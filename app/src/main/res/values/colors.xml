@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#FF0492ea</color>
+    <color name="colorPrimaryDark">#FF0068A5</color>
+    <color name="colorAccent">#FFe5f4fd</color>
+
+
+    <color name="ic_launcher_background">#FF03A9F4</color>
+
+
+    <color name="history_green_light">#f1f8f7</color>
+    <color name="history_green_dark">#74bdb0</color>
+
+    <color name="latest_yellow_light">#fff8e6</color>
+    <color name="latest_yellow_dark">#fbbc05</color>
+
+    <color name="favorite_red_light">#fdecea</color>
+    <color name="favorite_red_dark">#ea4335</color>
+
+    <color name="shuffle_blue_light">#e5f4fd</color>
+    <color name="shuffle_blue_dark">#0492ea</color>
+
+</resources>
