@@ -11,10 +11,10 @@
         android:layout_width="64dp"
         android:layout_height="64dp"
         android:scaleType="centerCrop"
-        android:src="@drawable/ic_launcher_foreground_blue"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"/>
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_launcher_foreground_blue"/>
 
     <TextView
         android:id="@+id/titleLabel"
@@ -52,7 +52,7 @@
             <ImageButton
                 android:layout_width="40dp"
                 android:layout_height="40dp"
-                android:src="@drawable/ic_more_vert_black_24dp"
+                app:srcCompat="@drawable/ic_more_vert_black_24dp"
                 style="@android:style/Widget.Material.ActionButton"/>
         </LinearLayout>
     </androidx.cardview.widget.CardView>
