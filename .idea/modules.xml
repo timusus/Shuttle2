@@ -3,7 +3,13 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/Shuttle2.iml" filepath="$PROJECT_DIR$/Shuttle2.iml" />
+      <module fileurl="file://$PROJECT_DIR$/core/Shuttle2-core.iml" filepath="$PROJECT_DIR$/core/Shuttle2-core.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/core/core.iml" filepath="$PROJECT_DIR$/core/core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/mediaprovider/local/local.iml" filepath="$PROJECT_DIR$/mediaprovider/local/local.iml" />
+      <module fileurl="file://$PROJECT_DIR$/mediaprovider/mediaprovider.iml" filepath="$PROJECT_DIR$/mediaprovider/mediaprovider.iml" />
+      <module fileurl="file://$PROJECT_DIR$/mediaprovider/core/mediaprovider-core.iml" filepath="$PROJECT_DIR$/mediaprovider/core/mediaprovider-core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/recyclerview-adapter/recyclerview-adapter.iml" filepath="$PROJECT_DIR$/recyclerview-adapter/recyclerview-adapter.iml" />
     </modules>
   </component>
 </project>
