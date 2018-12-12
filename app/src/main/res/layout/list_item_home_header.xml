@@ -61,39 +61,45 @@
         android:id="@+id/historyButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
         android:layout_marginTop="24dp"
+        android:padding="8dp"
         app:layout_constraintEnd_toStartOf="@+id/latestButton"
-        app:layout_constraintHorizontal_chainStyle="spread_inside"
+        app:layout_constraintHorizontal_chainStyle="spread"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/searchCard"/>
+        app:layout_constraintTop_toBottomOf="@id/searchCard"
+        app:type="history"/>
 
     <com.simplecityapps.shuttle.ui.view.HomeButton
         android:id="@+id/latestButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
+        android:padding="8dp"
         app:layout_constraintEnd_toStartOf="@+id/favoritesButton"
         app:layout_constraintStart_toEndOf="@+id/historyButton"
-        app:layout_constraintTop_toBottomOf="@id/searchCard"/>
+        app:layout_constraintTop_toBottomOf="@id/searchCard"
+        app:type="recent"/>
 
     <com.simplecityapps.shuttle.ui.view.HomeButton
         android:id="@+id/favoritesButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
+        android:padding="8dp"
         app:layout_constraintEnd_toStartOf="@+id/shuffleButton"
         app:layout_constraintStart_toEndOf="@+id/latestButton"
-        app:layout_constraintTop_toBottomOf="@id/searchCard"/>
+        app:layout_constraintTop_toBottomOf="@id/searchCard"
+        app:type="favorites"/>
 
     <com.simplecityapps.shuttle.ui.view.HomeButton
         android:id="@+id/shuffleButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
         android:layout_marginTop="24dp"
+        android:padding="8dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/favoritesButton"
-        app:layout_constraintTop_toBottomOf="@id/searchCard"/>
+        app:layout_constraintTop_toBottomOf="@id/searchCard"
+        app:type="shuffle"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<merge
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
@@ -8,7 +8,8 @@
     android:clickable="true"
     android:focusable="true"
     android:gravity="center"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    tools:parentTag="android.widget.LinearLayout">
 
     <ImageView
         android:id="@+id/image"
@@ -27,4 +28,4 @@
         android:textAppearance="@android:style/TextAppearance.DeviceDefault.Small"
         tools:text="History"/>
 
-</LinearLayout>
+</merge>

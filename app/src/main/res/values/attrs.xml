@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="HomeButton">
+        <attr format="enum" name="type">
+            <enum name="history" value="0"/>
+            <enum name="recent" value="1"/>
+            <enum name="favorites" value="2"/>
+            <enum name="shuffle" value="3"/>
+        </attr>
+    </declare-styleable>
+</resources>
