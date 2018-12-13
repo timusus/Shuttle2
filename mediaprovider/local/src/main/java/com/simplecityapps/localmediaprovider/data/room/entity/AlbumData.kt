@@ -1,11 +1,12 @@
 package com.simplecityapps.localmediaprovider.data.room.entity
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.Ignore
-import androidx.room.PrimaryKey
+import androidx.room.*
 
-@Entity(tableName = "albums")
+@Entity(
+    tableName = "albums",
+    indices = [Index("albumArtistId", "name", unique = true)],
+    foreignKeys = [(ForeignKey(entity = AlbumArtistData::class, parentColumns = ["id"], childColumns = ["albumArtistId"], onDelete = ForeignKey.CASCADE))]
+)
 data class AlbumData(
     @ColumnInfo(name = "name") val name: String,
     @ColumnInfo(name = "albumArtistId") var albumArtistId: Long = 0

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="@layout/fragment_library">
+
+    <!--suppress AndroidDomInspection -->
+    <com.google.android.material.tabs.TabItem
+        android:text="Artists"
+        tools:ignore="HardcodedText"/>
+
+    <!--suppress AndroidDomInspection -->
+    <com.google.android.material.tabs.TabItem
+        android:text="Albums"
+        tools:ignore="HardcodedText"/>
+
+    <!--suppress AndroidDomInspection -->
+    <com.google.android.material.tabs.TabItem
+        android:text="Songs"
+        tools:ignore="HardcodedText"/>
+</merge>

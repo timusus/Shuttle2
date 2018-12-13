@@ -3,9 +3,8 @@ package com.simplecityapps.localmediaprovider.repository
 import android.content.Context
 import android.os.Environment
 import android.util.Log
-import androidx.room.Room
 import com.simplecityapps.localmediaprovider.IntervalTimer
-import com.simplecityapps.localmediaprovider.data.room.database.MediaDatabase
+import com.simplecityapps.localmediaprovider.data.room.DatabaseProvider
 import com.simplecityapps.localmediaprovider.data.room.entity.AlbumArtistData
 import com.simplecityapps.localmediaprovider.data.room.entity.AlbumData
 import com.simplecityapps.localmediaprovider.data.room.entity.toSongData
@@ -19,13 +18,11 @@ import io.reactivex.schedulers.Schedulers
 
 class LocalSongRepository(context: Context) : SongRepository {
 
+    private val database = DatabaseProvider.getDatabase(context)
+
     private val intervalTimer = IntervalTimer()
 
     external fun getAudioFiles(path: String): ArrayList<AudioFile>
-
-    val database = Room.databaseBuilder(context, MediaDatabase::class.java, "song.db")
-        .fallbackToDestructiveMigration()
-        .build()
 
     override fun init(): Completable {
         intervalTimer.startLog()
@@ -95,12 +92,6 @@ class LocalSongRepository(context: Context) : SongRepository {
 
     override fun getSongs(): Observable<List<Song>> {
         return database.songDataDao().getAllDistinct().toObservable()
-            .map { songs ->
-                songs
-                    .sortedBy { it.track }
-                    .sortedBy { it.albumName }
-                    .sortedBy { it.albumArtistName }
-            }
     }
 
     companion object {
@@ -111,8 +102,6 @@ class LocalSongRepository(context: Context) : SongRepository {
             Log.i(TAG, "Init called")
             System.loadLibrary("file-scanner")
         }
-
-
     }
 
 }

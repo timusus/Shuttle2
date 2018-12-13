@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.screens.library.songs
+package com.simplecityapps.shuttle.ui.screens.library.albums
 
 import android.os.Bundle
 import android.util.Log
@@ -12,14 +12,14 @@ import com.simplecityapps.shuttle.MainActivity
 import com.simplecityapps.shuttle.R
 import io.reactivex.disposables.CompositeDisposable
 
-class SongsFragment : Fragment() {
+class AlbumsFragment : Fragment() {
 
     private val adapter = RecyclerAdapter()
 
     private val compositeDisposable = CompositeDisposable()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_songs, container, false)
+        return inflater.inflate(R.layout.fragment_albums, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -35,8 +35,8 @@ class SongsFragment : Fragment() {
 
         // Todo: Inject Repository
         compositeDisposable.add(
-            (activity as MainActivity).songsRepository.getSongs().subscribe(
-                { songs -> adapter.setData(songs.map { song -> SongBinder(song) }) },
+            (activity as MainActivity).albumRepository.getAlbums().subscribe(
+                { albums -> adapter.setData(albums.map { album -> AlbumBinder(album) }) },
                 { error -> Log.e(MainActivity.TAG, error.toString()) })
         )
     }
@@ -48,8 +48,8 @@ class SongsFragment : Fragment() {
 
     companion object {
 
-        const val TAG = "SongsFragment"
+        const val TAG = "AlbumsFragment"
 
-        fun newInstance() = SongsFragment()
+        fun newInstance() = AlbumsFragment()
     }
 }

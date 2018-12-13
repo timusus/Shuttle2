@@ -1,11 +1,11 @@
 package com.simplecityapps.localmediaprovider.data.room.entity
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.Ignore
-import androidx.room.PrimaryKey
+import androidx.room.*
 
-@Entity(tableName = "album_artists")
+@Entity(
+    tableName = "album_artists",
+    indices = [Index("name", unique = true)]
+)
 data class AlbumArtistData(
     @ColumnInfo(name = "name") val name: String
 ) {

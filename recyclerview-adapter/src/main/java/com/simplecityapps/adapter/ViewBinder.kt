@@ -12,7 +12,7 @@ interface ViewBinder : ContentsComparator {
 
     // Todo: This doesn't belong here
     enum class ViewType {
-        Song
+        AlbumArtist, Album, Song
     }
 
     fun createViewHolder(parent: ViewGroup): ViewHolder<out ViewBinder>
@@ -36,7 +36,7 @@ interface ViewBinder : ContentsComparator {
     }
 
     open class ViewHolder<B : ViewBinder>(itemView: View) : RecyclerView.ViewHolder(itemView),
-            RecyclingViewHolder {
+        RecyclingViewHolder {
 
         var viewBinder: B? = null
 

@@ -6,9 +6,14 @@ import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.simplecityapps.localmediaprovider.repository.LocalAlbumArtistRepository
+import com.simplecityapps.localmediaprovider.repository.LocalAlbumRepository
 import com.simplecityapps.localmediaprovider.repository.LocalSongRepository
+import com.simplecityapps.mediaprovider.repository.AlbumArtistRepository
+import com.simplecityapps.mediaprovider.repository.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.shuttle.ui.screens.home.HomeFragment
+import com.simplecityapps.shuttle.ui.screens.library.LibraryFragment
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongsFragment
 import io.reactivex.disposables.CompositeDisposable
 
@@ -16,6 +21,8 @@ class MainActivity : AppCompatActivity() {
 
     private val compositeDisposable = CompositeDisposable()
 
+    lateinit var albumArtistsRepository: AlbumArtistRepository
+    lateinit var albumRepository: AlbumRepository
     lateinit var songsRepository: SongRepository
 
     private val onNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
@@ -25,7 +32,7 @@ class MainActivity : AppCompatActivity() {
                 return@OnNavigationItemSelectedListener true
             }
             R.id.navigation_library -> {
-                supportFragmentManager.beginTransaction().replace(R.id.mainContainer, SongsFragment.newInstance(), SongsFragment.TAG).commit()
+                supportFragmentManager.beginTransaction().replace(R.id.mainContainer, LibraryFragment.newInstance(), LibraryFragment.TAG).commit()
                 return@OnNavigationItemSelectedListener true
             }
             R.id.navigation_folders -> {
@@ -65,6 +72,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onHasPermission() {
+        albumArtistsRepository = LocalAlbumArtistRepository(applicationContext)
+        albumRepository = LocalAlbumRepository(applicationContext)
         songsRepository = LocalSongRepository(applicationContext)
 
         compositeDisposable.add(songsRepository.init().subscribe())

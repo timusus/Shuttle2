@@ -40,7 +40,7 @@ class SongBinder(val song: Song) : ViewBinder {
             super.bind(viewBinder)
 
             title.text = viewBinder.song.name
-            subtitle.text = viewBinder.song.albumArtistName
+            subtitle.text = "${viewBinder.song.albumArtistName} • ${viewBinder.song.albumName}"
         }
     }
 }

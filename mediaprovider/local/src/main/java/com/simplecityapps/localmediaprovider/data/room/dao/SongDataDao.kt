@@ -4,9 +4,8 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy.REPLACE
 import androidx.room.Query
-import androidx.room.Transaction
-import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.localmediaprovider.data.room.entity.SongData
+import com.simplecityapps.mediaprovider.model.Song
 import io.reactivex.Flowable
 
 @Dao
@@ -16,14 +15,14 @@ abstract class SongDataDao {
         return getAll().distinctUntilChanged()
     }
 
-    @Transaction
     @Query("SELECT " +
             "songs.*, " +
             "album_artists.name as albumArtistName, " +
             "albums.name as albumName " +
             "FROM songs " +
             "INNER JOIN album_artists ON album_artists.id = songs.albumArtistId " +
-            "INNER JOIN albums ON albums.id = songs.albumId;")
+            "INNER JOIN albums ON albums.id = songs.albumId " +
+            "ORDER BY albumArtistName, albumName, track;")
     protected abstract fun getAll(): Flowable<List<Song>>
 
     @Insert(onConflict = REPLACE)

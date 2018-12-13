@@ -4,22 +4,27 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy.REPLACE
 import androidx.room.Query
-
 import com.simplecityapps.localmediaprovider.data.room.entity.AlbumArtistData
+import com.simplecityapps.mediaprovider.model.AlbumArtist
 import io.reactivex.Flowable
 
 @Dao
-interface AlbumArtistDataDao {
+abstract class AlbumArtistDataDao {
 
-    @Query("SELECT * from album_artists")
-    fun getAll(): Flowable<List<AlbumArtistData>>
+    fun getAllDistinct(): Flowable<List<AlbumArtist>> {
+        return getAll().distinctUntilChanged()
+    }
+
+    @Query("SELECT * from album_artists " +
+            "ORDER BY name")
+    protected abstract fun getAll(): Flowable<List<AlbumArtist>>
 
     @Insert(onConflict = REPLACE)
-    fun insert(albumData: AlbumArtistData): Long
+    abstract fun insert(albumData: AlbumArtistData): Long
 
     @Insert(onConflict = REPLACE)
-    fun insertAll(albumData: List<AlbumArtistData>): List<Long>
+    abstract fun insertAll(albumData: List<AlbumArtistData>): List<Long>
 
     @Query("DELETE from album_artists")
-    fun deleteAll()
+    abstract fun deleteAll()
 }

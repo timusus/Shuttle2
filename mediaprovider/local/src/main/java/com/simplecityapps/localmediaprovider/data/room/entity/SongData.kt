@@ -5,7 +5,11 @@ import com.simplecityapps.localmediaprovider.model.AudioFile
 
 @Entity(
     tableName = "songs",
-    indices = [Index("path", unique = true), Index("albumArtistId"), Index("albumId")],
+    indices = [
+        Index("path", unique = true),
+        Index("albumArtistId"),
+        Index("albumId")
+    ],
     foreignKeys = [
         (ForeignKey(entity = AlbumArtistData::class, parentColumns = ["id"], childColumns = ["albumArtistId"], onDelete = ForeignKey.CASCADE)),
         (ForeignKey(entity = AlbumData::class, parentColumns = ["id"], childColumns = ["albumId"], onDelete = ForeignKey.CASCADE))
