@@ -14,6 +14,7 @@ import com.simplecityapps.mediaprovider.repository.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.shuttle.ui.screens.home.HomeFragment
 import com.simplecityapps.shuttle.ui.screens.library.LibraryFragment
+import com.simplecityapps.shuttle.ui.screens.library.folders.FolderFragment
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongsFragment
 import io.reactivex.disposables.CompositeDisposable
 
@@ -36,6 +37,7 @@ class MainActivity : AppCompatActivity() {
                 return@OnNavigationItemSelectedListener true
             }
             R.id.navigation_folders -> {
+                supportFragmentManager.beginTransaction().replace(R.id.mainContainer, FolderFragment.newInstance(), FolderFragment.TAG).commit()
                 return@OnNavigationItemSelectedListener true
             }
             R.id.navigation_menu -> {

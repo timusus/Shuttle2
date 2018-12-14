@@ -35,7 +35,8 @@ class SongsFragment : Fragment() {
 
         // Todo: Inject Repository
         compositeDisposable.add(
-            (activity as MainActivity).songsRepository.getSongs().subscribe(
+            (activity as MainActivity).songsRepository.getSongs()
+                .subscribe(
                 { songs -> adapter.setData(songs.map { song -> SongBinder(song) }) },
                 { error -> Log.e(MainActivity.TAG, error.toString()) })
         )
