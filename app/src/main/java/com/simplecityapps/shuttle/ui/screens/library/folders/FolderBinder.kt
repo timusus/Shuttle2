@@ -5,9 +5,16 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import com.simplecityapps.adapter.ViewBinder
+import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 
-class FolderBinder(val path: String) : ViewBinder {
+class FolderBinder(val node: Node<Song>) : ViewBinder {
+
+    interface Listener {
+        fun onNodeSelected(node: Node<Song>)
+    }
+
+    var listener: Listener? = null
 
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
         return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_folder, parent, false))
@@ -19,15 +26,17 @@ class FolderBinder(val path: String) : ViewBinder {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is FolderBinder) return false
+        if (javaClass != other?.javaClass) return false
 
-        if (path != other.path) return false
+        other as FolderBinder
+
+        if (node != other.node) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        return path.hashCode()
+        return node.hashCode()
     }
 
 
@@ -35,10 +44,16 @@ class FolderBinder(val path: String) : ViewBinder {
 
         private val title = itemView.findViewById<TextView>(R.id.title)
 
+        init {
+            itemView.setOnClickListener {
+                viewBinder?.listener?.onNodeSelected(viewBinder!!.node)
+            }
+        }
+
         override fun bind(viewBinder: FolderBinder) {
             super.bind(viewBinder)
 
-            title.text = viewBinder.path
+            title.text = viewBinder.node.name
         }
     }
 }

@@ -1,5 +1,5 @@
 include ':app',
-    ':core',
-    ':recyclerview-adapter',
-    ':mediaprovider:core',
-    ':mediaprovider:local'
+        ':core',
+        ':recyclerview-adapter',
+        ':mediaprovider:core',
+        ':mediaprovider:local'

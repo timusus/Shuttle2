@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/libraryFragment">
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.home.HomeFragment"
+        android:label="HomeFragment"
+        tools:layout="@layout/fragment_home" />
+
+    <fragment
+        android:id="@+id/libraryFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.library.LibraryFragment"
+        android:label="LibraryFragment"
+        tools:layout="@layout/fragment_library" />
+
+    <fragment
+        android:id="@+id/folderFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.library.folders.FolderFragment"
+        android:label="FolderFragment"
+        tools:layout="@layout/fragment_folders" />
+
+</navigation>

@@ -8,15 +8,23 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
 import com.simplecityapps.adapter.RecyclerAdapter
-import com.simplecityapps.shuttle.MainActivity
+import com.simplecityapps.mediaprovider.repository.AlbumArtistRepository
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.MainActivity
 import io.reactivex.disposables.CompositeDisposable
+import javax.inject.Inject
 
-class AlbumArtistsFragment : Fragment() {
+class AlbumArtistsFragment : Fragment(), Injectable {
 
     private val adapter = RecyclerAdapter()
 
     private val compositeDisposable = CompositeDisposable()
+
+    @Inject lateinit var albumArtistRepository: AlbumArtistRepository
+
+
+    // Lifecycle
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_album_artists, container, false)
@@ -33,9 +41,8 @@ class AlbumArtistsFragment : Fragment() {
     override fun onResume() {
         super.onResume()
 
-        // Todo: Inject Repository
         compositeDisposable.add(
-            (activity as MainActivity).albumArtistsRepository.getAlbumArtists().subscribe(
+            albumArtistRepository.getAlbumArtists().subscribe(
                 { albumArtists -> adapter.setData(albumArtists.map { albumArtist -> AlbumArtistBinder(albumArtist) }) },
                 { error -> Log.e(MainActivity.TAG, error.toString()) })
         )
@@ -45,6 +52,9 @@ class AlbumArtistsFragment : Fragment() {
         compositeDisposable.clear()
         super.onDestroy()
     }
+
+
+    // Static
 
     companion object {
 

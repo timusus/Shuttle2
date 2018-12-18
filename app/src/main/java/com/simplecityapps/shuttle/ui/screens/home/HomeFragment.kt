@@ -9,32 +9,9 @@ import com.simplecityapps.shuttle.R
 
 class HomeFragment : Fragment() {
 
+    // Lifecycle
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_home, container, false)
     }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-    }
-
-    companion object {
-
-        const val TAG = "HomeFragment"
-
-        fun newInstance() = HomeFragment()
-    }
-
-}
-
-interface HomeContract {
-
-    interface Presenter {
-
-    }
-
-    interface View {
-
-    }
-
 }

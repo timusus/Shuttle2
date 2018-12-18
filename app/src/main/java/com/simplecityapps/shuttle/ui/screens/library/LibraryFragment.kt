@@ -15,6 +15,9 @@ import kotlinx.android.synthetic.main.fragment_library.*
 
 class LibraryFragment : Fragment() {
 
+
+    // Lifecycle
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_library, container, false)
     }
@@ -40,6 +43,7 @@ class LibraryFragment : Fragment() {
         fun newInstance() = LibraryFragment()
     }
 }
+
 
 class PagerAdapter(fragmentManager: FragmentManager) : FragmentPagerAdapter(fragmentManager) {
 

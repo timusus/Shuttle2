@@ -1,10 +1,11 @@
 package com.simplecityapps.localmediaprovider.repository
 
-import android.content.Context
+import android.annotation.SuppressLint
 import android.os.Environment
 import android.util.Log
+import com.jakewharton.rxrelay2.BehaviorRelay
 import com.simplecityapps.localmediaprovider.IntervalTimer
-import com.simplecityapps.localmediaprovider.data.room.DatabaseProvider
+import com.simplecityapps.localmediaprovider.data.room.database.MediaDatabase
 import com.simplecityapps.localmediaprovider.data.room.entity.AlbumArtistData
 import com.simplecityapps.localmediaprovider.data.room.entity.AlbumData
 import com.simplecityapps.localmediaprovider.data.room.entity.toSongData
@@ -16,15 +17,19 @@ import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.schedulers.Schedulers
 
-class LocalSongRepository(context: Context) : SongRepository {
-
-    private val database = DatabaseProvider.getDatabase(context)
+class LocalSongRepository(private val database: MediaDatabase) : SongRepository {
 
     private val intervalTimer = IntervalTimer()
 
+    private val songsRelay: BehaviorRelay<List<Song>> by lazy {
+        val relay = BehaviorRelay.create<List<Song>>()
+        database.songDataDao().getAllDistinct().toObservable().subscribe(relay)
+        relay
+    }
+
     external fun getAudioFiles(path: String): ArrayList<AudioFile>
 
-    override fun init(): Completable {
+    override fun populate(): Completable {
         intervalTimer.startLog()
 
         return Single.fromCallable { getAudioFiles(Environment.getExternalStorageDirectory().path) }
@@ -90,8 +95,9 @@ class LocalSongRepository(context: Context) : SongRepository {
             .subscribeOn(Schedulers.io())
     }
 
+    @SuppressLint("CheckResult")
     override fun getSongs(): Observable<List<Song>> {
-        return database.songDataDao().getAllDistinct().toObservable()
+        return songsRelay
     }
 
     companion object {
@@ -99,7 +105,6 @@ class LocalSongRepository(context: Context) : SongRepository {
         const val TAG = "LocalMediaProvider"
 
         init {
-            Log.i(TAG, "Init called")
             System.loadLibrary("file-scanner")
         }
     }

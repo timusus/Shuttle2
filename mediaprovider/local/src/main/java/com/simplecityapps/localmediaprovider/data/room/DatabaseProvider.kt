@@ -4,20 +4,11 @@ import android.content.Context
 import androidx.room.Room
 import com.simplecityapps.localmediaprovider.data.room.database.MediaDatabase
 
-// Todo: Make Singleton & Inject via DI
-object DatabaseProvider {
+class DatabaseProvider constructor(context: Context) {
 
-    private var database: MediaDatabase? = null
-
-    fun getDatabase(context: Context): MediaDatabase {
-        return database ?: initDatabase(context)
-    }
-
-    fun initDatabase(context: Context): MediaDatabase {
-        database = Room.databaseBuilder(context, MediaDatabase::class.java, "song.db")
+    val database: MediaDatabase by lazy {
+        Room.databaseBuilder(context, MediaDatabase::class.java, "song.db")
             .fallbackToDestructiveMigration()
             .build()
-
-        return database!!
     }
 }

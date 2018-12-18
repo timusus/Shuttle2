@@ -9,7 +9,15 @@ import com.simplecityapps.localmediaprovider.data.room.entity.AlbumData
 import com.simplecityapps.localmediaprovider.data.room.entity.SongData
 import com.simplecityapps.mediaprovider.data.room.dao.AlbumArtistDataDao
 
-@Database(entities = [SongData::class, AlbumArtistData::class, AlbumData::class], version = 12, exportSchema = false)
+@Database(
+    entities = [
+        SongData::class,
+        AlbumArtistData::class,
+        AlbumData::class
+    ],
+    version = 12,
+    exportSchema = false
+)
 abstract class MediaDatabase : RoomDatabase() {
 
     abstract fun songDataDao(): SongDataDao

@@ -8,15 +8,23 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
 import com.simplecityapps.adapter.RecyclerAdapter
-import com.simplecityapps.shuttle.MainActivity
+import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.MainActivity
 import io.reactivex.disposables.CompositeDisposable
+import javax.inject.Inject
 
-class SongsFragment : Fragment() {
+class SongsFragment : Fragment(), Injectable {
 
     private val adapter = RecyclerAdapter()
 
     private val compositeDisposable = CompositeDisposable()
+
+    @Inject lateinit var songRepository: SongRepository
+
+
+    // Lifecycle
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_songs, container, false)
@@ -33,10 +41,8 @@ class SongsFragment : Fragment() {
     override fun onResume() {
         super.onResume()
 
-        // Todo: Inject Repository
         compositeDisposable.add(
-            (activity as MainActivity).songsRepository.getSongs()
-                .subscribe(
+            songRepository.getSongs().subscribe(
                 { songs -> adapter.setData(songs.map { song -> SongBinder(song) }) },
                 { error -> Log.e(MainActivity.TAG, error.toString()) })
         )
@@ -46,6 +52,9 @@ class SongsFragment : Fragment() {
         compositeDisposable.clear()
         super.onDestroy()
     }
+
+
+    // Static
 
     companion object {
 

@@ -2,21 +2,22 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
-        android:id="@+id/navigation_home"
+        android:id="@+id/homeFragment"
         android:icon="@drawable/ic_home_black_24dp"
         android:title="@string/title_home"/>
 
     <item
-        android:id="@+id/navigation_library"
+        android:id="@+id/libraryFragment"
         android:icon="@drawable/ic_library_music_black_24dp"
         android:title="@string/title_library"/>
 
     <item
-        android:id="@+id/navigation_folders"
+        android:id="@+id/folderFragment"
         android:icon="@drawable/ic_folder_open_black_24dp"
         android:title="@string/title_folders"/>
 
     <item
+        android:title=""
         android:id="@+id/navigation_menu"
         android:icon="@drawable/ic_menu_black_24dp"/>
 

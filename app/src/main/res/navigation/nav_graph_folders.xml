@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph_folders"
+    app:startDestination="@id/folderDetailFragment">
+
+    <fragment
+        android:id="@+id/folderDetailFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.library.folders.FolderDetailFragment"
+        android:label="FolderDetailFragment"
+        tools:layout="@layout/fragment_folder_detail">
+        <action
+            android:id="@+id/action_folderDetailFragment_self"
+            app:destination="@id/folderDetailFragment"
+            app:enterAnim="@anim/enter_from_right"
+            app:exitAnim="@anim/nav_default_exit_anim"
+            app:popEnterAnim="@anim/nav_default_pop_enter_anim"
+            app:popExitAnim="@anim/exit_to_right" />
+        <argument
+            android:name="path"
+            android:defaultValue="/"
+            app:argType="string" />
+    </fragment>
+</navigation>
