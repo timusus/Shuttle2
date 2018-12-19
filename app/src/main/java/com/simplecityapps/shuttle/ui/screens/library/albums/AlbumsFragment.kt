@@ -1,23 +1,25 @@
 package com.simplecityapps.shuttle.ui.screens.library.albums
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.RecyclerView
-import com.simplecityapps.adapter.RecyclerAdapter
+import androidx.navigation.findNavController
+import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.repository.AlbumRepository
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
-import com.simplecityapps.shuttle.ui.MainActivity
+import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
+import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragmentArgs
 import io.reactivex.disposables.CompositeDisposable
+import kotlinx.android.synthetic.main.fragment_folder_detail.*
+import timber.log.Timber
 import javax.inject.Inject
 
-class AlbumsFragment : Fragment(), Injectable {
+class AlbumsFragment : Fragment(), Injectable, AlbumBinder.Listener {
 
-    private val adapter = RecyclerAdapter()
+    private val adapter = SectionedAdapter()
 
     private val compositeDisposable = CompositeDisposable()
 
@@ -33,9 +35,7 @@ class AlbumsFragment : Fragment(), Injectable {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        view as RecyclerView
-
-        view.adapter = adapter
+        recyclerView.adapter = adapter
     }
 
     override fun onResume() {
@@ -43,14 +43,31 @@ class AlbumsFragment : Fragment(), Injectable {
 
         compositeDisposable.add(
             albumRepository.getAlbums().subscribe(
-                { albums -> adapter.setData(albums.map { album -> AlbumBinder(album) }) },
-                { error -> Log.e(MainActivity.TAG, error.toString()) })
+                { albums ->
+                    adapter.setData(albums.map { album ->
+                        val albumBinder = AlbumBinder(album)
+                        albumBinder.listener = this
+                        albumBinder
+                    })
+                },
+                { error -> Timber.e(error, "Failed to retrieve albums") })
         )
     }
 
     override fun onDestroy() {
         compositeDisposable.clear()
         super.onDestroy()
+    }
+
+
+    // AlbumBinder.Listener Implementation
+
+    override fun onAlbumClicked(album: Album) {
+
+        view?.findNavController()?.navigate(
+            R.id.action_libraryFragment_to_albumDetailFragment,
+            AlbumDetailFragmentArgs.Builder(album.id).build().toBundle()
+        )
     }
 
 

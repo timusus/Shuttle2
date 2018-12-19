@@ -16,4 +16,11 @@
 
     <style name="AppTheme.DayNight" parent="AppTheme.Light" />
 
+    <style name="FastScrollRecyclerView">
+        <item name="fastScrollPopupBgColor">@color/colorPrimary</item>
+        <item name="fastScrollPopupTextColor">@android:color/primary_text_dark</item>
+        <item name="fastScrollThumbColor">@color/colorPrimary</item>
+        <item name="fastScrollThumbInactiveColor">@color/colorPrimary</item>
+    </style>
+
 </resources>

@@ -11,7 +11,7 @@ import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
 
-class RecyclerAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+open class RecyclerAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     var items = mutableListOf<ViewBinder>()
         private set
@@ -19,7 +19,7 @@ class RecyclerAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     private var disposable: Disposable? = null
 
     fun setData(newItems: List<ViewBinder>, animateChanges: Boolean = true, completion: (() -> Unit)? = null) {
-        disposable?.dispose()
+        dispose()
 
         if (animateChanges) {
             disposable = Single.fromCallable { DiffUtil.calculateDiff(DiffCallbacks(items, newItems)) }
@@ -64,6 +64,10 @@ class RecyclerAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         } else {
             notifyDataSetChanged()
         }
+    }
+
+    fun dispose() {
+        disposable?.dispose()
     }
 
     override fun getItemViewType(position: Int): Int {

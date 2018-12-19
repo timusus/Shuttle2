@@ -11,7 +11,9 @@ import com.simplecityapps.localmediaprovider.data.room.entity.AlbumData
 import com.simplecityapps.localmediaprovider.data.room.entity.toSongData
 import com.simplecityapps.localmediaprovider.model.AudioFile
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
+import com.simplecityapps.mediaprovider.repository.predicate
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
@@ -99,6 +101,11 @@ class LocalSongRepository(private val database: MediaDatabase) : SongRepository 
     override fun getSongs(): Observable<List<Song>> {
         return songsRelay
     }
+
+    override fun getSongs(query: SongQuery): Observable<List<Song>> {
+        return songsRelay.map { songs -> songs.filter(query.predicate()) }
+    }
+
 
     companion object {
 

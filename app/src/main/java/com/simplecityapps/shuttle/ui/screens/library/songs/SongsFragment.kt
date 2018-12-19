@@ -1,23 +1,27 @@
 package com.simplecityapps.shuttle.ui.screens.library.songs
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.RecyclerView
-import com.simplecityapps.adapter.RecyclerAdapter
+import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
-import com.simplecityapps.shuttle.ui.MainActivity
+import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import io.reactivex.disposables.CompositeDisposable
+import kotlinx.android.synthetic.main.fragment_folder_detail.*
+import timber.log.Timber
 import javax.inject.Inject
 
 class SongsFragment : Fragment(), Injectable {
 
-    private val adapter = RecyclerAdapter()
+    private val adapter = object : SectionedAdapter() {
+        override fun getSectionName(viewBinder: ViewBinder?): String {
+            return (viewBinder as? SongBinder)?.song?.albumArtistName?.firstOrNull()?.toString() ?: ""
+        }
+    }
 
     private val compositeDisposable = CompositeDisposable()
 
@@ -33,9 +37,7 @@ class SongsFragment : Fragment(), Injectable {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        view as RecyclerView
-
-        view.adapter = adapter
+        recyclerView.adapter = adapter
     }
 
     override fun onResume() {
@@ -44,7 +46,7 @@ class SongsFragment : Fragment(), Injectable {
         compositeDisposable.add(
             songRepository.getSongs().subscribe(
                 { songs -> adapter.setData(songs.map { song -> SongBinder(song) }) },
-                { error -> Log.e(MainActivity.TAG, error.toString()) })
+                { error -> Timber.e(error, "Failed to retrieve songs") })
         )
     }
 

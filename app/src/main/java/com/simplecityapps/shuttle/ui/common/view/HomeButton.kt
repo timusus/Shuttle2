@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.view
+package com.simplecityapps.shuttle.ui.common.view
 
 import android.content.Context
 import android.content.res.ColorStateList

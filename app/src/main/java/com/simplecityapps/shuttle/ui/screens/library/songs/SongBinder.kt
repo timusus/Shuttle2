@@ -18,6 +18,10 @@ class SongBinder(val song: Song) : ViewBinder {
         return ViewBinder.ViewType.Song
     }
 
+    override fun sectionName(): String? {
+        return song.name.firstOrNull().toString()
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is SongBinder) return false
@@ -30,6 +34,7 @@ class SongBinder(val song: Song) : ViewBinder {
     override fun hashCode(): Int {
         return song.hashCode()
     }
+
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<SongBinder>(itemView) {
 

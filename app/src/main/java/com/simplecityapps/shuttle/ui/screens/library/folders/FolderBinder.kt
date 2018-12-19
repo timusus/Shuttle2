@@ -24,6 +24,10 @@ class FolderBinder(val node: Node<Song>) : ViewBinder {
         return ViewBinder.ViewType.Folder
     }
 
+    override fun sectionName(): String? {
+        return node.name.firstOrNull()?.toString() ?: ""
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false

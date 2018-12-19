@@ -7,7 +7,7 @@ import android.view.ViewGroup
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import com.simplecityapps.shuttle.dagger.Injectable
-import com.simplecityapps.shuttle.ui.view.ToolbarHost
+import com.simplecityapps.shuttle.ui.common.view.ToolbarHost
 import kotlinx.android.synthetic.main.fragment_folders.*
 
 class FolderFragment : Fragment(), Injectable, ToolbarHost {

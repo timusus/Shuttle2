@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.view
+package com.simplecityapps.shuttle.ui.common.view
 
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment

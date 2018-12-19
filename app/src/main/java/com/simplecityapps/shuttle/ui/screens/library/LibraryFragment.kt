@@ -8,8 +8,8 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentPagerAdapter
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistsFragment
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumsFragment
-import com.simplecityapps.shuttle.ui.screens.library.artists.AlbumArtistsFragment
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongsFragment
 import kotlinx.android.synthetic.main.fragment_library.*
 
@@ -34,13 +34,6 @@ class LibraryFragment : Fragment() {
         adapter.notifyDataSetChanged()
 
         viewPager.adapter = adapter
-    }
-
-    companion object {
-
-        const val TAG = "LibraryFragment"
-
-        fun newInstance() = LibraryFragment()
     }
 }
 

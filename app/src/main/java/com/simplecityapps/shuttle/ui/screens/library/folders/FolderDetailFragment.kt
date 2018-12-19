@@ -12,8 +12,9 @@ import androidx.navigation.findNavController
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.ui.utils.findParent
-import com.simplecityapps.shuttle.ui.view.findToolbarHost
+import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
+import com.simplecityapps.shuttle.ui.common.utils.findParent
+import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
 import dagger.android.support.AndroidSupportInjection
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.android.synthetic.main.fragment_folder_detail.*
@@ -24,7 +25,7 @@ class FolderDetailFragment : Fragment(), FolderBinder.Listener {
 
     private val compositeDisposable = CompositeDisposable()
 
-    private val adapter = RecyclerAdapter()
+    private val adapter = SectionedAdapter()
 
     private lateinit var path: String
 

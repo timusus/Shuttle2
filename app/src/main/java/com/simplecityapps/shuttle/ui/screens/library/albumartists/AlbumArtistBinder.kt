@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.screens.library.artists
+package com.simplecityapps.shuttle.ui.screens.library.albumartists
 
 import android.view.LayoutInflater
 import android.view.View
@@ -10,12 +10,22 @@ import com.simplecityapps.shuttle.R
 
 class AlbumArtistBinder(val albumArtist: AlbumArtist) : ViewBinder {
 
+    interface Listener {
+        fun onAlbumArtistClicked(albumArtist: AlbumArtist)
+    }
+
+    var listener: Listener? = null
+
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
         return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_album_artist, parent, false))
     }
 
     override fun viewType(): ViewBinder.ViewType {
         return ViewBinder.ViewType.AlbumArtist
+    }
+
+    override fun sectionName(): String? {
+        return albumArtist.name.firstOrNull().toString()
     }
 
     override fun equals(other: Any?): Boolean {
@@ -33,6 +43,10 @@ class AlbumArtistBinder(val albumArtist: AlbumArtist) : ViewBinder {
 
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<AlbumArtistBinder>(itemView) {
+
+        init {
+            itemView.setOnClickListener { viewBinder?.listener?.onAlbumArtistClicked(viewBinder!!.albumArtist) }
+        }
 
         private val title = itemView.findViewById<TextView>(R.id.title)
 

@@ -10,12 +10,22 @@ import com.simplecityapps.shuttle.R
 
 class AlbumBinder(val album: Album) : ViewBinder {
 
+    interface Listener {
+        fun onAlbumClicked(album: Album)
+    }
+
+    var listener: Listener? = null
+
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
         return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_album, parent, false))
     }
 
     override fun viewType(): ViewBinder.ViewType {
         return ViewBinder.ViewType.Album
+    }
+
+    override fun sectionName(): String? {
+        return album.name.firstOrNull().toString()
     }
 
     override fun equals(other: Any?): Boolean {
@@ -31,7 +41,12 @@ class AlbumBinder(val album: Album) : ViewBinder {
         return album.hashCode()
     }
 
+
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<AlbumBinder>(itemView) {
+
+        init {
+            itemView.setOnClickListener { viewBinder?.listener?.onAlbumClicked(viewBinder!!.album) }
+        }
 
         private val title = itemView.findViewById<TextView>(R.id.title)
         private val subtitle = itemView.findViewById<TextView>(R.id.subtitle)

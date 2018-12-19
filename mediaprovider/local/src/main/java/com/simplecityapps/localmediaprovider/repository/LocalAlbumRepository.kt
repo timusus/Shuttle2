@@ -3,7 +3,9 @@ package com.simplecityapps.localmediaprovider.repository
 import com.jakewharton.rxrelay2.BehaviorRelay
 import com.simplecityapps.localmediaprovider.data.room.database.MediaDatabase
 import com.simplecityapps.mediaprovider.model.Album
+import com.simplecityapps.mediaprovider.repository.AlbumQuery
 import com.simplecityapps.mediaprovider.repository.AlbumRepository
+import com.simplecityapps.mediaprovider.repository.predicate
 import io.reactivex.Observable
 
 class LocalAlbumRepository(private val database: MediaDatabase) : AlbumRepository {
@@ -16,5 +18,9 @@ class LocalAlbumRepository(private val database: MediaDatabase) : AlbumRepositor
 
     override fun getAlbums(): Observable<List<Album>> {
         return albumsRelay
+    }
+
+    override fun getAlbums(query: AlbumQuery): Observable<List<Album>> {
+        return getAlbums().map { albums -> albums.filter(query.predicate()) }
     }
 }

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<navigation
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nav_graph"
@@ -16,12 +15,40 @@
         android:id="@+id/libraryFragment"
         android:name="com.simplecityapps.shuttle.ui.screens.library.LibraryFragment"
         android:label="LibraryFragment"
-        tools:layout="@layout/fragment_library" />
+        tools:layout="@layout/fragment_library">
+        <action
+            android:id="@+id/action_libraryFragment_to_albumArtistDetailFragment"
+            app:destination="@id/albumArtistDetailFragment" />
+        <action
+            android:id="@+id/action_libraryFragment_to_albumDetailFragment"
+            app:destination="@id/albumDetailFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/folderFragment"
         android:name="com.simplecityapps.shuttle.ui.screens.library.folders.FolderFragment"
         android:label="FolderFragment"
         tools:layout="@layout/fragment_folders" />
+    <fragment
+        android:id="@+id/albumArtistDetailFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragment"
+        android:label="AlbumArtistDetailFragment"
+        tools:layout="@layout/fragment_album_artist_detail">
+        <argument
+            android:name="albumArtistId"
+            app:argType="long" />
+        <action
+            android:id="@+id/action_albumArtistDetailFragment_to_albumDetailFragment"
+            app:destination="@id/albumDetailFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/albumDetailFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragment"
+        android:label="AlbumDetailFragment"
+        tools:layout="@layout/fragment_album_detail">
+        <argument
+            android:name="albumId"
+            app:argType="long" />
+    </fragment>
 
 </navigation>
