@@ -1,26 +1,42 @@
 <resources>
 
+    <!-- App Themes -->
+
     <style name="AppTheme.Light" parent="Theme.MaterialComponents.Light.NoActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorPrimary</item>
-        <item name="android:statusBarColor">@android:color/white</item>
+        <item name="tabLayoutStyle">@style/TabLayout.AppTheme.Dark</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
 
     <style name="AppTheme.Dark" parent="Theme.MaterialComponents.NoActionBar">
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="tabLayoutStyle">@style/TabLayout.AppTheme.Dark</item>
         <item name="colorAccent">@color/colorPrimary</item>
-        <item name="android:statusBarColor">@android:color/black</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
 
     <style name="AppTheme.DayNight" parent="AppTheme.Light" />
+
+
+    <!-- FastScroll -->
 
     <style name="FastScrollRecyclerView">
         <item name="fastScrollPopupBgColor">@color/colorPrimary</item>
         <item name="fastScrollPopupTextColor">@android:color/primary_text_dark</item>
         <item name="fastScrollThumbColor">@color/colorPrimary</item>
         <item name="fastScrollThumbInactiveColor">@color/colorPrimary</item>
+    </style>
+
+
+    <!-- TanLayout -->
+
+    <style name="TabLayout.AppTheme.Dark" parent="Widget.MaterialComponents.TabLayout">
+        <item name="android:background">@android:color/transparent</item>
+        <item name="tabTextColor">?android:textColorPrimary</item>
+        <item name="tabSelectedTextColor">?colorPrimary</item>
     </style>
 
 </resources>

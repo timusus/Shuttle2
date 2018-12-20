@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle
 
 import android.app.Activity
 import android.app.Application
+import androidx.appcompat.app.AppCompatDelegate
 import com.simplecityapps.shuttle.dagger.AppInjector
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
@@ -24,5 +25,12 @@ class ShuttleApp : Application(), HasActivityInjector {
 
     override fun activityInjector(): AndroidInjector<Activity> {
         return dispatchingAndroidInjector
+    }
+
+    companion object {
+
+        init {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_AUTO)
+        }
     }
 }
