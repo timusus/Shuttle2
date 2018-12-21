@@ -51,3 +51,10 @@ target_link_libraries( # Specifies the target library.
                        # Links the target library to the log library
                        # included in the NDK.
                        ${log-lib} )
+
+# This speeds up tag reading in debug builds. Possibly remove this when releasing, as presumably
+# optimizations are already included in release builds.
+target_compile_options(tag PRIVATE
+"$<$<CONFIG:RELEASE>:-O2>"
+"$<$<CONFIG:DEBUG>:-O2>"
+)
