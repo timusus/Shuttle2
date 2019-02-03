@@ -45,7 +45,7 @@ dependencies {
 
     // Dagger core
     api 'com.google.dagger:dagger-android:2.16'
-    kapt 'com.google.dagger:dagger-compiler:2.17'
+    kapt 'com.google.dagger:dagger-compiler:2.16'
 
     // Dagger Android
     api 'com.google.dagger:dagger-android-support:2.16'

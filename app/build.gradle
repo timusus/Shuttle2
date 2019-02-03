@@ -47,12 +47,12 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.1'
 
     implementation project(path: ':core')
-    implementation 'android.arch.navigation:navigation-fragment:1.0.0-alpha08'
-    implementation "android.arch.navigation:navigation-ui-ktx:1.0.0-alpha08"
-    implementation "androidx.fragment:fragment-ktx:1.1.0-alpha02"
+    implementation 'android.arch.navigation:navigation-fragment:1.0.0-alpha11'
+    implementation "android.arch.navigation:navigation-ui-ktx:1.0.0-alpha11"
+    implementation "androidx.fragment:fragment-ktx:1.1.0-alpha03"
 
     // Dagger core
-    kapt 'com.google.dagger:dagger-compiler:2.17'
+    kapt 'com.google.dagger:dagger-compiler:2.16'
 
     // Dagger Android
     kapt "com.google.dagger:dagger-android-processor:2.16"
