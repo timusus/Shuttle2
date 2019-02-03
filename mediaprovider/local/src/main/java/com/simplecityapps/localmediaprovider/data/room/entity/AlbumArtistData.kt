@@ -14,7 +14,16 @@ data class AlbumArtistData(
 
     @Ignore
     var albums = arrayListOf<AlbumData>()
+}
 
-    @Ignore
-    var songs = arrayListOf<SongData>()
+
+fun List<AlbumData>.toAlbumArtistData(): List<AlbumArtistData> {
+    return groupBy { data -> data.albumArtistName }
+        .map { entry ->
+            val albumArtistData = AlbumArtistData(name = entry.key)
+            val albums = filter { data -> data.albumArtistName == albumArtistData.name }
+            albumArtistData.id = albums.first().albumArtistId
+            albumArtistData.albums.addAll(albums)
+            albumArtistData
+        }
 }

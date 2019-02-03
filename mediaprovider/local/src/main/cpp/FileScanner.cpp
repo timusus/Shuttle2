@@ -165,7 +165,7 @@ Java_com_simplecityapps_localmediaprovider_repository_LocalSongRepository_getAud
     jmethodID arrayListAdd = env->GetMethodID(arrayListClass, "add", "(Ljava/lang/Object;)Z");
 
     jclass songClass = env->FindClass("com/simplecityapps/localmediaprovider/model/AudioFile");
-    jmethodID songInit = env->GetMethodID(songClass, "<init>", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IIIIJILjava/lang/String;)V");
+    jmethodID songInit = env->GetMethodID(songClass, "<init>", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IIIIJILjava/lang/String;JJ)V");
 
     jobject result = env->NewObject(arrayListClass, arrayListInit, paths.size());
 
@@ -187,6 +187,9 @@ Java_com_simplecityapps_localmediaprovider_repository_LocalSongRepository_getAud
 
     int i;
     long len = paths.size();
+
+    struct stat statbuf;
+
     for (i = 0; i < len; i++) {
 
         TagLib::FileRef fileRef(paths[i].c_str());
@@ -245,7 +248,9 @@ Java_com_simplecityapps_localmediaprovider_repository_LocalSongRepository_getAud
                 year = tag->year();
             }
 
-            song = env->NewObject(songClass, songInit, title, albumArtist, artist, album, track, trackTotal, disc, discTotal, duration, year, pathStr);
+            stat(paths[i].c_str(), &statbuf);
+
+            song = env->NewObject(songClass, songInit, title, albumArtist, artist, album, track, trackTotal, disc, discTotal, duration, year, pathStr, statbuf.st_size, statbuf.st_mtime * 1000);
 
             env->CallBooleanMethod(result, arrayListAdd, song);
         }

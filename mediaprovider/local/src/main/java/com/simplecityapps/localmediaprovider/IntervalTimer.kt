@@ -27,7 +27,7 @@ class IntervalTimer {
     }
 
     /**
-     * Lpg the time since the last logInterval() was called.
+     * Log the time since the last logInterval() was called.
      *
      *
      * Note: Must call startLog() or the 'total' time won't be accurate.
@@ -38,10 +38,9 @@ class IntervalTimer {
      * @param message the message to output
      */
     fun logInterval(tag: String, message: String) {
-        Log.i(tag, message
-                + "\n Interval: " + getInterval()
-                + "\n Total: " + getTotal()
-        )
+        if (initialTime <= 0) {
+            Log.e(tag, "Must call startLog() or the 'total' time won't be accurate")
+        }
+        Log.i(tag, "$message \nInterval: ${getInterval()} \nTotal: ${getTotal()}")
     }
-
 }

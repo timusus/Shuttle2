@@ -1,6 +1,7 @@
 package com.simplecityapps.mediaprovider.model
 
 import java.io.Serializable
+import java.util.*
 
 data class Song(
     val id: Long,
@@ -15,7 +16,9 @@ data class Song(
     val discTotal: Int,
     val duration: Long,
     val year: Int,
-    val path: String
+    val path: String,
+    val size: Long,
+    val lastModified: Date
 ) : Serializable {
 
     override fun equals(other: Any?): Boolean {

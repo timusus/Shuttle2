@@ -2,13 +2,11 @@ package com.simplecityapps.localmediaprovider.repository
 
 import android.annotation.SuppressLint
 import android.os.Environment
-import android.util.Log
 import com.jakewharton.rxrelay2.BehaviorRelay
+import com.simplecityapps.localmediaprovider.Diff.Companion.diff
 import com.simplecityapps.localmediaprovider.IntervalTimer
 import com.simplecityapps.localmediaprovider.data.room.database.MediaDatabase
-import com.simplecityapps.localmediaprovider.data.room.entity.AlbumArtistData
-import com.simplecityapps.localmediaprovider.data.room.entity.AlbumData
-import com.simplecityapps.localmediaprovider.data.room.entity.toSongData
+import com.simplecityapps.localmediaprovider.data.room.entity.*
 import com.simplecityapps.localmediaprovider.model.AudioFile
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongQuery
@@ -18,6 +16,7 @@ import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.schedulers.Schedulers
+import timber.log.Timber
 
 class LocalSongRepository(private val database: MediaDatabase) : SongRepository {
 
@@ -29,72 +28,148 @@ class LocalSongRepository(private val database: MediaDatabase) : SongRepository 
         relay
     }
 
-    external fun getAudioFiles(path: String): ArrayList<AudioFile>
+    private external fun getAudioFiles(path: String): ArrayList<AudioFile>
 
     override fun populate(): Completable {
         intervalTimer.startLog()
 
+        Timber.i("Scanning for media..")
+
+        // 1. Scan for media
         return Single.fromCallable { getAudioFiles(Environment.getExternalStorageDirectory().path) }
-            .doOnSuccess { songs ->
+            .flatMapCompletable { audioFiles ->
 
-                Log.i(TAG, "Retrieved  ${songs.size} songs in ${intervalTimer.getInterval()}ms")
+                Timber.i("Discovered ${audioFiles.size} songs in ${intervalTimer.getInterval()}ms")
 
-                var songData = songs.map { audioFile -> audioFile.toSongData() }
+                // 2. Build a list of device songs based on (1)
+                val diskSongData = audioFiles.map { audioFile -> audioFile.toSongData() }
 
-                var albums = songData.groupBy { data -> Pair(data.albumName, data.albumArtistName) }
-                    .map { entry ->
-                        val albumData = AlbumData(name = entry.key.first)
-                        albumData.albumArtistName = entry.key.second
-                        albumData.songs.addAll(entry.value)
-                        albumData
-                    }
+                // 3. Build a list of device albums based on  (2)
+                val diskAlbumData = diskSongData.toAlbumData()
 
-                val albumArtists = songData.groupBy { data -> data.albumArtistName }
-                    .map { entry ->
-                        val albumArtistData = AlbumArtistData(name = entry.key)
-                        albumArtistData.albums.addAll(albums.filter { data -> data.albumArtistName == albumArtistData.name })
-                        albumArtistData.songs.addAll(entry.value)
-                        albumArtistData
-                    }
-                Log.i(TAG, "Built models in ${intervalTimer.getInterval()}ms")
+                // 4. Build a list of device album artists based on (2)
+                val diskAlbumArtistData = diskAlbumData.toAlbumArtistData()
 
-                // Insert album artists
-                val albumArtistIds = database.albumArtistDataDao().insertAll(albumArtists)
-                Log.i(TAG, "Inserted ${albumArtistIds.size} album artists in ${intervalTimer.getInterval()}ms")
+                // 5. Retrieve existing songs from database
+                database.songDataDao().getAllDistinct().first(emptyList()).map { songs ->
+                    songs.map { song -> song.toSongData() }
+                }.flatMapCompletable { databaseSongsData ->
 
-                // Set the album artist ids
-                albumArtists.forEachIndexed { index, albumArtist -> albumArtist.id = albumArtistIds[index] }
+                    // 6. Build a list of database albums based on (5)
+                    val databaseAlbumData = databaseSongsData.toAlbumData()
 
-                // Set the album album-artist ids
-                albums = albumArtists.flatMap { albumArtistData ->
-                    albumArtistData.albums.forEach { album -> album.albumArtistId = albumArtistData.id }
-                    albumArtistData.albums
+                    // 7. Build a list of database albums artists based on (5)
+                    val databaseAlbumArtistData = databaseAlbumData.toAlbumArtistData()
+
+                    // 8. Diff the database & disk album artist data, and apply changes to database
+                    updateAlbumArtistDatabase(databaseAlbumArtistData, diskAlbumArtistData)
+
+                    // 9. Set the album album-artist id's, now that they are available due to (8)
+                    setAlbumAlbumArtistIds(diskAlbumArtistData)
+
+                    // 10. Diff the database & disk album data, and apply changes to the database
+                    updateAlbumDatabase(databaseAlbumData, diskAlbumData)
+
+                    // 11. Set the song album-artist and album id's, now that they're available due to (8) and (10)
+                    setSongAlbumArtistAndAlbumIds(diskAlbumData)
+
+                    // 12. Diff the database & disk song data, and apply changes to the database
+                    updateSongDatabase(databaseSongsData, diskSongData)
+
+                    Timber.i("Database populated in ${intervalTimer.getInterval()}ms. Total time to scan & populate: ${intervalTimer.getTotal()}ms")
+
+                    Completable.complete()
                 }
-                // Insert the albums
-                val albumIds = database.albumDataDao().insertAll(albums)
-                Log.i(TAG, "Inserted ${albumIds.size} albums in ${intervalTimer.getInterval()}ms")
-
-                // Set the album ids
-                albums.forEachIndexed { index, albumData -> albumData.id = albumIds[index] }
-
-                // Set the song album-artist & album ids
-                songData = albums.flatMap { albumData ->
-                    albumData.songs.forEach { song ->
-                        song.albumArtistId = albumData.albumArtistId
-                        song.albumId = albumData.id
-                    }
-                    albumData.songs
-                }
-
-                // Insert songs
-                val songIds = database.songDataDao().insertAll(songData)
-                Log.i(TAG, "Inserted ${songIds.size} songs in ${intervalTimer.getInterval()}ms")
-
-                Log.i(TAG, "Finished database migration in ${intervalTimer.getTotal()}ms")
-
             }
-            .ignoreElement()
             .subscribeOn(Schedulers.io())
+    }
+
+    /**
+     * Compares the database (stale) album artists with those found on disk (fresh), and applies insertions, removals and updates to the database accordingly.
+     */
+    private fun updateAlbumArtistDatabase(
+        databaseAlbumArtistData: List<AlbumArtistData>,
+        diskAlbumArtistData: List<AlbumArtistData>
+    ) {
+        diff(databaseAlbumArtistData, diskAlbumArtistData, { old, new -> old.name == new.name }).apply {
+            // Copy the id of old album artists over to the new
+            (updates + unchanged).forEach { pair ->
+                pair.second.id = pair.first.id
+            }
+
+            // Apply the changes to the database
+            val insertionIds = database.albumArtistDataDao().update(updates.map { pair -> pair.second }, insertions, deletions)
+
+            // Copy the newly inserted id's to our album artists
+            insertions.forEachIndexed { index, albumArtistData ->
+                albumArtistData.id = insertionIds[index]
+            }
+        }
+    }
+
+    /**
+     * Copies the album artist id from the parent album artist to its child albums.
+     */
+    private fun setAlbumAlbumArtistIds(albumArtistData: List<AlbumArtistData>) {
+        albumArtistData.forEach { albumArtist ->
+            albumArtist.albums.forEach { album -> album.albumArtistId = albumArtist.id }
+        }
+    }
+
+    /**
+     * Compares the database (stale) albums with those found on disk (fresh), and applies insertions, removals and updates to the database accordingly.
+     */
+    private fun updateAlbumDatabase(
+        databaseAlbumData: List<AlbumData>,
+        diskAlbumData: List<AlbumData>
+    ) {
+        diff(databaseAlbumData, diskAlbumData, { a, b -> a.name == b.name && a.albumArtistName == b.albumArtistName }).apply {
+            // Copy the id of old albums over to the new
+            (updates + unchanged).forEach { pair ->
+                pair.second.id = pair.first.id
+                pair.second.albumArtistId = pair.first.albumArtistId
+            }
+
+            // Apply the changes to the database
+            val insertionIds = database.albumDataDao().update(updates.map { pair -> pair.second }, insertions, deletions)
+
+            // Copy the newly inserted id's to our albums
+            insertions.forEachIndexed { index, albumData ->
+                albumData.id = insertionIds[index]
+            }
+        }
+    }
+
+    /**
+     * Copies the album artist and album ids from the parent album to its child songs.
+     */
+    private fun setSongAlbumArtistAndAlbumIds(albumData: List<AlbumData>) {
+        albumData.forEach { album ->
+            album.songs.forEach { song ->
+                song.albumArtistId = album.albumArtistId
+                song.albumId = album.id
+            }
+        }
+    }
+
+    /**
+     * Compares the database (stale) songs with those found on disk (fresh), and applies insertions, removals and updates to the database accordingly.
+     */
+    private fun updateSongDatabase(
+        databaseSongsData: List<SongData>,
+        diskSongData: List<SongData>
+    ) {
+        diff(databaseSongsData, diskSongData, { a, b -> a.path == b.path }, { a, b -> a.lastModified == b.lastModified }).apply {
+            // Copy the id of old songs over to the new
+            (updates + unchanged).forEach { pair ->
+                pair.second.id = pair.first.id
+                pair.second.albumArtistId = pair.first.albumArtistId
+                pair.second.albumId = pair.first.albumId
+            }
+
+            // Apply the changes to the database
+            database.songDataDao().update(updates.map { pair -> pair.second }, insertions, deletions)
+        }
     }
 
     @SuppressLint("CheckResult")
@@ -115,5 +190,4 @@ class LocalSongRepository(private val database: MediaDatabase) : SongRepository 
             System.loadLibrary("file-scanner")
         }
     }
-
 }

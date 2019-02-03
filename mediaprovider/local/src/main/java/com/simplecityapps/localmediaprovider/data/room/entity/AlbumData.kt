@@ -5,7 +5,11 @@ import androidx.room.*
 @Entity(
     tableName = "albums",
     indices = [Index("albumArtistId", "name", unique = true)],
-    foreignKeys = [(ForeignKey(entity = AlbumArtistData::class, parentColumns = ["id"], childColumns = ["albumArtistId"], onDelete = ForeignKey.CASCADE))]
+    foreignKeys = [(ForeignKey(
+        entity = AlbumArtistData::class,
+        parentColumns = ["id"],
+        childColumns = ["albumArtistId"]
+    ))]
 )
 data class AlbumData(
     @ColumnInfo(name = "name") val name: String,
@@ -18,5 +22,18 @@ data class AlbumData(
     var albumArtistName: String = ""
 
     @Ignore
-    var songs = arrayListOf<SongData>()
+    var songs = mutableListOf<SongData>()
+}
+
+fun List<SongData>.toAlbumData(): List<AlbumData> {
+    return groupBy { data -> Pair(data.albumName, data.albumArtistName) }
+        .map { entry ->
+            val albumData = AlbumData(name = entry.key.first)
+            val sampleSong = entry.value.first()
+            albumData.id = sampleSong.albumId
+            albumData.albumArtistId = sampleSong.albumArtistId
+            albumData.albumArtistName = entry.key.second
+            albumData.songs.addAll(entry.value)
+            albumData
+        }
 }

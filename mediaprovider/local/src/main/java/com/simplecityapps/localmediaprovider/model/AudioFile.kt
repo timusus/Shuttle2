@@ -11,5 +11,7 @@ data class AudioFile(
     val discTotal: Int,
     val duration: Long,
     val year: Int,
-    val path: String
+    val path: String,
+    var size: Long,
+    var lastModified: Long
 )
