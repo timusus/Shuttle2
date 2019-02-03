@@ -39,7 +39,7 @@ class AlbumDetailFragment :
 
         AndroidSupportInjection.inject(this)
 
-        presenter = presenterFactory.create(AlbumDetailFragmentArgs.fromBundle(arguments).albumId)
+        presenter = presenterFactory.create(AlbumDetailFragmentArgs.fromBundle(arguments!!).albumId)
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {

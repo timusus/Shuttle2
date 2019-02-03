@@ -7,7 +7,6 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.navigation.findNavController
-import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
@@ -38,7 +37,7 @@ class AlbumArtistDetailFragment :
 
         AndroidSupportInjection.inject(this)
 
-        val albumArtistId = AlbumArtistDetailFragmentArgs.fromBundle(arguments).albumArtistId
+        val albumArtistId = AlbumArtistDetailFragmentArgs.fromBundle(arguments!!).albumArtistId
 
         presenter = presenterFactory.create(albumArtistId)
     }

@@ -9,7 +9,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
 import androidx.navigation.findNavController
-import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
@@ -41,7 +40,7 @@ class FolderDetailFragment : Fragment(), FolderBinder.Listener {
 
         AndroidSupportInjection.inject(this)
 
-        path = FolderDetailFragmentArgs.fromBundle(arguments).path
+        path = FolderDetailFragmentArgs.fromBundle(arguments!!).path
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
