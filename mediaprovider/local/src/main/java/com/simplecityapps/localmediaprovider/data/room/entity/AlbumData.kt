@@ -1,6 +1,7 @@
 package com.simplecityapps.localmediaprovider.data.room.entity
 
 import androidx.room.*
+import com.simplecityapps.localmediaprovider.ContentsComparator
 
 @Entity(
     tableName = "albums",
@@ -14,7 +15,7 @@ import androidx.room.*
 data class AlbumData(
     @ColumnInfo(name = "name") val name: String,
     @ColumnInfo(name = "albumArtistId") var albumArtistId: Long = 0
-) {
+) : ContentsComparator<AlbumData> {
     @PrimaryKey(autoGenerate = true)
     var id: Long = 0
 
@@ -22,18 +23,42 @@ data class AlbumData(
     var albumArtistName: String = ""
 
     @Ignore
-    var songs = mutableListOf<SongData>()
+    var songs = listOf<SongData>()
+
+    override fun areContentsEqual(other: AlbumData): Boolean {
+        return true
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as AlbumData
+
+        if (!name.equals(other.name, true)) return false
+        if (!albumArtistName.equals(other.albumArtistName, true)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = name.toLowerCase().hashCode()
+        result = 31 * result + albumArtistName.toLowerCase().hashCode()
+        return result
+    }
 }
 
+
 fun List<SongData>.toAlbumData(): List<AlbumData> {
-    return groupBy { data -> Pair(data.albumName, data.albumArtistName) }
+    return groupBy { data ->
+        AlbumData(data.albumName, data.albumId).apply {
+            albumArtistId = data.albumArtistId
+            albumArtistName = data.albumArtistName
+        }
+    }
         .map { entry ->
-            val albumData = AlbumData(name = entry.key.first)
-            val sampleSong = entry.value.first()
-            albumData.id = sampleSong.albumId
-            albumData.albumArtistId = sampleSong.albumArtistId
-            albumData.albumArtistName = entry.key.second
-            albumData.songs.addAll(entry.value)
-            albumData
+            entry.key.apply {
+                songs = entry.value
+            }
         }
 }

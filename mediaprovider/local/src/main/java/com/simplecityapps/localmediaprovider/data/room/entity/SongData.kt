@@ -1,6 +1,7 @@
 package com.simplecityapps.localmediaprovider.data.room.entity
 
 import androidx.room.*
+import com.simplecityapps.localmediaprovider.ContentsComparator
 import com.simplecityapps.localmediaprovider.model.AudioFile
 import com.simplecityapps.mediaprovider.model.Song
 import java.util.*
@@ -38,7 +39,7 @@ data class SongData(
     @ColumnInfo(name = "albumId") var albumId: Long = 0,
     @ColumnInfo(name = "size") var size: Long,
     @ColumnInfo(name = "lastModified") var lastModified: Date
-) {
+) : ContentsComparator<SongData> {
     @PrimaryKey(autoGenerate = true)
     var id: Long = 0
 
@@ -47,19 +48,38 @@ data class SongData(
 
     @Ignore
     var albumName: String = ""
+
+    override fun areContentsEqual(other: SongData): Boolean {
+        return lastModified == other?.lastModified
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as SongData
+
+        if (path != other.path) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return path.hashCode()
+    }
 }
 
 fun AudioFile.toSongData(): SongData {
-    val songData = SongData(name, track, trackTotal, disc, discTotal, duration, year, path, 0, 0, size, Date(lastModified))
-    songData.albumArtistName = albumArtistName
-    songData.albumName = albumName
-    return songData
+    return SongData(name, track, trackTotal, disc, discTotal, duration, year, path, 0, 0, size, Date(lastModified)).apply {
+        albumArtistName = this@toSongData.albumArtistName
+        albumName = this@toSongData.albumName
+    }
 }
 
 fun Song.toSongData(): SongData {
-    val songData = SongData(name, track, trackTotal, disc, discTotal, duration, year, path, albumArtistId, albumId, size, lastModified)
-    songData.id = id
-    songData.albumArtistName = albumArtistName
-    songData.albumName = albumName
-    return songData
+    return SongData(name, track, trackTotal, disc, discTotal, duration, year, path, albumArtistId, albumId, size, lastModified).apply {
+        id = this@toSongData.id
+        albumArtistName = this@toSongData.albumArtistName
+        albumName = this@toSongData.albumName
+    }
 }

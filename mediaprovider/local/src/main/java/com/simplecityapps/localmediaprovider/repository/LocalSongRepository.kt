@@ -91,7 +91,7 @@ class LocalSongRepository(private val database: MediaDatabase) : SongRepository 
         databaseAlbumArtistData: List<AlbumArtistData>,
         diskAlbumArtistData: List<AlbumArtistData>
     ) {
-        diff(databaseAlbumArtistData, diskAlbumArtistData, { old, new -> old.name == new.name }).apply {
+        diff(databaseAlbumArtistData, diskAlbumArtistData).apply {
             // Copy the id of old album artists over to the new
             (updates + unchanged).forEach { pair ->
                 pair.second.id = pair.first.id
@@ -123,7 +123,7 @@ class LocalSongRepository(private val database: MediaDatabase) : SongRepository 
         databaseAlbumData: List<AlbumData>,
         diskAlbumData: List<AlbumData>
     ) {
-        diff(databaseAlbumData, diskAlbumData, { a, b -> a.name == b.name && a.albumArtistName == b.albumArtistName }).apply {
+        diff(databaseAlbumData, diskAlbumData).apply {
             // Copy the id of old albums over to the new
             (updates + unchanged).forEach { pair ->
                 pair.second.id = pair.first.id
@@ -159,7 +159,7 @@ class LocalSongRepository(private val database: MediaDatabase) : SongRepository 
         databaseSongsData: List<SongData>,
         diskSongData: List<SongData>
     ) {
-        diff(databaseSongsData, diskSongData, { a, b -> a.path == b.path }, { a, b -> a.lastModified == b.lastModified }).apply {
+        diff(databaseSongsData, diskSongData).apply {
             // Copy the id of old songs over to the new
             (updates + unchanged).forEach { pair ->
                 pair.second.id = pair.first.id
