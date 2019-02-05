@@ -12,7 +12,7 @@ class LocalAlbumArtistRepository(private val database: MediaDatabase) : AlbumArt
 
     private val albumArtistsRelay: BehaviorRelay<List<AlbumArtist>> by lazy {
         val relay = BehaviorRelay.create<List<AlbumArtist>>()
-        database.albumArtistDataDao().getAllDistinct().toObservable().subscribe(relay)
+        database.albumArtistDataDao().getAll().toObservable().subscribe(relay)
         relay
     }
 

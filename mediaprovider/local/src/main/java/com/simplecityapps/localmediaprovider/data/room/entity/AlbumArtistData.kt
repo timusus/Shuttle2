@@ -17,7 +17,7 @@ data class AlbumArtistData(
     var albums = listOf<AlbumData>()
 
     override fun areContentsEqual(other: AlbumArtistData): Boolean {
-        return true
+        return name.equals(other.name, true)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -26,13 +26,21 @@ data class AlbumArtistData(
 
         other as AlbumArtistData
 
-        if (!name.equals(other.name, true)) return false
+        if (name.equals(other.name, true)) {
+            return true
+        } else {
+            if (albums.size == other.albums.size && albums.containsAll(other.albums)) {
+                return true
+            }
+        }
 
-        return true
+        return false
     }
 
     override fun hashCode(): Int {
-        return name.toLowerCase().hashCode()
+        var result = name.hashCode()
+        result = 31 * result + albums.hashCode()
+        return result
     }
 }
 

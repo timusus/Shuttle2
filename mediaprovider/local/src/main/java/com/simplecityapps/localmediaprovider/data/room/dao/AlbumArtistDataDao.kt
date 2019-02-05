@@ -10,16 +10,12 @@ import timber.log.Timber
 @Dao
 abstract class AlbumArtistDataDao {
 
-    fun getAllDistinct(): Flowable<List<AlbumArtist>> {
-        return getAll().distinctUntilChanged()
-    }
-
     @Query(
         "SELECT * from album_artists " +
                 "ORDER BY name"
     )
 
-    protected abstract fun getAll(): Flowable<List<AlbumArtist>>
+    abstract fun getAll(): Flowable<List<AlbumArtist>>
 
     @Transaction
     @Query("SELECT * FROM songs")

@@ -6,7 +6,26 @@ import org.junit.Test
 
 class DiffTest {
 
-    class Song(val title: String, val lastModified: Long)
+    class Song(val title: String, val lastModified: Long) : ContentsComparator<Song> {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as Song
+
+            if (title != other.title) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            return title.hashCode()
+        }
+
+        override fun areContentsEqual(other: Song): Boolean {
+            return lastModified == other.lastModified
+        }
+    }
 
     @Test
     fun testDiff() {
@@ -23,7 +42,7 @@ class DiffTest {
             Song("Second", 0)
         )
 
-        var diff = diff(oldData, newData, { a, b -> a.title == b.title }, { a, b -> a.lastModified == b.lastModified })
+        var diff = diff(oldData, newData)
 
         assertEquals(diff.insertions.size, 0)
         assertEquals(diff.deletions.size, 0)
@@ -41,7 +60,7 @@ class DiffTest {
             Song("Second", 0)
         )
 
-        diff = diff(oldData, newData, { a, b -> a.title == b.title }, { a, b -> a.lastModified == b.lastModified })
+        diff = diff(oldData, newData)
 
         assertEquals(diff.insertions.size, 1)
         assertEquals(diff.deletions.size, 0)
@@ -59,7 +78,7 @@ class DiffTest {
             Song("First", 0)
         )
 
-        diff = diff(oldData, newData, { a, b -> a.title == b.title }, { a, b -> a.lastModified == b.lastModified })
+        diff = diff(oldData, newData)
 
 
         assertEquals(diff.insertions.size, 0)
@@ -77,7 +96,7 @@ class DiffTest {
             Song("First", 1)
         )
 
-        diff = diff(oldData, newData, { a, b -> a.title == b.title }, { a, b -> a.lastModified == b.lastModified })
+        diff = diff(oldData, newData)
 
         assertEquals(diff.insertions.size, 0)
         assertEquals(diff.deletions.size, 0)
@@ -100,7 +119,7 @@ class DiffTest {
             Song("Fifth", 0)
         )
 
-        diff = diff(oldData, newData, { a, b -> a.title == b.title }, { a, b -> a.lastModified == b.lastModified })
+        diff = diff(oldData, newData)
 
         assertEquals(diff.insertions.size, 1)
         assertEquals(diff.deletions.size, 1)

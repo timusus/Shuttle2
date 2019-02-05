@@ -41,6 +41,10 @@ class AlbumArtistBinder(val albumArtist: AlbumArtist) : ViewBinder {
         return albumArtist.hashCode()
     }
 
+    override fun areContentsTheSame(other: Any): Boolean {
+        return albumArtist.name == (other as? AlbumArtist)?.name
+    }
+
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<AlbumArtistBinder>(itemView) {
 
