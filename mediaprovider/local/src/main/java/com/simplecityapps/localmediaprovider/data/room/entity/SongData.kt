@@ -50,7 +50,7 @@ data class SongData(
     var albumName: String = ""
 
     override fun areContentsEqual(other: SongData): Boolean {
-        return lastModified == other?.lastModified
+        return lastModified == other.lastModified
     }
 
     override fun equals(other: Any?): Boolean {

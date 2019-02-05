@@ -26,8 +26,8 @@ data class AlbumData(
     var songs = listOf<SongData>()
 
     override fun areContentsEqual(other: AlbumData): Boolean {
-        return name.equals(other.name, true)
-                && albumArtistName.equals(other.albumArtistName, true)
+        return name == other.name
+                && albumArtistName == other.albumArtistName
     }
 
     override fun equals(other: Any?): Boolean {
@@ -36,7 +36,7 @@ data class AlbumData(
 
         other as AlbumData
 
-        if (name.equals(other.name, true) && albumArtistName.equals(other.albumArtistName, true)) {
+        if (name == other.name && albumArtistName == other.albumArtistName) {
             return true
         } else if (songs.size == other.songs.size && songs.containsAll(other.songs)) {
             return true

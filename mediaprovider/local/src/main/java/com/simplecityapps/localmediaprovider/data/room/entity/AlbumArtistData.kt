@@ -17,7 +17,7 @@ data class AlbumArtistData(
     var albums = listOf<AlbumData>()
 
     override fun areContentsEqual(other: AlbumArtistData): Boolean {
-        return name.equals(other.name, true)
+        return name == other.name
     }
 
     override fun equals(other: Any?): Boolean {
@@ -26,7 +26,7 @@ data class AlbumArtistData(
 
         other as AlbumArtistData
 
-        if (name.equals(other.name, true)) {
+        if (name == other.name) {
             return true
         } else {
             if (albums.size == other.albums.size && albums.containsAll(other.albums)) {
@@ -53,7 +53,7 @@ fun List<AlbumData>.toAlbumArtistData(): List<AlbumArtistData> {
     }
         .map { entry ->
             entry.key.apply {
-                albums = filter { data -> data.albumArtistName.equals(name, true) }.toList()
+                albums = filter { data -> data.albumArtistName == name }.toList()
             }
         }
 }
