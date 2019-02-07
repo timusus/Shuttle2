@@ -3,7 +3,7 @@ package com.simplecityapps.mediaprovider.model
 import java.io.Serializable
 import java.util.*
 
-data class Song(
+class Song(
     val id: Long,
     val name: String,
     val albumArtistId: Long,
@@ -11,9 +11,7 @@ data class Song(
     val albumId: Long,
     val albumName: String,
     val track: Int,
-    val trackTotal: Int,
     val disc: Int,
-    val discTotal: Int,
     val duration: Long,
     val year: Int,
     val path: String,
@@ -32,5 +30,21 @@ data class Song(
 
     override fun hashCode(): Int {
         return id.hashCode()
+    }
+
+    override fun toString(): String {
+        return "id=$id," +
+                "\nname='$name'," +
+                "\nalbumArtistId=$albumArtistId," +
+                "\nalbumArtistName='$albumArtistName'," +
+                "\nalbumId=$albumId," +
+                "\nalbumName='$albumName'," +
+                "\ntrack=$track," +
+                "\ndisc=$disc," +
+                "\nduration=$duration," +
+                "\nyear=$year," +
+                "\npath='$path'," +
+                "\nsize=$size," +
+                "\nlastModified=$lastModified"
     }
 }

@@ -2,9 +2,11 @@ package com.simplecityapps.mediaprovider.model
 
 import java.io.Serializable
 
-data class AlbumArtist(
+class AlbumArtist(
     var id: Long,
-    val name: String
+    val name: String,
+    val albumCount: Long,
+    val songCount: Long
 ) : Serializable {
 
     override fun equals(other: Any?): Boolean {
@@ -18,5 +20,12 @@ data class AlbumArtist(
 
     override fun hashCode(): Int {
         return id.hashCode()
+    }
+
+    override fun toString(): String {
+        return "id=$id, " +
+                "\nname='$name', " +
+                "\nalbumCount=$albumCount, " +
+                "\nsongCount=$songCount"
     }
 }

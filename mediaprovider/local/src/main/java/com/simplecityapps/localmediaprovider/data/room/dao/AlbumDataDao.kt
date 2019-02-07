@@ -13,15 +13,17 @@ abstract class AlbumDataDao {
     @Query(
         "SELECT " +
                 "albums.*, " +
-                "album_artists.name as albumArtistName " +
+                "album_artists.name as albumArtistName, " +
+                "count(distinct songs.id) as songCount, " +
+                "sum(distinct songs.duration) as duration, " +
+                "min(distinct songs.year) as year " +
                 "FROM albums " +
                 "INNER JOIN album_artists ON album_artists.id = albums.albumArtistId " +
-                "ORDER BY name;"
+                "INNER JOIN songs ON songs.albumId = albums.id " +
+                "GROUP BY albums.id " +
+                "ORDER BY albums.name;"
     )
     abstract fun getAll(): Flowable<List<Album>>
-
-    @Query("Select * FROM albums")
-    abstract fun getAllAlbumData(): Flowable<List<AlbumData>>
 
     @Insert(onConflict = REPLACE)
     abstract fun insert(albumData: AlbumData): Long

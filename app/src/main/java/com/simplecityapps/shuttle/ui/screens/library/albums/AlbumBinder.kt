@@ -59,7 +59,7 @@ class AlbumBinder(val album: Album) : ViewBinder {
             super.bind(viewBinder)
 
             title.text = viewBinder.album.name
-            subtitle.text = viewBinder.album.albumArtistName
+            subtitle.text = viewBinder.album.toString()
         }
     }
 }

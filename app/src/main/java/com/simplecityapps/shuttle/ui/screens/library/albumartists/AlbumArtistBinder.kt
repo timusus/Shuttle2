@@ -53,11 +53,13 @@ class AlbumArtistBinder(val albumArtist: AlbumArtist) : ViewBinder {
         }
 
         private val title = itemView.findViewById<TextView>(R.id.title)
+        private val subtitle = itemView.findViewById<TextView>(R.id.subtitle)
 
         override fun bind(viewBinder: AlbumArtistBinder) {
             super.bind(viewBinder)
 
             title.text = viewBinder.albumArtist.name
+            subtitle.text = viewBinder.albumArtist.toString()
         }
     }
 }

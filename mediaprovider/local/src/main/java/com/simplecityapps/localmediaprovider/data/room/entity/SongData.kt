@@ -29,9 +29,7 @@ import java.util.*
 data class SongData(
     @ColumnInfo(name = "name") val name: String,
     @ColumnInfo(name = "track") val track: Int,
-    @ColumnInfo(name = "trackTotal") val trackTotal: Int,
     @ColumnInfo(name = "disc") val disc: Int,
-    @ColumnInfo(name = "discTotal") val discTotal: Int,
     @ColumnInfo(name = "duration") val duration: Long,
     @ColumnInfo(name = "year") val year: Int,
     @ColumnInfo(name = "path") val path: String,
@@ -70,14 +68,14 @@ data class SongData(
 }
 
 fun AudioFile.toSongData(): SongData {
-    return SongData(name, track, trackTotal, disc, discTotal, duration, year, path, 0, 0, size, Date(lastModified)).apply {
+    return SongData(name, track, disc, duration, year, path, 0, 0, size, Date(lastModified)).apply {
         albumArtistName = this@toSongData.albumArtistName
         albumName = this@toSongData.albumName
     }
 }
 
 fun Song.toSongData(): SongData {
-    return SongData(name, track, trackTotal, disc, discTotal, duration, year, path, albumArtistId, albumId, size, lastModified).apply {
+    return SongData(name, track, disc, duration, year, path, albumArtistId, albumId, size, lastModified).apply {
         id = this@toSongData.id
         albumArtistName = this@toSongData.albumArtistName
         albumName = this@toSongData.albumName

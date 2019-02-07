@@ -95,63 +95,6 @@ vector<string> &scanDirectory(const string &path, vector<string> &files) {
     return files;
 }
 
-void dump(const TagLib::FileRef &fileRef) {
-    const char *log_tag = "File";
-
-//    __android_log_print(ANDROID_LOG_INFO, log_tag, "-------------------------------");
-
-    if (!fileRef.isNull() && fileRef.audioProperties()) {
-
-//        __android_log_print(ANDROID_LOG_INFO, log_tag, "\n\nfile       -  %s", fileRef.file()->name());
-
-        TagLib::AudioProperties *properties = fileRef.audioProperties();
-
-//        __android_log_print(ANDROID_LOG_INFO, log_tag, "bitrate       -  %d", properties->bitrate());
-//        __android_log_print(ANDROID_LOG_INFO, log_tag, "sample rate   -  %d", properties->sampleRate());
-//        __android_log_print(ANDROID_LOG_INFO, log_tag, "channels      -  %d", properties->channels());
-//        __android_log_print(ANDROID_LOG_INFO, log_tag, "length        -  %d seconds", properties->length() % 60);
-    }
-
-    if (!fileRef.isNull() && fileRef.tag()) {
-
-        TagLib::Tag *tag = fileRef.tag();
-
-
-
-//        __android_log_print(ANDROID_LOG_INFO, log_tag, "title         -  %s", tag->title().toCString(true));
-//        __android_log_print(ANDROID_LOG_INFO, log_tag, "artist        -  %s", tag->artist().toCString(true));
-//        __android_log_print(ANDROID_LOG_INFO, log_tag, "album         -  %s", tag->album().toCString(true));
-//        __android_log_print(ANDROID_LOG_INFO, log_tag, "year          -  %d", tag->year());
-//        __android_log_print(ANDROID_LOG_INFO, log_tag, "track         -  %d", tag->track());
-////        __android_log_print(ANDROID_LOG_INFO, log_tag, "track total   -  %d", tag->trackTotal());
-//
-//        __android_log_print(ANDROID_LOG_INFO, log_tag, "track total string   -  %s", tag->trackTot().toCString(true));
-//
-//
-//
-//        __android_log_print(ANDROID_LOG_INFO, log_tag, "track total   -  %d", tag->trackTotal());
-//
-//
-//        __android_log_print(ANDROID_LOG_INFO, log_tag, "genre         -  %s", tag->genre().toCString(true));
-//
-//
-//        __android_log_print(ANDROID_LOG_INFO, log_tag, "-- Properties --");
-        TagLib::PropertyMap tags = fileRef.file()->properties();
-        unsigned int longest = 0;
-        for (TagLib::PropertyMap::ConstIterator i = tags.begin(); i != tags.end(); ++i) {
-            if (i->first.size() > longest) {
-                longest = i->first.size();
-            }
-        }
-        for (TagLib::PropertyMap::ConstIterator i = tags.begin(); i != tags.end(); ++i) {
-            for (TagLib::StringList::ConstIterator j = i->second.begin(); j != i->second.end(); ++j) {
-
-//                __android_log_print(ANDROID_LOG_INFO, log_tag, "%s : %s", i->first.toCString(true), j->toCString(true));
-            }
-        }
-    }
-}
-
 JNIEXPORT jobject JNICALL
 Java_com_simplecityapps_localmediaprovider_repository_LocalSongRepository_getAudioFiles(JNIEnv *env, jobject instance, jstring initialDir_) {
 
@@ -165,7 +108,7 @@ Java_com_simplecityapps_localmediaprovider_repository_LocalSongRepository_getAud
     jmethodID arrayListAdd = env->GetMethodID(arrayListClass, "add", "(Ljava/lang/Object;)Z");
 
     jclass songClass = env->FindClass("com/simplecityapps/localmediaprovider/model/AudioFile");
-    jmethodID songInit = env->GetMethodID(songClass, "<init>", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IIIIJILjava/lang/String;JJ)V");
+    jmethodID songInit = env->GetMethodID(songClass, "<init>", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IIJILjava/lang/String;JJ)V");
 
     jobject result = env->NewObject(arrayListClass, arrayListInit, paths.size());
 
@@ -176,9 +119,7 @@ Java_com_simplecityapps_localmediaprovider_repository_LocalSongRepository_getAud
     jstring albumArtist = unknown;
     jstring album = unknown;
     int track = 0;
-    int trackTotal = 0;
     int disc = 1;
-    int discTotal = 1;
     long duration = 0;
     int year = 0;
     jstring pathStr;
@@ -193,8 +134,6 @@ Java_com_simplecityapps_localmediaprovider_repository_LocalSongRepository_getAud
     for (i = 0; i < len; i++) {
 
         TagLib::FileRef fileRef(paths[i].c_str());
-
-        dump(fileRef);
 
         if (!fileRef.isNull()) {
 
@@ -250,7 +189,7 @@ Java_com_simplecityapps_localmediaprovider_repository_LocalSongRepository_getAud
 
             stat(paths[i].c_str(), &statbuf);
 
-            song = env->NewObject(songClass, songInit, title, albumArtist, artist, album, track, trackTotal, disc, discTotal, duration, year, pathStr, statbuf.st_size, statbuf.st_mtime * 1000);
+            song = env->NewObject(songClass, songInit, title, albumArtist, artist, album, track, disc, duration, year, pathStr, statbuf.st_size, statbuf.st_mtime * 1000);
 
             env->CallBooleanMethod(result, arrayListAdd, song);
         }

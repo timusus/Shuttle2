@@ -11,15 +11,17 @@ import timber.log.Timber
 abstract class AlbumArtistDataDao {
 
     @Query(
-        "SELECT * from album_artists " +
+        "SELECT " +
+                "album_artists.*, " +
+                "count(distinct albums.id) as albumCount, " +
+                "count(distinct songs.id) as songCount " +
+                "FROM album_artists " +
+                "INNER JOIN songs ON songs.albumArtistId = album_artists.id " +
+                "INNER JOIN albums ON albums.albumArtistId = album_artists.id " +
+                "GROUP BY album_artists.id " +
                 "ORDER BY name"
     )
-
     abstract fun getAll(): Flowable<List<AlbumArtist>>
-
-    @Transaction
-    @Query("SELECT * FROM songs")
-    abstract fun getAllAlbumArtistData(): Flowable<List<AlbumArtistData>>
 
     @Insert(onConflict = IGNORE)
     abstract fun insert(albumData: AlbumArtistData): Long

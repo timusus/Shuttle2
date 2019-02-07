@@ -27,10 +27,6 @@ abstract class SongDataDao {
     )
     protected abstract fun getAll(): Flowable<List<Song>>
 
-    @Transaction
-    @Query("SELECT * FROM songs")
-    abstract fun getAllSongData(): Flowable<List<SongData>>
-
     @Insert(onConflict = REPLACE)
     abstract fun insert(songData: SongData): Long
 
