@@ -72,7 +72,15 @@ class AlbumDetailFragment :
     // AlbumDetailContract.View Implementation
 
     override fun setData(songs: List<Song>) {
-        adapter.setData(songs.map { song -> SongBinder(song) })
+        val discSongsMap = songs.groupBy { song -> song.disc }.toSortedMap()
+        adapter.setData(discSongsMap.flatMap { entry ->
+            val viewBinders = mutableListOf<ViewBinder>()
+            if (discSongsMap.size > 1) {
+                viewBinders.add(DiscNumberBinder(entry.key))
+            }
+            viewBinders.addAll(entry.value.map { song -> SongBinder(song) })
+            viewBinders
+        })
     }
 
     override fun setTitle(title: String, subtitle: String) {
