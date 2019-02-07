@@ -22,6 +22,25 @@ android {
         }
     }
 
+    flavorDimensions "all"
+    productFlavors {
+        mock {
+            dimension "all"
+        }
+        prod {
+            dimension "all"
+        }
+    }
+
+    sourceSets {
+        mock {
+            java.srcDirs = ['src/mock/java']
+        }
+        prod {
+            java.srcDirs = ['src/prod/java']
+        }
+    }
+
     packagingOptions {
         exclude 'META-INF/core_debug.kotlin_module'
     }
@@ -36,6 +55,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     api project(path: ':mediaprovider:local')
+    api project(path: ':mediaprovider:mock')
     api project(path: ':recyclerview-adapter')
 
     api 'androidx.appcompat:appcompat:1.0.2'

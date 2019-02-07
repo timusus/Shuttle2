@@ -24,6 +24,16 @@ android {
         }
     }
 
+    flavorDimensions "all"
+    productFlavors {
+        mock {
+            dimension "all"
+        }
+        prod {
+            dimension "all"
+        }
+    }
+
     packagingOptions {
         exclude 'META-INF/core_debug.kotlin_module'
     }

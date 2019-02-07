@@ -1,0 +1,458 @@
+[
+  {
+    "albumCount": 5,
+    "id": 2,
+    "name": "A Perfect Circle",
+    "songCount": 57
+  },
+  {
+    "albumCount": 2,
+    "id": 3,
+    "name": "Asgeir",
+    "songCount": 25
+  },
+  {
+    "albumCount": 2,
+    "id": 4,
+    "name": "At The Drive-In",
+    "songCount": 23
+  },
+  {
+    "albumCount": 9,
+    "id": 5,
+    "name": "Blink-182",
+    "songCount": 121
+  },
+  {
+    "albumCount": 3,
+    "id": 6,
+    "name": "Bon Iver",
+    "songCount": 29
+  },
+  {
+    "albumCount": 1,
+    "id": 7,
+    "name": "C418",
+    "songCount": 24
+  },
+  {
+    "albumCount": 1,
+    "id": 8,
+    "name": "CAMP COPE",
+    "songCount": 8
+  },
+  {
+    "albumCount": 1,
+    "id": 9,
+    "name": "CHVRCHES",
+    "songCount": 18
+  },
+  {
+    "albumCount": 1,
+    "id": 10,
+    "name": "Chvrches",
+    "songCount": 14
+  },
+  {
+    "albumCount": 5,
+    "id": 11,
+    "name": "City And Colour",
+    "songCount": 56
+  },
+  {
+    "albumCount": 4,
+    "id": 12,
+    "name": "Cog",
+    "songCount": 31
+  },
+  {
+    "albumCount": 7,
+    "id": 13,
+    "name": "Coldplay",
+    "songCount": 75
+  },
+  {
+    "albumCount": 1,
+    "id": 14,
+    "name": "Cut Copy",
+    "songCount": 15
+  },
+  {
+    "albumCount": 5,
+    "id": 15,
+    "name": "Death Cab For Cutie",
+    "songCount": 62
+  },
+  {
+    "albumCount": 8,
+    "id": 16,
+    "name": "Deftones",
+    "songCount": 89
+  },
+  {
+    "albumCount": 6,
+    "id": 17,
+    "name": "Devin Townsend",
+    "songCount": 70
+  },
+  {
+    "albumCount": 8,
+    "id": 19,
+    "name": "Eminem",
+    "songCount": 159
+  },
+  {
+    "albumCount": 1,
+    "id": 20,
+    "name": "Flight Facilities",
+    "songCount": 14
+  },
+  {
+    "albumCount": 1,
+    "id": 21,
+    "name": "Floating Me",
+    "songCount": 11
+  },
+  {
+    "albumCount": 2,
+    "id": 22,
+    "name": "Flume",
+    "songCount": 31
+  },
+  {
+    "albumCount": 1,
+    "id": 23,
+    "name": "Foals",
+    "songCount": 11
+  },
+  {
+    "albumCount": 2,
+    "id": 24,
+    "name": "Gang of Youths",
+    "songCount": 31
+  },
+  {
+    "albumCount": 1,
+    "id": 25,
+    "name": "GoGo Penguin",
+    "songCount": 10
+  },
+  {
+    "albumCount": 1,
+    "id": 26,
+    "name": "Gogo Penguin",
+    "songCount": 10
+  },
+  {
+    "albumCount": 4,
+    "id": 27,
+    "name": "Hans Zimmer",
+    "songCount": 61
+  },
+  {
+    "albumCount": 1,
+    "id": 28,
+    "name": "Hermitude",
+    "songCount": 11
+  },
+  {
+    "albumCount": 5,
+    "id": 29,
+    "name": "Hilltop Hoods",
+    "songCount": 84
+  },
+  {
+    "albumCount": 1,
+    "id": 30,
+    "name": "How to Destroy Angels",
+    "songCount": 13
+  },
+  {
+    "albumCount": 5,
+    "id": 31,
+    "name": "John Butler Trio",
+    "songCount": 48
+  },
+  {
+    "albumCount": 3,
+    "id": 32,
+    "name": "Karnivool",
+    "songCount": 37
+  },
+  {
+    "albumCount": 5,
+    "id": 33,
+    "name": "Kendrick Lamar",
+    "songCount": 66
+  },
+  {
+    "albumCount": 4,
+    "id": 34,
+    "name": "Killswitch Engage",
+    "songCount": 59
+  },
+  {
+    "albumCount": 1,
+    "id": 35,
+    "name": "King Gizzard And The Lizard Wizard",
+    "songCount": 20
+  },
+  {
+    "albumCount": 2,
+    "id": 37,
+    "name": "Kings Of Leon",
+    "songCount": 23
+  },
+  {
+    "albumCount": 1,
+    "id": 36,
+    "name": "Kings of Leon",
+    "songCount": 10
+  },
+  {
+    "albumCount": 2,
+    "id": 38,
+    "name": "Kingswood",
+    "songCount": 24
+  },
+  {
+    "albumCount": 13,
+    "id": 39,
+    "name": "Korn",
+    "songCount": 193
+  },
+  {
+    "albumCount": 2,
+    "id": 41,
+    "name": "LCD Soundsystem",
+    "songCount": 18
+  },
+  {
+    "albumCount": 1,
+    "id": 40,
+    "name": "Lady Of The Sunshine",
+    "songCount": 12
+  },
+  {
+    "albumCount": 5,
+    "id": 42,
+    "name": "Linkin Park",
+    "songCount": 63
+  },
+  {
+    "albumCount": 1,
+    "id": 43,
+    "name": "London Grammar",
+    "songCount": 11
+  },
+  {
+    "albumCount": 1,
+    "id": 44,
+    "name": "Luca Brasi",
+    "songCount": 10
+  },
+  {
+    "albumCount": 1,
+    "id": 45,
+    "name": "Major Lazer",
+    "songCount": 9
+  },
+  {
+    "albumCount": 3,
+    "id": 46,
+    "name": "Modest Mouse",
+    "songCount": 41
+  },
+  {
+    "albumCount": 8,
+    "id": 47,
+    "name": "Muse",
+    "songCount": 99
+  },
+  {
+    "albumCount": 1,
+    "id": 48,
+    "name": "Nero",
+    "songCount": 20
+  },
+  {
+    "albumCount": 12,
+    "id": 49,
+    "name": "Nine Inch Nails",
+    "songCount": 170
+  },
+  {
+    "albumCount": 3,
+    "id": 50,
+    "name": "Northlane",
+    "songCount": 32
+  },
+  {
+    "albumCount": 1,
+    "id": 51,
+    "name": "Ocean Alley",
+    "songCount": 12
+  },
+  {
+    "albumCount": 2,
+    "id": 52,
+    "name": "Olafur Arnalds",
+    "songCount": 30
+  },
+  {
+    "albumCount": 10,
+    "id": 53,
+    "name": "Opeth",
+    "songCount": 85
+  },
+  {
+    "albumCount": 4,
+    "id": 54,
+    "name": "Parkway Drive",
+    "songCount": 48
+  },
+  {
+    "albumCount": 3,
+    "id": 55,
+    "name": "Pendulum",
+    "songCount": 38
+  },
+  {
+    "albumCount": 2,
+    "id": 56,
+    "name": "Periphery",
+    "songCount": 17
+  },
+  {
+    "albumCount": 3,
+    "id": 57,
+    "name": "Pink Floyd",
+    "songCount": 41
+  },
+  {
+    "albumCount": 2,
+    "id": 58,
+    "name": "Polaris",
+    "songCount": 17
+  },
+  {
+    "albumCount": 5,
+    "id": 59,
+    "name": "Puscifer",
+    "songCount": 50
+  },
+  {
+    "albumCount": 9,
+    "id": 60,
+    "name": "Radiohead",
+    "songCount": 100
+  },
+  {
+    "albumCount": 6,
+    "id": 61,
+    "name": "Regina Spektor",
+    "songCount": 73
+  },
+  {
+    "albumCount": 1,
+    "id": 75,
+    "name": "Robert Jordan",
+    "songCount": 54
+  },
+  {
+    "albumCount": 2,
+    "id": 62,
+    "name": "Royal Blood",
+    "songCount": 20
+  },
+  {
+    "albumCount": 4,
+    "id": 63,
+    "name": "Silversun Pickups",
+    "songCount": 40
+  },
+  {
+    "albumCount": 5,
+    "id": 64,
+    "name": "System of a Down",
+    "songCount": 65
+  },
+  {
+    "albumCount": 2,
+    "id": 65,
+    "name": "The Black Keys",
+    "songCount": 22
+  },
+  {
+    "albumCount": 4,
+    "id": 66,
+    "name": "The Butterfly Effect",
+    "songCount": 40
+  },
+  {
+    "albumCount": 2,
+    "id": 67,
+    "name": "The Darkness",
+    "songCount": 20
+  },
+  {
+    "albumCount": 5,
+    "id": 68,
+    "name": "The Killers",
+    "songCount": 70
+  },
+  {
+    "albumCount": 6,
+    "id": 69,
+    "name": "The Mars Volta",
+    "songCount": 66
+  },
+  {
+    "albumCount": 1,
+    "id": 70,
+    "name": "The Occupants",
+    "songCount": 4
+  },
+  {
+    "albumCount": 2,
+    "id": 71,
+    "name": "The Presets",
+    "songCount": 21
+  },
+  {
+    "albumCount": 4,
+    "id": 72,
+    "name": "The Smith Street Band",
+    "songCount": 44
+  },
+  {
+    "albumCount": 6,
+    "id": 1,
+    "name": "Tool",
+    "songCount": 122
+  },
+  {
+    "albumCount": 2,
+    "id": 76,
+    "name": "Unknown",
+    "songCount": 30
+  },
+  {
+    "albumCount": 3,
+    "id": 73,
+    "name": "Violent Soho",
+    "songCount": 32
+  },
+  {
+    "albumCount": 1,
+    "id": 74,
+    "name": "Wil Wagner",
+    "songCount": 8
+  },
+  {
+    "albumCount": 2,
+    "id": 18,
+    "name": "Ziltoid",
+    "songCount": 23
+  }
+]

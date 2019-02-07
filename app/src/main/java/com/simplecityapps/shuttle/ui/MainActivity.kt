@@ -9,6 +9,8 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.findNavController
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.simplecityapps.mediaprovider.repository.AlbumArtistRepository
+import com.simplecityapps.mediaprovider.repository.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.shuttle.R
 import dagger.android.DispatchingAndroidInjector
@@ -23,6 +25,8 @@ class MainActivity : AppCompatActivity(), HasSupportFragmentInjector {
     @Inject lateinit var dispatchingAndroidInjector: DispatchingAndroidInjector<Fragment>
 
     @Inject lateinit var songRepository: SongRepository
+    @Inject lateinit var albumsRepository: AlbumRepository
+    @Inject lateinit var albumArtistsRepository: AlbumArtistRepository
 
 
     // Lifecycle
@@ -59,6 +63,8 @@ class MainActivity : AppCompatActivity(), HasSupportFragmentInjector {
 
     private fun onHasPermission() {
         compositeDisposable.add(songRepository.populate().subscribe())
+        compositeDisposable.add(albumsRepository.populate().subscribe())
+        compositeDisposable.add(albumArtistsRepository.populate().subscribe())
     }
 
 

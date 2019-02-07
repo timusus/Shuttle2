@@ -6,7 +6,9 @@ import io.reactivex.Observable
 
 interface SongRepository {
 
-    fun populate(): Completable
+    fun populate(): Completable {
+        return Completable.complete()
+    }
 
     fun getSongs(): Observable<List<Song>>
 
