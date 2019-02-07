@@ -6,6 +6,6 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <include layout="@layout/list_item_home_header"/>
+    <include layout="@layout/list_item_home_header" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

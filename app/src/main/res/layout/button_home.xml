@@ -18,7 +18,7 @@
         android:background="@drawable/circle_filled"
         android:scaleType="center"
         tools:src="@drawable/ic_history_black_24dp"
-        tools:tint="@color/history_green_dark"/>
+        tools:tint="@color/history_green_dark" />
 
     <TextView
         android:id="@+id/label"
@@ -26,6 +26,6 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:textAppearance="@android:style/TextAppearance.DeviceDefault.Small"
-        tools:text="History"/>
+        tools:text="History" />
 
 </merge>

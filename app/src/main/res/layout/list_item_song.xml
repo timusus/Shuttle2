@@ -21,7 +21,7 @@
         app:layout_constraintHorizontal_bias="0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:text="Lateralus"/>
+        tools:text="Lateralus" />
 
     <TextView
         android:id="@+id/subtitle"
@@ -34,6 +34,6 @@
         app:layout_constraintHorizontal_bias="0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/title"
-        tools:text="Tool"/>
+        tools:text="Tool" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
