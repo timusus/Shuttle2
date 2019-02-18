@@ -6,7 +6,8 @@ class AlbumArtist(
     var id: Long,
     val name: String,
     val albumCount: Long,
-    val songCount: Long
+    val songCount: Long,
+    val artworkUri: String? = null
 ) : Serializable {
 
     override fun equals(other: Any?): Boolean {

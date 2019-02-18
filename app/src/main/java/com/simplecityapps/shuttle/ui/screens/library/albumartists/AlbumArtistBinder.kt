@@ -3,10 +3,13 @@ package com.simplecityapps.shuttle.ui.screens.library.albumartists
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
+import com.bumptech.glide.request.RequestOptions
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.imageloading.GlideApp
 
 class AlbumArtistBinder(val albumArtist: AlbumArtist) : ViewBinder {
 
@@ -54,12 +57,26 @@ class AlbumArtistBinder(val albumArtist: AlbumArtist) : ViewBinder {
 
         private val title = itemView.findViewById<TextView>(R.id.title)
         private val subtitle = itemView.findViewById<TextView>(R.id.subtitle)
+        private val imageView: ImageView = itemView.findViewById(R.id.imageView)
 
         override fun bind(viewBinder: AlbumArtistBinder) {
             super.bind(viewBinder)
 
             title.text = viewBinder.albumArtist.name
             subtitle.text = viewBinder.albumArtist.toString()
+
+            // Todo: Pass image loader instance into ViewBinder.
+            // Todo: Abstract away behind a generic image loading interface
+            GlideApp
+                .with(itemView.context)
+                .load(viewBinder.albumArtist)
+                .apply(RequestOptions.circleCropTransform())
+                .into(imageView)
+        }
+
+        override fun recycle() {
+            // Todo: Hook up recycler listener to call recycler on RecyclerAdapter
+            GlideApp.with(itemView.context).clear(imageView)
         }
     }
 }

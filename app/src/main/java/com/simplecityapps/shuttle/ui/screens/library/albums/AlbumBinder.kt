@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.library.albums
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Album
@@ -54,6 +55,7 @@ class AlbumBinder(val album: Album) : ViewBinder {
 
         private val title = itemView.findViewById<TextView>(R.id.title)
         private val subtitle = itemView.findViewById<TextView>(R.id.subtitle)
+        private val imageView = itemView.findViewById<ImageView>(R.id.imageView)
 
         override fun bind(viewBinder: AlbumBinder) {
             super.bind(viewBinder)

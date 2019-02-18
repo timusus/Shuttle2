@@ -42,6 +42,11 @@ android {
         abortOnError true
         warningsAsErrors true
     }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 
 dependencies {
@@ -62,10 +67,10 @@ dependencies {
     implementation "androidx.fragment:fragment-ktx:1.1.0-alpha03"
 
     // Dagger core
-    kapt 'com.google.dagger:dagger-compiler:2.16'
+    kapt 'com.google.dagger:dagger-compiler:2.21'
 
     // Dagger Android
-    kapt "com.google.dagger:dagger-android-processor:2.16"
+    kapt "com.google.dagger:dagger-android-processor:2.21"
 
     // AssistedInject
     compileOnly 'com.squareup.inject:assisted-inject-annotations-dagger2:0.3.2'
