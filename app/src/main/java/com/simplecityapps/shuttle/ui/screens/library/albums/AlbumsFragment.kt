@@ -6,6 +6,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.navigation.findNavController
+import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
+import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.repository.AlbumRepository
 import com.simplecityapps.shuttle.R
@@ -25,6 +27,8 @@ class AlbumsFragment : Fragment(), Injectable, AlbumBinder.Listener {
 
     @Inject lateinit var albumRepository: AlbumRepository
 
+    @Inject lateinit var imageLoader: ArtworkImageLoader
+
 
     // Lifecycle
 
@@ -36,6 +40,7 @@ class AlbumsFragment : Fragment(), Injectable, AlbumBinder.Listener {
         super.onViewCreated(view, savedInstanceState)
 
         recyclerView.adapter = adapter
+        recyclerView.setRecyclerListener(RecyclerListener())
     }
 
     override fun onResume() {
@@ -45,7 +50,7 @@ class AlbumsFragment : Fragment(), Injectable, AlbumBinder.Listener {
             albumRepository.getAlbums().subscribe(
                 { albums ->
                     adapter.setData(albums.map { album ->
-                        val albumBinder = AlbumBinder(album)
+                        val albumBinder = AlbumBinder(album, imageLoader)
                         albumBinder.listener = this
                         albumBinder
                     })

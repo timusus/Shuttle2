@@ -32,18 +32,26 @@ android {
 dependencies {
   implementation fileTree(dir: 'libs', include: ['*.jar'])
 
+  // Shuttle MediaProvider Core
+  implementation project(path: ':mediaprovider:core')
+
+  // Kotlin Standard Library
+  implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+
+  // Room
+  kapt 'androidx.room:room-compiler:2.0.0'
+  implementation 'androidx.room:room-runtime:2.0.0'
+  implementation 'androidx.room:room-rxjava2:2.0.0'
+
+  // RxRelay
+  implementation 'com.jakewharton.rxrelay2:rxrelay:2.1.0'
+
+  // Testing
   testImplementation 'junit:junit:4.12'
   androidTestImplementation 'androidx.test:runner:1.1.1'
   androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.1'
-
-  api project(path: ':mediaprovider:core')
-
-  kapt 'androidx.room:room-compiler:2.0.0'
-  api 'androidx.room:room-runtime:2.0.0'
-  api 'androidx.room:room-rxjava2:2.0.0'
-
-  implementation 'com.jakewharton.rxrelay2:rxrelay:2.1.0'
 }
+
 repositories {
   mavenCentral()
 }

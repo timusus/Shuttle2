@@ -3,4 +3,5 @@ include ':app',
         ':recyclerview-adapter',
         ':mediaprovider:core',
         ':mediaprovider:local',
-        ':mediaprovider:mock'
+        ':mediaprovider:mock',
+        ':imageloader'

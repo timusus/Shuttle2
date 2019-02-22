@@ -15,7 +15,6 @@ interface AlbumArtistRepository {
     fun getAlbumArtists(query: AlbumArtistQuery): Observable<List<AlbumArtist>>
 }
 
-
 sealed class AlbumArtistQuery {
     class AlbumArtistId(val albumArtistId: Long) : AlbumArtistQuery()
 }

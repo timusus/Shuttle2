@@ -15,10 +15,15 @@ import dagger.android.support.HasSupportFragmentInjector
  * Helper class to automatically inject fragments if they implement [Injectable].
  */
 object AppInjector {
+
     fun init(shuttleApp: ShuttleApp) {
+
+        val coreComponent = shuttleApp.provideCoreComponent()
+
         DaggerAppComponent
             .builder()
             .application(shuttleApp)
+            .coreComponent(coreComponent)
             .build()
             .inject(shuttleApp)
 

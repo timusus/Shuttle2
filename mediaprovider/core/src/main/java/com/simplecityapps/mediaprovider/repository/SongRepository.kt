@@ -15,7 +15,6 @@ interface SongRepository {
     fun getSongs(query: SongQuery): Observable<List<Song>>
 }
 
-
 sealed class SongQuery {
     class AlbumArtistId(val albumArtistId: Long) : SongQuery()
     class AlbumId(val albumId: Long) : SongQuery()

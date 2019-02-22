@@ -13,9 +13,7 @@ interface AlbumRepository {
     fun getAlbums(): Observable<List<Album>>
 
     fun getAlbums(query: AlbumQuery): Observable<List<Album>>
-
 }
-
 
 sealed class AlbumQuery {
     class AlbumArtistId(val albumArtistId: Long) : AlbumQuery()

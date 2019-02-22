@@ -16,6 +16,7 @@ import com.simplecityapps.shuttle.R
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.support.HasSupportFragmentInjector
 import io.reactivex.disposables.CompositeDisposable
+import timber.log.Timber
 import javax.inject.Inject
 
 class MainActivity : AppCompatActivity(), HasSupportFragmentInjector {
@@ -62,7 +63,7 @@ class MainActivity : AppCompatActivity(), HasSupportFragmentInjector {
     }
 
     private fun onHasPermission() {
-        compositeDisposable.add(songRepository.populate().subscribe())
+        compositeDisposable.add(songRepository.populate().subscribe({ Timber.i("Populate complete")}))
         compositeDisposable.add(albumsRepository.populate().subscribe())
         compositeDisposable.add(albumArtistsRepository.populate().subscribe())
     }

@@ -25,20 +25,18 @@ android {
 dependencies {
   implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-  api "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+  // Kotlin Standard Library
+  implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
-  api 'androidx.appcompat:appcompat:1.0.2'
+  // Timber
+  implementation 'com.jakewharton.timber:timber:4.7.1'
 
+  // RxJava
+  implementation "io.reactivex.rxjava2:rxjava:2.2.6"
+
+  // Testing
   testImplementation 'junit:junit:4.12'
   androidTestImplementation 'androidx.test:runner:1.1.1'
   androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.1'
 
-  api 'com.jakewharton.timber:timber:4.7.1'
-
-
-  api "io.reactivex.rxjava2:rxjava:2.2.3"
-
-}
-repositories {
-  mavenCentral()
 }

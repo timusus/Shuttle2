@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.navigation.findNavController
+import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
@@ -24,6 +25,8 @@ class AlbumArtistDetailFragment :
     AlbumBinder.Listener {
 
     @Inject lateinit var presenterFactory: AlbumArtistDetailPresenter.Factory
+
+    @Inject lateinit var imageLoader: ArtworkImageLoader
 
     private lateinit var presenter: AlbumArtistDetailPresenter
 
@@ -73,7 +76,7 @@ class AlbumArtistDetailFragment :
 
     override fun setData(albums: List<Album>) {
         adapter.setData(albums.map { album ->
-            val albumBinder = AlbumBinder(album)
+            val albumBinder = AlbumBinder(album, imageLoader)
             albumBinder.listener = this
             albumBinder
         })

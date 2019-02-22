@@ -5,11 +5,12 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.shuttle.R
 
-class AlbumBinder(val album: Album) : ViewBinder {
+class AlbumBinder(val album: Album, val imageLoader: ArtworkImageLoader) : ViewBinder {
 
     interface Listener {
         fun onAlbumClicked(album: Album)
@@ -61,7 +62,12 @@ class AlbumBinder(val album: Album) : ViewBinder {
             super.bind(viewBinder)
 
             title.text = viewBinder.album.name
-            subtitle.text = viewBinder.album.toString()
+            subtitle.text = "${viewBinder.album.albumArtistName} • ${viewBinder.album.songCount} Songs"
+            viewBinder.imageLoader.loadArtwork(imageView, viewBinder.album, ArtworkImageLoader.Options.RoundedCorners(16))
+        }
+
+        override fun recycle() {
+            viewBinder?.imageLoader?.clear(imageView)
         }
     }
 }

@@ -1,8 +1,6 @@
 package com.simplecityapps.shuttle.core.dagger
 
 import android.content.Context
-import com.simplecityapps.localmediaprovider.data.room.DatabaseProvider
-import com.simplecityapps.localmediaprovider.data.room.database.MediaDatabase
 import com.simplecityapps.localmediaprovider.repository.MockAlbumArtistRepository
 import com.simplecityapps.localmediaprovider.repository.MockAlbumRepository
 import com.simplecityapps.localmediaprovider.repository.MockSongRepository
@@ -14,29 +12,24 @@ import dagger.Provides
 import javax.inject.Singleton
 
 @Module
-class RepositoryModule {
+open class RepositoryModule(val context: Context) {
 
-    @Provides
     @Singleton
-    fun provideMediaDatabase(context: Context): MediaDatabase {
-        return DatabaseProvider(context).database
-    }
-
     @Provides
-    @Singleton
-    fun provideSongRepository(context: Context): SongRepository {
+    fun provideSongRepository(): SongRepository {
         return MockSongRepository(context)
     }
 
-    @Provides
     @Singleton
-    fun provideAlbumRepository(context: Context): AlbumRepository {
+    @Provides
+    fun provideAlbumRepository(): AlbumRepository {
         return MockAlbumRepository(context)
     }
 
-    @Provides
     @Singleton
-    fun provideAlbumArtistRepository(context: Context): AlbumArtistRepository {
+    @Provides
+    fun provideAlbumArtistRepository(): AlbumArtistRepository {
         return MockAlbumArtistRepository(context)
     }
+
 }

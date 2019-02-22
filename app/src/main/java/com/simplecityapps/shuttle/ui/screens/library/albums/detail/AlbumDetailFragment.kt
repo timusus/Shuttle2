@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
@@ -22,6 +23,8 @@ class AlbumDetailFragment :
     AlbumDetailContract.View {
 
     @Inject lateinit var presenterFactory: AlbumDetailPresenter.Factory
+
+    @Inject lateinit var imageLoader: ArtworkImageLoader
 
     private lateinit var presenter: AlbumDetailPresenter
 
@@ -78,7 +81,7 @@ class AlbumDetailFragment :
             if (discSongsMap.size > 1) {
                 viewBinders.add(DiscNumberBinder(entry.key))
             }
-            viewBinders.addAll(entry.value.map { song -> SongBinder(song) })
+            viewBinders.addAll(entry.value.map { song -> SongBinder(song, imageLoader) })
             viewBinders
         })
     }

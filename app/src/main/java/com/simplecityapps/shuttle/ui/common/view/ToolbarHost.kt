@@ -6,7 +6,6 @@ import androidx.fragment.app.Fragment
 interface ToolbarHost {
 
     fun getToolbar(): Toolbar?
-
 }
 
 fun Fragment.findToolbarHost(): ToolbarHost? {

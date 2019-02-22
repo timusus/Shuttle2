@@ -5,6 +5,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
+import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.shuttle.R
@@ -27,6 +29,8 @@ class SongsFragment : Fragment(), Injectable {
 
     @Inject lateinit var songRepository: SongRepository
 
+    @Inject lateinit var imageLoader: ArtworkImageLoader
+
 
     // Lifecycle
 
@@ -38,6 +42,7 @@ class SongsFragment : Fragment(), Injectable {
         super.onViewCreated(view, savedInstanceState)
 
         recyclerView.adapter = adapter
+        recyclerView.setRecyclerListener(RecyclerListener())
     }
 
     override fun onResume() {
@@ -45,8 +50,12 @@ class SongsFragment : Fragment(), Injectable {
 
         compositeDisposable.add(
             songRepository.getSongs().subscribe(
-                { songs -> adapter.setData(songs.map { song -> SongBinder(song) }) },
-                { error -> Timber.e(error, "Failed to retrieve songs") })
+                { songs ->
+                    adapter.setData(songs.map { song -> SongBinder(song, imageLoader) })
+                },
+                { error ->
+                    Timber.e(error, "Failed to retrieve songs")
+                })
         )
     }
 

@@ -5,13 +5,12 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import com.bumptech.glide.request.RequestOptions
+import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.imageloading.GlideApp
 
-class AlbumArtistBinder(val albumArtist: AlbumArtist) : ViewBinder {
+class AlbumArtistBinder(val albumArtist: AlbumArtist, val imageLoader: ArtworkImageLoader) : ViewBinder {
 
     interface Listener {
         fun onAlbumArtistClicked(albumArtist: AlbumArtist)
@@ -63,20 +62,13 @@ class AlbumArtistBinder(val albumArtist: AlbumArtist) : ViewBinder {
             super.bind(viewBinder)
 
             title.text = viewBinder.albumArtist.name
-            subtitle.text = viewBinder.albumArtist.toString()
+            subtitle.text = "${viewBinder.albumArtist.albumCount} Albums • ${viewBinder.albumArtist.songCount} Songs"
 
-            // Todo: Pass image loader instance into ViewBinder.
-            // Todo: Abstract away behind a generic image loading interface
-            GlideApp
-                .with(itemView.context)
-                .load(viewBinder.albumArtist)
-                .apply(RequestOptions.circleCropTransform())
-                .into(imageView)
+            viewBinder.imageLoader.loadArtwork(imageView, viewBinder.albumArtist, ArtworkImageLoader.Options.RoundedCorners(16))
         }
 
         override fun recycle() {
-            // Todo: Hook up recycler listener to call recycler on RecyclerAdapter
-            GlideApp.with(itemView.context).clear(imageView)
+            viewBinder?.imageLoader?.clear(imageView)
         }
     }
 }

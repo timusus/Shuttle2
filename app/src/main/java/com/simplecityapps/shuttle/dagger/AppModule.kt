@@ -8,8 +8,9 @@ import dagger.Provides
 @Module(includes = [ViewModelModule::class])
 class AppModule {
 
+    @AppScope
     @Provides
     fun provideContext(application: ShuttleApp): Context {
-        return application.applicationContext
+        return application
     }
 }
