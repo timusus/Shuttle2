@@ -68,7 +68,7 @@ class FolderDetailFragment : Fragment(), FolderBinder.Listener {
             .map { root ->
                 root.find(path)?.children
                     ?.map {
-                        val binder = FolderBinder(it.node)
+                        val binder = FolderBinder(it)
                         binder.listener = this
                         binder
                     }

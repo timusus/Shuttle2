@@ -1,14 +1,17 @@
 package com.simplecityapps.shuttle.ui.screens.library.folders
 
+import android.content.res.ColorStateList
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 
-class FolderBinder(val node: Node<Song>) : ViewBinder {
+class FolderBinder(val treeNode: Tree<Node<Song>>) : ViewBinder {
 
     interface Listener {
         fun onNodeSelected(node: Node<Song>)
@@ -25,7 +28,7 @@ class FolderBinder(val node: Node<Song>) : ViewBinder {
     }
 
     override fun sectionName(): String? {
-        return node.name.firstOrNull()?.toString() ?: ""
+        return treeNode.node.name.firstOrNull()?.toString() ?: ""
     }
 
     override fun equals(other: Any?): Boolean {
@@ -34,30 +37,39 @@ class FolderBinder(val node: Node<Song>) : ViewBinder {
 
         other as FolderBinder
 
-        if (node != other.node) return false
+        if (treeNode != other.treeNode) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        return node.hashCode()
+        return treeNode.hashCode()
     }
 
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<FolderBinder>(itemView) {
 
         private val title = itemView.findViewById<TextView>(R.id.title)
+        private val imageView: ImageView = itemView.findViewById(R.id.imageView)
 
         init {
             itemView.setOnClickListener {
-                viewBinder?.listener?.onNodeSelected(viewBinder!!.node)
+                viewBinder?.listener?.onNodeSelected(viewBinder!!.treeNode.node)
             }
         }
 
         override fun bind(viewBinder: FolderBinder) {
             super.bind(viewBinder)
 
-            title.text = viewBinder.node.name
+            title.text = viewBinder.treeNode.node.name
+
+            if (viewBinder.treeNode.node.data == null) {
+                imageView.setImageResource(R.drawable.ic_folder_open_black_24dp)
+                imageView.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(itemView.context, R.color.primary_material_dark))
+            } else {
+                imageView.setImageResource(R.drawable.ic_audiotrack_black_24dp)
+                imageView.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(itemView.context, R.color.colorPrimary))
+            }
         }
     }
 }
