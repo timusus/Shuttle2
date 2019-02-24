@@ -7,6 +7,7 @@ import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFr
 import com.simplecityapps.shuttle.ui.screens.library.folders.FolderDetailFragment
 import com.simplecityapps.shuttle.ui.screens.library.folders.FolderFragment
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongsFragment
+import com.simplecityapps.shuttle.ui.screens.queue.QueueFragment
 import dagger.Module
 import dagger.android.ContributesAndroidInjector
 
@@ -34,5 +35,8 @@ abstract class FragmentBuildersModule {
 
     @ContributesAndroidInjector
     abstract fun contributeAlbumArtistDetailFragment(): AlbumArtistDetailFragment
+
+    @ContributesAndroidInjector
+    abstract fun contributeQueueFragment(): QueueFragment
 
 }

@@ -6,8 +6,6 @@ class BaseContract {
 
         fun bindView(view: T)
 
-        fun unbindView() {
-
-        }
+        fun unbindView()
     }
 }

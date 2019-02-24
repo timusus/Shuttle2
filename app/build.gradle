@@ -61,6 +61,9 @@ dependencies {
     // Shuttle Image Loader
     implementation project(path: ':imageloader')
 
+    // Shuttle Playback
+    implementation project(path: ':playback')
+
     // Kotlin Standard Library
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
@@ -89,7 +92,10 @@ dependencies {
 
     // RxJava
     implementation"io.reactivex.rxjava2:rxjava:2.2.6"
-    implementation "io.reactivex.rxjava2:rxandroid:2.1.0"
+    implementation "io.reactivex.rxjava2:rxandroid:2.1.1"
+
+    // RxKotlin
+    implementation 'io.reactivex.rxjava2:rxkotlin:2.3.0'
 
     // Dagger core
     implementation 'com.google.dagger:dagger-android:2.21'

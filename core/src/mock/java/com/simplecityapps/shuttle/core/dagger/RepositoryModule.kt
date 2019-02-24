@@ -12,7 +12,7 @@ import dagger.Provides
 import javax.inject.Singleton
 
 @Module
-open class RepositoryModule(val context: Context) {
+class RepositoryModule(val context: Context) {
 
     @Singleton
     @Provides

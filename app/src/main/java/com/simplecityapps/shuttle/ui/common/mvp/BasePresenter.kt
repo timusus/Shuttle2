@@ -5,7 +5,7 @@ import io.reactivex.disposables.Disposable
 
 abstract class BasePresenter<T : Any> : BaseContract.Presenter<T> {
 
-    lateinit var view: T
+    var view: T? = null
 
     private val compositeDisposable = CompositeDisposable()
 
@@ -14,13 +14,11 @@ abstract class BasePresenter<T : Any> : BaseContract.Presenter<T> {
     }
 
     override fun unbindView() {
-        super.unbindView()
-
         compositeDisposable.clear()
+        view = null
     }
 
     fun addDisposable(disposable: Disposable) {
         compositeDisposable.add(disposable)
     }
-
 }

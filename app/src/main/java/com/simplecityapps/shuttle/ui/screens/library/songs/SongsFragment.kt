@@ -8,16 +8,14 @@ import androidx.fragment.app.Fragment
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.adapter.ViewBinder
-import com.simplecityapps.mediaprovider.repository.SongRepository
+import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
-import io.reactivex.disposables.CompositeDisposable
 import kotlinx.android.synthetic.main.fragment_folder_detail.*
-import timber.log.Timber
 import javax.inject.Inject
 
-class SongsFragment : Fragment(), Injectable {
+class SongsFragment : Fragment(), Injectable, SongsContract.View {
 
     private val adapter = object : SectionedAdapter() {
         override fun getSectionName(viewBinder: ViewBinder?): String {
@@ -25,9 +23,7 @@ class SongsFragment : Fragment(), Injectable {
         }
     }
 
-    private val compositeDisposable = CompositeDisposable()
-
-    @Inject lateinit var songRepository: SongRepository
+    @Inject lateinit var presenter: SongsPresenter
 
     @Inject lateinit var imageLoader: ArtworkImageLoader
 
@@ -43,25 +39,32 @@ class SongsFragment : Fragment(), Injectable {
 
         recyclerView.adapter = adapter
         recyclerView.setRecyclerListener(RecyclerListener())
+
+        presenter.bindView(this)
     }
 
-    override fun onResume() {
-        super.onResume()
-
-        compositeDisposable.add(
-            songRepository.getSongs().subscribe(
-                { songs ->
-                    adapter.setData(songs.map { song -> SongBinder(song, imageLoader) })
-                },
-                { error ->
-                    Timber.e(error, "Failed to retrieve songs")
-                })
-        )
+    override fun onDestroyView() {
+        presenter.unbindView()
+        super.onDestroyView()
     }
 
-    override fun onDestroy() {
-        compositeDisposable.clear()
-        super.onDestroy()
+
+    // SongsContract.View Implementation
+
+    override fun setData(songs: List<Song>) {
+        adapter.setData(songs.map { song ->
+            SongBinder(song, imageLoader, songBinderListener)
+        })
+    }
+
+
+    // Private
+
+    private val songBinderListener = object : SongBinder.Listener {
+
+        override fun onSongClicked(song: Song) {
+            presenter.onSongClicked(song)
+        }
     }
 
 

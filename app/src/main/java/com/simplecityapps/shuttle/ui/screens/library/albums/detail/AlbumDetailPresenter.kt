@@ -1,9 +1,11 @@
 package com.simplecityapps.shuttle.ui.screens.library.albums.detail
 
+import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.AlbumQuery
 import com.simplecityapps.mediaprovider.repository.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
+import com.simplecityapps.playback.queue.PlaybackManager
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.squareup.inject.assisted.Assisted
 import com.squareup.inject.assisted.AssistedInject
@@ -12,6 +14,7 @@ import timber.log.Timber
 class AlbumDetailPresenter @AssistedInject constructor(
     private val songRepository: SongRepository,
     private val albumRepository: AlbumRepository,
+    private val playbackManager: PlaybackManager,
     @Assisted private val albumId: Long
 ) : BasePresenter<AlbumDetailContract.View>(), AlbumDetailContract.Presenter {
 
@@ -19,6 +22,8 @@ class AlbumDetailPresenter @AssistedInject constructor(
     interface Factory {
         fun create(albumId: Long): AlbumDetailPresenter
     }
+
+    private var songs: List<Song> = emptyList()
 
     override fun bindView(view: AlbumDetailContract.View) {
         super.bindView(view)
@@ -37,7 +42,12 @@ class AlbumDetailPresenter @AssistedInject constructor(
 
     override fun loadData() {
         addDisposable(songRepository.getSongs(SongQuery.AlbumId(albumId)).subscribe { songs ->
-            view.setData(songs)
+            this.songs = songs
+            view?.setData(songs)
         })
+    }
+
+    fun onSongClicked(song: Song){
+        playbackManager.play(songs, songs.indexOf(song))
     }
 }

@@ -37,7 +37,7 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
 
     override fun loadData() {
         addDisposable(albumRepository.getAlbums(AlbumQuery.AlbumArtistId(albumArtistId)).subscribe { albums ->
-            view.setData(albums)
+            view?.setData(albums)
         })
     }
 }

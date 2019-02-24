@@ -11,6 +11,9 @@ android {
         targetSdkVersion 28
         versionCode 1
         versionName "1.0"
+
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+
     }
 
     buildTypes {
@@ -29,24 +32,6 @@ android {
             dimension "all"
         }
     }
-
-    sourceSets {
-        mock {
-            java.srcDirs = ['src/mock/java']
-        }
-        prod {
-            java.srcDirs = ['src/prod/java']
-        }
-    }
-
-    packagingOptions {
-        exclude 'META-INF/core_debug.kotlin_module'
-    }
-
-    lintOptions {
-        abortOnError true
-        warningsAsErrors true
-    }
 }
 
 dependencies {
@@ -54,27 +39,16 @@ dependencies {
 
     // Shuttle Media Provider
     implementation project(path: ':mediaprovider:core')
-    prodImplementation project(path: ':mediaprovider:local')
-    mockImplementation project(path: ':mediaprovider:mock')
-
-    // Shuttle Playback
-    implementation project(path: ':playback')
 
     // Kotlin Standard Library
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
-    // Dagger core
-    implementation 'com.google.dagger:dagger-android:2.21'
-    kapt 'com.google.dagger:dagger-compiler:2.21'
+    // RxJava
+    implementation"io.reactivex.rxjava2:rxjava:2.2.6"
+    implementation "io.reactivex.rxjava2:rxandroid:2.1.0"
 
-    // Timber
-    implementation 'com.jakewharton.timber:timber:4.7.1'
-
-    // OKHttp
-    implementation 'com.squareup.okhttp3:okhttp:3.13.1'
-    implementation 'com.squareup.okhttp3:logging-interceptor:3.13.1'
-}
-
-repositories {
-    mavenCentral()
+    // Testing
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.2'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 }

@@ -81,7 +81,7 @@ class AlbumDetailFragment :
             if (discSongsMap.size > 1) {
                 viewBinders.add(DiscNumberBinder(entry.key))
             }
-            viewBinders.addAll(entry.value.map { song -> SongBinder(song, imageLoader) })
+            viewBinders.addAll(entry.value.map { song -> SongBinder(song, imageLoader, songBinderListener) })
             viewBinders
         })
     }
@@ -89,5 +89,15 @@ class AlbumDetailFragment :
     override fun setTitle(title: String, subtitle: String) {
         toolbar?.title = title
         toolbar?.subtitle = subtitle
+    }
+
+
+    // SongBinder.Listener Implementation
+
+    private val songBinderListener = object : SongBinder.Listener {
+
+        override fun onSongClicked(song: Song) {
+            presenter.onSongClicked(song)
+        }
     }
 }

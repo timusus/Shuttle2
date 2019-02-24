@@ -10,7 +10,15 @@ import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 
-class SongBinder(val song: Song, val imageLoader: ArtworkImageLoader) : ViewBinder {
+class SongBinder(
+    val song: Song,
+    val imageLoader: ArtworkImageLoader,
+    val listener: Listener? = null
+) : ViewBinder {
+
+    interface Listener {
+        fun onSongClicked(song: Song)
+    }
 
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
         return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_song, parent, false))
@@ -43,6 +51,12 @@ class SongBinder(val song: Song, val imageLoader: ArtworkImageLoader) : ViewBind
         private val title = itemView.findViewById<TextView>(R.id.title)
         private val subtitle = itemView.findViewById<TextView>(R.id.subtitle)
         private val imageView = itemView.findViewById<ImageView>(R.id.imageView)
+
+        init {
+            itemView.setOnClickListener {
+                viewBinder?.listener?.onSongClicked(viewBinder!!.song)
+            }
+        }
 
         override fun bind(viewBinder: SongBinder) {
             super.bind(viewBinder)
