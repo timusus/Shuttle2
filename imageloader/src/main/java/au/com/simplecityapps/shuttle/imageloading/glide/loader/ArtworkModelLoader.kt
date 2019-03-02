@@ -64,7 +64,9 @@ class ArtworkDataFetcher(
                 null
             } catch (e: IOException) {
                 null
-            }?.let { url ->
+            }
+                ?.takeIf { url -> url.isNotBlank() }
+                ?.let { url ->
                 okHttpStreamFetcher = OkHttpStreamFetcher(okHttpClient, GlideUrl(url))
                 okHttpStreamFetcher!!.loadData(priority, callback)
         } ?: callback.onLoadFailed(GlideException("Artwork url not found"))
