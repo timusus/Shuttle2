@@ -1,2 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.simplecityapps.playback" />
+    package="com.simplecityapps.playback">
+
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+
+    <application>
+        <service android:name=".PlaybackService" />
+    </application>
+
+
+</manifest>

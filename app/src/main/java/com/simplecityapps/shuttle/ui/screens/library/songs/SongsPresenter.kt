@@ -2,7 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.library.songs
 
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongRepository
-import com.simplecityapps.playback.queue.PlaybackManager
+import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import io.reactivex.rxkotlin.subscribeBy
 import timber.log.Timber
@@ -33,6 +33,6 @@ class SongsPresenter @Inject constructor(
     }
 
     override fun onSongClicked(song: Song) {
-        playbackManager.play(songs)
+        playbackManager.play(songs, songs.indexOf(song))
     }
 }

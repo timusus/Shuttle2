@@ -3,10 +3,11 @@ package com.simplecityapps.shuttle.dagger
 import com.simplecityapps.mediaprovider.repository.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.SongRepository
-import com.simplecityapps.playback.queue.PlaybackManager
+import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackNotificationManager
+import com.simplecityapps.playback.dagger.PlaybackModule
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.core.dagger.NetworkingModule
-import com.simplecityapps.shuttle.core.dagger.PlaybackModule
 import com.simplecityapps.shuttle.core.dagger.RepositoryModule
 import dagger.Component
 import okhttp3.OkHttpClient
@@ -34,8 +35,11 @@ interface CoreComponent {
 
     fun getQueue(): QueueManager
 
+    fun getPlaybackNotificationManager(): PlaybackNotificationManager
+
     @Component.Builder interface Builder {
         fun build(): CoreComponent
         fun repositoryModule(module: RepositoryModule): Builder
+        fun playbackModule(module: PlaybackModule): Builder
     }
 }

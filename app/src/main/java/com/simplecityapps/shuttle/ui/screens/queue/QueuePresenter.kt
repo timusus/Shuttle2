@@ -50,6 +50,10 @@ class QueuePresenter @Inject constructor(
     }
 
     override fun shuffleClicked(enabled: Boolean) {
+        when (queueManager.getShuffleMode()) {
+            QueueManager.ShuffleMode.On -> queueManager.setShuffleMode(QueueManager.ShuffleMode.Off)
+            QueueManager.ShuffleMode.Off -> queueManager.setShuffleMode(QueueManager.ShuffleMode.On)
+        }
     }
 
     override fun nextClicked() {
@@ -61,6 +65,11 @@ class QueuePresenter @Inject constructor(
     }
 
     override fun prevClicked() {
+        queueManager.getPrevious()?.let { prevItem ->
+            queueManager.setCurrentItem(prevItem)
+        } ?: run {
+            Timber.i("Failed to retrieve previous queue item")
+        }
     }
 
 

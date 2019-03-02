@@ -2,8 +2,10 @@ package com.simplecityapps.shuttle
 
 import android.app.Activity
 import android.app.Application
+import android.app.Service
 import androidx.appcompat.app.AppCompatDelegate
 import com.facebook.stetho.Stetho
+import com.simplecityapps.playback.dagger.PlaybackModule
 import com.simplecityapps.shuttle.core.dagger.RepositoryModule
 import com.simplecityapps.shuttle.dagger.AppInjector
 import com.simplecityapps.shuttle.dagger.CoreComponent
@@ -12,18 +14,23 @@ import com.simplecityapps.shuttle.dagger.DaggerCoreComponent
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasActivityInjector
+import dagger.android.HasServiceInjector
 import timber.log.Timber
 import javax.inject.Inject
 
-class ShuttleApp : Application(), HasActivityInjector, CoreComponentProvider {
+class ShuttleApp : Application(), HasActivityInjector, HasServiceInjector, CoreComponentProvider {
 
     @Inject
-    lateinit var dispatchingAndroidInjector: DispatchingAndroidInjector<Activity>
+    lateinit var dispatchingAndroidActivityInjector: DispatchingAndroidInjector<Activity>
+
+    @Inject
+    lateinit var dispatchingAndroidServiceInjector: DispatchingAndroidInjector<Service>
 
     private val coreComponent: CoreComponent by lazy {
         DaggerCoreComponent
             .builder()
             .repositoryModule(RepositoryModule(this))
+            .playbackModule(PlaybackModule(this))
             .build()
     }
 
@@ -38,7 +45,11 @@ class ShuttleApp : Application(), HasActivityInjector, CoreComponentProvider {
     }
 
     override fun activityInjector(): AndroidInjector<Activity> {
-        return dispatchingAndroidInjector
+        return dispatchingAndroidActivityInjector
+    }
+
+    override fun serviceInjector(): AndroidInjector<Service> {
+        return dispatchingAndroidServiceInjector
     }
 
     // CoreComponent.Provider Implementation

@@ -41,6 +41,7 @@ class QueueManager : QueueChangeCallback {
             throw IllegalArgumentException("Queue position must be >= 0 (position $position)")
         }
         val queueItems = songs.mapIndexed { index, song -> song.toQueueItem(index == position) }
+        currentItem = queueItems[position]
         baseQueue.set(queueItems)
 
         onQueueChanged()
@@ -71,11 +72,27 @@ class QueueManager : QueueChangeCallback {
 
     fun getNext(): QueueItem? {
         val currentQueue = baseQueue.get(shuffleMode)
-        return currentQueue.getOrNull(currentQueue.indexOf(currentItem) + 1)
+        val currentIndex = currentQueue.indexOf(currentItem)
+        return when (repeatMode) {
+            RepeatMode.Off -> {
+                currentQueue.getOrNull(currentIndex + 1)
+            }
+            RepeatMode.All -> {
+                if (currentIndex == baseQueue.size() - 1) {
+                    currentQueue.getOrNull(0)
+                } else {
+                    currentQueue.getOrNull(currentIndex + 1)
+                }
+            }
+            RepeatMode.One -> {
+                currentItem
+            }
+        }
     }
 
     fun getPrevious(): QueueItem? {
-        return null
+        val currentQueue = baseQueue.get(shuffleMode)
+        return currentQueue.getOrNull(currentQueue.indexOf(currentItem) - 1)
     }
 
     fun getQueue(): Single<QueueResult> {
@@ -93,6 +110,10 @@ class QueueManager : QueueChangeCallback {
             this.shuffleMode = shuffleMode
             onRepeatChanged()
         }
+    }
+
+    fun getShuffleMode(): ShuffleMode {
+        return shuffleMode
     }
 
     fun setRepeatMode(repeatMode: RepeatMode) {
@@ -148,6 +169,12 @@ class QueueManager : QueueChangeCallback {
         fun set(items: List<QueueItem>) {
             baseList = items.toMutableList()
             shuffleList = baseList.shuffled().toMutableList()
+
+            // Move the current item to the top of the shuffle list
+            val currentIndex = shuffleList.indexOfFirst { it.isCurrent }
+            if (currentIndex != -1) {
+                shuffleList.add(0, shuffleList.removeAt(currentIndex))
+            }
         }
 
         fun add(items: List<QueueItem>) {
