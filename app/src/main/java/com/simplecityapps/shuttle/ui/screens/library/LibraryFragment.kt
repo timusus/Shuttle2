@@ -11,7 +11,6 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistsFragment
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumsFragment
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongsFragment
-import com.simplecityapps.shuttle.ui.screens.queue.QueueFragment
 import kotlinx.android.synthetic.main.fragment_library.*
 
 class LibraryFragment : Fragment() {
@@ -32,7 +31,6 @@ class LibraryFragment : Fragment() {
         adapter.addFragment("Artists", AlbumArtistsFragment.newInstance())
         adapter.addFragment("Albums", AlbumsFragment.newInstance())
         adapter.addFragment("Songs", SongsFragment.newInstance())
-        adapter.addFragment("QueueManager", QueueFragment.newInstance())
         adapter.notifyDataSetChanged()
 
         viewPager.adapter = adapter

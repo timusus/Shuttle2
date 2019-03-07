@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.core.dagger
+package com.simplecityapps.shuttle.dagger
 
 import android.content.Context
 import com.simplecityapps.localmediaprovider.data.room.DatabaseProvider
@@ -14,11 +14,11 @@ import dagger.Provides
 import javax.inject.Singleton
 
 @Module
-class RepositoryModule {
+class RepositoryModule(private val context: Context) {
 
     @Provides
     @Singleton
-    fun provideMediaDatabase(context: Context): MediaDatabase {
+    fun provideMediaDatabase(): MediaDatabase {
         return DatabaseProvider(context).database
     }
 

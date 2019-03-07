@@ -10,7 +10,7 @@ class SongArtworkProvider(
     private val song: Song
 ) : ArtworkProvider {
     override fun getCacheKey(): String {
-        return "${song.albumArtistName}_${song.name}"
+        return "${song.albumArtistName}_${song.albumName}"
     }
 
     override fun getArtworkUri(): Call<out ArtworkUrlResult> {

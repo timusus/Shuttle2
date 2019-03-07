@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.core.dagger
+package com.simplecityapps.shuttle.dagger
 
 import dagger.Module
 import dagger.Provides

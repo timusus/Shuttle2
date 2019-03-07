@@ -1,11 +1,13 @@
 package com.simplecityapps.playback.queue
 
 import com.simplecityapps.mediaprovider.model.Song
-import io.reactivex.Single
+import timber.log.Timber
 
 interface QueueChangeCallback {
 
     fun onQueueChanged()
+
+    fun onQueuePositionChanged()
 
     fun onShuffleChanged()
 
@@ -41,28 +43,46 @@ class QueueManager : QueueChangeCallback {
             throw IllegalArgumentException("Queue position must be >= 0 (position $position)")
         }
         val queueItems = songs.mapIndexed { index, song -> song.toQueueItem(index == position) }
-        currentItem = queueItems[position]
         baseQueue.set(queueItems)
+        setCurrentItem(queueItems[position])
 
         onQueueChanged()
     }
 
     fun setCurrentItem(currentItem: QueueItem) {
-        this.currentItem = currentItem.clone(isCurrent = true)
+        Timber.d("setCurrentItem(): ${currentItem.song.path}")
+        if (this.currentItem != currentItem) {
+            this.currentItem = currentItem.clone(isCurrent = true)
 
-        baseQueue.get(ShuffleMode.On).forEach { queueItem ->
-            if (queueItem == currentItem) {
-                baseQueue.replace(queueItem, this.currentItem!!)
-            } else if (queueItem.isCurrent) {
-                baseQueue.replace(queueItem, queueItem.clone(isCurrent = false))
+            baseQueue.get(ShuffleMode.On).forEach { queueItem ->
+                if (queueItem == currentItem) {
+                    baseQueue.replace(queueItem, this.currentItem!!)
+                } else if (queueItem.isCurrent) {
+                    baseQueue.replace(queueItem, queueItem.clone(isCurrent = false))
+                }
             }
-        }
 
-        onQueueChanged()
+            onQueuePositionChanged()
+        } else {
+            Timber.d("setCurrentItem(): Item already current")
+        }
     }
 
     fun getCurrentItem(): QueueItem? {
         return currentItem
+    }
+
+    fun getCurrentPosition(): Int? {
+        val index = baseQueue.get(shuffleMode).indexOf(currentItem)
+        if (index != -1) {
+            return index
+        }
+
+        return null
+    }
+
+    fun getSize(): Int {
+        return baseQueue.size()
     }
 
     fun remove(items: List<QueueItem>) {
@@ -95,8 +115,8 @@ class QueueManager : QueueChangeCallback {
         return currentQueue.getOrNull(currentQueue.indexOf(currentItem) - 1)
     }
 
-    fun getQueue(): Single<QueueResult> {
-        return Single.just(
+    fun getQueue(callback: (QueueResult) -> (Unit)) {
+        callback(
             QueueResult(
                 baseQueue.get(ShuffleMode.Off),
                 baseQueue.get(ShuffleMode.On),
@@ -108,7 +128,7 @@ class QueueManager : QueueChangeCallback {
     fun setShuffleMode(shuffleMode: ShuffleMode) {
         if (this.shuffleMode != shuffleMode) {
             this.shuffleMode = shuffleMode
-            onRepeatChanged()
+            onShuffleChanged()
         }
     }
 
@@ -119,8 +139,28 @@ class QueueManager : QueueChangeCallback {
     fun setRepeatMode(repeatMode: RepeatMode) {
         if (this.repeatMode != repeatMode) {
             this.repeatMode = repeatMode
-
+            onRepeatChanged()
         }
+    }
+
+    fun getRepeatMode(): RepeatMode {
+        return repeatMode
+    }
+
+    fun skipToNext() {
+        Timber.d("skipToNext()")
+        getNext()?.let { nextItem ->
+            setCurrentItem(nextItem)
+            onQueuePositionChanged()
+        } ?: Timber.d("No next track to skip to")
+    }
+
+    fun skipToPrevious() {
+        Timber.d("skipToPrevious()")
+        getPrevious()?.let { previousItem ->
+            setCurrentItem(previousItem)
+            onQueuePositionChanged()
+        } ?: Timber.d("No next track to skip-previous to")
     }
 
 
@@ -136,6 +176,10 @@ class QueueManager : QueueChangeCallback {
 
     override fun onRepeatChanged() {
         callbacks.forEach { callback -> callback.onRepeatChanged() }
+    }
+
+    override fun onQueuePositionChanged() {
+        callbacks.forEach { callback -> callback.onQueuePositionChanged() }
     }
 
     fun addCallback(callback: QueueChangeCallback) {

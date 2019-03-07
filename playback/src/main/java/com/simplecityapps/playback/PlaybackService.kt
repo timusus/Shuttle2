@@ -27,16 +27,9 @@ class PlaybackService : Service() {
         startForeground(PlaybackNotificationManager.NOTIFICATION_ID, notification)
 
         when (intent?.action) {
-            PlaybackService.ACTION_TOGGLE_PLAYBACK -> {
-                playbackManager.togglePlayback()
-
-            }
-            PlaybackService.ACTION_SKIP_PREV -> {
-                // Todo: Handle
-            }
-            PlaybackService.ACTION_SKIP_NEXT -> {
-                // Todo: Handle
-            }
+            PlaybackService.ACTION_TOGGLE_PLAYBACK -> playbackManager.togglePlayback()
+            PlaybackService.ACTION_SKIP_PREV -> playbackManager.skipToPrev()
+            PlaybackService.ACTION_SKIP_NEXT -> playbackManager.skipToNext()
         }
 
         return START_STICKY
@@ -58,7 +51,6 @@ class PlaybackService : Service() {
         const val ACTION_TOGGLE_PLAYBACK: String = "com.simplectiyapps.playback.toggle"
         const val ACTION_SKIP_PREV: String = "com.simplectiyapps.playback.prev"
         const val ACTION_SKIP_NEXT: String = "com.simplectiyapps.playback.next"
-
     }
 
 }

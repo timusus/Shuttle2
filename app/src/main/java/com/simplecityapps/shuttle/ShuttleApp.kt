@@ -6,11 +6,7 @@ import android.app.Service
 import androidx.appcompat.app.AppCompatDelegate
 import com.facebook.stetho.Stetho
 import com.simplecityapps.playback.dagger.PlaybackModule
-import com.simplecityapps.shuttle.core.dagger.RepositoryModule
-import com.simplecityapps.shuttle.dagger.AppInjector
-import com.simplecityapps.shuttle.dagger.CoreComponent
-import com.simplecityapps.shuttle.dagger.CoreComponentProvider
-import com.simplecityapps.shuttle.dagger.DaggerCoreComponent
+import com.simplecityapps.shuttle.dagger.*
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasActivityInjector
@@ -61,7 +57,7 @@ class ShuttleApp : Application(), HasActivityInjector, HasServiceInjector, CoreC
     companion object {
 
         init {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_AUTO)
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
         }
     }
 }

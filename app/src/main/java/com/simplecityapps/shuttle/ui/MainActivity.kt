@@ -12,18 +12,24 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.simplecityapps.mediaprovider.repository.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.SongRepository
+import com.simplecityapps.playback.queue.QueueChangeCallback
+import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.ui.screens.playback.PlaybackFragment
+import com.simplecityapps.shuttle.ui.screens.playback.mini.MiniPlaybackFragment
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.support.HasSupportFragmentInjector
 import io.reactivex.disposables.CompositeDisposable
-import timber.log.Timber
+import kotlinx.android.synthetic.main.activity_main.*
 import javax.inject.Inject
 
-class MainActivity : AppCompatActivity(), HasSupportFragmentInjector {
+class MainActivity : AppCompatActivity(), HasSupportFragmentInjector, QueueChangeCallback {
 
     private val compositeDisposable = CompositeDisposable()
 
     @Inject lateinit var dispatchingAndroidInjector: DispatchingAndroidInjector<Fragment>
+
+    @Inject lateinit var queueMager: QueueManager
 
     @Inject lateinit var songRepository: SongRepository
     @Inject lateinit var albumsRepository: AlbumRepository
@@ -37,7 +43,7 @@ class MainActivity : AppCompatActivity(), HasSupportFragmentInjector {
 
         setContentView(R.layout.activity_main)
 
-        val navView: BottomNavigationView = findViewById(R.id.nav_view)
+        val navView: BottomNavigationView = findViewById(R.id.bottomNavigationView)
         navView.setupWithNavController(findNavController(R.id.navHostFragment))
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
@@ -45,6 +51,17 @@ class MainActivity : AppCompatActivity(), HasSupportFragmentInjector {
         } else {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), 1)
         }
+
+        if (savedInstanceState == null) {
+            supportFragmentManager.beginTransaction()
+                .add(R.id.sheet1Container, PlaybackFragment(), "PlaybackFragment")
+                .add(R.id.sheet1PeekView, MiniPlaybackFragment(), "MiniPlaybackFragment")
+                .commit()
+        }
+
+        // Update visible state of mini player
+        queueMager.addCallback(this)
+        onQueueChanged()
     }
 
     override fun onDestroy() {
@@ -63,7 +80,7 @@ class MainActivity : AppCompatActivity(), HasSupportFragmentInjector {
     }
 
     private fun onHasPermission() {
-        compositeDisposable.add(songRepository.populate().subscribe({ Timber.i("Populate complete")}))
+        compositeDisposable.add(songRepository.populate().subscribe())
         compositeDisposable.add(albumsRepository.populate().subscribe())
         compositeDisposable.add(albumArtistsRepository.populate().subscribe())
     }
@@ -72,6 +89,26 @@ class MainActivity : AppCompatActivity(), HasSupportFragmentInjector {
     // HasSupportFragmentInjector Implementation
 
     override fun supportFragmentInjector() = dispatchingAndroidInjector
+
+
+    // QueueChangeCallback
+
+    override fun onQueueChanged() {
+        if (queueMager.getSize() == 0) {
+            multiSheetView.hide(collapse = true, animate = false)
+        } else {
+            multiSheetView.unhide(true)
+        }
+    }
+
+    override fun onQueuePositionChanged() {
+    }
+
+    override fun onShuffleChanged() {
+    }
+
+    override fun onRepeatChanged() {
+    }
 
 
     // Static

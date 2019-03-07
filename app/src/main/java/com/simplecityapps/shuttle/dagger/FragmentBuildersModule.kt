@@ -7,6 +7,8 @@ import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFr
 import com.simplecityapps.shuttle.ui.screens.library.folders.FolderDetailFragment
 import com.simplecityapps.shuttle.ui.screens.library.folders.FolderFragment
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongsFragment
+import com.simplecityapps.shuttle.ui.screens.playback.PlaybackFragment
+import com.simplecityapps.shuttle.ui.screens.playback.mini.MiniPlaybackFragment
 import com.simplecityapps.shuttle.ui.screens.queue.QueueFragment
 import dagger.Module
 import dagger.android.ContributesAndroidInjector
@@ -38,5 +40,11 @@ abstract class FragmentBuildersModule {
 
     @ContributesAndroidInjector
     abstract fun contributeQueueFragment(): QueueFragment
+
+    @ContributesAndroidInjector
+    abstract fun contributePlaybackFragment(): PlaybackFragment
+
+    @ContributesAndroidInjector
+    abstract fun contributeMiniPlayerFragment(): MiniPlaybackFragment
 
 }

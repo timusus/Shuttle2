@@ -20,25 +20,6 @@ android {
         }
     }
 
-    flavorDimensions "all"
-    productFlavors {
-        mock {
-            dimension "all"
-        }
-        prod {
-            dimension "all"
-        }
-    }
-
-    sourceSets {
-        mock {
-            java.srcDirs = ['src/mock/java']
-        }
-        prod {
-            java.srcDirs = ['src/prod/java']
-        }
-    }
-
     packagingOptions {
         exclude 'META-INF/core_debug.kotlin_module'
     }
@@ -54,8 +35,8 @@ dependencies {
 
     // Shuttle Media Provider
     implementation project(path: ':mediaprovider:core')
-    prodImplementation project(path: ':mediaprovider:local')
-    mockImplementation project(path: ':mediaprovider:mock')
+    implementation project(path: ':mediaprovider:local')
+    // implementation project(path: ':mediaprovider:mock')
 
     // Shuttle Playback
     implementation project(path: ':playback')

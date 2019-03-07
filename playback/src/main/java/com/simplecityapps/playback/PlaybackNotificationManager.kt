@@ -8,6 +8,8 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
 
 class PlaybackNotificationManager(
@@ -15,14 +17,11 @@ class PlaybackNotificationManager(
     private val notificationManager: NotificationManager,
     private val playbackManager: PlaybackManager,
     private val queueManager: QueueManager
-) : Playback.Callback {
-
-    private lateinit var notificationChannel: NotificationChannel
-
-    private var notification: Notification? = null
+) : Playback.Callback, QueueChangeCallback {
 
     init {
         playbackManager.addCallback(this)
+        queueManager.addCallback(this)
     }
 
     fun displayNotification(): Notification {
@@ -31,7 +30,7 @@ class PlaybackNotificationManager(
 
         val song = queueManager.getCurrentItem()?.song
 
-        notification = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
+        val notification = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
             .apply {
                 song?.let {
                     setContentText(song.albumArtistName)
@@ -62,7 +61,7 @@ class PlaybackNotificationManager(
             }
             val pendingIntent = PendingIntent.getService(context, 1, intent, 0)
 
-            return if (playbackManager.playback.isPlaying()) {
+            return if (playbackManager.isPlaying()) {
                 NotificationCompat.Action(R.drawable.ic_pause_black_24dp, "Pause", pendingIntent)
             } else {
                 NotificationCompat.Action(R.drawable.ic_play_arrow_black_24dp, "Play", pendingIntent)
@@ -89,9 +88,8 @@ class PlaybackNotificationManager(
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val existingNotificationChannel = notificationManager.getNotificationChannel(NOTIFICATION_CHANNEL_ID)
-            if (existingNotificationChannel == null) {
-                notificationChannel = NotificationChannel(NOTIFICATION_CHANNEL_ID, "Shuttle", NotificationManager.IMPORTANCE_LOW)
+            notificationManager.getNotificationChannel(NOTIFICATION_CHANNEL_ID) ?: run {
+                val notificationChannel = NotificationChannel(NOTIFICATION_CHANNEL_ID, "Shuttle", NotificationManager.IMPORTANCE_LOW)
                 notificationChannel.enableLights(false)
                 notificationChannel.enableVibration(false)
                 notificationChannel.setShowBadge(false)
@@ -105,6 +103,33 @@ class PlaybackNotificationManager(
     // Playback.Callback Implementation
 
     override fun onPlaystateChanged(isPlaying: Boolean) {
+        displayNotification()
+    }
+
+    override fun onPlaybackPrepared() {
+
+    }
+
+    override fun onPlaybackComplete(song: Song?) {
+
+    }
+
+
+    // QueueChangeCallback Implementation
+
+    override fun onQueueChanged() {
+        displayNotification()
+    }
+
+    override fun onShuffleChanged() {
+        displayNotification()
+    }
+
+    override fun onRepeatChanged() {
+        displayNotification()
+    }
+
+    override fun onQueuePositionChanged() {
         displayNotification()
     }
 

@@ -9,6 +9,7 @@ import au.com.simplecityapps.shuttle.imageloading.glide.provider.ArtworkProvider
 import au.com.simplecityapps.shuttle.imageloading.glide.provider.SongArtworkProvider
 import au.com.simplecityapps.shuttle.imageloading.networking.lastfm.LastFmService
 import com.bumptech.glide.load.MultiTransformation
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.request.RequestOptions
@@ -34,7 +35,7 @@ class GlideImageLoader(private val lastFm: LastFmService.LastFm) : ArtworkImageL
         val glideRequest = GlideApp
             .with(imageView.context)
             .load(artworkProvider)
-            .centerCrop()
+            .diskCacheStrategy(DiskCacheStrategy.ALL)
 
         options.forEach { option ->
             when (option) {

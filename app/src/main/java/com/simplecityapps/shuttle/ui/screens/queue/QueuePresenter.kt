@@ -1,16 +1,15 @@
 package com.simplecityapps.shuttle.ui.screens.queue
 
+import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.rxkotlin.subscribeBy
-import timber.log.Timber
 import javax.inject.Inject
 
 class QueuePresenter @Inject constructor(
-    private val queueManager: QueueManager
+    private val queueManager: QueueManager,
+    private val playbackManager: PlaybackManager
 ) : BasePresenter<QueueContract.View>(),
     QueueContract.Presenter,
     QueueChangeCallback {
@@ -29,24 +28,13 @@ class QueuePresenter @Inject constructor(
     }
 
     override fun loadQueue() {
-
         view?.toggleLoadingView(true)
 
-        addDisposable(
-            queueManager.getQueue()
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeBy(
-                    onSuccess = { queueResult ->
-                        Timber.i("Queue loaded.. \nItems: ${queueResult.queue.joinToString("\n")}")
-                        view?.toggleLoadingView(false)
-                        view?.toggleEmptyView(queueResult.queue.isEmpty())
-                        view?.setData(queueResult)
-                    },
-                    onError = { error ->
-                        Timber.e(error, "Failed to load queueManager")
-                    }
-                )
-        )
+        queueManager.getQueue { queueResult ->
+            view?.toggleLoadingView(false)
+            view?.toggleEmptyView(queueResult.queue.isEmpty())
+            view?.setData(queueResult)
+        }
     }
 
     override fun shuffleClicked(enabled: Boolean) {
@@ -57,19 +45,11 @@ class QueuePresenter @Inject constructor(
     }
 
     override fun nextClicked() {
-        queueManager.getNext()?.let { nextItem ->
-            queueManager.setCurrentItem(nextItem)
-        } ?: run {
-            Timber.i("Failed to retrieve next queue item")
-        }
+        playbackManager.skipToNext()
     }
 
     override fun prevClicked() {
-        queueManager.getPrevious()?.let { prevItem ->
-            queueManager.setCurrentItem(prevItem)
-        } ?: run {
-            Timber.i("Failed to retrieve previous queue item")
-        }
+        playbackManager.skipToPrev()
     }
 
 
@@ -77,6 +57,7 @@ class QueuePresenter @Inject constructor(
 
     override fun onQueueItemClicked(queueItem: QueueItem) {
         queueManager.setCurrentItem(queueItem)
+        playbackManager.play()
     }
 
 
@@ -91,5 +72,10 @@ class QueuePresenter @Inject constructor(
     }
 
     override fun onRepeatChanged() {
+
+    }
+
+    override fun onQueuePositionChanged() {
+        loadQueue()
     }
 }

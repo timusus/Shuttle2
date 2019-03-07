@@ -22,8 +22,8 @@ class PlaybackModule(val context: Context) {
     }
 
     @Provides
-    fun providePlayback(): Playback {
-        return MediaPlayerPlayback()
+    fun providePlayback(queueManager: QueueManager): Playback {
+        return MediaPlayerPlayback(queueManager)
     }
 
     @Singleton
