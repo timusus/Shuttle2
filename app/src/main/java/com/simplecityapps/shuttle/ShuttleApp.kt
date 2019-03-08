@@ -4,7 +4,6 @@ import android.app.Activity
 import android.app.Application
 import android.app.Service
 import androidx.appcompat.app.AppCompatDelegate
-import com.facebook.stetho.Stetho
 import com.simplecityapps.playback.dagger.PlaybackModule
 import com.simplecityapps.shuttle.dagger.*
 import dagger.android.AndroidInjector
@@ -36,8 +35,6 @@ class ShuttleApp : Application(), HasActivityInjector, HasServiceInjector, CoreC
         AppInjector.init(this)
 
         Timber.plant(Timber.DebugTree())
-
-        Stetho.initializeWithDefaults(this)
     }
 
     override fun activityInjector(): AndroidInjector<Activity> {
