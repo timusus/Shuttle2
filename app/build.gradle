@@ -76,8 +76,8 @@ dependencies {
 
     // Android Arch
     implementation 'androidx.lifecycle:lifecycle-extensions:2.0.0'
-    implementation 'android.arch.navigation:navigation-fragment:1.0.0-beta02'
-    implementation "android.arch.navigation:navigation-ui-ktx:1.0.0-beta02"
+    implementation 'android.arch.navigation:navigation-fragment:1.0.0-rc02'
+    implementation "android.arch.navigation:navigation-ui-ktx:1.0.0-rc02"
 
     // Kotlin Extensions
     implementation "androidx.fragment:fragment-ktx:1.1.0-alpha04"
