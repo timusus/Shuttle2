@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/multiSheetView"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.MainActivity"/>
+    tools:context=".ui.MainActivity" />

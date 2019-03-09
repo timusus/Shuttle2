@@ -1,5 +1,7 @@
 package com.simplecityapps.shuttle.dagger
 
+import com.simplecityapps.shuttle.ui.screens.debug.DebugDrawerFragment
+import com.simplecityapps.shuttle.ui.screens.debug.LoggingFragment
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistsFragment
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragment
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumsFragment
@@ -45,6 +47,12 @@ abstract class FragmentBuildersModule {
     abstract fun contributePlaybackFragment(): PlaybackFragment
 
     @ContributesAndroidInjector
-    abstract fun contributeMiniPlayerFragment(): MiniPlaybackFragment
+    abstract fun contributeMiniPlaybackFragment(): MiniPlaybackFragment
+
+    @ContributesAndroidInjector
+    abstract fun contributeDebugDrawerFragment(): DebugDrawerFragment
+
+    @ContributesAndroidInjector
+    abstract fun contributeLoggingFragment(): LoggingFragment
 
 }

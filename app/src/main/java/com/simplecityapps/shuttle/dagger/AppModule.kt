@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.dagger
 
 import android.content.Context
+import com.simplecityapps.shuttle.DebugLoggingTree
 import com.simplecityapps.shuttle.ShuttleApplication
 import dagger.Module
 import dagger.Provides
@@ -12,5 +13,11 @@ class AppModule {
     @Provides
     fun provideContext(application: ShuttleApplication): Context {
         return application.applicationContext
+    }
+
+    @AppScope
+    @Provides
+    fun provideDebugLoggingTree(): DebugLoggingTree {
+        return DebugLoggingTree()
     }
 }

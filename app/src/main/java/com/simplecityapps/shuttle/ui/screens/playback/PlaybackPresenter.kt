@@ -80,7 +80,7 @@ class PlaybackPresenter @Inject constructor(
     }
 
 
-    // Playback.Callback Implementation
+    // Playback.Callbacks Implementation
 
     override fun onPlaystateChanged(isPlaying: Boolean) {
         view?.setPlayState(isPlaying)
