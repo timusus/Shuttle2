@@ -26,4 +26,13 @@ class PlaybackPreferenceManager(private val sharedPreferences: SharedPreferences
             val queuePosition = sharedPreferences.get("queue_position", -1)
             return if (queuePosition == -1) null else queuePosition
         }
+
+    var playbackPosition: Int?
+        set(value) {
+            sharedPreferences.put("playback_position", value ?: -1)
+        }
+        get() {
+            val playbackPosition = sharedPreferences.get("playback_position", -1)
+            return if (playbackPosition == -1) null else playbackPosition
+        }
 }

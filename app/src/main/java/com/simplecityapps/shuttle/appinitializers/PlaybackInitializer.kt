@@ -1,8 +1,10 @@
 package com.simplecityapps.shuttle.appinitializers
 
 import android.app.Application
+import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
+import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
@@ -19,20 +21,30 @@ class PlaybackInitializer @Inject constructor(
     private val playbackManager: PlaybackManager,
     private val queueManager: QueueManager,
     private val playbackPreferenceManager: PlaybackPreferenceManager
-) : AppInitializer, QueueChangeCallback {
+) : AppInitializer,
+    QueueChangeCallback,
+    Playback.Callback,
+    PlaybackManager.ProgressCallback {
 
+    var progress = 0
 
     override fun init(application: Application) {
 
         queueManager.addCallback(this)
+        playbackManager.addCallback(this)
+        playbackManager.addProgressCallback(this)
 
+        val seekPosition = playbackPreferenceManager.playbackPosition ?: 0
         val queuePosition = playbackPreferenceManager.queuePosition
+
+        Timber.d("Restoring queue position: $queuePosition, seekPosition: $seekPosition")
+
         queuePosition?.let { queuePosition ->
             val songIds = playbackPreferenceManager.queueIds?.split(",")?.map { id -> id.toLong() }
             songIds?.let { songIds ->
                 songRepository.getSongs(SongQuery.SongIds(songIds)).first(emptyList()).subscribeBy(
                     onSuccess = { songs ->
-                        playbackManager.load(songs, queuePosition, false)
+                        playbackManager.load(songs, queuePosition, seekPosition, false)
                     },
                     onError = { error ->
                         Timber.e(error, "Failed to reload queue")
@@ -48,10 +60,14 @@ class PlaybackInitializer @Inject constructor(
         playbackPreferenceManager.queueIds = queueManager.getQueue()
             .map { queueItem -> queueItem.song.id }
             .joinToString(",")
+
+        playbackPreferenceManager.playbackPosition = null
     }
 
     override fun onQueuePositionChanged() {
         playbackPreferenceManager.queuePosition = queueManager.getCurrentPosition()
+
+        playbackPreferenceManager.playbackPosition = null
     }
 
     override fun onShuffleChanged() {
@@ -62,4 +78,35 @@ class PlaybackInitializer @Inject constructor(
 
     }
 
+
+    // Playback.Callback Implementation
+
+    override fun onPlaystateChanged(isPlaying: Boolean) {
+        if (!isPlaying) {
+            playbackPreferenceManager.playbackPosition = playbackManager.getPosition()
+        }
+    }
+
+    override fun onPlaybackPrepared() {
+
+    }
+
+    override fun onPlaybackComplete(song: Song?) {
+        playbackPreferenceManager.playbackPosition = 0
+    }
+
+
+    // ProgressCallback Implementation
+
+    override fun onPregressChanged(position: Int, total: Int) {
+
+        // Saves the progress if it has changed by at least 1 second
+        if (progress == 0) {
+            progress = position
+        }
+        if (position - progress > 1000) {
+            playbackPreferenceManager.playbackPosition = position
+            progress = position
+        }
+    }
 }

@@ -43,9 +43,9 @@ class PlaybackManager(
         }
     }
 
-    fun load(songs: List<Song>, position: Int = 0, playOnComplete: Boolean) {
-        queueManager.set(songs, position)
-        playback.load(playOnComplete)
+    fun load(songs: List<Song>, queuePosition: Int = 0, seekPosition: Int = 0, playOnComplete: Boolean) {
+        queueManager.set(songs, queuePosition)
+        playback.load(seekPosition, playOnComplete)
     }
 
     fun play() {
@@ -67,12 +67,12 @@ class PlaybackManager(
 
     fun skipToNext() {
         queueManager.skipToNext()
-        playback.load(true)
+        playback.load(0, true)
     }
 
     fun skipToPrev() {
         queueManager.skipToPrevious()
-        playback.load(true)
+        playback.load(0, true)
     }
 
     fun isPlaying(): Boolean {
@@ -166,6 +166,8 @@ class PlaybackManager(
 
     override fun onPlaybackPrepared() {
         callbacks.forEach { callback -> callback.onPlaybackPrepared() }
+
+        updateProgress()
     }
 
     override fun onPlaybackComplete(song: Song?) {

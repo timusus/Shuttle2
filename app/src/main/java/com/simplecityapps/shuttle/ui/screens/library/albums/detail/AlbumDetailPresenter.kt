@@ -48,6 +48,6 @@ class AlbumDetailPresenter @AssistedInject constructor(
     }
 
     fun onSongClicked(song: Song){
-        playbackManager.load(songs, songs.indexOf(song), true)
+        playbackManager.load(songs, songs.indexOf(song), 0, true)
     }
 }

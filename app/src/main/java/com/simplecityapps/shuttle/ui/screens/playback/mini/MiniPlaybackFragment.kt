@@ -10,7 +10,7 @@ import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
-import kotlinx.android.synthetic.main.fragment_mini_player.*
+import kotlinx.android.synthetic.main.fragment_mini_playback.*
 import javax.inject.Inject
 
 class MiniPlaybackFragment : Fragment(), Injectable, MiniPlayerContract.View {
@@ -20,7 +20,7 @@ class MiniPlaybackFragment : Fragment(), Injectable, MiniPlayerContract.View {
     @Inject lateinit var imageLoader: ArtworkImageLoader
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_mini_player, container, false)
+        return inflater.inflate(R.layout.fragment_mini_playback, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
