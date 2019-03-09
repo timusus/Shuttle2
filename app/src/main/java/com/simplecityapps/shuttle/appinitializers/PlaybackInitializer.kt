@@ -37,7 +37,7 @@ class PlaybackInitializer @Inject constructor(
         val seekPosition = playbackPreferenceManager.playbackPosition ?: 0
         val queuePosition = playbackPreferenceManager.queuePosition
 
-        Timber.d("Restoring queue position: $queuePosition, seekPosition: $seekPosition")
+        Timber.v("Restoring queue position: $queuePosition, seekPosition: $seekPosition")
 
         queuePosition?.let { queuePosition ->
             val songIds = playbackPreferenceManager.queueIds?.split(",")?.map { id -> id.toLong() }

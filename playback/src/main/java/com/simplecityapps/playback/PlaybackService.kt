@@ -21,7 +21,7 @@ class PlaybackService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
-        Timber.d("onStartCommand() action: ${intent?.action}")
+        Timber.v("onStartCommand() action: ${intent?.action}")
 
         val notification = notificationManager.displayNotification()
         startForeground(PlaybackNotificationManager.NOTIFICATION_ID, notification)

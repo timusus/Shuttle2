@@ -91,19 +91,19 @@ open class RecyclerAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private class LoggingListUpdateCallback : ListUpdateCallback {
         override fun onChanged(position: Int, count: Int, payload: Any?) {
-            Timber.d("onChanged() $count")
+            Timber.v("onChanged() $count")
         }
 
         override fun onMoved(fromPosition: Int, toPosition: Int) {
-            Timber.d("onMoved() from: $fromPosition to: $toPosition")
+            Timber.v("onMoved() from: $fromPosition to: $toPosition")
         }
 
         override fun onInserted(position: Int, count: Int) {
-            Timber.d("onInserted() $count")
+            Timber.v("onInserted() $count")
         }
 
         override fun onRemoved(position: Int, count: Int) {
-            Timber.d("onRemoved() $count")
+            Timber.v("onRemoved() $count")
         }
     }
 }

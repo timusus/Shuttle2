@@ -76,7 +76,7 @@ class PlaybackPresenter @Inject constructor(
     override fun seek(fraction: Float) {
         queueManager.getCurrentItem()?.song?.let { currentSong ->
             playbackManager.seekTo((currentSong.duration * fraction).toInt())
-        } ?: Timber.i("seek() failed, current song null")
+        } ?: Timber.v("seek() failed, current song null")
     }
 
 

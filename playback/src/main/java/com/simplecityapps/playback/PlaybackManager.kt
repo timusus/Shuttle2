@@ -49,7 +49,7 @@ class PlaybackManager(
     }
 
     fun play() {
-        Timber.d("play() called")
+        Timber.v("play() called")
 
         playback.play()
 
@@ -190,13 +190,13 @@ class PlaybackManager(
         }
 
         fun start(callback: () -> Unit) {
-            Timber.d("start()")
+            Timber.v("start()")
             this.callback = callback
             post(runnable)
         }
 
         fun stop() {
-            Timber.d("stop()")
+            Timber.v("stop()")
             this.callback = null
             removeCallbacks(runnable)
         }

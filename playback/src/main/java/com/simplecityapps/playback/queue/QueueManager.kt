@@ -50,7 +50,7 @@ class QueueManager : QueueChangeCallback {
     }
 
     fun setCurrentItem(currentItem: QueueItem) {
-        Timber.d("setCurrentItem(): ${currentItem.song.path}, previous item: ${this.currentItem?.song?.path}")
+        Timber.v("setCurrentItem(): ${currentItem.song.path}, previous item: ${this.currentItem?.song?.path}")
         if (this.currentItem != currentItem) {
             this.currentItem = currentItem.clone(isCurrent = true)
 
@@ -64,7 +64,7 @@ class QueueManager : QueueChangeCallback {
 
             onQueuePositionChanged()
         } else {
-            Timber.d("setCurrentItem(): Item already current")
+            Timber.v("setCurrentItem(): Item already current")
         }
     }
 
@@ -142,19 +142,19 @@ class QueueManager : QueueChangeCallback {
     }
 
     fun skipToNext() {
-        Timber.d("skipToNext()")
+        Timber.v("skipToNext()")
         getNext()?.let { nextItem ->
             setCurrentItem(nextItem)
             onQueuePositionChanged()
-        } ?: Timber.d("No next track to skip to")
+        } ?: Timber.v("No next track to skip to")
     }
 
     fun skipToPrevious() {
-        Timber.d("skipToPrevious()")
+        Timber.v("skipToPrevious()")
         getPrevious()?.let { previousItem ->
             setCurrentItem(previousItem)
             onQueuePositionChanged()
-        } ?: Timber.d("No next track to skip-previous to")
+        } ?: Timber.v("No next track to skip-previous to")
     }
 
     // QueueChangeCallback Implementation

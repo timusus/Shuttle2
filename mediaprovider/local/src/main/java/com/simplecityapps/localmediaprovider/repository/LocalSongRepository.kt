@@ -33,13 +33,13 @@ class LocalSongRepository(private val database: MediaDatabase) : SongRepository 
     override fun populate(): Completable {
         intervalTimer.startLog()
 
-        Timber.i("Scanning for media..")
+        Timber.v("Scanning for media..")
 
         // 1. Scan for media
         return Single.fromCallable { getAudioFiles(Environment.getExternalStorageDirectory().path) }
             .flatMapCompletable { audioFiles ->
 
-                Timber.i("Discovered ${audioFiles.size} songs in ${intervalTimer.getInterval()}ms")
+                Timber.v("Discovered ${audioFiles.size} songs in ${intervalTimer.getInterval()}ms")
 
                 // 2. Build a list of device songs based on (1)
                 val diskSongData = audioFiles.map { audioFile -> audioFile.toSongData() }
@@ -76,7 +76,7 @@ class LocalSongRepository(private val database: MediaDatabase) : SongRepository 
                     // 12. Diff the database & disk song data, and apply changes to the database
                     updateSongDatabase(databaseSongsData, diskSongData)
 
-                    Timber.i("Database populated in ${intervalTimer.getInterval()}ms. Total time to scan & populate: ${intervalTimer.getTotal()}ms")
+                    Timber.v("Database populated in ${intervalTimer.getInterval()}ms. Total time to scan & populate: ${intervalTimer.getTotal()}ms")
 
                     Completable.complete()
                 }

@@ -46,9 +46,9 @@ class DebugLoggingTree : Timber.DebugTree() {
     @ColorInt
     private fun Int.getColor(): Int {
         return when (this) {
-            Log.VERBOSE -> 0XFF03a9f4.toInt()
-            Log.DEBUG -> 0XFF03a9f4.toInt()
-            Log.INFO -> 0XFF1a237e.toInt()
+            Log.VERBOSE -> 0XFF263238.toInt()
+            Log.DEBUG -> 0XFF263238.toInt()
+            Log.INFO -> 0XFF03a9f4.toInt()
             Log.WARN -> 0XFFef6c00.toInt()
             Log.ERROR -> 0xFFf44336.toInt()
             else -> 0XFF000000.toInt()

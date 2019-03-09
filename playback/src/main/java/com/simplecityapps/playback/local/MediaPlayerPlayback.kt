@@ -1,11 +1,13 @@
 package com.simplecityapps.playback.local
 
 import android.media.MediaPlayer
+import android.net.Uri
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
 import timber.log.Timber
+import java.io.File
 
 class MediaPlayerPlayback(
     private val queueManager: QueueManager
@@ -27,37 +29,37 @@ class MediaPlayerPlayback(
     }
 
     override fun load(seekPosition: Int, playOnPrepared: Boolean) {
-        Timber.d("load() position: $seekPosition, playOnPrepared: $playOnPrepared")
+        Timber.v("load() position: $seekPosition, playOnPrepared: $playOnPrepared")
 
         loadCurrent(seekPosition, playOnPrepared)
         loadNext()
     }
 
     private fun loadCurrent(seekPosition: Int, playOnPrepared: Boolean) {
-        Timber.d("loadCurrent()")
+        Timber.v("loadCurrent()")
         currentMediaPlayerHelper.callback = currentPlayerCallback
         currentQueueItem = queueManager.getCurrentItem()
         currentQueueItem?.let { currentQueueItem ->
             currentMediaPlayerHelper.load(currentQueueItem.song, seekPosition, playOnPrepared)
-        } ?: Timber.d("loadCurrent() current song null")
+        } ?: Timber.v("loadCurrent() current song null")
     }
 
     private fun loadNext() {
-        Timber.d("loadNext()")
+        Timber.v("loadNext()")
         nextMediaPlayerHelper.callback = nextPlayerCallback
         nextQueueItem = queueManager.getNext()
         nextQueueItem?.let { nextQueueItem ->
             nextMediaPlayerHelper.load(nextQueueItem.song, 0 ,false)
-        } ?: Timber.d("loadNext() next song null")
+        } ?: Timber.v("loadNext() next song null")
     }
 
     override fun play() {
-        Timber.d("play()")
+        Timber.v("play()")
         currentMediaPlayerHelper.play()
     }
 
     override fun pause() {
-        Timber.d("pause()")
+        Timber.v("pause()")
         currentMediaPlayerHelper.pause()
     }
 
@@ -94,19 +96,19 @@ class MediaPlayerPlayback(
             callback?.onPlaybackComplete(currentQueueItem?.song)
 
             // Release current media player
-            Timber.d("Releasing current player")
+            Timber.v("Releasing current player")
             currentMediaPlayerHelper.callback = null
             currentMediaPlayerHelper.mediaPlayer?.reset()
             currentMediaPlayerHelper.mediaPlayer?.release()
 
             // Make next media player current
-            Timber.d("Setting next player as current player")
+            Timber.v("Setting next player as current player")
             currentMediaPlayerHelper = nextMediaPlayerHelper
             currentMediaPlayerHelper.tag = "CurrentMediaPlayer"
             currentMediaPlayerHelper.callback = this
 
             // Update queue
-            Timber.d("Updating queue")
+            Timber.v("Updating queue")
             currentQueueItem = nextQueueItem
             currentQueueItem?.let { currentQueueItem ->
                 queueManager.setCurrentItem(currentQueueItem)
@@ -117,10 +119,10 @@ class MediaPlayerPlayback(
             nextMediaPlayerHelper.tag = "NextMediaPlayer"
 
             if (nextQueueItem != null) {
-                Timber.d("Loading next song")
+                Timber.v("Loading next song")
                 loadNext()
             } else {
-                Timber.d("No next song. Playback complete")
+                Timber.v("No next song. Playback complete")
                 callback?.onPlaystateChanged(false)
             }
         }
@@ -162,7 +164,7 @@ class MediaPlayerHelper {
 
     fun load(song: Song, seekPosition: Int = 0, playOnPrepared: Boolean) {
 
-        Timber.d("$tag load() song: ${song.path}, playOnPrepared: $playOnPrepared")
+        Timber.v("$tag load() song: ${song.path}, playOnPrepared: $playOnPrepared")
 
         this.playOnPrepared = playOnPrepared
 
@@ -173,7 +175,7 @@ class MediaPlayerHelper {
         if (mediaPlayer == null) {
             mediaPlayer = MediaPlayer()
         } else {
-            Timber.d("$tag MediaPlayer.reset()")
+            Timber.v("$tag MediaPlayer.reset()")
             pause()
             mediaPlayer!!.reset()
         }
@@ -181,32 +183,32 @@ class MediaPlayerHelper {
         mediaPlayer!!.setOnCompletionListener(onCompletionListener)
         mediaPlayer!!.setOnErrorListener(onErrorListener)
         mediaPlayer!!.setOnPreparedListener(onPreparedListener)
-        mediaPlayer!!.setDataSource(song.path)
+        mediaPlayer!!.setDataSource(Uri.fromFile(File(song.path)).toString())
 
         isPreparing = true
-        Timber.d("$tag MediaPlayer.prepareAsync()")
+        Timber.v("$tag MediaPlayer.prepareAsync()")
         mediaPlayer!!.prepareAsync()
     }
 
     fun play() {
         when {
             isPrepared -> {
-                Timber.d("$tag play() called. Attempting to play.")
+                Timber.v("$tag play() called. Attempting to play.")
                 mediaPlayer?.let { mediaPlayer ->
                     if (!isPlaying()) {
                         mediaPlayer.start()
                         callback?.onPlaystateChanged(true)
                     }
                 } ?: run {
-                    Timber.d("$tag play() called, Media player null")
+                    Timber.v("$tag play() called, Media player null")
                 }
                 playOnPrepared = false
             }
             isPreparing -> {
-                Timber.d("$tag play() called. preparing..")
+                Timber.v("$tag play() called. preparing..")
                 playOnPrepared = true
             }
-            else -> Timber.d("$tag play() called. Not prepared or preparing...")
+            else -> Timber.v("$tag play() called. Not prepared or preparing...")
         }
     }
 
@@ -215,19 +217,19 @@ class MediaPlayerHelper {
     }
 
     fun pause() {
-        Timber.d("$tag pause()")
+        Timber.v("$tag pause()")
         if (isPlaying()) {
             mediaPlayer?.pause()
             callback?.onPlaystateChanged(false)
         }
         if (isPreparing) {
-            Timber.d("pause() called while preparing. Cancelling playOnPrepared.")
+            Timber.v("pause() called while preparing. Cancelling playOnPrepared.")
             playOnPrepared = false
         }
     }
 
     fun seek(position: Int) {
-        Timber.d("seekTo() $position")
+        Timber.v("seekTo() $position")
         if (isPrepared) {
             mediaPlayer?.seekTo(position)
         }
@@ -250,16 +252,16 @@ class MediaPlayerHelper {
     }
 
     fun setNextMediaPlayer(nextMediaPlayer: MediaPlayer?) {
-        Timber.d("$tag setNextMediaPlayer()")
+        Timber.v("$tag setNextMediaPlayer()")
         if (isPrepared) {
             mediaPlayer?.setNextMediaPlayer(nextMediaPlayer)
         } else {
-            Timber.d("$tag setNextMediaPlayer() current MediaPlayer not prepared")
+            Timber.v("$tag setNextMediaPlayer() current MediaPlayer not prepared")
         }
     }
 
     private val onPreparedListener = MediaPlayer.OnPreparedListener {
-        Timber.d("$tag onPrepared()")
+        Timber.v("$tag onPrepared()")
 
         isPreparing = false
         isPrepared = true
@@ -278,7 +280,7 @@ class MediaPlayerHelper {
 
     private val onErrorListener = object : MediaPlayer.OnErrorListener {
         override fun onError(mp: MediaPlayer?, what: Int, extra: Int): Boolean {
-            Timber.d("$tag onError()")
+            Timber.v("$tag onError()")
 
             isPreparing = false
             isPrepared = false
@@ -290,7 +292,7 @@ class MediaPlayerHelper {
     }
 
     private val onCompletionListener = MediaPlayer.OnCompletionListener {
-        Timber.d("$tag onCompletion()")
+        Timber.v("$tag onCompletion()")
         callback?.onPlaybackComplete(null)
     }
 }

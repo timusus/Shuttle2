@@ -41,7 +41,7 @@ abstract class AlbumArtistDataDao {
         val updates = updateAll(updates)
         val inserts = insertAll(insertions)
 
-        Timber.i("Deleted $deletes, updated $updates, inserted ${inserts.size}")
+        Timber.v("Deleted $deletes, updated $updates, inserted ${inserts.size}")
 
         return inserts
     }
