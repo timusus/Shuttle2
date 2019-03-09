@@ -33,9 +33,11 @@ class MiniPlaybackFragment : Fragment(), Injectable, MiniPlayerContract.View {
     }
 
     override fun onDestroyView() {
-        presenter.unbindView()
+        if (activity?.isDestroyed != true) {
+            imageLoader.clear(imageView)
+        }
 
-        imageLoader.clear(imageView)
+        presenter.unbindView()
 
         super.onDestroyView()
     }
