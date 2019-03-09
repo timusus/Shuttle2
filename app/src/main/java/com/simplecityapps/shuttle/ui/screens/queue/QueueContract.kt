@@ -1,7 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.queue
 
 import com.simplecityapps.playback.queue.QueueItem
-import com.simplecityapps.playback.queue.QueueResult
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 
 interface QueueContract {
@@ -21,7 +20,7 @@ interface QueueContract {
 
     interface View {
 
-        fun setData(queueResult: QueueResult)
+        fun setData(queue: List<QueueItem>)
 
         fun toggleEmptyView(empty: Boolean)
 

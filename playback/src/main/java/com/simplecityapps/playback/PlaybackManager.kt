@@ -45,10 +45,7 @@ class PlaybackManager(
 
     fun load(songs: List<Song>, position: Int = 0, playOnComplete: Boolean) {
         queueManager.set(songs, position)
-
-        if (playOnComplete) {
-            playback.load(playOnComplete)
-        }
+        playback.load(playOnComplete)
     }
 
     fun play() {

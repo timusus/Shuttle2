@@ -214,6 +214,10 @@ class MediaPlayerHelper {
             mediaPlayer?.pause()
             callback?.onPlaystateChanged(false)
         }
+        if (isPreparing) {
+            Timber.d("pause() called while preparing. Cancelling playOnPrepared.")
+            playOnPrepared = false
+        }
     }
 
     fun seek(position: Int) {

@@ -10,11 +10,9 @@ import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.playback.queue.QueueItem
-import com.simplecityapps.playback.queue.QueueResult
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import kotlinx.android.synthetic.main.fragment_queue.*
-import timber.log.Timber
 import javax.inject.Inject
 
 class QueueFragment : Fragment(), Injectable, QueueContract.View {
@@ -63,11 +61,10 @@ class QueueFragment : Fragment(), Injectable, QueueContract.View {
 
     // QueueContract.View Implementation
 
-    override fun setData(queueResult: QueueResult) {
-        Timber.i("Applying queue result..")
-        queueAdapter.setData(queueResult.queue.map { QueueBinder(it, imageLoader, queueBinderListener) })
-        shuffleQueueAdapter.setData(queueResult.shuffleQueue.map { QueueBinder(it, imageLoader, queueBinderListener) })
-        historyAdapter.setData(queueResult.history.map { QueueBinder(it, imageLoader, queueBinderListener) })
+    override fun setData(queue: List<QueueItem>) {
+        queueAdapter.setData(queue.map { queueItem -> QueueBinder(queueItem, imageLoader, queueBinderListener) })
+//        shuffleQueueAdapter.setData(queueResult.shuffleQueue.map { QueueBinder(it, imageLoader, queueBinderListener) })
+//        historyAdapter.setData(queueResult.history.map { QueueBinder(it, imageLoader, queueBinderListener) })
     }
 
     override fun toggleEmptyView(empty: Boolean) {
@@ -81,7 +78,7 @@ class QueueFragment : Fragment(), Injectable, QueueContract.View {
 
     // QueueBinder.Listener Implementation
 
-    val queueBinderListener = object : QueueBinder.Listener {
+    private val queueBinderListener = object : QueueBinder.Listener {
         override fun onQueueItemClicked(queueItem: QueueItem) {
             presenter.onQueueItemClicked(queueItem)
         }

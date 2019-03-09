@@ -6,7 +6,7 @@ import android.os.Bundle
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
-import com.simplecityapps.shuttle.ShuttleApp
+import com.simplecityapps.shuttle.ShuttleApplication
 import dagger.android.AndroidInjection
 import dagger.android.support.AndroidSupportInjection
 import dagger.android.support.HasSupportFragmentInjector
@@ -16,18 +16,18 @@ import dagger.android.support.HasSupportFragmentInjector
  */
 object AppInjector {
 
-    fun init(shuttleApp: ShuttleApp) {
+    fun init(shuttleApplication: ShuttleApplication) {
 
-        val coreComponent = shuttleApp.provideCoreComponent()
+        val coreComponent = shuttleApplication.provideCoreComponent()
 
         DaggerAppComponent
             .builder()
-            .application(shuttleApp)
+            .application(shuttleApplication)
             .coreComponent(coreComponent)
             .build()
-            .inject(shuttleApp)
+            .inject(shuttleApplication)
 
-        shuttleApp.registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
+        shuttleApplication.registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
 
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
                 handleActivity(activity)

@@ -28,13 +28,8 @@ class QueuePresenter @Inject constructor(
     }
 
     override fun loadQueue() {
-        view?.toggleLoadingView(true)
-
-        queueManager.getQueue { queueResult ->
-            view?.toggleLoadingView(false)
-            view?.toggleEmptyView(queueResult.queue.isEmpty())
-            view?.setData(queueResult)
-        }
+        view?.toggleEmptyView(queueManager.getQueue().isEmpty())
+        view?.setData(queueManager.getQueue())
     }
 
     override fun shuffleClicked(enabled: Boolean) {

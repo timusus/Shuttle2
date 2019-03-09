@@ -105,9 +105,7 @@ class PlaybackPresenter @Inject constructor(
     // QueueChangeCallback Implementation
 
     override fun onQueueChanged() {
-        queueManager.getQueue { queueResult ->
-            view?.setQueue(queueResult.queue, queueManager.getCurrentPosition())
-        }
+        view?.setQueue(queueManager.getQueue(), queueManager.getCurrentPosition())
     }
 
     override fun onQueuePositionChanged() {

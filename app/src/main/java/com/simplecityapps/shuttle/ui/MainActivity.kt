@@ -12,6 +12,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.simplecityapps.mediaprovider.repository.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.SongRepository
+import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.R
@@ -29,7 +30,8 @@ class MainActivity : AppCompatActivity(), HasSupportFragmentInjector, QueueChang
 
     @Inject lateinit var dispatchingAndroidInjector: DispatchingAndroidInjector<Fragment>
 
-    @Inject lateinit var queueMager: QueueManager
+    @Inject lateinit var queueManager: QueueManager
+    @Inject lateinit var playbackManager: PlaybackManager
 
     @Inject lateinit var songRepository: SongRepository
     @Inject lateinit var albumsRepository: AlbumRepository
@@ -60,8 +62,7 @@ class MainActivity : AppCompatActivity(), HasSupportFragmentInjector, QueueChang
         }
 
         // Update visible state of mini player
-        queueMager.addCallback(this)
-        onQueueChanged()
+        queueManager.addCallback(this)
     }
 
     override fun onDestroy() {
@@ -94,7 +95,7 @@ class MainActivity : AppCompatActivity(), HasSupportFragmentInjector, QueueChang
     // QueueChangeCallback
 
     override fun onQueueChanged() {
-        if (queueMager.getSize() == 0) {
+        if (queueManager.getSize() == 0) {
             multiSheetView.hide(collapse = true, animate = false)
         } else {
             multiSheetView.unhide(true)

@@ -5,27 +5,33 @@ import android.app.Application
 import android.app.Service
 import androidx.appcompat.app.AppCompatDelegate
 import com.simplecityapps.playback.dagger.PlaybackModule
+import com.simplecityapps.shuttle.appinitializers.AppInitializers
 import com.simplecityapps.shuttle.dagger.*
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasActivityInjector
 import dagger.android.HasServiceInjector
-import timber.log.Timber
 import javax.inject.Inject
 
-class ShuttleApp : Application(), HasActivityInjector, HasServiceInjector, CoreComponentProvider {
+class ShuttleApplication : Application(), HasActivityInjector, HasServiceInjector, CoreComponentProvider {
 
-    @Inject
-    lateinit var dispatchingAndroidActivityInjector: DispatchingAndroidInjector<Activity>
+    @Inject lateinit var dispatchingAndroidActivityInjector: DispatchingAndroidInjector<Activity>
 
-    @Inject
-    lateinit var dispatchingAndroidServiceInjector: DispatchingAndroidInjector<Service>
+    @Inject lateinit var dispatchingAndroidServiceInjector: DispatchingAndroidInjector<Service>
+
+    @Inject lateinit var initializers: AppInitializers
 
     private val coreComponent: CoreComponent by lazy {
+
+        val persistenceModule = PersistenceModule(this)
+        val repositoryModule = RepositoryModule(this)
+        val playbackModule = PlaybackModule(this, persistenceModule.provideSharedPrefs())
+
         DaggerCoreComponent
             .builder()
-            .repositoryModule(RepositoryModule(this))
-            .playbackModule(PlaybackModule(this))
+            .repositoryModule(repositoryModule)
+            .playbackModule(playbackModule)
+            .persistenceModule(persistenceModule)
             .build()
     }
 
@@ -34,16 +40,23 @@ class ShuttleApp : Application(), HasActivityInjector, HasServiceInjector, CoreC
 
         AppInjector.init(this)
 
-        Timber.plant(Timber.DebugTree())
+        initializers.init(this)
     }
+
+
+    // HasActivityInjector Implementation
 
     override fun activityInjector(): AndroidInjector<Activity> {
         return dispatchingAndroidActivityInjector
     }
 
+
+    // HasServiceInjector Implementation
+
     override fun serviceInjector(): AndroidInjector<Service> {
         return dispatchingAndroidServiceInjector
     }
+
 
     // CoreComponent.Provider Implementation
 
@@ -51,10 +64,11 @@ class ShuttleApp : Application(), HasActivityInjector, HasServiceInjector, CoreC
         return coreComponent
     }
 
+
     companion object {
 
         init {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_AUTO)
         }
     }
 }

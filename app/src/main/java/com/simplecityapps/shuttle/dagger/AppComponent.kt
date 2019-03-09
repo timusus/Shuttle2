@@ -2,7 +2,7 @@ package com.simplecityapps.shuttle.dagger
 
 import au.com.simplecityapps.shuttle.imageloading.dagger.ImageLoaderModule
 import com.simplecityapps.playback.dagger.PlaybackServiceModule
-import com.simplecityapps.shuttle.ShuttleApp
+import com.simplecityapps.shuttle.ShuttleApplication
 import dagger.BindsInstance
 import dagger.Component
 import dagger.android.AndroidInjectionModule
@@ -25,11 +25,11 @@ interface AppComponent {
     @Component.Builder
     interface Builder {
         @BindsInstance
-        fun application(application: ShuttleApp): Builder
+        fun application(application: ShuttleApplication): Builder
         fun coreComponent(component: CoreComponent): Builder
         fun build(): AppComponent
     }
 
-    fun inject(shuttleApp: ShuttleApp)
+    fun inject(shuttleApplication: ShuttleApplication)
 
 }

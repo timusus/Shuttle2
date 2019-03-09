@@ -18,13 +18,13 @@ interface SongRepository {
 sealed class SongQuery {
     class AlbumArtistId(val albumArtistId: Long) : SongQuery()
     class AlbumId(val albumId: Long) : SongQuery()
-    class SongId(val songId: Long) : SongQuery()
+    class SongIds(val songIds: List<Long>) : SongQuery()
 }
 
 fun SongQuery.predicate(): (Song) -> Boolean {
     return when (this) {
         is SongQuery.AlbumArtistId -> { song -> song.albumArtistId == albumArtistId }
         is SongQuery.AlbumId -> { song -> song.albumId == albumId }
-        is SongQuery.SongId -> { song -> song.id == songId }
+        is SongQuery.SongIds -> { song -> songIds.contains(song.id) }
     }
 }

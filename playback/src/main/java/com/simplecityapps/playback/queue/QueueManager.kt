@@ -14,8 +14,6 @@ interface QueueChangeCallback {
     fun onRepeatChanged()
 }
 
-class QueueResult(val queue: List<QueueItem>, val shuffleQueue: List<QueueItem>, val history: List<QueueItem>)
-
 class QueueManager : QueueChangeCallback {
 
     enum class ShuffleMode {
@@ -32,8 +30,6 @@ class QueueManager : QueueChangeCallback {
 
     private val baseQueue = Queue()
 
-    private val history = mutableListOf<QueueItem>()
-
     private var currentItem: QueueItem? = null
 
     private var callbacks: MutableList<QueueChangeCallback> = mutableListOf()
@@ -42,15 +38,19 @@ class QueueManager : QueueChangeCallback {
         if (position < 0) {
             throw IllegalArgumentException("Queue position must be >= 0 (position $position)")
         }
-        val queueItems = songs.mapIndexed { index, song -> song.toQueueItem(index == position) }
-        baseQueue.set(queueItems)
-        setCurrentItem(queueItems[position])
+        set(songs.mapIndexed { index, song -> song.toQueueItem(index == position) })
+    }
 
+    fun set(queueItems: List<QueueItem>) {
+        baseQueue.set(queueItems)
+        queueItems.firstOrNull { queueItem -> queueItem.isCurrent }?.let { currentItem ->
+            setCurrentItem(currentItem)
+        }
         onQueueChanged()
     }
 
     fun setCurrentItem(currentItem: QueueItem) {
-        Timber.d("setCurrentItem(): ${currentItem.song.path}")
+        Timber.d("setCurrentItem(): ${currentItem.song.path}, previous item: ${this.currentItem?.song?.path}")
         if (this.currentItem != currentItem) {
             this.currentItem = currentItem.clone(isCurrent = true)
 
@@ -115,14 +115,8 @@ class QueueManager : QueueChangeCallback {
         return currentQueue.getOrNull(currentQueue.indexOf(currentItem) - 1)
     }
 
-    fun getQueue(callback: (QueueResult) -> (Unit)) {
-        callback(
-            QueueResult(
-                baseQueue.get(ShuffleMode.Off),
-                baseQueue.get(ShuffleMode.On),
-                history
-            )
-        )
+    fun getQueue(): List<QueueItem> {
+        return baseQueue.get(shuffleMode)
     }
 
     fun setShuffleMode(shuffleMode: ShuffleMode) {
@@ -162,7 +156,6 @@ class QueueManager : QueueChangeCallback {
             onQueuePositionChanged()
         } ?: Timber.d("No next track to skip-previous to")
     }
-
 
     // QueueChangeCallback Implementation
 
