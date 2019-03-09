@@ -56,7 +56,7 @@ class MiniPlaybackFragment : Fragment(), Injectable, MiniPlayerContract.View {
         song?.let {
             titleTextView.text = song.name
             subtitleTextView.text = "${song.albumArtistName} • ${song.albumName}"
-            imageLoader.loadArtwork(imageView, song, ArtworkImageLoader.Options.RoundedCorners(8))
+            imageLoader.loadArtwork(imageView, song, ArtworkImageLoader.Options.RoundedCorners(16))
         }
     }
 
