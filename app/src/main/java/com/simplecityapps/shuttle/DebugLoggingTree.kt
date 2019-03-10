@@ -23,13 +23,19 @@ class DebugLoggingTree : Timber.DebugTree() {
     override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
         super.log(priority, tag, message, t)
 
-        text += SpannableString(dateFormat.format(Date())) + "\n"
-        text += bold(color(priority.getColor(), priority.getPriorityString()))+ "/"
-        text += bold(tag ?: "") + "\n> "
-        text += SpannableString(message)
-        text += "\n\n"
+        val date = Date()
 
-        callback?.onTextChanged(text)
+        val thread = Thread(Runnable {
+            text += SpannableString(dateFormat.format(date)) + "\n"
+            text += bold(color(priority.getColor(), priority.getPriorityString())) + "/"
+            text += bold(tag ?: "") + "\n> "
+            text += SpannableString(message)
+            text += "\n\n"
+            callback?.onTextChanged(text)
+        })
+
+        thread.priority = Thread.MIN_PRIORITY
+        thread.start()
     }
 
     private fun Int.getPriorityString(): String {
