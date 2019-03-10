@@ -110,6 +110,7 @@ class PlaybackManager(
 
     fun seekTo(position: Int) {
         playback.seek(position)
+        updateProgress()
     }
 
 
