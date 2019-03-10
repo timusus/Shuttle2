@@ -1,11 +1,9 @@
 package com.simplecityapps.playback
 
 import android.content.Context
-import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import android.support.v4.media.session.MediaSessionCompat
-import androidx.core.content.ContextCompat
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.queue.QueueManager
 import timber.log.Timber
@@ -44,6 +42,7 @@ class PlaybackManager(
     }
 
     fun load(songs: List<Song>, queuePosition: Int = 0, seekPosition: Int = 0, playOnComplete: Boolean) {
+        Timber.v("load() called, queuePosition: $queuePosition, seekPosition: $seekPosition, playOnComplete: $playOnComplete")
         queueManager.set(songs, queuePosition)
         playback.load(seekPosition, playOnComplete)
     }
@@ -52,8 +51,6 @@ class PlaybackManager(
         Timber.v("play() called")
 
         playback.play()
-
-        ContextCompat.startForegroundService(context, Intent(context, PlaybackService::class.java))
 
         mediaSession.setCallback(mediaSessionCallback)
         mediaSession.isActive = true

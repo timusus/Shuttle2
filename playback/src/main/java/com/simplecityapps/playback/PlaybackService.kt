@@ -14,6 +14,8 @@ class PlaybackService : Service() {
     @Inject lateinit var notificationManager: PlaybackNotificationManager
 
     override fun onCreate() {
+        Timber.v("oonCreate()")
+
         AndroidInjection.inject(this)
         super.onCreate()
     }
@@ -40,6 +42,8 @@ class PlaybackService : Service() {
     }
 
     override fun onDestroy() {
+
+        Timber.v("onDestroy()")
 
         playbackManager.pause()
 
