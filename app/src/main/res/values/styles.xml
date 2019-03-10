@@ -10,6 +10,7 @@
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:textViewStyle">@style/Widget.Shuttle.TextView</item>
         <item name="toolbarStyle">@style/Widget.Shuttle.Toolbar</item>
+        <item name="imageButtonStyle">@style/Widget.Shuttle.ImageButton</item>
     </style>
 
     <style name="AppTheme.Dark" parent="Theme.MaterialComponents.NoActionBar">
@@ -19,12 +20,22 @@
         <item name="colorAccent">@color/colorPrimary</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:textViewStyle">@style/Widget.Shuttle.TextView</item>
+        <item name="toolbarStyle">@style/Widget.Shuttle.Toolbar</item>
+        <item name="imageButtonStyle">@style/Widget.Shuttle.ImageButton</item>
+
     </style>
 
     <style name="AppTheme.DayNight" parent="AppTheme.Light" />
 
 
-    <!-- List Items-->
+    <!-- Image Buttons-->
+
+    <style name="Widget.Shuttle.ImageButton" parent="Widget.AppCompat.ImageButton">
+        <item name="android:tint">?attr/colorControlNormal</item>
+    </style>
+
+
+    <!-- Text Items-->
 
     <style name="TextTitle">
         <item name="android:textSize">16sp</item>
