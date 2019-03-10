@@ -133,14 +133,6 @@ class QueueManager : QueueChangeCallback {
         return baseQueue.get(shuffleMode)
     }
 
-    fun getOtherQueue(): List<QueueItem> {
-        val shuffleMode = when (shuffleMode) {
-            ShuffleMode.On -> ShuffleMode.Off
-            ShuffleMode.Off -> ShuffleMode.On
-        }
-        return baseQueue.get(shuffleMode)
-    }
-
     fun setShuffleMode(shuffleMode: ShuffleMode) {
         if (this.shuffleMode != shuffleMode) {
             this.shuffleMode = shuffleMode

@@ -18,8 +18,6 @@ import javax.inject.Inject
 class QueueFragment : Fragment(), Injectable, QueueContract.View {
 
     private val queueAdapter = RecyclerAdapter()
-    private val shuffleQueueAdapter = RecyclerAdapter()
-    private val historyAdapter = RecyclerAdapter()
 
     @Inject lateinit var imageLoader: ArtworkImageLoader
 
@@ -38,9 +36,6 @@ class QueueFragment : Fragment(), Injectable, QueueContract.View {
         recyclerView1.adapter = queueAdapter
         recyclerView1.setRecyclerListener(RecyclerListener())
 
-        recyclerView2.adapter = shuffleQueueAdapter
-        recyclerView2.setRecyclerListener(RecyclerListener())
-
         presenter.bindView(this)
     }
 
@@ -52,9 +47,8 @@ class QueueFragment : Fragment(), Injectable, QueueContract.View {
 
     // QueueContract.View Implementation
 
-    override fun setData(queue: List<QueueItem>, otherQueue: List<QueueItem>) {
+    override fun setData(queue: List<QueueItem>) {
         queueAdapter.setData(queue.map { queueItem -> QueueBinder(queueItem, imageLoader, queueBinderListener) })
-        shuffleQueueAdapter.setData(otherQueue.map { queueItem -> QueueBinder(queueItem, imageLoader, queueBinderListener) })
     }
 
     override fun toggleEmptyView(empty: Boolean) {

@@ -14,7 +14,7 @@ interface QueueContract {
 
     interface View {
 
-        fun setData(queue: List<QueueItem>, otherQueue: List<QueueItem>)
+        fun setData(queue: List<QueueItem>)
 
         fun toggleEmptyView(empty: Boolean)
 

@@ -54,7 +54,7 @@
                 <FrameLayout
                     android:id="@+id/sheet2PeekView"
                     android:layout_width="match_parent"
-                    android:layout_height="@dimen/bottom_sheet_peek_2_height" />
+                    android:layout_height="?attr/actionBarSize" />
 
             </FrameLayout>
         </androidx.coordinatorlayout.widget.CoordinatorLayout>

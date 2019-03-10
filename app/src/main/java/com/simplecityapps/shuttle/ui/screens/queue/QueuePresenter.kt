@@ -29,7 +29,7 @@ class QueuePresenter @Inject constructor(
 
     override fun loadQueue() {
         view?.toggleEmptyView(queueManager.getQueue().isEmpty())
-        view?.setData(queueManager.getQueue(), queueManager.getOtherQueue())
+        view?.setData(queueManager.getQueue())
     }
 
 

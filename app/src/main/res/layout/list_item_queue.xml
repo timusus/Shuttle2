@@ -9,34 +9,74 @@
     android:clickable="true"
     android:focusable="true"
     android:orientation="vertical"
-    android:padding="4dp">
+    android:padding="8dp">
+
+    <ImageView
+        android:id="@+id/artwork"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:layout_marginStart="32dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:srcCompat="@drawable/ic_image_black_24dp" />
+
+    <ImageView
+        android:id="@+id/dragHandle"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_drag_black_24dp" />
 
     <TextView
         android:id="@+id/title"
+        style="@style/TextTitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
         android:ellipsize="end"
         android:maxLines="1"
         android:textAppearance="@android:style/TextAppearance.Material.Body1"
         android:textSize="14sp"
         app:layout_constraintBottom_toTopOf="@+id/subtitle"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/tertiary"
+        app:layout_constraintStart_toEndOf="@id/artwork"
         app:layout_constraintTop_toTopOf="parent"
         tools:text="Lateralus" />
 
     <TextView
         android:id="@+id/subtitle"
+        style="@style/TextSubtitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textAppearance="@android:style/TextAppearance.Material.Body2"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/tertiary"
+        app:layout_constraintStart_toEndOf="@id/artwork"
+        app:layout_constraintTop_toBottomOf="@+id/title"
+        tools:text="Tool" />
+
+    <TextView
+        android:id="@+id/tertiary"
+        style="@style/TextSubtitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="8dp"
         android:ellipsize="end"
         android:maxLines="1"
         android:textAppearance="@android:style/TextAppearance.Material.Body2"
         android:textSize="12sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/title"
-        tools:text="Tool" />
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="3:45" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

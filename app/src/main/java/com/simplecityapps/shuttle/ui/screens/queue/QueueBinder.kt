@@ -1,20 +1,15 @@
 package com.simplecityapps.shuttle.ui.screens.queue
 
-import android.content.Context
-import android.content.res.ColorStateList
-import android.graphics.Color
-import android.graphics.drawable.RippleDrawable
-import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
-import androidx.annotation.AttrRes
-import androidx.annotation.ColorInt
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.ui.common.toHms
 
 class QueueBinder(
     val queueItem: QueueItem,
@@ -64,6 +59,8 @@ class QueueBinder(
 
         private val title = itemView.findViewById<TextView>(R.id.title)
         private val subtitle = itemView.findViewById<TextView>(R.id.subtitle)
+        private val tertiary = itemView.findViewById<TextView>(R.id.tertiary)
+        private val artworkImageView = itemView.findViewById<ImageView>(R.id.artwork)
 
         init {
             itemView.setOnClickListener {
@@ -74,28 +71,14 @@ class QueueBinder(
         override fun bind(viewBinder: QueueBinder) {
             super.bind(viewBinder)
 
-            title.text = "${viewBinder.queueItem.song.track} ${viewBinder.queueItem.song.name}"
+            title.text = viewBinder.queueItem.song.name
             subtitle.text = "${viewBinder.queueItem.song.albumArtistName} • ${viewBinder.queueItem.song.albumName}"
+            tertiary.text = viewBinder.queueItem.song.duration.toHms()
+            viewBinder.imageLoader.loadArtwork(artworkImageView, viewBinder.queueItem.song, ArtworkImageLoader.Options.RoundedCorners(16))
+        }
 
-            if (viewBinder.queueItem.isCurrent) {
-                (itemView.background as? RippleDrawable)?.let { rippleDrawable ->
-                    rippleDrawable.setColor(ColorStateList.valueOf(Color.RED))
-                }
-                itemView.isHovered = true
-            } else {
-                (itemView.background as? RippleDrawable)?.let { rippleDrawable ->
-                    rippleDrawable.setColor(ColorStateList.valueOf(itemView.context.getThemeColor(R.attr.rippleColor)))
-                }
-                itemView.isHovered = false
-            }
+        override fun recycle() {
+            viewBinder?.imageLoader?.clear(artworkImageView)
         }
     }
-}
-
-@ColorInt
-fun Context.getThemeColor(
-    @AttrRes attribute: Int
-) = TypedValue().let {
-    theme.resolveAttribute(attribute, it, true)
-    it.data
 }
