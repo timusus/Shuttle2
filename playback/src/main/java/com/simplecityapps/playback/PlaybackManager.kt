@@ -62,14 +62,18 @@ class PlaybackManager(
         mediaSession.isActive = false
     }
 
-    fun skipToNext() {
-        queueManager.skipToNext()
+    fun skipToNext(ignoreRepeat: Boolean = false) {
+        queueManager.skipToNext(ignoreRepeat)
         playback.load(0, true)
     }
 
-    fun skipToPrev() {
-        queueManager.skipToPrevious()
-        playback.load(0, true)
+    fun skipToPrev(force: Boolean = false) {
+        if (force || playback.getPosition() ?: 0 < 2000) {
+            queueManager.skipToPrevious()
+            playback.load(0, true)
+        } else {
+            seekTo(0)
+        }
     }
 
     fun isPlaying(): Boolean {

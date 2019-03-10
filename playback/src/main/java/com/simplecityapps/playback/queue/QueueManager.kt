@@ -90,9 +90,23 @@ class QueueManager : QueueChangeCallback {
         onQueueChanged()
     }
 
-    fun getNext(): QueueItem? {
+    /**
+     * Retrieves the next queue item, accounting for the current repeat mode.=
+     *
+     * @param ignoreRepeat whether to ignore the current repeat mode, and return the next item as if repeat mode is 'all'
+     */
+    fun getNext(ignoreRepeat: Boolean = false): QueueItem? {
+        return if (ignoreRepeat) {
+            getNext(RepeatMode.All)
+        } else {
+            getNext(repeatMode)
+        }
+    }
+
+    private fun getNext(repeatMode: RepeatMode): QueueItem? {
         val currentQueue = baseQueue.get(shuffleMode)
         val currentIndex = currentQueue.indexOf(currentItem)
+
         return when (repeatMode) {
             RepeatMode.Off -> {
                 currentQueue.getOrNull(currentIndex + 1)
@@ -130,6 +144,13 @@ class QueueManager : QueueChangeCallback {
         return shuffleMode
     }
 
+    fun toggleShuffleMode() {
+        when (shuffleMode) {
+            ShuffleMode.Off -> setShuffleMode(ShuffleMode.On)
+            ShuffleMode.On -> setShuffleMode(ShuffleMode.Off)
+        }
+    }
+
     fun setRepeatMode(repeatMode: RepeatMode) {
         if (this.repeatMode != repeatMode) {
             this.repeatMode = repeatMode
@@ -141,9 +162,17 @@ class QueueManager : QueueChangeCallback {
         return repeatMode
     }
 
-    fun skipToNext() {
+    fun toggleRepeatMode() {
+        when (repeatMode) {
+            RepeatMode.Off -> setRepeatMode(RepeatMode.All)
+            RepeatMode.All -> setRepeatMode(RepeatMode.One)
+            RepeatMode.One -> setRepeatMode(RepeatMode.Off)
+        }
+    }
+
+    fun skipToNext(ignoreRepeat: Boolean) {
         Timber.v("skipToNext()")
-        getNext()?.let { nextItem ->
+        getNext(ignoreRepeat)?.let { nextItem ->
             setCurrentItem(nextItem)
             onQueuePositionChanged()
         } ?: Timber.v("No next track to skip to")
@@ -156,6 +185,7 @@ class QueueManager : QueueChangeCallback {
             onQueuePositionChanged()
         } ?: Timber.v("No next track to skip-previous to")
     }
+
 
     // QueueChangeCallback Implementation
 

@@ -115,8 +115,9 @@
         app:layout_constraintTop_toTopOf="@+id/seekBar"
         tools:text="4:31" />
 
-    <ImageButton
+    <com.simplecityapps.shuttle.ui.common.view.ShuffleButton
         android:id="@+id/shuffleButton"
+        style="@style/Widget.Shuttle.ImageButton"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_marginStart="32dp"
@@ -124,8 +125,7 @@
         android:contentDescription="Shuffle"
         app:layout_constraintBottom_toBottomOf="@+id/skipPrevButton"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/skipPrevButton"
-        app:srcCompat="@drawable/ic_shuffle_black_24dp" />
+        app:layout_constraintTop_toTopOf="@+id/skipPrevButton" />
 
     <ImageButton
         android:id="@+id/skipPrevButton"
@@ -172,16 +172,15 @@
         app:layout_constraintTop_toTopOf="@+id/playPauseButton"
         app:srcCompat="@drawable/ic_skip_next_black_24dp" />
 
-    <ImageButton
+    <com.simplecityapps.shuttle.ui.common.view.RepeatButton
         android:id="@+id/repeatButton"
+        style="@style/Widget.Shuttle.ImageButton"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_marginEnd="32dp"
         android:background="?selectableItemBackgroundBorderless"
-        android:contentDescription="Shuffle"
         app:layout_constraintBottom_toBottomOf="@+id/skipNextButton"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/skipNextButton"
-        app:srcCompat="@drawable/ic_repeat_black_24dp" />
+        app:layout_constraintTop_toTopOf="@+id/skipNextButton" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -78,14 +78,11 @@ class PlaybackFragment :
     }
 
     override fun setShuffleMode(shuffleMode: QueueManager.ShuffleMode) {
-        when (shuffleMode) {
-            QueueManager.ShuffleMode.Off -> shuffleButton.setImageDrawable(ContextCompat.getDrawable(context!!, R.drawable.ic_shuffle_black_24dp))
-            QueueManager.ShuffleMode.On -> shuffleButton.setImageDrawable(ContextCompat.getDrawable(context!!, R.drawable.ic_shuffle_off_black_24dp))
-        }
+        shuffleButton.shuffleMode = shuffleMode
     }
 
     override fun setRepeatMode(repeatMode: QueueManager.RepeatMode) {
-
+        repeatButton.repeatMode = repeatMode
     }
 
     override fun setCurrentSong(song: Song?) {

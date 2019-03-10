@@ -59,14 +59,15 @@ class PlaybackPresenter @Inject constructor(
     }
 
     override fun toggleShuffle() {
-
+        queueManager.toggleShuffleMode()
     }
 
     override fun toggleRepeat() {
+        queueManager.toggleRepeatMode()
     }
 
     override fun skipNext() {
-        playbackManager.skipToNext()
+        playbackManager.skipToNext(true)
     }
 
     override fun skipPrev() {
