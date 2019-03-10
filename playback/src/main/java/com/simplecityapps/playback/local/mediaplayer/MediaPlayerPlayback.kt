@@ -77,6 +77,11 @@ class MediaPlayerPlayback(
         return currentMediaPlayerHelper.getDuration()
     }
 
+    override fun setVolume(volume: Float) {
+        currentMediaPlayerHelper.volume = volume
+        nextMediaPlayerHelper.volume = volume
+    }
+
     private val currentPlayerCallback = object : Playback.Callback {
 
         override fun onPlaystateChanged(isPlaying: Boolean) {

@@ -113,6 +113,14 @@ class MediaPlayerHelper {
         return null
     }
 
+    var volume: Float = 1.0f
+        set(value) {
+            field = value
+            if (isPrepared) {
+                mediaPlayer?.setVolume(volume, volume)
+            }
+        }
+
     fun setNextMediaPlayer(nextMediaPlayer: MediaPlayer?) {
         Timber.v("$tag setNextMediaPlayer()")
         if (isPrepared) {
@@ -132,6 +140,8 @@ class MediaPlayerHelper {
             seek(seekPosition)
             seekPosition = 0
         }
+
+        volume = volume
 
         if (playOnPrepared) {
             play()

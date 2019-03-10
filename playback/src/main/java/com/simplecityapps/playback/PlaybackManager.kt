@@ -5,14 +5,17 @@ import android.os.Handler
 import android.os.Looper
 import android.support.v4.media.session.MediaSessionCompat
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.queue.QueueManager
 import timber.log.Timber
 
 class PlaybackManager(
     private val context: Context,
     private val queueManager: QueueManager,
-    private val playback: Playback
-) : Playback.Callback {
+    private val playback: Playback,
+    private val audioFocusHelper: AudioFocusHelper
+) : Playback.Callback,
+    AudioFocusHelper.Listener {
 
     interface ProgressCallback {
 
@@ -31,6 +34,7 @@ class PlaybackManager(
 
     init {
         playback.callback = this
+        audioFocusHelper.listener = this
     }
 
     fun togglePlayback() {
@@ -50,13 +54,17 @@ class PlaybackManager(
     fun play() {
         Timber.v("play() called")
 
-        playback.play()
+        if (audioFocusHelper.requestAudioFocus()) {
+            playback.play()
 
-        mediaSession.setCallback(mediaSessionCallback)
-        mediaSession.isActive = true
+            mediaSession.setCallback(mediaSessionCallback)
+            mediaSession.isActive = true
+        } else {
+            Timber.w("play() failed, audio focus request denied.")
+        }
     }
 
-    fun pause() {
+    override fun pause() {
         playback.pause()
 
         mediaSession.isActive = false
@@ -176,6 +184,17 @@ class PlaybackManager(
         callbacks.forEach { callback -> callback.onPlaybackComplete(song) }
     }
 
+
+    // AudioFocusHelper.Listener Implementation
+
+    override fun restoreVolumeAndplay() {
+        playback.setVolume(1.0f)
+        play()
+    }
+
+    override fun duck() {
+        playback.setVolume(0.2f)
+    }
 
     /**
      * A simple handler which executes continuously between start() and stop()

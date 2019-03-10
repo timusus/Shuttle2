@@ -3,10 +3,14 @@ package com.simplecityapps.playback.dagger
 import android.app.NotificationManager
 import android.content.Context
 import android.content.SharedPreferences
+import android.os.Build
 import androidx.core.content.getSystemService
 import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackNotificationManager
+import com.simplecityapps.playback.audiofocus.AudioFocusHelper
+import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi21
+import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi26
 import com.simplecityapps.playback.local.mediaplayer.MediaPlayerPlayback
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
@@ -33,8 +37,18 @@ class PlaybackModule(
 
     @Singleton
     @Provides
-    fun providePlaybackManager(queue: QueueManager, playback: Playback): PlaybackManager {
-        return PlaybackManager(context, queue, playback)
+    fun provideAudioFocusHelper(): AudioFocusHelper {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            return AudioFocusHelperApi26(context)
+        } else {
+            return AudioFocusHelperApi21(context)
+        }
+    }
+
+    @Singleton
+    @Provides
+    fun providePlaybackManager(queue: QueueManager, playback: Playback, audioFocusHelper: AudioFocusHelper): PlaybackManager {
+        return PlaybackManager(context, queue, playback, audioFocusHelper)
     }
 
     @Singleton

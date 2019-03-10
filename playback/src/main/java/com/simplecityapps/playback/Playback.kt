@@ -20,6 +20,8 @@ interface Playback {
 
     fun getDuration(): Int?
 
+    fun setVolume(volume: Float)
+
     interface Callback {
 
         fun onPlaystateChanged(isPlaying: Boolean)
