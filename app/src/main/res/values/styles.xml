@@ -8,6 +8,8 @@
         <item name="colorAccent">@color/colorPrimary</item>
         <item name="tabLayoutStyle">@style/TabLayout.AppTheme.Dark</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:textViewStyle">@style/Widget.Shuttle.TextView</item>
+        <item name="toolbarStyle">@style/Widget.Shuttle.Toolbar</item>
     </style>
 
     <style name="AppTheme.Dark" parent="Theme.MaterialComponents.NoActionBar">
@@ -16,9 +18,47 @@
         <item name="tabLayoutStyle">@style/TabLayout.AppTheme.Dark</item>
         <item name="colorAccent">@color/colorPrimary</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:textViewStyle">@style/Widget.Shuttle.TextView</item>
     </style>
 
     <style name="AppTheme.DayNight" parent="AppTheme.Light" />
+
+
+    <!-- List Items-->
+
+    <style name="TextTitle">
+        <item name="android:textSize">16sp</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:lines">1</item>
+        <item name="android:fontFamily">@font/opensans_semibold</item>
+    </style>
+
+    <style name="TextSubtitle">
+        <item name="android:textSize">13sp</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:lines">1</item>
+        <item name="android:fontFamily">@font/opensans_regular</item>
+    </style>
+
+
+    <!-- Toolbar -->
+
+    <style name="TextAppearance.Shuttle.Toolbar" parent="@android:style/TextAppearance">
+        <item name="android:textSize">20sp</item>
+        <item name="android:fontFamily">@font/opensans_semibold</item>
+    </style>
+
+    <style name="Widget.Shuttle.Toolbar" parent="Widget.AppCompat.Toolbar">
+        <item name="titleTextAppearance">@style/TextAppearance.Shuttle.Toolbar</item>
+    </style>
+
+
+    <!-- TextView -->
+
+    <style name="Widget.Shuttle.TextView" parent="@android:style/Widget.Material.TextView">
+        <item name="android:textAppearance">@style/TextAppearance.AppCompat.Body1</item>
+        <item name="android:fontFamily">@font/opensans_regular</item>
+    </style>
 
 
     <!-- FastScroll -->
@@ -31,12 +71,18 @@
     </style>
 
 
-    <!-- TanLayout -->
+    <!-- TabLayout -->
+
+    <style name="TextAppearance.Shuttle.TabItem" parent="@android:style/TextAppearance">
+        <item name="android:textSize">16sp</item>
+        <item name="android:fontFamily">@font/opensans_semibold</item>
+    </style>
 
     <style name="TabLayout.AppTheme.Dark" parent="Widget.MaterialComponents.TabLayout">
         <item name="android:background">@android:color/transparent</item>
         <item name="tabTextColor">?android:textColorPrimary</item>
         <item name="tabSelectedTextColor">?colorPrimary</item>
+        <item name="tabTextAppearance">@style/TextAppearance.Shuttle.TabItem</item>
     </style>
 
 </resources>

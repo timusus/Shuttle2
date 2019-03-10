@@ -13,9 +13,8 @@
 
     <ImageView
         android:id="@+id/imageView"
-        android:layout_width="56dp"
-        android:layout_height="56dp"
-        android:scaleType="centerCrop"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -24,14 +23,12 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:ellipsize="end"
-        android:lines="1"
-        android:textAppearance="@android:style/TextAppearance.Material.Body1"
-        android:textSize="16sp"
+        style="@style/TextTitle"
         app:layout_constraintBottom_toTopOf="@+id/subtitle"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/imageView"
         app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="spread"
         tools:text="10,000 Days" />
 
     <TextView
@@ -39,10 +36,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:ellipsize="end"
-        android:lines="1"
-        android:textAppearance="@android:style/TextAppearance.Material.Body2"
-        android:textSize="14sp"
+        style="@style/TextSubtitle"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/imageView"

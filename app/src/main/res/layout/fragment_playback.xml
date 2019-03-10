@@ -47,16 +47,13 @@
 
     <TextView
         android:id="@+id/titleTextView"
+        style="@style/TextTitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
-        android:ellipsize="end"
-        android:fontFamily="sans-serif-medium"
-        android:gravity="center"
-        android:lines="1"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
-        android:textSize="18sp"
+        android:textSize="19sp"
         app:layout_constraintBottom_toTopOf="@+id/subtitleTextView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
@@ -68,12 +65,11 @@
 
     <TextView
         android:id="@+id/subtitleTextView"
+        style="@style/TextSubtitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
-        android:ellipsize="end"
         android:gravity="center"
-        android:lines="1"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
         android:textSize="16sp"
