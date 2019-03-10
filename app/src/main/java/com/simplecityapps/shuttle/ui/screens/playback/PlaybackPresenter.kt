@@ -97,7 +97,7 @@ class PlaybackPresenter @Inject constructor(
 
     // PlaybackManager.ProgressCallback
 
-    override fun onPregressChanged(position: Int, total: Int) {
+    override fun onProgressChanged(position: Int, total: Int) {
         view?.setProgress(position, total)
     }
 

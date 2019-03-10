@@ -16,7 +16,7 @@ class PlaybackManager(
 
     interface ProgressCallback {
 
-        fun onPregressChanged(position: Int, total: Int)
+        fun onProgressChanged(position: Int, total: Int)
     }
 
     internal val mediaSession: MediaSessionCompat by lazy {
@@ -125,7 +125,7 @@ class PlaybackManager(
     }
 
     private fun updateProgress() {
-        progressCallbacks.forEach { callback -> callback.onPregressChanged(playback.getPosition() ?: 0, playback.getDuration() ?: 0) }
+        progressCallbacks.forEach { callback -> callback.onProgressChanged(playback.getPosition() ?: 0, playback.getDuration() ?: 0) }
     }
 
 
