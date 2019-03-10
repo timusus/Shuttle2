@@ -10,17 +10,11 @@ interface QueueContract {
         fun loadQueue()
 
         fun onQueueItemClicked(queueItem: QueueItem)
-
-        fun shuffleClicked(enabled: Boolean)
-
-        fun nextClicked()
-
-        fun prevClicked()
     }
 
     interface View {
 
-        fun setData(queue: List<QueueItem>)
+        fun setData(queue: List<QueueItem>, otherQueue: List<QueueItem>)
 
         fun toggleEmptyView(empty: Boolean)
 

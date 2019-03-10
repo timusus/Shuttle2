@@ -133,9 +133,20 @@ class QueueManager : QueueChangeCallback {
         return baseQueue.get(shuffleMode)
     }
 
+    fun getOtherQueue(): List<QueueItem> {
+        val shuffleMode = when (shuffleMode) {
+            ShuffleMode.On -> ShuffleMode.Off
+            ShuffleMode.Off -> ShuffleMode.On
+        }
+        return baseQueue.get(shuffleMode)
+    }
+
     fun setShuffleMode(shuffleMode: ShuffleMode) {
         if (this.shuffleMode != shuffleMode) {
             this.shuffleMode = shuffleMode
+            if (shuffleMode == ShuffleMode.On) {
+                baseQueue.shuffle()
+            }
             onShuffleChanged()
         }
     }
@@ -235,6 +246,11 @@ class QueueManager : QueueChangeCallback {
 
         fun set(items: List<QueueItem>) {
             baseList = items.toMutableList()
+
+            shuffle()
+        }
+
+        fun shuffle() {
             shuffleList = baseList.shuffled().toMutableList()
 
             // Move the current item to the top of the shuffle list

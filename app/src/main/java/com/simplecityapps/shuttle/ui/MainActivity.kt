@@ -18,6 +18,7 @@ import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.screens.playback.PlaybackFragment
 import com.simplecityapps.shuttle.ui.screens.playback.mini.MiniPlaybackFragment
+import com.simplecityapps.shuttle.ui.screens.queue.QueueFragment
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.support.HasSupportFragmentInjector
 import io.reactivex.disposables.CompositeDisposable
@@ -58,6 +59,7 @@ class MainActivity : AppCompatActivity(), HasSupportFragmentInjector, QueueChang
             supportFragmentManager.beginTransaction()
                 .add(R.id.sheet1Container, PlaybackFragment(), "PlaybackFragment")
                 .add(R.id.sheet1PeekView, MiniPlaybackFragment(), "MiniPlaybackFragment")
+                .add(R.id.sheet2Container, QueueFragment.newInstance(), "QueueFragment")
                 .commit()
         }
 

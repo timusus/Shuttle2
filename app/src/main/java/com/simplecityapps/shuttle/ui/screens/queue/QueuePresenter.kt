@@ -29,22 +29,7 @@ class QueuePresenter @Inject constructor(
 
     override fun loadQueue() {
         view?.toggleEmptyView(queueManager.getQueue().isEmpty())
-        view?.setData(queueManager.getQueue())
-    }
-
-    override fun shuffleClicked(enabled: Boolean) {
-        when (queueManager.getShuffleMode()) {
-            QueueManager.ShuffleMode.On -> queueManager.setShuffleMode(QueueManager.ShuffleMode.Off)
-            QueueManager.ShuffleMode.Off -> queueManager.setShuffleMode(QueueManager.ShuffleMode.On)
-        }
-    }
-
-    override fun nextClicked() {
-        playbackManager.skipToNext()
-    }
-
-    override fun prevClicked() {
-        playbackManager.skipToPrev()
+        view?.setData(queueManager.getQueue(), queueManager.getOtherQueue())
     }
 
 

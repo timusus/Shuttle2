@@ -41,15 +41,6 @@ class QueueFragment : Fragment(), Injectable, QueueContract.View {
         recyclerView2.adapter = shuffleQueueAdapter
         recyclerView2.setRecyclerListener(RecyclerListener())
 
-        recyclerView3.adapter = historyAdapter
-        recyclerView3.setRecyclerListener(RecyclerListener())
-
-        shuffleSwitch.setOnClickListener { presenter.shuffleClicked(shuffleSwitch.isChecked) }
-
-        nextButton.setOnClickListener { presenter.nextClicked() }
-
-        prevButton.setOnClickListener { presenter.prevClicked() }
-
         presenter.bindView(this)
     }
 
@@ -61,10 +52,9 @@ class QueueFragment : Fragment(), Injectable, QueueContract.View {
 
     // QueueContract.View Implementation
 
-    override fun setData(queue: List<QueueItem>) {
+    override fun setData(queue: List<QueueItem>, otherQueue: List<QueueItem>) {
         queueAdapter.setData(queue.map { queueItem -> QueueBinder(queueItem, imageLoader, queueBinderListener) })
-//        shuffleQueueAdapter.setData(queueResult.shuffleQueue.map { QueueBinder(it, imageLoader, queueBinderListener) })
-//        historyAdapter.setData(queueResult.history.map { QueueBinder(it, imageLoader, queueBinderListener) })
+        shuffleQueueAdapter.setData(otherQueue.map { queueItem -> QueueBinder(queueItem, imageLoader, queueBinderListener) })
     }
 
     override fun toggleEmptyView(empty: Boolean) {
