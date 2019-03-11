@@ -27,7 +27,7 @@ class PlaybackService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
-        Timber.v("onStartCommand() action: ${intent?.action}")
+        Timber.v("onStartCommand() intent: ${intent?.toString()} action: ${intent?.action}")
 
         MediaButtonReceiver.handleIntent(mediaSessionManager.mediaSession, intent)
 
