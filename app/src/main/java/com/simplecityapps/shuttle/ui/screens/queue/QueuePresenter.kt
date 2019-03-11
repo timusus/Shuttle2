@@ -57,5 +57,7 @@ class QueuePresenter @Inject constructor(
 
     override fun onQueuePositionChanged() {
         loadQueue()
+
+        view?.setQueuePosition(queueManager.getCurrentPosition() ?: 0, queueManager.getSize())
     }
 }

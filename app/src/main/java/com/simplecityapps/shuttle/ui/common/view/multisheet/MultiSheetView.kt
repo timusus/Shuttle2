@@ -279,31 +279,6 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
         v.visibility = if (alpha == 0f) View.GONE else View.VISIBLE
     }
 
-    companion object {
-
-        /**
-         * A helper method to return the first MultiSheetView parent of the passed in View,
-         * or null if none can be found.
-         *
-         * @param v the view whose hierarchy will be traversed.
-         * @return the first MultiSheetView of the passed in view, or null if none can be found.
-         */
-        fun getParentMultiSheetView(v: View?): MultiSheetView? {
-            if (v == null) return null
-
-            if (v is MultiSheetView) {
-                return v
-            }
-
-            if (v.parent is View) {
-                return getParentMultiSheetView(v.parent as View)
-            } else {
-                return null
-            }
-        }
-    }
-
-
     annotation class Sheet {
         companion object {
             const val NONE = 0
@@ -311,4 +286,16 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
             const val SECOND = 2
         }
     }
+}
+
+
+/**
+ * A helper method to return the first MultiSheetView parent of the passed in View,
+ * or null if none can be found.
+ *
+ * @param v the view whose hierarchy will be traversed.
+ * @return the first MultiSheetView of the passed in view, or null if none can be found.
+ */
+fun View?.findParentMultiSheetView(): MultiSheetView? {
+    return (this as? MultiSheetView) ?: (this?.parent as? View)?.findParentMultiSheetView()
 }

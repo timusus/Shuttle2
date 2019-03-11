@@ -12,6 +12,8 @@ import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
+import com.simplecityapps.shuttle.ui.common.view.multisheet.findParentMultiSheetView
 import kotlinx.android.synthetic.main.fragment_queue.*
 import javax.inject.Inject
 
@@ -37,10 +39,13 @@ class QueueFragment : Fragment(), Injectable, QueueContract.View {
         recyclerView1.setRecyclerListener(RecyclerListener())
 
         presenter.bindView(this)
+
+        view.findParentMultiSheetView()?.setSheetStateChangeListener(sheetStateChangeListener)
     }
 
     override fun onDestroyView() {
         presenter.unbindView()
+        view.findParentMultiSheetView()?.setSheetStateChangeListener(sheetStateChangeListener)
         super.onDestroyView()
     }
 
@@ -59,12 +64,29 @@ class QueueFragment : Fragment(), Injectable, QueueContract.View {
         progressBar.isVisible = loading
     }
 
+    override fun setQueuePosition(position: Int, total: Int) {
+        toolbarSubtitleTextView.text = "${position + 1} of $total"
+    }
 
     // QueueBinder.Listener Implementation
 
     private val queueBinderListener = object : QueueBinder.Listener {
         override fun onQueueItemClicked(queueItem: QueueItem) {
             presenter.onQueueItemClicked(queueItem)
+        }
+    }
+
+
+    private val sheetStateChangeListener = object : MultiSheetView.SheetStateChangeListener {
+
+        override fun onSheetStateChanged(sheet: Int, state: Int) {
+
+        }
+
+        override fun onSlide(sheet: Int, slideOffset: Float) {
+            if (sheet == MultiSheetView.Sheet.SECOND) {
+                toolbarTitleTextView.textSize = 15 + (5 * slideOffset)
+            }
         }
     }
 

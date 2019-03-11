@@ -19,5 +19,7 @@ interface QueueContract {
         fun toggleEmptyView(empty: Boolean)
 
         fun toggleLoadingView(loading: Boolean)
+
+        fun setQueuePosition(position: Int, total: Int)
     }
 }
