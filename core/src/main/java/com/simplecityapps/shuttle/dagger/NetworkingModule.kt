@@ -22,9 +22,13 @@ open class NetworkingModule {
     @Provides
     fun provideLoggingInterceptor(): HttpLoggingInterceptor {
         return HttpLoggingInterceptor(HttpLoggingInterceptor.Logger { message ->
-            Timber.tag("OkHttp").d(message)
+            Timber.tag(NETWORK_LOG_TAG).d(message)
         }).apply {
             level = HttpLoggingInterceptor.Level.BASIC
         }
+    }
+
+    companion object {
+        const val NETWORK_LOG_TAG = "OkHttp"
     }
 }

@@ -16,6 +16,8 @@ open class RecyclerAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     var items = mutableListOf<ViewBinder>()
         private set
 
+    var loggingEnabled = true
+
     private var disposable: Disposable? = null
 
     fun setData(newItems: List<ViewBinder>, animateChanges: Boolean = true, completion: (() -> Unit)? = null) {
@@ -27,7 +29,9 @@ open class RecyclerAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe { diffResult ->
                     items = newItems.toMutableList()
-                    diffResult.dispatchUpdatesTo(LoggingListUpdateCallback())
+                    if (loggingEnabled) {
+                        diffResult.dispatchUpdatesTo(LoggingListUpdateCallback())
+                    }
                     diffResult.dispatchUpdatesTo(this)
                     completion?.invoke()
                 }

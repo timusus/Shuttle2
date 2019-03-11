@@ -2,7 +2,7 @@ package com.simplecityapps.shuttle.appinitializers
 
 import android.app.Application
 import com.simplecityapps.shuttle.BuildConfig
-import com.simplecityapps.shuttle.DebugLoggingTree
+import com.simplecityapps.shuttle.debug.DebugLoggingTree
 import timber.log.Timber
 import javax.inject.Inject
 

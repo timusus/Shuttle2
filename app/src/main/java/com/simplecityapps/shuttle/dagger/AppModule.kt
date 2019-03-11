@@ -1,7 +1,7 @@
 package com.simplecityapps.shuttle.dagger
 
 import android.content.Context
-import com.simplecityapps.shuttle.DebugLoggingTree
+import com.simplecityapps.shuttle.debug.DebugLoggingTree
 import com.simplecityapps.shuttle.ShuttleApplication
 import dagger.Module
 import dagger.Provides

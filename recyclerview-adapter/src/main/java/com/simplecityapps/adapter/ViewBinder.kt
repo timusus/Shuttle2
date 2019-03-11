@@ -12,7 +12,7 @@ interface ViewBinder : ContentsComparator {
 
     // Todo: This doesn't belong here
     enum class ViewType {
-        AlbumArtist, Album, Song, Folder, DiscNumber, QueueItem, Artwork
+        AlbumArtist, Album, Song, Folder, DiscNumber, QueueItem, Artwork, Log
     }
 
     fun createViewHolder(parent: ViewGroup): ViewHolder<out ViewBinder>
