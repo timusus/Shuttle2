@@ -14,6 +14,6 @@ class SongArtworkProvider(
     }
 
     override fun getArtworkUri(): Call<out ArtworkUrlResult> {
-        return lastFm.getLastFmTrack(song.albumArtistName, song.name)
+        return lastFm.getLastFmAlbum(song.albumArtistName, song.albumName)
     }
 }
