@@ -50,7 +50,7 @@ class MiniPlayerPresenter @Inject constructor(
     }
 
 
-    // Playback.Callbacks Implementation
+    // Playback.Callback Implementation
 
     override fun onPlaystateChanged(isPlaying: Boolean) {
         view?.setPlayState(isPlaying)

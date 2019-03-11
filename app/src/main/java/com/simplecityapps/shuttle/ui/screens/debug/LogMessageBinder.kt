@@ -6,12 +6,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import androidx.annotation.ColorInt
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.debug.LogMessage
-import com.simplecityapps.shuttle.ui.common.color
-import com.simplecityapps.shuttle.ui.common.plus
 import java.text.SimpleDateFormat
 
 class LogMessageBinder(val logMessage: LogMessage) : ViewBinder {
@@ -49,13 +46,13 @@ class LogMessageBinder(val logMessage: LogMessage) : ViewBinder {
             super.bind(viewBinder)
 
             timestampTextView.text = dateFormat.format(viewBinder.logMessage.date)
-            tagTextView.text = color(viewBinder.logMessage.priority.getColor(), viewBinder.logMessage.priority.getPriorityString()) + "/" + (viewBinder.logMessage.tag ?: "")
+            tagTextView.text = viewBinder.logMessage.priority.getPriorityString() + "/" + (viewBinder.logMessage.tag ?: "")
             messageTextViewBinder.text = viewBinder.logMessage.message
         }
 
         companion object {
             @SuppressLint("SimpleDateFormat")
-            val dateFormat = SimpleDateFormat("hh:mm:ss:SSS")
+            val dateFormat = SimpleDateFormat("hh:mm:ss.SSS")
         }
 
         private fun Int.getPriorityString(): String {
@@ -66,18 +63,6 @@ class LogMessageBinder(val logMessage: LogMessage) : ViewBinder {
                 Log.WARN -> "W"
                 Log.ERROR -> "E"
                 else -> ""
-            }
-        }
-
-        @ColorInt
-        private fun Int.getColor(): Int {
-            return when (this) {
-                Log.VERBOSE -> 0XFF263238.toInt()
-                Log.DEBUG -> 0XFF263238.toInt()
-                Log.INFO -> 0XFF03a9f4.toInt()
-                Log.WARN -> 0XFFef6c00.toInt()
-                Log.ERROR -> 0xFFf44336.toInt()
-                else -> 0XFF000000.toInt()
             }
         }
     }

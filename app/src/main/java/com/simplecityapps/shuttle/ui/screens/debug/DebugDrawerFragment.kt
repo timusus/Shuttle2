@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.dagger.NetworkingModule
 import com.simplecityapps.shuttle.ui.common.PagerAdapter
 import kotlinx.android.synthetic.main.fragment_debug_drawer.*
 
@@ -25,7 +26,8 @@ class DebugDrawerFragment : Fragment(), Injectable {
         tabLayout.setupWithViewPager(viewPager, true)
 
         val adapter = PagerAdapter(childFragmentManager)
-        adapter.addFragment("All", LoggingFragment())
+        adapter.addFragment("All", LoggingFragment.newInstance(LoggingFragment.Filter(excludesTag = NetworkingModule.NETWORK_LOG_TAG)))
+        adapter.addFragment("OkHttp", LoggingFragment.newInstance(LoggingFragment.Filter(includesTag = NetworkingModule.NETWORK_LOG_TAG)))
         adapter.notifyDataSetChanged()
 
         viewPager.adapter = adapter
