@@ -4,10 +4,11 @@ import android.content.SharedPreferences
 import com.simplecityapps.mediaprovider.repository.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.SongRepository
-import com.simplecityapps.playback.mediasession.MediaSessionManager
+import com.simplecityapps.playback.NoiseManager
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackNotificationManager
 import com.simplecityapps.playback.dagger.PlaybackModule
+import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
 import dagger.Component
@@ -44,6 +45,8 @@ interface CoreComponent {
     fun getPlaybackPreferenceManager(): PlaybackPreferenceManager
 
     fun getMediaSessionManager(): MediaSessionManager
+
+    fun getNoiseManager(): NoiseManager
 
     @Component.Builder
     interface Builder {

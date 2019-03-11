@@ -7,6 +7,7 @@ import androidx.core.content.ContextCompat
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
+import com.simplecityapps.playback.NoiseManager
 import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackService
@@ -28,7 +29,8 @@ class PlaybackInitializer @Inject constructor(
     private val playbackManager: PlaybackManager,
     private val queueManager: QueueManager,
     private val playbackPreferenceManager: PlaybackPreferenceManager,
-    @Suppress("unused") private val mediaSessionManager: MediaSessionManager
+    @Suppress("unused") private val mediaSessionManager: MediaSessionManager,
+    @Suppress("unused") private val noiseManager: NoiseManager
 ) : AppInitializer,
     QueueChangeCallback,
     Playback.Callback,

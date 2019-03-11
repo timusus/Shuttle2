@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.os.Build
 import androidx.core.content.getSystemService
+import com.simplecityapps.playback.NoiseManager
 import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackNotificationManager
@@ -56,6 +57,12 @@ class PlaybackModule(
     @Provides
     fun provideMediaSessionManager(playbackManager: PlaybackManager, queueManager: QueueManager): MediaSessionManager {
         return MediaSessionManager(context, playbackManager, queueManager)
+    }
+
+    @Singleton
+    @Provides
+    fun provideNoiseManager(playbackManager: PlaybackManager): NoiseManager {
+        return NoiseManager(context, playbackManager)
     }
 
     @Singleton

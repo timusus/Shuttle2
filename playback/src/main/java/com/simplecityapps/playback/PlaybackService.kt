@@ -3,6 +3,8 @@ package com.simplecityapps.playback
 import android.app.Service
 import android.content.Intent
 import android.os.IBinder
+import androidx.media.session.MediaButtonReceiver
+import com.simplecityapps.playback.mediasession.MediaSessionManager
 import dagger.android.AndroidInjection
 import timber.log.Timber
 import javax.inject.Inject
@@ -10,6 +12,8 @@ import javax.inject.Inject
 class PlaybackService : Service() {
 
     @Inject lateinit var playbackManager: PlaybackManager
+
+    @Inject lateinit var mediaSessionManager: MediaSessionManager
 
     @Inject lateinit var notificationManager: PlaybackNotificationManager
 
@@ -24,6 +28,8 @@ class PlaybackService : Service() {
         super.onStartCommand(intent, flags, startId)
 
         Timber.v("onStartCommand() action: ${intent?.action}")
+
+        MediaButtonReceiver.handleIntent(mediaSessionManager.mediaSession, intent)
 
         val notification = notificationManager.displayNotification()
         startForeground(PlaybackNotificationManager.NOTIFICATION_ID, notification)
