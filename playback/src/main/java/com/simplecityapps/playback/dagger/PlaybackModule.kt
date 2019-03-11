@@ -12,6 +12,7 @@ import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi21
 import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi26
 import com.simplecityapps.playback.local.mediaplayer.MediaPlayerPlayback
+import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
 import dagger.Module
@@ -48,13 +49,19 @@ class PlaybackModule(
     @Singleton
     @Provides
     fun providePlaybackManager(queue: QueueManager, playback: Playback, audioFocusHelper: AudioFocusHelper): PlaybackManager {
-        return PlaybackManager(context, queue, playback, audioFocusHelper)
+        return PlaybackManager(queue, playback, audioFocusHelper)
     }
 
     @Singleton
     @Provides
-    fun providePlaybackNotificationManager(playbackManager: PlaybackManager, queueManager: QueueManager): PlaybackNotificationManager {
-        return PlaybackNotificationManager(context, context.getSystemService<NotificationManager>()!!, playbackManager, queueManager)
+    fun provideMediaSessionManager(playbackManager: PlaybackManager, queueManager: QueueManager): MediaSessionManager {
+        return MediaSessionManager(context, playbackManager, queueManager)
+    }
+
+    @Singleton
+    @Provides
+    fun providePlaybackNotificationManager(playbackManager: PlaybackManager, queueManager: QueueManager, mediaSessionManager: MediaSessionManager): PlaybackNotificationManager {
+        return PlaybackNotificationManager(context, context.getSystemService<NotificationManager>()!!, playbackManager, queueManager, mediaSessionManager)
     }
 
     @Singleton

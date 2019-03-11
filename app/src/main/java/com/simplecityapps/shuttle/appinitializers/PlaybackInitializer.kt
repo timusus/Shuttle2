@@ -10,9 +10,11 @@ import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackService
+import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
+import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.rxkotlin.subscribeBy
 import timber.log.Timber
 import javax.inject.Inject
@@ -25,7 +27,8 @@ class PlaybackInitializer @Inject constructor(
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackManager,
     private val queueManager: QueueManager,
-    private val playbackPreferenceManager: PlaybackPreferenceManager
+    private val playbackPreferenceManager: PlaybackPreferenceManager,
+    @Suppress("unused") private val mediaSessionManager: MediaSessionManager
 ) : AppInitializer,
     QueueChangeCallback,
     Playback.Callback,
@@ -47,7 +50,9 @@ class PlaybackInitializer @Inject constructor(
         queuePosition?.let { queuePosition ->
             val songIds = playbackPreferenceManager.queueIds?.split(",")?.map { id -> id.toLong() }
             songIds?.let { songIds ->
-                songRepository.getSongs(SongQuery.SongIds(songIds)).first(emptyList()).subscribeBy(
+                songRepository.getSongs(SongQuery.SongIds(songIds)).first(emptyList())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribeBy(
                     onSuccess = { songs ->
                         playbackManager.load(songs, queuePosition, seekPosition, false)
                     },

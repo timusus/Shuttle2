@@ -4,23 +4,24 @@ import com.simplecityapps.mediaprovider.model.Song
 import java.util.*
 
 class QueueItem(
-    val uid: String,
+    val uuid: UUID,
     val song: Song,
     val isCurrent: Boolean
 ) {
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
         other as QueueItem
 
-        if (uid != other.uid) return false
+        if (uuid != other.uuid) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        return uid.hashCode()
+        return uuid.hashCode()
     }
 
     override fun toString(): String {
@@ -29,9 +30,9 @@ class QueueItem(
 }
 
 fun Song.toQueueItem(isCurrent: Boolean): QueueItem {
-    return QueueItem(UUID.randomUUID().toString(), this, isCurrent)
+    return QueueItem(UUID.randomUUID(), this, isCurrent)
 }
 
-fun QueueItem.clone(uid: String = this.uid, song: Song = this.song, isCurrent: Boolean = this.isCurrent): QueueItem {
+fun QueueItem.clone(uid: UUID = this.uuid, song: Song = this.song, isCurrent: Boolean = this.isCurrent): QueueItem {
     return QueueItem(uid, song, isCurrent)
 }

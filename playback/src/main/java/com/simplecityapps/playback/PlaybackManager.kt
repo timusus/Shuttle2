@@ -1,16 +1,13 @@
 package com.simplecityapps.playback
 
-import android.content.Context
 import android.os.Handler
 import android.os.Looper
-import android.support.v4.media.session.MediaSessionCompat
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.queue.QueueManager
 import timber.log.Timber
 
 class PlaybackManager(
-    private val context: Context,
     private val queueManager: QueueManager,
     private val playback: Playback,
     private val audioFocusHelper: AudioFocusHelper
@@ -20,10 +17,6 @@ class PlaybackManager(
     interface ProgressCallback {
 
         fun onProgressChanged(position: Int, total: Int)
-    }
-
-    internal val mediaSession: MediaSessionCompat by lazy {
-        MediaSessionCompat(context, "ShuttleMediaSession")
     }
 
     private var handler: PlaybackManager.ProgressHandler = PlaybackManager.ProgressHandler()
@@ -56,9 +49,6 @@ class PlaybackManager(
 
         if (audioFocusHelper.requestAudioFocus()) {
             playback.play()
-
-            mediaSession.setCallback(mediaSessionCallback)
-            mediaSession.isActive = true
         } else {
             Timber.w("play() failed, audio focus request denied.")
         }
@@ -66,8 +56,6 @@ class PlaybackManager(
 
     override fun pause() {
         playback.pause()
-
-        mediaSession.isActive = false
     }
 
     fun skipToNext(ignoreRepeat: Boolean = false) {
@@ -138,31 +126,6 @@ class PlaybackManager(
 
     private fun updateProgress() {
         progressCallbacks.forEach { callback -> callback.onProgressChanged(playback.getPosition() ?: 0, playback.getDuration() ?: 0) }
-    }
-
-
-    // MediaSessionCompat.Callback Implementation
-
-    private val mediaSessionCallback = object : MediaSessionCompat.Callback() {
-        override fun onPlay() {
-            playback.play()
-        }
-
-        override fun onPause() {
-            playback.pause()
-        }
-
-        override fun onSkipToPrevious() {
-            skipToPrev()
-        }
-
-        override fun onSkipToNext() {
-            skipToNext()
-        }
-
-        override fun onSeekTo(pos: Long) {
-            playback.seek(pos.toInt())
-        }
     }
 
 

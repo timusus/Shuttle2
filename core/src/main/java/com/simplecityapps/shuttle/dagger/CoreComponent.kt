@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import com.simplecityapps.mediaprovider.repository.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.SongRepository
+import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackNotificationManager
 import com.simplecityapps.playback.dagger.PlaybackModule
@@ -41,6 +42,8 @@ interface CoreComponent {
     fun getSharedPreferences(): SharedPreferences
 
     fun getPlaybackPreferenceManager(): PlaybackPreferenceManager
+
+    fun getMediaSessionManager(): MediaSessionManager
 
     @Component.Builder
     interface Builder {

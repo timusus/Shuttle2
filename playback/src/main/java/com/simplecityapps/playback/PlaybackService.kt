@@ -31,7 +31,7 @@ class PlaybackService : Service() {
         when (intent?.action) {
             PlaybackService.ACTION_TOGGLE_PLAYBACK -> playbackManager.togglePlayback()
             PlaybackService.ACTION_SKIP_PREV -> playbackManager.skipToPrev()
-            PlaybackService.ACTION_SKIP_NEXT -> playbackManager.skipToNext()
+            PlaybackService.ACTION_SKIP_NEXT -> playbackManager.skipToNext(true)
         }
 
         return START_STICKY
@@ -52,9 +52,9 @@ class PlaybackService : Service() {
 
     companion object {
 
-        const val ACTION_TOGGLE_PLAYBACK: String = "com.simplectiyapps.playback.toggle"
-        const val ACTION_SKIP_PREV: String = "com.simplectiyapps.playback.prev"
-        const val ACTION_SKIP_NEXT: String = "com.simplectiyapps.playback.next"
+        const val ACTION_TOGGLE_PLAYBACK: String = "com.simplecityapps.playback.toggle"
+        const val ACTION_SKIP_PREV: String = "com.simplecityapps.playback.prev"
+        const val ACTION_SKIP_NEXT: String = "com.simplecityapps.playback.next"
     }
 
 }

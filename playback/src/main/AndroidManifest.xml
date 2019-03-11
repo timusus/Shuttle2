@@ -5,7 +5,12 @@
 
     <application>
         <service android:name=".PlaybackService" />
-    </application>
 
+        <receiver android:name="android.support.v4.media.session.MediaButtonReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.MEDIA_BUTTON"/>
+            </intent-filter>
+        </receiver>
+    </application>
 
 </manifest>

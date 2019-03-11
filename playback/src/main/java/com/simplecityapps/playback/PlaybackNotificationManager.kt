@@ -9,6 +9,7 @@ import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
 
@@ -16,7 +17,8 @@ class PlaybackNotificationManager(
     private val context: Context,
     private val notificationManager: NotificationManager,
     private val playbackManager: PlaybackManager,
-    private val queueManager: QueueManager
+    private val queueManager: QueueManager,
+    private val mediaSessionManager: MediaSessionManager
 ) : Playback.Callback, QueueChangeCallback {
 
     init {
@@ -41,8 +43,8 @@ class PlaybackNotificationManager(
             .setSmallIcon(R.drawable.ic_stat_name)
             .setStyle(
                 androidx.media.app.NotificationCompat.MediaStyle()
-                    .setMediaSession(playbackManager.mediaSession.sessionToken)
-                    .setShowCancelButton(true)
+                    .setMediaSession(mediaSessionManager.mediaSession.sessionToken)
+                    .setShowActionsInCompactView(0, 1, 2)
             )
             .setContentIntent(PendingIntent.getActivity(context, 1, (context.applicationContext as ActivityIntentProvider).provideMainActivityIntent(), 0))
             .addAction(prevAction)
