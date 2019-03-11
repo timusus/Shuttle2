@@ -44,6 +44,7 @@ class PlaybackNotificationManager(
                     .setMediaSession(playbackManager.mediaSession.sessionToken)
                     .setShowCancelButton(true)
             )
+            .setContentIntent(PendingIntent.getActivity(context, 1, (context.applicationContext as ActivityIntentProvider).provideMainActivityIntent(), 0))
             .addAction(prevAction)
             .addAction(playbackAction)
             .addAction(nextAction)

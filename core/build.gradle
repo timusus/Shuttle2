@@ -36,7 +36,6 @@ dependencies {
     // Shuttle Media Provider
     implementation project(path: ':mediaprovider:core')
     implementation project(path: ':mediaprovider:local')
-    // implementation project(path: ':mediaprovider:mock')
 
     // Shuttle Playback
     implementation project(path: ':playback')

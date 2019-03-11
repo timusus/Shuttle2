@@ -3,17 +3,24 @@ package com.simplecityapps.shuttle
 import android.app.Activity
 import android.app.Application
 import android.app.Service
+import android.content.Intent
 import androidx.appcompat.app.AppCompatDelegate
+import com.simplecityapps.playback.ActivityIntentProvider
 import com.simplecityapps.playback.dagger.PlaybackModule
 import com.simplecityapps.shuttle.appinitializers.AppInitializers
 import com.simplecityapps.shuttle.dagger.*
+import com.simplecityapps.shuttle.ui.MainActivity
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasActivityInjector
 import dagger.android.HasServiceInjector
 import javax.inject.Inject
 
-class ShuttleApplication : Application(), HasActivityInjector, HasServiceInjector, CoreComponentProvider {
+class ShuttleApplication : Application(),
+    HasActivityInjector,
+    HasServiceInjector,
+    CoreComponentProvider,
+    ActivityIntentProvider {
 
     @Inject lateinit var dispatchingAndroidActivityInjector: DispatchingAndroidInjector<Activity>
 
@@ -58,10 +65,17 @@ class ShuttleApplication : Application(), HasActivityInjector, HasServiceInjecto
     }
 
 
-    // CoreComponent.Provider Implementation
+    // CoreComponentProvider Implementation
 
     override fun provideCoreComponent(): CoreComponent {
         return coreComponent
+    }
+
+
+    // MainActivityIntentProvider Implementation
+
+    override fun provideMainActivityIntent(): Intent {
+        return Intent(this, MainActivity::class.java)
     }
 
 
