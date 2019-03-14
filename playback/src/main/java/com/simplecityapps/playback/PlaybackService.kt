@@ -18,7 +18,7 @@ class PlaybackService : Service() {
     @Inject lateinit var notificationManager: PlaybackNotificationManager
 
     override fun onCreate() {
-        Timber.v("oonCreate()")
+        Timber.v("onCreate()")
 
         AndroidInjection.inject(this)
         super.onCreate()
