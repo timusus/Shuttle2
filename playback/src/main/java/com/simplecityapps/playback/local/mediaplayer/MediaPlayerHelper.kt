@@ -24,9 +24,13 @@ class MediaPlayerHelper {
 
     private var playOnPrepared: Boolean = false
 
+    lateinit var currentSong: Song
+
     fun load(song: Song, seekPosition: Int = 0, playOnPrepared: Boolean) {
 
         Timber.v("$tag load() song: ${song.path}, playOnPrepared: $playOnPrepared")
+
+        currentSong = song
 
         this.playOnPrepared = playOnPrepared
 
@@ -165,6 +169,6 @@ class MediaPlayerHelper {
 
     private val onCompletionListener = MediaPlayer.OnCompletionListener {
         Timber.v("$tag onCompletion()")
-        callback?.onPlaybackComplete(null)
+        callback?.onPlaybackComplete(currentSong)
     }
 }

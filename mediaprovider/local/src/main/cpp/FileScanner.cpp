@@ -21,7 +21,7 @@ extern "C" {
 
 using namespace std;
 
-vector<string> fileTypes = {"mp3", "3gp", "mp4", "m4a", "aac", "ts", "flac", "mid", "xmf", "mxmf", "midi", "rtttl", "rtx", "ota", "imy", "ogg", "mkv", "wav"};
+vector<string> fileTypes = {"mp3", "3gp", "mp4", "m4a", "m4b", "aac", "ts", "flac", "mid", "xmf", "mxmf", "midi", "rtttl", "rtx", "ota", "imy", "ogg", "mkv", "wav"};
 
 string getExtension(const char *file) {
     size_t len = strlen(file);
@@ -108,7 +108,7 @@ Java_com_simplecityapps_localmediaprovider_repository_LocalSongRepository_getAud
     jmethodID arrayListAdd = env->GetMethodID(arrayListClass, "add", "(Ljava/lang/Object;)Z");
 
     jclass songClass = env->FindClass("com/simplecityapps/localmediaprovider/model/AudioFile");
-    jmethodID songInit = env->GetMethodID(songClass, "<init>", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IIJILjava/lang/String;JJ)V");
+    jmethodID songInit = env->GetMethodID(songClass, "<init>", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IIIILjava/lang/String;JJ)V");
 
     jobject result = env->NewObject(arrayListClass, arrayListInit, paths.size());
 
@@ -120,7 +120,7 @@ Java_com_simplecityapps_localmediaprovider_repository_LocalSongRepository_getAud
     jstring album = unknown;
     int track = 0;
     int disc = 1;
-    long duration = 0;
+    int duration = 0;
     int year = 0;
     jstring pathStr;
 

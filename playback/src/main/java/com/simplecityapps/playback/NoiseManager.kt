@@ -30,7 +30,7 @@ class NoiseManager(val context: Context, val playbackManager: PlaybackManager) :
 
     }
 
-    override fun onPlaybackComplete(song: Song?) {
+    override fun onPlaybackComplete(song: Song) {
 
     }
 }

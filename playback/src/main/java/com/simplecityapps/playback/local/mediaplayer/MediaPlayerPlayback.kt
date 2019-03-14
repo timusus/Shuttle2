@@ -96,8 +96,8 @@ class MediaPlayerPlayback(
             callback?.onPlaybackPrepared()
         }
 
-        override fun onPlaybackComplete(song: Song?) {
-            callback?.onPlaybackComplete(currentQueueItem?.song)
+        override fun onPlaybackComplete(song: Song) {
+            callback?.onPlaybackComplete(song)
 
             // Release current media player
             Timber.v("Releasing current player")
@@ -142,7 +142,7 @@ class MediaPlayerPlayback(
             currentMediaPlayerHelper.setNextMediaPlayer(nextMediaPlayerHelper.mediaPlayer)
         }
 
-        override fun onPlaybackComplete(song: Song?) {
+        override fun onPlaybackComplete(song: Song) {
 
         }
     }

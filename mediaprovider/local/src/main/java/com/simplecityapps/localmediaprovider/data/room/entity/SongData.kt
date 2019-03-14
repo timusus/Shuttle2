@@ -32,13 +32,16 @@ data class SongData(
     @ColumnInfo(name = "name") val name: String,
     @ColumnInfo(name = "track") val track: Int,
     @ColumnInfo(name = "disc") val disc: Int,
-    @ColumnInfo(name = "duration") val duration: Long,
+    @ColumnInfo(name = "duration") val duration: Int,
     @ColumnInfo(name = "year") val year: Int,
     @ColumnInfo(name = "path") val path: String,
     @ColumnInfo(name = "albumArtistId") var albumArtistId: Long = 0,
     @ColumnInfo(name = "albumId") var albumId: Long = 0,
     @ColumnInfo(name = "size") var size: Long,
-    @ColumnInfo(name = "lastModified") var lastModified: Date
+    @ColumnInfo(name = "lastModified") var lastModified: Date,
+    @ColumnInfo(name = "playbackPosition") var playbackPosition: Int = 0,
+    @ColumnInfo(name = "playCount") var playCount: Int = 0,
+    @ColumnInfo(name = "lastPlayed") var lastPlayed: Date? = null
 ) : ContentsComparator<SongData> {
     @PrimaryKey(autoGenerate = true)
     var id: Long = 0
@@ -77,7 +80,7 @@ fun AudioFile.toSongData(): SongData {
 }
 
 fun Song.toSongData(): SongData {
-    return SongData(name, track, disc, duration, year, path, albumArtistId, albumId, size, lastModified).apply {
+    return SongData(name, track, disc, duration, year, path, albumArtistId, albumId, size, lastModified, playbackPosition, playCount, lastPlayed).apply {
         id = this@toSongData.id
         albumArtistName = this@toSongData.albumArtistName
         albumName = this@toSongData.albumName

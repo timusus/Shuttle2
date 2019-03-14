@@ -17,6 +17,7 @@ import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
+import java.util.*
 
 class LocalSongRepository(private val database: MediaDatabase) : SongRepository {
 
@@ -181,6 +182,15 @@ class LocalSongRepository(private val database: MediaDatabase) : SongRepository 
         return songsRelay.map { songs -> songs.filter(query.predicate()) }
     }
 
+
+    override fun incrementPlayCount(song: Song): Completable {
+        return database.songDataDao().updatePlayCount(song.id, Date(), song.playCount + 1)
+    }
+
+    override fun setPlaybackPosition(song: Song, playbackPosition: Int): Completable {
+        Timber.i("Setting playback position to $playbackPosition for song: ${song.name}")
+        return database.songDataDao().updatePlaybackPosition(song.id, playbackPosition)
+    }
 
     companion object {
 

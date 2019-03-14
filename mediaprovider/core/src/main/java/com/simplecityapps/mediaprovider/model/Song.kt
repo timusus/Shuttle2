@@ -12,12 +12,24 @@ class Song(
     val albumName: String,
     val track: Int,
     val disc: Int,
-    val duration: Long,
+    val duration: Int,
     val year: Int,
     val path: String,
     val size: Long,
-    val lastModified: Date
+    val lastModified: Date,
+    val lastPlayed: Date?,
+    val playCount: Int,
+    val playbackPosition: Int
 ) : Serializable {
+
+    val type: Type
+        get() {
+            return when {
+                path.contains("audiobook", true) || path.endsWith("m4b", true) -> Type.Audiobook
+                path.contains("podcast", true) -> Type.Podcast
+                else -> Type.Normal
+            }
+        }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -46,5 +58,9 @@ class Song(
                 "\npath='$path'," +
                 "\nsize=$size," +
                 "\nlastModified=$lastModified"
+    }
+
+    enum class Type {
+        Normal, Audiobook, Podcast
     }
 }

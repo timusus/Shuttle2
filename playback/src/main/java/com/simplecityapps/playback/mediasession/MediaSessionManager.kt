@@ -57,7 +57,7 @@ class MediaSessionManager(
 
     }
 
-    override fun onPlaybackComplete(song: Song?) {
+    override fun onPlaybackComplete(song: Song) {
 
     }
 

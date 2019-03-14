@@ -7,7 +7,7 @@ data class AudioFile(
     val albumName: String,
     val track: Int,
     val disc: Int,
-    val duration: Long,
+    val duration: Int,
     val year: Int,
     val path: String,
     var size: Long,

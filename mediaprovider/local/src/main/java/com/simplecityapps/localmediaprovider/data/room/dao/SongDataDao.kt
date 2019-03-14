@@ -4,8 +4,10 @@ import androidx.room.*
 import androidx.room.OnConflictStrategy.REPLACE
 import com.simplecityapps.localmediaprovider.data.room.entity.SongData
 import com.simplecityapps.mediaprovider.model.Song
+import io.reactivex.Completable
 import io.reactivex.Flowable
 import timber.log.Timber
+import java.util.*
 
 @Dao
 abstract class SongDataDao {
@@ -49,6 +51,12 @@ abstract class SongDataDao {
 
         return inserts
     }
+
+    @Query("UPDATE songs SET lastPlayed = :lastPlayed, playCount = :playCount WHERE id =:id")
+    abstract fun updatePlayCount(id: Long, lastPlayed: Date, playCount: Int): Completable
+
+    @Query("UPDATE songs SET playbackPosition = :playbackPosition WHERE id =:id")
+    abstract fun updatePlaybackPosition(id: Long, playbackPosition: Int): Completable
 
     @Query("DELETE from songs")
     abstract fun deleteAll()

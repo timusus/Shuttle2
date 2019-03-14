@@ -17,6 +17,7 @@ import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.rxkotlin.subscribeBy
+import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -36,7 +37,7 @@ class PlaybackInitializer @Inject constructor(
     Playback.Callback,
     PlaybackManager.ProgressCallback {
 
-    var progress = 0
+    private var progress = 0
 
     override fun init(application: Application) {
 
@@ -98,6 +99,12 @@ class PlaybackInitializer @Inject constructor(
             ContextCompat.startForegroundService(context, Intent(context, PlaybackService::class.java))
         } else {
             playbackPreferenceManager.playbackPosition = playbackManager.getPosition()
+
+            queueManager.getCurrentItem()?.song?.let { song ->
+                songRepository.setPlaybackPosition(song, playbackManager.getPosition() ?: 0)
+                    .subscribeOn(Schedulers.io())
+                    .subscribe()
+            }
         }
     }
 
@@ -105,8 +112,16 @@ class PlaybackInitializer @Inject constructor(
 
     }
 
-    override fun onPlaybackComplete(song: Song?) {
+    override fun onPlaybackComplete(song: Song) {
         playbackPreferenceManager.playbackPosition = 0
+
+        songRepository.setPlaybackPosition(song, song.duration)
+            .subscribeOn(Schedulers.io())
+            .subscribe()
+
+        songRepository.incrementPlayCount(song)
+            .subscribeOn(Schedulers.io())
+            .subscribe()
     }
 
 
@@ -114,10 +129,11 @@ class PlaybackInitializer @Inject constructor(
 
     override fun onProgressChanged(position: Int, total: Int) {
 
-        // Saves the progress if it has changed by at least 1 second
         if (progress == 0) {
             progress = position
         }
+
+        // Saves the playback progress to shared prefs if it has changed by at least 1 second
         if (position - progress > 1000) {
             playbackPreferenceManager.playbackPosition = position
             progress = position

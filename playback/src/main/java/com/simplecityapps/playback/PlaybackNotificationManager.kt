@@ -113,7 +113,7 @@ class PlaybackNotificationManager(
 
     }
 
-    override fun onPlaybackComplete(song: Song?) {
+    override fun onPlaybackComplete(song: Song) {
 
     }
 

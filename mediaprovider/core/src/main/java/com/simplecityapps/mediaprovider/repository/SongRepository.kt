@@ -13,6 +13,10 @@ interface SongRepository {
     fun getSongs(): Observable<List<Song>>
 
     fun getSongs(query: SongQuery): Observable<List<Song>>
+
+    fun incrementPlayCount(song: Song): Completable
+
+    fun setPlaybackPosition(song: Song, playbackPosition: Int): Completable
 }
 
 sealed class SongQuery {

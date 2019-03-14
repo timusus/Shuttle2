@@ -5,7 +5,6 @@ buildscript {
     repositories {
         google()
         jcenter()
-        
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.3.2'
@@ -22,7 +21,8 @@ allprojects {
     repositories {
         google()
         jcenter()
-        
+        // Required for Room 2.1.0-alpha05
+        maven { url "https://kotlin.bintray.com/kotlinx/" }
     }
 }
 

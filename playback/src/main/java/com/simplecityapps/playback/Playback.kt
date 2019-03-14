@@ -28,7 +28,7 @@ interface Playback {
 
         fun onPlaybackPrepared()
 
-        fun onPlaybackComplete(song: Song?)
+        fun onPlaybackComplete(song: Song)
     }
 
 }

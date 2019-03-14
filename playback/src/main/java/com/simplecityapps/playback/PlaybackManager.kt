@@ -6,6 +6,7 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.queue.QueueManager
 import timber.log.Timber
+import kotlin.math.max
 
 class PlaybackManager(
     private val queueManager: QueueManager,
@@ -42,6 +43,21 @@ class PlaybackManager(
         Timber.v("load() called, queuePosition: $queuePosition, seekPosition: $seekPosition, playOnComplete: $playOnComplete")
         queueManager.set(songs, queuePosition)
         playback.load(seekPosition, playOnComplete)
+    }
+
+    /**
+     * Enqueues the list of songs, and sets the current position to the index of [song]. Playback will begin on successful load.
+     *
+     * If the song is a Podcast or Audiobook, the song will be seeked to [song.playbackPosition], otherwise playback starts at the specified seek position.
+     *
+     * @param song the first song to play once load is complete
+     * @param songs the list of songs to add to the queue
+     * @param seekPosition the seek position at which to begin playback. Note: this is ignored for audiobooks & podcasts.
+     * @param playOnComplete whether to begin playback once the load is complete.
+     */
+    fun load(song: Song, songs: List<Song>, seekPosition: Int = 0, playOnComplete: Boolean) {
+        val seekPosition = if (song.type == Song.Type.Podcast || song.type == Song.Type.Audiobook) max(0, song.playbackPosition - 5000) else seekPosition
+        load(songs, songs.indexOf(song), seekPosition, playOnComplete)
     }
 
     fun play() {
@@ -143,7 +159,7 @@ class PlaybackManager(
         updateProgress()
     }
 
-    override fun onPlaybackComplete(song: Song?) {
+    override fun onPlaybackComplete(song: Song) {
         callbacks.forEach { callback -> callback.onPlaybackComplete(song) }
     }
 
