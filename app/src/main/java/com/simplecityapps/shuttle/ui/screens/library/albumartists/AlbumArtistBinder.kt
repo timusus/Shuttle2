@@ -44,7 +44,7 @@ class AlbumArtistBinder(val albumArtist: AlbumArtist, val imageLoader: ArtworkIm
     }
 
     override fun areContentsTheSame(other: Any): Boolean {
-        return albumArtist.name == (other as? AlbumArtist)?.name
+        return albumArtist.name == (other as? AlbumArtistBinder)?.albumArtist?.name
     }
 
 
