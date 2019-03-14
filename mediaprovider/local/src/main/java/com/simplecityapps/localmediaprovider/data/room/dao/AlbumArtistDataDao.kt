@@ -50,5 +50,5 @@ abstract class AlbumArtistDataDao {
     abstract fun deleteAll()
 
     @Delete
-    abstract fun deleteAll(songData: List<AlbumArtistData>): Int
+    abstract fun deleteAll(albumArtistData: List<AlbumArtistData>): Int
 }
