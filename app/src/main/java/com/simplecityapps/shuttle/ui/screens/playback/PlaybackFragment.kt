@@ -89,7 +89,6 @@ class PlaybackFragment :
         song?.let {
             titleTextView.text = song.name
             subtitleTextView.text = "${song.albumArtistName} • ${song.albumName}"
-            durationTextView.text = song.duration.toHms()
         }
     }
 
@@ -112,6 +111,7 @@ class PlaybackFragment :
 
     override fun setProgress(position: Int, duration: Int) {
         currentTimeTextView.text = position.toLong().toHms()
+        durationTextView.text = duration.toLong().toHms()
         seekBar.progress = ((position.toFloat() / duration) * 1000).toInt()
     }
 
