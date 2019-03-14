@@ -9,7 +9,8 @@ import com.simplecityapps.localmediaprovider.ContentsComparator
     foreignKeys = [(ForeignKey(
         entity = AlbumArtistData::class,
         parentColumns = ["id"],
-        childColumns = ["albumArtistId"]
+        childColumns = ["albumArtistId"],
+        onDelete = ForeignKey.CASCADE
     ))]
 )
 data class AlbumData(

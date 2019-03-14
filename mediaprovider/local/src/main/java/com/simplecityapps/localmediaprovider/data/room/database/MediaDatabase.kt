@@ -17,7 +17,7 @@ import com.simplecityapps.localmediaprovider.data.room.entity.SongData
         AlbumArtistData::class,
         AlbumData::class
     ],
-    version = 20,
+    version = 21,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

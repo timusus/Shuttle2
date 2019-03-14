@@ -17,12 +17,14 @@ import java.util.*
         (ForeignKey(
             entity = AlbumArtistData::class,
             parentColumns = ["id"],
-            childColumns = ["albumArtistId"]
+            childColumns = ["albumArtistId"],
+            onDelete = ForeignKey.CASCADE
         )),
         (ForeignKey(
             entity = AlbumData::class,
             parentColumns = ["id"],
-            childColumns = ["albumId"]
+            childColumns = ["albumId"],
+            onDelete = ForeignKey.CASCADE
         ))
     ]
 )
