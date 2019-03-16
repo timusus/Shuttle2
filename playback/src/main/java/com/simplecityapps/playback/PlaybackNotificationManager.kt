@@ -47,6 +47,7 @@ class PlaybackNotificationManager(
                     .setShowActionsInCompactView(0, 1, 2)
             )
             .setContentIntent(PendingIntent.getActivity(context, 1, (context.applicationContext as ActivityIntentProvider).provideMainActivityIntent(), 0))
+            .setDeleteIntent(PendingIntent.getService(context, 1, Intent(context, PlaybackService::class.java).apply { action = PlaybackService.ACTION_NOTIFICATION_DISMISS }, 0))
             .addAction(prevAction)
             .addAction(playbackAction)
             .addAction(nextAction)
