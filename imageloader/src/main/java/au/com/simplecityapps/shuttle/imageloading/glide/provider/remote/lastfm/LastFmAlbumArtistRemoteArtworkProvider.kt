@@ -1,14 +1,15 @@
-package au.com.simplecityapps.shuttle.imageloading.glide.provider
+package au.com.simplecityapps.shuttle.imageloading.glide.provider.remote.lastfm
 
+import au.com.simplecityapps.shuttle.imageloading.glide.provider.remote.RemoteArtworkProvider
 import au.com.simplecityapps.shuttle.imageloading.networking.ArtworkUrlResult
 import au.com.simplecityapps.shuttle.imageloading.networking.lastfm.LastFmService
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import retrofit2.Call
 
-class AlbumArtistArtworkProvider(
+class LastFmAlbumArtistRemoteArtworkProvider(
     private val lastFm: LastFmService.LastFm,
     private val albumArtist: AlbumArtist
-) : ArtworkProvider {
+) : RemoteArtworkProvider {
     override fun getCacheKey(): String {
         return albumArtist.name
     }

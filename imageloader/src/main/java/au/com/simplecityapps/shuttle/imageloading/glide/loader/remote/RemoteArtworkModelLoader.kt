@@ -1,6 +1,6 @@
-package au.com.simplecityapps.shuttle.imageloading.glide.loader
+package au.com.simplecityapps.shuttle.imageloading.glide.loader.remote
 
-import au.com.simplecityapps.shuttle.imageloading.glide.provider.ArtworkProvider
+import au.com.simplecityapps.shuttle.imageloading.glide.provider.remote.RemoteArtworkProvider
 import au.com.simplecityapps.shuttle.imageloading.networking.ArtworkUrlResult
 import com.bumptech.glide.Priority
 import com.bumptech.glide.integration.okhttp3.OkHttpStreamFetcher
@@ -17,22 +17,22 @@ import java.io.IOException
 import java.io.InputStream
 import java.net.SocketException
 
-class ArtworkModelLoader(
+class RemoteArtworkModelLoader(
     private val okHttpClient: OkHttpClient
-) : ModelLoader<ArtworkProvider, InputStream> {
+) : ModelLoader<RemoteArtworkProvider, InputStream> {
 
-    override fun buildLoadData(model: ArtworkProvider, width: Int, height: Int, options: Options): ModelLoader.LoadData<InputStream>? {
-        return ModelLoader.LoadData<InputStream>(ObjectKey(model.getCacheKey()), ArtworkDataFetcher(okHttpClient, model))
+    override fun buildLoadData(model: RemoteArtworkProvider, width: Int, height: Int, options: Options): ModelLoader.LoadData<InputStream>? {
+        return ModelLoader.LoadData<InputStream>(ObjectKey(model.getCacheKey()), RemoteArtworkDataFetcher(okHttpClient, model))
     }
 
-    override fun handles(model: ArtworkProvider): Boolean {
+    override fun handles(model: RemoteArtworkProvider): Boolean {
         return true
     }
 }
 
-class ArtworkDataFetcher(
+class RemoteArtworkDataFetcher(
     private val okHttpClient: OkHttpClient,
-    private val artworkProvider: ArtworkProvider
+    private val remoteArtworkProvider: RemoteArtworkProvider
 ) : DataFetcher<InputStream> {
 
     private var okHttpStreamFetcher: OkHttpStreamFetcher? = null
@@ -57,7 +57,7 @@ class ArtworkDataFetcher(
     }
 
     override fun loadData(priority: Priority, callback: DataFetcher.DataCallback<in InputStream>) {
-        call = artworkProvider.getArtworkUri()
+        call = remoteArtworkProvider.getArtworkUri()
             try {
                 call!!.execute().body()?.artworkUrl
             } catch (e: SocketException) {
