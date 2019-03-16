@@ -14,7 +14,7 @@ interface SongRepository {
 
     fun getSongs(query: SongQuery): Observable<List<Song>>
 
-    fun incrementPlayCount(song: Song): Completable
+    fun setPlayCount(song: Song, playCount: Int): Completable
 
     fun setPlaybackPosition(song: Song, playbackPosition: Int): Completable
 }

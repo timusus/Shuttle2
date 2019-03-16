@@ -16,10 +16,10 @@ class Song(
     val year: Int,
     val path: String,
     val size: Long,
-    val lastModified: Date,
-    val lastPlayed: Date?,
-    val playCount: Int,
-    val playbackPosition: Int
+    var lastModified: Date,
+    var lastPlayed: Date?,
+    var playCount: Int,
+    var playbackPosition: Int
 ) : Serializable {
 
     val type: Type

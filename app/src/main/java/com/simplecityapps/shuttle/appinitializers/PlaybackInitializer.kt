@@ -101,7 +101,8 @@ class PlaybackInitializer @Inject constructor(
             playbackPreferenceManager.playbackPosition = playbackManager.getPosition()
 
             queueManager.getCurrentItem()?.song?.let { song ->
-                songRepository.setPlaybackPosition(song, playbackManager.getPosition() ?: 0)
+                song.playbackPosition = playbackManager.getPosition() ?: 0
+                songRepository.setPlaybackPosition(song, song.playbackPosition)
                     .subscribeOn(Schedulers.io())
                     .subscribe()
             }
@@ -115,11 +116,13 @@ class PlaybackInitializer @Inject constructor(
     override fun onPlaybackComplete(song: Song) {
         playbackPreferenceManager.playbackPosition = 0
 
-        songRepository.setPlaybackPosition(song, song.duration)
+        song.playbackPosition = song.duration
+        songRepository.setPlaybackPosition(song, song.playbackPosition)
             .subscribeOn(Schedulers.io())
             .subscribe()
 
-        songRepository.incrementPlayCount(song)
+        song.playCount++
+        songRepository.setPlayCount(song, song.playCount)
             .subscribeOn(Schedulers.io())
             .subscribe()
     }

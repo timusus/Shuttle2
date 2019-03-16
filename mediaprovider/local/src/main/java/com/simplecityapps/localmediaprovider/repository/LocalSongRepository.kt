@@ -183,8 +183,8 @@ class LocalSongRepository(private val database: MediaDatabase) : SongRepository 
     }
 
 
-    override fun incrementPlayCount(song: Song): Completable {
-        return database.songDataDao().updatePlayCount(song.id, Date(), song.playCount + 1)
+    override fun setPlayCount(song: Song, playCount: Int): Completable {
+        return database.songDataDao().updatePlayCount(song.id, Date(), playCount)
     }
 
     override fun setPlaybackPosition(song: Song, playbackPosition: Int): Completable {
