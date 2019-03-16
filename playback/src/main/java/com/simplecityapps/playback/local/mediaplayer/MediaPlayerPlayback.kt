@@ -59,6 +59,9 @@ class MediaPlayerPlayback(
     override fun pause() {
         Timber.v("pause()")
         currentMediaPlayerHelper.pause()
+
+        // In case we're in the process of transitioning to the next music player when pause is called, pause it too.
+        nextMediaPlayerHelper.pause()
     }
 
     override fun isPlaying(): Boolean {
@@ -97,7 +100,6 @@ class MediaPlayerPlayback(
         }
 
         override fun onPlaybackComplete(song: Song) {
-            callback?.onPlaybackComplete(song)
 
             // Release current media player
             Timber.v("Releasing current player")
@@ -129,6 +131,8 @@ class MediaPlayerPlayback(
                 Timber.v("No next song. Playback complete")
                 callback?.onPlaystateChanged(false)
             }
+
+            callback?.onPlaybackComplete(song)
         }
     }
 
