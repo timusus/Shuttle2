@@ -7,6 +7,7 @@ import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.queue.QueueManager
 import timber.log.Timber
 import kotlin.math.max
+import kotlin.math.min
 
 class PlaybackManager(
     private val queueManager: QueueManager,
@@ -141,7 +142,12 @@ class PlaybackManager(
     }
 
     private fun updateProgress() {
-        progressCallbacks.forEach { callback -> callback.onProgressChanged(playback.getPosition() ?: 0, playback.getDuration() ?: 0) }
+        progressCallbacks.forEach { callback ->
+            callback.onProgressChanged(
+                min(playback.getPosition() ?: 0, playback.getDuration() ?: 0),
+                playback.getDuration() ?: 0
+            )
+        }
     }
 
 
@@ -161,6 +167,8 @@ class PlaybackManager(
 
     override fun onPlaybackComplete(song: Song) {
         callbacks.forEach { callback -> callback.onPlaybackComplete(song) }
+
+        updateProgress()
     }
 
 
