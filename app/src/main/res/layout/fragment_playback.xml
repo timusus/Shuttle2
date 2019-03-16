@@ -16,9 +16,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:title="Now Playing">
-
-    </androidx.appcompat.widget.Toolbar>
+        app:title="Now Playing"/>
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/nestedScrollView"

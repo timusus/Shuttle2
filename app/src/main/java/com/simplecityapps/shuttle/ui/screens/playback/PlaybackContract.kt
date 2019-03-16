@@ -21,6 +21,8 @@ interface PlaybackContract {
         fun setQueuePosition(position: Int?, total: Int)
 
         fun setProgress(position: Int, duration: Int)
+
+        fun presentSleepTimer()
     }
 
     interface Presenter {
@@ -36,5 +38,7 @@ interface PlaybackContract {
         fun skipPrev()
 
         fun seek(fraction: Float)
+
+        fun sleepTimerClicked()
     }
 }

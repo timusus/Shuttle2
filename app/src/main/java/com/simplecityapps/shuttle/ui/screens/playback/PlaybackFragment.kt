@@ -19,6 +19,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.recyclerview.SpacesItemDecoration
 import com.simplecityapps.shuttle.ui.common.toHms
+import com.simplecityapps.shuttle.ui.screens.sleeptimer.SleepTimerDialogFragment
 import kotlinx.android.synthetic.main.fragment_playback.*
 import javax.inject.Inject
 
@@ -59,6 +60,17 @@ class PlaybackFragment :
         recyclerView.addItemDecoration(SpacesItemDecoration(8))
 
         playPauseButton.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(context!!, R.color.colorPrimary))
+
+        toolbar.inflateMenu(R.menu.playback_fragment_menu)
+        toolbar.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.sleepTimer -> {
+                    presenter.sleepTimerClicked()
+                    true
+                }
+                else -> false
+            }
+        }
     }
 
     override fun onDestroyView() {
@@ -113,6 +125,10 @@ class PlaybackFragment :
         currentTimeTextView.text = position.toHms()
         durationTextView.text = duration.toHms()
         seekBar.progress = ((position.toFloat() / duration) * 1000).toInt()
+    }
+
+    override fun presentSleepTimer() {
+        SleepTimerDialogFragment().show(childFragmentManager)
     }
 
 

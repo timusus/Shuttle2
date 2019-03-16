@@ -16,6 +16,7 @@ import com.simplecityapps.playback.local.mediaplayer.MediaPlayerPlayback
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.sleeptimer.SleepTimer
 import dagger.Module
 import dagger.Provides
 import javax.inject.Singleton
@@ -75,5 +76,11 @@ class PlaybackModule(
     @Provides
     fun providePlaybackPreferenceManager(): PlaybackPreferenceManager {
         return PlaybackPreferenceManager(sharedPreferences)
+    }
+
+    @Singleton
+    @Provides
+    fun provideSleepTimer(playbackManager: PlaybackManager): SleepTimer {
+        return SleepTimer(playbackManager)
     }
 }

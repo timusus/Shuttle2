@@ -76,8 +76,12 @@ class PlaybackPresenter @Inject constructor(
 
     override fun seek(fraction: Float) {
         queueManager.getCurrentItem()?.song?.let { currentSong ->
-            playbackManager.seekTo(((playbackManager.getDuration() ?: currentSong.duration.toInt()) * fraction).toInt())
+            playbackManager.seekTo(((playbackManager.getDuration() ?: currentSong.duration) * fraction).toInt())
         } ?: Timber.v("seek() failed, current song null")
+    }
+
+    override fun sleepTimerClicked() {
+        view?.presentSleepTimer()
     }
 
 

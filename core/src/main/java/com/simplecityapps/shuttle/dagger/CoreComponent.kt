@@ -11,6 +11,7 @@ import com.simplecityapps.playback.dagger.PlaybackModule
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.sleeptimer.SleepTimer
 import dagger.Component
 import okhttp3.OkHttpClient
 import javax.inject.Singleton
@@ -47,6 +48,8 @@ interface CoreComponent {
     fun getMediaSessionManager(): MediaSessionManager
 
     fun getNoiseManager(): NoiseManager
+
+    fun getSleepTimer(): SleepTimer
 
     @Component.Builder
     interface Builder {
