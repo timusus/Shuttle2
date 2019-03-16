@@ -22,6 +22,8 @@ class PlaybackService : Service(), Playback.Callback {
 
     private var foregroundNotificationHandler: Handler? = null
 
+    private var delayedShutdownHandler: Handler? = null
+
     override fun onCreate() {
         Timber.v("onCreate()")
 
@@ -31,12 +33,15 @@ class PlaybackService : Service(), Playback.Callback {
         playbackManager.addCallback(this)
 
         foregroundNotificationHandler = Handler()
+        delayedShutdownHandler = Handler()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
         Timber.v("onStartCommand() intent: ${intent?.toString()} action: ${intent?.action}")
+
+        delayedShutdownHandler?.removeCallbacksAndMessages(null)
 
         MediaButtonReceiver.handleIntent(mediaSessionManager.mediaSession, intent)
 
@@ -69,6 +74,7 @@ class PlaybackService : Service(), Playback.Callback {
         playbackManager.pause()
 
         foregroundNotificationHandler?.removeCallbacksAndMessages(null)
+        delayedShutdownHandler?.removeCallbacksAndMessages(null)
 
         super.onDestroy()
     }
@@ -78,13 +84,15 @@ class PlaybackService : Service(), Playback.Callback {
 
     override fun onPlaystateChanged(isPlaying: Boolean) {
 
-        // We use a handler here to slightly delay the call to stopForeground().
+        // We use the foreground notification handler here to slightly delay the call to stopForeground().
         // This appears to be necessary in order to allow our notification to become dismissable if pause() is called via onStartCommand() to this service.
         // Presumably, there is an issue in calling stopForeground() too soon after startForeground() which causes the notification to be stuck in the 'ongoing' state and not able to be dismissed.
 
         foregroundNotificationHandler?.removeCallbacksAndMessages(null)
 
-        if (!isPlaying) {
+        if (isPlaying) {
+            delayedShutdownHandler?.removeCallbacksAndMessages(null)
+        } else {
             foregroundNotificationHandler?.postDelayed({
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     stopForeground(Service.STOP_FOREGROUND_DETACH)
@@ -93,6 +101,14 @@ class PlaybackService : Service(), Playback.Callback {
                     notificationManager.displayNotification()
                 }
             }, 150)
+
+            // Shutdown this service after 30 seconds
+            delayedShutdownHandler?.postDelayed({
+                if (!playbackManager.isPlaying()) {
+                    Timber.d("Stopping service due to 30 second shutdown timer")
+                    stopSelf()
+                }
+            }, 30 * 1000)
         }
     }
 
