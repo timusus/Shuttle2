@@ -188,7 +188,7 @@ class LocalSongRepository(private val database: MediaDatabase) : SongRepository 
     }
 
     override fun setPlaybackPosition(song: Song, playbackPosition: Int): Completable {
-        Timber.i("Setting playback position to $playbackPosition for song: ${song.name}")
+        Timber.v("Setting playback position to $playbackPosition for song: ${song.name}")
         return database.songDataDao().updatePlaybackPosition(song.id, playbackPosition)
     }
 

@@ -57,7 +57,7 @@ class PlaybackService : Service(), Playback.Callback {
 
         val notification = notificationManager.displayNotification()
 
-        Timber.i("startForeground() called")
+        Timber.v("startForeground() called")
         startForeground(PlaybackNotificationManager.NOTIFICATION_ID, notification)
 
         return Service.START_STICKY
@@ -105,7 +105,7 @@ class PlaybackService : Service(), Playback.Callback {
             // Shutdown this service after 30 seconds
             delayedShutdownHandler?.postDelayed({
                 if (!playbackManager.isPlaying()) {
-                    Timber.d("Stopping service due to 30 second shutdown timer")
+                    Timber.v("Stopping service due to 30 second shutdown timer")
                     stopSelf()
                 }
             }, 30 * 1000)

@@ -27,7 +27,7 @@ class SleepTimer(val playbackManager: PlaybackManager) : Playback.Callback {
      */
     fun startTimer(delay: Long, playToEnd: Boolean) {
 
-        Timber.d("startTimer() called.. Delay: ${delay}ms")
+        Timber.v("startTimer() called.. Delay: ${delay}ms")
 
         startTime = Date()
         this.delay = delay
@@ -49,7 +49,7 @@ class SleepTimer(val playbackManager: PlaybackManager) : Playback.Callback {
      * Cancels the sleep timer
      */
     fun stopTimer() {
-        Timber.d("stopTimer() called")
+        Timber.v("stopTimer() called")
         handler?.removeCallbacksAndMessages(null)
         delay = 0L
         playbackManager.removeCallback(this)
@@ -69,7 +69,7 @@ class SleepTimer(val playbackManager: PlaybackManager) : Playback.Callback {
     }
 
     private fun sleep() {
-        Timber.d("sleep() called")
+        Timber.v("sleep() called")
         playbackManager.pause()
         stopTimer()
     }
@@ -86,7 +86,7 @@ class SleepTimer(val playbackManager: PlaybackManager) : Playback.Callback {
     }
 
     override fun onPlaybackComplete(song: Song) {
-        Timber.d("onPlaybackComplete, playToEnd: $playToEnd, timeRemaining: ${timeRemaining()}")
+        Timber.v("onPlaybackComplete, playToEnd: $playToEnd, timeRemaining: ${timeRemaining()}")
         if (playToEnd && timeRemaining() == 0L) {
             sleep()
         }
