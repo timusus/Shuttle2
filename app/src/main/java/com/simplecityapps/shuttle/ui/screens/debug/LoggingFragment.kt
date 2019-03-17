@@ -81,7 +81,9 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
             }
         }
         if (canLog) {
-            adapter.setData(adapter.items.toMutableList() + LogMessageBinder(logMessage))
+            recyclerView?.post {
+                adapter.setData(adapter.items.toMutableList() + LogMessageBinder(logMessage), false)
+            }
         }
     }
 
