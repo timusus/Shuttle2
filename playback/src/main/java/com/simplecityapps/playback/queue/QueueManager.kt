@@ -193,18 +193,22 @@ class QueueManager : QueueChangeCallback {
     // QueueChangeCallback Implementation
 
     override fun onQueueChanged() {
+        Timber.v("onQueueChanged()")
         callbacks.forEach { callback -> callback.onQueueChanged() }
     }
 
     override fun onShuffleChanged() {
+        Timber.v("onShuffleChanged()")
         callbacks.forEach { callback -> callback.onShuffleChanged() }
     }
 
     override fun onRepeatChanged() {
+        Timber.v("onRepeatChanged()")
         callbacks.forEach { callback -> callback.onRepeatChanged() }
     }
 
     override fun onQueuePositionChanged() {
+        Timber.v("onQueuePositionChanged()")
         callbacks.forEach { callback -> callback.onQueuePositionChanged() }
     }
 

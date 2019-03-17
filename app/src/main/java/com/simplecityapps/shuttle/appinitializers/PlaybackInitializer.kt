@@ -39,6 +39,8 @@ class PlaybackInitializer @Inject constructor(
 
     private var progress = 0
 
+    private var hasRestoredPlaybackPosition = false
+
     override fun init(application: Application) {
 
         queueManager.addCallback(this)
@@ -64,6 +66,8 @@ class PlaybackInitializer @Inject constructor(
                     })
             }
         }
+
+        hasRestoredPlaybackPosition = true
     }
 
 
@@ -74,13 +78,17 @@ class PlaybackInitializer @Inject constructor(
             .map { queueItem -> queueItem.song.id }
             .joinToString(",")
 
-        playbackPreferenceManager.playbackPosition = null
+        if (hasRestoredPlaybackPosition) {
+            playbackPreferenceManager.playbackPosition = null
+        }
     }
 
     override fun onQueuePositionChanged() {
         playbackPreferenceManager.queuePosition = queueManager.getCurrentPosition()
 
-        playbackPreferenceManager.playbackPosition = null
+        if (hasRestoredPlaybackPosition) {
+            playbackPreferenceManager.playbackPosition = null
+        }
     }
 
     override fun onShuffleChanged() {

@@ -154,18 +154,21 @@ class PlaybackManager(
     // Playback.Callback Implementation
 
     override fun onPlaystateChanged(isPlaying: Boolean) {
+        Timber.v("onPlaystateChanged() isPlaying: $isPlaying")
         callbacks.forEach { callback -> callback.onPlaystateChanged(isPlaying) }
 
         monitorProgress(isPlaying)
     }
 
     override fun onPlaybackPrepared() {
+        Timber.v("onPlaybackPrepared()")
         callbacks.forEach { callback -> callback.onPlaybackPrepared() }
 
         updateProgress()
     }
 
     override fun onPlaybackComplete(song: Song) {
+        Timber.v("onPlaybackComplete()")
         callbacks.forEach { callback -> callback.onPlaybackComplete(song) }
 
         updateProgress()
