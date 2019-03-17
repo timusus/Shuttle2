@@ -60,14 +60,13 @@ class PlaybackInitializer @Inject constructor(
                     .subscribeBy(
                     onSuccess = { songs ->
                         playbackManager.load(songs, queuePosition, seekPosition, false)
+                        hasRestoredPlaybackPosition = true
                     },
                     onError = { error ->
                         Timber.e(error, "Failed to reload queue")
                     })
             }
         }
-
-        hasRestoredPlaybackPosition = true
     }
 
 
