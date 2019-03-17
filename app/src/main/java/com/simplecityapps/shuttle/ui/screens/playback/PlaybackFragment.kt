@@ -20,6 +20,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.recyclerview.SpacesItemDecoration
 import com.simplecityapps.shuttle.ui.common.toHms
+import com.simplecityapps.shuttle.ui.common.view.SeekButton
 import com.simplecityapps.shuttle.ui.screens.sleeptimer.SleepTimerDialogFragment
 import kotlinx.android.synthetic.main.fragment_playback.*
 import javax.inject.Inject
@@ -53,8 +54,16 @@ class PlaybackFragment :
         repeatButton.setOnClickListener { presenter.toggleRepeat() }
         skipNextButton.setOnClickListener { presenter.skipNext() }
         skipPrevButton.setOnClickListener { presenter.skipPrev() }
-        seekBackwardButton.setOnClickListener { presenter.seekBackward(seekBackwardButton.seekSeconds) }
-        seekForwardButton.setOnClickListener { presenter.seekForward(seekForwardButton.seekSeconds) }
+        seekBackwardButton.listener = object : SeekButton.OnSeekListener {
+            override fun onSeek(seekAmount: Int) {
+                presenter.seekBackward(seekAmount)
+            }
+        }
+        seekForwardButton.listener = object : SeekButton.OnSeekListener {
+            override fun onSeek(seekAmount: Int) {
+                presenter.seekForward(seekAmount)
+            }
+        }
         seekBar.setOnSeekBarChangeListener(this)
 
         recyclerView.adapter = adapter

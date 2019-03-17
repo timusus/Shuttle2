@@ -1,44 +1,123 @@
 package com.simplecityapps.shuttle.ui.common.view
 
+import android.animation.ValueAnimator
 import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Rect
+import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.util.TypedValue
-import android.view.LayoutInflater
-import android.widget.FrameLayout
+import android.view.View
+import android.view.animation.AccelerateDecelerateInterpolator
+import androidx.core.animation.addListener
+import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
 import androidx.core.content.res.use
 import com.simplecityapps.shuttle.R
-import kotlinx.android.synthetic.main.button_seek.view.*
 
 class SeekButton @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
-) : FrameLayout(context, attrs, defStyleAttr) {
+) : View(context, attrs, defStyleAttr) {
 
-    var seekSeconds: Int = 15
-        set(value) {
-            field = value
-            textView.text = value.toString()
-        }
+    interface OnSeekListener {
+
+        /**
+         * The seek amount, in seconds
+         */
+        fun onSeek(seekAmount: Int)
+    }
+
+    private var textColor: Int = Color.BLACK
+    private val textPaint = Paint()
+    private val textRect = Rect()
+
+    private var seekDrawable: Drawable? = null
+
+    private var seekSeconds: Int = 15
 
     private var forward: Boolean = true
         set(value) {
             field = value
-            textView.setBackgroundResource(if (forward) R.drawable.ic_seek_forward_black_24dp else R.drawable.ic_seek_backward_black_24dp)
+
+            seekDrawable = ContextCompat.getDrawable(
+                context, if (forward) com.simplecityapps.shuttle.R.drawable.ic_seek_forward_black_24dp else com.simplecityapps.shuttle.R.drawable.ic_seek_backward_black_24dp
+            )!!.mutate()
         }
 
+    var listener: OnSeekListener? = null
+
+    private var seekRotation = 0f
+    private var animator: ValueAnimator? = null
+
     init {
-        LayoutInflater.from(context).inflate(R.layout.button_seek, this, true)
 
         isClickable = true
         isFocusable = true
 
+        context.theme.obtainStyledAttributes(attrs, com.simplecityapps.shuttle.R.styleable.SeekButton, 0, 0).use { typedArray ->
+            this.forward = typedArray.getBoolean(com.simplecityapps.shuttle.R.styleable.SeekButton_forward, true)
+            this.seekSeconds = typedArray.getInteger(com.simplecityapps.shuttle.R.styleable.SeekButton_seconds, 15)
+        }
+
         TypedValue().apply {
-            context.theme.resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, this, true)
+            context.theme.resolveAttribute(com.simplecityapps.shuttle.R.attr.selectableItemBackgroundBorderless, this, true)
             setBackgroundResource(resourceId)
         }
 
-        context.theme.obtainStyledAttributes(attrs, R.styleable.SeekButton, 0, 0).use { typedArray ->
-            this.forward = typedArray.getBoolean(R.styleable.SeekButton_forward, true)
-            this.seekSeconds = typedArray.getInteger(R.styleable.SeekButton_seconds, 15)
+        TypedValue().apply {
+            context.theme.resolveAttribute(com.simplecityapps.shuttle.R.attr.colorControlNormal, this, true)
+            val colorControlNormal = ContextCompat.getColor(context, resourceId)
+            textColor = colorControlNormal
+            seekDrawable?.setTint(colorControlNormal)
+        }
+
+        if (!isInEditMode) {
+            textPaint.typeface = ResourcesCompat.getFont(context, R.font.opensans_semibold)
+        }
+        textPaint.color = textColor
+        textPaint.textSize = resources.displayMetrics.scaledDensity * 10
+        textPaint.textAlign = Paint.Align.LEFT
+
+        setWillNotDraw(false)
+
+        animator?.cancel()
+        animator = ValueAnimator.ofFloat(0f, 360f)
+        animator!!.duration = 350
+        animator!!.interpolator = AccelerateDecelerateInterpolator()
+        animator!!.addUpdateListener { animator ->
+            seekRotation = (animator.animatedValue as Float) * (if (forward) 1f else -1f)
+            invalidate()
+        }
+        animator!!.addListener(onEnd = { rotation = 0f })
+
+        setOnClickListener {
+            listener?.onSeek(seekSeconds)
+
+            animator?.start()
+        }
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+
+        val text = seekSeconds.toString()
+        canvas.getClipBounds(textRect)
+        val textHeight = textRect.height()
+        val textWidth = textRect.width()
+        textPaint.getTextBounds(text, 0, text.length, textRect)
+        canvas.drawText(
+            text,
+            textWidth / 2f - textRect.width() / 2f - textRect.left,
+            (textHeight / 2f + textRect.height() / 2f - textRect.bottom) + 3f, // +3 moves the text down a tiny bit, below the seek drawable's arrow
+            textPaint
+        )
+
+        canvas.rotate(seekRotation, width / 2f, height / 2f)
+        seekDrawable?.let { seekDrawable ->
+            seekDrawable.setBounds(paddingLeft, paddingTop, width - paddingRight, height - paddingBottom)
+            seekDrawable.draw(canvas)
         }
     }
 }
