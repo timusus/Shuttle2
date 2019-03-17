@@ -10,11 +10,11 @@ import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.View
-import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.core.animation.addListener
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.content.res.use
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import com.simplecityapps.shuttle.R
 
 class SeekButton @JvmOverloads constructor(
@@ -84,8 +84,8 @@ class SeekButton @JvmOverloads constructor(
 
         animator?.cancel()
         animator = ValueAnimator.ofFloat(0f, 360f)
-        animator!!.duration = 350
-        animator!!.interpolator = AccelerateDecelerateInterpolator()
+        animator!!.duration = 450
+        animator!!.interpolator = FastOutSlowInInterpolator()
         animator!!.addUpdateListener { animator ->
             seekRotation = (animator.animatedValue as Float) * (if (forward) 1f else -1f)
             invalidate()
@@ -110,7 +110,7 @@ class SeekButton @JvmOverloads constructor(
         canvas.drawText(
             text,
             textWidth / 2f - textRect.width() / 2f - textRect.left,
-            (textHeight / 2f + textRect.height() / 2f - textRect.bottom) + 3f, // +3 moves the text down a tiny bit, below the seek drawable's arrow
+            (textHeight / 2f + textRect.height() / 2f - textRect.bottom),
             textPaint
         )
 
