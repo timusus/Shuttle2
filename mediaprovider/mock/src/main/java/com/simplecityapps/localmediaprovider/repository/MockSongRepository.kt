@@ -39,6 +39,13 @@ class MockSongRepository(val context: Context) : SongRepository {
         return songsRelay.map { songs -> songs.filter(query.predicate()) }
     }
 
+    override fun setPlayCount(song: Song, playCount: Int): Completable {
+        return Completable.complete()
+    }
+
+    override fun setPlaybackPosition(song: Song, playbackPosition: Int): Completable {
+        return Completable.complete()
+    }
 
     companion object {
 
