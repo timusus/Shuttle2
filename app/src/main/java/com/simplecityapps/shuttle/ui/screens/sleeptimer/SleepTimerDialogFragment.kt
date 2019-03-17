@@ -9,6 +9,7 @@ import androidx.fragment.app.FragmentManager
 import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.toHms
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 class SleepTimerDialogFragment : DialogFragment(), Injectable {
@@ -49,10 +50,10 @@ class SleepTimerDialogFragment : DialogFragment(), Injectable {
                 .setTitle("Sleep Timer")
                 .setItems(arrayOf("5 Minutes", "15 Minutes", "30 Minutes", "1 hour")) { _, index ->
                     when (index) {
-                        0 -> sleepTimer.startTimer(5 * 30 * 1000, false)
-                        1 -> sleepTimer.startTimer(15 * 60 * 1000, false)
-                        2 -> sleepTimer.startTimer(30 * 60 * 1000, false)
-                        3 -> sleepTimer.startTimer(60 * 60 * 1000, false)
+                        0 -> sleepTimer.startTimer(TimeUnit.MINUTES.toMillis(5), false)
+                        1 -> sleepTimer.startTimer(TimeUnit.MINUTES.toMillis(15), false)
+                        2 -> sleepTimer.startTimer(TimeUnit.MINUTES.toMillis(30), false)
+                        3 -> sleepTimer.startTimer(TimeUnit.MINUTES.toMillis(60), false)
                     }
                 }
                 .setNegativeButton("Close", null)
