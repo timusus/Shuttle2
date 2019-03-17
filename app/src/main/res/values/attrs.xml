@@ -12,4 +12,9 @@
         </attr>
     </declare-styleable>
 
+    <declare-styleable name="SeekButton">
+        <attr name="forward" format="boolean" />
+        <attr name="seconds" format="integer" />
+    </declare-styleable>
+
 </resources>

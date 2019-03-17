@@ -74,6 +74,20 @@ class PlaybackPresenter @Inject constructor(
         playbackManager.skipToPrev()
     }
 
+    override fun seekForward(seconds: Int) {
+        Timber.v("seekForward() seconds: $seconds")
+        playbackManager.getPosition()?.let { position ->
+            playbackManager.seekTo(position + seconds * 1000)
+        }
+    }
+
+    override fun seekBackward(seconds: Int) {
+        Timber.v("seekBackward() seconds: $seconds")
+        playbackManager.getPosition()?.let { position ->
+            playbackManager.seekTo(position - seconds * 1000)
+        }
+    }
+
     override fun seek(fraction: Float) {
         queueManager.getCurrentItem()?.song?.let { currentSong ->
             playbackManager.seekTo(((playbackManager.getDuration() ?: currentSong.duration) * fraction).toInt())

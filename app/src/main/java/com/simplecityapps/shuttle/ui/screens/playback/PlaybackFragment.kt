@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.SeekBar
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.PagerSnapHelper
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
@@ -52,6 +53,8 @@ class PlaybackFragment :
         repeatButton.setOnClickListener { presenter.toggleRepeat() }
         skipNextButton.setOnClickListener { presenter.skipNext() }
         skipPrevButton.setOnClickListener { presenter.skipPrev() }
+        seekBackwardButton.setOnClickListener { presenter.seekBackward(seekBackwardButton.seekSeconds) }
+        seekForwardButton.setOnClickListener { presenter.seekForward(seekForwardButton.seekSeconds) }
         seekBar.setOnSeekBarChangeListener(this)
 
         recyclerView.adapter = adapter
@@ -98,9 +101,24 @@ class PlaybackFragment :
     }
 
     override fun setCurrentSong(song: Song?) {
-        song?.let {
+        song?.let { song ->
             titleTextView.text = song.name
             subtitleTextView.text = "${song.albumArtistName} • ${song.albumName}"
+
+            when (song.type) {
+                Song.Type.Audiobook, Song.Type.Podcast -> {
+                    seekBackwardButton.isVisible = true
+                    seekForwardButton.isVisible = true
+                    skipPrevButton.isVisible = false
+                    skipNextButton.isVisible = false
+                }
+                else -> {
+                    seekBackwardButton.isVisible = false
+                    seekForwardButton.isVisible = false
+                    skipPrevButton.isVisible = true
+                    skipNextButton.isVisible = true
+                }
+            }
         }
     }
 

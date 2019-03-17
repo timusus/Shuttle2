@@ -37,6 +37,10 @@ interface PlaybackContract {
 
         fun skipPrev()
 
+        fun seekForward(seconds: Int)
+
+        fun seekBackward(seconds: Int)
+
         fun seek(fraction: Float)
 
         fun sleepTimerClicked()

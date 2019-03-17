@@ -16,7 +16,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:title="Now Playing"/>
+        app:title="Now Playing" />
 
     <androidx.core.widget.NestedScrollView
         android:id="@+id/nestedScrollView"
@@ -121,24 +121,43 @@
         android:layout_marginStart="32dp"
         android:background="?selectableItemBackgroundBorderless"
         android:contentDescription="Shuffle"
-        app:layout_constraintBottom_toBottomOf="@+id/skipPrevButton"
+        app:layout_constraintBottom_toBottomOf="@+id/skipPrevContainer"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/skipPrevButton" />
+        app:layout_constraintTop_toTopOf="@+id/skipPrevContainer" />
 
-    <ImageButton
-        android:id="@+id/skipPrevButton"
+    <FrameLayout
+        android:id="@+id/skipPrevContainer"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_marginStart="8dp"
-        android:background="?selectableItemBackgroundBorderless"
-        android:contentDescription="Shuffle"
         app:layout_constraintBottom_toBottomOf="@+id/playPauseButton"
         app:layout_constraintEnd_toStartOf="@+id/playPauseButton"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintHorizontal_chainStyle="packed"
         app:layout_constraintStart_toEndOf="@+id/shuffleButton"
-        app:layout_constraintTop_toTopOf="@+id/playPauseButton"
-        app:srcCompat="@drawable/ic_skip_previous_black_24dp" />
+        app:layout_constraintTop_toTopOf="@+id/playPauseButton">
+
+        <ImageButton
+            android:id="@+id/skipPrevButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?selectableItemBackgroundBorderless"
+            android:contentDescription="Skip Previous"
+            app:srcCompat="@drawable/ic_skip_previous_black_24dp"
+            tools:visibility="visible" />
+
+        <com.simplecityapps.shuttle.ui.common.view.SeekButton
+            android:id="@+id/seekBackwardButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:contentDescription="Seek Backward"
+            android:padding="8dp"
+            android:visibility="gone"
+            app:forward="false"
+            app:seconds="10"
+            tools:visibility="gone" />
+
+    </FrameLayout>
 
     <ImageButton
         android:id="@+id/playPauseButton"
@@ -148,27 +167,46 @@
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="32dp"
         android:background="@drawable/circle_filled"
-        android:contentDescription="Shuffle"
+        android:contentDescription="Toggle Playback"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/skipNextButton"
+        app:layout_constraintEnd_toStartOf="@+id/skipNextContainer"
         app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@+id/skipPrevButton"
+        app:layout_constraintStart_toEndOf="@+id/skipPrevContainer"
         app:layout_constraintTop_toBottomOf="@+id/seekBar"
         app:srcCompat="@drawable/ic_play_arrow_black_24dp" />
 
-    <ImageButton
-        android:id="@+id/skipNextButton"
+    <FrameLayout
+        android:id="@+id/skipNextContainer"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_marginEnd="8dp"
-        android:background="?selectableItemBackgroundBorderless"
-        android:contentDescription="Shuffle"
         app:layout_constraintBottom_toBottomOf="@+id/playPauseButton"
         app:layout_constraintEnd_toStartOf="@+id/repeatButton"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/playPauseButton"
-        app:layout_constraintTop_toTopOf="@+id/playPauseButton"
-        app:srcCompat="@drawable/ic_skip_next_black_24dp" />
+        app:layout_constraintTop_toTopOf="@+id/playPauseButton">
+
+        <ImageButton
+            android:id="@+id/skipNextButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?selectableItemBackgroundBorderless"
+            android:contentDescription="Skip Next"
+            app:srcCompat="@drawable/ic_skip_next_black_24dp"
+            tools:visibility="visible" />
+
+        <com.simplecityapps.shuttle.ui.common.view.SeekButton
+            android:id="@+id/seekForwardButton"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:contentDescription="Seek Forward"
+            android:padding="8dp"
+            android:visibility="gone"
+            app:forward="true"
+            app:seconds="30"
+            tools:visibility="gone" />
+
+    </FrameLayout>
 
     <com.simplecityapps.shuttle.ui.common.view.RepeatButton
         android:id="@+id/repeatButton"
@@ -177,8 +215,9 @@
         android:layout_height="48dp"
         android:layout_marginEnd="32dp"
         android:background="?selectableItemBackgroundBorderless"
-        app:layout_constraintBottom_toBottomOf="@+id/skipNextButton"
+        android:contentDescription="Repeat"
+        app:layout_constraintBottom_toBottomOf="@+id/skipNextContainer"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/skipNextButton" />
+        app:layout_constraintTop_toTopOf="@+id/skipNextContainer" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
