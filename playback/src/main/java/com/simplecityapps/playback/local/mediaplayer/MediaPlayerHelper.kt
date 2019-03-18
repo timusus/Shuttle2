@@ -86,12 +86,12 @@ class MediaPlayerHelper {
         Timber.v("$tag pause()")
         if (isPlaying()) {
             mediaPlayer?.pause()
+            callback?.onPlaystateChanged(false)
         }
         if (isPreparing) {
             Timber.v("pause() called while preparing. Cancelling playOnPrepared.")
             playOnPrepared = false
         }
-        callback?.onPlaystateChanged(false)
     }
 
     fun seek(position: Int) {
