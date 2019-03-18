@@ -71,6 +71,7 @@ class PlaybackService : Service(), Playback.Callback {
 
         Timber.v("onDestroy()")
 
+        playbackManager.removeCallback(this)
         playbackManager.pause()
 
         foregroundNotificationHandler?.removeCallbacksAndMessages(null)
@@ -90,9 +91,9 @@ class PlaybackService : Service(), Playback.Callback {
 
         foregroundNotificationHandler?.removeCallbacksAndMessages(null)
 
-        if (isPlaying) {
-            delayedShutdownHandler?.removeCallbacksAndMessages(null)
-        } else {
+        delayedShutdownHandler?.removeCallbacksAndMessages(null)
+
+        if (!isPlaying) {
             foregroundNotificationHandler?.postDelayed({
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     stopForeground(Service.STOP_FOREGROUND_DETACH)
