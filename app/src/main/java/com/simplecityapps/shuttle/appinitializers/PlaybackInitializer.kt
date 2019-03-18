@@ -123,13 +123,11 @@ class PlaybackInitializer @Inject constructor(
     override fun onPlaybackComplete(song: Song) {
         playbackPreferenceManager.playbackPosition = 0
 
-        song.playbackPosition = song.duration
         songRepository.setPlaybackPosition(song, song.playbackPosition)
             .subscribeOn(Schedulers.io())
             .subscribe()
 
-        song.playCount++
-        songRepository.setPlayCount(song, song.playCount)
+        songRepository.incrementPlayCount(song)
             .subscribeOn(Schedulers.io())
             .subscribe()
     }

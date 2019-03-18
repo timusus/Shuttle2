@@ -2,6 +2,8 @@ package com.simplecityapps.shuttle.dagger
 
 import com.simplecityapps.shuttle.ui.screens.debug.DebugDrawerFragment
 import com.simplecityapps.shuttle.ui.screens.debug.LoggingFragment
+import com.simplecityapps.shuttle.ui.screens.home.history.HistoryFragment
+import com.simplecityapps.shuttle.ui.screens.home.recent.RecentFragment
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistsFragment
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragment
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumsFragment
@@ -58,5 +60,11 @@ abstract class FragmentBuildersModule {
 
     @ContributesAndroidInjector
     abstract fun contributeSleepTimerDialogFragment(): SleepTimerDialogFragment
+
+    @ContributesAndroidInjector
+    abstract fun contributeHistoryFragment(): HistoryFragment
+
+    @ContributesAndroidInjector
+    abstract fun contributeRecentFragment(): RecentFragment
 
 }

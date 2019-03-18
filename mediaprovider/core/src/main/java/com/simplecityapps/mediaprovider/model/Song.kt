@@ -18,6 +18,7 @@ class Song(
     val size: Long,
     var lastModified: Date,
     var lastPlayed: Date?,
+    var lastCompleted: Date?,
     var playCount: Int,
     var playbackPosition: Int
 ) : Serializable {

@@ -182,14 +182,18 @@ class LocalSongRepository(private val database: MediaDatabase) : SongRepository 
         return songsRelay.map { songs -> songs.filter(query.predicate()) }
     }
 
-
-    override fun setPlayCount(song: Song, playCount: Int): Completable {
-        return database.songDataDao().updatePlayCount(song.id, Date(), playCount)
+    override fun incrementPlayCount(song: Song): Completable {
+        Timber.v("Incrementing play count for song: ${song.name}")
+        song.playCount++
+        song.lastCompleted = Date()
+        return database.songDataDao().updatePlayCount(song.id, song.playCount, song.lastCompleted!!)
     }
 
     override fun setPlaybackPosition(song: Song, playbackPosition: Int): Completable {
         Timber.v("Setting playback position to $playbackPosition for song: ${song.name}")
-        return database.songDataDao().updatePlaybackPosition(song.id, playbackPosition)
+        song.playbackPosition = playbackPosition
+        song.lastPlayed = Date()
+        return database.songDataDao().updatePlaybackPosition(song.id, playbackPosition, song.lastPlayed!!)
     }
 
     companion object {

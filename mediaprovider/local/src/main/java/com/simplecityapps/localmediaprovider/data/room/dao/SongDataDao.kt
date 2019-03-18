@@ -52,11 +52,11 @@ abstract class SongDataDao {
         return inserts
     }
 
-    @Query("UPDATE songs SET lastPlayed = :lastPlayed, playCount = :playCount WHERE id =:id")
-    abstract fun updatePlayCount(id: Long, lastPlayed: Date, playCount: Int): Completable
+    @Query("UPDATE songs SET playCount = :playCount, lastCompleted = :lastCompleted WHERE id =:id")
+    abstract fun updatePlayCount(id: Long, playCount: Int, lastCompleted: Date): Completable
 
-    @Query("UPDATE songs SET playbackPosition = :playbackPosition WHERE id =:id")
-    abstract fun updatePlaybackPosition(id: Long, playbackPosition: Int): Completable
+    @Query("UPDATE songs SET playbackPosition = :playbackPosition, lastPlayed = :lastPlayed WHERE id =:id")
+    abstract fun updatePlaybackPosition(id: Long, playbackPosition: Int, lastPlayed: Date): Completable
 
     @Query("DELETE from songs")
     abstract fun deleteAll()

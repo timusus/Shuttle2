@@ -9,7 +9,14 @@
         android:id="@+id/homeFragment"
         android:name="com.simplecityapps.shuttle.ui.screens.home.HomeFragment"
         android:label="HomeFragment"
-        tools:layout="@layout/fragment_home" />
+        tools:layout="@layout/fragment_home">
+        <action
+            android:id="@+id/action_homeFragment_to_historyFragment"
+            app:destination="@id/historyFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_recentFragment"
+            app:destination="@id/recentFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/libraryFragment"
@@ -50,5 +57,15 @@
             android:name="albumId"
             app:argType="long" />
     </fragment>
+    <fragment
+        android:id="@+id/historyFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.home.history.HistoryFragment"
+        android:label="HistoryFragment"
+        tools:layout="@layout/fragment_history" />
+    <fragment
+        android:id="@+id/recentFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.home.recent.RecentFragment"
+        android:label="RecentFragment"
+        tools:layout="@layout/fragment_recent" />
 
 </navigation>

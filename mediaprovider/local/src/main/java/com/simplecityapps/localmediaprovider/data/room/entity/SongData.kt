@@ -41,7 +41,8 @@ data class SongData(
     @ColumnInfo(name = "lastModified") var lastModified: Date,
     @ColumnInfo(name = "playbackPosition") var playbackPosition: Int = 0,
     @ColumnInfo(name = "playCount") var playCount: Int = 0,
-    @ColumnInfo(name = "lastPlayed") var lastPlayed: Date? = null
+    @ColumnInfo(name = "lastPlayed") var lastPlayed: Date? = null,
+    @ColumnInfo(name = "lastCompleted") var lastCompleted: Date? = null
 ) : ContentsComparator<SongData> {
     @PrimaryKey(autoGenerate = true)
     var id: Long = 0
@@ -80,7 +81,7 @@ fun AudioFile.toSongData(): SongData {
 }
 
 fun Song.toSongData(): SongData {
-    return SongData(name, track, disc, duration, year, path, albumArtistId, albumId, size, lastModified, playbackPosition, playCount, lastPlayed).apply {
+    return SongData(name, track, disc, duration, year, path, albumArtistId, albumId, size, lastModified, playbackPosition, playCount, lastPlayed, lastCompleted).apply {
         id = this@toSongData.id
         albumArtistName = this@toSongData.albumArtistName
         albumName = this@toSongData.albumName
