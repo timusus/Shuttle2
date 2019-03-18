@@ -11,6 +11,8 @@ interface AudioFocusHelper {
 
     var listener: Listener?
 
+    var isPlaying: Boolean
+
     interface Listener {
 
         fun restoreVolumeAndplay()

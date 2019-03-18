@@ -4,7 +4,9 @@ import android.content.Context
 import android.media.AudioManager
 import androidx.core.content.getSystemService
 
-abstract class AudioFocusHelperBase(val context: Context) : AudioFocusHelper, AudioManager.OnAudioFocusChangeListener {
+abstract class AudioFocusHelperBase(
+    private val context: Context
+) : AudioFocusHelper, AudioManager.OnAudioFocusChangeListener {
 
     internal val audioManager: AudioManager? by lazy {
         context.getSystemService<AudioManager>()
@@ -19,6 +21,8 @@ abstract class AudioFocusHelperBase(val context: Context) : AudioFocusHelper, Au
     internal var playbackNowAuthorized = false
 
     override var listener: AudioFocusHelper.Listener? = null
+
+    override var isPlaying: Boolean = false
 
     override fun onAudioFocusChange(focusChange: Int) {
         when (focusChange) {
@@ -39,7 +43,7 @@ abstract class AudioFocusHelperBase(val context: Context) : AudioFocusHelper, Au
             }
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
                 synchronized(focusLock) {
-                    resumeOnFocusGain = true
+                    resumeOnFocusGain = isPlaying
                     playbackDelayed = false
                 }
                 pause()

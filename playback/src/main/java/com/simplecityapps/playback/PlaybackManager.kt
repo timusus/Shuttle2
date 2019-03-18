@@ -157,6 +157,8 @@ class PlaybackManager(
         Timber.v("onPlaystateChanged() isPlaying: $isPlaying")
         callbacks.forEach { callback -> callback.onPlaystateChanged(isPlaying) }
 
+        audioFocusHelper.isPlaying = isPlaying
+
         monitorProgress(isPlaying)
     }
 
