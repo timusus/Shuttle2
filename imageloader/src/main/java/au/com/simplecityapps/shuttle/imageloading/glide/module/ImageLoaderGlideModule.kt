@@ -41,6 +41,7 @@ class ImageLoaderGlideModule : AppGlideModule() {
 
 
         // Generic loaders
+
         registry.replace(GlideUrl::class.java, InputStream::class.java, OkHttpUrlLoader.Factory(okHttpClient))
 
         registry.append(LocalArtworkProvider::class.java, InputStream::class.java, LocalArtworkModelLoaderFactory())
@@ -48,6 +49,7 @@ class ImageLoaderGlideModule : AppGlideModule() {
 
 
         // Local
+
         registry.append(Song::class.java, InputStream::class.java, DiskSongLocalArtworkModelLoaderFactory())
         registry.append(Song::class.java, InputStream::class.java, TagLibSongLocalArtworkModelLoaderFactory(artworkProvider))
 
@@ -57,7 +59,6 @@ class ImageLoaderGlideModule : AppGlideModule() {
         registry.append(Song::class.java, InputStream::class.java, LastFmRemoteSongArtworkModelLoaderFactory(lastFm))
         registry.append(Album::class.java, InputStream::class.java, LastFmRemoteAlbumArtworkModelLoaderFactory(lastFm))
         registry.append(AlbumArtist::class.java, InputStream::class.java, LastFmRemoteAlbumArtistArtworkModelLoaderFactory(lastFm))
-
     }
 
     override fun isManifestParsingEnabled(): Boolean {
