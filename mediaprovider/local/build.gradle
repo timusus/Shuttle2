@@ -4,57 +4,50 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
 
 android {
-  compileSdkVersion 28
+    compileSdkVersion 28
 
-  defaultConfig {
-    minSdkVersion 21
-    targetSdkVersion 28
-    versionCode 1
-    versionName "1.0"
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
 
-    testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-  }
-
-  buildTypes {
-    release {
-      minifyEnabled false
-      proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
-  }
 
-  externalNativeBuild {
-    cmake {
-      path "CMakeLists.txt"
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
     }
-  }
 }
 
 dependencies {
-  implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-  // Shuttle MediaProvider Core
-  implementation project(path: ':mediaprovider:core')
+    // Shuttle MediaProvider Core
+    implementation project(path: ':mediaprovider:core')
 
-  // Kotlin Standard Library
-  implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    // TagLib
+    implementation project(path: ':taglib')
 
-  // Room
-  kapt 'androidx.room:room-compiler:2.1.0-alpha05'
-  implementation 'androidx.room:room-runtime:2.1.0-alpha05'
-  implementation 'androidx.room:room-rxjava2:2.1.0-alpha05'
+    // Kotlin Standard Library
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
-  // RxRelay
-  implementation 'com.jakewharton.rxrelay2:rxrelay:2.1.0'
+    // Room
+    kapt 'androidx.room:room-compiler:2.1.0-alpha05'
+    implementation 'androidx.room:room-runtime:2.1.0-alpha05'
+    implementation 'androidx.room:room-rxjava2:2.1.0-alpha05'
 
-  // Testing
-  testImplementation 'junit:junit:4.12'
-  androidTestImplementation 'androidx.test:runner:1.1.1'
-  androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.1'
+    // RxRelay
+    implementation 'com.jakewharton.rxrelay2:rxrelay:2.1.0'
 
-  // Timber
-  implementation 'com.jakewharton.timber:timber:4.7.1'
-}
+    // Testing
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'androidx.test:runner:1.1.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.1'
 
-repositories {
-  mavenCentral()
+    // Timber
+    implementation 'com.jakewharton.timber:timber:4.7.1'
 }

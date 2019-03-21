@@ -9,12 +9,13 @@ import com.simplecityapps.localmediaprovider.repository.LocalSongRepository
 import com.simplecityapps.mediaprovider.repository.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.SongRepository
+import com.simplecityapps.taglib.FileScanner
 import dagger.Module
 import dagger.Provides
 import javax.inject.Singleton
 
 @Module
-class RepositoryModule(private val context: Context) {
+class RepositoryModule(private val context: Context, private val fileScanner: FileScanner) {
 
     @Provides
     @Singleton
@@ -25,7 +26,7 @@ class RepositoryModule(private val context: Context) {
     @Provides
     @Singleton
     fun provideSongRepository(database: MediaDatabase): SongRepository {
-        return LocalSongRepository(database)
+        return LocalSongRepository(fileScanner, database)
     }
 
     @Provides

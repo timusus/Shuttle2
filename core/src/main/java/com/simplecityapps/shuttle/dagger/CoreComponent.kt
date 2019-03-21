@@ -12,6 +12,7 @@ import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.sleeptimer.SleepTimer
+import com.simplecityapps.taglib.FileScanner
 import dagger.Component
 import okhttp3.OkHttpClient
 import javax.inject.Singleton
@@ -22,7 +23,8 @@ import javax.inject.Singleton
         RepositoryModule::class,
         NetworkingModule::class,
         PlaybackModule::class,
-        PersistenceModule::class
+        PersistenceModule::class,
+        TagLibModule::class
     ]
 )
 interface CoreComponent {
@@ -50,6 +52,8 @@ interface CoreComponent {
     fun getNoiseManager(): NoiseManager
 
     fun getSleepTimer(): SleepTimer
+
+    fun getFileScanner(): FileScanner
 
     @Component.Builder
     interface Builder {

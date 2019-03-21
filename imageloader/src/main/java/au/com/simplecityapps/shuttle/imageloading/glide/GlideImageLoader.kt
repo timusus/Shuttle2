@@ -3,11 +3,6 @@ package au.com.simplecityapps.shuttle.imageloading.glide
 import android.widget.ImageView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.module.GlideApp
-import au.com.simplecityapps.shuttle.imageloading.glide.provider.ArtworkProvider
-import au.com.simplecityapps.shuttle.imageloading.glide.provider.remote.lastfm.LastFmAlbumArtistRemoteArtworkProvider
-import au.com.simplecityapps.shuttle.imageloading.glide.provider.remote.lastfm.LastFmAlbumRemoteArtworkProvider
-import au.com.simplecityapps.shuttle.imageloading.glide.provider.remote.lastfm.LastFmSongRemoteArtworkProvider
-import au.com.simplecityapps.shuttle.imageloading.networking.lastfm.LastFmService
 import com.bumptech.glide.load.MultiTransformation
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
@@ -17,24 +12,24 @@ import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
 
-class GlideImageLoader(private val lastFm: LastFmService.LastFm) : ArtworkImageLoader {
+class GlideImageLoader : ArtworkImageLoader {
 
     override fun loadArtwork(imageView: ImageView, albumArtist: AlbumArtist, vararg options: ArtworkImageLoader.Options) {
-        loadArtwork(imageView, LastFmAlbumArtistRemoteArtworkProvider(lastFm, albumArtist), *options)
+        loadArtwork(imageView, albumArtist as Any, *options)
     }
 
     override fun loadArtwork(imageView: ImageView, album: Album, vararg options: ArtworkImageLoader.Options) {
-        loadArtwork(imageView, LastFmAlbumRemoteArtworkProvider(lastFm, album), *options)
+        loadArtwork(imageView, album as Any, *options)
     }
 
     override fun loadArtwork(imageView: ImageView, song: Song, vararg options: ArtworkImageLoader.Options) {
-        loadArtwork(imageView, LastFmSongRemoteArtworkProvider(lastFm, song), *options)
+        loadArtwork(imageView, song as Any, *options)
     }
 
-    private fun loadArtwork(imageView: ImageView, artworkProvider: ArtworkProvider, vararg options: ArtworkImageLoader.Options) {
+    private fun <T> loadArtwork(imageView: ImageView, `object`: T, vararg options: ArtworkImageLoader.Options) {
         val glideRequest = GlideApp
             .with(imageView.context)
-            .load(artworkProvider)
+            .load(`object`)
             .diskCacheStrategy(DiskCacheStrategy.ALL)
 
         options.forEach { option ->

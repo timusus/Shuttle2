@@ -1,6 +1,6 @@
 package au.com.simplecityapps.shuttle.imageloading.glide.loader.remote
 
-import au.com.simplecityapps.shuttle.imageloading.glide.provider.remote.RemoteArtworkProvider
+import au.com.simplecityapps.shuttle.imageloading.glide.loader.common.ArtworkProvider
 import au.com.simplecityapps.shuttle.imageloading.networking.ArtworkUrlResult
 import com.bumptech.glide.Priority
 import com.bumptech.glide.integration.okhttp3.OkHttpStreamFetcher
@@ -10,12 +10,20 @@ import com.bumptech.glide.load.data.DataFetcher
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.ModelLoader
+import com.bumptech.glide.load.model.ModelLoaderFactory
+import com.bumptech.glide.load.model.MultiModelLoaderFactory
 import com.bumptech.glide.signature.ObjectKey
 import okhttp3.OkHttpClient
 import retrofit2.Call
 import java.io.IOException
 import java.io.InputStream
 import java.net.SocketException
+
+interface RemoteArtworkProvider : ArtworkProvider {
+
+    fun getArtworkUri(): Call<out ArtworkUrlResult>
+}
+
 
 class RemoteArtworkModelLoader(
     private val okHttpClient: OkHttpClient
@@ -28,36 +36,35 @@ class RemoteArtworkModelLoader(
     override fun handles(model: RemoteArtworkProvider): Boolean {
         return true
     }
-}
 
-class RemoteArtworkDataFetcher(
-    private val okHttpClient: OkHttpClient,
-    private val remoteArtworkProvider: RemoteArtworkProvider
-) : DataFetcher<InputStream> {
+    class RemoteArtworkDataFetcher(
+        private val okHttpClient: OkHttpClient,
+        private val remoteArtworkProvider: RemoteArtworkProvider
+    ) : DataFetcher<InputStream> {
 
-    private var okHttpStreamFetcher: OkHttpStreamFetcher? = null
+        private var okHttpStreamFetcher: OkHttpStreamFetcher? = null
 
-    private var call: Call<out ArtworkUrlResult>? = null
+        private var call: Call<out ArtworkUrlResult>? = null
 
-    override fun getDataClass(): Class<InputStream> {
-        return InputStream::class.java
-    }
+        override fun getDataClass(): Class<InputStream> {
+            return InputStream::class.java
+        }
 
-    override fun cleanup() {
-        okHttpStreamFetcher?.cleanup()
-    }
+        override fun cleanup() {
+            okHttpStreamFetcher?.cleanup()
+        }
 
-    override fun getDataSource(): DataSource {
-        return DataSource.REMOTE
-    }
+        override fun getDataSource(): DataSource {
+            return DataSource.REMOTE
+        }
 
-    override fun cancel() {
-        call?.cancel()
-        okHttpStreamFetcher?.cancel()
-    }
+        override fun cancel() {
+            call?.cancel()
+            okHttpStreamFetcher?.cancel()
+        }
 
-    override fun loadData(priority: Priority, callback: DataFetcher.DataCallback<in InputStream>) {
-        call = remoteArtworkProvider.getArtworkUri()
+        override fun loadData(priority: Priority, callback: DataFetcher.DataCallback<in InputStream>) {
+            call = remoteArtworkProvider.getArtworkUri()
             try {
                 call!!.execute().body()?.artworkUrl
             } catch (e: SocketException) {
@@ -67,8 +74,23 @@ class RemoteArtworkDataFetcher(
             }
                 ?.takeIf { url -> url.isNotBlank() }
                 ?.let { url ->
-                okHttpStreamFetcher = OkHttpStreamFetcher(okHttpClient, GlideUrl(url))
-                okHttpStreamFetcher!!.loadData(priority, callback)
-        } ?: callback.onLoadFailed(GlideException("Artwork url not found"))
+                    okHttpStreamFetcher = OkHttpStreamFetcher(okHttpClient, GlideUrl(url))
+                    okHttpStreamFetcher!!.loadData(priority, callback)
+                } ?: callback.onLoadFailed(GlideException("ArtworkProvider url not found"))
+        }
+    }
+}
+
+
+class RemoteArtworkModelLoaderFactory(
+    private val okHttpClient: OkHttpClient
+) : ModelLoaderFactory<RemoteArtworkProvider, InputStream> {
+
+    override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<RemoteArtworkProvider, InputStream> {
+        return RemoteArtworkModelLoader(okHttpClient)
+    }
+
+    override fun teardown() {
+
     }
 }

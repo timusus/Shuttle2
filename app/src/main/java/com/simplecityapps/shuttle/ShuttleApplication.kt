@@ -30,8 +30,9 @@ class ShuttleApplication : Application(),
 
     private val coreComponent: CoreComponent by lazy {
 
+        val tagLibModule = TagLibModule()
         val persistenceModule = PersistenceModule(this)
-        val repositoryModule = RepositoryModule(this)
+        val repositoryModule = RepositoryModule(this, tagLibModule.provideFileScanner())
         val playbackModule = PlaybackModule(this, persistenceModule.provideSharedPrefs())
 
         DaggerCoreComponent

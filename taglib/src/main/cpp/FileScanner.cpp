@@ -1,6 +1,5 @@
 
 #include <jni.h>
-#include <android/log.h>
 #include <fileref.h>
 
 #include <sys/types.h>
@@ -62,16 +61,13 @@ vector<string> &scanDirectory(const string &path, vector<string> &files) {
 
         if (type == DT_UNKNOWN) {
 
-            // If the type is unknown, stat() the file instead.
-            // This is sometimes necessary when accessing NFS mounted filesystems, but could be needed in other cases well.
+            // If the type is unknown, stat() the file instead. This is sometimes necessary when accessing NFS mounted filesystems, but could be needed in other cases well.
             if (stat(path.c_str(), &statbuf) == 0) {
                 if (S_ISREG(statbuf.st_mode)) {
                     type = DT_REG;
                 } else if (S_ISDIR(statbuf.st_mode)) {
                     type = DT_DIR;
                 }
-            } else {
-//                __android_log_print(ANDROID_LOG_INFO, "stat() failed for", "%s", path.c_str());
             }
         }
 
@@ -96,7 +92,7 @@ vector<string> &scanDirectory(const string &path, vector<string> &files) {
 }
 
 JNIEXPORT jobject JNICALL
-Java_com_simplecityapps_localmediaprovider_repository_LocalSongRepository_getAudioFiles(JNIEnv *env, jobject instance, jstring initialDir_) {
+Java_com_simplecityapps_taglib_FileScanner_getAudioFiles(JNIEnv *env, jobject instance, jstring initialDir_) {
 
     const char *initialDir = env->GetStringUTFChars(initialDir_, 0);
 
@@ -107,7 +103,7 @@ Java_com_simplecityapps_localmediaprovider_repository_LocalSongRepository_getAud
     jmethodID arrayListInit = env->GetMethodID(arrayListClass, "<init>", "(I)V");
     jmethodID arrayListAdd = env->GetMethodID(arrayListClass, "add", "(Ljava/lang/Object;)Z");
 
-    jclass songClass = env->FindClass("com/simplecityapps/localmediaprovider/model/AudioFile");
+    jclass songClass = env->FindClass("com/simplecityapps/taglib/AudioFile");
     jmethodID songInit = env->GetMethodID(songClass, "<init>", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;IIIILjava/lang/String;JJ)V");
 
     jobject result = env->NewObject(arrayListClass, arrayListInit, paths.size());

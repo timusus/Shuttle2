@@ -7,11 +7,11 @@ import com.simplecityapps.localmediaprovider.Diff.Companion.diff
 import com.simplecityapps.localmediaprovider.IntervalTimer
 import com.simplecityapps.localmediaprovider.data.room.database.MediaDatabase
 import com.simplecityapps.localmediaprovider.data.room.entity.*
-import com.simplecityapps.localmediaprovider.model.AudioFile
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.mediaprovider.repository.predicate
+import com.simplecityapps.taglib.FileScanner
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
@@ -19,7 +19,10 @@ import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
 import java.util.*
 
-class LocalSongRepository(private val database: MediaDatabase) : SongRepository {
+class LocalSongRepository(
+    private val fileScanner: FileScanner,
+    private val database: MediaDatabase
+) : SongRepository {
 
     private val intervalTimer = IntervalTimer()
 
@@ -29,7 +32,7 @@ class LocalSongRepository(private val database: MediaDatabase) : SongRepository 
         relay
     }
 
-    private external fun getAudioFiles(path: String): ArrayList<AudioFile>
+
 
     override fun populate(): Completable {
         intervalTimer.startLog()
@@ -37,7 +40,7 @@ class LocalSongRepository(private val database: MediaDatabase) : SongRepository 
         Timber.v("Scanning for media..")
 
         // 1. Scan for media
-        return Single.fromCallable { getAudioFiles(Environment.getExternalStorageDirectory().path) }
+        return Single.fromCallable { fileScanner.getAudioFiles(Environment.getExternalStorageDirectory().path) }
             .flatMapCompletable { audioFiles ->
 
                 Timber.v("Discovered ${audioFiles.size} songs in ${intervalTimer.getInterval()}ms")

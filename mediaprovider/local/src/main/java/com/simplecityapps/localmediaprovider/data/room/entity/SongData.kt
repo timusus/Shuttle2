@@ -2,8 +2,8 @@ package com.simplecityapps.localmediaprovider.data.room.entity
 
 import androidx.room.*
 import com.simplecityapps.localmediaprovider.ContentsComparator
-import com.simplecityapps.localmediaprovider.model.AudioFile
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.taglib.AudioFile
 import java.util.*
 
 @Entity(

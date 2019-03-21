@@ -56,6 +56,9 @@ dependencies {
     // Shuttle Playback
     implementation project(path: ':playback')
 
+    // TagLib
+    implementation project(path: ':taglib')
+
     // Kotlin Standard Library
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 

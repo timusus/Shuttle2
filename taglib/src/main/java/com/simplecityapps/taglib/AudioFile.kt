@@ -1,4 +1,4 @@
-package com.simplecityapps.localmediaprovider.model
+package com.simplecityapps.taglib
 
 data class AudioFile(
     val name: String,
