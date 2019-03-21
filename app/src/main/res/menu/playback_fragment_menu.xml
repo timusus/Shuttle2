@@ -4,7 +4,7 @@
 
     <item
         android:id="@+id/sleepTimer"
-        android:icon="@drawable/ic_sleep_black_24dp"
+        android:icon="@drawable/ic_sleep_24dp"
         android:title="Sleep Timer"
         app:showAsAction="ifRoom" />
 
