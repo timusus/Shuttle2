@@ -4,7 +4,6 @@ import android.widget.ImageView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.module.GlideApp
 import com.bumptech.glide.load.MultiTransformation
-import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.request.RequestOptions
@@ -30,7 +29,6 @@ class GlideImageLoader : ArtworkImageLoader {
         val glideRequest = GlideApp
             .with(imageView.context)
             .load(`object`)
-            .diskCacheStrategy(DiskCacheStrategy.ALL)
 
         options.forEach { option ->
             when (option) {
