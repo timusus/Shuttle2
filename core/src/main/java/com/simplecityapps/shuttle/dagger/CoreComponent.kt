@@ -12,6 +12,7 @@ import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.sleeptimer.SleepTimer
+import com.simplecityapps.taglib.ArtworkProvider
 import com.simplecityapps.taglib.FileScanner
 import dagger.Component
 import okhttp3.OkHttpClient
@@ -54,6 +55,8 @@ interface CoreComponent {
     fun getSleepTimer(): SleepTimer
 
     fun getFileScanner(): FileScanner
+
+    fun getArtworkProvider(): ArtworkProvider
 
     @Component.Builder
     interface Builder {

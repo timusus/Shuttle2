@@ -23,7 +23,6 @@ import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.dagger.CoreComponentProvider
-import com.simplecityapps.taglib.ArtworkProvider
 import java.io.InputStream
 
 @GlideModule
@@ -33,12 +32,9 @@ class ImageLoaderGlideModule : AppGlideModule() {
 
         val okHttpClient = (context.applicationContext as CoreComponentProvider).provideCoreComponent().getOkHttpClient()
 
-        // Todo: Provider via injector
-        val lastFm = LastFmService(okHttpClient).lastFm
+        val artworkProvider = (context.applicationContext as CoreComponentProvider).provideCoreComponent().getArtworkProvider()
 
-        // Todo: Provide via injector
-        val artworkProvider = ArtworkProvider()
-
+        val songRepository = (context.applicationContext as CoreComponentProvider).provideCoreComponent().getSongRepository()
 
         // Generic loaders
 
@@ -56,6 +52,7 @@ class ImageLoaderGlideModule : AppGlideModule() {
 
         // Remote
 
+        val lastFm = LastFmService(okHttpClient).lastFm
         registry.append(Song::class.java, InputStream::class.java, LastFmRemoteSongArtworkModelLoaderFactory(lastFm))
         registry.append(Album::class.java, InputStream::class.java, LastFmRemoteAlbumArtworkModelLoaderFactory(lastFm))
         registry.append(AlbumArtist::class.java, InputStream::class.java, LastFmRemoteAlbumArtistArtworkModelLoaderFactory(lastFm))

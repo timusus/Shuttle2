@@ -30,6 +30,7 @@ dependencies {
     // Shuttle MediaProvider Core
     implementation project(path: ':mediaprovider:core')
 
+    // TagLib
     implementation project(path: ':taglib')
 
     // Kotlin Standard Library
