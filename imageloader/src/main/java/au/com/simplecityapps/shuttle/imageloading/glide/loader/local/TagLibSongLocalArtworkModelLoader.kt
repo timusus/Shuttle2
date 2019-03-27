@@ -30,7 +30,7 @@ class TagLibSongLocalArtworkModelLoader(
         LocalArtworkProvider {
 
         override fun getInputStream(): InputStream? {
-            return tagLibArtworkProvider.getArtwork(song.path)?.inputStream()
+            return tagLibArtworkProvider.getArtwork(song.path).inputStream()
         }
     }
 }
