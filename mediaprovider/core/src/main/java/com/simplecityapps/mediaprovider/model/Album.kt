@@ -8,7 +8,7 @@ class Album(
     val albumArtistId: Long,
     val albumArtistName: String,
     val songCount: Int,
-    val duration: Long,
+    val duration: Int,
     var year: Int
 ) : Serializable {
 
