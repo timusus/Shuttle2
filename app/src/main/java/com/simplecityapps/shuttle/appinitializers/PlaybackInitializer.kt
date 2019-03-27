@@ -15,6 +15,7 @@ import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.QueueWatcher
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
@@ -29,6 +30,7 @@ class PlaybackInitializer @Inject constructor(
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackManager,
     private val queueManager: QueueManager,
+    private val queueWatcher: QueueWatcher,
     private val playbackPreferenceManager: PlaybackPreferenceManager,
     @Suppress("unused") private val mediaSessionManager: MediaSessionManager,
     @Suppress("unused") private val noiseManager: NoiseManager
@@ -43,7 +45,7 @@ class PlaybackInitializer @Inject constructor(
 
     override fun init(application: Application) {
 
-        queueManager.addCallback(this)
+        queueWatcher.addCallback(this)
         playbackManager.addCallback(this)
         playbackManager.addProgressCallback(this)
 
@@ -88,14 +90,6 @@ class PlaybackInitializer @Inject constructor(
         if (hasRestoredPlaybackPosition) {
             playbackPreferenceManager.playbackPosition = null
         }
-    }
-
-    override fun onShuffleChanged() {
-
-    }
-
-    override fun onRepeatChanged() {
-
     }
 
 

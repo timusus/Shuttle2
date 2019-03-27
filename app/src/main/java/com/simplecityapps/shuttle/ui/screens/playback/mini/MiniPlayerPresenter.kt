@@ -5,12 +5,14 @@ import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import javax.inject.Inject
 
 class MiniPlayerPresenter @Inject constructor(
     private val playbackManager: PlaybackManager,
-    private val queueManager: QueueManager
+    private val queueManager: QueueManager,
+    private val queueWatcher: QueueWatcher
 ) : BasePresenter<MiniPlayerContract.View>(),
     MiniPlayerContract.Presenter,
     Playback.Callback,
@@ -29,7 +31,7 @@ class MiniPlayerPresenter @Inject constructor(
         super.bindView(view)
 
         playbackManager.addCallback(this)
-        queueManager.addCallback(this)
+        queueWatcher.addCallback(this)
         playbackManager.addProgressCallback(this)
 
         // One time update of all UI components
@@ -43,7 +45,7 @@ class MiniPlayerPresenter @Inject constructor(
 
     override fun unbindView() {
         playbackManager.removeCallback(this)
-        queueManager.removeCallback(this)
+        queueWatcher.removeCallback(this)
         playbackManager.removeProgressCallback(this)
 
         super.unbindView()
@@ -74,20 +76,8 @@ class MiniPlayerPresenter @Inject constructor(
 
     // QueueChangeCallback Implementation
 
-    override fun onQueueChanged() {
-
-    }
-
     override fun onQueuePositionChanged() {
         view?.setCurrentSong(queueManager.getCurrentItem()?.song)
-    }
-
-    override fun onShuffleChanged() {
-
-    }
-
-    override fun onRepeatChanged() {
-
     }
 
 

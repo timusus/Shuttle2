@@ -5,13 +5,15 @@ import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import timber.log.Timber
 import javax.inject.Inject
 
 class PlaybackPresenter @Inject constructor(
     private val playbackManager: PlaybackManager,
-    private val queueManager: QueueManager
+    private val queueManager: QueueManager,
+    private val queueWatcher: QueueWatcher
 ) : BasePresenter<PlaybackContract.View>(),
     PlaybackContract.Presenter,
     Playback.Callback,
@@ -22,7 +24,7 @@ class PlaybackPresenter @Inject constructor(
         super.bindView(view)
 
         playbackManager.addCallback(this)
-        queueManager.addCallback(this)
+        queueWatcher.addCallback(this)
         playbackManager.addProgressCallback(this)
 
         // One time update of all UI components
@@ -36,7 +38,7 @@ class PlaybackPresenter @Inject constructor(
 
     override fun unbindView() {
         playbackManager.removeCallback(this)
-        queueManager.removeCallback(this)
+        queueWatcher.removeCallback(this)
         playbackManager.removeProgressCallback(this)
 
         super.unbindView()
@@ -129,7 +131,7 @@ class PlaybackPresenter @Inject constructor(
 
     override fun onQueuePositionChanged() {
         view?.setCurrentSong(queueManager.getCurrentItem()?.song)
-        view?.setQueuePosition(queueManager.getCurrentPosition(), queueManager.getSize())
+        view?.setQueuePosition(queueManager.getCurrentPosition(), queueManager.getSize(), true)
     }
 
     override fun onShuffleChanged() {

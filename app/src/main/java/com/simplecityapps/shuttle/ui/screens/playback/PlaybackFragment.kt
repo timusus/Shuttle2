@@ -131,9 +131,13 @@ class PlaybackFragment :
         }
     }
 
-    override fun setQueuePosition(position: Int?, total: Int) {
+    override fun setQueuePosition(position: Int?, total: Int, smoothScroll: Boolean) {
         position?.let { position ->
-            recyclerView.smoothScrollToPosition(position)
+            if (smoothScroll) {
+                recyclerView.smoothScrollToPosition(position)
+            } else {
+                recyclerView.scrollToPosition(position)
+            }
         }
     }
 

@@ -18,7 +18,7 @@ interface PlaybackContract {
 
         fun setQueue(queue: List<QueueItem>, position: Int?)
 
-        fun setQueuePosition(position: Int?, total: Int)
+        fun setQueuePosition(position: Int?, total: Int, smoothScroll: Boolean)
 
         fun setProgress(position: Int, duration: Int)
 

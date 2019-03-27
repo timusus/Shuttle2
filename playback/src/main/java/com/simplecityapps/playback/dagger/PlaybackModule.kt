@@ -16,6 +16,7 @@ import com.simplecityapps.playback.local.mediaplayer.MediaPlayerPlayback
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.playback.sleeptimer.SleepTimer
 import dagger.Module
 import dagger.Provides
@@ -29,8 +30,14 @@ class PlaybackModule(
 
     @Singleton
     @Provides
-    fun provideQueueManager(): QueueManager {
-        return QueueManager()
+    fun provideQueueWatcher(): QueueWatcher {
+        return QueueWatcher()
+    }
+
+    @Singleton
+    @Provides
+    fun provideQueueManager(queueWatcher: QueueWatcher): QueueManager {
+        return QueueManager(queueWatcher)
     }
 
     @Provides
@@ -56,8 +63,8 @@ class PlaybackModule(
 
     @Singleton
     @Provides
-    fun provideMediaSessionManager(playbackManager: PlaybackManager, queueManager: QueueManager): MediaSessionManager {
-        return MediaSessionManager(context, playbackManager, queueManager)
+    fun provideMediaSessionManager(playbackManager: PlaybackManager, queueManager: QueueManager, queueWatcher: QueueWatcher): MediaSessionManager {
+        return MediaSessionManager(context, playbackManager, queueManager, queueWatcher)
     }
 
     @Singleton
@@ -68,8 +75,13 @@ class PlaybackModule(
 
     @Singleton
     @Provides
-    fun providePlaybackNotificationManager(playbackManager: PlaybackManager, queueManager: QueueManager, mediaSessionManager: MediaSessionManager): PlaybackNotificationManager {
-        return PlaybackNotificationManager(context, context.getSystemService<NotificationManager>()!!, playbackManager, queueManager, mediaSessionManager)
+    fun providePlaybackNotificationManager(
+        playbackManager: PlaybackManager,
+        queueManager: QueueManager,
+        mediaSessionManager: MediaSessionManager,
+        queueWatcher: QueueWatcher
+    ): PlaybackNotificationManager {
+        return PlaybackNotificationManager(context, context.getSystemService<NotificationManager>()!!, playbackManager, queueManager, mediaSessionManager, queueWatcher)
     }
 
     @Singleton

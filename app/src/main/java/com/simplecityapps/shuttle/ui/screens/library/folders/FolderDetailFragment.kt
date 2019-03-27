@@ -89,13 +89,7 @@ class FolderDetailFragment : Fragment(), FolderBinder.Listener {
 
     override fun onNodeSelected(node: Node<Song>) {
         when (node.data) {
-            null -> view?.findNavController()?.navigate(
-                R.id.action_folderDetailFragment_self,
-                FolderDetailFragmentArgs.Builder()
-                    .setPath(node.path)
-                    .build()
-                    .toBundle()
-            )
+            null -> view?.findNavController()?.navigate(R.id.action_folderDetailFragment_self, FolderDetailFragmentArgs(node.path).toBundle())
         }
     }
 

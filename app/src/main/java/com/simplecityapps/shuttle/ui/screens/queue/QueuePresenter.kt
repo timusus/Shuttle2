@@ -4,12 +4,14 @@ import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import javax.inject.Inject
 
 class QueuePresenter @Inject constructor(
     private val queueManager: QueueManager,
-    private val playbackManager: PlaybackManager
+    private val playbackManager: PlaybackManager,
+    private val queueWatcher: QueueWatcher
 ) : BasePresenter<QueueContract.View>(),
     QueueContract.Presenter,
     QueueChangeCallback {
@@ -17,12 +19,12 @@ class QueuePresenter @Inject constructor(
     override fun bindView(view: QueueContract.View) {
         super.bindView(view)
 
-        queueManager.addCallback(this)
+        queueWatcher.addCallback(this)
         loadQueue()
     }
 
     override fun unbindView() {
-        queueManager.removeCallback(this)
+        queueWatcher.removeCallback(this)
 
         super.unbindView()
     }
@@ -49,10 +51,6 @@ class QueuePresenter @Inject constructor(
 
     override fun onShuffleChanged() {
         loadQueue()
-    }
-
-    override fun onRepeatChanged() {
-
     }
 
     override fun onQueuePositionChanged() {

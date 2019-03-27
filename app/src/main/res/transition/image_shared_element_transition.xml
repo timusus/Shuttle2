@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<transitionSet xmlns:android="http://schemas.android.com/apk/res/android"
+    android:interpolator="@android:interpolator/fast_out_slow_in"
+    android:transitionOrdering="together">
+    <changeClipBounds />
+    <changeTransform />
+    <changeBounds >
+        <arcMotion
+            android:maximumAngle="90"
+            android:minimumHorizontalAngle="65"
+            android:minimumVerticalAngle="65" />
+    </changeBounds>
+</transitionSet>

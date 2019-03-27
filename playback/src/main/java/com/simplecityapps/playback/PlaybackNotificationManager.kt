@@ -12,18 +12,20 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.QueueWatcher
 
 class PlaybackNotificationManager(
     private val context: Context,
     private val notificationManager: NotificationManager,
     private val playbackManager: PlaybackManager,
     private val queueManager: QueueManager,
-    private val mediaSessionManager: MediaSessionManager
+    private val mediaSessionManager: MediaSessionManager,
+    queueWatcher: QueueWatcher
 ) : Playback.Callback, QueueChangeCallback {
 
     init {
         playbackManager.addCallback(this)
-        queueManager.addCallback(this)
+        queueWatcher.addCallback(this)
     }
 
     fun displayNotification(): Notification {

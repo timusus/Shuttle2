@@ -9,11 +9,12 @@ import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 
 class AlbumArtistBinder(val albumArtist: AlbumArtist, val imageLoader: ArtworkImageLoader) : ViewBinder {
 
     interface Listener {
-        fun onAlbumArtistClicked(albumArtist: AlbumArtist)
+        fun onAlbumArtistClicked(albumArtist: AlbumArtist, viewHolder: ViewHolder)
     }
 
     var listener: Listener? = null
@@ -22,8 +23,8 @@ class AlbumArtistBinder(val albumArtist: AlbumArtist, val imageLoader: ArtworkIm
         return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_album_artist, parent, false))
     }
 
-    override fun viewType(): ViewBinder.ViewType {
-        return ViewBinder.ViewType.AlbumArtist
+    override fun viewType(): Int {
+        return ViewTypes.AlbumArtist
     }
 
     override fun sectionName(): String? {
@@ -51,20 +52,21 @@ class AlbumArtistBinder(val albumArtist: AlbumArtist, val imageLoader: ArtworkIm
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<AlbumArtistBinder>(itemView) {
 
         init {
-            itemView.setOnClickListener { viewBinder?.listener?.onAlbumArtistClicked(viewBinder!!.albumArtist) }
+            itemView.setOnClickListener { viewBinder?.listener?.onAlbumArtistClicked(viewBinder!!.albumArtist, this) }
         }
 
         private val title = itemView.findViewById<TextView>(R.id.title)
         private val subtitle = itemView.findViewById<TextView>(R.id.subtitle)
-        private val imageView: ImageView = itemView.findViewById(R.id.imageView)
+        val imageView: ImageView = itemView.findViewById(R.id.imageView)
 
-        override fun bind(viewBinder: AlbumArtistBinder) {
-            super.bind(viewBinder)
+        override fun bind(viewBinder: AlbumArtistBinder, isPartial: Boolean) {
+            super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.albumArtist.name
             subtitle.text = "${viewBinder.albumArtist.albumCount} Albums • ${viewBinder.albumArtist.songCount} Songs"
 
-            viewBinder.imageLoader.loadArtwork(imageView, viewBinder.albumArtist, ArtworkImageLoader.Options.RoundedCorners(16))
+            viewBinder.imageLoader.loadArtwork(imageView, viewBinder.albumArtist, ArtworkImageLoader.Options.RoundedCorners(16), completionHandler = null)
+            imageView.transitionName = "album_artist_${viewBinder.albumArtist.name}"
         }
 
         override fun recycle() {

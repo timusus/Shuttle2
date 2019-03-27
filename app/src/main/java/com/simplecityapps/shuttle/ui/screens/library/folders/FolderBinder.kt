@@ -10,6 +10,7 @@ import androidx.core.content.ContextCompat
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 
 class FolderBinder(val treeNode: Tree<Node<Song>>) : ViewBinder {
 
@@ -23,8 +24,8 @@ class FolderBinder(val treeNode: Tree<Node<Song>>) : ViewBinder {
         return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_folder, parent, false))
     }
 
-    override fun viewType(): ViewBinder.ViewType {
-        return ViewBinder.ViewType.Folder
+    override fun viewType(): Int {
+        return ViewTypes.Folder
     }
 
     override fun sectionName(): String? {
@@ -58,8 +59,8 @@ class FolderBinder(val treeNode: Tree<Node<Song>>) : ViewBinder {
             }
         }
 
-        override fun bind(viewBinder: FolderBinder) {
-            super.bind(viewBinder)
+        override fun bind(viewBinder: FolderBinder, isPartial: Boolean) {
+            super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.treeNode.node.name
 

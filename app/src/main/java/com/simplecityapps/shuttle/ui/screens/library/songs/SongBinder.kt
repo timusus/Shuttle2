@@ -9,6 +9,7 @@ import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 
 class SongBinder(
     val song: Song,
@@ -24,8 +25,8 @@ class SongBinder(
         return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_song, parent, false))
     }
 
-    override fun viewType(): ViewBinder.ViewType {
-        return ViewBinder.ViewType.Song
+    override fun viewType(): Int {
+        return ViewTypes.Song
     }
 
     override fun sectionName(): String? {
@@ -58,12 +59,12 @@ class SongBinder(
             }
         }
 
-        override fun bind(viewBinder: SongBinder) {
-            super.bind(viewBinder)
+        override fun bind(viewBinder: SongBinder, isPartial: Boolean) {
+            super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.song.name
             subtitle.text = "${viewBinder.song.albumArtistName} • ${viewBinder.song.albumName}"
-            viewBinder.imageLoader.loadArtwork(imageView, viewBinder.song, ArtworkImageLoader.Options.RoundedCorners(16))
+            viewBinder.imageLoader.loadArtwork(imageView, viewBinder.song, ArtworkImageLoader.Options.RoundedCorners(16), completionHandler = null)
         }
 
         override fun recycle() {

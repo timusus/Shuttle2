@@ -11,6 +11,7 @@ import com.simplecityapps.playback.dagger.PlaybackModule
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.taglib.ArtworkProvider
 import com.simplecityapps.taglib.FileScanner
@@ -40,7 +41,9 @@ interface CoreComponent {
 
     fun getPlaybackManager(): PlaybackManager
 
-    fun getQueue(): QueueManager
+    fun getQueueManager(): QueueManager
+
+    fun getQueueWatcher(): QueueWatcher
 
     fun getPlaybackNotificationManager(): PlaybackNotificationManager
 

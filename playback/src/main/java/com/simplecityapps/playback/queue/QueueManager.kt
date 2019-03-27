@@ -3,18 +3,7 @@ package com.simplecityapps.playback.queue
 import com.simplecityapps.mediaprovider.model.Song
 import timber.log.Timber
 
-interface QueueChangeCallback {
-
-    fun onQueueChanged()
-
-    fun onQueuePositionChanged()
-
-    fun onShuffleChanged()
-
-    fun onRepeatChanged()
-}
-
-class QueueManager : QueueChangeCallback {
+class QueueManager(private val queueWatcher: QueueWatcher) {
 
     enum class ShuffleMode {
         Off, On
@@ -32,8 +21,6 @@ class QueueManager : QueueChangeCallback {
 
     private var currentItem: QueueItem? = null
 
-    private var callbacks: MutableList<QueueChangeCallback> = mutableListOf()
-
     fun set(songs: List<Song>, position: Int = 0) {
         if (position < 0) {
             throw IllegalArgumentException("Queue position must be >= 0 (position $position)")
@@ -46,7 +33,7 @@ class QueueManager : QueueChangeCallback {
         queueItems.firstOrNull { queueItem -> queueItem.isCurrent }?.let { currentItem ->
             setCurrentItem(currentItem)
         }
-        onQueueChanged()
+        queueWatcher.onQueueChanged()
     }
 
     fun setCurrentItem(currentItem: QueueItem) {
@@ -62,7 +49,7 @@ class QueueManager : QueueChangeCallback {
                 }
             }
 
-            onQueuePositionChanged()
+            queueWatcher.onQueuePositionChanged()
         } else {
             Timber.v("setCurrentItem(): Item already current")
         }
@@ -87,7 +74,7 @@ class QueueManager : QueueChangeCallback {
 
     fun remove(items: List<QueueItem>) {
         baseQueue.remove(items)
-        onQueueChanged()
+        queueWatcher.onQueueChanged()
     }
 
     /**
@@ -139,7 +126,7 @@ class QueueManager : QueueChangeCallback {
             if (shuffleMode == ShuffleMode.On) {
                 baseQueue.shuffle()
             }
-            onShuffleChanged()
+            queueWatcher.onShuffleChanged()
         }
     }
 
@@ -157,7 +144,7 @@ class QueueManager : QueueChangeCallback {
     fun setRepeatMode(repeatMode: RepeatMode) {
         if (this.repeatMode != repeatMode) {
             this.repeatMode = repeatMode
-            onRepeatChanged()
+            queueWatcher.onRepeatChanged()
         }
     }
 
@@ -177,7 +164,7 @@ class QueueManager : QueueChangeCallback {
         Timber.v("skipToNext()")
         getNext(ignoreRepeat)?.let { nextItem ->
             setCurrentItem(nextItem)
-            onQueuePositionChanged()
+            queueWatcher.onQueuePositionChanged()
         } ?: Timber.v("No next track to skip to")
     }
 
@@ -185,40 +172,12 @@ class QueueManager : QueueChangeCallback {
         Timber.v("skipToPrevious()")
         getPrevious()?.let { previousItem ->
             setCurrentItem(previousItem)
-            onQueuePositionChanged()
+            queueWatcher.onQueuePositionChanged()
         } ?: Timber.v("No next track to skip-previous to")
     }
 
 
-    // QueueChangeCallback Implementation
 
-    override fun onQueueChanged() {
-        Timber.v("onQueueChanged()")
-        callbacks.forEach { callback -> callback.onQueueChanged() }
-    }
-
-    override fun onShuffleChanged() {
-        Timber.v("onShuffleChanged()")
-        callbacks.forEach { callback -> callback.onShuffleChanged() }
-    }
-
-    override fun onRepeatChanged() {
-        Timber.v("onRepeatChanged()")
-        callbacks.forEach { callback -> callback.onRepeatChanged() }
-    }
-
-    override fun onQueuePositionChanged() {
-        Timber.v("onQueuePositionChanged()")
-        callbacks.forEach { callback -> callback.onQueuePositionChanged() }
-    }
-
-    fun addCallback(callback: QueueChangeCallback) {
-        callbacks.add(callback)
-    }
-
-    fun removeCallback(callback: QueueChangeCallback) {
-        callbacks.remove(callback)
-    }
 
 
     /**

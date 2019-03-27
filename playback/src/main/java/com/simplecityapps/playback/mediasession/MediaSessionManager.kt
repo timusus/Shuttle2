@@ -8,11 +8,13 @@ import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.QueueWatcher
 
 class MediaSessionManager(
     private val context: Context,
     private val playbackManager: PlaybackManager,
-    private val queueManager: QueueManager
+    private val queueManager: QueueManager,
+    queueWatcher: QueueWatcher
 ) : Playback.Callback,
     QueueChangeCallback {
 
@@ -35,7 +37,7 @@ class MediaSessionManager(
 
     init {
         playbackManager.addCallback(this)
-        queueManager.addCallback(this)
+        queueWatcher.addCallback(this)
     }
 
 

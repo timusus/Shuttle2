@@ -33,7 +33,7 @@ class AlbumDetailPresenter @AssistedInject constructor(
             .subscribe(
                 { album ->
                     album?.let {
-                        view.setTitle(album.name, album.albumArtistName)
+                        view.setCurrentAlbum(album)
                     }
                 },
                 { error -> Timber.e(error, "Failed to retrieve name for album $albumId") })
@@ -47,7 +47,7 @@ class AlbumDetailPresenter @AssistedInject constructor(
         })
     }
 
-    fun onSongClicked(song: Song){
+    override fun onSongClicked(song: Song) {
         playbackManager.load(song, songs, 0, true)
     }
 }

@@ -6,12 +6,14 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.navigation.findNavController
+import androidx.navigation.fragment.FragmentNavigatorExtras
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.repository.AlbumRepository
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.Regex
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragmentArgs
 import io.reactivex.disposables.CompositeDisposable
@@ -47,7 +49,9 @@ class AlbumsFragment : Fragment(), Injectable, AlbumBinder.Listener {
         super.onResume()
 
         compositeDisposable.add(
-            albumRepository.getAlbums().subscribe(
+            albumRepository.getAlbums()
+                .map { albums -> albums.sortedBy { album -> Regex.articlePattern.matcher(album.name).replaceAll("") } }
+                .subscribe(
                 { albums ->
                     adapter.setData(albums.map { album ->
                         val albumBinder = AlbumBinder(album, imageLoader)
@@ -67,11 +71,13 @@ class AlbumsFragment : Fragment(), Injectable, AlbumBinder.Listener {
 
     // AlbumBinder.Listener Implementation
 
-    override fun onAlbumClicked(album: Album) {
+    override fun onAlbumClicked(album: Album, viewHolder: AlbumBinder.ViewHolder) {
 
         view?.findNavController()?.navigate(
             R.id.action_libraryFragment_to_albumDetailFragment,
-            AlbumDetailFragmentArgs.Builder(album.id).build().toBundle()
+            AlbumDetailFragmentArgs(album.id).toBundle(),
+            null,
+            FragmentNavigatorExtras(viewHolder.imageView to viewHolder.imageView.transitionName)
         )
     }
 

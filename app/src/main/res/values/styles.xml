@@ -23,7 +23,6 @@
         <item name="android:textViewStyle">@style/Widget.Shuttle.TextView</item>
         <item name="toolbarStyle">@style/Widget.Shuttle.Toolbar</item>
         <item name="imageButtonStyle">@style/Widget.Shuttle.ImageButton</item>
-
     </style>
 
     <style name="AppTheme.DayNight" parent="AppTheme.Light" />

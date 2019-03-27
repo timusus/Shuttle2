@@ -9,6 +9,7 @@ import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 import com.simplecityapps.shuttle.ui.common.toHms
 
 class QueueBinder(
@@ -25,8 +26,8 @@ class QueueBinder(
         return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_queue, parent, false))
     }
 
-    override fun viewType(): ViewBinder.ViewType {
-        return ViewBinder.ViewType.QueueItem
+    override fun viewType(): Int {
+        return ViewTypes.Queue
     }
 
     override fun sectionName(): String? {
@@ -68,13 +69,13 @@ class QueueBinder(
             }
         }
 
-        override fun bind(viewBinder: QueueBinder) {
-            super.bind(viewBinder)
+        override fun bind(viewBinder: QueueBinder, isPartial: Boolean) {
+            super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.queueItem.song.name
             subtitle.text = "${viewBinder.queueItem.song.albumArtistName} • ${viewBinder.queueItem.song.albumName}"
             tertiary.text = viewBinder.queueItem.song.duration.toHms()
-            viewBinder.imageLoader.loadArtwork(artworkImageView, viewBinder.queueItem.song, ArtworkImageLoader.Options.RoundedCorners(16))
+            viewBinder.imageLoader.loadArtwork(artworkImageView, viewBinder.queueItem.song, ArtworkImageLoader.Options.RoundedCorners(16), completionHandler = null)
         }
 
         override fun recycle() {

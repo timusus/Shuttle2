@@ -1,17 +1,21 @@
 package com.simplecityapps.shuttle.ui.screens.library.albumartists.detail
 
-import com.simplecityapps.mediaprovider.repository.AlbumArtistQuery
-import com.simplecityapps.mediaprovider.repository.AlbumArtistRepository
-import com.simplecityapps.mediaprovider.repository.AlbumQuery
-import com.simplecityapps.mediaprovider.repository.AlbumRepository
+import com.simplecityapps.mediaprovider.model.Album
+import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.mediaprovider.repository.*
+import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.squareup.inject.assisted.Assisted
 import com.squareup.inject.assisted.AssistedInject
+import io.reactivex.Single
+import io.reactivex.functions.BiFunction
 import timber.log.Timber
 
 class AlbumArtistDetailPresenter @AssistedInject constructor(
     private val albumRepository: AlbumRepository,
+    private val songRepository: SongRepository,
     private val albumArtistRepository: AlbumArtistRepository,
+    private val playbackManager: PlaybackManager,
     @Assisted private val albumArtistId: Long
 ) : BasePresenter<AlbumArtistDetailContract.View>(), AlbumArtistDetailContract.Presenter {
 
@@ -28,7 +32,7 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
             .subscribe(
                 { albumArtist ->
                     albumArtist?.let {
-                        view.setTitle(albumArtist.name)
+                        view.setCurrentAlbumArtist(albumArtist)
                     }
                 },
                 { error -> Timber.e(error, "Failed to retrieve name for album artist $albumArtistId") })
@@ -36,8 +40,25 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
     }
 
     override fun loadData() {
-        addDisposable(albumRepository.getAlbums(AlbumQuery.AlbumArtistId(albumArtistId)).subscribe { albums ->
-            view?.setData(albums)
+        val songsSingle = songRepository.getSongs(SongQuery.AlbumArtistId(albumArtistId)).first(emptyList())
+        val albumsSingle = albumRepository.getAlbums(AlbumQuery.AlbumArtistId(albumArtistId))
+            .first(emptyList())
+
+        addDisposable(Single.zip(albumsSingle, songsSingle, BiFunction<List<Album>, List<Song>, Map<Album, List<Song>>> { albums, songs ->
+            val map = hashMapOf<Album, List<Song>>()
+            albums.forEach { album ->
+                map[album] = songs.filter { it.albumId == album.id }
+            }
+            map
         })
+            .map { map -> map.toSortedMap(Comparator { a, b -> a.year.compareTo(b.year) }) }
+            .subscribe { map ->
+
+                view?.setListData(map)
+        })
+    }
+
+    override fun onSongClicked(song: Song, songs: List<Song>) {
+        playbackManager.load(song, songs, 0, true)
     }
 }

@@ -5,13 +5,15 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.navigation.findNavController
+import androidx.navigation.fragment.FragmentNavigatorExtras
+import androidx.navigation.fragment.findNavController
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.repository.AlbumArtistRepository
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.Regex
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragmentArgs
 import io.reactivex.disposables.CompositeDisposable
@@ -33,7 +35,9 @@ class AlbumArtistsFragment : Fragment(), Injectable, AlbumArtistBinder.Listener 
     // Lifecycle
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_album_artists, container, false)
+        val view = inflater.inflate(R.layout.fragment_album_artists, container, false)
+
+        return view
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -46,8 +50,11 @@ class AlbumArtistsFragment : Fragment(), Injectable, AlbumArtistBinder.Listener 
     override fun onResume() {
         super.onResume()
 
+
         compositeDisposable.add(
-            albumArtistRepository.getAlbumArtists().subscribe(
+            albumArtistRepository.getAlbumArtists()
+                .map { albumArtists -> albumArtists.sortedBy { albumArtist -> Regex.articlePattern.matcher(albumArtist.name).replaceAll("") } }
+                .subscribe(
                 { albumArtists ->
                     adapter.setData(albumArtists.map { albumArtist ->
                         val albumArtistBinder = AlbumArtistBinder(albumArtist, imageLoader)
@@ -67,11 +74,12 @@ class AlbumArtistsFragment : Fragment(), Injectable, AlbumArtistBinder.Listener 
 
     // AlbumArtistBinder.Listener Implementation
 
-    override fun onAlbumArtistClicked(albumArtist: AlbumArtist) {
-
-        view?.findNavController()?.navigate(
+    override fun onAlbumArtistClicked(albumArtist: AlbumArtist, viewHolder: AlbumArtistBinder.ViewHolder) {
+        findNavController().navigate(
             R.id.action_libraryFragment_to_albumArtistDetailFragment,
-            AlbumArtistDetailFragmentArgs.Builder(albumArtist.id).build().toBundle()
+            AlbumArtistDetailFragmentArgs(albumArtist.id).toBundle(),
+            null,
+            FragmentNavigatorExtras(viewHolder.imageView to viewHolder.imageView.transitionName)
         )
     }
 

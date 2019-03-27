@@ -15,6 +15,7 @@ import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.screens.playback.PlaybackFragment
 import com.simplecityapps.shuttle.ui.screens.playback.mini.MiniPlaybackFragment
@@ -32,6 +33,7 @@ class MainActivity : AppCompatActivity(), HasSupportFragmentInjector, QueueChang
     @Inject lateinit var dispatchingAndroidInjector: DispatchingAndroidInjector<Fragment>
 
     @Inject lateinit var queueManager: QueueManager
+    @Inject lateinit var queueWatcher: QueueWatcher
     @Inject lateinit var playbackManager: PlaybackManager
 
     @Inject lateinit var songRepository: SongRepository
@@ -64,12 +66,13 @@ class MainActivity : AppCompatActivity(), HasSupportFragmentInjector, QueueChang
         }
 
         // Update visible state of mini player
-        queueManager.addCallback(this)
+        queueWatcher.addCallback(this)
     }
 
     override fun onDestroy() {
         super.onDestroy()
 
+        queueWatcher.removeCallback(this)
         compositeDisposable.clear()
     }
 
@@ -94,7 +97,7 @@ class MainActivity : AppCompatActivity(), HasSupportFragmentInjector, QueueChang
     override fun supportFragmentInjector() = dispatchingAndroidInjector
 
 
-    // QueueChangeCallback
+    // QueueChangeCallback Implementation
 
     override fun onQueueChanged() {
         if (queueManager.getSize() == 0) {
@@ -102,15 +105,6 @@ class MainActivity : AppCompatActivity(), HasSupportFragmentInjector, QueueChang
         } else {
             multiSheetView.unhide(true)
         }
-    }
-
-    override fun onQueuePositionChanged() {
-    }
-
-    override fun onShuffleChanged() {
-    }
-
-    override fun onRepeatChanged() {
     }
 
 

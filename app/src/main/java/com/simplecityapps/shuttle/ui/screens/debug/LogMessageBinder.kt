@@ -9,6 +9,7 @@ import android.widget.TextView
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.debug.LogMessage
+import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 import java.text.SimpleDateFormat
 
 class LogMessageBinder(val logMessage: LogMessage) : ViewBinder {
@@ -17,8 +18,8 @@ class LogMessageBinder(val logMessage: LogMessage) : ViewBinder {
         return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_debug_log, parent, false))
     }
 
-    override fun viewType(): ViewBinder.ViewType {
-        return ViewBinder.ViewType.Log
+    override fun viewType(): Int {
+        return ViewTypes.Log
     }
 
     override fun equals(other: Any?): Boolean {
@@ -42,8 +43,8 @@ class LogMessageBinder(val logMessage: LogMessage) : ViewBinder {
         private val tagTextView: TextView = itemView.findViewById(R.id.tagTextView)
         private val messageTextViewBinder: TextView = itemView.findViewById(R.id.messageTextView)
 
-        override fun bind(viewBinder: LogMessageBinder) {
-            super.bind(viewBinder)
+        override fun bind(viewBinder: LogMessageBinder, isPartial: Boolean) {
+            super.bind(viewBinder, isPartial)
 
             timestampTextView.text = dateFormat.format(viewBinder.logMessage.date)
             tagTextView.text = viewBinder.logMessage.priority.getPriorityString() + "/" + (viewBinder.logMessage.tag ?: "")

@@ -23,7 +23,8 @@ class SongsPresenter @Inject constructor(
     }
 
     override fun loadSongs() {
-        addDisposable(songRepository.getSongs().subscribeBy(
+        addDisposable(
+            songRepository.getSongs().subscribeBy(
             onNext = { songs ->
                 this.songs = songs
                 view?.setData(songs)

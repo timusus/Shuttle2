@@ -10,21 +10,16 @@ import com.simplecityapps.diff.ContentsComparator
 
 interface ViewBinder : ContentsComparator {
 
-    // Todo: This doesn't belong here
-    enum class ViewType {
-        AlbumArtist, Album, Song, Folder, DiscNumber, QueueItem, Artwork, Log
-    }
-
     fun createViewHolder(parent: ViewGroup): ViewHolder<out ViewBinder>
 
-    fun viewType(): ViewType
+    fun viewType(): Int
 
     fun spanSize(spanCount: Int): Int {
         return spanCount
     }
 
-    fun bindViewHolder(holder: ViewHolder<ViewBinder>) {
-        holder.bind(this)
+    fun bindViewHolder(holder: ViewHolder<ViewBinder>, isPartial: Boolean = false) {
+        holder.bind(this, isPartial)
     }
 
     fun sectionName(): String? {
@@ -41,7 +36,7 @@ interface ViewBinder : ContentsComparator {
         var viewBinder: B? = null
 
         @CallSuper
-        open fun bind(viewBinder: B) {
+        open fun bind(viewBinder: B, isPartial: Boolean) {
             this.viewBinder = viewBinder
         }
 
@@ -49,6 +44,9 @@ interface ViewBinder : ContentsComparator {
 
         }
     }
+
+
+    // Extension
 
     fun ViewGroup.inflateView(@LayoutRes layoutResId: Int): View {
         return LayoutInflater.from(context).inflate(layoutResId, this, false)

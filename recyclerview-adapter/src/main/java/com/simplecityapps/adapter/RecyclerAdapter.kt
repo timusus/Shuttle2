@@ -75,7 +75,7 @@ open class RecyclerAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     }
 
     override fun getItemViewType(position: Int): Int {
-        return items[position].viewType().ordinal
+        return items[position].viewType()
     }
 
     override fun getItemCount(): Int {
@@ -83,7 +83,7 @@ open class RecyclerAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-        return items.firstOrNull { adapterViewModel -> adapterViewModel.viewType().ordinal == viewType }?.createViewHolder(
+        return items.firstOrNull { adapterViewModel -> adapterViewModel.viewType() == viewType }?.createViewHolder(
             parent
         ) ?: throw IllegalStateException("Cannot create ViewHolder for view viewType: $viewType")
     }
@@ -91,6 +91,10 @@ open class RecyclerAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         @Suppress("UNCHECKED_CAST")
         items[position].bindViewHolder(holder as ViewBinder.ViewHolder<ViewBinder>)
+    }
+
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int, payloads: MutableList<Any>) {
+        items[position].bindViewHolder(holder as ViewBinder.ViewHolder<ViewBinder>, payloads.isNotEmpty())
     }
 
     private class LoggingListUpdateCallback : ListUpdateCallback {
