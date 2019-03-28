@@ -3,7 +3,9 @@ package com.simplecityapps.shuttle.ui.common.viewbinders
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ProgressBar
 import android.widget.TextView
+import androidx.core.view.isVisible
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
@@ -47,9 +49,10 @@ class DetailSongBinder(
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<DetailSongBinder>(itemView) {
 
-        private val trackTextView = itemView.findViewById<TextView>(R.id.trackTextView)
-        private val titleTextView = itemView.findViewById<TextView>(R.id.titleTextView)
-        private val durationTextView = itemView.findViewById<TextView>(R.id.durationTextView)
+        private val trackTextView: TextView = itemView.findViewById(R.id.trackTextView)
+        private val titleTextView: TextView = itemView.findViewById(R.id.titleTextView)
+        private val durationTextView: TextView = itemView.findViewById(R.id.durationTextView)
+        private val progressBar: ProgressBar = itemView.findViewById(R.id.progressBar)
 
         init {
             itemView.setOnClickListener {
@@ -63,6 +66,13 @@ class DetailSongBinder(
             trackTextView.text = (adapterPosition + 1).toString()
             titleTextView.text = viewBinder.song.name
             durationTextView.text = viewBinder.song.duration.toHms()
+
+            if ((viewBinder.song.type == Song.Type.Audiobook || viewBinder.song.type == Song.Type.Podcast) && viewBinder.song.playbackPosition != 0) {
+                progressBar.progress = (((viewBinder.song.playbackPosition.toFloat() / viewBinder.song.duration) * 1000).toInt())
+                progressBar.isVisible = true
+            } else {
+                progressBar.isVisible = false
+            }
         }
     }
 }
