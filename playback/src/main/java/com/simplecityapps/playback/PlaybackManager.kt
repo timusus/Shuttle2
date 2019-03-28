@@ -81,6 +81,10 @@ class PlaybackManager(
         }
     }
 
+    fun loadCurrent(){
+        playback.load(0, true)
+    }
+
     fun isPlaying(): Boolean {
         return playback.isPlaying()
     }
