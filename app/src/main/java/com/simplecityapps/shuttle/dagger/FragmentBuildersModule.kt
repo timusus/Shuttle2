@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.dagger
 
 import com.simplecityapps.shuttle.ui.screens.debug.DebugDrawerFragment
 import com.simplecityapps.shuttle.ui.screens.debug.LoggingFragment
+import com.simplecityapps.shuttle.ui.screens.home.HomeFragment
 import com.simplecityapps.shuttle.ui.screens.home.history.HistoryFragment
 import com.simplecityapps.shuttle.ui.screens.home.recent.RecentFragment
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistsFragment
@@ -66,5 +67,8 @@ abstract class FragmentBuildersModule {
 
     @ContributesAndroidInjector
     abstract fun contributeRecentFragment(): RecentFragment
+
+    @ContributesAndroidInjector
+    abstract fun contributeHomeFragment(): HomeFragment
 
 }
