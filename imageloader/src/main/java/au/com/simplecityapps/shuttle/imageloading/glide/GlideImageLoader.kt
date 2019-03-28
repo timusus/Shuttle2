@@ -2,6 +2,8 @@ package au.com.simplecityapps.shuttle.imageloading.glide
 
 import android.graphics.drawable.Drawable
 import android.widget.ImageView
+import androidx.annotation.DrawableRes
+import au.com.simplecityapps.R
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.CompletionHandler
 import au.com.simplecityapps.shuttle.imageloading.glide.module.GlideApp
@@ -37,10 +39,14 @@ class GlideImageLoader : ArtworkImageLoader {
         loadArtwork(imageView, song as Any, *options, completionHandler = completionHandler)
     }
 
+    @DrawableRes
+    var placeHolderResId: Int = R.drawable.ic_music_note_black_24dp
+
     private fun <T> loadArtwork(imageView: ImageView, `object`: T, vararg options: ArtworkImageLoader.Options, completionHandler: CompletionHandler) {
         val glideRequest = GlideApp
             .with(imageView.context)
             .load(`object`)
+            .placeholder(placeHolderResId)
 
         options.forEach { option ->
             when (option) {
