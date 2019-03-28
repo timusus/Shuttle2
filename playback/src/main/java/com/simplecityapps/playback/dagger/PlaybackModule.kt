@@ -5,10 +5,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.os.Build
 import androidx.core.content.getSystemService
-import com.simplecityapps.playback.NoiseManager
-import com.simplecityapps.playback.Playback
-import com.simplecityapps.playback.PlaybackManager
-import com.simplecityapps.playback.PlaybackNotificationManager
+import com.simplecityapps.playback.*
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi21
 import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi26
@@ -57,20 +54,26 @@ class PlaybackModule(
 
     @Singleton
     @Provides
-    fun providePlaybackManager(queue: QueueManager, playback: Playback, audioFocusHelper: AudioFocusHelper): PlaybackManager {
-        return PlaybackManager(queue, playback, audioFocusHelper)
+    fun providePlaybackWatcher(): PlaybackWatcher {
+        return PlaybackWatcher()
     }
 
     @Singleton
     @Provides
-    fun provideMediaSessionManager(playbackManager: PlaybackManager, queueManager: QueueManager, queueWatcher: QueueWatcher): MediaSessionManager {
-        return MediaSessionManager(context, playbackManager, queueManager, queueWatcher)
+    fun providePlaybackManager(queue: QueueManager, playback: Playback, playbackWatcher: PlaybackWatcher, audioFocusHelper: AudioFocusHelper): PlaybackManager {
+        return PlaybackManager(queue, playback, playbackWatcher, audioFocusHelper)
     }
 
     @Singleton
     @Provides
-    fun provideNoiseManager(playbackManager: PlaybackManager): NoiseManager {
-        return NoiseManager(context, playbackManager)
+    fun provideMediaSessionManager(playbackManager: PlaybackManager, queueManager: QueueManager, playbackWatcher: PlaybackWatcher, queueWatcher: QueueWatcher): MediaSessionManager {
+        return MediaSessionManager(context, playbackManager, queueManager, playbackWatcher, queueWatcher)
+    }
+
+    @Singleton
+    @Provides
+    fun provideNoiseManager(playbackManager: PlaybackManager, playbackWatcher: PlaybackWatcher): NoiseManager {
+        return NoiseManager(context, playbackManager, playbackWatcher)
     }
 
     @Singleton
@@ -79,9 +82,10 @@ class PlaybackModule(
         playbackManager: PlaybackManager,
         queueManager: QueueManager,
         mediaSessionManager: MediaSessionManager,
+        playbackWatcher: PlaybackWatcher,
         queueWatcher: QueueWatcher
     ): PlaybackNotificationManager {
-        return PlaybackNotificationManager(context, context.getSystemService<NotificationManager>()!!, playbackManager, queueManager, mediaSessionManager, queueWatcher)
+        return PlaybackNotificationManager(context, context.getSystemService<NotificationManager>()!!, playbackManager, queueManager, mediaSessionManager, playbackWatcher, queueWatcher)
     }
 
     @Singleton
@@ -92,7 +96,7 @@ class PlaybackModule(
 
     @Singleton
     @Provides
-    fun provideSleepTimer(playbackManager: PlaybackManager): SleepTimer {
-        return SleepTimer(playbackManager)
+    fun provideSleepTimer(playbackManager: PlaybackManager, playbackWatcher: PlaybackWatcher): SleepTimer {
+        return SleepTimer(playbackManager, playbackWatcher)
     }
 }

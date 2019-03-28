@@ -5,18 +5,21 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.media.AudioManager
-import com.simplecityapps.mediaprovider.model.Song
 
-class NoiseManager(val context: Context, val playbackManager: PlaybackManager) : Playback.Callback {
+class NoiseManager(
+    private val context: Context,
+    playbackManager: PlaybackManager,
+    playbackWatcher: PlaybackWatcher
+) : PlaybackWatcherCallback {
 
     init {
-        playbackManager.addCallback(this)
+        playbackWatcher.addCallback(this)
     }
 
     private val broadcastReceiver = NoisyReceiver(playbackManager)
 
 
-    // Playback.Callback Implementation
+    // PlaybackWatcherCallback Implementation
 
     override fun onPlaystateChanged(isPlaying: Boolean) {
         if (isPlaying) {
@@ -24,14 +27,6 @@ class NoiseManager(val context: Context, val playbackManager: PlaybackManager) :
         } else {
             context.safelyUnregisterReceiver(broadcastReceiver)
         }
-    }
-
-    override fun onPlaybackPrepared() {
-
-    }
-
-    override fun onPlaybackComplete(song: Song) {
-
     }
 }
 

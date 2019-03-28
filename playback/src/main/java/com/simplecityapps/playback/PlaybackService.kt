@@ -6,15 +6,16 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import androidx.media.session.MediaButtonReceiver
-import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import dagger.android.AndroidInjection
 import timber.log.Timber
 import javax.inject.Inject
 
-class PlaybackService : Service(), Playback.Callback {
+class PlaybackService : Service(), PlaybackWatcherCallback {
 
     @Inject lateinit var playbackManager: PlaybackManager
+
+    @Inject lateinit var playbackWatcher: PlaybackWatcher
 
     @Inject lateinit var mediaSessionManager: MediaSessionManager
 
@@ -30,7 +31,7 @@ class PlaybackService : Service(), Playback.Callback {
         AndroidInjection.inject(this)
         super.onCreate()
 
-        playbackManager.addCallback(this)
+        playbackWatcher.addCallback(this)
 
         foregroundNotificationHandler = Handler()
         delayedShutdownHandler = Handler()
@@ -71,7 +72,7 @@ class PlaybackService : Service(), Playback.Callback {
 
         Timber.v("onDestroy()")
 
-        playbackManager.removeCallback(this)
+        playbackWatcher.removeCallback(this)
         playbackManager.pause()
 
         foregroundNotificationHandler?.removeCallbacksAndMessages(null)
@@ -81,7 +82,7 @@ class PlaybackService : Service(), Playback.Callback {
     }
 
 
-    // Playback.Callback Implementation
+    // PlaybackWatcherCallback Implementation
 
     override fun onPlaystateChanged(isPlaying: Boolean) {
 
@@ -111,14 +112,6 @@ class PlaybackService : Service(), Playback.Callback {
                 }
             }, 30 * 1000)
         }
-    }
-
-    override fun onPlaybackPrepared() {
-
-    }
-
-    override fun onPlaybackComplete(song: Song) {
-
     }
 
 

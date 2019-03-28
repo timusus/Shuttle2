@@ -12,20 +12,12 @@ import kotlin.math.min
 class PlaybackManager(
     private val queueManager: QueueManager,
     private val playback: Playback,
+    private val playbackWatcher: PlaybackWatcher,
     private val audioFocusHelper: AudioFocusHelper
 ) : Playback.Callback,
     AudioFocusHelper.Listener {
 
-    interface ProgressCallback {
-
-        fun onProgressChanged(position: Int, total: Int)
-    }
-
     private var handler: PlaybackManager.ProgressHandler = PlaybackManager.ProgressHandler()
-
-    private var callbacks: MutableList<Playback.Callback> = mutableListOf()
-
-    private var progressCallbacks: MutableList<ProgressCallback> = mutableListOf()
 
     init {
         playback.callback = this
@@ -93,30 +85,6 @@ class PlaybackManager(
         return playback.isPlaying()
     }
 
-    fun addCallback(callback: Playback.Callback) {
-        if (!callbacks.contains(callback)) {
-            callbacks.add(callback)
-        }
-    }
-
-    fun removeCallback(callback: Playback.Callback) {
-        callbacks.remove(callback)
-    }
-
-    fun addProgressCallback(callback: ProgressCallback) {
-        if (!progressCallbacks.contains(callback)) {
-            progressCallbacks.add(callback)
-        }
-
-        monitorProgress(playback.isPlaying())
-    }
-
-    fun removeProgressCallback(callback: ProgressCallback) {
-        progressCallbacks.remove(callback)
-
-        monitorProgress(playback.isPlaying())
-    }
-
     fun getPosition(): Int? {
         return playback.getPosition()
     }
@@ -134,7 +102,7 @@ class PlaybackManager(
     // Private
 
     private fun monitorProgress(isPlaying: Boolean) {
-        if (isPlaying && progressCallbacks.isNotEmpty()) {
+        if (isPlaying) {
             handler.start { updateProgress() }
         } else {
             handler.stop()
@@ -142,12 +110,10 @@ class PlaybackManager(
     }
 
     private fun updateProgress() {
-        progressCallbacks.forEach { callback ->
-            callback.onProgressChanged(
-                min(playback.getPosition() ?: 0, playback.getDuration() ?: 0),
-                playback.getDuration() ?: 0
-            )
-        }
+        playbackWatcher.onProgressChanged(
+            min(playback.getPosition() ?: 0, playback.getDuration() ?: 0),
+            playback.getDuration() ?: 0
+        )
     }
 
 
@@ -155,23 +121,19 @@ class PlaybackManager(
 
     override fun onPlaystateChanged(isPlaying: Boolean) {
         Timber.v("onPlaystateChanged() isPlaying: $isPlaying")
-        callbacks.forEach { callback -> callback.onPlaystateChanged(isPlaying) }
-
-        audioFocusHelper.isPlaying = isPlaying
+        playbackWatcher.onPlaystateChanged(isPlaying)
 
         monitorProgress(isPlaying)
     }
 
     override fun onPlaybackPrepared() {
         Timber.v("onPlaybackPrepared()")
-        callbacks.forEach { callback -> callback.onPlaybackPrepared() }
-
         updateProgress()
     }
 
     override fun onPlaybackComplete(song: Song) {
         Timber.v("onPlaybackComplete()")
-        callbacks.forEach { callback -> callback.onPlaybackComplete(song) }
+        playbackWatcher.onPlaybackComplete(song)
 
         updateProgress()
     }

@@ -2,13 +2,17 @@ package com.simplecityapps.playback.sleeptimer
 
 import android.os.Handler
 import com.simplecityapps.mediaprovider.model.Song
-import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackWatcher
+import com.simplecityapps.playback.PlaybackWatcherCallback
 import timber.log.Timber
 import java.util.*
 import kotlin.math.max
 
-class SleepTimer(val playbackManager: PlaybackManager) : Playback.Callback {
+class SleepTimer(
+    private val playbackManager: PlaybackManager,
+    private val playbackWatcher: PlaybackWatcher
+) : PlaybackWatcherCallback {
 
     private var handler: Handler? = null
 
@@ -38,7 +42,7 @@ class SleepTimer(val playbackManager: PlaybackManager) : Playback.Callback {
         handler = Handler()
         handler?.postDelayed({
             if (playToEnd) {
-                playbackManager.addCallback(this)
+                playbackWatcher.addCallback(this)
             } else {
                 sleep()
             }
@@ -52,7 +56,7 @@ class SleepTimer(val playbackManager: PlaybackManager) : Playback.Callback {
         Timber.v("stopTimer() called")
         handler?.removeCallbacksAndMessages(null)
         delay = 0L
-        playbackManager.removeCallback(this)
+        playbackWatcher.removeCallback(this)
         startTime = null
         playToEnd = false
     }
@@ -75,15 +79,7 @@ class SleepTimer(val playbackManager: PlaybackManager) : Playback.Callback {
     }
 
 
-    // Playback.Callback Implementation
-
-    override fun onPlaystateChanged(isPlaying: Boolean) {
-
-    }
-
-    override fun onPlaybackPrepared() {
-
-    }
+    // PlaybackWatcherCallback Implementation
 
     override fun onPlaybackComplete(song: Song) {
         Timber.v("onPlaybackComplete, playToEnd: $playToEnd, timeRemaining: ${timeRemaining()}")

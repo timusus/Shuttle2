@@ -7,10 +7,7 @@ import androidx.core.content.ContextCompat
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
-import com.simplecityapps.playback.NoiseManager
-import com.simplecityapps.playback.Playback
-import com.simplecityapps.playback.PlaybackManager
-import com.simplecityapps.playback.PlaybackService
+import com.simplecityapps.playback.*
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
@@ -29,6 +26,7 @@ class PlaybackInitializer @Inject constructor(
     private val context: Context,
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackManager,
+    private val playbackWatcher: PlaybackWatcher,
     private val queueManager: QueueManager,
     private val queueWatcher: QueueWatcher,
     private val playbackPreferenceManager: PlaybackPreferenceManager,
@@ -36,8 +34,7 @@ class PlaybackInitializer @Inject constructor(
     @Suppress("unused") private val noiseManager: NoiseManager
 ) : AppInitializer,
     QueueChangeCallback,
-    Playback.Callback,
-    PlaybackManager.ProgressCallback {
+    PlaybackWatcherCallback {
 
     private var progress = 0
 
@@ -46,8 +43,7 @@ class PlaybackInitializer @Inject constructor(
     override fun init(application: Application) {
 
         queueWatcher.addCallback(this)
-        playbackManager.addCallback(this)
-        playbackManager.addProgressCallback(this)
+        playbackWatcher.addCallback(this)
 
         val seekPosition = playbackPreferenceManager.playbackPosition ?: 0
         val queuePosition = playbackPreferenceManager.queuePosition
@@ -93,7 +89,7 @@ class PlaybackInitializer @Inject constructor(
     }
 
 
-    // Playback.Callback Implementation
+    // PlaybackWatcherCallback Implementation
 
     override fun onPlaystateChanged(isPlaying: Boolean) {
         if (isPlaying) {
@@ -108,10 +104,6 @@ class PlaybackInitializer @Inject constructor(
                     .subscribe()
             }
         }
-    }
-
-    override fun onPlaybackPrepared() {
-
     }
 
     override fun onPlaybackComplete(song: Song) {

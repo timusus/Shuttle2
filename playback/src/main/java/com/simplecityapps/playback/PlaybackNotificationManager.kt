@@ -8,7 +8,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
@@ -20,11 +19,13 @@ class PlaybackNotificationManager(
     private val playbackManager: PlaybackManager,
     private val queueManager: QueueManager,
     private val mediaSessionManager: MediaSessionManager,
+    playbackWatcher: PlaybackWatcher,
     queueWatcher: QueueWatcher
-) : Playback.Callback, QueueChangeCallback {
+) : PlaybackWatcherCallback,
+    QueueChangeCallback {
 
     init {
-        playbackManager.addCallback(this)
+        playbackWatcher.addCallback(this)
         queueWatcher.addCallback(this)
     }
 
@@ -106,18 +107,10 @@ class PlaybackNotificationManager(
     }
 
 
-    // Playback.Callback Implementation
+    // PlaybackWatcherCallback Implementation
 
     override fun onPlaystateChanged(isPlaying: Boolean) {
         displayNotification()
-    }
-
-    override fun onPlaybackPrepared() {
-
-    }
-
-    override fun onPlaybackComplete(song: Song) {
-
     }
 
 

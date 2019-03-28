@@ -3,9 +3,9 @@ package com.simplecityapps.playback.mediasession
 import android.content.Context
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
-import com.simplecityapps.mediaprovider.model.Song
-import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackWatcher
+import com.simplecityapps.playback.PlaybackWatcherCallback
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
@@ -14,8 +14,9 @@ class MediaSessionManager(
     private val context: Context,
     private val playbackManager: PlaybackManager,
     private val queueManager: QueueManager,
+    playbackWatcher: PlaybackWatcher,
     queueWatcher: QueueWatcher
-) : Playback.Callback,
+) : PlaybackWatcherCallback,
     QueueChangeCallback {
 
     val mediaSession: MediaSessionCompat by lazy {
@@ -36,12 +37,12 @@ class MediaSessionManager(
         )
 
     init {
-        playbackManager.addCallback(this)
+        playbackWatcher.addCallback(this)
         queueWatcher.addCallback(this)
     }
 
 
-    // Playback.Callback Implementation
+    // PlaybackWatcherCallback Implementation
 
     override fun onPlaystateChanged(isPlaying: Boolean) {
         mediaSession.isActive = isPlaying
@@ -53,14 +54,6 @@ class MediaSessionManager(
         }
 
         mediaSession.setPlaybackState(playbackStateBuilder.build())
-    }
-
-    override fun onPlaybackPrepared() {
-
-    }
-
-    override fun onPlaybackComplete(song: Song) {
-
     }
 
 

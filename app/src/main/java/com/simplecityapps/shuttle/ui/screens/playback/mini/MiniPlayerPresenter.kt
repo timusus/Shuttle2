@@ -1,8 +1,8 @@
 package com.simplecityapps.shuttle.ui.screens.playback.mini
 
-import com.simplecityapps.mediaprovider.model.Song
-import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackWatcher
+import com.simplecityapps.playback.PlaybackWatcherCallback
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
@@ -11,13 +11,13 @@ import javax.inject.Inject
 
 class MiniPlayerPresenter @Inject constructor(
     private val playbackManager: PlaybackManager,
+    private val playbackWatcher: PlaybackWatcher,
     private val queueManager: QueueManager,
     private val queueWatcher: QueueWatcher
 ) : BasePresenter<MiniPlayerContract.View>(),
     MiniPlayerContract.Presenter,
-    Playback.Callback,
-    QueueChangeCallback,
-    PlaybackManager.ProgressCallback {
+    PlaybackWatcherCallback,
+    QueueChangeCallback {
 
     override fun togglePlayback() {
         playbackManager.togglePlayback()
@@ -30,9 +30,8 @@ class MiniPlayerPresenter @Inject constructor(
     override fun bindView(view: MiniPlayerContract.View) {
         super.bindView(view)
 
-        playbackManager.addCallback(this)
+        playbackWatcher.addCallback(this)
         queueWatcher.addCallback(this)
-        playbackManager.addProgressCallback(this)
 
         // One time update of all UI components
         updateProgress()
@@ -44,26 +43,17 @@ class MiniPlayerPresenter @Inject constructor(
     }
 
     override fun unbindView() {
-        playbackManager.removeCallback(this)
+        playbackWatcher.removeCallback(this)
         queueWatcher.removeCallback(this)
-        playbackManager.removeProgressCallback(this)
 
         super.unbindView()
     }
 
 
-    // Playback.Callback Implementation
+    // PlaybackWatcherCallback Implementation
 
     override fun onPlaystateChanged(isPlaying: Boolean) {
         view?.setPlayState(isPlaying)
-    }
-
-    override fun onPlaybackPrepared() {
-
-    }
-
-    override fun onPlaybackComplete(song: Song) {
-
     }
 
 

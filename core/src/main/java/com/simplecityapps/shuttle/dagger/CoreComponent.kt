@@ -7,6 +7,7 @@ import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.NoiseManager
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackNotificationManager
+import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.dagger.PlaybackModule
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
@@ -40,6 +41,8 @@ interface CoreComponent {
     fun getOkHttpClient(): OkHttpClient
 
     fun getPlaybackManager(): PlaybackManager
+
+    fun getPlaybackWatcher(): PlaybackWatcher
 
     fun getQueueManager(): QueueManager
 

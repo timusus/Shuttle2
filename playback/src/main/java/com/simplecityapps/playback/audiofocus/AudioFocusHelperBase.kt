@@ -3,16 +3,23 @@ package com.simplecityapps.playback.audiofocus
 import android.content.Context
 import android.media.AudioManager
 import androidx.core.content.getSystemService
+import com.simplecityapps.playback.PlaybackWatcher
+import com.simplecityapps.playback.PlaybackWatcherCallback
 
 abstract class AudioFocusHelperBase(
-    private val context: Context
-) : AudioFocusHelper, AudioManager.OnAudioFocusChangeListener {
+    private val context: Context,
+    playbackWatcher: PlaybackWatcher
+) : AudioFocusHelper,
+    AudioManager.OnAudioFocusChangeListener,
+    PlaybackWatcherCallback {
 
     internal val audioManager: AudioManager? by lazy {
         context.getSystemService<AudioManager>()
     }
 
     private var resumeOnFocusGain: Boolean = false
+
+    private var isPlaying: Boolean = false
 
     internal val focusLock = Any()
 
@@ -22,7 +29,9 @@ abstract class AudioFocusHelperBase(
 
     override var listener: AudioFocusHelper.Listener? = null
 
-    override var isPlaying: Boolean = false
+    init {
+        playbackWatcher.addCallback(this)
+    }
 
     override fun onAudioFocusChange(focusChange: Int) {
         when (focusChange) {
@@ -60,5 +69,12 @@ abstract class AudioFocusHelperBase(
 
     fun pause() {
         listener?.pause()
+    }
+
+
+    // PlaybackWatcherCallback Implementation
+
+    override fun onPlaystateChanged(isPlaying: Boolean) {
+        this.isPlaying = isPlaying
     }
 }
