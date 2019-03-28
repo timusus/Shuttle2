@@ -44,18 +44,18 @@ class PlaybackModule(
 
     @Singleton
     @Provides
-    fun provideAudioFocusHelper(): AudioFocusHelper {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            return AudioFocusHelperApi26(context)
-        } else {
-            return AudioFocusHelperApi21(context)
-        }
+    fun providePlaybackWatcher(): PlaybackWatcher {
+        return PlaybackWatcher()
     }
 
     @Singleton
     @Provides
-    fun providePlaybackWatcher(): PlaybackWatcher {
-        return PlaybackWatcher()
+    fun provideAudioFocusHelper(playbackWatcher: PlaybackWatcher): AudioFocusHelper {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            return AudioFocusHelperApi26(context, playbackWatcher)
+        } else {
+            return AudioFocusHelperApi21(context, playbackWatcher)
+        }
     }
 
     @Singleton
