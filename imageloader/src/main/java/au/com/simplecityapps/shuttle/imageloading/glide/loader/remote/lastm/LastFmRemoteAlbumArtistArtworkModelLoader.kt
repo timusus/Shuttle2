@@ -27,6 +27,20 @@ class LastFmRemoteAlbumArtistArtworkModelLoader(
     }
 
 
+    class Factory(
+        private val lastFm: LastFmService.LastFm
+    ) : ModelLoaderFactory<AlbumArtist, InputStream> {
+
+        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<AlbumArtist, InputStream> {
+            return LastFmRemoteAlbumArtistArtworkModelLoader(lastFm, multiFactory.build(RemoteArtworkProvider::class.java, InputStream::class.java) as RemoteArtworkModelLoader)
+        }
+
+        override fun teardown() {
+
+        }
+    }
+
+
     class LastFmAlbumArtistRemoteArtworkProvider(
         private val lastFm: LastFmService.LastFm,
         private val albumArtist: AlbumArtist
@@ -36,19 +50,5 @@ class LastFmRemoteAlbumArtistArtworkModelLoader(
         override fun getArtworkUri(): Call<out ArtworkUrlResult> {
             return lastFm.getLastFmArtist(albumArtist.name)
         }
-    }
-}
-
-
-class LastFmRemoteAlbumArtistArtworkModelLoaderFactory(
-    private val lastFm: LastFmService.LastFm
-) : ModelLoaderFactory<AlbumArtist, InputStream> {
-
-    override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<AlbumArtist, InputStream> {
-        return LastFmRemoteAlbumArtistArtworkModelLoader(lastFm, multiFactory.build(RemoteArtworkProvider::class.java, InputStream::class.java) as RemoteArtworkModelLoader)
-    }
-
-    override fun teardown() {
-
     }
 }

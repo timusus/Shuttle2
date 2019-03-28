@@ -18,6 +18,7 @@ import com.simplecityapps.taglib.ArtworkProvider
 import com.simplecityapps.taglib.FileScanner
 import dagger.Component
 import okhttp3.OkHttpClient
+import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
 
 @Singleton
@@ -63,6 +64,8 @@ interface CoreComponent {
     fun getFileScanner(): FileScanner
 
     fun getArtworkProvider(): ArtworkProvider
+
+    fun getGsonConverterFactory(): GsonConverterFactory
 
     @Component.Builder
     interface Builder {

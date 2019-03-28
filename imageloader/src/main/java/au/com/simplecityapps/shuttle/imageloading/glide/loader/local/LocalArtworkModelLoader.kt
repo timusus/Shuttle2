@@ -28,6 +28,18 @@ class LocalArtworkModelLoader : ModelLoader<LocalArtworkProvider, InputStream> {
     }
 
 
+    class Factory : ModelLoaderFactory<LocalArtworkProvider, InputStream> {
+
+        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<LocalArtworkProvider, InputStream> {
+            return LocalArtworkModelLoader()
+        }
+
+        override fun teardown() {
+
+        }
+    }
+
+
     class LocalArtworkDataFetcher(
         private val localArtworkProvider: LocalArtworkProvider
     ) : DataFetcher<InputStream> {
@@ -55,17 +67,5 @@ class LocalArtworkModelLoader : ModelLoader<LocalArtworkProvider, InputStream> {
                 callback.onLoadFailed(GlideException("Local artwork not found (${localArtworkProvider.javaClass.simpleName})"))
             }
         }
-    }
-}
-
-
-class LocalArtworkModelLoaderFactory : ModelLoaderFactory<LocalArtworkProvider, InputStream> {
-
-    override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<LocalArtworkProvider, InputStream> {
-        return LocalArtworkModelLoader()
-    }
-
-    override fun teardown() {
-
     }
 }

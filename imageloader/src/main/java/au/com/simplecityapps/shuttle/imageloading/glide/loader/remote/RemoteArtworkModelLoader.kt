@@ -37,6 +37,21 @@ class RemoteArtworkModelLoader(
         return true
     }
 
+
+    class Factory(
+        private val okHttpClient: OkHttpClient
+    ) : ModelLoaderFactory<RemoteArtworkProvider, InputStream> {
+
+        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<RemoteArtworkProvider, InputStream> {
+            return RemoteArtworkModelLoader(okHttpClient)
+        }
+
+        override fun teardown() {
+
+        }
+    }
+
+
     class RemoteArtworkDataFetcher(
         private val okHttpClient: OkHttpClient,
         private val remoteArtworkProvider: RemoteArtworkProvider
@@ -78,19 +93,5 @@ class RemoteArtworkModelLoader(
                     okHttpStreamFetcher!!.loadData(priority, callback)
                 } ?: callback.onLoadFailed(GlideException("ArtworkProvider url not found"))
         }
-    }
-}
-
-
-class RemoteArtworkModelLoaderFactory(
-    private val okHttpClient: OkHttpClient
-) : ModelLoaderFactory<RemoteArtworkProvider, InputStream> {
-
-    override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<RemoteArtworkProvider, InputStream> {
-        return RemoteArtworkModelLoader(okHttpClient)
-    }
-
-    override fun teardown() {
-
     }
 }

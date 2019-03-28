@@ -23,6 +23,17 @@ class DiskSongLocalArtworkModelLoader(
     }
 
 
+    class Factory : ModelLoaderFactory<Song, InputStream> {
+
+        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Song, InputStream> {
+            return DiskSongLocalArtworkModelLoader(multiFactory.build(LocalArtworkProvider::class.java, InputStream::class.java) as LocalArtworkModelLoader)
+        }
+
+        override fun teardown() {
+        }
+    }
+
+
     class DiskSongLocalArtworkProvider(
         private val song: Song
     ) : SongArtworkProvider(song),
@@ -32,16 +43,5 @@ class DiskSongLocalArtworkModelLoader(
             val pattern = Pattern.compile("(folder|cover|album).*\\.(jpg|jpeg|png)", Pattern.CASE_INSENSITIVE)
             return File(song.path).parentFile.listFiles { file -> pattern.matcher(file.name).matches() }.firstOrNull { it.length() > 1024 }?.inputStream()
         }
-    }
-}
-
-
-class DiskSongLocalArtworkModelLoaderFactory : ModelLoaderFactory<Song, InputStream> {
-
-    override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Song, InputStream> {
-        return DiskSongLocalArtworkModelLoader(multiFactory.build(LocalArtworkProvider::class.java, InputStream::class.java) as LocalArtworkModelLoader)
-    }
-
-    override fun teardown() {
     }
 }

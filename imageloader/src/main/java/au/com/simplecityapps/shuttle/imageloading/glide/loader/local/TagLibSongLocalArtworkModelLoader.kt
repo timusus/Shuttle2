@@ -23,6 +23,20 @@ class TagLibSongLocalArtworkModelLoader(
     }
 
 
+    class Factory(
+        private val tagLibArtworkProvider: ArtworkProvider
+    ) : ModelLoaderFactory<Song, InputStream> {
+
+        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Song, InputStream> {
+            return TagLibSongLocalArtworkModelLoader(tagLibArtworkProvider, multiFactory.build(LocalArtworkProvider::class.java, InputStream::class.java) as LocalArtworkModelLoader)
+        }
+
+        override fun teardown() {
+
+        }
+    }
+
+
     class TagLibSongLocalArtworkProvider(
         private val tagLibArtworkProvider: ArtworkProvider,
         private val song: Song
@@ -32,19 +46,5 @@ class TagLibSongLocalArtworkModelLoader(
         override fun getInputStream(): InputStream? {
             return tagLibArtworkProvider.getArtwork(song.path).inputStream()
         }
-    }
-}
-
-
-class TagLibSongLocalArtworkModelLoaderFactory(
-    private val tagLibArtworkProvider: ArtworkProvider
-) : ModelLoaderFactory<Song, InputStream> {
-
-    override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Song, InputStream> {
-        return TagLibSongLocalArtworkModelLoader(tagLibArtworkProvider, multiFactory.build(LocalArtworkProvider::class.java, InputStream::class.java) as LocalArtworkModelLoader)
-    }
-
-    override fun teardown() {
-
     }
 }

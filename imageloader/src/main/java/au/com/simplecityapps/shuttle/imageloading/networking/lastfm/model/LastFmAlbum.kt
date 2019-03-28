@@ -11,6 +11,7 @@ class LastFmAlbum: ArtworkUrlResult {
     override val artworkUrl
         get() = album?.images?.getBestImageUrl()
 
+
     class Album {
         @SerializedName("name")
         var name: String? = null

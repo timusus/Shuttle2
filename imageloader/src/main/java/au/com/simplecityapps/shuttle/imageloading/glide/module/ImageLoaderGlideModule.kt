@@ -2,15 +2,18 @@ package au.com.simplecityapps.shuttle.imageloading.glide.module
 
 import android.content.Context
 import android.util.Log
-import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.DiskSongLocalArtworkModelLoaderFactory
-import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.LocalArtworkModelLoaderFactory
+import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.DiskSongLocalArtworkModelLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.LocalArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.LocalArtworkProvider
-import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.TagLibSongLocalArtworkModelLoaderFactory
-import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.RemoteArtworkModelLoaderFactory
+import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.TagLibSongLocalArtworkModelLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.RemoteArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.RemoteArtworkProvider
-import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.lastm.LastFmRemoteAlbumArtistArtworkModelLoaderFactory
-import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.lastm.LastFmRemoteAlbumArtworkModelLoaderFactory
-import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.lastm.LastFmRemoteSongArtworkModelLoaderFactory
+import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.itunes.ItunesRemoteAlbumArtworkModelLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.itunes.ItunesRemoteSongArtworkModelLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.lastm.LastFmRemoteAlbumArtistArtworkModelLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.lastm.LastFmRemoteAlbumArtworkModelLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.lastm.LastFmRemoteSongArtworkModelLoader
+import au.com.simplecityapps.shuttle.imageloading.networking.itunes.ItunesService
 import au.com.simplecityapps.shuttle.imageloading.networking.lastfm.LastFmService
 import com.bumptech.glide.Glide
 import com.bumptech.glide.GlideBuilder
@@ -34,28 +37,33 @@ class ImageLoaderGlideModule : AppGlideModule() {
 
         val artworkProvider = (context.applicationContext as CoreComponentProvider).provideCoreComponent().getArtworkProvider()
 
-        val songRepository = (context.applicationContext as CoreComponentProvider).provideCoreComponent().getSongRepository()
+        val gsonConverterFactory = (context.applicationContext as CoreComponentProvider).provideCoreComponent().getGsonConverterFactory()
+
 
         // Generic loaders
 
         registry.replace(GlideUrl::class.java, InputStream::class.java, OkHttpUrlLoader.Factory(okHttpClient))
 
-        registry.append(LocalArtworkProvider::class.java, InputStream::class.java, LocalArtworkModelLoaderFactory())
-        registry.append(RemoteArtworkProvider::class.java, InputStream::class.java, RemoteArtworkModelLoaderFactory(okHttpClient))
+        registry.append(LocalArtworkProvider::class.java, InputStream::class.java, LocalArtworkModelLoader.Factory())
+        registry.append(RemoteArtworkProvider::class.java, InputStream::class.java, RemoteArtworkModelLoader.Factory(okHttpClient))
 
 
         // Local
 
-        registry.append(Song::class.java, InputStream::class.java, DiskSongLocalArtworkModelLoaderFactory())
-        registry.append(Song::class.java, InputStream::class.java, TagLibSongLocalArtworkModelLoaderFactory(artworkProvider))
+        registry.append(Song::class.java, InputStream::class.java, DiskSongLocalArtworkModelLoader.Factory())
+        registry.append(Song::class.java, InputStream::class.java, TagLibSongLocalArtworkModelLoader.Factory(artworkProvider))
 
 
         // Remote
 
-        val lastFm = LastFmService(okHttpClient).lastFm
-        registry.append(Song::class.java, InputStream::class.java, LastFmRemoteSongArtworkModelLoaderFactory(lastFm))
-        registry.append(Album::class.java, InputStream::class.java, LastFmRemoteAlbumArtworkModelLoaderFactory(lastFm))
-        registry.append(AlbumArtist::class.java, InputStream::class.java, LastFmRemoteAlbumArtistArtworkModelLoaderFactory(lastFm))
+        val lastFm = LastFmService(okHttpClient, gsonConverterFactory).lastFm
+        registry.append(Song::class.java, InputStream::class.java, LastFmRemoteSongArtworkModelLoader.Factory(lastFm))
+        registry.append(Album::class.java, InputStream::class.java, LastFmRemoteAlbumArtworkModelLoader.Factory(lastFm))
+        registry.append(AlbumArtist::class.java, InputStream::class.java, LastFmRemoteAlbumArtistArtworkModelLoader.Factory(lastFm))
+
+        val itunes = ItunesService(okHttpClient, gsonConverterFactory).itunes
+        registry.append(Song::class.java, InputStream::class.java, ItunesRemoteSongArtworkModelLoader.Factory(itunes))
+        registry.append(Album::class.java, InputStream::class.java, ItunesRemoteAlbumArtworkModelLoader.Factory(itunes))
     }
 
     override fun isManifestParsingEnabled(): Boolean {

@@ -10,7 +10,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
 
-class LastFmService(okHttpClient: OkHttpClient) {
+class LastFmService(okHttpClient: OkHttpClient, gsonConverterFactory: GsonConverterFactory) {
 
     interface LastFm {
         @GET("?api_key=$API_KEY&format=json&autocorrect=1&method=track.getInfo")
@@ -34,10 +34,11 @@ class LastFmService(okHttpClient: OkHttpClient) {
     private val retrofit = Retrofit.Builder()
         .baseUrl(BASE_URL)
         .client(okHttpClient)
-        .addConverterFactory(GsonConverterFactory.create())
+        .addConverterFactory(gsonConverterFactory)
         .build()
 
     val lastFm: LastFm = retrofit.create(LastFm::class.java)
+
 
     companion object {
         private const val BASE_URL = "https://ws.audioscrobbler.com/2.0/"
