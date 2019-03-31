@@ -109,7 +109,7 @@ class PlaybackInitializer @Inject constructor(
     override fun onPlaybackComplete(song: Song) {
         playbackPreferenceManager.playbackPosition = 0
 
-        songRepository.setPlaybackPosition(song, song.playbackPosition)
+        songRepository.setPlaybackPosition(song, song.duration)
             .subscribeOn(Schedulers.io())
             .subscribe()
 
