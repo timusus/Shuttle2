@@ -57,6 +57,7 @@
                 android:background="@drawable/rounded_background"
                 android:minHeight="?attr/actionBarSize"
                 android:paddingTop="8dp"
+                android:paddingEnd="4dp"
                 app:layout_collapseMode="pin"
                 app:navigationIcon="?attr/homeAsUpIndicator"
                 tools:subtitle="2 Albums | 20 Songs"

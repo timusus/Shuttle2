@@ -18,5 +18,7 @@ class AlbumDetailContract {
         fun loadData()
 
         fun onSongClicked(song: Song)
+
+        fun shuffle()
     }
 }

@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.LayoutInflater
+import android.view.MenuInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.os.postDelayed
@@ -92,8 +93,22 @@ class AlbumArtistDetailFragment :
             startPostponedEnterTransition() // In case our Glide load takes too long
         }
 
-        toolbar?.setNavigationOnClickListener {
-            NavHostFragment.findNavController(this).popBackStack()
+        toolbar?.let { toolbar ->
+            toolbar.setNavigationOnClickListener {
+                NavHostFragment.findNavController(this).popBackStack()
+            }
+            MenuInflater(context).inflate(R.menu.menu_album_artist_detail, toolbar.menu)
+            toolbar.setOnMenuItemClickListener { menuItem ->
+                when (menuItem.itemId) {
+                    R.id.shuffle -> {
+                        presenter.shuffle()
+                        true
+                    }
+                    else -> {
+                        false
+                    }
+                }
+            }
         }
 
         recyclerView.adapter = adapter
