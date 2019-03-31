@@ -51,9 +51,12 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
             }
             map
         })
-            .map { map -> map.toSortedMap(Comparator { a, b -> a.year.compareTo(b.year) }) }
+            .map { map ->
+                map.toSortedMap(Comparator { a, b -> a.year.compareTo(b.year) })
+                // Fixme:  For some reason, we can't return the above statement directly, or albums disappear from our map. Figure out why.
+                map
+            }
             .subscribe { map ->
-
                 view?.setListData(map)
         })
     }
