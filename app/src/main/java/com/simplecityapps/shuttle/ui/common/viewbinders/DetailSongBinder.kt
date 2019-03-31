@@ -33,6 +33,10 @@ class DetailSongBinder(
         return song.name.firstOrNull().toString()
     }
 
+    override fun areContentsTheSame(other: Any): Boolean {
+        return song.playbackPosition == (other as? Song)?.playbackPosition
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is DetailSongBinder) return false
