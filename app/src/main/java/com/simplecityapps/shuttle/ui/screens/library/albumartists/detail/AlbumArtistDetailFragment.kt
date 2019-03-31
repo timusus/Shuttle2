@@ -27,7 +27,6 @@ import com.simplecityapps.shuttle.ui.common.view.DetailImageAnimationHelper
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragmentArgs
 import dagger.android.support.AndroidSupportInjection
 import kotlinx.android.synthetic.main.fragment_album_artist_detail.*
-import timber.log.Timber
 import javax.inject.Inject
 
 class AlbumArtistDetailFragment :
@@ -128,7 +127,6 @@ class AlbumArtistDetailFragment :
 
     private fun maybeStartPostponedEnterTransition() {
         postponedTransitionCounter--
-        Timber.i("maybeStartPostponed.. counter: $postponedTransitionCounter")
         if (postponedTransitionCounter == 0) {
             startPostponedEnterTransition()
         }
