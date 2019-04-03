@@ -19,15 +19,15 @@ class LocalSongRepositoryTest {
 
     init {
         // Database
-        val databaseSong1 = SongData("Song1", 0, 1, 0, 1, 1000, 2001, "song1.mp3", 0, 0, 100, lastModified)
+        val databaseSong1 = SongData("Song1", 0, 0, 1, 0, "song1.mp3", 1000, 2001, 0, lastModified, 0, 0, null, null)
         databaseSong1.albumName = "Sky Blue"
         databaseSong1.albumArtistName = "Devin Townsend"
 
-        val databaseSong2 = SongData("Song2", 0, 1, 0, 1, 1000, 2001, "song2.mp3", 0, 0, 100, lastModified)
+        val databaseSong2 = SongData("Song2", 0, 1, 0, 1, "song2.mp3", 1000, 2001, 0, lastModified, 0, 0, null, null)
         databaseSong2.albumName = "Sky Blue"
         databaseSong2.albumArtistName = "Devin Townsend"
 
-        val databaseSong3 = SongData("Song3", 0, 1, 0, 1, 1000, 2001, "song3.mp3", 0, 0, 100, lastModified)
+        val databaseSong3 = SongData("Song3", 0, 1, 0, 1, "song3.mp3", 1000, 2001, 0, lastModified, 0, 0, null, null)
         databaseSong3.albumName = "Sky Blue"
         databaseSong3.albumArtistName = "Devin Townsend"
 
@@ -35,15 +35,15 @@ class LocalSongRepositoryTest {
 
 
         // Disk
-        val diskSong1 = SongData("Song1", 0, 1, 0, 1, 1000, 2001, "song1.mp3", 0, 0, 100, lastModified)
+        val diskSong1 = SongData("Song1", 0, 1, 0, 1, "song1.mp3", 1000, 2001, 0, lastModified, 0, 0, null, null)
         diskSong1.albumName = "Sky Blue"
         diskSong1.albumArtistName = "Devin Townsend"
 
-        val diskSong2 = SongData("Song2", 0, 1, 0, 1, 1000, 2001, "song2.mp3", 0, 0, 100, lastModified)
+        val diskSong2 = SongData("Song2", 0, 1, 0, 1, "song2.mp3", 1000, 2001, 0, lastModified, 0, 0, null, null)
         diskSong2.albumName = "Sky Blue"
         diskSong2.albumArtistName = "Devin Townsend"
 
-        val diskSong3 = SongData("Song3", 0, 1, 0, 1, 1000, 2001, "song3.mp3", 0, 0, 100, lastModified)
+        val diskSong3 = SongData("Song3", 0, 1, 0, 1, "song3.mp3", 1000, 2001, 0, lastModified, 0, 0, null, null)
         diskSong3.albumName = "Sky Blue"
         diskSong3.albumArtistName = "Devin Townsend"
 
@@ -121,7 +121,7 @@ class LocalSongRepositoryTest {
 
         // Comparing a set of 3 songs, with a set of 3 identical songs, plus one new song by a different artist, on a different album.
 
-        val newDiskSong = SongData("Song4", 0, 1, 0, 1, 1000, 2001, "song4.mp3", 0, 0, 100, lastModified)
+        val newDiskSong = SongData("Song4", 0, 1, 0, 1, "song4.mp3", 1000, 2001, 0, lastModified, 100, 0, null, null)
         newDiskSong.albumArtistName = "Roger Schleemskins"
         newDiskSong.albumName = "Flamboyance"
         val diskSongs = diskSongs.toMutableList()
@@ -157,7 +157,7 @@ class LocalSongRepositoryTest {
 
         // Comparing a set of 3 songs, with a set of 3 identical songs, plus one new song by the same artist, on a different album.
 
-        val newDiskSong = SongData("Song4", 0, 1, 0, 1, 1000, 2001, "song4.mp3", 0, 0, 100, lastModified)
+        val newDiskSong = SongData("Song4", 0, 1, 0, 1, "song4.mp3", 1000, 2001, 0, lastModified, 100, 0, null, null)
         newDiskSong.albumArtistName = "Devin Townsend"
         newDiskSong.albumName = "Flarge"
         val diskSongs = diskSongs.toMutableList()

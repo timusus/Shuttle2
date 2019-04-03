@@ -36,9 +36,9 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
     // Room
-    kapt 'androidx.room:room-compiler:2.1.0-alpha05'
-    implementation 'androidx.room:room-runtime:2.1.0-alpha05'
-    implementation 'androidx.room:room-rxjava2:2.1.0-alpha05'
+`    kapt 'androidx.room:room-compiler:2.1.0-alpha06'
+    implementation 'androidx.room:room-runtime:2.1.0-alpha06'
+    implementation 'androidx.room:room-rxjava2:2.1.0-alpha06'
 
     // RxRelay
     implementation 'com.jakewharton.rxrelay2:rxrelay:2.1.0'

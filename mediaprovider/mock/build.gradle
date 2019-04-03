@@ -3,38 +3,39 @@ apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-android'
 
 android {
-  compileSdkVersion 28
+    compileSdkVersion 28
 
-  defaultConfig {
-    minSdkVersion 21
-    targetSdkVersion 28
-    versionCode 1
-    versionName "1.0"
-  }
-
-  buildTypes {
-    release {
-      minifyEnabled false
-      proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 28
+        versionCode 1
+        versionName "1.0"
     }
-  }
+
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
 }
 
 dependencies {
-  implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-  // Shuttle MediaProvider Core
-  implementation project(path: ':mediaprovider:core')
+    // Shuttle MediaProvider Core
+    implementation project(path: ':mediaprovider:core')
 
-  // Kotlin Standard Library
-  implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    // Kotlin Standard Library
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
-  // RXRelay
-  implementation 'com.jakewharton.rxrelay2:rxrelay:2.1.0'
+    // RXRelay
+    implementation 'com.jakewharton.rxrelay2:rxrelay:2.1.0'
 
-  // Gson
-  implementation 'com.google.code.gson:gson:2.8.5'
+    // Gson
+    implementation 'com.google.code.gson:gson:2.8.5'
 
-  // Timber
-  implementation 'com.jakewharton.timber:timber:4.7.1'
+    // Timber
+    implementation 'com.jakewharton.timber:timber:4.7.1'
 }
