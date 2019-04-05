@@ -65,7 +65,7 @@ dependencies {
     implementation project(path: ':recyclerview-adapter')
 
     // RecyclerView FastScroll
-    implementation 'com.simplecityapps:recyclerview-fastscroll:2.0.0'
+    implementation 'com.github.timusus:RecyclerView-FastScroll:dev-SNAPSHOT'
 
     // Material Design
     implementation 'com.google.android.material:material:1.0.0'
