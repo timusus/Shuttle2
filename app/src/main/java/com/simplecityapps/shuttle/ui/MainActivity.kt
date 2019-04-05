@@ -67,6 +67,10 @@ class MainActivity : AppCompatActivity(), HasSupportFragmentInjector, QueueChang
 
         // Update visible state of mini player
         queueWatcher.addCallback(this)
+
+        onBackPressedDispatcher.addCallback {
+             multiSheetView.consumeBackPress()
+        }
     }
 
     override fun onDestroy() {
