@@ -9,7 +9,7 @@ import androidx.fragment.app.Fragment
 import androidx.transition.TransitionInflater
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.PagerAdapter
-import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistsFragment
+import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistListFragment
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumsFragment
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongsFragment
 import kotlinx.android.synthetic.main.fragment_library.*
@@ -36,7 +36,7 @@ class LibraryFragment : Fragment() {
         tabLayout.setupWithViewPager(viewPager, true)
 
         val adapter = PagerAdapter(childFragmentManager)
-        adapter.addFragment("Artists", AlbumArtistsFragment.newInstance())
+        adapter.addFragment("Artists", AlbumArtistListFragment.newInstance())
         adapter.addFragment("Albums", AlbumsFragment.newInstance())
         adapter.addFragment("Songs", SongsFragment.newInstance())
         adapter.notifyDataSetChanged()

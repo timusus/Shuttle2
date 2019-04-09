@@ -5,7 +5,7 @@ import com.simplecityapps.shuttle.ui.screens.debug.LoggingFragment
 import com.simplecityapps.shuttle.ui.screens.home.HomeFragment
 import com.simplecityapps.shuttle.ui.screens.home.history.HistoryFragment
 import com.simplecityapps.shuttle.ui.screens.home.recent.RecentFragment
-import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistsFragment
+import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistListFragment
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragment
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumsFragment
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragment
@@ -39,7 +39,7 @@ abstract class FragmentBuildersModule {
     abstract fun contributeAlbumDetailFragment(): AlbumDetailFragment
 
     @ContributesAndroidInjector
-    abstract fun contributeAlbumArtistsFragment(): AlbumArtistsFragment
+    abstract fun contributeAlbumArtistsFragment(): AlbumArtistListFragment
 
     @ContributesAndroidInjector
     abstract fun contributeAlbumArtistDetailFragment(): AlbumArtistDetailFragment
