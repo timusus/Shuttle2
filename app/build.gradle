@@ -110,9 +110,4 @@ dependencies {
 
     // OKHttp
     implementation 'com.squareup.okhttp3:okhttp:3.13.1'
-
-    // Testing
-    androidTestImplementation 'androidx.test:runner:1.1.1'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.1'
-    testImplementation 'junit:junit:4.12'
 }
