@@ -12,7 +12,7 @@ android {
         minSdkVersion 21
         targetSdkVersion 28
         versionCode 1
-        versionName "1.0"
+        versionName "0.0.1-alpha01"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
     }
@@ -110,4 +110,12 @@ dependencies {
 
     // OKHttp
     implementation 'com.squareup.okhttp3:okhttp:3.13.1'
+
+    // Firebase
+    implementation 'com.google.firebase:firebase-core:16.0.8'
+
+    // Crashlytics
+    implementation 'com.crashlytics.sdk.android:crashlytics:2.9.9'
 }
+
+apply plugin: 'com.google.gms.google-services'
