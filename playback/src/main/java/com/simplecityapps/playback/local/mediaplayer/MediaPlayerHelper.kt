@@ -2,10 +2,12 @@ package com.simplecityapps.playback.local.mediaplayer
 
 import android.media.MediaPlayer
 import android.net.Uri
+import android.util.Log
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.Playback
 import timber.log.Timber
 import java.io.File
+import java.io.IOException
 
 class MediaPlayerHelper {
 
@@ -49,7 +51,13 @@ class MediaPlayerHelper {
         mediaPlayer!!.setOnCompletionListener(onCompletionListener)
         mediaPlayer!!.setOnErrorListener(onErrorListener)
         mediaPlayer!!.setOnPreparedListener(onPreparedListener)
-        mediaPlayer!!.setDataSource(Uri.fromFile(File(song.path)).toString())
+
+        try {
+            mediaPlayer!!.setDataSource(Uri.fromFile(File(song.path)).toString())
+        } catch (e: IOException) {
+            Log.e("MediaPlayerHelper", "Failed to load ${song.path}")
+            return
+        }
 
         isPreparing = true
         Timber.v("$tag MediaPlayer.prepareAsync()")
