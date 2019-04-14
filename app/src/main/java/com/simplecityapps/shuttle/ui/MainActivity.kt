@@ -73,6 +73,10 @@ class MainActivity : AppCompatActivity(), HasSupportFragmentInjector, QueueChang
         onBackPressedDispatcher.addCallback {
              multiSheetView.consumeBackPress()
         }
+
+        if (queueManager.getSize() == 0) {
+            multiSheetView.hide(true, false)
+        }
     }
 
     override fun onDestroy() {
