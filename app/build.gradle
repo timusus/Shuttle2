@@ -3,6 +3,7 @@ apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-android'
 apply plugin: 'androidx.navigation.safeargs.kotlin'
 apply plugin: 'kotlin-kapt'
+apply plugin: 'io.fabric'
 
 android {
     compileSdkVersion 28
@@ -11,16 +12,29 @@ android {
         applicationId "com.simplecityapps.shuttle"
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 1
-        versionName "0.0.1-alpha01"
+        versionCode 5
+        versionName "0.0.1-alpha05"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
+    }
+
+    signingConfigs {
+        release {
+            Properties properties = getProperties('../keystore.properties')
+            storeFile file(getProperty(properties, 'store'))
+            keyAlias getProperty(properties, 'alias')
+            storePassword getProperty(properties, 'storePass')
+            keyPassword getProperty(properties, 'pass')
+        }
     }
 
     buildTypes {
         release {
             minifyEnabled false
+
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+
+            signingConfig signingConfigs.release
         }
     }
 
@@ -116,6 +130,20 @@ dependencies {
 
     // Crashlytics
     implementation 'com.crashlytics.sdk.android:crashlytics:2.9.9'
+}
+
+@org.jetbrains.annotations.Nullable
+def getProperties(String fileName) {
+    final Properties properties = new Properties()
+    def file = file(fileName)
+    if (file.exists()) {
+        file.withInputStream { stream -> properties.load(stream) }
+    }
+    return properties
+}
+
+static def getProperty(@org.jetbrains.annotations.Nullable Properties properties, String name) {
+    return properties.getProperty(name) ?: "$name missing"
 }
 
 apply plugin: 'com.google.gms.google-services'
