@@ -5,7 +5,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.navigation.fragment.NavHostFragment.findNavController
+import androidx.navigation.fragment.FragmentNavigatorExtras
+import androidx.navigation.fragment.findNavController
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import kotlinx.android.synthetic.main.list_item_home_header.*
@@ -25,8 +26,26 @@ class HomeFragment : Fragment(), Injectable {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        historyButton.setOnClickListener { findNavController(this).navigate(R.id.action_homeFragment_to_historyFragment) }
-        latestButton.setOnClickListener { findNavController(this).navigate(R.id.action_homeFragment_to_recentFragment) }
+        historyButton.setOnClickListener { findNavController().navigate(R.id.action_homeFragment_to_historyFragment) }
+        latestButton.setOnClickListener { findNavController().navigate(R.id.action_homeFragment_to_recentFragment) }
         shuffleButton.setOnClickListener { presenter.shuffleAll() }
+
+        searchView.setOnSearchClickListener {
+            navigateToSearch()
+        }
+        searchView.setOnQueryTextFocusChangeListener { v, hasFocus ->
+            if (hasFocus) {
+                navigateToSearch()
+            }
+        }
+    }
+
+    private fun navigateToSearch() {
+        findNavController().navigate(
+            R.id.action_homeFragment_to_searchFragment,
+            null,
+            null,
+            FragmentNavigatorExtras(searchView to searchView.transitionName)
+        )
     }
 }

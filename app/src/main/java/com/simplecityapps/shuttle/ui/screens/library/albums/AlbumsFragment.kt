@@ -5,8 +5,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.navigation.findNavController
 import androidx.navigation.fragment.FragmentNavigatorExtras
+import androidx.navigation.fragment.findNavController
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.mediaprovider.model.Album
@@ -72,8 +72,7 @@ class AlbumsFragment : Fragment(), Injectable, AlbumBinder.Listener {
     // AlbumBinder.Listener Implementation
 
     override fun onAlbumClicked(album: Album, viewHolder: AlbumBinder.ViewHolder) {
-
-        view?.findNavController()?.navigate(
+        findNavController().navigate(
             R.id.action_libraryFragment_to_albumDetailFragment,
             AlbumDetailFragmentArgs(album.id).toBundle(),
             null,

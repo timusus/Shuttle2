@@ -16,6 +16,9 @@
         <action
             android:id="@+id/action_homeFragment_to_recentFragment"
             app:destination="@id/recentFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_searchFragment"
+            app:destination="@id/searchFragment" />
     </fragment>
 
     <fragment
@@ -36,6 +39,7 @@
         android:name="com.simplecityapps.shuttle.ui.screens.library.folders.FolderFragment"
         android:label="FolderFragment"
         tools:layout="@layout/fragment_folders" />
+
     <fragment
         android:id="@+id/albumArtistDetailFragment"
         android:name="com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragment"
@@ -48,6 +52,7 @@
             android:id="@+id/action_albumArtistDetailFragment_to_albumDetailFragment"
             app:destination="@id/albumDetailFragment" />
     </fragment>
+
     <fragment
         android:id="@+id/albumDetailFragment"
         android:name="com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragment"
@@ -57,15 +62,23 @@
             android:name="albumId"
             app:argType="long" />
     </fragment>
+
     <fragment
         android:id="@+id/historyFragment"
         android:name="com.simplecityapps.shuttle.ui.screens.home.history.HistoryFragment"
         android:label="HistoryFragment"
         tools:layout="@layout/fragment_history" />
+
     <fragment
         android:id="@+id/recentFragment"
         android:name="com.simplecityapps.shuttle.ui.screens.home.recent.RecentFragment"
         android:label="RecentFragment"
         tools:layout="@layout/fragment_recent" />
+
+    <fragment
+        android:id="@+id/searchFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.home.search.SearchFragment"
+        android:label="SearchFragment"
+        tools:layout="@layout/fragment_search" />
 
 </navigation>

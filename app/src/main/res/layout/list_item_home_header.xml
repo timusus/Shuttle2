@@ -27,37 +27,40 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/shuttleLogo" />
 
-    <androidx.cardview.widget.CardView
-        android:id="@+id/searchCard"
+    <LinearLayout
+        android:id="@+id/searchContainer"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/background_search"
+        android:elevation="2dp"
+        android:gravity="center_vertical"
+        android:minHeight="56dp"
+        android:orientation="horizontal"
+        android:padding="4dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/titleLabel">
 
-        <LinearLayout
-            android:layout_width="match_parent"
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/searchView"
+            style="@android:style/Widget.Material.SearchView"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:layout_weight="1"
+            android:transitionName="searchView"
+            app:defaultQueryHint="Search Music"
+            app:iconifiedByDefault="false"
+            app:queryBackground="@android:color/transparent"
+            app:searchIcon="@drawable/ic_search_black_24dp" />
 
-            <androidx.appcompat.widget.SearchView
-                style="@android:style/Widget.Material.SearchView"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                app:defaultQueryHint="Search Music"
-                app:iconifiedByDefault="false" />
-
-            <ImageButton
-                style="@android:style/Widget.Material.ActionButton"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:contentDescription="More"
-                app:srcCompat="@drawable/ic_more_vert_black_24dp" />
-        </LinearLayout>
-    </androidx.cardview.widget.CardView>
+        <ImageButton
+            style="@android:style/Widget.Material.ActionButton"
+            android:layout_width="40dp"
+            android:layout_height="match_parent"
+            android:contentDescription="More"
+            app:srcCompat="@drawable/ic_more_vert_black_24dp" />
+    </LinearLayout>
 
     <com.simplecityapps.shuttle.ui.common.view.HomeButton
         android:id="@+id/historyButton"
@@ -68,7 +71,7 @@
         app:layout_constraintEnd_toStartOf="@+id/latestButton"
         app:layout_constraintHorizontal_chainStyle="spread"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/searchCard"
+        app:layout_constraintTop_toBottomOf="@id/searchContainer"
         app:type="history" />
 
     <com.simplecityapps.shuttle.ui.common.view.HomeButton
@@ -79,7 +82,7 @@
         android:padding="8dp"
         app:layout_constraintEnd_toStartOf="@+id/favoritesButton"
         app:layout_constraintStart_toEndOf="@+id/historyButton"
-        app:layout_constraintTop_toBottomOf="@id/searchCard"
+        app:layout_constraintTop_toBottomOf="@id/searchContainer"
         app:type="recent" />
 
     <com.simplecityapps.shuttle.ui.common.view.HomeButton
@@ -90,7 +93,7 @@
         android:padding="8dp"
         app:layout_constraintEnd_toStartOf="@+id/shuffleButton"
         app:layout_constraintStart_toEndOf="@+id/latestButton"
-        app:layout_constraintTop_toBottomOf="@id/searchCard"
+        app:layout_constraintTop_toBottomOf="@id/searchContainer"
         app:type="favorites" />
 
     <com.simplecityapps.shuttle.ui.common.view.HomeButton
@@ -101,7 +104,7 @@
         android:padding="8dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/favoritesButton"
-        app:layout_constraintTop_toBottomOf="@id/searchCard"
+        app:layout_constraintTop_toBottomOf="@id/searchContainer"
         app:type="shuffle" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
