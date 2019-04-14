@@ -74,6 +74,10 @@ class PlaybackPresenter @Inject constructor(
         playbackManager.skipToPrev()
     }
 
+    override fun skipTo(position: Int) {
+        playbackManager.skipTo(position)
+    }
+
     override fun seekForward(seconds: Int) {
         Timber.v("seekForward() seconds: $seconds")
         playbackManager.getPosition()?.let { position ->

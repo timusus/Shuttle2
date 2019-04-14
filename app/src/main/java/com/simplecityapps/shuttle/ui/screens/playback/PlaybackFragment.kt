@@ -18,7 +18,9 @@ import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.recyclerview.SnapOnScrollListener
 import com.simplecityapps.shuttle.ui.common.recyclerview.SpacesItemDecoration
+import com.simplecityapps.shuttle.ui.common.recyclerview.attachSnapHelperWithListener
 import com.simplecityapps.shuttle.ui.common.toHms
 import com.simplecityapps.shuttle.ui.common.view.SeekButton
 import com.simplecityapps.shuttle.ui.screens.sleeptimer.SleepTimerDialogFragment
@@ -68,7 +70,13 @@ class PlaybackFragment :
 
         recyclerView.adapter = adapter
         recyclerView.setRecyclerListener(RecyclerListener())
-        PagerSnapHelper().attachToRecyclerView(recyclerView)
+
+        val snapHelper = PagerSnapHelper()
+        snapHelper.attachToRecyclerView(recyclerView)
+        recyclerView.attachSnapHelperWithListener(snapHelper, SnapOnScrollListener.Behavior.NOTIFY_ON_SCROLL_STATE_IDLE) { position ->
+            presenter.skipTo(position)
+        }
+
         recyclerView.addItemDecoration(SpacesItemDecoration(8))
 
         playPauseButton.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(context!!, R.color.colorPrimary))

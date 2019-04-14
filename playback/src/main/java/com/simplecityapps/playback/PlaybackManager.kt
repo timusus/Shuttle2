@@ -17,7 +17,7 @@ class PlaybackManager(
 ) : Playback.Callback,
     AudioFocusHelper.Listener {
 
-    private var handler: PlaybackManager.ProgressHandler = PlaybackManager.ProgressHandler()
+    private var handler: ProgressHandler = ProgressHandler()
 
     init {
         playback.callback = this
@@ -78,6 +78,13 @@ class PlaybackManager(
             playback.load(0, true)
         } else {
             seekTo(0)
+        }
+    }
+
+    fun skipTo(position: Int) {
+        if (queueManager.getCurrentPosition() != position) {
+            queueManager.skipTo(position)
+            playback.load(0, true)
         }
     }
 

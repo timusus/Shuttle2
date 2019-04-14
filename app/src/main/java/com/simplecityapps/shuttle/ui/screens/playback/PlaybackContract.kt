@@ -37,6 +37,8 @@ interface PlaybackContract {
 
         fun skipPrev()
 
+        fun skipTo(position: Int)
+
         fun seekForward(seconds: Int)
 
         fun seekBackward(seconds: Int)

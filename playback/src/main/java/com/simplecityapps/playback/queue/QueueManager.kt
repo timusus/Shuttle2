@@ -176,8 +176,15 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
         } ?: Timber.v("No next track to skip-previous to")
     }
 
-
-
+    fun skipTo(position: Int) {
+        val currentQueue = baseQueue.get(shuffleMode)
+        currentQueue.getOrNull(position)?.let { queueItem ->
+            setCurrentItem(queueItem)
+            queueWatcher.onQueuePositionChanged()
+        } ?: run {
+            Timber.e("Couldn't skip to position $position, no associated queue item found")
+        }
+    }
 
 
     /**

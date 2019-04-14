@@ -31,6 +31,7 @@ class MediaSessionManager(
                     or PlaybackStateCompat.ACTION_PAUSE
                     or PlaybackStateCompat.ACTION_SKIP_TO_NEXT
                     or PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
+                    or PlaybackStateCompat.ACTION_SKIP_TO_QUEUE_ITEM
                     or PlaybackStateCompat.ACTION_SEEK_TO
                     or PlaybackStateCompat.ACTION_SET_REPEAT_MODE
                     or PlaybackStateCompat.ACTION_SET_SHUFFLE_MODE
@@ -98,6 +99,13 @@ class MediaSessionManager(
 
         override fun onSkipToNext() {
             playbackManager.skipToNext()
+        }
+
+        override fun onSkipToQueueItem(id: Long) {
+            val index = queueManager.getQueue().indexOfFirst { queueItem -> queueItem.toQueueItem().queueId == id }
+            if (index != -1) {
+                playbackManager.skipTo(index)
+            }
         }
 
         override fun onSeekTo(pos: Long) {
