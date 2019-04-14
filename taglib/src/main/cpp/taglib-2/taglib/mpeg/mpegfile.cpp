@@ -108,6 +108,10 @@ bool MPEG::File::isSupported(IOStream *stream)
   long long headerOffset;
   const ByteVector buffer = Utils::readHeader(stream, bufferSize(), true, &headerOffset);
 
+  if (buffer.size() <= 0){
+      return false;
+  }
+
   const long long originalPosition = stream->tell();
   AdapterFile file(stream);
 
