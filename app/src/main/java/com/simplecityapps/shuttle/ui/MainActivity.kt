@@ -23,7 +23,9 @@ import com.simplecityapps.shuttle.ui.screens.queue.QueueFragment
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.support.HasSupportFragmentInjector
 import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.rxkotlin.subscribeBy
 import kotlinx.android.synthetic.main.activity_main.*
+import timber.log.Timber
 import javax.inject.Inject
 
 class MainActivity : AppCompatActivity(), HasSupportFragmentInjector, QueueChangeCallback {
@@ -90,9 +92,9 @@ class MainActivity : AppCompatActivity(), HasSupportFragmentInjector, QueueChang
     }
 
     private fun onHasPermission() {
-        compositeDisposable.add(songRepository.populate().subscribe())
-        compositeDisposable.add(albumsRepository.populate().subscribe())
-        compositeDisposable.add(albumArtistsRepository.populate().subscribe())
+        compositeDisposable.add(songRepository.populate().subscribeBy(onError = { throwable -> Timber.e(throwable, "Failed to populate song repository") }))
+        compositeDisposable.add(albumsRepository.populate().subscribeBy(onError = { throwable -> Timber.e(throwable, "Failed to populate album repository") }))
+        compositeDisposable.add(albumArtistsRepository.populate().subscribeBy(onError = { throwable -> Timber.e(throwable, "Failed to populate artist repository") }))
     }
 
 
