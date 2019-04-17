@@ -53,7 +53,8 @@ class PlaybackInitializer @Inject constructor(
         queuePosition?.let { queuePosition ->
             val songIds = playbackPreferenceManager.queueIds?.split(",")?.map { id -> id.toLong() }
             songIds?.let { songIds ->
-                songRepository.getSongs(SongQuery.SongIds(songIds)).first(emptyList())
+                songRepository.getSongs(SongQuery.SongIds(songIds))
+                    .first(emptyList())
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribeBy(
                     onSuccess = { songs ->
