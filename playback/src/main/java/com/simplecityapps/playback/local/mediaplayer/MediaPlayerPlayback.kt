@@ -105,35 +105,37 @@ class MediaPlayerPlayback(
 
         override fun onPlaybackComplete(song: Song) {
 
-            // Release current media player
-            Timber.v("Releasing current player")
-            currentMediaPlayerHelper.callback = null
-            currentMediaPlayerHelper.mediaPlayer?.reset()
-            currentMediaPlayerHelper.mediaPlayer?.release()
+            if (nextQueueItem == null) {
+                Timber.v("onPlaybackComplete() called. No next song")
 
-            // Make next media player current
-            Timber.v("Setting next player as current player")
-            currentMediaPlayerHelper = nextMediaPlayerHelper
-            currentMediaPlayerHelper.tag = "CurrentMediaPlayer"
-            currentMediaPlayerHelper.callback = this
-
-            // Update queue
-            Timber.v("Updating queue")
-            currentQueueItem = nextQueueItem
-            currentQueueItem?.let { currentQueueItem ->
-                queueManager.setCurrentItem(currentQueueItem)
-            }
-
-            // Load next song
-            nextMediaPlayerHelper = MediaPlayerHelper()
-            nextMediaPlayerHelper.tag = "NextMediaPlayer"
-
-            if (nextQueueItem != null) {
-                Timber.v("Loading next song")
-                loadNext()
-            } else {
-                Timber.v("No next song. Playback complete")
                 callback?.onPlaystateChanged(false)
+            } else {
+                Timber.v("onPlaybackComplete() called. Loading next song")
+
+                // Release current media player
+                Timber.v("Releasing current player")
+                currentMediaPlayerHelper.callback = null
+                currentMediaPlayerHelper.mediaPlayer?.reset()
+                currentMediaPlayerHelper.mediaPlayer?.release()
+
+                // Make next media player current
+                Timber.v("Setting next player as current player")
+                currentMediaPlayerHelper = nextMediaPlayerHelper
+                currentMediaPlayerHelper.tag = "CurrentMediaPlayer"
+                currentMediaPlayerHelper.callback = this
+
+                // Update queue
+                Timber.v("Updating queue")
+                currentQueueItem = nextQueueItem
+                currentQueueItem?.let { currentQueueItem ->
+                    queueManager.setCurrentItem(currentQueueItem)
+                }
+
+                // Load next song
+                nextMediaPlayerHelper = MediaPlayerHelper()
+                nextMediaPlayerHelper.tag = "NextMediaPlayer"
+
+                loadNext()
             }
 
             callback?.onPlaybackComplete(song)
