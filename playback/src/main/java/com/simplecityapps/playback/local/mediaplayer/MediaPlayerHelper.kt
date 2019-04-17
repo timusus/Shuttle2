@@ -136,10 +136,24 @@ class MediaPlayerHelper {
     fun setNextMediaPlayer(nextMediaPlayer: MediaPlayer?) {
         Timber.v("$tag setNextMediaPlayer()")
         if (isPrepared) {
+            Timber.v("$tag setting nextMediaPlayer to null")
             mediaPlayer?.setNextMediaPlayer(nextMediaPlayer)
         } else {
             Timber.v("$tag setNextMediaPlayer() current MediaPlayer not prepared")
         }
+    }
+
+    fun release() {
+        Timber.v("$tag releasing MediaPlayer")
+
+        callback = null
+
+        isPreparing = false
+        isPrepared = false
+        playOnPrepared = false
+
+        mediaPlayer?.release()
+        mediaPlayer = null
     }
 
     private val onPreparedListener = MediaPlayer.OnPreparedListener {
@@ -162,17 +176,10 @@ class MediaPlayerHelper {
         callback?.onPlaybackPrepared()
     }
 
-    private val onErrorListener = object : MediaPlayer.OnErrorListener {
-        override fun onError(mp: MediaPlayer?, what: Int, extra: Int): Boolean {
-            Timber.v("$tag onError()")
-
-            isPreparing = false
-            isPrepared = false
-            mediaPlayer?.release()
-            mediaPlayer = null
-
-            return false
-        }
+    private val onErrorListener = MediaPlayer.OnErrorListener { mediaPlayer, what, extra ->
+        Timber.v("$tag onError()")
+        release()
+        false
     }
 
     private val onCompletionListener = MediaPlayer.OnCompletionListener {

@@ -48,7 +48,11 @@ class MediaPlayerPlayback(
         nextQueueItem = queueManager.getNext()
         nextQueueItem?.let { nextQueueItem ->
             nextMediaPlayerHelper.load(nextQueueItem.song, 0 ,false)
-        } ?: Timber.v("loadNext() next song null")
+        } ?:run {
+            Timber.v("loadNext() next song null")
+            nextMediaPlayerHelper.release()
+            currentMediaPlayerHelper.setNextMediaPlayer(null)
+        }
     }
 
     override fun play() {
