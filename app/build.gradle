@@ -69,14 +69,15 @@ dependencies {
     // TagLib
     implementation project(path: ':taglib')
 
+    // RecylerView Adapter
+    implementation project(path: ':recyclerview-adapter')
+
     // Kotlin Standard Library
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
     // Kotlin Extensions
     implementation 'androidx.core:core-ktx:1.0.1'
-
-    // RecylerView Adapter
-    implementation project(path: ':recyclerview-adapter')
+    implementation "androidx.fragment:fragment-ktx:1.1.0-alpha06"
 
     // RecyclerView FastScroll
     implementation 'com.github.timusus:RecyclerView-FastScroll:dev-SNAPSHOT'
@@ -96,9 +97,6 @@ dependencies {
     // AndroidX Navigation
     implementation "androidx.navigation:navigation-fragment-ktx:2.1.0-alpha02"
     implementation "androidx.navigation:navigation-ui-ktx:2.1.0-alpha02"
-
-    // Kotlin Extensions
-    implementation "androidx.fragment:fragment-ktx:1.1.0-alpha06"
 
     // RxJava
     implementation "io.reactivex.rxjava2:rxjava:2.2.7"
