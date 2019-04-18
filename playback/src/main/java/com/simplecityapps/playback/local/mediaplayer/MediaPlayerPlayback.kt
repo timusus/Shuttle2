@@ -25,29 +25,67 @@ class MediaPlayerPlayback(
         nextMediaPlayerHelper.tag = "NextMediaPlayer"
     }
 
-    override fun load(seekPosition: Int, playOnPrepared: Boolean) {
+    override fun load(seekPosition: Int, playOnPrepared: Boolean, onError: (Error) -> Unit) {
         Timber.v("load() position: $seekPosition, playOnPrepared: $playOnPrepared")
 
-        loadCurrent(seekPosition, playOnPrepared)
-        loadNext()
+        val currentQueueItem = queueManager.getCurrentItem()
+
+        attemptLoad(seekPosition, playOnPrepared, 1) { result ->
+            result.onSuccess {
+                loadNext()
+            }
+            result.onFailure { error ->
+                // Our load attempts may have caused us to skip through the queue. Since none of those subsequent attempts have succeeded,
+                // we may as well restore the previous queue position.
+                currentQueueItem?.let { currentQueueItem ->
+                    queueManager.setCurrentItem(currentQueueItem)
+                }
+
+                Timber.e("load() failed. Error: $error")
+                onError(Error(error))
+            }
+        }
     }
 
-    private fun loadCurrent(seekPosition: Int, playOnPrepared: Boolean) {
+    private fun attemptLoad(seekPosition: Int, playOnPrepared: Boolean, attempt: Int = 1, completion: (Result<Any?>) -> Unit) {
+        Timber.v("Attempting load ($attempt)")
+        loadCurrent(seekPosition, playOnPrepared) { result ->
+            result.onSuccess { loadNext() }
+            result.onFailure { error ->
+                // Attempt to load the next item in the queue. If there is no next item, or we're on repeat, call completion(error).
+                queueManager.getNext(false)?.let { nextQueueItem ->
+                    if (nextQueueItem != currentQueueItem) {
+                        queueManager.skipToNext(true)
+                        attemptLoad(seekPosition, playOnPrepared, attempt + 1, completion)
+                    } else {
+                        completion(Result.failure(error))
+                    }
+                } ?: run {
+                    completion(Result.failure(error))
+                }
+            }
+        }
+    }
+
+    private fun loadCurrent(seekPosition: Int, playOnPrepared: Boolean, completion: (Result<Any?>) -> Unit) {
         Timber.v("loadCurrent()")
         currentMediaPlayerHelper.callback = currentPlayerCallback
         currentQueueItem = queueManager.getCurrentItem()
         currentQueueItem?.let { currentQueueItem ->
-            currentMediaPlayerHelper.load(currentQueueItem.song, seekPosition, playOnPrepared)
-        } ?: Timber.v("loadCurrent() current song null")
+            currentMediaPlayerHelper.load(currentQueueItem.song, seekPosition, playOnPrepared, completion)
+        } ?: run {
+            completion(Result.failure(Error("Load failed: Current song null")))
+        }
     }
-
 
     private fun loadNext() {
         Timber.v("loadNext()")
-        nextMediaPlayerHelper.callback = nextPlayerCallback
         nextQueueItem = queueManager.getNext()
         nextQueueItem?.let { nextQueueItem ->
-            nextMediaPlayerHelper.load(nextQueueItem.song, 0 ,false)
+            nextMediaPlayerHelper.load(nextQueueItem.song, 0, false) { result ->
+                result.onSuccess { currentMediaPlayerHelper.setNextMediaPlayer(nextMediaPlayerHelper.mediaPlayer) }
+                result.onFailure { error -> Timber.e("Failed to load next media player: $error") }
+            }
         } ?:run {
             Timber.v("loadNext() next song null")
             nextMediaPlayerHelper.release()
@@ -95,14 +133,6 @@ class MediaPlayerPlayback(
             callback?.onPlaystateChanged(isPlaying)
         }
 
-        override fun onPlaybackPrepared() {
-            if (nextMediaPlayerHelper.isPrepared) {
-                currentMediaPlayerHelper.setNextMediaPlayer(nextMediaPlayerHelper.mediaPlayer)
-            }
-
-            callback?.onPlaybackPrepared()
-        }
-
         override fun onPlaybackComplete(song: Song) {
 
             if (nextQueueItem == null) {
@@ -139,21 +169,6 @@ class MediaPlayerPlayback(
             }
 
             callback?.onPlaybackComplete(song)
-        }
-    }
-
-    private val nextPlayerCallback = object : Playback.Callback {
-
-        override fun onPlaystateChanged(isPlaying: Boolean) {
-
-        }
-
-        override fun onPlaybackPrepared() {
-            currentMediaPlayerHelper.setNextMediaPlayer(nextMediaPlayerHelper.mediaPlayer)
-        }
-
-        override fun onPlaybackComplete(song: Song) {
-
         }
     }
 }

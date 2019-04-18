@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.MenuInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.core.os.postDelayed
 import androidx.core.view.doOnPreDraw
 import androidx.fragment.app.Fragment
@@ -24,6 +25,7 @@ import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.view.DetailImageAnimationHelper
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragmentArgs
 import dagger.android.support.AndroidSupportInjection
@@ -169,6 +171,10 @@ class AlbumArtistDetailFragment :
         }
 
         imageLoader.loadArtwork(heroImage, albumArtist, ArtworkImageLoader.Options.Priority(ArtworkImageLoader.Options.Priority.Priority.Max), completionHandler = null)
+    }
+
+    override fun showLoadError(error: Error) {
+        Toast.makeText(context, error.userDescription(), Toast.LENGTH_LONG).show()
     }
 
 

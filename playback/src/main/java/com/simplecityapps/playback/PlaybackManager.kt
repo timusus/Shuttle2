@@ -32,10 +32,10 @@ class PlaybackManager(
         }
     }
 
-    fun load(songs: List<Song>, queuePosition: Int = 0, seekPosition: Int = 0, playOnComplete: Boolean) {
+    fun load(songs: List<Song>, queuePosition: Int = 0, seekPosition: Int = 0, playOnComplete: Boolean, onError: (Error) -> Unit) {
         Timber.v("load() called, queuePosition: $queuePosition, seekPosition: $seekPosition, playOnComplete: $playOnComplete")
         queueManager.set(songs, queuePosition)
-        playback.load(seekPosition, playOnComplete)
+        playback.load(seekPosition, playOnComplete, onError)
     }
 
     /**
@@ -48,9 +48,9 @@ class PlaybackManager(
      * @param seekPosition the seek position at which to begin playback. Note: this is ignored for audiobooks & podcasts.
      * @param playOnComplete whether to begin playback once the load is complete.
      */
-    fun load(song: Song, songs: List<Song>, seekPosition: Int = 0, playOnComplete: Boolean) {
+    fun load(song: Song, songs: List<Song>, seekPosition: Int = 0, playOnComplete: Boolean, onError: (Error) -> Unit) {
         val seekPosition = if (song.type == Song.Type.Podcast || song.type == Song.Type.Audiobook) max(0, song.playbackPosition - 5000) else seekPosition
-        load(songs, songs.indexOf(song), seekPosition, playOnComplete)
+        load(songs, songs.indexOf(song), seekPosition, playOnComplete, onError)
     }
 
     fun play() {
@@ -67,29 +67,29 @@ class PlaybackManager(
         playback.pause()
     }
 
-    fun skipToNext(ignoreRepeat: Boolean = false) {
+    fun skipToNext(ignoreRepeat: Boolean = false, onLoadError: ((Error) -> Unit)? = null) {
         queueManager.skipToNext(ignoreRepeat)
-        playback.load(0, true)
+        playback.load(0, true, onLoadError ?: { error -> Timber.w("load() failed. Error: $error") })
     }
 
-    fun skipToPrev(force: Boolean = false) {
+    fun skipToPrev(force: Boolean = false, onLoadError: ((Error) -> Unit)? = null) {
         if (force || playback.getPosition() ?: 0 < 2000) {
             queueManager.skipToPrevious()
-            playback.load(0, true)
+            playback.load(0, true, onLoadError ?: { error -> Timber.w("load() failed. Error: $error") })
         } else {
             seekTo(0)
         }
     }
 
-    fun skipTo(position: Int) {
+    fun skipTo(position: Int, onLoadError: ((Error) -> Unit)? = null) {
         if (queueManager.getCurrentPosition() != position) {
             queueManager.skipTo(position)
-            playback.load(0, true)
+            playback.load(0, true, onLoadError ?: { error -> Timber.w("load() failed. Error: $error") })
         }
     }
 
-    fun loadCurrent(){
-        playback.load(0, true)
+    fun loadCurrent(onError: (Error) -> Unit) {
+        playback.load(0, true, onError)
     }
 
     fun isPlaying(): Boolean {
@@ -135,11 +135,6 @@ class PlaybackManager(
         playbackWatcher.onPlaystateChanged(isPlaying)
 
         monitorProgress(isPlaying)
-    }
-
-    override fun onPlaybackPrepared() {
-        Timber.v("onPlaybackPrepared()")
-        updateProgress()
     }
 
     override fun onPlaybackComplete(song: Song) {

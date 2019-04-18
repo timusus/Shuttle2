@@ -2,7 +2,6 @@ package com.simplecityapps.playback.local.mediaplayer
 
 import android.media.MediaPlayer
 import android.net.Uri
-import android.util.Log
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.Playback
 import timber.log.Timber
@@ -28,7 +27,12 @@ class MediaPlayerHelper {
 
     lateinit var currentSong: Song
 
-    fun load(song: Song, seekPosition: Int = 0, playOnPrepared: Boolean) {
+    /**
+     * @param completion
+     * - Failure called with an [Error] value if the [Song] cannot be loaded.
+     * - Success called with a null value if the [Song] is successfully loaded and the MediaPlayer has begun
+     */
+    fun load(song: Song, seekPosition: Int = 0, playOnPrepared: Boolean, completion: ((Result<Any?>) -> Unit)?) {
 
         Timber.v("$tag load() song: ${song.path}, playOnPrepared: $playOnPrepared")
 
@@ -49,13 +53,39 @@ class MediaPlayerHelper {
         }
 
         mediaPlayer!!.setOnCompletionListener(onCompletionListener)
-        mediaPlayer!!.setOnErrorListener(onErrorListener)
-        mediaPlayer!!.setOnPreparedListener(onPreparedListener)
+
+        mediaPlayer!!.setOnErrorListener { _, what, extra ->
+            Timber.e("$tag error ($what, $extra)")
+            release()
+            completion?.invoke(Result.failure(Error("Media player error occurred. ($what, $extra). Path: ${currentSong.path}")))
+            true
+        }
+
+        mediaPlayer!!.setOnPreparedListener {
+            Timber.v("$tag onPrepared()")
+
+            isPreparing = false
+            isPrepared = true
+
+            if (seekPosition != 0) {
+                seek(seekPosition)
+                this.seekPosition = 0
+            }
+
+            volume = volume
+
+            if (playOnPrepared) {
+                play()
+            }
+
+            completion?.invoke(Result.success(null))
+        }
 
         try {
             mediaPlayer!!.setDataSource(Uri.fromFile(File(song.path)).toString())
-        } catch (e: IOException) {
-            Log.e("MediaPlayerHelper", "Failed to load ${song.path}")
+        } catch (exception: IOException) {
+            Timber.e(exception, "Failed to load ${song.path}")
+            completion?.invoke(Result.failure(Error("$tag MediaPlayer.setData() failed", exception)))
             return
         }
 
@@ -136,7 +166,6 @@ class MediaPlayerHelper {
     fun setNextMediaPlayer(nextMediaPlayer: MediaPlayer?) {
         Timber.v("$tag setNextMediaPlayer()")
         if (isPrepared) {
-            Timber.v("$tag setting nextMediaPlayer to null")
             mediaPlayer?.setNextMediaPlayer(nextMediaPlayer)
         } else {
             Timber.v("$tag setNextMediaPlayer() current MediaPlayer not prepared")
@@ -154,32 +183,6 @@ class MediaPlayerHelper {
 
         mediaPlayer?.release()
         mediaPlayer = null
-    }
-
-    private val onPreparedListener = MediaPlayer.OnPreparedListener {
-        Timber.v("$tag onPrepared()")
-
-        isPreparing = false
-        isPrepared = true
-
-        if (seekPosition != 0) {
-            seek(seekPosition)
-            seekPosition = 0
-        }
-
-        volume = volume
-
-        if (playOnPrepared) {
-            play()
-        }
-
-        callback?.onPlaybackPrepared()
-    }
-
-    private val onErrorListener = MediaPlayer.OnErrorListener { mediaPlayer, what, extra ->
-        Timber.v("$tag onError()")
-        release()
-        false
     }
 
     private val onCompletionListener = MediaPlayer.OnCompletionListener {

@@ -6,7 +6,7 @@ interface Playback {
 
     var callback: Callback?
 
-    fun load(seekPosition: Int, playOnPrepared: Boolean)
+    fun load(seekPosition: Int, playOnPrepared: Boolean, onError: (Error) -> Unit)
 
     fun play()
 
@@ -34,8 +34,6 @@ interface Playback {
     interface Callback {
 
         fun onPlaystateChanged(isPlaying: Boolean)
-
-        fun onPlaybackPrepared()
 
         fun onPlaybackComplete(song: Song)
     }

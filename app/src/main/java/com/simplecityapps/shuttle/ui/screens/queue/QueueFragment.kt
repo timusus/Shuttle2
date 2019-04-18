@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
@@ -12,6 +13,7 @@ import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
 import com.simplecityapps.shuttle.ui.common.view.multisheet.findParentMultiSheetView
 import kotlinx.android.synthetic.main.fragment_queue.*
@@ -66,6 +68,10 @@ class QueueFragment : Fragment(), Injectable, QueueContract.View {
 
     override fun setQueuePosition(position: Int, total: Int) {
         toolbarSubtitleTextView.text = "${position + 1} of $total"
+    }
+
+    override fun showLoadError(error: Error) {
+        Toast.makeText(context, error.userDescription(), Toast.LENGTH_LONG).show()
     }
 
     // QueueBinder.Listener Implementation

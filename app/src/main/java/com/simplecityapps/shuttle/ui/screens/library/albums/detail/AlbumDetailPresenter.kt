@@ -53,7 +53,7 @@ class AlbumDetailPresenter @AssistedInject constructor(
     }
 
     override fun onSongClicked(song: Song) {
-        playbackManager.load(song, songs, 0, true)
+        playbackManager.load(song, songs, 0, true) { error -> view?.showLoadError(error) }
     }
 
     override fun shuffle() {
@@ -61,7 +61,7 @@ class AlbumDetailPresenter @AssistedInject constructor(
             .subscribeBy(
                 onSuccess = { songs ->
                     queueManager.setShuffleMode(QueueManager.ShuffleMode.On)
-                    playbackManager.load(songs, Random.nextInt(songs.size), 0, true)
+                    playbackManager.load(songs, Random.nextInt(songs.size), 0, true) { error -> view?.showLoadError(error) }
                 }, onError = { throwable ->
                     Timber.e(throwable, "Failed to retrieve songs")
                 })

@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.RecyclerListener
@@ -11,6 +12,7 @@ import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import kotlinx.android.synthetic.main.fragment_folder_detail.*
 import javax.inject.Inject
@@ -55,6 +57,10 @@ class SongsFragment : Fragment(), Injectable, SongsContract.View {
         adapter.setData(songs.map { song ->
             SongBinder(song, imageLoader, songBinderListener)
         })
+    }
+
+    override fun showLoadError(error: Error) {
+        Toast.makeText(context, error.userDescription(), Toast.LENGTH_LONG).show()
     }
 
 

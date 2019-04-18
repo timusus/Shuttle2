@@ -34,6 +34,6 @@ class SongsPresenter @Inject constructor(
     }
 
     override fun onSongClicked(song: Song) {
-        playbackManager.load(song, songs, 0, true)
+        playbackManager.load(song, songs, 0, true) { error -> view?.showLoadError(error) }
     }
 }

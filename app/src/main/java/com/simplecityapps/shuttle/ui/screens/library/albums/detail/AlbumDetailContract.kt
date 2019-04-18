@@ -11,6 +11,8 @@ class AlbumDetailContract {
         fun setCurrentAlbum(album: Album)
 
         fun setData(songs: List<Song>)
+
+        fun showLoadError(error: Error)
     }
 
     interface Presenter : BaseContract.Presenter<View> {

@@ -39,7 +39,7 @@ class QueuePresenter @Inject constructor(
 
     override fun onQueueItemClicked(queueItem: QueueItem) {
         queueManager.setCurrentItem(queueItem)
-        playbackManager.loadCurrent()
+        playbackManager.loadCurrent { error -> view?.showLoadError(error) }
     }
 
 

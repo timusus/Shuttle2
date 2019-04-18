@@ -4,6 +4,8 @@ interface HomeContract {
 
     interface View {
 
+        fun showLoadError(error: Error)
+
     }
 
     interface Presenter {

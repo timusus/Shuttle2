@@ -12,6 +12,8 @@ class AlbumArtistDetailContract {
         fun setListData(albums: Map<Album, List<Song>>)
 
         fun setCurrentAlbumArtist(albumArtist: AlbumArtist)
+
+        fun showLoadError(error: Error)
     }
 
     interface Presenter : BaseContract.Presenter<View> {

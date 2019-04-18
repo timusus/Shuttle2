@@ -21,5 +21,7 @@ interface QueueContract {
         fun toggleLoadingView(loading: Boolean)
 
         fun setQueuePosition(position: Int, total: Int)
+
+        fun showLoadError(error: Error)
     }
 }
