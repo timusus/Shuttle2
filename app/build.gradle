@@ -20,11 +20,10 @@ android {
 
     signingConfigs {
         release {
-            Properties properties = getProperties('../keystore.properties')
-            storeFile file(getProperty(properties, 'store'))
-            keyAlias getProperty(properties, 'alias')
-            storePassword getProperty(properties, 'storePass')
-            keyPassword getProperty(properties, 'pass')
+            storeFile file('../keystore.ks')
+            keyAlias project.hasProperty('keyAlias') ? project.keyAlias : 'default'
+            storePassword project.hasProperty('storePass') ? project.storePass : 'default'
+            keyPassword project.hasProperty('keyPass') ? project.keyPass : 'default'
         }
     }
 
@@ -130,18 +129,17 @@ dependencies {
     implementation 'com.crashlytics.sdk.android:crashlytics:2.9.9'
 }
 
-@org.jetbrains.annotations.Nullable
-def getProperties(String fileName) {
-    final Properties properties = new Properties()
-    def file = file(fileName)
-    if (file.exists()) {
-        file.withInputStream { stream -> properties.load(stream) }
-    }
-    return properties
+afterEvaluate {
+        processReleaseGoogleServices.dependsOn copyGoogleServies
 }
 
-static def getProperty(@org.jetbrains.annotations.Nullable Properties properties, String name) {
-    return properties.getProperty(name) ?: "$name missing"
+task copyGoogleServies(type: Copy) {
+    if (System.getenv('JENKINS_URL') != null) {
+        description = 'Copies google-services.json from Jenkins secret file'
+        from System.getenv('GOOGLE_SERVICES')
+        include "google-services.json"
+        into "."
+    }
 }
 
 apply plugin: 'com.google.gms.google-services'
