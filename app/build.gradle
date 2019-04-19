@@ -1,9 +1,17 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android-extensions'
-apply plugin: 'kotlin-android'
-apply plugin: 'androidx.navigation.safeargs.kotlin'
-apply plugin: 'kotlin-kapt'
-apply plugin: 'io.fabric'
+plugins {
+    id("com.android.application")
+    id("com.github.triplet.play") version "2.2.0"
+    id("kotlin-android-extensions")
+    id("kotlin-android")
+    id("androidx.navigation.safeargs.kotlin")
+    id("kotlin-kapt")
+    id("io.fabric")
+}
+
+ext {
+    versionMajor = 0
+    versionMinor = 1
+}
 
 android {
     compileSdkVersion 28
@@ -12,8 +20,8 @@ android {
         applicationId "com.simplecityapps.shuttle"
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 6
-        versionName "0.0.1-alpha06"
+        versionName computeVersionName()
+        versionCode computeVersionCode()
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
     }
@@ -129,8 +137,18 @@ dependencies {
     implementation 'com.crashlytics.sdk.android:crashlytics:2.9.9'
 }
 
+play {
+    if (System.getenv('JENKINS_URL') != null) {
+        serviceAccountCredentials = file(System.getenv('DEPLOYMENT_KEYS'))
+        defaultToAppBundles = true
+        track = "alpha"
+    } else {
+        serviceAccountCredentials = file('../deployment_keys.json')
+    }
+}
+
 afterEvaluate {
-        processReleaseGoogleServices.dependsOn copyGoogleServies
+    processReleaseGoogleServices.dependsOn copyGoogleServies
 }
 
 task copyGoogleServies(type: Copy) {
@@ -140,6 +158,19 @@ task copyGoogleServies(type: Copy) {
         include "google-services.json"
         into "."
     }
+}
+
+def computeVersionName() {
+    // Basic <major>.<minor> version name
+    if (System.getenv('JENKINS_URL') != null) {
+        return String.format('%d.%d-%d', versionMajor, versionMinor, System.getenv('GIT_TAG_NAME'))
+    }
+    return String.format('%d.%d', versionMajor, versionMinor)
+}
+
+def computeVersionCode() {
+    // Major + minor + Jenkins build number (where available)
+    return (versionMajor * 100000) + (versionMinor * 10000) + Integer.valueOf(System.env.BUILD_NUMBER ?: 0)
 }
 
 apply plugin: 'com.google.gms.google-services'
