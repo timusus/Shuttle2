@@ -10,7 +10,8 @@ plugins {
 
 ext {
     versionMajor = 0
-    versionMinor = 1
+    versionMinor = 0
+    versionPatch = 1
 }
 
 android {
@@ -141,7 +142,7 @@ play {
     if (System.getenv('JENKINS_URL') != null) {
         serviceAccountCredentials = file(System.getenv('DEPLOYMENT_KEYS'))
         defaultToAppBundles = true
-        track = "alpha"
+        track = "internal"
     } else {
         serviceAccountCredentials = file('../deployment_keys.json')
     }
@@ -160,17 +161,18 @@ task copyGoogleServies(type: Copy) {
     }
 }
 
+apply plugin: 'com.google.gms.google-services'
+
+
 def computeVersionName() {
     // Basic <major>.<minor> version name
     if (System.getenv('JENKINS_URL') != null) {
-        return String.format('%d.%d-%d', versionMajor, versionMinor, System.getenv('GIT_TAG_NAME'))
+        return String.format('%d.%d.%d-%s', versionMajor, versionMinor, versionPatch, System.getenv('GIT_TAG_NAME'))
     }
-    return String.format('%d.%d', versionMajor, versionMinor)
+    return String.format('%d.%d.%d', versionMajor, versionMinor, versionPatch)
 }
 
 def computeVersionCode() {
     // Major + minor + Jenkins build number (where available)
-    return (versionMajor * 100000) + (versionMinor * 10000) + Integer.valueOf(System.env.BUILD_NUMBER ?: 0)
+    return (versionMajor * 10000000) + (versionMinor * 1000000) + (versionPatch * 10000) + Integer.valueOf(System.env.BUILD_NUMBER ?: 0)
 }
-
-apply plugin: 'com.google.gms.google-services'
