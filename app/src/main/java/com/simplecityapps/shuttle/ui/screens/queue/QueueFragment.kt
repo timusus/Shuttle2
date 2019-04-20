@@ -37,8 +37,8 @@ class QueueFragment : Fragment(), Injectable, QueueContract.View {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        recyclerView1.adapter = queueAdapter
-        recyclerView1.setRecyclerListener(RecyclerListener())
+        recyclerView.adapter = queueAdapter
+        recyclerView.setRecyclerListener(RecyclerListener())
 
         presenter.bindView(this)
 
