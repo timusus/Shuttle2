@@ -49,8 +49,14 @@ class PlaybackManager(
      * @param playOnComplete whether to begin playback once the load is complete.
      */
     fun load(song: Song, songs: List<Song>, seekPosition: Int = 0, playOnComplete: Boolean, onError: (Error) -> Unit) {
+        // Todo: It doesn't really make sense to override seek position here, it makes the method signature kinda incorrect.
         val seekPosition = if (song.type == Song.Type.Podcast || song.type == Song.Type.Audiobook) max(0, song.playbackPosition - 5000) else seekPosition
-        load(songs, songs.indexOf(song), seekPosition, playOnComplete, onError)
+        val index = songs.indexOf(song)
+        if (index == -1) {
+            onError(Error("load() failed. Song not found in song list. Song: $song. Song list size: ${songs.size}"))
+            return
+        }
+        load(songs, index, seekPosition, playOnComplete, onError)
     }
 
     fun play() {
