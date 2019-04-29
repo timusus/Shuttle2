@@ -21,8 +21,13 @@ class HomePresenter @Inject constructor(
             .first(emptyList())
             .subscribeBy(
                 onSuccess = { songs ->
-                    queueManager.setShuffleMode(QueueManager.ShuffleMode.On)
-                    playbackManager.load(songs, Random.nextInt(songs.size), 0, true) { error -> view?.showLoadError(error) }
+                    playbackManager.load(songs, Random.nextInt(songs.size)) { result ->
+                        result.onSuccess {
+                            queueManager.setShuffleMode(QueueManager.ShuffleMode.On)
+                            playbackManager.play()
+                        }
+                        result.onFailure { error -> view?.showLoadError(Error(error)) }
+                    }
                 },
                 onError = { throwable -> Timber.e(throwable, "Error retrieving songs") }
             ))

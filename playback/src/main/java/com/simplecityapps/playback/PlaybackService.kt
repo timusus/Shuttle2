@@ -47,10 +47,10 @@ class PlaybackService : Service(), PlaybackWatcherCallback {
         MediaButtonReceiver.handleIntent(mediaSessionManager.mediaSession, intent)
 
         when (intent?.action) {
-            PlaybackService.ACTION_TOGGLE_PLAYBACK -> playbackManager.togglePlayback()
-            PlaybackService.ACTION_SKIP_PREV -> playbackManager.skipToPrev()
-            PlaybackService.ACTION_SKIP_NEXT -> playbackManager.skipToNext(true)
-            PlaybackService.ACTION_NOTIFICATION_DISMISS -> {
+            ACTION_TOGGLE_PLAYBACK -> playbackManager.togglePlayback()
+            ACTION_SKIP_PREV -> playbackManager.skipToPrev()
+            ACTION_SKIP_NEXT -> playbackManager.skipToNext(true)
+            ACTION_NOTIFICATION_DISMISS -> {
                 stopSelf()
                 return START_STICKY
             }
@@ -61,7 +61,7 @@ class PlaybackService : Service(), PlaybackWatcherCallback {
         Timber.v("startForeground() called")
         startForeground(PlaybackNotificationManager.NOTIFICATION_ID, notification)
 
-        return Service.START_STICKY
+        return START_STICKY
     }
 
     override fun onBind(intent: Intent?): IBinder? {

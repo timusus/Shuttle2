@@ -128,7 +128,7 @@ class PlaybackNotificationManager(
         displayNotification()
     }
 
-    override fun onQueuePositionChanged() {
+    override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
         displayNotification()
     }
 

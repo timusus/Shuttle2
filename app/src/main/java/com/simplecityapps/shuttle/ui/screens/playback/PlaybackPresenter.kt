@@ -8,6 +8,7 @@ import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import timber.log.Timber
+import java.lang.Math.abs
 import javax.inject.Inject
 
 class PlaybackPresenter @Inject constructor(
@@ -29,7 +30,7 @@ class PlaybackPresenter @Inject constructor(
         // One time update of all UI components
         updateProgress()
         onQueueChanged()
-        onQueuePositionChanged()
+        onQueuePositionChanged(null, queueManager.getCurrentPosition())
         onPlaystateChanged(playbackManager.isPlaying())
         onShuffleChanged()
         onRepeatChanged()
@@ -123,9 +124,9 @@ class PlaybackPresenter @Inject constructor(
         view?.setQueue(queueManager.getQueue(), queueManager.getCurrentPosition())
     }
 
-    override fun onQueuePositionChanged() {
+    override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
         view?.setCurrentSong(queueManager.getCurrentItem()?.song)
-        view?.setQueuePosition(queueManager.getCurrentPosition(), queueManager.getSize(), true)
+        view?.setQueuePosition(queueManager.getCurrentPosition(), queueManager.getSize(), abs((newPosition ?: 0) - (oldPosition ?: 0)) <= 1)
     }
 
     override fun onShuffleChanged() {

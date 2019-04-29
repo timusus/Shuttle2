@@ -16,31 +16,22 @@ class MediaPlayerHelper {
 
     var tag: String? = "MediaPlayerHelper"
 
-    var isPrepared: Boolean = false
-        private set
-
-    var seekPosition: Int = 0
+    private var isPrepared: Boolean = false
 
     private var isPreparing: Boolean = false
 
-    private var playOnPrepared: Boolean = false
-
-    lateinit var currentSong: Song
+    private lateinit var currentSong: Song
 
     /**
      * @param completion
      * - Failure called with an [Error] value if the [Song] cannot be loaded.
      * - Success called with a null value if the [Song] is successfully loaded and the MediaPlayer has begun
      */
-    fun load(song: Song, seekPosition: Int = 0, playOnPrepared: Boolean, completion: ((Result<Any?>) -> Unit)?) {
+    fun load(song: Song, completion: ((Result<Any?>) -> Unit)?) {
 
-        Timber.v("$tag load() song: ${song.path}, playOnPrepared: $playOnPrepared")
+        Timber.v("$tag load() song: ${song.path}")
 
         currentSong = song
-
-        this.playOnPrepared = playOnPrepared
-
-        this.seekPosition = seekPosition
 
         isPrepared = false
 
@@ -67,16 +58,7 @@ class MediaPlayerHelper {
             isPreparing = false
             isPrepared = true
 
-            if (seekPosition != 0) {
-                seek(seekPosition)
-                this.seekPosition = 0
-            }
-
             volume = volume
-
-            if (playOnPrepared) {
-                play()
-            }
 
             completion?.invoke(Result.success(null))
         }
@@ -106,11 +88,9 @@ class MediaPlayerHelper {
                 } ?: run {
                     Timber.v("$tag play() called, Media player null")
                 }
-                playOnPrepared = false
             }
             isPreparing -> {
                 Timber.v("$tag play() called. preparing..")
-                playOnPrepared = true
             }
             else -> Timber.v("$tag play() called. Not prepared or preparing...")
         }
@@ -128,7 +108,6 @@ class MediaPlayerHelper {
         }
         if (isPreparing) {
             Timber.v("pause() called while preparing. Cancelling playOnPrepared.")
-            playOnPrepared = false
         }
     }
 
@@ -179,7 +158,6 @@ class MediaPlayerHelper {
 
         isPreparing = false
         isPrepared = false
-        playOnPrepared = false
 
         mediaPlayer?.release()
         mediaPlayer = null

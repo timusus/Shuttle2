@@ -40,7 +40,10 @@ class QueuePresenter @Inject constructor(
 
     override fun onQueueItemClicked(queueItem: QueueItem) {
         queueManager.setCurrentItem(queueItem)
-        playbackManager.loadCurrent { error -> view?.showLoadError(error) }
+        playbackManager.loadCurrent { result ->
+            result.onSuccess { playbackManager.play() }
+            result.onFailure { error -> view?.showLoadError(error as Error)  }
+        }
     }
 
 
@@ -54,7 +57,7 @@ class QueuePresenter @Inject constructor(
         loadQueue()
     }
 
-    override fun onQueuePositionChanged() {
+    override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
         loadQueue()
     }
 }

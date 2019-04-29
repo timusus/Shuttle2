@@ -6,11 +6,32 @@ import timber.log.Timber
 class QueueManager(private val queueWatcher: QueueWatcher) {
 
     enum class ShuffleMode {
-        Off, On
+        Off, On;
+
+        companion object {
+            fun init(ordinal: Int): ShuffleMode {
+                return when (ordinal) {
+                    On.ordinal -> On
+                    Off.ordinal -> Off
+                    else -> Off
+                }
+            }
+        }
     }
 
     enum class RepeatMode {
-        Off, All, One
+        Off, All, One;
+
+        companion object {
+            fun init(ordinal: Int): RepeatMode {
+                return when (ordinal) {
+                    All.ordinal -> All
+                    One.ordinal -> One
+                    Off.ordinal -> Off
+                    else -> Off
+                }
+            }
+        }
     }
 
     private var shuffleMode: ShuffleMode = ShuffleMode.Off
@@ -21,23 +42,33 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
 
     private var currentItem: QueueItem? = null
 
-    fun set(songs: List<Song>, position: Int = 0) {
+    fun set(songs: List<Song>, shuffleSongs: List<Song>?, position: Int = 0) {
         if (position < 0) {
             throw IllegalArgumentException("Queue position must be >= 0 (position $position)")
         }
-        set(songs.mapIndexed { index, song -> song.toQueueItem(index == position) })
-    }
 
-    fun set(queueItems: List<QueueItem>) {
-        baseQueue.set(queueItems)
-        queueItems.firstOrNull { queueItem -> queueItem.isCurrent }?.let { currentItem ->
-            setCurrentItem(currentItem)
+        var currentQueueItem: QueueItem? = null
+        val queueItems = songs.mapIndexed { index, song ->
+            val isCurrent = index == position
+            val queueItem = song.toQueueItem(isCurrent)
+            if (isCurrent) {
+                currentQueueItem = queueItem
+            }
+            queueItem
         }
+
+        val shuffleQueueItems = shuffleSongs?.flatMap { song ->
+            queueItems.filter { queueItem -> queueItem.song == song }
+        }?.ifEmpty { null }
+
+        baseQueue.set(queueItems, shuffleQueueItems)
+        currentQueueItem?.let { setCurrentItem(it) }
         queueWatcher.onQueueChanged()
     }
 
     fun setCurrentItem(currentItem: QueueItem) {
         Timber.v("setCurrentItem(): ${currentItem.song.path}, previous item: ${this.currentItem?.song?.path}")
+        val oldPosition = getCurrentPosition()
         if (this.currentItem != currentItem) {
             this.currentItem = currentItem.clone(isCurrent = true)
 
@@ -49,7 +80,7 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
                 }
             }
 
-            queueWatcher.onQueuePositionChanged()
+            queueWatcher.onQueuePositionChanged(oldPosition, getCurrentPosition())
         } else {
             Timber.v("setCurrentItem(): Item already current")
         }
@@ -120,12 +151,17 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
         return baseQueue.get(shuffleMode)
     }
 
+    fun getQueue(shuffleMode: ShuffleMode): List<QueueItem> {
+        return baseQueue.get(shuffleMode)
+    }
+
     fun setShuffleMode(shuffleMode: ShuffleMode) {
         if (this.shuffleMode != shuffleMode) {
             this.shuffleMode = shuffleMode
             if (shuffleMode == ShuffleMode.On) {
                 baseQueue.shuffle()
             }
+            queueWatcher.onQueueChanged()
             queueWatcher.onShuffleChanged()
         }
     }
@@ -164,7 +200,6 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
         Timber.v("skipToNext()")
         getNext(ignoreRepeat)?.let { nextItem ->
             setCurrentItem(nextItem)
-            queueWatcher.onQueuePositionChanged()
         } ?: Timber.v("No next track to skip to")
     }
 
@@ -172,7 +207,6 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
         Timber.v("skipToPrevious()")
         getPrevious()?.let { previousItem ->
             setCurrentItem(previousItem)
-            queueWatcher.onQueuePositionChanged()
         } ?: Timber.v("No next track to skip-previous to")
     }
 
@@ -180,7 +214,6 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
         val currentQueue = baseQueue.get(shuffleMode)
         currentQueue.getOrNull(position)?.let { queueItem ->
             setCurrentItem(queueItem)
-            queueWatcher.onQueuePositionChanged()
         } ?: run {
             Timber.e("Couldn't skip to position $position, no associated queue item found")
         }
@@ -195,21 +228,16 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
         private var baseList: MutableList<QueueItem> = mutableListOf()
         private var shuffleList: MutableList<QueueItem> = mutableListOf()
 
-        fun get(shuffleMode: QueueManager.ShuffleMode): List<QueueItem> {
+        fun get(shuffleMode: ShuffleMode): List<QueueItem> {
             return when (shuffleMode) {
-                QueueManager.ShuffleMode.Off -> {
-                    baseList
-                }
-                QueueManager.ShuffleMode.On -> {
-                    shuffleList
-                }
+                ShuffleMode.Off -> baseList
+                ShuffleMode.On -> shuffleList
             }
         }
 
-        fun set(items: List<QueueItem>) {
+        fun set(items: List<QueueItem>, shuffleItems: List<QueueItem>? = null) {
             baseList = items.toMutableList()
-
-            shuffle()
+            shuffleItems?.let { shuffleList = shuffleItems.toMutableList() } ?: shuffle()
         }
 
         fun shuffle() {

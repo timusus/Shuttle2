@@ -67,8 +67,9 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
     }
 
     override fun onSongClicked(song: Song, songs: List<Song>) {
-        playbackManager.load(song, songs, 0, true) { error ->
-            view?.showLoadError(error)
+        playbackManager.load(songs, songs.indexOf(song)) { result ->
+            result.onSuccess { playbackManager.play() }
+            result.onFailure { error -> view?.showLoadError(error as Error) }
         }
     }
 
@@ -76,8 +77,13 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
         addDisposable(songRepository.getSongs(SongQuery.AlbumArtistId(albumArtistId)).first(emptyList())
             .subscribeBy(
                 onSuccess = { songs ->
-                    queueManager.setShuffleMode(QueueManager.ShuffleMode.On)
-                    playbackManager.load(songs, Random.nextInt(songs.size), 0, true) { error -> view?.showLoadError(error) }
+                    playbackManager.load(songs, Random.nextInt(songs.size)) { result ->
+                        result.onSuccess {
+                            queueManager.setShuffleMode(QueueManager.ShuffleMode.On)
+                            playbackManager.play()
+                        }
+                        result.onFailure { error -> view?.showLoadError(error as Error) }
+                    }
                 }, onError = { throwable ->
                     Timber.e(throwable, "Failed to retrieve songs")
                 })

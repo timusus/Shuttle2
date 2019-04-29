@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.appinitializers
 
+import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
 import android.content.Intent
@@ -40,6 +41,7 @@ class PlaybackInitializer @Inject constructor(
 
     private var hasRestoredPlaybackPosition = false
 
+    @SuppressLint("BinaryOperationInTimber")
     override fun init(application: Application) {
 
         queueWatcher.addCallback(this)
@@ -47,48 +49,88 @@ class PlaybackInitializer @Inject constructor(
 
         val seekPosition = playbackPreferenceManager.playbackPosition ?: 0
         val queuePosition = playbackPreferenceManager.queuePosition
+        val shuffleMode = playbackPreferenceManager.shuffleMode
+        val repeatMode = playbackPreferenceManager.repeatMode
 
-        Timber.v("Restoring queue position: $queuePosition, seekPosition: $seekPosition")
+        Timber.v(
+            "\nRestoring queue position: $queuePosition" +
+                    "\nseekPosition: $seekPosition" +
+                    "\nshuffleMode: $shuffleMode" +
+                    "\nrepeatMode: $repeatMode"
+        )
+
+        queueManager.setShuffleMode(shuffleMode)
+        queueManager.setRepeatMode(repeatMode)
 
         queuePosition?.let { queuePosition ->
             val songIds = playbackPreferenceManager.queueIds?.split(",")?.map { id -> id.toLong() }
-            songIds?.let { songIds ->
-                songRepository.getSongs(SongQuery.SongIds(songIds))
-                    .first(emptyList())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribeBy(
+            val shuffleSongIds = playbackPreferenceManager.shuffleQueueIds?.split(",")?.map { id -> id.toLong() }
+            val allSongIds = songIds.orEmpty().toMutableSet()
+            allSongIds.addAll(shuffleSongIds.orEmpty())
+
+            if (songIds.isNullOrEmpty()) {
+                onRestoreComplete()
+                return
+            }
+
+            songRepository.getSongs(SongQuery.SongIds(allSongIds.toList()))
+                .first(emptyList())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
                     onSuccess = { songs ->
-                        playbackManager.load(songs, queuePosition, seekPosition, false) { error ->
-                            Timber.e("Failed to load playback after reloading queue. Error: $error")
+                        queueManager.set(
+                            songIds.map { songId -> songs.first { song -> song.id == songId } },
+                            shuffleSongIds?.map { shuffleSongId -> songs.first { song -> song.id == shuffleSongId } },
+                            queuePosition
+                        )
+                        playbackManager.load { result ->
+                            result.onFailure { error -> Timber.e("Failed to load playback after reloading queue. Error: $error") }
                         }
-                        hasRestoredPlaybackPosition = true
+                        onRestoreComplete()
                     },
                     onError = { error ->
                         Timber.e(error, "Failed to reload queue")
+                        onRestoreComplete()
                     })
-            }
+        } ?: run {
+            onRestoreComplete()
         }
     }
 
+    private fun onRestoreComplete() {
+        hasRestoredPlaybackPosition = true
+    }
 
     // QueueChangeCallback Implementation
 
     override fun onQueueChanged() {
-        playbackPreferenceManager.queueIds = queueManager.getQueue()
-            .map { queueItem -> queueItem.song.id }
-            .joinToString(",")
+        if (hasRestoredPlaybackPosition) {
+            playbackPreferenceManager.queueIds = queueManager.getQueue(QueueManager.ShuffleMode.Off)
+                .map { queueItem -> queueItem.song.id }
+                .joinToString(",")
+
+            playbackPreferenceManager.shuffleQueueIds = queueManager.getQueue(QueueManager.ShuffleMode.On)
+                .map { queueItem -> queueItem.song.id }
+                .joinToString(",")
+
+            playbackPreferenceManager.playbackPosition = null
+        }
+    }
+
+    override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
+        playbackPreferenceManager.queuePosition = newPosition
 
         if (hasRestoredPlaybackPosition) {
             playbackPreferenceManager.playbackPosition = null
         }
     }
 
-    override fun onQueuePositionChanged() {
-        playbackPreferenceManager.queuePosition = queueManager.getCurrentPosition()
+    override fun onShuffleChanged() {
+        playbackPreferenceManager.shuffleMode = queueManager.getShuffleMode()
+    }
 
-        if (hasRestoredPlaybackPosition) {
-            playbackPreferenceManager.playbackPosition = null
-        }
+    override fun onRepeatChanged() {
+        playbackPreferenceManager.repeatMode = queueManager.getRepeatMode()
     }
 
 

@@ -25,14 +25,15 @@ class MediaPlayerPlayback(
         nextMediaPlayerHelper.tag = "NextMediaPlayer"
     }
 
-    override fun load(seekPosition: Int, playOnPrepared: Boolean, onError: (Error) -> Unit) {
-        Timber.v("load() position: $seekPosition, playOnPrepared: $playOnPrepared")
+    override fun load(completion: (Result<Boolean>) -> Unit) {
+        Timber.v("load()")
 
         val currentQueueItem = queueManager.getCurrentItem()
 
-        attemptLoad(seekPosition, playOnPrepared, 1) { result ->
+        attemptLoad(1) { result ->
             result.onSuccess {
                 loadNext()
+                completion(result)
             }
             result.onFailure { error ->
                 // Our load attempts may have caused us to skip through the queue. Since none of those subsequent attempts have succeeded,
@@ -42,21 +43,21 @@ class MediaPlayerPlayback(
                 }
 
                 Timber.e("load() failed. Error: $error")
-                onError(Error(error))
+                completion(result)
             }
         }
     }
 
-    private fun attemptLoad(seekPosition: Int, playOnPrepared: Boolean, attempt: Int = 1, completion: (Result<Any?>) -> Unit) {
+    private fun attemptLoad(attempt: Int = 1, completion: (Result<Boolean>) -> Unit) {
         Timber.v("Attempting load ($attempt)")
-        loadCurrent(seekPosition, playOnPrepared) { result ->
-            result.onSuccess { loadNext() }
+        loadCurrent { result ->
+            result.onSuccess { completion(Result.success(attempt == 1)) }
             result.onFailure { error ->
                 // Attempt to load the next item in the queue. If there is no next item, or we're on repeat, call completion(error).
                 queueManager.getNext(false)?.let { nextQueueItem ->
                     if (nextQueueItem != currentQueueItem) {
                         queueManager.skipToNext(true)
-                        attemptLoad(seekPosition, playOnPrepared, attempt + 1, completion)
+                        attemptLoad(attempt + 1, completion)
                     } else {
                         completion(Result.failure(error))
                     }
@@ -67,12 +68,12 @@ class MediaPlayerPlayback(
         }
     }
 
-    private fun loadCurrent(seekPosition: Int, playOnPrepared: Boolean, completion: (Result<Any?>) -> Unit) {
+    private fun loadCurrent(completion: (Result<Any?>) -> Unit) {
         Timber.v("loadCurrent()")
         currentMediaPlayerHelper.callback = currentPlayerCallback
         currentQueueItem = queueManager.getCurrentItem()
         currentQueueItem?.let { currentQueueItem ->
-            currentMediaPlayerHelper.load(currentQueueItem.song, seekPosition, playOnPrepared, completion)
+            currentMediaPlayerHelper.load(currentQueueItem.song, completion)
         } ?: run {
             completion(Result.failure(Error("Load failed: Current song null")))
         }
@@ -82,7 +83,7 @@ class MediaPlayerPlayback(
         Timber.v("loadNext()")
         nextQueueItem = queueManager.getNext()
         nextQueueItem?.let { nextQueueItem ->
-            nextMediaPlayerHelper.load(nextQueueItem.song, 0, false) { result ->
+            nextMediaPlayerHelper.load(nextQueueItem.song) { result ->
                 result.onSuccess { currentMediaPlayerHelper.setNextMediaPlayer(nextMediaPlayerHelper.mediaPlayer) }
                 result.onFailure { error -> Timber.e("Failed to load next media player: $error") }
             }

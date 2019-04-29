@@ -62,16 +62,19 @@ class ExpandableAlbumBinder(
     }
 
     override fun areContentsTheSame(other: Any): Boolean {
-        return album.name == (other as? ExpandableAlbumBinder)?.album?.name
-                && album.albumArtistName == (other as? ExpandableAlbumBinder)?.album?.albumArtistName
+        return (other as? ExpandableAlbumBinder)?.let {
+            album.name == other.album.name
+                    && album.albumArtistName == other.album.albumArtistName
+                    && expanded == other.expanded
+        } ?: false
     }
 
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<ExpandableAlbumBinder>(itemView) {
 
-        private val title = itemView.findViewById<TextView>(R.id.title)
-        private val subtitle = itemView.findViewById<TextView>(R.id.subtitle)
-        val imageView = itemView.findViewById<ImageView>(R.id.imageView)
+        private val title: TextView = itemView.findViewById(R.id.title)
+        private val subtitle: TextView = itemView.findViewById(R.id.subtitle)
+        val imageView: ImageView = itemView.findViewById(R.id.imageView)
         private val recyclerView: RecyclerView = itemView.findViewById(R.id.recyclerView)
 
         init {
@@ -87,6 +90,7 @@ class ExpandableAlbumBinder(
 
         override fun bind(viewBinder: ExpandableAlbumBinder, isPartial: Boolean) {
             super.bind(viewBinder, isPartial)
+
             if (isPartial) {
                 recyclerView.visibility = if (viewBinder.expanded) View.VISIBLE else View.GONE
                 itemView.isActivated = viewBinder.expanded
@@ -100,15 +104,15 @@ class ExpandableAlbumBinder(
 
                 recyclerView.adapter = adapter
 
-                val discSongsMap = viewBinder.songs.groupBy { song -> song.disc }.toSortedMap()
-                adapter.setData(discSongsMap.flatMap { entry ->
-                    val viewBinders = mutableListOf<ViewBinder>()
-                    if (discSongsMap.size > 1) {
-                        viewBinders.add(DiscNumberBinder(entry.key))
-                    }
-                    viewBinders.addAll(entry.value.map { song -> DetailSongBinder(song, songBinderListener) })
-                    viewBinders
-                })
+            val discSongsMap = viewBinder.songs.groupBy { song -> song.disc }.toSortedMap()
+            adapter.setData(discSongsMap.flatMap { entry ->
+                val viewBinders = mutableListOf<ViewBinder>()
+                if (discSongsMap.size > 1) {
+                    viewBinders.add(DiscNumberBinder(entry.key))
+                }
+                viewBinders.addAll(entry.value.map { song -> DetailSongBinder(song, songBinderListener) })
+                viewBinders
+            })
             }
         }
 

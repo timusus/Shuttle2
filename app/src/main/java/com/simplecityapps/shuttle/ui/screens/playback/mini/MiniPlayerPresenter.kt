@@ -36,7 +36,7 @@ class MiniPlayerPresenter @Inject constructor(
         // One time update of all UI components
         updateProgress()
         onQueueChanged()
-        onQueuePositionChanged()
+        onQueuePositionChanged(null, queueManager.getCurrentPosition())
         onPlaystateChanged(playbackManager.isPlaying())
         onShuffleChanged()
         onRepeatChanged()
@@ -66,7 +66,7 @@ class MiniPlayerPresenter @Inject constructor(
 
     // QueueChangeCallback Implementation
 
-    override fun onQueuePositionChanged() {
+    override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
         view?.setCurrentSong(queueManager.getCurrentItem()?.song)
     }
 

@@ -32,31 +32,30 @@ class PlaybackManager(
         }
     }
 
-    fun load(songs: List<Song>, queuePosition: Int = 0, seekPosition: Int = 0, playOnComplete: Boolean, onError: (Error) -> Unit) {
-        Timber.v("load() called, queuePosition: $queuePosition, seekPosition: $seekPosition, playOnComplete: $playOnComplete")
-        queueManager.set(songs, queuePosition)
-        playback.load(seekPosition, playOnComplete, onError)
+    fun load(completion: (Result<Any?>) -> Unit) {
+        playback.load(completion)
     }
 
-    /**
-     * Enqueues the list of songs, and sets the current position to the index of [song]. Playback will begin on successful load.
-     *
-     * If the song is a Podcast or Audiobook, the song will be seeked to [song.playbackPosition], otherwise playback starts at the specified seek position.
-     *
-     * @param song the first song to play once load is complete
-     * @param songs the list of songs to add to the queue
-     * @param seekPosition the seek position at which to begin playback. Note: this is ignored for audiobooks & podcasts.
-     * @param playOnComplete whether to begin playback once the load is complete.
-     */
-    fun load(song: Song, songs: List<Song>, seekPosition: Int = 0, playOnComplete: Boolean, onError: (Error) -> Unit) {
-        // Todo: It doesn't really make sense to override seek position here, it makes the method signature kinda incorrect.
-        val seekPosition = if (song.type == Song.Type.Podcast || song.type == Song.Type.Audiobook) max(0, song.playbackPosition - 5000) else seekPosition
-        val index = songs.indexOf(song)
-        if (index == -1) {
-            onError(Error("load() failed. Song not found in song list. Song: $song. Song list size: ${songs.size}"))
+    fun load(songs: List<Song>, queuePosition: Int = 0, completion: (Result<Any?>) -> Unit) {
+        if (songs.isEmpty()) {
+            Timber.e("Attempted to load empty song list")
             return
         }
-        load(songs, index, seekPosition, playOnComplete, onError)
+        if (queuePosition < 0 || queuePosition >= songs.size) {
+            Timber.e("Invalid queue position: $queuePosition (songs.size: ${songs.size})")
+            return
+        }
+
+        queueManager.setShuffleMode(QueueManager.ShuffleMode.Off)
+        queueManager.set(songs, null, queuePosition)
+        playback.load { result ->
+            result.onSuccess { didLoadFirst ->
+                if (didLoadFirst) {
+                    playback.seek(songs[queuePosition].getStartPosition())
+                }
+            }
+            completion(result)
+        }
     }
 
     fun play() {
@@ -73,29 +72,41 @@ class PlaybackManager(
         playback.pause()
     }
 
-    fun skipToNext(ignoreRepeat: Boolean = false, onLoadError: ((Error) -> Unit)? = null) {
+    fun skipToNext(ignoreRepeat: Boolean = false, completion: ((Result<Any?>) -> Unit)? = null) {
         queueManager.skipToNext(ignoreRepeat)
-        playback.load(0, true, onLoadError ?: { error -> Timber.w("load() failed. Error: $error") })
+        playback.load { result ->
+            result.onSuccess { play() }
+            result.onFailure { error -> Timber.w("load() failed. Error: $error") }
+            completion?.invoke(result)
+        }
     }
 
-    fun skipToPrev(force: Boolean = false, onLoadError: ((Error) -> Unit)? = null) {
+    fun skipToPrev(force: Boolean = false, completion: ((Result<Any?>) -> Unit)? = null) {
         if (force || playback.getPosition() ?: 0 < 2000) {
             queueManager.skipToPrevious()
-            playback.load(0, true, onLoadError ?: { error -> Timber.w("load() failed. Error: $error") })
+            playback.load { result ->
+                result.onSuccess { play() }
+                result.onFailure { error -> Timber.w("load() failed. Error: $error") }
+                completion?.invoke(result)
+            }
         } else {
             seekTo(0)
         }
     }
 
-    fun skipTo(position: Int, onLoadError: ((Error) -> Unit)? = null) {
+    fun skipTo(position: Int, completion: ((Result<Any?>) -> Unit)? = null) {
         if (queueManager.getCurrentPosition() != position) {
             queueManager.skipTo(position)
-            playback.load(0, true, onLoadError ?: { error -> Timber.w("load() failed. Error: $error") })
+            playback.load { result ->
+                result.onSuccess { play() }
+                result.onFailure { error -> Timber.w("load() failed. Error: $error") }
+                completion?.invoke(result)
+            }
         }
     }
 
-    fun loadCurrent(onError: (Error) -> Unit) {
-        playback.load(0, true, onError)
+    fun loadCurrent(completion: (Result<Any?>) -> Unit) {
+        playback.load(completion)
     }
 
     fun isPlaying(): Boolean {
@@ -189,4 +200,8 @@ class PlaybackManager(
             removeCallbacks(runnable)
         }
     }
+}
+
+private fun Song.getStartPosition(): Int {
+    return if (type == Song.Type.Podcast || type == Song.Type.Audiobook) max(0, playbackPosition - 5000) else 0
 }

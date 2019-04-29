@@ -6,7 +6,7 @@ interface Playback {
 
     var callback: Callback?
 
-    fun load(seekPosition: Int, playOnPrepared: Boolean, onError: (Error) -> Unit)
+    fun load(completion: (Result<Boolean>) -> Unit)
 
     fun play()
 

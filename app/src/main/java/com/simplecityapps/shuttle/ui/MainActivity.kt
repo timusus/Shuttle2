@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
@@ -75,7 +76,7 @@ class MainActivity : AppCompatActivity(), HasSupportFragmentInjector, QueueChang
         }
 
         if (queueManager.getSize() == 0) {
-            multiSheetView.hide(true, false)
+            multiSheetView.hide(collapse = true, animate = false)
         }
     }
 

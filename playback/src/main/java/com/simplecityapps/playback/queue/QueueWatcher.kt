@@ -8,7 +8,7 @@ interface QueueChangeCallback {
 
     }
 
-    fun onQueuePositionChanged(){
+    fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?){
 
     }
 
@@ -42,9 +42,9 @@ class QueueWatcher : QueueChangeCallback {
         callbacks.forEach { callback -> callback.onQueueChanged() }
     }
 
-    override fun onQueuePositionChanged() {
+    override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
         Timber.v("onQueuePositionChanged()")
-        callbacks.forEach { callback -> callback.onQueuePositionChanged() }
+        callbacks.forEach { callback -> callback.onQueuePositionChanged(oldPosition, newPosition) }
     }
 
     override fun onShuffleChanged() {

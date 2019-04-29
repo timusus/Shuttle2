@@ -156,7 +156,8 @@ class PlaybackFragment :
                 position?.let { position ->
                     recyclerView?.scrollToPosition(position)
                 }
-            }
+            },
+            animateChanges = false
         )
     }
 

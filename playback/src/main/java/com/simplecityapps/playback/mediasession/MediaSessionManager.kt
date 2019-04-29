@@ -65,7 +65,7 @@ class MediaSessionManager(
 
     }
 
-    override fun onQueuePositionChanged() {
+    override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
         queueManager.getCurrentItem()?.let { currentItem ->
             playbackStateBuilder.setActiveQueueItemId(currentItem.toQueueItem().queueId)
             mediaSession.setPlaybackState(playbackStateBuilder.build())
