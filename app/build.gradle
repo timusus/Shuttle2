@@ -140,6 +140,9 @@ dependencies {
 
     // Crashlytics
     implementation 'com.crashlytics.sdk.android:crashlytics:2.9.9'
+
+    // Leak Canary
+    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.0-alpha-1'
 }
 
 play {
