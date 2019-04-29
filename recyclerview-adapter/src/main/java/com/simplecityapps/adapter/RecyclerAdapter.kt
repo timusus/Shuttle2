@@ -38,6 +38,7 @@ open class RecyclerAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         } else {
             items = newItems.toMutableList()
             notifyDataSetChanged()
+            completion?.invoke()
         }
     }
 
