@@ -1,8 +1,8 @@
 plugins {
     id("com.android.application")
     id("com.github.triplet.play") version "2.2.0"
-    id("kotlin-android-extensions")
     id("kotlin-android")
+    id("kotlin-android-extensions")
     id("androidx.navigation.safeargs.kotlin")
     id("kotlin-kapt")
     id("io.fabric")
@@ -37,6 +37,10 @@ android {
     }
 
     buildTypes {
+        debug {
+            applicationIdSuffix ".dev"
+            ext.enableCrashlytics = false
+        }
         release {
             minifyEnabled false
 
@@ -85,7 +89,7 @@ dependencies {
 
     // Kotlin Extensions
     implementation 'androidx.core:core-ktx:1.0.1'
-    implementation "androidx.fragment:fragment-ktx:1.1.0-alpha06"
+    implementation "androidx.fragment:fragment-ktx:1.1.0-alpha07"
 
     // RecyclerView FastScroll
     implementation 'com.github.timusus:RecyclerView-FastScroll:dev-SNAPSHOT'
@@ -114,8 +118,8 @@ dependencies {
     implementation 'io.reactivex.rxjava2:rxkotlin:2.3.0'
 
     // Dagger core
-    implementation 'com.google.dagger:dagger-android:2.21'
-    kapt 'com.google.dagger:dagger-compiler:2.21'
+    implementation 'com.google.dagger:dagger-android:2.22.1'
+    kapt 'com.google.dagger:dagger-compiler:2.22.1'
 
     // Dagger Android
     implementation 'com.google.dagger:dagger-android-support:2.21'
