@@ -10,10 +10,10 @@ import androidx.navigation.fragment.findNavController
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.mediaprovider.model.Album
+import com.simplecityapps.mediaprovider.model.removeArticles
 import com.simplecityapps.mediaprovider.repository.AlbumRepository
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
-import com.simplecityapps.shuttle.ui.common.Regex
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragmentArgs
@@ -51,13 +51,11 @@ class AlbumsFragment : Fragment(), Injectable, AlbumBinder.Listener {
 
         compositeDisposable.add(
             albumRepository.getAlbums()
-                .map { albums -> albums.sortedBy { album -> Regex.articlePattern.matcher(album.name).replaceAll("") } }
+                .map { albums -> albums.sortedBy { album -> album.name.removeArticles() } }
                 .subscribe(
                 { albums ->
                     adapter.setData(albums.map { album ->
-                        val albumBinder = AlbumBinder(album, imageLoader)
-                        albumBinder.listener = this
-                        albumBinder
+                        AlbumBinder(album, imageLoader, this)
                     })
                 },
                 { error -> Timber.e(error, "Failed to retrieve albums") })

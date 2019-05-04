@@ -30,7 +30,7 @@ class AlbumArtistBinder(
     }
 
     override fun sectionName(): String? {
-        return albumArtist.name.firstOrNull().toString()
+        return albumArtist.sortKey?.firstOrNull().toString()
     }
 
     override fun equals(other: Any?): Boolean {

@@ -43,7 +43,7 @@ class ExpandableAlbumBinder(
     }
 
     override fun sectionName(): String? {
-        return album.name.firstOrNull().toString()
+        return album.sortKey?.firstOrNull().toString()
     }
 
     override fun equals(other: Any?): Boolean {

@@ -24,13 +24,14 @@ class SongsPresenter @Inject constructor(
 
     override fun loadSongs() {
         addDisposable(
-            songRepository.getSongs().subscribeBy(
-            onNext = { songs ->
-                this.songs = songs
-                view?.setData(songs)
-            },
-            onError = { error -> Timber.e(error, "Failed to load songs") }
-        ))
+            songRepository.getSongs()
+                .subscribeBy(
+                    onNext = { songs ->
+                        this.songs = songs
+                        view?.setData(songs)
+                    },
+                    onError = { error -> Timber.e(error, "Failed to load songs") }
+                ))
     }
 
     override fun onSongClicked(song: Song) {

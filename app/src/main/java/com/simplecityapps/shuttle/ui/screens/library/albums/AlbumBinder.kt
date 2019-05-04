@@ -13,14 +13,13 @@ import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 
 class AlbumBinder(
     val album: Album,
-    val imageLoader: ArtworkImageLoader
+    val imageLoader: ArtworkImageLoader,
+    val listener: Listener? = null
 ) : ViewBinder {
 
     interface Listener {
         fun onAlbumClicked(album: Album, viewHolder: ViewHolder)
     }
-
-    var listener: Listener? = null
 
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
         return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_album, parent, false))
@@ -31,7 +30,7 @@ class AlbumBinder(
     }
 
     override fun sectionName(): String? {
-        return album.name.firstOrNull().toString()
+        return album.sortKey?.firstOrNull().toString()
     }
 
     override fun equals(other: Any?): Boolean {

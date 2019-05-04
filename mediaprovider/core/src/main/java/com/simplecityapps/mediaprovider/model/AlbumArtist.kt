@@ -6,9 +6,10 @@ class AlbumArtist(
     var id: Long,
     val name: String,
     val albumCount: Long,
-    val songCount: Long,
-    val artworkUri: String? = null
+    val songCount: Long
 ) : Serializable {
+
+    var sortKey: String? = Regex.articlePattern.matcher(name).replaceAll("")
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

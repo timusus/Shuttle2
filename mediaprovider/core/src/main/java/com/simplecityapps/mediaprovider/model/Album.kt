@@ -9,8 +9,10 @@ class Album(
     val albumArtistName: String,
     val songCount: Int,
     val duration: Int,
-    var year: Int
+    val year: Int
 ) : Serializable {
+
+    var sortKey: String? = Regex.articlePattern.matcher(name).replaceAll("")
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
