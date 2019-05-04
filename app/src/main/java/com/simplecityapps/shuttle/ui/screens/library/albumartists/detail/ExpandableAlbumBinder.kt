@@ -21,7 +21,8 @@ class ExpandableAlbumBinder(
     val album: Album,
     val songs: List<Song>,
     val imageLoader: ArtworkImageLoader,
-    val expanded: Boolean = false
+    val expanded: Boolean = false,
+    val listener: Listener?
 ) : ViewBinder {
 
     interface Listener {
@@ -32,8 +33,6 @@ class ExpandableAlbumBinder(
 
         fun onItemClicked(position: Int, expanded: Boolean)
     }
-
-    var listener: Listener? = null
 
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
         return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_album_expandable, parent, false))
@@ -135,5 +134,5 @@ class ExpandableAlbumBinder(
 }
 
 fun ExpandableAlbumBinder.clone(expanded: Boolean): ExpandableAlbumBinder {
-    return ExpandableAlbumBinder(album, songs, imageLoader, expanded)
+    return ExpandableAlbumBinder(album, songs, imageLoader, expanded, listener)
 }

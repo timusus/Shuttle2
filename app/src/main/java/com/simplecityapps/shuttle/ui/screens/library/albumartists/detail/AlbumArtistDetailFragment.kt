@@ -157,9 +157,7 @@ class AlbumArtistDetailFragment :
 
     override fun setListData(albums: Map<Album, List<Song>>) {
         adapter.setData(albums.map { entry ->
-            val albumBinder = ExpandableAlbumBinder(entry.key, entry.value, imageLoader)
-            albumBinder.listener = this
-            albumBinder
+            ExpandableAlbumBinder(entry.key, entry.value, imageLoader, listener = this)
         })
     }
 

@@ -8,7 +8,9 @@ import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 
-class DiscNumberBinder(val discNumber: Int) : ViewBinder {
+class DiscNumberBinder(
+    val discNumber: Int
+) : ViewBinder {
 
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
         return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_disc_number, parent, false))

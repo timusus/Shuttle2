@@ -10,7 +10,10 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 
-class ArtworkBinder(val song: Song, val imageLoader: ArtworkImageLoader) : ViewBinder {
+class ArtworkBinder(
+    val song: Song,
+    val imageLoader: ArtworkImageLoader
+) : ViewBinder {
 
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
         return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_artwork, parent, false))

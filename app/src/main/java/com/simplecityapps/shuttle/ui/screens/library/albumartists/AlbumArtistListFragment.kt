@@ -75,9 +75,7 @@ class AlbumArtistListFragment :
 
     override fun setAlbumArtists(albumArtists: List<AlbumArtist>) {
         adapter.setData(albumArtists.map { albumArtist ->
-            val albumArtistBinder = AlbumArtistBinder(albumArtist, imageLoader)
-            albumArtistBinder.listener = this
-            albumArtistBinder
+            AlbumArtistBinder(albumArtist, imageLoader, this)
         })
     }
 

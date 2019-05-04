@@ -12,7 +12,9 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 
-class FolderBinder(val treeNode: Tree<Node<Song>>) : ViewBinder {
+class FolderBinder(
+    val treeNode: Tree<Node<Song>>
+) : ViewBinder {
 
     interface Listener {
         fun onNodeSelected(node: Node<Song>)

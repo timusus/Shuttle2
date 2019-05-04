@@ -14,7 +14,7 @@ import com.simplecityapps.shuttle.ui.common.toHms
 
 class DetailSongBinder(
     val song: Song,
-    val listener: Listener? = null
+    val listener: Listener
 ) : ViewBinder {
 
     interface Listener {

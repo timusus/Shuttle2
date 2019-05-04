@@ -11,13 +11,15 @@ import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 
-class AlbumArtistBinder(val albumArtist: AlbumArtist, val imageLoader: ArtworkImageLoader) : ViewBinder {
+class AlbumArtistBinder(
+    val albumArtist: AlbumArtist,
+    val imageLoader: ArtworkImageLoader,
+    val listener: Listener
+) : ViewBinder {
 
     interface Listener {
         fun onAlbumArtistClicked(albumArtist: AlbumArtist, viewHolder: ViewHolder)
     }
-
-    var listener: Listener? = null
 
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
         return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_album_artist, parent, false))

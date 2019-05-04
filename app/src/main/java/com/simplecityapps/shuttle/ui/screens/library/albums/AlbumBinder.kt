@@ -11,7 +11,10 @@ import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 
-class AlbumBinder(val album: Album, val imageLoader: ArtworkImageLoader) : ViewBinder {
+class AlbumBinder(
+    val album: Album,
+    val imageLoader: ArtworkImageLoader
+) : ViewBinder {
 
     interface Listener {
         fun onAlbumClicked(album: Album, viewHolder: ViewHolder)

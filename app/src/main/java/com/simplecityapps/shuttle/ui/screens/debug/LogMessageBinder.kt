@@ -12,7 +12,9 @@ import com.simplecityapps.shuttle.debug.LogMessage
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 import java.text.SimpleDateFormat
 
-class LogMessageBinder(val logMessage: LogMessage) : ViewBinder {
+class LogMessageBinder(
+    val logMessage: LogMessage
+) : ViewBinder {
 
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
         return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_debug_log, parent, false))
