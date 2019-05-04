@@ -12,6 +12,7 @@ import androidx.navigation.findNavController
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
+import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.utils.findParent
 import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
 import dagger.android.support.AndroidSupportInjection
@@ -79,9 +80,11 @@ class FolderDetailFragment : Fragment(), FolderBinder.Listener {
             })
     }
 
-    override fun onDestroy() {
+    override fun onDestroyView() {
         compositeDisposable.clear()
-        super.onDestroy()
+
+        recyclerView.clearAdapterOnDetach()
+        super.onDestroyView()
     }
 
 

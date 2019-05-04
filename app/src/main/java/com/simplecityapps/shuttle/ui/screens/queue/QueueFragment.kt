@@ -14,6 +14,7 @@ import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.error.userDescription
+import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
 import com.simplecityapps.shuttle.ui.common.view.multisheet.findParentMultiSheetView
 import kotlinx.android.synthetic.main.fragment_queue.*
@@ -48,6 +49,7 @@ class QueueFragment : Fragment(), Injectable, QueueContract.View {
     override fun onDestroyView() {
         presenter.unbindView()
         view.findParentMultiSheetView()?.setSheetStateChangeListener(sheetStateChangeListener)
+        recyclerView.clearAdapterOnDetach()
         super.onDestroyView()
     }
 

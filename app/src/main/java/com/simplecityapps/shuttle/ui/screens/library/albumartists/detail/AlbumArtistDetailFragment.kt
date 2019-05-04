@@ -26,6 +26,7 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.error.userDescription
+import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.DetailImageAnimationHelper
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragmentArgs
 import dagger.android.support.AndroidSupportInjection
@@ -139,6 +140,8 @@ class AlbumArtistDetailFragment :
 
         presenter.unbindView()
 
+        recyclerView.clearAdapterOnDetach()
+
         super.onDestroyView()
     }
 
@@ -180,10 +183,6 @@ class AlbumArtistDetailFragment :
 
     // ExpandableAlbumArtistBinder.Listener Implementation
 
-    override fun onItemClicked(expanded: Boolean, position: Int) {
-        adapter.notifyItemChanged(position, 1)
-    }
-
     override fun onArtworkClicked(album: Album, viewHolder: ExpandableAlbumBinder.ViewHolder) {
         view?.findNavController()?.navigate(
             R.id.action_albumArtistDetailFragment_to_albumDetailFragment,
@@ -191,6 +190,12 @@ class AlbumArtistDetailFragment :
             null,
             FragmentNavigatorExtras(viewHolder.imageView to viewHolder.imageView.transitionName)
         )
+    }
+
+    override fun onItemClicked(position: Int, expanded: Boolean) {
+        val items = adapter.items.toMutableList()
+        items[position] = (items[position] as ExpandableAlbumBinder).clone(!expanded)
+        adapter.setData(items)
     }
 
     override fun onSongClicked(song: Song, songs: List<Song>) {

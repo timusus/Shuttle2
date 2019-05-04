@@ -21,6 +21,7 @@ import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.recyclerview.SnapOnScrollListener
 import com.simplecityapps.shuttle.ui.common.recyclerview.SpacesItemDecoration
 import com.simplecityapps.shuttle.ui.common.recyclerview.attachSnapHelperWithListener
+import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.toHms
 import com.simplecityapps.shuttle.ui.common.view.SeekButton
 import com.simplecityapps.shuttle.ui.screens.sleeptimer.SleepTimerDialogFragment
@@ -95,7 +96,7 @@ class PlaybackFragment :
 
     override fun onDestroyView() {
         presenter.unbindView()
-
+        recyclerView.clearAdapterOnDetach()
         super.onDestroyView()
     }
 

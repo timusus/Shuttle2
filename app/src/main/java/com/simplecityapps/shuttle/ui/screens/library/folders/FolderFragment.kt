@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
+import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.view.ToolbarHost
 import kotlinx.android.synthetic.main.fragment_folders.*
@@ -16,7 +17,7 @@ class FolderFragment : Fragment(), Injectable, ToolbarHost {
     // Lifecycle
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(com.simplecityapps.shuttle.R.layout.fragment_folders, container, false)
+        return inflater.inflate(R.layout.fragment_folders, container, false)
     }
 
 

@@ -14,6 +14,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
+import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import kotlinx.android.synthetic.main.fragment_folder_detail.*
 import javax.inject.Inject
 
@@ -47,6 +48,7 @@ class SongsFragment : Fragment(), Injectable, SongsContract.View {
 
     override fun onDestroyView() {
         presenter.unbindView()
+        recyclerView.clearAdapterOnDetach()
         super.onDestroyView()
     }
 

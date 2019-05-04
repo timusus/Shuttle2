@@ -20,21 +20,20 @@ import com.simplecityapps.shuttle.ui.common.viewbinders.DiscNumberBinder
 class ExpandableAlbumBinder(
     val album: Album,
     val songs: List<Song>,
-    val imageLoader: ArtworkImageLoader
+    val imageLoader: ArtworkImageLoader,
+    val expanded: Boolean = false
 ) : ViewBinder {
 
     interface Listener {
 
         fun onSongClicked(song: Song, songs: List<Song>)
 
-        fun onItemClicked(expanded: Boolean, position: Int)
-
         fun onArtworkClicked(album: Album, viewHolder: ViewHolder)
+
+        fun onItemClicked(position: Int, expanded: Boolean)
     }
 
     var listener: Listener? = null
-
-    var expanded: Boolean = false
 
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
         return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_album_expandable, parent, false))
@@ -79,8 +78,7 @@ class ExpandableAlbumBinder(
 
         init {
             itemView.setOnClickListener {
-                viewBinder?.expanded = !viewBinder!!.expanded
-                viewBinder?.listener?.onItemClicked(viewBinder!!.expanded, adapterPosition)
+                viewBinder?.listener?.onItemClicked(adapterPosition, viewBinder!!.expanded)
             }
             imageView.increaseTouchableArea(8)
             imageView.setOnClickListener { viewBinder?.listener?.onArtworkClicked(viewBinder!!.album, this) }
@@ -91,10 +89,10 @@ class ExpandableAlbumBinder(
         override fun bind(viewBinder: ExpandableAlbumBinder, isPartial: Boolean) {
             super.bind(viewBinder, isPartial)
 
-            if (isPartial) {
-                recyclerView.visibility = if (viewBinder.expanded) View.VISIBLE else View.GONE
-                itemView.isActivated = viewBinder.expanded
-            } else {
+            recyclerView.visibility = if (viewBinder.expanded) View.VISIBLE else View.GONE
+            itemView.isActivated = viewBinder.expanded
+
+            if (!isPartial) {
                 title.text = viewBinder.album.name
                 subtitle.text = "${viewBinder.album.year.yearToString()} • ${viewBinder.album.songCount} Songs"
 
@@ -104,15 +102,15 @@ class ExpandableAlbumBinder(
 
                 recyclerView.adapter = adapter
 
-            val discSongsMap = viewBinder.songs.groupBy { song -> song.disc }.toSortedMap()
-            adapter.setData(discSongsMap.flatMap { entry ->
-                val viewBinders = mutableListOf<ViewBinder>()
-                if (discSongsMap.size > 1) {
-                    viewBinders.add(DiscNumberBinder(entry.key))
-                }
-                viewBinders.addAll(entry.value.map { song -> DetailSongBinder(song, songBinderListener) })
-                viewBinders
-            })
+                val discSongsMap = viewBinder.songs.groupBy { song -> song.disc }.toSortedMap()
+                adapter.setData(discSongsMap.flatMap { entry ->
+                    val viewBinders = mutableListOf<ViewBinder>()
+                    if (discSongsMap.size > 1) {
+                        viewBinders.add(DiscNumberBinder(entry.key))
+                    }
+                    viewBinders.addAll(entry.value.map { song -> DetailSongBinder(song, songBinderListener) })
+                    viewBinders
+                })
             }
         }
 
@@ -134,4 +132,8 @@ class ExpandableAlbumBinder(
             return this.toString()
         }
     }
+}
+
+fun ExpandableAlbumBinder.clone(expanded: Boolean): ExpandableAlbumBinder {
+    return ExpandableAlbumBinder(album, songs, imageLoader, expanded)
 }

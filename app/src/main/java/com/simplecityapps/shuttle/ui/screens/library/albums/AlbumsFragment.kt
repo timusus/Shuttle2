@@ -15,6 +15,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.Regex
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
+import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragmentArgs
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.android.synthetic.main.fragment_folder_detail.*
@@ -63,9 +64,11 @@ class AlbumsFragment : Fragment(), Injectable, AlbumBinder.Listener {
         )
     }
 
-    override fun onDestroy() {
+    override fun onDestroyView() {
         compositeDisposable.clear()
-        super.onDestroy()
+
+        recyclerView.clearAdapterOnDetach()
+        super.onDestroyView()
     }
 
 
