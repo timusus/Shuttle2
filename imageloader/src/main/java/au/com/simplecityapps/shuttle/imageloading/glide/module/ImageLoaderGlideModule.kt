@@ -8,13 +8,8 @@ import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.LocalArtwor
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.TagLibSongLocalArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.RemoteArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.RemoteArtworkProvider
-import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.itunes.ItunesRemoteAlbumArtworkModelLoader
-import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.itunes.ItunesRemoteSongArtworkModelLoader
-import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.lastm.LastFmRemoteAlbumArtistArtworkModelLoader
-import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.lastm.LastFmRemoteAlbumArtworkModelLoader
-import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.lastm.LastFmRemoteSongArtworkModelLoader
-import au.com.simplecityapps.shuttle.imageloading.networking.itunes.ItunesService
-import au.com.simplecityapps.shuttle.imageloading.networking.lastfm.LastFmService
+import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.artwork.AlbumArtistArtworkModelLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.artwork.AlbumArtworkModelLoader
 import com.bumptech.glide.Glide
 import com.bumptech.glide.GlideBuilder
 import com.bumptech.glide.Registry
@@ -37,9 +32,6 @@ class ImageLoaderGlideModule : AppGlideModule() {
 
         val artworkProvider = (context.applicationContext as CoreComponentProvider).provideCoreComponent().getArtworkProvider()
 
-        val gsonConverterFactory = (context.applicationContext as CoreComponentProvider).provideCoreComponent().getGsonConverterFactory()
-
-
         // Generic loaders
 
         registry.replace(GlideUrl::class.java, InputStream::class.java, OkHttpUrlLoader.Factory(okHttpClient))
@@ -56,14 +48,8 @@ class ImageLoaderGlideModule : AppGlideModule() {
 
         // Remote
 
-        val lastFm = LastFmService(okHttpClient, gsonConverterFactory).lastFm
-        registry.append(Song::class.java, InputStream::class.java, LastFmRemoteSongArtworkModelLoader.Factory(lastFm))
-        registry.append(Album::class.java, InputStream::class.java, LastFmRemoteAlbumArtworkModelLoader.Factory(lastFm))
-        registry.append(AlbumArtist::class.java, InputStream::class.java, LastFmRemoteAlbumArtistArtworkModelLoader.Factory(lastFm))
-
-        val itunes = ItunesService(okHttpClient, gsonConverterFactory).itunes
-        registry.append(Song::class.java, InputStream::class.java, ItunesRemoteSongArtworkModelLoader.Factory(itunes))
-        registry.append(Album::class.java, InputStream::class.java, ItunesRemoteAlbumArtworkModelLoader.Factory(itunes))
+        registry.append(Album::class.java, InputStream::class.java, AlbumArtworkModelLoader.Factory())
+        registry.append(AlbumArtist::class.java, InputStream::class.java, AlbumArtistArtworkModelLoader.Factory())
     }
 
     override fun isManifestParsingEnabled(): Boolean {
