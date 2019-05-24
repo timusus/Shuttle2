@@ -85,6 +85,7 @@ class PlaybackInitializer @Inject constructor(
                         )
                         playbackManager.load { result ->
                             result.onFailure { error -> Timber.e("Failed to load playback after reloading queue. Error: $error") }
+                            result.onSuccess { playbackManager.seekTo(seekPosition) }
                         }
                         onRestoreComplete()
                     },
