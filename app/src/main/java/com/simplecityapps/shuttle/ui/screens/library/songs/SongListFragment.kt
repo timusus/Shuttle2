@@ -18,7 +18,7 @@ import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import kotlinx.android.synthetic.main.fragment_folder_detail.*
 import javax.inject.Inject
 
-class SongsFragment : Fragment(), Injectable, SongsContract.View {
+class SongListFragment : Fragment(), Injectable, SongListContract.View {
 
     private val adapter = object : SectionedAdapter() {
         override fun getSectionName(viewBinder: ViewBinder?): String {
@@ -26,7 +26,7 @@ class SongsFragment : Fragment(), Injectable, SongsContract.View {
         }
     }
 
-    @Inject lateinit var presenter: SongsPresenter
+    @Inject lateinit var presenter: SongListPresenter
 
     @Inject lateinit var imageLoader: ArtworkImageLoader
 
@@ -53,7 +53,7 @@ class SongsFragment : Fragment(), Injectable, SongsContract.View {
     }
 
 
-    // SongsContract.View Implementation
+    // SongListContract.View Implementation
 
     override fun setData(songs: List<Song>) {
         adapter.setData(songs.map { song ->
@@ -80,8 +80,8 @@ class SongsFragment : Fragment(), Injectable, SongsContract.View {
 
     companion object {
 
-        const val TAG = "SongsFragment"
+        const val TAG = "SongListFragment"
 
-        fun newInstance() = SongsFragment()
+        fun newInstance() = SongListFragment()
     }
 }

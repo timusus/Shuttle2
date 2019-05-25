@@ -58,6 +58,13 @@ class AlbumArtistListFragment :
         super.onDestroyView()
     }
 
+    // AlbumArtistListContact.View Implementation
+
+    override fun setAlbumArtists(albumArtists: List<AlbumArtist>) {
+        adapter.setData(albumArtists.map { albumArtist ->
+            AlbumArtistBinder(albumArtist, imageLoader, this)
+        })
+    }
 
     // AlbumArtistBinder.Listener Implementation
 
@@ -68,15 +75,6 @@ class AlbumArtistListFragment :
             null,
             FragmentNavigatorExtras(viewHolder.imageView to viewHolder.imageView.transitionName)
         )
-    }
-
-
-    // AlbumArtistListContact.View Implementation
-
-    override fun setAlbumArtists(albumArtists: List<AlbumArtist>) {
-        adapter.setData(albumArtists.map { albumArtist ->
-            AlbumArtistBinder(albumArtist, imageLoader, this)
-        })
     }
 
 

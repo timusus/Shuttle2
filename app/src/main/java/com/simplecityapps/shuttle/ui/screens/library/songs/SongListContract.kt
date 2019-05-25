@@ -3,7 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.library.songs
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 
-interface SongsContract {
+interface SongListContract {
 
     interface View {
 

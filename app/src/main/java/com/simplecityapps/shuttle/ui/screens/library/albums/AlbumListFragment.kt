@@ -10,25 +10,23 @@ import androidx.navigation.fragment.findNavController
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.mediaprovider.model.Album
-import com.simplecityapps.mediaprovider.model.removeArticles
-import com.simplecityapps.mediaprovider.repository.AlbumRepository
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragmentArgs
-import io.reactivex.disposables.CompositeDisposable
 import kotlinx.android.synthetic.main.fragment_folder_detail.*
-import timber.log.Timber
 import javax.inject.Inject
 
-class AlbumsFragment : Fragment(), Injectable, AlbumBinder.Listener {
+class AlbumListFragment :
+    Fragment(),
+    Injectable,
+    AlbumBinder.Listener,
+    AlbumListContract.View {
 
     private val adapter = SectionedAdapter()
 
-    private val compositeDisposable = CompositeDisposable()
-
-    @Inject lateinit var albumRepository: AlbumRepository
+    @Inject lateinit var presenter: AlbumListPresenter
 
     @Inject lateinit var imageLoader: ArtworkImageLoader
 
@@ -44,31 +42,29 @@ class AlbumsFragment : Fragment(), Injectable, AlbumBinder.Listener {
 
         recyclerView.adapter = adapter
         recyclerView.setRecyclerListener(RecyclerListener())
+
+        presenter.bindView(this)
     }
 
     override fun onResume() {
         super.onResume()
 
-        compositeDisposable.add(
-            albumRepository.getAlbums()
-                .map { albums -> albums.sortedBy { album -> album.name.removeArticles() } }
-                .subscribe(
-                { albums ->
-                    adapter.setData(albums.map { album ->
-                        AlbumBinder(album, imageLoader, this)
-                    })
-                },
-                { error -> Timber.e(error, "Failed to retrieve albums") })
-        )
+        presenter.loadAlbums()
     }
 
     override fun onDestroyView() {
-        compositeDisposable.clear()
-
+        presenter.unbindView()
         recyclerView.clearAdapterOnDetach()
         super.onDestroyView()
     }
 
+    // AlbumListContract.View Implementation
+
+    override fun setAlbums(albums: List<Album>) {
+        adapter.setData(albums.map { album ->
+            AlbumBinder(album, imageLoader, this)
+        })
+    }
 
     // AlbumBinder.Listener Implementation
 
@@ -86,8 +82,8 @@ class AlbumsFragment : Fragment(), Injectable, AlbumBinder.Listener {
 
     companion object {
 
-        const val TAG = "AlbumsFragment"
+        const val TAG = "AlbumListFragment"
 
-        fun newInstance() = AlbumsFragment()
+        fun newInstance() = AlbumListFragment()
     }
 }

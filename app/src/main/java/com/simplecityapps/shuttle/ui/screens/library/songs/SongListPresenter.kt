@@ -6,17 +6,18 @@ import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import io.reactivex.rxkotlin.subscribeBy
 import timber.log.Timber
+import java.text.Collator
 import javax.inject.Inject
 
-class SongsPresenter @Inject constructor(
+class SongListPresenter @Inject constructor(
     private val playbackManager: PlaybackManager,
     private val songRepository: SongRepository
-) : BasePresenter<SongsContract.View>(),
-    SongsContract.Presenter {
+) : BasePresenter<SongListContract.View>(),
+    SongListContract.Presenter {
 
     var songs: List<Song> = emptyList()
 
-    override fun bindView(view: SongsContract.View) {
+    override fun bindView(view: SongListContract.View) {
         super.bindView(view)
 
         loadSongs()
@@ -25,13 +26,15 @@ class SongsPresenter @Inject constructor(
     override fun loadSongs() {
         addDisposable(
             songRepository.getSongs()
+                .map { albumArtist -> albumArtist.sortedWith(Comparator { a, b -> Collator.getInstance().compare(a.name, b.name) }) }
                 .subscribeBy(
                     onNext = { songs ->
                         this.songs = songs
                         view?.setData(songs)
                     },
                     onError = { error -> Timber.e(error, "Failed to load songs") }
-                ))
+                )
+        )
     }
 
     override fun onSongClicked(song: Song) {

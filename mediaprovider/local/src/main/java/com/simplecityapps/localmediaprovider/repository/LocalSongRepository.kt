@@ -32,8 +32,6 @@ class LocalSongRepository(
         relay
     }
 
-
-
     override fun populate(): Completable {
         intervalTimer.startLog()
 
