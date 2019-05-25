@@ -127,10 +127,6 @@ class AlbumArtistDetailFragment :
         presenter.bindView(this)
 
         isFirstLoad = false
-    }
-
-    override fun onResume() {
-        super.onResume()
 
         presenter.loadData()
     }
@@ -157,7 +153,13 @@ class AlbumArtistDetailFragment :
 
     override fun setListData(albums: Map<Album, List<Song>>) {
         adapter.setData(albums.map { entry ->
-            ExpandableAlbumBinder(entry.key, entry.value, imageLoader, listener = this)
+            ExpandableAlbumBinder(
+                entry.key,
+                entry.value,
+                imageLoader,
+                listener = this,
+                expanded = adapter.items.filterIsInstance<ExpandableAlbumBinder>().find { binder -> binder.album == entry.key }?.expanded ?: false
+            )
         })
     }
 

@@ -91,26 +91,24 @@ class ExpandableAlbumBinder(
             recyclerView.visibility = if (viewBinder.expanded) View.VISIBLE else View.GONE
             itemView.isActivated = viewBinder.expanded
 
-            if (!isPartial) {
-                title.text = viewBinder.album.name
-                subtitle.text = "${viewBinder.album.year.yearToString()} • ${viewBinder.album.songCount} Songs"
+            title.text = viewBinder.album.name
+            subtitle.text = "${viewBinder.album.year.yearToString()} • ${viewBinder.album.songCount} Songs"
 
-                viewBinder.imageLoader.loadArtwork(imageView, viewBinder.album, ArtworkImageLoader.Options.RoundedCorners(16), completionHandler = null)
+            viewBinder.imageLoader.loadArtwork(imageView, viewBinder.album, ArtworkImageLoader.Options.RoundedCorners(16), completionHandler = null)
 
-                imageView.transitionName = "album_${viewBinder.album.name}"
+            imageView.transitionName = "album_${viewBinder.album.name}"
 
-                recyclerView.adapter = adapter
+            recyclerView.adapter = adapter
 
-                val discSongsMap = viewBinder.songs.groupBy { song -> song.disc }.toSortedMap()
-                adapter.setData(discSongsMap.flatMap { entry ->
-                    val viewBinders = mutableListOf<ViewBinder>()
-                    if (discSongsMap.size > 1) {
-                        viewBinders.add(DiscNumberBinder(entry.key))
-                    }
-                    viewBinders.addAll(entry.value.map { song -> DetailSongBinder(song, songBinderListener) })
-                    viewBinders
-                })
-            }
+            val discSongsMap = viewBinder.songs.groupBy { song -> song.disc }.toSortedMap()
+            adapter.setData(discSongsMap.flatMap { entry ->
+                val viewBinders = mutableListOf<ViewBinder>()
+                if (discSongsMap.size > 1) {
+                    viewBinders.add(DiscNumberBinder(entry.key))
+                }
+                viewBinders.addAll(entry.value.map { song -> DetailSongBinder(song, songBinderListener) })
+                viewBinders
+            })
         }
 
         override fun recycle() {
