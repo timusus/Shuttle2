@@ -8,6 +8,7 @@ import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.LocalArtwor
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.TagLibSongLocalArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.artwork.AlbumArtistArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.artwork.AlbumArtworkModelLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.artwork.SongArtworkModelLoader
 import com.bumptech.glide.Glide
 import com.bumptech.glide.GlideBuilder
 import com.bumptech.glide.Registry
@@ -45,6 +46,7 @@ class ImageLoaderGlideModule : AppGlideModule() {
 
         // Remote
 
+        registry.append(Song::class.java, InputStream::class.java, SongArtworkModelLoader.Factory())
         registry.append(Album::class.java, InputStream::class.java, AlbumArtworkModelLoader.Factory())
         registry.append(AlbumArtist::class.java, InputStream::class.java, AlbumArtistArtworkModelLoader.Factory())
     }

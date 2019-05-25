@@ -152,7 +152,7 @@ class PlaybackFragment :
 
     override fun setQueue(queue: List<QueueItem>, position: Int?) {
         adapter.setData(
-            queue.map { ArtworkBinder(it.song, imageLoader) },
+            queue.map { queueItem -> ArtworkBinder(queueItem.song, imageLoader) },
             completion = {
                 position?.let { position ->
                     recyclerView?.scrollToPosition(position)
