@@ -79,8 +79,8 @@ class PlaybackInitializer @Inject constructor(
                 .subscribeBy(
                     onSuccess = { songs ->
                         queueManager.set(
-                            songIds.map { songId -> songs.first { song -> song.id == songId } },
-                            shuffleSongIds?.map { shuffleSongId -> songs.first { song -> song.id == shuffleSongId } },
+                            songIds.mapNotNull { songId -> songs.firstOrNull { song -> song.id == songId } },
+                            shuffleSongIds?.mapNotNull { shuffleSongId -> songs.firstOrNull { song -> song.id == shuffleSongId } },
                             queuePosition
                         )
                         playbackManager.load { result ->
@@ -147,7 +147,7 @@ class PlaybackInitializer @Inject constructor(
                 song.playbackPosition = playbackManager.getPosition() ?: 0
                 songRepository.setPlaybackPosition(song, song.playbackPosition)
                     .subscribeOn(Schedulers.io())
-                    .subscribe()
+                    .subscribeBy(onError = { throwable -> Timber.e(throwable) })
             }
         }
     }
@@ -157,11 +157,11 @@ class PlaybackInitializer @Inject constructor(
 
         songRepository.setPlaybackPosition(song, song.duration)
             .subscribeOn(Schedulers.io())
-            .subscribe()
+            .subscribeBy(onError = { throwable -> Timber.e(throwable) })
 
         songRepository.incrementPlayCount(song)
             .subscribeOn(Schedulers.io())
-            .subscribe()
+            .subscribeBy(onError = { throwable -> Timber.e(throwable) })
     }
 
 
@@ -178,5 +178,20 @@ class PlaybackInitializer @Inject constructor(
             playbackPreferenceManager.playbackPosition = position
             progress = position
         }
+    }
+}
+
+
+inline fun <T : Any> guardLet(vararg elements: T?, closure: () -> Nothing): List<T> {
+    return if (elements.all { it != null }) {
+        elements.filterNotNull()
+    } else {
+        closure()
+    }
+}
+
+inline fun <T : Any> ifLet(vararg elements: T?, closure: (List<T>) -> Unit) {
+    if (elements.all { it != null }) {
+        closure(elements.filterNotNull())
     }
 }
