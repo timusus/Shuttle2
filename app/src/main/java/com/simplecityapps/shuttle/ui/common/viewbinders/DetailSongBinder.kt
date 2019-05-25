@@ -9,13 +9,15 @@ import androidx.core.view.isVisible
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 import com.simplecityapps.shuttle.ui.common.toHms
 
 class DetailSongBinder(
     val song: Song,
     val listener: Listener
-) : ViewBinder {
+) : ViewBinder,
+    SectionViewBinder {
 
     interface Listener {
         fun onSongClicked(song: Song)
@@ -29,7 +31,7 @@ class DetailSongBinder(
         return ViewTypes.DetailSong
     }
 
-    override fun sectionName(): String? {
+    override fun getSectionName(): String? {
         return song.name.firstOrNull().toString()
     }
 

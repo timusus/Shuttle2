@@ -10,11 +10,13 @@ import androidx.core.content.ContextCompat
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 
 class FolderBinder(
     val treeNode: Tree<Node<Song>>
-) : ViewBinder {
+) : ViewBinder,
+SectionViewBinder{
 
     interface Listener {
         fun onNodeSelected(node: Node<Song>)
@@ -30,7 +32,7 @@ class FolderBinder(
         return ViewTypes.Folder
     }
 
-    override fun sectionName(): String? {
+    override fun getSectionName(): String? {
         return treeNode.node.name.firstOrNull()?.toString() ?: ""
     }
 

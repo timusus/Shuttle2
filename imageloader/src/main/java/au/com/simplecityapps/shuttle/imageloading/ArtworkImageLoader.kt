@@ -24,13 +24,15 @@ interface ArtworkImageLoader {
                 Low, Default, High, Max
             }
         }
+
+        class Crossfade(val duration: Int) : Options()
     }
 
-    fun loadArtwork(imageView: ImageView, albumArtist: AlbumArtist, vararg options: Options, completionHandler: CompletionHandler)
+    fun loadArtwork(imageView: ImageView, albumArtist: AlbumArtist, vararg options: Options, completionHandler: CompletionHandler = null)
 
-    fun loadArtwork(imageView: ImageView, album: Album, vararg options: Options, completionHandler: CompletionHandler)
+    fun loadArtwork(imageView: ImageView, album: Album, vararg options: Options, completionHandler: CompletionHandler = null)
 
-    fun loadArtwork(imageView: ImageView, song: Song, vararg options: Options, completionHandler: CompletionHandler)
+    fun loadArtwork(imageView: ImageView, song: Song, vararg options: Options, completionHandler: CompletionHandler = null)
 
     fun clear(imageView: ImageView)
 }

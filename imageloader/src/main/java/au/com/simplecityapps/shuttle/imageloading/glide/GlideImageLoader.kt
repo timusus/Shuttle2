@@ -1,5 +1,6 @@
 package au.com.simplecityapps.shuttle.imageloading.glide
 
+import android.content.Context
 import android.graphics.drawable.Drawable
 import android.widget.ImageView
 import androidx.annotation.DrawableRes
@@ -7,12 +8,14 @@ import au.com.simplecityapps.R
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.CompletionHandler
 import au.com.simplecityapps.shuttle.imageloading.glide.module.GlideApp
+import au.com.simplecityapps.shuttle.imageloading.glide.module.GlideRequest
 import com.bumptech.glide.Priority
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.MultiTransformation
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
@@ -40,12 +43,12 @@ class GlideImageLoader : ArtworkImageLoader {
     }
 
     @DrawableRes
-    var placeHolderResId: Int = R.drawable.ic_music_note_black_24dp
+    var placeHolderResId: Int = R.drawable.ic_placeholder_light
 
-    private fun <T> loadArtwork(imageView: ImageView, `object`: T, vararg options: ArtworkImageLoader.Options, completionHandler: CompletionHandler) {
+    fun getRequestBuilder(context: Context, vararg options: ArtworkImageLoader.Options): GlideRequest<Drawable> {
         val glideRequest = GlideApp
-            .with(imageView.context)
-            .load(`object`)
+            .with(context)
+            .asDrawable()
             .placeholder(placeHolderResId)
 
         options.forEach { option ->
@@ -64,8 +67,17 @@ class GlideImageLoader : ArtworkImageLoader {
                         ArtworkImageLoader.Options.Priority.Priority.Max -> glideRequest.priority(Priority.IMMEDIATE)
                     }
                 }
+                is ArtworkImageLoader.Options.Crossfade -> {
+                    glideRequest.transition(DrawableTransitionOptions.withCrossFade(option.duration))
+                }
             }
         }
+
+        return glideRequest
+    }
+
+    private fun <T> loadArtwork(imageView: ImageView, `object`: T, vararg options: ArtworkImageLoader.Options, completionHandler: CompletionHandler) {
+        val glideRequest = getRequestBuilder(imageView.context, *options)
 
         completionHandler?.let {
             glideRequest.addListener(object : RequestListener<Drawable> {
@@ -81,7 +93,9 @@ class GlideImageLoader : ArtworkImageLoader {
             })
         }
 
-        glideRequest.into(imageView)
+        glideRequest
+            .load(`object`)
+            .into(imageView)
     }
 
     override fun clear(imageView: ImageView) {

@@ -9,13 +9,15 @@ import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 
 class AlbumArtistBinder(
     val albumArtist: AlbumArtist,
     val imageLoader: ArtworkImageLoader,
     val listener: Listener
-) : ViewBinder {
+) : ViewBinder,
+    SectionViewBinder {
 
     interface Listener {
         fun onAlbumArtistClicked(albumArtist: AlbumArtist, viewHolder: ViewHolder)
@@ -29,7 +31,7 @@ class AlbumArtistBinder(
         return ViewTypes.AlbumArtist
     }
 
-    override fun sectionName(): String? {
+    override fun getSectionName(): String? {
         return albumArtist.sortKey?.firstOrNull().toString()
     }
 
@@ -67,7 +69,11 @@ class AlbumArtistBinder(
             title.text = viewBinder.albumArtist.name
             subtitle.text = "${viewBinder.albumArtist.albumCount} Albums • ${viewBinder.albumArtist.songCount} Songs"
 
-            viewBinder.imageLoader.loadArtwork(imageView, viewBinder.albumArtist, ArtworkImageLoader.Options.RoundedCorners(16), completionHandler = null)
+            viewBinder.imageLoader.loadArtwork(
+                imageView, viewBinder.albumArtist,
+                ArtworkImageLoader.Options.RoundedCorners(16),
+                ArtworkImageLoader.Options.Crossfade(200)
+            )
             imageView.transitionName = "album_artist_${viewBinder.albumArtist.name}"
         }
 

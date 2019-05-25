@@ -9,6 +9,7 @@ import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 import com.simplecityapps.shuttle.ui.common.toHms
 
@@ -16,7 +17,8 @@ class QueueBinder(
     val queueItem: QueueItem,
     val imageLoader: ArtworkImageLoader,
     val listener: Listener
-) : ViewBinder {
+) : ViewBinder,
+    SectionViewBinder {
 
     interface Listener {
         fun onQueueItemClicked(queueItem: QueueItem)
@@ -30,7 +32,7 @@ class QueueBinder(
         return ViewTypes.Queue
     }
 
-    override fun sectionName(): String? {
+    override fun getSectionName(): String? {
         return queueItem.song.name.firstOrNull().toString()
     }
 
@@ -75,7 +77,12 @@ class QueueBinder(
             title.text = viewBinder.queueItem.song.name
             subtitle.text = "${viewBinder.queueItem.song.albumArtistName} • ${viewBinder.queueItem.song.albumName}"
             tertiary.text = viewBinder.queueItem.song.duration.toHms()
-            viewBinder.imageLoader.loadArtwork(artworkImageView, viewBinder.queueItem.song, ArtworkImageLoader.Options.RoundedCorners(16), completionHandler = null)
+            viewBinder.imageLoader.loadArtwork(
+                artworkImageView,
+                viewBinder.queueItem.song,
+                ArtworkImageLoader.Options.RoundedCorners(16),
+                ArtworkImageLoader.Options.Crossfade(200)
+            )
         }
 
         override fun recycle() {

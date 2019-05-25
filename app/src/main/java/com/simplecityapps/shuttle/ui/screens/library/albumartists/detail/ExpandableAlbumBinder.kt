@@ -12,6 +12,7 @@ import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 import com.simplecityapps.shuttle.ui.common.view.increaseTouchableArea
 import com.simplecityapps.shuttle.ui.common.viewbinders.DetailSongBinder
@@ -23,7 +24,8 @@ class ExpandableAlbumBinder(
     val imageLoader: ArtworkImageLoader,
     val expanded: Boolean = false,
     val listener: Listener?
-) : ViewBinder {
+) : ViewBinder,
+    SectionViewBinder {
 
     interface Listener {
 
@@ -42,7 +44,7 @@ class ExpandableAlbumBinder(
         return ViewTypes.ExpandableAlbum
     }
 
-    override fun sectionName(): String? {
+    override fun getSectionName(): String? {
         return album.sortKey?.firstOrNull().toString()
     }
 
@@ -94,7 +96,11 @@ class ExpandableAlbumBinder(
             title.text = viewBinder.album.name
             subtitle.text = "${viewBinder.album.year.yearToString()} • ${viewBinder.album.songCount} Songs"
 
-            viewBinder.imageLoader.loadArtwork(imageView, viewBinder.album, ArtworkImageLoader.Options.RoundedCorners(16), completionHandler = null)
+            viewBinder.imageLoader.loadArtwork(
+                imageView, viewBinder.album,
+                ArtworkImageLoader.Options.RoundedCorners(16),
+                ArtworkImageLoader.Options.Crossfade(200)
+            )
 
             imageView.transitionName = "album_${viewBinder.album.name}"
 

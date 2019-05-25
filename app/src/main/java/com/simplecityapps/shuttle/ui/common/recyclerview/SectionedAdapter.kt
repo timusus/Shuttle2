@@ -11,6 +11,10 @@ open class SectionedAdapter : RecyclerAdapter(), FastScrollRecyclerView.Sectione
     }
 
     open fun getSectionName(viewBinder: ViewBinder?): String {
-        return viewBinder?.sectionName() ?: ""
+        return (viewBinder as? SectionViewBinder)?.getSectionName() ?: ""
     }
+}
+
+interface SectionViewBinder : ViewBinder {
+    fun getSectionName(): String? = null
 }

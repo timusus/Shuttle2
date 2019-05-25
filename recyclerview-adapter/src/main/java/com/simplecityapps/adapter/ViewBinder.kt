@@ -22,10 +22,6 @@ interface ViewBinder : ContentsComparator {
         holder.bind(this, isPartial)
     }
 
-    fun sectionName(): String? {
-        return null
-    }
-
     override fun areContentsTheSame(other: Any): Boolean {
         return this == other
     }

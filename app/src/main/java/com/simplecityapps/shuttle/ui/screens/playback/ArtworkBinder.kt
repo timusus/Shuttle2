@@ -30,7 +30,11 @@ class ArtworkBinder(
         override fun bind(viewBinder: ArtworkBinder, isPartial: Boolean) {
             super.bind(viewBinder, isPartial)
 
-            viewBinder.imageLoader.loadArtwork(imageView, viewBinder.song, ArtworkImageLoader.Options.RoundedCorners(32), completionHandler = null)
+            viewBinder.imageLoader.loadArtwork(
+                imageView, viewBinder.song,
+                ArtworkImageLoader.Options.RoundedCorners(32),
+                ArtworkImageLoader.Options.Crossfade(300)
+            )
         }
 
         override fun recycle() {
