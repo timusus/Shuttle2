@@ -43,12 +43,12 @@ class QueueFragment : Fragment(), Injectable, QueueContract.View {
 
         presenter.bindView(this)
 
-        view.findParentMultiSheetView()?.setSheetStateChangeListener(sheetStateChangeListener)
+        view.findParentMultiSheetView()?.addSheetStateChangeListener(sheetStateChangeListener)
     }
 
     override fun onDestroyView() {
         presenter.unbindView()
-        view.findParentMultiSheetView()?.setSheetStateChangeListener(sheetStateChangeListener)
+        view.findParentMultiSheetView()?.removeSheetStateChangeListener(sheetStateChangeListener)
         recyclerView.clearAdapterOnDetach()
         super.onDestroyView()
     }

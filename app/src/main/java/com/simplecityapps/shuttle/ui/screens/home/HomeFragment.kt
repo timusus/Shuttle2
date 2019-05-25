@@ -41,11 +41,6 @@ class HomeFragment : Fragment(), Injectable {
     }
 
     private fun navigateToSearch() {
-        findNavController().navigate(
-            R.id.action_homeFragment_to_searchFragment,
-            null,
-            null,
-            FragmentNavigatorExtras(searchView to searchView.transitionName)
-        )
+        findNavController().navigate(R.id.action_homeFragment_to_searchFragment, null, null, FragmentNavigatorExtras(searchView to searchView.transitionName))
     }
 }

@@ -25,7 +25,7 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
 
     private lateinit var navHostFragment: View
 
-    private var sheetStateChangeListener: SheetStateChangeListener? = null
+    private var sheetStateChangeListeners = mutableSetOf<SheetStateChangeListener>()
 
     override fun onFinishInflate() {
         super.onFinishInflate()
@@ -76,13 +76,13 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
             override fun onStateChanged(bottomSheet: View, newState: Int) {
                 fadeView(Sheet.FIRST, newState)
 
-                sheetStateChangeListener?.onSheetStateChanged(Sheet.FIRST, newState)
+                sheetStateChangeListeners.forEach { listener -> listener.onSheetStateChanged(Sheet.FIRST, newState)}
             }
 
             override fun onSlide(bottomSheet: View, slideOffset: Float) {
                 fadeView(findViewById(getSheetPeekViewResId(Sheet.FIRST)), slideOffset)
 
-                sheetStateChangeListener?.onSlide(Sheet.FIRST, slideOffset)
+                sheetStateChangeListeners.forEach { listener -> listener.onSlide(Sheet.FIRST, slideOffset)}
 
                 bottomNavigationView.translationY = bottomNavigationView.height.toFloat() * slideOffset
                 sheet1.translationY = -bottomNavigationView.height.toFloat() + bottomNavigationView.translationY
@@ -101,14 +101,14 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
 
                 fadeView(Sheet.SECOND, newState)
 
-                sheetStateChangeListener?.onSheetStateChanged(Sheet.SECOND, newState)
+                sheetStateChangeListeners.forEach { listener -> listener.onSheetStateChanged(Sheet.SECOND, newState)}
             }
 
             override fun onSlide(bottomSheet: View, slideOffset: Float) {
                 bottomSheetBehavior1.setAllowDragging(false)
                 fadeView(findViewById(getSheetPeekViewResId(Sheet.SECOND)), slideOffset)
 
-                sheetStateChangeListener?.onSlide(Sheet.SECOND, slideOffset)
+                sheetStateChangeListeners.forEach { listener -> listener.onSlide(Sheet.SECOND, slideOffset)}
             }
         })
 
@@ -125,8 +125,12 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
         }
     }
 
-    fun setSheetStateChangeListener(sheetStateChangeListener: SheetStateChangeListener?) {
-        this.sheetStateChangeListener = sheetStateChangeListener
+    fun addSheetStateChangeListener(sheetStateChangeListener: SheetStateChangeListener) {
+        sheetStateChangeListeners.add(sheetStateChangeListener)
+    }
+
+    fun removeSheetStateChangeListener(sheetStateChangeListener: SheetStateChangeListener){
+        sheetStateChangeListeners.remove(sheetStateChangeListener)
     }
 
     fun expandSheet(@Sheet sheet: Int) {

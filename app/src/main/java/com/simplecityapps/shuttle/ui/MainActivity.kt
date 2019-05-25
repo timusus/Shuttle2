@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -18,6 +19,7 @@ import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
 import com.simplecityapps.shuttle.ui.screens.playback.PlaybackFragment
 import com.simplecityapps.shuttle.ui.screens.playback.mini.MiniPlaybackFragment
 import com.simplecityapps.shuttle.ui.screens.queue.QueueFragment
@@ -43,6 +45,8 @@ class MainActivity : AppCompatActivity(), HasSupportFragmentInjector, QueueChang
     @Inject lateinit var albumsRepository: AlbumRepository
     @Inject lateinit var albumArtistsRepository: AlbumArtistRepository
 
+    private var onBackPressCallback: OnBackPressedCallback? = null
+
 
     // Lifecycle
 
@@ -66,18 +70,38 @@ class MainActivity : AppCompatActivity(), HasSupportFragmentInjector, QueueChang
                 .add(R.id.sheet1PeekView, MiniPlaybackFragment(), "MiniPlaybackFragment")
                 .add(R.id.sheet2Container, QueueFragment.newInstance(), "QueueFragment")
                 .commit()
+        } else {
+            multiSheetView.restoreSheet(savedInstanceState.getInt(STATE_CURRENT_SHEET))
         }
 
         // Update visible state of mini player
         queueWatcher.addCallback(this)
 
-        onBackPressedDispatcher.addCallback {
-             multiSheetView.consumeBackPress()
-        }
+        multiSheetView.addSheetStateChangeListener(object : MultiSheetView.SheetStateChangeListener {
+
+            override fun onSheetStateChanged(sheet: Int, state: Int) {
+                updateBackPressListener()
+            }
+
+            override fun onSlide(sheet: Int, slideOffset: Float) {
+
+            }
+        })
 
         if (queueManager.getSize() == 0) {
             multiSheetView.hide(collapse = true, animate = false)
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        updateBackPressListener()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putInt(STATE_CURRENT_SHEET, multiSheetView.currentSheet)
+        super.onSaveInstanceState(outState)
     }
 
     override fun onDestroy() {
@@ -85,6 +109,18 @@ class MainActivity : AppCompatActivity(), HasSupportFragmentInjector, QueueChang
 
         queueWatcher.removeCallback(this)
         compositeDisposable.clear()
+    }
+
+
+    // Private
+
+    private fun updateBackPressListener() {
+        onBackPressCallback?.remove()
+        if (multiSheetView.currentSheet != MultiSheetView.Sheet.NONE) {
+            onBackPressCallback = onBackPressedDispatcher.addCallback {
+                multiSheetView.consumeBackPress()
+            }
+        }
     }
 
 
@@ -123,5 +159,6 @@ class MainActivity : AppCompatActivity(), HasSupportFragmentInjector, QueueChang
 
     companion object {
         const val TAG = "MainActivity"
+        const val STATE_CURRENT_SHEET = "current_sheet"
     }
 }
