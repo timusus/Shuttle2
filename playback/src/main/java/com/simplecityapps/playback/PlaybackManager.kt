@@ -36,7 +36,7 @@ class PlaybackManager(
         load(songs, null, queuePosition, completion)
     }
 
-    fun load(songs: List<Song>, shuffleSongs: List<Song>?, queuePosition: Int = 0, completion: (Result<Any?>) -> Unit) {
+    fun load(songs: List<Song>, shuffleSongs: List<Song>?, queuePosition: Int = 0, completion: (Result<Boolean>) -> Unit) {
         if (songs.isEmpty()) {
             Timber.e("Attempted to load empty song list")
             return
