@@ -32,11 +32,11 @@ class PlaybackManager(
         }
     }
 
-    fun load(completion: (Result<Any?>) -> Unit) {
-        playback.load(completion)
+    fun load(songs: List<Song>, queuePosition: Int = 0, completion: (Result<Any?>) -> Unit) {
+        load(songs, null, queuePosition, completion)
     }
 
-    fun load(songs: List<Song>, queuePosition: Int = 0, completion: (Result<Any?>) -> Unit) {
+    fun load(songs: List<Song>, shuffleSongs: List<Song>?, queuePosition: Int = 0, completion: (Result<Any?>) -> Unit) {
         if (songs.isEmpty()) {
             Timber.e("Attempted to load empty song list")
             return
@@ -46,8 +46,11 @@ class PlaybackManager(
             return
         }
 
-        queueManager.setShuffleMode(QueueManager.ShuffleMode.Off)
-        queueManager.set(songs, null, queuePosition)
+        if (shuffleSongs == null) {
+            queueManager.setShuffleMode(QueueManager.ShuffleMode.Off)
+        }
+
+        queueManager.setQueue(songs, shuffleSongs, queuePosition)
         playback.load { result ->
             result.onSuccess { didLoadFirst ->
                 if (didLoadFirst) {

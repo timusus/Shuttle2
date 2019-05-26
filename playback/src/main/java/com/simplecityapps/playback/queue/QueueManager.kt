@@ -42,27 +42,24 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
 
     private var currentItem: QueueItem? = null
 
-    fun set(songs: List<Song>, shuffleSongs: List<Song>?, position: Int = 0) {
+    fun setQueue(songs: List<Song>, shuffleSongs: List<Song>? = null, position: Int = 0) {
         if (position < 0) {
             throw IllegalArgumentException("Queue position must be >= 0 (position $position)")
         }
 
-        var currentQueueItem: QueueItem? = null
-        val queueItems = songs.mapIndexed { index, song ->
-            val isCurrent = index == position
-            val queueItem = song.toQueueItem(isCurrent)
-            if (isCurrent) {
-                currentQueueItem = queueItem
-            }
-            queueItem
+        val queueItems = songs.map { song -> song.toQueueItem(false) }
+        baseQueue.setQueue(queueItems)
+
+        shuffleSongs?.map { song ->
+            queueItems.first { queueItem -> queueItem.song == song }
+        }?.let { shuffleQueueItems ->
+            baseQueue.setShuffleQueue(shuffleQueueItems)
+        } ?: baseQueue.generateShuffleQueue()
+
+        baseQueue.getItem(shuffleMode, position)?.let { currentItem ->
+            setCurrentItem(currentItem)
         }
 
-        val shuffleQueueItems = shuffleSongs?.flatMap { song ->
-            queueItems.filter { queueItem -> queueItem.song == song }
-        }?.ifEmpty { null }
-
-        baseQueue.set(queueItems, shuffleQueueItems)
-        currentQueueItem?.let { setCurrentItem(it) }
         queueWatcher.onQueueChanged()
     }
 
@@ -159,7 +156,7 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
         if (this.shuffleMode != shuffleMode) {
             this.shuffleMode = shuffleMode
             if (shuffleMode == ShuffleMode.On) {
-                baseQueue.shuffle()
+                baseQueue.generateShuffleQueue()
             }
             queueWatcher.onQueueChanged()
             queueWatcher.onShuffleChanged()
@@ -235,12 +232,28 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
             }
         }
 
-        fun set(items: List<QueueItem>, shuffleItems: List<QueueItem>? = null) {
-            baseList = items.toMutableList()
-            shuffleItems?.let { shuffleList = shuffleItems.toMutableList() } ?: shuffle()
+        fun getItem(shuffleMode: ShuffleMode, position: Int): QueueItem? {
+            return when (shuffleMode) {
+                ShuffleMode.Off -> baseList.getOrNull(position)
+                ShuffleMode.On -> shuffleList.getOrNull(position)
+            }
         }
 
-        fun shuffle() {
+        fun setQueue(items: List<QueueItem>) {
+            baseList = items.toMutableList()
+        }
+
+        fun setShuffleQueue(items: List<QueueItem>) {
+            shuffleList = items.toMutableList()
+        }
+
+        fun generateShuffleQueue() {
+            if (baseList.isEmpty()) {
+                Timber.e("Cannot generate shuffle queue; base queue is empty")
+                shuffleList = mutableListOf()
+                return
+            }
+
             shuffleList = baseList.shuffled().toMutableList()
 
             // Move the current item to the top of the shuffle list

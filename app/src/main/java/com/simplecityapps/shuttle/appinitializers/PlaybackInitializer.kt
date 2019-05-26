@@ -78,12 +78,11 @@ class PlaybackInitializer @Inject constructor(
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeBy(
                     onSuccess = { songs ->
-                        queueManager.set(
+                        playbackManager.load(
                             songIds.mapNotNull { songId -> songs.firstOrNull { song -> song.id == songId } },
                             shuffleSongIds?.mapNotNull { shuffleSongId -> songs.firstOrNull { song -> song.id == shuffleSongId } },
                             queuePosition
-                        )
-                        playbackManager.load { result ->
+                        ) { result ->
                             result.onFailure { error -> Timber.e("Failed to load playback after reloading queue. Error: $error") }
                             result.onSuccess { playbackManager.seekTo(seekPosition) }
                         }
