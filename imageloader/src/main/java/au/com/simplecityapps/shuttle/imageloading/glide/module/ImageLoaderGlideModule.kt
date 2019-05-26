@@ -9,6 +9,7 @@ import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.TagLibSongL
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.artwork.AlbumArtistArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.artwork.AlbumArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.artwork.SongArtworkModelLoader
+import com.bumptech.glide.BuildConfig
 import com.bumptech.glide.Glide
 import com.bumptech.glide.GlideBuilder
 import com.bumptech.glide.Registry
@@ -58,6 +59,8 @@ class ImageLoaderGlideModule : AppGlideModule() {
     override fun applyOptions(context: Context, builder: GlideBuilder) {
         super.applyOptions(context, builder)
 
-        builder.setLogLevel(Log.INFO)
+        if (BuildConfig.DEBUG) {
+            builder.setLogLevel(Log.INFO)
+        }
     }
 }
