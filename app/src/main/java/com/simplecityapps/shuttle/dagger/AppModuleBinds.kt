@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.dagger
 import android.app.Application
 import com.simplecityapps.shuttle.ShuttleApplication
 import com.simplecityapps.shuttle.appinitializers.AppInitializer
+import com.simplecityapps.shuttle.appinitializers.CrashlyticsInitializer
 import com.simplecityapps.shuttle.appinitializers.PlaybackInitializer
 import com.simplecityapps.shuttle.appinitializers.TimberInitializer
 import dagger.Binds
@@ -14,6 +15,10 @@ abstract class AppModuleBinds {
 
     @Binds
     abstract fun provideApplication(bind: ShuttleApplication): Application
+
+    @Binds
+    @IntoSet
+    abstract fun provideCrashlyticsInitializer(bind: CrashlyticsInitializer): AppInitializer
 
     @Binds
     @IntoSet
