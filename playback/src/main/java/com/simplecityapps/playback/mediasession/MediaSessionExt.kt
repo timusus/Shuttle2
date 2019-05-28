@@ -26,9 +26,9 @@ fun QueueManager.RepeatMode.toRepeatMode(): Int {
 
 fun Int.toShuffleMode(): QueueManager.ShuffleMode {
     return when (this) {
-        PlaybackStateCompat.SHUFFLE_MODE_ALL -> return QueueManager.ShuffleMode.On
-        PlaybackStateCompat.SHUFFLE_MODE_NONE -> return QueueManager.ShuffleMode.Off
-        else -> return QueueManager.ShuffleMode.Off
+        PlaybackStateCompat.SHUFFLE_MODE_ALL -> QueueManager.ShuffleMode.On
+        PlaybackStateCompat.SHUFFLE_MODE_NONE -> QueueManager.ShuffleMode.Off
+        else -> QueueManager.ShuffleMode.Off
     }
 }
 
