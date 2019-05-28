@@ -3,7 +3,6 @@ package com.simplecityapps.shuttle.dagger
 import android.content.SharedPreferences
 import com.simplecityapps.mediaprovider.repository.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.AlbumRepository
-import com.simplecityapps.mediaprovider.repository.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.NoiseManager
 import com.simplecityapps.playback.PlaybackManager
@@ -39,8 +38,6 @@ interface CoreComponent {
     fun getAlbumRepository(): AlbumRepository
 
     fun getAlbumArtistRepository(): AlbumArtistRepository
-
-    fun getPlaylistRepository(): PlaylistRepository
 
     fun getOkHttpClient(): OkHttpClient
 
