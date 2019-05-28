@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.dagger
 
-import au.com.simplecityapps.shuttle.imageloading.dagger.ImageLoaderModule
 import com.simplecityapps.playback.dagger.PlaybackServiceModule
 import com.simplecityapps.shuttle.ShuttleApplication
 import dagger.BindsInstance
@@ -13,7 +12,6 @@ import dagger.android.AndroidInjectionModule
         AppAssistedModule::class,
         AppModule::class,
         MainActivityModule::class,
-        ImageLoaderModule::class,
         PlaybackServiceModule::class
     ], dependencies = [
         CoreComponent::class
@@ -31,5 +29,4 @@ interface AppComponent {
     }
 
     fun inject(shuttleApplication: ShuttleApplication)
-
 }

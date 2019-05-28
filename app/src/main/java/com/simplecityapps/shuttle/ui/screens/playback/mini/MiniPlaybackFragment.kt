@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
@@ -17,7 +18,7 @@ class MiniPlaybackFragment : Fragment(), Injectable, MiniPlayerContract.View {
 
     @Inject lateinit var presenter: MiniPlayerPresenter
 
-    @Inject lateinit var imageLoader: ArtworkImageLoader
+    private lateinit var imageLoader: ArtworkImageLoader
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_mini_playback, container, false)
@@ -25,6 +26,8 @@ class MiniPlaybackFragment : Fragment(), Injectable, MiniPlayerContract.View {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        imageLoader = GlideImageLoader(this)
 
         presenter.bindView(this)
 

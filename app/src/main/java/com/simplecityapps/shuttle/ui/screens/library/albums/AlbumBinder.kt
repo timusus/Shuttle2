@@ -53,6 +53,7 @@ class AlbumBinder(
                 && album.albumArtistName == (other as? AlbumBinder)?.album?.albumArtistName
     }
 
+
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<AlbumBinder>(itemView) {
 
         init {

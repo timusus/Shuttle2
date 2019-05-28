@@ -19,6 +19,7 @@ import androidx.transition.Transition
 import androidx.transition.TransitionInflater
 import androidx.transition.TransitionListenerAdapter
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.AlbumArtist
@@ -41,7 +42,7 @@ class AlbumArtistDetailFragment :
 
     @Inject lateinit var presenterFactory: AlbumArtistDetailPresenter.Factory
 
-    @Inject lateinit var imageLoader: ArtworkImageLoader
+    private lateinit var imageLoader: ArtworkImageLoader
 
     private lateinit var presenter: AlbumArtistDetailPresenter
 
@@ -91,6 +92,8 @@ class AlbumArtistDetailFragment :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        imageLoader = GlideImageLoader(this)
 
         handler.postDelayed(1000) {
             startPostponedEnterTransition() // In case our Glide load takes too long

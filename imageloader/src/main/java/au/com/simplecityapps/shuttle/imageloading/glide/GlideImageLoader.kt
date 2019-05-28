@@ -1,15 +1,17 @@
 package au.com.simplecityapps.shuttle.imageloading.glide
 
-import android.content.Context
+import android.app.Activity
 import android.graphics.drawable.Drawable
 import android.widget.ImageView
 import androidx.annotation.DrawableRes
+import androidx.fragment.app.Fragment
 import au.com.simplecityapps.R
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.CompletionHandler
 import au.com.simplecityapps.shuttle.imageloading.glide.module.GlideApp
-import au.com.simplecityapps.shuttle.imageloading.glide.module.GlideRequest
 import com.bumptech.glide.Priority
+import com.bumptech.glide.RequestBuilder
+import com.bumptech.glide.RequestManager
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.MultiTransformation
 import com.bumptech.glide.load.engine.GlideException
@@ -30,6 +32,16 @@ class GlideImageLoader : ArtworkImageLoader {
         object Failure : LoadResult()
     }
 
+    private var requestManager: RequestManager
+
+    constructor(fragment: Fragment) {
+        this.requestManager = GlideApp.with(fragment)
+    }
+
+    constructor(activity: Activity) {
+        this.requestManager = GlideApp.with(activity)
+    }
+
     override fun loadArtwork(imageView: ImageView, albumArtist: AlbumArtist, vararg options: ArtworkImageLoader.Options, completionHandler: CompletionHandler) {
         loadArtwork(imageView, albumArtist as Any, *options, completionHandler = completionHandler)
     }
@@ -45,9 +57,30 @@ class GlideImageLoader : ArtworkImageLoader {
     @DrawableRes
     var placeHolderResId: Int = R.drawable.ic_placeholder_light
 
-    fun getRequestBuilder(context: Context, vararg options: ArtworkImageLoader.Options): GlideRequest<Drawable> {
-        val glideRequest = GlideApp
-            .with(context)
+    private fun <T> loadArtwork(imageView: ImageView, `object`: T, vararg options: ArtworkImageLoader.Options, completionHandler: CompletionHandler) {
+        val glideRequest = getRequestBuilder(*options)
+
+        completionHandler?.let {
+            glideRequest.addListener(object : RequestListener<Drawable> {
+                override fun onLoadFailed(e: GlideException?, model: Any?, target: Target<Drawable>?, isFirstResource: Boolean): Boolean {
+                    completionHandler(LoadResult.Failure)
+                    return false
+                }
+
+                override fun onResourceReady(resource: Drawable?, model: Any?, target: Target<Drawable>?, dataSource: DataSource?, isFirstResource: Boolean): Boolean {
+                    completionHandler(LoadResult.Success)
+                    return false
+                }
+            })
+        }
+
+        glideRequest
+            .load(`object`)
+            .into(imageView)
+    }
+
+    private fun getRequestBuilder(vararg options: ArtworkImageLoader.Options): RequestBuilder<Drawable> {
+        val glideRequest = requestManager
             .asDrawable()
             .placeholder(placeHolderResId)
 
@@ -76,31 +109,7 @@ class GlideImageLoader : ArtworkImageLoader {
         return glideRequest
     }
 
-    private fun <T> loadArtwork(imageView: ImageView, `object`: T, vararg options: ArtworkImageLoader.Options, completionHandler: CompletionHandler) {
-        val glideRequest = getRequestBuilder(imageView.context, *options)
-
-        completionHandler?.let {
-            glideRequest.addListener(object : RequestListener<Drawable> {
-                override fun onLoadFailed(e: GlideException?, model: Any?, target: Target<Drawable>?, isFirstResource: Boolean): Boolean {
-                    completionHandler(LoadResult.Failure)
-                    return false
-                }
-
-                override fun onResourceReady(resource: Drawable?, model: Any?, target: Target<Drawable>?, dataSource: DataSource?, isFirstResource: Boolean): Boolean {
-                    completionHandler(LoadResult.Success)
-                    return false
-                }
-            })
-        }
-
-        glideRequest
-            .load(`object`)
-            .into(imageView)
-    }
-
     override fun clear(imageView: ImageView) {
-        GlideApp
-            .with(imageView.context)
-            .clear(imageView)
+        requestManager.clear(imageView)
     }
 }

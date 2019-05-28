@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.shuttle.R
@@ -26,10 +27,9 @@ class AlbumArtistListFragment :
 
     private val adapter = SectionedAdapter()
 
+    private lateinit var imageLoader: ArtworkImageLoader
+
     @Inject lateinit var presenter: AlbumArtistListPresenter
-
-    @Inject lateinit var imageLoader: ArtworkImageLoader
-
 
     // Lifecycle
 
@@ -39,6 +39,8 @@ class AlbumArtistListFragment :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        imageLoader = GlideImageLoader(this)
 
         recyclerView.adapter = adapter
         recyclerView.setRecyclerListener(RecyclerListener())

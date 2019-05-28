@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.shuttle.R
@@ -28,7 +29,7 @@ class AlbumListFragment :
 
     @Inject lateinit var presenter: AlbumListPresenter
 
-    @Inject lateinit var imageLoader: ArtworkImageLoader
+    private lateinit var imageLoader: ArtworkImageLoader
 
 
     // Lifecycle
@@ -39,6 +40,8 @@ class AlbumListFragment :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        imageLoader = GlideImageLoader(this)
 
         recyclerView.adapter = adapter
         recyclerView.setRecyclerListener(RecyclerListener())

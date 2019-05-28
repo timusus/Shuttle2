@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.playback.queue.QueueItem
@@ -24,7 +25,7 @@ class QueueFragment : Fragment(), Injectable, QueueContract.View {
 
     private val queueAdapter = RecyclerAdapter()
 
-    @Inject lateinit var imageLoader: ArtworkImageLoader
+    private lateinit var imageLoader: ArtworkImageLoader
 
     @Inject lateinit var presenter: QueuePresenter
 
@@ -37,6 +38,8 @@ class QueueFragment : Fragment(), Injectable, QueueContract.View {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        imageLoader = GlideImageLoader(this)
 
         recyclerView.adapter = queueAdapter
         recyclerView.setRecyclerListener(RecyclerListener())

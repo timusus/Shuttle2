@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
@@ -18,7 +19,7 @@ class HistoryFragment : Fragment(), Injectable, HistoryContract.View, SongBinder
 
     @Inject lateinit var presenter: HistoryPresenter
 
-    @Inject lateinit var imageLoader: ArtworkImageLoader
+    private lateinit var imageLoader: ArtworkImageLoader
 
     private val adapter = RecyclerAdapter()
 
@@ -28,6 +29,8 @@ class HistoryFragment : Fragment(), Injectable, HistoryContract.View, SongBinder
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        imageLoader = GlideImageLoader(this)
 
         recyclerView.adapter = adapter
 

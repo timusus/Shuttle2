@@ -11,6 +11,7 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.PagerSnapHelper
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.mediaprovider.model.Song
@@ -36,7 +37,7 @@ class PlaybackFragment :
 
     @Inject lateinit var presenter: PlaybackPresenter
 
-    @Inject lateinit var imageLoader: ArtworkImageLoader
+    private lateinit var imageLoader: ArtworkImageLoader
 
     private val adapter = RecyclerAdapter()
 
@@ -51,6 +52,8 @@ class PlaybackFragment :
         super.onViewCreated(view, savedInstanceState)
 
         presenter.bindView(this)
+
+        imageLoader = GlideImageLoader(this)
 
         playPauseButton.setOnClickListener { presenter.togglePlayback() }
         shuffleButton.setOnClickListener { presenter.toggleShuffle() }
