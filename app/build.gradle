@@ -11,7 +11,7 @@ plugins {
 ext {
     versionMajor = 0
     versionMinor = 0
-    versionPatch = 10
+    versionPatch = 11
 }
 
 android {
