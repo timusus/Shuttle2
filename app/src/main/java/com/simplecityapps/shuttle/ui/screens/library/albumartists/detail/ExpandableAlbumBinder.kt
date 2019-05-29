@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.library.albumartists.detail
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
@@ -28,12 +29,11 @@ class ExpandableAlbumBinder(
     SectionViewBinder {
 
     interface Listener {
-
         fun onSongClicked(song: Song, songs: List<Song>)
-
         fun onArtworkClicked(album: Album, viewHolder: ViewHolder)
-
         fun onItemClicked(position: Int, expanded: Boolean)
+        fun onOverflowClicked(view: View, album: Album) {}
+        fun onOverflowClicked(view: View, song: Song) {}
     }
 
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
@@ -75,7 +75,9 @@ class ExpandableAlbumBinder(
         private val title: TextView = itemView.findViewById(R.id.title)
         private val subtitle: TextView = itemView.findViewById(R.id.subtitle)
         val imageView: ImageView = itemView.findViewById(R.id.imageView)
+        private val overflowButton: ImageButton = itemView.findViewById(R.id.overflowButton)
         private val recyclerView: RecyclerView = itemView.findViewById(R.id.recyclerView)
+        private val adapter: RecyclerAdapter = RecyclerAdapter()
 
         init {
             itemView.setOnClickListener {
@@ -83,9 +85,8 @@ class ExpandableAlbumBinder(
             }
             imageView.increaseTouchableArea(8)
             imageView.setOnClickListener { viewBinder?.listener?.onArtworkClicked(viewBinder!!.album, this) }
+            overflowButton.setOnClickListener { view -> viewBinder?.listener?.onOverflowClicked(view, viewBinder!!.album) }
         }
-
-        private val adapter = RecyclerAdapter()
 
         override fun bind(viewBinder: ExpandableAlbumBinder, isPartial: Boolean) {
             super.bind(viewBinder, isPartial)
@@ -122,8 +123,13 @@ class ExpandableAlbumBinder(
         }
 
         private val songBinderListener = object : DetailSongBinder.Listener {
+
             override fun onSongClicked(song: Song) {
                 viewBinder?.listener?.onSongClicked(song, viewBinder!!.songs)
+            }
+
+            override fun onOverflowClicked(view: View, song: Song) {
+                viewBinder?.listener?.onOverflowClicked(view, song)
             }
         }
 

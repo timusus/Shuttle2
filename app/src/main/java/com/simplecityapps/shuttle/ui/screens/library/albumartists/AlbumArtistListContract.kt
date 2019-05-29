@@ -4,7 +4,7 @@ import com.simplecityapps.mediaprovider.model.AlbumArtist
 
 interface AlbumArtistListContract {
 
-    interface View {
+    interface View  {
         fun setAlbumArtists(albumArtists: List<AlbumArtist>)
     }
 

@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.library.albums
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
@@ -21,6 +22,8 @@ class AlbumBinder(
 
     interface Listener {
         fun onAlbumClicked(album: Album, viewHolder: ViewHolder)
+        fun onOverflowClicked(view: View, album: Album) {}
+
     }
 
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
@@ -56,13 +59,17 @@ class AlbumBinder(
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<AlbumBinder>(itemView) {
 
-        init {
-            itemView.setOnClickListener { viewBinder?.listener?.onAlbumClicked(viewBinder!!.album, this) }
-        }
-
         private val title: TextView = itemView.findViewById(R.id.title)
         private val subtitle: TextView = itemView.findViewById(R.id.subtitle)
         val imageView: ImageView = itemView.findViewById(R.id.imageView)
+        private val overflowButton: ImageButton = itemView.findViewById(R.id.overflowButton)
+
+        init {
+            itemView.setOnClickListener { viewBinder?.listener?.onAlbumClicked(viewBinder!!.album, this) }
+            overflowButton.setOnClickListener {
+                viewBinder?.listener?.onOverflowClicked(it, viewBinder!!.album)
+            }
+        }
 
         override fun bind(viewBinder: AlbumBinder, isPartial: Boolean) {
             super.bind(viewBinder, isPartial)

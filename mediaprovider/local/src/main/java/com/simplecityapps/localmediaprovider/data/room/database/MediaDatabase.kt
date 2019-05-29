@@ -4,21 +4,19 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.simplecityapps.localmediaprovider.data.room.Converters
-import com.simplecityapps.localmediaprovider.data.room.dao.AlbumArtistDataDao
-import com.simplecityapps.localmediaprovider.data.room.dao.AlbumDataDao
-import com.simplecityapps.localmediaprovider.data.room.dao.SongDataDao
-import com.simplecityapps.localmediaprovider.data.room.entity.AlbumArtistData
-import com.simplecityapps.localmediaprovider.data.room.entity.AlbumData
-import com.simplecityapps.localmediaprovider.data.room.entity.SongData
+import com.simplecityapps.localmediaprovider.data.room.dao.*
+import com.simplecityapps.localmediaprovider.data.room.entity.*
 
 @Database(
     entities = [
         SongData::class,
         AlbumArtistData::class,
-        AlbumData::class
+        AlbumData::class,
+        PlaylistData::class,
+        PlaylistSongJoin::class
     ],
-    version = 23,
-    exportSchema = false
+    version = 24,
+    exportSchema = true
 )
 @TypeConverters(Converters::class)
 abstract class MediaDatabase : RoomDatabase() {
@@ -28,4 +26,8 @@ abstract class MediaDatabase : RoomDatabase() {
     abstract fun albumDataDao(): AlbumDataDao
 
     abstract fun albumArtistDataDao(): AlbumArtistDataDao
+
+    abstract fun playlistSongJoinDataDao(): PlaylistSongJoinDao
+
+    abstract fun playlistDataDao(): PlaylistDataDao
 }

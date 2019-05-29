@@ -11,8 +11,7 @@ import timber.log.Timber
 abstract class AlbumDataDao {
 
     @Query(
-        "SELECT " +
-                "albums.*, " +
+        "SELECT albums.*, " +
                 "album_artists.name as albumArtistName, " +
                 "count(distinct songs.id) as songCount, " +
                 "sum(distinct songs.duration) as duration, " +
@@ -23,6 +22,7 @@ abstract class AlbumDataDao {
                 "GROUP BY albums.id " +
                 "ORDER BY albums.name;"
     )
+    @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
     abstract fun getAll(): Flowable<List<Album>>
 
     @Insert(onConflict = REPLACE)

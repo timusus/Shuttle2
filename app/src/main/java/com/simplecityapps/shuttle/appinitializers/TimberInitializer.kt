@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.appinitializers
 
 import android.app.Application
+import android.util.Log
 import com.crashlytics.android.BuildConfig
 import com.crashlytics.android.Crashlytics
 import com.simplecityapps.shuttle.debug.DebugLoggingTree
@@ -26,10 +27,14 @@ class TimberInitializer @Inject constructor(
 class CrashReportingTree : Timber.Tree() {
 
     override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
-        Crashlytics.log(priority, tag, message)
+        try {
+            Crashlytics.log(priority, tag, message)
 
-        t?.let { throwable ->
-            Crashlytics.logException(throwable)
+            t?.let { throwable ->
+                Crashlytics.logException(throwable)
+            }
+        } catch (error: Exception) {
+            Log.e("TimberInit", "Failed to log to CrashReportingTree. \n[ tag: $tag\nmessage: $message. ]", error)
         }
     }
 }

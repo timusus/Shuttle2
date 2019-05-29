@@ -30,6 +30,10 @@ import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.DetailImageAnimationHelper
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragmentArgs
+import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
+import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
+import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
+import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import dagger.android.support.AndroidSupportInjection
 import kotlinx.android.synthetic.main.fragment_album_artist_detail.*
 import javax.inject.Inject
@@ -38,15 +42,18 @@ class AlbumArtistDetailFragment :
     Fragment(),
     Injectable,
     AlbumArtistDetailContract.View,
-    ExpandableAlbumBinder.Listener {
+    ExpandableAlbumBinder.Listener,
+    CreatePlaylistDialogFragment.Listener {
 
     @Inject lateinit var presenterFactory: AlbumArtistDetailPresenter.Factory
+
+    @Inject lateinit var playlistMenuPresenter: PlaylistMenuPresenter
 
     private lateinit var imageLoader: ArtworkImageLoader
 
     private lateinit var presenter: AlbumArtistDetailPresenter
 
-    private val adapter = RecyclerAdapter()
+    private lateinit var adapter: RecyclerAdapter
 
     private lateinit var animationHelper: DetailImageAnimationHelper
 
@@ -56,6 +63,10 @@ class AlbumArtistDetailFragment :
 
     private var isFirstLoad = true
 
+    private lateinit var albumArtist: AlbumArtist
+
+    private lateinit var playlistMenuView: PlaylistMenuView
+
 
     // Lifecycle
 
@@ -64,7 +75,8 @@ class AlbumArtistDetailFragment :
 
         AndroidSupportInjection.inject(this)
 
-        presenter = presenterFactory.create(AlbumArtistDetailFragmentArgs.fromBundle(arguments!!).albumArtistId)
+        albumArtist = AlbumArtistDetailFragmentArgs.fromBundle(arguments!!).albumArtist
+        presenter = presenterFactory.create(albumArtist)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -93,6 +105,10 @@ class AlbumArtistDetailFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        playlistMenuView = PlaylistMenuView(context!!, playlistMenuPresenter, childFragmentManager)
+
+        adapter = RecyclerAdapter()
+
         imageLoader = GlideImageLoader(this)
 
         handler.postDelayed(1000) {
@@ -100,10 +116,9 @@ class AlbumArtistDetailFragment :
         }
 
         toolbar?.let { toolbar ->
-            toolbar.setNavigationOnClickListener {
-                NavHostFragment.findNavController(this).popBackStack()
-            }
+            toolbar.setNavigationOnClickListener { NavHostFragment.findNavController(this).popBackStack() }
             MenuInflater(context).inflate(R.menu.menu_album_artist_detail, toolbar.menu)
+            playlistMenuView.createPlaylistMenu(toolbar.menu)
             toolbar.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
                     R.id.shuffle -> {
@@ -111,11 +126,22 @@ class AlbumArtistDetailFragment :
                         true
                     }
                     else -> {
-                        false
+                        playlistMenuView.handleMenuItem(menuItem, PlaylistData.AlbumArtists(albumArtist))
                     }
                 }
             }
         }
+
+        toolbar.title = albumArtist.name
+        toolbar.subtitle = "${albumArtist.albumCount} Albums • ${albumArtist.songCount} Songs"
+
+        dummyImage.transitionName = "album_artist_${albumArtist.name}"
+
+        imageLoader.loadArtwork(dummyImage, albumArtist, ArtworkImageLoader.Options.CircleCrop, ArtworkImageLoader.Options.Priority(ArtworkImageLoader.Options.Priority.Priority.Max)) {
+            maybeStartPostponedEnterTransition()
+        }
+
+        imageLoader.loadArtwork(heroImage, albumArtist, ArtworkImageLoader.Options.Priority(ArtworkImageLoader.Options.Priority.Priority.Max), completionHandler = null)
 
         recyclerView.adapter = adapter
 
@@ -128,6 +154,7 @@ class AlbumArtistDetailFragment :
         }
 
         presenter.bindView(this)
+        playlistMenuPresenter.bindView(playlistMenuView)
 
         isFirstLoad = false
 
@@ -138,6 +165,7 @@ class AlbumArtistDetailFragment :
         adapter.dispose()
 
         presenter.unbindView()
+        playlistMenuPresenter.unbindView()
 
         recyclerView.clearAdapterOnDetach()
 
@@ -166,19 +194,6 @@ class AlbumArtistDetailFragment :
         })
     }
 
-    override fun setCurrentAlbumArtist(albumArtist: AlbumArtist) {
-        toolbar.title = albumArtist.name
-        toolbar.subtitle = "${albumArtist.albumCount} Albums • ${albumArtist.songCount} Songs"
-
-        dummyImage.transitionName = "album_artist_${albumArtist.name}"
-
-        imageLoader.loadArtwork(dummyImage, albumArtist, ArtworkImageLoader.Options.CircleCrop, ArtworkImageLoader.Options.Priority(ArtworkImageLoader.Options.Priority.Priority.Max)) {
-            maybeStartPostponedEnterTransition()
-        }
-
-        imageLoader.loadArtwork(heroImage, albumArtist, ArtworkImageLoader.Options.Priority(ArtworkImageLoader.Options.Priority.Priority.Max), completionHandler = null)
-    }
-
     override fun showLoadError(error: Error) {
         Toast.makeText(context, error.userDescription(), Toast.LENGTH_LONG).show()
     }
@@ -189,7 +204,7 @@ class AlbumArtistDetailFragment :
     override fun onArtworkClicked(album: Album, viewHolder: ExpandableAlbumBinder.ViewHolder) {
         view?.findNavController()?.navigate(
             R.id.action_albumArtistDetailFragment_to_albumDetailFragment,
-            AlbumDetailFragmentArgs(album.id).toBundle(),
+            AlbumDetailFragmentArgs(album).toBundle(),
             null,
             FragmentNavigatorExtras(viewHolder.imageView to viewHolder.imageView.transitionName)
         )
@@ -203,5 +218,20 @@ class AlbumArtistDetailFragment :
 
     override fun onSongClicked(song: Song, songs: List<Song>) {
         presenter.onSongClicked(song, songs)
+    }
+
+    override fun onOverflowClicked(view: View, song: Song) {
+        playlistMenuView.createPlaylistPopupMenu(view, PlaylistData.Songs(song))
+    }
+
+    override fun onOverflowClicked(view: View, album: Album) {
+        playlistMenuView.createPlaylistPopupMenu(view, PlaylistData.Albums(album))
+    }
+
+
+    // CreatePlaylistDialogFragment.Listener Implementation
+
+    override fun onSave(text: String, playlistData: PlaylistData) {
+        playlistMenuPresenter.createPlaylist(text, playlistData)
     }
 }

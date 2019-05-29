@@ -3,7 +3,18 @@
 
     <item
         android:id="@+id/shuffle"
-        android:icon="@drawable/ic_shuffle_black_24dp"
         android:title="Shuffle" />
+
+    <item android:title="Add to">
+        <menu>
+            <item
+                android:id="@+id/playlist"
+                android:title="Playlist">
+
+                <menu />
+
+            </item>
+        </menu>
+    </item>
 
 </menu>

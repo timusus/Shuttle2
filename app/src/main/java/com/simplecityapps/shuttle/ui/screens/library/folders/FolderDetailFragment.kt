@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProviders
 import androidx.navigation.findNavController
+import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
@@ -25,7 +26,7 @@ class FolderDetailFragment : Fragment(), FolderBinder.Listener {
 
     private val compositeDisposable = CompositeDisposable()
 
-    private val adapter = SectionedAdapter()
+    private lateinit var adapter: RecyclerAdapter
 
     private lateinit var path: String
 
@@ -53,11 +54,13 @@ class FolderDetailFragment : Fragment(), FolderBinder.Listener {
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(com.simplecityapps.shuttle.R.layout.fragment_folder_detail, container, false)
+        return inflater.inflate(R.layout.fragment_folder_detail, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        adapter = SectionedAdapter()
 
         findToolbarHost()?.getToolbar()?.let { toolbar ->
             toolbar.subtitle = path

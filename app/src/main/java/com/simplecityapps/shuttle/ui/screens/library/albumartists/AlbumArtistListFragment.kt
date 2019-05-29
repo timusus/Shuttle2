@@ -7,8 +7,8 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
-import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
+import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.shuttle.R
@@ -16,6 +16,10 @@ import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragmentArgs
+import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
+import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
+import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
+import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import kotlinx.android.synthetic.main.fragment_folder_detail.*
 import javax.inject.Inject
 
@@ -23,15 +27,26 @@ class AlbumArtistListFragment :
     Fragment(),
     Injectable,
     AlbumArtistBinder.Listener,
-    AlbumArtistListContract.View {
+    AlbumArtistListContract.View,
+    CreatePlaylistDialogFragment.Listener {
 
-    private val adapter = SectionedAdapter()
+    private lateinit var adapter: RecyclerAdapter
 
-    private lateinit var imageLoader: ArtworkImageLoader
+    private lateinit var imageLoader: GlideImageLoader
 
     @Inject lateinit var presenter: AlbumArtistListPresenter
 
+    @Inject lateinit var playlistMenuPresenter: PlaylistMenuPresenter
+
+    private lateinit var playlistMenuView: PlaylistMenuView
+
     // Lifecycle
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        adapter = SectionedAdapter()
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_album_artists, container, false)
@@ -40,12 +55,15 @@ class AlbumArtistListFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        playlistMenuView = PlaylistMenuView(context!!, playlistMenuPresenter, childFragmentManager)
+
         imageLoader = GlideImageLoader(this)
 
         recyclerView.adapter = adapter
         recyclerView.setRecyclerListener(RecyclerListener())
 
         presenter.bindView(this)
+        playlistMenuPresenter.bindView(playlistMenuView)
     }
 
     override fun onResume() {
@@ -56,6 +74,7 @@ class AlbumArtistListFragment :
 
     override fun onDestroyView() {
         presenter.unbindView()
+        playlistMenuPresenter.unbindView()
         recyclerView.clearAdapterOnDetach()
         super.onDestroyView()
     }
@@ -68,15 +87,26 @@ class AlbumArtistListFragment :
         })
     }
 
+
     // AlbumArtistBinder.Listener Implementation
 
     override fun onAlbumArtistClicked(albumArtist: AlbumArtist, viewHolder: AlbumArtistBinder.ViewHolder) {
         findNavController().navigate(
             R.id.action_libraryFragment_to_albumArtistDetailFragment,
-            AlbumArtistDetailFragmentArgs(albumArtist.id).toBundle(),
+            AlbumArtistDetailFragmentArgs(albumArtist).toBundle(),
             null,
             FragmentNavigatorExtras(viewHolder.imageView to viewHolder.imageView.transitionName)
         )
+    }
+
+    override fun onOverflowClicked(view: View, albumArtist: AlbumArtist) {
+        playlistMenuView.createPlaylistPopupMenu(view, PlaylistData.AlbumArtists(albumArtist))
+    }
+
+    // CreatePlaylistDialogFragment.Listener
+
+    override fun onSave(text: String, playlistData: PlaylistData) {
+        playlistMenuView.onSave(text, playlistData)
     }
 
 

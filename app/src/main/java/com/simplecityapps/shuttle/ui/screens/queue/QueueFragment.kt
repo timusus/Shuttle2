@@ -23,7 +23,7 @@ import javax.inject.Inject
 
 class QueueFragment : Fragment(), Injectable, QueueContract.View {
 
-    private val queueAdapter = RecyclerAdapter()
+    private lateinit var queueAdapter: RecyclerAdapter
 
     private lateinit var imageLoader: ArtworkImageLoader
 
@@ -31,6 +31,12 @@ class QueueFragment : Fragment(), Injectable, QueueContract.View {
 
 
     // Lifecycle
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        queueAdapter = RecyclerAdapter()
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_queue, container, false)

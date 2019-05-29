@@ -96,4 +96,15 @@
         <item name="tabTextAppearance">@style/TextAppearance.Shuttle.TabItem</item>
     </style>
 
+    <!-- Overflow Image Button -->
+
+    <style name="Widget.Shuttle.OverflowButton" parent="Widget.AppCompat.ImageButton">
+        <item name="android:layout_width">48dp</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:background">?actionBarItemBackground</item>
+        <item name="android:padding">16dp</item>
+        <item name="android:scaleType">centerInside</item>
+        <item name="srcCompat">@drawable/ic_more_vert_black_24dp</item>
+    </style>
+
 </resources>

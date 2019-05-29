@@ -9,6 +9,7 @@ import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
+import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.shuttle.R
@@ -16,6 +17,10 @@ import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragmentArgs
+import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
+import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
+import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
+import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import kotlinx.android.synthetic.main.fragment_folder_detail.*
 import javax.inject.Inject
 
@@ -23,16 +28,27 @@ class AlbumListFragment :
     Fragment(),
     Injectable,
     AlbumBinder.Listener,
-    AlbumListContract.View {
+    AlbumListContract.View,
+    CreatePlaylistDialogFragment.Listener {
 
-    private val adapter = SectionedAdapter()
+    private lateinit var adapter: RecyclerAdapter
 
     @Inject lateinit var presenter: AlbumListPresenter
 
+    @Inject lateinit var playlistMenuPresenter: PlaylistMenuPresenter
+
     private lateinit var imageLoader: ArtworkImageLoader
+
+    private lateinit var playlistMenuView: PlaylistMenuView
 
 
     // Lifecycle
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        adapter = SectionedAdapter()
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_albums, container, false)
@@ -41,22 +57,27 @@ class AlbumListFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        playlistMenuView = PlaylistMenuView(context!!, playlistMenuPresenter, childFragmentManager)
+
         imageLoader = GlideImageLoader(this)
 
         recyclerView.adapter = adapter
         recyclerView.setRecyclerListener(RecyclerListener())
 
         presenter.bindView(this)
+        playlistMenuPresenter.bindView(playlistMenuView)
     }
 
     override fun onResume() {
         super.onResume()
 
         presenter.loadAlbums()
+        playlistMenuPresenter.bindView(playlistMenuView)
     }
 
     override fun onDestroyView() {
         presenter.unbindView()
+        playlistMenuPresenter.unbindView()
         recyclerView.clearAdapterOnDetach()
         super.onDestroyView()
     }
@@ -74,10 +95,20 @@ class AlbumListFragment :
     override fun onAlbumClicked(album: Album, viewHolder: AlbumBinder.ViewHolder) {
         findNavController().navigate(
             R.id.action_libraryFragment_to_albumDetailFragment,
-            AlbumDetailFragmentArgs(album.id).toBundle(),
+            AlbumDetailFragmentArgs(album).toBundle(),
             null,
             FragmentNavigatorExtras(viewHolder.imageView to viewHolder.imageView.transitionName)
         )
+    }
+
+    override fun onOverflowClicked(view: View, album: Album) {
+        playlistMenuView.createPlaylistPopupMenu(view, PlaylistData.Albums(album))
+    }
+
+    // CreatePlaylistDialogFragment.Listener Implementation
+
+    override fun onSave(text: String, playlistData: PlaylistData) {
+        playlistMenuPresenter.createPlaylist(text, playlistData)
     }
 
 

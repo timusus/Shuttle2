@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.library.songs
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
@@ -21,6 +22,7 @@ class SongBinder(
 
     interface Listener {
         fun onSongClicked(song: Song)
+        fun onOverflowClicked(view: View, song: Song) {}
     }
 
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
@@ -51,13 +53,17 @@ class SongBinder(
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<SongBinder>(itemView) {
 
-        private val title = itemView.findViewById<TextView>(R.id.title)
-        private val subtitle = itemView.findViewById<TextView>(R.id.subtitle)
-        private val imageView = itemView.findViewById<ImageView>(R.id.imageView)
+        private val title: TextView = itemView.findViewById(R.id.title)
+        private val subtitle: TextView = itemView.findViewById(R.id.subtitle)
+        private val imageView: ImageView = itemView.findViewById(R.id.imageView)
+        private val overflowButton: ImageButton = itemView.findViewById(R.id.overflowButton)
 
         init {
             itemView.setOnClickListener {
                 viewBinder?.listener?.onSongClicked(viewBinder!!.song)
+            }
+            overflowButton.setOnClickListener {
+                viewBinder?.listener?.onOverflowClicked(it, viewBinder!!.song)
             }
         }
 

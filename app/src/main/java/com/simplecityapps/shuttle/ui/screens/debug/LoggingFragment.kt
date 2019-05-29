@@ -19,13 +19,9 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
 
     @Inject lateinit var debugLoggingTree: DebugLoggingTree
 
-    private val adapter = RecyclerAdapter()
+    private lateinit var adapter: RecyclerAdapter
 
     private var filter: Filter? = null
-
-    init {
-        adapter.loggingEnabled = false
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -39,6 +35,9 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        adapter = RecyclerAdapter()
+        adapter.loggingEnabled = false
 
         debugLoggingTree.addCallback(this)
 

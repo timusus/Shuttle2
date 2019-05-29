@@ -2,10 +2,7 @@ package com.simplecityapps.shuttle.dagger
 
 import android.app.Application
 import com.simplecityapps.shuttle.ShuttleApplication
-import com.simplecityapps.shuttle.appinitializers.AppInitializer
-import com.simplecityapps.shuttle.appinitializers.CrashlyticsInitializer
-import com.simplecityapps.shuttle.appinitializers.PlaybackInitializer
-import com.simplecityapps.shuttle.appinitializers.TimberInitializer
+import com.simplecityapps.shuttle.appinitializers.*
 import dagger.Binds
 import dagger.Module
 import dagger.multibindings.IntoSet
@@ -26,6 +23,9 @@ abstract class AppModuleBinds {
 
     @Binds
     @IntoSet
-    abstract fun providePlaybackInitializer(bind: PlaybackInitializer): AppInitializer
+    abstract fun provideRxDogTagIniitializer(bind: RxDogTagInitializer): AppInitializer
 
+    @Binds
+    @IntoSet
+    abstract fun providePlaybackInitializer(bind: PlaybackInitializer): AppInitializer
 }

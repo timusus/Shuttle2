@@ -7,12 +7,18 @@ import com.simplecityapps.mediaprovider.repository.AlbumArtistQuery
 import com.simplecityapps.mediaprovider.repository.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.predicate
 import io.reactivex.Observable
+import io.reactivex.functions.Consumer
+import timber.log.Timber
 
 class LocalAlbumArtistRepository(private val database: MediaDatabase) : AlbumArtistRepository {
 
     private val albumArtistsRelay: BehaviorRelay<List<AlbumArtist>> by lazy {
         val relay = BehaviorRelay.create<List<AlbumArtist>>()
-        database.albumArtistDataDao().getAll().toObservable().subscribe(relay)
+        database.albumArtistDataDao().getAll().toObservable()
+            .subscribe(
+                relay,
+                Consumer { throwable -> Timber.e(throwable, "Failed to subscribe to album artists relay") }
+            )
         relay
     }
 

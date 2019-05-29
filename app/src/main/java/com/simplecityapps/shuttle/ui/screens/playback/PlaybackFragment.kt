@@ -39,7 +39,7 @@ class PlaybackFragment :
 
     private lateinit var imageLoader: ArtworkImageLoader
 
-    private val adapter = RecyclerAdapter()
+    private lateinit var adapter: RecyclerAdapter
 
 
     // Lifecycle
@@ -51,6 +51,7 @@ class PlaybackFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        adapter = RecyclerAdapter()
         imageLoader = GlideImageLoader(this)
 
         playPauseButton.setOnClickListener { presenter.togglePlayback() }

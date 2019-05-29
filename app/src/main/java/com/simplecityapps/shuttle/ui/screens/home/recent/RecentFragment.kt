@@ -21,7 +21,7 @@ class RecentFragment : Fragment(), Injectable, RecentContract.View, SongBinder.L
 
     private lateinit var imageLoader: ArtworkImageLoader
 
-    private val adapter = RecyclerAdapter()
+    private lateinit var adapter: RecyclerAdapter
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_recent, container, false)
@@ -29,6 +29,8 @@ class RecentFragment : Fragment(), Injectable, RecentContract.View, SongBinder.L
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        adapter = RecyclerAdapter()
 
         imageLoader = GlideImageLoader(this)
 

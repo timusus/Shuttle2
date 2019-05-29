@@ -12,4 +12,5 @@ object ViewTypes {
     const val Log = 7
     const val ExpandableAlbum = 8
     const val DetailSong = 9
+    const val Playlist = 10
 }

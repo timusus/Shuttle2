@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.appinitializers
 
 import android.app.Application
+import android.util.Log
 import javax.inject.Inject
 
 class AppInitializers @Inject constructor(
@@ -8,6 +9,7 @@ class AppInitializers @Inject constructor(
 ) {
     fun init(application: Application) {
         initializers.forEach {
+            Log.i("AppInit", "Initialising ${it::class.java.simpleName}")
             it.init(application)
         }
     }

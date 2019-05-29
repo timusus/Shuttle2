@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.fragment.app.Fragment
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
+import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Song
@@ -16,23 +17,41 @@ import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
+import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
+import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
+import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
+import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import kotlinx.android.synthetic.main.fragment_folder_detail.*
 import javax.inject.Inject
 
-class SongListFragment : Fragment(), Injectable, SongListContract.View {
+class SongListFragment :
+    Fragment(),
+    Injectable,
+    SongListContract.View,
+    CreatePlaylistDialogFragment.Listener {
 
-    private val adapter = object : SectionedAdapter() {
-        override fun getSectionName(viewBinder: ViewBinder?): String {
-            return (viewBinder as? SongBinder)?.song?.albumArtistName?.firstOrNull()?.toString() ?: ""
-        }
-    }
+    private lateinit var adapter: RecyclerAdapter
 
     @Inject lateinit var presenter: SongListPresenter
 
+    @Inject lateinit var playlistMenuPresenter: PlaylistMenuPresenter
+
     private lateinit var imageLoader: ArtworkImageLoader
+
+    private lateinit var playlistMenuView: PlaylistMenuView
 
 
     // Lifecycle
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        adapter = object : SectionedAdapter() {
+            override fun getSectionName(viewBinder: ViewBinder?): String {
+                return (viewBinder as? SongBinder)?.song?.albumArtistName?.firstOrNull()?.toString() ?: ""
+            }
+        }
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_songs, container, false)
@@ -41,20 +60,29 @@ class SongListFragment : Fragment(), Injectable, SongListContract.View {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        playlistMenuView = PlaylistMenuView(context!!, playlistMenuPresenter, childFragmentManager)
+
         imageLoader = GlideImageLoader(this)
 
         recyclerView.adapter = adapter
         recyclerView.setRecyclerListener(RecyclerListener())
 
         presenter.bindView(this)
+        playlistMenuPresenter.bindView(playlistMenuView)
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        presenter.loadSongs()
     }
 
     override fun onDestroyView() {
         presenter.unbindView()
+        playlistMenuPresenter.unbindView()
         recyclerView.clearAdapterOnDetach()
         super.onDestroyView()
     }
-
 
     // SongListContract.View Implementation
 
@@ -68,7 +96,6 @@ class SongListFragment : Fragment(), Injectable, SongListContract.View {
         Toast.makeText(context, error.userDescription(), Toast.LENGTH_LONG).show()
     }
 
-
     // Private
 
     private val songBinderListener = object : SongBinder.Listener {
@@ -76,6 +103,16 @@ class SongListFragment : Fragment(), Injectable, SongListContract.View {
         override fun onSongClicked(song: Song) {
             presenter.onSongClicked(song)
         }
+
+        override fun onOverflowClicked(view: View, song: Song) {
+            playlistMenuView.createPlaylistPopupMenu(view, PlaylistData.Songs(song))
+        }
+    }
+
+    // CreatePlaylistDialogFragment.Listener Implementation
+
+    override fun onSave(text: String, playlistData: PlaylistData) {
+        playlistMenuPresenter.createPlaylist(text, playlistData)
     }
 
 

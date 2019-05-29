@@ -4,7 +4,9 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
+import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.rxkotlin.subscribeBy
+import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
 import java.text.Collator
 import javax.inject.Inject
@@ -17,16 +19,12 @@ class SongListPresenter @Inject constructor(
 
     var songs: List<Song> = emptyList()
 
-    override fun bindView(view: SongListContract.View) {
-        super.bindView(view)
-
-        loadSongs()
-    }
-
     override fun loadSongs() {
         addDisposable(
             songRepository.getSongs()
                 .map { albumArtist -> albumArtist.sortedWith(Comparator { a, b -> Collator.getInstance().compare(a.name, b.name) }) }
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
                 .subscribeBy(
                     onNext = { songs ->
                         this.songs = songs

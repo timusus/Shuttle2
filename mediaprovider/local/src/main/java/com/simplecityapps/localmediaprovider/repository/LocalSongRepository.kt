@@ -15,6 +15,7 @@ import com.simplecityapps.taglib.FileScanner
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
+import io.reactivex.functions.Consumer
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
 import java.util.*
@@ -28,7 +29,11 @@ class LocalSongRepository(
 
     private val songsRelay: BehaviorRelay<List<Song>> by lazy {
         val relay = BehaviorRelay.create<List<Song>>()
-        database.songDataDao().getAllDistinct().toObservable().subscribe(relay)
+        database.songDataDao().getAllDistinct().toObservable()
+            .subscribe(
+                relay,
+                Consumer { throwable -> Timber.e(throwable, "Failed to subscribe to songs relay") }
+            )
         relay
     }
 

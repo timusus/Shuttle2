@@ -5,9 +5,11 @@ import com.simplecityapps.localmediaprovider.data.room.DatabaseProvider
 import com.simplecityapps.localmediaprovider.data.room.database.MediaDatabase
 import com.simplecityapps.localmediaprovider.repository.LocalAlbumArtistRepository
 import com.simplecityapps.localmediaprovider.repository.LocalAlbumRepository
+import com.simplecityapps.localmediaprovider.repository.LocalPlaylistRepository
 import com.simplecityapps.localmediaprovider.repository.LocalSongRepository
 import com.simplecityapps.mediaprovider.repository.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.AlbumRepository
+import com.simplecityapps.mediaprovider.repository.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.taglib.FileScanner
 import dagger.Module
@@ -39,5 +41,11 @@ class RepositoryModule(private val context: Context, private val fileScanner: Fi
     @Singleton
     fun provideAlbumArtistRepository(database: MediaDatabase): AlbumArtistRepository {
         return LocalAlbumArtistRepository(database)
+    }
+
+    @Provides
+    @Singleton
+    fun providePlaylistRepository(database: MediaDatabase): PlaylistRepository {
+        return LocalPlaylistRepository(database)
     }
 }

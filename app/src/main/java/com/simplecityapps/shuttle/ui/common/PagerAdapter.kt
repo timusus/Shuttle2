@@ -1,9 +1,11 @@
 package com.simplecityapps.shuttle.ui.common
 
+import android.annotation.SuppressLint
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentPagerAdapter
 
+@SuppressLint("WrongConstant")
 class PagerAdapter(fragmentManager: FragmentManager) : FragmentPagerAdapter(fragmentManager) {
 
     private val data = linkedMapOf<String, Fragment>()

@@ -17,14 +17,11 @@ data class AlbumData(
     @ColumnInfo(name = "name") val name: String,
     @ColumnInfo(name = "albumArtistId") var albumArtistId: Long = 0
 ) : ContentsComparator<AlbumData> {
-    @PrimaryKey(autoGenerate = true)
-    var id: Long = 0
+    @PrimaryKey(autoGenerate = true) var id: Long = 0
 
-    @Ignore
-    var albumArtistName: String = ""
+    @Ignore var albumArtistName: String = ""
 
-    @Ignore
-    var songs = listOf<SongData>()
+    @Ignore var songs = listOf<SongData>()
 
     override fun areContentsEqual(other: AlbumData): Boolean {
         return name == other.name

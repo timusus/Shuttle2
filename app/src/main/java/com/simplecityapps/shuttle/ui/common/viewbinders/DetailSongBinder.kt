@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.common.viewbinders
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.core.view.isVisible
@@ -21,6 +22,7 @@ class DetailSongBinder(
 
     interface Listener {
         fun onSongClicked(song: Song)
+        fun onOverflowClicked(view: View, song: Song) {}
     }
 
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
@@ -59,11 +61,11 @@ class DetailSongBinder(
         private val titleTextView: TextView = itemView.findViewById(R.id.titleTextView)
         private val durationTextView: TextView = itemView.findViewById(R.id.durationTextView)
         private val progressBar: ProgressBar = itemView.findViewById(R.id.progressBar)
+        private val overflowButton: ImageButton = itemView.findViewById(R.id.overflowButton)
 
         init {
-            itemView.setOnClickListener {
-                viewBinder?.listener?.onSongClicked(viewBinder!!.song)
-            }
+            itemView.setOnClickListener { viewBinder?.listener?.onSongClicked(viewBinder!!.song) }
+            overflowButton.setOnClickListener { view -> viewBinder?.listener?.onOverflowClicked(view, viewBinder!!.song) }
         }
 
         override fun bind(viewBinder: DetailSongBinder, isPartial: Boolean) {

@@ -32,6 +32,9 @@
         <action
             android:id="@+id/action_libraryFragment_to_albumDetailFragment"
             app:destination="@id/albumDetailFragment" />
+        <action
+            android:id="@+id/action_libraryFragment_to_playlistDetailFragment"
+            app:destination="@id/playlistDetailFragment" />
     </fragment>
 
     <fragment
@@ -46,8 +49,8 @@
         android:label="AlbumArtistDetailFragment"
         tools:layout="@layout/fragment_album_artist_detail">
         <argument
-            android:name="albumArtistId"
-            app:argType="long" />
+            android:name="albumArtist"
+            app:argType="com.simplecityapps.mediaprovider.model.AlbumArtist" />
         <action
             android:id="@+id/action_albumArtistDetailFragment_to_albumDetailFragment"
             app:destination="@id/albumDetailFragment" />
@@ -59,8 +62,8 @@
         android:label="AlbumDetailFragment"
         tools:layout="@layout/fragment_album_detail">
         <argument
-            android:name="albumId"
-            app:argType="long" />
+            android:name="album"
+            app:argType="com.simplecityapps.mediaprovider.model.Album" />
     </fragment>
 
     <fragment
@@ -80,5 +83,14 @@
         android:name="com.simplecityapps.shuttle.ui.screens.home.search.SearchFragment"
         android:label="SearchFragment"
         tools:layout="@layout/fragment_search" />
+    <fragment
+        android:id="@+id/playlistDetailFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.library.playlists.detail.PlaylistDetailFragment"
+        android:label="PlaylistDetailFragment"
+        tools:layout="@layout/fragment_playlist_detail" >
+        <argument
+            android:name="playlist"
+            app:argType="com.simplecityapps.mediaprovider.model.Playlist" />
+    </fragment>
 
 </navigation>

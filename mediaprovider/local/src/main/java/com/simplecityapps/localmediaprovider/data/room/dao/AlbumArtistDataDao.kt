@@ -21,6 +21,7 @@ abstract class AlbumArtistDataDao {
                 "GROUP BY album_artists.id " +
                 "ORDER BY name"
     )
+    @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
     abstract fun getAll(): Flowable<List<AlbumArtist>>
 
     @Insert(onConflict = IGNORE)
