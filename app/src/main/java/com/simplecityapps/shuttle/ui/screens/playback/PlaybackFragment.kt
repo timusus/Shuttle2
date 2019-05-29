@@ -51,8 +51,6 @@ class PlaybackFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        presenter.bindView(this)
-
         imageLoader = GlideImageLoader(this)
 
         playPauseButton.setOnClickListener { presenter.togglePlayback() }
@@ -95,6 +93,8 @@ class PlaybackFragment :
                 else -> false
             }
         }
+
+        presenter.bindView(this)
     }
 
     override fun onDestroyView() {
