@@ -15,7 +15,6 @@
       <module fileurl="file://$PROJECT_DIR$/playback/playback.iml" filepath="$PROJECT_DIR$/playback/playback.iml" />
       <module fileurl="file://$PROJECT_DIR$/recyclerview-adapter/recyclerview-adapter.iml" filepath="$PROJECT_DIR$/recyclerview-adapter/recyclerview-adapter.iml" />
       <module fileurl="file://$PROJECT_DIR$/taglib/taglib.iml" filepath="$PROJECT_DIR$/taglib/taglib.iml" />
-      <module fileurl="file://$PROJECT_DIR$/taglib/taglib.iml" filepath="$PROJECT_DIR$/taglib/taglib.iml" />
     </modules>
   </component>
 </project>
