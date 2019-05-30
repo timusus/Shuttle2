@@ -32,7 +32,7 @@ dependencies {
     implementation project(path: ':playback')
 
     // TagLib
-    implementation project(path: ":taglib")
+    implementation project(path: ":taglib:lib")
 
     // Kotlin Standard Library
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"

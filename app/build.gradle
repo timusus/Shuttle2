@@ -79,7 +79,7 @@ dependencies {
     implementation project(path: ':playback')
 
     // TagLib
-    implementation project(path: ':taglib')
+    implementation project(path: ':taglib:lib')
 
     // RecylerView Adapter
     implementation project(path: ':recyclerview-adapter')
