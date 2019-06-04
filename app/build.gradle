@@ -156,7 +156,9 @@ play {
 }
 
 afterEvaluate {
-    processReleaseGoogleServices.dependsOn copyGoogleServies
+    if (System.getenv('JENKINS_URL') != null) {
+        processReleaseGoogleServices.dependsOn copyGoogleServies
+    }
 }
 
 task copyGoogleServies(type: Copy) {
