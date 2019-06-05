@@ -16,7 +16,7 @@ open class RecyclerAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     var items = mutableListOf<ViewBinder>()
         private set
 
-    var loggingEnabled = true
+    var loggingEnabled = false
 
     private var disposable: Disposable? = null
 
