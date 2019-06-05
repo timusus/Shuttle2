@@ -15,7 +15,7 @@ android {
 
         externalNativeBuild {
             cmake {
-                arguments '-DANDROID_STL=c++_static'
+                arguments '-DANDROID_STL=c++_static', '-DCMAKE_CXX_FLAGS_DEBUG=-O2'
             }
         }
     }
@@ -55,7 +55,7 @@ dependencies {
 // into $project/distribution directory, does NOT affect application module;
 // Only enable these when want to build libs (together with note
 // inside settings.gradle)
-
+//
 //tasks.whenTaskAdded { task ->
 //    if (task.name == 'externalNativeBuildRelease') {
 //        task.dependsOn ":taglib:gen:externalNativeBuildRelease"

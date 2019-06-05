@@ -8,5 +8,5 @@ include ':app',
         ':imageloader',
         ':playback'
 
-// Re-comment when regenerating taglib .so files (see taglib/lib/build.gradle
-//      :taglib:gen'
+        // Re-comment when regenerating taglib .so files (see taglib/lib/build.gradle
+        //':taglib:gen'
