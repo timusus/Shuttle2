@@ -7,8 +7,6 @@ interface PlaylistListContract {
 
     interface View {
         fun setPlaylists(playlists: List<Playlist>)
-        fun onPlaylistCreated(playlist: Playlist)
-        fun onShowCreatePlaylistDialog()
     }
 
     interface Presenter : BaseContract.Presenter<View> {
