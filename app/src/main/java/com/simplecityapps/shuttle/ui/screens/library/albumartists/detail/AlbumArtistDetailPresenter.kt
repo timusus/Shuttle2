@@ -41,16 +41,9 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
 
         addDisposable(Single.zip(albumsSingle, songsSingle, BiFunction<List<Album>, List<Song>, Map<Album, List<Song>>> { albums, songs ->
             val map = hashMapOf<Album, List<Song>>()
-            albums.forEach { album ->
-                map[album] = songs.filter { song -> song.albumId == album.id }
-            }
-            map
+            albums.forEach { album -> map[album] = songs.filter { song -> song.albumId == album.id } }
+            map.toSortedMap(Comparator { a, b -> b.year.compareTo(a.year) })
         })
-            .map { map ->
-                map.toSortedMap(Comparator { a, b -> a.year.compareTo(b.year) })
-                // Fixme:  For some reason, we can't return the above statement directly, or albums disappear from our map. Figure out why.
-                map
-            }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe { map ->
