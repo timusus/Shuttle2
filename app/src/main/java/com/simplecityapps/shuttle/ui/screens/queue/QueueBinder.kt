@@ -5,23 +5,34 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.view.isInvisible
+import androidx.core.view.isVisible
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
+import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackWatcher
+import com.simplecityapps.playback.PlaybackWatcherCallback
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 import com.simplecityapps.shuttle.ui.common.toHms
+import com.simplecityapps.shuttle.ui.common.view.PlayPauseButton
+import com.simplecityapps.shuttle.ui.common.view.ProgressView
+import com.simplecityapps.shuttle.ui.common.view.increaseTouchableArea
 
 class QueueBinder(
     val queueItem: QueueItem,
     val imageLoader: ArtworkImageLoader,
+    val playbackManager: PlaybackManager,
+    val playbackWatcher: PlaybackWatcher,
     val listener: Listener
 ) : ViewBinder,
     SectionViewBinder {
 
     interface Listener {
         fun onQueueItemClicked(queueItem: QueueItem)
+        fun onPlayPauseClicked()
     }
 
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
@@ -58,16 +69,25 @@ class QueueBinder(
     }
 
 
-    class ViewHolder(itemView: View) : ViewBinder.ViewHolder<QueueBinder>(itemView) {
+    class ViewHolder(itemView: View) :
+        ViewBinder.ViewHolder<QueueBinder>(itemView),
+        PlaybackWatcherCallback {
 
-        private val title = itemView.findViewById<TextView>(R.id.title)
-        private val subtitle = itemView.findViewById<TextView>(R.id.subtitle)
-        private val tertiary = itemView.findViewById<TextView>(R.id.tertiary)
-        private val artworkImageView = itemView.findViewById<ImageView>(R.id.artwork)
+        private val title: TextView = itemView.findViewById(R.id.title)
+        private val subtitle: TextView = itemView.findViewById(R.id.subtitle)
+        private val tertiary: TextView = itemView.findViewById(R.id.tertiary)
+        private val artworkImageView: ImageView = itemView.findViewById(R.id.artwork)
+        private val progressView: ProgressView = itemView.findViewById(R.id.progressView)
+        private val playPauseButton: PlayPauseButton = itemView.findViewById(R.id.playPauseButton)
 
         init {
             itemView.setOnClickListener {
                 viewBinder?.listener?.onQueueItemClicked(viewBinder!!.queueItem)
+            }
+
+            playPauseButton.increaseTouchableArea(8)
+            playPauseButton.setOnClickListener {
+                viewBinder?.listener?.onPlayPauseClicked()
             }
         }
 
@@ -77,16 +97,51 @@ class QueueBinder(
             title.text = viewBinder.queueItem.song.name
             subtitle.text = "${viewBinder.queueItem.song.albumArtistName} • ${viewBinder.queueItem.song.albumName}"
             tertiary.text = viewBinder.queueItem.song.duration.toHms()
+
             viewBinder.imageLoader.loadArtwork(
                 artworkImageView,
                 viewBinder.queueItem.song,
                 ArtworkImageLoader.Options.RoundedCorners(16),
                 ArtworkImageLoader.Options.Crossfade(200)
             )
+
+            progressView.isVisible = viewBinder.queueItem.isCurrent
+            progressView.setProgress((viewBinder.playbackManager.getPosition()?.toFloat() ?: 0f) / viewBinder.queueItem.song.duration.toFloat())
+            playPauseButton.state = if (viewBinder.playbackManager.isPlaying()) PlayPauseButton.State.Playing else PlayPauseButton.State.Paused
+
+            if (viewBinder.queueItem.isCurrent) {
+                viewBinder.playbackWatcher.addCallback(this)
+                itemView.isActivated = true
+                artworkImageView.isInvisible = true
+                playPauseButton.isVisible = true
+            } else {
+                viewBinder.playbackWatcher.removeCallback(this)
+                itemView.isActivated = false
+                artworkImageView.isVisible = true
+                playPauseButton.isVisible = false
+            }
         }
 
         override fun recycle() {
             viewBinder?.imageLoader?.clear(artworkImageView)
+        }
+
+        override fun onAttach() {
+            if (viewBinder?.queueItem?.isCurrent == true) {
+                viewBinder?.playbackWatcher?.addCallback(this)
+            }
+        }
+
+        override fun onDetach() {
+            viewBinder?.playbackWatcher?.removeCallback(this)
+        }
+
+        override fun onProgressChanged(position: Int, total: Int) {
+            progressView.setProgress((position / total.toFloat()))
+        }
+
+        override fun onPlaystateChanged(isPlaying: Boolean) {
+            playPauseButton.state = if (isPlaying) PlayPauseButton.State.Playing else PlayPauseButton.State.Paused
         }
     }
 }

@@ -5,30 +5,45 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?selectableItemBackground"
+    android:background="@drawable/tning"
     android:clickable="true"
     android:focusable="true"
     android:orientation="vertical"
-    android:padding="8dp">
+    android:paddingStart="16dp"
+    android:paddingTop="8dp"
+    android:paddingEnd="8dp"
+    android:paddingBottom="8dp">
 
     <ImageView
         android:id="@+id/artwork"
         android:layout_width="36dp"
         android:layout_height="36dp"
-        android:layout_marginStart="32dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:srcCompat="@drawable/ic_image_black_24dp" />
 
+    <com.simplecityapps.shuttle.ui.common.view.PlayPauseButton
+        android:id="@+id/playPauseButton"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:background="?selectableItemBackgroundBorderless"
+        android:padding="4dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:visibility="visible" />
+
     <ImageView
         android:id="@+id/dragHandle"
         android:layout_width="40dp"
         android:layout_height="40dp"
+        android:padding="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_drag_black_24dp"
+        app:srcCompat="@drawable/ic_drag_handle_black_24dp"
         app:tint="?attr/colorControlNormal" />
 
     <TextView
@@ -46,6 +61,7 @@
         app:layout_constraintEnd_toStartOf="@+id/tertiary"
         app:layout_constraintStart_toEndOf="@id/artwork"
         app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="packed"
         tools:text="Lateralus" />
 
     <TextView
@@ -55,6 +71,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
+        android:layout_marginBottom="4dp"
         android:ellipsize="end"
         android:maxLines="1"
         android:textAppearance="@android:style/TextAppearance.Material.Body2"
@@ -70,14 +87,26 @@
         style="@style/TextSubtitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginRight="8dp"
         android:ellipsize="end"
         android:maxLines="1"
         android:textAppearance="@android:style/TextAppearance.Material.Body2"
         android:textSize="12sp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/dragHandle"
         app:layout_constraintTop_toTopOf="parent"
         tools:text="3:45" />
+
+    <com.simplecityapps.shuttle.ui.common.view.ProgressView
+        android:id="@+id/progressView"
+        android:layout_width="0dp"
+        android:layout_height="2dp"
+        android:layout_marginTop="6dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/tertiary"
+        app:layout_constraintStart_toStartOf="@+id/artwork"
+        app:layout_constraintTop_toBottomOf="@id/subtitle"
+        app:layout_goneMarginTop="0dp"
+        tools:visibility="visible" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

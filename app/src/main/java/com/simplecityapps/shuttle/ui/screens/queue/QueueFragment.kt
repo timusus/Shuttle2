@@ -9,8 +9,11 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
+import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
@@ -21,13 +24,20 @@ import com.simplecityapps.shuttle.ui.common.view.multisheet.findParentMultiSheet
 import kotlinx.android.synthetic.main.fragment_queue.*
 import javax.inject.Inject
 
-class QueueFragment : Fragment(), Injectable, QueueContract.View {
+class QueueFragment :
+    Fragment(),
+    Injectable,
+    QueueContract.View {
 
     private lateinit var queueAdapter: RecyclerAdapter
 
     private lateinit var imageLoader: ArtworkImageLoader
 
     @Inject lateinit var presenter: QueuePresenter
+
+    @Inject lateinit var playbackWatcher: PlaybackWatcher
+
+    @Inject lateinit var playbackManager: PlaybackManager
 
 
     // Lifecycle
@@ -53,6 +63,17 @@ class QueueFragment : Fragment(), Injectable, QueueContract.View {
         presenter.bindView(this)
 
         view.findParentMultiSheetView()?.addSheetStateChangeListener(sheetStateChangeListener)
+
+        toolbar.inflateMenu(R.menu.menu_up_next)
+        toolbar.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.scrollToCurrent -> {
+                    presenter.scrollToCurrent()
+                    return@setOnMenuItemClickListener true
+                }
+            }
+            false
+        }
     }
 
     override fun onDestroyView() {
@@ -65,8 +86,8 @@ class QueueFragment : Fragment(), Injectable, QueueContract.View {
 
     // QueueContract.View Implementation
 
-    override fun setData(queue: List<QueueItem>) {
-        queueAdapter.setData(queue.map { queueItem -> QueueBinder(queueItem, imageLoader, queueBinderListener) })
+    override fun setData(queue: List<QueueItem>, progress: Float, isPlaying: Boolean) {
+        queueAdapter.setData(queue.map { queueItem -> QueueBinder(queueItem, imageLoader, playbackManager, playbackWatcher, queueBinderListener) })
     }
 
     override fun toggleEmptyView(empty: Boolean) {
@@ -85,19 +106,38 @@ class QueueFragment : Fragment(), Injectable, QueueContract.View {
         Toast.makeText(context, error.userDescription(), Toast.LENGTH_LONG).show()
     }
 
+    override fun scrollToPosition(position: Int, fromUser: Boolean) {
+        if (fromUser) {
+            recyclerView.scrollToPosition(position)
+        } else {
+            view?.findParentMultiSheetView()?.let { multiSheetView ->
+                if (multiSheetView.currentSheet != MultiSheetView.Sheet.SECOND) {
+                    recyclerView.scrollToPosition(position)
+                }
+            }
+        }
+    }
+
     // QueueBinder.Listener Implementation
 
     private val queueBinderListener = object : QueueBinder.Listener {
+
         override fun onQueueItemClicked(queueItem: QueueItem) {
             presenter.onQueueItemClicked(queueItem)
+        }
+
+        override fun onPlayPauseClicked() {
+            presenter.togglePlayback()
         }
     }
 
 
+    // MultiSheetView.SheetStateChangeListener Implementation
+
     private val sheetStateChangeListener = object : MultiSheetView.SheetStateChangeListener {
 
         override fun onSheetStateChanged(sheet: Int, state: Int) {
-
+            toolbar.menu.findItem(R.id.scrollToCurrent)?.isVisible = sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_EXPANDED
         }
 
         override fun onSlide(sheet: Int, slideOffset: Float) {

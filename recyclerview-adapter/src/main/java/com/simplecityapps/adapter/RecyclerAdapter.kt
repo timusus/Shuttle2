@@ -98,6 +98,16 @@ open class RecyclerAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         items[position].bindViewHolder(holder as ViewBinder.ViewHolder<ViewBinder>, payloads.isNotEmpty())
     }
 
+    override fun onViewAttachedToWindow(holder: RecyclerView.ViewHolder) {
+        (holder as? AttachAwareViewHolder)?.onAttach()
+        super.onViewAttachedToWindow(holder)
+    }
+
+    override fun onViewDetachedFromWindow(holder: RecyclerView.ViewHolder) {
+        (holder as? AttachAwareViewHolder)?.onDetach()
+        super.onViewDetachedFromWindow(holder)
+    }
+
     private class LoggingListUpdateCallback : ListUpdateCallback {
         override fun onChanged(position: Int, count: Int, payload: Any?) {
             Timber.v("onChanged() $count")

@@ -31,8 +31,22 @@ class QueuePresenter @Inject constructor(
 
     override fun loadQueue() {
         view?.toggleEmptyView(queueManager.getQueue().isEmpty())
-        view?.setData(queueManager.getQueue())
+        view?.setData(
+            queueManager.getQueue(),
+            (playbackManager.getPosition() ?: 0) / (queueManager.getCurrentItem()?.song?.duration?.toFloat() ?: Float.MAX_VALUE),
+            playbackManager.isPlaying()
+        )
         view?.setQueuePosition(queueManager.getCurrentPosition() ?: 0, queueManager.getSize())
+    }
+
+    override fun togglePlayback() {
+        playbackManager.togglePlayback()
+    }
+
+    override fun scrollToCurrent() {
+        queueManager.getCurrentPosition()?.let { position ->
+            view?.scrollToPosition(position, true)
+        }
     }
 
 
@@ -59,5 +73,8 @@ class QueuePresenter @Inject constructor(
 
     override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
         loadQueue()
+        newPosition?.let { position ->
+            view?.scrollToPosition(position, false)
+        }
     }
 }

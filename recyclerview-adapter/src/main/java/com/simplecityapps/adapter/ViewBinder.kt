@@ -27,7 +27,8 @@ interface ViewBinder : ContentsComparator {
     }
 
     open class ViewHolder<B : ViewBinder>(itemView: View) : RecyclerView.ViewHolder(itemView),
-        RecyclingViewHolder {
+        RecyclingViewHolder,
+        AttachAwareViewHolder {
 
         var viewBinder: B? = null
 
@@ -37,7 +38,12 @@ interface ViewBinder : ContentsComparator {
         }
 
         override fun recycle() {
+        }
 
+        override fun onAttach() {
+        }
+
+        override fun onDetach() {
         }
     }
 
