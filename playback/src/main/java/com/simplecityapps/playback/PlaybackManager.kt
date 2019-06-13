@@ -143,7 +143,7 @@ class PlaybackManager(
     private fun updateProgress() {
         playbackWatcher.onProgressChanged(
             min(playback.getPosition() ?: 0, playback.getDuration() ?: 0),
-            playback.getDuration() ?: 0
+            playback.getDuration() ?: Int.MAX_VALUE
         )
     }
 
