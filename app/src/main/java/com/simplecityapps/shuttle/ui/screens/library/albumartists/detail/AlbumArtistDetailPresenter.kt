@@ -39,10 +39,11 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
         val albumsSingle = albumRepository.getAlbums(AlbumQuery.AlbumArtistId(albumArtist.id))
             .first(emptyList())
 
-        addDisposable(Single.zip(albumsSingle, songsSingle, BiFunction<List<Album>, List<Song>, Map<Album, List<Song>>> { albums, songs ->
-            val map = hashMapOf<Album, List<Song>>()
-            albums.forEach { album -> map[album] = songs.filter { song -> song.albumId == album.id } }
-            map.toSortedMap(Comparator { a, b -> b.year.compareTo(a.year) })
+        addDisposable(
+            Single.zip(albumsSingle, songsSingle, BiFunction<List<Album>, List<Song>, Map<Album, List<Song>>> { albums, songs ->
+                albums.map { album -> Pair(album, songs.filter { song -> song.albumId == album.id }) }
+                    .sortedWith(Comparator { a, b -> b.first.year.compareTo(a.first.year) })
+                    .toMap()
         })
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
