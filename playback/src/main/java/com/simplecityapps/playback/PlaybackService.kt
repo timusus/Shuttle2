@@ -56,10 +56,8 @@ class PlaybackService : Service(), PlaybackWatcherCallback {
             }
         }
 
-        val notification = notificationManager.displayNotification()
-
+        startForeground(PlaybackNotificationManager.NOTIFICATION_ID, notificationManager.displayNotification())
         Timber.v("startForeground() called")
-        startForeground(PlaybackNotificationManager.NOTIFICATION_ID, notification)
 
         return START_STICKY
     }

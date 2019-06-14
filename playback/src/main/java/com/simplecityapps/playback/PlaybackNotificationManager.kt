@@ -6,8 +6,14 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
+import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
@@ -24,6 +30,18 @@ class PlaybackNotificationManager(
 ) : PlaybackWatcherCallback,
     QueueChangeCallback {
 
+    private var artworkImageLoader = GlideImageLoader(context)
+
+    private val placeholder: Bitmap? by lazy {
+        drawableToBitmap(context.resources.getDrawable(R.drawable.ic_music_note_black_24dp))
+    }
+
+    private val artworkCache = object : LinkedHashMap<Song, Bitmap?>(5) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Song, Bitmap?>?): Boolean {
+            return size > 4
+        }
+    }
+
     init {
         playbackWatcher.addCallback(this)
         queueWatcher.addCallback(this)
@@ -35,9 +53,9 @@ class PlaybackNotificationManager(
 
         val song = queueManager.getCurrentItem()?.song
 
-        val notification = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
+        val notificationBuilder = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
             .apply {
-                song?.let {
+                song?.let { song ->
                     setContentText(song.albumArtistName)
                         .setContentTitle(song.name)
                 }
@@ -54,11 +72,31 @@ class PlaybackNotificationManager(
             .addAction(prevAction)
             .addAction(playbackAction)
             .addAction(nextAction)
-            .build()
+            .setLargeIcon(placeholder)
 
+        song?.let { song ->
+            artworkCache[song]?.let { image ->
+                notificationBuilder.setLargeIcon(image)
+            } ?: run {
+                artworkImageLoader.loadBitmap(song) { image ->
+                    notificationBuilder.setLargeIcon(image)
+                    val notification = notificationBuilder.build()
+                    notificationManager.notify(NOTIFICATION_ID, notification)
+                    artworkCache[song] = image
+                }
+            }
+        }
+
+        // Load the next song's artwork as well
+        queueManager.getNext(true)?.song?.let { song ->
+            artworkImageLoader.loadBitmap(song) { image ->
+                artworkCache[song] = image
+            }
+        }
+
+        val notification = notificationBuilder.build()
         notificationManager.notify(NOTIFICATION_ID, notification)
-
-        return notification!!
+        return notification
     }
 
     private val playbackAction: NotificationCompat.Action
@@ -136,5 +174,25 @@ class PlaybackNotificationManager(
     companion object {
         const val NOTIFICATION_CHANNEL_ID = "1"
         const val NOTIFICATION_ID = 1
+
+        fun drawableToBitmap(drawable: Drawable): Bitmap {
+
+            if (drawable is BitmapDrawable) {
+                if (drawable.bitmap != null) {
+                    return drawable.bitmap
+                }
+            }
+
+            val bitmap: Bitmap = if (drawable.intrinsicWidth <= 0 || drawable.intrinsicHeight <= 0) {
+                Bitmap.createBitmap(4, 4, Bitmap.Config.ARGB_8888)
+            } else {
+                Bitmap.createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
+            }
+
+            val canvas = Canvas(bitmap)
+            drawable.setBounds(0, 0, canvas.width, canvas.height)
+            drawable.draw(canvas)
+            return bitmap
+        }
     }
 }

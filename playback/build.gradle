@@ -30,6 +30,9 @@ dependencies {
     // Shuttle Media Provider
     implementation project(path: ':mediaprovider:core')
 
+    // Shuttle Image Loader
+    implementation project(path: ':imageloader')
+
     // Kotlin Standard Library
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 

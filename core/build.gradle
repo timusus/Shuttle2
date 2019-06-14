@@ -28,6 +28,9 @@ dependencies {
     implementation project(path: ':mediaprovider:core')
     implementation project(path: ':mediaprovider:local')
 
+    // Shuttle Image Loader
+    implementation project(path: ':imageloader')
+
     // Shuttle Playback
     implementation project(path: ':playback')
 

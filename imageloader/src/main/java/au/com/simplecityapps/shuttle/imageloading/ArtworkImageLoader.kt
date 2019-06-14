@@ -1,5 +1,6 @@
 package au.com.simplecityapps.shuttle.imageloading
 
+import android.graphics.Bitmap
 import android.widget.ImageView
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.mediaprovider.model.Album
@@ -33,6 +34,8 @@ interface ArtworkImageLoader {
     fun loadArtwork(imageView: ImageView, album: Album, vararg options: Options, completionHandler: CompletionHandler = null)
 
     fun loadArtwork(imageView: ImageView, song: Song, vararg options: Options, completionHandler: CompletionHandler = null)
+
+    fun loadBitmap(song: Song, completionHandler: (Bitmap?) -> Unit)
 
     fun clear(imageView: ImageView)
 }

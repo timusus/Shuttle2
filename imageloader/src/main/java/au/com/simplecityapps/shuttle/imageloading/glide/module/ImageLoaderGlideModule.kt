@@ -2,6 +2,7 @@ package au.com.simplecityapps.shuttle.imageloading.glide.module
 
 import android.content.Context
 import android.util.Log
+import au.com.simplecityapps.BuildConfig
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.DiskSongLocalArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.LocalArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.LocalArtworkProvider
@@ -9,7 +10,6 @@ import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.TagLibSongL
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.artwork.AlbumArtistArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.artwork.AlbumArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.artwork.SongArtworkModelLoader
-import com.bumptech.glide.BuildConfig
 import com.bumptech.glide.Glide
 import com.bumptech.glide.GlideBuilder
 import com.bumptech.glide.Registry
@@ -20,7 +20,8 @@ import com.bumptech.glide.module.AppGlideModule
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
-import com.simplecityapps.shuttle.dagger.CoreComponentProvider
+import com.simplecityapps.taglib.ArtworkProvider
+import okhttp3.OkHttpClient
 import java.io.InputStream
 
 @GlideModule
@@ -28,9 +29,7 @@ class ImageLoaderGlideModule : AppGlideModule() {
 
     override fun registerComponents(context: Context, glide: Glide, registry: Registry) {
 
-        val okHttpClient = (context.applicationContext as CoreComponentProvider).provideCoreComponent().getOkHttpClient()
-
-        val artworkProvider = (context.applicationContext as CoreComponentProvider).provideCoreComponent().getArtworkProvider()
+        val okHttpClient = OkHttpClient.Builder().build()
 
         // Generic loaders
 
@@ -42,7 +41,7 @@ class ImageLoaderGlideModule : AppGlideModule() {
         // Local
 
         registry.append(Song::class.java, InputStream::class.java, DiskSongLocalArtworkModelLoader.Factory())
-        registry.append(Song::class.java, InputStream::class.java, TagLibSongLocalArtworkModelLoader.Factory(artworkProvider))
+        registry.append(Song::class.java, InputStream::class.java, TagLibSongLocalArtworkModelLoader.Factory(ArtworkProvider()))
 
 
         // Remote

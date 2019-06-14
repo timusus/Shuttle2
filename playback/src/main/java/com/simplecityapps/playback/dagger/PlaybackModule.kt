@@ -85,7 +85,15 @@ class PlaybackModule(
         playbackWatcher: PlaybackWatcher,
         queueWatcher: QueueWatcher
     ): PlaybackNotificationManager {
-        return PlaybackNotificationManager(context, context.getSystemService<NotificationManager>()!!, playbackManager, queueManager, mediaSessionManager, playbackWatcher, queueWatcher)
+        return PlaybackNotificationManager(
+            context,
+            context.getSystemService<NotificationManager>()!!,
+            playbackManager,
+            queueManager,
+            mediaSessionManager,
+            playbackWatcher,
+            queueWatcher
+        )
     }
 
     @Singleton

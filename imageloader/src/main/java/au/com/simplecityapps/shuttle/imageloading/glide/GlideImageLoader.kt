@@ -1,6 +1,8 @@
 package au.com.simplecityapps.shuttle.imageloading.glide
 
 import android.app.Activity
+import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.widget.ImageView
 import androidx.annotation.DrawableRes
@@ -42,6 +44,10 @@ class GlideImageLoader : ArtworkImageLoader {
         this.requestManager = GlideApp.with(activity)
     }
 
+    constructor(context: Context) {
+        this.requestManager = GlideApp.with(context)
+    }
+
     override fun loadArtwork(imageView: ImageView, albumArtist: AlbumArtist, vararg options: ArtworkImageLoader.Options, completionHandler: CompletionHandler) {
         loadArtwork(imageView, albumArtist as Any, *options, completionHandler = completionHandler)
     }
@@ -54,8 +60,26 @@ class GlideImageLoader : ArtworkImageLoader {
         loadArtwork(imageView, song as Any, *options, completionHandler = completionHandler)
     }
 
+    override fun loadBitmap(song: Song, callback: (Bitmap?) -> Unit) {
+        requestManager
+            .asBitmap()
+            .load(song)
+            .addListener(object : RequestListener<Bitmap> {
+                override fun onLoadFailed(e: GlideException?, model: Any?, target: Target<Bitmap>?, isFirstResource: Boolean): Boolean {
+                    callback(null)
+                    return true
+                }
+
+                override fun onResourceReady(resource: Bitmap?, model: Any?, target: Target<Bitmap>?, dataSource: DataSource?, isFirstResource: Boolean): Boolean {
+                    callback(resource)
+                    return true
+                }
+            })
+            .submit(512, 512)
+    }
+
     @DrawableRes
-    var placeHolderResId: Int = R.drawable.ic_placeholder_light
+    var placeHolderResId: Int = R.drawable.ic_music_note_black_24dp
 
     private fun <T> loadArtwork(imageView: ImageView, `object`: T, vararg options: ArtworkImageLoader.Options, completionHandler: CompletionHandler) {
         val glideRequest = getRequestBuilder(*options)

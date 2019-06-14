@@ -115,7 +115,7 @@ class PlaylistDetailFragment :
                 )
             }
         } else {
-            heroImage.setImageResource(R.drawable.ic_placeholder_light)
+            heroImage.setImageResource(R.drawable.ic_music_note_black_24dp)
         }
 
         adapter.setData(songs.map { song ->
