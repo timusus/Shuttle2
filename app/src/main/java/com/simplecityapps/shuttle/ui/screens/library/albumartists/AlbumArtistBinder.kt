@@ -52,7 +52,11 @@ class AlbumArtistBinder(
     }
 
     override fun areContentsTheSame(other: Any): Boolean {
-        return albumArtist.name == (other as? AlbumArtistBinder)?.albumArtist?.name
+        if (other !is AlbumArtistBinder) return false
+
+        return albumArtist.name == other.albumArtist.name
+                && albumArtist.albumCount == other.albumArtist.albumCount
+                && albumArtist.songCount == other.albumArtist.songCount
     }
 
 
