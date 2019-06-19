@@ -43,9 +43,8 @@ class LibraryFragment : Fragment() {
         adapter.notifyDataSetChanged()
 
         viewPager.adapter = adapter
-
         viewPager.offscreenPageLimit = 3
-
         viewPager.doOnPreDraw { startPostponedEnterTransition() }
+        viewPager.setCurrentItem(1, false)
     }
 }
