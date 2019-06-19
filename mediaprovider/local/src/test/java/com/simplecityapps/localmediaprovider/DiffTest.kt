@@ -1,6 +1,7 @@
 package com.simplecityapps.localmediaprovider
 
-import com.simplecityapps.localmediaprovider.Diff.Companion.diff
+import com.simplecityapps.localmediaprovider.local.ContentsComparator
+import com.simplecityapps.localmediaprovider.local.Diff.Companion.diff
 import org.junit.Assert.assertEquals
 import org.junit.Test
 

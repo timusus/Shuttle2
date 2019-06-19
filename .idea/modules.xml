@@ -11,7 +11,6 @@
       <module fileurl="file://$PROJECT_DIR$/mediaprovider/local/local.iml" filepath="$PROJECT_DIR$/mediaprovider/local/local.iml" />
       <module fileurl="file://$PROJECT_DIR$/mediaprovider/mediaprovider.iml" filepath="$PROJECT_DIR$/mediaprovider/mediaprovider.iml" />
       <module fileurl="file://$PROJECT_DIR$/mediaprovider/core/mediaprovider-core.iml" filepath="$PROJECT_DIR$/mediaprovider/core/mediaprovider-core.iml" />
-      <module fileurl="file://$PROJECT_DIR$/mediaprovider/mock/mock.iml" filepath="$PROJECT_DIR$/mediaprovider/mock/mock.iml" />
       <module fileurl="file://$PROJECT_DIR$/playback/playback.iml" filepath="$PROJECT_DIR$/playback/playback.iml" />
       <module fileurl="file://$PROJECT_DIR$/recyclerview-adapter/recyclerview-adapter.iml" filepath="$PROJECT_DIR$/recyclerview-adapter/recyclerview-adapter.iml" />
       <module fileurl="file://$PROJECT_DIR$/taglib/taglib.iml" filepath="$PROJECT_DIR$/taglib/taglib.iml" />

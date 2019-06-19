@@ -1,12 +1,14 @@
 package com.simplecityapps.shuttle.dagger
 
 import android.content.Context
-import com.simplecityapps.localmediaprovider.data.room.DatabaseProvider
-import com.simplecityapps.localmediaprovider.data.room.database.MediaDatabase
-import com.simplecityapps.localmediaprovider.repository.LocalAlbumArtistRepository
-import com.simplecityapps.localmediaprovider.repository.LocalAlbumRepository
-import com.simplecityapps.localmediaprovider.repository.LocalPlaylistRepository
-import com.simplecityapps.localmediaprovider.repository.LocalSongRepository
+import com.simplecityapps.localmediaprovider.local.data.room.DatabaseProvider
+import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
+import com.simplecityapps.localmediaprovider.local.provider.SongProvider
+import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibSongProvider
+import com.simplecityapps.localmediaprovider.local.repository.LocalAlbumArtistRepository
+import com.simplecityapps.localmediaprovider.local.repository.LocalAlbumRepository
+import com.simplecityapps.localmediaprovider.local.repository.LocalPlaylistRepository
+import com.simplecityapps.localmediaprovider.local.repository.LocalSongRepository
 import com.simplecityapps.mediaprovider.repository.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.PlaylistRepository
@@ -17,7 +19,10 @@ import dagger.Provides
 import javax.inject.Singleton
 
 @Module
-class RepositoryModule(private val context: Context, private val fileScanner: FileScanner) {
+class RepositoryModule(
+    private val context: Context,
+    private val fileScanner: FileScanner
+) {
 
     @Provides
     @Singleton
@@ -27,8 +32,14 @@ class RepositoryModule(private val context: Context, private val fileScanner: Fi
 
     @Provides
     @Singleton
-    fun provideSongRepository(database: MediaDatabase): SongRepository {
-        return LocalSongRepository(fileScanner, database)
+    fun provideSongProvider(): SongProvider {
+        return TaglibSongProvider(fileScanner)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSongRepository(database: MediaDatabase, songProvider: SongProvider): SongRepository {
+        return LocalSongRepository(database, songProvider)
     }
 
     @Provides
