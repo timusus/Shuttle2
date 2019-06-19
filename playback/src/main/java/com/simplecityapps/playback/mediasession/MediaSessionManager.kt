@@ -98,7 +98,7 @@ class MediaSessionManager(
         }
 
         override fun onSkipToNext() {
-            playbackManager.skipToNext()
+            playbackManager.skipToNext(ignoreRepeat = true)
         }
 
         override fun onSkipToQueueItem(id: Long) {
