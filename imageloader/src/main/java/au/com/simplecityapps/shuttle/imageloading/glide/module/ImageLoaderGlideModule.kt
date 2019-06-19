@@ -1,8 +1,6 @@
 package au.com.simplecityapps.shuttle.imageloading.glide.module
 
 import android.content.Context
-import android.util.Log
-import au.com.simplecityapps.BuildConfig
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.DiskSongLocalArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.LocalArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.LocalArtworkProvider
@@ -11,7 +9,6 @@ import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.artwork.Al
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.artwork.AlbumArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.artwork.SongArtworkModelLoader
 import com.bumptech.glide.Glide
-import com.bumptech.glide.GlideBuilder
 import com.bumptech.glide.Registry
 import com.bumptech.glide.annotation.GlideModule
 import com.bumptech.glide.integration.okhttp3.OkHttpUrlLoader
@@ -53,13 +50,5 @@ class ImageLoaderGlideModule : AppGlideModule() {
 
     override fun isManifestParsingEnabled(): Boolean {
         return false
-    }
-
-    override fun applyOptions(context: Context, builder: GlideBuilder) {
-        super.applyOptions(context, builder)
-
-        if (BuildConfig.DEBUG) {
-            builder.setLogLevel(Log.INFO)
-        }
     }
 }
