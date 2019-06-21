@@ -79,7 +79,7 @@ class MediaPlayerPlayback(
         }
     }
 
-    private fun loadNext() {
+    override fun loadNext() {
         Timber.v("loadNext()")
         nextQueueItem = queueManager.getNext()
         nextQueueItem?.let { nextQueueItem ->

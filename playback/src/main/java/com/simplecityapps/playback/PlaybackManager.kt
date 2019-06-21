@@ -140,6 +140,11 @@ class PlaybackManager(
         }
     }
 
+    fun moveQueueItem(from: Int, to: Int){
+        queueManager.move(from, to)
+        playback.loadNext()
+    }
+
 
     // Private
 

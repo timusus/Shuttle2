@@ -60,6 +60,11 @@ open class RecyclerAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         removeItem(items.indexOf(item))
     }
 
+    fun moveItem(fromPosition: Int, toPosition: Int) {
+        items.add(toPosition, items.removeAt(fromPosition))
+        notifyItemMoved(fromPosition, toPosition)
+    }
+
     fun clear(animateChanges: Boolean = true) {
         val count = items.size
         items.clear()

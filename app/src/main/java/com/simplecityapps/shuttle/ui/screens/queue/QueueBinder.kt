@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.queue
 
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -33,6 +34,7 @@ class QueueBinder(
     interface Listener {
         fun onQueueItemClicked(queueItem: QueueItem)
         fun onPlayPauseClicked()
+        fun onStartDrag(viewHolder: ViewHolder)
     }
 
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
@@ -79,6 +81,7 @@ class QueueBinder(
         private val artworkImageView: ImageView = itemView.findViewById(R.id.artwork)
         private val progressView: ProgressView = itemView.findViewById(R.id.progressView)
         private val playPauseButton: PlayPauseButton = itemView.findViewById(R.id.playPauseButton)
+        private val dragHandle: ImageView = itemView.findViewById(R.id.dragHandle)
 
         init {
             itemView.setOnClickListener {
@@ -88,6 +91,13 @@ class QueueBinder(
             playPauseButton.increaseTouchableArea(8)
             playPauseButton.setOnClickListener {
                 viewBinder?.listener?.onPlayPauseClicked()
+            }
+
+            dragHandle.setOnTouchListener { v, event ->
+                if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+                    viewBinder?.listener?.onStartDrag(this)
+                }
+                true
             }
         }
 

@@ -49,6 +49,10 @@ class QueuePresenter @Inject constructor(
         }
     }
 
+    override fun moveQueueItem(from: Int, to: Int) {
+        playbackManager.moveQueueItem(from, to)
+    }
+
 
     // QueueBinder.Listener Implementation
 

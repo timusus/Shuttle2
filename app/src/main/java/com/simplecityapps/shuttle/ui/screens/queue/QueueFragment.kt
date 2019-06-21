@@ -7,6 +7,8 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.google.android.material.bottomsheet.BottomSheetBehavior
@@ -29,7 +31,7 @@ class QueueFragment :
     Injectable,
     QueueContract.View {
 
-    private lateinit var queueAdapter: RecyclerAdapter
+    private var queueAdapter = RecyclerAdapter()
 
     private lateinit var imageLoader: ArtworkImageLoader
 
@@ -42,12 +44,6 @@ class QueueFragment :
 
     // Lifecycle
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        queueAdapter = RecyclerAdapter()
-    }
-
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_queue, container, false)
     }
@@ -59,6 +55,7 @@ class QueueFragment :
 
         recyclerView.adapter = queueAdapter
         recyclerView.setRecyclerListener(RecyclerListener())
+        itemTouchHelper.attachToRecyclerView(recyclerView)
 
         presenter.bindView(this)
 
@@ -82,6 +79,12 @@ class QueueFragment :
         recyclerView.clearAdapterOnDetach()
         super.onDestroyView()
     }
+
+    private val itemTouchHelper = object : ItemTouchHelper(object : ItemTouchHelperCallback(queueAdapter, object : OnItemMoveListener {
+        override fun onItemMoved(from: Int, to: Int) {
+            presenter.moveQueueItem(from, to)
+        }
+    }) {}) {}
 
 
     // QueueContract.View Implementation
@@ -129,6 +132,10 @@ class QueueFragment :
         override fun onPlayPauseClicked() {
             presenter.togglePlayback()
         }
+
+        override fun onStartDrag(viewHolder: QueueBinder.ViewHolder) {
+            itemTouchHelper.startDrag(viewHolder)
+        }
     }
 
 
@@ -155,5 +162,45 @@ class QueueFragment :
         const val TAG = "QueueFragment"
 
         fun newInstance() = QueueFragment()
+    }
+}
+
+
+open class ItemTouchHelperCallback(
+    private val adapter: RecyclerAdapter,
+    private val onItemMoveListener: OnItemMoveListener
+) : ItemTouchHelper.Callback() {
+
+    interface OnItemMoveListener {
+        fun onItemMoved(from: Int, to: Int)
+    }
+
+    private var startPosition = -1
+    private var endPosition = -1
+
+    override fun getMovementFlags(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder): Int {
+        return makeMovementFlags(ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0)
+    }
+
+    override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
+        if (startPosition == -1) {
+            startPosition = viewHolder.adapterPosition
+        }
+        endPosition = target.adapterPosition
+
+        adapter.moveItem(viewHolder.adapterPosition, target.adapterPosition)
+        return true
+    }
+
+    override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+    }
+
+    override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
+        if (startPosition != -1 && endPosition != -1) {
+            onItemMoveListener.onItemMoved(startPosition, endPosition)
+        }
+
+        startPosition = -1
+        endPosition = -1
     }
 }

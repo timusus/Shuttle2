@@ -8,6 +8,8 @@ interface Playback {
 
     fun load(completion: (Result<Boolean>) -> Unit)
 
+    fun loadNext()
+
     fun play()
 
     fun pause()

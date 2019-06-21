@@ -221,6 +221,16 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
         queueWatcher.onQueueChanged()
     }
 
+    fun move(from: Int, to: Int) {
+        val oldPosition = getCurrentPosition()
+        baseQueue.move(from, to, shuffleMode)
+        val currentPosition = getCurrentPosition()
+        queueWatcher.onQueueChanged()
+        if (currentPosition != oldPosition) {
+            queueWatcher.onQueuePositionChanged(oldPosition, currentPosition)
+        }
+    }
+
 
     /**
      * Holds a pair of lists, one representing the 'base' queue, and the other representing the 'shuffle' queue.
@@ -230,7 +240,7 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
         private var baseList: MutableList<QueueItem> = mutableListOf()
         private var shuffleList: MutableList<QueueItem> = mutableListOf()
 
-        fun get(shuffleMode: ShuffleMode): List<QueueItem> {
+        fun get(shuffleMode: ShuffleMode): MutableList<QueueItem> {
             return when (shuffleMode) {
                 ShuffleMode.Off -> baseList
                 ShuffleMode.On -> shuffleList
@@ -281,6 +291,11 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
         fun replace(old: QueueItem, new: QueueItem) {
             baseList[baseList.indexOf(old)] = new
             shuffleList[shuffleList.indexOf(old)] = new
+        }
+
+        fun move(from: Int, to: Int, shuffleMode: ShuffleMode) {
+            val list = get(shuffleMode)
+            list.add(to, list.removeAt(from))
         }
 
         fun size(): Int {
