@@ -3,9 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.playlistmenu
 import android.content.Context
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
 import android.widget.Toast
-import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.FragmentManager
 import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.shuttle.R
@@ -39,25 +37,6 @@ class PlaylistMenuView(
 
     override fun onSave(text: String, playlistData: PlaylistData) {
         presenter.createPlaylist(text, playlistData)
-    }
-
-    fun createPlaylistPopupMenu(
-        anchor: View,
-        playlistData: PlaylistData,
-        listener: PopupMenu.OnMenuItemClickListener? = null
-    ) {
-        val popupMenu = PopupMenu(context, anchor)
-        popupMenu.inflate(R.menu.menu_playlist_add)
-        createPlaylistMenu(popupMenu.menu)
-
-        popupMenu.setOnMenuItemClickListener { item ->
-            if (handleMenuItem(item, playlistData)) {
-                return@setOnMenuItemClickListener true
-            }
-            listener?.onMenuItemClick(item) ?: false
-        }
-
-        popupMenu.show()
     }
 
     fun handleMenuItem(

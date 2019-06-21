@@ -11,11 +11,12 @@
         android:title="Add to">
         <menu>
             <item
+                android:id="@+id/queue"
+                android:title="Queue" />
+            <item
                 android:id="@+id/playlist"
                 android:title="Playlist">
-
                 <menu />
-
             </item>
         </menu>
     </item>

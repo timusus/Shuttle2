@@ -10,7 +10,9 @@ import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.squareup.inject.assisted.Assisted
 import com.squareup.inject.assisted.AssistedInject
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
+import timber.log.Timber
 import kotlin.random.Random
 
 class AlbumDetailPresenter @AssistedInject constructor(
@@ -52,5 +54,25 @@ class AlbumDetailPresenter @AssistedInject constructor(
             result.onSuccess { playbackManager.play() }
             result.onFailure { error -> view?.showLoadError(error as Error) }
         }
+    }
+
+    override fun addToQueue(album: Album) {
+        addDisposable(
+            songRepository.getSongs(SongQuery.AlbumId(album.id))
+                .first(emptyList())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onSuccess = { songs ->
+                        playbackManager.addToQueue(songs)
+                        view?.onAddedToQueue(album.name)
+                    },
+                    onError = { throwable -> Timber.e(throwable, "Failed to retrieve songs for album: ${album.name}") })
+        )
+    }
+
+    override fun addToQueue(song: Song) {
+        playbackManager.addToQueue(listOf(song))
+        view?.onAddedToQueue(song.name)
     }
 }

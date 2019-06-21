@@ -129,6 +129,17 @@ class PlaybackManager(
         updateProgress()
     }
 
+    fun addToQueue(songs: List<Song>) {
+        if (queueManager.getQueue().isEmpty()) {
+            load(songs, 0) { result ->
+                result.onSuccess { play() }
+                result.onFailure { throwable -> Timber.e(throwable, "Failed to load songs (addToQueue())") }
+            }
+        } else {
+            queueManager.addToQueue(songs)
+        }
+    }
+
 
     // Private
 

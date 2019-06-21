@@ -7,10 +7,12 @@ interface PlaylistListContract {
 
     interface View {
         fun setPlaylists(playlists: List<Playlist>)
+        fun onAddedToQueue(playlist: Playlist)
     }
 
     interface Presenter : BaseContract.Presenter<View> {
         fun loadPlaylists()
+        fun addToQueue(playlist: Playlist)
         fun deletePlaylist(playlist: Playlist)
     }
 }

@@ -4,6 +4,8 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
+import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
@@ -90,6 +92,10 @@ class AlbumListFragment :
         })
     }
 
+    override fun onAddedToQueue(album: Album) {
+        Toast.makeText(context, "${album.name} added to queue", Toast.LENGTH_SHORT).show()
+    }
+
     // AlbumBinder.Listener Implementation
 
     override fun onAlbumClicked(album: Album, viewHolder: AlbumBinder.ViewHolder) {
@@ -102,7 +108,25 @@ class AlbumListFragment :
     }
 
     override fun onOverflowClicked(view: View, album: Album) {
-        playlistMenuView.createPlaylistPopupMenu(view, PlaylistData.Albums(album))
+        val popupMenu = PopupMenu(context!!, view)
+        popupMenu.inflate(R.menu.menu_popup_add)
+
+        playlistMenuView.createPlaylistMenu(popupMenu.menu)
+
+        popupMenu.setOnMenuItemClickListener { menuItem ->
+            if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Albums(album))) {
+                return@setOnMenuItemClickListener true
+            } else {
+                when (menuItem.itemId) {
+                    R.id.queue -> {
+                        presenter.addToQueue(album)
+                        return@setOnMenuItemClickListener true
+                    }
+                }
+            }
+            false
+        }
+        popupMenu.show()
     }
 
     // CreatePlaylistDialogFragment.Listener Implementation

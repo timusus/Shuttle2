@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
@@ -96,6 +97,10 @@ class SongListFragment :
         Toast.makeText(context, error.userDescription(), Toast.LENGTH_LONG).show()
     }
 
+    override fun onAddedToQueue(song: Song) {
+        Toast.makeText(context, "${song.name} added to queue", Toast.LENGTH_SHORT).show()
+    }
+
     // Private
 
     private val songBinderListener = object : SongBinder.Listener {
@@ -105,7 +110,25 @@ class SongListFragment :
         }
 
         override fun onOverflowClicked(view: View, song: Song) {
-            playlistMenuView.createPlaylistPopupMenu(view, PlaylistData.Songs(song))
+            val popupMenu = PopupMenu(context!!, view)
+            popupMenu.inflate(R.menu.menu_popup_add)
+
+            playlistMenuView.createPlaylistMenu(popupMenu.menu)
+
+            popupMenu.setOnMenuItemClickListener { menuItem ->
+                if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Songs(song))) {
+                    return@setOnMenuItemClickListener true
+                } else {
+                    when (menuItem.itemId) {
+                        R.id.queue -> {
+                            presenter.addToQueue(song)
+                            return@setOnMenuItemClickListener true
+                        }
+                    }
+                }
+                false
+            }
+            popupMenu.show()
         }
     }
 

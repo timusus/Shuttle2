@@ -40,6 +40,6 @@ fun SongQuery.predicate(): (Song) -> Boolean {
         is SongQuery.SongIds -> { song -> songIds.contains(song.id) }
         is SongQuery.LastPlayed -> { song -> song.lastPlayed?.after(after) ?: false }
         is SongQuery.LastCompleted -> { song -> song.lastCompleted?.after(after) ?: false }
-        is SongQuery.PlaylistId -> throw NotImplementedError()
+        is SongQuery.PlaylistId -> throw NotImplementedError("Use PlaylistRepository.getSongsForPlaylist() instead")
     }
 }

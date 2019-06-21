@@ -6,9 +6,11 @@ interface AlbumArtistListContract {
 
     interface View  {
         fun setAlbumArtists(albumArtists: List<AlbumArtist>)
+        fun onAddedToQueue(albumArtist: AlbumArtist)
     }
 
     interface Presenter {
         fun loadAlbumArtists()
+        fun addToQueue(albumArtist: AlbumArtist)
     }
 }

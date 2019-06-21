@@ -106,7 +106,7 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
     }
 
     /**
-     * Retrieves the next queue item, accounting for the current repeat mode.=
+     * Retrieves the next queue item, accounting for the current repeat mode.
      *
      * @param ignoreRepeat whether to ignore the current repeat mode, and return the next item as if repeat mode is 'all'
      */
@@ -214,6 +214,11 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
         } ?: run {
             Timber.e("Couldn't skip to position $position, no associated queue item found")
         }
+    }
+
+    fun addToQueue(songs: List<Song>) {
+        baseQueue.add(songs.map { song -> song.toQueueItem(false) })
+        queueWatcher.onQueueChanged()
     }
 
 

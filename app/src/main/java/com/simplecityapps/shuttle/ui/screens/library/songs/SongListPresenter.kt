@@ -41,4 +41,9 @@ class SongListPresenter @Inject constructor(
             result.onFailure { error -> view?.showLoadError(error as Error) }
         }
     }
+
+    override fun addToQueue(song: Song) {
+        playbackManager.addToQueue(listOf(song))
+        view?.onAddedToQueue(song)
+    }
 }

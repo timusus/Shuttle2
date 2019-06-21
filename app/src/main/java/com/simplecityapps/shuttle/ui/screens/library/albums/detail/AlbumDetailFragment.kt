@@ -9,6 +9,7 @@ import android.view.MenuInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.widget.PopupMenu
 import androidx.core.os.postDelayed
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.NavHostFragment
@@ -100,7 +101,7 @@ class AlbumDetailFragment :
 
         imageLoader = GlideImageLoader(this)
 
-        handler.postDelayed(1000) {
+        handler.postDelayed(500) {
             startPostponedEnterTransition() // In case our Glide load takes too long
         }
 
@@ -125,6 +126,10 @@ class AlbumDetailFragment :
                 when (menuItem.itemId) {
                     R.id.shuffle -> {
                         presenter.shuffle()
+                        true
+                    }
+                    R.id.queue -> {
+                        presenter.addToQueue(album)
                         true
                     }
                     else -> {
@@ -176,6 +181,10 @@ class AlbumDetailFragment :
         Toast.makeText(context, error.userDescription(), Toast.LENGTH_LONG).show()
     }
 
+    override fun onAddedToQueue(name: String) {
+        Toast.makeText(context, "$name added to queue", Toast.LENGTH_SHORT).show()
+    }
+
 
     // SongBinder.Listener Implementation
 
@@ -186,7 +195,25 @@ class AlbumDetailFragment :
         }
 
         override fun onOverflowClicked(view: View, song: Song) {
-            playlistMenuView.createPlaylistPopupMenu(view, PlaylistData.Songs(song))
+            val popupMenu = PopupMenu(context!!, view)
+            popupMenu.inflate(R.menu.menu_popup_add)
+
+            playlistMenuView.createPlaylistMenu(popupMenu.menu)
+
+            popupMenu.setOnMenuItemClickListener { menuItem ->
+                if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Songs(song))) {
+                    return@setOnMenuItemClickListener true
+                } else {
+                    when (menuItem.itemId) {
+                        R.id.queue -> {
+                            presenter.addToQueue(song)
+                            return@setOnMenuItemClickListener true
+                        }
+                    }
+                }
+                false
+            }
+            popupMenu.show()
         }
     }
 

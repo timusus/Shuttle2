@@ -76,4 +76,39 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
                 })
         )
     }
+
+    override fun addToQueue(albumArtist: AlbumArtist) {
+        addDisposable(
+            songRepository.getSongs(SongQuery.AlbumArtistId(albumArtist.id))
+                .first(emptyList())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onSuccess = { songs ->
+                        playbackManager.addToQueue(songs)
+                        view?.onAddedToQueue(albumArtist.name)
+                    },
+                    onError = { throwable -> Timber.e(throwable, "Failed to retrieve songs for album artist: ${albumArtist.name}") })
+        )
+    }
+
+    override fun addToQueue(album: Album) {
+        addDisposable(
+            songRepository.getSongs(SongQuery.AlbumId(album.id))
+                .first(emptyList())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onSuccess = { songs ->
+                        playbackManager.addToQueue(songs)
+                        view?.onAddedToQueue(album.name)
+                    },
+                    onError = { throwable -> Timber.e(throwable, "Failed to retrieve songs for album: ${album.name}") })
+        )
+    }
+
+    override fun addToQueue(song: Song) {
+        playbackManager.addToQueue(listOf(song))
+        view?.onAddedToQueue(song.name)
+    }
 }

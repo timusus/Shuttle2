@@ -8,10 +8,12 @@ interface SongListContract {
     interface View {
         fun setData(songs: List<Song>)
         fun showLoadError(error: Error)
+        fun onAddedToQueue(song: Song)
     }
 
     interface Presenter : BaseContract.Presenter<View> {
         fun loadSongs()
         fun onSongClicked(song: Song)
+        fun addToQueue(song: Song)
     }
 }

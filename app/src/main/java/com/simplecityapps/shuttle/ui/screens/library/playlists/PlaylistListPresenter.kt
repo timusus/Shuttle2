@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.library.playlists
 
 import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.mediaprovider.repository.PlaylistRepository
+import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.rxkotlin.subscribeBy
@@ -11,7 +12,8 @@ import java.text.Collator
 import javax.inject.Inject
 
 class PlaylistListPresenter @Inject constructor(
-    private val playlistRepository: PlaylistRepository
+    private val playlistRepository: PlaylistRepository,
+    private val playbackManager: PlaybackManager
 ) : PlaylistListContract.Presenter,
     BasePresenter<PlaylistListContract.View>() {
 
@@ -36,6 +38,21 @@ class PlaylistListPresenter @Inject constructor(
                 .subscribeBy(
                     onError = { error -> Timber.e(error, "Failed to delete playlist: $playlist") }
                 )
+        )
+    }
+
+    override fun addToQueue(playlist: Playlist) {
+        addDisposable(
+            playlistRepository.getSongsForPlaylist(playlist.id)
+                .first(emptyList())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onSuccess = { songs ->
+                        playbackManager.addToQueue(songs)
+                        view?.onAddedToQueue(playlist)
+                    },
+                    onError = { throwable -> Timber.e(throwable, "Failed to retrieve songs for playlist: ${playlist.name}") })
         )
     }
 }
