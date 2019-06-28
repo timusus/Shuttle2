@@ -5,7 +5,12 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.os.Build
 import androidx.core.content.getSystemService
+import com.simplecityapps.mediaprovider.repository.AlbumArtistRepository
+import com.simplecityapps.mediaprovider.repository.AlbumRepository
+import com.simplecityapps.mediaprovider.repository.PlaylistRepository
+import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.*
+import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi21
 import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi26
@@ -58,6 +63,11 @@ class PlaybackModule(
         }
     }
 
+    @Provides
+    fun provideMediaIdHelper(playlistRepository: PlaylistRepository, artistRepository: AlbumArtistRepository, albumRepository: AlbumRepository, songRepository: SongRepository): MediaIdHelper {
+        return MediaIdHelper(playlistRepository, artistRepository, albumRepository, songRepository)
+    }
+
     @Singleton
     @Provides
     fun providePlaybackManager(queueManager: QueueManager, playback: Playback, playbackWatcher: PlaybackWatcher, audioFocusHelper: AudioFocusHelper): PlaybackManager {
@@ -66,8 +76,14 @@ class PlaybackModule(
 
     @Singleton
     @Provides
-    fun provideMediaSessionManager(playbackManager: PlaybackManager, queueManager: QueueManager, playbackWatcher: PlaybackWatcher, queueWatcher: QueueWatcher): MediaSessionManager {
-        return MediaSessionManager(context, playbackManager, queueManager, playbackWatcher, queueWatcher)
+    fun provideMediaSessionManager(
+        playbackManager: PlaybackManager,
+        queueManager: QueueManager,
+        playbackWatcher: PlaybackWatcher,
+        queueWatcher: QueueWatcher,
+        mediaIdHelper: MediaIdHelper
+    ): MediaSessionManager {
+        return MediaSessionManager(context, playbackManager, queueManager, mediaIdHelper, playbackWatcher, queueWatcher)
     }
 
     @Singleton

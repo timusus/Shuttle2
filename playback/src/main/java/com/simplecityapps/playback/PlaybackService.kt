@@ -3,15 +3,23 @@ package com.simplecityapps.playback
 import android.app.Service
 import android.content.Intent
 import android.os.Build
+import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
+import android.support.v4.media.MediaBrowserCompat
+import androidx.media.MediaBrowserServiceCompat
 import androidx.media.session.MediaButtonReceiver
+import com.simplecityapps.playback.androidauto.MediaIdHelper
+import com.simplecityapps.playback.androidauto.PackageValidator
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import dagger.android.AndroidInjection
+import io.reactivex.disposables.CompositeDisposable
 import timber.log.Timber
 import javax.inject.Inject
 
-class PlaybackService : Service(), PlaybackWatcherCallback {
+class PlaybackService :
+    MediaBrowserServiceCompat(),
+    PlaybackWatcherCallback {
 
     @Inject lateinit var playbackManager: PlaybackManager
 
@@ -21,9 +29,15 @@ class PlaybackService : Service(), PlaybackWatcherCallback {
 
     @Inject lateinit var notificationManager: PlaybackNotificationManager
 
+    @Inject lateinit var mediaIdHelper: MediaIdHelper
+
     private var foregroundNotificationHandler: Handler? = null
 
     private var delayedShutdownHandler: Handler? = null
+
+    private val packageValidator: PackageValidator by lazy { PackageValidator(this) }
+
+    private lateinit var compositeDisposable: CompositeDisposable
 
     override fun onCreate() {
         Timber.v("onCreate()")
@@ -35,6 +49,10 @@ class PlaybackService : Service(), PlaybackWatcherCallback {
 
         foregroundNotificationHandler = Handler()
         delayedShutdownHandler = Handler()
+
+        sessionToken = mediaSessionManager.mediaSession.sessionToken
+
+        compositeDisposable = CompositeDisposable()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -63,11 +81,13 @@ class PlaybackService : Service(), PlaybackWatcherCallback {
     }
 
     override fun onBind(intent: Intent?): IBinder? {
-        return null
+        // For Android auto, need to call super, or onGetRoot won't be called.
+        return if ("android.media.browse.MediaBrowserService" == intent?.action) {
+            super.onBind(intent)
+        } else null
     }
 
     override fun onDestroy() {
-
         Timber.v("onDestroy()")
 
         playbackWatcher.removeCallback(this)
@@ -76,6 +96,8 @@ class PlaybackService : Service(), PlaybackWatcherCallback {
         foregroundNotificationHandler?.removeCallbacksAndMessages(null)
         delayedShutdownHandler?.removeCallbacksAndMessages(null)
 
+        compositeDisposable.clear()
+
         super.onDestroy()
     }
 
@@ -83,7 +105,6 @@ class PlaybackService : Service(), PlaybackWatcherCallback {
     // PlaybackWatcherCallback Implementation
 
     override fun onPlaystateChanged(isPlaying: Boolean) {
-
         // We use the foreground notification handler here to slightly delay the call to stopForeground().
         // This appears to be necessary in order to allow our notification to become dismissable if pause() is called via onStartCommand() to this service.
         // Presumably, there is an issue in calling stopForeground() too soon after startForeground() which causes the notification to be stuck in the 'ongoing' state and not able to be dismissed.
@@ -110,6 +131,40 @@ class PlaybackService : Service(), PlaybackWatcherCallback {
                 }
             }, 30 * 1000)
         }
+    }
+
+
+    // MediaBrowserService Implementation
+
+    override fun onLoadChildren(parentId: String, result: Result<MutableList<MediaBrowserCompat.MediaItem>>) {
+        if ("EMPTY_ROOT" == parentId) {
+            result.sendResult(mutableListOf())
+        } else {
+            result.detach()
+            Timber.i("MediaId: $parentId")
+            compositeDisposable.add(mediaIdHelper.getChildren(parentId).subscribe(
+                { mediaItems ->
+                    result.sendResult(mediaItems.toMutableList())
+                },
+                { throwable ->
+                    Timber.e(throwable, "Failed to retrieve children for media id: $parentId")
+                    result.sendResult(mutableListOf())
+                }
+            ))
+        }
+    }
+
+    override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): BrowserRoot? {
+        // To ensure you are not allowing any arbitrary app to browse your app's contents, you
+        // need to check the origin:
+        if (!packageValidator.isCallerAllowed(this, clientPackageName, clientUid)) {
+            // If the request comes from an untrusted package, return an empty browser root.
+            // If you return null, then the media browser will not be able to connect and
+            // no further calls will be made to other media browsing methods.
+            Timber.i("OnGetRoot: Browsing NOT ALLOWED for unknown caller. Returning empty browser root so all apps can use MediaController. $clientPackageName")
+            return BrowserRoot("EMPTY_ROOT", null)
+        }
+        return BrowserRoot("media:/root/", null)
     }
 
 

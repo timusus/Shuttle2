@@ -33,7 +33,7 @@ class PlaybackNotificationManager(
     private var artworkImageLoader = GlideImageLoader(context)
 
     private val placeholder: Bitmap? by lazy {
-        drawableToBitmap(context.resources.getDrawable(R.drawable.ic_music_note_black_24dp))
+        drawableToBitmap(context.resources.getDrawable(R.drawable.ic_music_note_black_24dp, context.theme))
     }
 
     private val artworkCache = object : LinkedHashMap<Song, Bitmap?>(5) {
