@@ -225,6 +225,18 @@
                       </LayoutPositions>
                     </value>
                   </entry>
+                  <entry key="bottomDrawer">
+                    <value>
+                      <LayoutPositions>
+                        <option name="myPosition">
+                          <Point>
+                            <option name="x" value="-10" />
+                            <option name="y" value="1436" />
+                          </Point>
+                        </option>
+                      </LayoutPositions>
+                    </value>
+                  </entry>
                   <entry key="folderFragment">
                     <value>
                       <LayoutPositions>

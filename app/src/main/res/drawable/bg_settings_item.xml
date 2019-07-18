@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<inset xmlns:android="http://schemas.android.com/apk/res/android"
+    android:insetLeft="8dp">
+
+    <ripple android:color="?attr/colorControlHighlight">
+
+        <item android:id="@android:id/mask">
+            <shape android:shape="rectangle">
+                <solid android:color="#000000" />
+                <corners
+                    android:bottomLeftRadius="24dp"
+                    android:topLeftRadius="24dp" />
+            </shape>
+        </item>
+
+        <item>
+            <selector>
+                <item android:state_activated="true">
+                    <shape android:shape="rectangle">
+                        <solid android:color="@color/colorPrimaryTransparent" />
+                        <corners
+                            android:bottomLeftRadius="24dp"
+                            android:topLeftRadius="24dp" />
+                    </shape>
+                </item>
+            </selector>
+        </item>
+    </ripple>
+</inset>

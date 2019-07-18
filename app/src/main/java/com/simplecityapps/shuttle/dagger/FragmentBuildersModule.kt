@@ -17,6 +17,7 @@ import com.simplecityapps.shuttle.ui.screens.library.songs.SongListFragment
 import com.simplecityapps.shuttle.ui.screens.playback.PlaybackFragment
 import com.simplecityapps.shuttle.ui.screens.playback.mini.MiniPlaybackFragment
 import com.simplecityapps.shuttle.ui.screens.queue.QueueFragment
+import com.simplecityapps.shuttle.ui.screens.settings.BottomDrawerSettingsFragment
 import com.simplecityapps.shuttle.ui.screens.sleeptimer.SleepTimerDialogFragment
 import dagger.Module
 import dagger.android.ContributesAndroidInjector
@@ -78,5 +79,8 @@ abstract class FragmentBuildersModule {
 
     @ContributesAndroidInjector
     abstract fun contributeHomeFragment(): HomeFragment
+
+    @ContributesAndroidInjector
+    abstract fun contributeBottomSettingsFragment(): BottomDrawerSettingsFragment
 
 }

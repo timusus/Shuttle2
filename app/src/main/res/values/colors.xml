@@ -8,6 +8,7 @@
 
     <color name="ic_launcher_background">#FF03A9F4</color>
 
+    <color name="colorPrimaryTransparent">#200492ea</color>
 
     <color name="history_green_light">#f1f8f7</color>
     <color name="history_green_dark">#74bdb0</color>
