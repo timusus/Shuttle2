@@ -53,7 +53,7 @@ class AlbumDetailFragment :
 
     private lateinit var adapter: RecyclerAdapter
 
-    private lateinit var animationHelper: DetailImageAnimationHelper
+    private var animationHelper: DetailImageAnimationHelper? = null
 
     private val handler = Handler(Looper.getMainLooper())
 
@@ -76,12 +76,14 @@ class AlbumDetailFragment :
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        adapter = RecyclerAdapter()
+
         sharedElementEnterTransition = TransitionInflater.from(context).inflateTransition(R.transition.image_shared_element_transition)
         (sharedElementEnterTransition as Transition).duration = 200L
         (sharedElementEnterTransition as Transition).addListener(object : TransitionListenerAdapter() {
             override fun onTransitionEnd(transition: Transition) {
                 super.onTransitionEnd(transition)
-                animationHelper.showHeroView()
+                animationHelper?.showHeroView()
                 transition.removeListener(this)
             }
         })
@@ -96,8 +98,6 @@ class AlbumDetailFragment :
         super.onViewCreated(view, savedInstanceState)
 
         playlistMenuView = PlaylistMenuView(context!!, playlistMenuPresenter, childFragmentManager)
-
-        adapter = RecyclerAdapter()
 
         imageLoader = GlideImageLoader(this)
 
@@ -158,6 +158,8 @@ class AlbumDetailFragment :
 
         presenter.unbindView()
         playlistMenuPresenter.unbindView()
+
+        animationHelper = null
 
         super.onDestroyView()
     }
