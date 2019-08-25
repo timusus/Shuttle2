@@ -18,6 +18,8 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
+import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
+import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
@@ -43,6 +45,8 @@ class AlbumListFragment :
 
     private lateinit var playlistMenuView: PlaylistMenuView
 
+    private lateinit var circularLoadingView: CircularLoadingView
+    private lateinit var horizontalLoadingView: HorizontalLoadingView
 
     // Lifecycle
 
@@ -65,6 +69,9 @@ class AlbumListFragment :
 
         recyclerView.adapter = adapter
         recyclerView.setRecyclerListener(RecyclerListener())
+
+        circularLoadingView = view.findViewById(R.id.circularLoadingView)
+        horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
 
         presenter.bindView(this)
         playlistMenuPresenter.bindView(playlistMenuView)
@@ -94,6 +101,27 @@ class AlbumListFragment :
 
     override fun onAddedToQueue(album: Album) {
         Toast.makeText(context, "${album.name} added to queue", Toast.LENGTH_SHORT).show()
+    }
+
+    override fun setLoadingState(state: AlbumListContract.LoadingState) {
+        when (state) {
+            is AlbumListContract.LoadingState.Scanning -> {
+                horizontalLoadingView.setState(HorizontalLoadingView.State.Loading("Scanning your library"))
+                circularLoadingView.setState(CircularLoadingView.State.None)
+            }
+            is AlbumListContract.LoadingState.Empty -> {
+                horizontalLoadingView.setState(HorizontalLoadingView.State.None)
+                circularLoadingView.setState(CircularLoadingView.State.Empty("No albums"))
+            }
+            is AlbumListContract.LoadingState.None -> {
+                horizontalLoadingView.setState(HorizontalLoadingView.State.None)
+                circularLoadingView.setState(CircularLoadingView.State.None)
+            }
+        }
+    }
+
+    override fun setLoadingProgress(progress: Float) {
+        horizontalLoadingView.setProgress(progress)
     }
 
     // AlbumBinder.Listener Implementation

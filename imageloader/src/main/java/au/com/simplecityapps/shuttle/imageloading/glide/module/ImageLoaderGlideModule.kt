@@ -21,6 +21,8 @@ import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.taglib.ArtworkProvider
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
+import timber.log.Timber
 import java.io.InputStream
 
 @GlideModule
@@ -28,7 +30,14 @@ class ImageLoaderGlideModule : AppGlideModule() {
 
     override fun registerComponents(context: Context, glide: Glide, registry: Registry) {
 
-        val okHttpClient = OkHttpClient.Builder().build()
+        // Todo: Inject Http Client via NetworkingModule
+        val okHttpClient = OkHttpClient.Builder()
+            .addInterceptor(HttpLoggingInterceptor(HttpLoggingInterceptor.Logger { message ->
+                Timber.tag("OkHttp").d(message)
+            }).apply {
+                level = HttpLoggingInterceptor.Level.BASIC
+            })
+            .build()
 
         // Generic loaders
 
@@ -55,6 +64,6 @@ class ImageLoaderGlideModule : AppGlideModule() {
     }
 
     override fun applyOptions(context: Context, builder: GlideBuilder) {
-        builder.setLogLevel(Log.ERROR)
+        builder.setLogLevel(Log.INFO)
     }
 }

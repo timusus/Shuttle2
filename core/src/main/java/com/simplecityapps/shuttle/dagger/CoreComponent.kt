@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.dagger
 
 import android.content.SharedPreferences
+import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.repository.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.PlaylistRepository
@@ -69,6 +70,8 @@ interface CoreComponent {
     fun getArtworkProvider(): ArtworkProvider
 
     fun getGsonConverterFactory(): GsonConverterFactory
+
+    fun getMediaImporter(): MediaImporter
 
     @Component.Builder
     interface Builder {

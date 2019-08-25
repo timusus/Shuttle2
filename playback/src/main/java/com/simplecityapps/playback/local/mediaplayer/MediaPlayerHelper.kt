@@ -1,5 +1,6 @@
 package com.simplecityapps.playback.local.mediaplayer
 
+import android.content.Context
 import android.media.MediaPlayer
 import android.net.Uri
 import com.simplecityapps.mediaprovider.model.Song
@@ -27,7 +28,7 @@ class MediaPlayerHelper {
      * - Failure called with an [Error] value if the [Song] cannot be loaded.
      * - Success called with a null value if the [Song] is successfully loaded and the MediaPlayer has begun
      */
-    fun load(song: Song, completion: ((Result<Any?>) -> Unit)?) {
+    fun load(context: Context, song: Song, completion: ((Result<Any?>) -> Unit)?) {
 
         Timber.v("$tag load() song: ${song.path}")
 
@@ -64,7 +65,11 @@ class MediaPlayerHelper {
         }
 
         try {
-            mediaPlayer!!.setDataSource(Uri.fromFile(File(song.path)).toString())
+            if (song.path.startsWith("content://")) {
+                mediaPlayer!!.setDataSource(context, Uri.parse(song.path))
+            } else {
+                mediaPlayer!!.setDataSource(Uri.fromFile(File(song.path)).toString())
+            }
         } catch (exception: IOException) {
             Timber.e(exception, "Failed to load ${song.path}")
             completion?.invoke(Result.failure(Error("$tag MediaPlayer.setData() failed", exception)))

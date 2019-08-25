@@ -1,8 +1,21 @@
 package com.simplecityapps.taglib
 
+import android.content.Context
+import android.net.Uri
+import androidx.documentfile.provider.DocumentFile
+
 class FileScanner {
 
-    external fun getAudioFiles(path: String): ArrayList<AudioFile>
+    private external fun getAudioFile(uri: String, fd: Int): AudioFile?
+
+    fun getAudioFile(context: Context, uri: Uri): AudioFile? {
+        val documentFile = DocumentFile.fromSingleUri(context, uri)
+        context.contentResolver.openFileDescriptor(documentFile!!.uri, "r")?.use { pfd ->
+            return getAudioFile(uri.toString(), pfd.fd)
+        }
+
+        return null
+    }
 
     companion object {
 

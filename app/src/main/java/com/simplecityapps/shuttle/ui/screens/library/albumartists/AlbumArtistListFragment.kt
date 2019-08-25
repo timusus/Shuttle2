@@ -9,6 +9,7 @@ import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
@@ -17,12 +18,13 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
+import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
+import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
-import kotlinx.android.synthetic.main.fragment_folder_detail.*
 import javax.inject.Inject
 
 class AlbumArtistListFragment :
@@ -35,6 +37,11 @@ class AlbumArtistListFragment :
     private lateinit var adapter: RecyclerAdapter
 
     private lateinit var imageLoader: GlideImageLoader
+
+    private lateinit var recyclerView: RecyclerView
+
+    private lateinit var circularLoadingView: CircularLoadingView
+    private lateinit var horizontalLoadingView: HorizontalLoadingView
 
     @Inject lateinit var presenter: AlbumArtistListPresenter
 
@@ -61,8 +68,12 @@ class AlbumArtistListFragment :
 
         imageLoader = GlideImageLoader(this)
 
+        recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
         recyclerView.setRecyclerListener(RecyclerListener())
+
+        circularLoadingView = view.findViewById(R.id.circularLoadingView)
+        horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
 
         presenter.bindView(this)
         playlistMenuPresenter.bindView(playlistMenuView)
@@ -91,6 +102,27 @@ class AlbumArtistListFragment :
 
     override fun onAddedToQueue(albumArtist: AlbumArtist) {
         Toast.makeText(context, "${albumArtist.name} added to queue", Toast.LENGTH_SHORT).show()
+    }
+
+    override fun setLoadingState(state: AlbumArtistListContract.LoadingState) {
+        when (state) {
+            is AlbumArtistListContract.LoadingState.Scanning -> {
+                horizontalLoadingView.setState(HorizontalLoadingView.State.Loading("Scanning your library"))
+                circularLoadingView.setState(CircularLoadingView.State.None)
+            }
+            is AlbumArtistListContract.LoadingState.Empty -> {
+                horizontalLoadingView.setState(HorizontalLoadingView.State.None)
+                circularLoadingView.setState(CircularLoadingView.State.Empty("No album artists"))
+            }
+            is AlbumArtistListContract.LoadingState.None -> {
+                horizontalLoadingView.setState(HorizontalLoadingView.State.None)
+                circularLoadingView.setState(CircularLoadingView.State.None)
+            }
+        }
+    }
+
+    override fun setLoadingProgress(progress: Float) {
+        horizontalLoadingView.setProgress(progress)
     }
 
     // AlbumArtistBinder.Listener Implementation

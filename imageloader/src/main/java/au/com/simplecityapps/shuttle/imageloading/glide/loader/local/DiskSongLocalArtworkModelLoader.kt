@@ -40,8 +40,12 @@ class DiskSongLocalArtworkModelLoader(
         LocalArtworkProvider {
 
         override fun getInputStream(): InputStream? {
-            val pattern = Pattern.compile("(folder|cover|album).*\\.(jpg|jpeg|png)", Pattern.CASE_INSENSITIVE)
+            if (song.path.startsWith("content://")) return null
             return File(song.path).parentFile.listFiles { file -> pattern.matcher(file.name).matches() }.firstOrNull { it.length() > 1024 }?.inputStream()
+        }
+
+        companion object {
+            private val pattern by lazy { Pattern.compile("(folder|cover|album).*\\.(jpg|jpeg|png)", Pattern.CASE_INSENSITIVE) }
         }
     }
 }

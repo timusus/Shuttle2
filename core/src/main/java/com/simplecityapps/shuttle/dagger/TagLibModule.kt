@@ -6,7 +6,7 @@ import dagger.Module
 import dagger.Provides
 
 @Module
-class TagLibModule() {
+class TagLibModule {
 
     @Provides
     fun provideFileScanner(): FileScanner {

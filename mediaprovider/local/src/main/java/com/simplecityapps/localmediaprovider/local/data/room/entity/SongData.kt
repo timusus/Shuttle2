@@ -3,7 +3,6 @@ package com.simplecityapps.localmediaprovider.local.data.room.entity
 import androidx.room.*
 import com.simplecityapps.localmediaprovider.local.ContentsComparator
 import com.simplecityapps.mediaprovider.model.Song
-import com.simplecityapps.taglib.AudioFile
 import java.util.*
 
 @Entity(
@@ -70,13 +69,6 @@ data class SongData(
 
     override fun hashCode(): Int {
         return path.hashCode()
-    }
-}
-
-fun AudioFile.toSongData(): SongData {
-    return SongData(name, track, disc, duration, year, path, 0, 0, size, Date(lastModified)).apply {
-        albumArtistName = this@toSongData.albumArtistName
-        albumName = this@toSongData.albumName
     }
 }
 

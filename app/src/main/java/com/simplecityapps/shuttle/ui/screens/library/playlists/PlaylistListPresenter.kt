@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library.playlists
 
+import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.mediaprovider.repository.PlaylistRepository
 import com.simplecityapps.playback.PlaybackManager
@@ -13,9 +14,16 @@ import javax.inject.Inject
 
 class PlaylistListPresenter @Inject constructor(
     private val playlistRepository: PlaylistRepository,
-    private val playbackManager: PlaybackManager
+    private val playbackManager: PlaybackManager,
+    private val mediaImporter: MediaImporter
 ) : PlaylistListContract.Presenter,
     BasePresenter<PlaylistListContract.View>() {
+
+    private val mediaImporterListener = object : MediaImporter.Listener {
+        override fun onProgress(progress: Float, message: String) {
+            view?.setLoadingProgress(progress)
+        }
+    }
 
     override fun loadPlaylists() {
         addDisposable(
@@ -24,7 +32,21 @@ class PlaylistListPresenter @Inject constructor(
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeBy(
-                    onNext = { playlists -> view?.setPlaylists(playlists) },
+                    onNext = { playlists ->
+                        if (playlists.isEmpty()) {
+                            if (mediaImporter.isScanning) {
+                                mediaImporter.listeners.add(mediaImporterListener)
+                                view?.setLoadingState(PlaylistListContract.LoadingState.Scanning)
+                            } else {
+                                mediaImporter.listeners.remove(mediaImporterListener)
+                                view?.setLoadingState(PlaylistListContract.LoadingState.Empty)
+                            }
+                        } else {
+                            mediaImporter.listeners.remove(mediaImporterListener)
+                            view?.setLoadingState(PlaylistListContract.LoadingState.None)
+                        }
+                        view?.setPlaylists(playlists)
+                    },
                     onError = { error -> Timber.e(error, "Failed to retrieve playlists") }
                 )
         )

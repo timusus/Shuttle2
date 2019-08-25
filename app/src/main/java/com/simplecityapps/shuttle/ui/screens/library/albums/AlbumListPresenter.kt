@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library.albums
 
+import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.repository.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.SongQuery
@@ -16,10 +17,16 @@ import javax.inject.Inject
 class AlbumListPresenter @Inject constructor(
     private val albumArtistRepository: AlbumRepository,
     private val songRepository: SongRepository,
-    private val playbackManager: PlaybackManager
-
+    private val playbackManager: PlaybackManager,
+    private val mediaImporter: MediaImporter
 ) : AlbumListContract.Presenter,
     BasePresenter<AlbumListContract.View>() {
+
+    private val mediaImporterListener = object : MediaImporter.Listener {
+        override fun onProgress(progress: Float, message: String) {
+            view?.setLoadingProgress(progress)
+        }
+    }
 
     override fun loadAlbums() {
         addDisposable(
@@ -28,7 +35,21 @@ class AlbumListPresenter @Inject constructor(
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeBy(
-                    onNext = { albumArtists -> view?.setAlbums(albumArtists) },
+                    onNext = { albums ->
+                        if (albums.isEmpty()) {
+                            if (mediaImporter.isScanning) {
+                                mediaImporter.listeners.add(mediaImporterListener)
+                                view?.setLoadingState(AlbumListContract.LoadingState.Scanning)
+                            } else {
+                                mediaImporter.listeners.remove(mediaImporterListener)
+                                view?.setLoadingState(AlbumListContract.LoadingState.Empty)
+                            }
+                        } else {
+                            mediaImporter.listeners.remove(mediaImporterListener)
+                            view?.setLoadingState(AlbumListContract.LoadingState.None)
+                        }
+                        view?.setAlbums(albums)
+                    },
                     onError = { error -> Timber.e(error, "Failed to retrieve albums") })
         )
     }

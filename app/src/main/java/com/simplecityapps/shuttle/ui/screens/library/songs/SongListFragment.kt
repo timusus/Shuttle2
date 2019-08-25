@@ -18,6 +18,8 @@ import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
+import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
+import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
@@ -40,6 +42,9 @@ class SongListFragment :
     private lateinit var imageLoader: ArtworkImageLoader
 
     private lateinit var playlistMenuView: PlaylistMenuView
+
+    private lateinit var circularLoadingView: CircularLoadingView
+    private lateinit var horizontalLoadingView: HorizontalLoadingView
 
 
     // Lifecycle
@@ -67,6 +72,9 @@ class SongListFragment :
 
         recyclerView.adapter = adapter
         recyclerView.setRecyclerListener(RecyclerListener())
+
+        circularLoadingView = view.findViewById(R.id.circularLoadingView)
+        horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
 
         presenter.bindView(this)
         playlistMenuPresenter.bindView(playlistMenuView)
@@ -99,6 +107,27 @@ class SongListFragment :
 
     override fun onAddedToQueue(song: Song) {
         Toast.makeText(context, "${song.name} added to queue", Toast.LENGTH_SHORT).show()
+    }
+
+    override fun setLoadingState(state: SongListContract.LoadingState) {
+        when (state) {
+            is SongListContract.LoadingState.Scanning -> {
+                horizontalLoadingView.setState(HorizontalLoadingView.State.Loading("Scanning your library"))
+                circularLoadingView.setState(CircularLoadingView.State.None)
+            }
+            is SongListContract.LoadingState.Empty -> {
+                horizontalLoadingView.setState(HorizontalLoadingView.State.None)
+                circularLoadingView.setState(CircularLoadingView.State.Empty("No songs"))
+            }
+            is SongListContract.LoadingState.None -> {
+                horizontalLoadingView.setState(HorizontalLoadingView.State.None)
+                circularLoadingView.setState(CircularLoadingView.State.None)
+            }
+        }
+    }
+
+    override fun setLoadingProgress(progress: Float) {
+        horizontalLoadingView.setProgress(progress)
     }
 
     // Private

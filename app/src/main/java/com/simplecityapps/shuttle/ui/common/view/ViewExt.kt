@@ -1,9 +1,13 @@
 package com.simplecityapps.shuttle.ui.common.view
 
+import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
 import android.graphics.Rect
 import android.view.TouchDelegate
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.animation.addListener
+import androidx.core.view.isVisible
 import com.simplecityapps.shuttle.ui.common.utils.dp
 
 fun View.setMargins(
@@ -32,4 +36,29 @@ fun View.increaseTouchableArea(amount: Int) {
             parent.touchDelegate = TouchDelegate(touchableArea, this)
         }
     }
+}
+
+fun View.fadeIn(): ValueAnimator? {
+    if (isVisible && alpha == 1f) return null
+    alpha = 0f
+    isVisible = true
+    val animator = ObjectAnimator.ofFloat(this, View.ALPHA, alpha, 1f)
+    animator.duration = 250
+    animator.start()
+    return animator
+}
+
+fun View.fadeOut(completion: (() -> Unit)? = null): ValueAnimator? {
+    if (!isVisible) {
+        completion?.invoke()
+        return null
+    }
+    val animator = ObjectAnimator.ofFloat(this, View.ALPHA, alpha, 0f)
+    animator.duration = 250
+    animator.start()
+    animator.addListener(onEnd = {
+        isVisible = false
+        completion?.invoke()
+    })
+    return animator
 }

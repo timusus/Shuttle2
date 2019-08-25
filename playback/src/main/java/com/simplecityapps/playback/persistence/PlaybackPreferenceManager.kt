@@ -50,7 +50,7 @@ class PlaybackPreferenceManager(private val sharedPreferences: SharedPreferences
         }
 
     var shuffleMode: QueueManager.ShuffleMode
-        set (value) {
+        set(value) {
             sharedPreferences.put("shuffle_mode", value.ordinal)
         }
         get() {
@@ -58,10 +58,32 @@ class PlaybackPreferenceManager(private val sharedPreferences: SharedPreferences
         }
 
     var repeatMode: QueueManager.RepeatMode
-        set (value) {
+        set(value) {
             sharedPreferences.put("repeat_mode", value.ordinal)
         }
         get() {
             return QueueManager.RepeatMode.init(sharedPreferences.get("repeat_mode", -1))
+        }
+
+    enum class SongProvider {
+        TagLib, MediaStore;
+
+        companion object {
+            fun init(ordinal: Int): SongProvider {
+                return when (ordinal) {
+                    SongProvider.TagLib.ordinal -> SongProvider.TagLib
+                    SongProvider.MediaStore.ordinal -> SongProvider.MediaStore
+                    else -> SongProvider.MediaStore
+                }
+            }
+        }
+    }
+
+    var songProvider: SongProvider
+        set(value) {
+            sharedPreferences.put("song_provider", value.ordinal)
+        }
+        get() {
+            return SongProvider.init(sharedPreferences.get("song_provider", -1))
         }
 }

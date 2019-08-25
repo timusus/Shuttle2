@@ -1,5 +1,6 @@
 package com.simplecityapps.mediaprovider.repository
 
+import com.simplecityapps.mediaprovider.SongProvider
 import com.simplecityapps.mediaprovider.model.Song
 import io.reactivex.Completable
 import io.reactivex.Observable
@@ -7,7 +8,7 @@ import java.util.*
 
 interface SongRepository {
 
-    fun populate(): Completable {
+    fun populate(songProvider: SongProvider, callback: ((Float, String) -> Unit)? = null): Completable {
         return Completable.complete()
     }
 
@@ -29,6 +30,7 @@ sealed class SongQuery {
     class LastPlayed(val after: Date) : SongQuery()
     class LastCompleted(val after: Date) : SongQuery()
     class PlaylistId(val playlistId: Long) : SongQuery()
+    class Search(val query: String) : SongQuery()
 }
 
 fun SongQuery.predicate(): (Song) -> Boolean {
@@ -41,5 +43,10 @@ fun SongQuery.predicate(): (Song) -> Boolean {
         is SongQuery.LastPlayed -> { song -> song.lastPlayed?.after(after) ?: false }
         is SongQuery.LastCompleted -> { song -> song.lastCompleted?.after(after) ?: false }
         is SongQuery.PlaylistId -> throw NotImplementedError("Use PlaylistRepository.getSongsForPlaylist() instead")
+        is SongQuery.Search -> { song ->
+            song.name.contains(query, true)
+                    || song.albumName.contains(query, true)
+                    || song.albumArtistName.contains(query, true)
+        }
     }
 }

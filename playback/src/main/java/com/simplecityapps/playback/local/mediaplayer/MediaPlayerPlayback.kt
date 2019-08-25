@@ -1,5 +1,6 @@
 package com.simplecityapps.playback.local.mediaplayer
 
+import android.content.Context
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.queue.QueueItem
@@ -7,6 +8,7 @@ import com.simplecityapps.playback.queue.QueueManager
 import timber.log.Timber
 
 class MediaPlayerPlayback(
+    private val context: Context,
     private val queueManager: QueueManager
 ) : Playback {
 
@@ -73,7 +75,7 @@ class MediaPlayerPlayback(
         currentMediaPlayerHelper.callback = currentPlayerCallback
         currentQueueItem = queueManager.getCurrentItem()
         currentQueueItem?.let { currentQueueItem ->
-            currentMediaPlayerHelper.load(currentQueueItem.song, completion)
+            currentMediaPlayerHelper.load(context, currentQueueItem.song, completion)
         } ?: run {
             completion(Result.failure(Error("Load failed: Current song null")))
         }
@@ -83,7 +85,7 @@ class MediaPlayerPlayback(
         Timber.v("loadNext()")
         nextQueueItem = queueManager.getNext()
         nextQueueItem?.let { nextQueueItem ->
-            nextMediaPlayerHelper.load(nextQueueItem.song) { result ->
+            nextMediaPlayerHelper.load(context, nextQueueItem.song) { result ->
                 result.onSuccess { currentMediaPlayerHelper.setNextMediaPlayer(nextMediaPlayerHelper.mediaPlayer) }
                 result.onFailure { error -> Timber.e("Failed to load next media player: $error") }
             }

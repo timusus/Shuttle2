@@ -44,7 +44,7 @@ class PlaybackModule(
 
     @Provides
     fun providePlayback(queueManager: QueueManager): Playback {
-        return MediaPlayerPlayback(queueManager)
+        return MediaPlayerPlayback(context, queueManager)
     }
 
     @Singleton

@@ -14,4 +14,7 @@ object ViewTypes {
     const val DetailSong = 9
     const val Playlist = 10
     const val Settings = 11
+    const val OnboardingPage = 12
+    const val OnboardingDirectory = 13
+    const val OnboardingDirectoryAdd = 14
 }

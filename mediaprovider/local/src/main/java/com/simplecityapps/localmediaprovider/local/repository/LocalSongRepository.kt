@@ -6,7 +6,7 @@ import com.simplecityapps.localmediaprovider.local.Diff.Companion.diff
 import com.simplecityapps.localmediaprovider.local.IntervalTimer
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
 import com.simplecityapps.localmediaprovider.local.data.room.entity.*
-import com.simplecityapps.localmediaprovider.local.provider.SongProvider
+import com.simplecityapps.mediaprovider.SongProvider
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
@@ -14,6 +14,7 @@ import com.simplecityapps.mediaprovider.repository.predicate
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
+import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.functions.Consumer
 import io.reactivex.functions.Function4
 import io.reactivex.schedulers.Schedulers
@@ -21,8 +22,7 @@ import timber.log.Timber
 import java.util.*
 
 class LocalSongRepository(
-    private val database: MediaDatabase,
-    private val songProvider: SongProvider
+    private val database: MediaDatabase
 ) : SongRepository {
 
     private val intervalTimer = IntervalTimer()
@@ -43,16 +43,28 @@ class LocalSongRepository(
         val songData: List<SongData>
     )
 
-    override fun populate(): Completable {
+    //Todo: Might be nicer to remove this callback, and just invoke a listener on the LocalSongRepository instance
+    override fun populate(songProvider: SongProvider, callback: ((Float, String) -> Unit)?): Completable {
         intervalTimer.startLog()
 
         Timber.v("Scanning for media..")
 
-        val oldAlbumArtistData = database.albumArtistDataDao().getAll().first(emptyList()).map { albumArtists -> albumArtists.map { albumArtist -> albumArtist.toAlbumArtistData() } }
-        val oldAlbumData = database.albumDataDao().getAll().first(emptyList()).map { albums -> albums.map { album -> album.toAlbumData() } }
-        val oldSongData = database.songDataDao().getAllDistinct().first(emptyList()).map { it.toSongData() }
+        val oldAlbumArtistData = database.albumArtistDataDao().getAll()
+            .first(emptyList())
+            .map { albumArtists -> albumArtists.map { albumArtist -> albumArtist.toAlbumArtistData() } }
 
-        val newSongData = songProvider.findSongs()
+        val oldAlbumData = database.albumDataDao().getAll().first(emptyList())
+            .map { albums -> albums.map { album -> album.toAlbumData() } }
+
+        val oldSongData = database.songDataDao().getAllDistinct().first(emptyList())
+            .map { it.toSongData() }
+
+        val newSongData: Single<List<SongData>> = songProvider.findSongs()
+            .observeOn(AndroidSchedulers.mainThread())
+            .doOnNext { callback?.invoke(it.second, "${it.first.albumArtistName} • ${it.first.albumName} • ${it.first.name}") }
+            .map { it.first.toSongData() }
+            .observeOn(Schedulers.io())
+            .toList()
 
         return Single.zip(
             oldAlbumArtistData,
@@ -67,6 +79,7 @@ class LocalSongRepository(
                 updateDatabase(pair.first, pair.second)
                 Timber.v("Database populated in ${intervalTimer.getInterval()}ms. Total time to scan & populate: ${intervalTimer.getTotal()}ms")
                 Completable.complete()
+                    .subscribeOn(Schedulers.io())
             }
             .subscribeOn(Schedulers.io())
     }

@@ -14,8 +14,8 @@ abstract class BasePresenter<T : Any> : BaseContract.Presenter<T> {
     }
 
     override fun unbindView() {
-        compositeDisposable.clear()
         view = null
+        compositeDisposable.clear()
     }
 
     fun addDisposable(disposable: Disposable) {

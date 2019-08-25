@@ -1,11 +1,12 @@
-include ':app',
-        ':taglib:lib',
-        ':core',
-        ':recyclerview-adapter',
-        ':mediaprovider:core',
-        ':mediaprovider:local',
-        ':imageloader',
-        ':playback'
+include ':app'
+include ':taglib:lib'
+include ':core'
+include ':recyclerview-adapter'
+include ':mediaprovider:core'
+include ':mediaprovider:local'
+include ':imageloader'
+include ':playback'
+include ':saf'//
 
-        // Re-comment when regenerating taglib .so files (see taglib/lib/build.gradle
-        //':taglib:gen'
+// Re-comment when regenerating taglib .so files (see taglib/lib/build.gradle
+//include ':taglib:gen'

@@ -71,6 +71,7 @@ dependencies {
 
     // Shuttle MediaProvider Core
     implementation project(path: ':mediaprovider:core')
+    implementation project(path: ':mediaprovider:local')
 
     // Shuttle Image Loader
     implementation project(path: ':imageloader')
@@ -84,12 +85,15 @@ dependencies {
     // RecylerView Adapter
     implementation project(path: ':recyclerview-adapter')
 
+    // Storage Access Framework Helper
+    implementation project(path: ':saf')
+
     // Kotlin Standard Library
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
     // Kotlin Extensions
     implementation 'androidx.core:core-ktx:1.0.2'
-    implementation "androidx.fragment:fragment-ktx:1.1.0-alpha09"
+    implementation "androidx.fragment:fragment-ktx:1.2.0-alpha01"
 
     // RecyclerView FastScroll
     implementation 'com.github.timusus:RecyclerView-FastScroll:dev-SNAPSHOT'
@@ -107,8 +111,8 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-extensions:2.0.0'
 
     // AndroidX Navigation
-    implementation "androidx.navigation:navigation-fragment-ktx:2.1.0-alpha04"
-    implementation "androidx.navigation:navigation-ui-ktx:2.1.0-alpha04"
+    implementation "androidx.navigation:navigation-fragment-ktx:2.1.0-beta01"
+    implementation "androidx.navigation:navigation-ui-ktx:2.1.0-beta01"
 
     // RxJava
     implementation "io.reactivex.rxjava2:rxjava:2.2.7"
@@ -146,6 +150,12 @@ dependencies {
 
     // Leak Canary
     debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.0-alpha-1'
+
+    // ViewPager 2
+    implementation 'androidx.viewpager2:viewpager2:1.0.0-beta03'
+
+    // ViewPager Circle Indicator
+    implementation 'me.relex:circleindicator:2.1.2'
 }
 
 play {

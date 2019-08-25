@@ -29,18 +29,31 @@ class HomeFragment : Fragment(), Injectable {
         historyButton.setOnClickListener { findNavController().navigate(R.id.action_homeFragment_to_historyFragment) }
         latestButton.setOnClickListener { findNavController().navigate(R.id.action_homeFragment_to_recentFragment) }
         shuffleButton.setOnClickListener { presenter.shuffleAll() }
+    }
+
+    override fun onResume() {
+        super.onResume()
 
         searchView.setOnSearchClickListener {
-            navigateToSearch()
+            if (isResumed)
+                navigateToSearch()
         }
         searchView.setOnQueryTextFocusChangeListener { v, hasFocus ->
-            if (hasFocus) {
+            if (hasFocus && isResumed) {
                 navigateToSearch()
             }
         }
     }
 
+    override fun onPause() {
+        searchView.setOnSearchClickListener(null)
+        searchView.setOnQueryTextFocusChangeListener(null)
+        super.onPause()
+    }
+
     private fun navigateToSearch() {
-        findNavController().navigate(R.id.action_homeFragment_to_searchFragment, null, null, FragmentNavigatorExtras(searchView to searchView.transitionName))
+        if (findNavController().currentDestination?.id != R.id.searchFragment) {
+            findNavController().navigate(R.id.action_homeFragment_to_searchFragment, null, null, FragmentNavigatorExtras(searchView to searchView.transitionName))
+        }
     }
 }

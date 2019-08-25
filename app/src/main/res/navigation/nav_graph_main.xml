@@ -93,10 +93,4 @@
             app:argType="com.simplecityapps.mediaprovider.model.Playlist" />
     </fragment>
 
-    <dialog
-        android:id="@+id/bottomDrawer"
-        android:name="com.simplecityapps.shuttle.ui.screens.settings.BottomDrawer"
-        android:label="BottomDrawer"
-        tools:layout="@layout/fragment_bottom_drawer" />
-
 </navigation>

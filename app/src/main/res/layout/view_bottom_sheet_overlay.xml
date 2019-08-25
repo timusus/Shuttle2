@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:parentTag="androidx.coordinatorlayout.widget.CoordinatorLayout">
+
+    <View
+        android:id="@+id/backgroundView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#35000000"
+        android:clickable="true"
+        android:focusable="true"
+        android:visibility="gone" />
+
+    <fragment
+        android:id="@+id/bottomDrawerFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.settings.BottomDrawerSettingsFragment"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:behavior_hideable="true"
+        app:behavior_skipCollapsed="true"
+        app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior"
+        tools:layout="@layout/fragment_bottom_drawer" />
+
+</merge>

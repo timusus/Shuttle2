@@ -47,6 +47,7 @@ dependencies {
 
     // Kotlin Standard Library
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
+    implementation 'androidx.documentfile:documentfile:1.0.1'
 }
 
 // Workaround library native code dependency issue in gradle 3.0.0
