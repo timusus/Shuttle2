@@ -174,11 +174,11 @@ play {
 
 afterEvaluate {
     if (System.getenv('JENKINS_URL') != null) {
-        processReleaseGoogleServices.dependsOn copyGoogleServies
+        processReleaseGoogleServices.dependsOn 'copyGoogleServices'
     }
 }
 
-task copyGoogleServies(type: Copy) {
+task copyGoogleServices(type: Copy) {
     if (System.getenv('JENKINS_URL') != null) {
         description = 'Copies google-services.json from Jenkins secret file'
         from System.getenv('GOOGLE_SERVICES')
