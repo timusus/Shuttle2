@@ -47,8 +47,6 @@ class LocalSongRepository(
     override fun populate(songProvider: SongProvider, callback: ((Float, String) -> Unit)?): Completable {
         intervalTimer.startLog()
 
-        Timber.v("Scanning for media..")
-
         val oldAlbumArtistData = database.albumArtistDataDao().getAll()
             .first(emptyList())
             .map { albumArtists -> albumArtists.map { albumArtist -> albumArtist.toAlbumArtistData() } }

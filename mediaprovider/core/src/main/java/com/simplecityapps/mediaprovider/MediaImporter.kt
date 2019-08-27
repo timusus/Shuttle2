@@ -29,6 +29,8 @@ class MediaImporter(
 
         if (isScanning && songProvider == this.songProvider) return
 
+        Timber.v("Scanning for media...")
+
         disposable?.dispose()
 
         this.songProvider = songProvider

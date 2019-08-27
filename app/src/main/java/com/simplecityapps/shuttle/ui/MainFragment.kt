@@ -18,9 +18,7 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.simplecityappds.saf.SafDirectoryHelper
 import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStoreSongProvider
 import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibSongProvider
-import com.simplecityapps.mediaprovider.repository.AlbumArtistRepository
-import com.simplecityapps.mediaprovider.repository.AlbumRepository
-import com.simplecityapps.mediaprovider.repository.SongRepository
+import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
@@ -39,7 +37,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
-import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.fragment_main.*
 import timber.log.Timber
 import java.lang.ref.WeakReference
 import javax.inject.Inject
@@ -54,9 +52,7 @@ class MainFragment
     @Inject lateinit var queueWatcher: QueueWatcher
     @Inject lateinit var playbackManager: PlaybackManager
 
-    @Inject lateinit var songRepository: SongRepository
-    @Inject lateinit var albumsRepository: AlbumRepository
-    @Inject lateinit var albumArtistsRepository: AlbumArtistRepository
+    @Inject lateinit var mediaImporter: MediaImporter
 
     @Inject lateinit var playbackPreferenceManager: PlaybackPreferenceManager
     @Inject lateinit var fileScanner: FileScanner
@@ -121,11 +117,7 @@ class MainFragment
 
         when (playbackPreferenceManager.songProvider) {
             PlaybackPreferenceManager.SongProvider.MediaStore -> {
-                songRepository.populate(MediaStoreSongProvider(context!!.applicationContext)).subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribeBy(
-                        onComplete = { Timber.v("Scan completed") },
-                        onError = { throwable -> Timber.e(throwable, "Failed to scan library") })
+                mediaImporter.startScan(MediaStoreSongProvider(context!!.applicationContext))
             }
             PlaybackPreferenceManager.SongProvider.TagLib -> {
                 compositeDisposable.add(
@@ -138,13 +130,12 @@ class MainFragment
                                 }
                             }.orEmpty()
                     }
-                        .flatMapCompletable { uris ->
-                            songRepository.populate(TaglibSongProvider(context!!.applicationContext, fileScanner, uris))
-                        }
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribeBy(
-                            onComplete = { Timber.v("Scan completed") },
+                            onSuccess = { uris ->
+                                mediaImporter.startScan(TaglibSongProvider(context!!.applicationContext, fileScanner, uris))
+                            },
                             onError = { throwable -> Timber.e(throwable, "Failed to scan library") })
                 )
             }

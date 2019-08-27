@@ -1,22 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:fitsSystemWindows="true"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
 
     <androidx.drawerlayout.widget.DrawerLayout
-        xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/drawer_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
-            android:id="@+id/multiSheetView"
+        <fragment
+            android:id="@+id/onboardingNavHostFragment"
+            android:name="androidx.navigation.fragment.NavHostFragment"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            tools:context=".ui.MainActivity" />
+            app:defaultNavHost="true"
+            app:navGraph="@navigation/nav_graph_launch" />
 
         <com.google.android.material.navigation.NavigationView
             android:id="@+id/nav_view"
@@ -34,4 +35,5 @@
         </com.google.android.material.navigation.NavigationView>
 
     </androidx.drawerlayout.widget.DrawerLayout>
-</androidx.constraintlayout.widget.ConstraintLayout>
+
+</FrameLayout>
