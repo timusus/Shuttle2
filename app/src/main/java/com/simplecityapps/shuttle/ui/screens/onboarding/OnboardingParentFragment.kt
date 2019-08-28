@@ -77,10 +77,6 @@ class OnboardingParentFragment : Fragment(), OnboardingParent {
         super.onCreate(savedInstanceState)
 
         adapter = OnboardingAdapter(this)
-
-        if (hasOnboarded && hasStoragePermission()) {
-            exit()
-        }
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -89,6 +85,11 @@ class OnboardingParentFragment : Fragment(), OnboardingParent {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        if (hasOnboarded && hasStoragePermission()) {
+            exit()
+            return
+        }
 
         viewPager = view.findViewById(R.id.viewPager)
         viewPager.adapter = adapter
