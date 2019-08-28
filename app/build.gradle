@@ -15,12 +15,12 @@ ext {
 }
 
 android {
-    compileSdkVersion 28
+    compileSdkVersion 29
 
     defaultConfig {
         applicationId "com.simplecityapps.shuttle"
         minSdkVersion 21
-        targetSdkVersion 28
+        targetSdkVersion 29
         versionName computeVersionName()
         versionCode computeVersionCode()
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
