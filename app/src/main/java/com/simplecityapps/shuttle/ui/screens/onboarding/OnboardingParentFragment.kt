@@ -86,11 +86,6 @@ class OnboardingParentFragment : Fragment(), OnboardingParent {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        if (hasOnboarded && hasStoragePermission()) {
-            exit()
-            return
-        }
-
         viewPager = view.findViewById(R.id.viewPager)
         viewPager.adapter = adapter
         viewPager.isUserInputEnabled = false
@@ -118,6 +113,11 @@ class OnboardingParentFragment : Fragment(), OnboardingParent {
         previousButton.setOnClickListener {
             val currentPage = adapter.data[viewPager.currentItem]
             childFragmentManager.fragments.filterIsInstance<OnboardingChild>().firstOrNull { it.page == currentPage }?.handleBackButtonClick()
+        }
+
+        if (hasOnboarded && hasStoragePermission()) {
+            exit()
+            return
         }
     }
 
