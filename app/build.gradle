@@ -15,12 +15,12 @@ ext {
 }
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 28
 
     defaultConfig {
         applicationId "com.simplecityapps.shuttle"
         minSdkVersion 21
-        targetSdkVersion 29
+        targetSdkVersion 28
         versionName computeVersionName()
         versionCode computeVersionCode()
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -149,7 +149,7 @@ dependencies {
     implementation 'com.crashlytics.sdk.android:crashlytics:2.10.1'
 
     // Leak Canary
-    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.0-beta-3'
+//    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.0-beta-3'
 
     // ViewPager 2
     implementation 'androidx.viewpager2:viewpager2:1.0.0-beta03'
