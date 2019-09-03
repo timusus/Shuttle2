@@ -1,8 +1,6 @@
 package com.simplecityapps.shuttle
 
-import android.app.Activity
 import android.app.Application
-import android.app.Service
 import android.content.Intent
 import androidx.appcompat.app.AppCompatDelegate
 import com.simplecityapps.playback.ActivityIntentProvider
@@ -12,19 +10,15 @@ import com.simplecityapps.shuttle.dagger.*
 import com.simplecityapps.shuttle.ui.MainActivity
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
-import dagger.android.HasActivityInjector
-import dagger.android.HasServiceInjector
+import dagger.android.HasAndroidInjector
 import javax.inject.Inject
 
 class ShuttleApplication : Application(),
-    HasActivityInjector,
-    HasServiceInjector,
+    HasAndroidInjector,
     CoreComponentProvider,
     ActivityIntentProvider {
 
-    @Inject lateinit var dispatchingAndroidActivityInjector: DispatchingAndroidInjector<Activity>
-
-    @Inject lateinit var dispatchingAndroidServiceInjector: DispatchingAndroidInjector<Service>
+    @Inject lateinit var dispatchingAndroidInjector: DispatchingAndroidInjector<Any>
 
     @Inject lateinit var initializers: AppInitializers
 
@@ -51,17 +45,10 @@ class ShuttleApplication : Application(),
     }
 
 
-    // HasActivityInjector Implementation
+    // HasAndroidInjector Implementation
 
-    override fun activityInjector(): AndroidInjector<Activity> {
-        return dispatchingAndroidActivityInjector
-    }
-
-
-    // HasServiceInjector Implementation
-
-    override fun serviceInjector(): AndroidInjector<Service> {
-        return dispatchingAndroidServiceInjector
+    override fun androidInjector(): AndroidInjector<Any> {
+        return dispatchingAndroidInjector
     }
 
 

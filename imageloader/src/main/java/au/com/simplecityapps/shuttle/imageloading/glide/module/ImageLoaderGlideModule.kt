@@ -32,8 +32,10 @@ class ImageLoaderGlideModule : AppGlideModule() {
 
         // Todo: Inject Http Client via NetworkingModule
         val okHttpClient = OkHttpClient.Builder()
-            .addInterceptor(HttpLoggingInterceptor(HttpLoggingInterceptor.Logger { message ->
-                Timber.tag("OkHttp").d(message)
+            .addInterceptor(HttpLoggingInterceptor(object : (HttpLoggingInterceptor.Logger) {
+                override fun log(message: String) {
+                    Timber.tag("OkHttp").d(message)
+                }
             }).apply {
                 level = HttpLoggingInterceptor.Level.BASIC
             })

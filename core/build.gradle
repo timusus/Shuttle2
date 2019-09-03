@@ -41,18 +41,18 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
     // Dagger core
-    implementation 'com.google.dagger:dagger-android:2.22.1'
-    kapt 'com.google.dagger:dagger-compiler:2.22.1'
+    implementation 'com.google.dagger:dagger-android:2.24'
+    kapt 'com.google.dagger:dagger-compiler:2.24'
 
     // Timber
     implementation 'com.jakewharton.timber:timber:4.7.1'
 
     // OKHttp
-    implementation 'com.squareup.okhttp3:okhttp:3.13.1'
-    implementation 'com.squareup.okhttp3:logging-interceptor:3.13.1'
+    implementation 'com.squareup.okhttp3:okhttp:4.1.0'
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.1.0'
 
     // Retrofit
-    implementation 'com.squareup.retrofit2:converter-gson:2.5.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.6.1'
 }
 
 repositories {

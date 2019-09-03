@@ -22,8 +22,10 @@ open class NetworkingModule {
     @Singleton
     @Provides
     fun provideLoggingInterceptor(): HttpLoggingInterceptor {
-        return HttpLoggingInterceptor(HttpLoggingInterceptor.Logger { message ->
-            Timber.tag(NETWORK_LOG_TAG).d(message)
+        return HttpLoggingInterceptor(object : HttpLoggingInterceptor.Logger {
+            override fun log(message: String) {
+                Timber.tag(NETWORK_LOG_TAG).d(message)
+            }
         }).apply {
             level = HttpLoggingInterceptor.Level.BASIC
         }

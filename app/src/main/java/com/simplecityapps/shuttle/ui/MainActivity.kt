@@ -2,17 +2,17 @@ package com.simplecityapps.shuttle.ui
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.Fragment
 import com.simplecityapps.shuttle.R
+import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
-import dagger.android.support.HasSupportFragmentInjector
+import dagger.android.HasAndroidInjector
 import javax.inject.Inject
 
 class MainActivity :
     AppCompatActivity(),
-    HasSupportFragmentInjector {
+    HasAndroidInjector {
 
-    @Inject lateinit var dispatchingAndroidInjector: DispatchingAndroidInjector<Fragment>
+    @Inject lateinit var dispatchingAndroidInjector: DispatchingAndroidInjector<Any>
 
 
     // Lifecycle
@@ -24,7 +24,9 @@ class MainActivity :
     }
 
 
-    // HasSupportFragmentInjector Implementation
+    // HasAndroidInjector Implementation
 
-    override fun supportFragmentInjector() = dispatchingAndroidInjector
+    override fun androidInjector(): AndroidInjector<Any> {
+        return dispatchingAndroidInjector
+    }
 }
