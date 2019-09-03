@@ -12,7 +12,7 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
-import com.simplecityapps.shuttle.ui.common.toHms
+import com.simplecityapps.shuttle.ui.common.utils.toHms
 
 class DetailSongBinder(
     val song: Song,

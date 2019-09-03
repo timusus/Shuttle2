@@ -23,6 +23,7 @@ import com.simplecityapps.shuttle.ui.screens.onboarding.directories.DirectorySel
 import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.MediaProviderSelectionFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.scanner.MediaScannerFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.storage.StoragePermissionFragment
+import kotlinx.android.synthetic.main.fragment_onboarding.*
 import me.relex.circleindicator.CircleIndicator3
 
 enum class OnboardingPage {
@@ -70,11 +71,19 @@ class OnboardingParentFragment : Fragment(), OnboardingParent {
         get() = preferences.getBoolean(PREF_HAS_ONBOARDED, false)
         set(value) = preferences.put(PREF_HAS_ONBOARDED, value)
 
+    private var earlyExit = false
+
 
     // Lifecycle
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (hasOnboarded && hasStoragePermission()) {
+            earlyExit = true
+            exit()
+            return
+        }
 
         adapter = OnboardingAdapter(this)
     }
@@ -85,6 +94,10 @@ class OnboardingParentFragment : Fragment(), OnboardingParent {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        if (earlyExit) {
+            return
+        }
 
         viewPager = view.findViewById(R.id.viewPager)
         viewPager.adapter = adapter
@@ -114,15 +127,16 @@ class OnboardingParentFragment : Fragment(), OnboardingParent {
             val currentPage = adapter.data[viewPager.currentItem]
             childFragmentManager.fragments.filterIsInstance<OnboardingChild>().firstOrNull { it.page == currentPage }?.handleBackButtonClick()
         }
-
-        if (hasOnboarded && hasStoragePermission()) {
-            exit()
-            return
-        }
     }
 
     override fun onDestroyView() {
-        viewPager.clearAdapterOnDetach()
+        if (!earlyExit) {
+            adapter.unregisterAdapterDataObserver(indicator.adapterDataObserver)
+            viewPager.clearAdapterOnDetach()
+            viewPager.adapter = null
+        }
+        earlyExit = false
+
         super.onDestroyView()
     }
 
@@ -178,6 +192,7 @@ class OnboardingParentFragment : Fragment(), OnboardingParent {
     }
 
     override fun exit() {
+        earlyExit = true
         hasOnboarded = true
         findNavController().navigate(R.id.action_onboardingFragment_to_mainFragment)
     }

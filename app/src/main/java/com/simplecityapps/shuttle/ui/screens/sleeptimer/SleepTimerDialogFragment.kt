@@ -8,7 +8,7 @@ import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.shuttle.dagger.Injectable
-import com.simplecityapps.shuttle.ui.common.toHms
+import com.simplecityapps.shuttle.ui.common.utils.toHms
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 

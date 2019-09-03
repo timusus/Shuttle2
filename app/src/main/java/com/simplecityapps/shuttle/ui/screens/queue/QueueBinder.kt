@@ -17,7 +17,7 @@ import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
-import com.simplecityapps.shuttle.ui.common.toHms
+import com.simplecityapps.shuttle.ui.common.utils.toHms
 import com.simplecityapps.shuttle.ui.common.view.PlayPauseButton
 import com.simplecityapps.shuttle.ui.common.view.ProgressView
 import com.simplecityapps.shuttle.ui.common.view.increaseTouchableArea

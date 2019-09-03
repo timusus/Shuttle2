@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.common
+package com.simplecityapps.shuttle.ui.common.utils
 
 import android.graphics.Typeface
 import android.text.Spannable

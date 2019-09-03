@@ -85,6 +85,11 @@ class CircularLoadingView @JvmOverloads constructor(
         progressBar.indeterminateDrawable = drawable
     }
 
+    override fun onDetachedFromWindow() {
+        animation?.cancel()
+        super.onDetachedFromWindow()
+    }
+
     sealed class State {
         data class Loading(val message: String = "Loading…") : State()
         data class Empty(val message: String) : State()

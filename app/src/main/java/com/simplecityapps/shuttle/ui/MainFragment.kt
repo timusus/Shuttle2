@@ -76,6 +76,7 @@ class MainFragment
         val navController = findNavController(activity!!, R.id.navHostFragment)
 
         bottomSheetOverlayView = view.findViewById(R.id.bottomSheetOverlayView)
+        bottomSheetOverlayView.hide()
         bottomSheetOverlayView.listener = this
 
         val bottomNavigationView: BottomNavigationView = view.findViewById(R.id.bottomNavigationView)
