@@ -54,7 +54,7 @@
         android:layout_marginTop="8dp"
         android:nestedScrollingEnabled="false"
         android:orientation="vertical"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:layoutManager="com.simplecityapps.shuttle.ui.common.RecyclingLinearLayoutManager"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

@@ -14,7 +14,7 @@
         android:clipToPadding="false"
         android:orientation="vertical"
         android:paddingTop="8dp"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:layoutManager="com.simplecityapps.shuttle.ui.common.RecyclingLinearLayoutManager"
         tools:listitem="@layout/list_item_playlist"/>
 
     <com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
