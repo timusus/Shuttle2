@@ -20,6 +20,6 @@
         android:layout_height="400dp"
         android:orientation="vertical"
         tools:listitem="@layout/list_item_settings"
-        app:layoutManager="com.simplecityapps.shuttle.ui.common.RecyclingLinearLayoutManager" />
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
 
 </FrameLayout>
