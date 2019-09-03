@@ -74,8 +74,10 @@ class PlaybackService :
             }
         }
 
-        startForeground(PlaybackNotificationManager.NOTIFICATION_ID, notificationManager.displayNotification())
-        Timber.v("startForeground() called")
+        if (intent != null) {
+            startForeground(PlaybackNotificationManager.NOTIFICATION_ID, notificationManager.displayNotification())
+            Timber.v("startForeground() called")
+        }
 
         return START_STICKY
     }
@@ -92,6 +94,9 @@ class PlaybackService :
 
         playbackWatcher.removeCallback(this)
         playbackManager.pause()
+        playbackManager.release()
+
+        notificationManager.removeCallbacks()
 
         foregroundNotificationHandler?.removeCallbacksAndMessages(null)
         delayedShutdownHandler?.removeCallbacksAndMessages(null)

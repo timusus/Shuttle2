@@ -75,6 +75,10 @@ class PlaybackManager(
         playback.pause()
     }
 
+    fun release() {
+        playback.release()
+    }
+
     fun skipToNext(ignoreRepeat: Boolean = false, completion: ((Result<Any?>) -> Unit)? = null) {
         queueManager.skipToNext(ignoreRepeat)
         playback.load { result ->
@@ -140,7 +144,7 @@ class PlaybackManager(
         }
     }
 
-    fun moveQueueItem(from: Int, to: Int){
+    fun moveQueueItem(from: Int, to: Int) {
         queueManager.move(from, to)
         playback.loadNext()
     }
@@ -166,8 +170,8 @@ class PlaybackManager(
 
     // Playback.Callback Implementation
 
-    override fun onPlaystateChanged(isPlaying: Boolean) {
-        Timber.v("onPlaystateChanged() isPlaying: $isPlaying")
+    override fun onPlayStateChanged(isPlaying: Boolean) {
+        Timber.v("onPlayStateChanged() isPlaying: $isPlaying")
         playbackWatcher.onPlaystateChanged(isPlaying)
 
         monitorProgress(isPlaying)
@@ -183,7 +187,7 @@ class PlaybackManager(
 
     // AudioFocusHelper.Listener Implementation
 
-    override fun restoreVolumeAndplay() {
+    override fun restoreVolumeAndPlay() {
         playback.setVolume(1.0f)
         play()
     }

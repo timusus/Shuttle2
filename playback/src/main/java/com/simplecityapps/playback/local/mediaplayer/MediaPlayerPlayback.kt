@@ -109,6 +109,11 @@ class MediaPlayerPlayback(
         nextMediaPlayerHelper.pause()
     }
 
+    override fun release() {
+        currentMediaPlayerHelper.release()
+        nextMediaPlayerHelper.release()
+    }
+
     override fun isPlaying(): Boolean {
         return currentMediaPlayerHelper.isPlaying()
     }
@@ -132,8 +137,8 @@ class MediaPlayerPlayback(
 
     private val currentPlayerCallback = object : Playback.Callback {
 
-        override fun onPlaystateChanged(isPlaying: Boolean) {
-            callback?.onPlaystateChanged(isPlaying)
+        override fun onPlayStateChanged(isPlaying: Boolean) {
+            callback?.onPlayStateChanged(isPlaying)
         }
 
         override fun onPlaybackComplete(song: Song) {
@@ -141,7 +146,7 @@ class MediaPlayerPlayback(
             if (nextQueueItem == null) {
                 Timber.v("onPlaybackComplete() called. No next song")
 
-                callback?.onPlaystateChanged(false)
+                callback?.onPlayStateChanged(false)
             } else {
                 Timber.v("onPlaybackComplete() called. Loading next song")
 

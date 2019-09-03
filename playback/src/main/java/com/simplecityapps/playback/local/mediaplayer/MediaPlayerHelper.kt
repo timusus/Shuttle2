@@ -88,7 +88,7 @@ class MediaPlayerHelper {
                 mediaPlayer?.let { mediaPlayer ->
                     if (!isPlaying()) {
                         mediaPlayer.start()
-                        callback?.onPlaystateChanged(true)
+                        callback?.onPlayStateChanged(true)
                     }
                 } ?: run {
                     Timber.v("$tag play() called, Media player null")
@@ -109,7 +109,7 @@ class MediaPlayerHelper {
         Timber.v("$tag pause()")
         if (isPlaying()) {
             mediaPlayer?.pause()
-            callback?.onPlaystateChanged(false)
+            callback?.onPlayStateChanged(false)
         }
         if (isPreparing) {
             Timber.v("pause() called while preparing. Cancelling playOnPrepared.")

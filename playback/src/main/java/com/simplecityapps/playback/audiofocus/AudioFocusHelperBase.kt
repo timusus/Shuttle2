@@ -64,7 +64,7 @@ abstract class AudioFocusHelperBase(
     }
 
     fun restoreVolumeAndPlay() {
-        listener?.restoreVolumeAndplay()
+        listener?.restoreVolumeAndPlay()
     }
 
     fun pause() {

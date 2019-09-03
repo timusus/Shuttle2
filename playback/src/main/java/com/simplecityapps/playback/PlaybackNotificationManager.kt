@@ -18,6 +18,7 @@ import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
+import timber.log.Timber
 
 class PlaybackNotificationManager(
     private val context: Context,
@@ -25,8 +26,8 @@ class PlaybackNotificationManager(
     private val playbackManager: PlaybackManager,
     private val queueManager: QueueManager,
     private val mediaSessionManager: MediaSessionManager,
-    playbackWatcher: PlaybackWatcher,
-    queueWatcher: QueueWatcher
+    private val playbackWatcher: PlaybackWatcher,
+    private val queueWatcher: QueueWatcher
 ) : PlaybackWatcherCallback,
     QueueChangeCallback {
 
@@ -47,7 +48,14 @@ class PlaybackNotificationManager(
         queueWatcher.addCallback(this)
     }
 
+    fun removeCallbacks() {
+        playbackWatcher.removeCallback(this)
+        queueWatcher.removeCallback(this)
+    }
+
     fun displayNotification(): Notification {
+
+        Timber.i("Display Notification")
 
         createNotificationChannel()
 

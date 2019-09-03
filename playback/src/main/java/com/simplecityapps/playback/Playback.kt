@@ -14,6 +14,8 @@ interface Playback {
 
     fun pause()
 
+    fun release()
+
     fun isPlaying(): Boolean
 
     /**
@@ -35,7 +37,7 @@ interface Playback {
 
     interface Callback {
 
-        fun onPlaystateChanged(isPlaying: Boolean)
+        fun onPlayStateChanged(isPlaying: Boolean)
 
         fun onPlaybackComplete(song: Song)
     }

@@ -13,7 +13,7 @@ interface AudioFocusHelper {
 
     interface Listener {
 
-        fun restoreVolumeAndplay()
+        fun restoreVolumeAndPlay()
 
         fun pause()
 
