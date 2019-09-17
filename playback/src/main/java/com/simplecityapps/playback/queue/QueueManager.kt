@@ -193,11 +193,15 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
         }
     }
 
-    fun skipToNext(ignoreRepeat: Boolean) {
+    fun skipToNext(ignoreRepeat: Boolean = false): Boolean {
         Timber.v("skipToNext()")
         getNext(ignoreRepeat)?.let { nextItem ->
             setCurrentItem(nextItem)
-        } ?: Timber.v("No next track to skip to")
+            return true
+        } ?: run {
+            Timber.v("No next track to skip to")
+            return false
+        }
     }
 
     fun skipToPrevious() {

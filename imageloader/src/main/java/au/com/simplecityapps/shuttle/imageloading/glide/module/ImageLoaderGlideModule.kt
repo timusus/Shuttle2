@@ -37,7 +37,7 @@ class ImageLoaderGlideModule : AppGlideModule() {
                     Timber.tag("OkHttp").d(message)
                 }
             }).apply {
-                level = HttpLoggingInterceptor.Level.BASIC
+                level = HttpLoggingInterceptor.Level.NONE
             })
             .build()
 
@@ -66,6 +66,6 @@ class ImageLoaderGlideModule : AppGlideModule() {
     }
 
     override fun applyOptions(context: Context, builder: GlideBuilder) {
-        builder.setLogLevel(Log.INFO)
+        builder.setLogLevel(Log.ERROR)
     }
 }

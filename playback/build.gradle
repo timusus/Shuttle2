@@ -56,4 +56,10 @@ dependencies {
 
     // Timber
     implementation 'com.jakewharton.timber:timber:4.7.1'
+
+    // Chromecast
+    implementation 'com.google.android.gms:play-services-cast-framework:17.0.0'
+
+    // NanoHttp
+    implementation 'org.nanohttpd:nanohttpd-webserver:2.3.1'
 }

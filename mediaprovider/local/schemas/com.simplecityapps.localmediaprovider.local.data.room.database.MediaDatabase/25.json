@@ -1,12 +1,12 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 24,
-    "identityHash": "03a3d707491ce608665452366c89b3d5",
+    "version": 25,
+    "identityHash": "e209afe7874d7caf6490cc2e43bc5f28",
     "entities": [
       {
         "tableName": "songs",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `track` INTEGER NOT NULL, `disc` INTEGER NOT NULL, `duration` INTEGER NOT NULL, `year` INTEGER NOT NULL, `path` TEXT NOT NULL, `albumArtistId` INTEGER NOT NULL, `albumId` INTEGER NOT NULL, `size` INTEGER NOT NULL, `lastModified` INTEGER NOT NULL, `playbackPosition` INTEGER NOT NULL, `playCount` INTEGER NOT NULL, `lastPlayed` INTEGER, `lastCompleted` INTEGER, FOREIGN KEY(`albumArtistId`) REFERENCES `album_artists`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`albumId`) REFERENCES `albums`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `track` INTEGER NOT NULL, `disc` INTEGER NOT NULL, `duration` INTEGER NOT NULL, `year` INTEGER NOT NULL, `path` TEXT NOT NULL, `albumArtistId` INTEGER NOT NULL, `albumId` INTEGER NOT NULL, `size` INTEGER NOT NULL, `mimeType` TEXT NOT NULL, `lastModified` INTEGER NOT NULL, `playbackPosition` INTEGER NOT NULL, `playCount` INTEGER NOT NULL, `lastPlayed` INTEGER, `lastCompleted` INTEGER, FOREIGN KEY(`albumArtistId`) REFERENCES `album_artists`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`albumId`) REFERENCES `albums`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -66,6 +66,12 @@
             "fieldPath": "size",
             "columnName": "size",
             "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mimeType",
+            "columnName": "mimeType",
+            "affinity": "TEXT",
             "notNull": true
           },
           {
@@ -347,7 +353,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '03a3d707491ce608665452366c89b3d5')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e209afe7874d7caf6490cc2e43bc5f28')"
     ]
   }
 }

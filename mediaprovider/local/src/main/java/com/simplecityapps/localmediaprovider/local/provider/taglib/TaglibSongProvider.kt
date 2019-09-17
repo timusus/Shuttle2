@@ -11,7 +11,7 @@ import io.reactivex.Observable
 class TaglibSongProvider(
     private val context: Context,
     private val fileScanner: FileScanner,
-    private val uris: List<Uri>
+    private val uriMimeTypePairs: List<Pair<Uri, String>>
 ) : SongProvider {
 
     override fun findSongs(): Observable<Pair<Song, Float>> {
@@ -19,13 +19,13 @@ class TaglibSongProvider(
         var progress = 0
 
         return Observable.create { emitter ->
-            uris.forEach { uri ->
+            uriMimeTypePairs.forEach { pair ->
                 if (emitter.isDisposed) {
                     return@forEach
                 }
 
-                fileScanner.getAudioFile(context, uri)?.toSong()?.let { songData ->
-                    emitter.onNext(Pair(songData, progress / uris.size.toFloat()))
+                fileScanner.getAudioFile(context, pair.first)?.toSong(pair.second)?.let { songData ->
+                    emitter.onNext(Pair(songData, progress / this.uriMimeTypePairs.size.toFloat()))
                 }
                 progress++
             }
@@ -41,7 +41,7 @@ class TaglibSongProvider(
 
         if (context != other.context) return false
         if (fileScanner != other.fileScanner) return false
-        if (uris != other.uris) return false
+        if (uriMimeTypePairs != other.uriMimeTypePairs) return false
 
         return true
     }
@@ -49,7 +49,7 @@ class TaglibSongProvider(
     override fun hashCode(): Int {
         var result = context.hashCode()
         result = 31 * result + fileScanner.hashCode()
-        result = 31 * result + uris.hashCode()
+        result = 31 * result + uriMimeTypePairs.hashCode()
         return result
     }
 

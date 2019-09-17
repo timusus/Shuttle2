@@ -44,7 +44,7 @@ class MediaProviderSelectionFragment : Fragment(), Injectable, OnboardingChild {
             when (checkedId) {
                 R.id.basic -> {
                     playbackPreferenceManager.songProvider = PlaybackPreferenceManager.SongProvider.MediaStore
-                    getParent().selectedUris = null
+                    getParent().uriMimeTypePairs = null
                     pages.remove(OnboardingPage.MusicDirectories)
                     getParent().setPages(pages)
                 }

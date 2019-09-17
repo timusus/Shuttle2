@@ -14,6 +14,7 @@ class DatabaseProvider constructor(private val context: Context) {
     val database: MediaDatabase by lazy {
         Room.databaseBuilder(context, MediaDatabase::class.java, "song.db")
             .addMigrations(MIGRATION_23_24)
+            .addMigrations(MIGRATION_24_25)
             .addCallback(callback)
             .build()
     }
@@ -33,10 +34,16 @@ class DatabaseProvider constructor(private val context: Context) {
     private val MIGRATION_23_24 = object : Migration(23, 24) {
         override fun migrate(database: SupportSQLiteDatabase) {
             database.execSQL("CREATE TABLE IF NOT EXISTS `playlists` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL)")
-            database.execSQL("CREATE TABLE IF NOT EXISTS `playlist_song_join` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `playlistId` INTEGER NOT NULL, `songId` INTEGER NOT NULL, FOREIGN KEY(`playlistId`) REFERENCES `playlists`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`songId`) REFERENCES `songs`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )")
-            database.execSQL("CREATE  INDEX `index_playlist_song_join_songId` ON `playlist_song_join` (`songId`)")
-            database.execSQL("CREATE  INDEX `index_playlist_song_join_playlistId` ON `playlist_song_join` (`playlistId`)")
+            database.execSQL("CREATE TABLE IF NOT EXISTS `playlist_song_join` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `playlistId` INTEGER NOT NULL, `songId` INTEGER NOT NULL, FOREIGN KEY(`playlistId`) REFERENCES `playlists`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE, FOREIGN KEY(`songId`) REFERENCES `songs`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE)")
+            database.execSQL("CREATE INDEX `index_playlist_song_join_songId` ON `playlist_song_join` (`songId`)")
+            database.execSQL("CREATE INDEX `index_playlist_song_join_playlistId` ON `playlist_song_join` (`playlistId`)")
             database.execSQL("INSERT INTO playlists (name) VALUES('$favoritesName')")
+        }
+    }
+
+    private val MIGRATION_24_25 = object : Migration(24, 25) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            database.execSQL("ALTER TABLE `songs` ADD COLUMN `mimeType` TEXT NOT NULL DEFAULT 'audio/*'")
         }
     }
 }

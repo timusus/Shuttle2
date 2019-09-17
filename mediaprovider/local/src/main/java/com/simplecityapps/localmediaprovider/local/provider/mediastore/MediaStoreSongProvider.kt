@@ -29,6 +29,7 @@ class MediaStoreSongProvider(
                     MediaStore.Audio.Media.DATE_ADDED,
                     MediaStore.Audio.Media.IS_PODCAST,
                     MediaStore.Audio.Media.BOOKMARK,
+                    MediaStore.Audio.Media.MIME_TYPE,
                     "album_artist"
                 ),
                 "${MediaStore.Audio.Media.IS_MUSIC}=1 OR ${MediaStore.Audio.Media.IS_PODCAST}=1",
@@ -47,23 +48,24 @@ class MediaStoreSongProvider(
                         val albumArtist = cursor.getString(cursor.getColumnIndex("album_artist")) ?: artist
 
                         val song = Song(
-                            0,
-                            cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)),
-                            0,
-                            albumArtist,
-                            0,
-                            album,
-                            cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK)),
-                            0,
-                            cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)),
-                            cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)),
-                            cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)),
-                            cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)),
-                            Date(cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED))),
-                            null,
-                            null,
-                            0,
-                            0
+                            id = 0,
+                            name = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)),
+                            albumArtistId = 0,
+                            albumArtistName = albumArtist,
+                            albumId = 0,
+                            albumName = album,
+                            track = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK)),
+                            disc = 0,
+                            duration = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)),
+                            year = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)),
+                            path = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)),
+                            size = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)),
+                            mimeType = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)),
+                            lastModified = Date(cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_ADDED))),
+                            lastPlayed = null,
+                            lastCompleted = null,
+                            playCount = 0,
+                            playbackPosition = 0
                         )
                         emitter.onNext(Pair(song, cursor.position / cursor.count.toFloat()))
                     }

@@ -127,15 +127,15 @@ class MainFragment
                             ?.filter { uriPermission -> uriPermission.isReadPermission }
                             ?.flatMap { uriPermission ->
                                 SafDirectoryHelper.buildFolderNodeTree(context!!.applicationContext.contentResolver, uriPermission.uri)?.getLeaves().orEmpty().map {
-                                    (it as SafDirectoryHelper.DocumentNode).uri
+                                    it as SafDirectoryHelper.DocumentNode
                                 }
                             }.orEmpty()
                     }
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribeBy(
-                            onSuccess = { uris ->
-                                mediaImporter.startScan(TaglibSongProvider(context!!.applicationContext, fileScanner, uris))
+                            onSuccess = { nodes ->
+                                mediaImporter.startScan(TaglibSongProvider(context!!.applicationContext, fileScanner, nodes.map { Pair(it.uri, it.mimeType) }))
                             },
                             onError = { throwable -> Timber.e(throwable, "Failed to scan library") })
                 )

@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.widget.ImageView
 import androidx.annotation.DrawableRes
+import androidx.annotation.WorkerThread
 import androidx.fragment.app.Fragment
 import au.com.simplecityapps.R
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
@@ -26,6 +27,8 @@ import com.bumptech.glide.request.target.Target
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
+import java.util.concurrent.CancellationException
+import java.util.concurrent.ExecutionException
 
 class GlideImageLoader : ArtworkImageLoader {
 
@@ -76,6 +79,23 @@ class GlideImageLoader : ArtworkImageLoader {
                 }
             })
             .submit(512, 512)
+    }
+
+    @WorkerThread
+    override fun loadBitmap(song: Song): ByteArray? {
+        return try {
+            requestManager
+                .`as`(ByteArray::class.java)
+                .load(song)
+                .submit()
+                .get()
+        } catch (e: InterruptedException) {
+            return null
+        } catch (e: ExecutionException) {
+            return null
+        } catch (e: CancellationException) {
+            return null
+        }
     }
 
     @DrawableRes

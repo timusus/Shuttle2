@@ -21,7 +21,7 @@ class MediaPlayerHelper {
 
     private var isPreparing: Boolean = false
 
-    private lateinit var currentSong: Song
+    var isReleased: Boolean = true
 
     /**
      * @param completion
@@ -32,9 +32,9 @@ class MediaPlayerHelper {
 
         Timber.v("$tag load() song: ${song.path}")
 
-        currentSong = song
-
         isPrepared = false
+        isPreparing = false
+        isReleased = false
 
         if (mediaPlayer == null) {
             mediaPlayer = MediaPlayer()
@@ -49,7 +49,7 @@ class MediaPlayerHelper {
         mediaPlayer!!.setOnErrorListener { _, what, extra ->
             Timber.e("$tag error ($what, $extra)")
             release()
-            completion?.invoke(Result.failure(Error("Media player error occurred. ($what, $extra). Path: ${currentSong.path}")))
+            completion?.invoke(Result.failure(Error("Media player error occurred. ($what, $extra). Path: ${song.path}")))
             true
         }
 
@@ -166,10 +166,12 @@ class MediaPlayerHelper {
 
         mediaPlayer?.release()
         mediaPlayer = null
+
+        isReleased = true
     }
 
     private val onCompletionListener = MediaPlayer.OnCompletionListener {
         Timber.v("$tag onCompletion()")
-        callback?.onPlaybackComplete(currentSong)
+        callback?.onPlaybackComplete(false)
     }
 }

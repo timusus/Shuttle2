@@ -3,94 +3,46 @@ package com.simplecityapps.playback.local.mediaplayer
 import android.content.Context
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.Playback
-import com.simplecityapps.playback.queue.QueueItem
-import com.simplecityapps.playback.queue.QueueManager
 import timber.log.Timber
 
 class MediaPlayerPlayback(
-    private val context: Context,
-    private val queueManager: QueueManager
+    private val context: Context
 ) : Playback {
 
     private var currentMediaPlayerHelper = MediaPlayerHelper()
 
     private var nextMediaPlayerHelper = MediaPlayerHelper()
 
-    private var currentQueueItem: QueueItem? = null
-
-    private var nextQueueItem: QueueItem? = null
-
     override var callback: Playback.Callback? = null
+
+    override var isReleased : Boolean = true
 
     init {
         currentMediaPlayerHelper.tag = "CurrentMediaPlayer"
         nextMediaPlayerHelper.tag = "NextMediaPlayer"
     }
 
-    override fun load(completion: (Result<Boolean>) -> Unit) {
-        Timber.v("load()")
-
-        val currentQueueItem = queueManager.getCurrentItem()
-
-        attemptLoad(1) { result ->
-            result.onSuccess {
-                loadNext()
-                completion(result)
-            }
-            result.onFailure { error ->
-                // Our load attempts may have caused us to skip through the queue. Since none of those subsequent attempts have succeeded,
-                // we may as well restore the previous queue position.
-                currentQueueItem?.let { currentQueueItem ->
-                    queueManager.setCurrentItem(currentQueueItem)
-                }
-
-                Timber.e("load() failed. Error: $error")
-                completion(result)
-            }
-        }
-    }
-
-    private fun attemptLoad(attempt: Int = 1, completion: (Result<Boolean>) -> Unit) {
-        Timber.v("Attempting load ($attempt)")
-        loadCurrent { result ->
-            result.onSuccess { completion(Result.success(attempt == 1)) }
-            result.onFailure { error ->
-                // Attempt to load the next item in the queue. If there is no next item, or we're on repeat, call completion(error).
-                queueManager.getNext(false)?.let { nextQueueItem ->
-                    if (nextQueueItem != currentQueueItem) {
-                        queueManager.skipToNext(true)
-                        attemptLoad(attempt + 1, completion)
-                    } else {
-                        completion(Result.failure(error))
-                    }
-                } ?: run {
-                    completion(Result.failure(error))
-                }
-            }
-        }
-    }
-
-    private fun loadCurrent(completion: (Result<Any?>) -> Unit) {
-        Timber.v("loadCurrent()")
+    override fun load(current: Song, next: Song?, completion: (Result<Any?>) -> Unit) {
+        Timber.v("load(current: ${current.name})")
+        isReleased = false
         currentMediaPlayerHelper.callback = currentPlayerCallback
-        currentQueueItem = queueManager.getCurrentItem()
-        currentQueueItem?.let { currentQueueItem ->
-            currentMediaPlayerHelper.load(context, currentQueueItem.song, completion)
-        } ?: run {
-            completion(Result.failure(Error("Load failed: Current song null")))
+        currentMediaPlayerHelper.load(context, current) { result ->
+            result.onSuccess {
+                loadNext(next)
+            }
+            completion(result)
         }
     }
 
-    override fun loadNext() {
-        Timber.v("loadNext()")
-        nextQueueItem = queueManager.getNext()
-        nextQueueItem?.let { nextQueueItem ->
-            nextMediaPlayerHelper.load(context, nextQueueItem.song) { result ->
+    override fun loadNext(song: Song?) {
+        Timber.v("loadNext(song: ${song?.name})")
+        song?.let { song ->
+            nextMediaPlayerHelper.load(context, song) { result ->
                 result.onSuccess { currentMediaPlayerHelper.setNextMediaPlayer(nextMediaPlayerHelper.mediaPlayer) }
                 result.onFailure { error -> Timber.e("Failed to load next media player: $error") }
             }
-        } ?:run {
-            Timber.v("loadNext() next song null")
+        } ?: run {
+            Timber.v("loadNext() next song null, releasing.")
             nextMediaPlayerHelper.release()
             currentMediaPlayerHelper.setNextMediaPlayer(null)
         }
@@ -110,8 +62,11 @@ class MediaPlayerPlayback(
     }
 
     override fun release() {
+        currentMediaPlayerHelper.callback = null
         currentMediaPlayerHelper.release()
+        nextMediaPlayerHelper.callback = null
         nextMediaPlayerHelper.release()
+        isReleased = true
     }
 
     override fun isPlaying(): Boolean {
@@ -141,12 +96,12 @@ class MediaPlayerPlayback(
             callback?.onPlayStateChanged(isPlaying)
         }
 
-        override fun onPlaybackComplete(song: Song) {
-
-            if (nextQueueItem == null) {
+        override fun onPlaybackComplete(trackWentToNext: Boolean) {
+            if (nextMediaPlayerHelper.isReleased) {
                 Timber.v("onPlaybackComplete() called. No next song")
 
                 callback?.onPlayStateChanged(false)
+                callback?.onPlaybackComplete(false)
             } else {
                 Timber.v("onPlaybackComplete() called. Loading next song")
 
@@ -162,21 +117,12 @@ class MediaPlayerPlayback(
                 currentMediaPlayerHelper.tag = "CurrentMediaPlayer"
                 currentMediaPlayerHelper.callback = this
 
-                // Update queue
-                Timber.v("Updating queue")
-                currentQueueItem = nextQueueItem
-                currentQueueItem?.let { currentQueueItem ->
-                    queueManager.setCurrentItem(currentQueueItem)
-                }
-
                 // Load next song
                 nextMediaPlayerHelper = MediaPlayerHelper()
                 nextMediaPlayerHelper.tag = "NextMediaPlayer"
 
-                loadNext()
+                callback?.onPlaybackComplete(true)
             }
-
-            callback?.onPlaybackComplete(song)
         }
     }
 }

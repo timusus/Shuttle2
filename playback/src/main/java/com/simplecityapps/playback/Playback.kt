@@ -6,9 +6,9 @@ interface Playback {
 
     var callback: Callback?
 
-    fun load(completion: (Result<Boolean>) -> Unit)
+    fun load(current: Song, next: Song?, completion: (Result<Any?>) -> Unit)
 
-    fun loadNext()
+    fun loadNext(song: Song?)
 
     fun play()
 
@@ -17,6 +17,8 @@ interface Playback {
     fun release()
 
     fun isPlaying(): Boolean
+
+    var isReleased: Boolean
 
     /**
      * @param position the position to seek to, in milliseconds
@@ -39,7 +41,7 @@ interface Playback {
 
         fun onPlayStateChanged(isPlaying: Boolean)
 
-        fun onPlaybackComplete(song: Song)
+        fun onPlaybackComplete(trackWentToNext: Boolean)
     }
 
 }

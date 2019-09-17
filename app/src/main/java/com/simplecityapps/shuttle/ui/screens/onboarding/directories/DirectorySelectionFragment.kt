@@ -128,7 +128,15 @@ class DirectorySelectionFragment : Fragment(),
                 postAnimationConstraints.applyTo(constraintLayout)
             }
 
-            getParent().selectedUris = adapterData.filter { it.traversalComplete }.flatMap { it.tree.getLeaves().map { (it as SafDirectoryHelper.DocumentNode).uri } }
+            getParent().uriMimeTypePairs = adapterData
+                .filter { it.traversalComplete }
+                .flatMap {
+                    it.tree.getLeaves()
+                        .map { documentNode ->
+                            documentNode as SafDirectoryHelper.DocumentNode
+                            Pair(documentNode.uri, documentNode.mimeType)
+                        }
+                }
         }
     }
 

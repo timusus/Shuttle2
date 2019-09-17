@@ -47,7 +47,7 @@ class MediaScannerFragment :
 
         presenter.bindView(this)
 
-        if (getParent().selectedUris == null) {
+        if (getParent().uriMimeTypePairs == null) {
             titleTextView.text = "Scanning Media Store"
         } else {
             titleTextView.text = "Reading song tags"
@@ -59,7 +59,7 @@ class MediaScannerFragment :
 
         getParent().showNextButton("Close")
 
-        val scanType = when (val selectedUris = getParent().selectedUris) {
+        val scanType = when (val selectedUris = getParent().uriMimeTypePairs) {
             null -> ScannerContract.ScanType.MediaStore
             else -> ScannerContract.ScanType.Taglib(selectedUris)
         }

@@ -44,7 +44,7 @@ interface OnboardingParent {
     fun getPages(): List<OnboardingPage>
     fun setPages(pages: List<OnboardingPage>)
     fun exit()
-    var selectedUris: List<Uri>?
+    var uriMimeTypePairs: List<Pair<Uri, String>>?
 }
 
 interface OnboardingChild {
@@ -142,7 +142,7 @@ class OnboardingParentFragment : Fragment(), OnboardingParent {
 
     // PageCompletionListener Implementation
 
-    override var selectedUris: List<Uri>? = null
+    override var uriMimeTypePairs: List<Pair<Uri, String>>? = null
 
     override fun getPages(): List<OnboardingPage> {
         return adapter.data

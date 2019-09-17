@@ -16,6 +16,7 @@ class Song(
     val year: Int,
     val path: String,
     val size: Long,
+    val mimeType: String,
     var lastModified: Date,
     var lastPlayed: Date?,
     var lastCompleted: Date?,

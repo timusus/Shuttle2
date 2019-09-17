@@ -4,6 +4,7 @@ import android.os.Handler
 import android.os.Looper
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
+import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
 import timber.log.Timber
 import kotlin.math.max
@@ -13,7 +14,8 @@ class PlaybackManager(
     private val queueManager: QueueManager,
     private val playback: Playback,
     private val playbackWatcher: PlaybackWatcher,
-    private val audioFocusHelper: AudioFocusHelper
+    private val audioFocusHelper: AudioFocusHelper,
+    private val playbackPreferenceManager: PlaybackPreferenceManager
 ) : Playback.Callback,
     AudioFocusHelper.Listener {
 
@@ -51,21 +53,76 @@ class PlaybackManager(
         }
 
         queueManager.setQueue(songs, shuffleSongs, queuePosition)
-        playback.load { result ->
-            result.onSuccess { didLoadFirst ->
-                if (didLoadFirst) {
-                    playback.seek(songs[queuePosition].getStartPosition())
+
+        val currentQueueItem = queueManager.getCurrentItem()
+        currentQueueItem?.let { currentQueueItem ->
+            attemptLoad(currentQueueItem.song, queueManager.getNext()?.song) { result ->
+                result.onSuccess { didLoadFirst ->
+                    if (didLoadFirst) {
+                        playback.seek(songs[queuePosition].getStartPosition())
+                    }
                 }
+                result.onFailure {
+                    queueManager.setCurrentItem(currentQueueItem)
+                }
+                completion(result)
             }
-            completion(result)
         }
     }
 
-    fun play() {
-        Timber.v("play() called")
+    private fun attemptLoad(current: Song, next: Song?, attempt: Int = 1, completion: (Result<Boolean>) -> Unit) {
+        Timber.v("attemptLoad(current: ${current.name}, attempt: $attempt")
 
+        playback.load(current, next) { result ->
+            result.onSuccess {
+                completion(Result.success(attempt == 1))
+            }
+            result.onFailure { error ->
+                // Attempt to load the next item in the queue. If there is no next item, or we're on repeat, call completion(error).
+                if (queueManager.getCurrentPosition() != queueManager.getSize() - 1) {
+                    queueManager.getNext()?.let { nextQueueItem ->
+                        if (nextQueueItem != queueManager.getCurrentItem()) {
+                            queueManager.skipToNext(true)
+                            attemptLoad(nextQueueItem.song, queueManager.getNext()?.song, attempt + 1, completion)
+                        } else {
+                            completion(Result.failure(error))
+                        }
+                    } ?: run {
+                        completion(Result.failure(error))
+                    }
+                } else {
+                    completion(Result.failure(error))
+                }
+            }
+        }
+    }
+
+    /**
+     * Begin playback. If the Playback has been released, the current track will be reloaded, and we'll attempt to call play() again.
+     *
+     * @param attempt used internally to prevent infinite attempts
+     */
+    fun play(attempt: Int = 1) {
+        Timber.v("play() called (attempt: $attempt)")
         if (audioFocusHelper.requestAudioFocus()) {
-            playback.play()
+            if (playback.isReleased) {
+                if (attempt <= 2) {
+                    Timber.v("Playback released.. reloading.")
+                    loadCurrent { result ->
+                        result.onSuccess {
+                            playbackPreferenceManager.playbackPosition?.let { playbackPosition ->
+                                seekTo(playbackPosition)
+                            }
+                            play(attempt + 1)
+                        }
+                        result.onFailure { exception -> Timber.e(exception, "play() failed") }
+                    }
+                } else {
+                    Timber.e("play() failed. Exceeded max number of attempts (2)")
+                }
+            } else {
+                playback.play()
+            }
         } else {
             Timber.w("play() failed, audio focus request denied.")
         }
@@ -80,21 +137,26 @@ class PlaybackManager(
     }
 
     fun skipToNext(ignoreRepeat: Boolean = false, completion: ((Result<Any?>) -> Unit)? = null) {
-        queueManager.skipToNext(ignoreRepeat)
-        playback.load { result ->
-            result.onSuccess { play() }
-            result.onFailure { error -> Timber.w("load() failed. Error: $error") }
-            completion?.invoke(result)
+        if (queueManager.skipToNext(ignoreRepeat)) {
+            queueManager.getCurrentItem()?.let { currentQueueItem ->
+                playback.load(currentQueueItem.song, queueManager.getNext()?.song) { result ->
+                    result.onSuccess { play() }
+                    result.onFailure { error -> Timber.w("load() failed. Error: $error") }
+                    completion?.invoke(result)
+                }
+            }
         }
     }
 
     fun skipToPrev(force: Boolean = false, completion: ((Result<Any?>) -> Unit)? = null) {
         if (force || playback.getPosition() ?: 0 < 2000) {
             queueManager.skipToPrevious()
-            playback.load { result ->
-                result.onSuccess { play() }
-                result.onFailure { error -> Timber.w("load() failed. Error: $error") }
-                completion?.invoke(result)
+            queueManager.getCurrentItem()?.let { currentQueueItem ->
+                playback.load(currentQueueItem.song, queueManager.getNext()?.song) { result ->
+                    result.onSuccess { play() }
+                    result.onFailure { error -> Timber.w("load() failed. Error: $error") }
+                    completion?.invoke(result)
+                }
             }
         } else {
             seekTo(0)
@@ -104,16 +166,20 @@ class PlaybackManager(
     fun skipTo(position: Int, completion: ((Result<Any?>) -> Unit)? = null) {
         if (queueManager.getCurrentPosition() != position) {
             queueManager.skipTo(position)
-            playback.load { result ->
-                result.onSuccess { play() }
-                result.onFailure { error -> Timber.w("load() failed. Error: $error") }
-                completion?.invoke(result)
+            queueManager.getCurrentItem()?.let { currentQueueItem ->
+                playback.load(currentQueueItem.song, queueManager.getNext()?.song) { result ->
+                    result.onSuccess { play() }
+                    result.onFailure { error -> Timber.w("load() failed. Error: $error") }
+                    completion?.invoke(result)
+                }
             }
         }
     }
 
     fun loadCurrent(completion: (Result<Any?>) -> Unit) {
-        playback.load(completion)
+        queueManager.getCurrentItem()?.let { currentQueueItem ->
+            playback.load(currentQueueItem.song, queueManager.getNext()?.song, completion)
+        }
     }
 
     fun isPlaying(): Boolean {
@@ -146,7 +212,7 @@ class PlaybackManager(
 
     fun moveQueueItem(from: Int, to: Int) {
         queueManager.move(from, to)
-        playback.loadNext()
+        playback.loadNext(queueManager.getNext()?.song)
     }
 
 
@@ -177,11 +243,21 @@ class PlaybackManager(
         monitorProgress(isPlaying)
     }
 
-    override fun onPlaybackComplete(song: Song) {
-        Timber.v("onPlaybackComplete()")
-        playbackWatcher.onPlaybackComplete(song)
+    override fun onPlaybackComplete(trackWentToNext: Boolean) {
+        Timber.v("onPlaybackComplete(trackWentToNext: $trackWentToNext)")
+        queueManager.getCurrentItem()?.let { currentQueueItem ->
+            playbackWatcher.onPlaybackComplete(currentQueueItem.song)
+        } ?: Timber.e("onPlaybackComplete() called, but current queue item is null")
 
         updateProgress()
+
+        if (trackWentToNext) {
+            Timber.v("Updating queue")
+            queueManager.skipToNext()
+            playback.loadNext(queueManager.getNext()?.song)
+        } else {
+            skipToNext(false)
+        }
     }
 
 

@@ -43,8 +43,8 @@ class PlaybackModule(
     }
 
     @Provides
-    fun providePlayback(queueManager: QueueManager): Playback {
-        return MediaPlayerPlayback(context, queueManager)
+    fun providePlayback(): Playback {
+        return MediaPlayerPlayback(context)
     }
 
     @Singleton
@@ -70,8 +70,14 @@ class PlaybackModule(
 
     @Singleton
     @Provides
-    fun providePlaybackManager(queueManager: QueueManager, playback: Playback, playbackWatcher: PlaybackWatcher, audioFocusHelper: AudioFocusHelper): PlaybackManager {
-        return PlaybackManager(queueManager, playback, playbackWatcher, audioFocusHelper)
+    fun providePlaybackPreferenceManager(): PlaybackPreferenceManager {
+        return PlaybackPreferenceManager(sharedPreferences)
+    }
+
+    @Singleton
+    @Provides
+    fun providePlaybackManager(queueManager: QueueManager, playback: Playback, playbackWatcher: PlaybackWatcher, audioFocusHelper: AudioFocusHelper, playbackPreferenceManager: PlaybackPreferenceManager): PlaybackManager {
+        return PlaybackManager(queueManager, playback, playbackWatcher, audioFocusHelper, playbackPreferenceManager)
     }
 
     @Singleton
@@ -110,12 +116,6 @@ class PlaybackModule(
             playbackWatcher,
             queueWatcher
         )
-    }
-
-    @Singleton
-    @Provides
-    fun providePlaybackPreferenceManager(): PlaybackPreferenceManager {
-        return PlaybackPreferenceManager(sharedPreferences)
     }
 
     @Singleton

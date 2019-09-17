@@ -14,7 +14,7 @@ interface ScannerContract {
 
     sealed class ScanType {
         object MediaStore : ScanType()
-        class Taglib(val uris: List<Uri>) : ScanType()
+        class Taglib(val uriMimeTypePairs: List<Pair<Uri, String>>) : ScanType()
     }
 
     interface View {
@@ -49,7 +49,7 @@ class ScannerPresenter @Inject constructor(
         mediaImporter.startScan(
             when (scanType) {
                 is ScannerContract.ScanType.MediaStore -> MediaStoreSongProvider(context)
-                is ScannerContract.ScanType.Taglib -> TaglibSongProvider(context, fileScanner, scanType.uris)
+                is ScannerContract.ScanType.Taglib -> TaglibSongProvider(context, fileScanner, scanType.uriMimeTypePairs)
             }
         )
     }
