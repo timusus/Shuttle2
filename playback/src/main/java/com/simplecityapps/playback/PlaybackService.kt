@@ -50,6 +50,8 @@ class PlaybackService :
         foregroundNotificationHandler = Handler()
         delayedShutdownHandler = Handler()
 
+        notificationManager.registerCallbacks()
+
         sessionToken = mediaSessionManager.mediaSession.sessionToken
 
         compositeDisposable = CompositeDisposable()

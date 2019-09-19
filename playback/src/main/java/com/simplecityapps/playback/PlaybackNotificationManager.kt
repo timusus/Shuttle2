@@ -43,7 +43,7 @@ class PlaybackNotificationManager(
         }
     }
 
-    init {
+    fun registerCallbacks(){
         playbackWatcher.addCallback(this)
         queueWatcher.addCallback(this)
     }
