@@ -81,7 +81,6 @@ class OnboardingParentFragment : Fragment(), OnboardingParent {
 
         if (hasOnboarded && hasStoragePermission()) {
             earlyExit = true
-            exit()
             return
         }
 
@@ -96,6 +95,7 @@ class OnboardingParentFragment : Fragment(), OnboardingParent {
         super.onViewCreated(view, savedInstanceState)
 
         if (earlyExit) {
+            exit()
             return
         }
 
