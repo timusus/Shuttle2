@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.PagerSnapHelper
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
+import com.google.android.gms.cast.framework.CastButtonFactory
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.mediaprovider.model.Song
@@ -94,6 +95,8 @@ class PlaybackFragment :
                 else -> false
             }
         }
+
+        CastButtonFactory.setUpMediaRouteButton(context!!, toolbar.menu, R.id.media_route_menu_item)
 
         presenter.bindView(this)
     }

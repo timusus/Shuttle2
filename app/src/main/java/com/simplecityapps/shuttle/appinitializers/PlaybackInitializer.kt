@@ -9,6 +9,7 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.*
+import com.simplecityapps.playback.chromecast.CastSessionManager
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
@@ -31,6 +32,7 @@ class PlaybackInitializer @Inject constructor(
     private val queueManager: QueueManager,
     private val queueWatcher: QueueWatcher,
     private val playbackPreferenceManager: PlaybackPreferenceManager,
+    @Suppress("unused") private val castSessionManager: CastSessionManager,
     @Suppress("unused") private val mediaSessionManager: MediaSessionManager,
     @Suppress("unused") private val noiseManager: NoiseManager
 ) : AppInitializer,

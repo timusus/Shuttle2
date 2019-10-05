@@ -3,10 +3,11 @@ package com.simplecityapps.playback.chromecast
 import android.net.Uri
 import fi.iki.elonen.NanoHTTPD
 import timber.log.Timber
+import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream
 
-class NanoServer internal constructor() : NanoHTTPD(5000) {
+class HttpServer(private val castService: CastService) : NanoHTTPD(5000) {
 
     override fun serve(session: IHTTPSession): Response {
 
@@ -14,23 +15,25 @@ class NanoServer internal constructor() : NanoHTTPD(5000) {
 
         val paths = uri.pathSegments
         if (paths.contains("songs")) {
-            val songId = Integer.parseInt(paths[paths.indexOf("songs") + 1])
+            val songId = paths[paths.indexOf("songs") + 1].toLong()
 
             when (uri.lastPathSegment) {
                 "audio" -> {
+                    castService.getAudio(songId)?.let { audioStream ->
+                        return serveAudio(session.headers, audioStream.stream, audioStream.length, audioStream.mimeType)
+                    }
                 }
                 "artwork" -> {
+                    castService.getArtwork(songId)?.let { byteArray ->
+                        return serveArtwork(ByteArrayInputStream(byteArray), "image/jpeg", byteArray.size.toLong())
+                    }
                 }
-            }//                    return serveAudio();
-            //                    return serveArtwork();
-
+            }
         }
         return newFixedLengthResponse(Response.Status.NOT_FOUND, "text/html", "File not found")
     }
 
-
-
-    internal fun serveAudio(headers: MutableMap<String, String>, inputStream: InputStream, length: Long, mimeType: String): Response {
+    private fun serveAudio(headers: MutableMap<String, String>, inputStream: InputStream, length: Long, mimeType: String): Response {
         try {
             var range: String? = null
             for (key in headers.keys) {
@@ -79,7 +82,7 @@ class NanoServer internal constructor() : NanoHTTPD(5000) {
         return newFixedLengthResponse(Response.Status.NOT_FOUND, "text/html", "File not found")
     }
 
-    internal fun serveArtwork(inputStream: InputStream, mimeType: String, length: Long): Response {
+    private fun serveArtwork(inputStream: InputStream, mimeType: String, length: Long): Response {
         return newFixedLengthResponse(Response.Status.OK, mimeType, inputStream, length)
     }
 }

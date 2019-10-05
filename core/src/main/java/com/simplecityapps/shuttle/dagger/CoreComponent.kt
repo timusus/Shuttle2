@@ -10,6 +10,7 @@ import com.simplecityapps.playback.NoiseManager
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackNotificationManager
 import com.simplecityapps.playback.PlaybackWatcher
+import com.simplecityapps.playback.chromecast.HttpServer
 import com.simplecityapps.playback.dagger.PlaybackModule
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
@@ -72,6 +73,8 @@ interface CoreComponent {
     fun getGsonConverterFactory(): GsonConverterFactory
 
     fun getMediaImporter(): MediaImporter
+
+    fun getHttpSever(): HttpServer
 
     @Component.Builder
     interface Builder {

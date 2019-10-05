@@ -4,7 +4,7 @@ import com.simplecityapps.mediaprovider.model.Song
 import java.util.*
 
 class QueueItem(
-    val uuid: UUID,
+    val uid: Long,
     val song: Song,
     val isCurrent: Boolean
 ) {
@@ -15,13 +15,13 @@ class QueueItem(
 
         other as QueueItem
 
-        if (uuid != other.uuid) return false
+        if (uid != other.uid) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        return uuid.hashCode()
+        return uid.hashCode()
     }
 
     override fun toString(): String {
@@ -30,9 +30,9 @@ class QueueItem(
 }
 
 fun Song.toQueueItem(isCurrent: Boolean): QueueItem {
-    return QueueItem(UUID.randomUUID(), this, isCurrent)
+    return QueueItem(UUID.randomUUID().mostSignificantBits and Long.MAX_VALUE, this, isCurrent)
 }
 
-fun QueueItem.clone(uid: UUID = this.uuid, song: Song = this.song, isCurrent: Boolean = this.isCurrent): QueueItem {
+fun QueueItem.clone(uid: Long = this.uid, song: Song = this.song, isCurrent: Boolean = this.isCurrent): QueueItem {
     return QueueItem(uid, song, isCurrent)
 }

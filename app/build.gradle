@@ -160,6 +160,11 @@ dependencies {
     // AndroidX Media
     implementation 'androidx.media:media:1.1.0'
 
+    // ChromeCast
+    implementation 'com.google.android.gms:play-services-cast-framework:17.1.0'
+
+    // NanoHttp
+    implementation 'org.nanohttpd:nanohttpd-webserver:2.3.1'
 }
 
 play {

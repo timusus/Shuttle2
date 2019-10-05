@@ -1,6 +1,5 @@
 package com.simplecityapps.playback.dagger
 
-import android.app.NotificationManager
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Build
@@ -14,6 +13,9 @@ import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi21
 import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi26
+import com.simplecityapps.playback.chromecast.CastService
+import com.simplecityapps.playback.chromecast.CastSessionManager
+import com.simplecityapps.playback.chromecast.HttpServer
 import com.simplecityapps.playback.local.mediaplayer.MediaPlayerPlayback
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
@@ -76,8 +78,32 @@ class PlaybackModule(
 
     @Singleton
     @Provides
-    fun providePlaybackManager(queueManager: QueueManager, playback: Playback, playbackWatcher: PlaybackWatcher, audioFocusHelper: AudioFocusHelper, playbackPreferenceManager: PlaybackPreferenceManager): PlaybackManager {
+    fun providePlaybackManager(
+        queueManager: QueueManager,
+        playback: Playback,
+        playbackWatcher: PlaybackWatcher,
+        audioFocusHelper: AudioFocusHelper,
+        playbackPreferenceManager: PlaybackPreferenceManager
+    ): PlaybackManager {
         return PlaybackManager(queueManager, playback, playbackWatcher, audioFocusHelper, playbackPreferenceManager)
+    }
+
+    @Singleton
+    @Provides
+    fun provideCastService(songRepository: SongRepository): CastService {
+        return CastService(context, songRepository)
+    }
+
+    @Singleton
+    @Provides
+    fun provideHttpServer(castService: CastService): HttpServer {
+        return HttpServer(castService)
+    }
+
+    @Singleton
+    @Provides
+    fun provideCastSessionManager(playbackManager: PlaybackManager, httpServer: HttpServer): CastSessionManager {
+        return CastSessionManager(playbackManager, context, httpServer)
     }
 
     @Singleton
@@ -109,7 +135,7 @@ class PlaybackModule(
     ): PlaybackNotificationManager {
         return PlaybackNotificationManager(
             context,
-            context.getSystemService<NotificationManager>()!!,
+            context.getSystemService()!!,
             playbackManager,
             queueManager,
             mediaSessionManager,

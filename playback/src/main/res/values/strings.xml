@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">playback</string>
+    <string name="media_route_menu_title">Play on…</string>
 </resources>

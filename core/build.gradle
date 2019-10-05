@@ -53,6 +53,9 @@ dependencies {
 
     // Retrofit
     implementation 'com.squareup.retrofit2:converter-gson:2.6.1'
+
+    // NanoHttp
+    implementation 'org.nanohttpd:nanohttpd-webserver:2.3.1'
 }
 
 repositories {

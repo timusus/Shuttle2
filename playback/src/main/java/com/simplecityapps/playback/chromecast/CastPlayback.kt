@@ -16,7 +16,8 @@ import timber.log.Timber
 @SuppressLint("WifiManagerPotentialLeak")
 class CastPlayback(
     private val context: Context,
-    private val castSession: CastSession
+    private val castSession: CastSession,
+    private val httpServer: HttpServer
 ) : Playback {
 
     override var callback: Playback.Callback? = null
@@ -28,12 +29,18 @@ class CastPlayback(
     // remoteMediaClient.isPlaying() returns true momentarily after it is paused, so we use this to track whether it really is playing, based on calls to play(), pause(), stop() and load()
     private var isMeantToBePlaying = false
 
-    private var playerState: Int? = MediaStatus.PLAYER_STATE_UNKNOWN;
+    private var playerState: Int? = MediaStatus.PLAYER_STATE_UNKNOWN
 
     private val remoteMediaClientCallback = CastMediaClientCallback()
 
-    override fun load(current: Song, next: Song?, completion: (Result<Any?>) -> Unit) {
+    init {
+        httpServer.start()
+        castSession.remoteMediaClient.registerCallback(remoteMediaClientCallback)
+    }
+
+    override fun load(current: Song, next: Song?, seekPosition: Int, completion: (Result<Any?>) -> Unit) {
         isReleased = false
+
         val metadata = MediaMetadata(MediaMetadata.MEDIA_TYPE_MUSIC_TRACK)
         metadata.putString(MediaMetadata.KEY_ALBUM_ARTIST, current.albumArtistName)
         metadata.putString(MediaMetadata.KEY_ALBUM_TITLE, current.albumName)
@@ -42,19 +49,24 @@ class CastPlayback(
 
         val mediaInfo = MediaInfo.Builder("http://$ipAddress:5000/songs/${current.id}/audio")
             .setStreamType(MediaInfo.STREAM_TYPE_BUFFERED)
-            .setContentType("audio/*")
+            .setContentType(current.mimeType)
+            .setStreamDuration(current.duration.toLong())
             .setMetadata(metadata)
             .build()
 
-        castSession.remoteMediaClient.registerCallback(remoteMediaClientCallback)
-
         castSession.remoteMediaClient.load(
             mediaInfo, MediaLoadOptions.Builder()
+                .setPlayPosition(seekPosition.toLong())
                 .setAutoplay(false)
                 .build()
         )
-
-        completion(Result.success(null))
+            .setResultCallback { result ->
+                if (result.status.isSuccess) {
+                    completion(Result.success(null))
+                } else {
+                    completion(Result.failure(Error("Remote Media Client failed to load media. ${result.status.statusMessage}")))
+                }
+            }
     }
 
     override fun loadNext(song: Song?) {
@@ -79,7 +91,7 @@ class CastPlayback(
                 currentPosition = castSession.remoteMediaClient.approximateStreamPosition.toInt()
                 castSession.remoteMediaClient.pause()
             } else {
-                Timber.e("puase() failed. No remote media session")
+                Timber.e("pause() failed. No remote media session")
             }
         } catch (e: JSONException) {
             Timber.e(e, "Exception pausing cast playback")
@@ -95,6 +107,8 @@ class CastPlayback(
         }
 
         castSession.remoteMediaClient.unregisterCallback(remoteMediaClientCallback)
+
+        httpServer.stop()
 
         isReleased = true
     }
@@ -135,31 +149,38 @@ class CastPlayback(
         // Nothing to do
     }
 
+    override fun updateLastKnownStreamPosition() {
+        super.updateLastKnownStreamPosition()
+
+        getPosition()?.let { position ->
+            currentPosition = position
+        }
+    }
+
     private fun updatePlaybackState() {
         val playerState = castSession.remoteMediaClient.playerState
-        if (playerState != this.playerState) {
-            // Convert the remote playback states to media playback states.
-            when (playerState) {
-                MediaStatus.PLAYER_STATE_IDLE -> {
-                    val idleReason = castSession.remoteMediaClient.idleReason
-                    Timber.v("onRemoteMediaPlayerStatusUpdated... IDLE, reason: $idleReason")
-                    if (idleReason == MediaStatus.IDLE_REASON_FINISHED) {
-                        currentPosition = 0
-                        callback?.onPlaybackComplete(false)
-                    }
-                }
-                MediaStatus.PLAYER_STATE_PLAYING -> {
-                    Timber.v("onRemoteMediaPlayerStatusUpdated.. PLAYING")
-                    callback?.onPlayStateChanged(true)
-                }
-                MediaStatus.PLAYER_STATE_PAUSED -> {
-                    Timber.v("onRemoteMediaPlayerStatusUpdated.. PAUSED")
-                    callback?.onPlayStateChanged(false)
-                }
-                else -> {
-                    Timber.v("State default : $playerState")
+        // Convert the remote playback states to media playback states.
+        if (playerState != this.playerState) when (playerState) {
+            MediaStatus.PLAYER_STATE_IDLE -> {
+                val idleReason = castSession.remoteMediaClient.idleReason
+                Timber.v("onRemoteMediaPlayerStatusUpdated... IDLE, reason: $idleReason")
+                if (idleReason == MediaStatus.IDLE_REASON_FINISHED) {
+                    currentPosition = 0
+                    callback?.onPlaybackComplete(false)
                 }
             }
+            MediaStatus.PLAYER_STATE_PLAYING -> {
+                Timber.v("onRemoteMediaPlayerStatusUpdated ${playerState.playerStateToString()}")
+                callback?.onPlayStateChanged(true)
+            }
+            MediaStatus.PLAYER_STATE_PAUSED -> {
+                Timber.v("onRemoteMediaPlayerStatusUpdated ${playerState.playerStateToString()}")
+                callback?.onPlayStateChanged(false)
+            }
+            MediaStatus.PLAYER_STATE_LOADING -> Timber.v("onRemoteMediaPlayerStatusUpdated ${playerState.playerStateToString()}")
+            MediaStatus.PLAYER_STATE_BUFFERING -> Timber.v("onRemoteMediaPlayerStatusUpdated ${playerState.playerStateToString()}")
+            MediaStatus.PLAYER_STATE_UNKNOWN -> Timber.v("onRemoteMediaPlayerStatusUpdated ${playerState.playerStateToString()}")
+            else -> Timber.v("onRemoteMediaPlayerStatusUpdated State default $playerState")
         }
         this.playerState = playerState
     }
@@ -178,13 +199,24 @@ class CastPlayback(
     private inner class CastMediaClientCallback : RemoteMediaClient.Callback() {
 
         override fun onMetadataUpdated() {
-            Timber.v("RemoteMediaClient.onMetadataUpdated")
+            Timber.v("RemoteMediaClient.onMetadataUpdated ${castSession.remoteMediaClient?.mediaInfo?.toJson()}")
         }
 
         override fun onStatusUpdated() {
-            Timber.v("RemoteMediaClient.onStatusUpdated")
+            Timber.v("RemoteMediaClient.onStatusUpdated: ${castSession.remoteMediaClient?.playerState?.playerStateToString()}")
             updatePlaybackState()
         }
     }
 }
 
+fun Int.playerStateToString(): String {
+    return when (this) {
+        MediaStatus.PLAYER_STATE_IDLE -> "IDLE"
+        MediaStatus.PLAYER_STATE_PLAYING -> "PLAYING"
+        MediaStatus.PLAYER_STATE_PAUSED -> "PAUSED"
+        MediaStatus.PLAYER_STATE_LOADING -> "LOADING"
+        MediaStatus.PLAYER_STATE_BUFFERING -> "BUFFERING"
+        MediaStatus.PLAYER_STATE_UNKNOWN -> "UNKNOWN"
+        else -> "Unknown"
+    }
+}

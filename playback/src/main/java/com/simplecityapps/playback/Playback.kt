@@ -6,7 +6,7 @@ interface Playback {
 
     var callback: Callback?
 
-    fun load(current: Song, next: Song?, completion: (Result<Any?>) -> Unit)
+    fun load(current: Song, next: Song?, seekPosition: Int, completion: (Result<Any?>) -> Unit)
 
     fun loadNext(song: Song?)
 
@@ -36,6 +36,12 @@ interface Playback {
     fun getDuration(): Int?
 
     fun setVolume(volume: Float)
+
+    fun updateLastKnownStreamPosition() {}
+
+    fun getResumeWhenSwitched(): Boolean {
+        return false
+    }
 
     interface Callback {
 

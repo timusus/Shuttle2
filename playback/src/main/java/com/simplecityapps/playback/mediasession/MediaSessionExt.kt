@@ -46,5 +46,5 @@ fun QueueItem.toQueueItem(): MediaSessionCompat.QueueItem {
         .setTitle(song.name)
         .setSubtitle(song.albumArtistName)
         .build()
-    return MediaSessionCompat.QueueItem(mediaDescription, uuid.mostSignificantBits and Long.MAX_VALUE)
+    return MediaSessionCompat.QueueItem(mediaDescription, uid)
 }

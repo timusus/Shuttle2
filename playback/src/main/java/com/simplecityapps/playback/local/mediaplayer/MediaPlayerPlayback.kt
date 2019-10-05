@@ -15,19 +15,20 @@ class MediaPlayerPlayback(
 
     override var callback: Playback.Callback? = null
 
-    override var isReleased : Boolean = true
+    override var isReleased: Boolean = true
 
     init {
         currentMediaPlayerHelper.tag = "CurrentMediaPlayer"
         nextMediaPlayerHelper.tag = "NextMediaPlayer"
     }
 
-    override fun load(current: Song, next: Song?, completion: (Result<Any?>) -> Unit) {
+    override fun load(current: Song, next: Song?, seekPosition: Int, completion: (Result<Any?>) -> Unit) {
         Timber.v("load(current: ${current.name})")
         isReleased = false
         currentMediaPlayerHelper.callback = currentPlayerCallback
         currentMediaPlayerHelper.load(context, current) { result ->
             result.onSuccess {
+                seek(seekPosition)
                 loadNext(next)
             }
             completion(result)

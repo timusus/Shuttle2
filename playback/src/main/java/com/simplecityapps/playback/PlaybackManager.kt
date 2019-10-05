@@ -12,7 +12,7 @@ import kotlin.math.min
 
 class PlaybackManager(
     private val queueManager: QueueManager,
-    private val playback: Playback,
+    private var playback: Playback,
     private val playbackWatcher: PlaybackWatcher,
     private val audioFocusHelper: AudioFocusHelper,
     private val playbackPreferenceManager: PlaybackPreferenceManager
@@ -34,11 +34,11 @@ class PlaybackManager(
         }
     }
 
-    fun load(songs: List<Song>, queuePosition: Int = 0, completion: (Result<Any?>) -> Unit) {
-        load(songs, null, queuePosition, completion)
+    fun load(songs: List<Song>, queuePosition: Int = 0, seekPosition: Int = 0, completion: (Result<Any?>) -> Unit) {
+        load(songs, null, queuePosition, seekPosition, completion)
     }
 
-    fun load(songs: List<Song>, shuffleSongs: List<Song>?, queuePosition: Int = 0, completion: (Result<Boolean>) -> Unit) {
+    fun load(songs: List<Song>, shuffleSongs: List<Song>?, queuePosition: Int = 0, seekPosition: Int = 0, completion: (Result<Boolean>) -> Unit) {
         if (songs.isEmpty()) {
             Timber.e("Attempted to load empty song list")
             return
@@ -56,7 +56,8 @@ class PlaybackManager(
 
         val currentQueueItem = queueManager.getCurrentItem()
         currentQueueItem?.let { currentQueueItem ->
-            attemptLoad(currentQueueItem.song, queueManager.getNext()?.song) { result ->
+
+            attemptLoad(currentQueueItem.song, queueManager.getNext()?.song, seekPosition) { result ->
                 result.onSuccess { didLoadFirst ->
                     if (didLoadFirst) {
                         playback.seek(songs[queuePosition].getStartPosition())
@@ -70,10 +71,16 @@ class PlaybackManager(
         }
     }
 
-    private fun attemptLoad(current: Song, next: Song?, attempt: Int = 1, completion: (Result<Boolean>) -> Unit) {
-        Timber.v("attemptLoad(current: ${current.name}, attempt: $attempt")
+    fun loadCurrent(seekPosition: Int, completion: (Result<Any?>) -> Unit) {
+        queueManager.getCurrentItem()?.let { currentQueueItem ->
+            playback.load(currentQueueItem.song, queueManager.getNext()?.song, seekPosition, completion)
+        }
+    }
 
-        playback.load(current, next) { result ->
+    private fun attemptLoad(current: Song, next: Song?, seekPosition: Int, attempt: Int = 1, completion: (Result<Boolean>) -> Unit) {
+        Timber.v("attemptLoad(current song: ${current.name}, attempt: $attempt)")
+
+        playback.load(current, next, seekPosition) { result ->
             result.onSuccess {
                 completion(Result.success(attempt == 1))
             }
@@ -83,7 +90,7 @@ class PlaybackManager(
                     queueManager.getNext()?.let { nextQueueItem ->
                         if (nextQueueItem != queueManager.getCurrentItem()) {
                             queueManager.skipToNext(true)
-                            attemptLoad(nextQueueItem.song, queueManager.getNext()?.song, attempt + 1, completion)
+                            attemptLoad(nextQueueItem.song, queueManager.getNext()?.song, seekPosition, attempt + 1, completion)
                         } else {
                             completion(Result.failure(error))
                         }
@@ -108,7 +115,7 @@ class PlaybackManager(
             if (playback.isReleased) {
                 if (attempt <= 2) {
                     Timber.v("Playback released.. reloading.")
-                    loadCurrent { result ->
+                    loadCurrent(getPosition() ?: 0) { result ->
                         result.onSuccess {
                             playbackPreferenceManager.playbackPosition?.let { playbackPosition ->
                                 seekTo(playbackPosition)
@@ -139,7 +146,7 @@ class PlaybackManager(
     fun skipToNext(ignoreRepeat: Boolean = false, completion: ((Result<Any?>) -> Unit)? = null) {
         if (queueManager.skipToNext(ignoreRepeat)) {
             queueManager.getCurrentItem()?.let { currentQueueItem ->
-                playback.load(currentQueueItem.song, queueManager.getNext()?.song) { result ->
+                playback.load(currentQueueItem.song, queueManager.getNext()?.song, 0) { result ->
                     result.onSuccess { play() }
                     result.onFailure { error -> Timber.w("load() failed. Error: $error") }
                     completion?.invoke(result)
@@ -152,7 +159,7 @@ class PlaybackManager(
         if (force || playback.getPosition() ?: 0 < 2000) {
             queueManager.skipToPrevious()
             queueManager.getCurrentItem()?.let { currentQueueItem ->
-                playback.load(currentQueueItem.song, queueManager.getNext()?.song) { result ->
+                playback.load(currentQueueItem.song, queueManager.getNext()?.song, 0) { result ->
                     result.onSuccess { play() }
                     result.onFailure { error -> Timber.w("load() failed. Error: $error") }
                     completion?.invoke(result)
@@ -167,18 +174,12 @@ class PlaybackManager(
         if (queueManager.getCurrentPosition() != position) {
             queueManager.skipTo(position)
             queueManager.getCurrentItem()?.let { currentQueueItem ->
-                playback.load(currentQueueItem.song, queueManager.getNext()?.song) { result ->
+                playback.load(currentQueueItem.song, queueManager.getNext()?.song, 0) { result ->
                     result.onSuccess { play() }
                     result.onFailure { error -> Timber.w("load() failed. Error: $error") }
                     completion?.invoke(result)
                 }
             }
-        }
-    }
-
-    fun loadCurrent(completion: (Result<Any?>) -> Unit) {
-        queueManager.getCurrentItem()?.let { currentQueueItem ->
-            playback.load(currentQueueItem.song, queueManager.getNext()?.song, completion)
         }
     }
 
@@ -213,6 +214,31 @@ class PlaybackManager(
     fun moveQueueItem(from: Int, to: Int) {
         queueManager.move(from, to)
         playback.loadNext(queueManager.getNext()?.song)
+    }
+
+    fun getPlayback(): Playback {
+        return playback
+    }
+
+    fun switchToPlayback(playback: Playback) {
+        Timber.v("switchToPlayback(playback: ${playback.javaClass.simpleName})")
+
+        val oldPlayback = this.playback
+        val wasPlaying = oldPlayback.isPlaying()
+
+        val seekPosition = oldPlayback.getPosition()
+
+        oldPlayback.pause()
+        oldPlayback.release()
+
+        this.playback = playback
+        playback.callback = this
+
+        loadCurrent(seekPosition ?: 0) {
+            if (wasPlaying && playback.getResumeWhenSwitched()) {
+                play()
+            }
+        }
     }
 
 
