@@ -76,7 +76,7 @@ class CastPlayback(
     override fun play() {
         isMeantToBePlaying = true
 
-        if (castSession.remoteMediaClient.hasMediaSession() && !castSession.remoteMediaClient.isPlaying) {
+        if (castSession.remoteMediaClient?.hasMediaSession() == true && !castSession.remoteMediaClient.isPlaying) {
             currentPosition = castSession.remoteMediaClient.approximateStreamPosition.toInt()
             castSession.remoteMediaClient.play()
         } else {
@@ -87,7 +87,7 @@ class CastPlayback(
     override fun pause() {
         isMeantToBePlaying = false
         try {
-            if (castSession.remoteMediaClient.hasMediaSession()) {
+            if (castSession.remoteMediaClient?.hasMediaSession() == true) {
                 currentPosition = castSession.remoteMediaClient.approximateStreamPosition.toInt()
                 castSession.remoteMediaClient.pause()
             } else {
@@ -101,7 +101,7 @@ class CastPlayback(
     override fun release() {
         isMeantToBePlaying = false
 
-        if (castSession.remoteMediaClient.hasMediaSession()) {
+        if (castSession.remoteMediaClient?.hasMediaSession() == true) {
             currentPosition = castSession.remoteMediaClient.approximateStreamPosition.toInt()
             castSession.remoteMediaClient.stop()
         }
@@ -114,13 +114,13 @@ class CastPlayback(
     }
 
     override fun isPlaying(): Boolean {
-        return castSession.remoteMediaClient.isPlaying || isMeantToBePlaying
+        return castSession.remoteMediaClient?.isPlaying == true || isMeantToBePlaying
     }
 
     override fun seek(position: Int) {
         currentPosition = position
         try {
-            if (castSession.remoteMediaClient.hasMediaSession()) {
+            if (castSession.remoteMediaClient?.hasMediaSession() == true) {
                 castSession.remoteMediaClient.seek(
                     MediaSeekOptions.Builder()
                         .setPosition(position.toLong())
@@ -135,14 +135,14 @@ class CastPlayback(
     }
 
     override fun getPosition(): Int? {
-        if (castSession.remoteMediaClient.approximateStreamPosition == 0L) {
+        if (castSession.remoteMediaClient?.approximateStreamPosition == 0L) {
             return if (currentPosition <= getDuration() ?: 0) currentPosition else 0
         }
-        return castSession.remoteMediaClient.approximateStreamPosition.toInt()
+        return castSession.remoteMediaClient?.approximateStreamPosition?.toInt()
     }
 
     override fun getDuration(): Int? {
-        return castSession.remoteMediaClient.streamDuration.toInt()
+        return castSession.remoteMediaClient?.streamDuration?.toInt()
     }
 
     override fun setVolume(volume: Float) {
@@ -158,7 +158,7 @@ class CastPlayback(
     }
 
     private fun updatePlaybackState() {
-        val playerState = castSession.remoteMediaClient.playerState
+        val playerState = castSession.remoteMediaClient?.playerState
         // Convert the remote playback states to media playback states.
         if (playerState != this.playerState) when (playerState) {
             MediaStatus.PLAYER_STATE_IDLE -> {
