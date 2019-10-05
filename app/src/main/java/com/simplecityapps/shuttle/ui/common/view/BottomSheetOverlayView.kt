@@ -24,6 +24,29 @@ class BottomSheetOverlayView @JvmOverloads constructor(
 
     var listener: OnBottomSheetStateChangeListener? = null
 
+    private val bottomSheetCallback = object : BottomSheetBehavior.BottomSheetCallback() {
+        override fun onSlide(bottomSheet: View, offset: Float) {
+            if (settingsBottomSheetBackgroundAnimation?.isRunning != true) {
+                var alpha = 1f - (offset * -1f)
+                if (alpha.isNaN()) {
+                    alpha = 1f
+                }
+                backgroundView.alpha = alpha
+            }
+        }
+
+        override fun onStateChanged(bottomSheet: View, state: Int) {
+            if (state == BottomSheetBehavior.STATE_HIDDEN) {
+                settingsBottomSheetBackgroundAnimation?.cancel()
+                settingsBottomSheetBackgroundAnimation = backgroundView.fadeOut {
+                    isVisible = false
+                }
+            }
+
+            listener?.onStateChanged(state)
+        }
+    }
+
     @BottomSheetBehavior.State
     val state: Int
         get() = bottomSheetBehavior.state
@@ -39,25 +62,7 @@ class BottomSheetOverlayView @JvmOverloads constructor(
         backgroundView.setOnClickListener { hide() }
 
         bottomSheetBehavior = BottomSheetBehavior.from(findViewById(R.id.bottomDrawerFragment))
-        bottomSheetBehavior.setBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
-            override fun onSlide(bottomSheet: View, offset: Float) {
-                if (settingsBottomSheetBackgroundAnimation?.isRunning != true) {
-                    var alpha = 1f - (offset * -1f)
-                    if (alpha.isNaN()) {
-                        alpha = 1f
-                    }
-                    backgroundView.alpha = alpha
-                }
-            }
-
-            override fun onStateChanged(bottomSheet: View, state: Int) {
-                if (state == BottomSheetBehavior.STATE_HIDDEN) {
-                    settingsBottomSheetBackgroundAnimation?.cancel()
-                    settingsBottomSheetBackgroundAnimation = backgroundView.fadeOut()
-                }
-                listener?.onStateChanged(state)
-            }
-        })
+        bottomSheetBehavior.setBottomSheetCallback(bottomSheetCallback)
     }
 
     fun show() {
@@ -67,9 +72,14 @@ class BottomSheetOverlayView @JvmOverloads constructor(
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_EXPANDED
     }
 
-    fun hide() {
-        settingsBottomSheetBackgroundAnimation?.cancel()
-        settingsBottomSheetBackgroundAnimation = backgroundView.fadeOut { isVisible = false }
+    fun hide(animate: Boolean = true) {
         bottomSheetBehavior.state = BottomSheetBehavior.STATE_HIDDEN
+        settingsBottomSheetBackgroundAnimation?.cancel()
+
+        if (animate) {
+            settingsBottomSheetBackgroundAnimation = backgroundView.fadeOut()
+        } else {
+            isVisible = false
+        }
     }
 }

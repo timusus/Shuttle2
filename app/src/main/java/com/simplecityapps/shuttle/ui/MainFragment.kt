@@ -83,6 +83,9 @@ class MainFragment
         bottomNavigationView.setupWithNavController(navController) { menuItem ->
             if (menuItem.itemId == R.id.navigation_menu) {
                 bottomSheetOverlayView.show()
+                // There's an issue where the very first call to show() the bottom sheet overlay doesn't trigger its onChangeListener, which means we don't get a chaNce to update
+                // the back press listener.. So we do it here as well.
+                updateBackPressListener()
             } else {
                 bottomSheetOverlayView.hide()
             }
