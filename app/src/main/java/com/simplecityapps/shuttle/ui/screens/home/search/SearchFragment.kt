@@ -96,7 +96,8 @@ class SearchFragment : Fragment(),
         })
 
         toolbar.setNavigationOnClickListener {
-            findNavController().popBackStack(R.id.homeFragment, true)
+            searchView.clearFocus()
+            findNavController().popBackStack()
         }
 
         presenter.bindView(this)
