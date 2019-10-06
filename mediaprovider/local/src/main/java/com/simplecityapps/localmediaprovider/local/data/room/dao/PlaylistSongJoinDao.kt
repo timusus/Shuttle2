@@ -22,8 +22,8 @@ abstract class PlaylistSongJoinDao {
 
     @Query(
         "SELECT playlists.*, " +
-                "count(distinct songs.id) as songCount, " +
-                "sum(distinct songs.duration) as duration " +
+                "count(songs.id) as songCount, " +
+                "sum(songs.duration) as duration " +
                 "FROM playlists " +
                 "LEFT JOIN playlist_song_join " +
                 "ON playlists.id = playlist_song_join.playlistId " +
@@ -37,8 +37,8 @@ abstract class PlaylistSongJoinDao {
 
     @Query(
         "SELECT playlists.*, " +
-                "count(distinct songs.id) as songCount, " +
-                "sum(distinct songs.duration) as duration " +
+                "count(songs.id) as songCount, " +
+                "sum(songs.duration) as duration " +
                 "FROM playlists " +
                 "LEFT JOIN playlist_song_join " +
                 "ON playlists.id = playlist_song_join.playlistId " +
