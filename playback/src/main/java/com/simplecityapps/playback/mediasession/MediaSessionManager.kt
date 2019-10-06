@@ -164,8 +164,6 @@ class MediaSessionManager(
                             }
                         },
                         { throwable -> Timber.e(throwable, "onPlayFromMediaId failed") })
-
-
             } ?: Timber.e("onPlayFromMediaId requested with null parentMediaId")
         }
     }
