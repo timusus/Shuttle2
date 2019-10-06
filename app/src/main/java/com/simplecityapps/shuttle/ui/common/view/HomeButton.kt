@@ -72,10 +72,10 @@ class HomeButton @JvmOverloads constructor(
             }
 
         companion object {
-            val history = ButtonType.Data(R.drawable.ic_history_black_24dp, R.color.history_green_light, R.color.history_green_dark, R.string.btn_history)
-            val recent = ButtonType.Data(R.drawable.ic_queue_black_24dp, R.color.latest_yellow_light, R.color.latest_yellow_dark, R.string.btn_latest)
-            val favorites = ButtonType.Data(R.drawable.ic_favorite_border_black_24dp, R.color.favorite_red_light, R.color.favorite_red_dark, R.string.btn_favorite)
-            val shuffle = ButtonType.Data(R.drawable.ic_shuffle_black_24dp, R.color.shuffle_blue_light, R.color.shuffle_blue_dark, R.string.btn_shuffle)
+            val history = Data(R.drawable.ic_history_black_24dp, R.color.history_green_light, R.color.history_green_dark, R.string.btn_history)
+            val recent = Data(R.drawable.ic_queue_black_24dp, R.color.latest_yellow_light, R.color.latest_yellow_dark, R.string.btn_latest)
+            val favorites = Data(R.drawable.ic_favorite_border_black_24dp, R.color.favorite_red_light, R.color.favorite_red_dark, R.string.btn_favorite)
+            val shuffle = Data(R.drawable.ic_shuffle_black_24dp, R.color.shuffle_blue_light, R.color.shuffle_blue_dark, R.string.btn_shuffle)
         }
     }
 }
