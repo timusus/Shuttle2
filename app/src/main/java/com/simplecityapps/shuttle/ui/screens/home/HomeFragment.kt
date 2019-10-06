@@ -7,14 +7,23 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
+import com.simplecityapps.mediaprovider.repository.PlaylistQuery
+import com.simplecityapps.mediaprovider.repository.PlaylistRepository
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.screens.library.playlists.detail.PlaylistDetailFragmentArgs
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.rxkotlin.subscribeBy
+import io.reactivex.schedulers.Schedulers
 import kotlinx.android.synthetic.main.list_item_home_header.*
+import timber.log.Timber
 import javax.inject.Inject
 
 class HomeFragment : Fragment(), Injectable {
 
     @Inject lateinit var presenter: HomePresenter
+
+    @Inject lateinit var playlistRepository: PlaylistRepository
 
 
     // Lifecycle
@@ -28,6 +37,18 @@ class HomeFragment : Fragment(), Injectable {
 
         historyButton.setOnClickListener { findNavController().navigate(R.id.action_homeFragment_to_historyFragment) }
         latestButton.setOnClickListener { findNavController().navigate(R.id.action_homeFragment_to_recentFragment) }
+        favoritesButton.setOnClickListener {
+            playlistRepository
+                .getPlaylists(PlaylistQuery.PlaylistName("Favorites"))
+                .first(emptyList())
+                .map { playlists -> playlists.first() }
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onSuccess = { playlist -> findNavController().navigate(R.id.action_homeFragment_to_favoritesFragment, PlaylistDetailFragmentArgs(playlist).toBundle()) },
+                    onError = { throwable -> Timber.e(throwable, "Failed to retrieve favorites playlist") }
+                )
+        }
         shuffleButton.setOnClickListener { presenter.shuffleAll() }
     }
 

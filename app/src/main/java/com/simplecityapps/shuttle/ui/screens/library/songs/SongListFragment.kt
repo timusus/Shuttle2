@@ -33,11 +33,11 @@ class SongListFragment :
     SongListContract.View,
     CreatePlaylistDialogFragment.Listener {
 
-    private lateinit var adapter: RecyclerAdapter
-
     @Inject lateinit var presenter: SongListPresenter
 
     @Inject lateinit var playlistMenuPresenter: PlaylistMenuPresenter
+
+    private lateinit var adapter: RecyclerAdapter
 
     private lateinit var imageLoader: ArtworkImageLoader
 
@@ -93,6 +93,7 @@ class SongListFragment :
         super.onDestroyView()
     }
 
+
     // SongListContract.View Implementation
 
     override fun setData(songs: List<Song>) {
@@ -130,6 +131,7 @@ class SongListFragment :
         horizontalLoadingView.setProgress(progress)
     }
 
+
     // Private
 
     private val songBinderListener = object : SongBinder.Listener {
@@ -160,6 +162,7 @@ class SongListFragment :
             popupMenu.show()
         }
     }
+
 
     // CreatePlaylistDialogFragment.Listener Implementation
 

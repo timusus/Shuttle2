@@ -24,11 +24,7 @@ class LocalPlaylistRepository(
     }
 
     override fun getPlaylists(query: PlaylistQuery): Observable<List<Playlist>> {
-        return when (query) {
-            is PlaylistQuery.PlaylistId -> {
-                playlistsRelay.map { playlists -> playlists.filter(query.predicate()) }
-            }
-        }
+        return playlistsRelay.map { playlists -> playlists.filter(query.predicate()) }
     }
 
     override fun getPlaylists(): Observable<List<Playlist>> {
