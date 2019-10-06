@@ -11,19 +11,15 @@ import androidx.recyclerview.widget.RecyclerView
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.view.BottomSheetOverlayView
 import com.simplecityapps.shuttle.ui.screens.sleeptimer.SleepTimerDialogFragment
 import timber.log.Timber
 import javax.inject.Inject
 
-interface BottomSheetSettingsManager {
-    fun showBottomSettingsSheet()
-    fun hideBottomSettingsSheet()
-}
-
-class BottomDrawerSettingsFragment : Fragment(),
+class BottomDrawerSettingsFragment :
+    Fragment(),
     Injectable,
     BottomDrawerSettingsContract.View {
-
 
     // Lifecycle
 
@@ -83,7 +79,7 @@ class BottomDrawerSettingsFragment : Fragment(),
                 findNavController().navigate(navDestination)
             }
 
-            (activity as? BottomSheetSettingsManager)?.hideBottomSettingsSheet()
+            (view?.parent as? BottomSheetOverlayView)?.hide(true)
 
             when (settingsItem) {
                 SettingsMenuItem.SleepTimer -> {
@@ -100,6 +96,5 @@ class BottomDrawerSettingsFragment : Fragment(),
 
     override fun setData(settingsItems: List<SettingsMenuItem>, currentDestination: Int?) {
         adapter.setData(settingsItems.map { settingsItem -> SettingsViewBinder(settingsItem, settingsItem.navDestination == currentDestination, settingsItemClickListener) })
-
     }
 }
