@@ -11,8 +11,8 @@ import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistLis
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragment
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListFragment
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragment
-import com.simplecityapps.shuttle.ui.screens.library.folders.FolderDetailFragment
 import com.simplecityapps.shuttle.ui.screens.library.folders.FolderFragment
+import com.simplecityapps.shuttle.ui.screens.library.folders.detail.FolderDetailFragment
 import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListFragment
 import com.simplecityapps.shuttle.ui.screens.library.playlists.detail.PlaylistDetailFragment
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListFragment

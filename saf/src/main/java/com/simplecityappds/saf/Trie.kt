@@ -4,14 +4,20 @@ import java.io.Serializable
 
 interface Node
 
-interface TreeNode : Serializable {
-    val treeNodes: LinkedHashSet<TreeNode>
-    val leafNodes: LinkedHashSet<Node>
+interface TreeNode<TN, N> : Serializable {
+    val treeNodes: LinkedHashSet<TN>
+    val leafNodes: LinkedHashSet<N>
 }
 
-interface Trie<TN : TreeNode, N : Node> : TreeNode {
+interface Trie<TN : TreeNode<TN, N>, N : Node> : TreeNode<TN, N> {
 
     fun addTreeNode(treeNode: TN): TN {
+
+        treeNodes
+            .firstOrNull { childTreeNode -> childTreeNode == treeNode }?.let { existingChildNode ->
+            return existingChildNode
+        }
+
         treeNodes.add(treeNode)
         return treeNode
     }
@@ -23,7 +29,7 @@ interface Trie<TN : TreeNode, N : Node> : TreeNode {
     fun getLeaves(): List<Node> {
         val leaves = leafNodes.toMutableList()
 
-        fun traverseTree(parentTreeNode: TreeNode) {
+        fun traverseTree(parentTreeNode: TreeNode<TN, N>) {
             for (treeNode in parentTreeNode.treeNodes) {
                 leaves.addAll(treeNode.leafNodes.toList())
                 traverseTree(treeNode)

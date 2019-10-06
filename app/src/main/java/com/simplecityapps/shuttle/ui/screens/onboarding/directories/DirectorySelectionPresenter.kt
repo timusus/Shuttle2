@@ -23,7 +23,7 @@ interface MusicDirectoriesContract {
     }
 
     interface View {
-        class Data(val tree: SafDirectoryHelper.FolderNodeTree, val traversalComplete: Boolean) {
+        class Data(val tree: SafDirectoryHelper.DocumentNodeTree, val traversalComplete: Boolean) {
 
             override fun equals(other: Any?): Boolean {
                 if (this === other) return true

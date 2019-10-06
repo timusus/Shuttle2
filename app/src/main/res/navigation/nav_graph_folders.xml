@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/folderDetailFragment"
-        android:name="com.simplecityapps.shuttle.ui.screens.library.folders.FolderDetailFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.library.folders.detail.FolderDetailFragment"
         android:label="FolderDetailFragment"
         tools:layout="@layout/fragment_folder_detail">
         <action

@@ -1,53 +1,72 @@
 package com.simplecityapps.shuttle.ui.screens.library.folders
 
-import java.io.Serializable
+import android.net.Uri
+import com.simplecityappds.saf.SafDirectoryHelper
+import com.simplecityappds.saf.Trie
+import com.simplecityapps.mediaprovider.model.Song
+import java.net.URLDecoder
 
-class Tree<T : Serializable>(val node: T) : Serializable {
-
-    val children = LinkedHashSet<Tree<T>>()
-
-    fun addChild(node: T): Tree<T> {
-        for (child in children) {
-            if (child.node == node) {
-                return child
-            }
-        }
-
-        val child = Tree(node)
-        children.add(child)
-        return child
-    }
-}
-
-class Node<T>(val path: String, val name: String, val data: T? = null) : Serializable {
-
+open class FileNode(
+    override val uri: Uri,
+    override val displayName: String,
+    val song: Song,
+    val parent: FileNodeTree
+) : SafDirectoryHelper.FileNode {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
 
-        other as Node<*>
+        other as FileNode
 
-        if (path != other.path) return false
-        if (name != other.name) return false
+        if (uri != other.uri) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        var result = path.hashCode()
-        result = 31 * result + name.hashCode()
-        return result
+        return uri.hashCode()
     }
 }
 
-fun <T> Tree<Node<T>>.find(path: String): Tree<Node<T>>? {
+class FileNodeTree(
+    override val uri: Uri,
+    override val displayName: String
+) : Trie<FileNodeTree, FileNode>, SafDirectoryHelper.FileNode {
 
-    if (node.path == path) {
+    override val treeNodes: LinkedHashSet<FileNodeTree> = linkedSetOf()
+    override val leafNodes: LinkedHashSet<FileNode> = linkedSetOf()
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as FileNodeTree
+
+        if (uri != other.uri) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return uri.hashCode()
+    }
+
+    override fun toString(): String {
+        return "FileNodeTree(uri=$uri, displayName='$displayName')"
+    }
+}
+
+fun FileNodeTree.find(uri: Uri): FileNodeTree? {
+
+    val treePath = URLDecoder.decode(this.uri.toString(), Charsets.UTF_8.name())
+    val searchPath = URLDecoder.decode(uri.toString(), Charsets.UTF_8.name())
+
+    if (treePath == searchPath) {
         return this
     }
 
-    children.forEach {
-        val tree = it.find(path)
+    treeNodes.forEach {
+        val tree = it.find(uri)
         if (tree != null) {
             return tree
         }
