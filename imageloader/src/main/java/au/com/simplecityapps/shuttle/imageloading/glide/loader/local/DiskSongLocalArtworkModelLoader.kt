@@ -41,7 +41,7 @@ class DiskSongLocalArtworkModelLoader(
 
         override fun getInputStream(): InputStream? {
             if (song.path.startsWith("content://")) return null
-            return File(song.path).parentFile.listFiles { file -> pattern.matcher(file.name).matches() }.firstOrNull { it.length() > 1024 }?.inputStream()
+            return File(song.path).parentFile?.listFiles { file -> pattern.matcher(file.name).matches() }?.firstOrNull { it.length() > 1024 }?.inputStream()
         }
 
         companion object {
