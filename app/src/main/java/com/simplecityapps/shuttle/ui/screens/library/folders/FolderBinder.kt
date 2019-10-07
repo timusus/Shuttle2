@@ -9,6 +9,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
+import androidx.core.view.setPadding
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityappds.saf.SafDirectoryHelper
 import com.simplecityapps.adapter.ViewBinder
@@ -16,6 +17,7 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
+import com.simplecityapps.shuttle.ui.common.utils.dp
 
 class FolderBinder(
     val fileNode: SafDirectoryHelper.FileNode,
@@ -81,10 +83,12 @@ class FolderBinder(
             if (viewBinder.fileNode is FileNodeTree) {
                 imageView.setImageResource(R.drawable.ic_folder_open_black_24dp)
                 imageView.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(itemView.context, R.color.primary_material_dark))
+                imageView.setPadding(4.dp)
                 title.isVisible = false
                 overflowButton.isVisible = false
             } else {
                 imageView.imageTintList = null
+                imageView.setPadding(0)
                 title.text = (viewBinder.fileNode as FileNode).song.name
                 title.isVisible = true
                 overflowButton.isVisible = true
