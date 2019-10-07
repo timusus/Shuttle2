@@ -26,7 +26,7 @@ class MediaStoreSongProvider(
                     MediaStore.Audio.Media.SIZE,
                     MediaStore.Audio.Media.YEAR,
                     MediaStore.Audio.Media.TRACK,
-                    MediaStore.Audio.Media.DATE_ADDED,
+                    MediaStore.Audio.Media.DATE_MODIFIED,
                     MediaStore.Audio.Media.IS_PODCAST,
                     MediaStore.Audio.Media.BOOKMARK,
                     MediaStore.Audio.Media.MIME_TYPE,
