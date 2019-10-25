@@ -24,6 +24,7 @@ import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
+import com.simplecity.amp_library.glide.palette.ColorSet
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
@@ -63,18 +64,18 @@ class GlideImageLoader : ArtworkImageLoader {
         loadArtwork(imageView, song as Any, *options, completionHandler = completionHandler)
     }
 
-    override fun loadBitmap(song: Song, callback: (Bitmap?) -> Unit) {
+    override fun loadBitmap(song: Song, completionHandler: (Bitmap?) -> Unit) {
         requestManager
             .asBitmap()
             .load(song)
             .addListener(object : RequestListener<Bitmap> {
                 override fun onLoadFailed(e: GlideException?, model: Any?, target: Target<Bitmap>?, isFirstResource: Boolean): Boolean {
-                    callback(null)
+                    completionHandler(null)
                     return true
                 }
 
                 override fun onResourceReady(resource: Bitmap?, model: Any?, target: Target<Bitmap>?, dataSource: DataSource?, isFirstResource: Boolean): Boolean {
-                    callback(resource)
+                    completionHandler(resource)
                     return true
                 }
             })
@@ -96,6 +97,24 @@ class GlideImageLoader : ArtworkImageLoader {
         } catch (e: CancellationException) {
             return null
         }
+    }
+
+    override fun loadColorSet(song: Song, callback: (ColorSet?) -> Unit) {
+        requestManager
+            .`as`(ColorSet::class.java)
+            .load(song)
+            .addListener(object : RequestListener<ColorSet> {
+                override fun onLoadFailed(e: GlideException?, model: Any?, target: Target<ColorSet>?, isFirstResource: Boolean): Boolean {
+                    callback(null)
+                    return true
+                }
+
+                override fun onResourceReady(resource: ColorSet?, model: Any?, target: Target<ColorSet>?, dataSource: DataSource?, isFirstResource: Boolean): Boolean {
+                    callback(resource)
+                    return true
+                }
+            })
+            .submit(256, 256)
     }
 
     @DrawableRes

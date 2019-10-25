@@ -1,12 +1,151 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
+<androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?android:windowBackground"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:orientation="vertical">
 
-    <include layout="@layout/list_item_home_header" />
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/transparent"
+        android:elevation="0dp"
+        app:elevation="0dp">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="8dp"
+            app:layout_scrollFlags="scroll">
+
+            <ImageView
+                android:id="@+id/shuttleLogo"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:contentDescription="Logo"
+                android:scaleType="centerCrop"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/ic_launcher_foreground_blue" />
+
+            <TextView
+                android:id="@+id/titleLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Shuttle Music Player"
+                android:textAppearance="@android:style/TextAppearance.Material.Headline"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/shuttleLogo" />
+
+            <LinearLayout
+                android:id="@+id/searchContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="12dp"
+                android:background="@drawable/background_search"
+                android:elevation="2dp"
+                android:gravity="center_vertical"
+                android:minHeight="56dp"
+                android:orientation="horizontal"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/titleLabel">
+
+                <androidx.appcompat.widget.SearchView
+                    android:id="@+id/searchView"
+                    style="@android:style/Widget.Material.SearchView"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:transitionName="searchView"
+                    app:defaultQueryHint="Search Music"
+                    app:iconifiedByDefault="false"
+                    app:queryBackground="@android:color/transparent"
+                    app:searchIcon="@drawable/ic_search_black_24dp" />
+
+                <ImageButton
+                    style="@android:style/Widget.Material.ActionButton"
+                    android:layout_width="40dp"
+                    android:layout_height="match_parent"
+                    android:contentDescription="More"
+                    app:srcCompat="@drawable/ic_more_vert_black_24dp" />
+            </LinearLayout>
+
+            <com.simplecityapps.shuttle.ui.common.view.HomeButton
+                android:id="@+id/historyButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                app:layout_constraintEnd_toStartOf="@+id/latestButton"
+                app:layout_constraintHorizontal_chainStyle="spread"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/searchContainer"
+                app:type="history" />
+
+            <com.simplecityapps.shuttle.ui.common.view.HomeButton
+                android:id="@+id/latestButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                app:layout_constraintEnd_toStartOf="@+id/favoritesButton"
+                app:layout_constraintStart_toEndOf="@+id/historyButton"
+                app:layout_constraintTop_toBottomOf="@id/searchContainer"
+                app:type="recent" />
+
+            <com.simplecityapps.shuttle.ui.common.view.HomeButton
+                android:id="@+id/favoritesButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                app:layout_constraintEnd_toStartOf="@+id/shuffleButton"
+                app:layout_constraintStart_toEndOf="@+id/latestButton"
+                app:layout_constraintTop_toBottomOf="@id/searchContainer"
+                app:type="favorites" />
+
+            <com.simplecityapps.shuttle.ui.common.view.HomeButton
+                android:id="@+id/shuffleButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/favoritesButton"
+                app:layout_constraintTop_toBottomOf="@id/searchContainer"
+                app:type="shuffle" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@drawable/divider"
+        app:layout_anchor="@id/recyclerView" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        tools:listitem="@layout/list_item_most_played_section" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

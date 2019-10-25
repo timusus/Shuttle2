@@ -11,7 +11,6 @@
     android:orientation="vertical"
     android:paddingStart="16dp"
     android:paddingTop="8dp"
-    android:paddingEnd="8dp"
     android:paddingBottom="8dp">
 
     <ImageView
@@ -20,7 +19,8 @@
         android:layout_height="40dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        tools:src="#33b5e5" />
 
     <TextView
         android:id="@+id/title"

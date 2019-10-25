@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.widget.ImageView
 import androidx.annotation.WorkerThread
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
+import com.simplecity.amp_library.glide.palette.ColorSet
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
@@ -40,6 +41,8 @@ interface ArtworkImageLoader {
 
     @WorkerThread
     fun loadBitmap(song: Song): ByteArray?
+
+    fun loadColorSet(song: Song, callback: (ColorSet?) -> Unit)
 
     fun clear(imageView: ImageView)
 }

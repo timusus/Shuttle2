@@ -157,6 +157,7 @@ class PlaybackInitializer @Inject constructor(
         }
     }
 
+    @SuppressLint("CheckResult")
     override fun onPlaybackComplete(song: Song) {
         playbackPreferenceManager.playbackPosition = 0
 

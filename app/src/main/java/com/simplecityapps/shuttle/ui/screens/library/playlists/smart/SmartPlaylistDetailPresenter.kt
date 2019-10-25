@@ -1,10 +1,11 @@
-package com.simplecityapps.shuttle.ui.screens.library.playlists.detail
+package com.simplecityapps.shuttle.ui.screens.library.playlists.smart
 
-import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.mediaprovider.model.Song
-import com.simplecityapps.mediaprovider.repository.PlaylistRepository
+import com.simplecityapps.mediaprovider.repository.SongQuery
+import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.squareup.inject.assisted.Assisted
@@ -12,9 +13,24 @@ import com.squareup.inject.assisted.AssistedInject
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
+import java.io.Serializable
 import kotlin.random.Random
 
-interface PlaylistDetailContract {
+data class SmartPlaylist(val nameResId: Int, val songQuery: SongQuery?) : Serializable {
+
+    companion object {
+        val MostPlayed = SmartPlaylist(
+            R.string.playlist_title_most_played,
+            SongQuery.PlayCount(2, Comparator { a, b -> b.playCount.compareTo(a.playCount) })
+        )
+        val RecentlyPlayed = SmartPlaylist(
+            R.string.playlist_title_recently_played,
+            SongQuery.PlayCount(1, Comparator { a, b -> b.lastPlayed?.compareTo(a.lastPlayed) ?: 0 })
+        )
+    }
+}
+
+interface SmartPlaylistDetailContract {
 
     interface View {
         fun setData(songs: List<Song>)
@@ -30,23 +46,24 @@ interface PlaylistDetailContract {
     }
 }
 
-class PlaylistDetailPresenter @AssistedInject constructor(
-    private val playlistRepository: PlaylistRepository,
+class SmartPlaylistDetailPresenter @AssistedInject constructor(
+    private val songRepository: SongRepository,
     private val playbackManager: PlaybackManager,
     private val queueManager: QueueManager,
-    @Assisted private val playlist: Playlist
-) : BasePresenter<PlaylistDetailContract.View>(),
-    PlaylistDetailContract.Presenter {
+    @Assisted private val playlist: SmartPlaylist
+) : BasePresenter<SmartPlaylistDetailContract.View>(),
+    SmartPlaylistDetailContract.Presenter {
 
     @AssistedInject.Factory
     interface Factory {
-        fun create(playlist: Playlist): PlaylistDetailPresenter
+        fun create(playlist: SmartPlaylist): SmartPlaylistDetailPresenter
     }
 
     private var songs: List<Song> = emptyList()
 
     override fun loadData() {
-        addDisposable(playlistRepository.getSongsForPlaylist(playlist.id)
+        addDisposable(songRepository.getSongs(playlist.songQuery)
+            .map { songs -> playlist.songQuery?.sortOrder?.let { songs.sortedWith(it) } ?: songs }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe { songs ->

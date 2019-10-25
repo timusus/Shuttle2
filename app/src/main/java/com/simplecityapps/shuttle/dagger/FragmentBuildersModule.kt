@@ -15,6 +15,7 @@ import com.simplecityapps.shuttle.ui.screens.library.folders.FolderFragment
 import com.simplecityapps.shuttle.ui.screens.library.folders.detail.FolderDetailFragment
 import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListFragment
 import com.simplecityapps.shuttle.ui.screens.library.playlists.detail.PlaylistDetailFragment
+import com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylistDetailFragment
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParentFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.directories.DirectorySelectionFragment
@@ -58,6 +59,9 @@ abstract class FragmentBuildersModule {
 
     @ContributesAndroidInjector
     abstract fun contributePlaylistDetailFragment(): PlaylistDetailFragment
+
+    @ContributesAndroidInjector
+    abstract fun contributeSmartPlaylistDetailFragment(): SmartPlaylistDetailFragment
 
     @ContributesAndroidInjector
     abstract fun contributeAlbumArtistsFragment(): AlbumArtistListFragment

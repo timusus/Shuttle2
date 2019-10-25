@@ -35,7 +35,7 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
     }
 
     override fun loadData() {
-        val songsSingle = songRepository.getSongs(SongQuery.AlbumArtistId(albumArtist.id)).first(emptyList())
+        val songsSingle = songRepository.getSongs(SongQuery.AlbumArtistIds(listOf(albumArtist.id))).first(emptyList())
         val albumsSingle = albumRepository.getAlbums(AlbumQuery.AlbumArtistId(albumArtist.id))
             .first(emptyList())
 
@@ -44,12 +44,12 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
                 albums.map { album -> Pair(album, songs.filter { song -> song.albumId == album.id }) }
                     .sortedWith(Comparator { a, b -> b.first.year.compareTo(a.first.year) })
                     .toMap()
-        })
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe { map ->
-                view?.setListData(map)
             })
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe { map ->
+                    view?.setListData(map)
+                })
     }
 
     override fun onSongClicked(song: Song, songs: List<Song>) {
@@ -61,25 +61,25 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
 
     override fun shuffle() {
         addDisposable(
-            songRepository.getSongs(SongQuery.AlbumArtistId(albumArtist.id)).first(emptyList())
-            .subscribeBy(
-                onSuccess = { songs ->
-                    playbackManager.load(songs, Random.nextInt(songs.size)) { result ->
-                        result.onSuccess {
-                            queueManager.setShuffleMode(QueueManager.ShuffleMode.On)
-                            playbackManager.play()
+            songRepository.getSongs(SongQuery.AlbumArtistIds(listOf(albumArtist.id))).first(emptyList())
+                .subscribeBy(
+                    onSuccess = { songs ->
+                        playbackManager.load(songs, Random.nextInt(songs.size)) { result ->
+                            result.onSuccess {
+                                queueManager.setShuffleMode(QueueManager.ShuffleMode.On)
+                                playbackManager.play()
+                            }
+                            result.onFailure { error -> view?.showLoadError(error as Error) }
                         }
-                        result.onFailure { error -> view?.showLoadError(error as Error) }
-                    }
-                }, onError = { throwable ->
-                    Timber.e(throwable, "Failed to retrieve songs")
-                })
+                    }, onError = { throwable ->
+                        Timber.e(throwable, "Failed to retrieve songs")
+                    })
         )
     }
 
     override fun addToQueue(albumArtist: AlbumArtist) {
         addDisposable(
-            songRepository.getSongs(SongQuery.AlbumArtistId(albumArtist.id))
+            songRepository.getSongs(SongQuery.AlbumArtistIds(listOf(albumArtist.id)))
                 .first(emptyList())
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -94,7 +94,7 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
 
     override fun addToQueue(album: Album) {
         addDisposable(
-            songRepository.getSongs(SongQuery.AlbumId(album.id))
+            songRepository.getSongs(SongQuery.AlbumIds(listOf(album.id)))
                 .first(emptyList())
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())

@@ -42,6 +42,6 @@ class ProgressView @JvmOverloads constructor(
         super.onDraw(canvas)
 
         rect.set(0f, 0f, width * progress, height.toFloat())
-        canvas.drawRect(rect, paint)
+        canvas.drawRoundRect(rect, height / 2f, height / 2f, paint)
     }
 }

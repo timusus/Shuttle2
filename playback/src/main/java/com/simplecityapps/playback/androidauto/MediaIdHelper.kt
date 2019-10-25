@@ -72,7 +72,7 @@ class MediaIdHelper @Inject constructor(
                 }
             }
             is MediaIdWrapper.Directory.Songs.Album -> {
-                songRepository.getSongs(SongQuery.AlbumId(mediaIdWrapper.albumId)).first(emptyList()).map { songs ->
+                songRepository.getSongs(SongQuery.AlbumIds(listOf(mediaIdWrapper.albumId))).first(emptyList()).map { songs ->
                     songs.map { it.toMediaItem(mediaId) }
                 }
             }
@@ -196,7 +196,7 @@ class MediaIdHelper @Inject constructor(
 
         return when (mediaIdWrapper.directory) {
             is MediaIdWrapper.Directory.Songs.Album -> {
-                songRepository.getSongs(SongQuery.AlbumId(mediaIdWrapper.directory.albumId)).first(emptyList()).map { songs ->
+                songRepository.getSongs(SongQuery.AlbumIds(listOf(mediaIdWrapper.directory.albumId))).first(emptyList()).map { songs ->
                     PlayQueue(songs, songs.indexOfFirst { it.id == mediaIdWrapper.songId })
                 }
             }

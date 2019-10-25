@@ -38,15 +38,14 @@
                 android:layout_height="320dp"
                 android:scaleType="centerCrop"
                 app:layout_collapseMode="parallax"
-                app:layout_collapseParallaxMultiplier="0.5"
-                tools:srcCompat="@drawable/ic_image_black_24dp" />
+                app:layout_collapseParallaxMultiplier="0.5" />
 
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom"
-                android:background="@drawable/rounded_background"
+                android:background="?android:windowBackground"
                 android:minHeight="?attr/actionBarSize"
                 android:paddingTop="8dp"
                 app:layout_collapseMode="pin"

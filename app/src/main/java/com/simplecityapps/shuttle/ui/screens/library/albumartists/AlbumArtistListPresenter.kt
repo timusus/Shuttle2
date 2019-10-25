@@ -61,7 +61,7 @@ class AlbumArtistListPresenter @Inject constructor(
 
     override fun addToQueue(albumArtist: AlbumArtist) {
         addDisposable(
-            songRepository.getSongs(SongQuery.AlbumArtistId(albumArtist.id))
+            songRepository.getSongs(SongQuery.AlbumArtistIds(listOf(albumArtist.id)))
                 .first(emptyList())
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())

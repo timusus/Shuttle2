@@ -1,6 +1,7 @@
 package au.com.simplecityapps.shuttle.imageloading.glide.module
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.util.Log
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.DiskSongLocalArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.LocalArtworkModelLoader
@@ -9,6 +10,7 @@ import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.TagLibSongL
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.artwork.AlbumArtistArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.artwork.AlbumArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.artwork.SongArtworkModelLoader
+import au.com.simplecityapps.shuttle.imageloading.palette.ColorSetTranscoder
 import com.bumptech.glide.Glide
 import com.bumptech.glide.GlideBuilder
 import com.bumptech.glide.Registry
@@ -16,6 +18,7 @@ import com.bumptech.glide.annotation.GlideModule
 import com.bumptech.glide.integration.okhttp3.OkHttpUrlLoader
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.module.AppGlideModule
+import com.simplecity.amp_library.glide.palette.ColorSet
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
@@ -46,6 +49,8 @@ class ImageLoaderGlideModule : AppGlideModule() {
         registry.replace(GlideUrl::class.java, InputStream::class.java, OkHttpUrlLoader.Factory(okHttpClient))
 
         registry.append(LocalArtworkProvider::class.java, InputStream::class.java, LocalArtworkModelLoader.Factory())
+
+        registry.register(Bitmap::class.java, ColorSet::class.java, ColorSetTranscoder(context))
 
 
         // Local

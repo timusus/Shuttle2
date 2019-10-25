@@ -9,8 +9,12 @@
 
     <!-- Home Buttons-->
     <string name="btn_history">History</string>
-    <string name="btn_latest">Recents</string>
+    <string name="btn_recently_added">Recently Added</string>
     <string name="btn_favorite">Favorites</string>
     <string name="btn_shuffle">Shuffle</string>
+
+    <!-- Smart Playlists -->
+    <string name="playlist_title_most_played">Most Played</string>
+    <string name="playlist_title_recently_played">Recently Played</string>
 
 </resources>

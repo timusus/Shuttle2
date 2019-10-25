@@ -25,10 +25,8 @@ abstract class PlaylistSongJoinDao {
                 "count(songs.id) as songCount, " +
                 "sum(songs.duration) as duration " +
                 "FROM playlists " +
-                "LEFT JOIN playlist_song_join " +
-                "ON playlists.id = playlist_song_join.playlistId " +
-                "LEFT JOIN songs " +
-                "ON songs.id = playlist_song_join.songId " +
+                "LEFT JOIN playlist_song_join ON playlists.id = playlist_song_join.playlistId " +
+                "LEFT JOIN songs ON songs.id = playlist_song_join.songId " +
                 "GROUP BY playlists.id " +
                 "ORDER BY playlists.name;"
     )
@@ -40,10 +38,8 @@ abstract class PlaylistSongJoinDao {
                 "count(songs.id) as songCount, " +
                 "sum(songs.duration) as duration " +
                 "FROM playlists " +
-                "LEFT JOIN playlist_song_join " +
-                "ON playlists.id = playlist_song_join.playlistId " +
-                "LEFT JOIN songs " +
-                "ON songs.id = playlist_song_join.songId " +
+                "LEFT JOIN playlist_song_join ON playlists.id = playlist_song_join.playlistId " +
+                "LEFT JOIN songs ON songs.id = playlist_song_join.songId " +
                 "WHERE playlists.id = :playlistId " +
                 "GROUP BY playlists.id " +
                 "ORDER BY playlists.name;"
@@ -56,12 +52,9 @@ abstract class PlaylistSongJoinDao {
                 "album_artists.name as albumArtistName, " +
                 "albums.name as albumName " +
                 "FROM songs " +
-                "INNER JOIN album_artists " +
-                "ON album_artists.id = songs.albumArtistId " +
-                "INNER JOIN albums " +
-                "ON albums.id = songs.albumId " +
-                "INNER JOIN playlist_song_join " +
-                "ON songs.id = playlist_song_join.songId " +
+                "INNER JOIN album_artists ON album_artists.id = songs.albumArtistId " +
+                "INNER JOIN albums ON albums.id = songs.albumId " +
+                "INNER JOIN playlist_song_join ON songs.id = playlist_song_join.songId " +
                 "WHERE playlist_song_join.playlistId = :playlistId;"
     )
     abstract fun getSongsForPlaylist(playlistId: Long): Flowable<List<Song>>

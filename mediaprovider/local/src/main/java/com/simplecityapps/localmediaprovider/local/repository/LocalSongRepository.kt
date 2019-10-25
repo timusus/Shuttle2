@@ -1,6 +1,5 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
-import android.annotation.SuppressLint
 import com.jakewharton.rxrelay2.BehaviorRelay
 import com.simplecityapps.localmediaprovider.local.Diff.Companion.diff
 import com.simplecityapps.localmediaprovider.local.IntervalTimer
@@ -10,7 +9,6 @@ import com.simplecityapps.mediaprovider.SongProvider
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
-import com.simplecityapps.mediaprovider.repository.predicate
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
@@ -205,13 +203,9 @@ class LocalSongRepository(
         }
     }
 
-    @SuppressLint("CheckResult")
-    override fun getSongs(): Observable<List<Song>> {
-        return songsRelay
-    }
 
-    override fun getSongs(query: SongQuery): Observable<List<Song>> {
-        return songsRelay.map { songs -> songs.filter(query.predicate()) }
+    override fun getSongs(query: SongQuery?): Observable<List<Song>> {
+        return query?.let { query -> songsRelay.map { songs -> songs.filter(query.predicate) } } ?: songsRelay
     }
 
     override fun incrementPlayCount(song: Song): Completable {

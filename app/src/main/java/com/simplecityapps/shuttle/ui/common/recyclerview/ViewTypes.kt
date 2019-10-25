@@ -17,4 +17,6 @@ object ViewTypes {
     const val OnboardingPage = 12
     const val OnboardingDirectory = 13
     const val OnboardingDirectoryAdd = 14
+    const val MostPlayedSection = 15
+    const val RecentlyPlayedSection = 16
 }

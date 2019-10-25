@@ -4,7 +4,7 @@ import com.simplecityapps.mediaprovider.SongProvider
 import com.simplecityapps.mediaprovider.model.Song
 import io.reactivex.Completable
 import io.reactivex.Observable
-import java.util.*
+import java.io.Serializable
 
 interface SongRepository {
 
@@ -12,41 +12,33 @@ interface SongRepository {
         return Completable.complete()
     }
 
-    fun getSongs(): Observable<List<Song>>
-
-    fun getSongs(query: SongQuery): Observable<List<Song>>
+    fun getSongs(query: SongQuery? = null): Observable<List<Song>>
 
     fun incrementPlayCount(song: Song): Completable
 
     fun setPlaybackPosition(song: Song, playbackPosition: Int): Completable
 }
 
-sealed class SongQuery {
-    class AlbumArtistId(val albumArtistId: Long) : SongQuery()
-    class AlbumArtistIds(val albumArtistIds: List<Long>) : SongQuery()
-    class AlbumId(val albumId: Long) : SongQuery()
-    class AlbumIds(val albumIds: List<Long>) : SongQuery()
-    class SongIds(val songIds: List<Long>) : SongQuery()
-    class LastPlayed(val after: Date) : SongQuery()
-    class LastCompleted(val after: Date) : SongQuery()
-    class PlaylistId(val playlistId: Long) : SongQuery()
-    class Search(val query: String) : SongQuery()
-}
+sealed class SongQuery(val predicate: ((Song) -> Boolean), val sortOrder: Comparator<Song>? = null) : Serializable {
 
-fun SongQuery.predicate(): (Song) -> Boolean {
-    return when (this) {
-        is SongQuery.AlbumArtistId -> { song -> song.albumArtistId == albumArtistId }
-        is SongQuery.AlbumArtistIds -> { song -> albumArtistIds.contains(song.albumArtistId) }
-        is SongQuery.AlbumId -> { song -> song.albumId == albumId }
-        is SongQuery.AlbumIds -> { song -> albumIds.contains(song.albumId) }
-        is SongQuery.SongIds -> { song -> songIds.contains(song.id) }
-        is SongQuery.LastPlayed -> { song -> song.lastPlayed?.after(after) ?: false }
-        is SongQuery.LastCompleted -> { song -> song.lastCompleted?.after(after) ?: false }
-        is SongQuery.PlaylistId -> throw NotImplementedError("Use PlaylistRepository.getSongsForPlaylist() instead")
-        is SongQuery.Search -> { song ->
-            song.name.contains(query, true)
-                    || song.albumName.contains(query, true)
-                    || song.albumArtistName.contains(query, true)
-        }
-    }
+    class AlbumArtistIds(private val albumArtistIds: List<Long>) :
+        SongQuery({ song -> albumArtistIds.contains(song.albumArtistId) })
+
+    class AlbumIds(private val albumIds: List<Long>) :
+        SongQuery({ song -> albumIds.contains(song.albumId) })
+
+    class SongIds(private val songIds: List<Long>) :
+        SongQuery({ song -> songIds.contains(song.id) })
+
+    class LastPlayed(private val after: java.util.Date) :
+        SongQuery({ song -> song.lastPlayed?.after(after) ?: false })
+
+    class LastCompleted(private val after: java.util.Date) :
+        SongQuery({ song -> song.lastCompleted?.after(after) ?: false })
+
+    class Search(private val query: String) :
+        SongQuery({ song -> song.name.contains(query, true) || song.albumName.contains(query, true) || song.albumArtistName.contains(query, true) })
+
+    class PlayCount(private val count: Int, sortOrder: Comparator<Song>? = null) :
+        SongQuery({ song -> song.playCount >= count }, sortOrder)
 }

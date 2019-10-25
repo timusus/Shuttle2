@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.screens.library.playlists.detail
+package com.simplecityapps.shuttle.ui.screens.library.playlists.smart
 
 import android.content.Context
 import android.os.Bundle
@@ -13,12 +13,10 @@ import androidx.navigation.fragment.NavHostFragment
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.adapter.RecyclerAdapter
-import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.error.userDescription
-import com.simplecityapps.shuttle.ui.common.utils.toHms
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongBinder
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
@@ -28,23 +26,23 @@ import dagger.android.support.AndroidSupportInjection
 import kotlinx.android.synthetic.main.fragment_album_detail.*
 import javax.inject.Inject
 
-class PlaylistDetailFragment :
+class SmartPlaylistDetailFragment :
     Fragment(),
     Injectable,
-    PlaylistDetailContract.View,
+    SmartPlaylistDetailContract.View,
     CreatePlaylistDialogFragment.Listener {
 
-    @Inject lateinit var presenterFactory: PlaylistDetailPresenter.Factory
+    @Inject lateinit var presenterFactory: SmartPlaylistDetailPresenter.Factory
 
     @Inject lateinit var playlistMenuPresenter: PlaylistMenuPresenter
 
     private lateinit var imageLoader: ArtworkImageLoader
 
-    private lateinit var presenter: PlaylistDetailPresenter
+    private lateinit var presenter: SmartPlaylistDetailPresenter
 
     private lateinit var adapter: RecyclerAdapter
 
-    private lateinit var playlist: Playlist
+    private lateinit var playlist: SmartPlaylist
 
     private lateinit var playlistMenuView: PlaylistMenuView
 
@@ -56,12 +54,12 @@ class PlaylistDetailFragment :
 
         AndroidSupportInjection.inject(this)
 
-        playlist = PlaylistDetailFragmentArgs.fromBundle(arguments!!).playlist
+        playlist = SmartPlaylistDetailFragmentArgs.fromBundle(arguments!!).playlist
         presenter = presenterFactory.create(playlist)
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_playlist_detail, container, false)
+        return inflater.inflate(R.layout.fragment_smart_playlist_detail, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -91,8 +89,7 @@ class PlaylistDetailFragment :
             }
         }
 
-        toolbar?.title = playlist.name
-        toolbar?.subtitle = "${playlist.songCount} Songs • ${playlist.duration.toHms()}"
+        toolbar?.setTitle(playlist.nameResId)
 
         recyclerView.adapter = adapter
 

@@ -18,8 +18,8 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
-import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
+import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
@@ -81,7 +81,6 @@ class AlbumListFragment :
         super.onResume()
 
         presenter.loadAlbums()
-        playlistMenuPresenter.bindView(playlistMenuView)
     }
 
     override fun onDestroyView() {

@@ -17,11 +17,14 @@
             android:id="@+id/action_homeFragment_to_recentFragment"
             app:destination="@id/recentFragment" />
         <action
-            android:id="@+id/action_homeFragment_to_favoritesFragment"
-            app:destination="@id/favoritesFragment" />
+            android:id="@+id/action_homeFragment_to_playlistDetailFragment"
+            app:destination="@id/playlistDetailFragment" />
         <action
             android:id="@+id/action_homeFragment_to_searchFragment"
             app:destination="@id/searchFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_smartPlaylistDetailFragment"
+            app:destination="@id/smartPlaylistDetailFragment" />
     </fragment>
 
     <fragment
@@ -82,16 +85,6 @@
         tools:layout="@layout/fragment_recent" />
 
     <fragment
-        android:id="@+id/favoritesFragment"
-        android:name="com.simplecityapps.shuttle.ui.screens.library.playlists.detail.PlaylistDetailFragment"
-        android:label="FavoritesFragment"
-        tools:layout="@layout/fragment_playlist_detail">
-        <argument
-            android:name="playlist"
-            app:argType="com.simplecityapps.mediaprovider.model.Playlist" />
-    </fragment>
-
-    <fragment
         android:id="@+id/searchFragment"
         android:name="com.simplecityapps.shuttle.ui.screens.home.search.SearchFragment"
         android:label="SearchFragment"
@@ -104,6 +97,15 @@
         <argument
             android:name="playlist"
             app:argType="com.simplecityapps.mediaprovider.model.Playlist" />
+    </fragment>
+    <fragment
+        android:id="@+id/smartPlaylistDetailFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylistDetailFragment"
+        android:label="SmartPlaylistDetailFragment"
+        tools:layout="@layout/fragment_smart_playlist_detail" >
+        <argument
+            android:name="playlist"
+            app:argType="com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylist" />
     </fragment>
 
 </navigation>

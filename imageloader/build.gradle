@@ -19,6 +19,11 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
 }
 
 dependencies {
@@ -48,4 +53,7 @@ dependencies {
     // Dagger core
     implementation 'com.google.dagger:dagger-android:2.24'
     kapt 'com.google.dagger:dagger-compiler:2.24'
+
+    // Palette
+    implementation 'androidx.palette:palette:1.0.0'
 }
