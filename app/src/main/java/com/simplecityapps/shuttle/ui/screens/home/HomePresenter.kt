@@ -8,7 +8,9 @@ import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylist.Companion.MostPlayed
 import com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylist.Companion.RecentlyPlayed
 import io.reactivex.Observable
+import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.rxkotlin.subscribeBy
+import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
 import javax.inject.Inject
 import kotlin.random.Random
@@ -41,6 +43,8 @@ class HomePresenter @Inject constructor(
     override fun shuffleAll() {
         addDisposable(songRepository.getSongs()
             .first(emptyList())
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
                 onSuccess = { songs ->
                     playbackManager.load(songs, Random.nextInt(songs.size)) { result ->
