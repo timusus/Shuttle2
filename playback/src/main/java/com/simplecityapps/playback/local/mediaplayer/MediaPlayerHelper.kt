@@ -74,6 +74,10 @@ class MediaPlayerHelper {
             Timber.e(exception, "Failed to load ${song.path}")
             completion?.invoke(Result.failure(Error("$tag MediaPlayer.setData() failed", exception)))
             return
+        } catch (exception: IllegalArgumentException) {
+            Timber.e(exception, "Failed to load ${song.path}")
+            completion?.invoke(Result.failure(Error("$tag MediaPlayer.setData() failed", exception)))
+            return
         }
 
         isPreparing = true
