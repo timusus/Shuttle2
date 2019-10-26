@@ -54,7 +54,7 @@ class SongListFragment :
 
         adapter = object : SectionedAdapter() {
             override fun getSectionName(viewBinder: ViewBinder?): String {
-                return (viewBinder as? SongBinder)?.song?.albumArtistName?.firstOrNull()?.toString() ?: ""
+                return (viewBinder as? SongBinder)?.song?.name?.firstOrNull()?.toString() ?: ""
             }
         }
     }
