@@ -16,5 +16,6 @@
     <!-- Smart Playlists -->
     <string name="playlist_title_most_played">Most Played</string>
     <string name="playlist_title_recently_played">Recently Played</string>
+    <string name="playlist_title_recently_added">Recently Added</string>
 
 </resources>

@@ -71,7 +71,7 @@ class HomePresenter @Inject constructor(
     override fun loadMostPlayed() {
         addDisposable(
             songRepository.getSongs(MostPlayed.songQuery)
-                .map { songs -> RecentlyPlayed.songQuery?.sortOrder?.let { songs.sortedWith(it) } ?: songs }
+                .map { songs -> MostPlayed.songQuery?.sortOrder?.let { songs.sortedWith(it) } ?: songs }
                 .flatMap { songs -> Observable.just(songs.take(20)) }
                 .subscribeBy(
                     onNext = { songs ->

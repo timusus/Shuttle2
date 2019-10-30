@@ -27,6 +27,10 @@ data class SmartPlaylist(val nameResId: Int, val songQuery: SongQuery?) : Serial
             R.string.playlist_title_recently_played,
             SongQuery.PlayCount(1, Comparator { a, b -> b.lastPlayed?.compareTo(a.lastPlayed) ?: 0 })
         )
+        val RecentlyAdded = SmartPlaylist(
+            R.string.btn_recently_added,
+            SongQuery.RecentlyAdded()
+        )
     }
 }
 

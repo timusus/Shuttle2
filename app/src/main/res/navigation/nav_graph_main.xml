@@ -12,10 +12,10 @@
         tools:layout="@layout/fragment_home">
         <action
             android:id="@+id/action_homeFragment_to_historyFragment"
-            app:destination="@id/historyFragment" />
+            app:destination="@id/smartPlaylistDetailFragment" />
         <action
             android:id="@+id/action_homeFragment_to_recentFragment"
-            app:destination="@id/recentFragment" />
+            app:destination="@id/smartPlaylistDetailFragment" />
         <action
             android:id="@+id/action_homeFragment_to_playlistDetailFragment"
             app:destination="@id/playlistDetailFragment" />
@@ -71,19 +71,6 @@
             android:name="album"
             app:argType="com.simplecityapps.mediaprovider.model.Album" />
     </fragment>
-
-    <fragment
-        android:id="@+id/historyFragment"
-        android:name="com.simplecityapps.shuttle.ui.screens.home.history.HistoryFragment"
-        android:label="HistoryFragment"
-        tools:layout="@layout/fragment_history" />
-
-    <fragment
-        android:id="@+id/recentFragment"
-        android:name="com.simplecityapps.shuttle.ui.screens.home.recent.RecentFragment"
-        android:label="RecentFragment"
-        tools:layout="@layout/fragment_recent" />
-
     <fragment
         android:id="@+id/searchFragment"
         android:name="com.simplecityapps.shuttle.ui.screens.home.search.SearchFragment"
@@ -102,7 +89,7 @@
         android:id="@+id/smartPlaylistDetailFragment"
         android:name="com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylistDetailFragment"
         android:label="SmartPlaylistDetailFragment"
-        tools:layout="@layout/fragment_smart_playlist_detail" >
+        tools:layout="@layout/fragment_smart_playlist_detail">
         <argument
             android:name="playlist"
             app:argType="com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylist" />

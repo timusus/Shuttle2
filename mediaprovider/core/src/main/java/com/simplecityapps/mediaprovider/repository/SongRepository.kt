@@ -41,4 +41,9 @@ sealed class SongQuery(val predicate: ((Song) -> Boolean), val sortOrder: Compar
 
     class PlayCount(private val count: Int, sortOrder: Comparator<Song>? = null) :
         SongQuery({ song -> song.playCount >= count }, sortOrder)
+
+    // Todo: This isn't really 'recently added', any songs which have had their contents modified will show up here.
+    //   Best to add a 'dateAdded' column.
+    class RecentlyAdded :
+        SongQuery({ song -> true }, Comparator { a, b -> a.lastModified.compareTo(b.lastModified) })
 }

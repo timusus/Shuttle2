@@ -4,8 +4,6 @@ import com.simplecityapps.shuttle.ui.MainFragment
 import com.simplecityapps.shuttle.ui.screens.debug.DebugDrawerFragment
 import com.simplecityapps.shuttle.ui.screens.debug.LoggingFragment
 import com.simplecityapps.shuttle.ui.screens.home.HomeFragment
-import com.simplecityapps.shuttle.ui.screens.home.history.HistoryFragment
-import com.simplecityapps.shuttle.ui.screens.home.recent.RecentFragment
 import com.simplecityapps.shuttle.ui.screens.home.search.SearchFragment
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistListFragment
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragment
@@ -86,12 +84,6 @@ abstract class FragmentBuildersModule {
 
     @ContributesAndroidInjector
     abstract fun contributeSleepTimerDialogFragment(): SleepTimerDialogFragment
-
-    @ContributesAndroidInjector
-    abstract fun contributeHistoryFragment(): HistoryFragment
-
-    @ContributesAndroidInjector
-    abstract fun contributeRecentFragment(): RecentFragment
 
     @ContributesAndroidInjector
     abstract fun contributeHomeFragment(): HomeFragment
