@@ -10,16 +10,23 @@
 
     <color name="colorPrimaryTransparent">#200492ea</color>
 
-    <color name="history_green_light">#f1f8f7</color>
-    <color name="history_green_dark">#74bdb0</color>
+    <color name="history_green_primary">#f1f8f7</color>
+    <color name="history_green_primary_dark">#1474bdb0</color>
+    <color name="history_green_tint">#74bdb0</color>
 
-    <color name="latest_yellow_light">#fff8e6</color>
-    <color name="latest_yellow_dark">#fbbc05</color>
+    <color name="recently_added_yellow_primary">#fff8e6</color>
+    <color name="recently_added_yellow_primary_dark">#14fbbc05</color>
+    <color name="recently_added_yellow_tint">#fbbc05</color>
 
-    <color name="favorite_red_light">#fdecea</color>
-    <color name="favorite_red_dark">#ea4335</color>
+    <color name="favorite_red_primary">#fdecea</color>
+    <color name="favorite_red_primary_dark">#14ea4335</color>
+    <color name="favorite_red_tint">#ea4335</color>
 
-    <color name="shuffle_blue_light">#e5f4fd</color>
-    <color name="shuffle_blue_dark">#0492ea</color>
+    <color name="shuffle_blue_primary">#e5f4fd</color>
+    <color name="shuffle_blue_primary_dark">#140492ea</color>
+    <color name="shuffle_blue_tint">#0492ea</color>
+
+    <color name="bg_window_dark">#121212</color>
+    <color name="bg_card_dark">#33b5e5</color>
 
 </resources>

@@ -12,9 +12,15 @@
         <item name="android:textViewStyle">@style/Widget.Shuttle.TextView</item>
         <item name="toolbarStyle">@style/Widget.Shuttle.Toolbar</item>
         <item name="imageButtonStyle">@style/Widget.Shuttle.ImageButton</item>
+
+        <item name="historyButtonBackgroundColor">@color/history_green_primary</item>
+        <item name="recentlyAddedButtonBackgroundColor">@color/recently_added_yellow_primary</item>
+        <item name="favoritesButtonBackgroundColor">@color/favorite_red_primary</item>
+        <item name="shuffleButtonBackgroundColor">@color/shuffle_blue_primary</item>
     </style>
 
     <style name="AppTheme.Dark" parent="Theme.MaterialComponents.NoActionBar">
+        <item name="android:windowBackground">@color/bg_window_dark</item>
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="tabLayoutStyle">@style/TabLayout.AppTheme.Dark</item>
@@ -23,6 +29,11 @@
         <item name="android:textViewStyle">@style/Widget.Shuttle.TextView</item>
         <item name="toolbarStyle">@style/Widget.Shuttle.Toolbar</item>
         <item name="imageButtonStyle">@style/Widget.Shuttle.ImageButton</item>
+
+        <item name="historyButtonBackgroundColor">@color/history_green_primary_dark</item>
+        <item name="recentlyAddedButtonBackgroundColor">@color/recently_added_yellow_primary_dark</item>
+        <item name="favoritesButtonBackgroundColor">@color/favorite_red_primary_dark</item>
+        <item name="shuffleButtonBackgroundColor">@color/shuffle_blue_primary_dark</item>
     </style>
 
     <style name="AppTheme.DayNight" parent="AppTheme.Light" />
@@ -96,6 +107,7 @@
         <item name="tabTextAppearance">@style/TextAppearance.Shuttle.TabItem</item>
     </style>
 
+
     <!-- Overflow Image Button -->
 
     <style name="Widget.Shuttle.OverflowButton" parent="Widget.AppCompat.ImageButton">
@@ -107,5 +119,12 @@
         <item name="android:scaleType">centerInside</item>
         <item name="srcCompat">@drawable/ic_more_vert_black_24dp</item>
     </style>
+
+    <!-- Home Buttons -->
+
+    <attr name="historyButtonBackgroundColor" format="reference|color" />
+    <attr name="recentlyAddedButtonBackgroundColor" format="reference|color" />
+    <attr name="favoritesButtonBackgroundColor" format="reference|color" />
+    <attr name="shuffleButtonBackgroundColor" format="reference|color" />
 
 </resources>

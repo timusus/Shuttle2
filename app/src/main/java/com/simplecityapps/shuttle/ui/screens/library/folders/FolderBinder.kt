@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.library.folders
 
 import android.content.res.ColorStateList
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -66,6 +67,13 @@ class FolderBinder(
         private val imageView: ImageView = itemView.findViewById(R.id.imageView)
         private val overflowButton: ImageButton = itemView.findViewById(R.id.overflowButton)
 
+        private val tintColor: Int by lazy {
+            with(TypedValue()) {
+                itemView.context.theme.resolveAttribute(R.attr.colorControlNormal, this, true)
+                ContextCompat.getColor(itemView.context, resourceId)
+            }
+        }
+
         init {
             itemView.setOnClickListener {
                 viewBinder?.listener?.onNodeSelected(viewBinder!!.fileNode)
@@ -82,7 +90,8 @@ class FolderBinder(
 
             if (viewBinder.fileNode is FileNodeTree) {
                 imageView.setImageResource(R.drawable.ic_folder_open_black_24dp)
-                imageView.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(itemView.context, R.color.primary_material_dark))
+
+                imageView.imageTintList = ColorStateList.valueOf(tintColor)
                 imageView.setPadding(4.dp)
                 title.isVisible = false
                 overflowButton.isVisible = false

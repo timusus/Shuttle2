@@ -7,6 +7,7 @@ import android.util.TypedValue
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.widget.LinearLayout
+import androidx.annotation.AttrRes
 import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
@@ -46,8 +47,15 @@ class HomeButton @JvmOverloads constructor(
         label.setText(type.data.text)
         image.setImageResource(type.data.image)
         image.setBackgroundResource(R.drawable.circle_filled)
-        image.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(context, type.data.backgroundColor))
+        image.backgroundTintList = ColorStateList.valueOf(getColor(type.data.backgroundColor))
         image.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(context, type.data.foregroundColor))
+    }
+
+    private fun getColor(@AttrRes res: Int): Int {
+        with(TypedValue()) {
+            context.theme.resolveAttribute(res, this, true)
+            return ContextCompat.getColor(context, resourceId)
+        }
     }
 
 
@@ -56,7 +64,7 @@ class HomeButton @JvmOverloads constructor(
 
         data class Data(
             @DrawableRes val image: Int,
-            @ColorRes val backgroundColor: Int,
+            @AttrRes val backgroundColor: Int,
             @ColorRes val foregroundColor: Int,
             @StringRes val text: Int
         )
@@ -72,10 +80,10 @@ class HomeButton @JvmOverloads constructor(
             }
 
         companion object {
-            val history = Data(R.drawable.ic_history_black_24dp, R.color.history_green_light, R.color.history_green_dark, R.string.btn_history)
-            val recent = Data(R.drawable.ic_queue_black_24dp, R.color.latest_yellow_light, R.color.latest_yellow_dark, R.string.btn_recently_added)
-            val favorites = Data(R.drawable.ic_favorite_border_black_24dp, R.color.favorite_red_light, R.color.favorite_red_dark, R.string.btn_favorite)
-            val shuffle = Data(R.drawable.ic_shuffle_black_24dp, R.color.shuffle_blue_light, R.color.shuffle_blue_dark, R.string.btn_shuffle)
+            val history = Data(R.drawable.ic_history_black_24dp, R.attr.historyButtonBackgroundColor, R.color.history_green_tint, R.string.btn_history)
+            val recent = Data(R.drawable.ic_queue_black_24dp, R.attr.recentlyAddedButtonBackgroundColor, R.color.recently_added_yellow_tint, R.string.btn_recently_added)
+            val favorites = Data(R.drawable.ic_favorite_border_black_24dp, R.attr.favoritesButtonBackgroundColor, R.color.favorite_red_tint, R.string.btn_favorite)
+            val shuffle = Data(R.drawable.ic_shuffle_black_24dp, R.attr.shuffleButtonBackgroundColor, R.color.shuffle_blue_tint, R.string.btn_shuffle)
         }
     }
 }
