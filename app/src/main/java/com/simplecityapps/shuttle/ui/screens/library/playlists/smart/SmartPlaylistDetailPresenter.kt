@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.library.playlists.smart
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
+import com.simplecityapps.mediaprovider.repository.SongSortOrder
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.R
@@ -21,11 +22,11 @@ data class SmartPlaylist(val nameResId: Int, val songQuery: SongQuery?) : Serial
     companion object {
         val MostPlayed = SmartPlaylist(
             R.string.playlist_title_most_played,
-            SongQuery.PlayCount(2, Comparator { a, b -> b.playCount.compareTo(a.playCount) })
+            SongQuery.PlayCount(2, SongSortOrder.MostPlayed)
         )
         val RecentlyPlayed = SmartPlaylist(
             R.string.playlist_title_recently_played,
-            SongQuery.PlayCount(1, Comparator { a, b -> b.lastPlayed?.compareTo(a.lastPlayed) ?: 0 })
+            SongQuery.PlayCount(1, SongSortOrder.RecentlyPlayed)
         )
         val RecentlyAdded = SmartPlaylist(
             R.string.btn_recently_added,
@@ -67,7 +68,7 @@ class SmartPlaylistDetailPresenter @AssistedInject constructor(
 
     override fun loadData() {
         addDisposable(songRepository.getSongs(playlist.songQuery)
-            .map { songs -> playlist.songQuery?.sortOrder?.let { songs.sortedWith(it) } ?: songs }
+            .map { songs -> playlist.songQuery?.sortOrder?.let { songs.sortedWith(it.getSortOrder()) } ?: songs }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe { songs ->

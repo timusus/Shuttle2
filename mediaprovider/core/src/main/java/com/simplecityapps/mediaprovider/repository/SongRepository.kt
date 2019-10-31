@@ -19,10 +19,16 @@ interface SongRepository {
     fun setPlaybackPosition(song: Song, playbackPosition: Int): Completable
 }
 
-sealed class SongQuery(val predicate: ((Song) -> Boolean), val sortOrder: Comparator<Song>? = null) : Serializable {
+sealed class SongQuery(
+    val predicate: ((Song) -> Boolean),
+    val sortOrder: SongSortOrder? = null
+) : Serializable {
+
 
     class AlbumArtistIds(private val albumArtistIds: List<Long>) :
-        SongQuery({ song -> albumArtistIds.contains(song.albumArtistId) })
+        SongQuery(fun(song: Song): Boolean {
+            return albumArtistIds.contains(song.albumArtistId)
+        })
 
     class AlbumIds(private val albumIds: List<Long>) :
         SongQuery({ song -> albumIds.contains(song.albumId) })
@@ -39,11 +45,24 @@ sealed class SongQuery(val predicate: ((Song) -> Boolean), val sortOrder: Compar
     class Search(private val query: String) :
         SongQuery({ song -> song.name.contains(query, true) || song.albumName.contains(query, true) || song.albumArtistName.contains(query, true) })
 
-    class PlayCount(private val count: Int, sortOrder: Comparator<Song>? = null) :
+    class PlayCount(private val count: Int, sortOrder: SongSortOrder) :
         SongQuery({ song -> song.playCount >= count }, sortOrder)
 
     // Todo: This isn't really 'recently added', any songs which have had their contents modified will show up here.
     //   Best to add a 'dateAdded' column.
     class RecentlyAdded :
-        SongQuery({ song -> true }, Comparator { a, b -> a.lastModified.compareTo(b.lastModified) })
+        SongQuery({ song -> true }, SongSortOrder.RecentlyAdded)
+}
+
+enum class SongSortOrder : Serializable {
+    PlayCount, RecentlyAdded, MostPlayed, RecentlyPlayed;
+
+    fun getSortOrder(): Comparator<Song> {
+        return when (this) {
+            PlayCount -> Comparator { a, b -> a.playCount.compareTo(b.playCount) }
+            RecentlyAdded -> Comparator { a, b -> a.lastModified.compareTo(b.lastModified) }
+            MostPlayed -> Comparator { a, b -> b.playCount.compareTo(a.playCount) }
+            RecentlyPlayed -> Comparator { a, b -> b.lastPlayed?.compareTo(a.lastPlayed) ?: 0 }
+        }
+    }
 }
