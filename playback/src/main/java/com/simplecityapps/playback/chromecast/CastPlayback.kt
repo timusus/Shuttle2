@@ -54,19 +54,19 @@ class CastPlayback(
             .setMetadata(metadata)
             .build()
 
-        castSession.remoteMediaClient.load(
+        castSession.remoteMediaClient?.load(
             mediaInfo, MediaLoadOptions.Builder()
                 .setPlayPosition(seekPosition.toLong())
                 .setAutoplay(false)
                 .build()
         )
-            .setResultCallback { result ->
+            ?.setResultCallback { result ->
                 if (result.status.isSuccess) {
                     completion(Result.success(null))
                 } else {
                     completion(Result.failure(Error("Remote Media Client failed to load media. ${result.status.statusMessage}")))
                 }
-            }
+            } ?: completion(Result.failure(Error("Remote Media Client failed to load media. (RemoteMediaClient null)")))
     }
 
     override fun loadNext(song: Song?) {
