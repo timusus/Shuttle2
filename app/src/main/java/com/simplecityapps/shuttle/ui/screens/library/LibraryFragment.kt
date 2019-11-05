@@ -4,9 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.view.doOnPreDraw
 import androidx.fragment.app.Fragment
-import androidx.transition.TransitionInflater
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.PagerAdapter
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistListFragment
@@ -19,14 +17,7 @@ class LibraryFragment : Fragment() {
 
     // Lifecycle
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        sharedElementReturnTransition = TransitionInflater.from(context!!).inflateTransition(R.transition.image_shared_element_transition)
-    }
-
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        postponeEnterTransition()
         return inflater.inflate(R.layout.fragment_library, container, false)
     }
 
@@ -44,7 +35,7 @@ class LibraryFragment : Fragment() {
 
         viewPager.adapter = adapter
         viewPager.offscreenPageLimit = 3
-        viewPager.doOnPreDraw { startPostponedEnterTransition() }
+
         viewPager.setCurrentItem(1, false)
     }
 }
