@@ -69,7 +69,7 @@ class ShuttleApplication : Application(),
     companion object {
 
         init {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_AUTO_TIME)
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
         }
     }
 }
