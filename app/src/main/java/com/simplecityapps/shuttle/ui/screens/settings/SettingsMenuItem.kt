@@ -4,7 +4,7 @@ import com.simplecityapps.shuttle.R
 
 enum class SettingsMenuItem {
 
-    Home, Library, Folders, SleepTimer;
+    Home, Library, Folders, SleepTimer, Shuffle;
 
     val icon: Int
         get() {
@@ -12,7 +12,8 @@ enum class SettingsMenuItem {
                 Home -> R.drawable.ic_home_black_24dp
                 Library -> R.drawable.ic_library_music_black_24dp
                 Folders -> R.drawable.ic_folder_open_black_24dp
-                SleepTimer -> R.drawable.ic_sleep_24dp
+                SleepTimer -> R.drawable.ic_sleep_black_24dp
+                Shuffle -> R.drawable.ic_shuffle_black_24dp
             }
         }
 
@@ -23,6 +24,7 @@ enum class SettingsMenuItem {
                 Library -> "Library"
                 Folders -> "Folders"
                 SleepTimer -> "Sleep Timer"
+                Shuffle -> "Shuffle All"
             }
         }
 

@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.annotation.NavigationRes
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
@@ -11,9 +12,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.view.BottomSheetOverlayView
 import com.simplecityapps.shuttle.ui.screens.sleeptimer.SleepTimerDialogFragment
-import timber.log.Timber
 import javax.inject.Inject
 
 class BottomDrawerSettingsFragment :
@@ -23,8 +24,7 @@ class BottomDrawerSettingsFragment :
 
     // Lifecycle
 
-    @Inject
-    lateinit var presenter: BottomDrawerSettingsPresenter
+    @Inject lateinit var presenter: BottomDrawerSettingsPresenter
 
     private lateinit var adapter: RecyclerAdapter
 
@@ -83,9 +83,10 @@ class BottomDrawerSettingsFragment :
 
             when (settingsItem) {
                 SettingsMenuItem.SleepTimer -> {
-                    fragmentManager?.let { fragmentManager ->
-                        SleepTimerDialogFragment().show(fragmentManager)
-                    } ?: Timber.e("Failed to show sleep timer: parent fragment manager null")
+                    SleepTimerDialogFragment().show(parentFragmentManager)
+                }
+                SettingsMenuItem.Shuffle -> {
+                   presenter.shuffleAll()
                 }
             }
         }
@@ -96,5 +97,9 @@ class BottomDrawerSettingsFragment :
 
     override fun setData(settingsItems: List<SettingsMenuItem>, currentDestination: Int?) {
         adapter.setData(settingsItems.map { settingsItem -> SettingsViewBinder(settingsItem, settingsItem.navDestination == currentDestination, settingsItemClickListener) })
+    }
+
+    override fun showLoadError(error: Error) {
+        Toast.makeText(context, error.userDescription(), Toast.LENGTH_LONG).show()
     }
 }
