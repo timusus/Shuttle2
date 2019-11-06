@@ -20,9 +20,9 @@ class KeylineView @JvmOverloads constructor(
     private val gutterWidth = 16f.dp
     private val gutterFillColor = 0xFFE5FBEF.toInt()
 
-    private val horiztonalKeylineStart = 72f.dp
-    private val horiztonalKeyLineColor = 0xFFC68BA4.toInt()
-    private val horiztonalKeyLineWidth = 2f.dp
+    private val horizontalKeylineStart = 72f.dp
+    private val horizontalKeyLineColor = 0xFFC68BA4.toInt()
+    private val horizontalKeyLineWidth = 2f.dp
 
     private val verticalKeylineStart = 56f.dp
     private val verticalKeyLineColor = 0xFFC68BA4.toInt()
@@ -55,9 +55,9 @@ class KeylineView @JvmOverloads constructor(
 
         // Vertical Keyline 1
         paint.style = Paint.Style.STROKE
-        paint.color = horiztonalKeyLineColor
-        paint.strokeWidth = horiztonalKeyLineWidth
-        canvas.drawLine(horiztonalKeylineStart, 0f, horiztonalKeylineStart, height.toFloat(), paint)
+        paint.color = horizontalKeyLineColor
+        paint.strokeWidth = horizontalKeyLineWidth
+        canvas.drawLine(horizontalKeylineStart, 0f, horizontalKeylineStart, height.toFloat(), paint)
 
         // Horizontal Keyline 1
         paint.style = Paint.Style.STROKE
