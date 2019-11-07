@@ -4,6 +4,7 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylist.Companion.MostPlayed
 import com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylist.Companion.RecentlyPlayed
@@ -47,6 +48,10 @@ class HomePresenter @Inject constructor(
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
                 onSuccess = { songs ->
+                    if (songs.isEmpty()) {
+                        view?.showLoadError(UserFriendlyError("Your library is empty"))
+                        return@subscribeBy
+                    }
                     playbackManager.load(songs, Random.nextInt(songs.size)) { result ->
                         result.onSuccess {
                             queueManager.setShuffleMode(QueueManager.ShuffleMode.On)
