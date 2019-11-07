@@ -30,7 +30,7 @@ class MediaPlayerHelper {
      */
     fun load(context: Context, song: Song, completion: ((Result<Any?>) -> Unit)?) {
 
-        Timber.v("$tag load() song: ${song.path}")
+        Timber.v("$tag load() song: ${song.name}")
 
         isPrepared = false
         isPreparing = false
