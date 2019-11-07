@@ -1,5 +1,7 @@
 package com.simplecityapps.shuttle.debug
 
+import android.annotation.SuppressLint
+import java.text.SimpleDateFormat
 import java.util.*
 
 class LogMessage(val priority: Int, val tag: String?, val message: String, val throwable: Throwable?) {
@@ -25,5 +27,14 @@ class LogMessage(val priority: Int, val tag: String?, val message: String, val t
         return result
     }
 
+    override fun toString(): String {
+        return "${dateFormat.format(date)}" +
+                "\n$priority/$tag" +
+                "\n$message"
+    }
 
+    companion object {
+        @SuppressLint("SimpleDateFormat")
+        val dateFormat = SimpleDateFormat("hh:mm:ss.SSS")
+    }
 }

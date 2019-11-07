@@ -1,25 +1,35 @@
 package com.simplecityapps.shuttle.ui.screens.debug
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.TextView
+import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.recyclerview.widget.RecyclerView
 import com.simplecityapps.adapter.RecyclerAdapter
+import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.debug.DebugLoggingTree
 import com.simplecityapps.shuttle.debug.LogMessage
 import com.simplecityapps.shuttle.ui.common.utils.withArgs
-import kotlinx.android.synthetic.main.fragment_debug_logging.*
 import java.io.Serializable
 import javax.inject.Inject
+
 
 class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
 
     @Inject lateinit var debugLoggingTree: DebugLoggingTree
 
     private lateinit var adapter: RecyclerAdapter
+
+    private lateinit var recyclerView: RecyclerView
 
     private var filter: Filter? = null
 
@@ -41,7 +51,21 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
 
         debugLoggingTree.addCallback(this)
 
+        recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
+
+        val dumpButton: Button = view.findViewById(R.id.dumpButton)
+        dumpButton.setOnClickListener {
+            val clipboardManager: ClipboardManager = context!!.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            var label = "v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})\n\n"
+            label += adapter.items.filterIsInstance<LogMessageBinder>().joinToString("\n\n") { it.logMessage.toString() }
+            val clip = ClipData.newPlainText("Shuttle Logs", label)
+            clipboardManager.primaryClip = clip
+            Toast.makeText(context!!, "Logs copied to clipboard", Toast.LENGTH_SHORT).show()
+        }
+
+        val versionInfo: TextView = view.findViewById(R.id.versionInfoLabel)
+        versionInfo.text = "v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
     }
 
     override fun onDestroyView() {

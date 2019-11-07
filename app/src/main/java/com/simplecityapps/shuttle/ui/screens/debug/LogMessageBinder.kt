@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.ui.screens.debug
 
-import android.annotation.SuppressLint
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
@@ -10,7 +9,6 @@ import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.debug.LogMessage
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
-import java.text.SimpleDateFormat
 
 class LogMessageBinder(
     val logMessage: LogMessage
@@ -48,14 +46,9 @@ class LogMessageBinder(
         override fun bind(viewBinder: LogMessageBinder, isPartial: Boolean) {
             super.bind(viewBinder, isPartial)
 
-            timestampTextView.text = dateFormat.format(viewBinder.logMessage.date)
+            timestampTextView.text = LogMessage.dateFormat.format(viewBinder.logMessage.date)
             tagTextView.text = viewBinder.logMessage.priority.getPriorityString() + "/" + (viewBinder.logMessage.tag ?: "")
             messageTextViewBinder.text = viewBinder.logMessage.message
-        }
-
-        companion object {
-            @SuppressLint("SimpleDateFormat")
-            val dateFormat = SimpleDateFormat("hh:mm:ss.SSS")
         }
 
         private fun Int.getPriorityString(): String {
