@@ -268,7 +268,7 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
 
         fun generateShuffleQueue() {
             if (baseList.isEmpty()) {
-                Timber.e("Cannot generate shuffle queue; base queue is empty")
+                Timber.i("Cannot generate shuffle queue; base queue is empty")
                 shuffleList = mutableListOf()
                 return
             }

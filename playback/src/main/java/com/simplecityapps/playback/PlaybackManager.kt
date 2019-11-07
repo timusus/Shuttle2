@@ -189,17 +189,26 @@ class PlaybackManager(
         return playback.isPlaying()
     }
 
+    /**
+     * @return the current seek position, in milliseconds
+     */
     fun getPosition(): Int? {
         return playback.getPosition()
     }
 
+    /**
+     * @return the track duration, in milliseconds
+     */
     fun getDuration(): Int? {
         return playback.getDuration()
     }
 
+    /**
+     * The position to seek to, in milliseconds
+     */
     fun seekTo(position: Int) {
         playback.seek(position)
-        updateProgress()
+        updateProgress(true)
     }
 
     fun addToQueue(songs: List<Song>) {
@@ -248,16 +257,17 @@ class PlaybackManager(
 
     private fun monitorProgress(isPlaying: Boolean) {
         if (isPlaying) {
-            handler.start { updateProgress() }
+            handler.start { updateProgress(false) }
         } else {
             handler.stop()
         }
     }
 
-    private fun updateProgress() {
+    private fun updateProgress(fromUser: Boolean) {
         playbackWatcher.onProgressChanged(
             min(playback.getPosition() ?: 0, playback.getDuration() ?: 0),
-            playback.getDuration() ?: Int.MAX_VALUE
+            playback.getDuration() ?: Int.MAX_VALUE,
+            fromUser
         )
     }
 
@@ -277,7 +287,7 @@ class PlaybackManager(
             playbackWatcher.onPlaybackComplete(currentQueueItem.song)
         } ?: Timber.e("onPlaybackComplete() called, but current queue item is null")
 
-        updateProgress()
+        updateProgress(false)
 
         if (trackWentToNext) {
             Timber.v("Updating queue")

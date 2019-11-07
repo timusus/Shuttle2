@@ -173,7 +173,7 @@ class PlaybackInitializer @Inject constructor(
 
     // ProgressCallback Implementation
 
-    override fun onProgressChanged(position: Int, total: Int) {
+    override fun onProgressChanged(position: Int, total: Int, fromUser: Boolean) {
 
         if (progress == 0) {
             progress = position

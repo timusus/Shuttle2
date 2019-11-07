@@ -54,18 +54,24 @@ class MediaSessionManager(
         artworkImageLoader = GlideImageLoader(context)
     }
 
+    private fun getPlaybackState() = if (playbackManager.isPlaying()) PlaybackStateCompat.STATE_PLAYING else PlaybackStateCompat.STATE_PAUSED
+
+
     // PlaybackWatcherCallback Implementation
 
     override fun onPlaystateChanged(isPlaying: Boolean) {
         mediaSession.isActive = isPlaying
-
-        if (isPlaying) {
-            playbackStateBuilder.setState(PlaybackStateCompat.STATE_PLAYING, playbackManager.getPosition()?.toLong() ?: 0, 1.0f)
-        } else {
-            playbackStateBuilder.setState(PlaybackStateCompat.STATE_PAUSED, playbackManager.getPosition()?.toLong() ?: 0, 1.0f)
-        }
-
+        playbackStateBuilder.setState(getPlaybackState(), playbackManager.getPosition()?.toLong() ?: 0, 1.0f)
         mediaSession.setPlaybackState(playbackStateBuilder.build())
+    }
+
+    override fun onProgressChanged(position: Int, total: Int, fromUser: Boolean) {
+        super.onProgressChanged(position, total, fromUser)
+
+        if (fromUser) {
+            playbackStateBuilder.setState(getPlaybackState(), playbackManager.getPosition()?.toLong() ?: 0, 1.0f)
+            mediaSession.setPlaybackState(playbackStateBuilder.build())
+        }
     }
 
 
@@ -78,8 +84,10 @@ class MediaSessionManager(
     override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
         queueManager.getCurrentItem()?.let { currentItem ->
             playbackStateBuilder.setActiveQueueItemId(currentItem.toQueueItem().queueId)
-            mediaSession.setPlaybackState(playbackStateBuilder.build())
 
+            playbackStateBuilder.setState(getPlaybackState(), playbackManager.getPosition()?.toLong() ?: 0, 1.0f)
+
+            mediaSession.setPlaybackState(playbackStateBuilder.build())
             val mediaMetadataCompat = MediaMetadataCompat.Builder()
                 .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, currentItem.song.id.toString())
                 .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, currentItem.song.albumArtistName)

@@ -146,7 +146,7 @@ class QueueBinder(
             viewBinder?.playbackWatcher?.removeCallback(this)
         }
 
-        override fun onProgressChanged(position: Int, total: Int) {
+        override fun onProgressChanged(position: Int, total: Int, fromUser: Boolean) {
             progressView.setProgress((position / total.toFloat()))
         }
 
