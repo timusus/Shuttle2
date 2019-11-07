@@ -41,10 +41,12 @@ class PlaybackManager(
     fun load(songs: List<Song>, shuffleSongs: List<Song>?, queuePosition: Int = 0, seekPosition: Int = 0, completion: (Result<Boolean>) -> Unit) {
         if (songs.isEmpty()) {
             Timber.e("Attempted to load empty song list")
+            completion(Result.failure(Error("Failed to load songs. The song list is empty.")))
             return
         }
         if (queuePosition < 0 || queuePosition >= songs.size) {
             Timber.e("Invalid queue position: $queuePosition (songs.size: ${songs.size})")
+            completion(Result.failure(Error("Failed to load songs. The queue position is invalid.")))
             return
         }
 
