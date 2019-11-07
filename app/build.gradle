@@ -11,7 +11,7 @@ plugins {
 ext {
     versionMajor = 0
     versionMinor = 0
-    versionPatch = 25
+    versionPatch = 26
 }
 
 android {
@@ -171,7 +171,7 @@ play {
     if (System.getenv('JENKINS_URL') != null) {
         serviceAccountCredentials = file(System.getenv('DEPLOYMENT_KEYS'))
         defaultToAppBundles = true
-        track = "internal"
+        track = "alpha"
     } else {
         serviceAccountCredentials = file('../deployment_keys.json')
     }
