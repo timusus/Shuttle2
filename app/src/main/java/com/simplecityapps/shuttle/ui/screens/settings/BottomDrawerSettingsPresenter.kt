@@ -12,7 +12,6 @@ import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
 import javax.inject.Inject
-import kotlin.random.Random
 
 interface BottomDrawerSettingsContract {
 
@@ -63,9 +62,8 @@ class BottomDrawerSettingsPresenter @Inject constructor(
                         view?.showLoadError(UserFriendlyError("Your library is empty"))
                         return@subscribeBy
                     }
-                    playbackManager.load(songs, Random.nextInt(songs.size)) { result ->
+                    playbackManager.shuffle(songs) { result ->
                         result.onSuccess {
-                            queueManager.setShuffleMode(QueueManager.ShuffleMode.On)
                             playbackManager.play()
                         }
                         result.onFailure { error -> view?.showLoadError(Error(error)) }

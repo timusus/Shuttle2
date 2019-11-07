@@ -9,6 +9,7 @@ import com.simplecityapps.playback.queue.QueueManager
 import timber.log.Timber
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.random.Random
 
 class PlaybackManager(
     private val queueManager: QueueManager,
@@ -51,7 +52,7 @@ class PlaybackManager(
         }
 
         if (shuffleSongs == null) {
-            queueManager.setShuffleMode(QueueManager.ShuffleMode.Off)
+            queueManager.setShuffleMode(QueueManager.ShuffleMode.Off, reshuffle = false)
         }
 
         queueManager.setQueue(songs, shuffleSongs, queuePosition)
@@ -104,6 +105,11 @@ class PlaybackManager(
                 }
             }
         }
+    }
+
+    fun shuffle(songs: List<Song>, completion: (Result<Any?>) -> Unit) {
+        queueManager.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = false)
+        load(songs, songs.shuffled(), Random.nextInt(songs.size), completion = completion)
     }
 
     /**

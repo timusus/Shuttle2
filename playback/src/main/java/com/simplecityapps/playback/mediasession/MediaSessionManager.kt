@@ -156,7 +156,7 @@ class MediaSessionManager(
         }
 
         override fun onSetShuffleMode(shuffleMode: Int) {
-            queueManager.setShuffleMode(shuffleMode.toShuffleMode())
+            queueManager.setShuffleMode(shuffleMode.toShuffleMode(), reshuffle = true)
         }
 
         override fun onPlayFromMediaId(mediaId: String?, extras: Bundle?) {

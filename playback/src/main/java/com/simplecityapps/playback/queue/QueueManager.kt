@@ -152,10 +152,10 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
         return baseQueue.get(shuffleMode)
     }
 
-    fun setShuffleMode(shuffleMode: ShuffleMode) {
+    fun setShuffleMode(shuffleMode: ShuffleMode, reshuffle: Boolean) {
         if (this.shuffleMode != shuffleMode) {
             this.shuffleMode = shuffleMode
-            if (shuffleMode == ShuffleMode.On) {
+            if (shuffleMode == ShuffleMode.On && reshuffle) {
                 baseQueue.generateShuffleQueue()
             }
             queueWatcher.onQueueChanged()
@@ -169,8 +169,8 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
 
     fun toggleShuffleMode() {
         when (shuffleMode) {
-            ShuffleMode.Off -> setShuffleMode(ShuffleMode.On)
-            ShuffleMode.On -> setShuffleMode(ShuffleMode.Off)
+            ShuffleMode.Off -> setShuffleMode(ShuffleMode.On, reshuffle = true)
+            ShuffleMode.On -> setShuffleMode(ShuffleMode.Off, reshuffle = false)
         }
     }
 

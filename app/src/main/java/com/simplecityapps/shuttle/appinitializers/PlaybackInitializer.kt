@@ -61,7 +61,7 @@ class PlaybackInitializer @Inject constructor(
                     "\nrepeatMode: $repeatMode"
         )
 
-        queueManager.setShuffleMode(shuffleMode)
+        queueManager.setShuffleMode(shuffleMode, reshuffle = false)
         queueManager.setRepeatMode(repeatMode)
 
         queuePosition?.let { queuePosition ->

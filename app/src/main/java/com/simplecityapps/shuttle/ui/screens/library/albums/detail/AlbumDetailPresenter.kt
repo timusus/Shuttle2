@@ -13,7 +13,6 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
-import kotlin.random.Random
 
 class AlbumDetailPresenter @AssistedInject constructor(
     private val songRepository: SongRepository,
@@ -36,9 +35,9 @@ class AlbumDetailPresenter @AssistedInject constructor(
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe { songs ->
-            this.songs = songs
-            view?.setData(songs)
-        })
+                    this.songs = songs
+                    view?.setData(songs)
+                })
     }
 
     override fun onSongClicked(song: Song) {
@@ -49,8 +48,7 @@ class AlbumDetailPresenter @AssistedInject constructor(
     }
 
     override fun shuffle() {
-        queueManager.setShuffleMode(QueueManager.ShuffleMode.On)
-        playbackManager.load(songs, Random.nextInt(songs.size)) { result ->
+        playbackManager.shuffle(songs)  { result ->
             result.onSuccess { playbackManager.play() }
             result.onFailure { error -> view?.showLoadError(error as Error) }
         }

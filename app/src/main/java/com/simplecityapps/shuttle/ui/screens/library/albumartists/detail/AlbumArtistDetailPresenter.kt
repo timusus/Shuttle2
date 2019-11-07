@@ -18,7 +18,6 @@ import io.reactivex.functions.BiFunction
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
-import kotlin.random.Random
 
 class AlbumArtistDetailPresenter @AssistedInject constructor(
     private val albumRepository: AlbumRepository,
@@ -64,9 +63,8 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
             songRepository.getSongs(SongQuery.AlbumArtistIds(listOf(albumArtist.id))).first(emptyList())
                 .subscribeBy(
                     onSuccess = { songs ->
-                        playbackManager.load(songs, Random.nextInt(songs.size)) { result ->
+                        playbackManager.shuffle(songs)  { result ->
                             result.onSuccess {
-                                queueManager.setShuffleMode(QueueManager.ShuffleMode.On)
                                 playbackManager.play()
                             }
                             result.onFailure { error -> view?.showLoadError(error as Error) }

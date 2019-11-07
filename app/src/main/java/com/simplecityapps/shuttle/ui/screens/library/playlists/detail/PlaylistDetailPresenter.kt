@@ -12,7 +12,6 @@ import com.squareup.inject.assisted.AssistedInject
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
-import kotlin.random.Random
 
 interface PlaylistDetailContract {
 
@@ -64,8 +63,7 @@ class PlaylistDetailPresenter @AssistedInject constructor(
 
     override fun shuffle() {
         if (songs.isNotEmpty()) {
-            queueManager.setShuffleMode(QueueManager.ShuffleMode.On)
-            playbackManager.load(songs, Random.nextInt(songs.size)) { result ->
+            playbackManager.shuffle(songs)  { result ->
                 result.onSuccess { playbackManager.play() }
                 result.onFailure { error -> view?.showLoadError(error as Error) }
             }
