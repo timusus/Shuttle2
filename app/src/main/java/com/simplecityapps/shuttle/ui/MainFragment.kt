@@ -12,9 +12,9 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.Navigation.findNavController
+import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.simplecityappds.saf.SafDirectoryHelper
 import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStoreSongProvider
 import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibSongProvider
@@ -26,7 +26,6 @@ import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
-import com.simplecityapps.shuttle.ui.common.view.BottomSheetOverlayView
 import com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
 import com.simplecityapps.shuttle.ui.screens.playback.PlaybackFragment
 import com.simplecityapps.shuttle.ui.screens.playback.mini.MiniPlaybackFragment
@@ -45,8 +44,7 @@ import javax.inject.Inject
 class MainFragment
     : Fragment(),
     Injectable,
-    QueueChangeCallback,
-    BottomSheetOverlayView.OnBottomSheetStateChangeListener {
+    QueueChangeCallback {
 
     @Inject lateinit var queueManager: QueueManager
     @Inject lateinit var queueWatcher: QueueWatcher
@@ -61,8 +59,6 @@ class MainFragment
 
     private var onBackPressCallback: OnBackPressedCallback? = null
 
-    private lateinit var bottomSheetOverlayView: BottomSheetOverlayView
-
 
     // Lifecycle
 
@@ -75,19 +71,10 @@ class MainFragment
 
         val navController = findNavController(activity!!, R.id.navHostFragment)
 
-        bottomSheetOverlayView = view.findViewById(R.id.bottomSheetOverlayView)
-        bottomSheetOverlayView.hide()
-        bottomSheetOverlayView.listener = this
-
         val bottomNavigationView: BottomNavigationView = view.findViewById(R.id.bottomNavigationView)
         bottomNavigationView.setupWithNavController(navController) { menuItem ->
-            if (menuItem.itemId == R.id.navigation_menu) {
-                bottomSheetOverlayView.show()
-                // There's an issue where the very first call to show() the bottom sheet overlay doesn't trigger its onChangeListener, which means we don't get a chaNce to update
-                // the back press listener.. So we do it here as well.
-                updateBackPressListener()
-            } else {
-                bottomSheetOverlayView.hide()
+            if (menuItem.itemId == R.id.bottomSheetFragment) {
+                findNavController().navigate(R.id.action_mainFragment_to_bottomSheetFragment)
             }
         }
 
@@ -153,7 +140,7 @@ class MainFragment
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
-        outState.putInt(STATE_CURRENT_SHEET, multiSheetView.currentSheet)
+        outState.putInt(STATE_CURRENT_SHEET, multiSheetView?.currentSheet ?: MultiSheetView.Sheet.NONE)
         super.onSaveInstanceState(outState)
     }
 
@@ -167,14 +154,6 @@ class MainFragment
 
     private fun updateBackPressListener() {
         onBackPressCallback?.remove()
-
-        if (bottomSheetOverlayView.state != BottomSheetBehavior.STATE_HIDDEN) {
-            // Todo: Remove activity dependency.
-            onBackPressCallback = activity!!.onBackPressedDispatcher.addCallback {
-                bottomSheetOverlayView.hide()
-            }
-            return
-        }
 
         if (multiSheetView.currentSheet != MultiSheetView.Sheet.NONE) {
             // Todo: Remove activity dependency.
@@ -194,11 +173,6 @@ class MainFragment
         }
     }
 
-    // BottomSheetOverlayView.Listener Implementation
-
-    override fun onStateChanged(state: Int) {
-        updateBackPressListener()
-    }
 
     // Static
 

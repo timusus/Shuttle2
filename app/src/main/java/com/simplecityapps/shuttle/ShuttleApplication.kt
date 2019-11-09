@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle
 
 import android.app.Application
 import android.content.Intent
+import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatDelegate
 import com.simplecityapps.playback.ActivityIntentProvider
 import com.simplecityapps.playback.dagger.PlaybackModule
@@ -22,6 +23,8 @@ class ShuttleApplication : Application(),
 
     @Inject lateinit var initializers: AppInitializers
 
+    @Inject lateinit var sharedPrefs: SharedPreferences
+
     private val coreComponent: CoreComponent by lazy {
 
         val persistenceModule = PersistenceModule(this)
@@ -40,6 +43,12 @@ class ShuttleApplication : Application(),
         super.onCreate()
 
         AppInjector.init(this)
+
+        when (sharedPrefs.getString("pref_night_mode", "0")) {
+            "0" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
+            "1" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
+            "2" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+        }
 
         initializers.init(this)
     }
@@ -63,13 +72,5 @@ class ShuttleApplication : Application(),
 
     override fun provideMainActivityIntent(): Intent {
         return Intent(this, MainActivity::class.java)
-    }
-
-
-    companion object {
-
-        init {
-            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
-        }
     }
 }

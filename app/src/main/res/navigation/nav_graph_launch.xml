@@ -9,7 +9,11 @@
         android:id="@+id/mainFragment"
         android:name="com.simplecityapps.shuttle.ui.MainFragment"
         android:label="MainFragment"
-        tools:layout="@layout/fragment_main" />
+        tools:layout="@layout/fragment_main">
+        <action
+            android:id="@+id/action_mainFragment_to_bottomSheetFragment"
+            app:destination="@id/bottomSheetFragment" />
+    </fragment>
     <fragment
         android:id="@+id/onboardingFragment"
         android:name="com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParentFragment"
@@ -18,6 +22,33 @@
         <action
             android:id="@+id/action_onboardingFragment_to_mainFragment"
             app:destination="@id/mainFragment"
-            app:popUpTo="@+id/mainFragment" />
+            app:popUpTo="@+id/onboardingFragment"
+            app:popUpToInclusive="true" />
     </fragment>
+    <fragment
+        android:id="@+id/settingsFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.settings.SettingsFragment"
+        android:label="SettingsFragment" />
+
+    <dialog
+        android:id="@+id/bottomSheetFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.settings.BottomDrawerSettingsFragment">
+        <action
+            android:id="@+id/action_bottomSheetDialog_to_settingsFragment"
+            app:destination="@id/settingsFragment"
+            app:enterAnim="@anim/enter_from_right"
+            app:exitAnim="@anim/fragment_fade_exit"
+            app:popEnterAnim="@anim/fragment_fade_enter"
+            app:popExitAnim="@anim/exit_to_right"
+            app:popUpTo="@+id/bottomSheetFragment"
+            app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_bottomSheetDialog_to_sleepTimerDialog"
+            app:destination="@id/sleepTimerFragment"
+            app:popUpTo="@+id/bottomSheetFragment"
+            app:popUpToInclusive="true" />
+    </dialog>
+    <dialog
+        android:id="@+id/sleepTimerFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.sleeptimer.SleepTimerDialogFragment" />
 </navigation>

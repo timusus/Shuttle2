@@ -10,7 +10,7 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.view.setMargins
-import kotlinx.android.synthetic.main.multi_sheet.view.*
+import kotlinx.android.synthetic.main.fragment_main.view.*
 
 class MultiSheetView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) : CoordinatorLayout(context, attrs, defStyleAttr) {
 
@@ -20,8 +20,8 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
         fun onSlide(@Sheet sheet: Int, slideOffset: Float)
     }
 
-    private val bottomSheetBehavior1: CustomBottomSheetBehavior<*>
-    private val bottomSheetBehavior2: CustomBottomSheetBehavior<*>
+    private lateinit var bottomSheetBehavior1: CustomBottomSheetBehavior<*>
+    private lateinit var bottomSheetBehavior2: CustomBottomSheetBehavior<*>
 
     private lateinit var navHostFragment: View
 
@@ -31,44 +31,6 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
         super.onFinishInflate()
 
         navHostFragment = findViewById<View>(R.id.navHostFragment)
-    }
-
-    override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
-        super.onLayout(changed, l, t, r, b)
-
-        if (changed) {
-            sheet1.translationY = -bottomNavigationView.height.toFloat() + bottomNavigationView.translationY
-            sheet1Container.setMargins(bottomMargin = sheet2PeekView.height)
-            navHostFragment.setMargins(bottomMargin = bottomNavigationView.height + bottomSheetBehavior1.peekHeight)
-        }
-    }
-
-    val isHidden: Boolean
-        get() {
-            val peekHeight = context.resources.getDimensionPixelSize(R.dimen.bottom_sheet_peek_1_height)
-            return bottomSheetBehavior1.peekHeight < peekHeight
-        }
-
-    /**
-     * @return the currently expanded Sheet
-     */
-    val currentSheet: Int
-        @Sheet
-        get() = if (bottomSheetBehavior2.state == BottomSheetBehavior.STATE_EXPANDED) {
-            Sheet.SECOND
-        } else if (bottomSheetBehavior1.state == BottomSheetBehavior.STATE_EXPANDED) {
-            Sheet.FIRST
-        } else {
-            Sheet.NONE
-        }
-
-    val mainContainerResId: Int
-        @IdRes
-        get() = R.id.navHostFragment
-
-
-    init {
-        View.inflate(getContext(), R.layout.multi_sheet, this)
 
         val sheet1 = findViewById<View>(R.id.sheet1)
         bottomSheetBehavior1 = BottomSheetBehavior.from(sheet1) as CustomBottomSheetBehavior<*>
@@ -123,6 +85,43 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
             bottomSheetBehavior2.setAllowDragging(true)
             false
         }
+    }
+
+    override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
+        super.onLayout(changed, l, t, r, b)
+
+        if (changed) {
+            sheet1.translationY = -bottomNavigationView.height.toFloat() + bottomNavigationView.translationY
+            sheet1Container.setMargins(bottomMargin = sheet2PeekView.height)
+            navHostFragment.setMargins(bottomMargin = bottomNavigationView.height + bottomSheetBehavior1.peekHeight)
+        }
+    }
+
+    val isHidden: Boolean
+        get() {
+            val peekHeight = context.resources.getDimensionPixelSize(R.dimen.bottom_sheet_peek_1_height)
+            return bottomSheetBehavior1.peekHeight < peekHeight
+        }
+
+    /**
+     * @return the currently expanded Sheet
+     */
+    val currentSheet: Int
+        @Sheet
+        get() = if (bottomSheetBehavior2.state == BottomSheetBehavior.STATE_EXPANDED) {
+            Sheet.SECOND
+        } else if (bottomSheetBehavior1.state == BottomSheetBehavior.STATE_EXPANDED) {
+            Sheet.FIRST
+        } else {
+            Sheet.NONE
+        }
+
+    val mainContainerResId: Int
+        @IdRes
+        get() = R.id.navHostFragment
+
+    init {
+
     }
 
     fun addSheetStateChangeListener(sheetStateChangeListener: SheetStateChangeListener) {

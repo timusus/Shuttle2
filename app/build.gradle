@@ -99,7 +99,7 @@ dependencies {
     implementation 'com.github.timusus:RecyclerView-FastScroll:dev-SNAPSHOT'
 
     // Material Design
-    implementation 'com.google.android.material:material:1.0.0'
+    implementation 'com.google.android.material:material:1.2.0-alpha01'
 
     // AppCompat
     implementation 'androidx.appcompat:appcompat:1.1.0'
@@ -159,6 +159,10 @@ dependencies {
 
     // AndroidX Media
     implementation 'androidx.media:media:1.1.0'
+
+    // AndroidX Preference
+    implementation 'androidx.preference:preference:1.1.0'
+    implementation "androidx.preference:preference-ktx:1.1.0"
 
     // ChromeCast
     implementation 'com.google.android.gms:play-services-cast-framework:17.1.0'

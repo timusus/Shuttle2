@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="Display">
+        <ListPreference
+            android:defaultValue="0"
+            android:dialogTitle="Night Mode"
+            android:entries="@array/pref_night_mode_entries"
+            android:entryValues="@array/pref_night_mode_values"
+            android:key="pref_night_mode"
+            android:summary="Matches the system preference for night mode by default"
+            android:title="Night mode" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

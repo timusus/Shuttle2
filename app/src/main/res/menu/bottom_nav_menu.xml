@@ -18,7 +18,7 @@
 
     <item
         android:title=""
-        android:id="@+id/navigation_menu"
+        android:id="@+id/bottomSheetFragment"
         android:icon="@drawable/ic_menu_black_24dp"/>
 
 </menu>

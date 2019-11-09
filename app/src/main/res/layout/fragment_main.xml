@@ -3,18 +3,76 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
         android:id="@+id/multiSheetView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".ui.MainActivity" />
+        tools:context=".ui.MainActivity" >
 
-    <com.simplecityapps.shuttle.ui.common.view.BottomSheetOverlayView
-        android:id="@+id/bottomSheetOverlayView"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:visibility="gone" />
+        <fragment
+            android:id="@+id/navHostFragment"
+            android:name="androidx.navigation.fragment.NavHostFragment"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:defaultNavHost="true"
+            app:navGraph="@navigation/nav_graph_main" />
+
+        <FrameLayout
+            android:id="@+id/sheet1"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:behavior_peekHeight="@dimen/bottom_sheet_peek_1_height"
+            app:layout_behavior="com.simplecityapps.shuttle.ui.common.view.multisheet.CustomBottomSheetBehavior"
+            tools:ignore="MissingPrefix">
+
+            <FrameLayout
+                android:id="@+id/sheet1Container"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <FrameLayout
+                android:id="@+id/sheet1PeekView"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/bottom_sheet_peek_1_height" />
+
+            <androidx.coordinatorlayout.widget.CoordinatorLayout
+                android:id="@+id/sheet1Coordinator"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <FrameLayout
+                    android:id="@+id/sheet2"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical"
+                    app:behavior_peekHeight="@dimen/bottom_sheet_peek_2_height"
+                    app:layout_behavior="com.simplecityapps.shuttle.ui.common.view.multisheet.CustomBottomSheetBehavior">
+
+                    <FrameLayout
+                        android:id="@+id/sheet2Container"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
+
+                    <FrameLayout
+                        android:id="@+id/sheet2PeekView"
+                        android:layout_width="match_parent"
+                        android:layout_height="?attr/actionBarSize" />
+
+                </FrameLayout>
+            </androidx.coordinatorlayout.widget.CoordinatorLayout>
+        </FrameLayout>
+
+        <com.google.android.material.bottomnavigation.BottomNavigationView
+            android:id="@+id/bottomNavigationView"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_gravity="bottom"
+            android:background="?android:attr/windowBackground"
+            app:menu="@menu/bottom_nav_menu" />
+
+    </com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

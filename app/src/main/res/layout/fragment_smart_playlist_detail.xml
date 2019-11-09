@@ -28,7 +28,7 @@
             android:id="@+id/collapsingToolbarLayout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            app:contentScrim="?android:windowBackground"
+            app:contentScrim="?android:attr/windowBackground"
             app:layout_scrollFlags="scroll|exitUntilCollapsed|snap"
             app:titleEnabled="false">
 
@@ -45,7 +45,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom"
-                android:background="?android:windowBackground"
+                android:background="?android:attr/windowBackground"
                 android:minHeight="?attr/actionBarSize"
                 android:paddingTop="8dp"
                 app:layout_collapseMode="pin"

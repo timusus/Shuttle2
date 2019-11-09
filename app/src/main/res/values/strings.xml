@@ -18,4 +18,17 @@
     <string name="playlist_title_recently_played">Recently Played</string>
     <string name="playlist_title_recently_added">Recently Added</string>
 
+    <!-- Settings Option -->
+    <string-array name="pref_night_mode_entries">
+        <item>Default</item>
+        <item>Off</item>
+        <item>On</item>
+    </string-array>
+
+    <string-array name="pref_night_mode_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+    </string-array>
+
 </resources>

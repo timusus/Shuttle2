@@ -61,7 +61,7 @@ class SettingsViewBinder(
             super.bind(viewBinder, isPartial)
 
             icon.setImageResource(viewBinder.settingsItem.icon)
-            label.text = viewBinder.settingsItem.name
+            label.text = viewBinder.settingsItem.title
 
             itemView.isActivated = viewBinder.isSelected
         }

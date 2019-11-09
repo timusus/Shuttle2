@@ -17,6 +17,12 @@
         <item name="recentlyAddedButtonBackgroundColor">@color/recently_added_yellow_primary</item>
         <item name="favoritesButtonBackgroundColor">@color/favorite_red_primary</item>
         <item name="shuffleButtonBackgroundColor">@color/shuffle_blue_primary</item>
+
+        <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.Shuttle.SmallComponent</item>
+        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.Shuttle.MediumComponent</item>
+        <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.Shuttle.LargeComponent</item>
+
+        <item name="preferenceTheme">@style/Shuttle.PreferenceThemeOverlay</item>
     </style>
 
     <style name="AppTheme.Dark" parent="Theme.MaterialComponents.NoActionBar">
@@ -34,6 +40,14 @@
         <item name="recentlyAddedButtonBackgroundColor">@color/recently_added_yellow_primary_dark</item>
         <item name="favoritesButtonBackgroundColor">@color/favorite_red_primary_dark</item>
         <item name="shuffleButtonBackgroundColor">@color/shuffle_blue_primary_dark</item>
+
+        <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.Shuttle.SmallComponent</item>
+        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.Shuttle.MediumComponent</item>
+        <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.Shuttle.LargeComponent</item>
+
+        <item name="preferenceTheme">@style/Shuttle.PreferenceThemeOverlay</item>
+
+        <item name="bottomSheetDialogTheme">@style/Shuttle.BottomSheetDialog.Dark</item>
     </style>
 
     <style name="AppTheme.DayNight" parent="AppTheme.Light" />
@@ -126,5 +140,34 @@
     <attr name="recentlyAddedButtonBackgroundColor" format="reference|color" />
     <attr name="favoritesButtonBackgroundColor" format="reference|color" />
     <attr name="shuffleButtonBackgroundColor" format="reference|color" />
+
+
+    <!-- Material Shapes-->
+
+    <style name="ShapeAppearance.Shuttle.SmallComponent" parent="ShapeAppearance.MaterialComponents.SmallComponent">
+        <item name="cornerFamily">cut</item>
+        <item name="cornerSize">4dp</item>
+    </style>
+
+    <style name="ShapeAppearance.Shuttle.MediumComponent" parent="ShapeAppearance.MaterialComponents.MediumComponent">
+        <item name="cornerFamily">cut</item>
+        <item name="cornerSize">8dp</item>
+    </style>
+
+    <style name="ShapeAppearance.Shuttle.LargeComponent" parent="ShapeAppearance.MaterialComponents.LargeComponent">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
+    </style>
+
+
+    <!-- Settings Fragemnt-->
+
+    <style name="Shuttle.PreferenceThemeOverlay" parent="@style/PreferenceThemeOverlay">
+        <item name="android:layout">@layout/fragment_settings</item>
+    </style>
+
+    <style name="Shuttle.BottomSheetDialog.Dark" parent="Theme.Design.BottomSheetDialog">
+        <item name="colorBackgroundFloating">#121212</item>
+    </style>
 
 </resources>
