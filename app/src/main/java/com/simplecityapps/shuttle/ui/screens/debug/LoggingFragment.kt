@@ -57,11 +57,16 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
         val dumpButton: Button = view.findViewById(R.id.dumpButton)
         dumpButton.setOnClickListener {
             val clipboardManager: ClipboardManager = context!!.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            var label = "v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})\n\n"
-            label += adapter.items.filterIsInstance<LogMessageBinder>().joinToString("\n\n") { it.logMessage.toString() }
-            val clip = ClipData.newPlainText("Shuttle Logs", label)
-            clipboardManager.primaryClip = clip
-            Toast.makeText(context!!, "Logs copied to clipboard", Toast.LENGTH_SHORT).show()
+//            var label = "v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})\n\n"
+//            label += adapter.items.filterIsInstance<LogMessageBinder>().joinToString("\n\n") { it.logMessage.toString() }
+            val file = context!!.getFileStreamPath(DebugLoggingTree.FILE_NAME)
+            if(file.exists()) {
+                val clip = ClipData.newPlainText("Shuttle Logs", context!!.getFileStreamPath(DebugLoggingTree.FILE_NAME).readText(Charsets.UTF_8))
+                clipboardManager.primaryClip = clip
+                Toast.makeText(context!!, "Logs copied to clipboard", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(context!!, "Log file is empty", Toast.LENGTH_SHORT).show()
+            }
         }
 
         val versionInfo: TextView = view.findViewById(R.id.versionInfoLabel)
