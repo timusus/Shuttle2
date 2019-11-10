@@ -144,10 +144,12 @@ class PlaybackManager(
     }
 
     override fun pause() {
+        Timber.v("pause()")
         playback.pause()
     }
 
     fun release() {
+        Timber.v("release()")
         playback.release()
     }
 

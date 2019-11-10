@@ -2,6 +2,7 @@ package com.simplecityapps.playback
 
 import android.app.Service
 import android.content.Intent
+import android.content.ServiceConnection
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -71,6 +72,7 @@ class PlaybackService :
             ACTION_SKIP_PREV -> playbackManager.skipToPrev()
             ACTION_SKIP_NEXT -> playbackManager.skipToNext(true)
             ACTION_NOTIFICATION_DISMISS -> {
+                Timber.v("Stopping due to notification dismiss")
                 stopSelf()
                 return START_STICKY
             }
@@ -89,6 +91,16 @@ class PlaybackService :
         return if ("android.media.browse.MediaBrowserService" == intent?.action) {
             super.onBind(intent)
         } else null
+    }
+
+    override fun stopService(name: Intent?): Boolean {
+        Timber.v("stopService() $name")
+        return super.stopService(name)
+    }
+
+    override fun unbindService(conn: ServiceConnection) {
+        Timber.v("unbindService()")
+        super.unbindService(conn)
     }
 
     override fun onDestroy() {
@@ -123,8 +135,10 @@ class PlaybackService :
         if (!isPlaying) {
             foregroundNotificationHandler?.postDelayed({
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    Timber.v("stopForeground()")
                     stopForeground(Service.STOP_FOREGROUND_DETACH)
                 } else {
+                    Timber.v("stopForeground()")
                     stopForeground(true)
                     notificationManager.displayNotification()
                 }
