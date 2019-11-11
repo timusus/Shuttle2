@@ -56,7 +56,7 @@ class ImageLoaderGlideModule : AppGlideModule() {
         // Local
 
         registry.append(Song::class.java, InputStream::class.java, DiskSongLocalArtworkModelLoader.Factory())
-        registry.append(Song::class.java, InputStream::class.java, TagLibSongLocalArtworkModelLoader.Factory(ArtworkProvider()))
+        registry.append(Song::class.java, InputStream::class.java, TagLibSongLocalArtworkModelLoader.Factory(context, ArtworkProvider()))
 
 
         // Remote

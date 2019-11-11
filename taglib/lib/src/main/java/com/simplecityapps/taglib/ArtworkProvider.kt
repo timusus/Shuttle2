@@ -2,7 +2,7 @@ package com.simplecityapps.taglib
 
 class ArtworkProvider {
 
-    external fun getArtwork(path: String): ByteArray?
+    external fun getArtwork(fd: Int): ByteArray?
 
     companion object {
         init {

@@ -2,16 +2,19 @@
 #include <fileref.h>
 #include <tpicturemap.h>
 #include "tag.h"
+#include <tfilestream.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 JNIEXPORT jbyteArray JNICALL
-Java_com_simplecityapps_taglib_ArtworkProvider_getArtwork(JNIEnv *env, jobject instance, jstring path_) {
+Java_com_simplecityapps_taglib_ArtworkProvider_getArtwork(JNIEnv *env, jobject instance, jint fd_) {
 
-    const char *path = env->GetStringUTFChars(path_, 0);
-    TagLib::FileRef fileRef(path);
+    int fd = (int) fd_;
+
+    TagLib::IOStream *stream = new TagLib::FileStream(fd, true);
+    TagLib::FileRef fileRef(stream);
 
     if (!fileRef.isNull()) {
         TagLib::Tag *tag = fileRef.tag();
