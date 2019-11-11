@@ -17,8 +17,6 @@ class MediaImporter(
 
     var isScanning = false
 
-    var scanComplete = false
-
     var listeners = mutableSetOf<Listener>()
 
     private var disposable: Disposable? = null
@@ -29,9 +27,12 @@ class MediaImporter(
 
         if (isScanning && songProvider == this.songProvider) return
 
+        disposable?.dispose()
+
         Timber.v("Scanning for media...")
 
-        disposable?.dispose()
+        isScanning = true
+        scanCount++
 
         this.songProvider = songProvider
 
@@ -42,19 +43,26 @@ class MediaImporter(
         }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
-            .doOnSubscribe { isScanning = true }
+            .doOnSubscribe {}
             .subscribe(
                 {
                     Timber.i("Populated songs in ${System.currentTimeMillis() - time}ms")
-                    scanComplete = true
                     isScanning = false
-                    listeners.forEach { it.onComplete() }
+                    listeners.forEach { listener -> listener.onComplete() }
                 },
-                { Timber.e(it, "Failed to populate songs") })
+                { throwable ->
+                    isScanning = false
+                    listeners.forEach { listener -> listener.onComplete() }
+                    Timber.e(throwable, "Failed to populate songs")
+                })
     }
 
     fun stopScan() {
         isScanning = false
         disposable?.dispose()
+    }
+
+    companion object {
+        var scanCount: Int = 0
     }
 }

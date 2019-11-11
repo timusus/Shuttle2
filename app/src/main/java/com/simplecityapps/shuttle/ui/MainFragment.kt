@@ -106,29 +106,32 @@ class MainFragment
             multiSheetView.hide(collapse = true, animate = false)
         }
 
-        when (playbackPreferenceManager.songProvider) {
-            PlaybackPreferenceManager.SongProvider.MediaStore -> {
-                mediaImporter.startScan(MediaStoreSongProvider(context!!.applicationContext))
-            }
-            PlaybackPreferenceManager.SongProvider.TagLib -> {
-                compositeDisposable.add(
-                    Single.fromCallable {
-                        context?.applicationContext?.contentResolver?.persistedUriPermissions
-                            ?.filter { uriPermission -> uriPermission.isReadPermission }
-                            ?.flatMap { uriPermission ->
-                                SafDirectoryHelper.buildFolderNodeTree(context!!.applicationContext.contentResolver, uriPermission.uri)?.getLeaves().orEmpty().map {
-                                    it as SafDirectoryHelper.DocumentNode
-                                }
-                            }.orEmpty()
-                    }
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribeBy(
-                            onSuccess = { nodes ->
-                                mediaImporter.startScan(TaglibSongProvider(context!!.applicationContext, fileScanner, nodes.map { Pair(it.uri, it.mimeType) }))
-                            },
-                            onError = { throwable -> Timber.e(throwable, "Failed to scan library") })
-                )
+        // Don't bother scanning for media again if we've already scanned once this session
+        if (MediaImporter.scanCount < 1) {
+            when (playbackPreferenceManager.songProvider) {
+                PlaybackPreferenceManager.SongProvider.MediaStore -> {
+                    mediaImporter.startScan(MediaStoreSongProvider(context!!.applicationContext))
+                }
+                PlaybackPreferenceManager.SongProvider.TagLib -> {
+                    compositeDisposable.add(
+                        Single.fromCallable {
+                            context?.applicationContext?.contentResolver?.persistedUriPermissions
+                                ?.filter { uriPermission -> uriPermission.isReadPermission }
+                                ?.flatMap { uriPermission ->
+                                    SafDirectoryHelper.buildFolderNodeTree(context!!.applicationContext.contentResolver, uriPermission.uri)?.getLeaves().orEmpty().map {
+                                        it as SafDirectoryHelper.DocumentNode
+                                    }
+                                }.orEmpty()
+                        }
+                            .subscribeOn(Schedulers.io())
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .subscribeBy(
+                                onSuccess = { nodes ->
+                                    mediaImporter.startScan(TaglibSongProvider(context!!.applicationContext, fileScanner, nodes.map { Pair(it.uri, it.mimeType) }))
+                                },
+                                onError = { throwable -> Timber.e(throwable, "Failed to scan library") })
+                    )
+                }
             }
         }
     }
