@@ -47,6 +47,17 @@ class MediaStoreSongProvider(
                         val artist = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST))
                         val albumArtist = cursor.getString(cursor.getColumnIndex("album_artist")) ?: artist
 
+                        var track = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK))
+                        var disc = 1
+                        if (track >= 1000) {
+                            track %= 1000
+
+                            disc = track / 1000
+                            if (disc == 0) {
+                                disc = 1
+                            }
+                        }
+
                         val song = Song(
                             id = 0,
                             name = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)),
@@ -54,8 +65,8 @@ class MediaStoreSongProvider(
                             albumArtistName = albumArtist,
                             albumId = 0,
                             albumName = album,
-                            track = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK)),
-                            disc = 0,
+                            track = track,
+                            disc = disc,
                             duration = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)),
                             year = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)),
                             path = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)),
