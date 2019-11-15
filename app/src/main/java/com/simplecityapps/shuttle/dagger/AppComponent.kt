@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.dagger
 
 import com.simplecityapps.playback.dagger.PlaybackServiceModule
 import com.simplecityapps.shuttle.ShuttleApplication
+import com.simplecityapps.shuttle.ui.widgets.WidgetModule
 import dagger.BindsInstance
 import dagger.Component
 import dagger.android.AndroidInjectionModule
@@ -12,7 +13,8 @@ import dagger.android.AndroidInjectionModule
         AppAssistedModule::class,
         AppModule::class,
         MainActivityModule::class,
-        PlaybackServiceModule::class
+        PlaybackServiceModule::class,
+        WidgetModule::class
     ], dependencies = [
         CoreComponent::class
     ]
@@ -24,6 +26,7 @@ interface AppComponent {
     interface Builder {
         @BindsInstance
         fun application(application: ShuttleApplication): Builder
+
         fun coreComponent(component: CoreComponent): Builder
         fun build(): AppComponent
     }

@@ -23,6 +23,7 @@ import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
+import com.bumptech.glide.request.target.AppWidgetTarget
 import com.bumptech.glide.request.target.Target
 import com.simplecity.amp_library.glide.palette.ColorSet
 import com.simplecityapps.mediaprovider.model.Album
@@ -65,7 +66,12 @@ class GlideImageLoader : ArtworkImageLoader {
     }
 
     override fun loadBitmap(song: Song, completionHandler: (Bitmap?) -> Unit) {
-        requestManager
+        loadBitmapTarget(song, completionHandler)
+            .submit(512, 512)
+    }
+
+    private fun loadBitmapTarget(song: Song, completionHandler: (Bitmap?) -> Unit): RequestBuilder<Bitmap> {
+        return requestManager
             .asBitmap()
             .load(song)
             .addListener(object : RequestListener<Bitmap> {
@@ -79,7 +85,37 @@ class GlideImageLoader : ArtworkImageLoader {
                     return true
                 }
             })
-            .submit(512, 512)
+    }
+
+    fun loadIntoRemoteViews(song: Song, target: AppWidgetTarget, vararg options: ArtworkImageLoader.Options) {
+
+        val glideRequest = requestManager
+            .asBitmap()
+            .load(song)
+
+        options.forEach { option ->
+            when (option) {
+                is ArtworkImageLoader.Options.CircleCrop -> {
+                    glideRequest.apply(RequestOptions.circleCropTransform())
+                }
+                is ArtworkImageLoader.Options.RoundedCorners -> {
+                    glideRequest.apply(RequestOptions.bitmapTransform(MultiTransformation(mutableListOf(CenterCrop(), RoundedCorners(option.radius)))))
+                }
+                is ArtworkImageLoader.Options.Priority -> {
+                    when (option.priority) {
+                        ArtworkImageLoader.Options.Priority.Priority.Low -> glideRequest.priority(Priority.LOW)
+                        ArtworkImageLoader.Options.Priority.Priority.Default -> glideRequest.priority(Priority.NORMAL)
+                        ArtworkImageLoader.Options.Priority.Priority.High -> glideRequest.priority(Priority.HIGH)
+                        ArtworkImageLoader.Options.Priority.Priority.Max -> glideRequest.priority(Priority.IMMEDIATE)
+                    }
+                }
+                is ArtworkImageLoader.Options.Crossfade -> {
+                    throw NotImplementedError()
+                }
+            }
+        }
+
+        glideRequest.into(target)
     }
 
     @WorkerThread
@@ -174,5 +210,9 @@ class GlideImageLoader : ArtworkImageLoader {
 
     override fun clear(imageView: ImageView) {
         requestManager.clear(imageView)
+    }
+
+    fun clear(target: Target<Bitmap>) {
+        requestManager.clear(target)
     }
 }

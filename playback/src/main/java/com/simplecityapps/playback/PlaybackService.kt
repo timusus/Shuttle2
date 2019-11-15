@@ -13,6 +13,7 @@ import androidx.media.session.MediaButtonReceiver
 import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.androidauto.PackageValidator
 import com.simplecityapps.playback.mediasession.MediaSessionManager
+import com.simplecityapps.playback.widgets.WidgetManager
 import dagger.android.AndroidInjection
 import io.reactivex.disposables.CompositeDisposable
 import timber.log.Timber
@@ -31,6 +32,9 @@ class PlaybackService :
     @Inject lateinit var notificationManager: PlaybackNotificationManager
 
     @Inject lateinit var mediaIdHelper: MediaIdHelper
+
+    @Inject lateinit var widgetManager: WidgetManager
+
 
     private var foregroundNotificationHandler: Handler? = null
 
@@ -52,6 +56,8 @@ class PlaybackService :
         delayedShutdownHandler = Handler()
 
         notificationManager.registerCallbacks()
+
+        widgetManager.registerCallbacks()
 
         sessionToken = mediaSessionManager.mediaSession.sessionToken
 
@@ -114,6 +120,8 @@ class PlaybackService :
 
         foregroundNotificationHandler?.removeCallbacksAndMessages(null)
         delayedShutdownHandler?.removeCallbacksAndMessages(null)
+
+        widgetManager.removeCallbacks()
 
         compositeDisposable.clear()
 

@@ -6,4 +6,6 @@ interface ActivityIntentProvider {
 
     fun provideMainActivityIntent(): Intent
 
+    fun provideAppWidgetIntent(): Intent
+
 }

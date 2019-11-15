@@ -15,7 +15,6 @@
       <module fileurl="file://$PROJECT_DIR$/recyclerview-adapter/recyclerview-adapter.iml" filepath="$PROJECT_DIR$/recyclerview-adapter/recyclerview-adapter.iml" />
       <module fileurl="file://$PROJECT_DIR$/saf/saf.iml" filepath="$PROJECT_DIR$/saf/saf.iml" />
       <module fileurl="file://$PROJECT_DIR$/taglib/taglib.iml" filepath="$PROJECT_DIR$/taglib/taglib.iml" />
-      <module fileurl="file://$PROJECT_DIR$/taglib/gen/taglib-gen.iml" filepath="$PROJECT_DIR$/taglib/gen/taglib-gen.iml" />
     </modules>
   </component>
 </project>

@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle
 
 import android.app.Application
+import android.appwidget.AppWidgetManager
 import android.content.Intent
 import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatDelegate
@@ -9,6 +10,7 @@ import com.simplecityapps.playback.dagger.PlaybackModule
 import com.simplecityapps.shuttle.appinitializers.AppInitializers
 import com.simplecityapps.shuttle.dagger.*
 import com.simplecityapps.shuttle.ui.MainActivity
+import com.simplecityapps.shuttle.ui.widgets.ShuttleAppWidgetProvider
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasAndroidInjector
@@ -52,6 +54,12 @@ class ShuttleApplication : Application(),
         }
 
         initializers.init(this)
+
+        sendBroadcast(provideAppWidgetIntent().apply {
+            action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+            val ids = AppWidgetManager.getInstance(this@ShuttleApplication).getAppWidgetIds(component)
+            putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
+        })
     }
 
     override fun onLowMemory() {
@@ -74,9 +82,13 @@ class ShuttleApplication : Application(),
     }
 
 
-    // MainActivityIntentProvider Implementation
+    // ActivityIntentProvider Implementation
 
     override fun provideMainActivityIntent(): Intent {
         return Intent(this, MainActivity::class.java)
+    }
+
+    override fun provideAppWidgetIntent(): Intent {
+        return Intent(this, ShuttleAppWidgetProvider::class.java)
     }
 }
