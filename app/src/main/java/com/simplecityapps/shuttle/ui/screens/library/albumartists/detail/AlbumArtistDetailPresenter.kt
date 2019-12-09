@@ -8,7 +8,6 @@ import com.simplecityapps.mediaprovider.repository.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.PlaybackManager
-import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.squareup.inject.assisted.Assisted
 import com.squareup.inject.assisted.AssistedInject
@@ -23,7 +22,6 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
     private val albumRepository: AlbumRepository,
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackManager,
-    private val queueManager: QueueManager,
     @Assisted private val albumArtist: AlbumArtist
 ) : BasePresenter<AlbumArtistDetailContract.View>(),
     AlbumArtistDetailContract.Presenter {
@@ -63,7 +61,7 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
             songRepository.getSongs(SongQuery.AlbumArtistIds(listOf(albumArtist.id))).first(emptyList())
                 .subscribeBy(
                     onSuccess = { songs ->
-                        playbackManager.shuffle(songs)  { result ->
+                        playbackManager.shuffle(songs) { result ->
                             result.onSuccess {
                                 playbackManager.play()
                             }

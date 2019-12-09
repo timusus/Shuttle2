@@ -203,9 +203,16 @@ class LocalSongRepository(
         }
     }
 
-
     override fun getSongs(query: SongQuery?): Observable<List<Song>> {
-        return query?.let { query -> songsRelay.map { songs -> songs.filter(query.predicate) } } ?: songsRelay
+        return query?.let {
+            songsRelay.map { songs ->
+                var result = songs.filter(query.predicate)
+                query.sortOrder?.let { sortOrder ->
+                    result = result.sortedWith(sortOrder.getSortOrder())
+                }
+                result
+            }
+        } ?: songsRelay
     }
 
     override fun incrementPlayCount(song: Song): Completable {

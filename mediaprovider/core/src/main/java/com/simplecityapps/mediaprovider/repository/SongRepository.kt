@@ -24,14 +24,17 @@ sealed class SongQuery(
     val sortOrder: SongSortOrder? = null
 ) : Serializable {
 
-
     class AlbumArtistIds(private val albumArtistIds: List<Long>) :
-        SongQuery(fun(song: Song): Boolean {
-            return albumArtistIds.contains(song.albumArtistId)
-        })
+        SongQuery(
+            { song -> albumArtistIds.contains(song.albumArtistId) },
+            SongSortOrder.Track
+        )
 
     class AlbumIds(private val albumIds: List<Long>) :
-        SongQuery({ song -> albumIds.contains(song.albumId) })
+        SongQuery(
+            { song -> albumIds.contains(song.albumId) },
+            SongSortOrder.Track
+        )
 
     class SongIds(private val songIds: List<Long>) :
         SongQuery({ song -> songIds.contains(song.id) })
@@ -55,10 +58,11 @@ sealed class SongQuery(
 }
 
 enum class SongSortOrder : Serializable {
-    PlayCount, RecentlyAdded, MostPlayed, RecentlyPlayed;
+    Track, PlayCount, RecentlyAdded, MostPlayed, RecentlyPlayed;
 
     fun getSortOrder(): Comparator<Song> {
         return when (this) {
+            Track -> compareBy<Song> { song -> song.disc }.thenBy { song -> song.track }
             PlayCount -> Comparator { a, b -> a.playCount.compareTo(b.playCount) }
             RecentlyAdded -> Comparator { a, b -> a.lastModified.compareTo(b.lastModified) }
             MostPlayed -> Comparator { a, b -> b.playCount.compareTo(a.playCount) }

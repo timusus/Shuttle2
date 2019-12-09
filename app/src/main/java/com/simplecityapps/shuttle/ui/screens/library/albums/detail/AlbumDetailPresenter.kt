@@ -48,7 +48,7 @@ class AlbumDetailPresenter @AssistedInject constructor(
     }
 
     override fun shuffle() {
-        playbackManager.shuffle(songs)  { result ->
+        playbackManager.shuffle(songs) { result ->
             result.onSuccess { playbackManager.play() }
             result.onFailure { error -> view?.showLoadError(error as Error) }
         }
