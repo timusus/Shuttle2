@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import androidx.appcompat.app.AlertDialog
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.fragment.app.Fragment
@@ -76,11 +77,16 @@ class DirectorySelectionFragment : Fragment(),
 
         val addDirectoryButton: Button = view.findViewById(R.id.addDirectoryButton)
         addDirectoryButton.setOnClickListener {
-            startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE), REQUEST_CODE_OPEN_DOCUMENT)
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+            if (intent.resolveActivity(context!!.packageManager) != null) {
+                startActivityForResult(intent, REQUEST_CODE_OPEN_DOCUMENT)
+            } else {
+                presenter
+            }
         }
 
         preAnimationConstraints.clone(view as ConstraintLayout)
-        postAnimationConstraints.clone(view as ConstraintLayout)
+        postAnimationConstraints.clone(view)
         postAnimationConstraints.clear(R.id.addDirectoryButton, ConstraintSet.TOP)
 
         transition.interpolator = FastOutSlowInInterpolator()
@@ -140,6 +146,17 @@ class DirectorySelectionFragment : Fragment(),
         }
     }
 
+    override fun startActivity(intent: Intent, requestCode: Int) {
+        startActivityForResult(intent, requestCode)
+    }
+
+    override fun showDocumentProviderNotAvailable() {
+        AlertDialog.Builder(context!!)
+            .setTitle("Missing Document Provider")
+            .setMessage("A 'Document Provider' (file manager) app can't be found on your device. You may have to install one, or revert to using the 'basic' media scanner.")
+            .setNeutralButton("Close", null)
+            .show()
+    }
 
     // DirectoryBinder.Listener
 

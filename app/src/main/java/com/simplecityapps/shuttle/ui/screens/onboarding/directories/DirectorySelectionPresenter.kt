@@ -20,6 +20,7 @@ interface MusicDirectoriesContract {
         fun loadData(contentResolver: ContentResolver)
         fun removeItem(data: View.Data)
         fun handleSafResult(contentResolver: ContentResolver, intent: Intent)
+        fun presentDocumentProvider()
     }
 
     interface View {
@@ -42,6 +43,8 @@ interface MusicDirectoriesContract {
         }
 
         fun setData(data: List<Data>)
+        fun startActivity(intent: Intent, requestCode: Int)
+        fun showDocumentProviderNotAvailable()
     }
 }
 
@@ -74,6 +77,15 @@ class MusicDirectoriesPresenter @Inject constructor(
         intent.data?.let { uri ->
             contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
             parseUri(contentResolver, uri)
+        }
+    }
+
+    override fun presentDocumentProvider() {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+        if (intent.resolveActivity(context.packageManager) != null) {
+            view?.startActivity(intent, DirectorySelectionFragment.REQUEST_CODE_OPEN_DOCUMENT)
+        } else {
+            view?.showDocumentProviderNotAvailable()
         }
     }
 
