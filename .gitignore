@@ -53,6 +53,7 @@ keystore.properties
 
 # Google Services (e.g. APIs or Firebase)
 google-services.json
+deployment_keys.json
 
 # Freeline
 freeline.py
