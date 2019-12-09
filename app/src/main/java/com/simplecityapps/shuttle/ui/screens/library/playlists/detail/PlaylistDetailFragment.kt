@@ -103,7 +103,6 @@ class PlaylistDetailFragment :
     override fun onResume() {
         super.onResume()
 
-        playlistMenuPresenter.bindView(playlistMenuView)
         presenter.loadData()
     }
 

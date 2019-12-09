@@ -59,6 +59,12 @@ class HorizontalLoadingView @JvmOverloads constructor(
         progressBar.progress = (progress * 100).toInt()
     }
 
+    override fun onDetachedFromWindow() {
+        animation?.removeAllUpdateListeners()
+        animation?.cancel()
+        super.onDetachedFromWindow()
+    }
+
     sealed class State {
         data class Loading(val message: String = "Loading…") : State()
         object None : State()

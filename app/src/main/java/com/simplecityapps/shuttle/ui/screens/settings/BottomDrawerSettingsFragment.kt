@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.annotation.NavigationRes
+import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
@@ -51,9 +52,13 @@ class BottomDrawerSettingsFragment :
         super.onResume()
 
         setSelectedItem(findNavController().currentDestination?.id)
-        findNavController().addOnDestinationChangedListener { _, destination, _ ->
-            setSelectedItem(destination.id)
-        }
+
+        findNavController().addOnDestinationChangedListener(destinationChangedListener)
+    }
+
+    override fun onPause() {
+        findNavController().removeOnDestinationChangedListener(destinationChangedListener)
+        super.onPause()
     }
 
     override fun onDestroyView() {
@@ -63,6 +68,8 @@ class BottomDrawerSettingsFragment :
 
 
     // Private
+
+    private val destinationChangedListener = NavController.OnDestinationChangedListener { _, destination, _ -> setSelectedItem(destination.id) }
 
     private fun setSelectedItem(@NavigationRes destinationIdRes: Int?) {
         presenter.currentDestinationIdRes = destinationIdRes

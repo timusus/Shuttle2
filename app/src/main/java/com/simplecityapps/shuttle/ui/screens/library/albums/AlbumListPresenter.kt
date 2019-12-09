@@ -50,6 +50,12 @@ class AlbumListPresenter @Inject constructor(
         }
     }
 
+    override fun unbindView() {
+        super.unbindView()
+
+        mediaImporter.listeners.remove(mediaImporterListener)
+    }
+
     override fun loadAlbums() {
         addDisposable(
             albumArtistRepository.getAlbums()

@@ -43,8 +43,8 @@ class SongListFragment :
 
     private lateinit var playlistMenuView: PlaylistMenuView
 
-    private lateinit var circularLoadingView: CircularLoadingView
-    private lateinit var horizontalLoadingView: HorizontalLoadingView
+    private var circularLoadingView: CircularLoadingView? = null
+    private var horizontalLoadingView: HorizontalLoadingView? = null
 
 
     // Lifecycle
@@ -90,6 +90,10 @@ class SongListFragment :
         presenter.unbindView()
         playlistMenuPresenter.unbindView()
         recyclerView.clearAdapterOnDetach()
+
+        circularLoadingView = null
+        horizontalLoadingView = null
+
         super.onDestroyView()
     }
 
@@ -113,22 +117,22 @@ class SongListFragment :
     override fun setLoadingState(state: SongListContract.LoadingState) {
         when (state) {
             is SongListContract.LoadingState.Scanning -> {
-                horizontalLoadingView.setState(HorizontalLoadingView.State.Loading("Scanning your library"))
-                circularLoadingView.setState(CircularLoadingView.State.None)
+                horizontalLoadingView?.setState(HorizontalLoadingView.State.Loading("Scanning your library"))
+                circularLoadingView?.setState(CircularLoadingView.State.None)
             }
             is SongListContract.LoadingState.Empty -> {
-                horizontalLoadingView.setState(HorizontalLoadingView.State.None)
-                circularLoadingView.setState(CircularLoadingView.State.Empty("No songs"))
+                horizontalLoadingView?.setState(HorizontalLoadingView.State.None)
+                circularLoadingView?.setState(CircularLoadingView.State.Empty("No songs"))
             }
             is SongListContract.LoadingState.None -> {
-                horizontalLoadingView.setState(HorizontalLoadingView.State.None)
-                circularLoadingView.setState(CircularLoadingView.State.None)
+                horizontalLoadingView?.setState(HorizontalLoadingView.State.None)
+                circularLoadingView?.setState(CircularLoadingView.State.None)
             }
         }
     }
 
     override fun setLoadingProgress(progress: Float) {
-        horizontalLoadingView.setProgress(progress)
+        horizontalLoadingView?.setProgress(progress)
     }
 
 

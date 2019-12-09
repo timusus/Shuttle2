@@ -51,8 +51,9 @@ class AlbumArtistListPresenter @Inject constructor(
     }
 
     override fun unbindView() {
-        mediaImporter.listeners.remove(mediaImporterListener)
         super.unbindView()
+
+        mediaImporter.listeners.remove(mediaImporterListener)
     }
 
     override fun loadAlbumArtists() {

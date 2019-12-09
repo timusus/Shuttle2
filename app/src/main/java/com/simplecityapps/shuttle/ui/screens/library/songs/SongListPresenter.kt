@@ -52,6 +52,12 @@ class SongListPresenter @Inject constructor(
         }
     }
 
+    override fun unbindView() {
+        super.unbindView()
+
+        mediaImporter.listeners.remove(mediaImporterListener)
+    }
+
     override fun loadSongs() {
         addDisposable(
             songRepository.getSongs()

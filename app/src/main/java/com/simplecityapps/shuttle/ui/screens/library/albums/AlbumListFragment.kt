@@ -45,8 +45,8 @@ class AlbumListFragment :
 
     private lateinit var playlistMenuView: PlaylistMenuView
 
-    private lateinit var circularLoadingView: CircularLoadingView
-    private lateinit var horizontalLoadingView: HorizontalLoadingView
+    private var circularLoadingView: CircularLoadingView? = null
+    private var horizontalLoadingView: HorizontalLoadingView? = null
 
     // Lifecycle
 
@@ -87,6 +87,10 @@ class AlbumListFragment :
         presenter.unbindView()
         playlistMenuPresenter.unbindView()
         recyclerView.clearAdapterOnDetach()
+
+        circularLoadingView = null
+        horizontalLoadingView = null
+
         super.onDestroyView()
     }
 
@@ -105,22 +109,22 @@ class AlbumListFragment :
     override fun setLoadingState(state: AlbumListContract.LoadingState) {
         when (state) {
             is AlbumListContract.LoadingState.Scanning -> {
-                horizontalLoadingView.setState(HorizontalLoadingView.State.Loading("Scanning your library"))
-                circularLoadingView.setState(CircularLoadingView.State.None)
+                horizontalLoadingView?.setState(HorizontalLoadingView.State.Loading("Scanning your library"))
+                circularLoadingView?.setState(CircularLoadingView.State.None)
             }
             is AlbumListContract.LoadingState.Empty -> {
-                horizontalLoadingView.setState(HorizontalLoadingView.State.None)
-                circularLoadingView.setState(CircularLoadingView.State.Empty("No albums"))
+                horizontalLoadingView?.setState(HorizontalLoadingView.State.None)
+                circularLoadingView?.setState(CircularLoadingView.State.Empty("No albums"))
             }
             is AlbumListContract.LoadingState.None -> {
-                horizontalLoadingView.setState(HorizontalLoadingView.State.None)
-                circularLoadingView.setState(CircularLoadingView.State.None)
+                horizontalLoadingView?.setState(HorizontalLoadingView.State.None)
+                circularLoadingView?.setState(CircularLoadingView.State.None)
             }
         }
     }
 
     override fun setLoadingProgress(progress: Float) {
-        horizontalLoadingView.setProgress(progress)
+        horizontalLoadingView?.setProgress(progress)
     }
 
     // AlbumBinder.Listener Implementation

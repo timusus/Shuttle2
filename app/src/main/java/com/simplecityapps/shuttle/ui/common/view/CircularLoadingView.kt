@@ -86,6 +86,7 @@ class CircularLoadingView @JvmOverloads constructor(
     }
 
     override fun onDetachedFromWindow() {
+        animation?.removeAllUpdateListeners()
         animation?.cancel()
         super.onDetachedFromWindow()
     }

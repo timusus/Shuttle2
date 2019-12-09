@@ -80,7 +80,7 @@ class QueueFragment :
         super.onDestroyView()
     }
 
-    private val itemTouchHelper = object : ItemTouchHelper(object : ItemTouchHelperCallback(queueAdapter, object : OnItemMoveListener {
+    private val itemTouchHelper = object : ItemTouchHelper(object : ItemTouchHelperCallback(object : OnItemMoveListener {
         override fun onItemMoved(from: Int, to: Int) {
             presenter.moveQueueItem(from, to)
         }
@@ -167,7 +167,6 @@ class QueueFragment :
 
 
 open class ItemTouchHelperCallback(
-    private val adapter: RecyclerAdapter,
     private val onItemMoveListener: OnItemMoveListener
 ) : ItemTouchHelper.Callback() {
 
@@ -188,7 +187,7 @@ open class ItemTouchHelperCallback(
         }
         endPosition = target.adapterPosition
 
-        adapter.moveItem(viewHolder.adapterPosition, target.adapterPosition)
+        (recyclerView.adapter as RecyclerAdapter).moveItem(viewHolder.adapterPosition, target.adapterPosition)
         return true
     }
 

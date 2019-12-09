@@ -16,8 +16,8 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
-import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
+import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.screens.library.playlists.detail.PlaylistDetailFragmentArgs
 import kotlinx.android.synthetic.main.fragment_folder_detail.*
 import javax.inject.Inject
@@ -32,8 +32,8 @@ class PlaylistListFragment :
 
     @Inject lateinit var presenter: PlaylistListPresenter
 
-    private lateinit var circularLoadingView: CircularLoadingView
-    private lateinit var horizontalLoadingView: HorizontalLoadingView
+    private var circularLoadingView: CircularLoadingView? = null
+    private var horizontalLoadingView: HorizontalLoadingView? = null
 
 
     // Lifecycle
@@ -69,6 +69,10 @@ class PlaylistListFragment :
     override fun onDestroyView() {
         presenter.unbindView()
         recyclerView.clearAdapterOnDetach()
+
+        circularLoadingView = null
+        horizontalLoadingView = null
+
         super.onDestroyView()
     }
 
@@ -87,22 +91,22 @@ class PlaylistListFragment :
     override fun setLoadingState(state: PlaylistListContract.LoadingState) {
         when (state) {
             is PlaylistListContract.LoadingState.Scanning -> {
-                horizontalLoadingView.setState(HorizontalLoadingView.State.Loading("Scanning your library"))
-                circularLoadingView.setState(CircularLoadingView.State.None)
+                horizontalLoadingView?.setState(HorizontalLoadingView.State.Loading("Scanning your library"))
+                circularLoadingView?.setState(CircularLoadingView.State.None)
             }
             is PlaylistListContract.LoadingState.Empty -> {
-                horizontalLoadingView.setState(HorizontalLoadingView.State.None)
-                circularLoadingView.setState(CircularLoadingView.State.Empty("No playlists"))
+                horizontalLoadingView?.setState(HorizontalLoadingView.State.None)
+                circularLoadingView?.setState(CircularLoadingView.State.Empty("No playlists"))
             }
             is PlaylistListContract.LoadingState.None -> {
-                horizontalLoadingView.setState(HorizontalLoadingView.State.None)
-                circularLoadingView.setState(CircularLoadingView.State.None)
+                horizontalLoadingView?.setState(HorizontalLoadingView.State.None)
+                circularLoadingView?.setState(CircularLoadingView.State.None)
             }
         }
     }
 
     override fun setLoadingProgress(progress: Float) {
-        horizontalLoadingView.setProgress(progress)
+        horizontalLoadingView?.setProgress(progress)
     }
 
     // PlaylistBinder.Listener

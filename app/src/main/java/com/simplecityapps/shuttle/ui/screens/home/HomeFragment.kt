@@ -116,7 +116,6 @@ class HomeFragment :
 
         presenter.loadMostPlayed()
         presenter.loadRecentlyPlayed()
-        playlistMenuPresenter.bindView(playlistMenuView)
     }
 
     override fun onPause() {

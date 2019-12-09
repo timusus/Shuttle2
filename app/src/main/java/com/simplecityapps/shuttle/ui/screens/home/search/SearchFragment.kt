@@ -125,6 +125,7 @@ class SearchFragment : Fragment(),
 
     override fun onDestroyView() {
         presenter.unbindView()
+        playlistMenuPresenter.unbindView()
         super.onDestroyView()
     }
 
