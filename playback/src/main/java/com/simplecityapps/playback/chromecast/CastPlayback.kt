@@ -80,7 +80,7 @@ class CastPlayback(
             currentPosition = castSession.remoteMediaClient.approximateStreamPosition.toInt()
             castSession.remoteMediaClient.play()
         } else {
-            Timber.e("play() failed. HasMediaSession ${castSession.remoteMediaClient.hasMediaSession()}")
+            Timber.e("play() failed. HasMediaSession ${castSession.remoteMediaClient?.hasMediaSession()}")
         }
     }
 
