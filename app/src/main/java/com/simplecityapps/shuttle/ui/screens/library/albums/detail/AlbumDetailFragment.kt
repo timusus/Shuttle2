@@ -132,6 +132,10 @@ class AlbumDetailFragment :
                         presenter.addToQueue(album)
                         true
                     }
+                    R.id.playNext -> {
+                        presenter.playNext(album)
+                        return@setOnMenuItemClickListener true
+                    }
                     else -> {
                         playlistMenuView.handleMenuItem(menuItem, PlaylistData.Albums(album))
                     }
@@ -209,6 +213,10 @@ class AlbumDetailFragment :
                     when (menuItem.itemId) {
                         R.id.queue -> {
                             presenter.addToQueue(song)
+                            return@setOnMenuItemClickListener true
+                        }
+                        R.id.playNext -> {
+                            presenter.playNext(song)
                             return@setOnMenuItemClickListener true
                         }
                     }

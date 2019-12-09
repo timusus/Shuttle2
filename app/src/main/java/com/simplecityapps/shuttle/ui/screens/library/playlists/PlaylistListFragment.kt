@@ -132,6 +132,10 @@ class PlaylistListFragment :
                         presenter.deletePlaylist(playlist)
                         true
                     }
+                    R.id.playNext -> {
+                        presenter.playNext(playlist)
+                        return@setOnMenuItemClickListener true
+                    }
                     else -> false
                 }
             }

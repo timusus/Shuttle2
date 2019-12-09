@@ -38,7 +38,7 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
 
     private var repeatMode: RepeatMode = RepeatMode.Off
 
-    private val baseQueue = Queue()
+    private val queue = Queue()
 
     private var currentItem: QueueItem? = null
 
@@ -48,15 +48,15 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
         }
 
         val queueItems = songs.map { song -> song.toQueueItem(false) }
-        baseQueue.setQueue(queueItems)
+        queue.setQueue(queueItems)
 
         shuffleSongs?.map { song ->
             queueItems.first { queueItem -> queueItem.song == song }
         }?.let { shuffleQueueItems ->
-            baseQueue.setShuffleQueue(shuffleQueueItems)
-        } ?: baseQueue.generateShuffleQueue()
+            queue.setShuffleQueue(shuffleQueueItems)
+        } ?: queue.generateShuffleQueue()
 
-        baseQueue.getItem(shuffleMode, position)?.let { currentItem ->
+        queue.getItem(shuffleMode, position)?.let { currentItem ->
             setCurrentItem(currentItem)
         }
 
@@ -69,11 +69,11 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
         if (this.currentItem != currentItem) {
             this.currentItem = currentItem.clone(isCurrent = true)
 
-            baseQueue.get(ShuffleMode.On).forEach { queueItem ->
+            queue.get(ShuffleMode.On).forEach { queueItem ->
                 if (queueItem == currentItem) {
-                    baseQueue.replace(queueItem, this.currentItem!!)
+                    queue.replace(queueItem, this.currentItem!!)
                 } else if (queueItem.isCurrent) {
-                    baseQueue.replace(queueItem, queueItem.clone(isCurrent = false))
+                    queue.replace(queueItem, queueItem.clone(isCurrent = false))
                 }
             }
 
@@ -88,7 +88,7 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
     }
 
     fun getCurrentPosition(): Int? {
-        val index = baseQueue.get(shuffleMode).indexOf(currentItem)
+        val index = queue.get(shuffleMode).indexOf(currentItem)
         if (index != -1) {
             return index
         }
@@ -97,11 +97,11 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
     }
 
     fun getSize(): Int {
-        return baseQueue.size()
+        return queue.size()
     }
 
     fun remove(items: List<QueueItem>) {
-        baseQueue.remove(items)
+        queue.remove(items)
         queueWatcher.onQueueChanged()
     }
 
@@ -119,7 +119,7 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
     }
 
     private fun getNext(repeatMode: RepeatMode): QueueItem? {
-        val currentQueue = baseQueue.get(shuffleMode)
+        val currentQueue = queue.get(shuffleMode)
         val currentIndex = currentQueue.indexOf(currentItem)
 
         return when (repeatMode) {
@@ -127,7 +127,7 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
                 currentQueue.getOrNull(currentIndex + 1)
             }
             RepeatMode.All -> {
-                if (currentIndex == baseQueue.size() - 1) {
+                if (currentIndex == queue.size() - 1) {
                     currentQueue.getOrNull(0)
                 } else {
                     currentQueue.getOrNull(currentIndex + 1)
@@ -140,23 +140,23 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
     }
 
     fun getPrevious(): QueueItem? {
-        val currentQueue = baseQueue.get(shuffleMode)
+        val currentQueue = queue.get(shuffleMode)
         return currentQueue.getOrNull(currentQueue.indexOf(currentItem) - 1)
     }
 
     fun getQueue(): List<QueueItem> {
-        return baseQueue.get(shuffleMode)
+        return queue.get(shuffleMode)
     }
 
     fun getQueue(shuffleMode: ShuffleMode): List<QueueItem> {
-        return baseQueue.get(shuffleMode)
+        return queue.get(shuffleMode)
     }
 
     fun setShuffleMode(shuffleMode: ShuffleMode, reshuffle: Boolean) {
         if (this.shuffleMode != shuffleMode) {
             this.shuffleMode = shuffleMode
             if (shuffleMode == ShuffleMode.On && reshuffle) {
-                baseQueue.generateShuffleQueue()
+                queue.generateShuffleQueue()
             }
             queueWatcher.onQueueChanged()
             queueWatcher.onShuffleChanged()
@@ -212,7 +212,7 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
     }
 
     fun skipTo(position: Int) {
-        val currentQueue = baseQueue.get(shuffleMode)
+        val currentQueue = queue.get(shuffleMode)
         currentQueue.getOrNull(position)?.let { queueItem ->
             setCurrentItem(queueItem)
         } ?: run {
@@ -221,18 +221,23 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
     }
 
     fun addToQueue(songs: List<Song>) {
-        baseQueue.add(songs.map { song -> song.toQueueItem(false) })
+        queue.add(songs.map { song -> song.toQueueItem(false) })
         queueWatcher.onQueueChanged()
     }
 
     fun move(from: Int, to: Int) {
         val oldPosition = getCurrentPosition()
-        baseQueue.move(from, to, shuffleMode)
+        queue.move(from, to, shuffleMode)
         val currentPosition = getCurrentPosition()
         queueWatcher.onQueueChanged()
         if (currentPosition != oldPosition) {
             queueWatcher.onQueuePositionChanged(oldPosition, currentPosition)
         }
+    }
+
+    fun playNext(songs: List<Song>) {
+        queue.insert((getCurrentPosition() ?: -1) + 1, songs.map { song -> song.toQueueItem(false) })
+        queueWatcher.onQueueChanged()
     }
 
 
@@ -285,6 +290,11 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
         fun add(items: List<QueueItem>) {
             baseList.addAll(items)
             shuffleList.addAll(items.shuffled())
+        }
+
+        fun insert(position: Int, items: List<QueueItem>) {
+            baseList.addAll(position, items)
+            shuffleList.addAll(position, items)
         }
 
         fun remove(items: List<QueueItem>) {

@@ -4,6 +4,7 @@ import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.mediaprovider.repository.PlaylistRepository
 import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.rxkotlin.subscribeBy
@@ -11,6 +12,29 @@ import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
 import java.text.Collator
 import javax.inject.Inject
+
+interface PlaylistListContract {
+
+    sealed class LoadingState {
+        object Scanning : LoadingState()
+        object Empty : LoadingState()
+        object None : LoadingState()
+    }
+
+    interface View {
+        fun setPlaylists(playlists: List<Playlist>)
+        fun onAddedToQueue(playlist: Playlist)
+        fun setLoadingState(state: LoadingState)
+        fun setLoadingProgress(progress: Float)
+    }
+
+    interface Presenter : BaseContract.Presenter<View> {
+        fun loadPlaylists()
+        fun addToQueue(playlist: Playlist)
+        fun playNext(playlist: Playlist)
+        fun deletePlaylist(playlist: Playlist)
+    }
+}
 
 class PlaylistListPresenter @Inject constructor(
     private val playlistRepository: PlaylistRepository,
@@ -72,6 +96,21 @@ class PlaylistListPresenter @Inject constructor(
                 .subscribeBy(
                     onSuccess = { songs ->
                         playbackManager.addToQueue(songs)
+                        view?.onAddedToQueue(playlist)
+                    },
+                    onError = { throwable -> Timber.e(throwable, "Failed to retrieve songs for playlist: ${playlist.name}") })
+        )
+    }
+
+    override fun playNext(playlist: Playlist) {
+        addDisposable(
+            playlistRepository.getSongsForPlaylist(playlist.id)
+                .first(emptyList())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onSuccess = { songs ->
+                        playbackManager.playNext(songs)
                         view?.onAddedToQueue(playlist)
                     },
                     onError = { throwable -> Timber.e(throwable, "Failed to retrieve songs for playlist: ${playlist.name}") })

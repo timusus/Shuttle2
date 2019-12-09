@@ -19,6 +19,7 @@ interface SearchContract : BaseContract.Presenter<SearchContract.View> {
         fun loadData(query: String)
         fun onSongClicked(song: Song)
         fun addToQueue(song: Song)
+        fun playNext(song: Song)
     }
 
     interface View {
@@ -75,6 +76,11 @@ class SearchPresenter @Inject constructor(
 
     override fun addToQueue(song: Song) {
         playbackManager.addToQueue(listOf(song))
+        view?.onAddedToQueue(song)
+    }
+
+    override fun playNext(song: Song) {
+        playbackManager.playNext(listOf(song))
         view?.onAddedToQueue(song)
     }
 }

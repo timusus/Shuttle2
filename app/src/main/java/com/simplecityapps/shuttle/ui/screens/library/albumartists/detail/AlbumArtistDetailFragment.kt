@@ -130,6 +130,10 @@ class AlbumArtistDetailFragment :
                         presenter.addToQueue(albumArtist)
                         true
                     }
+                    R.id.playNext -> {
+                        presenter.playNext(albumArtist)
+                        true
+                    }
                     else -> {
                         playlistMenuView.handleMenuItem(menuItem, PlaylistData.AlbumArtists(albumArtist))
                     }
@@ -246,6 +250,10 @@ class AlbumArtistDetailFragment :
                         presenter.addToQueue(song)
                         return@setOnMenuItemClickListener true
                     }
+                    R.id.playNext -> {
+                        presenter.playNext(song)
+                        return@setOnMenuItemClickListener true
+                    }
                 }
             }
             false
@@ -266,6 +274,10 @@ class AlbumArtistDetailFragment :
                 when (menuItem.itemId) {
                     R.id.queue -> {
                         presenter.addToQueue(album)
+                        return@setOnMenuItemClickListener true
+                    }
+                    R.id.playNext -> {
+                        presenter.playNext(album)
                         return@setOnMenuItemClickListener true
                     }
                 }

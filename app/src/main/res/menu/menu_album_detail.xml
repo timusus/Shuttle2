@@ -4,21 +4,16 @@
 
     <item
         android:id="@+id/shuffle"
-        app:showAsAction="always"
-        android:title="Shuffle" />
-
+        android:title="Shuffle"
+        app:showAsAction="always" />
     <item
-        android:title="Add to">
-        <menu>
-            <item
-                android:id="@+id/queue"
-                android:title="Queue" />
-            <item
-                android:id="@+id/playlist"
-                android:title="Playlist">
-                <menu />
-            </item>
-        </menu>
-    </item>
+        android:id="@+id/queue"
+        android:title="Add to Queue" />
+    <item
+        android:id="@+id/playlist"
+        android:title="Add to Playlist" />
+    <item
+        android:id="@+id/playNext"
+        android:title="Play Next" />
 
 </menu>

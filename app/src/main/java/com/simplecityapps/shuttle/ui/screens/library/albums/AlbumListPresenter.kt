@@ -14,6 +14,28 @@ import timber.log.Timber
 import java.text.Collator
 import javax.inject.Inject
 
+class AlbumListContract {
+
+    sealed class LoadingState {
+        object Scanning : LoadingState()
+        object Empty : LoadingState()
+        object None : LoadingState()
+    }
+
+    interface View {
+        fun setAlbums(albums: List<Album>)
+        fun onAddedToQueue(album: Album)
+        fun setLoadingState(state: LoadingState)
+        fun setLoadingProgress(progress: Float)
+    }
+
+    interface Presenter {
+        fun loadAlbums()
+        fun addToQueue(album: Album)
+        fun playNext(album: Album)
+    }
+}
+
 class AlbumListPresenter @Inject constructor(
     private val albumArtistRepository: AlbumRepository,
     private val songRepository: SongRepository,
@@ -63,6 +85,21 @@ class AlbumListPresenter @Inject constructor(
                 .subscribeBy(
                     onSuccess = { songs ->
                         playbackManager.addToQueue(songs)
+                        view?.onAddedToQueue(album)
+                    },
+                    onError = { throwable -> Timber.e(throwable, "Failed to retrieve songs for album: ${album.name}") })
+        )
+    }
+
+    override fun playNext(album: Album) {
+        addDisposable(
+            songRepository.getSongs(SongQuery.AlbumIds(listOf(album.id)))
+                .first(emptyList())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onSuccess = { songs ->
+                        playbackManager.playNext(songs)
                         view?.onAddedToQueue(album)
                     },
                     onError = { throwable -> Timber.e(throwable, "Failed to retrieve songs for album: ${album.name}") })

@@ -47,6 +47,7 @@ interface SmartPlaylistDetailContract {
         fun onSongClicked(song: Song)
         fun shuffle()
         fun addToQueue(song: Song)
+        fun playNext(song: Song)
     }
 }
 
@@ -96,6 +97,11 @@ class SmartPlaylistDetailPresenter @AssistedInject constructor(
 
     override fun addToQueue(song: Song) {
         playbackManager.addToQueue(listOf(song))
+        view?.onAddedToQueue(song)
+    }
+
+    override fun playNext(song: Song) {
+        playbackManager.playNext(listOf(song))
         view?.onAddedToQueue(song)
     }
 }

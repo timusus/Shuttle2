@@ -4,6 +4,7 @@ import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.rxkotlin.subscribeBy
@@ -11,6 +12,30 @@ import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
 import java.text.Collator
 import javax.inject.Inject
+
+interface SongListContract {
+
+    sealed class LoadingState {
+        object Scanning : LoadingState()
+        object Empty : LoadingState()
+        object None : LoadingState()
+    }
+
+    interface View {
+        fun setData(songs: List<Song>)
+        fun showLoadError(error: Error)
+        fun onAddedToQueue(song: Song)
+        fun setLoadingState(state: LoadingState)
+        fun setLoadingProgress(progress: Float)
+    }
+
+    interface Presenter : BaseContract.Presenter<View> {
+        fun loadSongs()
+        fun onSongClicked(song: Song)
+        fun addToQueue(song: Song)
+        fun playNext(song: Song)
+    }
+}
 
 class SongListPresenter @Inject constructor(
     private val playbackManager: PlaybackManager,
@@ -64,6 +89,11 @@ class SongListPresenter @Inject constructor(
 
     override fun addToQueue(song: Song) {
         playbackManager.addToQueue(listOf(song))
+        view?.onAddedToQueue(song)
+    }
+
+    override fun playNext(song: Song) {
+        playbackManager.playNext(listOf(song))
         view?.onAddedToQueue(song)
     }
 }

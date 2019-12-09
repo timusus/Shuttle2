@@ -235,6 +235,18 @@ class PlaybackManager(
         playback.loadNext(queueManager.getNext()?.song)
     }
 
+    fun playNext(songs: List<Song>){
+        if (queueManager.getQueue().isEmpty()) {
+            load(songs, 0) { result ->
+                result.onSuccess { play() }
+                result.onFailure { throwable -> Timber.e(throwable, "Failed to load songs (addToQueue())") }
+            }
+        } else {
+            queueManager.playNext(songs)
+            playback.loadNext(queueManager.getNext()?.song)
+        }
+    }
+
     fun getPlayback(): Playback {
         return playback
     }

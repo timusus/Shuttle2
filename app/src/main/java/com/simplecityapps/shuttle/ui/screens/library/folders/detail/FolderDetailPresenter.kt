@@ -25,6 +25,7 @@ interface FolderDetailContract {
         fun loadData(uri: Uri)
         fun onSongClicked(song: Song, songs: List<Song>)
         fun addToQueue(song: Song)
+        fun playNext(song: Song)
     }
 
     interface View {
@@ -107,6 +108,11 @@ class FolderDetailPresenter @Inject constructor(
 
     override fun addToQueue(song: Song) {
         playbackManager.addToQueue(listOf(song))
+        view?.onAddedToQueue(song)
+    }
+
+    override fun playNext(song: Song) {
+        playbackManager.playNext(listOf(song))
         view?.onAddedToQueue(song)
     }
 }

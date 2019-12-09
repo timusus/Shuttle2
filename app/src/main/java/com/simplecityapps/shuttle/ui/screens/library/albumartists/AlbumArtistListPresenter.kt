@@ -14,6 +14,28 @@ import timber.log.Timber
 import java.text.Collator
 import javax.inject.Inject
 
+interface AlbumArtistListContract {
+
+    sealed class LoadingState {
+        object Scanning : LoadingState()
+        object Empty : LoadingState()
+        object None : LoadingState()
+    }
+
+    interface View {
+        fun setAlbumArtists(albumArtists: List<AlbumArtist>)
+        fun onAddedToQueue(albumArtist: AlbumArtist)
+        fun setLoadingState(state: LoadingState)
+        fun setLoadingProgress(progress: Float)
+    }
+
+    interface Presenter {
+        fun loadAlbumArtists()
+        fun addToQueue(albumArtist: AlbumArtist)
+        fun playNext(albumArtist: AlbumArtist)
+    }
+}
+
 class AlbumArtistListPresenter @Inject constructor(
     private val albumArtistRepository: AlbumArtistRepository,
     private val songRepository: SongRepository,
@@ -68,6 +90,21 @@ class AlbumArtistListPresenter @Inject constructor(
                 .subscribeBy(
                     onSuccess = { songs ->
                         playbackManager.addToQueue(songs)
+                        view?.onAddedToQueue(albumArtist)
+                    },
+                    onError = { throwable -> Timber.e(throwable, "Failed to retrieve songs for album artist: ${albumArtist.name}") })
+        )
+    }
+
+    override fun playNext(albumArtist: AlbumArtist) {
+        addDisposable(
+            songRepository.getSongs(SongQuery.AlbumArtistIds(listOf(albumArtist.id)))
+                .first(emptyList())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onSuccess = { songs ->
+                        playbackManager.playNext(songs)
                         view?.onAddedToQueue(albumArtist)
                     },
                     onError = { throwable -> Timber.e(throwable, "Failed to retrieve songs for album artist: ${albumArtist.name}") })

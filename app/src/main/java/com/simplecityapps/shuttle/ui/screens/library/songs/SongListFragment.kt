@@ -155,6 +155,10 @@ class SongListFragment :
                             presenter.addToQueue(song)
                             return@setOnMenuItemClickListener true
                         }
+                        R.id.playNext -> {
+                            presenter.playNext(song)
+                            return@setOnMenuItemClickListener true
+                        }
                     }
                 }
                 false

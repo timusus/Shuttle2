@@ -30,6 +30,7 @@ interface HomeContract {
         fun loadMostPlayed()
         fun loadRecentlyPlayed()
         fun addToQueue(song: Song)
+        fun playNext(song: Song)
     }
 }
 
@@ -51,7 +52,7 @@ class HomePresenter @Inject constructor(
                         view?.showLoadError(UserFriendlyError("Your library is empty"))
                         return@subscribeBy
                     }
-                    playbackManager.shuffle(songs)  { result ->
+                    playbackManager.shuffle(songs) { result ->
                         result.onSuccess {
                             playbackManager.play()
                         }
@@ -105,6 +106,11 @@ class HomePresenter @Inject constructor(
 
     override fun addToQueue(song: Song) {
         playbackManager.addToQueue(listOf(song))
+        view?.onAddedToQueue(song)
+    }
+
+    override fun playNext(song: Song) {
+        playbackManager.playNext(listOf(song))
         view?.onAddedToQueue(song)
     }
 }

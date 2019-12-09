@@ -149,6 +149,10 @@ class AlbumListFragment :
                         presenter.addToQueue(album)
                         return@setOnMenuItemClickListener true
                     }
+                    R.id.playNext -> {
+                        presenter.playNext(album)
+                        return@setOnMenuItemClickListener true
+                    }
                 }
             }
             false
