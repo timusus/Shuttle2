@@ -93,13 +93,13 @@ dependencies {
 
     // Kotlin Extensions
     implementation 'androidx.core:core-ktx:1.1.0'
-    implementation "androidx.fragment:fragment-ktx:1.2.0-rc01"
+    implementation "androidx.fragment:fragment-ktx:1.2.0-rc03"
 
     // RecyclerView FastScroll
     implementation 'com.github.timusus:RecyclerView-FastScroll:dev-SNAPSHOT'
 
     // Material Design
-    implementation 'com.google.android.material:material:1.2.0-alpha01'
+    implementation 'com.google.android.material:material:1.2.0-alpha02'
 
     // AppCompat
     implementation 'androidx.appcompat:appcompat:1.1.0'
@@ -111,36 +111,36 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-extensions:2.1.0'
 
     // AndroidX Navigation
-    implementation "androidx.navigation:navigation-fragment-ktx:2.2.0-rc01"
-    implementation "androidx.navigation:navigation-ui-ktx:2.2.0-rc01"
+    implementation "androidx.navigation:navigation-fragment-ktx:2.2.0-rc03"
+    implementation "androidx.navigation:navigation-ui-ktx:2.2.0-rc03"
 
     // RxJava
-    implementation "io.reactivex.rxjava2:rxjava:2.2.12"
+    implementation "io.reactivex.rxjava2:rxjava:2.2.15"
     implementation "io.reactivex.rxjava2:rxandroid:2.1.1"
 
     // RxKotlin
     implementation 'io.reactivex.rxjava2:rxkotlin:2.4.0'
 
     // RxDogTag
-    implementation("com.uber.rxdogtag:rxdogtag:0.2.0")
+    implementation("com.uber.rxdogtag:rxdogtag:0.3.0")
 
     // Dagger core
-    implementation 'com.google.dagger:dagger-android:2.24'
-    kapt 'com.google.dagger:dagger-compiler:2.24'
+    implementation 'com.google.dagger:dagger-android:2.25.2'
+    kapt 'com.google.dagger:dagger-compiler:2.25.2'
 
     // Dagger Android
-    implementation 'com.google.dagger:dagger-android-support:2.24'
-    kapt "com.google.dagger:dagger-android-processor:2.24"
+    implementation 'com.google.dagger:dagger-android-support:2.25.2'
+    kapt "com.google.dagger:dagger-android-processor:2.25.2"
 
     // AssistedInject
-    compileOnly 'com.squareup.inject:assisted-inject-annotations-dagger2:0.5.0'
-    kapt 'com.squareup.inject:assisted-inject-processor-dagger2:0.5.0'
+    compileOnly 'com.squareup.inject:assisted-inject-annotations-dagger2:0.5.2'
+    kapt 'com.squareup.inject:assisted-inject-processor-dagger2:0.5.2'
 
     // Timber
     implementation 'com.jakewharton.timber:timber:4.7.1'
 
     // OKHttp
-    implementation 'com.squareup.okhttp3:okhttp:4.2.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.2.2'
 
     // Firebase
     implementation 'com.google.firebase:firebase-core:17.2.1'
@@ -149,10 +149,10 @@ dependencies {
     implementation 'com.crashlytics.sdk.android:crashlytics:2.10.1'
 
     // Leak Canary
-//    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.0-beta-3'
+    debugImplementation 'com.squareup.leakcanary:leakcanary-android:2.0'
 
     // ViewPager 2
-    implementation 'androidx.viewpager2:viewpager2:1.0.0-rc01'
+    implementation 'androidx.viewpager2:viewpager2:1.0.0'
 
     // ViewPager Circle Indicator
     implementation 'me.relex:circleindicator:2.1.4'
@@ -165,7 +165,7 @@ dependencies {
     implementation "androidx.preference:preference-ktx:1.1.0"
 
     // ChromeCast
-    implementation 'com.google.android.gms:play-services-cast-framework:17.1.0'
+    implementation 'com.google.android.gms:play-services-cast-framework:18.0.0'
 
     // NanoHttp
     implementation 'org.nanohttpd:nanohttpd-webserver:2.3.1'

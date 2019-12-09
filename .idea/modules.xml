@@ -2,19 +2,19 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/Shuttle2.iml" filepath="$PROJECT_DIR$/Shuttle2.iml" />
-      <module fileurl="file://$PROJECT_DIR$/core/Shuttle2-core.iml" filepath="$PROJECT_DIR$/core/Shuttle2-core.iml" />
-      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Shuttle2.iml" filepath="$PROJECT_DIR$/Shuttle2.iml" group="Shuttle2" />
+      <module fileurl="file://$PROJECT_DIR$/core/Shuttle2-core.iml" filepath="$PROJECT_DIR$/core/Shuttle2-core.iml" group="Shuttle2/core" />
+      <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" group="Shuttle2/app" />
       <module fileurl="file://$PROJECT_DIR$/taglib/gen/gen.iml" filepath="$PROJECT_DIR$/taglib/gen/gen.iml" />
-      <module fileurl="file://$PROJECT_DIR$/imageloader/imageloader.iml" filepath="$PROJECT_DIR$/imageloader/imageloader.iml" />
-      <module fileurl="file://$PROJECT_DIR$/taglib/lib/lib.iml" filepath="$PROJECT_DIR$/taglib/lib/lib.iml" />
-      <module fileurl="file://$PROJECT_DIR$/mediaprovider/local/local.iml" filepath="$PROJECT_DIR$/mediaprovider/local/local.iml" />
-      <module fileurl="file://$PROJECT_DIR$/mediaprovider/mediaprovider.iml" filepath="$PROJECT_DIR$/mediaprovider/mediaprovider.iml" />
-      <module fileurl="file://$PROJECT_DIR$/mediaprovider/core/mediaprovider-core.iml" filepath="$PROJECT_DIR$/mediaprovider/core/mediaprovider-core.iml" />
-      <module fileurl="file://$PROJECT_DIR$/playback/playback.iml" filepath="$PROJECT_DIR$/playback/playback.iml" />
-      <module fileurl="file://$PROJECT_DIR$/recyclerview-adapter/recyclerview-adapter.iml" filepath="$PROJECT_DIR$/recyclerview-adapter/recyclerview-adapter.iml" />
-      <module fileurl="file://$PROJECT_DIR$/saf/saf.iml" filepath="$PROJECT_DIR$/saf/saf.iml" />
-      <module fileurl="file://$PROJECT_DIR$/taglib/taglib.iml" filepath="$PROJECT_DIR$/taglib/taglib.iml" />
+      <module fileurl="file://$PROJECT_DIR$/imageloader/imageloader.iml" filepath="$PROJECT_DIR$/imageloader/imageloader.iml" group="Shuttle2/imageloader" />
+      <module fileurl="file://$PROJECT_DIR$/taglib/lib/lib.iml" filepath="$PROJECT_DIR$/taglib/lib/lib.iml" group="Shuttle2/taglib/lib" />
+      <module fileurl="file://$PROJECT_DIR$/mediaprovider/local/local.iml" filepath="$PROJECT_DIR$/mediaprovider/local/local.iml" group="Shuttle2/mediaprovider/local" />
+      <module fileurl="file://$PROJECT_DIR$/mediaprovider/mediaprovider.iml" filepath="$PROJECT_DIR$/mediaprovider/mediaprovider.iml" group="Shuttle2/mediaprovider" />
+      <module fileurl="file://$PROJECT_DIR$/mediaprovider/core/mediaprovider-core.iml" filepath="$PROJECT_DIR$/mediaprovider/core/mediaprovider-core.iml" group="Shuttle2/mediaprovider/core" />
+      <module fileurl="file://$PROJECT_DIR$/playback/playback.iml" filepath="$PROJECT_DIR$/playback/playback.iml" group="Shuttle2/playback" />
+      <module fileurl="file://$PROJECT_DIR$/recyclerview-adapter/recyclerview-adapter.iml" filepath="$PROJECT_DIR$/recyclerview-adapter/recyclerview-adapter.iml" group="Shuttle2/recyclerview-adapter" />
+      <module fileurl="file://$PROJECT_DIR$/saf/saf.iml" filepath="$PROJECT_DIR$/saf/saf.iml" group="Shuttle2/saf" />
+      <module fileurl="file://$PROJECT_DIR$/taglib/taglib.iml" filepath="$PROJECT_DIR$/taglib/taglib.iml" group="Shuttle2/taglib" />
     </modules>
   </component>
 </project>
