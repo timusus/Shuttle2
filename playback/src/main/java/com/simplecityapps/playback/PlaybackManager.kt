@@ -88,8 +88,8 @@ class PlaybackManager(
                 completion(Result.success(attempt == 1))
             }
             result.onFailure { error ->
-                // Attempt to load the next item in the queue. If there is no next item, or we're on repeat, call completion(error).
-                if (queueManager.getCurrentPosition() != queueManager.getSize() - 1) {
+                // Attempt to load the next item in the queue. If there is no next item, or we're on repeat, or we've made 15 previous attempts, call completion(error).
+                if (queueManager.getCurrentPosition() != queueManager.getSize() - 1 && attempt < 15) {
                     queueManager.getNext()?.let { nextQueueItem ->
                         if (nextQueueItem != queueManager.getCurrentItem()) {
                             queueManager.skipToNext(true)
