@@ -1,6 +1,6 @@
 plugins {
     id("com.android.application")
-    id("com.github.triplet.play") version "2.3.0"
+    id("com.github.triplet.play") version "2.6.1"
     id("kotlin-android")
     id("kotlin-android-extensions")
     id("androidx.navigation.safeargs.kotlin")
