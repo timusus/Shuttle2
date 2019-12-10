@@ -69,7 +69,7 @@ class MediaSessionManager(
         super.onProgressChanged(position, total, fromUser)
 
         if (fromUser) {
-            playbackStateBuilder.setState(getPlaybackState(), playbackManager.getPosition()?.toLong() ?: 0, 1.0f)
+            playbackStateBuilder.setState(getPlaybackState(), position.toLong(), 1.0f)
             mediaSession.setPlaybackState(playbackStateBuilder.build())
         }
     }

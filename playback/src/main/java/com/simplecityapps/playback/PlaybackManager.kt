@@ -8,7 +8,6 @@ import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
 import timber.log.Timber
 import kotlin.math.max
-import kotlin.math.min
 import kotlin.random.Random
 
 class PlaybackManager(
@@ -235,7 +234,7 @@ class PlaybackManager(
         playback.loadNext(queueManager.getNext()?.song)
     }
 
-    fun playNext(songs: List<Song>){
+    fun playNext(songs: List<Song>) {
         if (queueManager.getQueue().isEmpty()) {
             load(songs, 0) { result ->
                 result.onSuccess { play() }
@@ -284,11 +283,15 @@ class PlaybackManager(
     }
 
     private fun updateProgress(fromUser: Boolean) {
-        playbackWatcher.onProgressChanged(
-            min(playback.getPosition() ?: 0, playback.getDuration() ?: 0),
-            playback.getDuration() ?: Int.MAX_VALUE,
-            fromUser
-        )
+        playback.getPosition()?.let { position ->
+            playback.getDuration()?.let { duration ->
+                playbackWatcher.onProgressChanged(
+                    position,
+                    duration,
+                    fromUser
+                )
+            }
+        }
     }
 
 
