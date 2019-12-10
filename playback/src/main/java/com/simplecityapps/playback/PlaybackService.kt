@@ -114,7 +114,6 @@ class PlaybackService :
 
         playbackWatcher.removeCallback(this)
         playbackManager.pause()
-        playbackManager.release()
 
         notificationManager.removeCallbacks()
 
