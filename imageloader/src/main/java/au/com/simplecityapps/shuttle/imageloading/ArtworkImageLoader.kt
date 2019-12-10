@@ -37,7 +37,7 @@ interface ArtworkImageLoader {
 
     fun loadArtwork(imageView: ImageView, song: Song, vararg options: Options, completionHandler: CompletionHandler = null)
 
-    fun loadBitmap(song: Song, completionHandler: (Bitmap?) -> Unit)
+    fun loadBitmap(song: Song, width: Int, height: Int, vararg options: Options, completionHandler: (Bitmap?) -> Unit)
 
     @WorkerThread
     fun loadBitmap(song: Song): ByteArray?

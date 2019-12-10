@@ -65,13 +65,13 @@ class GlideImageLoader : ArtworkImageLoader {
         loadArtwork(imageView, song as Any, *options, completionHandler = completionHandler)
     }
 
-    override fun loadBitmap(song: Song, completionHandler: (Bitmap?) -> Unit) {
-        loadBitmapTarget(song, completionHandler)
-            .submit(512, 512)
+    override fun loadBitmap(song: Song, width: Int, height: Int, vararg options: ArtworkImageLoader.Options, completionHandler: (Bitmap?) -> Unit) {
+        loadBitmapTarget(song, *options, completionHandler = completionHandler)
+            .submit(width, height)
     }
 
-    private fun loadBitmapTarget(song: Song, completionHandler: (Bitmap?) -> Unit): RequestBuilder<Bitmap> {
-        return requestManager
+    private fun loadBitmapTarget(song: Song, vararg options: ArtworkImageLoader.Options, completionHandler: (Bitmap?) -> Unit): RequestBuilder<Bitmap> {
+        val glideRequest = requestManager
             .asBitmap()
             .load(song)
             .addListener(object : RequestListener<Bitmap> {
@@ -85,6 +85,30 @@ class GlideImageLoader : ArtworkImageLoader {
                     return true
                 }
             })
+
+        options.forEach { option ->
+            when (option) {
+                is ArtworkImageLoader.Options.CircleCrop -> {
+                    glideRequest.apply(RequestOptions.circleCropTransform())
+                }
+                is ArtworkImageLoader.Options.RoundedCorners -> {
+                    glideRequest.apply(RequestOptions.bitmapTransform(MultiTransformation(mutableListOf(CenterCrop(), RoundedCorners(option.radius)))))
+                }
+                is ArtworkImageLoader.Options.Priority -> {
+                    when (option.priority) {
+                        ArtworkImageLoader.Options.Priority.Priority.Low -> glideRequest.priority(Priority.LOW)
+                        ArtworkImageLoader.Options.Priority.Priority.Default -> glideRequest.priority(Priority.NORMAL)
+                        ArtworkImageLoader.Options.Priority.Priority.High -> glideRequest.priority(Priority.HIGH)
+                        ArtworkImageLoader.Options.Priority.Priority.Max -> glideRequest.priority(Priority.IMMEDIATE)
+                    }
+                }
+                is ArtworkImageLoader.Options.Crossfade -> {
+                    throw NotImplementedError()
+                }
+            }
+        }
+
+        return glideRequest
     }
 
     fun loadIntoRemoteViews(song: Song, target: AppWidgetTarget, vararg options: ArtworkImageLoader.Options) {

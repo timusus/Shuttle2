@@ -5,11 +5,12 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.view.View
 import android.widget.RemoteViews
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
-import com.bumptech.glide.request.target.AppWidgetTarget
+import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.ActivityIntentProvider
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackService
@@ -25,8 +26,7 @@ class ShuttleAppWidgetProvider : AppWidgetProvider() {
 
     @Inject lateinit var playbackManager: PlaybackManager
     @Inject lateinit var queueManager: QueueManager
-
-    private var target: AppWidgetTarget? = null
+    @Inject lateinit var artworkCache: HashMap<Song, Bitmap?>
 
     private var updateReason = WidgetManager.UpdateReason.Unknown
 
@@ -67,11 +67,33 @@ class ShuttleAppWidgetProvider : AppWidgetProvider() {
                             || updateReason == WidgetManager.UpdateReason.QueuePositionChanged
                             || updateReason == WidgetManager.UpdateReason.Unknown
                         ) {
-                            setTextViewText(R.id.title, currentItem.song.name)
-                            setTextViewText(R.id.subtitle, "${currentItem.song.albumArtistName} • ${currentItem.song.albumName}")
-                            setImageViewResource(R.id.artwork, R.drawable.ic_music_note_black_24dp)
-                            target = AppWidgetTarget(context, 44.dp, 44.dp, R.id.artwork, this, appWidgetId)
-                            imageLoader.loadIntoRemoteViews(currentItem.song, target!!, ArtworkImageLoader.Options.RoundedCorners(4.dp))
+                            val song = currentItem.song
+
+                            setTextViewText(R.id.title, song.name)
+                            setTextViewText(R.id.subtitle, "${song.albumArtistName} • ${song.albumName}")
+
+                            artworkCache[song]?.let { image ->
+                                setImageViewBitmap(R.id.artwork, image)
+                            } ?: run {
+                                setImageViewResource(R.id.artwork, R.drawable.ic_music_note_black_24dp)
+
+                                imageLoader.loadBitmap(song, 48.dp, 48.dp, ArtworkImageLoader.Options.RoundedCorners(4.dp)) { image ->
+                                    artworkCache[song] = image
+                                    image?.let {
+                                        setImageViewBitmap(R.id.artwork, image)
+                                    } ?: run {
+                                        setImageViewResource(R.id.artwork, R.drawable.ic_music_note_black_24dp)
+                                    }
+                                    appWidgetManager.updateAppWidget(appWidgetId, this)
+                                }
+                            }
+
+                            // Load the next song's artwork as well
+                            queueManager.getNext(true)?.song?.let { song ->
+                                artworkCache[song] ?: imageLoader.loadBitmap(song, 48.dp, 48.dp, ArtworkImageLoader.Options.RoundedCorners(4.dp)) { image ->
+                                    artworkCache[song] = image
+                                }
+                            }
                         }
                     } ?: run {
                         setTextViewText(R.id.title, "Choose a song…")

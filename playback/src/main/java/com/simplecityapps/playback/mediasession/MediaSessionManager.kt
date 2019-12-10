@@ -102,7 +102,7 @@ class MediaSessionManager(
                 mediaMetadataCompat.build()
             )
 
-            artworkImageLoader.loadBitmap(currentItem.song) { bitmap ->
+            artworkImageLoader.loadBitmap(currentItem.song, 512, 512) { bitmap ->
                 mediaMetadataCompat.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, bitmap)
                 mediaSession.setMetadata(
                     mediaMetadataCompat.build()

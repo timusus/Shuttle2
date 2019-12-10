@@ -43,7 +43,7 @@ class PlaybackNotificationManager(
         }
     }
 
-    fun registerCallbacks(){
+    fun registerCallbacks() {
         playbackWatcher.addCallback(this)
         queueWatcher.addCallback(this)
     }
@@ -86,7 +86,7 @@ class PlaybackNotificationManager(
             artworkCache[song]?.let { image ->
                 notificationBuilder.setLargeIcon(image)
             } ?: run {
-                artworkImageLoader.loadBitmap(song) { image ->
+                artworkImageLoader.loadBitmap(song, 512, 512) { image ->
                     notificationBuilder.setLargeIcon(image)
                     val notification = notificationBuilder.build()
                     notificationManager.notify(NOTIFICATION_ID, notification)
@@ -97,7 +97,7 @@ class PlaybackNotificationManager(
 
         // Load the next song's artwork as well
         queueManager.getNext(true)?.song?.let { song ->
-            artworkImageLoader.loadBitmap(song) { image ->
+            artworkCache[song] ?: artworkImageLoader.loadBitmap(song, 512, 512) { image ->
                 artworkCache[song] = image
             }
         }
