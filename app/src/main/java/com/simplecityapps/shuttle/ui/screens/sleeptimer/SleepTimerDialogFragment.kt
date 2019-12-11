@@ -82,11 +82,6 @@ class SleepTimerDialogFragment : DialogFragment(), Injectable {
     }
 
     fun show(manager: FragmentManager) {
-        super.show(manager, TAG)
-    }
-
-
-    companion object {
-        const val TAG = "SleepTimerDialog"
+        super.show(manager, null)
     }
 }
