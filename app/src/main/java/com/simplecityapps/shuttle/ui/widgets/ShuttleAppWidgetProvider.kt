@@ -36,25 +36,23 @@ class ShuttleAppWidgetProvider : AppWidgetProvider() {
 
         updateReason = WidgetManager.UpdateReason.values()[intent?.extras?.getInt(WidgetManager.ARG_UPDATE_REASON) ?: WidgetManager.UpdateReason.Unknown.ordinal]
 
+        Timber.i("onReceive intent: $intent, data: ${intent?.data?.toString()}, updateReason: $updateReason")
+
         super.onReceive(context, intent)
     }
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         super.onUpdate(context, appWidgetManager, appWidgetIds)
 
+        Timber.i("onUpdate(), ids: $appWidgetIds")
+
         val imageLoader = GlideImageLoader(context)
 
-
-        // Perform this loop procedure for each App Widget that belongs to this provider
         appWidgetIds.forEach { appWidgetId ->
 
-            // Create an Intent to launch ExampleActivity
             val contentIntent: PendingIntent = (context.applicationContext as ActivityIntentProvider).provideMainActivityIntent()
                 .let { intent -> PendingIntent.getActivity(context, 0, intent, 0) }
 
-
-            // Get the layout for the App Widget and attach an on-click listener
-            // to the button
             val views = RemoteViews(context.packageName, R.layout.appwidget)
                 .apply {
                     setOnClickPendingIntent(R.id.container, contentIntent)
@@ -79,12 +77,15 @@ class ShuttleAppWidgetProvider : AppWidgetProvider() {
 
                                 imageLoader.loadBitmap(song, 48.dp, 48.dp, ArtworkImageLoader.Options.RoundedCorners(4.dp)) { image ->
                                     artworkCache[song] = image
-                                    image?.let {
-                                        setImageViewBitmap(R.id.artwork, image)
-                                    } ?: run {
-                                        setImageViewResource(R.id.artwork, R.drawable.ic_music_note_black_24dp)
+
+                                    if (song == queueManager.getCurrentItem()?.song) {
+                                        image?.let {
+                                            setImageViewBitmap(R.id.artwork, image)
+                                        } ?: run {
+                                            setImageViewResource(R.id.artwork, R.drawable.ic_music_note_black_24dp)
+                                        }
+                                        appWidgetManager.updateAppWidget(appWidgetId, this)
                                     }
-                                    appWidgetManager.updateAppWidget(appWidgetId, this)
                                 }
                             }
 
