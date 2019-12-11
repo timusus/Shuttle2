@@ -87,9 +87,14 @@ class PlaybackNotificationManager(
                 notificationBuilder.setLargeIcon(image)
             } ?: run {
                 artworkImageLoader.loadBitmap(song, 512, 512) { image ->
-                    notificationBuilder.setLargeIcon(image)
-                    val notification = notificationBuilder.build()
-                    notificationManager.notify(NOTIFICATION_ID, notification)
+                    if (song == queueManager.getCurrentItem()?.song) {
+                        notificationBuilder
+                            .setContentText(song.albumArtistName)
+                            .setContentTitle(song.name)
+                            .setLargeIcon(image)
+                        val notification = notificationBuilder.build()
+                        notificationManager.notify(NOTIFICATION_ID, notification)
+                    }
                     artworkCache[song] = image
                 }
             }
