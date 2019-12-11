@@ -71,7 +71,7 @@ class PlaylistMenuView(
             for ((index, playlist) in presenter.playlists.withIndex()) {
                 subMenu.add(playlistGroupId, index, index, playlist.name)
             }
-        } ?: Timber.e("Failed to create playlist menu. 'R.id.Playlist' not found in menu")
+        } ?: Timber.e("Failed to create playlist menu. 'R.id.playlist' not found in menu")
     }
 
     /**
