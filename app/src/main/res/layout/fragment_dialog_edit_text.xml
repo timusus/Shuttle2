@@ -18,7 +18,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:inputType="textCapWords"
-            tools:text="Input" />a
+            tools:text="Input" />
 
     </com.google.android.material.textfield.TextInputLayout>
 
