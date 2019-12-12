@@ -74,7 +74,9 @@ class MainFragment
         val bottomNavigationView: BottomNavigationView = view.findViewById(R.id.bottomNavigationView)
         bottomNavigationView.setupWithNavController(navController) { menuItem ->
             if (menuItem.itemId == R.id.bottomSheetFragment) {
-                findNavController().navigate(R.id.action_mainFragment_to_bottomSheetFragment)
+                if (findNavController().currentDestination?.id != R.id.bottomSheetFragment) {
+                    findNavController().navigate(R.id.action_mainFragment_to_bottomSheetFragment)
+                }
             }
         }
 
