@@ -60,8 +60,8 @@ class OnboardingParentFragment : Fragment(), OnboardingParent {
 
     private lateinit var adapter: OnboardingAdapter
 
-    private lateinit var nextButton: Button
-    private lateinit var previousButton: Button
+    private var nextButton: Button? = null
+    private var previousButton: Button? = null
 
     private val preferences: SharedPreferences by lazy {
         PreferenceManager.getDefaultSharedPreferences(context)
@@ -117,13 +117,13 @@ class OnboardingParentFragment : Fragment(), OnboardingParent {
         adapter.data = pages
 
         nextButton = view.findViewById(R.id.nextButton)
-        nextButton.setOnClickListener {
+        nextButton?.setOnClickListener {
             val currentPage = adapter.data[viewPager.currentItem]
             childFragmentManager.fragments.filterIsInstance<OnboardingChild>().firstOrNull { it.page == currentPage }?.handleNextButtonClick()
         }
 
         previousButton = view.findViewById(R.id.previousButton)
-        previousButton.setOnClickListener {
+        previousButton?.setOnClickListener {
             val currentPage = adapter.data[viewPager.currentItem]
             childFragmentManager.fragments.filterIsInstance<OnboardingChild>().firstOrNull { it.page == currentPage }?.handleBackButtonClick()
         }
@@ -166,29 +166,29 @@ class OnboardingParentFragment : Fragment(), OnboardingParent {
     }
 
     override fun hideNextButton() {
-        nextButton.isVisible = false
+        nextButton?.isVisible = false
     }
 
     override fun showNextButton(text: String?) {
         text?.let {
-            nextButton.text = text
+            nextButton?.text = text
         }
-        nextButton.isVisible = true
+        nextButton?.isVisible = true
     }
 
     override fun toggleNextButton(enabled: Boolean) {
-        nextButton.isEnabled = enabled
+        nextButton?.isEnabled = enabled
     }
 
     override fun hideBackButton() {
-        previousButton.isVisible = false
+        previousButton?.isVisible = false
     }
 
     override fun showBackButton(text: String?) {
         text?.let {
-            previousButton.text = text
+            previousButton?.text = text
         }
-        previousButton.isVisible = true
+        previousButton?.isVisible = true
     }
 
     override fun exit() {
