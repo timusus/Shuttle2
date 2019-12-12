@@ -6,6 +6,7 @@ import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.os.Build
 import android.view.View
 import android.widget.RemoteViews
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
@@ -19,7 +20,6 @@ import com.simplecityapps.playback.widgets.WidgetManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.utils.dp
 import dagger.android.AndroidInjection
-import timber.log.Timber
 import javax.inject.Inject
 
 class ShuttleAppWidgetProvider : AppWidgetProvider() {
@@ -36,15 +36,11 @@ class ShuttleAppWidgetProvider : AppWidgetProvider() {
 
         updateReason = WidgetManager.UpdateReason.values()[intent?.extras?.getInt(WidgetManager.ARG_UPDATE_REASON) ?: WidgetManager.UpdateReason.Unknown.ordinal]
 
-        Timber.i("onReceive intent: $intent, data: ${intent?.data?.toString()}, updateReason: $updateReason")
-
         super.onReceive(context, intent)
     }
 
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         super.onUpdate(context, appWidgetManager, appWidgetIds)
-
-        Timber.i("onUpdate(), ids: $appWidgetIds")
 
         val imageLoader = GlideImageLoader(context)
 
@@ -64,6 +60,7 @@ class ShuttleAppWidgetProvider : AppWidgetProvider() {
                         if (updateReason == WidgetManager.UpdateReason.QueueChanged
                             || updateReason == WidgetManager.UpdateReason.QueuePositionChanged
                             || updateReason == WidgetManager.UpdateReason.Unknown
+                            || !hasUpdatedMetadata // The widget hasn't been updated since the application was launched, so it will require a metadata update
                         ) {
                             val song = currentItem.song
 
@@ -95,6 +92,8 @@ class ShuttleAppWidgetProvider : AppWidgetProvider() {
                                     artworkCache[song] = image
                                 }
                             }
+
+                            hasUpdatedMetadata = true
                         }
                     } ?: run {
                         setTextViewText(R.id.title, "Choose a song…")
@@ -106,8 +105,6 @@ class ShuttleAppWidgetProvider : AppWidgetProvider() {
                     }
                 }
 
-            Timber.i("Is playing ${playbackManager.isPlaying()}")
-
             // Tell the AppWidgetManager to perform an update on the current app widget
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
@@ -117,13 +114,27 @@ class ShuttleAppWidgetProvider : AppWidgetProvider() {
         val intent = Intent(context, PlaybackService::class.java).apply {
             action = PlaybackService.ACTION_TOGGLE_PLAYBACK
         }
-        return PendingIntent.getService(context, 1, intent, 0)
+        return getPendingIntent(context, intent)
     }
 
     private fun nextPendingIntent(context: Context): PendingIntent {
         val intent = Intent(context, PlaybackService::class.java).apply {
             action = PlaybackService.ACTION_SKIP_NEXT
         }
-        return PendingIntent.getService(context, 1, intent, 0)
+        return getPendingIntent(context, intent)
+    }
+
+    private fun getPendingIntent(context: Context, intent: Intent): PendingIntent {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            PendingIntent.getForegroundService(context, 1, intent, 0)
+        } else {
+            PendingIntent.getService(context, 1, intent, 0)
+        }
+    }
+
+    companion object {
+        
+        // A flag to indicate whether this widget has ever updated its metadata. See above
+        var hasUpdatedMetadata = false
     }
 }
