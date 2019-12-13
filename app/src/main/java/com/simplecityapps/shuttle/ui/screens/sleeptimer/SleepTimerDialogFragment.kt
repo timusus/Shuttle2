@@ -39,7 +39,7 @@ class SleepTimerDialogFragment : DialogFragment(), Injectable {
                 sleepTimer.stopTimer()
                 fragmentManager?.let { fragmentManager ->
                     dismiss()
-                    show(fragmentManager)
+                    SleepTimerDialogFragment().show(fragmentManager)
                 }
             }
         } ?: run {
