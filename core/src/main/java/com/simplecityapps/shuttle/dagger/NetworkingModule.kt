@@ -1,10 +1,10 @@
 package com.simplecityapps.shuttle.dagger
 
+import com.squareup.moshi.Moshi
 import dagger.Module
 import dagger.Provides
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
-import retrofit2.converter.gson.GsonConverterFactory
 import timber.log.Timber
 import javax.inject.Singleton
 
@@ -33,8 +33,8 @@ open class NetworkingModule {
 
     @Singleton
     @Provides
-    fun provideGsonConverterFactory(): GsonConverterFactory {
-        return GsonConverterFactory.create()
+    fun provideMoshi(): Moshi {
+        return Moshi.Builder().build()
     }
 
     companion object {

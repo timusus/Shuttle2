@@ -1,3 +1,5 @@
+import java.io.ByteArrayOutputStream
+
 plugins {
     id(BuildPlugins.androidApplication)
     id(BuildPlugins.playPublisher) version BuildPlugins.Versions.playPublisher
@@ -164,6 +166,10 @@ android {
         implementation("com.github.bumptech.glide:glide:4.10.0")
         kapt("com.github.bumptech.glide:compiler:4.10.0")
         implementation("com.github.bumptech.glide:okhttp3-integration:4.10.0")
+
+        // Moshi
+        implementation("com.squareup.moshi:moshi-kotlin:1.9.2")
+        kapt("com.squareup.moshi:moshi-kotlin-codegen:1.9.2")
     }
 }
 
@@ -185,6 +191,8 @@ afterEvaluate {
     }
 }
 
+tasks.getByName("preBuild").dependsOn("generateChangelog")
+
 tasks.register<Copy>("copyGoogleServices") {
     if (System.getenv("JENKINS_URL") != null) {
         description = "Copies google-services.json from Jenkins secret file"
@@ -192,6 +200,17 @@ tasks.register<Copy>("copyGoogleServices") {
         include("google-services.json")
         into(".")
     }
+}
+
+tasks.register("generateChangelog") {
+    val stdout = ByteArrayOutputStream()
+    exec {
+        commandLine("bash", "-c", "git log --pretty=format:'\"%s\",' $(git describe --tags --abbrev=0 @^)..@")
+        standardOutput = stdout
+    }
+
+    val jsonFile = file("src/main/assets/changelog.json")
+    jsonFile.writeText("{\"commits\": [${stdout.toString().trim().removeSuffix(",")}]}")
 }
 
 apply(plugin = "com.google.gms.google-services")

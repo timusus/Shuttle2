@@ -24,6 +24,7 @@ import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
+import com.simplecityapps.shuttle.GeneralPreferenceManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
@@ -54,6 +55,8 @@ class MainFragment
 
     @Inject lateinit var playbackPreferenceManager: PlaybackPreferenceManager
     @Inject lateinit var fileScanner: FileScanner
+
+    @Inject lateinit var preferenceManager: GeneralPreferenceManager
 
     private val compositeDisposable = CompositeDisposable()
 
@@ -135,6 +138,10 @@ class MainFragment
                     )
                 }
             }
+        }
+
+        if (!preferenceManager.hasSeenChangelog && preferenceManager.showChangelogOnLaunch) {
+            findNavController().navigate(R.id.action_mainFragment_to_changelogFragment)
         }
     }
 

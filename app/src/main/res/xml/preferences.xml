@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <PreferenceCategory android:title="Display">
         <ListPreference
@@ -12,13 +13,25 @@
             android:title="Night mode" />
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="Changelog">
+
+        <Preference
+            android:key="changelog_show"
+            app:title="View changelog" />
+
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="changelog_show_on_launch"
+            android:title="Show changelog on launch" />
+    </PreferenceCategory>
+
     <PreferenceCategory android:title="Debug">
-        <CheckBoxPreference
+        <SwitchPreference
             android:defaultValue="false"
             android:dialogTitle="File Logging"
             android:key="pref_file_logging"
             android:summary="Writes Shuttle logs to a file on disk, which can be copied via the debug "
-            android:title="File Logging" />
+            android:title="File logging" />
     </PreferenceCategory>
 
 </PreferenceScreen>

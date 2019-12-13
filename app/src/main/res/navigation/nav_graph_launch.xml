@@ -13,6 +13,9 @@
         <action
             android:id="@+id/action_mainFragment_to_bottomSheetFragment"
             app:destination="@id/bottomSheetFragment" />
+        <action
+            android:id="@+id/action_mainFragment_to_changelogFragment"
+            app:destination="@id/changelogFragment" />
     </fragment>
     <fragment
         android:id="@+id/onboardingFragment"
@@ -28,7 +31,11 @@
     <fragment
         android:id="@+id/settingsFragment"
         android:name="com.simplecityapps.shuttle.ui.screens.settings.SettingsFragment"
-        android:label="SettingsFragment" />
+        android:label="SettingsFragment" >
+        <action
+            android:id="@+id/action_settingsFragment_to_changelogFragment"
+            app:destination="@id/changelogFragment" />
+    </fragment>
 
     <dialog
         android:id="@+id/bottomSheetFragment"
@@ -51,4 +58,8 @@
     <dialog
         android:id="@+id/sleepTimerFragment"
         android:name="com.simplecityapps.shuttle.ui.screens.sleeptimer.SleepTimerDialogFragment" />
+
+    <dialog
+        android:id="@+id/changelogFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.changelog.ChangelogDialogFragment" />
 </navigation>

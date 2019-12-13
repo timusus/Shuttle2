@@ -3,7 +3,6 @@ package com.simplecityapps.shuttle
 import android.app.Application
 import android.appwidget.AppWidgetManager
 import android.content.Intent
-import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatDelegate
 import com.simplecityapps.playback.ActivityIntentProvider
 import com.simplecityapps.playback.dagger.PlaybackModule
@@ -26,7 +25,7 @@ class ShuttleApplication : Application(),
 
     @Inject lateinit var initializers: AppInitializers
 
-    @Inject lateinit var sharedPrefs: SharedPreferences
+    @Inject lateinit var preferenceManager: GeneralPreferenceManager
 
     private val coreComponent: CoreComponent by lazy {
 
@@ -47,10 +46,16 @@ class ShuttleApplication : Application(),
 
         AppInjector.init(this)
 
-        when (sharedPrefs.getString("pref_night_mode", "0")) {
+        when (preferenceManager.nightMode) {
             "0" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
             "1" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
             "2" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+        }
+
+        if (preferenceManager.previousVersionCode != BuildConfig.VERSION_CODE) {
+            // This is the first time the user has seen this build
+            preferenceManager.hasSeenChangelog = false
+            preferenceManager.previousVersionCode = BuildConfig.VERSION_CODE
         }
 
         initializers.init(this)

@@ -17,11 +17,12 @@ import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.playback.sleeptimer.SleepTimer
+import com.simplecityapps.shuttle.GeneralPreferenceManager
 import com.simplecityapps.taglib.ArtworkProvider
 import com.simplecityapps.taglib.FileScanner
+import com.squareup.moshi.Moshi
 import dagger.Component
 import okhttp3.OkHttpClient
-import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
 
 @Singleton
@@ -70,11 +71,13 @@ interface CoreComponent {
 
     fun getArtworkProvider(): ArtworkProvider
 
-    fun getGsonConverterFactory(): GsonConverterFactory
+    fun getMoshi(): Moshi
 
     fun getMediaImporter(): MediaImporter
 
     fun getHttpSever(): HttpServer
+
+    fun getGeneralPreferenceManager(): GeneralPreferenceManager
 
     @Component.Builder
     interface Builder {

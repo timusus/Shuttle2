@@ -71,9 +71,9 @@ class PlaybackPreferenceManager(private val sharedPreferences: SharedPreferences
         companion object {
             fun init(ordinal: Int): SongProvider {
                 return when (ordinal) {
-                    SongProvider.TagLib.ordinal -> SongProvider.TagLib
-                    SongProvider.MediaStore.ordinal -> SongProvider.MediaStore
-                    else -> SongProvider.MediaStore
+                    TagLib.ordinal -> TagLib
+                    MediaStore.ordinal -> MediaStore
+                    else -> MediaStore
                 }
             }
         }

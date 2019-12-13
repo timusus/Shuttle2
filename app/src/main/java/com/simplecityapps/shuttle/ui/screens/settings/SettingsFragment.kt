@@ -6,11 +6,18 @@ import android.view.View
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.Toolbar
 import androidx.navigation.fragment.findNavController
+import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import com.simplecityapps.shuttle.GeneralPreferenceManager
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.dagger.Injectable
+import javax.inject.Inject
 
-class SettingsFragment : PreferenceFragmentCompat(), SharedPreferences.OnSharedPreferenceChangeListener {
+class SettingsFragment : PreferenceFragmentCompat(),
+    SharedPreferences.OnSharedPreferenceChangeListener,
+    Injectable {
 
+    @Inject lateinit var preferenceManager: GeneralPreferenceManager
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -19,6 +26,11 @@ class SettingsFragment : PreferenceFragmentCompat(), SharedPreferences.OnSharedP
         toolbar.setNavigationOnClickListener { findNavController().popBackStack() }
 
         preferenceScreen.sharedPreferences.registerOnSharedPreferenceChangeListener(this)
+
+        preferenceScreen.findPreference<Preference>("changelog_show")?.setOnPreferenceClickListener {
+            findNavController().navigate(R.id.action_settingsFragment_to_changelogFragment)
+            true
+        }
     }
 
     override fun onDestroyView() {
@@ -36,7 +48,7 @@ class SettingsFragment : PreferenceFragmentCompat(), SharedPreferences.OnSharedP
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
         when (key) {
             "pref_night_mode" -> {
-                setNightMode(sharedPreferences.getString(key, "0"))
+                setNightMode(sharedPreferences.getString(key, "0") ?: "0")
             }
         }
     }
@@ -48,6 +60,4 @@ class SettingsFragment : PreferenceFragmentCompat(), SharedPreferences.OnSharedP
             "2" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
         }
     }
-
-
 }

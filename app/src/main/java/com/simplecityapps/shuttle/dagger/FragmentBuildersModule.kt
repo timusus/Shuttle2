@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.dagger
 
 import com.simplecityapps.shuttle.ui.MainFragment
+import com.simplecityapps.shuttle.ui.screens.changelog.ChangelogDialogFragment
 import com.simplecityapps.shuttle.ui.screens.debug.DebugDrawerFragment
 import com.simplecityapps.shuttle.ui.screens.debug.LoggingFragment
 import com.simplecityapps.shuttle.ui.screens.home.HomeFragment
@@ -23,6 +24,7 @@ import com.simplecityapps.shuttle.ui.screens.playback.PlaybackFragment
 import com.simplecityapps.shuttle.ui.screens.playback.mini.MiniPlaybackFragment
 import com.simplecityapps.shuttle.ui.screens.queue.QueueFragment
 import com.simplecityapps.shuttle.ui.screens.settings.BottomDrawerSettingsFragment
+import com.simplecityapps.shuttle.ui.screens.settings.SettingsFragment
 import com.simplecityapps.shuttle.ui.screens.sleeptimer.SleepTimerDialogFragment
 import dagger.Module
 import dagger.android.ContributesAndroidInjector
@@ -102,4 +104,10 @@ abstract class FragmentBuildersModule {
 
     @ContributesAndroidInjector
     abstract fun contributeMediaProviderSelectionFragment(): MediaProviderSelectionFragment
+
+    @ContributesAndroidInjector
+    abstract fun contributeChangelogDialog(): ChangelogDialogFragment
+
+    @ContributesAndroidInjector
+    abstract fun contributeSettingsFragment(): SettingsFragment
 }
