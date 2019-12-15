@@ -5,7 +5,9 @@ import android.os.Looper
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
+import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.QueueWatcher
 import timber.log.Timber
 import kotlin.math.max
 import kotlin.random.Random
@@ -15,15 +17,19 @@ class PlaybackManager(
     private var playback: Playback,
     private val playbackWatcher: PlaybackWatcher,
     private val audioFocusHelper: AudioFocusHelper,
-    private val playbackPreferenceManager: PlaybackPreferenceManager
+    private val playbackPreferenceManager: PlaybackPreferenceManager,
+    private val queueWatcher: QueueWatcher
 ) : Playback.Callback,
-    AudioFocusHelper.Listener {
+    AudioFocusHelper.Listener,
+    QueueChangeCallback {
 
     private var handler: ProgressHandler = ProgressHandler()
 
     init {
         playback.callback = this
         audioFocusHelper.listener = this
+
+        queueWatcher.addCallback(this)
     }
 
     fun togglePlayback() {
@@ -319,6 +325,21 @@ class PlaybackManager(
         } else {
             skipToNext(false)
         }
+    }
+
+
+    // QueueChangeCallback Implementation
+
+    override fun onRepeatChanged() {
+        super.onRepeatChanged()
+
+        playback.loadNext(queueManager.getNext()?.song)
+    }
+
+    override fun onShuffleChanged() {
+        super.onShuffleChanged()
+
+        playback.loadNext(queueManager.getNext()?.song)
     }
 
 

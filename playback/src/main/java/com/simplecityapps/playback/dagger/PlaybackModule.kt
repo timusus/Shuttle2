@@ -83,9 +83,10 @@ class PlaybackModule(
         playback: Playback,
         playbackWatcher: PlaybackWatcher,
         audioFocusHelper: AudioFocusHelper,
-        playbackPreferenceManager: PlaybackPreferenceManager
+        playbackPreferenceManager: PlaybackPreferenceManager,
+        queueWatcher: QueueWatcher
     ): PlaybackManager {
-        return PlaybackManager(queueManager, playback, playbackWatcher, audioFocusHelper, playbackPreferenceManager)
+        return PlaybackManager(queueManager, playback, playbackWatcher, audioFocusHelper, playbackPreferenceManager, queueWatcher)
     }
 
     @Singleton
