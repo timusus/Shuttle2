@@ -210,6 +210,9 @@ tasks.register("generateChangelog") {
     }
 
     val jsonFile = file("src/main/assets/changelog.json")
+    if (!jsonFile.parentFile.exists()) {
+        jsonFile.parentFile.mkdirs()
+    }
     jsonFile.writeText("{\"commits\": [${stdout.toString().trim().removeSuffix(",")}]}")
 }
 
