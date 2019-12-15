@@ -41,8 +41,6 @@ class PlaybackInitializer @Inject constructor(
 
     private var progress = 0
 
-    private var hasRestoredPlaybackPosition = false
-
     @SuppressLint("BinaryOperationInTimber")
     override fun init(application: Application) {
 
@@ -104,13 +102,13 @@ class PlaybackInitializer @Inject constructor(
     }
 
     private fun onRestoreComplete() {
-        hasRestoredPlaybackPosition = true
+        queueWatcher.hasRestoredQueue = true
     }
 
     // QueueChangeCallback Implementation
 
     override fun onQueueChanged() {
-        if (hasRestoredPlaybackPosition) {
+        if (queueWatcher.hasRestoredQueue) {
             playbackPreferenceManager.queueIds = queueManager.getQueue(QueueManager.ShuffleMode.Off)
                 .map { queueItem -> queueItem.song.id }
                 .joinToString(",")
@@ -126,7 +124,7 @@ class PlaybackInitializer @Inject constructor(
     override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
         playbackPreferenceManager.queuePosition = newPosition
 
-        if (hasRestoredPlaybackPosition) {
+        if (queueWatcher.hasRestoredQueue) {
             playbackPreferenceManager.playbackPosition = null
         }
     }

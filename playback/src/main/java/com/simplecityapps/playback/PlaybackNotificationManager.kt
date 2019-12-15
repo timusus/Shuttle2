@@ -43,6 +43,8 @@ class PlaybackNotificationManager(
         }
     }
 
+    private var hasDisplayedNotification = false
+
     fun registerCallbacks() {
         playbackWatcher.addCallback(this)
         queueWatcher.addCallback(this)
@@ -109,6 +111,9 @@ class PlaybackNotificationManager(
 
         val notification = notificationBuilder.build()
         notificationManager.notify(NOTIFICATION_ID, notification)
+
+        hasDisplayedNotification = true
+
         return notification
     }
 
@@ -168,19 +173,27 @@ class PlaybackNotificationManager(
     // QueueChangeCallback Implementation
 
     override fun onQueueChanged() {
-        displayNotification()
+        if (queueWatcher.hasRestoredQueue) {
+            displayNotification()
+        }
     }
 
     override fun onShuffleChanged() {
-        displayNotification()
+        if (queueWatcher.hasRestoredQueue) {
+            displayNotification()
+        }
     }
 
     override fun onRepeatChanged() {
-        displayNotification()
+        if (queueWatcher.hasRestoredQueue) {
+            displayNotification()
+        }
     }
 
     override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
-        displayNotification()
+        if (queueWatcher.hasRestoredQueue) {
+            displayNotification()
+        }
     }
 
 

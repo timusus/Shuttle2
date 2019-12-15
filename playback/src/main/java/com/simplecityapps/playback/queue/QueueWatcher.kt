@@ -26,6 +26,8 @@ class QueueWatcher : QueueChangeCallback {
 
     private var callbacks: MutableList<QueueChangeCallback> = mutableListOf()
 
+    var hasRestoredQueue = false
+
     fun addCallback(callback: QueueChangeCallback) {
         callbacks.add(callback)
     }
