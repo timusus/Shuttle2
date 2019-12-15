@@ -57,44 +57,38 @@ class ShuttleAppWidgetProvider : AppWidgetProvider() {
 
                     queueManager.getCurrentItem()?.let { currentItem ->
                         setViewVisibility(R.id.subtitle, View.VISIBLE)
-                        if (updateReason == WidgetManager.UpdateReason.QueueChanged
-                            || updateReason == WidgetManager.UpdateReason.QueuePositionChanged
-                            || updateReason == WidgetManager.UpdateReason.Unknown
-                            || !hasUpdatedMetadata // The widget hasn't been updated since the application was launched, so it will require a metadata update
-                        ) {
-                            val song = currentItem.song
 
-                            setTextViewText(R.id.title, song.name)
-                            setTextViewText(R.id.subtitle, "${song.albumArtistName} • ${song.albumName}")
+                        val song = currentItem.song
 
-                            artworkCache[song]?.let { image ->
-                                setImageViewBitmap(R.id.artwork, image)
-                            } ?: run {
-                                setImageViewResource(R.id.artwork, R.drawable.ic_music_note_black_24dp)
+                        setTextViewText(R.id.title, song.name)
+                        setTextViewText(R.id.subtitle, "${song.albumArtistName} • ${song.albumName}")
 
-                                imageLoader.loadBitmap(song, 48.dp, 48.dp, ArtworkImageLoader.Options.RoundedCorners(4.dp)) { image ->
-                                    artworkCache[song] = image
+                        artworkCache[song]?.let { image ->
+                            setImageViewBitmap(R.id.artwork, image)
+                        } ?: run {
+                            setImageViewResource(R.id.artwork, R.drawable.ic_music_note_black_24dp)
 
-                                    if (song == queueManager.getCurrentItem()?.song) {
-                                        image?.let {
-                                            setImageViewBitmap(R.id.artwork, image)
-                                        } ?: run {
-                                            setImageViewResource(R.id.artwork, R.drawable.ic_music_note_black_24dp)
-                                        }
-                                        appWidgetManager.updateAppWidget(appWidgetId, this)
+                            imageLoader.loadBitmap(song, 48.dp, 48.dp, ArtworkImageLoader.Options.RoundedCorners(4.dp)) { image ->
+                                artworkCache[song] = image
+
+                                if (song == queueManager.getCurrentItem()?.song) {
+                                    image?.let {
+                                        setImageViewBitmap(R.id.artwork, image)
+                                    } ?: run {
+                                        setImageViewResource(R.id.artwork, R.drawable.ic_music_note_black_24dp)
                                     }
+                                    appWidgetManager.updateAppWidget(appWidgetId, this)
                                 }
                             }
-
-                            // Load the next song's artwork as well
-                            queueManager.getNext(true)?.song?.let { song ->
-                                artworkCache[song] ?: imageLoader.loadBitmap(song, 48.dp, 48.dp, ArtworkImageLoader.Options.RoundedCorners(4.dp)) { image ->
-                                    artworkCache[song] = image
-                                }
-                            }
-
-                            hasUpdatedMetadata = true
                         }
+
+                        // Load the next song's artwork as well
+                        queueManager.getNext(true)?.song?.let { song ->
+                            artworkCache[song] ?: imageLoader.loadBitmap(song, 48.dp, 48.dp, ArtworkImageLoader.Options.RoundedCorners(4.dp)) { image ->
+                                artworkCache[song] = image
+                            }
+                        }
+
                     } ?: run {
                         setTextViewText(R.id.title, "Choose a song…")
                         setViewVisibility(R.id.subtitle, View.GONE)
@@ -130,11 +124,5 @@ class ShuttleAppWidgetProvider : AppWidgetProvider() {
         } else {
             PendingIntent.getService(context, 1, intent, 0)
         }
-    }
-
-    companion object {
-        
-        // A flag to indicate whether this widget has ever updated its metadata. See above
-        var hasUpdatedMetadata = false
     }
 }
