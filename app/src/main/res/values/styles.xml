@@ -23,6 +23,8 @@
         <item name="shapeAppearanceLargeComponent">@style/ShapeAppearance.Shuttle.LargeComponent</item>
 
         <item name="preferenceTheme">@style/Shuttle.PreferenceThemeOverlay</item>
+
+        <item name="toolbarNavigationButtonStyle">@style/Toolbar.Button.Navigation.Tinted</item>
     </style>
 
     <style name="AppTheme.Dark" parent="Theme.MaterialComponents.NoActionBar">
@@ -48,6 +50,8 @@
         <item name="preferenceTheme">@style/Shuttle.PreferenceThemeOverlay</item>
 
         <item name="bottomSheetDialogTheme">@style/Shuttle.BottomSheetDialog.Dark</item>
+
+        <item name="toolbarNavigationButtonStyle">@style/Toolbar.Button.Navigation.Tinted</item>
     </style>
 
     <style name="AppTheme.DayNight" parent="AppTheme.Light" />
@@ -168,6 +172,13 @@
 
     <style name="Shuttle.BottomSheetDialog.Dark" parent="Theme.Design.BottomSheetDialog">
         <item name="colorBackgroundFloating">#121212</item>
+    </style>
+
+
+    <!-- Toolbar -->
+
+    <style name="Toolbar.Button.Navigation.Tinted" parent="Widget.AppCompat.Toolbar.Button.Navigation">
+        <item name="tint">?android:textColorPrimary</item>
     </style>
 
 </resources>

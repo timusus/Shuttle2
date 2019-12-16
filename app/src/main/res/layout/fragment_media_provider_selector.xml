@@ -2,37 +2,43 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="24dp">
+    android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/titleLabel"
-        style="@style/TextAppearance.MaterialComponents.Headline6"
-        android:layout_width="wrap_content"
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:gravity="center"
-        android:text="Discover your music"
+        android:minHeight="?attr/actionBarSize"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"/>
+        app:layout_constraintStart_toStartOf="parent"
+        app:navigationIcon="@drawable/ic_close_black_24dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:title="Discover your music">
+
+    </androidx.appcompat.widget.Toolbar>
 
     <TextView
         android:id="@+id/subtitleLabel"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
         android:layout_marginTop="16dp"
-        android:gravity="center"
+        android:layout_marginEnd="24dp"
         android:text="Shuttle can find your music using two different modes. You can change this later."
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/titleLabel"/>
+        app:layout_constraintTop_toBottomOf="@id/toolbar" />
 
     <RadioGroup
         android:id="@+id/radioGroup"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
         android:layout_marginTop="32dp"
+        android:layout_marginEnd="24dp"
         android:checkedButton="@id/basic"
         app:layout_constraintTop_toBottomOf="@id/subtitleLabel">
 
@@ -43,7 +49,7 @@
             android:gravity="top"
             android:paddingStart="4dp"
             android:paddingTop="6dp"
-            android:text="Android Media Store (Basic)\n\nThe Android Media Store is a database on your device containing information about your songs."/>
+            android:text="Android Media Store (Basic)\n\nThe Android Media Store is a database on your device containing information about your songs." />
 
         <RadioButton
             android:id="@+id/advanced"
@@ -53,8 +59,23 @@
             android:gravity="top"
             android:paddingStart="4dp"
             android:paddingTop="6dp"
-            android:text="Scan Folders (Advanced)\n\nScan your folders and read the tags from your audio files. This is more accurate than the Media Store, and allows you to choose some directories that may not be available to the MediaStore."/>
+            android:text="Scan Folders (Advanced)\n\nScan your folders and read the tags from your audio files. This is more accurate than the Media Store, and allows you to choose some directories that may not be available to the MediaStore." />
 
     </RadioGroup>
+
+    <TextView
+        android:id="@+id/warningLabel"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginEnd="24dp"
+        android:text="Warning: Changing media providers will reset your database (playlists, history, play count, etc.)"
+        android:textColor="#B00020"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/radioGroup"
+        tools:visibility="visible" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

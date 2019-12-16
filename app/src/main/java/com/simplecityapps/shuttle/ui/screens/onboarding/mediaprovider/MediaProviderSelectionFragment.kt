@@ -6,22 +6,38 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.RadioButton
 import android.widget.RadioGroup
+import android.widget.TextView
+import androidx.appcompat.widget.Toolbar
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.utils.withArgs
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingChild
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingPage
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParent
 import javax.inject.Inject
 
-class MediaProviderSelectionFragment : Fragment(), Injectable, OnboardingChild {
+class MediaProviderSelectionFragment :
+    Fragment(),
+    Injectable,
+    OnboardingChild {
 
     private lateinit var radioGroup: RadioGroup
     private lateinit var basicRadioButton: RadioButton
     private lateinit var advancedRadioButton: RadioButton
 
     @Inject lateinit var playbackPreferenceManager: PlaybackPreferenceManager
+
+    private var isOnboarding = true
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        isOnboarding = arguments!!.getBoolean(ARG_ONBOARDING)
+    }
 
     // Lifecycle
 
@@ -36,7 +52,37 @@ class MediaProviderSelectionFragment : Fragment(), Injectable, OnboardingChild {
         basicRadioButton = view.findViewById(R.id.basic)
         advancedRadioButton = view.findViewById(R.id.advanced)
 
+        val toolbar: Toolbar = view.findViewById(R.id.toolbar)
+        if (isOnboarding) {
+            toolbar.title = "Discover your music"
+            toolbar.navigationIcon = null
+        } else {
+            toolbar.title = "Media provider"
+            toolbar.setNavigationOnClickListener {
+                findNavController().popBackStack()
+            }
+        }
+
+        val subtitleLabel: TextView = view.findViewById(R.id.subtitleLabel)
+        if (isOnboarding) {
+            subtitleLabel.text = "Shuttle can find your music using two different modes. You can change this later."
+        } else {
+            subtitleLabel.text = "Shuttle can find your music using two different modes:"
+        }
+
         getParent().showNextButton("Next")
+
+        val initialSongProvider = playbackPreferenceManager.songProvider
+        when (initialSongProvider) {
+            PlaybackPreferenceManager.SongProvider.MediaStore -> {
+                radioGroup.check(R.id.basic)
+            }
+            PlaybackPreferenceManager.SongProvider.TagLib -> {
+                radioGroup.check(R.id.advanced)
+            }
+        }
+
+        val warningLabel: TextView = view.findViewById(R.id.warningLabel)
 
         radioGroup.setOnCheckedChangeListener { _, checkedId ->
             val pages = getParent().getPages().toMutableList()
@@ -55,6 +101,10 @@ class MediaProviderSelectionFragment : Fragment(), Injectable, OnboardingChild {
                         getParent().setPages(pages)
                     }
                 }
+            }
+
+            if (!isOnboarding) {
+                warningLabel.isVisible = playbackPreferenceManager.songProvider != initialSongProvider
             }
         }
     }
@@ -81,5 +131,15 @@ class MediaProviderSelectionFragment : Fragment(), Injectable, OnboardingChild {
 
     override fun handleNextButtonClick() {
         getParent().goToNext()
+    }
+
+
+    // Static
+
+    companion object {
+        const val ARG_ONBOARDING = "is_onboarding"
+        fun newInstance(isOnboarding: Boolean = true): MediaProviderSelectionFragment {
+            return MediaProviderSelectionFragment().withArgs { putBoolean(ARG_ONBOARDING, isOnboarding) }
+        }
     }
 }

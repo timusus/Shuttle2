@@ -112,7 +112,7 @@ class MainFragment
         }
 
         // Don't bother scanning for media again if we've already scanned once this session
-        if (MediaImporter.scanCount < 1) {
+        if (mediaImporter.scanCount < 1) {
             when (playbackPreferenceManager.songProvider) {
                 PlaybackPreferenceManager.SongProvider.MediaStore -> {
                     mediaImporter.startScan(MediaStoreSongProvider(context!!.applicationContext))

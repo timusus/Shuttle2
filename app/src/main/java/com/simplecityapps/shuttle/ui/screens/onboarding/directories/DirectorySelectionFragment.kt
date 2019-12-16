@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.widget.Toolbar
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.fragment.app.Fragment
@@ -69,6 +70,9 @@ class DirectorySelectionFragment : Fragment(),
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        val toolbar: Toolbar = view.findViewById(R.id.toolbar)
+        toolbar.setNavigationOnClickListener { getParent().goToPrevious() }
+
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
 
@@ -99,10 +103,10 @@ class DirectorySelectionFragment : Fragment(),
         getParent().showBackButton("Back")
         getParent().showNextButton("Done")
 
-        if (adapter.items.none { binder -> binder is DirectoryBinder && binder.data.traversalComplete }) {
-            getParent().toggleNextButton(false)
+        if (adapter.items.none { binder -> binder is DirectoryBinder } || adapter.items.any { binder -> binder is DirectoryBinder && !binder.data.traversalComplete }) {
+            getParent().toggleNextButton(enabled = false)
         } else {
-            getParent().toggleNextButton(true)
+            getParent().toggleNextButton(enabled = true)
         }
     }
 
@@ -121,10 +125,10 @@ class DirectorySelectionFragment : Fragment(),
         adapter.setData(data.map { data -> DirectoryBinder(data, directoryBinderListener) }.toMutableList<ViewBinder>()) {
             val adapterData = adapter.items.filterIsInstance<DirectoryBinder>().map { binder -> binder.data }
 
-            if (adapter.items.none { binder -> binder is DirectoryBinder && binder.data.traversalComplete }) {
-                getParent().toggleNextButton(false)
+            if (adapter.items.none { binder -> binder is DirectoryBinder } || adapter.items.any { binder -> binder is DirectoryBinder && !binder.data.traversalComplete }) {
+                getParent().toggleNextButton(enabled = false)
             } else {
-                getParent().toggleNextButton(true)
+                getParent().toggleNextButton(enabled = true)
             }
 
             TransitionManager.beginDelayedTransition(constraintLayout, transition)

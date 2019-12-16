@@ -23,6 +23,8 @@ class MediaImporter(
 
     private var songProvider: SongProvider? = null
 
+    var scanCount: Int = 0
+
     fun startScan(songProvider: SongProvider) {
 
         if (isScanning && songProvider == this.songProvider) return
@@ -62,7 +64,7 @@ class MediaImporter(
         disposable?.dispose()
     }
 
-    companion object {
-        var scanCount: Int = 0
+    fun rescan() {
+        songProvider?.let { songProvider -> startScan(songProvider) }
     }
 }

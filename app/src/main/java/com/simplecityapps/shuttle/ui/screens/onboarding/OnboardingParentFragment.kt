@@ -14,10 +14,13 @@ import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import androidx.navigation.fragment.navArgs
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
+import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.put
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.screens.onboarding.directories.DirectorySelectionFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.MediaProviderSelectionFragment
@@ -25,6 +28,7 @@ import com.simplecityapps.shuttle.ui.screens.onboarding.scanner.MediaScannerFrag
 import com.simplecityapps.shuttle.ui.screens.onboarding.storage.StoragePermissionFragment
 import kotlinx.android.synthetic.main.fragment_onboarding.*
 import me.relex.circleindicator.CircleIndicator3
+import javax.inject.Inject
 
 enum class OnboardingPage {
     StoragePermission,
@@ -54,7 +58,9 @@ interface OnboardingChild {
     fun handleBackButtonClick() {}
 }
 
-class OnboardingParentFragment : Fragment(), OnboardingParent {
+class OnboardingParentFragment : Fragment(),
+    OnboardingParent,
+    Injectable {
 
     private lateinit var viewPager: ViewPager2
 
@@ -73,18 +79,22 @@ class OnboardingParentFragment : Fragment(), OnboardingParent {
 
     private var earlyExit = false
 
+    private val args: OnboardingParentFragmentArgs by navArgs()
+
+    @Inject lateinit var playbackPreferenceManager: PlaybackPreferenceManager
+
 
     // Lifecycle
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (hasOnboarded && hasStoragePermission()) {
+        if (args.isOnboarding && hasOnboarded && hasStoragePermission()) {
             earlyExit = true
             return
         }
 
-        adapter = OnboardingAdapter(this)
+        adapter = OnboardingAdapter(this, args.isOnboarding)
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -113,6 +123,12 @@ class OnboardingParentFragment : Fragment(), OnboardingParent {
         }
         pages.add(OnboardingPage.MediaProviderSelector)
         pages.add(OnboardingPage.Scanner)
+
+        // If we've previously chosen the tag lib song provider as our default song provider (in which case we're probably not onboarding for the first time), we need to
+        // add the directory selection page after the scanner page
+        if (playbackPreferenceManager.songProvider == PlaybackPreferenceManager.SongProvider.TagLib) {
+            pages.add(pages.indexOf(OnboardingPage.Scanner), OnboardingPage.MusicDirectories)
+        }
 
         adapter.data = pages
 
@@ -194,7 +210,12 @@ class OnboardingParentFragment : Fragment(), OnboardingParent {
     override fun exit() {
         earlyExit = true
         hasOnboarded = true
-        findNavController().navigate(R.id.action_onboardingFragment_to_mainFragment)
+
+        if (args.isOnboarding) {
+            findNavController().navigate(R.id.action_onboardingFragment_to_mainFragment)
+        } else {
+            findNavController().popBackStack()
+        }
     }
 
 
@@ -213,7 +234,7 @@ class OnboardingParentFragment : Fragment(), OnboardingParent {
     }
 
 
-    class OnboardingAdapter(fragment: Fragment) : FragmentStateAdapter(fragment) {
+    class OnboardingAdapter(fragment: Fragment, val isOnboarding: Boolean) : FragmentStateAdapter(fragment) {
         var data = listOf<OnboardingPage>()
             set(value) {
                 if (field != value) {
@@ -235,7 +256,7 @@ class OnboardingParentFragment : Fragment(), OnboardingParent {
         override fun createFragment(position: Int): Fragment {
             return when (data[position]) {
                 OnboardingPage.StoragePermission -> StoragePermissionFragment()
-                OnboardingPage.MediaProviderSelector -> MediaProviderSelectionFragment()
+                OnboardingPage.MediaProviderSelector -> MediaProviderSelectionFragment.newInstance(isOnboarding)
                 OnboardingPage.MusicDirectories -> DirectorySelectionFragment()
                 OnboardingPage.Scanner -> MediaScannerFragment()
             }
