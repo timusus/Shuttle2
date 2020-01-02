@@ -5,6 +5,7 @@
     android:id="@+id/container"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    tools:layout_width="250dp"
     android:background="@drawable/background_rounded"
     android:gravity="center_vertical"
     android:orientation="vertical"
@@ -38,14 +39,16 @@
                 android:fontFamily="sans-serif"
                 android:lines="1"
                 android:textColor="#000"
+                android:ellipsize="end"
                 android:textSize="14sp"
-                tools:text="Title" />
+                tools:text="A reasonably long title" />
 
             <TextView
                 android:id="@+id/subtitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:fontFamily="sans-serif"
+                android:ellipsize="end"
                 android:lines="1"
                 android:textColor="#000"
                 android:textSize="12sp"
