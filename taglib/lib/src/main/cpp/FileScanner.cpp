@@ -120,13 +120,13 @@ vector<string> &scanDirectory(const string &path, vector<string> &files) {
 
 JNIEXPORT jobject
 JNICALL
-Java_com_simplecityapps_taglib_FileScanner_getAudioFile(JNIEnv *env, jobject instance, jstring pathStr, jint fd_) {
+Java_com_simplecityapps_taglib_FileScanner_getAudioFile(JNIEnv *env, jobject instance, jstring pathStr, jint fd_, jstring fileName) {
 
     int fd = (int) fd_;
 
     unknown = env->NewStringUTF("Unknown");
 
-    jstring title = unknown;
+    jstring title = fileName;
     jstring artist = unknown;
     jstring albumArtist = unknown;
     jstring album = unknown;
@@ -151,7 +151,11 @@ Java_com_simplecityapps_taglib_FileScanner_getAudioFile(JNIEnv *env, jobject ins
         if (fileRef.tag()) {
             TagLib::Tag *tag = fileRef.tag();
 
-            title = env->NewStringUTF(tag->title().toCString(true));
+            if (tag->title().isEmpty()) {
+                title = fileName;
+            } else {
+                title = env->NewStringUTF(tag->title().toCString(true));
+            }
 
             if (tag->artist().isEmpty()) {
                 artist = unknown;

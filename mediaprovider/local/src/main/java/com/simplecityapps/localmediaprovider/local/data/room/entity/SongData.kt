@@ -57,7 +57,7 @@ data class SongData(
         // Todo: The track/disc check can be removed.
         //  This is a fix for a temporary issue, due to a change in how track/disc numbers are imported from the MediaStore.
         //  This just enables users with out-dated track/disc parsing logic to have their library update.
-        return lastModified == other.lastModified && track == other.track && disc == other.disc
+        return lastModified == other.lastModified && track == other.track && disc == other.disc && name == other.name
     }
 
     override fun equals(other: Any?): Boolean {
