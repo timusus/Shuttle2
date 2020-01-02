@@ -52,6 +52,8 @@
         <item name="bottomSheetDialogTheme">@style/Shuttle.BottomSheetDialog.Dark</item>
 
         <item name="toolbarNavigationButtonStyle">@style/Toolbar.Button.Navigation.Tinted</item>
+
+        <item name="android:navigationBarColor">@color/bg_window_dark</item>
     </style>
 
     <style name="AppTheme.DayNight" parent="AppTheme.Light" />
