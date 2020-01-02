@@ -12,6 +12,7 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationCompat.VISIBILITY_PUBLIC
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.mediasession.MediaSessionManager
@@ -71,6 +72,7 @@ class PlaybackNotificationManager(
                 }
             }
             .setShowWhen(false)
+            .setVisibility(VISIBILITY_PUBLIC)
             .setSmallIcon(R.drawable.ic_stat_name)
             .setStyle(
                 androidx.media.app.NotificationCompat.MediaStyle()
