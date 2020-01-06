@@ -31,9 +31,9 @@ class LocalPlaylistRepository(
         return database.playlistSongJoinDataDao().getAll().toObservable()
     }
 
-    override fun createPlaylist(name: String, songs: List<Song>?): Single<Playlist> {
+    override fun createPlaylist(name: String, mediaStoreId: Long?, songs: List<Song>?): Single<Playlist> {
         return Single.fromCallable {
-            database.playlistDataDao().insert(PlaylistData(name))
+            database.playlistDataDao().insert(PlaylistData(name = name, mediaStoreId = mediaStoreId))
         }
             .flatMap { playlistId ->
                 database.playlistSongJoinDataDao().insert(songs.orEmpty().map { song -> PlaylistSongJoin(playlistId, song.id) })
@@ -54,8 +54,15 @@ class LocalPlaylistRepository(
 
     override fun deletePlaylist(playlist: Playlist): Completable {
         return database.playlistDataDao().delete(
-            PlaylistData(playlist.name)
-                .apply { id = playlist.id }
+            PlaylistData(playlist.id, playlist.name)
         )
+    }
+
+    override fun updatePlaylistMediaStoreId(playlist: Playlist, mediaStoreId: Long?): Completable {
+        return database.playlistDataDao().update(PlaylistData(playlist.id, playlist.name, mediaStoreId))
+    }
+
+    override fun clearPlaylist(playlist: Playlist): Completable {
+        return database.playlistSongJoinDataDao().delete(playlist.id)
     }
 }

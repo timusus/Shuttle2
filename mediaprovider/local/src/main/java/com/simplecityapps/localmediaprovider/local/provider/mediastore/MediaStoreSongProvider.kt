@@ -37,7 +37,7 @@ class MediaStoreSongProvider(
                 null
             )
 
-            cursor?.use { cursor ->
+            cursor?.use {
                 try {
                     while (cursor.moveToNext()) {
                         if (emitter.isDisposed) {

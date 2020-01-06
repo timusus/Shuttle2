@@ -9,10 +9,12 @@ import io.reactivex.Single
 interface PlaylistRepository {
     fun getPlaylists(): Observable<List<Playlist>>
     fun getPlaylists(query: PlaylistQuery): Observable<List<Playlist>>
-    fun createPlaylist(name: String, songs: List<Song>?): Single<Playlist>
+    fun createPlaylist(name: String, mediaStoreId: Long?, songs: List<Song>?): Single<Playlist>
     fun addToPlaylist(playlist: Playlist, songs: List<Song>): Completable
     fun getSongsForPlaylist(playlistId: Long): Observable<List<Song>>
     fun deletePlaylist(playlist: Playlist): Completable
+    fun updatePlaylistMediaStoreId(playlist: Playlist, mediaStoreId: Long?) : Completable
+    fun clearPlaylist(playlist: Playlist): Completable
 }
 
 sealed class PlaylistQuery {

@@ -13,8 +13,7 @@ class DatabaseProvider constructor(private val context: Context) {
 
     val database: MediaDatabase by lazy {
         Room.databaseBuilder(context, MediaDatabase::class.java, "song.db")
-            .addMigrations(MIGRATION_23_24)
-            .addMigrations(MIGRATION_24_25)
+            .addMigrations(MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26)
             .addCallback(callback)
             .build()
     }
@@ -24,7 +23,7 @@ class DatabaseProvider constructor(private val context: Context) {
             super.onCreate(db)
 
             Executors.newSingleThreadScheduledExecutor().execute {
-                database.playlistDataDao().insert(PlaylistData(favoritesName))
+                database.playlistDataDao().insert(PlaylistData(name = favoritesName))
             }
         }
     }
@@ -44,6 +43,12 @@ class DatabaseProvider constructor(private val context: Context) {
     private val MIGRATION_24_25 = object : Migration(24, 25) {
         override fun migrate(database: SupportSQLiteDatabase) {
             database.execSQL("ALTER TABLE `songs` ADD COLUMN `mimeType` TEXT NOT NULL DEFAULT 'audio/*'")
+        }
+    }
+
+    private val MIGRATION_25_26 = object : Migration(25, 26) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            database.execSQL("ALTER TABLE `playlists` ADD COLUMN `media_store_id` INTEGER")
         }
     }
 }

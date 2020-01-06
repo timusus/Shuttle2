@@ -2,11 +2,12 @@ package com.simplecityapps.mediaprovider.model
 
 import java.io.Serializable
 
-class Playlist(
+data class Playlist(
     val id: Long,
     val name: String,
     val songCount: Int,
-    val duration: Int
+    val duration: Int,
+    val mediaStoreId: Long?
 ) : Serializable {
 
     override fun equals(other: Any?): Boolean {

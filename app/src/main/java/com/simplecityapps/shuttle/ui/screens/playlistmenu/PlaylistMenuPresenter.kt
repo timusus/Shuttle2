@@ -40,7 +40,7 @@ class PlaylistMenuPresenter @Inject constructor(
 
     override fun createPlaylist(name: String, playlistData: PlaylistData?) {
         addDisposable((playlistData?.getSongs() ?: Single.just(emptyList())).flatMap { songs ->
-            playlistRepository.createPlaylist(name, songs)
+            playlistRepository.createPlaylist(name, null, songs)
         }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())

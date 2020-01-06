@@ -4,7 +4,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.view.isVisible
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.shuttle.R
@@ -44,12 +46,14 @@ class PlaylistBinder(val playlist: Playlist, private val listener: Listener) : V
     override fun areContentsTheSame(other: Any): Boolean {
         return playlist.name == (other as? PlaylistBinder)?.playlist?.name
                 && playlist.songCount == (other as? PlaylistBinder)?.playlist?.songCount
+                && playlist.mediaStoreId == other.playlist.mediaStoreId
     }
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<PlaylistBinder>(itemView) {
 
         private val titleTextView: TextView = itemView.findViewById(R.id.title)
         private val subtitleTextView: TextView = itemView.findViewById(R.id.subtitle)
+        private val syncIcon: ImageView = itemView.findViewById(R.id.syncIcon)
         private val overflowButton: ImageButton = itemView.findViewById(R.id.overflowButton)
 
         init {
@@ -66,6 +70,8 @@ class PlaylistBinder(val playlist: Playlist, private val listener: Listener) : V
             } else {
                 subtitleTextView.text = "${viewBinder.playlist.songCount} Song(s) • ${viewBinder.playlist.duration.toHms()}"
             }
+
+            syncIcon.isVisible = viewBinder.playlist.mediaStoreId != null
         }
     }
 }

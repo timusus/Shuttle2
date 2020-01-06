@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
@@ -18,6 +19,7 @@ import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
+import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
 import com.simplecityapps.shuttle.ui.screens.library.playlists.detail.PlaylistDetailFragmentArgs
 import kotlinx.android.synthetic.main.fragment_folder_detail.*
 import javax.inject.Inject
@@ -64,6 +66,33 @@ class PlaylistListFragment :
         super.onResume()
 
         presenter.loadPlaylists()
+
+        findToolbarHost()?.getToolbar()?.let { toolbar ->
+            toolbar.inflateMenu(R.menu.menu_playlists)
+            toolbar.setOnMenuItemClickListener { menuItem ->
+                when (menuItem.itemId) {
+                    R.id.syncPlaylists -> {
+                        AlertDialog.Builder(context!!)
+                            .setTitle("Sync Media Store Playlists")
+                            .setMessage("Copy playlists from the Media Store. If the playlists already exists in Shuttle, the songs will be merged. \n\nNote: Songs are only added, and not removed.")
+                            .setPositiveButton("Sync") { _, _ -> presenter.importMediaStorePlaylists() }
+                            .setNegativeButton("Cancel", null)
+                            .show()
+                        true
+                    }
+                    else -> false
+                }
+            }
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        findToolbarHost()?.getToolbar()?.let { toolbar ->
+            toolbar.menu.removeItem(R.id.syncPlaylists)
+            toolbar.setOnMenuItemClickListener(null)
+        }
     }
 
     override fun onDestroyView() {
@@ -109,6 +138,10 @@ class PlaylistListFragment :
         horizontalLoadingView?.setProgress(progress)
     }
 
+    override fun onPlaylistsImported() {
+        Toast.makeText(context!!, "Playlists imported", Toast.LENGTH_SHORT).show()
+    }
+
     // PlaylistBinder.Listener
 
     private val playlistBinderListener = object : PlaylistBinder.Listener {
@@ -133,11 +166,20 @@ class PlaylistListFragment :
                         true
                     }
                     R.id.delete -> {
-                        presenter.deletePlaylist(playlist)
+                        AlertDialog.Builder(context!!)
+                            .setTitle("Delete Playlist")
+                            .setMessage("${playlist.name} will be permanently deleted")
+                            .setPositiveButton("Delete") { _, _ -> presenter.deletePlaylist(playlist) }
+                            .setNegativeButton("Cancel", null)
+                            .show()
                         true
                     }
                     R.id.playNext -> {
                         presenter.playNext(playlist)
+                        return@setOnMenuItemClickListener true
+                    }
+                    R.id.clear -> {
+                        presenter.clearPlaylist(playlist)
                         return@setOnMenuItemClickListener true
                     }
                     else -> false

@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.dagger
 
 import android.content.SharedPreferences
+import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStorePlaylistImporter
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.repository.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.AlbumRepository
@@ -78,6 +79,8 @@ interface CoreComponent {
     fun getHttpSever(): HttpServer
 
     fun getGeneralPreferenceManager(): GeneralPreferenceManager
+
+    fun getPlaylistImporter(): MediaStorePlaylistImporter
 
     @Component.Builder
     interface Builder {

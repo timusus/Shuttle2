@@ -8,6 +8,11 @@
     <item
         android:id="@+id/delete"
         android:title="Delete">
-
     </item>
+
+    <item
+        android:id="@+id/clear"
+        android:title="Clear">
+    </item>
+
 </menu>

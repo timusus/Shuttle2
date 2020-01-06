@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library.playlists
 
+import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStorePlaylistImporter
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.mediaprovider.repository.PlaylistRepository
@@ -7,6 +8,7 @@ import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.Disposable
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
@@ -26,6 +28,7 @@ interface PlaylistListContract {
         fun onAddedToQueue(playlist: Playlist)
         fun setLoadingState(state: LoadingState)
         fun setLoadingProgress(progress: Float)
+        fun onPlaylistsImported()
     }
 
     interface Presenter : BaseContract.Presenter<View> {
@@ -33,13 +36,16 @@ interface PlaylistListContract {
         fun addToQueue(playlist: Playlist)
         fun playNext(playlist: Playlist)
         fun deletePlaylist(playlist: Playlist)
+        fun importMediaStorePlaylists(): Disposable
+        fun clearPlaylist(playlist: Playlist)
     }
 }
 
 class PlaylistListPresenter @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val playbackManager: PlaybackManager,
-    private val mediaImporter: MediaImporter
+    private val mediaImporter: MediaImporter,
+    private val playlistImporter: MediaStorePlaylistImporter
 ) : PlaylistListContract.Presenter,
     BasePresenter<PlaylistListContract.View>() {
 
@@ -121,5 +127,28 @@ class PlaylistListPresenter @Inject constructor(
                     },
                     onError = { throwable -> Timber.e(throwable, "Failed to retrieve songs for playlist: ${playlist.name}") })
         )
+    }
+
+    override fun importMediaStorePlaylists(): Disposable {
+        return playlistImporter.importPlaylists()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeBy(
+                onComplete = {
+                    view?.onPlaylistsImported()
+                },
+                onError = { throwable ->
+                    Timber.e(throwable, "Failed to import playlists")
+                })
+    }
+
+    override fun clearPlaylist(playlist: Playlist) {
+        addDisposable(
+            playlistRepository.clearPlaylist(playlist)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onError = { error -> Timber.e(error, "Failed to clear playlist: $playlist") }
+                ))
     }
 }

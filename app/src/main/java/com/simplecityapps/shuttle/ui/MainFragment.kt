@@ -62,6 +62,7 @@ class MainFragment
 
     private var onBackPressCallback: OnBackPressedCallback? = null
 
+    // Todo: Use Presenter
 
     // Lifecycle
 

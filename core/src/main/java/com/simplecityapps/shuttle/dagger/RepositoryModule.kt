@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.dagger
 import android.content.Context
 import com.simplecityapps.localmediaprovider.local.data.room.DatabaseProvider
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
+import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStorePlaylistImporter
 import com.simplecityapps.localmediaprovider.local.repository.LocalAlbumArtistRepository
 import com.simplecityapps.localmediaprovider.local.repository.LocalAlbumRepository
 import com.simplecityapps.localmediaprovider.local.repository.LocalPlaylistRepository
@@ -55,5 +56,11 @@ class RepositoryModule(
     @Singleton
     fun providePlaylistRepository(database: MediaDatabase): PlaylistRepository {
         return LocalPlaylistRepository(database)
+    }
+
+    @Provides
+    @Singleton
+    fun providePlaylistImporter(songRepository: SongRepository, playlistRepository: PlaylistRepository): MediaStorePlaylistImporter {
+        return MediaStorePlaylistImporter(context, songRepository, playlistRepository)
     }
 }

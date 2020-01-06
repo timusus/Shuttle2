@@ -3,7 +3,6 @@ package com.simplecityapps.localmediaprovider.local.data.room.dao
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
-import androidx.room.RoomWarnings
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistSongJoin
 import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.mediaprovider.model.Song
@@ -23,20 +22,21 @@ abstract class PlaylistSongJoinDao {
     @Query(
         "SELECT playlists.*, " +
                 "count(songs.id) as songCount, " +
-                "sum(songs.duration) as duration " +
+                "sum(songs.duration) as duration, " +
+                "media_store_id as mediaStoreId " +
                 "FROM playlists " +
                 "LEFT JOIN playlist_song_join ON playlists.id = playlist_song_join.playlistId " +
                 "LEFT JOIN songs ON songs.id = playlist_song_join.songId " +
                 "GROUP BY playlists.id " +
                 "ORDER BY playlists.name;"
     )
-    @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
     abstract fun getAll(): Flowable<List<Playlist>>
 
     @Query(
         "SELECT playlists.*, " +
                 "count(songs.id) as songCount, " +
-                "sum(songs.duration) as duration " +
+                "sum(songs.duration) as duration, " +
+                "media_store_id as mediaStoreId " +
                 "FROM playlists " +
                 "LEFT JOIN playlist_song_join ON playlists.id = playlist_song_join.playlistId " +
                 "LEFT JOIN songs ON songs.id = playlist_song_join.songId " +
@@ -44,7 +44,6 @@ abstract class PlaylistSongJoinDao {
                 "GROUP BY playlists.id " +
                 "ORDER BY playlists.name;"
     )
-    @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
     abstract fun getPlaylist(playlistId: Long): Single<Playlist>
 
     @Query(
@@ -58,4 +57,7 @@ abstract class PlaylistSongJoinDao {
                 "WHERE playlist_song_join.playlistId = :playlistId;"
     )
     abstract fun getSongsForPlaylist(playlistId: Long): Flowable<List<Song>>
+
+    @Query("DELETE FROM playlist_song_join WHERE playlistId = :playlistId")
+    abstract fun delete(playlistId: Long): Completable
 }
