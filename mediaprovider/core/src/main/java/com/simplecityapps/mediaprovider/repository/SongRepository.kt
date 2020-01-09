@@ -5,6 +5,8 @@ import com.simplecityapps.mediaprovider.model.Song
 import io.reactivex.Completable
 import io.reactivex.Observable
 import java.io.Serializable
+import java.util.*
+import kotlin.Comparator
 
 interface SongRepository {
 
@@ -54,7 +56,7 @@ sealed class SongQuery(
     // Todo: This isn't really 'recently added', any songs which have had their contents modified will show up here.
     //   Best to add a 'dateAdded' column.
     class RecentlyAdded :
-        SongQuery({ song -> true }, SongSortOrder.RecentlyAdded)
+        SongQuery({ song -> (Date().time - song.lastModified.time < (2 * 7 * 24 * 60 * 60 * 1000L)) }, SongSortOrder.RecentlyAdded) // 2 weeks
 }
 
 enum class SongSortOrder : Serializable {
@@ -64,7 +66,10 @@ enum class SongSortOrder : Serializable {
         return when (this) {
             Track -> compareBy<Song> { song -> song.disc }.thenBy { song -> song.track }
             PlayCount -> Comparator { a, b -> a.playCount.compareTo(b.playCount) }
-            RecentlyAdded -> Comparator { a, b -> a.lastModified.compareTo(b.lastModified) }
+            RecentlyAdded -> compareByDescending<Song> { song -> song.lastModified.time / 1000 / 60 } // Round to the nearest minute
+                .thenBy { song -> song.albumArtistName }
+                .thenBy { song -> song.year }
+                .thenBy { song -> song.track }
             MostPlayed -> Comparator { a, b -> b.playCount.compareTo(a.playCount) }
             RecentlyPlayed -> Comparator { a, b -> b.lastPlayed?.compareTo(a.lastPlayed) ?: 0 }
         }
