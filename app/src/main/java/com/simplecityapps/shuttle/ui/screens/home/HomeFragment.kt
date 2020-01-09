@@ -74,16 +74,22 @@ class HomeFragment :
         playlistMenuView = PlaylistMenuView(context!!, playlistMenuPresenter, childFragmentManager)
 
         historyButton.setOnClickListener {
-            findNavController().navigate(
-                R.id.action_homeFragment_to_smartPlaylistDetailFragment,
-                SmartPlaylistDetailFragmentArgs(SmartPlaylist.RecentlyPlayed).toBundle()
-            )
+            val navController = findNavController()
+            if (navController.currentDestination?.id != R.id.smartPlaylistDetailFragment) {
+                navController.navigate(
+                    R.id.action_homeFragment_to_smartPlaylistDetailFragment,
+                    SmartPlaylistDetailFragmentArgs(SmartPlaylist.RecentlyPlayed).toBundle()
+                )
+            }
         }
         latestButton.setOnClickListener {
-            findNavController().navigate(
-                R.id.action_homeFragment_to_smartPlaylistDetailFragment,
-                SmartPlaylistDetailFragmentArgs(SmartPlaylist.RecentlyAdded).toBundle()
-            )
+            val navController = findNavController()
+            if (navController.currentDestination?.id != R.id.smartPlaylistDetailFragment) {
+                navController.navigate(
+                    R.id.action_homeFragment_to_smartPlaylistDetailFragment,
+                    SmartPlaylistDetailFragmentArgs(SmartPlaylist.RecentlyAdded).toBundle()
+                )
+            }
         }
         favoritesButton.setOnClickListener { navigateToPlaylist(PlaylistQuery.PlaylistName("Favorites")) }
         shuffleButton.setOnClickListener { presenter.shuffleAll() }
