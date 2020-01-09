@@ -43,6 +43,8 @@ class SearchFragment : Fragment(),
 
     private lateinit var searchView: SearchView
 
+    private var recyclerView: RecyclerView? = null
+
     @Inject lateinit var presenter: SearchPresenter
 
     @Inject lateinit var playlistMenuPresenter: PlaylistMenuPresenter
@@ -54,6 +56,7 @@ class SearchFragment : Fragment(),
     private val queryPublishSubject = PublishSubject.create<String>()
 
     private lateinit var playlistMenuView: PlaylistMenuView
+
 
 
     // Lifecycle
@@ -78,8 +81,8 @@ class SearchFragment : Fragment(),
 
         imageLoader = GlideImageLoader(this)
 
-        val recyclerView: RecyclerView = view.findViewById(R.id.recyclerView)
-        recyclerView.adapter = adapter
+        recyclerView = view.findViewById(R.id.recyclerView)
+        recyclerView?.adapter = adapter
 
         searchView = view.findViewById(R.id.searchView)
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
@@ -136,7 +139,7 @@ class SearchFragment : Fragment(),
         adapter.setData(
             songs.map { song -> SongBinder(song, imageLoader, songBinderListener) },
             completion = {
-                recyclerView.scrollToPosition(0)
+                recyclerView?.scrollToPosition(0)
             })
     }
 
