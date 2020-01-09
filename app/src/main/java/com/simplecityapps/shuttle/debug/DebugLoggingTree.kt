@@ -39,8 +39,8 @@ class DebugLoggingTree(
     private fun writeToFile(context: Context, logMessage: LogMessage) {
         val file = context.getFileStreamPath(FILE_NAME)
 
-        // If the file is more than 24 hours old, or larger than 1mb, delete it
-        if (file.exists() && (((Date().time - file.lastModified()) > 24 * 60 * 60 * 1000) || file.length() > 1024 * 1024)) {
+        // If the file is more than 24 hours old, or larger than 512kB, delete it
+        if (file.exists() && (((Date().time - file.lastModified()) > 24 * 60 * 60 * 1000) || file.length() > 512 * 1024)) {
             file.delete()
         }
 

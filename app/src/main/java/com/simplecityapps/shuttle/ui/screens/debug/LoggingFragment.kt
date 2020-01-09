@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.os.Bundle
+import android.os.TransactionTooLargeException
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -57,12 +58,14 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
         val dumpButton: Button = view.findViewById(R.id.dumpButton)
         dumpButton.setOnClickListener {
             val clipboardManager: ClipboardManager = context!!.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-//            var label = "v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})\n\n"
-//            label += adapter.items.filterIsInstance<LogMessageBinder>().joinToString("\n\n") { it.logMessage.toString() }
             val file = context!!.getFileStreamPath(DebugLoggingTree.FILE_NAME)
-            if(file.exists()) {
+            if (file.exists()) {
                 val clip = ClipData.newPlainText("Shuttle Logs", context!!.getFileStreamPath(DebugLoggingTree.FILE_NAME).readText(Charsets.UTF_8))
-                clipboardManager.primaryClip = clip
+                try {
+                    clipboardManager.primaryClip = clip
+                } catch (e: TransactionTooLargeException) {
+                    Toast.makeText(context!!, "Log file is too big large clipboard", Toast.LENGTH_SHORT).show()
+                }
                 Toast.makeText(context!!, "Logs copied to clipboard", Toast.LENGTH_SHORT).show()
             } else {
                 Toast.makeText(context!!, "Log file is empty", Toast.LENGTH_SHORT).show()
