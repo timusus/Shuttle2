@@ -1,9 +1,7 @@
-package com.simplecityapps.shuttle
+package com.simplecityapps.shuttle.persistence
 
 import android.content.SharedPreferences
 import com.simplecityapps.core.BuildConfig
-import com.simplecityapps.get
-import com.simplecityapps.put
 
 class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences) {
 

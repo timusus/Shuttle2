@@ -126,7 +126,7 @@ class PlaybackFragment :
     }
 
     override fun setCurrentSong(song: Song?) {
-        song?.let { song ->
+        song?.let {
             titleTextView.text = song.name
             subtitleTextView.text = "${song.albumArtistName} • ${song.albumName}"
 
@@ -148,7 +148,7 @@ class PlaybackFragment :
     }
 
     override fun setQueuePosition(position: Int?, total: Int, smoothScroll: Boolean) {
-        position?.let { position ->
+        position?.let {
             if (smoothScroll) {
                 recyclerView.smoothScrollToPosition(position)
             } else {

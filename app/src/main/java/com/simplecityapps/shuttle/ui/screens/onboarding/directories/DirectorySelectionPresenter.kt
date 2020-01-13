@@ -93,7 +93,7 @@ class MusicDirectoriesPresenter @Inject constructor(
         addDisposable(
             Observable.create<MusicDirectoriesContract.View.Data> { emitter ->
                 SafDirectoryHelper.buildFolderNodeTree(contentResolver, uri) { tree, traversalComplete ->
-                    tree?.let { tree ->
+                    tree?.let {
                         emitter.onNext(MusicDirectoriesContract.View.Data(tree, traversalComplete))
                         if (traversalComplete) {
                             emitter.onComplete()

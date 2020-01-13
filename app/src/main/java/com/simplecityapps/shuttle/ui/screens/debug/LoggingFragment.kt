@@ -30,7 +30,7 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
 
     private lateinit var adapter: RecyclerAdapter
 
-    private lateinit var recyclerView: RecyclerView
+    private var recyclerView: RecyclerView? = null
 
     private var filter: Filter? = null
 
@@ -53,7 +53,7 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
         debugLoggingTree.addCallback(this)
 
         recyclerView = view.findViewById(R.id.recyclerView)
-        recyclerView.adapter = adapter
+        recyclerView?.adapter = adapter
 
         val dumpButton: Button = view.findViewById(R.id.dumpButton)
         dumpButton.setOnClickListener {

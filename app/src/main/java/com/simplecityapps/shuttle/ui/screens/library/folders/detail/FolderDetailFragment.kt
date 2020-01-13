@@ -130,7 +130,7 @@ class FolderDetailFragment :
                 view?.findNavController()?.navigate(R.id.action_folderDetailFragment_self, FolderDetailFragmentArgs(node.uri.toString()).toBundle())
             }
             is FileNode -> {
-                presenter.onSongClicked(node.song, node.parent.leafNodes.map { node -> node.song })
+                presenter.onSongClicked(node.song, node.parent.leafNodes.map { leaf -> leaf.song })
             }
         }
     }

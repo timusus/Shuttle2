@@ -19,7 +19,6 @@ package au.com.simplecityapps.shuttle.imageloading.palette;
 import android.app.Notification;
 import android.content.Context;
 import android.graphics.Color;
-import android.util.Log;
 import android.util.Pair;
 
 import androidx.annotation.ColorInt;
@@ -27,10 +26,10 @@ import androidx.annotation.FloatRange;
 import androidx.annotation.IntRange;
 import androidx.annotation.NonNull;
 
+import timber.log.Timber;
+
 /**
  * Helper class to process legacy (Holo) notifications to make them look like material notifications.
- *
- * @hide
  */
 public class ColorHelper {
 
@@ -281,8 +280,7 @@ public class ColorHelper {
          */
         static double calculateContrast(@ColorInt int foreground, @ColorInt int background) {
             if (Color.alpha(background) != 255) {
-                Log.wtf(TAG, "background can not be translucent: #"
-                        + Integer.toHexString(background));
+                Timber.e("background can not be translucent: #%s",  Integer.toHexString(background));
             }
             if (Color.alpha(foreground) < 255) {
                 // If the foreground is translucent, composite the foreground over the background

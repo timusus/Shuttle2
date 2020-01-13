@@ -93,7 +93,7 @@ class QueueBinder(
                 viewBinder?.listener?.onPlayPauseClicked()
             }
 
-            dragHandle.setOnTouchListener { v, event ->
+            dragHandle.setOnTouchListener { _, event ->
                 if (event.actionMasked == MotionEvent.ACTION_DOWN) {
                     viewBinder?.listener?.onStartDrag(this)
                 }

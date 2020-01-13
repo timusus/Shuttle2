@@ -5,7 +5,7 @@ import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import com.simplecityapps.shuttle.BuildConfig
-import com.simplecityapps.shuttle.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.squareup.moshi.Moshi
 import javax.inject.Inject

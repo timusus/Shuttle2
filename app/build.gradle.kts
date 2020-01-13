@@ -65,6 +65,9 @@ android {
         // Shuttle Core
         implementation(project(":core"))
 
+        // TagLib
+        implementation(project(":taglib:lib"))
+
         // Shuttle MediaProvider Core
         implementation(project(":mediaprovider:core"))
         implementation(project(":mediaprovider:local"))

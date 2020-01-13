@@ -6,12 +6,11 @@ import dagger.Provides
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import timber.log.Timber
-import javax.inject.Singleton
 
 @Module
 open class NetworkingModule {
 
-    @Singleton
+    @AppScope
     @Provides
     fun provideOkHttpClient(loggingInterceptor: HttpLoggingInterceptor): OkHttpClient {
         return OkHttpClient.Builder()
@@ -19,7 +18,7 @@ open class NetworkingModule {
             .build()
     }
 
-    @Singleton
+    @AppScope
     @Provides
     fun provideLoggingInterceptor(): HttpLoggingInterceptor {
         return HttpLoggingInterceptor(object : HttpLoggingInterceptor.Logger {
@@ -31,7 +30,7 @@ open class NetworkingModule {
         }
     }
 
-    @Singleton
+    @AppScope
     @Provides
     fun provideMoshi(): Moshi {
         return Moshi.Builder().build()

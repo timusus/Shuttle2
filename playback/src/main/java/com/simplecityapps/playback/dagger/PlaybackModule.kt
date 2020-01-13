@@ -22,9 +22,9 @@ import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.playback.sleeptimer.SleepTimer
+import com.simplecityapps.shuttle.dagger.AppScope
 import dagger.Module
 import dagger.Provides
-import javax.inject.Singleton
 
 @Module
 class PlaybackModule(
@@ -32,13 +32,13 @@ class PlaybackModule(
     private val sharedPreferences: SharedPreferences
 ) {
 
-    @Singleton
+    @AppScope
     @Provides
     fun provideQueueWatcher(): QueueWatcher {
         return QueueWatcher()
     }
 
-    @Singleton
+    @AppScope
     @Provides
     fun provideQueueManager(queueWatcher: QueueWatcher): QueueManager {
         return QueueManager(queueWatcher)
@@ -49,13 +49,13 @@ class PlaybackModule(
         return MediaPlayerPlayback(context)
     }
 
-    @Singleton
+    @AppScope
     @Provides
     fun providePlaybackWatcher(): PlaybackWatcher {
         return PlaybackWatcher()
     }
 
-    @Singleton
+    @AppScope
     @Provides
     fun provideAudioFocusHelper(playbackWatcher: PlaybackWatcher): AudioFocusHelper {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -70,13 +70,13 @@ class PlaybackModule(
         return MediaIdHelper(playlistRepository, artistRepository, albumRepository, songRepository)
     }
 
-    @Singleton
+    @AppScope
     @Provides
     fun providePlaybackPreferenceManager(): PlaybackPreferenceManager {
         return PlaybackPreferenceManager(sharedPreferences)
     }
 
-    @Singleton
+    @AppScope
     @Provides
     fun providePlaybackManager(
         queueManager: QueueManager,
@@ -89,25 +89,25 @@ class PlaybackModule(
         return PlaybackManager(queueManager, playback, playbackWatcher, audioFocusHelper, playbackPreferenceManager, queueWatcher)
     }
 
-    @Singleton
+    @AppScope
     @Provides
     fun provideCastService(songRepository: SongRepository): CastService {
         return CastService(context, songRepository)
     }
 
-    @Singleton
+    @AppScope
     @Provides
     fun provideHttpServer(castService: CastService): HttpServer {
         return HttpServer(castService)
     }
 
-    @Singleton
+    @AppScope
     @Provides
     fun provideCastSessionManager(playbackManager: PlaybackManager, httpServer: HttpServer): CastSessionManager {
         return CastSessionManager(playbackManager, context, httpServer)
     }
 
-    @Singleton
+    @AppScope
     @Provides
     fun provideMediaSessionManager(
         playbackManager: PlaybackManager,
@@ -119,13 +119,13 @@ class PlaybackModule(
         return MediaSessionManager(context, playbackManager, queueManager, mediaIdHelper, playbackWatcher, queueWatcher)
     }
 
-    @Singleton
+    @AppScope
     @Provides
     fun provideNoiseManager(playbackManager: PlaybackManager, playbackWatcher: PlaybackWatcher): NoiseManager {
         return NoiseManager(context, playbackManager, playbackWatcher)
     }
 
-    @Singleton
+    @AppScope
     @Provides
     fun providePlaybackNotificationManager(
         playbackManager: PlaybackManager,
@@ -145,7 +145,7 @@ class PlaybackModule(
         )
     }
 
-    @Singleton
+    @AppScope
     @Provides
     fun provideSleepTimer(playbackManager: PlaybackManager, playbackWatcher: PlaybackWatcher): SleepTimer {
         return SleepTimer(playbackManager, playbackWatcher)

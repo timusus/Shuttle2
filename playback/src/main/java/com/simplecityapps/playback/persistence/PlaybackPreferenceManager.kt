@@ -1,9 +1,9 @@
 package com.simplecityapps.playback.persistence
 
 import android.content.SharedPreferences
-import com.simplecityapps.get
+import com.simplecityapps.shuttle.persistence.get
 import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.put
+import com.simplecityapps.shuttle.persistence.put
 
 class PlaybackPreferenceManager(private val sharedPreferences: SharedPreferences) {
 

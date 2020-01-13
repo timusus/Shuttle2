@@ -18,7 +18,7 @@ import androidx.navigation.fragment.navArgs
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
-import com.simplecityapps.put
+import com.simplecityapps.shuttle.persistence.put
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach

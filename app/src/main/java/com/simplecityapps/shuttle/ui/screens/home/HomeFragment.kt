@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
@@ -98,7 +99,7 @@ class HomeFragment :
         recyclerView.adapter = adapter
 
         val decoration = DividerItemDecoration(context, LinearLayout.VERTICAL)
-        decoration.setDrawable(resources.getDrawable(R.drawable.divider))
+        decoration.setDrawable(ContextCompat.getDrawable(context!!, R.drawable.divider)!!)
         recyclerView.addItemDecoration(decoration)
 
         imageLoader = GlideImageLoader(this)
@@ -114,7 +115,7 @@ class HomeFragment :
             if (isResumed)
                 navigateToSearch()
         }
-        searchView.setOnQueryTextFocusChangeListener { v, hasFocus ->
+        searchView.setOnQueryTextFocusChangeListener { _, hasFocus ->
             if (hasFocus && isResumed) {
                 navigateToSearch()
             }

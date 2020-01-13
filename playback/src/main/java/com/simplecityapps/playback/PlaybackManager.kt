@@ -63,8 +63,7 @@ class PlaybackManager(
         queueManager.setQueue(songs, shuffleSongs, queuePosition)
 
         val currentQueueItem = queueManager.getCurrentItem()
-        currentQueueItem?.let { currentQueueItem ->
-
+        currentQueueItem?.let {
             attemptLoad(currentQueueItem.song, queueManager.getNext()?.song, seekPosition) { result ->
                 result.onSuccess { didLoadFirst ->
                     if (didLoadFirst) {

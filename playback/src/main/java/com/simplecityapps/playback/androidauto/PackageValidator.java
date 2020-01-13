@@ -15,20 +15,25 @@
  */
 package com.simplecityapps.playback.androidauto;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.res.XmlResourceParser;
+import android.os.Build;
 import android.os.Process;
 import android.util.Base64;
-import android.util.Log;
+
 import com.simplecityapps.playback.R;
+
 import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+
+import timber.log.Timber;
 
 /**
  * Validates that the calling package is authorized to browse a
@@ -43,7 +48,6 @@ import java.util.Map;
  * paste into allowed_media_browser_callers.xml. Spaces and newlines are ignored.
  */
 public class PackageValidator {
-    private static final String TAG = "PackageValidator";
 
     /**
      * Map allowed callers' certificate keys to the expected caller information.
@@ -74,13 +78,13 @@ public class PackageValidator {
                         infos = new ArrayList<>();
                         validCertificates.put(certificate, infos);
                     }
-                    Log.v(TAG, String.format("Adding allowed caller: %s package=%s release=%s certificate=%s", info.name, info.packageName, info.release, certificate));
+                    Timber.v("Adding allowed caller: %s package=%s release=%s certificate=%s", info.name, info.packageName, info.release, certificate);
                     infos.add(info);
                 }
                 eventType = parser.next();
             }
         } catch (XmlPullParserException | IOException e) {
-            Log.e(TAG, String.format("%s Could not read allowed callers from XML.", e));
+            Timber.e("%s Could not read allowed callers from XML.", e);
         }
         return validCertificates;
     }
@@ -88,7 +92,6 @@ public class PackageValidator {
     /**
      * @return false if the caller is not authorized to get data from this MediaBrowserService
      */
-    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     public boolean isCallerAllowed(Context context, String callingPackage, int callingUid) {
         // Always allow calls from the framework, self app or development environment.
         if (Process.SYSTEM_UID == callingUid || Process.myUid() == callingUid) {
@@ -104,7 +107,7 @@ public class PackageValidator {
             return false;
         }
         if (packageInfo.signatures.length != 1) {
-            Log.w(TAG, "Caller does not have exactly one signature certificate!");
+            Timber.w("Caller does not have exactly one signature certificate!");
             return false;
         }
         String signature = Base64.encodeToString(
@@ -113,10 +116,10 @@ public class PackageValidator {
         // Test for known signatures:
         ArrayList<CallerInfo> validCallers = mValidCertificates.get(signature);
         if (validCallers == null) {
-            Log.v(TAG, "Signature for caller " + callingPackage + " is not valid: \n" + signature);
+            Timber.v("Signature for caller " + callingPackage + " is not valid: \n" + signature);
             if (mValidCertificates.isEmpty()) {
-                Log.w(TAG, String.format(
-                        "The list of valid certificates is empty. Either your file res/xml/allowed_media_browser_callers.xml is empty or there was an error while reading it. Check previous log messages."));
+                Timber.w(
+                        "The list of valid certificates is empty. Either your file res/xml/allowed_media_browser_callers.xml is empty or there was an error while reading it. Check previous log messages.");
             }
             return false;
         }
@@ -125,15 +128,15 @@ public class PackageValidator {
         StringBuffer expectedPackages = new StringBuffer();
         for (CallerInfo info : validCallers) {
             if (callingPackage.equals(info.packageName)) {
-                Log.v(TAG, String.format("Valid caller: %s  package=%s release=%s", info.name, info.packageName, info.release));
+                Timber.v("Valid caller: %s  package=%s release=%s", info.name, info.packageName, info.release);
                 return true;
             }
             expectedPackages.append(info.packageName).append(' ');
         }
 
-        Log.i(TAG, String.format(
+        Timber.i(
                 "Caller has a valid certificate, but its package doesn't match any expected package for the given certificate. Caller's package is %s. Expected packages as defined in res/xml/allowed_media_browser_callers.xml are (%s). This caller's certificate is: \n%s",
-                callingPackage, expectedPackages, signature));
+                callingPackage, expectedPackages, signature);
 
         return false;
     }
@@ -160,12 +163,18 @@ public class PackageValidator {
     /**
      * @return {@link PackageInfo} for the package name or null if it's not found.
      */
+    @SuppressWarnings("deprecation")
+    @SuppressLint("PackageManagerGetSignatures")
     private PackageInfo getPackageInfo(Context context, String pkgName) {
         try {
             final PackageManager pm = context.getPackageManager();
-            return pm.getPackageInfo(pkgName, PackageManager.GET_SIGNATURES);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                return pm.getPackageInfo(pkgName, PackageManager.GET_SIGNING_CERTIFICATES);
+            } else {
+                return pm.getPackageInfo(pkgName, PackageManager.GET_SIGNATURES);
+            }
         } catch (PackageManager.NameNotFoundException e) {
-            Log.w(TAG, String.format("%s Package manager can't find package: %s", e, pkgName));
+            Timber.w(e, "Package manager can't find package: %s", pkgName);
         }
         return null;
     }

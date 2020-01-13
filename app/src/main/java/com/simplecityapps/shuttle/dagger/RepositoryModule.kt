@@ -15,7 +15,6 @@ import com.simplecityapps.mediaprovider.repository.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import dagger.Module
 import dagger.Provides
-import javax.inject.Singleton
 
 @Module
 class RepositoryModule(
@@ -23,43 +22,43 @@ class RepositoryModule(
 ) {
 
     @Provides
-    @Singleton
+    @AppScope
     fun provideMediaDatabase(): MediaDatabase {
         return DatabaseProvider(context).database
     }
 
     @Provides
-    @Singleton
+    @AppScope
     fun provideSongRepository(database: MediaDatabase): SongRepository {
         return LocalSongRepository(database)
     }
 
     @Provides
-    @Singleton
+    @AppScope
     fun provideMediaImporter(songRepository: SongRepository): MediaImporter {
         return MediaImporter(songRepository)
     }
 
     @Provides
-    @Singleton
+    @AppScope
     fun provideAlbumRepository(database: MediaDatabase): AlbumRepository {
         return LocalAlbumRepository(database)
     }
 
     @Provides
-    @Singleton
+    @AppScope
     fun provideAlbumArtistRepository(database: MediaDatabase): AlbumArtistRepository {
         return LocalAlbumArtistRepository(database)
     }
 
     @Provides
-    @Singleton
+    @AppScope
     fun providePlaylistRepository(database: MediaDatabase): PlaylistRepository {
         return LocalPlaylistRepository(database)
     }
 
     @Provides
-    @Singleton
+    @AppScope
     fun providePlaylistImporter(songRepository: SongRepository, playlistRepository: PlaylistRepository): MediaStorePlaylistImporter {
         return MediaStorePlaylistImporter(context, songRepository, playlistRepository)
     }

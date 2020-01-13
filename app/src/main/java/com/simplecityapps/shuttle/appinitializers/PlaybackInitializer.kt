@@ -62,7 +62,7 @@ class PlaybackInitializer @Inject constructor(
         queueManager.setShuffleMode(shuffleMode, reshuffle = false)
         queueManager.setRepeatMode(repeatMode)
 
-        queuePosition?.let { queuePosition ->
+        queuePosition?.let {
             val songIds = playbackPreferenceManager.queueIds?.split(",")?.map { id -> id.toLong() }
             val shuffleSongIds = playbackPreferenceManager.shuffleQueueIds?.split(",")?.map { id -> id.toLong() }
             val allSongIds = songIds.orEmpty().toMutableSet()

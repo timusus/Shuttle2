@@ -37,10 +37,8 @@ class SleepTimerDialogFragment : DialogFragment(), Injectable {
             builder.setPositiveButton("Close", null)
             builder.setNeutralButton("Set Time") { _, _ ->
                 sleepTimer.stopTimer()
-                fragmentManager?.let { fragmentManager ->
-                    dismiss()
-                    SleepTimerDialogFragment().show(fragmentManager)
-                }
+                dismiss()
+                SleepTimerDialogFragment().show(parentFragmentManager)
             }
         } ?: run {
 

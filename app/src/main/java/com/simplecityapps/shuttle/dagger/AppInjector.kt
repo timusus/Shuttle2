@@ -18,15 +18,6 @@ object AppInjector {
 
     fun init(shuttleApplication: ShuttleApplication) {
 
-        val coreComponent = shuttleApplication.provideCoreComponent()
-
-        DaggerAppComponent
-            .builder()
-            .application(shuttleApplication)
-            .coreComponent(coreComponent)
-            .build()
-            .inject(shuttleApplication)
-
         shuttleApplication.registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
 
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {

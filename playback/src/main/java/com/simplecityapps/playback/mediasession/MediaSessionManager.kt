@@ -17,8 +17,9 @@ import com.simplecityapps.playback.queue.QueueWatcher
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
+import javax.inject.Inject
 
-class MediaSessionManager(
+class MediaSessionManager @Inject constructor(
     private val context: Context,
     private val playbackManager: PlaybackManager,
     private val queueManager: QueueManager,

@@ -1,4 +1,6 @@
-package com.simplecityapps
+@file:Suppress("UNCHECKED_CAST")
+
+package com.simplecityapps.shuttle.persistence
 
 import android.content.SharedPreferences
 

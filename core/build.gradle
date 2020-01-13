@@ -24,44 +24,30 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
-    // Shuttle Media Provider
-    implementation project(path: ':mediaprovider:core')
-    implementation project(path: ':mediaprovider:local')
-
-    // Shuttle Image Loader
-    implementation project(path: ':imageloader')
-
-    // Shuttle Playback
-    implementation project(path: ':playback')
-
-    // TagLib
-    implementation project(path: ":taglib:lib")
-
     // Kotlin Standard Library
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.3.61"
+    api "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.3.61"
+
+    // Kotlin Extensions
+    api 'androidx.core:core-ktx:1.1.0'
 
     // Dagger core
-    implementation 'com.google.dagger:dagger-android:2.25.2'
+    api 'com.google.dagger:dagger-android:2.25.2'
     kapt 'com.google.dagger:dagger-compiler:2.25.2'
 
     // Timber
-    implementation 'com.jakewharton.timber:timber:4.7.1'
+    api 'com.jakewharton.timber:timber:4.7.1'
 
     // OKHttp
-    implementation 'com.squareup.okhttp3:okhttp:4.2.2'
-    implementation 'com.squareup.okhttp3:logging-interceptor:4.2.2'
+    api 'com.squareup.okhttp3:okhttp:4.2.2'
+    api 'com.squareup.okhttp3:logging-interceptor:4.2.2'
 
     // Retrofit
-    implementation "com.squareup.retrofit2:converter-moshi:2.7.0"
+    api "com.squareup.retrofit2:converter-moshi:2.7.0"
 
     // Moshi
-    implementation("com.squareup.moshi:moshi-kotlin:1.9.2")
+    api("com.squareup.moshi:moshi-kotlin:1.9.2")
     kapt("com.squareup.moshi:moshi-kotlin-codegen:1.9.2")
 
-    // NanoHttp
-    implementation 'org.nanohttpd:nanohttpd-webserver:2.3.1'
-}
-
-repositories {
-    mavenCentral()
+    // AndroidX Preferences
+    implementation "androidx.preference:preference:1.1.0"
 }

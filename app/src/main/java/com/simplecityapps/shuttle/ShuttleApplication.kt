@@ -8,18 +8,20 @@ import com.simplecityapps.playback.ActivityIntentProvider
 import com.simplecityapps.playback.dagger.PlaybackModule
 import com.simplecityapps.shuttle.appinitializers.AppInitializers
 import com.simplecityapps.shuttle.dagger.*
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.MainActivity
 import com.simplecityapps.shuttle.ui.widgets.ShuttleAppWidgetProvider
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasAndroidInjector
+import okhttp3.OkHttpClient
 import timber.log.Timber
 import javax.inject.Inject
 
 class ShuttleApplication : Application(),
     HasAndroidInjector,
-    CoreComponentProvider,
-    ActivityIntentProvider {
+    ActivityIntentProvider,
+    OkHttpClientProvider {
 
     @Inject lateinit var dispatchingAndroidInjector: DispatchingAndroidInjector<Any>
 
@@ -27,22 +29,24 @@ class ShuttleApplication : Application(),
 
     @Inject lateinit var preferenceManager: GeneralPreferenceManager
 
-    private val coreComponent: CoreComponent by lazy {
+    lateinit var appComponent: AppComponent
+
+    override fun onCreate() {
+        super.onCreate()
 
         val persistenceModule = PersistenceModule(this)
         val repositoryModule = RepositoryModule(this)
         val playbackModule = PlaybackModule(this, persistenceModule.provideSharedPrefs())
 
-        DaggerCoreComponent
+        appComponent = DaggerAppComponent
             .builder()
+            .application(this)
             .repositoryModule(repositoryModule)
-            .playbackModule(playbackModule)
             .persistenceModule(persistenceModule)
+            .playbackModule(playbackModule)
             .build()
-    }
 
-    override fun onCreate() {
-        super.onCreate()
+        appComponent.inject(this)
 
         AppInjector.init(this)
 
@@ -80,13 +84,6 @@ class ShuttleApplication : Application(),
     }
 
 
-    // CoreComponentProvider Implementation
-
-    override fun provideCoreComponent(): CoreComponent {
-        return coreComponent
-    }
-
-
     // ActivityIntentProvider Implementation
 
     override fun provideMainActivityIntent(): Intent {
@@ -95,5 +92,12 @@ class ShuttleApplication : Application(),
 
     override fun provideAppWidgetIntent(): Intent {
         return Intent(this, ShuttleAppWidgetProvider::class.java)
+    }
+
+
+    // OkHttpClientProvider Implementation
+
+    override fun provideOkHttpClient(): OkHttpClient {
+        return appComponent.okHttpClient()
     }
 }
