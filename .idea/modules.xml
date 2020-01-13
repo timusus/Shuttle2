@@ -4,9 +4,8 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/Shuttle2.iml" filepath="$PROJECT_DIR$/Shuttle2.iml" group="Shuttle2" />
       <module fileurl="file://$PROJECT_DIR$/core/Shuttle2-core.iml" filepath="$PROJECT_DIR$/core/Shuttle2-core.iml" group="Shuttle2/core" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Shuttle2_buildSrc.iml" filepath="$PROJECT_DIR$/.idea/modules/Shuttle2_buildSrc.iml" group="Shuttle2/buildSrc/Shuttle2_buildSrc" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Shuttle2_buildSrc.iml" filepath="$PROJECT_DIR$/.idea/modules/Shuttle2_buildSrc.iml" group="Shuttle2/Shuttle2_buildSrc" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" group="Shuttle2/app" />
-      <module fileurl="file://$PROJECT_DIR$/taglib/gen/gen.iml" filepath="$PROJECT_DIR$/taglib/gen/gen.iml" />
       <module fileurl="file://$PROJECT_DIR$/imageloader/imageloader.iml" filepath="$PROJECT_DIR$/imageloader/imageloader.iml" group="Shuttle2/imageloader" />
       <module fileurl="file://$PROJECT_DIR$/taglib/lib/lib.iml" filepath="$PROJECT_DIR$/taglib/lib/lib.iml" group="Shuttle2/taglib/lib" />
       <module fileurl="file://$PROJECT_DIR$/mediaprovider/local/local.iml" filepath="$PROJECT_DIR$/mediaprovider/local/local.iml" group="Shuttle2/mediaprovider/local" />

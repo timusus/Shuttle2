@@ -8,5 +8,4 @@ include ':imageloader'
 include ':playback'
 include ':saf'//
 
-// Re-comment when regenerating taglib .so files (see taglib/lib/build.gradle
 //include ':taglib:gen'
