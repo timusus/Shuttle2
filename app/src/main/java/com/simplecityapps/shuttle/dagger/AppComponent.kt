@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.dagger
 
+import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.dagger.PlaybackModule
 import com.simplecityapps.playback.dagger.PlaybackServiceModule
 import com.simplecityapps.shuttle.ShuttleApplication
@@ -32,6 +33,7 @@ interface AppComponent {
     interface Builder {
         @BindsInstance
         fun application(application: ShuttleApplication): Builder
+
         fun repositoryModule(module: RepositoryModule): Builder
         fun playbackModule(module: PlaybackModule): Builder
         fun persistenceModule(module: PersistenceModule): Builder
@@ -43,4 +45,6 @@ interface AppComponent {
     fun okHttpClient(): OkHttpClient
 
     fun generalPreferenceManager(): GeneralPreferenceManager
+
+    fun songRepository(): SongRepository
 }

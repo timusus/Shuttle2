@@ -4,10 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.net.ConnectivityManager
 import android.util.Log
-import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.DiskSongLocalArtworkModelLoader
-import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.LocalArtworkModelLoader
-import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.LocalArtworkProvider
-import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.TagLibSongLocalArtworkModelLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.*
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.artwork.AlbumArtistArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.artwork.AlbumArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.artwork.SongArtworkModelLoader
@@ -23,6 +20,7 @@ import com.simplecity.amp_library.glide.palette.ColorSet
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.mediaprovider.repository.SongRepositoryProvider
 import com.simplecityapps.shuttle.dagger.GeneralPreferenceManagerProvider
 import com.simplecityapps.shuttle.dagger.OkHttpClientProvider
 import com.simplecityapps.taglib.ArtworkProvider
@@ -39,6 +37,8 @@ class ImageLoaderGlideModule : AppGlideModule() {
         val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
 
         val preferenceManager = (context.applicationContext as GeneralPreferenceManagerProvider).provideGeneralPreferenceManager()
+
+        val songRepository = (context.applicationContext as SongRepositoryProvider).provideSongRepository()
 
         val okHttpClient = (context.applicationContext as OkHttpClientProvider)
             .provideOkHttpClient()
@@ -65,6 +65,7 @@ class ImageLoaderGlideModule : AppGlideModule() {
 
         registry.append(Song::class.java, InputStream::class.java, DiskSongLocalArtworkModelLoader.Factory())
         registry.append(Song::class.java, InputStream::class.java, TagLibSongLocalArtworkModelLoader.Factory(context, ArtworkProvider()))
+        registry.append(Album::class.java, InputStream::class.java, DelegatingAlbumLocalArtworkModelLoader.Factory(songRepository))
 
 
         // Remote

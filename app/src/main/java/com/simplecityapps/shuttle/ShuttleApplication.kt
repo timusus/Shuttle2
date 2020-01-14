@@ -4,6 +4,8 @@ import android.app.Application
 import android.appwidget.AppWidgetManager
 import android.content.Intent
 import androidx.appcompat.app.AppCompatDelegate
+import com.simplecityapps.mediaprovider.repository.SongRepository
+import com.simplecityapps.mediaprovider.repository.SongRepositoryProvider
 import com.simplecityapps.playback.ActivityIntentProvider
 import com.simplecityapps.playback.dagger.PlaybackModule
 import com.simplecityapps.shuttle.appinitializers.AppInitializers
@@ -22,7 +24,8 @@ class ShuttleApplication : Application(),
     HasAndroidInjector,
     ActivityIntentProvider,
     OkHttpClientProvider,
-    GeneralPreferenceManagerProvider {
+    GeneralPreferenceManagerProvider,
+    SongRepositoryProvider {
 
     @Inject lateinit var dispatchingAndroidInjector: DispatchingAndroidInjector<Any>
 
@@ -107,5 +110,12 @@ class ShuttleApplication : Application(),
 
     override fun provideGeneralPreferenceManager(): GeneralPreferenceManager {
         return appComponent.generalPreferenceManager()
+    }
+
+
+    // SongRepositoryProvider Implementation
+
+    override fun provideSongRepository(): SongRepository {
+        return appComponent.songRepository()
     }
 }
