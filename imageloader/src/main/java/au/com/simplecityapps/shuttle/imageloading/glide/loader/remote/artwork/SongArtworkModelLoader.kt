@@ -8,9 +8,13 @@ import com.bumptech.glide.load.model.ModelLoaderFactory
 import com.bumptech.glide.load.model.MultiModelLoaderFactory
 import com.bumptech.glide.load.model.stream.BaseGlideUrlLoader
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import java.io.InputStream
 
-class SongArtworkModelLoader(urlLoader: ModelLoader<GlideUrl, InputStream>) : BaseGlideUrlLoader<Song>(urlLoader) {
+class SongArtworkModelLoader(
+    urlLoader: ModelLoader<GlideUrl, InputStream>,
+    private val preferenceManager: GeneralPreferenceManager
+) : BaseGlideUrlLoader<Song>(urlLoader) {
 
     override fun getUrl(model: Song, width: Int, height: Int, options: Options?): String {
         return "https://artwork.shuttlemusicplayer.app/api/v1/artwork?artist=${model.albumArtistName.encode()}&album=${model.albumName.encode()}"
@@ -20,10 +24,20 @@ class SongArtworkModelLoader(urlLoader: ModelLoader<GlideUrl, InputStream>) : Ba
         return true
     }
 
-    class Factory : ModelLoaderFactory<Song, InputStream> {
+    override fun buildLoadData(model: Song, width: Int, height: Int, options: Options): ModelLoader.LoadData<InputStream>? {
+        if (preferenceManager.artworkLocalOnly) {
+            return null
+        }
+        return super.buildLoadData(model, width, height, options)
+    }
+
+
+    class Factory(
+        private val preferenceManager: GeneralPreferenceManager
+    ) : ModelLoaderFactory<Song, InputStream> {
 
         override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Song, InputStream> {
-            return SongArtworkModelLoader(multiFactory.build(GlideUrl::class.java, InputStream::class.java))
+            return SongArtworkModelLoader(multiFactory.build(GlideUrl::class.java, InputStream::class.java), preferenceManager)
         }
 
         override fun teardown() {}

@@ -21,7 +21,8 @@ import javax.inject.Inject
 class ShuttleApplication : Application(),
     HasAndroidInjector,
     ActivityIntentProvider,
-    OkHttpClientProvider {
+    OkHttpClientProvider,
+    GeneralPreferenceManagerProvider {
 
     @Inject lateinit var dispatchingAndroidInjector: DispatchingAndroidInjector<Any>
 
@@ -99,5 +100,12 @@ class ShuttleApplication : Application(),
 
     override fun provideOkHttpClient(): OkHttpClient {
         return appComponent.okHttpClient()
+    }
+
+
+    // GeneralPreferenceManagerProvider Implementation
+
+    override fun provideGeneralPreferenceManager(): GeneralPreferenceManager {
+        return appComponent.generalPreferenceManager()
     }
 }

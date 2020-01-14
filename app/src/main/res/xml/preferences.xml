@@ -24,6 +24,20 @@
             android:title="Rescan" />
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="Artwork">
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="artwork_wifi_only"
+            android:summary="Only download artwork from remote sources when Wi-Fi is available"
+            android:title="Wi-Fi only" />
+
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="artwork_local_only"
+            android:summary="Don't download artwork from remote (internet) sources"
+            android:title="Local only" />
+    </PreferenceCategory>
+
     <PreferenceCategory android:title="Changelog">
 
         <Preference

@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.dagger
 import com.simplecityapps.playback.dagger.PlaybackModule
 import com.simplecityapps.playback.dagger.PlaybackServiceModule
 import com.simplecityapps.shuttle.ShuttleApplication
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.widgets.WidgetModule
 import dagger.BindsInstance
 import dagger.Component
@@ -40,4 +41,6 @@ interface AppComponent {
     fun inject(shuttleApplication: ShuttleApplication)
 
     fun okHttpClient(): OkHttpClient
+
+    fun generalPreferenceManager(): GeneralPreferenceManager
 }

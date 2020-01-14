@@ -2,6 +2,7 @@ package au.com.simplecityapps.shuttle.imageloading.glide.module
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.net.ConnectivityManager
 import android.util.Log
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.DiskSongLocalArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.LocalArtworkModelLoader
@@ -22,16 +23,33 @@ import com.simplecity.amp_library.glide.palette.ColorSet
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.shuttle.dagger.GeneralPreferenceManagerProvider
 import com.simplecityapps.shuttle.dagger.OkHttpClientProvider
 import com.simplecityapps.taglib.ArtworkProvider
+import java.io.IOException
 import java.io.InputStream
+
+object NoConnectivityException : IOException("No connectivity")
 
 @GlideModule
 class ImageLoaderGlideModule : AppGlideModule() {
 
     override fun registerComponents(context: Context, glide: Glide, registry: Registry) {
 
-        val okHttpClient = (context.applicationContext as OkHttpClientProvider).provideOkHttpClient()
+        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
+
+        val preferenceManager = (context.applicationContext as GeneralPreferenceManagerProvider).provideGeneralPreferenceManager()
+
+        val okHttpClient = (context.applicationContext as OkHttpClientProvider)
+            .provideOkHttpClient()
+            .newBuilder()
+            .addNetworkInterceptor { chain ->
+                if (preferenceManager.artworkWifiOnly && connectivityManager?.isActiveNetworkMetered == true) {
+                    throw NoConnectivityException
+                }
+                chain.proceed(chain.request())
+            }
+            .build()
 
 
         // Generic loaders
@@ -51,9 +69,9 @@ class ImageLoaderGlideModule : AppGlideModule() {
 
         // Remote
 
-        registry.append(Song::class.java, InputStream::class.java, SongArtworkModelLoader.Factory())
-        registry.append(Album::class.java, InputStream::class.java, AlbumArtworkModelLoader.Factory())
-        registry.append(AlbumArtist::class.java, InputStream::class.java, AlbumArtistArtworkModelLoader.Factory())
+        registry.append(Song::class.java, InputStream::class.java, SongArtworkModelLoader.Factory(preferenceManager))
+        registry.append(Album::class.java, InputStream::class.java, AlbumArtworkModelLoader.Factory(preferenceManager))
+        registry.append(AlbumArtist::class.java, InputStream::class.java, AlbumArtistArtworkModelLoader.Factory(preferenceManager))
     }
 
     override fun isManifestParsingEnabled(): Boolean {

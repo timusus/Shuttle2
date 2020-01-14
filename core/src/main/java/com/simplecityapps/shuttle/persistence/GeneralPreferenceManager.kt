@@ -36,4 +36,20 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
         get() {
             return sharedPreferences.get("pref_night_mode", "0")
         }
+
+    var artworkWifiOnly: Boolean
+        set(value) {
+            sharedPreferences.put("artwork_wifi_only", value)
+        }
+        get() {
+            return sharedPreferences.get("artwork_wifi_only", true)
+        }
+
+    var artworkLocalOnly: Boolean
+        set(value) {
+            sharedPreferences.put("artwork_local_only", value)
+        }
+        get() {
+            return sharedPreferences.get("artwork_local_only", false)
+        }
 }
