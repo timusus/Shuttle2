@@ -36,7 +36,7 @@ class PlaybackService :
 
     private var delayedShutdownHandler: Handler? = null
 
-    private val packageValidator: PackageValidator by lazy { PackageValidator(this) }
+    private val packageValidator: PackageValidator by lazy { PackageValidator(this, R.xml.allowed_media_browser_callers) }
 
     private lateinit var compositeDisposable: CompositeDisposable
 
@@ -175,16 +175,12 @@ class PlaybackService :
     }
 
     override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): BrowserRoot? {
-        // To ensure you are not allowing any arbitrary app to browse your app's contents, you
-        // need to check the origin:
-        if (!packageValidator.isCallerAllowed(this, clientPackageName, clientUid)) {
-            // If the request comes from an untrusted package, return an empty browser root.
-            // If you return null, then the media browser will not be able to connect and
-            // no further calls will be made to other media browsing methods.
+        return if (packageValidator.isKnownCaller(clientPackageName, clientUid)) {
+            BrowserRoot("media:/root/", null)
+        } else {
             Timber.i("OnGetRoot: Browsing NOT ALLOWED for unknown caller. Returning empty browser root so all apps can use MediaController. $clientPackageName")
-            return BrowserRoot("EMPTY_ROOT", null)
+            BrowserRoot("EMPTY_ROOT", null)
         }
-        return BrowserRoot("media:/root/", null)
     }
 
 
