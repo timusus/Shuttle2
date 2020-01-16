@@ -104,7 +104,7 @@ android {
         implementation("androidx.appcompat:appcompat:1.1.0")
 
         // Constraint Layout
-        implementation("androidx.constraintlayout:constraintlayout:1.1.3")
+        implementation("androidx.constraintlayout:constraintlayout:2.0.0-beta4")
 
         // Android Arch
         implementation("androidx.lifecycle:lifecycle-extensions:2.1.0")
@@ -114,7 +114,7 @@ android {
         implementation("androidx.navigation:navigation-ui-ktx:2.2.0-rc04")
 
         // RxJava
-        implementation("io.reactivex.rxjava2:rxjava:2.2.15")
+        implementation("io.reactivex.rxjava2:rxjava:2.2.17")
         implementation("io.reactivex.rxjava2:rxandroid:2.1.1")
 
         // RxKotlin
@@ -124,12 +124,12 @@ android {
         implementation("com.uber.rxdogtag:rxdogtag:0.3.0")
 
         // Dagger core
-        implementation("com.google.dagger:dagger-android:2.25.2")
-        kapt("com.google.dagger:dagger-compiler:2.25.2")
+        implementation("com.google.dagger:dagger-android:2.25.4")
+        kapt("com.google.dagger:dagger-compiler:2.25.4")
 
         // Dagger Android
-        implementation("com.google.dagger:dagger-android-support:2.25.2")
-        kapt("com.google.dagger:dagger-android-processor:2.25.2")
+        implementation("com.google.dagger:dagger-android-support:2.25.4")
+        kapt("com.google.dagger:dagger-android-processor:2.25.4")
 
         // AssistedInject
         compileOnly("com.squareup.inject:assisted-inject-annotations-dagger2:0.5.2")
@@ -139,16 +139,16 @@ android {
         implementation("com.jakewharton.timber:timber:4.7.1")
 
         // OKHttp
-        implementation("com.squareup.okhttp3:okhttp:4.2.2")
+        implementation("com.squareup.okhttp3:okhttp:4.3.0")
 
         // Firebase
-        implementation("com.google.firebase:firebase-core:17.2.1")
+        implementation("com.google.firebase:firebase-core:17.2.2")
 
         // Crashlytics
         implementation("com.crashlytics.sdk.android:crashlytics:2.10.1")
 
         // Leak Canary
-        debugImplementation("com.squareup.leakcanary:leakcanary-android:2.0")
+        debugImplementation("com.squareup.leakcanary:leakcanary-android:2.1")
 
         // ViewPager 2
         implementation("androidx.viewpager2:viewpager2:1.0.0")

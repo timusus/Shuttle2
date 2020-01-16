@@ -5,13 +5,13 @@ object BuildPlugins {
     object Versions {
         // Top level
         const val androidGradlePlugin = "4.0.0-alpha08"
-        const val safeArgsPlugin = "2.2.0-rc03"
+        const val safeArgsPlugin = "2.2.0-rc04"
         const val googleServicesPlugin = "4.3.3"
         const val fabricPlugin = "1.31.2"
         const val gradleVersionPlugin = "0.27.0"
 
         // Module
-        const val playPublisher = "2.6.1"
+        const val playPublisher = "2.6.2"
     }
 
     // Top level
