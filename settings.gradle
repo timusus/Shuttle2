@@ -6,6 +6,6 @@ include ':mediaprovider:core'
 include ':mediaprovider:local'
 include ':imageloader'
 include ':playback'
-include ':saf'//
+include ':saf'
 
 //include ':taglib:gen'

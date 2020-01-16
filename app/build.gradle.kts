@@ -92,13 +92,13 @@ android {
 
         // Kotlin Extensions
         implementation("androidx.core:core-ktx:1.1.0")
-        implementation("androidx.fragment:fragment-ktx:1.2.0-rc03")
+        implementation("androidx.fragment:fragment-ktx:1.2.0-rc05")
 
         // RecyclerView FastScroll
         implementation("com.github.timusus:RecyclerView-FastScroll:dev-SNAPSHOT")
 
         // Material Design
-        implementation("com.google.android.material:material:1.2.0-alpha02")
+        implementation("com.google.android.material:material:1.2.0-alpha03")
 
         // AppCompat
         implementation("androidx.appcompat:appcompat:1.1.0")
@@ -110,8 +110,8 @@ android {
         implementation("androidx.lifecycle:lifecycle-extensions:2.1.0")
 
         // AndroidX Navigation
-        implementation("androidx.navigation:navigation-fragment-ktx:2.2.0-rc03")
-        implementation("androidx.navigation:navigation-ui-ktx:2.2.0-rc03")
+        implementation("androidx.navigation:navigation-fragment-ktx:2.2.0-rc04")
+        implementation("androidx.navigation:navigation-ui-ktx:2.2.0-rc04")
 
         // RxJava
         implementation("io.reactivex.rxjava2:rxjava:2.2.15")
@@ -177,6 +177,9 @@ android {
         // Moshi
         implementation("com.squareup.moshi:moshi-kotlin:1.9.2")
         kapt("com.squareup.moshi:moshi-kotlin-codegen:1.9.2")
+
+        // AndroidX Lifecycle
+        implementation("androidx.lifecycle:lifecycle-common-java8:2.1.0")
     }
 }
 
