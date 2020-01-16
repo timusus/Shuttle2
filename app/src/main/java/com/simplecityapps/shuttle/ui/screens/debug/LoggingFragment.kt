@@ -19,6 +19,8 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.debug.DebugLoggingTree
 import com.simplecityapps.shuttle.debug.LogMessage
+import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.utils.withArgs
 import java.io.Serializable
 import javax.inject.Inject
@@ -30,7 +32,7 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
 
     private lateinit var adapter: RecyclerAdapter
 
-    private var recyclerView: RecyclerView? = null
+    private var recyclerView: RecyclerView by autoCleared()
 
     private var filter: Filter? = null
 
@@ -53,7 +55,8 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
         debugLoggingTree.addCallback(this)
 
         recyclerView = view.findViewById(R.id.recyclerView)
-        recyclerView?.adapter = adapter
+        recyclerView.adapter = adapter
+        recyclerView.clearAdapterOnDetach()
 
         val dumpButton: Button = view.findViewById(R.id.dumpButton)
         dumpButton.setOnClickListener {
@@ -77,6 +80,8 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
     }
 
     override fun onDestroyView() {
+        adapter.dispose()
+
         debugLoggingTree.removeCallback(this)
 
         super.onDestroyView()
@@ -112,7 +117,7 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
             }
         }
         if (canLog) {
-            recyclerView?.post {
+            recyclerView.post {
                 adapter.setData(adapter.items.toMutableList() + LogMessageBinder(logMessage), false)
             }
         }

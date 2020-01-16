@@ -68,5 +68,10 @@ class RecentlyPlayedSectionBinder(val songs: List<Song>, val imageLoader: Artwor
                 })
             })
         }
+
+        override fun recycle() {
+            adapter.dispose()
+            super.recycle()
+        }
     }
 }

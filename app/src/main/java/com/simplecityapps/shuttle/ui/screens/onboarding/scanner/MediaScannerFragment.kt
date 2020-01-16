@@ -9,10 +9,10 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingChild
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingPage
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParent
-import kotlinx.android.synthetic.main.fragment_scanner.*
 import javax.inject.Inject
 
 class MediaScannerFragment :
@@ -21,10 +21,10 @@ class MediaScannerFragment :
     ScannerContract.View,
     OnboardingChild {
 
-    private lateinit var progress: ProgressBar
-    private lateinit var titleTextView: TextView
-    private lateinit var subtitleTextView: TextView
-    private lateinit var songCountTextView: TextView
+    private var progressBar: ProgressBar by autoCleared()
+    private var titleTextView: TextView by autoCleared()
+    private var subtitleTextView: TextView by autoCleared()
+    private var songCountTextView: TextView by autoCleared()
 
     @Inject lateinit var presenter: ScannerPresenter
 
@@ -40,7 +40,7 @@ class MediaScannerFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        progress = view.findViewById(R.id.progressBar)
+        progressBar = view.findViewById(R.id.progressBar)
         titleTextView = view.findViewById(R.id.title)
         subtitleTextView = view.findViewById(R.id.subtitle)
         songCountTextView = view.findViewById(R.id.songCount)
@@ -81,7 +81,7 @@ class MediaScannerFragment :
         progressBar.progress = (progress * 100).toInt()
         subtitleTextView.text = message
         progressBar.isIndeterminate = false
-        songCount.text = "$scanProgress songs discovered"
+        songCountTextView.text = "$scanProgress songs discovered"
     }
 
     override fun dismiss() {

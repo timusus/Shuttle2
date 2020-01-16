@@ -9,6 +9,7 @@ import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.adapter.RecyclerAdapter
@@ -16,6 +17,7 @@ import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
@@ -25,7 +27,6 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFr
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
-import kotlinx.android.synthetic.main.fragment_folder_detail.*
 import javax.inject.Inject
 
 class AlbumListFragment :
@@ -41,12 +42,14 @@ class AlbumListFragment :
 
     @Inject lateinit var playlistMenuPresenter: PlaylistMenuPresenter
 
-    private lateinit var imageLoader: ArtworkImageLoader
+    private var imageLoader: ArtworkImageLoader by autoCleared()
 
     private lateinit var playlistMenuView: PlaylistMenuView
 
-    private var circularLoadingView: CircularLoadingView? = null
-    private var horizontalLoadingView: HorizontalLoadingView? = null
+    private var recyclerView: RecyclerView by autoCleared()
+
+    private var circularLoadingView: CircularLoadingView by autoCleared()
+    private var horizontalLoadingView: HorizontalLoadingView by autoCleared()
 
     // Lifecycle
 
@@ -67,8 +70,10 @@ class AlbumListFragment :
 
         imageLoader = GlideImageLoader(this)
 
+        recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
         recyclerView.setRecyclerListener(RecyclerListener())
+        recyclerView.clearAdapterOnDetach()
 
         circularLoadingView = view.findViewById(R.id.circularLoadingView)
         horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
@@ -84,12 +89,10 @@ class AlbumListFragment :
     }
 
     override fun onDestroyView() {
+        adapter.dispose()
+
         presenter.unbindView()
         playlistMenuPresenter.unbindView()
-        recyclerView.clearAdapterOnDetach()
-
-        circularLoadingView = null
-        horizontalLoadingView = null
 
         super.onDestroyView()
     }
@@ -109,16 +112,16 @@ class AlbumListFragment :
     override fun setLoadingState(state: AlbumListContract.LoadingState) {
         when (state) {
             is AlbumListContract.LoadingState.Scanning -> {
-                horizontalLoadingView?.setState(HorizontalLoadingView.State.Loading("Scanning your library"))
-                circularLoadingView?.setState(CircularLoadingView.State.None)
+                horizontalLoadingView.setState(HorizontalLoadingView.State.Loading("Scanning your library"))
+                circularLoadingView.setState(CircularLoadingView.State.None)
             }
             is AlbumListContract.LoadingState.Empty -> {
-                horizontalLoadingView?.setState(HorizontalLoadingView.State.None)
-                circularLoadingView?.setState(CircularLoadingView.State.Empty("No albums"))
+                horizontalLoadingView.setState(HorizontalLoadingView.State.None)
+                circularLoadingView.setState(CircularLoadingView.State.Empty("No albums"))
             }
             is AlbumListContract.LoadingState.None -> {
-                horizontalLoadingView?.setState(HorizontalLoadingView.State.None)
-                circularLoadingView?.setState(CircularLoadingView.State.None)
+                horizontalLoadingView.setState(HorizontalLoadingView.State.None)
+                circularLoadingView.setState(CircularLoadingView.State.None)
             }
         }
     }

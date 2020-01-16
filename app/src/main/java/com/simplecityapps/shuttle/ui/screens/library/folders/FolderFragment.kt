@@ -8,16 +8,25 @@ import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.view.ToolbarHost
-import kotlinx.android.synthetic.main.fragment_folders.*
 
 class FolderFragment : Fragment(), Injectable, ToolbarHost {
+
+    var toolbar: Toolbar by autoCleared()
+        @JvmName("getToolbar_") get // Resolves clash with ToolbarHost function
 
 
     // Lifecycle
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_folders, container, false)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        toolbar = view.findViewById(R.id.toolbar)
     }
 
 

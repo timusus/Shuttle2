@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
+import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.FragmentNavigatorExtras
@@ -22,7 +23,10 @@ import com.simplecityapps.mediaprovider.repository.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.PlaylistRepository
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.error.userDescription
+import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
+import com.simplecityapps.shuttle.ui.common.view.HomeButton
 import com.simplecityapps.shuttle.ui.screens.library.playlists.detail.PlaylistDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylist
 import com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylistDetailFragmentArgs
@@ -34,7 +38,6 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
-import kotlinx.android.synthetic.main.fragment_home.*
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -50,11 +53,11 @@ class HomeFragment :
 
     @Inject lateinit var playlistRepository: PlaylistRepository
 
-    private lateinit var recyclerView: RecyclerView
+    private var recyclerView: RecyclerView by autoCleared()
 
-    private val adapter = RecyclerAdapter()
+    private lateinit var adapter: RecyclerAdapter
 
-    private lateinit var imageLoader: ArtworkImageLoader
+    private var imageLoader: ArtworkImageLoader by autoCleared()
 
     private var viewBinders = mutableSetOf<ViewBinder>()
 
@@ -62,8 +65,16 @@ class HomeFragment :
 
     private lateinit var playlistMenuView: PlaylistMenuView
 
+    private var searchView: SearchView by autoCleared()
+
 
     // Lifecycle
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        adapter = RecyclerAdapter()
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_home, container, false)
@@ -71,6 +82,13 @@ class HomeFragment :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        searchView = view.findViewById(R.id.searchView)
+
+        val historyButton: HomeButton = view.findViewById(R.id.historyButton)
+        val latestButton: HomeButton = view.findViewById(R.id.latestButton)
+        val favoritesButton: HomeButton = view.findViewById(R.id.favoritesButton)
+        val shuffleButton: HomeButton = view.findViewById(R.id.shuffleButton)
 
         playlistMenuView = PlaylistMenuView(context!!, playlistMenuPresenter, childFragmentManager)
 
@@ -97,6 +115,7 @@ class HomeFragment :
 
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
+        recyclerView.clearAdapterOnDetach()
 
         val decoration = DividerItemDecoration(context, LinearLayout.VERTICAL)
         decoration.setDrawable(ContextCompat.getDrawable(context!!, R.drawable.divider)!!)
@@ -134,6 +153,7 @@ class HomeFragment :
     override fun onDestroyView() {
         presenter.unbindView()
         playlistMenuPresenter.unbindView()
+        adapter.dispose()
         disposable.clear()
         super.onDestroyView()
     }

@@ -6,10 +6,13 @@ import android.view.LayoutInflater
 import android.view.MenuInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
+import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.NavHostFragment
+import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.adapter.RecyclerAdapter
@@ -17,7 +20,9 @@ import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.error.userDescription
+import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.utils.toHms
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongBinder
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
@@ -25,7 +30,6 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import dagger.android.support.AndroidSupportInjection
-import kotlinx.android.synthetic.main.fragment_album_detail.*
 import javax.inject.Inject
 
 class PlaylistDetailFragment :
@@ -38,7 +42,7 @@ class PlaylistDetailFragment :
 
     @Inject lateinit var playlistMenuPresenter: PlaylistMenuPresenter
 
-    private lateinit var imageLoader: ArtworkImageLoader
+    private var imageLoader: ArtworkImageLoader by autoCleared()
 
     private lateinit var presenter: PlaylistDetailPresenter
 
@@ -47,6 +51,12 @@ class PlaylistDetailFragment :
     private lateinit var playlist: Playlist
 
     private lateinit var playlistMenuView: PlaylistMenuView
+
+    private var toolbar: Toolbar? = null
+
+    private var recyclerView: RecyclerView by autoCleared()
+
+    private var heroImage: ImageView by autoCleared()
 
 
     // Lifecycle
@@ -66,6 +76,9 @@ class PlaylistDetailFragment :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        recyclerView = view.findViewById(R.id.recyclerView)
+        toolbar = view.findViewById(R.id.toolbar)
 
         playlistMenuView = PlaylistMenuView(context!!, playlistMenuPresenter, childFragmentManager)
 
@@ -95,6 +108,9 @@ class PlaylistDetailFragment :
         toolbar?.subtitle = "${playlist.songCount} Songs • ${playlist.duration.toHms()}"
 
         recyclerView.adapter = adapter
+        recyclerView.clearAdapterOnDetach()
+
+        heroImage = view.findViewById(R.id.heroImage)
 
         presenter.bindView(this)
         playlistMenuPresenter.bindView(playlistMenuView)

@@ -5,11 +5,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import androidx.viewpager.widget.ViewPager
+import com.google.android.material.tabs.TabLayout
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.dagger.NetworkingModule
 import com.simplecityapps.shuttle.ui.common.PagerAdapter
-import kotlinx.android.synthetic.main.fragment_debug_drawer.*
 
 class DebugDrawerFragment : Fragment(), Injectable {
 
@@ -23,6 +24,8 @@ class DebugDrawerFragment : Fragment(), Injectable {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        val tabLayout: TabLayout = view.findViewById(R.id.tabLayout)
+        val viewPager: ViewPager = view.findViewById(R.id.viewPager)
         tabLayout.setupWithViewPager(viewPager, true)
 
         val adapter = PagerAdapter(childFragmentManager)

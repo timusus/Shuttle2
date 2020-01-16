@@ -21,7 +21,7 @@ import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
-import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
+import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingChild
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingPage
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParent
@@ -38,7 +38,7 @@ class DirectorySelectionFragment : Fragment(),
 
     lateinit var adapter: RecyclerAdapter
 
-    private lateinit var recyclerView: RecyclerView
+    private var recyclerView: RecyclerView by autoCleared()
 
     private val preAnimationConstraints = ConstraintSet()
     private val postAnimationConstraints = ConstraintSet()
@@ -111,8 +111,8 @@ class DirectorySelectionFragment : Fragment(),
     }
 
     override fun onDestroyView() {
+        adapter.dispose()
         presenter.unbindView()
-        recyclerView.clearAdapterOnDetach()
         super.onDestroyView()
     }
 

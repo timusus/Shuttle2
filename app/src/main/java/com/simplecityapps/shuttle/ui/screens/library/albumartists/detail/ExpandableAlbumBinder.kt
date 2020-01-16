@@ -120,6 +120,7 @@ class ExpandableAlbumBinder(
 
         override fun recycle() {
             viewBinder?.imageLoader?.clear(imageView)
+            adapter.dispose()
         }
 
         private val songBinderListener = object : DetailSongBinder.Listener {

@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SearchView
+import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
@@ -17,7 +18,9 @@ import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.error.userDescription
+import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongBinder
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
@@ -29,7 +32,6 @@ import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
 import io.reactivex.subjects.PublishSubject
-import kotlinx.android.synthetic.main.fragment_queue.*
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -41,9 +43,11 @@ class SearchFragment : Fragment(),
 
     private lateinit var adapter: RecyclerAdapter
 
-    private lateinit var searchView: SearchView
+    private var searchView: SearchView by autoCleared()
 
-    private var recyclerView: RecyclerView? = null
+    private var recyclerView: RecyclerView by autoCleared()
+
+    private var toolbar: Toolbar by autoCleared()
 
     @Inject lateinit var presenter: SearchPresenter
 
@@ -51,12 +55,11 @@ class SearchFragment : Fragment(),
 
     private var compositeDisposable = CompositeDisposable()
 
-    private lateinit var imageLoader: GlideImageLoader
+    private var imageLoader: GlideImageLoader by autoCleared()
 
     private val queryPublishSubject = PublishSubject.create<String>()
 
     private lateinit var playlistMenuView: PlaylistMenuView
-
 
 
     // Lifecycle
@@ -82,7 +85,8 @@ class SearchFragment : Fragment(),
         imageLoader = GlideImageLoader(this)
 
         recyclerView = view.findViewById(R.id.recyclerView)
-        recyclerView?.adapter = adapter
+        recyclerView.adapter = adapter
+        recyclerView.clearAdapterOnDetach()
 
         searchView = view.findViewById(R.id.searchView)
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
@@ -98,6 +102,7 @@ class SearchFragment : Fragment(),
             }
         })
 
+        toolbar = view.findViewById(R.id.toolbar)
         toolbar.setNavigationOnClickListener {
             searchView.clearFocus()
             findNavController().popBackStack()
@@ -127,8 +132,11 @@ class SearchFragment : Fragment(),
     }
 
     override fun onDestroyView() {
+        adapter.dispose()
+
         presenter.unbindView()
         playlistMenuPresenter.unbindView()
+
         super.onDestroyView()
     }
 
@@ -139,7 +147,7 @@ class SearchFragment : Fragment(),
         adapter.setData(
             songs.map { song -> SongBinder(song, imageLoader, songBinderListener) },
             completion = {
-                recyclerView?.scrollToPosition(0)
+                recyclerView.scrollToPosition(0)
             })
     }
 

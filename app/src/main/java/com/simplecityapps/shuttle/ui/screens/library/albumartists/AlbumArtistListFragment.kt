@@ -16,6 +16,7 @@ import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
@@ -36,12 +37,11 @@ class AlbumArtistListFragment :
 
     private lateinit var adapter: RecyclerAdapter
 
-    private lateinit var imageLoader: GlideImageLoader
+    private var imageLoader: GlideImageLoader by autoCleared()
 
-    private lateinit var recyclerView: RecyclerView
-
-    private var circularLoadingView: CircularLoadingView? = null
-    private var horizontalLoadingView: HorizontalLoadingView? = null
+    private var recyclerView: RecyclerView by autoCleared()
+    private var circularLoadingView: CircularLoadingView by autoCleared()
+    private var horizontalLoadingView: HorizontalLoadingView by autoCleared()
 
     @Inject lateinit var presenter: AlbumArtistListPresenter
 
@@ -71,6 +71,7 @@ class AlbumArtistListFragment :
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
         recyclerView.setRecyclerListener(RecyclerListener())
+        recyclerView.clearAdapterOnDetach()
 
         circularLoadingView = view.findViewById(R.id.circularLoadingView)
         horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
@@ -86,12 +87,10 @@ class AlbumArtistListFragment :
     }
 
     override fun onDestroyView() {
+        adapter.dispose()
+
         presenter.unbindView()
         playlistMenuPresenter.unbindView()
-        recyclerView.clearAdapterOnDetach()
-
-        circularLoadingView = null
-        horizontalLoadingView = null
 
         super.onDestroyView()
     }
@@ -111,22 +110,22 @@ class AlbumArtistListFragment :
     override fun setLoadingState(state: AlbumArtistListContract.LoadingState) {
         when (state) {
             is AlbumArtistListContract.LoadingState.Scanning -> {
-                horizontalLoadingView?.setState(HorizontalLoadingView.State.Loading("Scanning your library"))
-                circularLoadingView?.setState(CircularLoadingView.State.None)
+                horizontalLoadingView.setState(HorizontalLoadingView.State.Loading("Scanning your library"))
+                circularLoadingView.setState(CircularLoadingView.State.None)
             }
             is AlbumArtistListContract.LoadingState.Empty -> {
-                horizontalLoadingView?.setState(HorizontalLoadingView.State.None)
-                circularLoadingView?.setState(CircularLoadingView.State.Empty("No album artists"))
+                horizontalLoadingView.setState(HorizontalLoadingView.State.None)
+                circularLoadingView.setState(CircularLoadingView.State.Empty("No album artists"))
             }
             is AlbumArtistListContract.LoadingState.None -> {
-                horizontalLoadingView?.setState(HorizontalLoadingView.State.None)
-                circularLoadingView?.setState(CircularLoadingView.State.None)
+                horizontalLoadingView.setState(HorizontalLoadingView.State.None)
+                circularLoadingView.setState(CircularLoadingView.State.None)
             }
         }
     }
 
     override fun setLoadingProgress(progress: Float) {
-        horizontalLoadingView?.setProgress(progress)
+        horizontalLoadingView.setProgress(progress)
     }
 
     // AlbumArtistBinder.Listener Implementation

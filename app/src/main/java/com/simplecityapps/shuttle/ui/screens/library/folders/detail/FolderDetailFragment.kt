@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import androidx.navigation.findNavController
+import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityappds.saf.SafDirectoryHelper
@@ -17,6 +18,7 @@ import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
@@ -29,7 +31,6 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import io.reactivex.disposables.CompositeDisposable
-import kotlinx.android.synthetic.main.fragment_folder_detail.*
 import javax.inject.Inject
 
 
@@ -46,9 +47,11 @@ class FolderDetailFragment :
 
     private lateinit var path: String
 
-    private lateinit var imageLoader: ArtworkImageLoader
+    private var imageLoader: ArtworkImageLoader by autoCleared()
 
     private lateinit var playlistMenuView: PlaylistMenuView
+
+    private var recyclerView: RecyclerView by autoCleared()
 
     @Inject lateinit var playlistMenuPresenter: PlaylistMenuPresenter
 
@@ -70,17 +73,19 @@ class FolderDetailFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        recyclerView = view.findViewById(R.id.recyclerView)
+
         playlistMenuView = PlaylistMenuView(context!!, playlistMenuPresenter, childFragmentManager)
 
         imageLoader = GlideImageLoader(this)
-
-        adapter = SectionedAdapter()
 
         findToolbarHost()?.getToolbar()?.let { toolbar ->
             toolbar.subtitle = path
         }
 
+        adapter = SectionedAdapter()
         recyclerView.adapter = adapter
+        recyclerView.clearAdapterOnDetach()
 
         playlistMenuPresenter.bindView(playlistMenuView)
         presenter.bindView(this)
@@ -90,7 +95,7 @@ class FolderDetailFragment :
     override fun onDestroyView() {
         compositeDisposable.clear()
 
-        recyclerView.clearAdapterOnDetach()
+        adapter.dispose()
 
         playlistMenuPresenter.unbindView()
         presenter.unbindView()

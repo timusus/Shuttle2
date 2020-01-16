@@ -14,6 +14,7 @@ import androidx.navigation.fragment.findNavController
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.utils.withArgs
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingChild
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingPage
@@ -25,9 +26,9 @@ class MediaProviderSelectionFragment :
     Injectable,
     OnboardingChild {
 
-    private lateinit var radioGroup: RadioGroup
-    private lateinit var basicRadioButton: RadioButton
-    private lateinit var advancedRadioButton: RadioButton
+    private var radioGroup: RadioGroup by autoCleared()
+    private var basicRadioButton: RadioButton by autoCleared()
+    private var advancedRadioButton: RadioButton by autoCleared()
 
     @Inject lateinit var playbackPreferenceManager: PlaybackPreferenceManager
 
@@ -115,11 +116,6 @@ class MediaProviderSelectionFragment :
         getParent().hideBackButton()
         getParent().toggleNextButton(true)
         getParent().showNextButton("Next")
-    }
-
-    override fun onDestroyView() {
-        radioGroup.setOnCheckedChangeListener(null)
-        super.onDestroyView()
     }
 
 

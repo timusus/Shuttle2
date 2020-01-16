@@ -8,14 +8,17 @@ import android.view.LayoutInflater
 import android.view.MenuInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
+import androidx.appcompat.widget.Toolbar
 import androidx.core.os.postDelayed
 import androidx.core.view.doOnPreDraw
 import androidx.fragment.app.Fragment
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.NavHostFragment
+import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.Transition
 import androidx.transition.TransitionInflater
 import androidx.transition.TransitionListenerAdapter
@@ -27,6 +30,7 @@ import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.DetailImageAnimationHelper
@@ -36,7 +40,6 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import dagger.android.support.AndroidSupportInjection
-import kotlinx.android.synthetic.main.fragment_album_artist_detail.*
 import javax.inject.Inject
 
 class AlbumArtistDetailFragment :
@@ -50,13 +53,13 @@ class AlbumArtistDetailFragment :
 
     @Inject lateinit var playlistMenuPresenter: PlaylistMenuPresenter
 
-    private lateinit var imageLoader: ArtworkImageLoader
+    private var imageLoader: ArtworkImageLoader by autoCleared()
 
     private lateinit var presenter: AlbumArtistDetailPresenter
 
     private lateinit var adapter: RecyclerAdapter
 
-    private var animationHelper: DetailImageAnimationHelper? = null
+    private var animationHelper: DetailImageAnimationHelper by autoCleared()
 
     private val handler = Handler(Looper.getMainLooper())
 
@@ -67,6 +70,14 @@ class AlbumArtistDetailFragment :
     private lateinit var albumArtist: AlbumArtist
 
     private lateinit var playlistMenuView: PlaylistMenuView
+
+    private var recyclerView: RecyclerView by autoCleared()
+
+    private var toolbar: Toolbar by autoCleared()
+
+    private var dummyImage: ImageView by autoCleared()
+
+    private var heroImage: ImageView by autoCleared()
 
 
     // Lifecycle
@@ -90,7 +101,7 @@ class AlbumArtistDetailFragment :
         (sharedElementEnterTransition as Transition).addListener(object : TransitionListenerAdapter() {
             override fun onTransitionEnd(transition: Transition) {
                 super.onTransitionEnd(transition)
-                animationHelper?.showHeroView()
+                animationHelper.showHeroView()
                 transition.removeListener(this)
             }
         })
@@ -116,7 +127,8 @@ class AlbumArtistDetailFragment :
             startPostponedEnterTransition() // In case our Glide load takes too long
         }
 
-        toolbar?.let { toolbar ->
+        toolbar = view.findViewById(R.id.toolbar)
+        toolbar.let { toolbar ->
             toolbar.setNavigationOnClickListener { NavHostFragment.findNavController(this).popBackStack() }
             MenuInflater(context).inflate(R.menu.menu_album_artist_detail, toolbar.menu)
             playlistMenuView.createPlaylistMenu(toolbar.menu)
@@ -144,17 +156,20 @@ class AlbumArtistDetailFragment :
         toolbar.title = albumArtist.name
         toolbar.subtitle = "${albumArtist.albumCount} Albums • ${albumArtist.songCount} Songs"
 
+        dummyImage = view.findViewById(R.id.dummyImage)
         dummyImage.transitionName = "album_artist_${albumArtist.name}"
 
         imageLoader.loadArtwork(dummyImage, albumArtist, ArtworkImageLoader.Options.CircleCrop, ArtworkImageLoader.Options.Priority(ArtworkImageLoader.Options.Priority.Priority.Max)) {
             maybeStartPostponedEnterTransition()
         }
 
+        heroImage = view.findViewById(R.id.heroImage)
         imageLoader.loadArtwork(heroImage, albumArtist, ArtworkImageLoader.Options.Priority(ArtworkImageLoader.Options.Priority.Priority.Max), completionHandler = null)
 
+        recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
-
         recyclerView.doOnPreDraw { maybeStartPostponedEnterTransition() }
+        recyclerView.clearAdapterOnDetach()
 
         animationHelper = DetailImageAnimationHelper(heroImage, dummyImage)
 
@@ -175,10 +190,6 @@ class AlbumArtistDetailFragment :
 
         presenter.unbindView()
         playlistMenuPresenter.unbindView()
-
-        recyclerView.clearAdapterOnDetach()
-
-        animationHelper = null
 
         super.onDestroyView()
     }

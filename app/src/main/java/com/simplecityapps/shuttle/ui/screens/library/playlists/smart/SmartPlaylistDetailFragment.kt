@@ -6,24 +6,28 @@ import android.view.LayoutInflater
 import android.view.MenuInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
+import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.NavHostFragment
+import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.error.userDescription
+import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongBinder
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import dagger.android.support.AndroidSupportInjection
-import kotlinx.android.synthetic.main.fragment_album_detail.*
 import javax.inject.Inject
 
 class SmartPlaylistDetailFragment :
@@ -36,7 +40,13 @@ class SmartPlaylistDetailFragment :
 
     @Inject lateinit var playlistMenuPresenter: PlaylistMenuPresenter
 
-    private lateinit var imageLoader: ArtworkImageLoader
+    private var recyclerView: RecyclerView by autoCleared()
+
+    private var toolbar: Toolbar by autoCleared()
+
+    private var imageLoader: ArtworkImageLoader by autoCleared()
+
+    private var heroImageView: ImageView by autoCleared()
 
     private lateinit var presenter: SmartPlaylistDetailPresenter
 
@@ -71,7 +81,8 @@ class SmartPlaylistDetailFragment :
 
         imageLoader = GlideImageLoader(this)
 
-        toolbar?.let { toolbar ->
+        toolbar = view.findViewById(R.id.toolbar)
+        toolbar.let { toolbar ->
             toolbar.setNavigationOnClickListener {
                 NavHostFragment.findNavController(this).popBackStack()
             }
@@ -89,9 +100,13 @@ class SmartPlaylistDetailFragment :
             }
         }
 
-        toolbar?.setTitle(playlist.nameResId)
+        toolbar.setTitle(playlist.nameResId)
 
+        recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
+        recyclerView.clearAdapterOnDetach()
+
+        heroImageView = view.findViewById(R.id.heroImage)
 
         presenter.bindView(this)
         playlistMenuPresenter.bindView(playlistMenuView)
@@ -117,16 +132,16 @@ class SmartPlaylistDetailFragment :
 
     override fun setData(songs: List<Song>) {
         if (songs.isNotEmpty()) {
-            if (heroImage.drawable == null) {
+            if (heroImageView.drawable == null) {
                 imageLoader.loadArtwork(
-                    heroImage,
+                    heroImageView,
                     songs.random(),
                     ArtworkImageLoader.Options.Priority(ArtworkImageLoader.Options.Priority.Priority.Max),
                     ArtworkImageLoader.Options.Crossfade(600)
                 )
             }
         } else {
-            heroImage.setImageResource(R.drawable.ic_music_note_black_24dp)
+            heroImageView.setImageResource(R.drawable.ic_music_note_black_24dp)
         }
 
         adapter.setData(songs.map { song ->

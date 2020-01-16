@@ -5,11 +5,15 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageButton
 import android.widget.SeekBar
+import android.widget.TextView
+import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.PagerSnapHelper
+import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.google.android.gms.cast.framework.CastButtonFactory
@@ -20,14 +24,16 @@ import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.recyclerview.SnapOnScrollListener
 import com.simplecityapps.shuttle.ui.common.recyclerview.SpacesItemDecoration
 import com.simplecityapps.shuttle.ui.common.recyclerview.attachSnapHelperWithListener
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.utils.toHms
+import com.simplecityapps.shuttle.ui.common.view.RepeatButton
 import com.simplecityapps.shuttle.ui.common.view.SeekButton
+import com.simplecityapps.shuttle.ui.common.view.ShuffleButton
 import com.simplecityapps.shuttle.ui.screens.sleeptimer.SleepTimerDialogFragment
-import kotlinx.android.synthetic.main.fragment_playback.*
 import javax.inject.Inject
 
 class PlaybackFragment :
@@ -38,9 +44,25 @@ class PlaybackFragment :
 
     @Inject lateinit var presenter: PlaybackPresenter
 
-    private lateinit var imageLoader: ArtworkImageLoader
+    private var imageLoader: ArtworkImageLoader by autoCleared()
+
+    private var recyclerView: RecyclerView by autoCleared()
 
     private lateinit var adapter: RecyclerAdapter
+
+    private var playPauseButton: ImageButton by autoCleared()
+    private var skipNextButton: ImageButton by autoCleared()
+    private var skipPrevButton: ImageButton by autoCleared()
+    private var shuffleButton: ShuffleButton by autoCleared()
+    private var repeatButton: RepeatButton by autoCleared()
+    private var seekBackwardButton: SeekButton by autoCleared()
+    private var seekForwardButton: SeekButton by autoCleared()
+    private var seekBar: SeekBar by autoCleared()
+    private var titleTextView: TextView by autoCleared()
+    private var subtitleTextView: TextView by autoCleared()
+    private var currentTimeTextView: TextView by autoCleared()
+    private var durationTextView: TextView by autoCleared()
+    private var toolbar: Toolbar by autoCleared()
 
 
     // Lifecycle
@@ -51,6 +73,23 @@ class PlaybackFragment :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        recyclerView = view.findViewById(R.id.recyclerView)
+
+        toolbar = view.findViewById(R.id.toolbar)
+
+        skipNextButton = view.findViewById(R.id.skipNextButton)
+        skipPrevButton = view.findViewById(R.id.skipPrevButton)
+        playPauseButton = view.findViewById(R.id.playPauseButton)
+        shuffleButton = view.findViewById(R.id.shuffleButton)
+        repeatButton = view.findViewById(R.id.repeatButton)
+        seekBackwardButton = view.findViewById(R.id.seekBackwardButton)
+        seekForwardButton = view.findViewById(R.id.seekForwardButton)
+        seekBar = view.findViewById(R.id.seekBar)
+        titleTextView = view.findViewById(R.id.titleTextView)
+        subtitleTextView = view.findViewById(R.id.subtitleTextView)
+        currentTimeTextView = view.findViewById(R.id.currentTimeTextView)
+        durationTextView = view.findViewById(R.id.durationTextView)
 
         adapter = RecyclerAdapter()
         imageLoader = GlideImageLoader(this)
@@ -74,6 +113,7 @@ class PlaybackFragment :
 
         recyclerView.adapter = adapter
         recyclerView.setRecyclerListener(RecyclerListener())
+        recyclerView.clearAdapterOnDetach()
 
         val snapHelper = PagerSnapHelper()
         snapHelper.attachToRecyclerView(recyclerView)
@@ -102,8 +142,8 @@ class PlaybackFragment :
     }
 
     override fun onDestroyView() {
+        adapter.dispose()
         presenter.unbindView()
-        recyclerView.clearAdapterOnDetach()
         super.onDestroyView()
     }
 
@@ -162,7 +202,7 @@ class PlaybackFragment :
             queue.map { queueItem -> ArtworkBinder(queueItem.song, imageLoader) },
             completion = {
                 position?.let { position ->
-                    recyclerView?.scrollToPosition(position)
+                    recyclerView.scrollToPosition(position)
                 }
             },
             animateChanges = false

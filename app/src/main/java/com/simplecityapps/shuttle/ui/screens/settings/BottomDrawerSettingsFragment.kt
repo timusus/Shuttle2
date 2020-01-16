@@ -14,6 +14,7 @@ import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.error.userDescription
+import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import javax.inject.Inject
 
 
@@ -24,15 +25,10 @@ class BottomDrawerSettingsFragment :
 
     // Lifecycle
 
+
     @Inject lateinit var presenter: BottomDrawerSettingsPresenter
 
     private lateinit var adapter: RecyclerAdapter
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        adapter = RecyclerAdapter()
-    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_bottom_drawer, container, false)
@@ -41,8 +37,11 @@ class BottomDrawerSettingsFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        adapter = RecyclerAdapter()
+
         val recyclerView: RecyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
+        recyclerView.clearAdapterOnDetach()
 
         presenter.bindView(this)
         presenter.loadData()
@@ -63,6 +62,7 @@ class BottomDrawerSettingsFragment :
 
     override fun onDestroyView() {
         presenter.unbindView()
+        adapter.dispose()
         super.onDestroyView()
     }
 

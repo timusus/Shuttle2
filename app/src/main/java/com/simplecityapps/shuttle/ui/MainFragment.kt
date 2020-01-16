@@ -24,9 +24,10 @@ import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.ui.common.autoClearedNullable
 import com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
 import com.simplecityapps.shuttle.ui.screens.playback.PlaybackFragment
 import com.simplecityapps.shuttle.ui.screens.playback.mini.MiniPlaybackFragment
@@ -37,7 +38,6 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
-import kotlinx.android.synthetic.main.fragment_main.*
 import timber.log.Timber
 import java.lang.ref.WeakReference
 import javax.inject.Inject
@@ -58,6 +58,8 @@ class MainFragment
 
     @Inject lateinit var preferenceManager: GeneralPreferenceManager
 
+    private var multiSheetView: MultiSheetView? by autoClearedNullable()
+
     private val compositeDisposable = CompositeDisposable()
 
     private var onBackPressCallback: OnBackPressedCallback? = null
@@ -72,6 +74,8 @@ class MainFragment
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        multiSheetView = view.findViewById(R.id.multiSheetView)
 
         val navController = findNavController(activity!!, R.id.navHostFragment)
 
@@ -91,13 +95,13 @@ class MainFragment
                 .add(R.id.sheet2Container, QueueFragment.newInstance(), "QueueFragment")
                 .commit()
         } else {
-            multiSheetView.restoreSheet(savedInstanceState.getInt(STATE_CURRENT_SHEET))
+            multiSheetView?.restoreSheet(savedInstanceState.getInt(STATE_CURRENT_SHEET))
         }
 
         // Update visible state of mini player
         queueWatcher.addCallback(this)
 
-        multiSheetView.addSheetStateChangeListener(object : MultiSheetView.SheetStateChangeListener {
+        multiSheetView?.addSheetStateChangeListener(object : MultiSheetView.SheetStateChangeListener {
 
             override fun onSheetStateChanged(sheet: Int, state: Int) {
                 updateBackPressListener()
@@ -109,7 +113,7 @@ class MainFragment
         })
 
         if (queueManager.getSize() == 0) {
-            multiSheetView.hide(collapse = true, animate = false)
+            multiSheetView?.hide(collapse = true, animate = false)
         }
 
         // Don't bother scanning for media again if we've already scanned once this session
@@ -168,10 +172,10 @@ class MainFragment
     private fun updateBackPressListener() {
         onBackPressCallback?.remove()
 
-        if (multiSheetView.currentSheet != MultiSheetView.Sheet.NONE) {
+        if (multiSheetView?.currentSheet != MultiSheetView.Sheet.NONE) {
             // Todo: Remove activity dependency.
             onBackPressCallback = activity!!.onBackPressedDispatcher.addCallback {
-                multiSheetView.consumeBackPress()
+                multiSheetView?.consumeBackPress()
             }
         }
     }
@@ -180,9 +184,9 @@ class MainFragment
 
     override fun onQueueChanged() {
         if (queueManager.getSize() == 0) {
-            multiSheetView.hide(collapse = true, animate = false)
+            multiSheetView?.hide(collapse = true, animate = false)
         } else {
-            multiSheetView.unhide(true)
+            multiSheetView?.unhide(true)
         }
     }
 

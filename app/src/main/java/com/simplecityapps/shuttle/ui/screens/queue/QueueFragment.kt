@@ -4,7 +4,10 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -19,11 +22,11 @@ import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
 import com.simplecityapps.shuttle.ui.common.view.multisheet.findParentMultiSheetView
-import kotlinx.android.synthetic.main.fragment_queue.*
 import javax.inject.Inject
 
 class QueueFragment :
@@ -31,9 +34,17 @@ class QueueFragment :
     Injectable,
     QueueContract.View {
 
-    private var queueAdapter = RecyclerAdapter()
+    private lateinit var adapter: RecyclerAdapter
 
-    private lateinit var imageLoader: ArtworkImageLoader
+    private var imageLoader: ArtworkImageLoader by autoCleared()
+
+    private var recyclerView: RecyclerView by autoCleared()
+
+    private var toolbar: Toolbar by autoCleared()
+    private var toolbarTitleTextView: TextView by autoCleared()
+    private var toolbarSubtitleTextView: TextView by autoCleared()
+    private var progressBar: ProgressBar by autoCleared()
+    private var emptyLabel: TextView by autoCleared()
 
     @Inject lateinit var presenter: QueuePresenter
 
@@ -51,16 +62,26 @@ class QueueFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        adapter = RecyclerAdapter()
+
         imageLoader = GlideImageLoader(this)
 
-        recyclerView.adapter = queueAdapter
+        recyclerView = view.findViewById(R.id.recyclerView)
+        recyclerView.adapter = adapter
         recyclerView.setRecyclerListener(RecyclerListener())
+        recyclerView.clearAdapterOnDetach()
         itemTouchHelper.attachToRecyclerView(recyclerView)
+
+        toolbarTitleTextView = view.findViewById(R.id.toolbarTitleTextView)
+        toolbarSubtitleTextView = view.findViewById(R.id.toolbarSubtitleTextView)
+        progressBar = view.findViewById(R.id.progressBar)
+        emptyLabel = view.findViewById(R.id.emptyLabel)
 
         presenter.bindView(this)
 
         view.findParentMultiSheetView()?.addSheetStateChangeListener(sheetStateChangeListener)
 
+        toolbar = view.findViewById(R.id.toolbar)
         toolbar.inflateMenu(R.menu.menu_up_next)
         toolbar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
@@ -75,8 +96,12 @@ class QueueFragment :
 
     override fun onDestroyView() {
         presenter.unbindView()
+
+        itemTouchHelper.attachToRecyclerView(null)
         view.findParentMultiSheetView()?.removeSheetStateChangeListener(sheetStateChangeListener)
-        recyclerView.clearAdapterOnDetach()
+
+        adapter.dispose()
+
         super.onDestroyView()
     }
 
@@ -90,7 +115,7 @@ class QueueFragment :
     // QueueContract.View Implementation
 
     override fun setData(queue: List<QueueItem>, progress: Float, isPlaying: Boolean) {
-        queueAdapter.setData(queue.map { queueItem -> QueueBinder(queueItem, imageLoader, playbackManager, playbackWatcher, queueBinderListener) })
+        adapter.setData(queue.map { queueItem -> QueueBinder(queueItem, imageLoader, playbackManager, playbackWatcher, queueBinderListener) })
     }
 
     override fun toggleEmptyView(empty: Boolean) {

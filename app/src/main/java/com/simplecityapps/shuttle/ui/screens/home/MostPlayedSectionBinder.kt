@@ -72,5 +72,10 @@ class MostPlayedSectionBinder(val songs: List<Song>, val imageLoader: ArtworkIma
                 })
             })
         }
+
+        override fun recycle() {
+            adapter.dispose()
+            super.recycle()
+        }
     }
 }

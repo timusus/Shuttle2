@@ -6,18 +6,26 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
+import androidx.viewpager.widget.ViewPager
+import com.google.android.material.tabs.TabLayout
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.PagerAdapter
+import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.view.ToolbarHost
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistListFragment
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListFragment
 import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListFragment
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListFragment
-import kotlinx.android.synthetic.main.fragment_library.*
 
 class LibraryFragment : Fragment(), ToolbarHost {
 
-    private lateinit var toolbar: Toolbar
+    private var toolbar: Toolbar by autoCleared()
+        @JvmName("getToolbar_") get // Resolves clash with ToolbarHost function
+
+    private var viewPager: ViewPager by autoCleared()
+
+    private var tabLayout: TabLayout by autoCleared()
+
 
     // Lifecycle
 
@@ -27,6 +35,9 @@ class LibraryFragment : Fragment(), ToolbarHost {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        tabLayout = view.findViewById(R.id.tabLayout)
+        viewPager = view.findViewById(R.id.viewPager)
 
         tabLayout.setupWithViewPager(viewPager, true)
 
@@ -39,7 +50,6 @@ class LibraryFragment : Fragment(), ToolbarHost {
 
         viewPager.adapter = adapter
         viewPager.offscreenPageLimit = 3
-
         viewPager.setCurrentItem(1, false)
 
         toolbar = view.findViewById(R.id.toolbar)

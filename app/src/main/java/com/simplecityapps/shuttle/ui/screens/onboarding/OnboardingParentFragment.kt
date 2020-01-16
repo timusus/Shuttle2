@@ -18,15 +18,15 @@ import androidx.navigation.fragment.navArgs
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
-import com.simplecityapps.shuttle.persistence.put
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.persistence.put
+import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.screens.onboarding.directories.DirectorySelectionFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.MediaProviderSelectionFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.scanner.MediaScannerFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.storage.StoragePermissionFragment
-import kotlinx.android.synthetic.main.fragment_onboarding.*
 import me.relex.circleindicator.CircleIndicator3
 import javax.inject.Inject
 
@@ -62,12 +62,14 @@ class OnboardingParentFragment : Fragment(),
     OnboardingParent,
     Injectable {
 
-    private lateinit var viewPager: ViewPager2
+    private var viewPager: ViewPager2 by autoCleared()
 
     private lateinit var adapter: OnboardingAdapter
 
-    private var nextButton: Button? = null
-    private var previousButton: Button? = null
+    private var nextButton: Button by autoCleared()
+    private var previousButton: Button by autoCleared()
+
+    private var indicator: CircleIndicator3 by autoCleared()
 
     private val preferences: SharedPreferences by lazy {
         PreferenceManager.getDefaultSharedPreferences(context)
@@ -112,8 +114,9 @@ class OnboardingParentFragment : Fragment(),
         viewPager = view.findViewById(R.id.viewPager)
         viewPager.adapter = adapter
         viewPager.isUserInputEnabled = false
+        viewPager.clearAdapterOnDetach()
 
-        val indicator: CircleIndicator3 = view.findViewById(R.id.indicator)
+        indicator = view.findViewById(R.id.indicator)
         indicator.setViewPager(viewPager)
         adapter.registerAdapterDataObserver(indicator.adapterDataObserver)
 
@@ -133,13 +136,13 @@ class OnboardingParentFragment : Fragment(),
         adapter.data = pages
 
         nextButton = view.findViewById(R.id.nextButton)
-        nextButton?.setOnClickListener {
+        nextButton.setOnClickListener {
             val currentPage = adapter.data[viewPager.currentItem]
             childFragmentManager.fragments.filterIsInstance<OnboardingChild>().firstOrNull { it.page == currentPage }?.handleNextButtonClick()
         }
 
         previousButton = view.findViewById(R.id.previousButton)
-        previousButton?.setOnClickListener {
+        previousButton.setOnClickListener {
             val currentPage = adapter.data[viewPager.currentItem]
             childFragmentManager.fragments.filterIsInstance<OnboardingChild>().firstOrNull { it.page == currentPage }?.handleBackButtonClick()
         }
@@ -148,7 +151,6 @@ class OnboardingParentFragment : Fragment(),
     override fun onDestroyView() {
         if (!earlyExit) {
             adapter.unregisterAdapterDataObserver(indicator.adapterDataObserver)
-            viewPager.clearAdapterOnDetach()
             viewPager.adapter = null
         }
         earlyExit = false
@@ -182,29 +184,29 @@ class OnboardingParentFragment : Fragment(),
     }
 
     override fun hideNextButton() {
-        nextButton?.isVisible = false
+        nextButton.isVisible = false
     }
 
     override fun showNextButton(text: String?) {
         text?.let {
-            nextButton?.text = text
+            nextButton.text = text
         }
-        nextButton?.isVisible = true
+        nextButton.isVisible = true
     }
 
     override fun toggleNextButton(enabled: Boolean) {
-        nextButton?.isEnabled = enabled
+        nextButton.isEnabled = enabled
     }
 
     override fun hideBackButton() {
-        previousButton?.isVisible = false
+        previousButton.isVisible = false
     }
 
     override fun showBackButton(text: String?) {
         text?.let {
-            previousButton?.text = text
+            previousButton.text = text
         }
-        previousButton?.isVisible = true
+        previousButton.isVisible = true
     }
 
     override fun exit() {
@@ -234,7 +236,7 @@ class OnboardingParentFragment : Fragment(),
     }
 
 
-    class OnboardingAdapter(fragment: Fragment, val isOnboarding: Boolean) : FragmentStateAdapter(fragment) {
+    class OnboardingAdapter(fragment: Fragment, private val isOnboarding: Boolean) : FragmentStateAdapter(fragment) {
         var data = listOf<OnboardingPage>()
             set(value) {
                 if (field != value) {
