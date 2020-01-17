@@ -149,12 +149,14 @@ class PlaylistListFragment :
     private val playlistBinderListener = object : PlaylistBinder.Listener {
 
         override fun onPlaylistSelected(playlist: Playlist, viewHolder: PlaylistBinder.ViewHolder) {
-            findNavController().navigate(
-                R.id.action_libraryFragment_to_playlistDetailFragment,
-                PlaylistDetailFragmentArgs(playlist).toBundle(),
-                null,
-                null
-            )
+            if (playlist.songCount != 0) {
+                findNavController().navigate(
+                    R.id.action_libraryFragment_to_playlistDetailFragment,
+                    PlaylistDetailFragmentArgs(playlist).toBundle(),
+                    null,
+                    null
+                )
+            }
         }
 
         @SuppressLint("RestrictedApi")
