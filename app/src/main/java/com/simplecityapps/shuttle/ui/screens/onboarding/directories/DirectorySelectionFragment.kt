@@ -71,7 +71,7 @@ class DirectorySelectionFragment : Fragment(),
         super.onViewCreated(view, savedInstanceState)
 
         val toolbar: Toolbar = view.findViewById(R.id.toolbar)
-        toolbar.setNavigationOnClickListener { getParent().goToPrevious() }
+        toolbar.setNavigationOnClickListener { getParent()?.goToPrevious() ?: Timber.e("Failed to navigate, parent is null") }
 
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
@@ -100,14 +100,16 @@ class DirectorySelectionFragment : Fragment(),
     override fun onResume() {
         super.onResume()
 
-        getParent().showBackButton("Back")
-        getParent().showNextButton("Done")
+        getParent()?.let { parent ->
+            parent.showBackButton("Back")
+            parent.showNextButton("Done")
 
-        if (adapter.items.none { binder -> binder is DirectoryBinder } || adapter.items.any { binder -> binder is DirectoryBinder && !binder.data.traversalComplete }) {
-            getParent().toggleNextButton(enabled = false)
-        } else {
-            getParent().toggleNextButton(enabled = true)
-        }
+            if (adapter.items.none { binder -> binder is DirectoryBinder } || adapter.items.any { binder -> binder is DirectoryBinder && !binder.data.traversalComplete }) {
+                parent.toggleNextButton(enabled = false)
+            } else {
+                parent.toggleNextButton(enabled = true)
+            }
+        } ?: Timber.e("Failed to update back/done button - parent is null")
     }
 
     override fun onDestroyView() {
@@ -120,25 +122,8 @@ class DirectorySelectionFragment : Fragment(),
     // MusicDirectoriesContract.View Implementation
 
     override fun setData(data: List<MusicDirectoriesContract.View.Data>) {
-        val constraintLayout = view as ConstraintLayout
-
-        adapter.setData(data.map { data -> DirectoryBinder(data, directoryBinderListener) }.toMutableList<ViewBinder>()) {
-            val adapterData = adapter.items.filterIsInstance<DirectoryBinder>().map { binder -> binder.data }
-
-            if (adapter.items.none { binder -> binder is DirectoryBinder } || adapter.items.any { binder -> binder is DirectoryBinder && !binder.data.traversalComplete }) {
-                getParent().toggleNextButton(enabled = false)
-            } else {
-                getParent().toggleNextButton(enabled = true)
-            }
-
-            TransitionManager.beginDelayedTransition(constraintLayout, transition)
-            if (adapter.items.isEmpty()) {
-                preAnimationConstraints.applyTo(constraintLayout)
-            } else {
-                postAnimationConstraints.applyTo(constraintLayout)
-            }
-
-            getParent().uriMimeTypePairs = adapterData
+        getParent()?.let { parent ->
+            parent.uriMimeTypePairs = data
                 .filter { it.traversalComplete }
                 .flatMap {
                     it.tree.getLeaves()
@@ -147,6 +132,26 @@ class DirectorySelectionFragment : Fragment(),
                             Pair(documentNode.uri, documentNode.mimeType)
                         }
                 }
+        } ?: Timber.e("Failed to set parent uri data - getParent() returned null")
+
+        adapter.setData(data.map { data -> DirectoryBinder(data, directoryBinderListener) }.toMutableList<ViewBinder>()) {
+            getParent()?.let { parent ->
+                if (adapter.items.none { binder -> binder is DirectoryBinder } || adapter.items.any { binder -> binder is DirectoryBinder && !binder.data.traversalComplete }) {
+                    parent.toggleNextButton(enabled = false)
+                } else {
+                    parent.toggleNextButton(enabled = true)
+                }
+
+                (view as? ConstraintLayout)?.let { constraintLayout ->
+                    TransitionManager.beginDelayedTransition(constraintLayout, transition)
+                    if (adapter.items.isEmpty()) {
+                        preAnimationConstraints.applyTo(constraintLayout)
+                    } else {
+                        postAnimationConstraints.applyTo(constraintLayout)
+                    }
+                }
+
+            } ?: Timber.e("Failed to update update buttons, getParent() returned null")
         }
     }
 
@@ -176,16 +181,16 @@ class DirectorySelectionFragment : Fragment(),
 
     override val page = OnboardingPage.MusicDirectories
 
-    override fun getParent(): OnboardingParent {
-        return parentFragment as OnboardingParent
+    override fun getParent(): OnboardingParent? {
+        return parentFragment as? OnboardingParent
     }
 
     override fun handleNextButtonClick() {
-        getParent().goToNext()
+        getParent()?.goToNext() ?: Timber.e("Failed to goToNext() - getParent() returned null")
     }
 
     override fun handleBackButtonClick() {
-        getParent().goToPrevious()
+        getParent()?.goToPrevious() ?: Timber.e("Failed to goToPrevious() - getParent() returned null")
     }
 
 

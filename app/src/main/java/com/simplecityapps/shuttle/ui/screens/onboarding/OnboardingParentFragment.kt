@@ -53,7 +53,7 @@ interface OnboardingParent {
 
 interface OnboardingChild {
     val page: OnboardingPage
-    fun getParent(): OnboardingParent
+    fun getParent(): OnboardingParent?
     fun handleNextButtonClick() {}
     fun handleBackButtonClick() {}
 }
