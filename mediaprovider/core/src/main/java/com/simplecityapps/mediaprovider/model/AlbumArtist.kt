@@ -5,8 +5,8 @@ import java.io.Serializable
 class AlbumArtist(
     var id: Long,
     val name: String,
-    val albumCount: Long,
-    val songCount: Long
+    val albumCount: Int,
+    val songCount: Int
 ) : Serializable {
 
     var sortKey: String? = Regex.articlePattern.matcher(name).replaceAll("")

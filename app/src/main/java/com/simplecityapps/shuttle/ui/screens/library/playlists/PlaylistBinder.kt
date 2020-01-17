@@ -68,7 +68,8 @@ class PlaylistBinder(val playlist: Playlist, private val listener: Listener) : V
             if (viewBinder.playlist.songCount == 0) {
                 subtitleTextView.text = "Playlist empty"
             } else {
-                subtitleTextView.text = "${viewBinder.playlist.songCount} Song(s) • ${viewBinder.playlist.duration.toHms()}"
+                subtitleTextView.text =
+                    "${subtitleTextView.resources.getQuantityString(R.plurals.songsPlural, viewBinder.playlist.songCount, viewBinder.playlist.songCount)} • ${viewBinder.playlist.duration.toHms()}"
             }
 
             syncIcon.isVisible = viewBinder.playlist.mediaStoreId != null

@@ -102,7 +102,7 @@ class PlaylistMenuView(
     }
 
     private fun showAddedToPlaylistToast(context: Context, playlist: Playlist, playlistData: PlaylistData) {
-        Toast.makeText(context, playlistData.getPlaylistSavedMessage(playlist.name), Toast.LENGTH_LONG).show()
+        Toast.makeText(context, playlistData.getPlaylistSavedMessage(context.resources, playlist.name), Toast.LENGTH_LONG).show()
     }
 
     private fun showPlaylistAddFailedToast(context: Context, error: Error) {

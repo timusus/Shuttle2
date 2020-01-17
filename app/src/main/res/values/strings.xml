@@ -31,4 +31,19 @@
         <item>2</item>
     </string-array>
 
+    <plurals name="songsPlural">
+        <item quantity="one">%d Song</item>
+        <item quantity="other">%d Songs</item>
+    </plurals>
+
+    <plurals name="albumsPlural">
+        <item quantity="one">%d Album</item>
+        <item quantity="other">%d Albums</item>
+    </plurals>
+
+    <plurals name="artistsPlural">
+        <item quantity="one">%d Artist</item>
+        <item quantity="other">%d Artists</item>
+    </plurals>
+
 </resources>

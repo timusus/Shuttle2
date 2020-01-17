@@ -78,7 +78,9 @@ class AlbumArtistBinder(
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.albumArtist.name
-            subtitle.text = "${viewBinder.albumArtist.albumCount} Albums • ${viewBinder.albumArtist.songCount} Songs"
+            subtitle.text =
+                "${subtitle.resources.getQuantityString(R.plurals.albumsPlural, viewBinder.albumArtist.albumCount, viewBinder.albumArtist.albumCount)} " +
+                        "• ${subtitle.resources.getQuantityString(R.plurals.songsPlural, viewBinder.albumArtist.songCount, viewBinder.albumArtist.songCount)}"
 
             viewBinder.imageLoader.loadArtwork(
                 imageView, viewBinder.albumArtist,

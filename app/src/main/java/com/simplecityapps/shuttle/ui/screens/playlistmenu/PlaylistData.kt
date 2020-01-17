@@ -1,20 +1,22 @@
 package com.simplecityapps.shuttle.ui.screens.playlistmenu
 
+import android.content.res.Resources
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.shuttle.R
 import java.io.Serializable
 
 sealed class PlaylistData : Serializable {
 
-    abstract fun getPlaylistSavedMessage(playlistName: String): String
+    abstract fun getPlaylistSavedMessage(resources: Resources, playlistName: String): String
 
     class Songs(val data: List<Song>) : PlaylistData() {
 
         constructor(song: Song) : this(listOf(song))
 
-        override fun getPlaylistSavedMessage(playlistName: String): String {
-            return "${data.size} song(s) added to $playlistName"
+        override fun getPlaylistSavedMessage(resources: Resources, playlistName: String): String {
+            return "${resources.getQuantityString(R.plurals.songsPlural, data.size, data.size)} added to $playlistName"
         }
     }
 
@@ -22,8 +24,8 @@ sealed class PlaylistData : Serializable {
 
         constructor(album: Album) : this(listOf(album))
 
-        override fun getPlaylistSavedMessage(playlistName: String): String {
-            return "${data.size} album(s) added to $playlistName"
+        override fun getPlaylistSavedMessage(resources: Resources, playlistName: String): String {
+            return "${resources.getQuantityString(R.plurals.albumsPlural, data.size, data.size)} added to $playlistName"
         }
     }
 
@@ -31,8 +33,8 @@ sealed class PlaylistData : Serializable {
 
         constructor(albumArtist: AlbumArtist) : this(listOf(albumArtist))
 
-        override fun getPlaylistSavedMessage(playlistName: String): String {
-            return "${data.size} artist(s) added to $playlistName"
+        override fun getPlaylistSavedMessage(resources: Resources, playlistName: String): String {
+            return "${resources.getQuantityString(R.plurals.artistsPlural, data.size, data.size)} added to $playlistName"
         }
     }
 }
