@@ -149,12 +149,7 @@ class OnboardingParentFragment : Fragment(),
     }
 
     override fun onDestroyView() {
-        if (!earlyExit) {
-            adapter.unregisterAdapterDataObserver(indicator.adapterDataObserver)
-            viewPager.adapter = null
-        }
         earlyExit = false
-
         super.onDestroyView()
     }
 
