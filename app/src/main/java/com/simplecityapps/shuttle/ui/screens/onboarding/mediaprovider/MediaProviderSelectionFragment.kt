@@ -19,6 +19,7 @@ import com.simplecityapps.shuttle.ui.common.utils.withArgs
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingChild
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingPage
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParent
+import timber.log.Timber
 import javax.inject.Inject
 
 class MediaProviderSelectionFragment :
@@ -71,8 +72,6 @@ class MediaProviderSelectionFragment :
             subtitleLabel.text = "Shuttle can find your music using two different modes:"
         }
 
-        getParent().showNextButton("Next")
-
         val initialSongProvider = playbackPreferenceManager.songProvider
         when (initialSongProvider) {
             PlaybackPreferenceManager.SongProvider.MediaStore -> {
@@ -86,36 +85,37 @@ class MediaProviderSelectionFragment :
         val warningLabel: TextView = view.findViewById(R.id.warningLabel)
 
         radioGroup.setOnCheckedChangeListener { _, checkedId ->
-            val pages = getParent().getPages().toMutableList()
-
-            when (checkedId) {
-                R.id.basic -> {
-                    playbackPreferenceManager.songProvider = PlaybackPreferenceManager.SongProvider.MediaStore
-                    getParent().uriMimeTypePairs = null
-                    pages.remove(OnboardingPage.MusicDirectories)
-                    getParent().setPages(pages)
-                }
-                R.id.advanced -> {
-                    playbackPreferenceManager.songProvider = PlaybackPreferenceManager.SongProvider.TagLib
-                    if (!pages.contains(OnboardingPage.MusicDirectories)) {
-                        pages.add(pages.indexOf(OnboardingPage.Scanner), OnboardingPage.MusicDirectories)
-                        getParent().setPages(pages)
+            getParent()?.let { parent ->
+                val pages = parent.getPages().toMutableList()
+                when (checkedId) {
+                    R.id.basic -> {
+                        playbackPreferenceManager.songProvider = PlaybackPreferenceManager.SongProvider.MediaStore
+                        parent.uriMimeTypePairs = null
+                        pages.remove(OnboardingPage.MusicDirectories)
+                        parent.setPages(pages)
+                    }
+                    R.id.advanced -> {
+                        playbackPreferenceManager.songProvider = PlaybackPreferenceManager.SongProvider.TagLib
+                        if (!pages.contains(OnboardingPage.MusicDirectories)) {
+                            pages.add(pages.indexOf(OnboardingPage.Scanner), OnboardingPage.MusicDirectories)
+                            parent.setPages(pages)
+                        }
                     }
                 }
-            }
-
-            if (!isOnboarding) {
-                warningLabel.isVisible = playbackPreferenceManager.songProvider != initialSongProvider
-            }
+                if (!isOnboarding) {
+                    warningLabel.isVisible = playbackPreferenceManager.songProvider != initialSongProvider
+                }
+            } ?: Timber.e("Failed to update state - getParent() returned null")
         }
-    }
 
-    override fun onResume() {
-        super.onResume()
-
-        getParent().hideBackButton()
-        getParent().toggleNextButton(true)
-        getParent().showNextButton("Next")
+        // It seems we need some sort of arbitrary delay, to ensure the parent fragment has indeed finished its onViewCreated() and instantiated the next button.
+        view.postDelayed({
+            getParent()?.let { parent ->
+                parent.hideBackButton()
+                parent.toggleNextButton(true)
+                parent.showNextButton("Next")
+            } ?: Timber.e("Failed to update state - getParent() returned null")
+        }, 50)
     }
 
 
@@ -123,10 +123,12 @@ class MediaProviderSelectionFragment :
 
     override val page = OnboardingPage.MediaProviderSelector
 
-    override fun getParent() = parentFragment as OnboardingParent
+    override fun getParent(): OnboardingParent? {
+        return parentFragment as? OnboardingParent
+    }
 
     override fun handleNextButtonClick() {
-        getParent().goToNext()
+        getParent()?.goToNext() ?: Timber.e("Failed to goToNext() - getParent() returned null")
     }
 
 
