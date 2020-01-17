@@ -61,6 +61,8 @@ class LocalSongRepository(
             .map { it.first.toSongData() }
             .observeOn(Schedulers.io())
             .toList()
+            .map { it.distinct() }
+
 
         return Single.zip(
             oldAlbumArtistData,

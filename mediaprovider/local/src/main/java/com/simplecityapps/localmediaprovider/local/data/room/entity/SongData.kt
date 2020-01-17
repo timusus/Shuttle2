@@ -1,5 +1,7 @@
 package com.simplecityapps.localmediaprovider.local.data.room.entity
 
+import android.net.Uri
+import android.provider.DocumentsContract
 import androidx.room.*
 import com.simplecityapps.localmediaprovider.local.ContentsComparator
 import com.simplecityapps.mediaprovider.model.Song
@@ -53,6 +55,13 @@ data class SongData(
     @Ignore
     var albumName: String = ""
 
+    @Ignore
+    val documentId: String = try {
+        DocumentsContract.getDocumentId(Uri.parse(path))
+    } catch (e: IllegalArgumentException) {
+        path
+    }
+
     override fun areContentsEqual(other: SongData): Boolean {
         // Todo: The track/disc check can be removed.
         //  This is a fix for a temporary issue, due to a change in how track/disc numbers are imported from the MediaStore.
@@ -66,13 +75,13 @@ data class SongData(
 
         other as SongData
 
-        if (path != other.path) return false
+        if (documentId != other.documentId) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        return path.hashCode()
+        return documentId.hashCode()
     }
 }
 
