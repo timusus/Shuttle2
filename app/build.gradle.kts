@@ -1,5 +1,3 @@
-import java.io.ByteArrayOutputStream
-
 plugins {
     id(BuildPlugins.androidApplication)
     id(BuildPlugins.playPublisher) version BuildPlugins.Versions.playPublisher
@@ -201,8 +199,6 @@ afterEvaluate {
     }
 }
 
-tasks.getByName("preBuild").dependsOn("generateChangelog")
-
 tasks.register<Copy>("copyGoogleServices") {
     if (System.getenv("JENKINS_URL") != null) {
         description = "Copies google-services.json from Jenkins secret file"
@@ -210,20 +206,6 @@ tasks.register<Copy>("copyGoogleServices") {
         include("google-services.json")
         into(".")
     }
-}
-
-tasks.register("generateChangelog") {
-    val stdout = ByteArrayOutputStream()
-    exec {
-        commandLine("bash", "-c", "git log --pretty=format:'\"%s\",' $(git describe --tags --abbrev=0 @^)..@")
-        standardOutput = stdout
-    }
-
-    val jsonFile = file("src/main/assets/changelog.json")
-    if (!jsonFile.parentFile.exists()) {
-        jsonFile.parentFile.mkdirs()
-    }
-    jsonFile.writeText("{\"commits\": [${stdout.toString().trim().removeSuffix(",")}]}")
 }
 
 apply(plugin = "com.google.gms.google-services")
