@@ -35,6 +35,7 @@ class QueueBinder(
         fun onQueueItemClicked(queueItem: QueueItem)
         fun onPlayPauseClicked()
         fun onStartDrag(viewHolder: ViewHolder)
+        fun onLongPress(viewHolder: ViewHolder)
     }
 
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
@@ -86,6 +87,11 @@ class QueueBinder(
         init {
             itemView.setOnClickListener {
                 viewBinder?.listener?.onQueueItemClicked(viewBinder!!.queueItem)
+            }
+
+            itemView.setOnLongClickListener {
+                viewBinder?.listener?.onLongPress(this)
+                true
             }
 
             playPauseButton.increaseTouchableArea(8)

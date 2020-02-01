@@ -50,8 +50,8 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
         val queueItems = songs.map { song -> song.toQueueItem(false) }
         queue.setQueue(queueItems)
 
-        shuffleSongs?.map { song ->
-            queueItems.first { queueItem -> queueItem.song == song }
+        shuffleSongs?.mapNotNull { song ->
+            queueItems.firstOrNull { queueItem -> queueItem.song == song }
         }?.let { shuffleQueueItems ->
             queue.setShuffleQueue(shuffleQueueItems)
         } ?: queue.generateShuffleQueue()

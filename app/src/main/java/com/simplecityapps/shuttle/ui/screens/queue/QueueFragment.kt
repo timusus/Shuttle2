@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -146,6 +147,7 @@ class QueueFragment :
         }
     }
 
+
     // QueueBinder.Listener Implementation
 
     private val queueBinderListener = object : QueueBinder.Listener {
@@ -160,6 +162,26 @@ class QueueFragment :
 
         override fun onStartDrag(viewHolder: QueueBinder.ViewHolder) {
             itemTouchHelper.startDrag(viewHolder)
+        }
+
+        override fun onLongPress(viewHolder: QueueBinder.ViewHolder) {
+            val popupMenu = PopupMenu(context!!, viewHolder.itemView)
+            popupMenu.inflate(R.menu.menu_queue_item)
+            popupMenu.menu.findItem(R.id.playNext).isVisible = viewHolder.viewBinder?.queueItem?.isCurrent == false
+            popupMenu.setOnMenuItemClickListener {
+                when (it.itemId) {
+                    R.id.removeFromQueue -> {
+                        presenter.removeFromQueue(viewHolder.viewBinder!!.queueItem)
+                        return@setOnMenuItemClickListener true
+                    }
+                    R.id.playNext -> {
+                        presenter.playNext(viewHolder.viewBinder!!.queueItem)
+                        return@setOnMenuItemClickListener true
+                    }
+                }
+                false
+            }
+            popupMenu.show()
         }
     }
 
@@ -201,6 +223,11 @@ open class ItemTouchHelperCallback(
 
     private var startPosition = -1
     private var endPosition = -1
+
+    override fun isLongPressDragEnabled(): Boolean {
+        // Long presses are handled separately
+        return false
+    }
 
     override fun getMovementFlags(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder): Int {
         return makeMovementFlags(ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0)

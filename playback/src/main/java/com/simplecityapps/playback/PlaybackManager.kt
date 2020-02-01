@@ -6,6 +6,7 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
+import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
 import timber.log.Timber
@@ -237,6 +238,14 @@ class PlaybackManager(
     fun moveQueueItem(from: Int, to: Int) {
         queueManager.move(from, to)
         playback.loadNext(queueManager.getNext()?.song)
+    }
+
+    fun removeQueueItem(queueItem: QueueItem) {
+        if (queueManager.getCurrentItem() == queueItem) {
+            playback.pause()
+            queueManager.skipToNext(true)
+        }
+        queueManager.remove(listOf(queueItem))
     }
 
     fun playNext(songs: List<Song>) {

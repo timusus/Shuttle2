@@ -11,6 +11,7 @@ interface QueueContract {
         fun togglePlayback()
         fun scrollToCurrent()
         fun moveQueueItem(from: Int, to: Int)
+        fun removeFromQueue(queueItem: QueueItem)
     }
 
     interface View {

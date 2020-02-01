@@ -53,6 +53,16 @@ class QueuePresenter @Inject constructor(
         playbackManager.moveQueueItem(from, to)
     }
 
+    override fun removeFromQueue(queueItem: QueueItem) {
+        playbackManager.removeQueueItem(queueItem)
+    }
+
+    fun playNext(queueItem: QueueItem) {
+        queueManager.getCurrentPosition()?.let { currentPosition ->
+            val from = queueManager.getQueue().indexOf(queueItem)
+            playbackManager.moveQueueItem(from, currentPosition + if (from < currentPosition) 0 else 1)
+        }
+    }
 
     // QueueBinder.Listener Implementation
 
@@ -60,7 +70,7 @@ class QueuePresenter @Inject constructor(
         queueManager.setCurrentItem(queueItem)
         playbackManager.loadCurrent(0) { result ->
             result.onSuccess { playbackManager.play() }
-            result.onFailure { error -> view?.showLoadError(error as Error)  }
+            result.onFailure { error -> view?.showLoadError(error as Error) }
         }
     }
 
