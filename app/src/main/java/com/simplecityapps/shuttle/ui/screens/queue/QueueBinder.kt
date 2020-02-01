@@ -106,7 +106,7 @@ class QueueBinder(
 
             title.text = viewBinder.queueItem.song.name
             subtitle.text = "${viewBinder.queueItem.song.albumArtistName} • ${viewBinder.queueItem.song.albumName}"
-            tertiary.text = viewBinder.queueItem.song.duration.toHms()
+            tertiary.text = viewBinder.queueItem.song.duration.toHms("--:--")
 
             viewBinder.imageLoader.loadArtwork(
                 artworkImageView,

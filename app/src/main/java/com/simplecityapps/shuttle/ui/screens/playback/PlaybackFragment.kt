@@ -211,7 +211,7 @@ class PlaybackFragment :
 
     override fun setProgress(position: Int, duration: Int) {
         currentTimeTextView.text = position.toHms()
-        durationTextView.text = duration.toHms()
+        durationTextView.text = duration.toHms("--:--")
         seekBar.progress = ((position.toFloat() / duration) * 1000).toInt()
     }
 

@@ -130,7 +130,7 @@ Java_com_simplecityapps_taglib_FileScanner_getAudioFile(JNIEnv *env, jobject ins
     jstring artist = unknown;
     jstring albumArtist = unknown;
     jstring album = unknown;
-    int track = 0;
+    int track = 1;
     int disc = 1;
     int duration = 0;
     int year = 0;
@@ -180,6 +180,9 @@ Java_com_simplecityapps_taglib_FileScanner_getAudioFile(JNIEnv *env, jobject ins
             }
 
             track = tag->track();
+            if (track <= 0) {
+                track = 1;
+            }
 
             if (properties.contains("DISCNUMBER")) {
                 const TagLib::StringList &stringList = properties["DISCNUMBER"];
