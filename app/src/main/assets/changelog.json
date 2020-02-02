@@ -1,6 +1,5 @@
 {
   "commits": [
-    "Bump to alpha-46",
-    "Fixed a crash when launching app, due to invalid characters in changelog"
+    "Implemented long-press to remove form queue & play next in queue"
   ]
 }

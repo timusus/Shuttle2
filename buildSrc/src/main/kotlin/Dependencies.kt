@@ -41,5 +41,5 @@ object AndroidSdk {
 object AppVersion {
     const val versionMajor = 0
     const val versionMinor = 0
-    const val versionPatch = 46
+    const val versionPatch = 47
 }
