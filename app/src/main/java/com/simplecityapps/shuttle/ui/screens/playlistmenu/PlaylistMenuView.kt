@@ -67,7 +67,7 @@ class PlaylistMenuView(
         val subMenu = menu.findItem(R.id.playlist)?.subMenu
         subMenu?.let {
             subMenu.clear()
-            subMenu.add(Menu.NONE, playlistCreateId, 0, "+ New Playlist")
+            subMenu.add(Menu.NONE, playlistCreateId, 0, "New Playlist")
             for ((index, playlist) in presenter.playlists.withIndex()) {
                 subMenu.add(playlistGroupId, index, index, playlist.name)
             }
