@@ -96,6 +96,7 @@ class MainFragment
                 .commit()
         } else {
             multiSheetView?.restoreSheet(savedInstanceState.getInt(STATE_CURRENT_SHEET))
+            multiSheetView?.restoreBottomSheetTranslation(savedInstanceState.getFloat(STATE_BOTTOM_NAV_TRANSLATION_Y, 0f))
         }
 
         // Update visible state of mini player
@@ -158,6 +159,7 @@ class MainFragment
 
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putInt(STATE_CURRENT_SHEET, multiSheetView?.currentSheet ?: MultiSheetView.Sheet.NONE)
+        multiSheetView?.bottomSheetTranslation?.let { translationY -> outState.putFloat(STATE_BOTTOM_NAV_TRANSLATION_Y, translationY) }
         super.onSaveInstanceState(outState)
     }
 
@@ -196,6 +198,7 @@ class MainFragment
     companion object {
         const val TAG = "MainFragment"
         const val STATE_CURRENT_SHEET = "current_sheet"
+        const val STATE_BOTTOM_NAV_TRANSLATION_Y = "bottom_nav_alpha"
     }
 
 }
