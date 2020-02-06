@@ -52,26 +52,28 @@ class FolderDetailPresenter @Inject constructor(
                     val root = FileNodeTree(Uri.parse("/"), "Root")
                     var currentTree = root
 
-                    songs.forEach { song ->
+                    songs
+                        .sortedBy { song -> song.path }
+                        .forEach { song ->
 
-                        val path = song.path.sanitise()
-                        val parts = path.split(Regex("(?<!/)/(?!/)"))
+                            val path = song.path.sanitise()
+                            val parts = path.split(Regex("(?<!/)/(?!/)"))
 
-                        parts.forEachIndexed { index, part ->
-                            var path = currentTree.uri.toString().sanitise()
-                            path += part
+                            parts.forEachIndexed { index, part ->
+                                var path = currentTree.uri.toString().sanitise()
+                                path += part
 
-                            if (index != parts.size - 1) {
-                                if (path != "/") {
-                                    path += "/"
+                                if (index != parts.size - 1) {
+                                    if (path != "/") {
+                                        path += "/"
+                                    }
+                                    currentTree = currentTree.addTreeNode(FileNodeTree(Uri.parse(path), part))
+                                } else {
+                                    currentTree.addLeafNode(FileNode(Uri.parse(path), part, song, currentTree))
                                 }
-                                currentTree = currentTree.addTreeNode(FileNodeTree(Uri.parse(path), part))
-                            } else {
-                                currentTree.addLeafNode(FileNode(Uri.parse(path), part, song, currentTree))
                             }
+                            currentTree = root
                         }
-                        currentTree = root
-                    }
                     root
                 }
                 .cache()
