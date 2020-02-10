@@ -9,16 +9,17 @@
     android:clipToPadding="false"
     android:fitsSystemWindows="false"
     android:orientation="vertical"
-    android:paddingTop="8dp"
+    android:paddingTop="16dp"
+    android:paddingBottom="16dp"
     app:layout_behavior="@string/appbar_scrolling_view_behavior"
     tools:listitem="@layout/list_item_album">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
-        android:layout_height="400dp"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
-        tools:listitem="@layout/list_item_settings"
-        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        tools:listitem="@layout/list_item_settings" />
 
 </FrameLayout>
