@@ -78,7 +78,7 @@ class PlaylistListFragment :
                     R.id.syncPlaylists -> {
                         AlertDialog.Builder(context!!)
                             .setTitle("Sync Media Store Playlists")
-                            .setMessage("Copy playlists from the Media Store. If the playlists already exists in Shuttle, the songs will be merged. \n\nNote: Songs are only added, and not removed.")
+                            .setMessage("Copies playlists from the Media Store. If the playlists already exists in Shuttle, the songs will be merged. \n\nNote: Songs are only added, and not removed.")
                             .setPositiveButton("Sync") { _, _ -> presenter.importMediaStorePlaylists() }
                             .setNegativeButton("Cancel", null)
                             .show()
