@@ -33,6 +33,7 @@ interface AlbumArtistListContract {
         fun loadAlbumArtists()
         fun addToQueue(albumArtist: AlbumArtist)
         fun playNext(albumArtist: AlbumArtist)
+        fun rescanLibrary()
     }
 }
 
@@ -110,5 +111,9 @@ class AlbumArtistListPresenter @Inject constructor(
                     },
                     onError = { throwable -> Timber.e(throwable, "Failed to retrieve songs for album artist: ${albumArtist.name}") })
         )
+    }
+
+    override fun rescanLibrary() {
+        mediaImporter.rescan()
     }
 }

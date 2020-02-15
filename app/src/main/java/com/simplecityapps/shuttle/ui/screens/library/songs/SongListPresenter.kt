@@ -34,6 +34,7 @@ interface SongListContract {
         fun onSongClicked(song: Song)
         fun addToQueue(song: Song)
         fun playNext(song: Song)
+        fun rescanLibrary()
     }
 }
 
@@ -101,5 +102,9 @@ class SongListPresenter @Inject constructor(
     override fun playNext(song: Song) {
         playbackManager.playNext(listOf(song))
         view?.onAddedToQueue(song)
+    }
+
+    override fun rescanLibrary() {
+        mediaImporter.rescan()
     }
 }

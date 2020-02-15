@@ -21,6 +21,7 @@ import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
+import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
@@ -84,6 +85,29 @@ class AlbumArtistListFragment :
         super.onResume()
 
         presenter.loadAlbumArtists()
+
+        findToolbarHost()?.getToolbar()?.let { toolbar ->
+            toolbar.inflateMenu(R.menu.menu_library)
+            toolbar.setOnMenuItemClickListener { menuItem ->
+                when (menuItem.itemId) {
+                    R.id.rescan -> {
+                        presenter.rescanLibrary()
+                        Toast.makeText(context!!, "Library scan started", Toast.LENGTH_SHORT).show()
+                        true
+                    }
+                    else -> false
+                }
+            }
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        findToolbarHost()?.getToolbar()?.let { toolbar ->
+            toolbar.menu.removeItem(R.id.rescan)
+            toolbar.setOnMenuItemClickListener(null)
+        }
     }
 
     override fun onDestroyView() {

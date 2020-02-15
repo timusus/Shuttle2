@@ -3,9 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:id="@+id/syncPlaylists"
-        android:icon="@drawable/ic_content_copy"
-        android:title="MediaStore Sync"
-        app:showAsAction="ifRoom" />
+        android:id="@+id/rescan"
+        android:icon="@drawable/ic_outline_sync_24"
+        android:title="Rescan"
+        app:showAsAction="always" />
 
 </menu>

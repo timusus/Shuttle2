@@ -33,6 +33,7 @@ class AlbumListContract {
         fun loadAlbums()
         fun addToQueue(album: Album)
         fun playNext(album: Album)
+        fun rescanLibrary()
     }
 }
 
@@ -110,5 +111,9 @@ class AlbumListPresenter @Inject constructor(
                     },
                     onError = { throwable -> Timber.e(throwable, "Failed to retrieve songs for album: ${album.name}") })
         )
+    }
+
+    override fun rescanLibrary() {
+        mediaImporter.rescan()
     }
 }
