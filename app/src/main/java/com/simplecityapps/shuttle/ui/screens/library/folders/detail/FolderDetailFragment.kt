@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import androidx.navigation.findNavController
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
@@ -30,6 +31,7 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFr
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
+import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragmentArgs
 import io.reactivex.disposables.CompositeDisposable
 import javax.inject.Inject
 
@@ -142,7 +144,7 @@ class FolderDetailFragment :
 
     override fun onOverflowClicked(view: View, song: Song) {
         val popupMenu = PopupMenu(context!!, view)
-        popupMenu.inflate(R.menu.menu_popup_add)
+        popupMenu.inflate(R.menu.menu_popup_song)
 
         playlistMenuView.createPlaylistMenu(popupMenu.menu)
 
@@ -157,6 +159,10 @@ class FolderDetailFragment :
                     }
                     R.id.playNext -> {
                         presenter.playNext(song)
+                        return@setOnMenuItemClickListener true
+                    }
+                    R.id.songInfo -> {
+                        findNavController().navigate(R.id.action_folderFragment_to_songInfoDialogFragment, SongInfoDialogFragmentArgs(song).toBundle())
                         return@setOnMenuItemClickListener true
                     }
                 }

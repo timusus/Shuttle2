@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/queue"
+        android:title="Add to Queue" />
+    <item
+        android:id="@+id/playlist"
+        android:title="Add to Playlist">
+
+        <menu />
+
+    </item>
+    <item
+        android:id="@+id/playNext"
+        android:title="Play Next" />
+
+    <item
+        android:id="@+id/songInfo"
+        android:title="Song Info" />
+
+</menu>

@@ -32,6 +32,7 @@ import com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
 import com.simplecityapps.shuttle.ui.screens.playback.PlaybackFragment
 import com.simplecityapps.shuttle.ui.screens.playback.mini.MiniPlaybackFragment
 import com.simplecityapps.shuttle.ui.screens.queue.QueueFragment
+import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragmentArgs
 import com.simplecityapps.taglib.FileScanner
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers

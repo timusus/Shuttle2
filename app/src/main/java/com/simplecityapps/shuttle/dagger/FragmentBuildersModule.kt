@@ -28,6 +28,7 @@ import com.simplecityapps.shuttle.ui.screens.queue.QueueFragment
 import com.simplecityapps.shuttle.ui.screens.settings.BottomDrawerSettingsFragment
 import com.simplecityapps.shuttle.ui.screens.settings.SettingsFragment
 import com.simplecityapps.shuttle.ui.screens.sleeptimer.SleepTimerDialogFragment
+import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
 import dagger.Module
 import dagger.android.ContributesAndroidInjector
 
@@ -118,4 +119,7 @@ abstract class FragmentBuildersModule {
 
     @ContributesAndroidInjector
     abstract fun contributeFrequencyResponseFragment(): FrequencyResponseDialogFragment
+
+    @ContributesAndroidInjector
+    abstract fun contributeSongInfoDialog(): SongInfoDialogFragment
 }

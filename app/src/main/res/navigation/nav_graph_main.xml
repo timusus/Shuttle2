@@ -25,6 +25,9 @@
         <action
             android:id="@+id/action_homeFragment_to_smartPlaylistDetailFragment"
             app:destination="@id/smartPlaylistDetailFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_songInfoDialogFragment"
+            app:destination="@id/songInfoDialogFragment" />
     </fragment>
 
     <fragment
@@ -41,13 +44,20 @@
         <action
             android:id="@+id/action_libraryFragment_to_playlistDetailFragment"
             app:destination="@id/playlistDetailFragment" />
+        <action
+            android:id="@+id/action_libraryFragment_to_songInfoDialogFragment"
+            app:destination="@id/songInfoDialogFragment" />
     </fragment>
 
     <fragment
         android:id="@+id/folderFragment"
         android:name="com.simplecityapps.shuttle.ui.screens.library.folders.FolderFragment"
         android:label="FolderFragment"
-        tools:layout="@layout/fragment_folders" />
+        tools:layout="@layout/fragment_folders" >
+        <action
+            android:id="@+id/action_folderFragment_to_songInfoDialogFragment"
+            app:destination="@id/songInfoDialogFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/albumArtistDetailFragment"
@@ -60,6 +70,9 @@
         <action
             android:id="@+id/action_albumArtistDetailFragment_to_albumDetailFragment"
             app:destination="@id/albumDetailFragment" />
+        <action
+            android:id="@+id/action_albumArtistDetailFragment_to_songInfoDialogFragment"
+            app:destination="@id/songInfoDialogFragment" />
     </fragment>
 
     <fragment
@@ -70,12 +83,19 @@
         <argument
             android:name="album"
             app:argType="com.simplecityapps.mediaprovider.model.Album" />
+        <action
+            android:id="@+id/action_albumDetailFragment_to_songInfoDialogFragment"
+            app:destination="@id/songInfoDialogFragment" />
     </fragment>
     <fragment
         android:id="@+id/searchFragment"
         android:name="com.simplecityapps.shuttle.ui.screens.home.search.SearchFragment"
         android:label="SearchFragment"
-        tools:layout="@layout/fragment_search" />
+        tools:layout="@layout/fragment_search" >
+        <action
+            android:id="@+id/action_searchFragment_to_songInfoDialogFragment"
+            app:destination="@id/songInfoDialogFragment" />
+    </fragment>
     <fragment
         android:id="@+id/playlistDetailFragment"
         android:name="com.simplecityapps.shuttle.ui.screens.library.playlists.detail.PlaylistDetailFragment"
@@ -84,6 +104,9 @@
         <argument
             android:name="playlist"
             app:argType="com.simplecityapps.mediaprovider.model.Playlist" />
+        <action
+            android:id="@+id/action_playlistDetailFragment_to_songInfoDialogFragment"
+            app:destination="@id/songInfoDialogFragment" />
     </fragment>
     <fragment
         android:id="@+id/smartPlaylistDetailFragment"
@@ -93,6 +116,17 @@
         <argument
             android:name="playlist"
             app:argType="com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylist" />
+        <action
+            android:id="@+id/action_smartPlaylistDetailFragment_to_songInfoDialogFragment"
+            app:destination="@id/songInfoDialogFragment" />
     </fragment>
+    <dialog
+        android:id="@+id/songInfoDialogFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment"
+        android:label="SongInfoDialogFragment" >
+        <argument
+            android:name="song"
+            app:argType="com.simplecityapps.mediaprovider.model.Song" />
+    </dialog>
 
 </navigation>
