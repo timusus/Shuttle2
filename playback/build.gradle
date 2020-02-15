@@ -58,7 +58,7 @@ dependencies {
     implementation 'org.nanohttpd:nanohttpd-webserver:2.3.1'
 
     // ExoPlayer
-    api 'com.google.android.exoplayer:exoplayer:2.10.7'
+    api project(':exoplayer-library-core')
 
     // Moshi
     kapt "com.squareup.moshi:moshi-kotlin-codegen:1.9.2"

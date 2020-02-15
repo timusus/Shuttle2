@@ -3,10 +3,10 @@ package com.simplecityapps.playback.local.exoplayer
 import android.content.Context
 import android.net.Uri
 import com.google.android.exoplayer2.*
+import com.google.android.exoplayer2.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON
 import com.google.android.exoplayer2.audio.AudioProcessor
 import com.google.android.exoplayer2.source.ConcatenatingMediaSource
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
-import com.google.android.exoplayer2.trackselection.DefaultTrackSelector
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
 import com.simplecityapps.mediaprovider.model.Song
@@ -32,58 +32,64 @@ class ExoPlayerPlayback(
 
     private var playWhenReady = false
 
-    private val trackChangeListener by lazy {
-        Timber.e("Creating TrackChangeEventListener!!")
-        object : TrackChangeEventListener(player) {
-            override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
-                val state = playbackState.toState()
-                Timber.v("onPlayerStateChanged(playWhenReady: $playWhenReady, playbackState: ${state})")
-
-                if (playWhenReady != this@ExoPlayerPlayback.playWhenReady) {
-                    callback?.onPlayStateChanged(playWhenReady)
-                    this@ExoPlayerPlayback.playWhenReady = playWhenReady
-                }
-
-                if (state == PlaybackState.Ended) {
-                    callback?.onPlayStateChanged(isPlaying = false)
-                    callback?.onPlaybackComplete(trackWentToNext = false)
-                    this@ExoPlayerPlayback.playWhenReady = false
-                }
-            }
-
-            override fun onTimelineChanged(timeline: Timeline?, manifest: Any?, reason: Int) {
-                Timber.v("onTimelineChanged() ")
-                updateWindowIndex()
-            }
-
-            override fun onTrackChanged() {
-                Timber.v("onTrackChanged()")
-                callback?.onPlaybackComplete(trackWentToNext = true)
-            }
-        }
-    }
+    private var trackChangeListener: TrackChangeEventListener? = null
 
     private fun initPlayer(context: Context): ExoPlayer {
 
         val renderersFactory = object : DefaultRenderersFactory(context) {
+
             override fun buildAudioProcessors(): Array<AudioProcessor> {
                 return super.buildAudioProcessors().plus(audioProcessor)
             }
         }
 
-        return ExoPlayerFactory.newSimpleInstance(
-            context,
-            renderersFactory,
-            DefaultTrackSelector(),
-            DefaultLoadControl()
-        )
+        renderersFactory.setExtensionRendererMode(EXTENSION_RENDERER_MODE_ON)
+
+        return SimpleExoPlayer.Builder(context, renderersFactory).build()
     }
 
     override fun load(current: Song, next: Song?, seekPosition: Int, completion: (Result<Any?>) -> Unit) {
         Timber.v("load(current: ${current.name})")
         isReleased = false
 
-        player.addListener(trackChangeListener)
+        trackChangeListener =
+            object : TrackChangeEventListener(player) {
+
+                override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
+                    val state = playbackState.toState()
+                    Timber.v("onPlayerStateChanged(playWhenReady: $playWhenReady, playbackState: ${state})")
+
+                    if (playWhenReady != this@ExoPlayerPlayback.playWhenReady) {
+                        callback?.onPlayStateChanged(playWhenReady)
+                        this@ExoPlayerPlayback.playWhenReady = playWhenReady
+                    }
+
+                    if (state == PlaybackState.Ended) {
+                        callback?.onPlayStateChanged(isPlaying = false)
+                        callback?.onPlaybackComplete(trackWentToNext = false)
+                        this@ExoPlayerPlayback.playWhenReady = false
+                    }
+                }
+
+                override fun onTimelineChanged(timeline: Timeline, reason: Int) {
+                    super.onTimelineChanged(timeline, reason)
+
+                    updateWindowIndex()
+                }
+
+                override fun onTrackChanged() {
+                    Timber.v("onTrackChanged()")
+                    callback?.onPlaybackComplete(trackWentToNext = true)
+                }
+
+                override fun onPlayerError(error: ExoPlaybackException) {
+                    super.onPlayerError(error)
+
+                    Timber.e(error, "onPlayerError()")
+                }
+            }
+
+        player.addListener(trackChangeListener!!)
         player.seekTo(seekPosition.toLong())
 
         Timber.v("MediaSource: Clearing")
@@ -91,7 +97,7 @@ class ExoPlayerPlayback(
         Timber.v("MediaSource: Adding song")
         concatenatingMediaSource.addMediaSource(mediaSourceFactory.createMediaSource(Uri.parse(current.path)))
         Timber.v("load() calling updateWindowIndex()")
-        trackChangeListener.updateWindowIndex()
+        trackChangeListener?.updateWindowIndex()
 
         player.prepare(concatenatingMediaSource)
 
@@ -121,7 +127,7 @@ class ExoPlayerPlayback(
 
         // Let the track change listener know that the window index has changed, so we don't get a false 'track changed' call
         Timber.v("LoadNext() calling updateWindowIndex()")
-        trackChangeListener.updateWindowIndex()
+        trackChangeListener?.updateWindowIndex()
     }
 
     override fun play() {
@@ -182,7 +188,6 @@ class ExoPlayerPlayback(
         private var currentWindowIndex: Int = 0
 
         fun updateWindowIndex() {
-            Timber.v("updateWindowIndex(from: $currentWindowIndex, to: ${player.currentWindowIndex}) ")
             currentWindowIndex = player.currentWindowIndex
         }
 

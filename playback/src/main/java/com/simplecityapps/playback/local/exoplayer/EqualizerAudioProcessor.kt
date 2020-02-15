@@ -1,6 +1,9 @@
 package com.simplecityapps.playback.local.exoplayer
 
 import androidx.core.math.MathUtils.clamp
+import com.google.android.exoplayer2.C
+import com.google.android.exoplayer2.audio.AudioProcessor
+import com.google.android.exoplayer2.audio.AudioProcessor.UnhandledAudioFormatException
 import com.google.android.exoplayer2.audio.BaseAudioProcessor
 import com.simplecityapps.playback.equalizer.BandProcessor
 import com.simplecityapps.playback.equalizer.Equalizer
@@ -17,7 +20,7 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
     var preset: Equalizer.Presets.Preset = Equalizer.Presets.flat
         set(value) {
             field = value
-            
+
             updateBandProcessors()
         }
 
@@ -35,38 +38,42 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
 
         Timber.v("Updating band processors: (${preset.bands.map { it.gain.toString() }.joinToString(",")})")
 
-        if (channelCount <= 0) {
+        if (outputAudioFormat.channelCount <= 0) {
             return
         }
 
         bandProcessors = preset.bands.map { band ->
             BandProcessor(
                 band.toNyquistBand(),
-                sampleRate = sampleRateHz,
-                channelCount = channelCount,
+                sampleRate = outputAudioFormat.sampleRate,
+                channelCount = outputAudioFormat.channelCount,
                 referenceGain = 0
             )
         }.toList()
     }
 
-    override fun configure(sampleRateHz: Int, channelCount: Int, encoding: Int): Boolean {
-        val inputChanged = setInputFormat(sampleRateHz, channelCount, encoding)
+    override fun onConfigure(inputAudioFormat: AudioProcessor.AudioFormat): AudioProcessor.AudioFormat {
+        super.onConfigure(inputAudioFormat)
+
+        if (inputAudioFormat.encoding != C.ENCODING_PCM_16BIT) {
+            throw UnhandledAudioFormatException(inputAudioFormat)
+        }
 
         updateBandProcessors()
 
-        return inputChanged
+        return inputAudioFormat
     }
 
     override fun queueInput(inputBuffer: ByteBuffer) {
         if (enabled) {
             var position = inputBuffer.position()
             val limit = inputBuffer.limit()
-            val frameCount = (limit - position) / (2 * channelCount)
-            val outputSize = frameCount * outputChannelCount * 2
+            val frameCount = (limit - position) / (2 * outputAudioFormat.channelCount)
+            val outputSize = frameCount * outputAudioFormat.channelCount * 2
             val buffer = replaceOutputBuffer(outputSize)
 
             while (position < limit) {
-                for (channelIndex in 0 until outputChannelCount) {
+                for (channelIndex in 0 until outputAudioFormat.channelCount) {
 
                     val samplePosition = position + 2 * channelIndex
                     val originalSample = inputBuffer.getShort(samplePosition)
@@ -84,7 +91,7 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
 
                     buffer.putShort(clamp(alteredSample, Short.MIN_VALUE.toFloat(), Short.MAX_VALUE.toFloat()).toShort())
                 }
-                position += channelCount * 2
+                position += outputAudioFormat.channelCount * 2
             }
             inputBuffer.position(limit)
             buffer.flip()

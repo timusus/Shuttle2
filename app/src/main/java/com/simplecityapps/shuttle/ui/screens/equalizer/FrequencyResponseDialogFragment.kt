@@ -18,6 +18,7 @@ import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.google.android.exoplayer2.C
+import com.google.android.exoplayer2.audio.AudioProcessor
 import com.paramsen.noise.Noise
 import com.simplecityapps.playback.equalizer.Equalizer
 import com.simplecityapps.playback.local.exoplayer.EqualizerAudioProcessor
@@ -154,7 +155,7 @@ class FrequencyResponseDialogFragment : DialogFragment(), Injectable {
     private suspend fun calculateFft(): Map<Float, Float> {
         return withContext(Dispatchers.IO) {
             val audioProcessor = EqualizerAudioProcessor(true)
-            audioProcessor.configure(44100, 1, C.ENCODING_PCM_16BIT)
+            audioProcessor.configure(AudioProcessor.AudioFormat(44100, 1, C.ENCODING_PCM_16BIT))
             audioProcessor.preset = preset
 
             val size = 2.0.pow(14).toInt()
@@ -177,7 +178,7 @@ class FrequencyResponseDialogFragment : DialogFragment(), Injectable {
             noise.fft(src, dst)
 
             (0 until size / 2).associateBy(
-                { index -> ((index / (size / 2f)) * (audioProcessor.outputSampleRateHz / 2f)) },
+                { index -> ((index / (size / 2f)) * (44100 / 2f)) },
                 { index -> (20f * log10(sqrt(((dst[index * 2]).pow(2)) + ((dst[index * 2 + 1]).pow(2))))) })
         }
     }
