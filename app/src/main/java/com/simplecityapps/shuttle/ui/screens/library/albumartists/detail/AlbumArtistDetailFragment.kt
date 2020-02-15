@@ -32,6 +32,7 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.autoClearedNullable
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.DetailImageAnimationHelper
@@ -61,7 +62,7 @@ class AlbumArtistDetailFragment :
 
     private lateinit var adapter: RecyclerAdapter
 
-    private var animationHelper: DetailImageAnimationHelper by autoCleared()
+    private var animationHelper: DetailImageAnimationHelper? by autoClearedNullable()
 
     private val handler = Handler(Looper.getMainLooper())
 
@@ -103,7 +104,7 @@ class AlbumArtistDetailFragment :
         (sharedElementEnterTransition as Transition).addListener(object : TransitionListenerAdapter() {
             override fun onTransitionEnd(transition: Transition) {
                 super.onTransitionEnd(transition)
-                animationHelper.showHeroView()
+                animationHelper?.showHeroView()
                 transition.removeListener(this)
             }
         })

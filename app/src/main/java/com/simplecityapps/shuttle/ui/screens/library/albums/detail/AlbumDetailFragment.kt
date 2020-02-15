@@ -29,6 +29,7 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.autoClearedNullable
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.utils.toHms
@@ -59,7 +60,7 @@ class AlbumDetailFragment :
 
     private lateinit var adapter: RecyclerAdapter
 
-    private var animationHelper: DetailImageAnimationHelper? = null
+    private var animationHelper: DetailImageAnimationHelper? by autoClearedNullable()
 
     private val handler = Handler(Looper.getMainLooper())
 
@@ -181,8 +182,6 @@ class AlbumDetailFragment :
 
         presenter.unbindView()
         playlistMenuPresenter.unbindView()
-
-        animationHelper = null
 
         super.onDestroyView()
     }
