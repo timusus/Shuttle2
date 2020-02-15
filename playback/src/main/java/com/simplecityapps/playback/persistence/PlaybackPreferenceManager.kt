@@ -1,11 +1,21 @@
 package com.simplecityapps.playback.persistence
 
 import android.content.SharedPreferences
-import com.simplecityapps.shuttle.persistence.get
+import com.simplecityapps.playback.equalizer.Equalizer
+import com.simplecityapps.playback.equalizer.EqualizerBand
 import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.shuttle.persistence.get
 import com.simplecityapps.shuttle.persistence.put
+import com.squareup.moshi.JsonAdapter
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.Types
+import java.lang.reflect.Type
 
-class PlaybackPreferenceManager(private val sharedPreferences: SharedPreferences) {
+
+class PlaybackPreferenceManager(
+    private val sharedPreferences: SharedPreferences,
+    private val moshi: Moshi
+) {
 
     /**
      * A comma separated list of song ids
@@ -85,5 +95,34 @@ class PlaybackPreferenceManager(private val sharedPreferences: SharedPreferences
         }
         get() {
             return SongProvider.init(sharedPreferences.get("song_provider", -1))
+        }
+
+    var equalizerEnabled: Boolean
+        set(value) {
+            sharedPreferences.put("equalizer_enabled", value)
+        }
+        get() {
+            return sharedPreferences.get("equalizer_enabled", false)
+        }
+
+    var preset: Equalizer.Presets.Preset
+        set(value) {
+            sharedPreferences.put("preset_name", value.name)
+        }
+        get() {
+            val name = sharedPreferences.get("preset_name", Equalizer.Presets.custom.name)
+            return Equalizer.Presets.all.firstOrNull { preset -> preset.name == name } ?: Equalizer.Presets.custom
+        }
+
+    private val listEqualizerBandType: Type = Types.newParameterizedType(MutableList::class.java, EqualizerBand::class.java)
+    private val adapter: JsonAdapter<List<EqualizerBand>> by lazy { moshi.adapter<List<EqualizerBand>>(listEqualizerBandType) }
+    var customPresetBands: List<EqualizerBand>?
+        set(value) {
+            sharedPreferences.put("custom_preset_bands", adapter.toJson(value))
+        }
+        get() {
+            return sharedPreferences.getString("custom_preset_bands", null)?.let { json ->
+                adapter.fromJson(json)
+            }
         }
 }

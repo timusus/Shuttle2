@@ -25,6 +25,8 @@
         <item name="preferenceTheme">@style/Shuttle.PreferenceThemeOverlay</item>
 
         <item name="toolbarNavigationButtonStyle">@style/Toolbar.Button.Navigation.Tinted</item>
+
+        <item name="guidelineColor">@color/vertical_seekbar_guideline_light</item>
     </style>
 
     <style name="AppTheme.Dark" parent="Theme.MaterialComponents.NoActionBar">
@@ -54,6 +56,8 @@
         <item name="toolbarNavigationButtonStyle">@style/Toolbar.Button.Navigation.Tinted</item>
 
         <item name="android:navigationBarColor">@color/bg_window_dark</item>
+
+        <item name="guidelineColor">@color/vertical_seekbar_guideline_dark</item>
     </style>
 
     <style name="AppTheme.DayNight" parent="AppTheme.Light" />
@@ -166,7 +170,7 @@
     </style>
 
 
-    <!-- Settings Fragemnt-->
+    <!-- Settings Fragment-->
 
     <style name="Shuttle.PreferenceThemeOverlay" parent="@style/PreferenceThemeOverlay">
         <item name="android:layout">@layout/fragment_settings</item>
@@ -182,5 +186,11 @@
     <style name="Toolbar.Button.Navigation.Tinted" parent="Widget.AppCompat.Toolbar.Button.Navigation">
         <item name="tint">?android:textColorPrimary</item>
     </style>
+
+
+    <!-- Equalizer-->
+
+    <attr name="guidelineColor" format="reference|color" />
+
 
 </resources>

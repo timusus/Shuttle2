@@ -219,6 +219,11 @@
                                 <LayoutPositions />
                               </value>
                             </entry>
+                            <entry key="action_bottomSheetFragment_to_equalizerFragment">
+                              <value>
+                                <LayoutPositions />
+                              </value>
+                            </entry>
                           </map>
                         </option>
                       </LayoutPositions>
@@ -231,6 +236,39 @@
                           <Point>
                             <option name="x" value="1016" />
                             <option name="y" value="-291" />
+                          </Point>
+                        </option>
+                      </LayoutPositions>
+                    </value>
+                  </entry>
+                  <entry key="equalizerFragment">
+                    <value>
+                      <LayoutPositions>
+                        <option name="myPosition">
+                          <Point>
+                            <option name="x" value="928" />
+                            <option name="y" value="683" />
+                          </Point>
+                        </option>
+                        <option name="myPositions">
+                          <map>
+                            <entry key="action_equalizerFragment_to_frequencyResponseFragment">
+                              <value>
+                                <LayoutPositions />
+                              </value>
+                            </entry>
+                          </map>
+                        </option>
+                      </LayoutPositions>
+                    </value>
+                  </entry>
+                  <entry key="frequencyResponseFragment">
+                    <value>
+                      <LayoutPositions>
+                        <option name="myPosition">
+                          <Point>
+                            <option name="x" value="1146" />
+                            <option name="y" value="683" />
                           </Point>
                         </option>
                       </LayoutPositions>
@@ -288,13 +326,18 @@
                       <LayoutPositions>
                         <option name="myPosition">
                           <Point>
-                            <option name="x" value="839" />
-                            <option name="y" value="503" />
+                            <option name="x" value="970" />
+                            <option name="y" value="340" />
                           </Point>
                         </option>
                         <option name="myPositions">
                           <map>
                             <entry key="action_settingsFragment_to_changelogFragment">
+                              <value>
+                                <LayoutPositions />
+                              </value>
+                            </entry>
+                            <entry key="action_settingsFragment_to_onboardingFragment">
                               <value>
                                 <LayoutPositions />
                               </value>
@@ -309,8 +352,8 @@
                       <LayoutPositions>
                         <option name="myPosition">
                           <Point>
-                            <option name="x" value="833" />
-                            <option name="y" value="195" />
+                            <option name="x" value="906" />
+                            <option name="y" value="-19" />
                           </Point>
                         </option>
                       </LayoutPositions>

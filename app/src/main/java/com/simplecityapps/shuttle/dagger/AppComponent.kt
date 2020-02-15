@@ -33,10 +33,6 @@ interface AppComponent {
     interface Builder {
         @BindsInstance
         fun application(application: ShuttleApplication): Builder
-
-        fun repositoryModule(module: RepositoryModule): Builder
-        fun playbackModule(module: PlaybackModule): Builder
-        fun persistenceModule(module: PersistenceModule): Builder
         fun build(): AppComponent
     }
 

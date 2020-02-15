@@ -49,5 +49,4 @@ interface Playback {
 
         fun onPlaybackComplete(trackWentToNext: Boolean)
     }
-
 }

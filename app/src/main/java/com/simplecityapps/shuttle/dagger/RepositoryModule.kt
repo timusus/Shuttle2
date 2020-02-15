@@ -17,13 +17,11 @@ import dagger.Module
 import dagger.Provides
 
 @Module
-class RepositoryModule(
-    private val context: Context
-) {
+class RepositoryModule {
 
     @Provides
     @AppScope
-    fun provideMediaDatabase(): MediaDatabase {
+    fun provideMediaDatabase(context: Context): MediaDatabase {
         return DatabaseProvider(context).database
     }
 
@@ -59,7 +57,7 @@ class RepositoryModule(
 
     @Provides
     @AppScope
-    fun providePlaylistImporter(songRepository: SongRepository, playlistRepository: PlaylistRepository): MediaStorePlaylistImporter {
+    fun providePlaylistImporter(context: Context, songRepository: SongRepository, playlistRepository: PlaylistRepository): MediaStorePlaylistImporter {
         return MediaStorePlaylistImporter(context, songRepository, playlistRepository)
     }
 }

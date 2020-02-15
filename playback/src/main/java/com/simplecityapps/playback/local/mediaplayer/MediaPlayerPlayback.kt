@@ -101,8 +101,8 @@ class MediaPlayerPlayback(
             if (nextMediaPlayerHelper.isReleased) {
                 Timber.v("onPlaybackComplete() called. No next song")
 
-                callback?.onPlayStateChanged(false)
-                callback?.onPlaybackComplete(false)
+                callback?.onPlayStateChanged(isPlaying = false)
+                callback?.onPlaybackComplete(trackWentToNext = false)
             } else {
                 Timber.v("onPlaybackComplete() called. Loading next song")
 
@@ -122,7 +122,7 @@ class MediaPlayerPlayback(
                 nextMediaPlayerHelper = MediaPlayerHelper()
                 nextMediaPlayerHelper.tag = "NextMediaPlayer"
 
-                callback?.onPlaybackComplete(true)
+                callback?.onPlaybackComplete(trackWentToNext = true)
             }
         }
     }

@@ -89,6 +89,9 @@ class BottomDrawerSettingsFragment :
                 SettingsMenuItem.SleepTimer -> {
                     findNavController().navigate(R.id.action_bottomSheetDialog_to_sleepTimerDialog)
                 }
+                SettingsMenuItem.Equalizer -> {
+                    findNavController().navigate(R.id.action_bottomSheetFragment_to_equalizerFragment)
+                }
                 SettingsMenuItem.Settings -> {
                     findNavController().navigate(R.id.action_bottomSheetDialog_to_settingsFragment)
                 }

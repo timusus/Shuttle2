@@ -8,11 +8,11 @@ import dagger.Module
 import dagger.Provides
 
 @Module
-class PersistenceModule(private val context: Context) {
+class PersistenceModule {
 
     @AppScope
     @Provides
-    fun provideSharedPrefs(): SharedPreferences {
+    fun provideSharedPrefs(context: Context): SharedPreferences {
         return PreferenceManager.getDefaultSharedPreferences(context)
     }
 

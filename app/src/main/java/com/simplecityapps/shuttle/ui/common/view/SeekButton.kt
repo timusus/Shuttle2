@@ -56,18 +56,18 @@ class SeekButton @JvmOverloads constructor(
         isClickable = true
         isFocusable = true
 
-        context.theme.obtainStyledAttributes(attrs, com.simplecityapps.shuttle.R.styleable.SeekButton, 0, 0).use { typedArray ->
-            this.forward = typedArray.getBoolean(com.simplecityapps.shuttle.R.styleable.SeekButton_forward, true)
-            this.seekSeconds = typedArray.getInteger(com.simplecityapps.shuttle.R.styleable.SeekButton_seconds, 15)
+        context.theme.obtainStyledAttributes(attrs, R.styleable.SeekButton, 0, 0).use { typedArray ->
+            this.forward = typedArray.getBoolean(R.styleable.SeekButton_forward, true)
+            this.seekSeconds = typedArray.getInteger(R.styleable.SeekButton_seconds, 15)
         }
 
         TypedValue().apply {
-            context.theme.resolveAttribute(com.simplecityapps.shuttle.R.attr.selectableItemBackgroundBorderless, this, true)
+            context.theme.resolveAttribute(R.attr.selectableItemBackgroundBorderless, this, true)
             setBackgroundResource(resourceId)
         }
 
         TypedValue().apply {
-            context.theme.resolveAttribute(com.simplecityapps.shuttle.R.attr.colorControlNormal, this, true)
+            context.theme.resolveAttribute(R.attr.colorControlNormal, this, true)
             val colorControlNormal = ContextCompat.getColor(context, resourceId)
             textColor = colorControlNormal
             seekDrawable?.setTint(colorControlNormal)

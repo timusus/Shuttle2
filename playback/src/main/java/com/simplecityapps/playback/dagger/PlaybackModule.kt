@@ -16,21 +16,21 @@ import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi26
 import com.simplecityapps.playback.chromecast.CastService
 import com.simplecityapps.playback.chromecast.CastSessionManager
 import com.simplecityapps.playback.chromecast.HttpServer
-import com.simplecityapps.playback.local.mediaplayer.MediaPlayerPlayback
+import com.simplecityapps.playback.equalizer.Equalizer
+import com.simplecityapps.playback.local.exoplayer.EqualizerAudioProcessor
+import com.simplecityapps.playback.local.exoplayer.ExoPlayerPlayback
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.shuttle.dagger.AppScope
+import com.squareup.moshi.Moshi
 import dagger.Module
 import dagger.Provides
 
 @Module
-class PlaybackModule(
-    private val context: Context,
-    private val sharedPreferences: SharedPreferences
-) {
+class PlaybackModule {
 
     @AppScope
     @Provides
@@ -44,9 +44,27 @@ class PlaybackModule(
         return QueueManager(queueWatcher)
     }
 
+    @AppScope
     @Provides
-    fun providePlayback(): Playback {
-        return MediaPlayerPlayback(context)
+    fun provideEqualizer(playbackPreferenceManager: PlaybackPreferenceManager): EqualizerAudioProcessor {
+        return EqualizerAudioProcessor(playbackPreferenceManager.equalizerEnabled).apply {
+            // Restore current eq
+            preset = playbackPreferenceManager.preset
+
+            // Restore custom eq bands
+            playbackPreferenceManager.customPresetBands?.forEach { restoredBand ->
+                Equalizer.Presets.custom.bands.forEach { customBand ->
+                    if (customBand.centerFrequency == restoredBand.centerFrequency) {
+                        customBand.gain = restoredBand.gain
+                    }
+                }
+            }
+        }
+    }
+
+    @Provides
+    fun providePlayback(context: Context, equalizerAudioProcessor: EqualizerAudioProcessor): Playback {
+        return ExoPlayerPlayback(context, equalizerAudioProcessor)
     }
 
     @AppScope
@@ -57,7 +75,7 @@ class PlaybackModule(
 
     @AppScope
     @Provides
-    fun provideAudioFocusHelper(playbackWatcher: PlaybackWatcher): AudioFocusHelper {
+    fun provideAudioFocusHelper(context: Context, playbackWatcher: PlaybackWatcher): AudioFocusHelper {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             return AudioFocusHelperApi26(context, playbackWatcher)
         } else {
@@ -72,8 +90,8 @@ class PlaybackModule(
 
     @AppScope
     @Provides
-    fun providePlaybackPreferenceManager(): PlaybackPreferenceManager {
-        return PlaybackPreferenceManager(sharedPreferences)
+    fun providePlaybackPreferenceManager(sharedPreferences: SharedPreferences, moshi: Moshi): PlaybackPreferenceManager {
+        return PlaybackPreferenceManager(sharedPreferences, moshi)
     }
 
     @AppScope
@@ -91,7 +109,7 @@ class PlaybackModule(
 
     @AppScope
     @Provides
-    fun provideCastService(songRepository: SongRepository): CastService {
+    fun provideCastService(context: Context, songRepository: SongRepository): CastService {
         return CastService(context, songRepository)
     }
 
@@ -103,13 +121,14 @@ class PlaybackModule(
 
     @AppScope
     @Provides
-    fun provideCastSessionManager(playbackManager: PlaybackManager, httpServer: HttpServer): CastSessionManager {
+    fun provideCastSessionManager(context: Context, playbackManager: PlaybackManager, httpServer: HttpServer): CastSessionManager {
         return CastSessionManager(playbackManager, context, httpServer)
     }
 
     @AppScope
     @Provides
     fun provideMediaSessionManager(
+        context: Context,
         playbackManager: PlaybackManager,
         queueManager: QueueManager,
         playbackWatcher: PlaybackWatcher,
@@ -121,13 +140,14 @@ class PlaybackModule(
 
     @AppScope
     @Provides
-    fun provideNoiseManager(playbackManager: PlaybackManager, playbackWatcher: PlaybackWatcher): NoiseManager {
+    fun provideNoiseManager(context: Context, playbackManager: PlaybackManager, playbackWatcher: PlaybackWatcher): NoiseManager {
         return NoiseManager(context, playbackManager, playbackWatcher)
     }
 
     @AppScope
     @Provides
     fun providePlaybackNotificationManager(
+        context: Context,
         playbackManager: PlaybackManager,
         queueManager: QueueManager,
         mediaSessionManager: MediaSessionManager,

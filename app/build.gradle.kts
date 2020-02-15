@@ -96,7 +96,7 @@ android {
         implementation("com.github.timusus:RecyclerView-FastScroll:dev-SNAPSHOT")
 
         // Material Design
-        implementation("com.google.android.material:material:1.2.0-alpha03")
+        implementation("com.google.android.material:material:1.2.0-alpha04")
 
         // AppCompat
         implementation("androidx.appcompat:appcompat:1.1.0")
@@ -178,6 +178,12 @@ android {
 
         // AndroidX Lifecycle
         implementation("androidx.lifecycle:lifecycle-common-java8:2.1.0")
+
+        // Noise
+        implementation("com.github.paramsen:noise:2.0.0")
+
+        // MpAndroidChart
+        implementation("com.github.PhilJay:MPAndroidChart:v3.0.3")
     }
 }
 

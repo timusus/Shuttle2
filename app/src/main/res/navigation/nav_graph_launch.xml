@@ -48,6 +48,15 @@
         </action>
     </fragment>
 
+    <fragment
+        android:id="@+id/equalizerFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.equalizer.EqualizerFragment"
+        android:label="EqualizerFragment" >
+        <action
+            android:id="@+id/action_equalizerFragment_to_frequencyResponseFragment"
+            app:destination="@id/frequencyResponseFragment" />
+    </fragment>
+
     <dialog
         android:id="@+id/bottomSheetFragment"
         android:name="com.simplecityapps.shuttle.ui.screens.settings.BottomDrawerSettingsFragment">
@@ -65,6 +74,14 @@
             app:destination="@id/sleepTimerFragment"
             app:popUpTo="@+id/bottomSheetFragment"
             app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_bottomSheetFragment_to_equalizerFragment"
+            app:destination="@id/equalizerFragment"
+            app:enterAnim="@anim/enter_from_right"
+            app:exitAnim="@anim/fragment_fade_exit"
+            app:popEnterAnim="@anim/fragment_fade_enter"
+            app:popExitAnim="@anim/exit_to_right"
+            app:popUpTo="@+id/bottomSheetFragment" />
     </dialog>
     <dialog
         android:id="@+id/sleepTimerFragment"
@@ -73,4 +90,8 @@
     <dialog
         android:id="@+id/changelogFragment"
         android:name="com.simplecityapps.shuttle.ui.screens.changelog.ChangelogDialogFragment" />
+
+    <dialog
+        android:id="@+id/frequencyResponseFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.equalizer.FrequencyResponseDialogFragment" />
 </navigation>

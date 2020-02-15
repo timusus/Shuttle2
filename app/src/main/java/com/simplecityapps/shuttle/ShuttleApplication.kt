@@ -7,7 +7,6 @@ import androidx.appcompat.app.AppCompatDelegate
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.mediaprovider.repository.SongRepositoryProvider
 import com.simplecityapps.playback.ActivityIntentProvider
-import com.simplecityapps.playback.dagger.PlaybackModule
 import com.simplecityapps.shuttle.appinitializers.AppInitializers
 import com.simplecityapps.shuttle.dagger.*
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
@@ -38,16 +37,9 @@ class ShuttleApplication : Application(),
     override fun onCreate() {
         super.onCreate()
 
-        val persistenceModule = PersistenceModule(this)
-        val repositoryModule = RepositoryModule(this)
-        val playbackModule = PlaybackModule(this, persistenceModule.provideSharedPrefs())
-
         appComponent = DaggerAppComponent
             .builder()
             .application(this)
-            .repositoryModule(repositoryModule)
-            .persistenceModule(persistenceModule)
-            .playbackModule(playbackModule)
             .build()
 
         appComponent.inject(this)
