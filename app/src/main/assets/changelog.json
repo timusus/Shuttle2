@@ -1,5 +1,12 @@
 {
   "commits": [
-    "Implemented long-press to remove form queue & play next in queue"
+    "Added equalizer",
+    "Added 'song info' popup",
+    "Shuttle now natively supports Opus and FLAC, so they should work regardless of your device/OS",
+    "Added a button to library screens for 'rescan'",
+    "Fixed a screen rotation issue (@dvs)",
+    "Fixed an issue where folders weren't sorted alphabetically (@Stiletto)",
+    "Fixed an issue where shuffle all didn't start playback at the first shuffled track",
+    "Various crash fixes"
   ]
 }
