@@ -32,7 +32,43 @@ class ExoPlayerPlayback(
 
     private var playWhenReady = false
 
-    private var trackChangeListener: TrackChangeEventListener? = null
+    private val trackChangeListener by lazy {
+        Timber.e("Creating TrackChangeEventListener!!")
+        object : TrackChangeEventListener(player) {
+            override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
+                val state = playbackState.toState()
+                Timber.v("onPlayerStateChanged(playWhenReady: $playWhenReady, playbackState: ${state})")
+
+                if (playWhenReady != this@ExoPlayerPlayback.playWhenReady) {
+                    callback?.onPlayStateChanged(playWhenReady)
+                    this@ExoPlayerPlayback.playWhenReady = playWhenReady
+                }
+
+                if (state == PlaybackState.Ended) {
+                    callback?.onPlayStateChanged(isPlaying = false)
+                    callback?.onPlaybackComplete(trackWentToNext = false)
+                    this@ExoPlayerPlayback.playWhenReady = false
+                }
+            }
+
+            override fun onTimelineChanged(timeline: Timeline, reason: Int) {
+                super.onTimelineChanged(timeline, reason)
+
+                updateWindowIndex()
+            }
+
+            override fun onTrackChanged() {
+                Timber.v("onTrackChanged()")
+                callback?.onPlaybackComplete(trackWentToNext = true)
+            }
+
+            override fun onPlayerError(error: ExoPlaybackException) {
+                super.onPlayerError(error)
+
+                Timber.e(error, "onPlayerError()")
+            }
+        }
+    }
 
     private fun initPlayer(context: Context): ExoPlayer {
 
@@ -52,44 +88,7 @@ class ExoPlayerPlayback(
         Timber.v("load(current: ${current.name})")
         isReleased = false
 
-        trackChangeListener =
-            object : TrackChangeEventListener(player) {
-
-                override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
-                    val state = playbackState.toState()
-                    Timber.v("onPlayerStateChanged(playWhenReady: $playWhenReady, playbackState: ${state})")
-
-                    if (playWhenReady != this@ExoPlayerPlayback.playWhenReady) {
-                        callback?.onPlayStateChanged(playWhenReady)
-                        this@ExoPlayerPlayback.playWhenReady = playWhenReady
-                    }
-
-                    if (state == PlaybackState.Ended) {
-                        callback?.onPlayStateChanged(isPlaying = false)
-                        callback?.onPlaybackComplete(trackWentToNext = false)
-                        this@ExoPlayerPlayback.playWhenReady = false
-                    }
-                }
-
-                override fun onTimelineChanged(timeline: Timeline, reason: Int) {
-                    super.onTimelineChanged(timeline, reason)
-
-                    updateWindowIndex()
-                }
-
-                override fun onTrackChanged() {
-                    Timber.v("onTrackChanged()")
-                    callback?.onPlaybackComplete(trackWentToNext = true)
-                }
-
-                override fun onPlayerError(error: ExoPlaybackException) {
-                    super.onPlayerError(error)
-
-                    Timber.e(error, "onPlayerError()")
-                }
-            }
-
-        player.addListener(trackChangeListener!!)
+        player.addListener(trackChangeListener)
         player.seekTo(seekPosition.toLong())
 
         Timber.v("MediaSource: Clearing")
