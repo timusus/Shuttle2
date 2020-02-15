@@ -92,13 +92,18 @@ class MusicDirectoriesPresenter @Inject constructor(
     private fun parseUri(contentResolver: ContentResolver, uri: Uri) {
         addDisposable(
             Observable.create<MusicDirectoriesContract.View.Data> { emitter ->
-                SafDirectoryHelper.buildFolderNodeTree(contentResolver, uri) { tree, traversalComplete ->
-                    tree?.let {
-                        emitter.onNext(MusicDirectoriesContract.View.Data(tree, traversalComplete))
-                        if (traversalComplete) {
-                            emitter.onComplete()
-                        }
-                    } ?: emitter.onComplete()
+                try {
+                    SafDirectoryHelper.buildFolderNodeTree(contentResolver, uri) { tree, traversalComplete ->
+                        tree?.let {
+                            emitter.onNext(MusicDirectoriesContract.View.Data(tree, traversalComplete))
+                            if (traversalComplete) {
+                                emitter.onComplete()
+                            }
+                        } ?: emitter.onComplete()
+                    }
+                } catch (e: SecurityException) {
+                    Timber.e(e, "Failed to parse directory: ${uri.path}")
+                    emitter.onError(e)
                 }
             }
                 .subscribeOn(Schedulers.io())
