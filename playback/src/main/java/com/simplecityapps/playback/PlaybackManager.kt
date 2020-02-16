@@ -18,7 +18,7 @@ class PlaybackManager(
     private val playbackWatcher: PlaybackWatcher,
     private val audioFocusHelper: AudioFocusHelper,
     private val playbackPreferenceManager: PlaybackPreferenceManager,
-    private val queueWatcher: QueueWatcher
+    queueWatcher: QueueWatcher
 ) : Playback.Callback,
     AudioFocusHelper.Listener,
     QueueChangeCallback {
@@ -297,7 +297,7 @@ class PlaybackManager(
 
     private fun updateProgress(fromUser: Boolean) {
         playback.getPosition()?.let { position ->
-            playback.getDuration()?.let { duration ->
+            playback.getDuration() ?: queueManager.getCurrentItem()?.song?.duration?.let { duration ->
                 playbackWatcher.onProgressChanged(
                     position,
                     duration,

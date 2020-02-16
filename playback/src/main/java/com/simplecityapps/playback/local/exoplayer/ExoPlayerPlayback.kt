@@ -157,7 +157,7 @@ class ExoPlayerPlayback(
     }
 
     override fun getDuration(): Int? {
-        return player.duration.toInt()
+        return player.duration.takeIf { duration -> duration != C.TIME_UNSET }?.toInt()
     }
 
     override fun setVolume(volume: Float) {
