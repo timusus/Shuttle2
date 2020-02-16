@@ -156,6 +156,7 @@ class FrequencyResponseDialogFragment : DialogFragment(), Injectable {
         return withContext(Dispatchers.IO) {
             val audioProcessor = EqualizerAudioProcessor(true)
             audioProcessor.configure(AudioProcessor.AudioFormat(44100, 1, C.ENCODING_PCM_16BIT))
+            audioProcessor.flush()
             audioProcessor.preset = preset
 
             val size = 2.0.pow(14).toInt()

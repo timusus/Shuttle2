@@ -20,7 +20,6 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
     var preset: Equalizer.Presets.Preset = Equalizer.Presets.flat
         set(value) {
             field = value
-
             updateBandProcessors()
         }
 
