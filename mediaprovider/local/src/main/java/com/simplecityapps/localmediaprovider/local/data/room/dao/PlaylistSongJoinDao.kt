@@ -60,4 +60,7 @@ abstract class PlaylistSongJoinDao {
 
     @Query("DELETE FROM playlist_song_join WHERE playlistId = :playlistId")
     abstract fun delete(playlistId: Long): Completable
+
+    @Query("DELETE FROM playlist_song_join WHERE playlistId = :playlistId and songId IN (:songIds)")
+    abstract fun delete(playlistId: Long, songIds: Array<Long>): Completable
 }

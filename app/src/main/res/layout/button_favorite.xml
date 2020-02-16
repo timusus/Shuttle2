@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="?attr/actionBarSize"
+    android:layout_height="?attr/actionBarSize">
+
+    <com.simplecityapps.shuttle.ui.common.view.FavoriteButton
+        android:id="@+id/favoritesButton"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_gravity="center"
+        android:background="?attr/actionBarItemBackground"
+        android:tint="?colorControlNormal" />
+
+</FrameLayout>

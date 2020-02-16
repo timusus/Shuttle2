@@ -48,6 +48,10 @@ class LocalPlaylistRepository(
         return database.playlistSongJoinDataDao().insert(songs.map { song -> PlaylistSongJoin(playlist.id, song.id) })
     }
 
+    override fun removeFromPlaylist(playlist: Playlist, songs: List<Song>): Completable {
+        return database.playlistSongJoinDataDao().delete(playlist.id, songs.map { song -> song.id }.toTypedArray())
+    }
+
     override fun getSongsForPlaylist(playlistId: Long): Observable<List<Song>> {
         return database.playlistSongJoinDataDao().getSongsForPlaylist(playlistId).toObservable()
     }

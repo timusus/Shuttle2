@@ -15,4 +15,10 @@
         android:title="Sleep Timer"
         app:showAsAction="ifRoom" />
 
+    <item
+        android:id="@+id/favorite"
+        android:title="Favourite"
+        app:actionLayout="@layout/button_favorite"
+        app:showAsAction="ifRoom" />
+
 </menu>

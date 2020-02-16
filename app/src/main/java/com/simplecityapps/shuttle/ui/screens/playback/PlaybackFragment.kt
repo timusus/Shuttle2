@@ -30,6 +30,7 @@ import com.simplecityapps.shuttle.ui.common.recyclerview.SpacesItemDecoration
 import com.simplecityapps.shuttle.ui.common.recyclerview.attachSnapHelperWithListener
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.utils.toHms
+import com.simplecityapps.shuttle.ui.common.view.FavoriteButton
 import com.simplecityapps.shuttle.ui.common.view.RepeatButton
 import com.simplecityapps.shuttle.ui.common.view.SeekButton
 import com.simplecityapps.shuttle.ui.common.view.ShuffleButton
@@ -63,6 +64,7 @@ class PlaybackFragment :
     private var currentTimeTextView: TextView by autoCleared()
     private var durationTextView: TextView by autoCleared()
     private var toolbar: Toolbar by autoCleared()
+    private var favoriteButton: FavoriteButton by autoCleared()
 
 
     // Lifecycle
@@ -125,7 +127,7 @@ class PlaybackFragment :
 
         playPauseButton.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(context!!, R.color.colorPrimary))
 
-        toolbar.inflateMenu(R.menu.playback_fragment_menu)
+        toolbar.inflateMenu(R.menu.menu_playback)
         toolbar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.sleepTimer -> {
@@ -134,6 +136,11 @@ class PlaybackFragment :
                 }
                 else -> false
             }
+        }
+        favoriteButton = toolbar.menu.findItem(R.id.favorite).actionView.findViewById(R.id.favoritesButton)
+        favoriteButton.setOnClickListener {
+            favoriteButton.toggle()
+            presenter.setFavorite(favoriteButton.isChecked)
         }
 
         CastButtonFactory.setUpMediaRouteButton(context!!, toolbar.menu, R.id.media_route_menu_item)
@@ -217,6 +224,10 @@ class PlaybackFragment :
 
     override fun presentSleepTimer() {
         SleepTimerDialogFragment().show(childFragmentManager)
+    }
+
+    override fun setIsFavorite(isFavorite: Boolean) {
+        favoriteButton.isChecked = isFavorite
     }
 
 
