@@ -1,7 +1,6 @@
 {
   "commits": [
-    "Added favorites button to now playing",
-    "Fixed an issue where progress/duration was incorrectly displayed on launch",
-    "Fixed an issue preventing frequency response from being displayed"
+    "Fixed an issue where progress didn't update",
+    "Just let me sleep"
   ]
 }
