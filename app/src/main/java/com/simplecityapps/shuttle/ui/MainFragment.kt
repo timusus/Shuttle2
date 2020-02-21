@@ -83,7 +83,11 @@ class MainFragment
         bottomNavigationView.setupWithNavController(navController) { menuItem ->
             if (menuItem.itemId == R.id.bottomSheetFragment) {
                 if (findNavController().currentDestination?.id != menuItem.itemId) {
-                    findNavController().navigate(R.id.action_mainFragment_to_bottomSheetFragment)
+                    try {
+                        findNavController().navigate(R.id.action_mainFragment_to_bottomSheetFragment)
+                    } catch (e: IllegalArgumentException) {
+                        Timber.e(e, "Failed to navigate to bottom sheet")
+                    }
                 }
             }
         }
