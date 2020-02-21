@@ -32,7 +32,6 @@ import com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
 import com.simplecityapps.shuttle.ui.screens.playback.PlaybackFragment
 import com.simplecityapps.shuttle.ui.screens.playback.mini.MiniPlaybackFragment
 import com.simplecityapps.shuttle.ui.screens.queue.QueueFragment
-import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragmentArgs
 import com.simplecityapps.taglib.FileScanner
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -130,8 +129,13 @@ class MainFragment
                             context?.applicationContext?.contentResolver?.persistedUriPermissions
                                 ?.filter { uriPermission -> uriPermission.isReadPermission }
                                 ?.flatMap { uriPermission ->
-                                    SafDirectoryHelper.buildFolderNodeTree(context!!.applicationContext.contentResolver, uriPermission.uri)?.getLeaves().orEmpty().map {
-                                        it as SafDirectoryHelper.DocumentNode
+                                    context?.applicationContext?.let { context ->
+                                        SafDirectoryHelper.buildFolderNodeTree(context.contentResolver, uriPermission.uri)?.getLeaves().orEmpty().map { node ->
+                                            node as SafDirectoryHelper.DocumentNode
+                                        }
+                                    } ?: run {
+                                        Timber.e("Failed to build folder node tree - context null")
+                                        emptyList<SafDirectoryHelper.DocumentNode>()
                                     }
                                 }.orEmpty()
                         }
