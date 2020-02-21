@@ -1,6 +1,6 @@
 {
   "commits": [
-    "Fixed an issue where progress didn't update",
-    "Just let me sleep"
+    "Search results now include artists & albums",
+    "Crash fixes",
   ]
 }
