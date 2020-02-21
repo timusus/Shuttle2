@@ -1,9 +1,11 @@
 package com.simplecityapps.shuttle.ui.screens.home.search
 
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SearchView
@@ -15,12 +17,17 @@ import androidx.transition.Transition
 import androidx.transition.TransitionInflater
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.adapter.RecyclerAdapter
+import com.simplecityapps.adapter.ViewBinder
+import com.simplecityapps.mediaprovider.model.Album
+import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
+import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistBinder
+import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumBinder
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongBinder
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
@@ -94,6 +101,7 @@ class SearchFragment : Fragment(),
 
             override fun onQueryTextSubmit(s: String): Boolean {
                 queryPublishSubject.onComplete()
+                closeKeyboard()
                 return true
             }
 
@@ -144,16 +152,34 @@ class SearchFragment : Fragment(),
 
     // SearchContract.View Implementation
 
-    override fun setData(songs: List<Song>) {
-        adapter.setData(
-            songs.map { song -> SongBinder(song, imageLoader, songBinderListener) },
-            completion = {
-                recyclerView.scrollToPosition(0)
-            })
+    override fun setData(searchResult: Triple<List<AlbumArtist>, List<Album>, List<Song>>) {
+        val list = mutableListOf<ViewBinder>().apply {
+            if (searchResult.first.isNotEmpty()) {
+                add(SearchHeaderBinder("Artists"))
+                addAll(searchResult.first.map { albumArtist -> AlbumArtistBinder(albumArtist, imageLoader, albumArtistBinderListener) })
+            }
+            if (searchResult.first.isNotEmpty()) {
+                add(SearchHeaderBinder("Albums"))
+                addAll(searchResult.second.map { album -> AlbumBinder(album, imageLoader, albumBinderListener) })
+            }
+            if (searchResult.first.isNotEmpty()) {
+                add(SearchHeaderBinder("Songs"))
+                addAll(searchResult.third.map { song -> SongBinder(song, imageLoader, songBinderListener) })
+            }
+        }
+        adapter.setData(list, completion = { recyclerView.scrollToPosition(0) })
     }
 
     override fun showLoadError(error: Error) {
         Toast.makeText(context, error.userDescription(), Toast.LENGTH_LONG).show()
+    }
+
+    override fun onAddedToQueue(albumArtist: AlbumArtist) {
+        Toast.makeText(context, "${albumArtist.name} added to queue", Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onAddedToQueue(album: Album) {
+        Toast.makeText(context, "${album.name} added to queue", Toast.LENGTH_SHORT).show()
     }
 
     override fun onAddedToQueue(song: Song) {
@@ -166,6 +192,7 @@ class SearchFragment : Fragment(),
     private val songBinderListener = object : SongBinder.Listener {
 
         override fun onSongClicked(song: Song) {
+            closeKeyboard()
             presenter.onSongClicked(song)
         }
 
@@ -199,6 +226,81 @@ class SearchFragment : Fragment(),
             popupMenu.show()
         }
     }
+
+    private val albumArtistBinderListener = object : AlbumArtistBinder.Listener {
+
+        override fun onAlbumArtistClicked(albumArtist: AlbumArtist, viewHolder: AlbumArtistBinder.ViewHolder) {
+            closeKeyboard()
+            presenter.onAlbumArtistCLicked(albumArtist)
+        }
+
+        override fun onOverflowClicked(view: View, albumArtist: AlbumArtist) {
+            val popupMenu = PopupMenu(context!!, view)
+            popupMenu.inflate(R.menu.menu_popup_add)
+
+            playlistMenuView.createPlaylistMenu(popupMenu.menu)
+
+            popupMenu.setOnMenuItemClickListener { menuItem ->
+                if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.AlbumArtists(albumArtist))) {
+                    return@setOnMenuItemClickListener true
+                } else {
+                    when (menuItem.itemId) {
+                        R.id.queue -> {
+                            presenter.addToQueue(albumArtist)
+                            return@setOnMenuItemClickListener true
+                        }
+                        R.id.playNext -> {
+                            presenter.playNext(albumArtist)
+                            return@setOnMenuItemClickListener true
+                        }
+                    }
+                }
+                false
+            }
+            popupMenu.show()
+        }
+    }
+
+    private val albumBinderListener = object : AlbumBinder.Listener {
+
+        override fun onAlbumClicked(album: Album, viewHolder: AlbumBinder.ViewHolder) {
+            closeKeyboard()
+            presenter.onAlbumClicked(album)
+        }
+
+        override fun onOverflowClicked(view: View, album: Album) {
+            val popupMenu = PopupMenu(context!!, view)
+            popupMenu.inflate(R.menu.menu_popup_add)
+
+            playlistMenuView.createPlaylistMenu(popupMenu.menu)
+
+            popupMenu.setOnMenuItemClickListener { menuItem ->
+                if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Albums(album))) {
+                    return@setOnMenuItemClickListener true
+                } else {
+                    when (menuItem.itemId) {
+                        R.id.queue -> {
+                            presenter.addToQueue(album)
+                            return@setOnMenuItemClickListener true
+                        }
+                        R.id.playNext -> {
+                            presenter.playNext(album)
+                            return@setOnMenuItemClickListener true
+                        }
+                    }
+                }
+                false
+            }
+            popupMenu.show()
+        }
+    }
+
+    private fun closeKeyboard() {
+        view?.let { view ->
+            (context?.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager)?.hideSoftInputFromWindow(view.windowToken, 0)
+        }
+    }
+
 
     // CreatePlaylistDialogFragment.Listener Implementation
 

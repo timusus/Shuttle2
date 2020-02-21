@@ -15,14 +15,10 @@ interface AlbumRepository {
     fun getAlbums(query: AlbumQuery): Observable<List<Album>>
 }
 
-sealed class AlbumQuery {
-    class AlbumArtistId(val albumArtistId: Long) : AlbumQuery()
-    class AlbumId(val albumId: Long) : AlbumQuery()
-}
-
-fun AlbumQuery.predicate(): (Album) -> Boolean {
-    return when (this) {
-        is AlbumQuery.AlbumArtistId -> { album -> album.albumArtistId == albumArtistId }
-        is AlbumQuery.AlbumId -> { album -> album.id == albumId }
-    }
+sealed class AlbumQuery(
+    val predicate: ((Album) -> Boolean)
+) {
+    class AlbumArtistId(val albumArtistId: Long) : AlbumQuery({ album -> album.albumArtistId == albumArtistId })
+    class AlbumId(val albumId: Long) : AlbumQuery({ album -> album.id == albumId })
+    class Search(private val query: String) : AlbumQuery({ album -> album.name.contains(query, true) || album.albumArtistName.contains(query, true) })
 }

@@ -41,10 +41,10 @@ sealed class SongQuery(
     class SongIds(private val songIds: List<Long>) :
         SongQuery({ song -> songIds.contains(song.id) })
 
-    class LastPlayed(private val after: java.util.Date) :
+    class LastPlayed(private val after: Date) :
         SongQuery({ song -> song.lastPlayed?.after(after) ?: false })
 
-    class LastCompleted(private val after: java.util.Date) :
+    class LastCompleted(private val after: Date) :
         SongQuery({ song -> song.lastCompleted?.after(after) ?: false })
 
     class Search(private val query: String) :

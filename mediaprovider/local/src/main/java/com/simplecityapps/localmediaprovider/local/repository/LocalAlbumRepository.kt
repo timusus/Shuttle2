@@ -5,7 +5,6 @@ import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatab
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.repository.AlbumQuery
 import com.simplecityapps.mediaprovider.repository.AlbumRepository
-import com.simplecityapps.mediaprovider.repository.predicate
 import io.reactivex.Observable
 import io.reactivex.functions.Consumer
 import timber.log.Timber
@@ -27,6 +26,6 @@ class LocalAlbumRepository(private val database: MediaDatabase) : AlbumRepositor
     }
 
     override fun getAlbums(query: AlbumQuery): Observable<List<Album>> {
-        return getAlbums().map { albums -> albums.filter(query.predicate()) }
+        return getAlbums().map { albums -> albums.filter(query.predicate) }
     }
 }
