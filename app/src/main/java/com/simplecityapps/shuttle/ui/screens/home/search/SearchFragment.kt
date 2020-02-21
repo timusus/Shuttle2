@@ -106,7 +106,7 @@ class SearchFragment : Fragment(),
             }
 
             override fun onQueryTextChange(text: String): Boolean {
-                queryPublishSubject.onNext(text)
+                queryPublishSubject.onNext(text.trim())
                 return true
             }
         })
