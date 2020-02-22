@@ -12,6 +12,7 @@ import au.com.simplecityapps.R
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.CompletionHandler
 import au.com.simplecityapps.shuttle.imageloading.glide.module.GlideApp
+import com.bumptech.glide.Glide
 import com.bumptech.glide.Priority
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.RequestManager
@@ -29,6 +30,8 @@ import com.simplecity.amp_library.glide.palette.ColorSet
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
 
@@ -238,5 +241,16 @@ class GlideImageLoader : ArtworkImageLoader {
 
     fun clear(target: Target<Bitmap>) {
         requestManager.clear(target)
+    }
+
+    override suspend fun clearCache(context: Context?) {
+        context?.let {
+            Glide.get(context).clearMemory()
+        }
+        withContext(Dispatchers.IO) {
+            context?.let {
+                Glide.get(context).clearDiskCache()
+            }
+        }
     }
 }

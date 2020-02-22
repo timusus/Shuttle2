@@ -1,5 +1,6 @@
 package au.com.simplecityapps.shuttle.imageloading
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.widget.ImageView
 import androidx.annotation.WorkerThread
@@ -45,4 +46,6 @@ interface ArtworkImageLoader {
     fun loadColorSet(song: Song, callback: (ColorSet?) -> Unit)
 
     fun clear(imageView: ImageView)
+
+    suspend fun clearCache(context: Context?)
 }

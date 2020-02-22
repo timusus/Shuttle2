@@ -10,11 +10,17 @@ import androidx.appcompat.widget.Toolbar
 import androidx.navigation.fragment.findNavController
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.ui.common.autoCleared
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class SettingsFragment : PreferenceFragmentCompat(),
@@ -30,8 +36,14 @@ class SettingsFragment : PreferenceFragmentCompat(),
     private var scanningProgressView: ProgressBar? = null
     private var scanningDialog: AlertDialog? = null
 
+    private var imageLoader: GlideImageLoader by autoCleared()
+
+    private val coroutineScope = CoroutineScope(Dispatchers.Main)
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        imageLoader = GlideImageLoader(this)
 
         val toolbar: Toolbar = view.findViewById(R.id.toolbar)
         toolbar.setNavigationOnClickListener { findNavController().popBackStack() }
@@ -72,12 +84,32 @@ class SettingsFragment : PreferenceFragmentCompat(),
             true
         }
 
+        preferenceScreen.findPreference<Preference>("pref_clear_artwork")?.setOnPreferenceClickListener {
+            AlertDialog.Builder(context!!)
+                .setTitle("Clear Artwork")
+                .setMessage("This will permanently remove all cached artwork")
+                .setPositiveButton("Clear") { _, _ ->
+                    coroutineScope.launch {
+                        context?.let { context ->
+                            imageLoader.clearCache(context)
+                        }
+                    }
+                }
+                .setNegativeButton("Close", null)
+                .show()
+
+            true
+        }
+
         mediaImporter.listeners.add(this)
     }
 
     override fun onDestroyView() {
         preferenceScreen.sharedPreferences.unregisterOnSharedPreferenceChangeListener(this)
         mediaImporter.listeners.remove(this)
+
+        coroutineScope.cancel()
+
         super.onDestroyView()
     }
 

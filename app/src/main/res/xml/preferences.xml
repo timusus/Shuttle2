@@ -36,6 +36,11 @@
             android:key="artwork_local_only"
             android:summary="Don't download artwork from remote (internet) sources"
             android:title="Local only" />
+
+        <Preference
+            android:key="pref_clear_artwork"
+            android:summary="Removes all cached artwork"
+            android:title="Clear artwork" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="Changelog">
