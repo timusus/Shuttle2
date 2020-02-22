@@ -5,20 +5,21 @@ import android.util.Log
 import com.crashlytics.android.Crashlytics
 import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.debug.DebugLoggingTree
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import timber.log.Timber
 import javax.inject.Inject
 
 class TimberInitializer @Inject constructor(
-    private val debugLoggingTree: DebugLoggingTree
+    private val debugLoggingTree: DebugLoggingTree,
+    private val preferenceManager: GeneralPreferenceManager
 ) : AppInitializer {
 
     override fun init(application: Application) {
 
+        // Todo: Disable for release builds
         Timber.plant(debugLoggingTree)
 
-        if (BuildConfig.DEBUG) {
-
-        } else {
+        if (!BuildConfig.DEBUG && preferenceManager.crashReportingEnabled) {
             Timber.plant(CrashReportingTree())
         }
     }

@@ -12,9 +12,9 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import javax.inject.Inject
 
 class SettingsFragment : PreferenceFragmentCompat(),
@@ -45,6 +45,17 @@ class SettingsFragment : PreferenceFragmentCompat(),
 
         preferenceScreen.findPreference<Preference>("pref_media_provider")?.setOnPreferenceClickListener {
             findNavController().navigate(R.id.action_settingsFragment_to_onboardingFragment)
+            true
+        }
+
+        preferenceScreen.findPreference<Preference>("pref_crash_reporting")?.setOnPreferenceClickListener {
+            if (!preferenceManager.crashReportingEnabled) {
+                AlertDialog.Builder(context!!)
+                    .setTitle("Requires Restart")
+                    .setMessage("In order to completely opt-out of Crashlytics, please restart Shuttle. Make sure to pause, swipe away the notification, and clear the app from recents.")
+                    .setNegativeButton("Close", null)
+                    .show()
+            }
             true
         }
 

@@ -52,4 +52,12 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
         get() {
             return sharedPreferences.get("artwork_local_only", false)
         }
+
+    var crashReportingEnabled: Boolean
+        set(value) {
+            sharedPreferences.put("pref_crash_reporting", value)
+        }
+        get() {
+            return sharedPreferences.get("pref_crash_reporting", true)
+        }
 }

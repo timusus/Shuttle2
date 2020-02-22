@@ -50,6 +50,14 @@
             android:title="Show changelog on launch" />
     </PreferenceCategory>
 
+    <PreferenceCategory android:title="Privacy">
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="pref_crash_reporting"
+            android:summary="Shuttle collects crash data via Google's 'Firebase Crashlytics'. Turn off to opt-out."
+            android:title="Crash Reporting" />
+    </PreferenceCategory>
+
     <PreferenceCategory android:title="Debug">
         <SwitchPreference
             android:defaultValue="false"
