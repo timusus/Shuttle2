@@ -1,6 +1,6 @@
 {
   "commits": [
-    "Search results now include artists & albums",
-    "Crash fixes"
+    "Lock to portrait",
+    "Added settings option to opt-out of Crashlytics",
   ]
 }
