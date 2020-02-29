@@ -1,6 +1,5 @@
 {
   "commits": [
-    "Lock to portrait",
-    "Added settings option to opt-out of Crashlytics"
+    "Crash fixes"
   ]
 }
