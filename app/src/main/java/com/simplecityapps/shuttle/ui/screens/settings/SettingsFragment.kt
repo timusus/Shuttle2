@@ -51,12 +51,16 @@ class SettingsFragment : PreferenceFragmentCompat(),
         preferenceScreen.sharedPreferences.registerOnSharedPreferenceChangeListener(this)
 
         preferenceScreen.findPreference<Preference>("changelog_show")?.setOnPreferenceClickListener {
-            findNavController().navigate(R.id.action_settingsFragment_to_changelogFragment)
+            if (findNavController().currentDestination?.id != R.id.changelogFragment) {
+                findNavController().navigate(R.id.action_settingsFragment_to_changelogFragment)
+            }
             true
         }
 
         preferenceScreen.findPreference<Preference>("pref_media_provider")?.setOnPreferenceClickListener {
-            findNavController().navigate(R.id.action_settingsFragment_to_onboardingFragment)
+            if (findNavController().currentDestination?.id != R.id.onboardingFragment) {
+                findNavController().navigate(R.id.action_settingsFragment_to_onboardingFragment)
+            }
             true
         }
 
