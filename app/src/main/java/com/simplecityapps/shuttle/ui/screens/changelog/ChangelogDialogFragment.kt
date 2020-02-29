@@ -5,9 +5,10 @@ import android.os.Bundle
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import com.simplecityapps.shuttle.BuildConfig
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.squareup.moshi.Moshi
+import timber.log.Timber
 import javax.inject.Inject
 
 class ChangelogDialogFragment : DialogFragment(), Injectable {
@@ -17,8 +18,12 @@ class ChangelogDialogFragment : DialogFragment(), Injectable {
     @Inject lateinit var preferenceManager: GeneralPreferenceManager
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-
-        val changelog = moshi.adapter(Changelog::class.java).fromJson(context!!.assets.open("changelog.json").bufferedReader().use { it.readText() })
+        val changelog = try {
+            moshi.adapter(Changelog::class.java).fromJson(context!!.assets.open("changelog.json").bufferedReader().use { it.readText() })
+        } catch (e: RuntimeException) {
+            Timber.e(e, "Invalid changelog")
+            null
+        }
 
         preferenceManager.hasSeenChangelog = true
 
