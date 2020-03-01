@@ -89,14 +89,14 @@ android {
         implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.3.61")
 
         // Kotlin Extensions
-        implementation("androidx.core:core-ktx:1.1.0")
-        implementation("androidx.fragment:fragment-ktx:1.2.0-rc05")
+        implementation("androidx.core:core-ktx:1.2.0")
+        implementation("androidx.fragment:fragment-ktx:1.2.2")
 
         // RecyclerView FastScroll
         implementation("com.github.timusus:RecyclerView-FastScroll:dev-SNAPSHOT")
 
         // Material Design
-        implementation("com.google.android.material:material:1.2.0-alpha04")
+        implementation("com.google.android.material:material:1.2.0-alpha05")
 
         // AppCompat
         implementation("androidx.appcompat:appcompat:1.1.0")
@@ -105,14 +105,14 @@ android {
         implementation("androidx.constraintlayout:constraintlayout:2.0.0-beta4")
 
         // Android Arch
-        implementation("androidx.lifecycle:lifecycle-extensions:2.1.0")
+        implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
 
         // AndroidX Navigation
-        implementation("androidx.navigation:navigation-fragment-ktx:2.2.0-rc04")
-        implementation("androidx.navigation:navigation-ui-ktx:2.2.0-rc04")
+        implementation("androidx.navigation:navigation-fragment-ktx:2.3.0-alpha02")
+        implementation("androidx.navigation:navigation-ui-ktx:2.3.0-alpha02")
 
         // RxJava
-        implementation("io.reactivex.rxjava2:rxjava:2.2.17")
+        implementation("io.reactivex.rxjava2:rxjava:2.2.18")
         implementation("io.reactivex.rxjava2:rxandroid:2.1.1")
 
         // RxKotlin
@@ -122,12 +122,12 @@ android {
         implementation("com.uber.rxdogtag:rxdogtag:0.3.0")
 
         // Dagger core
-        implementation("com.google.dagger:dagger-android:2.25.4")
-        kapt("com.google.dagger:dagger-compiler:2.25.4")
+        implementation("com.google.dagger:dagger-android:2.26")
+        kapt("com.google.dagger:dagger-compiler:2.26")
 
         // Dagger Android
-        implementation("com.google.dagger:dagger-android-support:2.25.4")
-        kapt("com.google.dagger:dagger-android-processor:2.25.4")
+        implementation("com.google.dagger:dagger-android-support:2.26")
+        kapt("com.google.dagger:dagger-android-processor:2.26")
 
         // AssistedInject
         compileOnly("com.squareup.inject:assisted-inject-annotations-dagger2:0.5.2")
@@ -137,16 +137,16 @@ android {
         implementation("com.jakewharton.timber:timber:4.7.1")
 
         // OKHttp
-        implementation("com.squareup.okhttp3:okhttp:4.3.0")
+        implementation("com.squareup.okhttp3:okhttp:4.4.0")
 
         // Firebase
-        implementation("com.google.firebase:firebase-core:17.2.2")
+        implementation("com.google.firebase:firebase-core:17.2.3")
 
         // Crashlytics
         implementation("com.crashlytics.sdk.android:crashlytics:2.10.1")
 
         // Leak Canary
-        debugImplementation("com.squareup.leakcanary:leakcanary-android:2.1")
+        debugImplementation("com.squareup.leakcanary:leakcanary-android:2.2")
 
         // ViewPager 2
         implementation("androidx.viewpager2:viewpager2:1.0.0")
@@ -162,28 +162,28 @@ android {
         implementation("androidx.preference:preference-ktx:1.1.0")
 
         // ChromeCast
-        implementation("com.google.android.gms:play-services-cast-framework:18.0.0")
+        implementation("com.google.android.gms:play-services-cast-framework:18.1.0")
 
         // NanoHttp
         implementation("org.nanohttpd:nanohttpd-webserver:2.3.1")
 
         // Glide
-        implementation("com.github.bumptech.glide:glide:4.10.0")
-        kapt("com.github.bumptech.glide:compiler:4.10.0")
-        implementation("com.github.bumptech.glide:okhttp3-integration:4.10.0")
+        implementation("com.github.bumptech.glide:glide:4.11.0")
+        kapt("com.github.bumptech.glide:compiler:4.11.0")
+        implementation("com.github.bumptech.glide:okhttp3-integration:4.11.0")
 
         // Moshi
         implementation("com.squareup.moshi:moshi-kotlin:1.9.2")
         kapt("com.squareup.moshi:moshi-kotlin-codegen:1.9.2")
 
         // AndroidX Lifecycle
-        implementation("androidx.lifecycle:lifecycle-common-java8:2.1.0")
+        implementation("androidx.lifecycle:lifecycle-common-java8:2.2.0")
 
         // Noise
         implementation("com.github.paramsen:noise:2.0.0")
 
         // MpAndroidChart
-        implementation("com.github.PhilJay:MPAndroidChart:v3.0.3")
+        implementation("com.github.PhilJay:MPAndroidChart:3.1.0")
     }
 }
 

@@ -32,21 +32,21 @@ dependencies {
     api "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.3.61"
 
     // Kotlin Extensions
-    api 'androidx.core:core-ktx:1.1.0'
+    api 'androidx.core:core-ktx:1.2.0'
 
     // Dagger core
-    api 'com.google.dagger:dagger-android:2.25.4'
-    kapt 'com.google.dagger:dagger-compiler:2.25.4'
+    api 'com.google.dagger:dagger-android:2.26'
+    kapt 'com.google.dagger:dagger-compiler:2.26'
 
     // Timber
     api 'com.jakewharton.timber:timber:4.7.1'
 
     // OKHttp
-    api 'com.squareup.okhttp3:okhttp:4.3.0'
-    api 'com.squareup.okhttp3:logging-interceptor:4.3.0'
+    api 'com.squareup.okhttp3:okhttp:4.4.0'
+    api 'com.squareup.okhttp3:logging-interceptor:4.4.0'
 
     // Retrofit
-    api "com.squareup.retrofit2:converter-moshi:2.7.1"
+    api "com.squareup.retrofit2:converter-moshi:2.7.2"
 
     // Moshi
     api("com.squareup.moshi:moshi-kotlin:1.9.2")

@@ -17,6 +17,7 @@ import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
+import com.github.mikephil.charting.formatter.ValueFormatter
 import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.audio.AudioProcessor
 import com.paramsen.noise.Noise
@@ -60,7 +61,7 @@ class FrequencyResponseDialogFragment : DialogFragment(), Injectable {
         super.onCreate(savedInstanceState)
 
         TypedValue().apply {
-            context!!.theme.resolveAttribute(android.R.attr.textColorSecondary, this, true)
+            requireContext().theme.resolveAttribute(android.R.attr.textColorSecondary, this, true)
             textColor = ContextCompat.getColor(context!!, resourceId)
         }
     }
@@ -123,8 +124,10 @@ class FrequencyResponseDialogFragment : DialogFragment(), Injectable {
         lineChart.axisLeft.axisMinimum = -16f
         lineChart.axisLeft.axisMaximum = 16f
         lineChart.axisLeft.labelCount = 7
-        lineChart.axisLeft.setValueFormatter { value, axis ->
-            "%.1f".format(value) + "dB"
+        lineChart.axisLeft.valueFormatter = object : ValueFormatter() {
+            override fun getFormattedValue(value: Float): String {
+                return "%.1f".format(value) + "dB"
+            }
         }
         lineChart.axisRight.isEnabled = false
 
@@ -133,11 +136,13 @@ class FrequencyResponseDialogFragment : DialogFragment(), Injectable {
         lineChart.xAxis.axisMaximum = 21050f
         lineChart.xAxis.position = XAxis.XAxisPosition.BOTTOM
         lineChart.xAxis.setDrawAxisLine(false)
-        lineChart.xAxis.setValueFormatter { value, axis ->
-            if (value >= 1000) {
-                "%.0f".format(value / 1000) + " kHz"
-            } else {
-                "%.0f".format(value) + " Hz"
+        lineChart.xAxis.valueFormatter = object : ValueFormatter() {
+            override fun getFormattedValue(value: Float): String {
+               return  if (value >= 1000) {
+                    "%.0f".format(value / 1000) + " kHz"
+                } else {
+                    "%.0f".format(value) + " Hz"
+                }
             }
         }
 
