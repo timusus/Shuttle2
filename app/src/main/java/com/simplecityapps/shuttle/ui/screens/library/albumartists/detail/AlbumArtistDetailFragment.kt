@@ -14,11 +14,11 @@ import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.Toolbar
 import androidx.core.os.postDelayed
 import androidx.core.view.doOnPreDraw
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.Transition
 import androidx.transition.TransitionInflater
@@ -41,7 +41,7 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFr
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
-import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragmentArgs
+import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
 
@@ -68,8 +68,6 @@ class AlbumArtistDetailFragment :
 
     private var postponedTransitionCounter = 2
 
-    private var isFirstLoad = true
-
     private lateinit var albumArtist: AlbumArtist
 
     private lateinit var playlistMenuView: PlaylistMenuView
@@ -82,6 +80,8 @@ class AlbumArtistDetailFragment :
 
     private var heroImage: ImageView by autoCleared()
 
+    private var isShowingHeroImage = false
+
 
     // Lifecycle
 
@@ -90,7 +90,7 @@ class AlbumArtistDetailFragment :
 
         AndroidSupportInjection.inject(this)
 
-        albumArtist = AlbumArtistDetailFragmentArgs.fromBundle(arguments!!).albumArtist
+        albumArtist = AlbumArtistDetailFragmentArgs.fromBundle(requireArguments()).albumArtist
         presenter = presenterFactory.create(albumArtist)
     }
 
@@ -105,6 +105,7 @@ class AlbumArtistDetailFragment :
             override fun onTransitionEnd(transition: Transition) {
                 super.onTransitionEnd(transition)
                 animationHelper?.showHeroView()
+                isShowingHeroImage = true
                 transition.removeListener(this)
             }
         })
@@ -122,7 +123,7 @@ class AlbumArtistDetailFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        playlistMenuView = PlaylistMenuView(context!!, playlistMenuPresenter, childFragmentManager)
+        playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
 
         imageLoader = GlideImageLoader(this)
 
@@ -168,6 +169,10 @@ class AlbumArtistDetailFragment :
 
         heroImage = view.findViewById(R.id.heroImage)
         imageLoader.loadArtwork(heroImage, albumArtist, ArtworkImageLoader.Options.Priority(ArtworkImageLoader.Options.Priority.Priority.Max), completionHandler = null)
+        if (isShowingHeroImage) {
+            heroImage.isVisible = true
+            dummyImage.isVisible = false
+        }
 
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
@@ -176,14 +181,8 @@ class AlbumArtistDetailFragment :
 
         animationHelper = DetailImageAnimationHelper(heroImage, dummyImage)
 
-        if (!isFirstLoad) {
-            heroImage.visibility = View.VISIBLE
-        }
-
         presenter.bindView(this)
         playlistMenuPresenter.bindView(playlistMenuView)
-
-        isFirstLoad = false
 
         presenter.loadData()
     }
@@ -250,7 +249,7 @@ class AlbumArtistDetailFragment :
     }
 
     override fun onOverflowClicked(view: View, song: Song) {
-        val popupMenu = PopupMenu(context!!, view)
+        val popupMenu = PopupMenu(requireContext(), view)
         popupMenu.inflate(R.menu.menu_popup_song)
 
         playlistMenuView.createPlaylistMenu(popupMenu.menu)
@@ -269,7 +268,7 @@ class AlbumArtistDetailFragment :
                         return@setOnMenuItemClickListener true
                     }
                     R.id.songInfo -> {
-                        findNavController().navigate(R.id.action_albumArtistDetailFragment_to_songInfoDialogFragment, SongInfoDialogFragmentArgs(song).toBundle())
+                        SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
                         return@setOnMenuItemClickListener true
                     }
                 }
@@ -280,7 +279,7 @@ class AlbumArtistDetailFragment :
     }
 
     override fun onOverflowClicked(view: View, album: Album) {
-        val popupMenu = PopupMenu(context!!, view)
+        val popupMenu = PopupMenu(requireContext(), view)
         popupMenu.inflate(R.menu.menu_popup_add)
 
         playlistMenuView.createPlaylistMenu(popupMenu.menu)

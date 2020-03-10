@@ -17,6 +17,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.screens.changelog.ChangelogDialogFragment
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -51,22 +52,22 @@ class SettingsFragment : PreferenceFragmentCompat(),
         preferenceScreen.sharedPreferences.registerOnSharedPreferenceChangeListener(this)
 
         preferenceScreen.findPreference<Preference>("changelog_show")?.setOnPreferenceClickListener {
-            if (findNavController().currentDestination?.id != R.id.changelogFragment) {
-                findNavController().navigate(R.id.action_settingsFragment_to_changelogFragment)
-            }
+            ChangelogDialogFragment.newInstance().show(childFragmentManager)
             true
         }
 
         preferenceScreen.findPreference<Preference>("pref_media_provider")?.setOnPreferenceClickListener {
-            if (findNavController().currentDestination?.id != R.id.onboardingFragment) {
-                findNavController().navigate(R.id.action_settingsFragment_to_onboardingFragment)
-            }
+//            fragmentManager
+//                ?.beginTransaction()
+//                ?.replace(R.id.overlayContainer, OnboardingParentFragment.newInstance(OnboardingParentFragmentArgs(false)), OnboardingParentFragment.TAG)
+//                ?.addToBackStack(null)
+//                ?.commit()
             true
         }
 
         preferenceScreen.findPreference<Preference>("pref_crash_reporting")?.setOnPreferenceClickListener {
             if (!preferenceManager.crashReportingEnabled) {
-                AlertDialog.Builder(context!!)
+                AlertDialog.Builder(requireContext())
                     .setTitle("Requires Restart")
                     .setMessage("In order to completely opt-out of Crashlytics, please restart Shuttle. Make sure to pause, swipe away the notification, and clear the app from recents.")
                     .setNegativeButton("Close", null)
@@ -78,9 +79,9 @@ class SettingsFragment : PreferenceFragmentCompat(),
         preferenceScreen.findPreference<Preference>("pref_media_rescan")?.setOnPreferenceClickListener {
             mediaImporter.rescan()
 
-            val customView = View.inflate(context!!, R.layout.progress_dialog_loading_horizontal, null)
+            val customView = View.inflate(requireContext(), R.layout.progress_dialog_loading_horizontal, null)
             scanningProgressView = customView.findViewById(R.id.progressBar)
-            scanningDialog = AlertDialog.Builder(context!!)
+            scanningDialog = AlertDialog.Builder(requireContext())
                 .setView(customView)
                 .setNegativeButton("Close", null)
                 .show()
@@ -89,7 +90,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
         }
 
         preferenceScreen.findPreference<Preference>("pref_clear_artwork")?.setOnPreferenceClickListener {
-            AlertDialog.Builder(context!!)
+            AlertDialog.Builder(requireContext())
                 .setTitle("Clear Artwork")
                 .setMessage("This will permanently remove all cached artwork")
                 .setPositiveButton("Clear") { _, _ ->
@@ -149,5 +150,12 @@ class SettingsFragment : PreferenceFragmentCompat(),
     override fun onComplete() {
         super.onComplete()
         scanningDialog?.dismiss()
+    }
+
+
+    // Static
+
+    companion object {
+        fun newInstance() = SettingsFragment()
     }
 }

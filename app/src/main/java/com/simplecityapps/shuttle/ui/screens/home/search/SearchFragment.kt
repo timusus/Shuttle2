@@ -33,7 +33,7 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFr
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
-import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragmentArgs
+import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
 import io.reactivex.Completable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
@@ -88,7 +88,7 @@ class SearchFragment : Fragment(),
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        playlistMenuView = PlaylistMenuView(context!!, playlistMenuPresenter, childFragmentManager)
+        playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
 
         imageLoader = GlideImageLoader(this)
 
@@ -197,7 +197,7 @@ class SearchFragment : Fragment(),
         }
 
         override fun onOverflowClicked(view: View, song: Song) {
-            val popupMenu = PopupMenu(context!!, view)
+            val popupMenu = PopupMenu(requireContext(), view)
             popupMenu.inflate(R.menu.menu_popup_song)
 
             playlistMenuView.createPlaylistMenu(popupMenu.menu)
@@ -216,7 +216,7 @@ class SearchFragment : Fragment(),
                             return@setOnMenuItemClickListener true
                         }
                         R.id.songInfo -> {
-                            findNavController().navigate(R.id.action_searchFragment_to_songInfoDialogFragment, SongInfoDialogFragmentArgs(song).toBundle())
+                            SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
                             return@setOnMenuItemClickListener true
                         }
                     }
@@ -235,7 +235,7 @@ class SearchFragment : Fragment(),
         }
 
         override fun onOverflowClicked(view: View, albumArtist: AlbumArtist) {
-            val popupMenu = PopupMenu(context!!, view)
+            val popupMenu = PopupMenu(requireContext(), view)
             popupMenu.inflate(R.menu.menu_popup_add)
 
             playlistMenuView.createPlaylistMenu(popupMenu.menu)
@@ -269,7 +269,7 @@ class SearchFragment : Fragment(),
         }
 
         override fun onOverflowClicked(view: View, album: Album) {
-            val popupMenu = PopupMenu(context!!, view)
+            val popupMenu = PopupMenu(requireContext(), view)
             popupMenu.inflate(R.menu.menu_popup_add)
 
             playlistMenuView.createPlaylistMenu(popupMenu.menu)

@@ -124,10 +124,6 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
         @IdRes
         get() = R.id.navHostFragment
 
-    init {
-
-    }
-
     fun addSheetStateChangeListener(sheetStateChangeListener: SheetStateChangeListener) {
         sheetStateChangeListeners.add(sheetStateChangeListener)
     }

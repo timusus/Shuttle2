@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.queue
 
 import android.os.Bundle
+import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -53,6 +54,8 @@ class QueueFragment :
 
     @Inject lateinit var playbackManager: PlaybackManager
 
+    private var recyclerViewState: Parcelable? = null
+
 
     // Lifecycle
 
@@ -78,8 +81,6 @@ class QueueFragment :
         progressBar = view.findViewById(R.id.progressBar)
         emptyLabel = view.findViewById(R.id.emptyLabel)
 
-        presenter.bindView(this)
-
         view.findParentMultiSheetView()?.addSheetStateChangeListener(sheetStateChangeListener)
 
         toolbar = view.findViewById(R.id.toolbar)
@@ -93,6 +94,27 @@ class QueueFragment :
             }
             false
         }
+
+        savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
+
+        presenter.bindView(this)
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        recyclerViewState?.let { recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState) }
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        recyclerViewState = recyclerView.layoutManager?.onSaveInstanceState()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putParcelable(ARG_RECYCLER_STATE, recyclerViewState)
+        super.onSaveInstanceState(outState)
     }
 
     override fun onDestroyView() {
@@ -116,7 +138,12 @@ class QueueFragment :
     // QueueContract.View Implementation
 
     override fun setData(queue: List<QueueItem>, progress: Float, isPlaying: Boolean) {
-        adapter.setData(queue.map { queueItem -> QueueBinder(queueItem, imageLoader, playbackManager, playbackWatcher, queueBinderListener) })
+        adapter.setData(queue.map { queueItem -> QueueBinder(queueItem, imageLoader, playbackManager, playbackWatcher, queueBinderListener) },
+            completion = {
+                recyclerViewState?.let {
+                    recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
+                }
+            })
     }
 
     override fun toggleEmptyView(empty: Boolean) {
@@ -165,7 +192,7 @@ class QueueFragment :
         }
 
         override fun onLongPress(viewHolder: QueueBinder.ViewHolder) {
-            val popupMenu = PopupMenu(context!!, viewHolder.itemView)
+            val popupMenu = PopupMenu(requireContext(), viewHolder.itemView)
             popupMenu.inflate(R.menu.menu_queue_item)
             popupMenu.menu.findItem(R.id.playNext).isVisible = viewHolder.viewBinder?.queueItem?.isCurrent == false
             popupMenu.setOnMenuItemClickListener {
@@ -207,6 +234,8 @@ class QueueFragment :
     companion object {
 
         const val TAG = "QueueFragment"
+
+        const val ARG_RECYCLER_STATE = "recycler_state"
 
         fun newInstance() = QueueFragment()
     }

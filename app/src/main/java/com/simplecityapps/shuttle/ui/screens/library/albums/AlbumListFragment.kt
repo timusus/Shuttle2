@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.library.albums
 
 import android.os.Bundle
+import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -52,6 +53,9 @@ class AlbumListFragment :
     private var circularLoadingView: CircularLoadingView by autoCleared()
     private var horizontalLoadingView: HorizontalLoadingView by autoCleared()
 
+    private var recyclerViewState: Parcelable? = null
+
+
     // Lifecycle
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -67,7 +71,7 @@ class AlbumListFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        playlistMenuView = PlaylistMenuView(context!!, playlistMenuPresenter, childFragmentManager)
+        playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
 
         imageLoader = GlideImageLoader(this)
 
@@ -81,10 +85,16 @@ class AlbumListFragment :
 
         presenter.bindView(this)
         playlistMenuPresenter.bindView(playlistMenuView)
+
+        savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
     }
 
     override fun onResume() {
         super.onResume()
+
+        recyclerViewState?.let {
+            recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
+        }
 
         presenter.loadAlbums()
 
@@ -94,7 +104,7 @@ class AlbumListFragment :
                 when (menuItem.itemId) {
                     R.id.rescan -> {
                         presenter.rescanLibrary()
-                        Toast.makeText(context!!, "Library scan started", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(), "Library scan started", Toast.LENGTH_SHORT).show()
                         true
                     }
                     else -> false
@@ -110,6 +120,13 @@ class AlbumListFragment :
             toolbar.menu.removeItem(R.id.rescan)
             toolbar.setOnMenuItemClickListener(null)
         }
+
+        recyclerViewState = recyclerView.layoutManager?.onSaveInstanceState()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putParcelable(ARG_RECYCLER_STATE, recyclerViewState)
+        super.onSaveInstanceState(outState)
     }
 
     override fun onDestroyView() {
@@ -121,11 +138,16 @@ class AlbumListFragment :
         super.onDestroyView()
     }
 
+
     // AlbumListContract.View Implementation
 
     override fun setAlbums(albums: List<Album>) {
         adapter.setData(albums.map { album ->
             AlbumBinder(album, imageLoader, this)
+        }, completion = {
+            recyclerViewState?.let {
+                recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
+            }
         })
     }
 
@@ -151,8 +173,9 @@ class AlbumListFragment :
     }
 
     override fun setLoadingProgress(progress: Float) {
-        horizontalLoadingView?.setProgress(progress)
+        horizontalLoadingView.setProgress(progress)
     }
+
 
     // AlbumBinder.Listener Implementation
 
@@ -166,7 +189,7 @@ class AlbumListFragment :
     }
 
     override fun onOverflowClicked(view: View, album: Album) {
-        val popupMenu = PopupMenu(context!!, view)
+        val popupMenu = PopupMenu(requireContext(), view)
         popupMenu.inflate(R.menu.menu_popup_add)
 
         playlistMenuView.createPlaylistMenu(popupMenu.menu)
@@ -191,6 +214,7 @@ class AlbumListFragment :
         popupMenu.show()
     }
 
+
     // CreatePlaylistDialogFragment.Listener Implementation
 
     override fun onSave(text: String, playlistData: PlaylistData) {
@@ -203,6 +227,8 @@ class AlbumListFragment :
     companion object {
 
         const val TAG = "AlbumListFragment"
+
+        const val ARG_RECYCLER_STATE = "recycler_state"
 
         fun newInstance() = AlbumListFragment()
     }

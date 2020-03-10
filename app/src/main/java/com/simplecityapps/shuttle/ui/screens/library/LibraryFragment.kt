@@ -16,6 +16,7 @@ import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistLis
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListFragment
 import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListFragment
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListFragment
+import timber.log.Timber
 
 class LibraryFragment : Fragment(), ToolbarHost {
 

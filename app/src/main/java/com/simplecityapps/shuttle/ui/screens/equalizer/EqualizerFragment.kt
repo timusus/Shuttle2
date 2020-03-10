@@ -1,12 +1,16 @@
 package com.simplecityapps.shuttle.ui.screens.equalizer
 
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
 import androidx.appcompat.widget.SwitchCompat
 import androidx.appcompat.widget.Toolbar
+import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import androidx.navigation.fragment.findNavController
 import com.simplecityapps.playback.equalizer.Equalizer
 import com.simplecityapps.playback.equalizer.EqualizerBand
@@ -16,7 +20,7 @@ import com.simplecityapps.shuttle.ui.common.autoCleared
 import javax.inject.Inject
 
 
-class EqualizerFragment : Fragment(R.layout.fragment_equalizer), Injectable, EqualizerContract.View {
+class EqualizerFragment : Fragment(), Injectable, EqualizerContract.View {
 
     @Inject lateinit var presenter: EqualizerPresenter
 
@@ -28,6 +32,10 @@ class EqualizerFragment : Fragment(R.layout.fragment_equalizer), Injectable, Equ
 
 
     // Lifecycle
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        return inflater.inflate(R.layout.fragment_equalizer, container, false)
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -42,7 +50,7 @@ class EqualizerFragment : Fragment(R.layout.fragment_equalizer), Injectable, Equ
         toolbar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.frequencyResponse -> {
-                    findNavController().navigate(R.id.action_equalizerFragment_to_frequencyResponseFragment)
+                    FrequencyResponseDialogFragment.newInstance().show(childFragmentManager)
                     return@setOnMenuItemClickListener true
                 }
             }
@@ -56,7 +64,7 @@ class EqualizerFragment : Fragment(R.layout.fragment_equalizer), Injectable, Equ
         autoCompleteTextView = view.findViewById(R.id.autoCompleteTextView)
         autoCompleteTextView.setAdapter(
             ArrayAdapter(
-                context!!,
+                requireContext(),
                 R.layout.dropdown_menu_popup_item,
                 presets.map { preset -> preset.name }
             )
@@ -93,8 +101,8 @@ class EqualizerFragment : Fragment(R.layout.fragment_equalizer), Injectable, Equ
         autoCompleteTextView.setText(preset.name, false)
     }
 
-    override fun showEnabled(activated: Boolean) {
-        equalizerView.isActivated = activated
+    override fun showEnabled(enabled: Boolean) {
+        equalizerView.isActivated = enabled
     }
 
 
@@ -105,5 +113,13 @@ class EqualizerFragment : Fragment(R.layout.fragment_equalizer), Injectable, Equ
         override fun onBandChanged(band: EqualizerBand) {
             presenter.updateBand(band)
         }
+    }
+
+
+    // Static
+
+    companion object {
+        const val TAG = "EqualizerFragment"
+        fun newInstance() = EqualizerFragment()
     }
 }

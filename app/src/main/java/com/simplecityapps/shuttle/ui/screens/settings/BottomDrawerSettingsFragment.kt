@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.annotation.NavigationRes
+import androidx.fragment.app.FragmentManager
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
@@ -15,6 +16,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
+import com.simplecityapps.shuttle.ui.screens.sleeptimer.SleepTimerDialogFragment
 import javax.inject.Inject
 
 
@@ -24,7 +26,6 @@ class BottomDrawerSettingsFragment :
     BottomDrawerSettingsContract.View {
 
     // Lifecycle
-
 
     @Inject lateinit var presenter: BottomDrawerSettingsPresenter
 
@@ -66,6 +67,10 @@ class BottomDrawerSettingsFragment :
         super.onDestroyView()
     }
 
+    fun show(fragmentManager: FragmentManager) {
+        show(fragmentManager, TAG)
+    }
+
 
     // Private
 
@@ -81,20 +86,14 @@ class BottomDrawerSettingsFragment :
     private val settingsItemClickListener = object : SettingsViewBinder.Listener {
 
         override fun onMenuItemClicked(settingsItem: SettingsMenuItem) {
+
+            dismiss()
+
             when (settingsItem) {
-                SettingsMenuItem.Shuffle -> {
-                    presenter.shuffleAll()
-                    findNavController().popBackStack()
-                }
-                SettingsMenuItem.SleepTimer -> {
-                    findNavController().navigate(R.id.action_bottomSheetDialog_to_sleepTimerDialog)
-                }
-                SettingsMenuItem.Equalizer -> {
-                    findNavController().navigate(R.id.action_bottomSheetFragment_to_equalizerFragment)
-                }
-                SettingsMenuItem.Settings -> {
-                    findNavController().navigate(R.id.action_bottomSheetDialog_to_settingsFragment)
-                }
+                SettingsMenuItem.Shuffle -> presenter.shuffleAll()
+                SettingsMenuItem.SleepTimer -> SleepTimerDialogFragment.newInstance().show(requireFragmentManager())
+                SettingsMenuItem.Equalizer -> findNavController().navigate(R.id.action_bottomSheetFragment_to_equalizerFragment)
+                SettingsMenuItem.Settings -> findNavController().navigate(R.id.action_bottomSheetFragment_to_settingsFragment)
             }
         }
     }
@@ -108,5 +107,14 @@ class BottomDrawerSettingsFragment :
 
     override fun showLoadError(error: Error) {
         Toast.makeText(context, error.userDescription(), Toast.LENGTH_LONG).show()
+    }
+
+
+    // Static
+
+    companion object {
+        const val TAG = "BottomDrawerSettingsFragment"
+
+        fun newInstance() = BottomDrawerSettingsFragment()
     }
 }

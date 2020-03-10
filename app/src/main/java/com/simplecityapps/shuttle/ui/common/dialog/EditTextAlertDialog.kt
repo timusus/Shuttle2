@@ -40,7 +40,7 @@ open class EditTextAlertDialog : DialogFragment() {
     @SuppressLint("InflateParams")
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
 
-        val view = LayoutInflater.from(context!!).inflate(R.layout.fragment_dialog_edit_text, null)
+        val view = LayoutInflater.from(requireContext()).inflate(R.layout.fragment_dialog_edit_text, null)
 
         val textInputLayout: TextInputLayout = view.findViewById(R.id.inputLayout)
         hint?.let { textInputLayout.hint = hint }
@@ -57,7 +57,7 @@ open class EditTextAlertDialog : DialogFragment() {
         })
         initialText?.let { editText.setText(initialText) }
 
-        return AlertDialog.Builder(context!!)
+        return AlertDialog.Builder(requireContext())
             .setView(view)
             .setNegativeButton("Close", null)
             .setPositiveButton("Save") { _, _ -> onSave(editText.text.toString()) }
@@ -71,7 +71,7 @@ open class EditTextAlertDialog : DialogFragment() {
 
         editText.post {
             editText.requestFocus()
-            val inputMethodManager = context!!.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+            val inputMethodManager = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
             inputMethodManager.showSoftInput(editText, 0)
         }
     }

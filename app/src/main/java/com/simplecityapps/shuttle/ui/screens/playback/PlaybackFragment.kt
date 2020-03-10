@@ -125,7 +125,7 @@ class PlaybackFragment :
 
         recyclerView.addItemDecoration(SpacesItemDecoration(8))
 
-        playPauseButton.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(context!!, R.color.colorPrimary))
+        playPauseButton.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.colorPrimary))
 
         toolbar.inflateMenu(R.menu.menu_playback)
         toolbar.setOnMenuItemClickListener { item ->
@@ -143,7 +143,7 @@ class PlaybackFragment :
             presenter.setFavorite(favoriteButton.isChecked)
         }
 
-        CastButtonFactory.setUpMediaRouteButton(context!!, toolbar.menu, R.id.media_route_menu_item)
+        CastButtonFactory.setUpMediaRouteButton(requireContext(), toolbar.menu, R.id.media_route_menu_item)
 
         presenter.bindView(this)
     }
@@ -159,8 +159,8 @@ class PlaybackFragment :
 
     override fun setPlayState(isPlaying: Boolean) {
         when {
-            isPlaying -> playPauseButton.setImageDrawable(ContextCompat.getDrawable(context!!, R.drawable.ic_pause_black_24dp))
-            else -> playPauseButton.setImageDrawable(ContextCompat.getDrawable(context!!, R.drawable.ic_play_arrow_black_24dp))
+            isPlaying -> playPauseButton.setImageDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.ic_pause_black_24dp))
+            else -> playPauseButton.setImageDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.ic_play_arrow_black_24dp))
         }
     }
 

@@ -60,18 +60,18 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
 
         val dumpButton: Button = view.findViewById(R.id.dumpButton)
         dumpButton.setOnClickListener {
-            val clipboardManager: ClipboardManager = context!!.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            val file = context!!.getFileStreamPath(DebugLoggingTree.FILE_NAME)
+            val clipboardManager: ClipboardManager = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val file = requireContext().getFileStreamPath(DebugLoggingTree.FILE_NAME)
             if (file.exists()) {
-                val clip = ClipData.newPlainText("Shuttle Logs", context!!.getFileStreamPath(DebugLoggingTree.FILE_NAME).readText(Charsets.UTF_8))
+                val clip = ClipData.newPlainText("Shuttle Logs", requireContext().getFileStreamPath(DebugLoggingTree.FILE_NAME).readText(Charsets.UTF_8))
                 try {
                     clipboardManager.primaryClip = clip
                 } catch (e: TransactionTooLargeException) {
-                    Toast.makeText(context!!, "Log file is too big large clipboard", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), "Log file is too big large clipboard", Toast.LENGTH_SHORT).show()
                 }
-                Toast.makeText(context!!, "Logs copied to clipboard", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Logs copied to clipboard", Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(context!!, "Log file is empty", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Log file is empty", Toast.LENGTH_SHORT).show()
             }
         }
 

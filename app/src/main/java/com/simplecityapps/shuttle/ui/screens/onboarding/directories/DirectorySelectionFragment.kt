@@ -58,7 +58,7 @@ class DirectorySelectionFragment : Fragment(),
 
         if (requestCode == REQUEST_CODE_OPEN_DOCUMENT && resultCode == Activity.RESULT_OK) {
             data?.let { intent ->
-                presenter.handleSafResult(context!!.contentResolver, intent)
+                presenter.handleSafResult(requireContext().contentResolver, intent)
             } ?: Timber.e("onActivityResult failed to handle result: Intent data null")
         }
     }
@@ -77,12 +77,12 @@ class DirectorySelectionFragment : Fragment(),
         recyclerView.adapter = adapter
 
         presenter.bindView(this)
-        presenter.loadData(context!!.contentResolver)
+        presenter.loadData(requireContext().contentResolver)
 
         val addDirectoryButton: Button = view.findViewById(R.id.addDirectoryButton)
         addDirectoryButton.setOnClickListener {
             val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
-            if (intent.resolveActivity(context!!.packageManager) != null) {
+            if (intent.resolveActivity(requireContext().packageManager) != null) {
                 startActivityForResult(intent, REQUEST_CODE_OPEN_DOCUMENT)
             } else {
                 presenter
@@ -134,7 +134,7 @@ class DirectorySelectionFragment : Fragment(),
                 }
         } ?: Timber.e("Failed to set parent uri data - getParent() returned null")
 
-        adapter.setData(data.map { data -> DirectoryBinder(data, directoryBinderListener) }.toMutableList<ViewBinder>()) {
+        adapter.setData(data.map { DirectoryBinder(it, directoryBinderListener) }.toMutableList<ViewBinder>()) {
             getParent()?.let { parent ->
                 if (adapter.items.none { binder -> binder is DirectoryBinder } || adapter.items.any { binder -> binder is DirectoryBinder && !binder.data.traversalComplete }) {
                     parent.toggleNextButton(enabled = false)
@@ -160,7 +160,7 @@ class DirectorySelectionFragment : Fragment(),
     }
 
     override fun showDocumentProviderNotAvailable() {
-        AlertDialog.Builder(context!!)
+        AlertDialog.Builder(requireContext())
             .setTitle("Missing Document Provider")
             .setMessage("A 'Document Provider' (file manager) app can't be found on your device. You may have to install one, or revert to using the 'basic' media scanner.")
             .setNeutralButton("Close", null)

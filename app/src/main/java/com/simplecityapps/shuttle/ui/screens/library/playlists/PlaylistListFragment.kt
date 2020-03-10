@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.library.playlists
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -40,6 +41,9 @@ class PlaylistListFragment :
 
     private var recyclerView: RecyclerView by autoCleared()
 
+    private var recyclerViewState: Parcelable? = null
+
+
     // Lifecycle
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -63,6 +67,8 @@ class PlaylistListFragment :
         circularLoadingView = view.findViewById(R.id.circularLoadingView)
         horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
 
+        savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
+
         presenter.bindView(this)
     }
 
@@ -76,7 +82,7 @@ class PlaylistListFragment :
             toolbar.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
                     R.id.syncPlaylists -> {
-                        AlertDialog.Builder(context!!)
+                        AlertDialog.Builder(requireContext())
                             .setTitle("Sync Media Store Playlists")
                             .setMessage("Copies playlists from the Media Store. If the playlists already exists in Shuttle, the songs will be merged. \n\nNote: Songs are only added, and not removed.")
                             .setPositiveButton("Sync") { _, _ -> presenter.importMediaStorePlaylists() }
@@ -88,6 +94,8 @@ class PlaylistListFragment :
                 }
             }
         }
+
+        recyclerViewState?.let { recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState) }
     }
 
     override fun onPause() {
@@ -97,6 +105,13 @@ class PlaylistListFragment :
             toolbar.menu.removeItem(R.id.syncPlaylists)
             toolbar.setOnMenuItemClickListener(null)
         }
+
+        recyclerViewState = recyclerView.layoutManager?.onSaveInstanceState()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putParcelable(ARG_RECYCLER_STATE, recyclerViewState)
+        super.onSaveInstanceState(outState)
     }
 
     override fun onDestroyView() {
@@ -107,11 +122,16 @@ class PlaylistListFragment :
         super.onDestroyView()
     }
 
+
     // PlaylistListContract.View Implementation
 
     override fun setPlaylists(playlists: List<Playlist>) {
         adapter.setData(playlists.map { playlist ->
             PlaylistBinder(playlist, playlistBinderListener)
+        }, completion = {
+            recyclerViewState?.let {
+                recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
+            }
         })
     }
 
@@ -141,8 +161,9 @@ class PlaylistListFragment :
     }
 
     override fun onPlaylistsImported() {
-        Toast.makeText(context!!, "Playlists imported", Toast.LENGTH_SHORT).show()
+        Toast.makeText(requireContext(), "Playlists imported", Toast.LENGTH_SHORT).show()
     }
+
 
     // PlaylistBinder.Listener
 
@@ -161,7 +182,7 @@ class PlaylistListFragment :
 
         @SuppressLint("RestrictedApi")
         override fun onOverflowClicked(view: View, playlist: Playlist) {
-            val popupMenu = PopupMenu(context!!, view)
+            val popupMenu = PopupMenu(requireContext(), view)
             popupMenu.inflate(R.menu.menu_playlist_overflow)
             popupMenu.setOnMenuItemClickListener { item ->
                 when (item.itemId) {
@@ -170,7 +191,7 @@ class PlaylistListFragment :
                         true
                     }
                     R.id.delete -> {
-                        AlertDialog.Builder(context!!)
+                        AlertDialog.Builder(requireContext())
                             .setTitle("Delete Playlist")
                             .setMessage("${playlist.name} will be permanently deleted")
                             .setPositiveButton("Delete") { _, _ -> presenter.deletePlaylist(playlist) }
@@ -199,6 +220,8 @@ class PlaylistListFragment :
     companion object {
 
         const val TAG = "PlaylistListFragment"
+
+        const val ARG_RECYCLER_STATE = "recycler_state"
 
         fun newInstance() = PlaylistListFragment()
     }

@@ -1,6 +1,6 @@
 package com.simplecityapps.shuttle.dagger
 
-import com.simplecityapps.shuttle.ui.MainFragment
+import com.simplecityapps.shuttle.ui.screens.main.MainFragment
 import com.simplecityapps.shuttle.ui.screens.changelog.ChangelogDialogFragment
 import com.simplecityapps.shuttle.ui.screens.debug.DebugDrawerFragment
 import com.simplecityapps.shuttle.ui.screens.debug.LoggingFragment

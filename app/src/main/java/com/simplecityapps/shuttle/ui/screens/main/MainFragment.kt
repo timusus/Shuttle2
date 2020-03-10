@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui
+package com.simplecityapps.shuttle.ui.screens.main
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -11,60 +11,35 @@ import androidx.annotation.IdRes
 import androidx.fragment.app.Fragment
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
-import androidx.navigation.Navigation.findNavController
+import androidx.navigation.Navigation
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.simplecityappds.saf.SafDirectoryHelper
-import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStoreSongProvider
-import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibSongProvider
-import com.simplecityapps.mediaprovider.MediaImporter
-import com.simplecityapps.playback.PlaybackManager
-import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
-import com.simplecityapps.playback.queue.QueueChangeCallback
-import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.autoClearedNullable
+import com.simplecityapps.shuttle.ui.common.navigation.setupWithNavController
 import com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
+import com.simplecityapps.shuttle.ui.screens.changelog.ChangelogDialogFragment
 import com.simplecityapps.shuttle.ui.screens.playback.PlaybackFragment
 import com.simplecityapps.shuttle.ui.screens.playback.mini.MiniPlaybackFragment
 import com.simplecityapps.shuttle.ui.screens.queue.QueueFragment
-import com.simplecityapps.taglib.FileScanner
-import io.reactivex.Single
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.rxkotlin.subscribeBy
-import io.reactivex.schedulers.Schedulers
+import com.simplecityapps.shuttle.ui.screens.settings.BottomDrawerSettingsFragment
 import timber.log.Timber
 import java.lang.ref.WeakReference
 import javax.inject.Inject
 
-class MainFragment
-    : Fragment(),
+class MainFragment : Fragment(),
     Injectable,
-    QueueChangeCallback {
-
-    @Inject lateinit var queueManager: QueueManager
-    @Inject lateinit var queueWatcher: QueueWatcher
-    @Inject lateinit var playbackManager: PlaybackManager
-
-    @Inject lateinit var mediaImporter: MediaImporter
-
-    @Inject lateinit var playbackPreferenceManager: PlaybackPreferenceManager
-    @Inject lateinit var fileScanner: FileScanner
-
-    @Inject lateinit var preferenceManager: GeneralPreferenceManager
+    MainContract.View {
 
     private var multiSheetView: MultiSheetView? by autoClearedNullable()
 
-    private val compositeDisposable = CompositeDisposable()
-
     private var onBackPressCallback: OnBackPressedCallback? = null
 
-    // Todo: Use Presenter
+    @Inject lateinit var presenter: MainPresenter
+
 
     // Lifecycle
 
@@ -77,7 +52,7 @@ class MainFragment
 
         multiSheetView = view.findViewById(R.id.multiSheetView)
 
-        val navController = findNavController(activity!!, R.id.navHostFragment)
+        val navController = Navigation.findNavController(requireActivity(), R.id.navHostFragment)
 
         val bottomNavigationView: BottomNavigationView = view.findViewById(R.id.bottomNavigationView)
         bottomNavigationView.setupWithNavController(navController) { menuItem ->
@@ -103,11 +78,7 @@ class MainFragment
             multiSheetView?.restoreBottomSheetTranslation(savedInstanceState.getFloat(STATE_BOTTOM_NAV_TRANSLATION_Y, 0f))
         }
 
-        // Update visible state of mini player
-        queueWatcher.addCallback(this)
-
         multiSheetView?.addSheetStateChangeListener(object : MultiSheetView.SheetStateChangeListener {
-
             override fun onSheetStateChanged(sheet: Int, state: Int) {
                 updateBackPressListener()
             }
@@ -117,47 +88,7 @@ class MainFragment
             }
         })
 
-        if (queueManager.getSize() == 0) {
-            multiSheetView?.hide(collapse = true, animate = false)
-        }
-
-        // Don't bother scanning for media again if we've already scanned once this session
-        if (mediaImporter.scanCount < 1) {
-            when (playbackPreferenceManager.songProvider) {
-                PlaybackPreferenceManager.SongProvider.MediaStore -> {
-                    mediaImporter.startScan(MediaStoreSongProvider(context!!.applicationContext))
-                }
-                PlaybackPreferenceManager.SongProvider.TagLib -> {
-                    compositeDisposable.add(
-                        Single.fromCallable {
-                            context?.applicationContext?.contentResolver?.persistedUriPermissions
-                                ?.filter { uriPermission -> uriPermission.isReadPermission }
-                                ?.flatMap { uriPermission ->
-                                    context?.applicationContext?.let { context ->
-                                        SafDirectoryHelper.buildFolderNodeTree(context.contentResolver, uriPermission.uri)?.getLeaves().orEmpty().map { node ->
-                                            node as SafDirectoryHelper.DocumentNode
-                                        }
-                                    } ?: run {
-                                        Timber.e("Failed to build folder node tree - context null")
-                                        emptyList<SafDirectoryHelper.DocumentNode>()
-                                    }
-                                }.orEmpty()
-                        }
-                            .subscribeOn(Schedulers.io())
-                            .observeOn(AndroidSchedulers.mainThread())
-                            .subscribeBy(
-                                onSuccess = { nodes ->
-                                    mediaImporter.startScan(TaglibSongProvider(context!!.applicationContext, fileScanner, nodes.map { Pair(it.uri, it.mimeType) }))
-                                },
-                                onError = { throwable -> Timber.e(throwable, "Failed to scan library") })
-                    )
-                }
-            }
-        }
-
-        if (!preferenceManager.hasSeenChangelog && preferenceManager.showChangelogOnLaunch) {
-            findNavController().navigate(R.id.action_mainFragment_to_changelogFragment)
-        }
+        presenter.bindView(this)
     }
 
     override fun onResume() {
@@ -173,9 +104,23 @@ class MainFragment
     }
 
     override fun onDestroyView() {
-        queueWatcher.removeCallback(this)
-        compositeDisposable.clear()
+        presenter.unbindView()
         super.onDestroyView()
+    }
+
+
+    // MainContract.View Implementation
+
+    override fun toggleSheet(visible: Boolean) {
+        if (visible) {
+            multiSheetView?.unhide(true)
+        } else {
+            multiSheetView?.hide(collapse = true, animate = false)
+        }
+    }
+
+    override fun showChangelog() {
+        ChangelogDialogFragment.newInstance().show(childFragmentManager)
     }
 
     // Private
@@ -185,19 +130,9 @@ class MainFragment
 
         if (multiSheetView?.currentSheet != MultiSheetView.Sheet.NONE) {
             // Todo: Remove activity dependency.
-            onBackPressCallback = activity!!.onBackPressedDispatcher.addCallback {
+            onBackPressCallback = requireActivity().onBackPressedDispatcher.addCallback {
                 multiSheetView?.consumeBackPress()
             }
-        }
-    }
-
-    // QueueChangeCallback Implementation
-
-    override fun onQueueChanged() {
-        if (queueManager.getSize() == 0) {
-            multiSheetView?.hide(collapse = true, animate = false)
-        } else {
-            multiSheetView?.unhide(true)
         }
     }
 
@@ -209,8 +144,8 @@ class MainFragment
         const val STATE_CURRENT_SHEET = "current_sheet"
         const val STATE_BOTTOM_NAV_TRANSLATION_Y = "bottom_nav_alpha"
     }
-
 }
+
 
 fun BottomNavigationView.setupWithNavController(navController: NavController, onItemSelected: (MenuItem) -> (Unit)) {
 

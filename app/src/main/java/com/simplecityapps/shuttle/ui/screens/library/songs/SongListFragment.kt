@@ -1,13 +1,13 @@
 package com.simplecityapps.shuttle.ui.screens.library.songs
 
 import android.os.Bundle
+import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
-import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
@@ -28,7 +28,7 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFr
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
-import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragmentArgs
+import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
 import javax.inject.Inject
 
 class SongListFragment :
@@ -52,6 +52,8 @@ class SongListFragment :
 
     private var recyclerView: RecyclerView by autoCleared()
 
+    private var recyclerViewState: Parcelable? = null
+
 
     // Lifecycle
 
@@ -72,7 +74,7 @@ class SongListFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        playlistMenuView = PlaylistMenuView(context!!, playlistMenuPresenter, childFragmentManager)
+        playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
 
         imageLoader = GlideImageLoader(this)
 
@@ -86,10 +88,14 @@ class SongListFragment :
 
         presenter.bindView(this)
         playlistMenuPresenter.bindView(playlistMenuView)
+
+        savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
     }
 
     override fun onResume() {
         super.onResume()
+
+        recyclerViewState?.let { recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState) }
 
         presenter.loadSongs()
 
@@ -99,7 +105,7 @@ class SongListFragment :
                 when (menuItem.itemId) {
                     R.id.rescan -> {
                         presenter.rescanLibrary()
-                        Toast.makeText(context!!, "Library scan started", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(requireContext(), "Library scan started", Toast.LENGTH_SHORT).show()
                         true
                     }
                     else -> false
@@ -115,6 +121,13 @@ class SongListFragment :
             toolbar.menu.removeItem(R.id.rescan)
             toolbar.setOnMenuItemClickListener(null)
         }
+
+        recyclerViewState = recyclerView.layoutManager?.onSaveInstanceState()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putParcelable(ARG_RECYCLER_STATE, recyclerViewState)
+        super.onSaveInstanceState(outState)
     }
 
     override fun onDestroyView() {
@@ -132,6 +145,10 @@ class SongListFragment :
     override fun setData(songs: List<Song>) {
         adapter.setData(songs.map { song ->
             SongBinder(song, imageLoader, songBinderListener)
+        }, completion = {
+            recyclerViewState?.let {
+                recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
+            }
         })
     }
 
@@ -174,7 +191,7 @@ class SongListFragment :
         }
 
         override fun onOverflowClicked(view: View, song: Song) {
-            val popupMenu = PopupMenu(context!!, view)
+            val popupMenu = PopupMenu(requireContext(), view)
             popupMenu.inflate(R.menu.menu_popup_song)
 
             playlistMenuView.createPlaylistMenu(popupMenu.menu)
@@ -193,7 +210,7 @@ class SongListFragment :
                             return@setOnMenuItemClickListener true
                         }
                         R.id.songInfo -> {
-                            findNavController().navigate(R.id.action_libraryFragment_to_songInfoDialogFragment, SongInfoDialogFragmentArgs(song).toBundle())
+                            SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
                             return@setOnMenuItemClickListener true
                         }
                     }
@@ -217,6 +234,8 @@ class SongListFragment :
     companion object {
 
         const val TAG = "SongListFragment"
+
+        const val ARG_RECYCLER_STATE = "recycler_state"
 
         fun newInstance() = SongListFragment()
     }

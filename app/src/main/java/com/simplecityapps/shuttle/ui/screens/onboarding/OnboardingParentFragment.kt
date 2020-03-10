@@ -219,7 +219,7 @@ class OnboardingParentFragment : Fragment(),
     // Private
 
     private fun hasStoragePermission(): Boolean {
-        return (checkSelfPermission(context!!, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
+        return (checkSelfPermission(requireContext(), Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
     }
 
 
@@ -228,8 +228,12 @@ class OnboardingParentFragment : Fragment(),
     companion object {
         const val PREF_HAS_ONBOARDED = "has_onboarded"
         const val REQUEST_CODE_READ_STORAGE = 100
-    }
 
+        const val TAG = "OnboardingParentFragment"
+        fun newInstance(args: OnboardingParentFragmentArgs) = OnboardingParentFragment().apply {
+            arguments = args.toBundle()
+        }
+    }
 
     class OnboardingAdapter(fragment: Fragment, private val isOnboarding: Boolean) : FragmentStateAdapter(fragment) {
         var data = listOf<OnboardingPage>()

@@ -11,13 +11,13 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <fragment
+        <androidx.fragment.app.FragmentContainerView
             android:id="@+id/onboardingNavHostFragment"
             android:name="androidx.navigation.fragment.NavHostFragment"
             android:layout_width="match_parent"
             app:defaultNavHost="true"
             android:layout_height="match_parent"
-            app:navGraph="@navigation/nav_graph_launch" />
+            app:navGraph="@navigation/launch" />
 
         <com.google.android.material.navigation.NavigationView
             android:id="@+id/nav_view"
@@ -26,7 +26,7 @@
             android:layout_gravity="end"
             android:fitsSystemWindows="true">
 
-            <fragment
+            <androidx.fragment.app.FragmentContainerView
                 android:id="@+id/debugDrawerFragment"
                 android:name="com.simplecityapps.shuttle.ui.screens.debug.DebugDrawerFragment"
                 android:layout_width="match_parent"

@@ -13,9 +13,9 @@ import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.Toolbar
 import androidx.core.os.postDelayed
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.Transition
 import androidx.transition.TransitionInflater
@@ -40,7 +40,7 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFr
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
-import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragmentArgs
+import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
 
@@ -76,6 +76,8 @@ class AlbumDetailFragment :
 
     private var heroImage: ImageView by autoCleared()
 
+    private var isShowingHeroImage = false
+
 
     // Lifecycle
 
@@ -84,7 +86,7 @@ class AlbumDetailFragment :
 
         AndroidSupportInjection.inject(this)
 
-        album = AlbumDetailFragmentArgs.fromBundle(arguments!!).album
+        album = AlbumDetailFragmentArgs.fromBundle(requireArguments()).album
         presenter = presenterFactory.create(album)
     }
 
@@ -99,6 +101,7 @@ class AlbumDetailFragment :
             override fun onTransitionEnd(transition: Transition) {
                 super.onTransitionEnd(transition)
                 animationHelper?.showHeroView()
+                isShowingHeroImage = true
                 transition.removeListener(this)
             }
         })
@@ -112,7 +115,7 @@ class AlbumDetailFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        playlistMenuView = PlaylistMenuView(context!!, playlistMenuPresenter, childFragmentManager)
+        playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
 
         imageLoader = GlideImageLoader(this)
 
@@ -133,6 +136,10 @@ class AlbumDetailFragment :
 
         heroImage = view.findViewById(R.id.heroImage)
         imageLoader.loadArtwork(heroImage, album, ArtworkImageLoader.Options.Priority(ArtworkImageLoader.Options.Priority.Priority.Max))
+        if (isShowingHeroImage) {
+            heroImage.isVisible = true
+            dummyImage.isVisible = false
+        }
 
         toolbar.let { toolbar ->
             toolbar.setNavigationOnClickListener {
@@ -219,7 +226,7 @@ class AlbumDetailFragment :
         }
 
         override fun onOverflowClicked(view: View, song: Song) {
-            val popupMenu = PopupMenu(context!!, view)
+            val popupMenu = PopupMenu(requireContext(), view)
             popupMenu.inflate(R.menu.menu_popup_song)
 
             playlistMenuView.createPlaylistMenu(popupMenu.menu)
@@ -238,7 +245,7 @@ class AlbumDetailFragment :
                             return@setOnMenuItemClickListener true
                         }
                         R.id.songInfo -> {
-                            findNavController().navigate(R.id.action_albumDetailFragment_to_songInfoDialogFragment, SongInfoDialogFragmentArgs(song).toBundle())
+                            SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
                             return@setOnMenuItemClickListener true
                         }
                     }

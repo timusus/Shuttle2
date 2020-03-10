@@ -12,10 +12,12 @@ import androidx.core.view.marginEnd
 import androidx.core.view.marginStart
 import androidx.core.view.setPadding
 import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.FragmentManager
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.utils.dp
 import com.simplecityapps.shuttle.ui.common.utils.toHms
+import com.simplecityapps.shuttle.ui.common.utils.withArgs
 import com.simplecityapps.shuttle.ui.common.view.setMargins
 
 class SongInfoDialogFragment : DialogFragment(), Injectable {
@@ -25,19 +27,12 @@ class SongInfoDialogFragment : DialogFragment(), Injectable {
     override fun onAttach(context: Context) {
         super.onAttach(context)
 
-        song = SongInfoDialogFragmentArgs.fromBundle(arguments!!).song
+        song = requireArguments().getSerializable(ARG_SONG) as Song
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
 
-        val lhs = LinearLayout(context!!, null).apply {
-            orientation = LinearLayout.VERTICAL
-        }
-        val rhs = LinearLayout(context!!, null).apply {
-            orientation = LinearLayout.VERTICAL
-        }
-
-        val rootView = LinearLayout(context!!, null).apply {
+        val rootView = LinearLayout(requireContext(), null).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(24.dp)
         }
@@ -55,19 +50,19 @@ class SongInfoDialogFragment : DialogFragment(), Injectable {
         )
 
         for ((key, value) in map) {
-            rootView.addView(LinearLayout(context!!, null).apply {
+            rootView.addView(LinearLayout(requireContext(), null).apply {
 
                 orientation = LinearLayout.HORIZONTAL
                 layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
                 setMargins(marginStart, 4.dp, marginEnd, 4.dp)
 
-                addView(TextView(context!!).apply {
+                addView(TextView(requireContext()).apply {
                     text = key
                     gravity = Gravity.START or Gravity.CENTER_VERTICAL
                     layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)
                 })
-                addView(Space(context!!, null), 8.dp, LinearLayout.LayoutParams.MATCH_PARENT)
-                addView(TextView(context!!).apply {
+                addView(Space(requireContext(), null), 8.dp, LinearLayout.LayoutParams.MATCH_PARENT)
+                addView(TextView(requireContext()).apply {
                     text = value
                     gravity = Gravity.START or Gravity.CENTER_VERTICAL
                     layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)
@@ -75,10 +70,25 @@ class SongInfoDialogFragment : DialogFragment(), Injectable {
             })
         }
 
-        return AlertDialog.Builder(context!!)
+        return AlertDialog.Builder(requireContext())
             .setTitle("Song Info")
             .setView(rootView)
             .setNegativeButton("Close", null)
             .show()
+    }
+
+    fun show(fragmentManager: FragmentManager) {
+        show(fragmentManager, TAG)
+    }
+
+    companion object {
+
+        private const val ARG_SONG = "song"
+
+        private const val TAG = "SongInfoDialogFragment"
+
+        fun newInstance(song: Song): SongInfoDialogFragment = SongInfoDialogFragment().withArgs {
+            putSerializable(ARG_SONG, song)
+        }
     }
 }

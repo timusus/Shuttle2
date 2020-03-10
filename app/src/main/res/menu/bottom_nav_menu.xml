@@ -4,21 +4,22 @@
     <item
         android:id="@+id/homeFragment"
         android:icon="@drawable/ic_home_black_24dp"
-        android:title="@string/title_home"/>
+        android:title="@string/title_home" />
 
     <item
         android:id="@+id/libraryFragment"
+        android:checked="true"
         android:icon="@drawable/ic_library_music_black_24dp"
-        android:title="@string/title_library"/>
+        android:title="@string/title_library" />
 
     <item
         android:id="@+id/folderFragment"
         android:icon="@drawable/ic_folder_open_black_24dp"
-        android:title="@string/title_folders"/>
+        android:title="@string/title_folders" />
 
     <item
-        android:title=""
         android:id="@+id/bottomSheetFragment"
-        android:icon="@drawable/ic_menu_black_24dp"/>
+        android:icon="@drawable/ic_menu_black_24dp"
+        android:title="" />
 
 </menu>

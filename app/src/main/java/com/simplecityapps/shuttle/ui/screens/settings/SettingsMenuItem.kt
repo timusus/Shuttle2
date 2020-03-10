@@ -4,7 +4,7 @@ import com.simplecityapps.shuttle.R
 
 enum class SettingsMenuItem {
 
-    Shuffle, SleepTimer, Settings, Equalizer;
+    Shuffle, SleepTimer, Equalizer, Settings;
 
     val icon: Int
         get() {

@@ -28,7 +28,7 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFr
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
-import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragmentArgs
+import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
 import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
 
@@ -66,7 +66,7 @@ class SmartPlaylistDetailFragment :
 
         AndroidSupportInjection.inject(this)
 
-        playlist = SmartPlaylistDetailFragmentArgs.fromBundle(arguments!!).playlist
+        playlist = SmartPlaylistDetailFragmentArgs.fromBundle(requireArguments()).playlist
         presenter = presenterFactory.create(playlist)
     }
 
@@ -77,7 +77,7 @@ class SmartPlaylistDetailFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        playlistMenuView = PlaylistMenuView(context!!, playlistMenuPresenter, childFragmentManager)
+        playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
 
         adapter = RecyclerAdapter()
 
@@ -169,7 +169,7 @@ class SmartPlaylistDetailFragment :
         }
 
         override fun onOverflowClicked(view: View, song: Song) {
-            val popupMenu = PopupMenu(context!!, view)
+            val popupMenu = PopupMenu(requireContext(), view)
             popupMenu.inflate(R.menu.menu_popup_song)
 
             playlistMenuView.createPlaylistMenu(popupMenu.menu)
@@ -188,7 +188,7 @@ class SmartPlaylistDetailFragment :
                             return@setOnMenuItemClickListener true
                         }
                         R.id.songInfo -> {
-                            findNavController().navigate(R.id.action_smartPlaylistDetailFragment_to_songInfoDialogFragment, SongInfoDialogFragmentArgs(song).toBundle())
+                            SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
                             return@setOnMenuItemClickListener true
                         }
                     }

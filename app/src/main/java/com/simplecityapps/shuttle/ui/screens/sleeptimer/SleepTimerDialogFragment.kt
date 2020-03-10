@@ -19,7 +19,7 @@ class SleepTimerDialogFragment : DialogFragment(), Injectable {
     private var handler: Handler? = null
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val builder = AlertDialog.Builder(context!!)
+        val builder = AlertDialog.Builder(requireContext())
             .setTitle("Sleep Timer")
 
         sleepTimer.timeRemaining()?.let { timeRemaining ->
@@ -80,6 +80,12 @@ class SleepTimerDialogFragment : DialogFragment(), Injectable {
     }
 
     fun show(manager: FragmentManager) {
-        super.show(manager, null)
+        super.show(manager, TAG)
+    }
+
+    companion object {
+        fun newInstance() = SleepTimerDialogFragment()
+
+        const val TAG = "SleepTimerDialog"
     }
 }

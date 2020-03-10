@@ -38,7 +38,7 @@ class MediaProviderSelectionFragment :
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        isOnboarding = arguments!!.getBoolean(ARG_ONBOARDING)
+        isOnboarding = requireArguments().getBoolean(ARG_ONBOARDING)
     }
 
     // Lifecycle

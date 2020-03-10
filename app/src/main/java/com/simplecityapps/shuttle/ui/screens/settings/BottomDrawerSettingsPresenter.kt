@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.settings
 
+import android.annotation.SuppressLint
 import androidx.annotation.NavigationRes
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.PlaybackManager
@@ -51,8 +52,9 @@ class BottomDrawerSettingsPresenter @Inject constructor(
         )
     }
 
+    @SuppressLint("CheckResult")
     override fun shuffleAll() {
-        addDisposable(songRepository.getSongs()
+        songRepository.getSongs()
             .first(emptyList())
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
@@ -70,6 +72,6 @@ class BottomDrawerSettingsPresenter @Inject constructor(
                     }
                 },
                 onError = { throwable -> Timber.e(throwable, "Error retrieving songs") }
-            ))
+            )
     }
 }

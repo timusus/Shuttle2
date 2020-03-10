@@ -64,8 +64,8 @@ class MiniPlaybackFragment : Fragment(), Injectable, MiniPlayerContract.View {
 
     override fun setPlayState(isPlaying: Boolean) {
         when {
-            isPlaying -> playPauseButton.setImageDrawable(ContextCompat.getDrawable(context!!, R.drawable.ic_pause_black_24dp))
-            else -> playPauseButton.setImageDrawable(ContextCompat.getDrawable(context!!, R.drawable.ic_play_arrow_black_24dp))
+            isPlaying -> playPauseButton.setImageDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.ic_pause_black_24dp))
+            else -> playPauseButton.setImageDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.ic_play_arrow_black_24dp))
         }
     }
 

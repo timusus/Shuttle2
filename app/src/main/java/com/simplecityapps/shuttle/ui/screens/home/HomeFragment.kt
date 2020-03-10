@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.adapter.RecyclerAdapter
+import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.PlaylistQuery
@@ -34,7 +35,7 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFr
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
-import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragmentArgs
+import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.subscribeBy
@@ -91,7 +92,7 @@ class HomeFragment :
         val favoritesButton: HomeButton = view.findViewById(R.id.favoritesButton)
         val shuffleButton: HomeButton = view.findViewById(R.id.shuffleButton)
 
-        playlistMenuView = PlaylistMenuView(context!!, playlistMenuPresenter, childFragmentManager)
+        playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
 
         historyButton.setOnClickListener {
             val navController = findNavController()
@@ -116,10 +117,11 @@ class HomeFragment :
 
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
+        recyclerView.setRecyclerListener(RecyclerListener())
         recyclerView.clearAdapterOnDetach()
 
         val decoration = DividerItemDecoration(context, LinearLayout.VERTICAL)
-        decoration.setDrawable(ContextCompat.getDrawable(context!!, R.drawable.divider)!!)
+        decoration.setDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.divider)!!)
         recyclerView.addItemDecoration(decoration)
 
         imageLoader = GlideImageLoader(this)
@@ -189,7 +191,7 @@ class HomeFragment :
         }
 
         override fun onOverflowClicked(view: View, song: Song) {
-            val popupMenu = PopupMenu(context!!, view)
+            val popupMenu = PopupMenu(requireContext(), view)
             popupMenu.inflate(R.menu.menu_popup_song)
 
             playlistMenuView.createPlaylistMenu(popupMenu.menu)
@@ -208,7 +210,7 @@ class HomeFragment :
                             return@setOnMenuItemClickListener true
                         }
                         R.id.songInfo -> {
-                            findNavController().navigate(R.id.action_homeFragment_to_songInfoDialogFragment, SongInfoDialogFragmentArgs(song).toBundle())
+                            SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
                             return@setOnMenuItemClickListener true
                         }
                     }
@@ -234,7 +236,11 @@ class HomeFragment :
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
-                onSuccess = { playlist -> findNavController().navigate(R.id.action_homeFragment_to_playlistDetailFragment, PlaylistDetailFragmentArgs(playlist).toBundle()) },
+                onSuccess = { playlist ->
+                    if (findNavController().currentDestination?.id != R.id.playlistDetailFragment) {
+                        findNavController().navigate(R.id.action_homeFragment_to_playlistDetailFragment, PlaylistDetailFragmentArgs(playlist).toBundle())
+                    }
+                },
                 onError = { throwable -> Timber.e(throwable, "Failed to retrieve favorites playlist") }
             ))
     }

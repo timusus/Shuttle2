@@ -24,6 +24,6 @@
         app:defaultNavHost="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@id/toolbar"
-        app:navGraph="@navigation/nav_graph_folders" />
+        app:navGraph="@navigation/folders" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -11,6 +11,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.DialogFragment
+import androidx.fragment.app.FragmentManager
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.LimitLine
 import com.github.mikephil.charting.components.XAxis
@@ -62,14 +63,14 @@ class FrequencyResponseDialogFragment : DialogFragment(), Injectable {
 
         TypedValue().apply {
             requireContext().theme.resolveAttribute(android.R.attr.textColorSecondary, this, true)
-            textColor = ContextCompat.getColor(context!!, resourceId)
+            textColor = ContextCompat.getColor(requireContext(), resourceId)
         }
     }
 
     @SuppressLint("InflateParams")
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
 
-        val view = View.inflate(context!!, R.layout.fragment_frequency_response_dialog, null)
+        val view = View.inflate(requireContext(), R.layout.fragment_frequency_response_dialog, null)
 
         lineChart = view.findViewById(R.id.lineChart)
 
@@ -82,7 +83,7 @@ class FrequencyResponseDialogFragment : DialogFragment(), Injectable {
             lineChart.isVisible = true
         }
 
-        return AlertDialog.Builder(context!!)
+        return AlertDialog.Builder(requireContext())
             .setTitle("Frequency Response")
             .setView(view)
             .setNegativeButton("Close", null)
@@ -104,7 +105,7 @@ class FrequencyResponseDialogFragment : DialogFragment(), Injectable {
         dataset.setDrawCircles(false)
         dataset.setDrawHorizontalHighlightIndicator(false)
         dataset.setDrawVerticalHighlightIndicator(false)
-        dataset.color = context!!.resources.getColor(R.color.colorPrimary)
+        dataset.color = ContextCompat.getColor(requireContext(), R.color.colorPrimary)
 
         val chartData = LineData(dataset)
         chartData.setDrawValues(false)
@@ -138,7 +139,7 @@ class FrequencyResponseDialogFragment : DialogFragment(), Injectable {
         lineChart.xAxis.setDrawAxisLine(false)
         lineChart.xAxis.valueFormatter = object : ValueFormatter() {
             override fun getFormattedValue(value: Float): String {
-               return  if (value >= 1000) {
+                return if (value >= 1000) {
                     "%.0f".format(value / 1000) + " kHz"
                 } else {
                     "%.0f".format(value) + " Hz"
@@ -187,5 +188,15 @@ class FrequencyResponseDialogFragment : DialogFragment(), Injectable {
                 { index -> ((index / (size / 2f)) * (44100 / 2f)) },
                 { index -> (20f * log10(sqrt(((dst[index * 2]).pow(2)) + ((dst[index * 2 + 1]).pow(2))))) })
         }
+    }
+
+    fun show(fragmentManager: FragmentManager) {
+        show(fragmentManager, TAG)
+    }
+
+    companion object {
+        const val TAG = "FrequencyResponseDialog"
+
+        fun newInstance() = FrequencyResponseDialogFragment()
     }
 }

@@ -27,6 +27,7 @@
     <color name="shuffle_blue_tint">#0492ea</color>
 
     <color name="bg_window_dark">#000000</color>
+    <color name="bg_window_light">#FFFFFF</color>
     <color name="bg_card_dark">#33b5e5</color>
 
 

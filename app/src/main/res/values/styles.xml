@@ -3,6 +3,7 @@
     <!-- App Themes -->
 
     <style name="AppTheme.Light" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="android:windowBackground">@color/bg_window_light</item>
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorPrimary</item>
@@ -191,6 +192,5 @@
     <!-- Equalizer-->
 
     <attr name="guidelineColor" format="reference|color" />
-
 
 </resources>
