@@ -3,7 +3,6 @@ package com.simplecityapps.shuttle.ui.screens.equalizer
 import android.annotation.SuppressLint
 import android.app.Dialog
 import android.content.Context
-import android.graphics.Color
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.View
@@ -13,7 +12,6 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import com.github.mikephil.charting.charts.LineChart
-import com.github.mikephil.charting.components.LimitLine
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
@@ -23,17 +21,18 @@ import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.audio.AudioProcessor
 import com.paramsen.noise.Noise
 import com.simplecityapps.playback.equalizer.Equalizer
+import com.simplecityapps.playback.equalizer.fromDb
 import com.simplecityapps.playback.local.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
-import com.simplecityapps.shuttle.ui.common.utils.dp
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import dagger.android.support.AndroidSupportInjection
 import kotlinx.coroutines.*
 import javax.inject.Inject
 import kotlin.math.log10
+import kotlin.math.max
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -97,7 +96,7 @@ class FrequencyResponseDialogFragment : DialogFragment(), Injectable {
 
     fun setData(data: Map<Float, Float>) {
 
-        val entries = data.map { Entry(it.key, it.value) }
+        val entries = data.map { Entry(log10(it.key), it.value) }
 
         val dataset = LineDataSet(entries, "Frequency Response")
         dataset.mode = LineDataSet.Mode.HORIZONTAL_BEZIER
@@ -111,19 +110,9 @@ class FrequencyResponseDialogFragment : DialogFragment(), Injectable {
         chartData.setDrawValues(false)
         lineChart.data = chartData
 
-        lineChart.axisLeft.addLimitLine(LimitLine(12f, "").apply {
-            lineColor = Color.RED
-            enableDashedLine(12f.dp, 6f.dp, 0f)
-        })
-
-        lineChart.axisLeft.addLimitLine(LimitLine(-12f, "").apply {
-            lineColor = Color.RED
-            enableDashedLine(12f.dp, 6f.dp, 0f)
-        })
-
         lineChart.axisLeft.textColor = textColor
-        lineChart.axisLeft.axisMinimum = -16f
-        lineChart.axisLeft.axisMaximum = 16f
+        lineChart.axisLeft.axisMinimum = -20f
+        lineChart.axisLeft.axisMaximum = 20f
         lineChart.axisLeft.labelCount = 7
         lineChart.axisLeft.valueFormatter = object : ValueFormatter() {
             override fun getFormattedValue(value: Float): String {
@@ -133,16 +122,18 @@ class FrequencyResponseDialogFragment : DialogFragment(), Injectable {
         lineChart.axisRight.isEnabled = false
 
         lineChart.xAxis.textColor = textColor
-        lineChart.xAxis.axisMinimum = 0f
-        lineChart.xAxis.axisMaximum = 21050f
+        lineChart.xAxis.axisMinimum = 1f
+        lineChart.xAxis.axisMaximum = log10(20500f)
         lineChart.xAxis.position = XAxis.XAxisPosition.BOTTOM
         lineChart.xAxis.setDrawAxisLine(false)
+        lineChart.xAxis.setLabelCount(8, true)
         lineChart.xAxis.valueFormatter = object : ValueFormatter() {
             override fun getFormattedValue(value: Float): String {
-                return if (value >= 1000) {
-                    "%.0f".format(value / 1000) + " kHz"
+                val unscaled = 10f.pow(value)
+                return if (unscaled >= 1000) {
+                    "%.0f".format(unscaled / 1000) + " kHz"
                 } else {
-                    "%.0f".format(value) + " Hz"
+                    "%.0f".format(unscaled) + " Hz"
                 }
             }
         }
@@ -174,6 +165,13 @@ class FrequencyResponseDialogFragment : DialogFragment(), Injectable {
 
             src.forEachIndexed { index, value ->
                 var newValue = value
+
+                // Adjust overall gain to prevent clipping (create headroom). Used when max gain is above 3dB
+                val maxBandGain = max(0, (preset.bands.map { band -> band.gain }.max() ?: 0))
+                if (maxBandGain > 3) {
+                    newValue = (newValue * ((-maxBandGain).fromDb())).toFloat()
+                }
+
                 for (band in audioProcessor.bandProcessors) {
                     newValue = band.processSample(newValue, 0)
                 }

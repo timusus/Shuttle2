@@ -113,7 +113,6 @@ class VerticalSeekbar @JvmOverloads constructor(
     }
 
 
-
     /**
      * Rounds i to nearest multiple of n
      */
@@ -145,7 +144,7 @@ class VerticalSeekbar @JvmOverloads constructor(
         canvas.drawRoundRect(rect, trackWidth / 2, trackWidth / 2, trackPaint)
 
         // Progress
-        rect.set((width / 2f - trackWidth / 2f), height * progress, width / 2f + trackWidth / 2f, height.toFloat() - thumbRadius)
+        rect.set((width / 2f - trackWidth / 2f), height * progress, width / 2f + trackWidth / 2f, height / 2f)
         canvas.drawRoundRect(rect, trackWidth / 2, trackWidth / 2, progressPaint)
 
         // Thumb
