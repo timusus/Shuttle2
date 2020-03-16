@@ -1,5 +1,10 @@
 {
   "commits": [
-    "Crash fixes"
+    "Keep scroll position when returning to artist/album list",
+    "Added 'go to album/artist' from now playing screen",
+    "Use log scale for equalizer frequency response graph",
+    "Equalizer seek bars now display as seeking from 0, rather than from -12dB",
+    "Frequency response graph accurately displays gain (including compensation used to prevent clipping)",
+    "Fixed an issue where player didn't move to 'paused' state after finishing playback"
   ]
 }
