@@ -108,8 +108,8 @@ android {
         implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
 
         // AndroidX Navigation
-        implementation("androidx.navigation:navigation-fragment-ktx:2.3.0-alpha02")
-        implementation("androidx.navigation:navigation-ui-ktx:2.3.0-alpha02")
+        implementation("androidx.navigation:navigation-fragment-ktx:2.3.0-alpha03")
+        implementation("androidx.navigation:navigation-ui-ktx:2.3.0-alpha03")
 
         // RxJava
         implementation("io.reactivex.rxjava2:rxjava:2.2.18")
