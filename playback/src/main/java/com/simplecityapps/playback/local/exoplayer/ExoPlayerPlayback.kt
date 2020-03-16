@@ -33,7 +33,6 @@ class ExoPlayerPlayback(
     private var playWhenReady = false
 
     private val trackChangeListener by lazy {
-        Timber.e("Creating TrackChangeEventListener!!")
         object : TrackChangeEventListener(player) {
             override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
                 val state = playbackState.toState()
@@ -45,9 +44,10 @@ class ExoPlayerPlayback(
                 }
 
                 if (state == PlaybackState.Ended) {
+                    player.playWhenReady = false
+                    this@ExoPlayerPlayback.playWhenReady = false
                     callback?.onPlayStateChanged(isPlaying = false)
                     callback?.onPlaybackComplete(trackWentToNext = false)
-                    this@ExoPlayerPlayback.playWhenReady = false
                 }
             }
 
@@ -91,12 +91,10 @@ class ExoPlayerPlayback(
         player.addListener(trackChangeListener)
         player.seekTo(seekPosition.toLong())
 
-        Timber.v("MediaSource: Clearing")
         concatenatingMediaSource.clear()
-        Timber.v("MediaSource: Adding song")
         concatenatingMediaSource.addMediaSource(mediaSourceFactory.createMediaSource(Uri.parse(current.path)))
         Timber.v("load() calling updateWindowIndex()")
-        trackChangeListener?.updateWindowIndex()
+        trackChangeListener.updateWindowIndex()
 
         player.prepare(concatenatingMediaSource)
 
@@ -112,21 +110,17 @@ class ExoPlayerPlayback(
             if (concatenatingMediaSource.size > 1) {
                 if (currentWindowIndex == 0) {
                     // We're at the first track. Remove the second
-                    Timber.v("MediaSource: We're at track 0. Remove track 1")
                     concatenatingMediaSource.removeMediaSource(1)
                 } else if (currentWindowIndex == 1) {
                     // We're at the second track. Move the first
-                    Timber.v("MediaSource: We're at track 1. Remove track at 0")
                     concatenatingMediaSource.removeMediaSource(0)
                 }
             }
-            Timber.v("MediaSource: adding song")
             concatenatingMediaSource.addMediaSource(mediaSourceFactory.createMediaSource(Uri.parse(song.path)))
         }
 
         // Let the track change listener know that the window index has changed, so we don't get a false 'track changed' call
-        Timber.v("LoadNext() calling updateWindowIndex()")
-        trackChangeListener?.updateWindowIndex()
+        trackChangeListener.updateWindowIndex()
     }
 
     override fun play() {
@@ -191,10 +185,7 @@ class ExoPlayerPlayback(
         }
 
         override fun onPositionDiscontinuity(reason: Int) {
-            val discontinuityReason = reason.toDiscontinuityReason()
-            Timber.v("onPositionDiscontinuity(reason: $discontinuityReason, currentWindowIndex: $currentWindowIndex, player.currentWindowIndex: ${player.currentWindowIndex})")
-
-            if (currentWindowIndex != player.currentWindowIndex && discontinuityReason == DiscontinuityReason.PeriodTransition) {
+            if (currentWindowIndex != player.currentWindowIndex && reason.toDiscontinuityReason() == DiscontinuityReason.PeriodTransition) {
                 onTrackChanged()
             }
         }
