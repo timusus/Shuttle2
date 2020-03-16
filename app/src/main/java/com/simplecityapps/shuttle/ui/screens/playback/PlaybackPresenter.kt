@@ -1,7 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.playback
 
-import com.simplecityapps.mediaprovider.repository.PlaylistQuery
-import com.simplecityapps.mediaprovider.repository.PlaylistRepository
+import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.PlaybackWatcherCallback
@@ -25,7 +24,9 @@ class PlaybackPresenter @Inject constructor(
     private val playbackWatcher: PlaybackWatcher,
     private val queueManager: QueueManager,
     private val queueWatcher: QueueWatcher,
-    private val playlistRepository: PlaylistRepository
+    private val playlistRepository: PlaylistRepository,
+    private val albumRepository: AlbumRepository,
+    private val albumArtistRepository: AlbumArtistRepository
 ) : BasePresenter<PlaybackContract.View>(),
     PlaybackContract.Presenter,
     QueueChangeCallback,
@@ -151,6 +152,43 @@ class PlaybackPresenter @Inject constructor(
                         Timber.e(error, "Failed to add to favorites")
                     })
             )
+        }
+    }
+
+    override fun goToAlbum() {
+        queueManager.getCurrentItem()?.song?.let { song ->
+            albumRepository.getAlbums(AlbumQuery.AlbumId(song.albumId)).first(emptyList())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onSuccess = { albums ->
+                        albums.firstOrNull()?.let { album ->
+                            view?.goToAlbum(album)
+                        } ?: Timber.e("Failed to retrieve album for song: ${song.name}")
+                    },
+                    onError = {
+                        Timber.e(it, "Failed to retrieve album for song: ${song.name}")
+                    }
+                )
+        }
+
+    }
+
+    override fun goToArtist() {
+        queueManager.getCurrentItem()?.song?.let { song ->
+            albumArtistRepository.getAlbumArtists(AlbumArtistQuery.AlbumArtistId(song.albumArtistId)).first(emptyList())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onSuccess = { artists ->
+                        artists.firstOrNull()?.let { artist ->
+                            view?.goToArtist(artist)
+                        } ?: Timber.e("Failed to retrieve album artist for song: ${song.name}")
+                    },
+                    onError = {
+                        Timber.e(it, "Failed to retrieve album artist for song: ${song.name}")
+                    }
+                )
         }
     }
 

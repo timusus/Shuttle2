@@ -12,6 +12,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.PagerSnapHelper
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
@@ -19,6 +20,8 @@ import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.google.android.gms.cast.framework.CastButtonFactory
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
+import com.simplecityapps.mediaprovider.model.Album
+import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
@@ -34,6 +37,10 @@ import com.simplecityapps.shuttle.ui.common.view.FavoriteButton
 import com.simplecityapps.shuttle.ui.common.view.RepeatButton
 import com.simplecityapps.shuttle.ui.common.view.SeekButton
 import com.simplecityapps.shuttle.ui.common.view.ShuffleButton
+import com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
+import com.simplecityapps.shuttle.ui.common.view.multisheet.findParentMultiSheetView
+import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragmentArgs
+import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.sleeptimer.SleepTimerDialogFragment
 import javax.inject.Inject
 
@@ -60,7 +67,8 @@ class PlaybackFragment :
     private var seekForwardButton: SeekButton by autoCleared()
     private var seekBar: SeekBar by autoCleared()
     private var titleTextView: TextView by autoCleared()
-    private var subtitleTextView: TextView by autoCleared()
+    private var artistTextView: TextView by autoCleared()
+    private var albumTextView: TextView by autoCleared()
     private var currentTimeTextView: TextView by autoCleared()
     private var durationTextView: TextView by autoCleared()
     private var toolbar: Toolbar by autoCleared()
@@ -89,7 +97,8 @@ class PlaybackFragment :
         seekForwardButton = view.findViewById(R.id.seekForwardButton)
         seekBar = view.findViewById(R.id.seekBar)
         titleTextView = view.findViewById(R.id.titleTextView)
-        subtitleTextView = view.findViewById(R.id.subtitleTextView)
+        artistTextView = view.findViewById(R.id.artistTextView)
+        albumTextView = view.findViewById(R.id.albumTextView)
         currentTimeTextView = view.findViewById(R.id.currentTimeTextView)
         durationTextView = view.findViewById(R.id.durationTextView)
 
@@ -112,6 +121,12 @@ class PlaybackFragment :
             }
         }
         seekBar.setOnSeekBarChangeListener(this)
+        artistTextView.setOnClickListener {
+            presenter.goToArtist()
+        }
+        albumTextView.setOnClickListener {
+            presenter.goToAlbum()
+        }
 
         recyclerView.adapter = adapter
         recyclerView.setRecyclerListener(RecyclerListener())
@@ -175,7 +190,8 @@ class PlaybackFragment :
     override fun setCurrentSong(song: Song?) {
         song?.let {
             titleTextView.text = song.name
-            subtitleTextView.text = "${song.albumArtistName} • ${song.albumName}"
+            artistTextView.text = song.albumArtistName
+            albumTextView.text = song.albumName
 
             when (song.type) {
                 Song.Type.Audiobook, Song.Type.Podcast -> {
@@ -228,6 +244,26 @@ class PlaybackFragment :
 
     override fun setIsFavorite(isFavorite: Boolean) {
         favoriteButton.isChecked = isFavorite
+    }
+
+    override fun goToAlbum(album: Album) {
+        if (findNavController().currentDestination?.id != R.id.libraryFragment) {
+            findNavController().navigate(R.id.libraryFragment)
+        }
+        findNavController().navigate(R.id.albumDetailFragment, AlbumDetailFragmentArgs(album, animateTransition = false).toBundle())
+        view?.postDelayed({
+            view?.findParentMultiSheetView()?.goToSheet(MultiSheetView.Sheet.NONE)
+        }, 200)
+    }
+
+    override fun goToArtist(artist: AlbumArtist) {
+        if (findNavController().currentDestination?.id != R.id.libraryFragment) {
+            findNavController().navigate(R.id.libraryFragment)
+        }
+        findNavController().navigate(R.id.albumArtistDetailFragment, AlbumArtistDetailFragmentArgs(artist, animateTransition = false).toBundle())
+        view?.postDelayed({
+            view?.findParentMultiSheetView()?.goToSheet(MultiSheetView.Sheet.NONE)
+        }, 200)
     }
 
 

@@ -80,8 +80,8 @@ class AlbumArtistDetailFragment :
 
     private var heroImage: ImageView by autoCleared()
 
-    private var isShowingHeroImage = false
-
+    private var showHeroView = false
+    private var animateTransition : Boolean = true
 
     // Lifecycle
 
@@ -91,6 +91,7 @@ class AlbumArtistDetailFragment :
         AndroidSupportInjection.inject(this)
 
         albumArtist = AlbumArtistDetailFragmentArgs.fromBundle(requireArguments()).albumArtist
+        animateTransition = AlbumArtistDetailFragmentArgs.fromBundle(requireArguments()).animateTransition
         presenter = presenterFactory.create(albumArtist)
     }
 
@@ -103,9 +104,8 @@ class AlbumArtistDetailFragment :
         (sharedElementEnterTransition as Transition).duration = 200L
         (sharedElementEnterTransition as Transition).addListener(object : TransitionListenerAdapter() {
             override fun onTransitionEnd(transition: Transition) {
-                super.onTransitionEnd(transition)
                 animationHelper?.showHeroView()
-                isShowingHeroImage = true
+                showHeroView = true
                 transition.removeListener(this)
             }
         })
@@ -169,7 +169,7 @@ class AlbumArtistDetailFragment :
 
         heroImage = view.findViewById(R.id.heroImage)
         imageLoader.loadArtwork(heroImage, albumArtist, ArtworkImageLoader.Options.Priority(ArtworkImageLoader.Options.Priority.Priority.Max), completionHandler = null)
-        if (isShowingHeroImage) {
+        if (showHeroView || !animateTransition) {
             heroImage.isVisible = true
             dummyImage.isVisible = false
         }

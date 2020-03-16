@@ -1,5 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.playback
 
+import com.simplecityapps.mediaprovider.model.Album
+import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
@@ -16,6 +18,8 @@ interface PlaybackContract {
         fun setProgress(position: Int, duration: Int)
         fun setIsFavorite(isFavorite: Boolean)
         fun presentSleepTimer()
+        fun goToAlbum(album: Album)
+        fun goToArtist(artist: AlbumArtist)
     }
 
     interface Presenter {
@@ -30,5 +34,7 @@ interface PlaybackContract {
         fun seek(fraction: Float)
         fun sleepTimerClicked()
         fun setFavorite(isFavorite: Boolean)
+        fun goToAlbum()
+        fun goToArtist()
     }
 }

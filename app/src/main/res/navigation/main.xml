@@ -56,6 +56,10 @@
         <argument
             android:name="album"
             app:argType="com.simplecityapps.mediaprovider.model.Album" />
+        <argument
+            android:name="animateTransition"
+            app:argType="boolean"
+            android:defaultValue="true" />
     </fragment>
     <fragment
         android:id="@+id/albumArtistDetailFragment"
@@ -68,6 +72,10 @@
         <action
             android:id="@+id/action_albumArtistDetailFragment_to_albumDetailFragment"
             app:destination="@id/albumDetailFragment" />
+        <argument
+            android:name="animateTransition"
+            app:argType="boolean"
+            android:defaultValue="true" />
     </fragment>
     <fragment
         android:id="@+id/libraryFragment"

@@ -23,11 +23,11 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="8dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
         android:clipToPadding="false"
         android:nestedScrollingEnabled="false"
         android:orientation="horizontal"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         app:layout_constraintBottom_toTopOf="@id/titleTextView"
         app:layout_constraintTop_toBottomOf="@id/toolbar"
@@ -42,7 +42,7 @@
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
         android:textSize="19sp"
-        app:layout_constraintBottom_toTopOf="@+id/subtitleTextView"
+        app:layout_constraintBottom_toTopOf="@+id/separatorTextView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
@@ -52,21 +52,67 @@
         tools:text="Lateralus" />
 
     <TextView
-        android:id="@+id/subtitleTextView"
+        android:id="@+id/artistTextView"
+        style="@style/TextSubtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:paddingStart="8dp"
+        android:paddingTop="4dp"
+        android:paddingEnd="8dp"
+        android:paddingBottom="4dp"
+        android:textSize="16sp"
+        app:layout_constrainedWidth="true"
+        app:layout_constraintBottom_toBottomOf="@id/separatorTextView"
+        app:layout_constraintEnd_toStartOf="@id/separatorTextView"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@id/separatorTextView"
+        app:layout_constraintWidth_max="wrap"
+        app:layout_constraintWidth_percent="0.55"
+        tools:text="Tool" />
+
+    <TextView
+        android:id="@+id/separatorTextView"
         style="@style/TextSubtitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
         android:gravity="center"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
+        android:text="•"
         android:textSize="16sp"
         app:layout_constraintBottom_toTopOf="@+id/seekBar"
+        app:layout_constraintEnd_toStartOf="@id/albumTextView"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        app:layout_constraintStart_toEndOf="@id/artistTextView"
+        app:layout_constraintTop_toBottomOf="@+id/titleTextView" />
+
+    <TextView
+        android:id="@+id/albumTextView"
+        style="@style/TextSubtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:paddingStart="8dp"
+        android:paddingTop="4dp"
+        android:paddingEnd="8dp"
+        android:paddingBottom="4dp"
+        android:textSize="16sp"
+        app:layout_constrainedWidth="true"
+        app:layout_constraintBottom_toBottomOf="@id/separatorTextView"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/titleTextView"
-        tools:text="Tool | Lateralus" />
+        app:layout_constraintHorizontal_chainStyle="packed"
+        app:layout_constraintStart_toEndOf="@id/separatorTextView"
+        app:layout_constraintTop_toTopOf="@id/separatorTextView"
+        app:layout_constraintWidth_max="wrap"
+        app:layout_constraintWidth_percent="0.55"
+        tools:text="Lateralus" />
 
     <TextView
         android:id="@+id/currentTimeTextView"
@@ -91,7 +137,7 @@
         app:layout_constraintEnd_toStartOf="@+id/durationTextView"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@id/currentTimeTextView"
-        app:layout_constraintTop_toBottomOf="@+id/subtitleTextView" />
+        app:layout_constraintTop_toBottomOf="@+id/separatorTextView" />
 
     <TextView
         android:id="@+id/durationTextView"
