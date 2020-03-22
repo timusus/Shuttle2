@@ -90,7 +90,7 @@ class MediaProviderSelectionFragment :
                 when (checkedId) {
                     R.id.basic -> {
                         playbackPreferenceManager.songProvider = PlaybackPreferenceManager.SongProvider.MediaStore
-                        parent.uriMimeTypePairs = null
+                        parent.directories = null
                         pages.remove(OnboardingPage.MusicDirectories)
                         parent.setPages(pages)
                     }

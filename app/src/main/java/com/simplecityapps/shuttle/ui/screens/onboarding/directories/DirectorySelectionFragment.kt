@@ -16,7 +16,6 @@ import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.ChangeBounds
 import androidx.transition.TransitionManager
-import com.simplecityappds.saf.SafDirectoryHelper
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.shuttle.R
@@ -123,15 +122,10 @@ class DirectorySelectionFragment : Fragment(),
 
     override fun setData(data: List<MusicDirectoriesContract.View.Data>) {
         getParent()?.let { parent ->
-            parent.uriMimeTypePairs = data
+            parent.directories = data
                 .filter { it.traversalComplete }
-                .flatMap {
-                    it.tree.getLeaves()
-                        .map { documentNode ->
-                            documentNode as SafDirectoryHelper.DocumentNode
-                            Pair(documentNode.uri, documentNode.mimeType)
-                        }
-                }
+                .map { it.tree }
+
         } ?: Timber.e("Failed to set parent uri data - getParent() returned null")
 
         adapter.setData(data.map { DirectoryBinder(it, directoryBinderListener) }.toMutableList<ViewBinder>()) {

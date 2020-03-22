@@ -33,8 +33,8 @@ class RepositoryModule {
 
     @Provides
     @AppScope
-    fun provideMediaImporter(songRepository: SongRepository): MediaImporter {
-        return MediaImporter(songRepository)
+    fun provideMediaImporter(context: Context, songRepository: SongRepository): MediaImporter {
+        return MediaImporter(context, songRepository)
     }
 
     @Provides

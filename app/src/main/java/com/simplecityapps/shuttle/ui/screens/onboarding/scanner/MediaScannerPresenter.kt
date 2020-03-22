@@ -1,7 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.onboarding.scanner
 
 import android.content.Context
-import android.net.Uri
+import com.simplecityappds.saf.SafDirectoryHelper
 import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStoreSongProvider
 import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibSongProvider
 import com.simplecityapps.mediaprovider.MediaImporter
@@ -14,7 +14,7 @@ interface ScannerContract {
 
     sealed class ScanType {
         object MediaStore : ScanType()
-        class Taglib(val uriMimeTypePairs: List<Pair<Uri, String>>) : ScanType()
+        class Taglib(val directories: List<SafDirectoryHelper.DocumentNodeTree>) : ScanType()
     }
 
     interface View {
@@ -49,7 +49,7 @@ class ScannerPresenter @Inject constructor(
         mediaImporter.startScan(
             when (scanType) {
                 is ScannerContract.ScanType.MediaStore -> MediaStoreSongProvider(context)
-                is ScannerContract.ScanType.Taglib -> TaglibSongProvider(context, fileScanner, scanType.uriMimeTypePairs)
+                is ScannerContract.ScanType.Taglib -> TaglibSongProvider(context, fileScanner, scanType.directories)
             }
         )
     }

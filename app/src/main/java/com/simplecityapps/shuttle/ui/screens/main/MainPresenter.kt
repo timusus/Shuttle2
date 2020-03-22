@@ -74,20 +74,17 @@ class MainPresenter @Inject constructor(
             PlaybackPreferenceManager.SongProvider.TagLib -> {
                 addDisposable(
                     Single.fromCallable {
-                        context.contentResolver?.persistedUriPermissions
-                            ?.filter { uriPermission -> uriPermission.isReadPermission }
-                            ?.flatMap { uriPermission ->
-                                SafDirectoryHelper.buildFolderNodeTree(context.contentResolver, uriPermission.uri)?.getLeaves().orEmpty().map { node ->
-                                    node as SafDirectoryHelper.DocumentNode
-                                }
-
-                            }.orEmpty()
-                    }
+                            context.contentResolver?.persistedUriPermissions
+                                ?.filter { uriPermission -> uriPermission.isReadPermission }
+                                ?.mapNotNull { uriPermission ->
+                                    SafDirectoryHelper.buildFolderNodeTree(context.contentResolver, uriPermission.uri)
+                                }.orEmpty()
+                        }
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribeBy(
                             onSuccess = { nodes ->
-                                mediaImporter.startScan(TaglibSongProvider(context, fileScanner, nodes.map { Pair(it.uri, it.mimeType) }))
+                                mediaImporter.startScan(TaglibSongProvider(context, fileScanner, nodes))
                             },
                             onError = { throwable -> Timber.e(throwable, "Failed to scan library") }
                         )

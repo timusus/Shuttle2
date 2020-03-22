@@ -3,7 +3,6 @@ package com.simplecityapps.shuttle.ui.screens.onboarding
 import android.Manifest
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Bundle
 import android.preference.PreferenceManager
 import android.view.LayoutInflater
@@ -17,6 +16,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
+import com.simplecityappds.saf.SafDirectoryHelper
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
@@ -48,7 +48,7 @@ interface OnboardingParent {
     fun getPages(): List<OnboardingPage>
     fun setPages(pages: List<OnboardingPage>)
     fun exit()
-    var uriMimeTypePairs: List<Pair<Uri, String>>?
+    var directories: List<SafDirectoryHelper.DocumentNodeTree>?
 }
 
 interface OnboardingChild {
@@ -155,7 +155,7 @@ class OnboardingParentFragment : Fragment(),
 
     // PageCompletionListener Implementation
 
-    override var uriMimeTypePairs: List<Pair<Uri, String>>? = null
+    override var directories: List<SafDirectoryHelper.DocumentNodeTree>? = null
 
     override fun getPages(): List<OnboardingPage> {
         return adapter.data

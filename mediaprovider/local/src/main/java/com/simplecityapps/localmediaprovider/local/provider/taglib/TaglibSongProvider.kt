@@ -1,7 +1,7 @@
 package com.simplecityapps.localmediaprovider.local.provider.taglib
 
 import android.content.Context
-import android.net.Uri
+import com.simplecityappds.saf.SafDirectoryHelper
 import com.simplecityapps.localmediaprovider.local.provider.toSong
 import com.simplecityapps.mediaprovider.SongProvider
 import com.simplecityapps.mediaprovider.model.Song
@@ -11,24 +11,32 @@ import io.reactivex.Observable
 class TaglibSongProvider(
     private val context: Context,
     private val fileScanner: FileScanner,
-    private val uriMimeTypePairs: List<Pair<Uri, String>>
+    private val directories: List<SafDirectoryHelper.DocumentNodeTree>
 ) : SongProvider {
 
     override fun findSongs(): Observable<Pair<Song, Float>> {
-
         var progress = 0
 
         return Observable.create { emitter ->
-            uriMimeTypePairs.forEach { pair ->
-                if (emitter.isDisposed) {
-                    return@forEach
-                }
+            directories.flatMap { directory ->
+                directory.getLeaves()
+                    .map { documentNode ->
+                        documentNode as SafDirectoryHelper.DocumentNode
+                        Pair(documentNode.uri, documentNode.mimeType)
+                    }
+            }.apply {
+                forEach { pair ->
+                    if (emitter.isDisposed) {
+                        return@forEach
+                    }
 
-                fileScanner.getAudioFile(context, pair.first)?.toSong(pair.second)?.let { songData ->
-                    emitter.onNext(Pair(songData, progress / this.uriMimeTypePairs.size.toFloat()))
+                    fileScanner.getAudioFile(context, pair.first)?.toSong(pair.second)?.let { songData ->
+                        emitter.onNext(Pair(songData, progress / size.toFloat()))
+                    }
+                    progress++
                 }
-                progress++
             }
+
             emitter.onComplete()
         }
     }
@@ -41,7 +49,7 @@ class TaglibSongProvider(
 
         if (context != other.context) return false
         if (fileScanner != other.fileScanner) return false
-        if (uriMimeTypePairs != other.uriMimeTypePairs) return false
+        if (directories != other.directories) return false
 
         return true
     }
@@ -49,10 +57,9 @@ class TaglibSongProvider(
     override fun hashCode(): Int {
         var result = context.hashCode()
         result = 31 * result + fileScanner.hashCode()
-        result = 31 * result + uriMimeTypePairs.hashCode()
+        result = 31 * result + directories.hashCode()
         return result
     }
-
 
     companion object {
         const val TAG = "LocalMediaProvider"

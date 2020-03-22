@@ -75,7 +75,6 @@ class LocalSongRepository(
         )
             .flatMapCompletable { pair ->
                 updateDatabase(pair.first, pair.second)
-                Timber.v("Database populated in ${intervalTimer.getInterval()}ms. Total time to scan & populate: ${intervalTimer.getTotal()}ms")
                 Completable.complete()
                     .subscribeOn(Schedulers.io())
             }

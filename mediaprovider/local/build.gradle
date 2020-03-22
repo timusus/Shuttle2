@@ -38,6 +38,9 @@ dependencies {
     // TagLib
     implementation project(path: ':taglib:lib')
 
+    // Storage Access Framework
+    implementation project(path: ':saf')
+
     // Kotlin Standard Library
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.3.70"
 
