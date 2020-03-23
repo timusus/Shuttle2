@@ -52,6 +52,10 @@
         android:id="@+id/settingsFragment"
         android:name="com.simplecityapps.shuttle.ui.screens.settings.SettingsFragment"
         android:label="SettingsFragment"
-        tools:layout="@layout/fragment_settings" />
+        tools:layout="@layout/fragment_settings" >
+        <action
+            android:id="@+id/action_settingsFragment_to_onboardingFragment"
+            app:destination="@id/onboardingFragment" />
+    </fragment>
 
 </navigation>

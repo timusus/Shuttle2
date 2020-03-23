@@ -18,6 +18,7 @@ import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.screens.changelog.ChangelogDialogFragment
+import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParentFragmentArgs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -57,11 +58,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
         }
 
         preferenceScreen.findPreference<Preference>("pref_media_provider")?.setOnPreferenceClickListener {
-//            fragmentManager
-//                ?.beginTransaction()
-//                ?.replace(R.id.overlayContainer, OnboardingParentFragment.newInstance(OnboardingParentFragmentArgs(false)), OnboardingParentFragment.TAG)
-//                ?.addToBackStack(null)
-//                ?.commit()
+            findNavController().navigate(R.id.onboardingFragment, OnboardingParentFragmentArgs(false).toBundle())
             true
         }
 
