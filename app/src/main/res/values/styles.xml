@@ -67,7 +67,7 @@
     <!-- Image Buttons-->
 
     <style name="Widget.Shuttle.ImageButton" parent="Widget.AppCompat.ImageButton">
-        <item name="android:tint">?attr/colorControlNormal</item>
+        <item name="android:tint">?android:textColorPrimary</item>
     </style>
 
 

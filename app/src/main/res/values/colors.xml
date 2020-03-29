@@ -11,19 +11,19 @@
     <color name="colorPrimaryTransparent">#200492ea</color>
 
     <color name="history_green_primary">#f1f8f7</color>
-    <color name="history_green_primary_dark">#1474bdb0</color>
+    <color name="history_green_primary_dark">#1F74BDB0</color>
     <color name="history_green_tint">#74bdb0</color>
 
     <color name="recently_added_yellow_primary">#fff8e6</color>
-    <color name="recently_added_yellow_primary_dark">#14fbbc05</color>
+    <color name="recently_added_yellow_primary_dark">#1FFBBC05</color>
     <color name="recently_added_yellow_tint">#fbbc05</color>
 
     <color name="favorite_red_primary">#fdecea</color>
-    <color name="favorite_red_primary_dark">#14ea4335</color>
+    <color name="favorite_red_primary_dark">#1FEA4335</color>
     <color name="favorite_red_tint">#ea4335</color>
 
     <color name="shuffle_blue_primary">#e5f4fd</color>
-    <color name="shuffle_blue_primary_dark">#140492ea</color>
+    <color name="shuffle_blue_primary_dark">#1F0492EA</color>
     <color name="shuffle_blue_tint">#0492ea</color>
 
     <color name="bg_window_dark">#000000</color>

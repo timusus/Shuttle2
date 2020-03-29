@@ -15,7 +15,7 @@
                 android:fillColor="#000000"
                 android:fillAlpha="0"
                 android:strokeColor="#000000"
-                android:strokeWidth="1"/>
+                android:strokeWidth="2"/>
         </vector>
     </aapt:attr>
     <target android:name="path_1">

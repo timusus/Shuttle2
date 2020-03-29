@@ -42,7 +42,7 @@ class SeekButton @JvmOverloads constructor(
             field = value
 
             seekDrawable = ContextCompat.getDrawable(
-                context, if (forward) com.simplecityapps.shuttle.R.drawable.ic_seek_forward_black_24dp else com.simplecityapps.shuttle.R.drawable.ic_seek_backward_black_24dp
+                context, if (forward) R.drawable.ic_seek_forward_black_24dp else R.drawable.ic_seek_backward_black_24dp
             )!!.mutate()
         }
 
@@ -67,10 +67,10 @@ class SeekButton @JvmOverloads constructor(
         }
 
         TypedValue().apply {
-            context.theme.resolveAttribute(R.attr.colorControlNormal, this, true)
-            val colorControlNormal = ContextCompat.getColor(context, resourceId)
-            textColor = colorControlNormal
-            seekDrawable?.setTint(colorControlNormal)
+            context.theme.resolveAttribute(android.R.attr.textColorPrimary, this, true)
+            val color = ContextCompat.getColor(context, resourceId)
+            textColor = color
+            seekDrawable?.setTint(color)
         }
 
         if (!isInEditMode) {
