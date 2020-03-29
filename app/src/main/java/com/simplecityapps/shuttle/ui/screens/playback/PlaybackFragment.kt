@@ -280,11 +280,4 @@ class PlaybackFragment :
     override fun onStopTrackingTouch(seekBar: SeekBar) {
         presenter.seek(seekBar.progress / 1000f)
     }
-
-
-    // Static
-
-    companion object {
-        fun newInstance() = PlaybackFragment()
-    }
 }
