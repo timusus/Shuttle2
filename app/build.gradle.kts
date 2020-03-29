@@ -86,11 +86,11 @@ android {
         implementation(project(":saf"))
 
         // Kotlin Standard Library
-        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.3.61")
+        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.70")
 
         // Kotlin Extensions
         implementation("androidx.core:core-ktx:1.2.0")
-        implementation("androidx.fragment:fragment-ktx:1.2.2")
+        implementation("androidx.fragment:fragment-ktx:1.2.3")
 
         // RecyclerView FastScroll
         implementation("com.github.timusus:RecyclerView-FastScroll:dev-SNAPSHOT")
@@ -108,26 +108,26 @@ android {
         implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
 
         // AndroidX Navigation
-        implementation("androidx.navigation:navigation-fragment-ktx:2.3.0-alpha03")
-        implementation("androidx.navigation:navigation-ui-ktx:2.3.0-alpha03")
+        implementation("androidx.navigation:navigation-fragment-ktx:2.3.0-alpha04")
+        implementation("androidx.navigation:navigation-ui-ktx:2.3.0-alpha04")
 
         // RxJava
-        implementation("io.reactivex.rxjava2:rxjava:2.2.18")
+        implementation("io.reactivex.rxjava2:rxjava:2.2.19")
         implementation("io.reactivex.rxjava2:rxandroid:2.1.1")
 
         // RxKotlin
         implementation("io.reactivex.rxjava2:rxkotlin:2.4.0")
 
         // RxDogTag
-        implementation("com.uber.rxdogtag:rxdogtag:0.3.0")
+        implementation("com.uber.rxdogtag:rxdogtag:1.0.0")
 
         // Dagger core
-        implementation("com.google.dagger:dagger-android:2.26")
-        kapt("com.google.dagger:dagger-compiler:2.26")
+        implementation("com.google.dagger:dagger-android:2.27")
+        kapt("com.google.dagger:dagger-compiler:2.27")
 
         // Dagger Android
-        implementation("com.google.dagger:dagger-android-support:2.26")
-        kapt("com.google.dagger:dagger-android-processor:2.26")
+        implementation("com.google.dagger:dagger-android-support:2.27")
+        kapt("com.google.dagger:dagger-android-processor:2.27")
 
         // AssistedInject
         compileOnly("com.squareup.inject:assisted-inject-annotations-dagger2:0.5.2")
@@ -137,7 +137,7 @@ android {
         implementation("com.jakewharton.timber:timber:4.7.1")
 
         // OKHttp
-        implementation("com.squareup.okhttp3:okhttp:4.4.0")
+        implementation("com.squareup.okhttp3:okhttp:4.4.1")
 
         // Firebase
         implementation("com.google.firebase:firebase-core:17.2.3")
@@ -173,7 +173,6 @@ android {
         implementation("com.github.bumptech.glide:okhttp3-integration:4.11.0")
 
         // Moshi
-        implementation("com.squareup.moshi:moshi-kotlin:1.9.2")
         kapt("com.squareup.moshi:moshi-kotlin-codegen:1.9.2")
 
         // AndroidX Lifecycle
