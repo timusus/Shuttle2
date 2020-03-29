@@ -78,7 +78,7 @@ class PlaybackPresenter @Inject constructor(
 
     private fun updateProgress() {
         queueManager.getCurrentItem()?.song?.let { currentSong ->
-            view?.setProgress(playbackManager.getPosition() ?: 0, playbackManager.getDuration() ?: currentSong.duration)
+            onProgressChanged(playbackManager.getProgress() ?: 0, playbackManager.getDuration() ?: currentSong.duration)
         }
     }
 
@@ -111,14 +111,14 @@ class PlaybackPresenter @Inject constructor(
 
     override fun seekForward(seconds: Int) {
         Timber.v("seekForward() seconds: $seconds")
-        playbackManager.getPosition()?.let { position ->
+        playbackManager.getProgress()?.let { position ->
             playbackManager.seekTo(position + seconds * 1000)
         }
     }
 
     override fun seekBackward(seconds: Int) {
         Timber.v("seekBackward() seconds: $seconds")
-        playbackManager.getPosition()?.let { position ->
+        playbackManager.getProgress()?.let { position ->
             playbackManager.seekTo(position - seconds * 1000)
         }
     }
@@ -202,8 +202,8 @@ class PlaybackPresenter @Inject constructor(
 
     // PlaybackManager.ProgressCallback
 
-    override fun onProgressChanged(position: Int, total: Int, fromUser: Boolean) {
-        view?.setProgress(position, total)
+    override fun onProgressChanged(position: Int, duration: Int, fromUser: Boolean) {
+        view?.setProgress(position, duration)
     }
 
 
@@ -231,14 +231,11 @@ class PlaybackPresenter @Inject constructor(
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeBy(
-                    onSuccess = { isFavorite ->
-                        view?.setIsFavorite(isFavorite)
-                    },
+                    onSuccess = { isFavorite -> view?.setIsFavorite(isFavorite) },
                     onError = { error -> Timber.e(error, "Failed to determine if song is favorite") }
                 )
         }
     }
-
 
     override fun onShuffleChanged() {
         view?.setShuffleMode(queueManager.getShuffleMode())

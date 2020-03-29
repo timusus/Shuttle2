@@ -28,7 +28,7 @@ interface Playback {
     /**
      * @return the current seek position, in milliseconds
      */
-    fun getPosition(): Int?
+    fun getProgress(): Int?
 
     /**
      * @return the track duration, in milliseconds

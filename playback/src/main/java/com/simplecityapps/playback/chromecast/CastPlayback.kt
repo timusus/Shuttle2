@@ -134,7 +134,7 @@ class CastPlayback(
         }
     }
 
-    override fun getPosition(): Int? {
+    override fun getProgress(): Int? {
         if (castSession.remoteMediaClient?.approximateStreamPosition == 0L) {
             return if (currentPosition <= getDuration() ?: 0) currentPosition else 0
         }
@@ -152,7 +152,7 @@ class CastPlayback(
     override fun updateLastKnownStreamPosition() {
         super.updateLastKnownStreamPosition()
 
-        getPosition()?.let { position ->
+        getProgress()?.let { position ->
             currentPosition = position
         }
     }

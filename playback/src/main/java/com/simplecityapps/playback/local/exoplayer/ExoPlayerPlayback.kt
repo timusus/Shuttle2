@@ -146,7 +146,7 @@ class ExoPlayerPlayback(
         player.seekTo(position.toLong())
     }
 
-    override fun getPosition(): Int? {
+    override fun getProgress(): Int? {
         return player.contentPosition.toInt()
     }
 

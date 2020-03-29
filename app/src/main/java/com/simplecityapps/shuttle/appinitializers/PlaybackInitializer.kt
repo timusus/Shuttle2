@@ -144,10 +144,10 @@ class PlaybackInitializer @Inject constructor(
         if (isPlaying) {
             ContextCompat.startForegroundService(context, Intent(context, PlaybackService::class.java))
         } else {
-            playbackPreferenceManager.playbackPosition = playbackManager.getPosition()
+            playbackPreferenceManager.playbackPosition = playbackManager.getProgress()
 
             queueManager.getCurrentItem()?.song?.let { song ->
-                song.playbackPosition = playbackManager.getPosition() ?: 0
+                song.playbackPosition = playbackManager.getProgress() ?: 0
                 songRepository.setPlaybackPosition(song, song.playbackPosition)
                     .subscribeOn(Schedulers.io())
                     .subscribeBy(onError = { throwable -> Timber.e(throwable) })
@@ -171,7 +171,7 @@ class PlaybackInitializer @Inject constructor(
 
     // ProgressCallback Implementation
 
-    override fun onProgressChanged(position: Int, total: Int, fromUser: Boolean) {
+    override fun onProgressChanged(position: Int, duration: Int, fromUser: Boolean) {
 
         if (progress == 0) {
             progress = position

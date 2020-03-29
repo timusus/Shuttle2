@@ -33,7 +33,7 @@ class QueuePresenter @Inject constructor(
         view?.toggleEmptyView(queueManager.getQueue().isEmpty())
         view?.setData(
             queueManager.getQueue(),
-            (playbackManager.getPosition() ?: 0) / (queueManager.getCurrentItem()?.song?.duration?.toFloat() ?: Float.MAX_VALUE),
+            (playbackManager.getProgress() ?: 0) / (queueManager.getCurrentItem()?.song?.duration?.toFloat() ?: Float.MAX_VALUE),
             playbackManager.isPlaying()
         )
         view?.setQueuePosition(queueManager.getCurrentPosition() ?: 0, queueManager.getSize())

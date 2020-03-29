@@ -78,7 +78,7 @@ class MediaPlayerPlayback(
         currentMediaPlayerHelper.seek(position)
     }
 
-    override fun getPosition(): Int? {
+    override fun getProgress(): Int? {
         return currentMediaPlayerHelper.getPosition()
     }
 

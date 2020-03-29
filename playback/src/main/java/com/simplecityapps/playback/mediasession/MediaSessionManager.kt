@@ -62,7 +62,7 @@ class MediaSessionManager @Inject constructor(
 
     override fun onPlaystateChanged(isPlaying: Boolean) {
         mediaSession.isActive = isPlaying
-        playbackStateBuilder.setState(getPlaybackState(), playbackManager.getPosition()?.toLong() ?: 0, 1.0f)
+        playbackStateBuilder.setState(getPlaybackState(), playbackManager.getProgress()?.toLong() ?: 0, 1.0f)
         mediaSession.setPlaybackState(playbackStateBuilder.build())
     }
 
@@ -86,7 +86,7 @@ class MediaSessionManager @Inject constructor(
         queueManager.getCurrentItem()?.let { currentItem ->
             playbackStateBuilder.setActiveQueueItemId(currentItem.toQueueItem().queueId)
 
-            playbackStateBuilder.setState(getPlaybackState(), playbackManager.getPosition()?.toLong() ?: 0, 1.0f)
+            playbackStateBuilder.setState(getPlaybackState(), playbackManager.getProgress()?.toLong() ?: 0, 1.0f)
 
             mediaSession.setPlaybackState(playbackStateBuilder.build())
             val mediaMetadataCompat = MediaMetadataCompat.Builder()

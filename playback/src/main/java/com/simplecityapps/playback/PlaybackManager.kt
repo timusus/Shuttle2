@@ -127,7 +127,7 @@ class PlaybackManager(
             if (playback.isReleased) {
                 if (attempt <= 2) {
                     Timber.v("Playback released.. reloading.")
-                    loadCurrent(getPosition() ?: 0) { result ->
+                    loadCurrent(getProgress() ?: 0) { result ->
                         result.onSuccess {
                             playbackPreferenceManager.playbackPosition?.let { playbackPosition ->
                                 seekTo(playbackPosition)
@@ -170,7 +170,7 @@ class PlaybackManager(
     }
 
     fun skipToPrev(force: Boolean = false, completion: ((Result<Any?>) -> Unit)? = null) {
-        if (force || playback.getPosition() ?: 0 < 2000) {
+        if (force || playback.getProgress() ?: 0 < 2000) {
             queueManager.skipToPrevious()
             queueManager.getCurrentItem()?.let { currentQueueItem ->
                 playback.load(currentQueueItem.song, queueManager.getNext()?.song, 0) { result ->
@@ -204,8 +204,8 @@ class PlaybackManager(
     /**
      * @return the current seek position, in milliseconds
      */
-    fun getPosition(): Int? {
-        return playback.getPosition()
+    fun getProgress(): Int? {
+        return playback.getProgress()
     }
 
     /**
@@ -269,7 +269,7 @@ class PlaybackManager(
         val oldPlayback = this.playback
         val wasPlaying = oldPlayback.isPlaying()
 
-        val seekPosition = oldPlayback.getPosition()
+        val seekPosition = oldPlayback.getProgress()
 
         oldPlayback.pause()
         oldPlayback.release()
@@ -296,13 +296,9 @@ class PlaybackManager(
     }
 
     private fun updateProgress(fromUser: Boolean) {
-        playback.getPosition()?.let { position ->
+        playback.getProgress()?.let { position ->
             (playback.getDuration() ?: queueManager.getCurrentItem()?.song?.duration)?.let { duration ->
-                playbackWatcher.onProgressChanged(
-                    position,
-                    duration,
-                    fromUser
-                )
+                playbackWatcher.onProgressChanged(position, duration, fromUser)
             }
         }
     }

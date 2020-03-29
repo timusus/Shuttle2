@@ -122,7 +122,7 @@ class QueueBinder(
             )
 
             progressView.isVisible = viewBinder.queueItem.isCurrent
-            progressView.setProgress((viewBinder.playbackManager.getPosition()?.toFloat() ?: 0f) / viewBinder.queueItem.song.duration.toFloat())
+            progressView.setProgress((viewBinder.playbackManager.getProgress()?.toFloat() ?: 0f) / viewBinder.queueItem.song.duration.toFloat())
             playPauseButton.state = if (viewBinder.playbackManager.isPlaying()) PlayPauseButton.State.Playing else PlayPauseButton.State.Paused
 
             if (viewBinder.queueItem.isCurrent) {
@@ -152,8 +152,8 @@ class QueueBinder(
             viewBinder?.playbackWatcher?.removeCallback(this)
         }
 
-        override fun onProgressChanged(position: Int, total: Int, fromUser: Boolean) {
-            progressView.setProgress((position / total.toFloat()))
+        override fun onProgressChanged(position: Int, duration: Int, fromUser: Boolean) {
+            progressView.setProgress((position / duration.toFloat()))
         }
 
         override fun onPlaystateChanged(isPlaying: Boolean) {

@@ -59,8 +59,8 @@ class MiniPlayerPresenter @Inject constructor(
 
     // PlaybackManager.ProgressCallback
 
-    override fun onProgressChanged(position: Int, total: Int, fromUser: Boolean) {
-        view?.setProgress(position, total)
+    override fun onProgressChanged(position: Int, duration: Int, fromUser: Boolean) {
+        view?.setProgress(position, duration)
     }
 
 
@@ -75,7 +75,7 @@ class MiniPlayerPresenter @Inject constructor(
 
     private fun updateProgress() {
         queueManager.getCurrentItem()?.song?.let { currentSong ->
-            view?.setProgress(playbackManager.getPosition() ?: 0, currentSong.duration)
+            view?.setProgress(playbackManager.getProgress() ?: 0, currentSong.duration)
         }
     }
 
