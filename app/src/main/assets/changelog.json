@@ -1,10 +1,10 @@
 {
   "commits": [
-    "Keep scroll position when returning to artist/album list",
-    "Added 'go to album/artist' from now playing screen",
-    "Use log scale for equalizer frequency response graph",
-    "Equalizer seek bars now display as seeking from 0, rather than from -12dB",
-    "Frequency response graph accurately displays gain (including compensation used to prevent clipping)",
-    "Fixed an issue where player didn't move to 'paused' state after finishing playback"
+    "Added blacklist feature",
+    "Automatically rescan library when songs are added (triggered by Media Store scan)",
+    "Fixed an issue where recently added / most played weren't updated in real-time on home screen",
+    "Work around Android bug causing some audio files not to be detected",
+    "Fixed an issue where 'media provider' settings button didn't work",
+    "Minor styling improvements for dark mode"
   ]
 }
