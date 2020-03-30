@@ -47,6 +47,10 @@ class GridSongBinder(
         return true
     }
 
+    override fun areContentsTheSame(other: Any): Boolean {
+        return song.playCount == (other as? GridSongBinder)?.song?.playCount
+    }
+
     override fun hashCode(): Int {
         return song.hashCode()
     }

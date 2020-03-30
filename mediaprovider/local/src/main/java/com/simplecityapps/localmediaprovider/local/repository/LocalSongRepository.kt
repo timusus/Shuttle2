@@ -17,7 +17,6 @@ import io.reactivex.functions.Consumer
 import io.reactivex.functions.Function4
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
-import java.util.*
 
 class LocalSongRepository(
     private val database: MediaDatabase
@@ -27,7 +26,10 @@ class LocalSongRepository(
 
     private val songsRelay: BehaviorRelay<List<Song>> by lazy {
         val relay = BehaviorRelay.create<List<Song>>()
-        database.songDataDao().getAllDistinct().toObservable()
+        database
+            .songDataDao()
+            .getAll()
+            .toObservable()
             .subscribe(
                 relay,
                 Consumer { throwable -> Timber.e(throwable, "Failed to subscribe to songs relay") }
@@ -52,7 +54,7 @@ class LocalSongRepository(
         val oldAlbumData = database.albumDataDao().getAll().first(emptyList())
             .map { albums -> albums.map { album -> album.toAlbumData() } }
 
-        val oldSongData = database.songDataDao().getAllDistinct().first(emptyList())
+        val oldSongData = database.songDataDao().getAll().first(emptyList())
             .map { it.toSongData() }
 
         val newSongData: Single<List<SongData>> = songProvider.findSongs()
@@ -204,29 +206,37 @@ class LocalSongRepository(
         }
     }
 
-    override fun getSongs(query: SongQuery?): Observable<List<Song>> {
+    override fun getSongs(query: SongQuery?, includeBlacklisted: Boolean): Observable<List<Song>> {
+        val observable = songsRelay.takeIf { includeBlacklisted } ?: songsRelay.map { songs -> songs.filterNot { song -> song.blacklisted } }
+
         return query?.let {
-            songsRelay.map { songs ->
+            observable.map { songs ->
                 var result = songs.filter(query.predicate)
                 query.sortOrder?.let { sortOrder ->
                     result = result.sortedWith(sortOrder.getSortOrder())
                 }
                 result
             }
-        } ?: songsRelay
+        } ?: observable
     }
 
     override fun incrementPlayCount(song: Song): Completable {
         Timber.v("Incrementing play count for song: ${song.name}")
-        song.playCount++
-        song.lastCompleted = Date()
-        return database.songDataDao().updatePlayCount(song.id, song.playCount, song.lastCompleted!!)
+        return database.songDataDao().incrementPlayCount(song.id)
     }
 
     override fun setPlaybackPosition(song: Song, playbackPosition: Int): Completable {
         Timber.v("Setting playback position to $playbackPosition for song: ${song.name}")
-        song.playbackPosition = playbackPosition
-        song.lastPlayed = Date()
-        return database.songDataDao().updatePlaybackPosition(song.id, playbackPosition, song.lastPlayed!!)
+        return database.songDataDao().updatePlaybackPosition(song.id, playbackPosition)
+    }
+
+    override fun setBlacklisted(songs: List<Song>, blacklisted: Boolean): Completable {
+        Timber.v("Blacklisting ${songs.count()} songs")
+        return database.songDataDao().setBlacklisted(songs.map { it.id }, blacklisted)
+    }
+
+    override fun clearBlacklist(): Completable {
+        Timber.v("Clearing blacklist")
+        return database.songDataDao().clearBlacklist()
     }
 }

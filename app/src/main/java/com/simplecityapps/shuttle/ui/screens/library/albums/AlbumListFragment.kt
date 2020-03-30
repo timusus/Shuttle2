@@ -207,6 +207,10 @@ class AlbumListFragment :
                         presenter.playNext(album)
                         return@setOnMenuItemClickListener true
                     }
+                    R.id.blacklist -> {
+                        presenter.blacklist(album)
+                        return@setOnMenuItemClickListener true
+                    }
                 }
             }
             false

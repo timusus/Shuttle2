@@ -18,4 +18,5 @@ object ViewTypes {
     const val MostPlayedSection = 13
     const val RecentlyPlayedSection = 14
     const val SearchHeader = 15
+    const val Blacklist = 16
 }

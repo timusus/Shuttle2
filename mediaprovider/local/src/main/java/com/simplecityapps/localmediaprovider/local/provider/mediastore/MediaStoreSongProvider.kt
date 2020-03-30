@@ -76,7 +76,8 @@ class MediaStoreSongProvider(
                             lastPlayed = null,
                             lastCompleted = null,
                             playCount = 0,
-                            playbackPosition = 0
+                            playbackPosition = 0,
+                            blacklisted = false
                         )
                         emitter.onNext(Pair(song, cursor.position / cursor.count.toFloat()))
                     }

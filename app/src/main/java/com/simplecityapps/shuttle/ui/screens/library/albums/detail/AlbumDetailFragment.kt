@@ -124,10 +124,6 @@ class AlbumDetailFragment :
             startPostponedEnterTransition() // In case our Glide load takes too long
         }
 
-        toolbar = view.findViewById(R.id.toolbar)
-        toolbar.title = album.name
-        toolbar.subtitle = "${album.year.yearToString()} • ${album.songCount} Songs • ${album.duration.toHms()}"
-
         dummyImage = view.findViewById(R.id.dummyImage)
         dummyImage.transitionName = "album_${album.name}"
 
@@ -142,6 +138,7 @@ class AlbumDetailFragment :
             dummyImage.isVisible = false
         }
 
+        toolbar = view.findViewById(R.id.toolbar)
         toolbar.let { toolbar ->
             toolbar.setNavigationOnClickListener {
                 NavHostFragment.findNavController(this).popBackStack()
@@ -217,6 +214,10 @@ class AlbumDetailFragment :
         Toast.makeText(context, "$name added to queue", Toast.LENGTH_SHORT).show()
     }
 
+    override fun setAlbum(album: Album) {
+        toolbar.title = album.name
+        toolbar.subtitle = "${album.year.yearToString()} • ${resources.getQuantityString(R.plurals.songsPlural, album.songCount, album.songCount)} • ${album.duration.toHms()}"
+    }
 
     // SongBinder.Listener Implementation
 
@@ -247,6 +248,10 @@ class AlbumDetailFragment :
                         }
                         R.id.songInfo -> {
                             SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
+                            return@setOnMenuItemClickListener true
+                        }
+                        R.id.blacklist -> {
+                            presenter.blacklist(song)
                             return@setOnMenuItemClickListener true
                         }
                     }

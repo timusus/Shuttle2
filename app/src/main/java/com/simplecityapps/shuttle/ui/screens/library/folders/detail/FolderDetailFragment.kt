@@ -10,7 +10,6 @@ import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import androidx.navigation.findNavController
-import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
@@ -163,6 +162,10 @@ class FolderDetailFragment :
                     }
                     R.id.songInfo -> {
                         SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
+                        return@setOnMenuItemClickListener true
+                    }
+                    R.id.blacklist -> {
+                        presenter.blacklist(song)
                         return@setOnMenuItemClickListener true
                     }
                 }

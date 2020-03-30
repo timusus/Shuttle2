@@ -35,6 +35,7 @@ interface SongListContract {
         fun addToQueue(song: Song)
         fun playNext(song: Song)
         fun rescanLibrary()
+        fun blacklist(song: Song)
     }
 }
 
@@ -110,5 +111,13 @@ class SongListPresenter @Inject constructor(
 
     override fun rescanLibrary() {
         mediaImporter.rescan()
+    }
+
+    override fun blacklist(song: Song) {
+        addDisposable(
+            songRepository.setBlacklisted(listOf(song), true)
+                .subscribeOn(Schedulers.io())
+                .subscribeBy(onError = { throwable -> Timber.e(throwable, "Failed to blacklist song") })
+        )
     }
 }

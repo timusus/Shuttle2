@@ -19,6 +19,7 @@ abstract class AlbumDataDao {
                 "FROM albums " +
                 "LEFT JOIN album_artists ON album_artists.id = albums.albumArtistId " +
                 "LEFT JOIN songs ON songs.albumId = albums.id " +
+                "WHERE songs.blacklisted == 0 " +
                 "GROUP BY albums.id " +
                 "ORDER BY albums.name;"
     )

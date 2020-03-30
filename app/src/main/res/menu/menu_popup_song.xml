@@ -19,4 +19,8 @@
         android:id="@+id/songInfo"
         android:title="Song Info" />
 
+    <item
+        android:id="@+id/blacklist"
+        android:title="Blacklist" />
+
 </menu>

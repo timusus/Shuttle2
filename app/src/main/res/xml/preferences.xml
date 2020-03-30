@@ -22,6 +22,10 @@
             android:key="pref_media_rescan"
             android:summary="Rescan the device for media"
             android:title="Rescan" />
+        <Preference
+            android:key="pref_blacklist"
+            android:summary="View/Edit blacklist"
+            android:title="Blacklist" />
     </PreferenceCategory>
 
     <PreferenceCategory android:title="Artwork">

@@ -25,6 +25,7 @@ import com.simplecityapps.mediaprovider.repository.PlaylistRepository
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.autoClearedNullable
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.HomeButton
@@ -61,7 +62,8 @@ class HomeFragment :
 
     private var imageLoader: ArtworkImageLoader by autoCleared()
 
-    private var viewBinders = mutableSetOf<ViewBinder>()
+    private var recentlyAddedViewBinder: ViewBinder? by autoClearedNullable()
+    private var mostPlayedViewBinder: ViewBinder? by autoClearedNullable()
 
     private val disposable: CompositeDisposable = CompositeDisposable()
 
@@ -169,13 +171,13 @@ class HomeFragment :
     }
 
     override fun setMostPlayed(songs: List<Song>) {
-        viewBinders.add(MostPlayedSectionBinder(songs, imageLoader, sectionBinderListener))
-        adapter.setData(viewBinders.toList())
+        mostPlayedViewBinder = MostPlayedSectionBinder(songs, imageLoader, sectionBinderListener)
+        updateViewBinders()
     }
 
     override fun setRecentlyPlayed(songs: List<Song>) {
-        viewBinders.add(RecentlyPlayedSectionBinder(songs, imageLoader, sectionBinderListener))
-        adapter.setData(viewBinders.toList())
+        recentlyAddedViewBinder = RecentlyPlayedSectionBinder(songs, imageLoader, sectionBinderListener)
+        updateViewBinders()
     }
 
     override fun onAddedToQueue(song: Song) {
@@ -213,6 +215,10 @@ class HomeFragment :
                             SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
                             return@setOnMenuItemClickListener true
                         }
+                        R.id.blacklist -> {
+                            presenter.blacklist(song)
+                            return@setOnMenuItemClickListener true
+                        }
                     }
                 }
                 false
@@ -227,6 +233,13 @@ class HomeFragment :
 
 
     // Private
+
+    fun updateViewBinders() {
+        val viewBinders = mutableListOf<ViewBinder>()
+        recentlyAddedViewBinder?.let { viewBinders.add(it) }
+        mostPlayedViewBinder?.let { viewBinders.add(it) }
+        adapter.setData(viewBinders)
+    }
 
     private fun navigateToPlaylist(query: PlaylistQuery) {
         disposable.add(playlistRepository

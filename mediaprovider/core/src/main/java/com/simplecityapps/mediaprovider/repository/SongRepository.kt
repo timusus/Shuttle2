@@ -14,11 +14,15 @@ interface SongRepository {
         return Completable.complete()
     }
 
-    fun getSongs(query: SongQuery? = null): Observable<List<Song>>
+    fun getSongs(query: SongQuery? = null, includeBlacklisted: Boolean = false): Observable<List<Song>>
 
     fun incrementPlayCount(song: Song): Completable
 
     fun setPlaybackPosition(song: Song, playbackPosition: Int): Completable
+
+    fun setBlacklisted(songs: List<Song>, blacklisted: Boolean): Completable
+
+    fun clearBlacklist(): Completable
 }
 
 sealed class SongQuery(
@@ -71,7 +75,7 @@ enum class SongSortOrder : Serializable {
                 .thenBy { song -> song.year }
                 .thenBy { song -> song.track }
             MostPlayed -> Comparator { a, b -> b.playCount.compareTo(a.playCount) }
-            RecentlyPlayed -> Comparator { a, b -> b.lastPlayed?.compareTo(a.lastPlayed) ?: 0 }
+            RecentlyPlayed -> Comparator { a, b -> b.lastCompleted?.compareTo(a.lastCompleted) ?: 0 }
         }
     }
 }

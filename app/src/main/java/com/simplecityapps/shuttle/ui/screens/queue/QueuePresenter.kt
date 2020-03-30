@@ -1,17 +1,22 @@
 package com.simplecityapps.shuttle.ui.screens.queue
 
+import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
+import io.reactivex.rxkotlin.subscribeBy
+import io.reactivex.schedulers.Schedulers
+import timber.log.Timber
 import javax.inject.Inject
 
 class QueuePresenter @Inject constructor(
     private val queueManager: QueueManager,
     private val playbackManager: PlaybackManager,
-    private val queueWatcher: QueueWatcher
+    private val queueWatcher: QueueWatcher,
+    private val songRepository: SongRepository
 ) : BasePresenter<QueueContract.View>(),
     QueueContract.Presenter,
     QueueChangeCallback {
@@ -62,6 +67,15 @@ class QueuePresenter @Inject constructor(
             val from = queueManager.getQueue().indexOf(queueItem)
             playbackManager.moveQueueItem(from, currentPosition + if (from < currentPosition) 0 else 1)
         }
+    }
+
+    override fun blacklist(queueItem: QueueItem) {
+        removeFromQueue(queueItem)
+        addDisposable(
+            songRepository.setBlacklisted(listOf(queueItem.song), true)
+                .subscribeOn(Schedulers.io())
+                .subscribeBy(onError = { throwable -> Timber.e(throwable, "Failed to blacklist song") })
+        )
     }
 
     // QueueBinder.Listener Implementation

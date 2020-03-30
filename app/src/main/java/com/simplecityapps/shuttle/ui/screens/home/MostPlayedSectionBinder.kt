@@ -38,13 +38,17 @@ class MostPlayedSectionBinder(val songs: List<Song>, val imageLoader: ArtworkIma
 
         other as MostPlayedSectionBinder
 
-        if (songs != other.songs) return false
+        if (playlist != other.playlist) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        return songs.hashCode()
+        return playlist.hashCode()
+    }
+
+    override fun areContentsTheSame(other: Any): Boolean {
+        return songs == (other as? MostPlayedSectionBinder)?.songs
     }
 
 
@@ -70,7 +74,7 @@ class MostPlayedSectionBinder(val songs: List<Song>, val imageLoader: ArtworkIma
                         viewBinder.listener.onSongClicked(song, viewBinder.songs)
                     }
                 })
-            })
+            }, completion = { recyclerView.scrollToPosition(0) })
         }
 
         override fun recycle() {

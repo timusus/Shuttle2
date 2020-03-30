@@ -13,7 +13,9 @@ class LocalAlbumRepository(private val database: MediaDatabase) : AlbumRepositor
 
     private val albumsRelay: BehaviorRelay<List<Album>> by lazy {
         val relay = BehaviorRelay.create<List<Album>>()
-        database.albumDataDao().getAll().toObservable()
+        database.albumDataDao()
+            .getAll()
+            .toObservable()
             .subscribe(
                 relay,
                 Consumer { throwable -> Timber.e(throwable, "Failed to subscribe to albums relay") }
@@ -22,7 +24,7 @@ class LocalAlbumRepository(private val database: MediaDatabase) : AlbumRepositor
     }
 
     override fun getAlbums(): Observable<List<Album>> {
-        return albumsRelay
+        return albumsRelay.map { albumList -> albumList.filter { album -> album.songCount > 0 } }
     }
 
     override fun getAlbums(query: AlbumQuery): Observable<List<Album>> {

@@ -219,6 +219,10 @@ class SearchFragment : Fragment(),
                             SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
                             return@setOnMenuItemClickListener true
                         }
+                        R.id.blacklist -> {
+                            presenter.blacklist(song)
+                            return@setOnMenuItemClickListener true
+                        }
                     }
                 }
                 false
@@ -253,6 +257,10 @@ class SearchFragment : Fragment(),
                             presenter.playNext(albumArtist)
                             return@setOnMenuItemClickListener true
                         }
+                        R.id.blacklist -> {
+                            presenter.blacklist(albumArtist)
+                            return@setOnMenuItemClickListener true
+                        }
                     }
                 }
                 false
@@ -285,6 +293,10 @@ class SearchFragment : Fragment(),
                         }
                         R.id.playNext -> {
                             presenter.playNext(album)
+                            return@setOnMenuItemClickListener true
+                        }
+                        R.id.blacklist -> {
+                            presenter.blacklist(album)
                             return@setOnMenuItemClickListener true
                         }
                     }

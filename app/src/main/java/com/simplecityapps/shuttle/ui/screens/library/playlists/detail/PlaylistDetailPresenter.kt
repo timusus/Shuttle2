@@ -2,14 +2,16 @@ package com.simplecityapps.shuttle.ui.screens.library.playlists.detail
 
 import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.mediaprovider.repository.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.PlaylistRepository
+import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.PlaybackManager
-import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.squareup.inject.assisted.Assisted
 import com.squareup.inject.assisted.AssistedInject
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
 
@@ -19,6 +21,7 @@ interface PlaylistDetailContract {
         fun setData(songs: List<Song>)
         fun showLoadError(error: Error)
         fun onAddedToQueue(song: Song)
+        fun setPlaylist(playlist: Playlist)
     }
 
     interface Presenter : BaseContract.Presenter<View> {
@@ -27,13 +30,14 @@ interface PlaylistDetailContract {
         fun shuffle()
         fun addToQueue(song: Song)
         fun playNext(song: Song)
+        fun blacklist(song: Song)
     }
 }
 
 class PlaylistDetailPresenter @AssistedInject constructor(
     private val playlistRepository: PlaylistRepository,
+    private val songRepository: SongRepository,
     private val playbackManager: PlaybackManager,
-    private val queueManager: QueueManager,
     @Assisted private val playlist: Playlist
 ) : BasePresenter<PlaylistDetailContract.View>(),
     PlaylistDetailContract.Presenter {
@@ -44,6 +48,22 @@ class PlaylistDetailPresenter @AssistedInject constructor(
     }
 
     private var songs: List<Song> = emptyList()
+
+    override fun bindView(view: PlaylistDetailContract.View) {
+        super.bindView(view)
+
+        view.setPlaylist(playlist)
+        addDisposable(playlistRepository.getPlaylists(PlaylistQuery.PlaylistId(playlist.id))
+            .map { it.firstOrNull() }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({ playlist ->
+                playlist?.let { view.setPlaylist(playlist) }
+            }, { error ->
+                Timber.e(error, "Failed to retrieve playlist")
+            })
+        )
+    }
 
     override fun loadData() {
         addDisposable(playlistRepository.getSongsForPlaylist(playlist.id)
@@ -64,7 +84,7 @@ class PlaylistDetailPresenter @AssistedInject constructor(
 
     override fun shuffle() {
         if (songs.isNotEmpty()) {
-            playbackManager.shuffle(songs)  { result ->
+            playbackManager.shuffle(songs) { result ->
                 result.onSuccess { playbackManager.play() }
                 result.onFailure { error -> view?.showLoadError(error as Error) }
             }
@@ -81,5 +101,13 @@ class PlaylistDetailPresenter @AssistedInject constructor(
     override fun playNext(song: Song) {
         playbackManager.playNext(listOf(song))
         view?.onAddedToQueue(song)
+    }
+
+    override fun blacklist(song: Song) {
+        addDisposable(
+            songRepository.setBlacklisted(listOf(song), true)
+                .subscribeOn(Schedulers.io())
+                .subscribeBy(onError = { throwable -> Timber.e(throwable, "Failed to blacklist song") })
+        )
     }
 }

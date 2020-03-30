@@ -17,11 +17,12 @@ class Song(
     val path: String,
     val size: Long,
     val mimeType: String,
-    var lastModified: Date,
-    var lastPlayed: Date?,
-    var lastCompleted: Date?,
-    var playCount: Int,
-    var playbackPosition: Int
+    val lastModified: Date,
+    val lastPlayed: Date?,
+    val lastCompleted: Date?,
+    val playCount: Int,
+    var playbackPosition: Int,
+    val blacklisted: Boolean
 ) : Serializable {
 
     val type: Type
@@ -29,7 +30,7 @@ class Song(
             return when {
                 path.contains("audiobook", true) || path.endsWith("m4b", true) -> Type.Audiobook
                 path.contains("podcast", true) -> Type.Podcast
-                else -> Type.Normal
+                else -> Type.Audio
             }
         }
 
@@ -63,6 +64,6 @@ class Song(
     }
 
     enum class Type {
-        Normal, Audiobook, Podcast
+        Audio, Audiobook, Podcast
     }
 }

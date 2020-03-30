@@ -26,6 +26,7 @@ interface FolderDetailContract {
         fun onSongClicked(song: Song, songs: List<Song>)
         fun addToQueue(song: Song)
         fun playNext(song: Song)
+        fun blacklist(song: Song)
     }
 
     interface View {
@@ -116,6 +117,14 @@ class FolderDetailPresenter @Inject constructor(
     override fun playNext(song: Song) {
         playbackManager.playNext(listOf(song))
         view?.onAddedToQueue(song)
+    }
+
+    override fun blacklist(song: Song) {
+        addDisposable(
+            songRepository.setBlacklisted(listOf(song), true)
+                .subscribeOn(Schedulers.io())
+                .subscribeBy(onError = { throwable -> Timber.e(throwable, "Failed to blacklist song") })
+        )
     }
 }
 

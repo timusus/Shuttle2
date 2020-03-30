@@ -81,7 +81,7 @@ class AlbumArtistDetailFragment :
     private var heroImage: ImageView by autoCleared()
 
     private var showHeroView = false
-    private var animateTransition : Boolean = true
+    private var animateTransition: Boolean = true
 
     // Lifecycle
 
@@ -157,9 +157,6 @@ class AlbumArtistDetailFragment :
             }
         }
 
-        toolbar.title = albumArtist.name
-        toolbar.subtitle = "${albumArtist.albumCount} Albums • ${albumArtist.songCount} Songs"
-
         dummyImage = view.findViewById(R.id.dummyImage)
         dummyImage.transitionName = "album_artist_${albumArtist.name}"
 
@@ -226,6 +223,12 @@ class AlbumArtistDetailFragment :
         Toast.makeText(context, "$name added to queue", Toast.LENGTH_SHORT).show()
     }
 
+    override fun setAlbumArtist(albumArtist: AlbumArtist) {
+        toolbar.title = albumArtist.name
+        toolbar.subtitle = "${resources.getQuantityString(R.plurals.albumsPlural, albumArtist.albumCount, albumArtist.albumCount)} " +
+                "• ${resources.getQuantityString(R.plurals.songsPlural, albumArtist.songCount, albumArtist.songCount)}"
+    }
+
 
     // ExpandableAlbumArtistBinder.Listener Implementation
 
@@ -271,6 +274,10 @@ class AlbumArtistDetailFragment :
                         SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
                         return@setOnMenuItemClickListener true
                     }
+                    R.id.blacklist -> {
+                        presenter.blacklist(song)
+                        return@setOnMenuItemClickListener true
+                    }
                 }
             }
             false
@@ -295,6 +302,10 @@ class AlbumArtistDetailFragment :
                     }
                     R.id.playNext -> {
                         presenter.playNext(album)
+                        return@setOnMenuItemClickListener true
+                    }
+                    R.id.blacklist -> {
+                        presenter.blacklist(album)
                         return@setOnMenuItemClickListener true
                     }
                 }

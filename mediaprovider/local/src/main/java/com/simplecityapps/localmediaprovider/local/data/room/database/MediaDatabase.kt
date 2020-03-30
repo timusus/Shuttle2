@@ -15,7 +15,7 @@ import com.simplecityapps.localmediaprovider.local.data.room.entity.*
         PlaylistData::class,
         PlaylistSongJoin::class
     ],
-    version = 26,
+    version = 27,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

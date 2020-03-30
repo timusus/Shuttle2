@@ -34,6 +34,8 @@ interface AlbumArtistListContract {
         fun addToQueue(albumArtist: AlbumArtist)
         fun playNext(albumArtist: AlbumArtist)
         fun rescanLibrary()
+        fun blacklist(albumArtist: AlbumArtist)
+
     }
 }
 
@@ -115,5 +117,19 @@ class AlbumArtistListPresenter @Inject constructor(
 
     override fun rescanLibrary() {
         mediaImporter.rescan()
+    }
+
+    override fun blacklist(albumArtist: AlbumArtist) {
+        addDisposable(
+            songRepository.getSongs(SongQuery.AlbumArtistIds(listOf(albumArtist.id)))
+                .first(emptyList())
+                .flatMapCompletable { songs ->
+                    songRepository.setBlacklisted(songs, true)
+                }
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onError = { throwable -> Timber.e(throwable, "Failed to retrieve songs for album artist: ${albumArtist.name}") })
+        )
     }
 }

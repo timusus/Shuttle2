@@ -12,10 +12,6 @@ import java.util.*
 @Dao
 abstract class SongDataDao {
 
-    fun getAllDistinct(): Flowable<List<Song>> {
-        return getAll().distinctUntilChanged()
-    }
-
     @Transaction
     @Query(
         "SELECT " +
@@ -27,7 +23,7 @@ abstract class SongDataDao {
                 "LEFT JOIN albums ON albums.id = songs.albumId " +
                 "ORDER BY albumArtistName, albumName, track;"
     )
-    protected abstract fun getAll(): Flowable<List<Song>>
+    abstract fun getAll(): Flowable<List<Song>>
 
     @Query("SELECT * FROM songs")
     abstract fun getAllData(): Flowable<List<SongData>>
@@ -57,11 +53,17 @@ abstract class SongDataDao {
         return inserts
     }
 
-    @Query("UPDATE songs SET playCount = :playCount, lastCompleted = :lastCompleted WHERE id =:id")
-    abstract fun updatePlayCount(id: Long, playCount: Int, lastCompleted: Date): Completable
+    @Query("UPDATE songs SET playCount = (SELECT songs.playCount + 1), lastCompleted = :lastCompleted WHERE id =:id")
+    abstract fun incrementPlayCount(id: Long, lastCompleted: Date = Date()): Completable
 
     @Query("UPDATE songs SET playbackPosition = :playbackPosition, lastPlayed = :lastPlayed WHERE id =:id")
-    abstract fun updatePlaybackPosition(id: Long, playbackPosition: Int, lastPlayed: Date): Completable
+    abstract fun updatePlaybackPosition(id: Long, playbackPosition: Int, lastPlayed: Date = Date()): Completable
+
+    @Query("UPDATE songs SET blacklisted = :blacklisted WHERE id IN (:ids)")
+    abstract fun setBlacklisted(ids: List<Long>, blacklisted: Boolean): Completable
+
+    @Query("UPDATE songs SET blacklisted = 0")
+    abstract fun clearBlacklist(): Completable
 
     @Query("DELETE from songs")
     abstract fun deleteAll()

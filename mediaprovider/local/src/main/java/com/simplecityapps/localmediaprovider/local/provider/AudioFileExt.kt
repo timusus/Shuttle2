@@ -5,5 +5,25 @@ import com.simplecityapps.taglib.AudioFile
 import java.util.*
 
 fun AudioFile.toSong(mimeType: String): Song {
-    return Song(0, name, 0, albumArtistName, 0, albumName, track, disc, duration, year, path, size, mimeType, Date(lastModified), null, null, 0, 0)
+    return Song(
+        id = 0,
+        name = name,
+        albumArtistId = 0,
+        albumArtistName = albumArtistName,
+        albumId = 0,
+        albumName = albumName,
+        track = track,
+        disc = disc,
+        duration = duration,
+        year = year,
+        path = path,
+        size = size,
+        mimeType = mimeType,
+        lastModified = Date(lastModified),
+        lastPlayed = null,
+        lastCompleted = null,
+        playCount = 0,
+        playbackPosition = 0,
+        blacklisted = false
+    )
 }

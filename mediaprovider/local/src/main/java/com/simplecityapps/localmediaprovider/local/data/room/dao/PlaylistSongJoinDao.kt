@@ -27,6 +27,7 @@ abstract class PlaylistSongJoinDao {
                 "FROM playlists " +
                 "LEFT JOIN playlist_song_join ON playlists.id = playlist_song_join.playlistId " +
                 "LEFT JOIN songs ON songs.id = playlist_song_join.songId " +
+                "WHERE songs.blacklisted == 0 " +
                 "GROUP BY playlists.id " +
                 "ORDER BY playlists.name;"
     )
@@ -40,7 +41,7 @@ abstract class PlaylistSongJoinDao {
                 "FROM playlists " +
                 "LEFT JOIN playlist_song_join ON playlists.id = playlist_song_join.playlistId " +
                 "LEFT JOIN songs ON songs.id = playlist_song_join.songId " +
-                "WHERE playlists.id = :playlistId " +
+                "WHERE playlists.id = :playlistId AND songs.blacklisted == 0 " +
                 "GROUP BY playlists.id " +
                 "ORDER BY playlists.name;"
     )
@@ -54,7 +55,7 @@ abstract class PlaylistSongJoinDao {
                 "INNER JOIN album_artists ON album_artists.id = songs.albumArtistId " +
                 "INNER JOIN albums ON albums.id = songs.albumId " +
                 "INNER JOIN playlist_song_join ON songs.id = playlist_song_join.songId " +
-                "WHERE playlist_song_join.playlistId = :playlistId;"
+                "WHERE playlist_song_join.playlistId = :playlistId AND songs.blacklisted == 0;"
     )
     abstract fun getSongsForPlaylist(playlistId: Long): Flowable<List<Song>>
 

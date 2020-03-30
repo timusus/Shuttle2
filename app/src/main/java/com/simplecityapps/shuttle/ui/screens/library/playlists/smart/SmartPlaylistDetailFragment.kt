@@ -191,6 +191,10 @@ class SmartPlaylistDetailFragment :
                             SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
                             return@setOnMenuItemClickListener true
                         }
+                        R.id.blacklist ->  {
+                            presenter.blacklist(song)
+                            return@setOnMenuItemClickListener true
+                        }
                     }
                 }
                 false

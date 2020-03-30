@@ -5,13 +5,13 @@ import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.mediaprovider.repository.SongSortOrder
 import com.simplecityapps.playback.PlaybackManager
-import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.squareup.inject.assisted.Assisted
 import com.squareup.inject.assisted.AssistedInject
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
 import java.io.Serializable
@@ -48,13 +48,13 @@ interface SmartPlaylistDetailContract {
         fun shuffle()
         fun addToQueue(song: Song)
         fun playNext(song: Song)
+        fun blacklist(song: Song)
     }
 }
 
 class SmartPlaylistDetailPresenter @AssistedInject constructor(
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackManager,
-    private val queueManager: QueueManager,
     @Assisted private val playlist: SmartPlaylist
 ) : BasePresenter<SmartPlaylistDetailContract.View>(),
     SmartPlaylistDetailContract.Presenter {
@@ -86,7 +86,7 @@ class SmartPlaylistDetailPresenter @AssistedInject constructor(
 
     override fun shuffle() {
         if (songs.isNotEmpty()) {
-            playbackManager.shuffle(songs)  { result ->
+            playbackManager.shuffle(songs) { result ->
                 result.onSuccess { playbackManager.play() }
                 result.onFailure { error -> view?.showLoadError(error as Error) }
             }
@@ -103,5 +103,13 @@ class SmartPlaylistDetailPresenter @AssistedInject constructor(
     override fun playNext(song: Song) {
         playbackManager.playNext(listOf(song))
         view?.onAddedToQueue(song)
+    }
+
+    override fun blacklist(song: Song) {
+        addDisposable(
+            songRepository.setBlacklisted(listOf(song), true)
+                .subscribeOn(Schedulers.io())
+                .subscribeBy(onError = { throwable -> Timber.e(throwable, "Failed to blacklist song") })
+        )
     }
 }

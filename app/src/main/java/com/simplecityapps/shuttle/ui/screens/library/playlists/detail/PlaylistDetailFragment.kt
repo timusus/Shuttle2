@@ -105,9 +105,6 @@ class PlaylistDetailFragment :
             }
         }
 
-        toolbar?.title = playlist.name
-        toolbar?.subtitle = "${playlist.songCount} Songs • ${playlist.duration.toHms()}"
-
         recyclerView.adapter = adapter
         recyclerView.clearAdapterOnDetach()
 
@@ -134,6 +131,11 @@ class PlaylistDetailFragment :
 
 
     // PlaylistDetailContract.View Implementation
+
+    override fun setPlaylist(playlist: Playlist) {
+        toolbar?.title = playlist.name
+        toolbar?.subtitle = "${playlist.songCount} Songs • ${playlist.duration.toHms()}"
+    }
 
     override fun setData(songs: List<Song>) {
         if (songs.isNotEmpty()) {
@@ -192,6 +194,10 @@ class PlaylistDetailFragment :
                         }
                         R.id.songInfo -> {
                             SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
+                            return@setOnMenuItemClickListener true
+                        }
+                        R.id.blacklist -> {
+                            presenter.blacklist(song)
                             return@setOnMenuItemClickListener true
                         }
                     }

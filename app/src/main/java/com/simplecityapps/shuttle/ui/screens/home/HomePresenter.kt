@@ -3,12 +3,10 @@ package com.simplecityapps.shuttle.ui.screens.home
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.PlaybackManager
-import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylist.Companion.MostPlayed
 import com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylist.Companion.RecentlyPlayed
-import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
@@ -31,12 +29,12 @@ interface HomeContract {
         fun loadRecentlyPlayed()
         fun addToQueue(song: Song)
         fun playNext(song: Song)
+        fun blacklist(song: Song)
     }
 }
 
 class HomePresenter @Inject constructor(
     private val songRepository: SongRepository,
-    private val queueManager: QueueManager,
     private val playbackManager: PlaybackManager
 
 ) : HomeContract.Presenter, BasePresenter<HomeContract.View>() {
@@ -76,7 +74,7 @@ class HomePresenter @Inject constructor(
         addDisposable(
             songRepository.getSongs(MostPlayed.songQuery)
                 .map { songs -> MostPlayed.songQuery?.sortOrder?.let { songs.sortedWith(it.getSortOrder()) } ?: songs }
-                .flatMap { songs -> Observable.just(songs.take(20)) }
+                .map { songs -> songs.take(20) }
                 .subscribeBy(
                     onNext = { songs ->
                         if (songs.count() >= 4) {
@@ -92,7 +90,7 @@ class HomePresenter @Inject constructor(
         addDisposable(
             songRepository.getSongs(RecentlyPlayed.songQuery)
                 .map { songs -> RecentlyPlayed.songQuery?.sortOrder?.let { songSortOrder -> songs.sortedWith(songSortOrder.getSortOrder()) } ?: songs }
-                .flatMap { songs -> Observable.just(songs.take(5)) }
+                .map { songs -> songs.take(5) }
                 .subscribeBy(
                     onNext = { songs ->
                         if (songs.count() >= 3) {
@@ -112,5 +110,13 @@ class HomePresenter @Inject constructor(
     override fun playNext(song: Song) {
         playbackManager.playNext(listOf(song))
         view?.onAddedToQueue(song)
+    }
+
+    override fun blacklist(song: Song) {
+        addDisposable(
+            songRepository.setBlacklisted(listOf(song), true)
+                .subscribeOn(Schedulers.io())
+                .subscribeBy(onError = { throwable -> Timber.e(throwable, "Failed to blacklist song") })
+        )
     }
 }

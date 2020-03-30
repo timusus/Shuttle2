@@ -31,13 +31,17 @@ class RecentlyPlayedSectionBinder(val songs: List<Song>, val imageLoader: Artwor
 
         other as RecentlyPlayedSectionBinder
 
-        if (songs != other.songs) return false
+        if (playlist != other.playlist) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        return songs.hashCode()
+        return playlist.hashCode()
+    }
+
+    override fun areContentsTheSame(other: Any): Boolean {
+        return songs == (other as? RecentlyPlayedSectionBinder)?.songs
     }
 
 

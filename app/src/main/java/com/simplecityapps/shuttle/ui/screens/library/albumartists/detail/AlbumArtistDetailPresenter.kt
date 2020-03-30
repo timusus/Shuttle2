@@ -3,16 +3,13 @@ package com.simplecityapps.shuttle.ui.screens.library.albumartists.detail
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
-import com.simplecityapps.mediaprovider.repository.AlbumQuery
-import com.simplecityapps.mediaprovider.repository.AlbumRepository
-import com.simplecityapps.mediaprovider.repository.SongQuery
-import com.simplecityapps.mediaprovider.repository.SongRepository
+import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.squareup.inject.assisted.Assisted
 import com.squareup.inject.assisted.AssistedInject
-import io.reactivex.Single
+import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.functions.BiFunction
 import io.reactivex.rxkotlin.subscribeBy
@@ -25,6 +22,7 @@ class AlbumArtistDetailContract {
         fun setListData(albums: Map<Album, List<Song>>)
         fun showLoadError(error: Error)
         fun onAddedToQueue(name: String)
+        fun setAlbumArtist(albumArtist: AlbumArtist)
     }
 
     interface Presenter : BaseContract.Presenter<View> {
@@ -37,10 +35,13 @@ class AlbumArtistDetailContract {
         fun playNext(album: AlbumArtist)
         fun playNext(album: Album)
         fun playNext(song: Song)
+        fun blacklist(song: Song)
+        fun blacklist(album: Album)
     }
 }
 
 class AlbumArtistDetailPresenter @AssistedInject constructor(
+    private val albumArtistRepository: AlbumArtistRepository,
     private val albumRepository: AlbumRepository,
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackManager,
@@ -53,22 +54,39 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
         fun create(albumArtist: AlbumArtist): AlbumArtistDetailPresenter
     }
 
+    override fun bindView(view: AlbumArtistDetailContract.View) {
+        super.bindView(view)
+
+        view.setAlbumArtist(albumArtist)
+        addDisposable(albumArtistRepository
+            .getAlbumArtists(AlbumArtistQuery.AlbumArtistId(albumArtist.id))
+            .map { it.firstOrNull() }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({ albumArtist ->
+                albumArtist?.let { view.setAlbumArtist(albumArtist) }
+            }, { error ->
+                Timber.e(error, "Failed to retrieve album artist")
+            })
+        )
+    }
+
     override fun loadData() {
-        val songsSingle = songRepository.getSongs(SongQuery.AlbumArtistIds(listOf(albumArtist.id))).first(emptyList())
-        val albumsSingle = albumRepository.getAlbums(AlbumQuery.AlbumArtistId(albumArtist.id))
-            .first(emptyList())
+        val songsObservable = songRepository.getSongs(SongQuery.AlbumArtistIds(listOf(albumArtist.id)))
+        val albumsObservable = albumRepository.getAlbums(AlbumQuery.AlbumArtistId(albumArtist.id))
 
         addDisposable(
-            Single.zip(albumsSingle, songsSingle, BiFunction<List<Album>, List<Song>, Map<Album, List<Song>>> { albums, songs ->
+            Observable.zip(albumsObservable, songsObservable, BiFunction<List<Album>, List<Song>, Map<Album, List<Song>>> { albums, songs ->
                 albums.map { album -> Pair(album, songs.filter { song -> song.albumId == album.id }) }
                     .sortedWith(Comparator { a, b -> b.first.year.compareTo(a.first.year) })
                     .toMap()
             })
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe { map ->
-                    view?.setListData(map)
-                })
+                .subscribeBy(
+                    onNext = { map -> view?.setListData(map) },
+                    onError = { Timber.e(it, "Failed to load album artist album/song data") })
+        )
     }
 
     override fun onSongClicked(song: Song, songs: List<Song>) {
@@ -163,5 +181,27 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
     override fun playNext(song: Song) {
         playbackManager.playNext(listOf(song))
         view?.onAddedToQueue(song.name)
+    }
+
+    override fun blacklist(song: Song) {
+        addDisposable(
+            songRepository.setBlacklisted(listOf(song), true)
+                .subscribeOn(Schedulers.io())
+                .subscribeBy(onError = { throwable -> Timber.e(throwable, "Failed to blacklist song") })
+        )
+    }
+
+    override fun blacklist(album: Album) {
+        addDisposable(
+            songRepository.getSongs(SongQuery.AlbumIds(listOf(album.id)))
+                .first(emptyList())
+                .flatMapCompletable { songs ->
+                    songRepository.setBlacklisted(songs, true)
+                }
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onError = { throwable -> Timber.e(throwable, "Failed to blacklist album ${album.name}") })
+        )
     }
 }

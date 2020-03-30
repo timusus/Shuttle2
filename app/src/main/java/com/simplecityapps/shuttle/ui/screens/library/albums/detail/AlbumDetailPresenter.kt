@@ -2,10 +2,11 @@ package com.simplecityapps.shuttle.ui.screens.library.albums.detail
 
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.mediaprovider.repository.AlbumQuery
+import com.simplecityapps.mediaprovider.repository.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.PlaybackManager
-import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.squareup.inject.assisted.Assisted
@@ -21,6 +22,7 @@ interface AlbumDetailContract {
         fun setData(songs: List<Song>)
         fun showLoadError(error: Error)
         fun onAddedToQueue(name: String)
+        fun setAlbum(album: Album)
     }
 
     interface Presenter : BaseContract.Presenter<View> {
@@ -31,13 +33,14 @@ interface AlbumDetailContract {
         fun addToQueue(song: Song)
         fun playNext(album: Album)
         fun playNext(song: Song)
+        fun blacklist(song: Song)
     }
 }
 
 class AlbumDetailPresenter @AssistedInject constructor(
+    private val albumRepository: AlbumRepository,
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackManager,
-    private val queueManager: QueueManager,
     @Assisted private val album: Album
 ) : BasePresenter<AlbumDetailContract.View>(),
     AlbumDetailContract.Presenter {
@@ -48,6 +51,23 @@ class AlbumDetailPresenter @AssistedInject constructor(
     }
 
     private var songs: List<Song> = emptyList()
+
+    override fun bindView(view: AlbumDetailContract.View) {
+        super.bindView(view)
+
+        view.setAlbum(album)
+        addDisposable(albumRepository
+            .getAlbums(AlbumQuery.AlbumId(album.id))
+            .map { it.firstOrNull() }
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({ album ->
+                album?.let { view.setAlbum(album) }
+            }, { error ->
+                Timber.e(error, "Failed to retrieve album")
+            })
+        )
+    }
 
     override fun loadData() {
         addDisposable(
@@ -112,5 +132,13 @@ class AlbumDetailPresenter @AssistedInject constructor(
     override fun playNext(song: Song) {
         playbackManager.playNext(listOf(song))
         view?.onAddedToQueue(song.name)
+    }
+
+    override fun blacklist(song: Song) {
+        addDisposable(
+            songRepository.setBlacklisted(listOf(song), true)
+                .subscribeOn(Schedulers.io())
+                .subscribeBy(onError = { throwable -> Timber.e(throwable, "Failed to blacklist song") })
+        )
     }
 }

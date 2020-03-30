@@ -24,10 +24,13 @@ interface SearchContract : BaseContract.Presenter<SearchContract.View> {
         fun onAlbumClicked(album: Album)
         fun addToQueue(albumArtist: AlbumArtist)
         fun playNext(albumArtist: AlbumArtist)
+        fun blacklist(albumArtist: AlbumArtist)
         fun addToQueue(album: Album)
         fun playNext(album: Album)
+        fun blacklist(album: Album)
         fun addToQueue(song: Song)
         fun playNext(song: Song)
+        fun blacklist(song: Song)
     }
 
     interface View {
@@ -204,5 +207,41 @@ class SearchPresenter @Inject constructor(
     override fun playNext(song: Song) {
         playbackManager.playNext(listOf(song))
         view?.onAddedToQueue(song)
+    }
+
+    override fun blacklist(albumArtist: AlbumArtist) {
+        addDisposable(
+            songRepository.getSongs(SongQuery.AlbumArtistIds(listOf(albumArtist.id)))
+                .first(emptyList())
+                .flatMapCompletable { songs ->
+                    songRepository.setBlacklisted(songs, true)
+                }
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onError = { throwable -> Timber.e(throwable, "Failed to retrieve songs for album artist: ${albumArtist.name}") })
+        )
+    }
+
+    override fun blacklist(album: Album) {
+        addDisposable(
+            songRepository.getSongs(SongQuery.AlbumIds(listOf(album.id)))
+                .first(emptyList())
+                .flatMapCompletable { songs ->
+                    songRepository.setBlacklisted(songs, true)
+                }
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onError = { throwable -> Timber.e(throwable, "Failed to blacklist album ${album.name}") })
+        )
+    }
+
+    override fun blacklist(song: Song) {
+        addDisposable(
+            songRepository.setBlacklisted(listOf(song), true)
+                .subscribeOn(Schedulers.io())
+                .subscribeBy(onError = { throwable -> Timber.e(throwable, "Failed to blacklist song") })
+        )
     }
 }

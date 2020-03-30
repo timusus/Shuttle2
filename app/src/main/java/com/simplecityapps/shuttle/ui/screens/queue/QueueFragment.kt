@@ -29,6 +29,7 @@ import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
 import com.simplecityapps.shuttle.ui.common.view.multisheet.findParentMultiSheetView
+import timber.log.Timber
 import javax.inject.Inject
 
 class QueueFragment :
@@ -192,23 +193,29 @@ class QueueFragment :
         }
 
         override fun onLongPress(viewHolder: QueueBinder.ViewHolder) {
-            val popupMenu = PopupMenu(requireContext(), viewHolder.itemView)
-            popupMenu.inflate(R.menu.menu_queue_item)
-            popupMenu.menu.findItem(R.id.playNext).isVisible = viewHolder.viewBinder?.queueItem?.isCurrent == false
-            popupMenu.setOnMenuItemClickListener {
-                when (it.itemId) {
-                    R.id.removeFromQueue -> {
-                        presenter.removeFromQueue(viewHolder.viewBinder!!.queueItem)
-                        return@setOnMenuItemClickListener true
+            viewHolder.viewBinder?.queueItem?.let { queueItem ->
+                val popupMenu = PopupMenu(requireContext(), viewHolder.itemView)
+                popupMenu.inflate(R.menu.menu_queue_item)
+                popupMenu.menu.findItem(R.id.playNext).isVisible = queueItem.isCurrent == false
+                popupMenu.setOnMenuItemClickListener {
+                    when (it.itemId) {
+                        R.id.removeFromQueue -> {
+                            presenter.removeFromQueue(queueItem)
+                            return@setOnMenuItemClickListener true
+                        }
+                        R.id.playNext -> {
+                            presenter.playNext(queueItem)
+                            return@setOnMenuItemClickListener true
+                        }
+                        R.id.blacklist -> {
+                            presenter.blacklist(queueItem)
+                            return@setOnMenuItemClickListener true
+                        }
                     }
-                    R.id.playNext -> {
-                        presenter.playNext(viewHolder.viewBinder!!.queueItem)
-                        return@setOnMenuItemClickListener true
-                    }
+                    false
                 }
-                false
-            }
-            popupMenu.show()
+                popupMenu.show()
+            } ?: Timber.e("Failed to show popup menu, queue item null")
         }
     }
 

@@ -15,4 +15,8 @@
         android:id="@+id/playNext"
         android:title="Play Next" />
 
+    <item
+        android:id="@+id/blacklist"
+        android:title="Blacklist" />
+
 </menu>

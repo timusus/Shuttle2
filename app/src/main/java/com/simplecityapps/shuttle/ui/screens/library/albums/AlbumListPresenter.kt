@@ -34,6 +34,7 @@ class AlbumListContract {
         fun addToQueue(album: Album)
         fun playNext(album: Album)
         fun rescanLibrary()
+        fun blacklist(album: Album)
     }
 }
 
@@ -115,5 +116,19 @@ class AlbumListPresenter @Inject constructor(
 
     override fun rescanLibrary() {
         mediaImporter.rescan()
+    }
+
+    override fun blacklist(album: Album) {
+        addDisposable(
+            songRepository.getSongs(SongQuery.AlbumIds(listOf(album.id)))
+                .first(emptyList())
+                .flatMapCompletable { songs ->
+                    songRepository.setBlacklisted(songs, true)
+                }
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onError = { throwable -> Timber.e(throwable, "Failed to blacklist album ${album.name}") })
+        )
     }
 }
