@@ -65,7 +65,7 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
             if (file.exists()) {
                 val clip = ClipData.newPlainText("Shuttle Logs", requireContext().getFileStreamPath(DebugLoggingTree.FILE_NAME).readText(Charsets.UTF_8))
                 try {
-                    clipboardManager.primaryClip = clip
+                    clipboardManager.setPrimaryClip(clip)
                 } catch (e: TransactionTooLargeException) {
                     Toast.makeText(requireContext(), "Log file is too big large clipboard", Toast.LENGTH_SHORT).show()
                 }
