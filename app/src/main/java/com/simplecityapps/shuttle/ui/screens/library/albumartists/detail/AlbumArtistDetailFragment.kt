@@ -10,6 +10,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.Toolbar
 import androidx.core.os.postDelayed
@@ -229,6 +230,10 @@ class AlbumArtistDetailFragment :
                 "• ${resources.getQuantityString(R.plurals.songsPlural, albumArtist.songCount, albumArtist.songCount)}"
     }
 
+    override fun showDeleteError(error: Error) {
+        Toast.makeText(requireContext(), error.userDescription(), Toast.LENGTH_LONG).show()
+    }
+
 
     // ExpandableAlbumArtistBinder.Listener Implementation
 
@@ -257,6 +262,10 @@ class AlbumArtistDetailFragment :
 
         playlistMenuView.createPlaylistMenu(popupMenu.menu)
 
+        if (song.mediaStoreId != null) {
+            popupMenu.menu.findItem(R.id.delete)?.isVisible = false
+        }
+
         popupMenu.setOnMenuItemClickListener { menuItem ->
             if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Songs(song))) {
                 return@setOnMenuItemClickListener true
@@ -276,6 +285,17 @@ class AlbumArtistDetailFragment :
                     }
                     R.id.blacklist -> {
                         presenter.blacklist(song)
+                        return@setOnMenuItemClickListener true
+                    }
+                    R.id.delete -> {
+                        AlertDialog.Builder(requireContext())
+                            .setTitle("Delete Song")
+                            .setMessage("\"${song.name}\" will be permanently deleted")
+                            .setPositiveButton("Delete") { _, _ ->
+                                presenter.delete(song)
+                            }
+                            .setNegativeButton("Cancel", null)
+                            .show()
                         return@setOnMenuItemClickListener true
                     }
                 }

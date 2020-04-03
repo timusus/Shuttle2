@@ -16,6 +16,7 @@ class MediaStoreSongProvider(
             val cursor = context.contentResolver.query(
                 MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 arrayOf(
+                    MediaStore.Audio.Media._ID,
                     MediaStore.Audio.Media.DATA,
                     MediaStore.Audio.Media.TITLE,
                     MediaStore.Audio.Media.ARTIST_ID,
@@ -77,7 +78,8 @@ class MediaStoreSongProvider(
                             lastCompleted = null,
                             playCount = 0,
                             playbackPosition = 0,
-                            blacklisted = false
+                            blacklisted = false,
+                            mediaStoreId = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID))
                         )
                         emitter.onNext(Pair(song, cursor.position / cursor.count.toFloat()))
                     }

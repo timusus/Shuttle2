@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
@@ -181,6 +182,9 @@ class SongListFragment :
         horizontalLoadingView.setProgress(progress)
     }
 
+    override fun showDeleteError(error: Error) {
+        Toast.makeText(requireContext(), error.userDescription(), Toast.LENGTH_LONG).show()
+    }
 
     // Private
 
@@ -195,6 +199,10 @@ class SongListFragment :
             popupMenu.inflate(R.menu.menu_popup_song)
 
             playlistMenuView.createPlaylistMenu(popupMenu.menu)
+
+            if (song.mediaStoreId != null) {
+                popupMenu.menu.findItem(R.id.delete)?.isVisible = false
+            }
 
             popupMenu.setOnMenuItemClickListener { menuItem ->
                 if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Songs(song))) {
@@ -217,6 +225,17 @@ class SongListFragment :
                             presenter.blacklist(song)
                             return@setOnMenuItemClickListener true
                         }
+                        R.id.delete -> {
+                            AlertDialog.Builder(requireContext())
+                                .setTitle("Delete Song")
+                                .setMessage("\"${song.name}\" will be permanently deleted")
+                                .setPositiveButton("Delete") { _, _ ->
+                                    presenter.delete(song)
+                                }
+                                .setNegativeButton("Cancel", null)
+                                .show()
+                            return@setOnMenuItemClickListener true
+                        }
                     }
                 }
                 false
@@ -236,9 +255,7 @@ class SongListFragment :
     // Static
 
     companion object {
-
         const val TAG = "SongListFragment"
-
         const val ARG_RECYCLER_STATE = "recycler_state"
 
         fun newInstance() = SongListFragment()

@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
@@ -164,6 +165,10 @@ class PlaylistDetailFragment :
         Toast.makeText(context, error.userDescription(), Toast.LENGTH_LONG).show()
     }
 
+    override fun showDeleteError(error: Error) {
+        Toast.makeText(requireContext(), error.userDescription(), Toast.LENGTH_LONG).show()
+    }
+
 
     // SongBinder.Listener Implementation
 
@@ -178,6 +183,10 @@ class PlaylistDetailFragment :
             popupMenu.inflate(R.menu.menu_popup_song)
 
             playlistMenuView.createPlaylistMenu(popupMenu.menu)
+
+            if (song.mediaStoreId != null) {
+                popupMenu.menu.findItem(R.id.delete)?.isVisible = false
+            }
 
             popupMenu.setOnMenuItemClickListener { menuItem ->
                 if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Songs(song))) {
@@ -198,6 +207,17 @@ class PlaylistDetailFragment :
                         }
                         R.id.blacklist -> {
                             presenter.blacklist(song)
+                            return@setOnMenuItemClickListener true
+                        }
+                        R.id.delete -> {
+                            AlertDialog.Builder(requireContext())
+                                .setTitle("Delete Song")
+                                .setMessage("\"${song.name}\" will be permanently deleted")
+                                .setPositiveButton("Delete") { _, _ ->
+                                    presenter.delete(song)
+                                }
+                                .setNegativeButton("Cancel", null)
+                                .show()
                             return@setOnMenuItemClickListener true
                         }
                     }

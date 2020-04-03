@@ -239,4 +239,9 @@ class LocalSongRepository(
         Timber.v("Clearing blacklist")
         return database.songDataDao().clearBlacklist()
     }
+
+    override fun removeSong(song: Song): Completable {
+        Timber.v("Deleting song")
+        return database.songDataDao().delete(song.id)
+    }
 }

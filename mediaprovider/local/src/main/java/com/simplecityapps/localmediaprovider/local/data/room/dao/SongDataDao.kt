@@ -70,4 +70,7 @@ abstract class SongDataDao {
 
     @Delete
     abstract fun deleteAll(songData: List<SongData>): Int
+
+    @Query("DELETE from songs WHERE id = :id")
+    abstract fun delete(id: Long): Completable
 }

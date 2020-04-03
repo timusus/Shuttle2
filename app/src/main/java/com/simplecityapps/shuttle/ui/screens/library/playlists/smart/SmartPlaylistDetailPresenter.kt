@@ -1,11 +1,15 @@
 package com.simplecityapps.shuttle.ui.screens.library.playlists.smart
 
+import android.content.Context
+import androidx.core.net.toUri
+import androidx.documentfile.provider.DocumentFile
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.mediaprovider.repository.SongSortOrder
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.squareup.inject.assisted.Assisted
@@ -40,6 +44,7 @@ interface SmartPlaylistDetailContract {
         fun setData(songs: List<Song>)
         fun showLoadError(error: Error)
         fun onAddedToQueue(song: Song)
+        fun showDeleteError(error: Error)
     }
 
     interface Presenter : BaseContract.Presenter<View> {
@@ -49,10 +54,12 @@ interface SmartPlaylistDetailContract {
         fun addToQueue(song: Song)
         fun playNext(song: Song)
         fun blacklist(song: Song)
+        fun delete(song: Song)
     }
 }
 
 class SmartPlaylistDetailPresenter @AssistedInject constructor(
+    private val context: Context,
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackManager,
     @Assisted private val playlist: SmartPlaylist
@@ -111,5 +118,20 @@ class SmartPlaylistDetailPresenter @AssistedInject constructor(
                 .subscribeOn(Schedulers.io())
                 .subscribeBy(onError = { throwable -> Timber.e(throwable, "Failed to blacklist song") })
         )
+    }
+
+    override fun delete(song: Song) {
+        val uri = song.path.toUri()
+        val documentFile = DocumentFile.fromSingleUri(context, uri)
+        if (documentFile?.delete() == true) {
+            addDisposable(songRepository.removeSong(song)
+                .subscribeOn(Schedulers.io())
+                .subscribeBy(
+                    onComplete = { Timber.i("Song deleted") },
+                    onError = { throwable -> Timber.e(throwable, "Failed to remove song from database") }
+                ))
+        } else {
+            view?.showDeleteError(UserFriendlyError("The song couldn't be deleted"))
+        }
     }
 }

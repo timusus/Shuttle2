@@ -45,7 +45,8 @@ data class SongData(
     @ColumnInfo(name = "playCount") var playCount: Int = 0,
     @ColumnInfo(name = "lastPlayed") var lastPlayed: Date? = null,
     @ColumnInfo(name = "lastCompleted") var lastCompleted: Date? = null,
-    @ColumnInfo(name = "blacklisted") var blacklisted: Boolean = false
+    @ColumnInfo(name = "blacklisted") var blacklisted: Boolean = false,
+    @ColumnInfo(name = "mediaStoreId") var mediaStoreId: Long? = null
 ) : ContentsComparator<SongData> {
     @PrimaryKey(autoGenerate = true)
     var id: Long = 0
@@ -67,7 +68,7 @@ data class SongData(
         // Todo: The track/disc check can be removed.
         //  This is a fix for a temporary issue, due to a change in how track/disc numbers are imported from the MediaStore.
         //  This just enables users with out-dated track/disc parsing logic to have their library update.
-        return lastModified == other.lastModified && track == other.track && disc == other.disc && name == other.name
+        return lastModified == other.lastModified && track == other.track && disc == other.disc && name == other.name && mediaStoreId == other.mediaStoreId
     }
 
     override fun equals(other: Any?): Boolean {
@@ -103,7 +104,8 @@ fun Song.toSongData(): SongData {
         playCount = playCount,
         lastPlayed = lastPlayed,
         lastCompleted = lastCompleted,
-        blacklisted = false
+        blacklisted = false,
+        mediaStoreId = mediaStoreId
     ).apply {
         id = this@toSongData.id
         albumArtistName = this@toSongData.albumArtistName

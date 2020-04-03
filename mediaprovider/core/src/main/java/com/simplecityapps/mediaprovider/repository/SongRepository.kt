@@ -23,6 +23,8 @@ interface SongRepository {
     fun setBlacklisted(songs: List<Song>, blacklisted: Boolean): Completable
 
     fun clearBlacklist(): Completable
+
+    fun removeSong(song: Song) : Completable
 }
 
 sealed class SongQuery(

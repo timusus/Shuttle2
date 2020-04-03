@@ -1,9 +1,13 @@
 package com.simplecityapps.shuttle.ui.screens.library.songs
 
+import android.content.Context
+import androidx.core.net.toUri
+import androidx.documentfile.provider.DocumentFile
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -27,6 +31,7 @@ interface SongListContract {
         fun onAddedToQueue(song: Song)
         fun setLoadingState(state: LoadingState)
         fun setLoadingProgress(progress: Float)
+        fun showDeleteError(error: Error)
     }
 
     interface Presenter : BaseContract.Presenter<View> {
@@ -36,10 +41,12 @@ interface SongListContract {
         fun playNext(song: Song)
         fun rescanLibrary()
         fun blacklist(song: Song)
+        fun delete(song: Song)
     }
 }
 
 class SongListPresenter @Inject constructor(
+    private val context: Context,
     private val playbackManager: PlaybackManager,
     private val songRepository: SongRepository,
     private val mediaImporter: MediaImporter
@@ -119,5 +126,20 @@ class SongListPresenter @Inject constructor(
                 .subscribeOn(Schedulers.io())
                 .subscribeBy(onError = { throwable -> Timber.e(throwable, "Failed to blacklist song") })
         )
+    }
+
+    override fun delete(song: Song) {
+        val uri = song.path.toUri()
+        val documentFile = DocumentFile.fromSingleUri(context, uri)
+        if (documentFile?.delete() == true) {
+            addDisposable(songRepository.removeSong(song)
+                .subscribeOn(Schedulers.io())
+                .subscribeBy(
+                    onComplete = { Timber.i("Song deleted") },
+                    onError = { throwable -> Timber.e(throwable, "Failed to remove song from database") }
+                ))
+        } else {
+            view?.showDeleteError(UserFriendlyError("The song couldn't be deleted"))
+        }
     }
 }

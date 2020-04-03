@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
@@ -184,6 +185,10 @@ class HomeFragment :
         Toast.makeText(context, "${song.name} added to queue", Toast.LENGTH_SHORT).show()
     }
 
+    override fun showDeleteError(error: Error) {
+        Toast.makeText(requireContext(), error.userDescription(), Toast.LENGTH_LONG).show()
+    }
+
 
     // MostPlayedSectionBinder.Listener Implementation
 
@@ -197,6 +202,10 @@ class HomeFragment :
             popupMenu.inflate(R.menu.menu_popup_song)
 
             playlistMenuView.createPlaylistMenu(popupMenu.menu)
+
+            if (song.mediaStoreId != null) {
+                popupMenu.menu.findItem(R.id.delete)?.isVisible = false
+            }
 
             popupMenu.setOnMenuItemClickListener { menuItem ->
                 if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Songs(song))) {
@@ -217,6 +226,17 @@ class HomeFragment :
                         }
                         R.id.blacklist -> {
                             presenter.blacklist(song)
+                            return@setOnMenuItemClickListener true
+                        }
+                        R.id.delete -> {
+                            AlertDialog.Builder(requireContext())
+                                .setTitle("Delete Song")
+                                .setMessage("\"${song.name}\" will be permanently deleted")
+                                .setPositiveButton("Delete") { _, _ ->
+                                    presenter.delete(song)
+                                }
+                                .setNegativeButton("Cancel", null)
+                                .show()
                             return@setOnMenuItemClickListener true
                         }
                     }
