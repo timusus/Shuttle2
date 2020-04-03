@@ -1,10 +1,6 @@
 {
   "commits": [
-    "Added blacklist feature",
-    "Automatically rescan library when songs are added (triggered by Media Store scan)",
-    "Fixed an issue where recently added / most played weren't updated in real-time on home screen",
-    "Work around Android bug causing some audio files not to be detected",
-    "Fixed an issue where 'media provider' settings button didn't work",
-    "Minor styling improvements for dark mode"
+    "Added option to delete songs. (Works with 'advanced' media scanner only)",
+    "Fixed an issue where search results only showed up if a matching artist was found"
   ]
 }
