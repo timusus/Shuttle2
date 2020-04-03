@@ -159,11 +159,11 @@ class SearchFragment : Fragment(),
                 add(SearchHeaderBinder("Artists"))
                 addAll(searchResult.first.map { albumArtist -> AlbumArtistBinder(albumArtist, imageLoader, albumArtistBinderListener) })
             }
-            if (searchResult.first.isNotEmpty()) {
+            if (searchResult.second.isNotEmpty()) {
                 add(SearchHeaderBinder("Albums"))
                 addAll(searchResult.second.map { album -> AlbumBinder(album, imageLoader, albumBinderListener) })
             }
-            if (searchResult.first.isNotEmpty()) {
+            if (searchResult.third.isNotEmpty()) {
                 add(SearchHeaderBinder("Songs"))
                 addAll(searchResult.third.map { song -> SongBinder(song, imageLoader, songBinderListener) })
             }
