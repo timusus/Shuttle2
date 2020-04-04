@@ -2,7 +2,9 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <PreferenceCategory android:title="Display">
+    <PreferenceCategory
+        android:title="Display"
+        app:iconSpaceReserved="false">
         <ListPreference
             android:defaultValue="0"
             android:dialogTitle="Night Mode"
@@ -10,70 +12,91 @@
             android:entryValues="@array/pref_night_mode_values"
             android:key="pref_night_mode"
             android:summary="Matches the system preference for night mode by default"
-            android:title="Night mode" />
+            android:title="Night mode"
+            app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="Media">
+    <PreferenceCategory
+        android:title="Media"
+        app:iconSpaceReserved="false">
         <Preference
             android:key="pref_media_provider"
             android:summary="Choose between Shuttle's built in Media Scanner, and the Android MediaStore"
-            android:title="Media provider" />
+            android:title="Media provider"
+            app:iconSpaceReserved="false" />
         <Preference
             android:key="pref_media_rescan"
             android:summary="Rescan the device for media"
-            android:title="Rescan" />
+            android:title="Rescan"
+            app:iconSpaceReserved="false" />
         <Preference
             android:key="pref_blacklist"
             android:summary="View/Edit blacklist"
-            android:title="Blacklist" />
+            android:title="Blacklist"
+            app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="Artwork">
+    <PreferenceCategory
+        android:title="Artwork"
+        app:iconSpaceReserved="false">
         <SwitchPreference
             android:defaultValue="true"
             android:key="artwork_wifi_only"
             android:summary="Only download artwork from remote sources when Wi-Fi is available"
-            android:title="Wi-Fi only" />
+            android:title="Wi-Fi only"
+            app:iconSpaceReserved="false" />
 
         <SwitchPreference
             android:defaultValue="false"
             android:key="artwork_local_only"
             android:summary="Don't download artwork from remote (internet) sources"
-            android:title="Local only" />
+            android:title="Local only"
+            app:iconSpaceReserved="false" />
 
         <Preference
             android:key="pref_clear_artwork"
             android:summary="Removes all cached artwork"
-            android:title="Clear artwork" />
+            android:title="Clear artwork"
+            app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="Changelog">
+    <PreferenceCategory
+        android:title="Changelog"
+        app:iconSpaceReserved="false">
 
         <Preference
             android:key="changelog_show"
+            app:iconSpaceReserved="false"
             app:title="View changelog" />
 
         <SwitchPreference
             android:defaultValue="true"
             android:key="changelog_show_on_launch"
-            android:title="Show changelog on launch" />
+            android:title="Show changelog on launch"
+            app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="Privacy">
+    <PreferenceCategory
+        android:title="Privacy"
+        app:iconSpaceReserved="false">
         <SwitchPreference
             android:defaultValue="true"
             android:key="pref_crash_reporting"
             android:summary="Shuttle collects crash data via Google's 'Firebase Crashlytics'. Turn off to opt-out."
-            android:title="Crash Reporting" />
+            android:title="Crash Reporting"
+            app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
-    <PreferenceCategory android:title="Debug">
+    <PreferenceCategory
+        android:title="Debug"
+        app:iconSpaceReserved="false">
         <SwitchPreference
             android:defaultValue="false"
             android:dialogTitle="File Logging"
             android:key="pref_file_logging"
             android:summary="Writes Shuttle logs to a file on disk, which can be copied via the debug drawer"
-            android:title="File logging" />
+            android:title="File logging"
+            app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
 </PreferenceScreen>
