@@ -26,6 +26,12 @@ class LocalAlbumArtistRepository(private val database: MediaDatabase) : AlbumArt
     }
 
     override fun getAlbumArtists(query: AlbumArtistQuery): Observable<List<AlbumArtist>> {
-        return albumArtistsRelay.map { albumArtists -> albumArtists.filter(query.predicate) }
+        return albumArtistsRelay.map { albumArtists ->
+            var result = albumArtists.filter(query.predicate)
+            query.sortOrder?.let { sortOrder ->
+                result = result.sortedWith(sortOrder.comparator)
+            }
+            result
+        }
     }
 }

@@ -60,6 +60,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:clipToPadding="false"
+        android:minHeight="156dp"
         android:nestedScrollingEnabled="false"
         android:orientation="horizontal"
         android:paddingStart="12dp"

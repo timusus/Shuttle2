@@ -76,13 +76,14 @@ class HomePresenter @Inject constructor(
 
     override fun loadData() {
         addDisposable(Observables.combineLatest(
-                albumRepository.getAlbums(AlbumQuery.PlayCount(1, AlbumSortOrder.PlayCount)),
+                albumRepository.getAlbums(AlbumQuery.PlayCount(1, AlbumSortOrder.PlayCount)).map { albums -> albums.take(20) },
                 songRepository.getSongs(SmartPlaylist.RecentlyPlayed.songQuery)
                     .map { songs -> SmartPlaylist.RecentlyPlayed.songQuery?.sortOrder?.let { songSortOrder -> songs.sortedWith(songSortOrder.comparator) } ?: songs }
                     .map { songs -> songs.distinctBy { it.albumId }.map { it.albumId } }
-                    .concatMap { albumIds -> albumRepository.getAlbums(AlbumQuery.AlbumIds(albumIds)) },
-                albumRepository.getAlbums(AlbumQuery.Year(Calendar.getInstance().get(Calendar.YEAR))),
+                    .concatMap { albumIds -> albumRepository.getAlbums(AlbumQuery.AlbumIds(albumIds)).take(20) },
+                albumRepository.getAlbums(AlbumQuery.Year(Calendar.getInstance().get(Calendar.YEAR))).map { albums -> albums.take(20) },
                 albumArtistRepository.getAlbumArtists(AlbumArtistQuery.PlayCount(0, AlbumArtistSortOrder.PlayCount))
+                    .map { albumArtists -> albumArtists.shuffled().take(20) }
             ) { mostPlayedAlbums, recentlyPlayedAlbums, albumsFromThisYear, unplayedAlbumArtists ->
                 HomeContract.HomeData(
                     mostPlayedAlbums,

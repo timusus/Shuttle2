@@ -187,9 +187,9 @@ class HomeFragment :
 
     override fun setData(data: HomeContract.HomeData) {
         val viewBinders = mutableListOf<ViewBinder>()
-        if (data.albumsFromThisYear.isNotEmpty()) {
+        if (data.recentlyPlayedAlbums.isNotEmpty()) {
             viewBinders.add(
-                HorizontalAlbumListBinder("This Year", "Albums released in ${Calendar.getInstance().get(Calendar.YEAR)}", data.albumsFromThisYear, imageLoader, listener = albumBinderListener)
+                HorizontalAlbumListBinder("Recent", "Recently played albums", data.recentlyPlayedAlbums, imageLoader, listener = albumBinderListener)
             )
         }
         if (data.mostPlayedAlbums.isNotEmpty()) {
@@ -197,9 +197,9 @@ class HomeFragment :
                 HorizontalAlbumListBinder("Most Played", "Albums in heavy rotation", data.mostPlayedAlbums, imageLoader, showPlayCountBadge = true, listener = albumBinderListener)
             )
         }
-        if (data.recentlyPlayedAlbums.isNotEmpty()) {
+        if (data.albumsFromThisYear.isNotEmpty()) {
             viewBinders.add(
-                HorizontalAlbumListBinder("Recent", "Recently played albums", data.recentlyPlayedAlbums, imageLoader, listener = albumBinderListener)
+                HorizontalAlbumListBinder("This Year", "Albums released in ${Calendar.getInstance().get(Calendar.YEAR)}", data.albumsFromThisYear, imageLoader, listener = albumBinderListener)
             )
         }
         if (data.unplayedAlbumArtists.isNotEmpty()) {
