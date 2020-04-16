@@ -14,7 +14,8 @@ abstract class AlbumArtistDataDao {
         "SELECT " +
                 "album_artists.*, " +
                 "count(distinct albums.id) as albumCount, " +
-                "count(distinct songs.id) as songCount " +
+                "count(distinct songs.id) as songCount, " +
+                "min(distinct songs.playCount) as playCount " +
                 "FROM album_artists " +
                 "LEFT JOIN songs ON songs.albumArtistId = album_artists.id " +
                 "LEFT JOIN albums ON albums.albumArtistId = album_artists.id " +

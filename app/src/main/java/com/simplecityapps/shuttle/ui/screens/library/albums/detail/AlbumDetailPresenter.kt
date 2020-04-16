@@ -64,7 +64,7 @@ class AlbumDetailPresenter @AssistedInject constructor(
 
         view.setAlbum(album)
         addDisposable(albumRepository
-            .getAlbums(AlbumQuery.AlbumId(album.id))
+            .getAlbums(AlbumQuery.AlbumIds(listOf(album.id)))
             .map { it.firstOrNull() }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())

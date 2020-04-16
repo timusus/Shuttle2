@@ -1,12 +1,12 @@
 package com.simplecityapps.shuttle.ui.screens.home
 
 import android.os.Bundle
+import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
@@ -20,29 +20,33 @@ import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.adapter.ViewBinder
-import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.mediaprovider.model.Album
+import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.repository.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.PlaylistRepository
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
-import com.simplecityapps.shuttle.ui.common.autoClearedNullable
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.HomeButton
+import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragmentArgs
+import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.library.playlists.detail.PlaylistDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylist
 import com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylistDetailFragmentArgs
+import com.simplecityapps.shuttle.ui.screens.library.songs.GridAlbumArtistBinder
+import com.simplecityapps.shuttle.ui.screens.library.songs.GridAlbumBinder
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
-import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
+import java.util.*
 import javax.inject.Inject
 
 class HomeFragment :
@@ -63,14 +67,13 @@ class HomeFragment :
 
     private var imageLoader: ArtworkImageLoader by autoCleared()
 
-    private var recentlyAddedViewBinder: ViewBinder? by autoClearedNullable()
-    private var mostPlayedViewBinder: ViewBinder? by autoClearedNullable()
-
     private val disposable: CompositeDisposable = CompositeDisposable()
 
     private lateinit var playlistMenuView: PlaylistMenuView
 
     private var searchView: SearchView by autoCleared()
+
+    private var recyclerViewState: Parcelable? = null
 
 
     // Lifecycle
@@ -129,12 +132,18 @@ class HomeFragment :
 
         imageLoader = GlideImageLoader(this)
 
+        savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
+
         presenter.bindView(this)
         playlistMenuPresenter.bindView(playlistMenuView)
     }
 
     override fun onResume() {
         super.onResume()
+
+        recyclerViewState?.let {
+            recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
+        }
 
         searchView.setOnSearchClickListener {
             if (isResumed)
@@ -146,14 +155,19 @@ class HomeFragment :
             }
         }
 
-        presenter.loadMostPlayed()
-        presenter.loadRecentlyPlayed()
+        presenter.loadData()
     }
 
     override fun onPause() {
+        super.onPause()
         searchView.setOnSearchClickListener(null)
         searchView.setOnQueryTextFocusChangeListener(null)
-        super.onPause()
+        recyclerViewState = recyclerView.layoutManager?.onSaveInstanceState()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putParcelable(ARG_RECYCLER_STATE, recyclerViewState)
+        super.onSaveInstanceState(outState)
     }
 
     override fun onDestroyView() {
@@ -171,72 +185,82 @@ class HomeFragment :
         Toast.makeText(context, error.userDescription(), Toast.LENGTH_LONG).show()
     }
 
-    override fun setMostPlayed(songs: List<Song>) {
-        mostPlayedViewBinder = MostPlayedSectionBinder(songs, imageLoader, sectionBinderListener)
-        updateViewBinders()
-    }
-
-    override fun setRecentlyPlayed(songs: List<Song>) {
-        recentlyAddedViewBinder = RecentlyPlayedSectionBinder(songs, imageLoader, sectionBinderListener)
-        updateViewBinders()
-    }
-
-    override fun onAddedToQueue(song: Song) {
-        Toast.makeText(context, "${song.name} added to queue", Toast.LENGTH_SHORT).show()
+    override fun setData(data: HomeContract.HomeData) {
+        val viewBinders = mutableListOf<ViewBinder>()
+        if (data.albumsFromThisYear.isNotEmpty()) {
+            viewBinders.add(
+                HorizontalAlbumListBinder("This Year", "Albums released in ${Calendar.getInstance().get(Calendar.YEAR)}", data.albumsFromThisYear, imageLoader, listener = albumBinderListener)
+            )
+        }
+        if (data.mostPlayedAlbums.isNotEmpty()) {
+            viewBinders.add(
+                HorizontalAlbumListBinder("Most Played", "Albums in heavy rotation", data.mostPlayedAlbums, imageLoader, showPlayCountBadge = true, listener = albumBinderListener)
+            )
+        }
+        if (data.recentlyPlayedAlbums.isNotEmpty()) {
+            viewBinders.add(
+                HorizontalAlbumListBinder("Recent", "Recently played albums", data.recentlyPlayedAlbums, imageLoader, listener = albumBinderListener)
+            )
+        }
+        if (data.unplayedAlbumArtists.isNotEmpty()) {
+            viewBinders.add(
+                HorizontalAlbumArtistListBinder("Something Different", "Artists you haven't listened to in a while", data.unplayedAlbumArtists, imageLoader, listener = albumArtistBinderListener)
+            )
+        }
+        adapter.setData(viewBinders.toList(), completion = {
+            recyclerViewState?.let {
+                recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
+            }
+        })
     }
 
     override fun showDeleteError(error: Error) {
         Toast.makeText(requireContext(), error.userDescription(), Toast.LENGTH_LONG).show()
     }
 
+    override fun onAddedToQueue(albumArtist: AlbumArtist) {
+        Toast.makeText(context, "${albumArtist.name} added to queue", Toast.LENGTH_SHORT).show()
+    }
 
-    // MostPlayedSectionBinder.Listener Implementation
+    override fun onAddedToQueue(album: Album) {
+        Toast.makeText(context, "${album.name} added to queue", Toast.LENGTH_SHORT).show()
+    }
 
-    private val sectionBinderListener = object : SectionBinderListener {
-        override fun onSongClicked(song: Song, songs: List<Song>) {
-            presenter.play(song, songs)
+
+    // Private
+
+    private val albumArtistBinderListener = object : GridAlbumArtistBinder.Listener {
+
+        override fun onAlbumArtistClicked(albumArtist: AlbumArtist, viewHolder: GridAlbumArtistBinder.ViewHolder) {
+            findNavController().navigate(
+                R.id.action_homeFragment_to_albumArtistDetailFragment,
+                AlbumArtistDetailFragmentArgs(albumArtist, true).toBundle(),
+                null,
+                FragmentNavigatorExtras(viewHolder.imageView to viewHolder.imageView.transitionName)
+            )
         }
 
-        override fun onOverflowClicked(view: View, song: Song) {
+        override fun onAlbumArtistLongPressed(view: View, albumArtist: AlbumArtist) {
             val popupMenu = PopupMenu(requireContext(), view)
-            popupMenu.inflate(R.menu.menu_popup_song)
+            popupMenu.inflate(R.menu.menu_popup_add)
 
             playlistMenuView.createPlaylistMenu(popupMenu.menu)
 
-            if (song.mediaStoreId != null) {
-                popupMenu.menu.findItem(R.id.delete)?.isVisible = false
-            }
-
             popupMenu.setOnMenuItemClickListener { menuItem ->
-                if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Songs(song))) {
+                if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.AlbumArtists(albumArtist))) {
                     return@setOnMenuItemClickListener true
                 } else {
                     when (menuItem.itemId) {
                         R.id.queue -> {
-                            presenter.addToQueue(song)
+                            presenter.addToQueue(albumArtist)
                             return@setOnMenuItemClickListener true
                         }
                         R.id.playNext -> {
-                            presenter.playNext(song)
-                            return@setOnMenuItemClickListener true
-                        }
-                        R.id.songInfo -> {
-                            SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
+                            presenter.playNext(albumArtist)
                             return@setOnMenuItemClickListener true
                         }
                         R.id.blacklist -> {
-                            presenter.blacklist(song)
-                            return@setOnMenuItemClickListener true
-                        }
-                        R.id.delete -> {
-                            AlertDialog.Builder(requireContext())
-                                .setTitle("Delete Song")
-                                .setMessage("\"${song.name}\" will be permanently deleted")
-                                .setPositiveButton("Delete") { _, _ ->
-                                    presenter.delete(song)
-                                }
-                                .setNegativeButton("Cancel", null)
-                                .show()
+                            presenter.blacklist(albumArtist)
                             return@setOnMenuItemClickListener true
                         }
                     }
@@ -245,20 +269,48 @@ class HomeFragment :
             }
             popupMenu.show()
         }
-
-        override fun onHeaderClicked(playlist: SmartPlaylist) {
-            findNavController().navigate(R.id.action_homeFragment_to_smartPlaylistDetailFragment, SmartPlaylistDetailFragmentArgs(playlist).toBundle())
-        }
     }
 
+    private val albumBinderListener = object : GridAlbumBinder.Listener {
 
-    // Private
+        override fun onAlbumClicked(album: Album, viewHolder: GridAlbumBinder.ViewHolder) {
+            findNavController().navigate(
+                R.id.action_homeFragment_to_albumDetailFragment,
+                AlbumDetailFragmentArgs(album, true).toBundle(),
+                null,
+                FragmentNavigatorExtras(viewHolder.imageView to viewHolder.imageView.transitionName)
+            )
+        }
 
-    fun updateViewBinders() {
-        val viewBinders = mutableListOf<ViewBinder>()
-        recentlyAddedViewBinder?.let { viewBinders.add(it) }
-        mostPlayedViewBinder?.let { viewBinders.add(it) }
-        adapter.setData(viewBinders)
+        override fun onAlbumLongPressed(view: View, album: Album) {
+            val popupMenu = PopupMenu(requireContext(), view)
+            popupMenu.inflate(R.menu.menu_popup_add)
+
+            playlistMenuView.createPlaylistMenu(popupMenu.menu)
+
+            popupMenu.setOnMenuItemClickListener { menuItem ->
+                if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Albums(album))) {
+                    return@setOnMenuItemClickListener true
+                } else {
+                    when (menuItem.itemId) {
+                        R.id.queue -> {
+                            presenter.addToQueue(album)
+                            return@setOnMenuItemClickListener true
+                        }
+                        R.id.playNext -> {
+                            presenter.playNext(album)
+                            return@setOnMenuItemClickListener true
+                        }
+                        R.id.blacklist -> {
+                            presenter.blacklist(album)
+                            return@setOnMenuItemClickListener true
+                        }
+                    }
+                }
+                false
+            }
+            popupMenu.show()
+        }
     }
 
     private fun navigateToPlaylist(query: PlaylistQuery) {
@@ -289,5 +341,9 @@ class HomeFragment :
 
     override fun onSave(text: String, playlistData: PlaylistData) {
         playlistMenuPresenter.createPlaylist(text, playlistData)
+    }
+
+    companion object {
+        const val ARG_RECYCLER_STATE = "recycler_state"
     }
 }

@@ -29,6 +29,12 @@
         <action
             android:id="@+id/action_homeFragment_to_smartPlaylistDetailFragment"
             app:destination="@id/smartPlaylistDetailFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_albumArtistDetailFragment"
+            app:destination="@id/albumArtistDetailFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_albumDetailFragment"
+            app:destination="@id/albumDetailFragment" />
     </fragment>
     <fragment
         android:id="@+id/smartPlaylistDetailFragment"

@@ -23,9 +23,9 @@ import java.io.Serializable
 data class SmartPlaylist(val nameResId: Int, val songQuery: SongQuery?) : Serializable {
 
     companion object {
-        val MostPlayed = SmartPlaylist(
+        val MostPlayedAlbums = SmartPlaylist(
             R.string.playlist_title_most_played,
-            SongQuery.PlayCount(2, SongSortOrder.MostPlayed)
+            SongQuery.PlayCount(2, SongSortOrder.PlayCount)
         )
         val RecentlyPlayed = SmartPlaylist(
             R.string.playlist_title_recently_played,
@@ -75,7 +75,7 @@ class SmartPlaylistDetailPresenter @AssistedInject constructor(
 
     override fun loadData() {
         addDisposable(songRepository.getSongs(playlist.songQuery)
-            .map { songs -> playlist.songQuery?.sortOrder?.let { songs.sortedWith(it.getSortOrder()) } ?: songs }
+            .map { songs -> playlist.songQuery?.sortOrder?.let { sortOrder -> songs.sortedWith(sortOrder.comparator) } ?: songs }
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe { songs ->

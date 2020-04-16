@@ -53,7 +53,7 @@ class PlaybackPresenter @Inject constructor(
             .flatMapObservable { playlists ->
                 playlists.firstOrNull()?.let { favoritesPlaylist ->
                     playlistRepository.getSongsForPlaylist(favoritesPlaylist.id)
-                } ?: Observable.error(Error("Failed to retrieve Favorites playlist"))
+                } ?: Observable.just(emptyList())
             }
             .map { it.contains(queueManager.getCurrentItem()?.song) }
             .subscribeOn(Schedulers.io())
@@ -157,7 +157,7 @@ class PlaybackPresenter @Inject constructor(
 
     override fun goToAlbum() {
         queueManager.getCurrentItem()?.song?.let { song ->
-            albumRepository.getAlbums(AlbumQuery.AlbumId(song.albumId)).first(emptyList())
+            albumRepository.getAlbums(AlbumQuery.AlbumIds(listOf(song.albumId))).first(emptyList())
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeBy(
@@ -226,7 +226,7 @@ class PlaybackPresenter @Inject constructor(
                         playlistRepository.getSongsForPlaylist(playlist.id).first(emptyList()).flatMap { songs ->
                             Single.just(songs.contains(song))
                         }
-                    } ?: Single.error(Error("Favorites playlist not found"))
+                    } ?: Single.just(false)
                 }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())

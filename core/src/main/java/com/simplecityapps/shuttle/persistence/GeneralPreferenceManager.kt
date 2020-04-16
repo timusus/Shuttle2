@@ -1,7 +1,6 @@
 package com.simplecityapps.shuttle.persistence
 
 import android.content.SharedPreferences
-import com.simplecityapps.core.BuildConfig
 
 class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences) {
 
@@ -10,7 +9,7 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
             sharedPreferences.put("previous_version_code", value)
         }
         get() {
-            return sharedPreferences.get("previous_version_code", BuildConfig.VERSION_CODE)
+            return sharedPreferences.get("previous_version_code", -1)
         }
 
     var hasSeenChangelog: Boolean

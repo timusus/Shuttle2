@@ -15,7 +15,8 @@ abstract class AlbumDataDao {
                 "album_artists.name as albumArtistName, " +
                 "count(distinct songs.id) as songCount, " +
                 "sum(distinct songs.duration) as duration, " +
-                "min(distinct songs.year) as year " +
+                "min(distinct songs.year) as year, " +
+                "min(distinct songs.playCount) as playCount " +
                 "FROM albums " +
                 "LEFT JOIN album_artists ON album_artists.id = albums.albumArtistId " +
                 "LEFT JOIN songs ON songs.albumId = albums.id " +

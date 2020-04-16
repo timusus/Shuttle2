@@ -28,6 +28,12 @@ class LocalAlbumRepository(private val database: MediaDatabase) : AlbumRepositor
     }
 
     override fun getAlbums(query: AlbumQuery): Observable<List<Album>> {
-        return getAlbums().map { albums -> albums.filter(query.predicate) }
+        return getAlbums().map { albums ->
+            var result = albums.filter(query.predicate)
+            query.sortOrder?.let { sortOrder ->
+                result = result.sortedWith(sortOrder.comparator)
+            }
+            result
+        }
     }
 }

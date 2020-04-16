@@ -1,46 +1,53 @@
 package com.simplecityapps.shuttle.ui.screens.home
 
-import android.content.Context
-import androidx.core.net.toUri
-import androidx.documentfile.provider.DocumentFile
-import com.simplecityapps.mediaprovider.model.Song
-import com.simplecityapps.mediaprovider.repository.SongRepository
+import com.simplecityapps.mediaprovider.model.Album
+import com.simplecityapps.mediaprovider.model.AlbumArtist
+import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
-import com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylist.Companion.MostPlayed
-import com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylist.Companion.RecentlyPlayed
+import com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylist
 import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.rxkotlin.Observables
 import io.reactivex.rxkotlin.subscribeBy
 import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
+import java.util.*
 import javax.inject.Inject
 
 interface HomeContract {
 
+    data class HomeData(
+        val mostPlayedAlbums: List<Album>,
+        val recentlyPlayedAlbums: List<Album>,
+        val albumsFromThisYear: List<Album>,
+        val unplayedAlbumArtists: List<AlbumArtist>
+    )
+
     interface View {
         fun showLoadError(error: Error)
-        fun setMostPlayed(songs: List<Song>)
-        fun setRecentlyPlayed(songs: List<Song>)
-        fun onAddedToQueue(song: Song)
+        fun setData(data: HomeData)
+        fun onAddedToQueue(albumArtist: AlbumArtist)
+        fun onAddedToQueue(album: Album)
         fun showDeleteError(error: Error)
     }
 
     interface Presenter {
         fun shuffleAll()
-        fun play(song: Song, songs: List<Song>)
-        fun loadMostPlayed()
-        fun loadRecentlyPlayed()
-        fun addToQueue(song: Song)
-        fun playNext(song: Song)
-        fun blacklist(song: Song)
-        fun delete(song: Song)
+        fun loadData()
+        fun addToQueue(albumArtist: AlbumArtist)
+        fun playNext(albumArtist: AlbumArtist)
+        fun blacklist(albumArtist: AlbumArtist)
+        fun addToQueue(album: Album)
+        fun playNext(album: Album)
+        fun blacklist(album: Album)
     }
 }
 
 class HomePresenter @Inject constructor(
-    private val context: Context,
     private val songRepository: SongRepository,
+    private val albumRepository: AlbumRepository,
+    private val albumArtistRepository: AlbumArtistRepository,
     private val playbackManager: PlaybackManager
 
 ) : HomeContract.Presenter, BasePresenter<HomeContract.View>() {
@@ -67,77 +74,114 @@ class HomePresenter @Inject constructor(
             ))
     }
 
-    override fun play(song: Song, songs: List<Song>) {
-        playbackManager.load(songs, songs.indexOf(song)) { result ->
-            result.onSuccess {
-                playbackManager.play()
+    override fun loadData() {
+        addDisposable(Observables.combineLatest(
+                albumRepository.getAlbums(AlbumQuery.PlayCount(1, AlbumSortOrder.PlayCount)),
+                songRepository.getSongs(SmartPlaylist.RecentlyPlayed.songQuery)
+                    .map { songs -> SmartPlaylist.RecentlyPlayed.songQuery?.sortOrder?.let { songSortOrder -> songs.sortedWith(songSortOrder.comparator) } ?: songs }
+                    .map { songs -> songs.distinctBy { it.albumId }.map { it.albumId } }
+                    .concatMap { albumIds -> albumRepository.getAlbums(AlbumQuery.AlbumIds(albumIds)) },
+                albumRepository.getAlbums(AlbumQuery.Year(Calendar.getInstance().get(Calendar.YEAR))),
+                albumArtistRepository.getAlbumArtists(AlbumArtistQuery.PlayCount(0, AlbumArtistSortOrder.PlayCount))
+            ) { mostPlayedAlbums, recentlyPlayedAlbums, albumsFromThisYear, unplayedAlbumArtists ->
+                HomeContract.HomeData(
+                    mostPlayedAlbums,
+                    recentlyPlayedAlbums,
+                    albumsFromThisYear,
+                    unplayedAlbumArtists
+                )
             }
-            result.onFailure { error -> view?.showLoadError(Error(error)) }
-        }
+            .subscribeBy(
+                onNext = { homeData -> view?.setData(homeData) },
+                onError = { throwable -> Timber.e(throwable, "Failed to load home data") }
+            ))
     }
 
-    override fun loadMostPlayed() {
+    override fun addToQueue(albumArtist: AlbumArtist) {
         addDisposable(
-            songRepository.getSongs(MostPlayed.songQuery)
-                .map { songs -> MostPlayed.songQuery?.sortOrder?.let { songs.sortedWith(it.getSortOrder()) } ?: songs }
-                .map { songs -> songs.take(20) }
-                .subscribeBy(
-                    onNext = { songs ->
-                        if (songs.count() >= 4) {
-                            view?.setMostPlayed(songs)
-                        }
-                    },
-                    onError = { throwable -> Timber.e(throwable, "Failed to load most played songs") }
-                )
-        )
-    }
-
-    override fun loadRecentlyPlayed() {
-        addDisposable(
-            songRepository.getSongs(RecentlyPlayed.songQuery)
-                .map { songs -> RecentlyPlayed.songQuery?.sortOrder?.let { songSortOrder -> songs.sortedWith(songSortOrder.getSortOrder()) } ?: songs }
-                .map { songs -> songs.take(5) }
-                .subscribeBy(
-                    onNext = { songs ->
-                        if (songs.count() >= 3) {
-                            view?.setRecentlyPlayed(songs)
-                        }
-                    },
-                    onError = { throwable -> Timber.e(throwable, "Failed to load most recently played songs") }
-                )
-        )
-    }
-
-    override fun addToQueue(song: Song) {
-        playbackManager.addToQueue(listOf(song))
-        view?.onAddedToQueue(song)
-    }
-
-    override fun playNext(song: Song) {
-        playbackManager.playNext(listOf(song))
-        view?.onAddedToQueue(song)
-    }
-
-    override fun blacklist(song: Song) {
-        addDisposable(
-            songRepository.setBlacklisted(listOf(song), true)
+            songRepository.getSongs(SongQuery.AlbumArtistIds(listOf(albumArtist.id)))
+                .first(emptyList())
                 .subscribeOn(Schedulers.io())
-                .subscribeBy(onError = { throwable -> Timber.e(throwable, "Failed to blacklist song") })
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onSuccess = { songs ->
+                        playbackManager.addToQueue(songs)
+                        view?.onAddedToQueue(albumArtist)
+                    },
+                    onError = { throwable -> Timber.e(throwable, "Failed to retrieve songs for album artist: ${albumArtist.name}") })
         )
     }
 
-    override fun delete(song: Song) {
-        val uri = song.path.toUri()
-        val documentFile = DocumentFile.fromSingleUri(context, uri)
-        if (documentFile?.delete() == true) {
-            addDisposable(songRepository.removeSong(song)
+    override fun playNext(albumArtist: AlbumArtist) {
+        addDisposable(
+            songRepository.getSongs(SongQuery.AlbumArtistIds(listOf(albumArtist.id)))
+                .first(emptyList())
                 .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
                 .subscribeBy(
-                    onComplete = { Timber.i("Song deleted") },
-                    onError = { throwable -> Timber.e(throwable, "Failed to remove song from database") }
-                ))
-        } else {
-            view?.showDeleteError(UserFriendlyError("The song couldn't be deleted"))
-        }
+                    onSuccess = { songs ->
+                        playbackManager.playNext(songs)
+                        view?.onAddedToQueue(albumArtist)
+                    },
+                    onError = { throwable -> Timber.e(throwable, "Failed to retrieve songs for album artist: ${albumArtist.name}") })
+        )
+    }
+
+    override fun addToQueue(album: Album) {
+        addDisposable(
+            songRepository.getSongs(SongQuery.AlbumIds(listOf(album.id)))
+                .first(emptyList())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onSuccess = { songs ->
+                        playbackManager.addToQueue(songs)
+                        view?.onAddedToQueue(album)
+                    },
+                    onError = { throwable -> Timber.e(throwable, "Failed to retrieve songs for album: ${album.name}") })
+        )
+    }
+
+    override fun playNext(album: Album) {
+        addDisposable(
+            songRepository.getSongs(SongQuery.AlbumIds(listOf(album.id)))
+                .first(emptyList())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onSuccess = { songs ->
+                        playbackManager.playNext(songs)
+                        view?.onAddedToQueue(album)
+                    },
+                    onError = { throwable -> Timber.e(throwable, "Failed to retrieve songs for album: ${album.name}") })
+        )
+    }
+
+    override fun blacklist(albumArtist: AlbumArtist) {
+        addDisposable(
+            songRepository.getSongs(SongQuery.AlbumArtistIds(listOf(albumArtist.id)))
+                .first(emptyList())
+                .flatMapCompletable { songs ->
+                    songRepository.setBlacklisted(songs, true)
+                }
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onError = { throwable -> Timber.e(throwable, "Failed to retrieve songs for album artist: ${albumArtist.name}") })
+        )
+    }
+
+    override fun blacklist(album: Album) {
+        addDisposable(
+            songRepository.getSongs(SongQuery.AlbumIds(listOf(album.id)))
+                .first(emptyList())
+                .flatMapCompletable { songs ->
+                    songRepository.setBlacklisted(songs, true)
+                }
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(
+                    onError = { throwable -> Timber.e(throwable, "Failed to blacklist album ${album.name}") })
+        )
     }
 }

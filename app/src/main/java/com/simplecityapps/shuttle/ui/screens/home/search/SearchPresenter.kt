@@ -21,23 +21,6 @@ import javax.inject.Inject
 
 interface SearchContract : BaseContract.Presenter<SearchContract.View> {
 
-    interface Presenter {
-        fun loadData(query: String)
-        fun onSongClicked(song: Song)
-        fun onAlbumArtistCLicked(albumArtist: AlbumArtist)
-        fun onAlbumClicked(album: Album)
-        fun addToQueue(albumArtist: AlbumArtist)
-        fun playNext(albumArtist: AlbumArtist)
-        fun blacklist(albumArtist: AlbumArtist)
-        fun addToQueue(album: Album)
-        fun playNext(album: Album)
-        fun blacklist(album: Album)
-        fun addToQueue(song: Song)
-        fun playNext(song: Song)
-        fun blacklist(song: Song)
-        fun delete(song: Song)
-    }
-
     interface View {
         fun setData(searchResult: Triple<List<AlbumArtist>, List<Album>, List<Song>>)
         fun showLoadError(error: Error)
@@ -45,6 +28,23 @@ interface SearchContract : BaseContract.Presenter<SearchContract.View> {
         fun onAddedToQueue(album: Album)
         fun onAddedToQueue(song: Song)
         fun showDeleteError(error: Error)
+    }
+
+    interface Presenter {
+        fun loadData(query: String)
+        fun onAlbumArtistCLicked(albumArtist: AlbumArtist)
+        fun addToQueue(albumArtist: AlbumArtist)
+        fun playNext(albumArtist: AlbumArtist)
+        fun blacklist(albumArtist: AlbumArtist)
+        fun onAlbumClicked(album: Album)
+        fun addToQueue(album: Album)
+        fun playNext(album: Album)
+        fun blacklist(album: Album)
+        fun onSongClicked(song: Song)
+        fun addToQueue(song: Song)
+        fun playNext(song: Song)
+        fun blacklist(song: Song)
+        fun delete(song: Song)
     }
 }
 

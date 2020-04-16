@@ -44,6 +44,8 @@ interface ArtworkImageLoader {
     fun loadBitmap(song: Song): ByteArray?
 
     fun loadColorSet(song: Song, callback: (ColorSet?) -> Unit)
+    fun loadColorSet(album: Album, callback: (ColorSet?) -> Unit)
+    fun loadColorSet(albumArtist: AlbumArtist, callback: (ColorSet?) -> Unit)
 
     fun clear(imageView: ImageView)
 

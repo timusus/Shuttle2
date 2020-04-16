@@ -17,4 +17,11 @@
         <attr name="seconds" format="integer" />
     </declare-styleable>
 
+    <declare-styleable name="BadgeView">
+        <attr name="android:textColor" format="color|reference" />
+        <attr name="android:background" format="color|reference" />
+        <attr name="android:fontFamily" format="reference" />
+        <attr name="android:textSize" format="dimension|reference" />
+    </declare-styleable>
+
 </resources>

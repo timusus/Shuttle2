@@ -23,7 +23,6 @@ class AlbumBinder(
     interface Listener {
         fun onAlbumClicked(album: Album, viewHolder: ViewHolder)
         fun onOverflowClicked(view: View, album: Album) {}
-
     }
 
     override fun createViewHolder(parent: ViewGroup): ViewHolder {

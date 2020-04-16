@@ -180,6 +180,41 @@ class GlideImageLoader : ArtworkImageLoader {
             .submit(256, 256)
     }
 
+    override fun loadColorSet(album: Album, callback: (ColorSet?) -> Unit) {
+        requestManager
+            .`as`(ColorSet::class.java)
+            .load(album)
+            .addListener(object : RequestListener<ColorSet> {
+                override fun onLoadFailed(e: GlideException?, model: Any?, target: Target<ColorSet>?, isFirstResource: Boolean): Boolean {
+                    callback(null)
+                    return true
+                }
+
+                override fun onResourceReady(resource: ColorSet?, model: Any?, target: Target<ColorSet>?, dataSource: DataSource?, isFirstResource: Boolean): Boolean {
+                    callback(resource)
+                    return true
+                }
+            })
+            .submit(256, 256)
+    }
+    override fun loadColorSet(albumArtist: AlbumArtist, callback: (ColorSet?) -> Unit) {
+        requestManager
+            .`as`(ColorSet::class.java)
+            .load(albumArtist)
+            .addListener(object : RequestListener<ColorSet> {
+                override fun onLoadFailed(e: GlideException?, model: Any?, target: Target<ColorSet>?, isFirstResource: Boolean): Boolean {
+                    callback(null)
+                    return true
+                }
+
+                override fun onResourceReady(resource: ColorSet?, model: Any?, target: Target<ColorSet>?, dataSource: DataSource?, isFirstResource: Boolean): Boolean {
+                    callback(resource)
+                    return true
+                }
+            })
+            .submit(256, 256)
+    }
+
     @DrawableRes
     var placeHolderResId: Int = R.drawable.ic_music_note_black_24dp
 

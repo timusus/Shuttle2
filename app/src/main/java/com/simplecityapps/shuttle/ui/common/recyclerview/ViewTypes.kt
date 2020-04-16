@@ -1,7 +1,6 @@
 package com.simplecityapps.shuttle.ui.common.recyclerview
 
 object ViewTypes {
-
     const val Song = 0
     const val Album = 1
     const val AlbumArtist = 2
@@ -15,8 +14,9 @@ object ViewTypes {
     const val Playlist = 10
     const val Settings = 11
     const val OnboardingDirectory = 12
-    const val MostPlayedSection = 13
-    const val RecentlyPlayedSection = 14
-    const val SearchHeader = 15
-    const val Blacklist = 16
+    const val SearchHeader = 13
+    const val Blacklist = 14
+    const val HorizontalAlbumSection = 15
+    const val HorizontalAlbumArtistSection = 16
+    const val HorizontalSongSection = 17
 }

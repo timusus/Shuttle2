@@ -213,7 +213,7 @@ class LocalSongRepository(
             observable.map { songs ->
                 var result = songs.filter(query.predicate)
                 query.sortOrder?.let { sortOrder ->
-                    result = result.sortedWith(sortOrder.getSortOrder())
+                    result = result.sortedWith(sortOrder.comparator)
                 }
                 result
             }

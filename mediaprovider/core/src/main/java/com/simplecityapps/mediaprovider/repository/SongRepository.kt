@@ -24,7 +24,7 @@ interface SongRepository {
 
     fun clearBlacklist(): Completable
 
-    fun removeSong(song: Song) : Completable
+    fun removeSong(song: Song): Completable
 }
 
 sealed class SongQuery(
@@ -66,18 +66,18 @@ sealed class SongQuery(
 }
 
 enum class SongSortOrder : Serializable {
-    Track, PlayCount, RecentlyAdded, MostPlayed, RecentlyPlayed;
+    Track, PlayCount, RecentlyAdded, RecentlyPlayed;
 
-    fun getSortOrder(): Comparator<Song> {
-        return when (this) {
-            Track -> compareBy<Song> { song -> song.disc }.thenBy { song -> song.track }
-            PlayCount -> Comparator { a, b -> a.playCount.compareTo(b.playCount) }
-            RecentlyAdded -> compareByDescending<Song> { song -> song.lastModified.time / 1000 / 60 } // Round to the nearest minute
-                .thenBy { song -> song.albumArtistName }
-                .thenBy { song -> song.year }
-                .thenBy { song -> song.track }
-            MostPlayed -> Comparator { a, b -> b.playCount.compareTo(a.playCount) }
-            RecentlyPlayed -> Comparator { a, b -> b.lastCompleted?.compareTo(a.lastCompleted) ?: 0 }
+    val comparator: Comparator<Song>
+        get() {
+            return when (this) {
+                Track -> compareBy<Song> { song -> song.disc }.thenBy { song -> song.track }
+                PlayCount -> Comparator { a, b -> a.playCount.compareTo(b.playCount) }
+                RecentlyAdded -> compareByDescending<Song> { song -> song.lastModified.time / 1000 / 60 } // Round to the nearest minute
+                    .thenBy { song -> song.albumArtistName }
+                    .thenBy { song -> song.year }
+                    .thenBy { song -> song.track }
+                RecentlyPlayed -> Comparator { a, b -> b.lastCompleted?.compareTo(a.lastCompleted) ?: 0 }
+            }
         }
-    }
 }
