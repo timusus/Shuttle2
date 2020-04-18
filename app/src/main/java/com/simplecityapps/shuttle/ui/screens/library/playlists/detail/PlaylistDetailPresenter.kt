@@ -36,6 +36,7 @@ interface PlaylistDetailContract {
         fun addToQueue(song: Song)
         fun playNext(song: Song)
         fun blacklist(song: Song)
+        fun remove(song: Song)
         fun delete(song: Song)
     }
 }
@@ -115,6 +116,14 @@ class PlaylistDetailPresenter @AssistedInject constructor(
             songRepository.setBlacklisted(listOf(song), true)
                 .subscribeOn(Schedulers.io())
                 .subscribeBy(onError = { throwable -> Timber.e(throwable, "Failed to blacklist song") })
+        )
+    }
+
+    override fun remove(song: Song) {
+        addDisposable(
+            playlistRepository.removeFromPlaylist(playlist, listOf(song))
+                .subscribeOn(Schedulers.io())
+                .subscribeBy(onError = { throwable -> Timber.e(throwable, "Failed to remove song") })
         )
     }
 

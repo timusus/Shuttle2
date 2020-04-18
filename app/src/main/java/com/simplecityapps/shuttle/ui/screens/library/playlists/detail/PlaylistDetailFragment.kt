@@ -180,7 +180,7 @@ class PlaylistDetailFragment :
 
         override fun onOverflowClicked(view: View, song: Song) {
             val popupMenu = PopupMenu(requireContext(), view)
-            popupMenu.inflate(R.menu.menu_popup_song)
+            popupMenu.inflate(R.menu.menu_popup_playlist_song)
 
             playlistMenuView.createPlaylistMenu(popupMenu.menu)
 
@@ -207,6 +207,10 @@ class PlaylistDetailFragment :
                         }
                         R.id.blacklist -> {
                             presenter.blacklist(song)
+                            return@setOnMenuItemClickListener true
+                        }
+                        R.id.remove -> {
+                            presenter.remove(song)
                             return@setOnMenuItemClickListener true
                         }
                         R.id.delete -> {
