@@ -1,6 +1,9 @@
 {
   "commits": [
-    "Added option to delete songs. (Works with 'advanced' media scanner only)",
-    "Fixed an issue where search results only showed up if a matching artist was found"
+    "Fixed a bug preventing empty playlists from being accessed/added to (including 'favourites')",
+    "Move search to bottom navigation bar (replaces folders)",
+    "Removed search from home screen",
+    "Changes to suggested content on home screen",
+    "Fixed an issue with left padding in settings screen"
   ]
 }
