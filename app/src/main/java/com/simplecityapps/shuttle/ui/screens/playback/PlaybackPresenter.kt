@@ -137,6 +137,7 @@ class PlaybackPresenter @Inject constructor(
         queueManager.getCurrentItem()?.song?.let { song ->
             addDisposable(
                 playlistRepository.getPlaylists(PlaylistQuery.PlaylistName("Favorites"))
+                    .doOnNext { Timber.i("Retrieved ${it.size } playlists")}
                     .first(emptyList())
                     .flatMapCompletable { playlists ->
                         playlists.firstOrNull()?.let { playlist ->

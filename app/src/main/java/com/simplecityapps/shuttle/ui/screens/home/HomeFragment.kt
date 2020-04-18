@@ -313,11 +313,21 @@ class HomeFragment :
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeBy(
                 onSuccess = { playlist ->
-                    if (findNavController().currentDestination?.id != R.id.playlistDetailFragment) {
-                        findNavController().navigate(R.id.action_homeFragment_to_playlistDetailFragment, PlaylistDetailFragmentArgs(playlist).toBundle())
+                    if (playlist.songCount == 0) {
+                        Toast.makeText(context, "Playlist empty", Toast.LENGTH_SHORT).show()
+                    } else {
+                        if (findNavController().currentDestination?.id != R.id.playlistDetailFragment) {
+                            findNavController().navigate(R.id.action_homeFragment_to_playlistDetailFragment, PlaylistDetailFragmentArgs(playlist).toBundle())
+                        }
                     }
                 },
-                onError = { throwable -> Timber.e(throwable, "Failed to retrieve favorites playlist") }
+                onError = { throwable ->
+                    if (throwable is NoSuchElementException) {
+                        Toast.makeText(context, "Playlist empty", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Timber.e(throwable, "Failed to retrieve favorites playlist")
+                    }
+                }
             ))
     }
 

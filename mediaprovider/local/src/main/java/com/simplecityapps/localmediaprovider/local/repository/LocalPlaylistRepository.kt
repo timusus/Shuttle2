@@ -12,6 +12,8 @@ import com.simplecityapps.mediaprovider.repository.predicate
 import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
+import io.reactivex.functions.Consumer
+import timber.log.Timber
 
 class LocalPlaylistRepository(
     private val database: MediaDatabase
@@ -19,28 +21,35 @@ class LocalPlaylistRepository(
 
     private val playlistsRelay: BehaviorRelay<List<Playlist>> by lazy {
         val relay = BehaviorRelay.create<List<Playlist>>()
-        database.playlistSongJoinDataDao().getAll().toObservable().subscribe(relay)
+        database.playlistDataDao()
+            .getAll()
+            .toObservable()
+            .subscribe(
+                relay,
+                Consumer { throwable -> Timber.e(throwable, "Failed to subscribe to playlists relay") })
         relay
     }
 
     override fun getPlaylists(query: PlaylistQuery): Observable<List<Playlist>> {
-        return playlistsRelay.map { playlists -> playlists.filter(query.predicate()) }
+        return playlistsRelay.map { playlists ->
+            playlists.filter(query.predicate())
+        }
     }
 
     override fun getPlaylists(): Observable<List<Playlist>> {
-        return database.playlistSongJoinDataDao().getAll().toObservable()
+        return playlistsRelay
     }
 
     override fun createPlaylist(name: String, mediaStoreId: Long?, songs: List<Song>?): Single<Playlist> {
         return Single.fromCallable {
-            database.playlistDataDao().insert(PlaylistData(name = name, mediaStoreId = mediaStoreId))
-        }
+                database.playlistDataDao().insert(PlaylistData(name = name, mediaStoreId = mediaStoreId))
+            }
             .flatMap { playlistId ->
                 database.playlistSongJoinDataDao().insert(songs.orEmpty().map { song -> PlaylistSongJoin(playlistId, song.id) })
                     .andThen(Single.just(playlistId))
             }
             .flatMap { playlistId ->
-                database.playlistSongJoinDataDao().getPlaylist(playlistId)
+                database.playlistDataDao().getPlaylist(playlistId)
             }
     }
 
@@ -67,6 +76,6 @@ class LocalPlaylistRepository(
     }
 
     override fun clearPlaylist(playlist: Playlist): Completable {
-        return database.playlistSongJoinDataDao().delete(playlist.id)
+        return database.playlistDataDao().delete(playlist.id)
     }
 }
