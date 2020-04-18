@@ -32,15 +32,15 @@ interface SearchContract : BaseContract.Presenter<SearchContract.View> {
 
     interface Presenter {
         fun loadData(query: String)
-        fun onAlbumArtistCLicked(albumArtist: AlbumArtist)
+        fun play(albumArtist: AlbumArtist)
         fun addToQueue(albumArtist: AlbumArtist)
         fun playNext(albumArtist: AlbumArtist)
         fun blacklist(albumArtist: AlbumArtist)
-        fun onAlbumClicked(album: Album)
+        fun play(album: Album)
         fun addToQueue(album: Album)
         fun playNext(album: Album)
         fun blacklist(album: Album)
-        fun onSongClicked(song: Song)
+        fun play(song: Song)
         fun addToQueue(song: Song)
         fun playNext(song: Song)
         fun blacklist(song: Song)
@@ -105,7 +105,7 @@ class SearchPresenter @Inject constructor(
         addDisposable(queryDisposable!!)
     }
 
-    override fun onAlbumArtistCLicked(albumArtist: AlbumArtist) {
+    override fun play(albumArtist: AlbumArtist) {
         addDisposable(
             songRepository.getSongs(SongQuery.AlbumArtistIds(listOf(albumArtist.id)))
                 .first(emptyList())
@@ -122,7 +122,7 @@ class SearchPresenter @Inject constructor(
         )
     }
 
-    override fun onAlbumClicked(album: Album) {
+    override fun play(album: Album) {
         addDisposable(
             songRepository.getSongs(SongQuery.AlbumIds(listOf(album.id)))
                 .first(emptyList())
@@ -139,7 +139,7 @@ class SearchPresenter @Inject constructor(
         )
     }
 
-    override fun onSongClicked(song: Song) {
+    override fun play(song: Song) {
         playbackManager.load(searchResult.third, searchResult.third.indexOf(song)) { result ->
             result.onSuccess { playbackManager.play() }
             result.onFailure { error -> view?.showLoadError(error as Error) }

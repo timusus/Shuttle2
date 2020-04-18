@@ -27,6 +27,7 @@ class AlbumListContract {
         fun onAddedToQueue(album: Album)
         fun setLoadingState(state: LoadingState)
         fun setLoadingProgress(progress: Float)
+        fun showLoadError(error: Error)
     }
 
     interface Presenter {
@@ -35,6 +36,7 @@ class AlbumListContract {
         fun playNext(album: Album)
         fun rescanLibrary()
         fun blacklist(album: Album)
+        fun play(album: Album)
     }
 }
 
@@ -129,6 +131,23 @@ class AlbumListPresenter @Inject constructor(
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeBy(
                     onError = { throwable -> Timber.e(throwable, "Failed to blacklist album ${album.name}") })
+        )
+    }
+
+    override fun play(album: Album) {
+        addDisposable(
+            songRepository.getSongs(SongQuery.AlbumIds(listOf(album.id)))
+                .first(emptyList())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(onSuccess = { songs ->
+                    playbackManager.load(songs, 0) { result ->
+                        result.onSuccess { playbackManager.play() }
+                        result.onFailure { error -> view?.showLoadError(error as Error) }
+                    }
+                }, onError = { error ->
+                    Timber.e(error, "Failed to retrieve songs for album")
+                })
         )
     }
 }

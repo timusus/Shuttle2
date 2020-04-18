@@ -12,6 +12,7 @@ import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.Transition
@@ -28,7 +29,9 @@ import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistBinder
+import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumBinder
+import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongBinder
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
@@ -70,6 +73,8 @@ class SearchFragment : Fragment(),
 
     private lateinit var playlistMenuView: PlaylistMenuView
 
+    private var query = ""
+
 
     // Lifecycle
 
@@ -107,10 +112,18 @@ class SearchFragment : Fragment(),
             }
 
             override fun onQueryTextChange(text: String): Boolean {
-                queryPublishSubject.onNext(text.trim())
+                query = text.trim()
+                queryPublishSubject.onNext(query)
                 return true
             }
         })
+        searchView.setOnQueryTextFocusChangeListener { v, hasFocus ->
+            if (hasFocus) {
+                val inputMethodManager = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                inputMethodManager.showSoftInput(v.findFocus(), 0)
+            }
+        }
+        searchView.post { searchView.requestFocus() }
 
         toolbar = view.findViewById(R.id.toolbar)
         toolbar.setNavigationOnClickListener {
@@ -120,6 +133,7 @@ class SearchFragment : Fragment(),
 
         presenter.bindView(this)
         playlistMenuPresenter.bindView(playlistMenuView)
+        searchView.setQuery(query, true)
     }
 
     override fun onResume() {
@@ -129,7 +143,7 @@ class SearchFragment : Fragment(),
             queryPublishSubject
                 .debounce(300, TimeUnit.MILLISECONDS)
                 .distinctUntilChanged()
-                .switchMapCompletable { Completable.fromAction { presenter.loadData(it) } }
+                .switchMapCompletable { query -> Completable.fromAction { presenter.loadData(query) } }
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeBy(onError = { throwable -> Timber.e(throwable, "Failed to perform search.") })
@@ -198,7 +212,7 @@ class SearchFragment : Fragment(),
 
         override fun onSongClicked(song: Song) {
             closeKeyboard()
-            presenter.onSongClicked(song)
+            presenter.play(song)
         }
 
         override fun onOverflowClicked(view: View, song: Song) {
@@ -255,7 +269,12 @@ class SearchFragment : Fragment(),
 
         override fun onAlbumArtistClicked(albumArtist: AlbumArtist, viewHolder: AlbumArtistBinder.ViewHolder) {
             closeKeyboard()
-            presenter.onAlbumArtistCLicked(albumArtist)
+            findNavController().navigate(
+                R.id.action_searchFragment_to_albumArtistDetailFragment,
+                AlbumArtistDetailFragmentArgs(albumArtist, true).toBundle(),
+                null,
+                FragmentNavigatorExtras(viewHolder.imageView to viewHolder.imageView.transitionName)
+            )
         }
 
         override fun onOverflowClicked(view: View, albumArtist: AlbumArtist) {
@@ -269,6 +288,10 @@ class SearchFragment : Fragment(),
                     return@setOnMenuItemClickListener true
                 } else {
                     when (menuItem.itemId) {
+                        R.id.play -> {
+                            presenter.play(albumArtist)
+                            return@setOnMenuItemClickListener true
+                        }
                         R.id.queue -> {
                             presenter.addToQueue(albumArtist)
                             return@setOnMenuItemClickListener true
@@ -293,7 +316,12 @@ class SearchFragment : Fragment(),
 
         override fun onAlbumClicked(album: Album, viewHolder: AlbumBinder.ViewHolder) {
             closeKeyboard()
-            presenter.onAlbumClicked(album)
+            findNavController().navigate(
+                R.id.action_searchFragment_to_albumDetailFragment,
+                AlbumDetailFragmentArgs(album, true).toBundle(),
+                null,
+                FragmentNavigatorExtras(viewHolder.imageView to viewHolder.imageView.transitionName)
+            )
         }
 
         override fun onOverflowClicked(view: View, album: Album) {
@@ -307,6 +335,10 @@ class SearchFragment : Fragment(),
                     return@setOnMenuItemClickListener true
                 } else {
                     when (menuItem.itemId) {
+                        R.id.play -> {
+                            presenter.play(album)
+                            return@setOnMenuItemClickListener true
+                        }
                         R.id.queue -> {
                             presenter.addToQueue(album)
                             return@setOnMenuItemClickListener true

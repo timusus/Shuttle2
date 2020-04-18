@@ -2,9 +2,10 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:tools="http://schemas.android.com/tools"
     android:background="?android:attr/windowBackground"
     android:orientation="vertical">
 
@@ -20,39 +21,21 @@
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            app:navigationIcon="@drawable/ic_arrow_back_black_24dp"
-            android:layout_height="?attr/actionBarSize">
+            android:layout_height="?attr/actionBarSize"
+            app:navigationIcon="@drawable/ic_arrow_back_black_24dp">
 
-            <LinearLayout
-                android:id="@+id/searchContainer"
+            <androidx.appcompat.widget.SearchView
+                android:id="@+id/searchView"
+                style="@android:style/Widget.Material.SearchView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="4dp"
+                android:transitionName="searchView"
+                app:defaultQueryHint="Search Music"
+                app:iconifiedByDefault="false"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/titleLabel">
-
-                <androidx.appcompat.widget.SearchView
-                    android:id="@+id/searchView"
-                    style="@android:style/Widget.Material.SearchView"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:transitionName="searchView"
-                    app:defaultQueryHint="Search Music"
-                    app:iconifiedByDefault="false"
-                    app:searchIcon="@drawable/ic_search_black_24dp" />
-
-                <ImageButton
-                    style="@android:style/Widget.Material.ActionButton"
-                    android:layout_width="40dp"
-                    android:layout_height="match_parent"
-                    android:contentDescription="More"
-                    app:srcCompat="@drawable/ic_more_vert_black_24dp" />
-
-            </LinearLayout>
+                app:layout_constraintTop_toBottomOf="@id/titleLabel"
+                app:searchIcon="@drawable/ic_search_black_24dp" />
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
 

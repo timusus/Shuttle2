@@ -316,6 +316,10 @@ class AlbumArtistDetailFragment :
                 return@setOnMenuItemClickListener true
             } else {
                 when (menuItem.itemId) {
+                    R.id.play -> {
+                        presenter.play(album)
+                        return@setOnMenuItemClickListener true
+                    }
                     R.id.queue -> {
                         presenter.addToQueue(album)
                         return@setOnMenuItemClickListener true

@@ -35,6 +35,7 @@ class AlbumArtistDetailContract {
         fun onSongClicked(song: Song, songs: List<Song>)
         fun shuffle()
         fun addToQueue(albumArtist: AlbumArtist)
+        fun play(album: Album)
         fun addToQueue(album: Album)
         fun addToQueue(song: Song)
         fun playNext(album: AlbumArtist)
@@ -225,5 +226,22 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
         } else {
             view?.showDeleteError(UserFriendlyError("The song couldn't be deleted"))
         }
+    }
+
+    override fun play(album: Album) {
+        addDisposable(
+            songRepository.getSongs(SongQuery.AlbumIds(listOf(album.id)))
+                .first(emptyList())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(onSuccess = { songs ->
+                    playbackManager.load(songs, 0) { result ->
+                        result.onSuccess { playbackManager.play() }
+                        result.onFailure { error -> view?.showLoadError(error as Error) }
+                    }
+                }, onError = { error ->
+                    Timber.e(error, "Failed to retrieve songs for album")
+                })
+        )
     }
 }

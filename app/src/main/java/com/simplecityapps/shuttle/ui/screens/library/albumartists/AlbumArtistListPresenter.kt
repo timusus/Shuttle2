@@ -27,6 +27,7 @@ interface AlbumArtistListContract {
         fun onAddedToQueue(albumArtist: AlbumArtist)
         fun setLoadingState(state: LoadingState)
         fun setLoadingProgress(progress: Float)
+        fun showLoadError(error: Error)
     }
 
     interface Presenter {
@@ -35,7 +36,7 @@ interface AlbumArtistListContract {
         fun playNext(albumArtist: AlbumArtist)
         fun rescanLibrary()
         fun blacklist(albumArtist: AlbumArtist)
-
+        fun play(albumArtist: AlbumArtist)
     }
 }
 
@@ -130,6 +131,23 @@ class AlbumArtistListPresenter @Inject constructor(
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeBy(
                     onError = { throwable -> Timber.e(throwable, "Failed to retrieve songs for album artist: ${albumArtist.name}") })
+        )
+    }
+
+    override fun play(albumArtist: AlbumArtist) {
+        addDisposable(
+            songRepository.getSongs(SongQuery.AlbumArtistIds(listOf(albumArtist.id)))
+                .first(emptyList())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(onSuccess = { songs ->
+                    playbackManager.load(songs, 0) { result ->
+                        result.onSuccess { playbackManager.play() }
+                        result.onFailure { error -> view?.showLoadError(error as Error) }
+                    }
+                }, onError = { error ->
+                    Timber.e(error, "Failed to retrieve songs for album artist")
+                })
         )
     }
 }

@@ -44,44 +44,6 @@
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/shuttleLogo" />
 
-            <LinearLayout
-                android:id="@+id/searchContainer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
-                android:layout_marginTop="16dp"
-                android:layout_marginEnd="12dp"
-                android:background="@drawable/background_rounded"
-                android:elevation="2dp"
-                android:gravity="center_vertical"
-                android:minHeight="56dp"
-                android:orientation="horizontal"
-                android:paddingTop="4dp"
-                android:paddingBottom="4dp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/titleLabel">
-
-                <androidx.appcompat.widget.SearchView
-                    android:id="@+id/searchView"
-                    style="@android:style/Widget.Material.SearchView"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:transitionName="searchView"
-                    app:defaultQueryHint="Search Music"
-                    app:iconifiedByDefault="false"
-                    app:queryBackground="@android:color/transparent"
-                    app:searchIcon="@drawable/ic_search_black_24dp" />
-
-                <ImageButton
-                    style="@android:style/Widget.Material.ActionButton"
-                    android:layout_width="40dp"
-                    android:layout_height="match_parent"
-                    android:contentDescription="More"
-                    app:srcCompat="@drawable/ic_more_vert_black_24dp" />
-            </LinearLayout>
-
             <com.simplecityapps.shuttle.ui.common.view.HomeButton
                 android:id="@+id/historyButton"
                 android:layout_width="0dp"
@@ -92,7 +54,7 @@
                 app:layout_constraintEnd_toStartOf="@+id/latestButton"
                 app:layout_constraintHorizontal_chainStyle="spread"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/searchContainer"
+                app:layout_constraintTop_toBottomOf="@id/titleLabel"
                 app:type="history" />
 
             <com.simplecityapps.shuttle.ui.common.view.HomeButton
@@ -104,7 +66,7 @@
                 android:paddingBottom="8dp"
                 app:layout_constraintEnd_toStartOf="@+id/favoritesButton"
                 app:layout_constraintStart_toEndOf="@+id/historyButton"
-                app:layout_constraintTop_toBottomOf="@id/searchContainer"
+                app:layout_constraintTop_toBottomOf="@id/titleLabel"
                 app:type="recent" />
 
             <com.simplecityapps.shuttle.ui.common.view.HomeButton
@@ -116,7 +78,7 @@
                 android:paddingBottom="8dp"
                 app:layout_constraintEnd_toStartOf="@+id/shuffleButton"
                 app:layout_constraintStart_toEndOf="@+id/latestButton"
-                app:layout_constraintTop_toBottomOf="@id/searchContainer"
+                app:layout_constraintTop_toBottomOf="@id/titleLabel"
                 app:type="favorites" />
 
             <com.simplecityapps.shuttle.ui.common.view.HomeButton
@@ -128,7 +90,7 @@
                 android:paddingBottom="8dp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toEndOf="@+id/favoritesButton"
-                app:layout_constraintTop_toBottomOf="@id/searchContainer"
+                app:layout_constraintTop_toBottomOf="@id/titleLabel"
                 app:type="shuffle" />
         </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -147,6 +109,7 @@
         android:layout_marginTop="8dp"
         android:clipToPadding="false"
         android:orientation="vertical"
+        android:overScrollMode="never"
         android:paddingBottom="24dp"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"

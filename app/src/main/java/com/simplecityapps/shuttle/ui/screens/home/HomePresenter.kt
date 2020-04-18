@@ -41,6 +41,8 @@ interface HomeContract {
         fun addToQueue(album: Album)
         fun playNext(album: Album)
         fun blacklist(album: Album)
+        fun play(albumArtist: AlbumArtist)
+        fun play(album: Album)
     }
 }
 
@@ -183,6 +185,40 @@ class HomePresenter @Inject constructor(
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribeBy(
                     onError = { throwable -> Timber.e(throwable, "Failed to blacklist album ${album.name}") })
+        )
+    }
+
+    override fun play(albumArtist: AlbumArtist) {
+        addDisposable(
+            songRepository.getSongs(SongQuery.AlbumArtistIds(listOf(albumArtist.id)))
+                .first(emptyList())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(onSuccess = { songs ->
+                    playbackManager.load(songs, 0) { result ->
+                        result.onSuccess { playbackManager.play() }
+                        result.onFailure { error -> view?.showLoadError(error as Error) }
+                    }
+                }, onError = { error ->
+                    Timber.e(error, "Failed to retrieve songs for album artist")
+                })
+        )
+    }
+
+    override fun play(album: Album) {
+        addDisposable(
+            songRepository.getSongs(SongQuery.AlbumIds(listOf(album.id)))
+                .first(emptyList())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeBy(onSuccess = { songs ->
+                    playbackManager.load(songs, 0) { result ->
+                        result.onSuccess { playbackManager.play() }
+                        result.onFailure { error -> view?.showLoadError(error as Error) }
+                    }
+                }, onError = { error ->
+                    Timber.e(error, "Failed to retrieve songs for album")
+                })
         )
     }
 }

@@ -13,13 +13,12 @@
         android:title="@string/title_library" />
 
     <item
-        android:id="@+id/folderFragment"
-        android:icon="@drawable/ic_folder_open_black_24dp"
-        android:title="@string/title_folders" />
+        android:id="@+id/searchFragment"
+        android:icon="@drawable/ic_search_black_24dp"
+        android:title="@string/title_search" />
 
     <item
         android:id="@+id/bottomSheetFragment"
         android:icon="@drawable/ic_menu_black_24dp"
         android:title="" />
-
 </menu>

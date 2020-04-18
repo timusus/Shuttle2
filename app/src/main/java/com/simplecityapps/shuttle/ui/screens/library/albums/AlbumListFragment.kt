@@ -19,6 +19,7 @@ import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
@@ -176,6 +177,10 @@ class AlbumListFragment :
         horizontalLoadingView.setProgress(progress)
     }
 
+    override fun showLoadError(error: Error) {
+        Toast.makeText(context, error.userDescription(), Toast.LENGTH_LONG).show()
+    }
+
 
     // AlbumBinder.Listener Implementation
 
@@ -199,6 +204,10 @@ class AlbumListFragment :
                 return@setOnMenuItemClickListener true
             } else {
                 when (menuItem.itemId) {
+                    R.id.play -> {
+                        presenter.play(album)
+                        return@setOnMenuItemClickListener true
+                    }
                     R.id.queue -> {
                         presenter.addToQueue(album)
                         return@setOnMenuItemClickListener true

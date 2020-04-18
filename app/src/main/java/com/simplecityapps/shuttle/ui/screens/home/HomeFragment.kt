@@ -8,7 +8,6 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
-import androidx.appcompat.widget.SearchView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.FragmentNavigatorExtras
@@ -71,8 +70,6 @@ class HomeFragment :
 
     private lateinit var playlistMenuView: PlaylistMenuView
 
-    private var searchView: SearchView by autoCleared()
-
     private var recyclerViewState: Parcelable? = null
 
 
@@ -90,8 +87,6 @@ class HomeFragment :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        searchView = view.findViewById(R.id.searchView)
 
         val historyButton: HomeButton = view.findViewById(R.id.historyButton)
         val latestButton: HomeButton = view.findViewById(R.id.latestButton)
@@ -145,23 +140,11 @@ class HomeFragment :
             recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
         }
 
-        searchView.setOnSearchClickListener {
-            if (isResumed)
-                navigateToSearch()
-        }
-        searchView.setOnQueryTextFocusChangeListener { _, hasFocus ->
-            if (hasFocus && isResumed) {
-                navigateToSearch()
-            }
-        }
-
         presenter.loadData()
     }
 
     override fun onPause() {
         super.onPause()
-        searchView.setOnSearchClickListener(null)
-        searchView.setOnQueryTextFocusChangeListener(null)
         recyclerViewState = recyclerView.layoutManager?.onSaveInstanceState()
     }
 
@@ -251,6 +234,10 @@ class HomeFragment :
                     return@setOnMenuItemClickListener true
                 } else {
                     when (menuItem.itemId) {
+                        R.id.play -> {
+                            presenter.play(albumArtist)
+                            return@setOnMenuItemClickListener true
+                        }
                         R.id.queue -> {
                             presenter.addToQueue(albumArtist)
                             return@setOnMenuItemClickListener true
@@ -293,6 +280,10 @@ class HomeFragment :
                     return@setOnMenuItemClickListener true
                 } else {
                     when (menuItem.itemId) {
+                        R.id.play -> {
+                            presenter.play(album)
+                            return@setOnMenuItemClickListener true
+                        }
                         R.id.queue -> {
                             presenter.addToQueue(album)
                             return@setOnMenuItemClickListener true
@@ -328,12 +319,6 @@ class HomeFragment :
                 },
                 onError = { throwable -> Timber.e(throwable, "Failed to retrieve favorites playlist") }
             ))
-    }
-
-    private fun navigateToSearch() {
-        if (findNavController().currentDestination?.id != R.id.searchFragment) {
-            findNavController().navigate(R.id.action_homeFragment_to_searchFragment, null, null, FragmentNavigatorExtras(searchView to searchView.transitionName))
-        }
     }
 
 
