@@ -90,13 +90,13 @@ android {
 
         // Kotlin Extensions
         implementation("androidx.core:core-ktx:1.2.0")
-        implementation("androidx.fragment:fragment-ktx:1.2.3")
+        implementation("androidx.fragment:fragment-ktx:1.2.4")
 
         // RecyclerView FastScroll
         implementation("com.github.timusus:RecyclerView-FastScroll:dev-SNAPSHOT")
 
         // Material Design
-        implementation("com.google.android.material:material:1.2.0-alpha05")
+        implementation("com.google.android.material:material:1.2.0-alpha06")
 
         // AppCompat
         implementation("androidx.appcompat:appcompat:1.1.0")
@@ -108,8 +108,8 @@ android {
         implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
 
         // AndroidX Navigation
-        implementation("androidx.navigation:navigation-fragment-ktx:2.3.0-alpha04")
-        implementation("androidx.navigation:navigation-ui-ktx:2.3.0-alpha04")
+        implementation("androidx.navigation:navigation-fragment-ktx:2.3.0-alpha05")
+        implementation("androidx.navigation:navigation-ui-ktx:2.3.0-alpha05")
 
         // RxJava
         implementation("io.reactivex.rxjava2:rxjava:2.2.19")
@@ -140,7 +140,7 @@ android {
         implementation("com.squareup.okhttp3:okhttp:4.4.1")
 
         // Firebase
-        implementation("com.google.firebase:firebase-core:17.2.3")
+        implementation("com.google.firebase:firebase-core:17.3.0")
 
         // Crashlytics
         implementation("com.crashlytics.sdk.android:crashlytics:2.10.1")

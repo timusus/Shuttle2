@@ -128,12 +128,20 @@ class AlbumDetailFragment :
         dummyImage = view.findViewById(R.id.dummyImage)
         dummyImage.transitionName = "album_${album.name}"
 
-        imageLoader.loadArtwork(dummyImage, album, ArtworkImageLoader.Options.CircleCrop, ArtworkImageLoader.Options.Priority(ArtworkImageLoader.Options.Priority.Priority.Max)) {
+        imageLoader.loadArtwork(
+            dummyImage, album, ArtworkImageLoader.Options.CircleCrop,
+            ArtworkImageLoader.Options.Priority(ArtworkImageLoader.Options.Priority.Priority.Max)
+        ) {
             startPostponedEnterTransition()
         }
 
         heroImage = view.findViewById(R.id.heroImage)
-        imageLoader.loadArtwork(heroImage, album, ArtworkImageLoader.Options.Priority(ArtworkImageLoader.Options.Priority.Priority.Max))
+        imageLoader.loadArtwork(
+            heroImage,
+            album,
+            ArtworkImageLoader.Options.Priority(ArtworkImageLoader.Options.Priority.Priority.Max),
+            ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder)
+        )
         if (showHeroView || !animateTransition) {
             heroImage.isVisible = true
             dummyImage.isVisible = false

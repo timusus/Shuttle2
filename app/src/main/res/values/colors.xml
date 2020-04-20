@@ -34,7 +34,7 @@
     <!-- Vertical Seekbar-->
 
     <color name="vertical_seekbar_progress">@color/colorPrimary</color>
-    <color name="vertical_seekbar_progress_disabled">#A8b2b2b2</color>
+    <color name="vertical_seekbar_progress_disabled">#A8272727</color>
 
     <color name="vertical_seekbar_track">#300492ea</color>
     <color name="vertical_seekbar_track_disabled">#30b2b2b2</color>

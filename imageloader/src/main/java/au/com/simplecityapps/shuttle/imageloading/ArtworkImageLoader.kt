@@ -30,6 +30,8 @@ interface ArtworkImageLoader {
         }
 
         class Crossfade(val duration: Int) : Options()
+
+        class Placeholder(val placeholderResId: Int) : Options()
     }
 
     fun loadArtwork(imageView: ImageView, albumArtist: AlbumArtist, vararg options: Options, completionHandler: CompletionHandler = null)

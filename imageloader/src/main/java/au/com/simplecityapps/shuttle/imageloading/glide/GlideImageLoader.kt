@@ -197,6 +197,7 @@ class GlideImageLoader : ArtworkImageLoader {
             })
             .submit(256, 256)
     }
+
     override fun loadColorSet(albumArtist: AlbumArtist, callback: (ColorSet?) -> Unit) {
         requestManager
             .`as`(ColorSet::class.java)
@@ -216,7 +217,7 @@ class GlideImageLoader : ArtworkImageLoader {
     }
 
     @DrawableRes
-    var placeHolderResId: Int = R.drawable.ic_music_note_black_24dp
+    var placeHolderResId: Int = R.drawable.ic_placeholder_rounded
 
     private fun <T> loadArtwork(imageView: ImageView, `object`: T, vararg options: ArtworkImageLoader.Options, completionHandler: CompletionHandler) {
         val glideRequest = getRequestBuilder(*options)
@@ -263,6 +264,9 @@ class GlideImageLoader : ArtworkImageLoader {
                 }
                 is ArtworkImageLoader.Options.Crossfade -> {
                     glideRequest.transition(DrawableTransitionOptions.withCrossFade(option.duration))
+                }
+                is ArtworkImageLoader.Options.Placeholder -> {
+                    glideRequest.placeholder(option.placeholderResId)
                 }
             }
         }

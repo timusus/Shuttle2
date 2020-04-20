@@ -1,0 +1,18 @@
+<resources>
+
+    <!-- App Themes -->
+
+    <style name="AppTheme.Light" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="placeholderBackgroundColor">@color/bg_placeholder</item>
+    </style>
+
+    <style name="AppTheme.Dark" parent="Theme.MaterialComponents.NoActionBar">
+        <item name="placeholderBackgroundColor">@color/bg_placeholder_dark</item>
+    </style>
+
+    <style name="AppTheme.DayNight" parent="AppTheme.Light" />
+
+    <!-- Placeholder-->
+    <attr name="placeholderBackgroundColor" format="reference|color" />
+
+</resources>

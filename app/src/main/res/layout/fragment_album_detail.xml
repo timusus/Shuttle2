@@ -47,7 +47,7 @@
                 android:visibility="invisible"
                 app:layout_collapseMode="parallax"
                 app:layout_collapseParallaxMultiplier="0.5"
-                tools:srcCompat="@drawable/ic_image_black_24dp"
+                tools:srcCompat="@drawable/ic_placeholder"
                 tools:visibility="visible" />
 
             <androidx.appcompat.widget.Toolbar

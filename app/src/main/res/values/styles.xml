@@ -28,6 +28,8 @@
         <item name="toolbarNavigationButtonStyle">@style/Toolbar.Button.Navigation.Tinted</item>
 
         <item name="guidelineColor">@color/vertical_seekbar_guideline_light</item>
+
+        <item name="placeholderBackgroundColor">@color/bg_placeholder</item>
     </style>
 
     <style name="AppTheme.Dark" parent="Theme.MaterialComponents.NoActionBar">
@@ -59,6 +61,8 @@
         <item name="android:navigationBarColor">@color/bg_window_dark</item>
 
         <item name="guidelineColor">@color/vertical_seekbar_guideline_dark</item>
+
+        <item name="placeholderBackgroundColor">@color/bg_placeholder_dark</item>
     </style>
 
     <style name="AppTheme.DayNight" parent="AppTheme.Light" />
@@ -192,5 +196,11 @@
     <!-- Equalizer-->
 
     <attr name="guidelineColor" format="reference|color" />
+
+
+    <!-- Placeholder-->
+
+    <attr name="placeholderBackgroundColor" format="reference|color" />
+
 
 </resources>

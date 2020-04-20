@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:drawable="?attr/placeholderBackgroundColor" />
+    <item android:drawable="@drawable/ic_placeholder_foreground" android:bottom="40dp" android:top="20dp" android:start="40dp" android:end="40dp" />
+
+</layer-list>
