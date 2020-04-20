@@ -1,9 +1,6 @@
 {
   "commits": [
-    "Fixed a bug preventing empty playlists from being accessed/added to (including 'favourites')",
-    "Move search to bottom navigation bar (replaces folders)",
-    "Removed search from home screen",
-    "Changes to suggested content on home screen",
-    "Fixed an issue with left padding in settings screen"
+    "Fixed an issue with bottom margin on 'now playing' screen",
+    "Updated placeholder images. Special thanks to RedShiftClick for his help"
   ]
 }
