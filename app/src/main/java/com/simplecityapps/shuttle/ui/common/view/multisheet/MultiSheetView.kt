@@ -38,6 +38,7 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
 
         val sheet1 = findViewById<View>(R.id.sheet1)
         bottomSheetBehavior1 = BottomSheetBehavior.from(sheet1) as CustomBottomSheetBehavior<*>
+        bottomSheetBehavior1.isGestureInsetBottomIgnored = true
         bottomSheetBehavior1.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
             override fun onStateChanged(bottomSheet: View, newState: Int) {
                 fadeView(Sheet.FIRST, newState)
@@ -57,6 +58,7 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
 
         val sheet2 = findViewById<View>(R.id.sheet2)
         bottomSheetBehavior2 = BottomSheetBehavior.from(sheet2) as CustomBottomSheetBehavior<*>
+        bottomSheetBehavior2.isGestureInsetBottomIgnored = true
         bottomSheetBehavior2.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
             override fun onStateChanged(bottomSheet: View, newState: Int) {
                 if (newState == BottomSheetBehavior.STATE_EXPANDED || newState == BottomSheetBehavior.STATE_DRAGGING) {
