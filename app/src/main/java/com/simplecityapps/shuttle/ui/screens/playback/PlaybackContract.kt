@@ -32,6 +32,7 @@ interface PlaybackContract {
         fun seekForward(seconds: Int)
         fun seekBackward(seconds: Int)
         fun seek(fraction: Float)
+        fun updateProgress(fraction: Float)
         fun sleepTimerClicked()
         fun setFavorite(isFavorite: Boolean)
         fun goToAlbum()

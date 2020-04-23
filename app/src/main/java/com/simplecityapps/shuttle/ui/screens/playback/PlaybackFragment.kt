@@ -233,9 +233,11 @@ class PlaybackFragment :
     }
 
     override fun setProgress(position: Int, duration: Int) {
-        currentTimeTextView.text = position.toHms()
-        durationTextView.text = duration.toHms("--:--")
-        seekBar.progress = ((position.toFloat() / duration) * 1000).toInt()
+        if (!isSeeking) {
+            durationTextView.text = duration.toHms("--:--")
+            currentTimeTextView.text = position.toHms()
+            seekBar.progress = ((position.toFloat() / duration) * 1000).toInt()
+        }
     }
 
     override fun presentSleepTimer() {
@@ -269,15 +271,20 @@ class PlaybackFragment :
 
     // SeekBar.OnSeekBarChangeListener Implementation
 
+    private var isSeeking = false
     override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-
+        // A little hack - temporarily allow us to update the progress text.
+        isSeeking = false
+        presenter.updateProgress(seekBar.progress / 1000f)
+        isSeeking = true
     }
 
     override fun onStartTrackingTouch(seekBar: SeekBar) {
-
+        isSeeking = true
     }
 
     override fun onStopTrackingTouch(seekBar: SeekBar) {
         presenter.seek(seekBar.progress / 1000f)
+        isSeeking = false
     }
 }

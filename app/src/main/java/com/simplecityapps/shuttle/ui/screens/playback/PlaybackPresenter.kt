@@ -129,6 +129,12 @@ class PlaybackPresenter @Inject constructor(
         } ?: Timber.v("seek() failed, current song null")
     }
 
+    override fun updateProgress(fraction: Float) {
+        queueManager.getCurrentItem()?.song?.let { currentSong ->
+            view?.setProgress(((playbackManager.getDuration() ?: currentSong.duration) * fraction).toInt(), (playbackManager.getDuration() ?: currentSong.duration).toInt())
+        } ?: Timber.v("seek() failed, current song null")
+    }
+
     override fun sleepTimerClicked() {
         view?.presentSleepTimer()
     }
@@ -137,7 +143,7 @@ class PlaybackPresenter @Inject constructor(
         queueManager.getCurrentItem()?.song?.let { song ->
             addDisposable(
                 playlistRepository.getPlaylists(PlaylistQuery.PlaylistName("Favorites"))
-                    .doOnNext { Timber.i("Retrieved ${it.size } playlists")}
+                    .doOnNext { Timber.i("Retrieved ${it.size} playlists") }
                     .first(emptyList())
                     .flatMapCompletable { playlists ->
                         playlists.firstOrNull()?.let { playlist ->
