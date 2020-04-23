@@ -83,7 +83,8 @@ class GridAlbumArtistBinder(
             viewBinder.imageLoader.loadArtwork(
                 imageView,
                 viewBinder.albumArtist,
-                ArtworkImageLoader.Options.Crossfade(200)
+                ArtworkImageLoader.Options.Crossfade(200),
+                ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_artist)
             )
 
             viewBinder.imageLoader.loadColorSet(viewBinder.albumArtist) { newColorSet ->

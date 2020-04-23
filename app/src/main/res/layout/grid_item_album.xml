@@ -22,7 +22,7 @@
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            tools:src="#33b5e5" />
+            tools:src="@drawable/ic_placeholder_album" />
 
         <com.simplecityapps.shuttle.ui.common.view.BadgeView
             android:id="@+id/badgeImageView"

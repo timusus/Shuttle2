@@ -217,7 +217,7 @@ class GlideImageLoader : ArtworkImageLoader {
     }
 
     @DrawableRes
-    var placeHolderResId: Int = R.drawable.ic_placeholder_rounded
+    var placeHolderResId: Int = R.drawable.ic_placeholder_album_rounded
 
     private fun <T> loadArtwork(imageView: ImageView, `object`: T, vararg options: ArtworkImageLoader.Options, completionHandler: CompletionHandler) {
         val glideRequest = getRequestBuilder(*options)

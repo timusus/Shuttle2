@@ -18,11 +18,12 @@
             android:id="@+id/imageView"
             android:layout_width="wrap_content"
             android:layout_height="108dp"
+            android:scaleType="centerCrop"
             app:layout_constraintBottom_toTopOf="@id/textContainer"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            tools:src="#33b5e5" />
+            tools:src="@drawable/ic_placeholder_artist" />
 
         <LinearLayout
             android:id="@+id/textContainer"

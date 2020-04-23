@@ -118,7 +118,8 @@ class QueueBinder(
                 artworkImageView,
                 viewBinder.queueItem.song,
                 ArtworkImageLoader.Options.RoundedCorners(16),
-                ArtworkImageLoader.Options.Crossfade(200)
+                ArtworkImageLoader.Options.Crossfade(200),
+                ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_song_rounded)
             )
 
             progressView.isVisible = viewBinder.queueItem.isCurrent

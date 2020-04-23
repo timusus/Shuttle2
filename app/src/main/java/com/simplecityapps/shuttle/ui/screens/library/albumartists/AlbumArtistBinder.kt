@@ -84,7 +84,8 @@ class AlbumArtistBinder(
             viewBinder.imageLoader.loadArtwork(
                 imageView, viewBinder.albumArtist,
                 ArtworkImageLoader.Options.RoundedCorners(16),
-                ArtworkImageLoader.Options.Crossfade(200)
+                ArtworkImageLoader.Options.Crossfade(200),
+                ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_artist_rounded)
             )
             imageView.transitionName = "album_artist_${viewBinder.albumArtist.name}"
         }

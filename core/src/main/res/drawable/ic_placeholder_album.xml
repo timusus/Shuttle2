@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:drawable="?attr/placeholderBackgroundColor" />
+    <item
+        android:bottom="16dp"
+        android:drawable="@drawable/ic_record"
+        android:end="16dp"
+        android:start="16dp"
+        android:top="16dp" />
+
+</layer-list>

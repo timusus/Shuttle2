@@ -140,7 +140,7 @@ class AlbumDetailFragment :
             heroImage,
             album,
             ArtworkImageLoader.Options.Priority(ArtworkImageLoader.Options.Priority.Priority.Max),
-            ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder)
+            ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_album)
         )
         if (showHeroView || !animateTransition) {
             heroImage.isVisible = true

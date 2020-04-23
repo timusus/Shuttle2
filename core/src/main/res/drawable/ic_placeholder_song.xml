@@ -3,6 +3,11 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item android:drawable="?attr/placeholderBackgroundColor" />
-    <item android:drawable="@drawable/ic_placeholder_foreground" android:bottom="40dp" android:top="20dp" android:start="40dp" android:end="40dp" />
+    <item
+        android:bottom="16dp"
+        android:drawable="@drawable/ic_shuttle_logo_grey"
+        android:end="16dp"
+        android:start="16dp"
+        android:top="16dp" />
 
 </layer-list>

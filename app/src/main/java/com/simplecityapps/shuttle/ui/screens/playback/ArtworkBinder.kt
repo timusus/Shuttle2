@@ -33,7 +33,8 @@ class ArtworkBinder(
             viewBinder.imageLoader.loadArtwork(
                 imageView, viewBinder.song,
                 ArtworkImageLoader.Options.RoundedCorners(32),
-                ArtworkImageLoader.Options.Crossfade(300)
+                ArtworkImageLoader.Options.Crossfade(200),
+                ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_song)
             )
         }
 

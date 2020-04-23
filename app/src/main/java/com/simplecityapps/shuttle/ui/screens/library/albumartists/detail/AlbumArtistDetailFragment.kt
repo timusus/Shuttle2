@@ -174,7 +174,7 @@ class AlbumArtistDetailFragment :
         imageLoader.loadArtwork(
             heroImage, albumArtist,
             ArtworkImageLoader.Options.Priority(ArtworkImageLoader.Options.Priority.Priority.Max),
-            ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder),
+            ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_artist),
             completionHandler = null
         )
         if (showHeroView || !animateTransition) {
