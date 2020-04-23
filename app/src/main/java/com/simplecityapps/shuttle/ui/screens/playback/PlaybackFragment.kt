@@ -273,10 +273,12 @@ class PlaybackFragment :
 
     private var isSeeking = false
     override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-        // A little hack - temporarily allow us to update the progress text.
-        isSeeking = false
-        presenter.updateProgress(seekBar.progress / 1000f)
-        isSeeking = true
+        if (fromUser) {
+            // A little hack - temporarily allow us to update the progress text.
+            isSeeking = false
+            presenter.updateProgress(seekBar.progress / 1000f)
+            isSeeking = true
+        }
     }
 
     override fun onStartTrackingTouch(seekBar: SeekBar) {
