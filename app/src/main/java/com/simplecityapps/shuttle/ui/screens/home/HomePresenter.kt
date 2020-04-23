@@ -78,7 +78,7 @@ class HomePresenter @Inject constructor(
 
     override fun loadData() {
         addDisposable(Observables.combineLatest(
-                albumRepository.getAlbums(AlbumQuery.PlayCount(1, AlbumSortOrder.PlayCount)).map { albums -> albums.take(20) },
+                albumRepository.getAlbums(AlbumQuery.PlayCount(2, AlbumSortOrder.PlayCount)).map { albums -> albums.take(20) },
                 songRepository.getSongs(SmartPlaylist.RecentlyPlayed.songQuery)
                     .map { songs -> SmartPlaylist.RecentlyPlayed.songQuery?.sortOrder?.let { songSortOrder -> songs.sortedWith(songSortOrder.comparator) } ?: songs }
                     .map { songs -> songs.distinctBy { it.albumId }.map { it.albumId } }
