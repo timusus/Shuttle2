@@ -4,9 +4,11 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.RadioButton
 import android.widget.RadioGroup
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -30,6 +32,7 @@ class MediaProviderSelectionFragment :
     private var radioGroup: RadioGroup by autoCleared()
     private var basicRadioButton: RadioButton by autoCleared()
     private var advancedRadioButton: RadioButton by autoCleared()
+    private var toolbar: Toolbar by autoCleared()
 
     @Inject lateinit var playbackPreferenceManager: PlaybackPreferenceManager
 
@@ -54,16 +57,7 @@ class MediaProviderSelectionFragment :
         basicRadioButton = view.findViewById(R.id.basic)
         advancedRadioButton = view.findViewById(R.id.advanced)
 
-        val toolbar: Toolbar = view.findViewById(R.id.toolbar)
-        if (isOnboarding) {
-            toolbar.title = "Discover your music"
-            toolbar.navigationIcon = null
-        } else {
-            toolbar.title = "Media provider"
-            toolbar.setNavigationOnClickListener {
-                findNavController().popBackStack()
-            }
-        }
+        toolbar = view.findViewById(R.id.toolbar)
 
         val subtitleLabel: TextView = view.findViewById(R.id.subtitleLabel)
         if (isOnboarding) {
@@ -108,8 +102,31 @@ class MediaProviderSelectionFragment :
             } ?: Timber.e("Failed to update state - getParent() returned null")
         }
 
+        val moreInfoButton: Button = view.findViewById(R.id.moreInfoButton)
+        moreInfoButton.setOnClickListener {
+            AlertDialog.Builder(requireContext())
+                .setTitle("Media Provider")
+                .setMessage("• Shuttle File Scanner\n\nSearches for music in directories you specify, and scans the files for metadata. More accurate than the Android Media Store, and allows you to modify/delete songs. \n\n• Android Media Store\n\nFaster, and easier to set up, but less reliable.")
+                .setNegativeButton("Close", null)
+                .show()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        if (isOnboarding) {
+            toolbar.title = "Discover your music"
+            toolbar.navigationIcon = null
+        } else {
+            toolbar.title = "Media provider"
+            toolbar.setNavigationOnClickListener {
+                findNavController().popBackStack()
+            }
+        }
+
         // It seems we need some sort of arbitrary delay, to ensure the parent fragment has indeed finished its onViewCreated() and instantiated the next button.
-        view.postDelayed({
+        view?.postDelayed({
             getParent()?.let { parent ->
                 parent.hideBackButton()
                 parent.toggleNextButton(true)

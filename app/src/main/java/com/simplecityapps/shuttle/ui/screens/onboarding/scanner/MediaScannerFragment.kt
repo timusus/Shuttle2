@@ -48,9 +48,9 @@ class MediaScannerFragment :
         presenter.bindView(this)
 
         if (getParent().directories == null) {
-            titleTextView.text = "Scanning Media Store"
+            titleTextView.text = "Scanning Media Store…"
         } else {
-            titleTextView.text = "Reading song tags"
+            titleTextView.text = "Reading song tags…"
         }
     }
 
@@ -81,7 +81,7 @@ class MediaScannerFragment :
         progressBar.progress = (progress * 100).toInt()
         subtitleTextView.text = message
         progressBar.isIndeterminate = false
-        songCountTextView.text = "$scanProgress songs discovered"
+        songCountTextView.text = "$scanProgress songs scanned"
     }
 
     override fun dismiss() {

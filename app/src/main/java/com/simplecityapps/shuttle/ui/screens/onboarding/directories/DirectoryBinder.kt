@@ -44,7 +44,8 @@ class DirectoryBinder(
             title.text = viewBinder.data.tree.documentId
             progressBar.isVisible = !viewBinder.data.traversalComplete
             if (viewBinder.data.traversalComplete) {
-                subtitle.text = "${viewBinder.data.tree.getLeaves().size} audio files"
+                val leaves = viewBinder.data.tree.getLeaves()
+                subtitle.text = "${leaves.size} audio file${if (leaves.size == 1) "" else "s"}"
                 progressBar.isVisible = false
             } else {
                 progressBar.isVisible = true

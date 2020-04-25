@@ -88,6 +88,15 @@ class DirectorySelectionFragment : Fragment(),
             }
         }
 
+        val helpButton: Button = view.findViewById(R.id.helpButton)
+        helpButton.setOnClickListener {
+            AlertDialog.Builder(requireContext())
+                .setTitle("Media Directory Chooser")
+                .setMessage("In order to scan for music, Shuttle requires access to your media directories.\n\nWhen you press 'add directory', you'll be taken to your default 'file provider' app. Navigate to the folder(s) containing your music. You can add multiple directories. \n\nNote: You may need to enable 'show internal storage' in order to see your music folder(s).")
+                .setNegativeButton("Close", null)
+                .show()
+        }
+
         preAnimationConstraints.clone(view as ConstraintLayout)
         postAnimationConstraints.clone(view)
         postAnimationConstraints.clear(R.id.addDirectoryButton, ConstraintSet.TOP)
@@ -101,14 +110,14 @@ class DirectorySelectionFragment : Fragment(),
 
         getParent()?.let { parent ->
             parent.showBackButton("Back")
-            parent.showNextButton("Done")
+            parent.showNextButton("Scan")
 
             if (adapter.items.none { binder -> binder is DirectoryBinder } || adapter.items.any { binder -> binder is DirectoryBinder && !binder.data.traversalComplete }) {
                 parent.toggleNextButton(enabled = false)
             } else {
                 parent.toggleNextButton(enabled = true)
             }
-        } ?: Timber.e("Failed to update back/done button - parent is null")
+        } ?: Timber.e("Failed to update back/scan button - parent is null")
     }
 
     override fun onDestroyView() {

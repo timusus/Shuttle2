@@ -14,8 +14,8 @@
         android:minHeight="?attr/actionBarSize"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:navigationIcon="@drawable/ic_close_black_24dp"
         app:layout_constraintTop_toTopOf="parent"
+        app:navigationIcon="@drawable/ic_close_black_24dp"
         app:title="Discover your music">
 
     </androidx.appcompat.widget.Toolbar>
@@ -39,29 +39,35 @@
         android:layout_marginStart="24dp"
         android:layout_marginTop="32dp"
         android:layout_marginEnd="24dp"
-        android:checkedButton="@id/basic"
+        android:checkedButton="@id/advanced"
         app:layout_constraintTop_toBottomOf="@id/subtitleLabel">
-
-        <RadioButton
-            android:id="@+id/basic"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:gravity="top"
-            android:paddingStart="4dp"
-            android:paddingTop="6dp"
-            android:text="Android Media Store (Basic)\n\nThe Android Media Store is a database on your device containing information about your songs." />
 
         <RadioButton
             android:id="@+id/advanced"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:gravity="top"
             android:paddingStart="4dp"
-            android:paddingTop="6dp"
-            android:text="Scan Folders (Advanced)\n\nScan your folders and read the tags from your audio files. This is more accurate than the Media Store, and allows you to choose some directories that may not be available to the MediaStore." />
+            android:text="Shuttle File Scanner (Advanced)" />
+
+        <RadioButton
+            android:id="@+id/basic"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingStart="4dp"
+            android:text="Android Media Store (Basic)" />
 
     </RadioGroup>
+
+    <Button
+        android:id="@+id/moreInfoButton"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:text="More Info"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/radioGroup" />
 
     <TextView
         android:id="@+id/warningLabel"
@@ -75,7 +81,7 @@
         android:visibility="gone"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/radioGroup"
+        app:layout_constraintTop_toBottomOf="@id/moreInfoButton"
         tools:visibility="visible" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
