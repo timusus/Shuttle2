@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.library.playlists.smart
 
 import android.content.Context
+import androidx.annotation.Keep
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.simplecityapps.mediaprovider.model.Song
@@ -20,6 +21,7 @@ import io.reactivex.schedulers.Schedulers
 import timber.log.Timber
 import java.io.Serializable
 
+@Keep
 data class SmartPlaylist(val nameResId: Int, val songQuery: SongQuery?) : Serializable {
 
     companion object {

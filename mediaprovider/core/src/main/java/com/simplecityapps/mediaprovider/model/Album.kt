@@ -1,7 +1,9 @@
 package com.simplecityapps.mediaprovider.model
 
+import androidx.annotation.Keep
 import java.io.Serializable
 
+@Keep
 class Album(
     val id: Long,
     val name: String,

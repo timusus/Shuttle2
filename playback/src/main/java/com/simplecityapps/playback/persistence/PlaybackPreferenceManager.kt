@@ -83,7 +83,7 @@ class PlaybackPreferenceManager(
                 return when (ordinal) {
                     TagLib.ordinal -> TagLib
                     MediaStore.ordinal -> MediaStore
-                    else -> MediaStore
+                    else -> TagLib
                 }
             }
         }

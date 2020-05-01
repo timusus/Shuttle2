@@ -1,7 +1,9 @@
 package com.simplecityapps.mediaprovider.model
 
+import androidx.annotation.Keep
 import java.io.Serializable
 
+@Keep
 data class Playlist(
     val id: Long,
     val name: String,

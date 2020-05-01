@@ -15,7 +15,7 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -33,6 +33,9 @@ dependencies {
 
     // Kotlin Extensions
     api 'androidx.core:core-ktx:1.2.0'
+
+    // AnroidX Annotations
+    api "androidx.annotation:annotation:1.1.0"
 
     // Dagger core
     api 'com.google.dagger:dagger-android:2.27'
