@@ -1,6 +1,8 @@
 {
   "commits": [
-    "Fixed an issue with bottom margin on 'now playing' screen",
-    "Updated placeholder images. Special thanks to RedShiftClick for his help"
+    "Reduced app size",
+    "Added placeholder images for artists & songs",
+    "Update progress position while seeking",
+    "Updated onboarding screens (less text)"
   ]
 }
