@@ -15,6 +15,9 @@
 # hide the original source file name.
 -renamesourcefileattribute SourceFile
 
+# Custom Exceptions
+-keep public class * extends java.lang.Exception
+
 ### Moshi
 
 # JSR 305 annotations are for embedding nullability information.
