@@ -1,5 +1,4 @@
 include ':app'
-include ':taglib:lib'
 include ':core'
 include ':recyclerview-adapter'
 include ':mediaprovider:core'

@@ -3,11 +3,11 @@ package com.simplecityapps.shuttle.ui.screens.onboarding.scanner
 import android.content.Context
 import com.simplecityappds.saf.SafDirectoryHelper
 import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStoreSongProvider
+import com.simplecityapps.localmediaprovider.local.provider.taglib.FileScanner
 import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibSongProvider
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
-import com.simplecityapps.taglib.FileScanner
 import javax.inject.Inject
 
 interface ScannerContract {

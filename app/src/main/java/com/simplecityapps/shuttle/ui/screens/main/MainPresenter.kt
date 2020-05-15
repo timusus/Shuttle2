@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.main
 import android.content.Context
 import com.simplecityappds.saf.SafDirectoryHelper
 import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStoreSongProvider
+import com.simplecityapps.localmediaprovider.local.provider.taglib.FileScanner
 import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibSongProvider
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
@@ -11,7 +12,6 @@ import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
-import com.simplecityapps.taglib.FileScanner
 import io.reactivex.Single
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.rxkotlin.subscribeBy

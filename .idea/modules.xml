@@ -35,8 +35,6 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/playback/Shuttle2.playback.iml" filepath="$PROJECT_DIR$/.idea/modules/playback/Shuttle2.playback.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/recyclerview-adapter/Shuttle2.recyclerview-adapter.iml" filepath="$PROJECT_DIR$/.idea/modules/recyclerview-adapter/Shuttle2.recyclerview-adapter.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/saf/Shuttle2.saf.iml" filepath="$PROJECT_DIR$/.idea/modules/saf/Shuttle2.saf.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/taglib/Shuttle2.taglib.iml" filepath="$PROJECT_DIR$/.idea/modules/taglib/Shuttle2.taglib.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/taglib/lib/Shuttle2.taglib.lib.iml" filepath="$PROJECT_DIR$/.idea/modules/taglib/lib/Shuttle2.taglib.lib.iml" />
     </modules>
   </component>
 </project>

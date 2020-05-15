@@ -39,13 +39,13 @@ dependencies {
     implementation project(path: ':mediaprovider:core')
 
     // TagLib
-    implementation project(path: ':taglib:lib')
+    implementation("com.github.timusus:KTagLib:shuttle2-SNAPSHOT")
 
     // Storage Access Framework
     implementation project(path: ':saf')
 
     // Kotlin Standard Library
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.70"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.71"
 
     // Room
     kapt 'androidx.room:room-compiler:2.2.5'

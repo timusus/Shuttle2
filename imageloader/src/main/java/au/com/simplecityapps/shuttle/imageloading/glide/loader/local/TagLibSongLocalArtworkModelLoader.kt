@@ -7,19 +7,20 @@ import com.bumptech.glide.load.Options
 import com.bumptech.glide.load.model.ModelLoader
 import com.bumptech.glide.load.model.ModelLoaderFactory
 import com.bumptech.glide.load.model.MultiModelLoaderFactory
+import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.mediaprovider.model.Song
-import com.simplecityapps.taglib.ArtworkProvider
+import timber.log.Timber
 import java.io.File
 import java.io.InputStream
 
 class TagLibSongLocalArtworkModelLoader(
     private val context: Context,
-    private val tagLibArtworkProvider: ArtworkProvider,
+    private val tagLib: KTagLib,
     private val localArtworkModelLoader: LocalArtworkModelLoader
 ) : ModelLoader<Song, InputStream> {
 
     override fun buildLoadData(model: Song, width: Int, height: Int, options: Options): ModelLoader.LoadData<InputStream>? {
-        return localArtworkModelLoader.buildLoadData(TagLibSongLocalArtworkProvider(context, tagLibArtworkProvider, model), width, height, options)
+        return localArtworkModelLoader.buildLoadData(TagLibSongLocalArtworkProvider(context, tagLib, model), width, height, options)
     }
 
     override fun handles(model: Song): Boolean {
@@ -29,11 +30,11 @@ class TagLibSongLocalArtworkModelLoader(
 
     class Factory(
         private val context: Context,
-        private val tagLibArtworkProvider: ArtworkProvider
+        private val tagLib: KTagLib
     ) : ModelLoaderFactory<Song, InputStream> {
 
         override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Song, InputStream> {
-            return TagLibSongLocalArtworkModelLoader(context, tagLibArtworkProvider, multiFactory.build(LocalArtworkProvider::class.java, InputStream::class.java) as LocalArtworkModelLoader)
+            return TagLibSongLocalArtworkModelLoader(context, tagLib, multiFactory.build(LocalArtworkProvider::class.java, InputStream::class.java) as LocalArtworkModelLoader)
         }
 
         override fun teardown() {
@@ -44,7 +45,7 @@ class TagLibSongLocalArtworkModelLoader(
 
     class TagLibSongLocalArtworkProvider(
         private val context: Context,
-        private val tagLibArtworkProvider: ArtworkProvider,
+        private val tagLib: KTagLib,
         private val song: Song
     ) : SongArtworkProvider(song),
         LocalArtworkProvider {
@@ -55,8 +56,13 @@ class TagLibSongLocalArtworkModelLoader(
             } else {
                 Uri.fromFile(File(song.path))
             }
-            context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
-                return tagLibArtworkProvider.getArtwork(pfd.fd)?.inputStream()
+            try {
+                context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
+                    return tagLib.getArtwork(pfd.fd)?.inputStream()
+                }
+            } catch (e: SecurityException) {
+                Timber.v("Failed to retrieve artwork (permission denial)")
+                return null
             }
 
             return null

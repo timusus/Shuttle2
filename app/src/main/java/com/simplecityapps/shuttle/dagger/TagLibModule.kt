@@ -1,7 +1,7 @@
 package com.simplecityapps.shuttle.dagger
 
-import com.simplecityapps.taglib.ArtworkProvider
-import com.simplecityapps.taglib.FileScanner
+import com.simplecityapps.ktaglib.KTagLib
+import com.simplecityapps.localmediaprovider.local.provider.taglib.FileScanner
 import dagger.Module
 import dagger.Provides
 
@@ -9,13 +9,12 @@ import dagger.Provides
 class TagLibModule {
 
     @Provides
-    fun provideFileScanner(): FileScanner {
-        return FileScanner()
+    fun provideTagLib(): KTagLib {
+        return KTagLib()
     }
 
     @Provides
-    fun provideArtwork(): ArtworkProvider {
-        return ArtworkProvider()
+    fun provideFileScanner(tagLib: KTagLib): FileScanner {
+        return FileScanner(tagLib)
     }
-
 }

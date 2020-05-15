@@ -64,7 +64,7 @@ android {
         implementation(project(":core"))
 
         // TagLib
-        implementation(project(":taglib:lib"))
+        implementation("com.github.timusus:KTagLib:shuttle2-SNAPSHOT")
 
         // Shuttle MediaProvider Core
         implementation(project(":mediaprovider:core"))
@@ -76,9 +76,6 @@ android {
         // Shuttle Playback
         implementation(project(":playback"))
 
-        // TagLib
-        implementation(project(":taglib:lib"))
-
         // RecylerView Adapter
         implementation(project(":recyclerview-adapter"))
 
@@ -86,7 +83,7 @@ android {
         implementation(project(":saf"))
 
         // Kotlin Standard Library
-        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.70")
+        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.71")
 
         // Kotlin Extensions
         implementation("androidx.core:core-ktx:1.2.0")

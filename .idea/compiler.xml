@@ -2,6 +2,28 @@
 <project version="4">
   <component name="CompilerConfiguration">
     <bytecodeTargetLevel>
+      <module name="exoplayer-extension-av1" target="1.8" />
+      <module name="exoplayer-extension-cast" target="1.8" />
+      <module name="exoplayer-extension-cronet" target="1.8" />
+      <module name="exoplayer-extension-ffmpeg" target="1.8" />
+      <module name="exoplayer-extension-flac" target="1.8" />
+      <module name="exoplayer-extension-gvr" target="1.8" />
+      <module name="exoplayer-extension-ima" target="1.8" />
+      <module name="exoplayer-extension-jobdispatcher" target="1.8" />
+      <module name="exoplayer-extension-leanback" target="1.8" />
+      <module name="exoplayer-extension-mediasession" target="1.8" />
+      <module name="exoplayer-extension-okhttp" target="1.8" />
+      <module name="exoplayer-extension-opus" target="1.8" />
+      <module name="exoplayer-extension-rtmp" target="1.8" />
+      <module name="exoplayer-extension-vp9" target="1.8" />
+      <module name="exoplayer-extension-workmanager" target="1.8" />
+      <module name="exoplayer-library" target="1.7" />
+      <module name="exoplayer-library-core" target="1.8" />
+      <module name="exoplayer-library-dash" target="1.8" />
+      <module name="exoplayer-library-hls" target="1.8" />
+      <module name="exoplayer-library-smoothstreaming" target="1.8" />
+      <module name="exoplayer-library-ui" target="1.8" />
+      <module name="exoplayer-testutils" target="1.8" />
       <module name="Shuttle2.app" target="1.8" />
       <module name="Shuttle2.buildSrc" target="1.8" />
       <module name="Shuttle2.core" target="1.7" />

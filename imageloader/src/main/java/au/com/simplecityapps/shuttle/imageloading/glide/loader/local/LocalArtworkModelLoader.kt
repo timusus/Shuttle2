@@ -20,7 +20,7 @@ interface LocalArtworkProvider : ArtworkProvider {
 class LocalArtworkModelLoader : ModelLoader<LocalArtworkProvider, InputStream> {
 
     override fun buildLoadData(model: LocalArtworkProvider, width: Int, height: Int, options: Options): ModelLoader.LoadData<InputStream>? {
-        return ModelLoader.LoadData<InputStream>(ObjectKey(model.getCacheKey()), LocalArtworkDataFetcher(model))
+        return ModelLoader.LoadData(ObjectKey(model.getCacheKey()), LocalArtworkDataFetcher(model))
     }
 
     override fun handles(model: LocalArtworkProvider): Boolean {

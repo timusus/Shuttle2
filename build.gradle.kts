@@ -2,6 +2,7 @@ buildscript {
     repositories {
         google()
         jcenter()
+        maven(url = "https://dl.bintray.com/kotlin/kotlin-eap")
         maven(url = "https://maven.fabric.io/public")
     }
     dependencies {
@@ -21,6 +22,7 @@ allprojects {
     repositories {
         google()
         jcenter()
+        maven(url = "https://dl.bintray.com/kotlin/kotlin-eap")
         maven(url = "https://jitpack.io")
     }
 }

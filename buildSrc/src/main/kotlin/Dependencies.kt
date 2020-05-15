@@ -1,10 +1,10 @@
-const val kotlinVersion = "1.3.70"
+const val kotlinVersion = "1.4-M1"
 
 object BuildPlugins {
 
     object Versions {
         // Top level
-        const val androidGradlePlugin = "4.1.0-alpha08"
+        const val androidGradlePlugin = "4.1.0-alpha09"
         const val safeArgsPlugin = "2.2.0-rc04"
         const val googleServicesPlugin = "4.3.3"
         const val fabricPlugin = "1.31.0"
