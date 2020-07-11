@@ -2,6 +2,7 @@ package com.simplecityapps.playback.chromecast
 
 import android.net.Uri
 import fi.iki.elonen.NanoHTTPD
+import kotlinx.coroutines.runBlocking
 import timber.log.Timber
 import java.io.ByteArrayInputStream
 import java.io.IOException
@@ -19,13 +20,17 @@ class HttpServer(private val castService: CastService) : NanoHTTPD(5000) {
 
             when (uri.lastPathSegment) {
                 "audio" -> {
-                    castService.getAudio(songId)?.let { audioStream ->
-                        return serveAudio(session.headers, audioStream.stream, audioStream.length, audioStream.mimeType)
+                    runBlocking {
+                        castService.getAudio(songId)?.let { audioStream ->
+                            return@runBlocking serveAudio(session.headers, audioStream.stream, audioStream.length, audioStream.mimeType)
+                        }
                     }
                 }
                 "artwork" -> {
-                    castService.getArtwork(songId)?.let { byteArray ->
-                        return serveArtwork(ByteArrayInputStream(byteArray), "image/jpeg", byteArray.size.toLong())
+                    runBlocking {
+                        castService.getArtwork(songId)?.let { byteArray ->
+                            return@runBlocking serveArtwork(ByteArrayInputStream(byteArray), "image/jpeg", byteArray.size.toLong())
+                        }
                     }
                 }
             }

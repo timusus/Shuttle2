@@ -4,7 +4,7 @@ object BuildPlugins {
 
     object Versions {
         // Top level
-        const val androidGradlePlugin = "4.0.0"
+        const val androidGradlePlugin = "4.0.1"
         const val safeArgsPlugin = "2.2.0-rc04"
         const val googleServicesPlugin = "4.3.3"
         const val bugsnagPlugin = "4.7.5"

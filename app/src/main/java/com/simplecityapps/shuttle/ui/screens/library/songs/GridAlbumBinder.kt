@@ -82,7 +82,7 @@ class GridAlbumBinder(
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.album.name
-            subtitle.text = "${viewBinder.album.albumArtistName}"
+            subtitle.text = "${viewBinder.album.albumArtist}"
 
             viewBinder.imageLoader.loadArtwork(
                 imageView,

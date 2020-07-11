@@ -34,9 +34,6 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
         }
 
     private fun updateBandProcessors() {
-
-        Timber.v("Updating band processors: (${preset.bands.map { it.gain.toString() }.joinToString(",")})")
-
         if (outputAudioFormat.channelCount <= 0) {
             return
         }

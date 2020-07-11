@@ -2,11 +2,16 @@ package com.simplecityapps.localmediaprovider.local.provider.mediastore
 
 import android.content.Context
 import android.provider.MediaStore
+import androidx.core.database.getStringOrNull
 import com.simplecityapps.mediaprovider.repository.PlaylistRepository
+import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
-import io.reactivex.Completable
-import io.reactivex.Observable
-import io.reactivex.Single
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable.isActive
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.coroutineContext
 
 class MediaStorePlaylistImporter(
     private val context: Context,
@@ -14,60 +19,53 @@ class MediaStorePlaylistImporter(
     private val playlistRepository: PlaylistRepository
 ) {
 
-    fun importPlaylists(): Completable {
-        return songRepository.getSongs().first(emptyList()).flatMapCompletable { allSongs ->
-            playlistRepository.getPlaylists().first(emptyList()).flatMapCompletable { allPlaylists ->
+    suspend fun importPlaylists() {
+        val allSongs = songRepository.getSongs(SongQuery.All()).firstOrNull().orEmpty()
+        val allPlaylists = playlistRepository.getPlaylists().firstOrNull().orEmpty()
 
-                // Get the MediaStore playlists, and their songs
-                findMediaStorePlaylists()
-                    .flatMapSingle { playlist ->
-                        findSongsForPlaylist(playlist.id)
-                            .map { songs -> Pair(playlist, songs) }
-                    }
-                    .flatMapCompletable { (mediaStorePlaylist: MediaStorePlaylist, mediaStoreSongs: List<MediaStoreSong>) ->
-                        // Associate Media Store songs with Shuttle's songs
-                        val matchingSongs = allSongs.filter { song ->
-                            mediaStoreSongs.any { mediaStoreSong ->
-                                // We assume two songs are equal, if they have the same title, album, artist & duration. We can't be too specific, as the
-                                // MediaStore scanner may have interpreted some fields differently to Shuttle's built in scanner.
-                                song.name.equals(mediaStoreSong.title, ignoreCase = true)
-                                        && song.albumName.equals(mediaStoreSong.album, ignoreCase = true)
-                                        && song.albumArtistName.equals(mediaStoreSong.albumArtist, ignoreCase = true)
-                                        && song.duration == mediaStoreSong.duration
-                            }
-                        }
-                        if (matchingSongs.isNotEmpty()) {
-                            // We have a list of songs to import
-                            allPlaylists.find { playlist -> playlist.mediaStoreId == mediaStorePlaylist.id || playlist.name == mediaStorePlaylist.name }?.let { existingPlaylist ->
-                                playlistRepository.getSongsForPlaylist(existingPlaylist.id)
-                                    .first(emptyList())
-                                    .flatMapCompletable { existingSongs ->
-                                        val duplicates = existingSongs.intersect(matchingSongs)
-                                        val songsToInsert = matchingSongs.toMutableList()
-                                        songsToInsert.removeAll(duplicates)
-                                        if (songsToInsert.isEmpty()) {
-                                            Completable.complete()
-                                        } else {
-                                            playlistRepository.updatePlaylistMediaStoreId(existingPlaylist, mediaStorePlaylist.id)
-                                                .andThen(playlistRepository.addToPlaylist(existingPlaylist, songsToInsert))
-                                        }
-                                    }
-                            } ?: run {
-                                playlistRepository.createPlaylist(mediaStorePlaylist.name, mediaStorePlaylist.id, matchingSongs).ignoreElement()
-                            }
-                        } else {
-                            Completable.complete()
-                        }
-                    }
+        findMediaStorePlaylists()
+            .map { playlist ->
+                Pair(playlist, findSongsForPlaylist(playlist.id))
             }
-        }
-    }
+            .collect { (mediaStorePlaylist, mediaStoreSongs) ->
+                // Associate Media Store songs with Shuttle's songs
+                val matchingSongs = allSongs.filter { song ->
+                    mediaStoreSongs.any { mediaStoreSong ->
+                        // We assume two songs are equal, if they have the same title, album, artist & duration. We can't be too specific, as the
+                        // MediaStore scanner may have interpreted some fields differently to Shuttle's built in scanner.
+                        song.name.equals(mediaStoreSong.title, ignoreCase = true)
+                                && song.album.equals(mediaStoreSong.album, ignoreCase = true)
+                                && song.albumArtist.equals(mediaStoreSong.albumArtist, ignoreCase = true)
+                                && song.duration == mediaStoreSong.duration
+                    }
+                }
 
+                if (matchingSongs.isNotEmpty()) {
+                    // We have a list of songs to import
+                    allPlaylists.find { playlist -> playlist.mediaStoreId == mediaStorePlaylist.id || playlist.name == mediaStorePlaylist.name }?.let { existingPlaylist ->
+                        val existingSongs = playlistRepository.getSongsForPlaylist(existingPlaylist.id)
+                            .firstOrNull()
+                            .orEmpty()
+
+                        val duplicates = existingSongs.intersect(matchingSongs)
+                        val songsToInsert = matchingSongs.toMutableList()
+                        songsToInsert.removeAll(duplicates)
+                        if (songsToInsert.isNotEmpty()) {
+                            playlistRepository.updatePlaylistMediaStoreId(existingPlaylist, mediaStorePlaylist.id)
+                            playlistRepository.addToPlaylist(existingPlaylist, songsToInsert)
+                        }
+                    } ?: run {
+                        playlistRepository.createPlaylist(mediaStorePlaylist.name, mediaStorePlaylist.id, matchingSongs)
+                    }
+                }
+            }
+    }
 
     data class MediaStorePlaylist(val id: Long, val name: String)
 
-    private fun findMediaStorePlaylists(): Observable<MediaStorePlaylist> {
-        return Observable.create { emitter ->
+    private fun findMediaStorePlaylists(): Flow<MediaStorePlaylist> {
+        return flow {
+
             val cursor = context.contentResolver.query(
                 MediaStore.Audio.Playlists.EXTERNAL_CONTENT_URI,
                 arrayOf(
@@ -80,32 +78,26 @@ class MediaStorePlaylistImporter(
             )
 
             cursor?.use {
-                try {
-                    while (cursor.moveToNext()) {
-                        if (emitter.isDisposed) {
-                            return@use
-                        }
-                        emitter.onNext(
-                            MediaStorePlaylist(
-                                cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists._ID)),
-                                cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.NAME))
-                            )
-                        )
+                while (cursor.moveToNext()) {
+                    if (!coroutineContext.isActive) {
+                        return@use
                     }
-                } catch (e: Exception) {
-                    emitter.onError(e)
+                    emit(
+                        MediaStorePlaylist(
+                            cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists._ID)),
+                            cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.NAME))
+                        )
+                    )
                 }
             }
-            emitter.onComplete()
         }
     }
 
 
     data class MediaStoreSong(val title: String, val album: String, val albumArtist: String, val duration: Int, val year: Int, val track: Int, val mimeType: String, val path: String)
 
-    private fun findSongsForPlaylist(playlistId: Long): Single<List<MediaStoreSong>> {
-        return Single.create<List<MediaStoreSong>> { emitter ->
-
+    private suspend fun findSongsForPlaylist(playlistId: Long): List<MediaStoreSong> {
+        return withContext(Dispatchers.IO) {
             val songs = mutableListOf<MediaStoreSong>()
 
             val cursor = context.contentResolver.query(
@@ -127,39 +119,35 @@ class MediaStorePlaylistImporter(
             )
 
             cursor?.use {
-                try {
-                    while (cursor.moveToNext()) {
-                        if (emitter.isDisposed) {
-                            return@use
-                        }
-
-                        val artist = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST))
-                        val albumArtist = cursor.getString(cursor.getColumnIndex("album_artist")) ?: artist
-
-                        var track = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK))
-                        if (track >= 1000) {
-                            track %= 1000
-                        }
-
-                        songs.add(
-                            MediaStoreSong(
-                                cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.TITLE)),
-                                cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.ALBUM)),
-                                albumArtist,
-                                cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.DURATION)),
-                                cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.YEAR)),
-                                track,
-                                cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.MIME_TYPE)),
-                                cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.DATA))
-                            )
-                        )
+                while (cursor.moveToNext()) {
+                    if (!isActive) {
+                        return@use
                     }
-                } catch (e: Exception) {
-                    emitter.onError(e)
+
+                    val artist = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST))
+                    val albumArtist = cursor.getStringOrNull(cursor.getColumnIndex("album_artist")) ?: artist
+
+                    var track = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK))
+                    if (track >= 1000) {
+                        track %= 1000
+                    }
+
+                    songs.add(
+                        MediaStoreSong(
+                            cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.TITLE)),
+                            cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.ALBUM)),
+                            albumArtist,
+                            cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.DURATION)),
+                            cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.YEAR)),
+                            track,
+                            cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.MIME_TYPE)),
+                            cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.DATA))
+                        )
+                    )
                 }
             }
 
-            emitter.onSuccess(songs)
+            songs
         }
     }
 }

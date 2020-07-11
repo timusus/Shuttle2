@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.dagger
 
-import com.simplecityapps.shuttle.ui.screens.main.MainFragment
 import com.simplecityapps.shuttle.ui.screens.changelog.ChangelogDialogFragment
 import com.simplecityapps.shuttle.ui.screens.debug.DebugDrawerFragment
 import com.simplecityapps.shuttle.ui.screens.debug.LoggingFragment
@@ -12,12 +11,11 @@ import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistLis
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragment
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListFragment
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragment
-import com.simplecityapps.shuttle.ui.screens.library.folders.FolderFragment
-import com.simplecityapps.shuttle.ui.screens.library.folders.detail.FolderDetailFragment
 import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListFragment
 import com.simplecityapps.shuttle.ui.screens.library.playlists.detail.PlaylistDetailFragment
 import com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylistDetailFragment
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListFragment
+import com.simplecityapps.shuttle.ui.screens.main.MainFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParentFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.directories.DirectorySelectionFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.MediaProviderSelectionFragment
@@ -41,12 +39,6 @@ abstract class FragmentBuildersModule {
 
     @ContributesAndroidInjector
     abstract fun contributeOnboardingFragment(): OnboardingParentFragment
-
-    @ContributesAndroidInjector
-    abstract fun contributeFolderFragment(): FolderFragment
-
-    @ContributesAndroidInjector
-    abstract fun contributeFolderDetailFragment(): FolderDetailFragment
 
     @ContributesAndroidInjector
     abstract fun contributeSongsFragment(): SongListFragment

@@ -13,11 +13,11 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.fragment.app.Fragment
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
+import androidx.lifecycle.coroutineScope
 import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.ChangeBounds
 import androidx.transition.TransitionManager
 import com.simplecityapps.adapter.RecyclerAdapter
-import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
@@ -49,7 +49,7 @@ class DirectorySelectionFragment : Fragment(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        adapter = RecyclerAdapter()
+        adapter = RecyclerAdapter(lifecycle.coroutineScope)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -84,7 +84,7 @@ class DirectorySelectionFragment : Fragment(),
             if (intent.resolveActivity(requireContext().packageManager) != null) {
                 startActivityForResult(intent, REQUEST_CODE_OPEN_DOCUMENT)
             } else {
-                presenter
+                showDocumentProviderNotAvailable()
             }
         }
 
@@ -112,7 +112,7 @@ class DirectorySelectionFragment : Fragment(),
             parent.showBackButton("Back")
             parent.showNextButton("Scan")
 
-            if (adapter.items.none { binder -> binder is DirectoryBinder } || adapter.items.any { binder -> binder is DirectoryBinder && !binder.data.traversalComplete }) {
+            if (adapter.items.none { binder -> binder is DirectoryBinder } || adapter.items.any { binder -> binder is DirectoryBinder && !binder.directory.traversalComplete }) {
                 parent.toggleNextButton(enabled = false)
             } else {
                 parent.toggleNextButton(enabled = true)
@@ -121,7 +121,6 @@ class DirectorySelectionFragment : Fragment(),
     }
 
     override fun onDestroyView() {
-        adapter.dispose()
         presenter.unbindView()
         super.onDestroyView()
     }
@@ -129,7 +128,7 @@ class DirectorySelectionFragment : Fragment(),
 
     // MusicDirectoriesContract.View Implementation
 
-    override fun setData(data: List<MusicDirectoriesContract.View.Data>) {
+    override fun setData(data: List<MusicDirectoriesContract.Directory>) {
         getParent()?.let { parent ->
             parent.directories = data
                 .filter { it.traversalComplete }
@@ -137,9 +136,9 @@ class DirectorySelectionFragment : Fragment(),
 
         } ?: Timber.e("Failed to set parent uri data - getParent() returned null")
 
-        adapter.setData(data.map { DirectoryBinder(it, directoryBinderListener) }.toMutableList<ViewBinder>()) {
+        adapter.update(data.map { DirectoryBinder(it, directoryBinderListener) }.toMutableList()) {
             getParent()?.let { parent ->
-                if (adapter.items.none { binder -> binder is DirectoryBinder } || adapter.items.any { binder -> binder is DirectoryBinder && !binder.data.traversalComplete }) {
+                if (adapter.items.none { binder -> binder is DirectoryBinder } || adapter.items.any { binder -> binder is DirectoryBinder && !binder.directory.traversalComplete }) {
                     parent.toggleNextButton(enabled = false)
                 } else {
                     parent.toggleNextButton(enabled = true)
@@ -174,8 +173,8 @@ class DirectorySelectionFragment : Fragment(),
 
     private val directoryBinderListener = object : DirectoryBinder.Listener {
 
-        override fun onRemoveClicked(data: MusicDirectoriesContract.View.Data) {
-            presenter.removeItem(data)
+        override fun onRemoveClicked(directory: MusicDirectoriesContract.Directory) {
+            presenter.removeItem(directory)
         }
     }
 

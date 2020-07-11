@@ -14,7 +14,10 @@ import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.androidauto.PackageValidator
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import dagger.android.AndroidInjection
-import io.reactivex.disposables.CompositeDisposable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -38,7 +41,7 @@ class PlaybackService :
 
     private val packageValidator: PackageValidator by lazy { PackageValidator(this, R.xml.allowed_media_browser_callers) }
 
-    private lateinit var compositeDisposable: CompositeDisposable
+    private val coroutineScope = CoroutineScope(Dispatchers.IO)
 
     override fun onCreate() {
         Timber.v("onCreate()")
@@ -54,8 +57,6 @@ class PlaybackService :
         notificationManager.registerCallbacks()
 
         sessionToken = mediaSessionManager.mediaSession.sessionToken
-
-        compositeDisposable = CompositeDisposable()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -114,7 +115,7 @@ class PlaybackService :
         foregroundNotificationHandler?.removeCallbacksAndMessages(null)
         delayedShutdownHandler?.removeCallbacksAndMessages(null)
 
-        compositeDisposable.clear()
+        coroutineScope.cancel()
 
         super.onDestroy()
     }
@@ -162,15 +163,9 @@ class PlaybackService :
         } else {
             result.detach()
             Timber.i("MediaId: $parentId")
-            compositeDisposable.add(mediaIdHelper.getChildren(parentId).subscribe(
-                { mediaItems ->
-                    result.sendResult(mediaItems.toMutableList())
-                },
-                { throwable ->
-                    Timber.e(throwable, "Failed to retrieve children for media id: $parentId")
-                    result.sendResult(mutableListOf())
-                }
-            ))
+            coroutineScope.launch {
+                result.sendResult(mediaIdHelper.getChildren(parentId).toMutableList())
+            }
         }
     }
 

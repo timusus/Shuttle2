@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.coroutineScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.simplecityapps.adapter.RecyclerAdapter
@@ -49,7 +50,7 @@ class PlaylistListFragment :
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        adapter = SectionedAdapter()
+        adapter = SectionedAdapter(lifecycle.coroutineScope)
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -115,7 +116,7 @@ class PlaylistListFragment :
     }
 
     override fun onDestroyView() {
-        adapter.dispose()
+
 
         presenter.unbindView()
 
@@ -126,7 +127,7 @@ class PlaylistListFragment :
     // PlaylistListContract.View Implementation
 
     override fun setPlaylists(playlists: List<Playlist>) {
-        adapter.setData(playlists.map { playlist ->
+        adapter.update(playlists.map { playlist ->
             PlaylistBinder(playlist, playlistBinderListener)
         }, completion = {
             recyclerViewState?.let {

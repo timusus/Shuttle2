@@ -54,7 +54,7 @@ class AlbumBinder(
         if (other !is AlbumBinder) return false
 
         return album.name == other.album.name
-                && album.albumArtistName == other.album.albumArtistName
+                && album.albumArtist == other.album.albumArtist
                 && album.songCount == other.album.songCount
     }
 
@@ -77,7 +77,7 @@ class AlbumBinder(
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.album.name
-            subtitle.text = "${viewBinder.album.albumArtistName} • ${subtitle.resources.getQuantityString(R.plurals.songsPlural, viewBinder.album.songCount, viewBinder.album.songCount)}"
+            subtitle.text = "${viewBinder.album.albumArtist} • ${subtitle.resources.getQuantityString(R.plurals.songsPlural, viewBinder.album.songCount, viewBinder.album.songCount)}"
 
             viewBinder.imageLoader.loadArtwork(
                 imageView, viewBinder.album,

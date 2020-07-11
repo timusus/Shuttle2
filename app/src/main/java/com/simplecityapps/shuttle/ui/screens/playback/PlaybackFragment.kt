@@ -12,6 +12,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.coroutineScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.PagerSnapHelper
 import androidx.recyclerview.widget.RecyclerView
@@ -102,7 +103,7 @@ class PlaybackFragment :
         currentTimeTextView = view.findViewById(R.id.currentTimeTextView)
         durationTextView = view.findViewById(R.id.durationTextView)
 
-        adapter = RecyclerAdapter()
+        adapter = RecyclerAdapter(lifecycle.coroutineScope)
         imageLoader = GlideImageLoader(this)
 
         playPauseButton.setOnClickListener { presenter.togglePlayback() }
@@ -164,7 +165,7 @@ class PlaybackFragment :
     }
 
     override fun onDestroyView() {
-        adapter.dispose()
+
         presenter.unbindView()
         super.onDestroyView()
     }
@@ -190,8 +191,8 @@ class PlaybackFragment :
     override fun setCurrentSong(song: Song?) {
         song?.let {
             titleTextView.text = song.name
-            artistTextView.text = song.albumArtistName
-            albumTextView.text = song.albumName
+            artistTextView.text = song.albumArtist
+            albumTextView.text = song.album
 
             when (song.type) {
                 Song.Type.Audiobook, Song.Type.Podcast -> {
@@ -221,14 +222,13 @@ class PlaybackFragment :
     }
 
     override fun setQueue(queue: List<QueueItem>, position: Int?) {
-        adapter.setData(
+        adapter.update(
             queue.map { queueItem -> ArtworkBinder(queueItem.song, imageLoader) },
             completion = {
                 position?.let { position ->
                     recyclerView.scrollToPosition(position)
                 }
-            },
-            animateChanges = false
+            }
         )
     }
 

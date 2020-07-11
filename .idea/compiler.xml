@@ -24,7 +24,6 @@
       <module name="exoplayer-library-smoothstreaming" target="1.8" />
       <module name="exoplayer-library-ui" target="1.8" />
       <module name="exoplayer-testutils" target="1.8" />
-      <module name="Shuttle2.saf" target="1.7" />
       <module name="Shuttle2.taglib.lib" target="1.7" />
     </bytecodeTargetLevel>
   </component>

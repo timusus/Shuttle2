@@ -61,7 +61,7 @@ class ShuttleAppWidgetProvider : AppWidgetProvider() {
                         val song = currentItem.song
 
                         setTextViewText(R.id.title, song.name)
-                        setTextViewText(R.id.subtitle, "${song.albumArtistName} • ${song.albumName}")
+                        setTextViewText(R.id.subtitle, "${song.albumArtist} • ${song.album}")
 
                         artworkCache[song]?.let { image ->
                             setImageViewBitmap(R.id.artwork, image)

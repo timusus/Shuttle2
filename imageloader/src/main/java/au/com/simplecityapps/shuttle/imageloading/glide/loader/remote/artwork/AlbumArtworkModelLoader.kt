@@ -17,7 +17,7 @@ class AlbumArtworkModelLoader(
 ) : BaseGlideUrlLoader<Album>(urlLoader) {
 
     override fun getUrl(model: Album, width: Int, height: Int, options: Options?): String {
-        return "https://artwork.shuttlemusicplayer.app/api/v1/artwork?artist=${model.albumArtistName.encode()}&album=${model.name.encode()}"
+        return "https://artwork.shuttlemusicplayer.app/api/v1/artwork?artist=${model.albumArtist.encode()}&album=${model.name.encode()}"
     }
 
     override fun handles(model: Album): Boolean {

@@ -12,6 +12,7 @@ import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.coroutineScope
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
@@ -67,7 +68,7 @@ class QueueFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        adapter = RecyclerAdapter()
+        adapter = RecyclerAdapter(lifecycle.coroutineScope)
 
         imageLoader = GlideImageLoader(this)
 
@@ -124,7 +125,7 @@ class QueueFragment :
         itemTouchHelper.attachToRecyclerView(null)
         view.findParentMultiSheetView()?.removeSheetStateChangeListener(sheetStateChangeListener)
 
-        adapter.dispose()
+
 
         super.onDestroyView()
     }
@@ -139,7 +140,7 @@ class QueueFragment :
     // QueueContract.View Implementation
 
     override fun setData(queue: List<QueueItem>, progress: Float, isPlaying: Boolean) {
-        adapter.setData(queue.map { queueItem -> QueueBinder(queueItem, imageLoader, playbackManager, playbackWatcher, queueBinderListener) },
+        adapter.update(queue.map { queueItem -> QueueBinder(queueItem, imageLoader, playbackManager, playbackWatcher, queueBinderListener) },
             completion = {
                 recyclerViewState?.let {
                     recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
@@ -275,7 +276,7 @@ open class ItemTouchHelperCallback(
         }
         endPosition = target.adapterPosition
 
-        (recyclerView.adapter as RecyclerAdapter).moveItem(viewHolder.adapterPosition, target.adapterPosition)
+        (recyclerView.adapter as RecyclerAdapter).move(viewHolder.adapterPosition, target.adapterPosition)
         return true
     }
 

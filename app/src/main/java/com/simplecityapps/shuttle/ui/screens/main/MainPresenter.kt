@@ -12,11 +12,9 @@ import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
-import io.reactivex.Single
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.rxkotlin.subscribeBy
-import io.reactivex.schedulers.Schedulers
-import timber.log.Timber
+import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 interface MainContract {
@@ -27,7 +25,7 @@ interface MainContract {
     }
 
     interface Presenter {
-        fun scanMedia()
+        suspend fun scanMedia()
     }
 }
 
@@ -55,8 +53,10 @@ class MainPresenter @Inject constructor(
         }
 
         // Don't bother scanning for media again if we've already scanned once this session
-        if (mediaImporter.scanCount < 1) {
-            scanMedia()
+        if (mediaImporter.importCount < 1) {
+            launch {
+                scanMedia()
+            }
         }
     }
 
@@ -66,34 +66,26 @@ class MainPresenter @Inject constructor(
         queueWatcher.removeCallback(this)
     }
 
-    override fun scanMedia() {
+    override suspend fun scanMedia() {
         when (playbackPreferenceManager.songProvider) {
             PlaybackPreferenceManager.SongProvider.MediaStore -> {
-                mediaImporter.startScan(MediaStoreSongProvider(context.applicationContext))
+                mediaImporter.import(MediaStoreSongProvider(context.applicationContext))
             }
             PlaybackPreferenceManager.SongProvider.TagLib -> {
-                addDisposable(
-                    Single.fromCallable {
-                            context.contentResolver?.persistedUriPermissions
-                                ?.filter { uriPermission -> uriPermission.isReadPermission }
-                                ?.mapNotNull { uriPermission ->
-                                    SafDirectoryHelper.buildFolderNodeTree(context.contentResolver, uriPermission.uri)
-                                }.orEmpty()
-                        }
-                        .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .subscribeBy(
-                            onSuccess = { nodes ->
-                                mediaImporter.startScan(TaglibSongProvider(context, fileScanner, nodes))
-                            },
-                            onError = { throwable -> Timber.e(throwable, "Failed to scan library") }
-                        )
-                )
+                val directories = context.contentResolver?.persistedUriPermissions
+                    ?.filter { uriPermission -> uriPermission.isReadPermission }
+                    ?.mapNotNull { uriPermission ->
+                        SafDirectoryHelper.buildFolderNodeTree(context.contentResolver, uriPermission.uri)
+                    }
+                    .orEmpty()
+                    .merge()
+                    .toList()
+                mediaImporter.import(TaglibSongProvider(context, fileScanner, directories))
             }
         }
     }
 
-    // QueueChangeCallback Implementation
+// QueueChangeCallback Implementation
 
     override fun onQueueChanged() {
         view?.toggleSheet(visible = queueManager.getSize() != 0)

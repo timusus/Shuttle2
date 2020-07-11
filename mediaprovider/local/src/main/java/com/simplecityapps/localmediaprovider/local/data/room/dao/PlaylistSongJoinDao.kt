@@ -5,30 +5,25 @@ import androidx.room.Insert
 import androidx.room.Query
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistSongJoin
 import com.simplecityapps.mediaprovider.model.Song
-import io.reactivex.Completable
-import io.reactivex.Flowable
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 abstract class PlaylistSongJoinDao {
 
     @Insert
-    abstract fun insert(playlistSongJoin: PlaylistSongJoin): Completable
+    abstract suspend fun insert(playlistSongJoin: PlaylistSongJoin)
 
     @Insert
-    abstract fun insert(playlistSongJoins: List<PlaylistSongJoin>): Completable
+    abstract suspend fun insert(playlistSongJoins: List<PlaylistSongJoin>)
 
     @Query(
-        "SELECT songs.*, " +
-                "album_artists.name as albumArtistName, " +
-                "albums.name as albumName " +
+        "SELECT songs.* " +
                 "FROM songs " +
-                "INNER JOIN album_artists ON album_artists.id = songs.albumArtistId " +
-                "INNER JOIN albums ON albums.id = songs.albumId " +
                 "INNER JOIN playlist_song_join ON songs.id = playlist_song_join.songId " +
                 "WHERE playlist_song_join.playlistId = :playlistId AND songs.blacklisted == 0;"
     )
-    abstract fun getSongsForPlaylist(playlistId: Long): Flowable<List<Song>>
+    abstract fun getSongsForPlaylist(playlistId: Long): Flow<List<Song>>
 
     @Query("DELETE FROM playlist_song_join WHERE playlistId = :playlistId and songId IN (:songIds)")
-    abstract fun delete(playlistId: Long, songIds: Array<Long>): Completable
+    abstract suspend fun delete(playlistId: Long, songIds: Array<Long>)
 }

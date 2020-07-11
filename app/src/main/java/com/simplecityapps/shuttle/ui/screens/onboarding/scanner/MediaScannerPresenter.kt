@@ -6,8 +6,10 @@ import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStor
 import com.simplecityapps.localmediaprovider.local.provider.taglib.FileScanner
 import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibSongProvider
 import com.simplecityapps.mediaprovider.MediaImporter
+import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 interface ScannerContract {
@@ -46,21 +48,23 @@ class ScannerPresenter @Inject constructor(
     }
 
     override fun startScan(scanType: ScannerContract.ScanType) {
-        mediaImporter.startScan(
-            when (scanType) {
-                is ScannerContract.ScanType.MediaStore -> MediaStoreSongProvider(context)
-                is ScannerContract.ScanType.Taglib -> TaglibSongProvider(context, fileScanner, scanType.directories)
-            }
-        )
+        launch {
+            mediaImporter.import(
+                when (scanType) {
+                    is ScannerContract.ScanType.MediaStore -> MediaStoreSongProvider(context)
+                    is ScannerContract.ScanType.Taglib -> TaglibSongProvider(context, fileScanner, scanType.directories)
+                }
+            )
+        }
     }
 
     override fun stopScan() {
-        mediaImporter.stopScan()
+        mediaImporter.stopImport()
     }
 
     private val listener = object : MediaImporter.Listener {
-        override fun onProgress(progress: Float, message: String) {
-            view?.setProgress(progress, message)
+        override fun onProgress(progress: Float, song: Song) {
+            view?.setProgress(progress, "${song.albumArtist} - ${song.name}")
         }
 
         override fun onComplete() {

@@ -8,10 +8,8 @@ import java.util.*
 class Song(
     val id: Long,
     val name: String,
-    val albumArtistId: Long,
-    val albumArtistName: String,
-    val albumId: Long,
-    val albumName: String,
+    val albumArtist: String,
+    val album: String,
     val track: Int,
     val disc: Int,
     val duration: Int,
@@ -53,10 +51,10 @@ class Song(
     override fun toString(): String {
         return "id=$id," +
                 "\nname='$name'," +
-                "\nalbumArtistId=$albumArtistId," +
-                "\nalbumArtistName='$albumArtistName'," +
-                "\nalbumId=$albumId," +
-                "\nalbumName='$albumName'," +
+                "\nalbumArtist=$albumArtist," +
+                "\nalbumArtistName='$albumArtist'," +
+                "\nalbum=$album," +
+                "\nalbumName='$album'," +
                 "\ntrack=$track," +
                 "\ndisc=$disc," +
                 "\nduration=$duration," +

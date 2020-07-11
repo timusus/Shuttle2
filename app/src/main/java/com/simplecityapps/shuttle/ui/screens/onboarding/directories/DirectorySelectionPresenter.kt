@@ -7,42 +7,38 @@ import android.net.Uri
 import com.simplecityappds.saf.SafDirectoryHelper
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
-import io.reactivex.Observable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.rxkotlin.subscribeBy
-import io.reactivex.schedulers.Schedulers
-import timber.log.Timber
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 interface MusicDirectoriesContract {
 
+    data class Directory(val tree: SafDirectoryHelper.DocumentNodeTree, val traversalComplete: Boolean) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as Directory
+
+            if (tree != other.tree) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            return tree.hashCode()
+        }
+    }
+
     interface Presenter : BaseContract.Presenter<View> {
         fun loadData(contentResolver: ContentResolver)
-        fun removeItem(data: View.Data)
+        fun removeItem(directory: Directory)
         fun handleSafResult(contentResolver: ContentResolver, intent: Intent)
         fun presentDocumentProvider()
     }
 
     interface View {
-        class Data(val tree: SafDirectoryHelper.DocumentNodeTree, val traversalComplete: Boolean) {
-
-            override fun equals(other: Any?): Boolean {
-                if (this === other) return true
-                if (javaClass != other?.javaClass) return false
-
-                other as Data
-
-                if (tree != other.tree) return false
-
-                return true
-            }
-
-            override fun hashCode(): Int {
-                return tree.hashCode()
-            }
-        }
-
-        fun setData(data: List<Data>)
+        fun setData(data: List<Directory>)
         fun startActivity(intent: Intent, requestCode: Int)
         fun showDocumentProviderNotAvailable()
     }
@@ -52,7 +48,7 @@ class MusicDirectoriesPresenter @Inject constructor(
     private val context: Context
 ) : MusicDirectoriesContract.Presenter, BasePresenter<MusicDirectoriesContract.View>() {
 
-    private var data = mutableListOf<MusicDirectoriesContract.View.Data>()
+    private var data: MutableList<MusicDirectoriesContract.Directory> = mutableListOf()
 
     override fun loadData(contentResolver: ContentResolver) {
         contentResolver.persistedUriPermissions
@@ -60,17 +56,13 @@ class MusicDirectoriesPresenter @Inject constructor(
             .forEach { uriPermission ->
                 parseUri(contentResolver, uriPermission.uri)
             }
-        view?.setData(data)
+        view?.setData(emptyList())
     }
 
-    override fun removeItem(data: MusicDirectoriesContract.View.Data) {
-        context.contentResolver?.releasePersistableUriPermission(data.tree.rootUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-
-        val index = this.data.indexOf(data)
-        if (index != -1) {
-            this.data.removeAt(index)
-        }
-        view?.setData(this.data)
+    override fun removeItem(directory: MusicDirectoriesContract.Directory) {
+        context.contentResolver?.releasePersistableUriPermission(directory.tree.rootUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        data.remove(directory)
+        view?.setData(data)
     }
 
     override fun handleSafResult(contentResolver: ContentResolver, intent: Intent) {
@@ -90,35 +82,19 @@ class MusicDirectoriesPresenter @Inject constructor(
     }
 
     private fun parseUri(contentResolver: ContentResolver, uri: Uri) {
-        addDisposable(
-            Observable.create<MusicDirectoriesContract.View.Data> { emitter ->
-                try {
-                    SafDirectoryHelper.buildFolderNodeTree(contentResolver, uri) { tree, traversalComplete ->
-                        tree?.let {
-                            emitter.onNext(MusicDirectoriesContract.View.Data(tree, traversalComplete))
-                            if (traversalComplete) {
-                                emitter.onComplete()
-                            }
-                        } ?: emitter.onComplete()
+        launch {
+            SafDirectoryHelper.buildFolderNodeTree(contentResolver, uri)
+                .collect { tree ->
+                    val directory = MusicDirectoriesContract.Directory(tree, false)
+                    val index = data.indexOf(directory)
+                    if (index != -1) {
+                        data[index] = directory
+                    } else {
+                        data.add(directory)
                     }
-                } catch (e: SecurityException) {
-                    Timber.e(e, "Failed to parse directory: ${uri.path}")
-                    emitter.onError(e)
+                    view?.setData(data)
                 }
-            }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeBy(
-                    onNext = { element ->
-                        val index = data.indexOf(element)
-                        if (index != -1) {
-                            data[index] = element
-                        } else {
-                            data.add(element)
-                        }
-                        view?.setData(data)
-                    },
-                    onError = { error -> Timber.e(error, "Failed to parse uri: $uri") })
-        )
+            view?.setData(data.map { MusicDirectoriesContract.Directory(it.tree, true) })
+        }
     }
 }

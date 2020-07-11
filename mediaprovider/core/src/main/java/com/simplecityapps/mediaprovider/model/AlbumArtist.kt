@@ -5,7 +5,6 @@ import java.io.Serializable
 
 @Keep
 class AlbumArtist(
-    var id: Long,
     val name: String,
     val albumCount: Int,
     val songCount: Int,
@@ -16,21 +15,20 @@ class AlbumArtist(
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is AlbumArtist) return false
+        if (javaClass != other?.javaClass) return false
 
-        if (id != other.id) return false
+        other as AlbumArtist
+
+        if (name != other.name) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        return id.hashCode()
+        return name.hashCode()
     }
 
     override fun toString(): String {
-        return "id=$id, " +
-                "\nname='$name', " +
-                "\nalbumCount=$albumCount, " +
-                "\nsongCount=$songCount"
+        return "AlbumArtist(name='$name', albumCount=$albumCount, songCount=$songCount, playCount=$playCount, sortKey=$sortKey)"
     }
 }

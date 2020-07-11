@@ -2,20 +2,18 @@ package com.simplecityapps.mediaprovider.repository
 
 import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.mediaprovider.model.Song
-import io.reactivex.Completable
-import io.reactivex.Observable
-import io.reactivex.Single
+import kotlinx.coroutines.flow.Flow
 
 interface PlaylistRepository {
-    fun getPlaylists(): Observable<List<Playlist>>
-    fun getPlaylists(query: PlaylistQuery): Observable<List<Playlist>>
-    fun createPlaylist(name: String, mediaStoreId: Long?, songs: List<Song>?): Single<Playlist>
-    fun addToPlaylist(playlist: Playlist, songs: List<Song>): Completable
-    fun removeFromPlaylist(playlist: Playlist, songs: List<Song>): Completable
-    fun getSongsForPlaylist(playlistId: Long): Observable<List<Song>>
-    fun deletePlaylist(playlist: Playlist): Completable
-    fun updatePlaylistMediaStoreId(playlist: Playlist, mediaStoreId: Long?) : Completable
-    fun clearPlaylist(playlist: Playlist): Completable
+    fun getPlaylists(): Flow<List<Playlist>>
+    fun getPlaylists(query: PlaylistQuery): Flow<List<Playlist>>
+    suspend fun createPlaylist(name: String, mediaStoreId: Long?, songs: List<Song>?): Playlist
+    suspend fun addToPlaylist(playlist: Playlist, songs: List<Song>)
+    suspend fun removeFromPlaylist(playlist: Playlist, songs: List<Song>)
+    fun getSongsForPlaylist(playlistId: Long): Flow<List<Song>>
+    suspend fun deletePlaylist(playlist: Playlist)
+    suspend fun updatePlaylistMediaStoreId(playlist: Playlist, mediaStoreId: Long?)
+    suspend fun clearPlaylist(playlist: Playlist)
 }
 
 sealed class PlaylistQuery {

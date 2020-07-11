@@ -12,6 +12,8 @@ import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.coroutineScope
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
@@ -38,14 +40,13 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
-import io.reactivex.Completable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.rxkotlin.subscribeBy
-import io.reactivex.schedulers.Schedulers
-import io.reactivex.subjects.PublishSubject
-import timber.log.Timber
-import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BroadcastChannel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class SearchFragment : Fragment(),
@@ -65,15 +66,13 @@ class SearchFragment : Fragment(),
 
     @Inject lateinit var playlistMenuPresenter: PlaylistMenuPresenter
 
-    private var compositeDisposable = CompositeDisposable()
-
     private var imageLoader: GlideImageLoader by autoCleared()
-
-    private val queryPublishSubject = PublishSubject.create<String>()
 
     private lateinit var playlistMenuView: PlaylistMenuView
 
     private var query = ""
+
+    private val queryChannel = BroadcastChannel<String>(Channel.CONFLATED)
 
 
     // Lifecycle
@@ -81,7 +80,7 @@ class SearchFragment : Fragment(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        adapter = RecyclerAdapter()
+        adapter = RecyclerAdapter(lifecycle.coroutineScope)
 
         sharedElementEnterTransition = TransitionInflater.from(context).inflateTransition(android.R.transition.move)
         (sharedElementEnterTransition as Transition).duration = 200L
@@ -106,14 +105,15 @@ class SearchFragment : Fragment(),
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
 
             override fun onQueryTextSubmit(s: String): Boolean {
-                queryPublishSubject.onComplete()
                 closeKeyboard()
                 return true
             }
 
             override fun onQueryTextChange(text: String): Boolean {
                 query = text.trim()
-                queryPublishSubject.onNext(query)
+                lifecycleScope.launch {
+                    queryChannel.send(query)
+                }
                 return true
             }
         })
@@ -134,30 +134,18 @@ class SearchFragment : Fragment(),
         presenter.bindView(this)
         playlistMenuPresenter.bindView(playlistMenuView)
         searchView.setQuery(query, true)
-    }
 
-    override fun onResume() {
-        super.onResume()
-
-        compositeDisposable.add(
-            queryPublishSubject
-                .debounce(300, TimeUnit.MILLISECONDS)
-                .distinctUntilChanged()
-                .switchMapCompletable { query -> Completable.fromAction { presenter.loadData(query) } }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeBy(onError = { throwable -> Timber.e(throwable, "Failed to perform search.") })
-        )
-    }
-
-    override fun onPause() {
-        compositeDisposable.clear()
-        super.onPause()
+        lifecycleScope.launch(Dispatchers.Default) {
+            queryChannel
+                .asFlow()
+                .debounce(300)
+                .collect { query ->
+                    presenter.loadData(query)
+                }
+        }
     }
 
     override fun onDestroyView() {
-        adapter.dispose()
-
         presenter.unbindView()
         playlistMenuPresenter.unbindView()
 
@@ -182,7 +170,7 @@ class SearchFragment : Fragment(),
                 addAll(searchResult.third.map { song -> SongBinder(song, imageLoader, songBinderListener) })
             }
         }
-        adapter.setData(list, completion = { recyclerView.scrollToPosition(0) })
+        adapter.update(list, completion = { recyclerView.scrollToPosition(0) })
     }
 
     override fun showLoadError(error: Error) {

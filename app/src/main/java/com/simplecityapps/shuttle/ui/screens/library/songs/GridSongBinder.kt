@@ -73,7 +73,7 @@ class GridSongBinder(
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.song.name
-            subtitle.text = "${viewBinder.song.albumArtistName} • ${viewBinder.song.albumName}"
+            subtitle.text = "${viewBinder.song.albumArtist} • ${viewBinder.song.album}"
 
             viewBinder.imageLoader.loadArtwork(
                 imageView,

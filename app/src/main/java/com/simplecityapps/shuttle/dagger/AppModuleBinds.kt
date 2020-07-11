@@ -23,10 +23,6 @@ abstract class AppModuleBinds {
 
     @Binds
     @IntoSet
-    abstract fun provideRxDogTagIniitializer(bind: RxDogTagInitializer): AppInitializer
-
-    @Binds
-    @IntoSet
     abstract fun providePlaybackInitializer(bind: PlaybackInitializer): AppInitializer
 
     @Binds

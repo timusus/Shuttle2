@@ -13,12 +13,10 @@ import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.squareup.inject.assisted.Assisted
 import com.squareup.inject.assisted.AssistedInject
-import io.reactivex.Observable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.functions.BiFunction
-import io.reactivex.rxkotlin.subscribeBy
-import io.reactivex.schedulers.Schedulers
-import timber.log.Timber
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
 
 class AlbumArtistDetailContract {
 
@@ -66,182 +64,131 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
         super.bindView(view)
 
         view.setAlbumArtist(albumArtist)
-        addDisposable(albumArtistRepository
-            .getAlbumArtists(AlbumArtistQuery.AlbumArtistId(albumArtist.id))
-            .map { it.firstOrNull() }
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({ albumArtist ->
-                albumArtist?.let { view.setAlbumArtist(albumArtist) }
-            }, { error ->
-                Timber.e(error, "Failed to retrieve album artist")
-            })
-        )
+
+        launch {
+            albumArtistRepository
+                .getAlbumArtists(AlbumArtistQuery.AlbumArtist(name = albumArtist.name))
+                .collect { albumArtists ->
+                    albumArtists.firstOrNull()?.let { albumArtist ->
+                        this@AlbumArtistDetailPresenter.view?.setAlbumArtist(albumArtist)
+                    }
+                }
+        }
     }
 
     override fun loadData() {
-        val songsObservable = songRepository.getSongs(SongQuery.AlbumArtistIds(listOf(albumArtist.id)))
-        val albumsObservable = albumRepository.getAlbums(AlbumQuery.AlbumArtistId(albumArtist.id))
-
-        addDisposable(
-            Observable.zip(albumsObservable, songsObservable, BiFunction<List<Album>, List<Song>, Map<Album, List<Song>>> { albums, songs ->
-                albums.map { album -> Pair(album, songs.filter { song -> song.albumId == album.id }) }
-                    .sortedWith(Comparator { a, b -> b.first.year.compareTo(a.first.year) })
-                    .toMap()
-            })
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeBy(
-                    onNext = { map -> view?.setListData(map) },
-                    onError = { Timber.e(it, "Failed to load album artist album/song data") })
-        )
+        launch {
+            albumRepository.getAlbums(AlbumQuery.AlbumArtist(albumArtist.name))
+                .combine(songRepository.getSongs(SongQuery.AlbumArtists(listOf(SongQuery.AlbumArtist(name = albumArtist.name))))) { albums, songs ->
+                    albums.map { album -> Pair(album, songs.filter { song -> song.album == album.name }) }
+                        .sortedWith(Comparator { a, b -> b.first.year.compareTo(a.first.year) })
+                        .toMap()
+                }
+                .collect { map ->
+                    view?.setListData(map)
+                }
+        }
     }
 
     override fun onSongClicked(song: Song, songs: List<Song>) {
-        playbackManager.load(songs, songs.indexOf(song)) { result ->
-            result.onSuccess { playbackManager.play() }
-            result.onFailure { error -> view?.showLoadError(error as Error) }
+        launch {
+            playbackManager.load(songs, songs.indexOf(song)) { result ->
+                result.onSuccess { playbackManager.play() }
+                result.onFailure { error -> view?.showLoadError(error as Error) }
+            }
         }
     }
 
     override fun shuffle() {
-        addDisposable(
-            songRepository.getSongs(SongQuery.AlbumArtistIds(listOf(albumArtist.id))).first(emptyList())
-                .subscribeBy(
-                    onSuccess = { songs ->
-                        playbackManager.shuffle(songs) { result ->
-                            result.onSuccess {
-                                playbackManager.play()
-                            }
-                            result.onFailure { error -> view?.showLoadError(error as Error) }
-                        }
-                    }, onError = { throwable ->
-                        Timber.e(throwable, "Failed to retrieve songs")
-                    })
-        )
+        launch {
+            val songs = songRepository.getSongs(SongQuery.AlbumArtists(listOf(SongQuery.AlbumArtist(name = albumArtist.name)))).firstOrNull().orEmpty()
+            playbackManager.shuffle(songs) { result ->
+                result.onSuccess {
+                    playbackManager.play()
+                }
+                result.onFailure { error -> view?.showLoadError(error as Error) }
+            }
+        }
     }
 
     override fun addToQueue(albumArtist: AlbumArtist) {
-        addDisposable(
-            songRepository.getSongs(SongQuery.AlbumArtistIds(listOf(albumArtist.id)))
-                .first(emptyList())
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeBy(
-                    onSuccess = { songs ->
-                        playbackManager.addToQueue(songs)
-                        view?.onAddedToQueue(albumArtist.name)
-                    },
-                    onError = { throwable -> Timber.e(throwable, "Failed to retrieve songs for album artist: ${albumArtist.name}") })
-        )
+        launch {
+            val songs = songRepository.getSongs(SongQuery.AlbumArtists(listOf(SongQuery.AlbumArtist(name = albumArtist.name)))).firstOrNull().orEmpty()
+            playbackManager.addToQueue(songs)
+            view?.onAddedToQueue(albumArtist.name)
+        }
     }
 
     override fun addToQueue(album: Album) {
-        addDisposable(
-            songRepository.getSongs(SongQuery.AlbumIds(listOf(album.id)))
-                .first(emptyList())
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeBy(
-                    onSuccess = { songs ->
-                        playbackManager.addToQueue(songs)
-                        view?.onAddedToQueue(album.name)
-                    },
-                    onError = { throwable -> Timber.e(throwable, "Failed to retrieve songs for album: ${album.name}") })
-        )
+        launch {
+            val songs = songRepository.getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = album.name, albumArtistName = album.albumArtist)))).firstOrNull().orEmpty()
+            playbackManager.addToQueue(songs)
+            view?.onAddedToQueue(album.name)
+        }
     }
 
     override fun addToQueue(song: Song) {
-        playbackManager.addToQueue(listOf(song))
-        view?.onAddedToQueue(song.name)
+        launch {
+            playbackManager.addToQueue(listOf(song))
+            view?.onAddedToQueue(song.name)
+        }
     }
 
     override fun playNext(album: AlbumArtist) {
-        addDisposable(
-            songRepository.getSongs(SongQuery.AlbumArtistIds(listOf(albumArtist.id)))
-                .first(emptyList())
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeBy(
-                    onSuccess = { songs ->
-                        playbackManager.playNext(songs)
-                        view?.onAddedToQueue(albumArtist.name)
-                    },
-                    onError = { throwable -> Timber.e(throwable, "Failed to retrieve songs for album artist: ${albumArtist.name}") })
-        )
+        launch {
+            val songs = songRepository.getSongs(SongQuery.AlbumArtists(listOf(SongQuery.AlbumArtist(name = albumArtist.name)))).firstOrNull().orEmpty()
+            playbackManager.playNext(songs)
+            view?.onAddedToQueue(albumArtist.name)
+        }
     }
 
     override fun playNext(album: Album) {
-        addDisposable(
-            songRepository.getSongs(SongQuery.AlbumIds(listOf(album.id)))
-                .first(emptyList())
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeBy(
-                    onSuccess = { songs ->
-                        playbackManager.playNext(songs)
-                        view?.onAddedToQueue(album.name)
-                    },
-                    onError = { throwable -> Timber.e(throwable, "Failed to retrieve songs for album: ${album.name}") })
-        )
+        launch {
+            val songs = songRepository.getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = album.name, albumArtistName = album.albumArtist)))).firstOrNull().orEmpty()
+            playbackManager.playNext(songs)
+            view?.onAddedToQueue(album.name)
+        }
     }
 
     override fun playNext(song: Song) {
-        playbackManager.playNext(listOf(song))
-        view?.onAddedToQueue(song.name)
+        launch {
+            playbackManager.playNext(listOf(song))
+            view?.onAddedToQueue(song.name)
+        }
     }
 
     override fun blacklist(song: Song) {
-        addDisposable(
+        launch {
             songRepository.setBlacklisted(listOf(song), true)
-                .subscribeOn(Schedulers.io())
-                .subscribeBy(onError = { throwable -> Timber.e(throwable, "Failed to blacklist song") })
-        )
+        }
     }
 
     override fun blacklist(album: Album) {
-        addDisposable(
-            songRepository.getSongs(SongQuery.AlbumIds(listOf(album.id)))
-                .first(emptyList())
-                .flatMapCompletable { songs ->
-                    songRepository.setBlacklisted(songs, true)
-                }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeBy(
-                    onError = { throwable -> Timber.e(throwable, "Failed to blacklist album ${album.name}") })
-        )
+        launch {
+            val songs = songRepository.getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = album.name, albumArtistName = album.albumArtist)))).firstOrNull().orEmpty()
+            songRepository.setBlacklisted(songs, true)
+        }
     }
 
     override fun delete(song: Song) {
         val uri = song.path.toUri()
         val documentFile = DocumentFile.fromSingleUri(context, uri)
         if (documentFile?.delete() == true) {
-            addDisposable(songRepository.removeSong(song)
-                .subscribeOn(Schedulers.io())
-                .subscribeBy(
-                    onComplete = { Timber.i("Song deleted") },
-                    onError = { throwable -> Timber.e(throwable, "Failed to remove song from database") }
-                ))
+            launch {
+                songRepository.removeSong(song)
+            }
         } else {
             view?.showDeleteError(UserFriendlyError("The song couldn't be deleted"))
         }
     }
 
     override fun play(album: Album) {
-        addDisposable(
-            songRepository.getSongs(SongQuery.AlbumIds(listOf(album.id)))
-                .first(emptyList())
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeBy(onSuccess = { songs ->
-                    playbackManager.load(songs, 0) { result ->
-                        result.onSuccess { playbackManager.play() }
-                        result.onFailure { error -> view?.showLoadError(error as Error) }
-                    }
-                }, onError = { error ->
-                    Timber.e(error, "Failed to retrieve songs for album")
-                })
-        )
+        launch {
+            val songs = songRepository.getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = album.name, albumArtistName = album.albumArtist)))).firstOrNull().orEmpty()
+            playbackManager.load(songs, 0) { result ->
+                result.onSuccess { playbackManager.play() }
+                result.onFailure { error -> view?.showLoadError(error as Error) }
+            }
+        }
     }
 }

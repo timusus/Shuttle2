@@ -15,9 +15,11 @@ import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.rxkotlin.subscribeBy
-import io.reactivex.schedulers.Schedulers
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -47,57 +49,54 @@ class PlaybackInitializer @Inject constructor(
         queueWatcher.addCallback(this)
         playbackWatcher.addCallback(this)
 
-        val seekPosition = playbackPreferenceManager.playbackPosition ?: 0
-        val queuePosition = playbackPreferenceManager.queuePosition
-        val shuffleMode = playbackPreferenceManager.shuffleMode
-        val repeatMode = playbackPreferenceManager.repeatMode
+        GlobalScope.launch {
+            val seekPosition = playbackPreferenceManager.playbackPosition ?: 0
+            val queuePosition = playbackPreferenceManager.queuePosition
+            val shuffleMode = playbackPreferenceManager.shuffleMode
+            val repeatMode = playbackPreferenceManager.repeatMode
 
-        Timber.v(
-            "\nRestoring queue position: $queuePosition" +
-                    "\nseekPosition: $seekPosition" +
-                    "\nshuffleMode: $shuffleMode" +
-                    "\nrepeatMode: $repeatMode"
-        )
+            Timber.v(
+                "\nRestoring queue position: $queuePosition" +
+                        "\nseekPosition: $seekPosition" +
+                        "\nshuffleMode: $shuffleMode" +
+                        "\nrepeatMode: $repeatMode"
+            )
 
-        queueManager.setShuffleMode(shuffleMode, reshuffle = false)
-        queueManager.setRepeatMode(repeatMode)
+            queueManager.setShuffleMode(shuffleMode, reshuffle = false)
+            queueManager.setRepeatMode(repeatMode)
 
-        queuePosition?.let {
-            val songIds = playbackPreferenceManager.queueIds?.split(",")?.map { id -> id.toLong() }
-            val shuffleSongIds = playbackPreferenceManager.shuffleQueueIds?.split(",")?.map { id -> id.toLong() }
-            val allSongIds = songIds.orEmpty().toMutableSet()
-            allSongIds.addAll(shuffleSongIds.orEmpty())
+            queuePosition?.let {
+                val songIds = playbackPreferenceManager.queueIds?.split(",")?.map { id -> id.toLong() }
+                val shuffleSongIds = playbackPreferenceManager.shuffleQueueIds?.split(",")?.map { id -> id.toLong() }
+                val allSongIds = songIds.orEmpty().toMutableSet()
+                allSongIds.addAll(shuffleSongIds.orEmpty())
 
-            if (songIds.isNullOrEmpty()) {
-                onRestoreComplete()
-                return
-            }
+                if (songIds.isNullOrEmpty()) {
+                    onRestoreComplete()
+                    return@launch
+                }
 
-            songRepository.getSongs(SongQuery.SongIds(allSongIds.toList()))
-                .first(emptyList())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeBy(
-                    onSuccess = { songs ->
-                        playbackManager.load(
-                            songIds.mapNotNull { songId -> songs.firstOrNull { song -> song.id == songId } },
-                            shuffleSongIds?.mapNotNull { shuffleSongId -> songs.firstOrNull { song -> song.id == shuffleSongId } },
-                            queuePosition
-                        ) { result ->
-                            result.onFailure { error -> Timber.e("Failed to load playback after reloading queue. Error: $error") }
-                            result.onSuccess { didLoadFirst ->
-                                if (didLoadFirst) {
-                                    playbackManager.seekTo(seekPosition)
-                                }
-                            }
+                val songs = songRepository.getSongs(SongQuery.SongIds(allSongIds.toList()))
+                    .flowOn(Dispatchers.IO)
+                    .firstOrNull()
+                    .orEmpty()
+
+                playbackManager.load(
+                    songIds.mapNotNull { songId -> songs.firstOrNull { song -> song.id == songId } },
+                    shuffleSongIds?.mapNotNull { shuffleSongId -> songs.firstOrNull { song -> song.id == shuffleSongId } },
+                    queuePosition
+                ) { result ->
+                    result.onFailure { error -> Timber.e("Failed to load playback after reloading queue. Error: $error") }
+                    result.onSuccess { didLoadFirst ->
+                        if (didLoadFirst) {
+                            playbackManager.seekTo(seekPosition)
                         }
-                        onRestoreComplete()
-                    },
-                    onError = { error ->
-                        Timber.e(error, "Failed to reload queue")
-                        onRestoreComplete()
-                    })
-        } ?: run {
-            onRestoreComplete()
+                    }
+                }
+                onRestoreComplete()
+            } ?: run {
+                onRestoreComplete()
+            }
         }
     }
 
@@ -147,10 +146,11 @@ class PlaybackInitializer @Inject constructor(
             playbackPreferenceManager.playbackPosition = playbackManager.getProgress()
 
             queueManager.getCurrentItem()?.song?.let { song ->
-                song.playbackPosition = playbackManager.getProgress() ?: 0
-                songRepository.setPlaybackPosition(song, song.playbackPosition)
-                    .subscribeOn(Schedulers.io())
-                    .subscribeBy(onError = { throwable -> Timber.e(throwable) })
+                val playbackPosition = playbackManager.getProgress() ?: 0
+                song.playbackPosition = playbackPosition
+                GlobalScope.launch {
+                    songRepository.setPlaybackPosition(song, playbackPosition)
+                }
             }
         }
     }
@@ -159,13 +159,10 @@ class PlaybackInitializer @Inject constructor(
     override fun onPlaybackComplete(song: Song) {
         playbackPreferenceManager.playbackPosition = 0
 
-        songRepository.setPlaybackPosition(song, song.duration)
-            .subscribeOn(Schedulers.io())
-            .subscribeBy(onError = { throwable -> Timber.e(throwable) })
-
-        songRepository.incrementPlayCount(song)
-            .subscribeOn(Schedulers.io())
-            .subscribeBy(onError = { throwable -> Timber.e(throwable) })
+        GlobalScope.launch {
+            songRepository.setPlaybackPosition(song, song.duration)
+            songRepository.incrementPlayCount(song)
+        }
     }
 
 

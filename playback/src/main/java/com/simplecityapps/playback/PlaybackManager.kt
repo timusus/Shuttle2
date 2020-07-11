@@ -9,6 +9,8 @@ import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import kotlin.math.max
 
@@ -40,11 +42,11 @@ class PlaybackManager(
         }
     }
 
-    fun load(songs: List<Song>, queuePosition: Int = 0, seekPosition: Int = 0, completion: (Result<Any?>) -> Unit) {
+    suspend fun load(songs: List<Song>, queuePosition: Int = 0, seekPosition: Int = 0, completion: (Result<Any?>) -> Unit) {
         load(songs, null, queuePosition, seekPosition, completion)
     }
 
-    fun load(songs: List<Song>, shuffleSongs: List<Song>?, queuePosition: Int = 0, seekPosition: Int = 0, completion: (Result<Boolean>) -> Unit) {
+    suspend fun load(songs: List<Song>, shuffleSongs: List<Song>?, queuePosition: Int = 0, seekPosition: Int = 0, completion: (Result<Boolean>) -> Unit) {
         if (songs.isEmpty()) {
             Timber.e("Attempted to load empty song list")
             completion(Result.failure(Error("Failed to load songs. The song list is empty.")))
@@ -59,21 +61,23 @@ class PlaybackManager(
         if (shuffleSongs == null) {
             queueManager.setShuffleMode(QueueManager.ShuffleMode.Off, reshuffle = false)
         }
-
         queueManager.setQueue(songs, shuffleSongs, queuePosition)
 
-        val currentQueueItem = queueManager.getCurrentItem()
-        currentQueueItem?.let {
-            attemptLoad(currentQueueItem.song, queueManager.getNext()?.song, seekPosition) { result ->
-                result.onSuccess { didLoadFirst ->
-                    if (didLoadFirst) {
-                        playback.seek(songs[queuePosition].getStartPosition())
+        // Some players (Exo/CasT) like to be loaded from the main thread
+        withContext(Dispatchers.Main) {
+            val currentQueueItem = queueManager.getCurrentItem()
+            currentQueueItem?.let {
+                attemptLoad(currentQueueItem.song, queueManager.getNext()?.song, seekPosition) { result ->
+                    result.onSuccess { didLoadFirst ->
+                        if (didLoadFirst) {
+                            playback.seek(songs[queuePosition].getStartPosition())
+                        }
                     }
+                    result.onFailure {
+                        queueManager.setCurrentItem(currentQueueItem)
+                    }
+                    completion(result)
                 }
-                result.onFailure {
-                    queueManager.setCurrentItem(currentQueueItem)
-                }
-                completion(result)
             }
         }
     }
@@ -111,7 +115,7 @@ class PlaybackManager(
         }
     }
 
-    fun shuffle(songs: List<Song>, completion: (Result<Any?>) -> Unit) {
+    suspend fun shuffle(songs: List<Song>, completion: (Result<Any?>) -> Unit) {
         queueManager.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = false)
         load(songs, songs.shuffled(), 0, completion = completion)
     }
@@ -223,7 +227,7 @@ class PlaybackManager(
         updateProgress(true)
     }
 
-    fun addToQueue(songs: List<Song>) {
+    suspend fun addToQueue(songs: List<Song>) {
         if (queueManager.getQueue().isEmpty()) {
             load(songs, 0) { result ->
                 result.onSuccess { play() }
@@ -247,7 +251,7 @@ class PlaybackManager(
         queueManager.remove(listOf(queueItem))
     }
 
-    fun playNext(songs: List<Song>) {
+    suspend fun playNext(songs: List<Song>) {
         if (queueManager.getQueue().isEmpty()) {
             load(songs, 0) { result ->
                 result.onSuccess { play() }

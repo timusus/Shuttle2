@@ -10,6 +10,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
+import androidx.lifecycle.coroutineScope
 import androidx.navigation.fragment.findNavController
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -17,6 +18,7 @@ import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.shuttle.R
@@ -26,14 +28,9 @@ import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.screens.changelog.ChangelogDialogFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParentFragmentArgs
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.rxkotlin.subscribeBy
-import io.reactivex.schedulers.Schedulers
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.map
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -55,9 +52,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
 
     private var imageLoader: GlideImageLoader by autoCleared()
 
-    private val coroutineScope = CoroutineScope(Dispatchers.Main)
-
-    private var compositeDisposable = CompositeDisposable()
+    private val coroutineScope = CoroutineScope(Dispatchers.Main + CoroutineExceptionHandler { _, throwable -> Timber.e(throwable) })
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -91,7 +86,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
         }
 
         preferenceScreen.findPreference<Preference>("pref_media_rescan")?.setOnPreferenceClickListener {
-            mediaImporter.rescan()
+            mediaImporter.reImport()
 
             val customView = View.inflate(requireContext(), R.layout.progress_dialog_loading_horizontal, null)
             scanningProgressView = customView.findViewById(R.id.progressBar)
@@ -104,8 +99,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
         }
 
         preferenceScreen.findPreference<Preference>("pref_blacklist")?.setOnPreferenceClickListener {
-
-            val adapter = SectionedAdapter()
+            val adapter = SectionedAdapter(lifecycle.coroutineScope)
             val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_blacklist, null)
             val recyclerView = dialogView.findViewById<RecyclerView>(R.id.recyclerView)
             val emptyLabel = dialogView.findViewById<TextView>(R.id.emptyLabel)
@@ -113,35 +107,29 @@ class SettingsFragment : PreferenceFragmentCompat(),
 
             val blacklistListener = object : BlacklistBinder.Listener {
                 override fun onRemoveClicked(song: Song) {
-                    compositeDisposable.add(
+                    coroutineScope.launch {
                         songRepository.setBlacklisted(listOf(song), false)
-                            .subscribeOn(Schedulers.io())
-                            .subscribeBy(onError = { throwable -> Timber.e(throwable, "Failed to remove song from blacklist") })
-                    )
+                    }
                 }
             }
 
-            compositeDisposable.add(songRepository.getSongs(includeBlacklisted = true)
-                .map { songList -> songList.filter { song -> song.blacklisted } }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeBy(
-                    onNext = { songs ->
-                        adapter.setData(songs.map { BlacklistBinder(it, imageLoader, blacklistListener) })
+            coroutineScope.launch {
+                songRepository
+                    .getSongs(SongQuery.All(includeBlacklisted = true))
+                    .map { songList -> songList.filter { song -> song.blacklisted } }
+                    .collect { songs ->
+                        adapter.update(songs.map { BlacklistBinder(it, imageLoader, blacklistListener) })
                         emptyLabel.isVisible = songs.isEmpty()
-                    },
-                    onError = { error -> Timber.e(error, "Failed to load blacklisted songs") }
-                ))
+                    }
+            }
 
             AlertDialog.Builder(requireContext()).setTitle("Blacklist")
                 .setView(dialogView)
                 .setPositiveButton("Close", null)
                 .setNegativeButton("Clear") { _, _ ->
-                    compositeDisposable.add(
+                    coroutineScope.launch {
                         songRepository.clearBlacklist()
-                            .subscribeOn(Schedulers.io())
-                            .subscribeBy(onError = { throwable -> Timber.e(throwable, "Failed to clear blacklist") })
-                    )
+                    }
                 }
                 .show()
 
@@ -174,8 +162,6 @@ class SettingsFragment : PreferenceFragmentCompat(),
 
         coroutineScope.cancel()
 
-        compositeDisposable.dispose()
-
         super.onDestroyView()
     }
 
@@ -204,7 +190,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
 
     // MediaImporter.Listener Implementation
 
-    override fun onProgress(progress: Float, message: String) {
+    override fun onProgress(progress: Float, song: Song) {
         scanningProgressView?.progress = (progress * 100).toInt()
     }
 

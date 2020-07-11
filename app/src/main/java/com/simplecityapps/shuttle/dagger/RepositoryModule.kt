@@ -15,6 +15,10 @@ import com.simplecityapps.mediaprovider.repository.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import dagger.Module
 import dagger.Provides
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import timber.log.Timber
 
 @Module
 class RepositoryModule {
@@ -28,31 +32,31 @@ class RepositoryModule {
     @Provides
     @AppScope
     fun provideSongRepository(database: MediaDatabase): SongRepository {
-        return LocalSongRepository(database)
+        return LocalSongRepository(database.songDataDao())
     }
 
     @Provides
     @AppScope
     fun provideMediaImporter(context: Context, songRepository: SongRepository): MediaImporter {
-        return MediaImporter(context, songRepository)
+        return MediaImporter(context, songRepository, CoroutineScope(Dispatchers.Main + CoroutineExceptionHandler { _, exception -> Timber.e(exception) }))
     }
 
     @Provides
     @AppScope
     fun provideAlbumRepository(database: MediaDatabase): AlbumRepository {
-        return LocalAlbumRepository(database)
+        return LocalAlbumRepository(database.albumDataDao())
     }
 
     @Provides
     @AppScope
     fun provideAlbumArtistRepository(database: MediaDatabase): AlbumArtistRepository {
-        return LocalAlbumArtistRepository(database)
+        return LocalAlbumArtistRepository(database.albumArtistDataDao())
     }
 
     @Provides
     @AppScope
     fun providePlaylistRepository(database: MediaDatabase): PlaylistRepository {
-        return LocalPlaylistRepository(database)
+        return LocalPlaylistRepository(database.playlistDataDao(), database.playlistSongJoinDataDao())
     }
 
     @Provides

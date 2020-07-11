@@ -7,9 +7,7 @@ import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
-import io.reactivex.rxkotlin.subscribeBy
-import io.reactivex.schedulers.Schedulers
-import timber.log.Timber
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class QueuePresenter @Inject constructor(
@@ -71,11 +69,9 @@ class QueuePresenter @Inject constructor(
 
     override fun blacklist(queueItem: QueueItem) {
         removeFromQueue(queueItem)
-        addDisposable(
+        launch {
             songRepository.setBlacklisted(listOf(queueItem.song), true)
-                .subscribeOn(Schedulers.io())
-                .subscribeBy(onError = { throwable -> Timber.e(throwable, "Failed to blacklist song") })
-        )
+        }
     }
 
     // QueueBinder.Listener Implementation

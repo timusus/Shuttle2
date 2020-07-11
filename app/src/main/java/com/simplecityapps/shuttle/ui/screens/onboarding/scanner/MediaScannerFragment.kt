@@ -23,7 +23,7 @@ class MediaScannerFragment :
 
     private var progressBar: ProgressBar by autoCleared()
     private var titleTextView: TextView by autoCleared()
-    private var subtitleTextView: TextView by autoCleared()
+    private lateinit var subtitleTextView: TextView
     private var songCountTextView: TextView by autoCleared()
 
     @Inject lateinit var presenter: ScannerPresenter
@@ -87,6 +87,7 @@ class MediaScannerFragment :
     override fun dismiss() {
         getParent().exit()
     }
+
 
     // OnboardingChild Implementation
 

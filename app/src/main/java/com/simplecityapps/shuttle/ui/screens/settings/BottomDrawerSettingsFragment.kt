@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.annotation.NavigationRes
 import androidx.fragment.app.FragmentManager
+import androidx.lifecycle.coroutineScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
@@ -38,7 +39,7 @@ class BottomDrawerSettingsFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        adapter = RecyclerAdapter()
+        adapter = RecyclerAdapter(lifecycle.coroutineScope)
 
         val recyclerView: RecyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
@@ -63,7 +64,7 @@ class BottomDrawerSettingsFragment :
 
     override fun onDestroyView() {
         presenter.unbindView()
-        adapter.dispose()
+
         super.onDestroyView()
     }
 
@@ -102,7 +103,7 @@ class BottomDrawerSettingsFragment :
     // BottomDrawerSettingsContract.View Implementation
 
     override fun setData(settingsItems: List<SettingsMenuItem>, currentDestination: Int?) {
-        adapter.setData(settingsItems.map { settingsItem -> SettingsViewBinder(settingsItem, false, settingsItemClickListener) })
+        adapter.update(settingsItems.map { settingsItem -> SettingsViewBinder(settingsItem, false, settingsItemClickListener) })
     }
 
     override fun showLoadError(error: Error) {

@@ -2,16 +2,16 @@ package com.simplecityapps.shuttle.ui.screens.settings
 
 import android.annotation.SuppressLint
 import androidx.annotation.NavigationRes
+import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.PlaybackManager
-import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.rxkotlin.subscribeBy
-import io.reactivex.schedulers.Schedulers
-import timber.log.Timber
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 interface BottomDrawerSettingsContract {
@@ -29,7 +29,6 @@ interface BottomDrawerSettingsContract {
 
 class BottomDrawerSettingsPresenter @Inject constructor(
     private val songRepository: SongRepository,
-    private val queueManager: QueueManager,
     private val playbackManager: PlaybackManager
 ) :
     BasePresenter<BottomDrawerSettingsContract.View>(),
@@ -54,24 +53,20 @@ class BottomDrawerSettingsPresenter @Inject constructor(
 
     @SuppressLint("CheckResult")
     override fun shuffleAll() {
-        songRepository.getSongs()
-            .first(emptyList())
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(
-                onSuccess = { songs ->
-                    if (songs.isEmpty()) {
-                        view?.showLoadError(UserFriendlyError("Your library is empty"))
-                        return@subscribeBy
-                    }
-                    playbackManager.shuffle(songs) { result ->
-                        result.onSuccess {
-                            playbackManager.play()
-                        }
-                        result.onFailure { error -> view?.showLoadError(Error(error)) }
-                    }
-                },
-                onError = { throwable -> Timber.e(throwable, "Error retrieving songs") }
-            )
+        GlobalScope.launch(Dispatchers.Main) {
+            val songs = songRepository
+                .getSongs(SongQuery.All())
+                .firstOrNull()
+                .orEmpty()
+            if (songs.isEmpty()) {
+                view?.showLoadError(UserFriendlyError("Your library is empty"))
+                return@launch
+            }
+
+            playbackManager.shuffle(songs) { result ->
+                result.onSuccess { playbackManager.play() }
+                result.onFailure { error -> view?.showLoadError(Error(error)) }
+            }
+        }
     }
 }

@@ -8,8 +8,9 @@ import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.*
-import io.reactivex.Single
-import timber.log.Timber
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class MediaIdHelper @Inject constructor(
@@ -19,77 +20,63 @@ class MediaIdHelper @Inject constructor(
     private val songRepository: SongRepository
 ) {
 
-    fun getChildren(mediaId: String): Single<List<MediaBrowserCompat.MediaItem>> {
-        val mediaIdWrapper: MediaIdWrapper? = try {
-            parseMediaId(mediaId)
-        } catch (e: IllegalStateException) {
-            Timber.e("Failed to parse media id: ${e.localizedMessage}")
-            return Single.error(e)
-        }
+    suspend fun getChildren(mediaId: String): List<MediaBrowserCompat.MediaItem> {
+
+        val mediaIdWrapper: MediaIdWrapper? = parseMediaId(mediaId)
 
         return when (mediaIdWrapper) {
             is MediaIdWrapper.Directory.Root -> {
-                Single.just(
-                    mutableListOf(
-                        MediaBrowserCompat.MediaItem(
-                            MediaDescriptionCompat.Builder()
-                                .setTitle("Artists")
-                                .setMediaId("media:/artists/")
-                                .build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
-                        ),
-                        MediaBrowserCompat.MediaItem(
-                            MediaDescriptionCompat.Builder()
-                                .setTitle("Albums")
-                                .setMediaId("media:/albums/")
-                                .build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
-                        ), MediaBrowserCompat.MediaItem(
-                            MediaDescriptionCompat.Builder()
-                                .setTitle("Playlists")
-                                .setMediaId("media:/playlists/")
-                                .build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
-                        )
+                mutableListOf(
+                    MediaBrowserCompat.MediaItem(
+                        MediaDescriptionCompat.Builder()
+                            .setTitle("Artists")
+                            .setMediaId("media:/artists/")
+                            .build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
+                    ),
+                    MediaBrowserCompat.MediaItem(
+                        MediaDescriptionCompat.Builder()
+                            .setTitle("Albums")
+                            .setMediaId("media:/albums/")
+                            .build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
+                    ), MediaBrowserCompat.MediaItem(
+                        MediaDescriptionCompat.Builder()
+                            .setTitle("Playlists")
+                            .setMediaId("media:/playlists/")
+                            .build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
                     )
                 )
             }
             is MediaIdWrapper.Directory.Artists -> {
-                artistRepository.getAlbumArtists().first(emptyList()).map { albumArtists ->
-                    albumArtists.map { it.toMediaItem(mediaId) }
-                }
+                artistRepository.getAlbumArtists().firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
             }
             is MediaIdWrapper.Directory.Albums.All -> {
-                albumRepository.getAlbums().first(emptyList()).map { albums ->
-                    albums.map { it.toMediaItem(mediaId) }
-                }
+                albumRepository.getAlbums().firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
             }
             is MediaIdWrapper.Directory.Albums.Artist -> {
-                albumRepository.getAlbums(AlbumQuery.AlbumArtistId(mediaIdWrapper.artistId)).first(emptyList()).map { albums ->
-                    albums.map { it.toMediaItem(mediaId) }
-                }
+                albumRepository.getAlbums(AlbumQuery.AlbumArtist(mediaIdWrapper.artistName)).firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
             }
             is MediaIdWrapper.Directory.Playlists -> {
-                playlistRepository.getPlaylists().first(emptyList()).map { playlists ->
-                    playlists.map { it.toMediaItem(mediaId) }
-                }
+                playlistRepository.getPlaylists().firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
             }
             is MediaIdWrapper.Directory.Songs.Album -> {
-                songRepository.getSongs(SongQuery.AlbumIds(listOf(mediaIdWrapper.albumId))).first(emptyList()).map { songs ->
-                    songs.map { it.toMediaItem(mediaId) }
-                }
+                songRepository
+                    .getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = mediaIdWrapper.albumName, albumArtistName = mediaIdWrapper.albumArtistName))))
+                    .firstOrNull()
+                    .orEmpty()
+                    .map { it.toMediaItem(mediaId) }
             }
             is MediaIdWrapper.Directory.Songs.Playlist -> {
-                playlistRepository.getSongsForPlaylist(mediaIdWrapper.playlistId).first(emptyList()).map { songs ->
-                    songs.map { it.toMediaItem(mediaId) }
-                }
+                playlistRepository.getSongsForPlaylist(mediaIdWrapper.playlistId).firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
             }
-            else -> Single.just(mutableListOf())
+            else -> mutableListOf()
         }
     }
 
     private fun AlbumArtist.toMediaItem(parentMediaId: String): MediaBrowserCompat.MediaItem {
         return MediaBrowserCompat.MediaItem(
-            android.support.v4.media.MediaDescriptionCompat.Builder()
+            MediaDescriptionCompat.Builder()
                 .setTitle(name)
-                .setMediaId("$parentMediaId${id}/albums/")
+                .setMediaId("$parentMediaId${name}/albums/")
                 .build(),
             MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
         )
@@ -97,7 +84,7 @@ class MediaIdHelper @Inject constructor(
 
     private fun Playlist.toMediaItem(parentMediaId: String): MediaBrowserCompat.MediaItem {
         return MediaBrowserCompat.MediaItem(
-            android.support.v4.media.MediaDescriptionCompat.Builder()
+            MediaDescriptionCompat.Builder()
                 .setTitle(name)
                 .setMediaId("$parentMediaId${id}/songs/")
                 .build(),
@@ -107,9 +94,9 @@ class MediaIdHelper @Inject constructor(
 
     private fun Album.toMediaItem(parentMediaId: String): MediaBrowserCompat.MediaItem {
         return MediaBrowserCompat.MediaItem(
-            android.support.v4.media.MediaDescriptionCompat.Builder()
+            MediaDescriptionCompat.Builder()
                 .setTitle(name)
-                .setMediaId("$parentMediaId${id}/songs/")
+                .setMediaId("$parentMediaId${name}/songs/")
                 .build(),
             MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
         )
@@ -117,7 +104,7 @@ class MediaIdHelper @Inject constructor(
 
     private fun Song.toMediaItem(parentMediaId: String): MediaBrowserCompat.MediaItem {
         return MediaBrowserCompat.MediaItem(
-            android.support.v4.media.MediaDescriptionCompat.Builder()
+            MediaDescriptionCompat.Builder()
                 .setTitle(name)
                 .setMediaId("$parentMediaId${id}")
                 .build(),
@@ -135,13 +122,13 @@ class MediaIdHelper @Inject constructor(
 
             sealed class Albums : Directory() {
                 object All : Albums()
-                class Artist(val artistId: Long) : Albums()
+                class Artist(val artistName: String) : Albums()
             }
 
             object Playlists : Directory()
 
             sealed class Songs : Directory() {
-                class Album(val albumId: Long) : Songs()
+                class Album(val albumName: String, val albumArtistName: String) : Songs()
                 class Playlist(val playlistId: Long) : Songs()
             }
         }
@@ -161,14 +148,21 @@ class MediaIdHelper @Inject constructor(
             "artists" -> MediaIdWrapper.Directory.Artists
             "albums" -> {
                 if (pathSegments.contains("artists")) {
-                    MediaIdWrapper.Directory.Albums.Artist(pathSegments.getNextSegment("artists")!!.toLong())
+                    MediaIdWrapper.Directory.Albums.Artist(pathSegments.getNextSegment("artists")!!)
                 } else {
                     MediaIdWrapper.Directory.Albums.All
                 }
             }
             "songs" -> {
                 when {
-                    pathSegments.contains("albums") -> MediaIdWrapper.Directory.Songs.Album(pathSegments.getNextSegment("albums")!!.toLong())
+                    pathSegments.contains("albums") -> {
+                        if (pathSegments.contains("artists")) {
+                            MediaIdWrapper.Directory.Songs.Album(albumName = pathSegments.getNextSegment("albums")!!, albumArtistName = pathSegments.getNextSegment("artists")!!)
+                        } else {
+                            // Todo: Handle
+                            throw IllegalStateException("artists missing from path segment")
+                        }
+                    }
                     pathSegments.contains("playlists") -> MediaIdWrapper.Directory.Songs.Playlist(pathSegments.getNextSegment("playlists")!!.toLong())
                     else -> throw IllegalStateException()
                 }
@@ -191,21 +185,23 @@ class MediaIdHelper @Inject constructor(
         return null
     }
 
-    fun getPlayQueue(mediaId: String): Single<PlayQueue> {
-        val mediaIdWrapper = parseMediaId(mediaId) as MediaIdWrapper.Song
-
-        return when (mediaIdWrapper.directory) {
-            is MediaIdWrapper.Directory.Songs.Album -> {
-                songRepository.getSongs(SongQuery.AlbumIds(listOf(mediaIdWrapper.directory.albumId))).first(emptyList()).map { songs ->
+    suspend fun getPlayQueue(mediaId: String): PlayQueue {
+        return withContext(Dispatchers.IO) {
+            val mediaIdWrapper = parseMediaId(mediaId) as MediaIdWrapper.Song
+            when (mediaIdWrapper.directory) {
+                is MediaIdWrapper.Directory.Songs.Album -> {
+                    val songs = songRepository
+                        .getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = mediaIdWrapper.directory.albumName, albumArtistName = mediaIdWrapper.directory.albumArtistName))))
+                        .firstOrNull()
+                        .orEmpty()
                     PlayQueue(songs, songs.indexOfFirst { it.id == mediaIdWrapper.songId })
                 }
-            }
-            is MediaIdWrapper.Directory.Songs.Playlist -> {
-                playlistRepository.getSongsForPlaylist(mediaIdWrapper.directory.playlistId).first(emptyList()).map { songs ->
+                is MediaIdWrapper.Directory.Songs.Playlist -> {
+                    val songs = playlistRepository.getSongsForPlaylist(mediaIdWrapper.directory.playlistId).firstOrNull().orEmpty()
                     PlayQueue(songs, songs.indexOfFirst { it.id == mediaIdWrapper.songId })
                 }
+                else -> throw IllegalStateException("Cannot retrieve play queue for songId: ${mediaIdWrapper.songId}, directory: ${mediaIdWrapper.directory}")
             }
-            else -> throw IllegalStateException("Cannot retrieve play queue for songId: ${mediaIdWrapper.songId}, directory: ${mediaIdWrapper.directory}")
         }
     }
 }

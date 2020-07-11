@@ -42,8 +42,8 @@ class CastPlayback(
         isReleased = false
 
         val metadata = MediaMetadata(MediaMetadata.MEDIA_TYPE_MUSIC_TRACK)
-        metadata.putString(MediaMetadata.KEY_ALBUM_ARTIST, current.albumArtistName)
-        metadata.putString(MediaMetadata.KEY_ALBUM_TITLE, current.albumName)
+        metadata.putString(MediaMetadata.KEY_ALBUM_ARTIST, current.albumArtist)
+        metadata.putString(MediaMetadata.KEY_ALBUM_TITLE, current.album)
         metadata.putString(MediaMetadata.KEY_TITLE, current.name)
         metadata.addImage(WebImage(Uri.parse("http://$ipAddress:5000/songs/${current.id}/artwork")))
 

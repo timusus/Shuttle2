@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.coroutineScope
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
@@ -60,7 +61,7 @@ class AlbumArtistListFragment :
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        adapter = SectionedAdapter()
+        adapter = SectionedAdapter(lifecycle.coroutineScope)
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -127,7 +128,7 @@ class AlbumArtistListFragment :
     }
 
     override fun onDestroyView() {
-        adapter.dispose()
+
 
         presenter.unbindView()
         playlistMenuPresenter.unbindView()
@@ -139,7 +140,7 @@ class AlbumArtistListFragment :
     // AlbumArtistListContact.View Implementation
 
     override fun setAlbumArtists(albumArtists: List<AlbumArtist>) {
-        adapter.setData(albumArtists.map { albumArtist ->
+        adapter.update(albumArtists.map { albumArtist ->
             AlbumArtistBinder(albumArtist, imageLoader, this)
         }, completion = {
             recyclerViewState?.let {

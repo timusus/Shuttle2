@@ -44,7 +44,7 @@ fun QueueItem.toQueueItem(): MediaSessionCompat.QueueItem {
     val mediaDescription = MediaDescriptionCompat.Builder()
         .setMediaId(song.id.toString())
         .setTitle(song.name)
-        .setSubtitle(song.albumArtistName)
+        .setSubtitle(song.albumArtist)
         .build()
     return MediaSessionCompat.QueueItem(mediaDescription, uid)
 }

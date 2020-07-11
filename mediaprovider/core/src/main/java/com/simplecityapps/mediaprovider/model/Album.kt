@@ -5,10 +5,8 @@ import java.io.Serializable
 
 @Keep
 class Album(
-    val id: Long,
     val name: String,
-    val albumArtistId: Long,
-    val albumArtistName: String,
+    val albumArtist: String,
     val songCount: Int,
     val duration: Int,
     val year: Int,
@@ -19,24 +17,23 @@ class Album(
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is Album) return false
+        if (javaClass != other?.javaClass) return false
 
-        if (id != other.id) return false
+        other as Album
+
+        if (name != other.name) return false
+        if (albumArtist != other.albumArtist) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        return id.hashCode()
+        var result = name.hashCode()
+        result = 31 * result + albumArtist.hashCode()
+        return result
     }
 
     override fun toString(): String {
-        return "id=$id," +
-                "\nname='$name'," +
-                "\nalbumArtistId=$albumArtistId," +
-                "\nalbumArtistName='$albumArtistName'," +
-                "\nsongCount=$songCount," +
-                "\nduration=$duration," +
-                "\nyear=$year"
+        return "Album(name='$name', albumArtist='$albumArtist', songCount=$songCount, duration=$duration, year=$year, playCount=$playCount, sortKey=$sortKey)"
     }
 }

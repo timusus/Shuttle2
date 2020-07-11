@@ -77,7 +77,8 @@ class FrequencyResponseDialogFragment : DialogFragment(), Injectable {
         loadingView.setState(CircularLoadingView.State.Loading())
 
         coroutineScope.launch {
-            setData(calculateFft())
+            val fft = calculateFft()
+            setData(fft)
             loadingView.setState(CircularLoadingView.State.None)
             lineChart.isVisible = true
         }

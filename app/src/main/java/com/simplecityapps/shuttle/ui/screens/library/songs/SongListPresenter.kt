@@ -5,14 +5,17 @@ import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.rxkotlin.subscribeBy
-import io.reactivex.schedulers.Schedulers
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.text.Collator
 import javax.inject.Inject
@@ -56,7 +59,7 @@ class SongListPresenter @Inject constructor(
     var songs: List<Song> = emptyList()
 
     private val mediaImporterListener = object : MediaImporter.Listener {
-        override fun onProgress(progress: Float, message: String) {
+        override fun onProgress(progress: Float, song: Song) {
             view?.setLoadingProgress(progress)
         }
     }
@@ -68,76 +71,75 @@ class SongListPresenter @Inject constructor(
     }
 
     override fun loadSongs() {
-        addDisposable(
-            songRepository.getSongs()
-                .map { song -> song.sortedWith(Comparator { a, b -> Collator.getInstance().compare(a.name, b.name) }) }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeBy(
-                    onNext = { songs ->
-                        this.songs = songs
-                        if (this.songs.isEmpty()) {
-                            if (mediaImporter.isScanning) {
-                                mediaImporter.listeners.add(mediaImporterListener)
-                                view?.setLoadingState(SongListContract.LoadingState.Scanning)
-                            } else {
-                                mediaImporter.listeners.remove(mediaImporterListener)
-                                view?.setLoadingState(SongListContract.LoadingState.Empty)
-                            }
+        Timber.i("loadSongs()")
+        launch {
+            songRepository.getSongs(SongQuery.All())
+                .map { songs -> songs.sortedWith(Comparator { a, b -> Collator.getInstance().compare(a.name, b.name) }) }
+                .flowOn(Dispatchers.IO)
+                .collect { songs ->
+                    Timber.i("loadSongs collected ${songs.size} songs")
+                    this@SongListPresenter.songs = songs
+                    if (songs.isEmpty()) {
+                        if (mediaImporter.isImporting) {
+                            mediaImporter.listeners.add(mediaImporterListener)
+                            view?.setLoadingState(SongListContract.LoadingState.Scanning)
                         } else {
                             mediaImporter.listeners.remove(mediaImporterListener)
-                            view?.setLoadingState(SongListContract.LoadingState.None)
+                            view?.setLoadingState(SongListContract.LoadingState.Empty)
                         }
-                        view?.setData(songs)
-                    },
-                    onError = { error -> Timber.e(error, "Failed to load songs") }
-                )
-        )
+                    } else {
+                        mediaImporter.listeners.remove(mediaImporterListener)
+                        view?.setLoadingState(SongListContract.LoadingState.None)
+                    }
+                    view?.setData(songs)
+                }
+        }
     }
 
     override fun onSongClicked(song: Song) {
-        playbackManager.load(songs, songs.indexOf(song)) { result ->
-            result.onSuccess {
-                playbackManager.play()
-            }
-            result.onFailure { error ->
-                view?.showLoadError(error as Error)
+        launch {
+            playbackManager.load(songs, songs.indexOf(song)) { result ->
+                result.onSuccess {
+                    playbackManager.play()
+                }
+                result.onFailure { error ->
+                    view?.showLoadError(error as Error)
+                }
             }
         }
     }
 
     override fun addToQueue(song: Song) {
-        playbackManager.addToQueue(listOf(song))
-        view?.onAddedToQueue(song)
+        launch {
+            playbackManager.addToQueue(listOf(song))
+            view?.onAddedToQueue(song)
+        }
     }
 
     override fun playNext(song: Song) {
-        playbackManager.playNext(listOf(song))
-        view?.onAddedToQueue(song)
+        launch {
+            playbackManager.playNext(listOf(song))
+            view?.onAddedToQueue(song)
+        }
     }
 
     override fun rescanLibrary() {
-        mediaImporter.rescan()
+        mediaImporter.reImport()
     }
 
     override fun blacklist(song: Song) {
-        addDisposable(
+        launch {
             songRepository.setBlacklisted(listOf(song), true)
-                .subscribeOn(Schedulers.io())
-                .subscribeBy(onError = { throwable -> Timber.e(throwable, "Failed to blacklist song") })
-        )
+        }
     }
 
     override fun delete(song: Song) {
         val uri = song.path.toUri()
         val documentFile = DocumentFile.fromSingleUri(context, uri)
         if (documentFile?.delete() == true) {
-            addDisposable(songRepository.removeSong(song)
-                .subscribeOn(Schedulers.io())
-                .subscribeBy(
-                    onComplete = { Timber.i("Song deleted") },
-                    onError = { throwable -> Timber.e(throwable, "Failed to remove song from database") }
-                ))
+            launch {
+                songRepository.removeSong(song)
+            }
         } else {
             view?.showDeleteError(UserFriendlyError("The song couldn't be deleted"))
         }

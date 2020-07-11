@@ -3,15 +3,17 @@ package com.simplecityapps.shuttle.ui.screens.library.playlists
 import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStorePlaylistImporter
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.model.Playlist
+import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.PlaylistRepository
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.Disposable
-import io.reactivex.rxkotlin.subscribeBy
-import io.reactivex.schedulers.Schedulers
-import timber.log.Timber
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import java.text.Collator
 import javax.inject.Inject
 
@@ -36,7 +38,7 @@ interface PlaylistListContract {
         fun addToQueue(playlist: Playlist)
         fun playNext(playlist: Playlist)
         fun deletePlaylist(playlist: Playlist)
-        fun importMediaStorePlaylists(): Disposable
+        fun importMediaStorePlaylists()
         fun clearPlaylist(playlist: Playlist)
     }
 }
@@ -50,7 +52,7 @@ class PlaylistListPresenter @Inject constructor(
     BasePresenter<PlaylistListContract.View>() {
 
     private val mediaImporterListener = object : MediaImporter.Listener {
-        override fun onProgress(progress: Float, message: String) {
+        override fun onProgress(progress: Float, song: Song) {
             view?.setLoadingProgress(progress)
         }
     }
@@ -62,93 +64,59 @@ class PlaylistListPresenter @Inject constructor(
     }
 
     override fun loadPlaylists() {
-        addDisposable(
-            playlistRepository.getPlaylists()
-                .map { playlist -> playlist.sortedWith(Comparator { a, b -> Collator.getInstance().compare(a.name, b.name) }) }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeBy(
-                    onNext = { playlists ->
-                        if (playlists.isEmpty()) {
-                            if (mediaImporter.isScanning) {
-                                mediaImporter.listeners.add(mediaImporterListener)
-                                view?.setLoadingState(PlaylistListContract.LoadingState.Scanning)
-                            } else {
-                                mediaImporter.listeners.remove(mediaImporterListener)
-                                view?.setLoadingState(PlaylistListContract.LoadingState.Empty)
-                            }
+        launch {
+            playlistRepository.getPlaylists().map { playlist -> playlist.sortedWith(Comparator { a, b -> Collator.getInstance().compare(a.name, b.name) }) }
+                .flowOn(Dispatchers.IO)
+                .collect { playlists ->
+                    if (playlists.isEmpty()) {
+                        if (mediaImporter.isImporting) {
+                            mediaImporter.listeners.add(mediaImporterListener)
+                            view?.setLoadingState(PlaylistListContract.LoadingState.Scanning)
                         } else {
                             mediaImporter.listeners.remove(mediaImporterListener)
-                            view?.setLoadingState(PlaylistListContract.LoadingState.None)
+                            view?.setLoadingState(PlaylistListContract.LoadingState.Empty)
                         }
-                        view?.setPlaylists(playlists)
-                    },
-                    onError = { error -> Timber.e(error, "Failed to retrieve playlists") }
-                )
-        )
+                    } else {
+                        mediaImporter.listeners.remove(mediaImporterListener)
+                        view?.setLoadingState(PlaylistListContract.LoadingState.None)
+                    }
+                    view?.setPlaylists(playlists)
+                }
+        }
     }
 
     override fun deletePlaylist(playlist: Playlist) {
-        addDisposable(
+        launch {
             playlistRepository.deletePlaylist(playlist)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeBy(
-                    onError = { error -> Timber.e(error, "Failed to delete playlist: $playlist") }
-                )
-        )
+        }
     }
 
     override fun addToQueue(playlist: Playlist) {
-        addDisposable(
-            playlistRepository.getSongsForPlaylist(playlist.id)
-                .first(emptyList())
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeBy(
-                    onSuccess = { songs ->
-                        playbackManager.addToQueue(songs)
-                        view?.onAddedToQueue(playlist)
-                    },
-                    onError = { throwable -> Timber.e(throwable, "Failed to retrieve songs for playlist: ${playlist.name}") })
-        )
+        launch {
+            val songs = playlistRepository.getSongsForPlaylist(playlist.id).firstOrNull().orEmpty()
+            playbackManager.addToQueue(songs)
+            view?.onAddedToQueue(playlist)
+        }
     }
 
     override fun playNext(playlist: Playlist) {
-        addDisposable(
-            playlistRepository.getSongsForPlaylist(playlist.id)
-                .first(emptyList())
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeBy(
-                    onSuccess = { songs ->
-                        playbackManager.playNext(songs)
-                        view?.onAddedToQueue(playlist)
-                    },
-                    onError = { throwable -> Timber.e(throwable, "Failed to retrieve songs for playlist: ${playlist.name}") })
-        )
+        launch {
+            val songs = playlistRepository.getSongsForPlaylist(playlist.id).firstOrNull().orEmpty()
+            playbackManager.playNext(songs)
+            view?.onAddedToQueue(playlist)
+        }
     }
 
-    override fun importMediaStorePlaylists(): Disposable {
-        return playlistImporter.importPlaylists()
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(
-                onComplete = {
-                    view?.onPlaylistsImported()
-                },
-                onError = { throwable ->
-                    Timber.e(throwable, "Failed to import playlists")
-                })
+    override fun importMediaStorePlaylists() {
+        launch {
+            playlistImporter.importPlaylists()
+            view?.onPlaylistsImported()
+        }
     }
 
     override fun clearPlaylist(playlist: Playlist) {
-        addDisposable(
+        launch {
             playlistRepository.clearPlaylist(playlist)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeBy(
-                    onError = { error -> Timber.e(error, "Failed to clear playlist: $playlist") }
-                ))
+        }
     }
 }

@@ -14,9 +14,8 @@ import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.squareup.inject.assisted.Assisted
 import com.squareup.inject.assisted.AssistedInject
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.rxkotlin.subscribeBy
-import io.reactivex.schedulers.Schedulers
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 interface PlaylistDetailContract {
@@ -61,40 +60,43 @@ class PlaylistDetailPresenter @AssistedInject constructor(
         super.bindView(view)
 
         view.setPlaylist(playlist)
-        addDisposable(playlistRepository.getPlaylists(PlaylistQuery.PlaylistId(playlist.id))
-            .map { it.firstOrNull() }
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({ playlist ->
-                playlist?.let { view.setPlaylist(playlist) }
-            }, { error ->
-                Timber.e(error, "Failed to retrieve playlist")
-            })
-        )
+
+        launch {
+            playlistRepository.getPlaylists(PlaylistQuery.PlaylistId(playlist.id))
+                .collect { playlists ->
+                    playlists.firstOrNull()?.let { playlist ->
+                        view.setPlaylist(playlist)
+                    }
+                }
+        }
     }
 
     override fun loadData() {
-        addDisposable(playlistRepository.getSongsForPlaylist(playlist.id)
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe { songs ->
-                this.songs = songs
-                view?.setData(songs)
-            })
+        launch {
+            playlistRepository.getSongsForPlaylist(playlist.id)
+                .collect { songs ->
+                    this@PlaylistDetailPresenter.songs = songs
+                    view?.setData(songs)
+                }
+        }
     }
 
     override fun onSongClicked(song: Song) {
-        playbackManager.load(songs, songs.indexOf(song)) { result ->
-            result.onSuccess { playbackManager.play() }
-            result.onFailure { error -> view?.showLoadError(error as Error) }
+        launch {
+            playbackManager.load(songs, songs.indexOf(song)) { result ->
+                result.onSuccess { playbackManager.play() }
+                result.onFailure { error -> view?.showLoadError(error as Error) }
+            }
         }
     }
 
     override fun shuffle() {
         if (songs.isNotEmpty()) {
-            playbackManager.shuffle(songs) { result ->
-                result.onSuccess { playbackManager.play() }
-                result.onFailure { error -> view?.showLoadError(error as Error) }
+            launch {
+                playbackManager.shuffle(songs) { result ->
+                    result.onSuccess { playbackManager.play() }
+                    result.onFailure { error -> view?.showLoadError(error as Error) }
+                }
             }
         } else {
             Timber.i("Shuffle failed: Songs list empty")
@@ -102,41 +104,38 @@ class PlaylistDetailPresenter @AssistedInject constructor(
     }
 
     override fun addToQueue(song: Song) {
-        playbackManager.addToQueue(listOf(song))
-        view?.onAddedToQueue(song)
+        launch {
+            playbackManager.addToQueue(listOf(song))
+            view?.onAddedToQueue(song)
+        }
     }
 
     override fun playNext(song: Song) {
-        playbackManager.playNext(listOf(song))
-        view?.onAddedToQueue(song)
+        launch {
+            playbackManager.playNext(listOf(song))
+            view?.onAddedToQueue(song)
+        }
     }
 
     override fun blacklist(song: Song) {
-        addDisposable(
+        launch {
             songRepository.setBlacklisted(listOf(song), true)
-                .subscribeOn(Schedulers.io())
-                .subscribeBy(onError = { throwable -> Timber.e(throwable, "Failed to blacklist song") })
-        )
+        }
     }
 
     override fun remove(song: Song) {
-        addDisposable(
+        launch {
             playlistRepository.removeFromPlaylist(playlist, listOf(song))
-                .subscribeOn(Schedulers.io())
-                .subscribeBy(onError = { throwable -> Timber.e(throwable, "Failed to remove song") })
-        )
+        }
     }
 
     override fun delete(song: Song) {
         val uri = song.path.toUri()
         val documentFile = DocumentFile.fromSingleUri(context, uri)
         if (documentFile?.delete() == true) {
-            addDisposable(songRepository.removeSong(song)
-                .subscribeOn(Schedulers.io())
-                .subscribeBy(
-                    onComplete = { Timber.i("Song deleted") },
-                    onError = { throwable -> Timber.e(throwable, "Failed to remove song from database") }
-                ))
+            launch {
+                songRepository.removeSong(song)
+            }
         } else {
             view?.showDeleteError(UserFriendlyError("The song couldn't be deleted"))
         }

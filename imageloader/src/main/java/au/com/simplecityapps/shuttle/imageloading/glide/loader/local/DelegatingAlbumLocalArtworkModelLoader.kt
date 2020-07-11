@@ -8,6 +8,8 @@ import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.runBlocking
 import java.io.InputStream
 
 class DelegatingAlbumLocalArtworkModelLoader(
@@ -16,10 +18,12 @@ class DelegatingAlbumLocalArtworkModelLoader(
 ) : ModelLoader<Album, InputStream> {
 
     override fun buildLoadData(model: Album, width: Int, height: Int, options: Options): ModelLoader.LoadData<InputStream>? {
-        return songRepository.getSongs(SongQuery.AlbumIds(listOf(model.id)))
-            .blockingFirst(emptyList())
-            .firstOrNull()
-            ?.let { song -> songLoader.buildLoadData(song, width, height, options) }
+        return runBlocking {
+            songRepository.getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = model.name, albumArtistName = model.albumArtist))))
+                .firstOrNull()
+                ?.firstOrNull()
+                ?.let { song -> songLoader.buildLoadData(song, width, height, options) }
+        }
     }
 
     override fun handles(model: Album): Boolean {

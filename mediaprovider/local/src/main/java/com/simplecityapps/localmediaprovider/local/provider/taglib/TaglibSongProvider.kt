@@ -7,22 +7,25 @@ import com.simplecityappds.saf.SafDirectoryHelper
 import com.simplecityapps.ktaglib.AudioFile
 import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.localmediaprovider.local.provider.toSong
-import com.simplecityapps.mediaprovider.SongProvider
+import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.Song
-import io.reactivex.Observable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.isActive
 import timber.log.Timber
 import java.util.*
+import kotlin.coroutines.coroutineContext
 
 class TaglibSongProvider(
     private val context: Context,
     private val fileScanner: FileScanner,
     private val directories: List<SafDirectoryHelper.DocumentNodeTree>
-) : SongProvider {
+) : MediaProvider {
 
-    override fun findSongs(): Observable<Pair<Song, Float>> {
-        var progress = 0
-
-        return Observable.create { emitter ->
+    override fun findSongs(): Flow<Pair<Song, Float>> {
+        return flow {
             directories.flatMap { directory ->
                 directory.getLeaves()
                     .map { documentNode ->
@@ -30,24 +33,15 @@ class TaglibSongProvider(
                         Pair(documentNode.uri, documentNode.mimeType)
                     }
             }.apply {
-                forEach { pair ->
-                    if (emitter.isDisposed) {
-                        return@forEach
+                forEachIndexed { index, (uri, mimeType) ->
+                    if (coroutineContext.isActive) {
+                        fileScanner.getAudioFile(context, uri)?.toSong(mimeType)?.let { songData ->
+                            emit(Pair(songData, index / size.toFloat()))
+                        }
                     }
-
-                    fileScanner.getAudioFile(context, pair.first)?.toSong(pair.second)?.let { songData ->
-                        emitter.onNext(Pair(songData, progress / size.toFloat()))
-                    }
-                    progress++
                 }
             }
-
-            emitter.onComplete()
-        }
-    }
-
-    companion object {
-        const val TAG = "LocalMediaProvider"
+        }.flowOn(Dispatchers.IO)
     }
 }
 

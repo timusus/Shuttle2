@@ -6,11 +6,6 @@
     app:startDestination="@id/libraryFragment">
 
     <fragment
-        android:id="@+id/folderFragment"
-        android:name="com.simplecityapps.shuttle.ui.screens.library.folders.FolderFragment"
-        android:label="FolderFragment"
-        tools:layout="@layout/fragment_folders"/>
-    <fragment
         android:id="@+id/searchFragment"
         android:name="com.simplecityapps.shuttle.ui.screens.home.search.SearchFragment"
         android:label="SearchFragment"

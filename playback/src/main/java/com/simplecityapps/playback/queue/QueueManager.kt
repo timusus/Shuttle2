@@ -1,6 +1,8 @@
 package com.simplecityapps.playback.queue
 
 import com.simplecityapps.mediaprovider.model.Song
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 class QueueManager(private val queueWatcher: QueueWatcher) {
@@ -42,25 +44,27 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
 
     private var currentItem: QueueItem? = null
 
-    fun setQueue(songs: List<Song>, shuffleSongs: List<Song>? = null, position: Int = 0) {
+    suspend fun setQueue(songs: List<Song>, shuffleSongs: List<Song>? = null, position: Int = 0) {
         if (position < 0) {
             throw IllegalArgumentException("Queue position must be >= 0 (position $position)")
         }
 
-        val queueItems = songs.map { song -> song.toQueueItem(false) }
-        queue.setQueue(queueItems)
-
-        shuffleSongs?.mapNotNull { song ->
-            queueItems.firstOrNull { queueItem -> queueItem.song == song }
-        }?.let { shuffleQueueItems ->
-            queue.setShuffleQueue(shuffleQueueItems)
-        } ?: queue.generateShuffleQueue()
-
-        queue.getItem(shuffleMode, position)?.let { currentItem ->
-            setCurrentItem(currentItem)
+        withContext(Dispatchers.IO) {
+            val queueItems = songs.map { song -> song.toQueueItem(false) }
+            queue.setQueue(queueItems)
+                shuffleSongs?.mapNotNull { song ->
+                queueItems.firstOrNull { queueItem -> queueItem.song == song }
+            }?.let { shuffleQueueItems ->
+                queue.setShuffleQueue(shuffleQueueItems)
+            } ?: queue.generateShuffleQueue()
         }
 
-        queueWatcher.onQueueChanged()
+        withContext(Dispatchers.Main) {
+            queue.getItem(shuffleMode, position)?.let { currentItem ->
+                setCurrentItem(currentItem)
+            }
+            queueWatcher.onQueueChanged()
+        }
     }
 
     fun setCurrentItem(currentItem: QueueItem) {
@@ -152,14 +156,18 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
         return queue.get(shuffleMode)
     }
 
-    fun setShuffleMode(shuffleMode: ShuffleMode, reshuffle: Boolean) {
+    suspend fun setShuffleMode(shuffleMode: ShuffleMode, reshuffle: Boolean) {
         if (this.shuffleMode != shuffleMode) {
-            this.shuffleMode = shuffleMode
-            if (shuffleMode == ShuffleMode.On && reshuffle) {
-                queue.generateShuffleQueue()
+            withContext(Dispatchers.IO) {
+                this@QueueManager.shuffleMode = shuffleMode
+                if (shuffleMode == ShuffleMode.On && reshuffle) {
+                    queue.generateShuffleQueue()
+                }
             }
-            queueWatcher.onQueueChanged()
-            queueWatcher.onShuffleChanged()
+            withContext(Dispatchers.Main) {
+                queueWatcher.onQueueChanged()
+                queueWatcher.onShuffleChanged()
+            }
         }
     }
 
@@ -167,7 +175,7 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
         return shuffleMode
     }
 
-    fun toggleShuffleMode() {
+    suspend fun toggleShuffleMode() {
         when (shuffleMode) {
             ShuffleMode.Off -> setShuffleMode(ShuffleMode.On, reshuffle = true)
             ShuffleMode.On -> setShuffleMode(ShuffleMode.Off, reshuffle = false)

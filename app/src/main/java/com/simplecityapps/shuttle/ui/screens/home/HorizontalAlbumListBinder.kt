@@ -13,6 +13,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.SpacesItemDecoration
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 import com.simplecityapps.shuttle.ui.screens.library.songs.GridAlbumBinder
+import kotlinx.coroutines.CoroutineScope
 
 class HorizontalAlbumListBinder(
     val title: String,
@@ -20,11 +21,12 @@ class HorizontalAlbumListBinder(
     val albums: List<Album>,
     val imageLoader: ArtworkImageLoader,
     val showPlayCountBadge: Boolean = false,
+    val scope: CoroutineScope,
     val listener: GridAlbumBinder.Listener? = null
 ) : ViewBinder {
 
     override fun createViewHolder(parent: ViewGroup): ViewBinder.ViewHolder<out ViewBinder> {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_horizontal_list, parent, false))
+        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_horizontal_list, parent, false), scope)
     }
 
     override fun viewType(): Int {
@@ -54,14 +56,14 @@ class HorizontalAlbumListBinder(
     }
 
 
-    class ViewHolder(itemView: View) : ViewBinder.ViewHolder<HorizontalAlbumListBinder>(itemView) {
+    class ViewHolder(itemView: View, scope: CoroutineScope) : ViewBinder.ViewHolder<HorizontalAlbumListBinder>(itemView) {
 
         private val titleLabel: TextView = itemView.findViewById(R.id.titleLabel)
         private val subtitleLabel: TextView = itemView.findViewById(R.id.subtitleLabel)
         private val headerContainer: View = itemView.findViewById(R.id.headerContainer)
         private val recyclerView: RecyclerView = itemView.findViewById(R.id.recyclerView)
 
-        val adapter: RecyclerAdapter = RecyclerAdapter()
+        val adapter: RecyclerAdapter = RecyclerAdapter(scope)
 
         init {
             recyclerView.addItemDecoration(SpacesItemDecoration(4))
@@ -74,13 +76,13 @@ class HorizontalAlbumListBinder(
             subtitleLabel.text = viewBinder.subtitle
 
             recyclerView.adapter = adapter
-            adapter.setData(viewBinder.albums.map { album ->
+            adapter.update(viewBinder.albums.map { album ->
                 GridAlbumBinder(album, viewBinder.imageLoader, showPlayCountBadge = viewBinder.showPlayCountBadge, listener = viewBinder.listener)
             })
         }
 
         override fun recycle() {
-            adapter.dispose()
+
             super.recycle()
         }
     }

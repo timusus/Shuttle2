@@ -6,31 +6,31 @@ import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
+import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongRepository
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.Disposable
-import io.reactivex.schedulers.Schedulers
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class MediaImporter(
     context: Context,
-    private val songRepository: SongRepository
+    private val songRepository: SongRepository,
+    private val coroutineScope: CoroutineScope
 ) {
 
     interface Listener {
-        fun onProgress(progress: Float, message: String)
+        fun onProgress(progress: Float, song: Song)
         fun onComplete() {}
     }
 
-    var isScanning = false
+    var isImporting = false
 
     var listeners = mutableSetOf<Listener>()
 
-    private var disposable: Disposable? = null
+    private var mediaProvider: MediaProvider? = null
 
-    private var songProvider: SongProvider? = null
-
-    var scanCount: Int = 0
+    var importCount: Int = 0
 
     private val contentObserver = ScanningContentObserver(Handler(Looper.getMainLooper()))
 
@@ -38,49 +38,43 @@ class MediaImporter(
         context.contentResolver.registerContentObserver(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, true, contentObserver)
     }
 
-    fun startScan(songProvider: SongProvider) {
-
-        if (isScanning && songProvider == this.songProvider) {
-            return
+    fun import(mediaProvider: MediaProvider) {
+        if (isImporting && mediaProvider == this.mediaProvider) {
+            throw Exception("Import already in progress")
         }
 
-        disposable?.dispose()
-
         Timber.v("Scanning media...")
-
-        isScanning = true
-        scanCount++
-
-        this.songProvider = songProvider
-
         val time = System.currentTimeMillis()
 
-        disposable = songRepository.populate(songProvider) { progress, message ->
-                listeners.forEach { it.onProgress(progress, message) }
+        isImporting = true
+        importCount++
+
+        this.mediaProvider = mediaProvider
+
+        coroutineScope.launch {
+            val songs = mutableListOf<Song>()
+            mediaProvider.findSongs().collect { (song, progress) ->
+                songs.add(song)
+                listeners.forEach { listener -> listener.onProgress(progress, song) }
             }
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(
-                {
-                    Timber.i("Populated media in ${"%.1f".format((System.currentTimeMillis() - time) / 1000f)}s")
-                    isScanning = false
-                    listeners.forEach { listener -> listener.onComplete() }
-                },
-                { throwable ->
-                    isScanning = false
-                    listeners.forEach { listener -> listener.onComplete() }
-                    Timber.e(throwable, "Failed to populate songs")
-                }
-            )
+
+            songRepository.insert(songs)
+            isImporting = false
+
+            Timber.i("Populated media in ${"%.1f".format((System.currentTimeMillis() - time) / 1000f)}s")
+            listeners.forEach { listener -> listener.onComplete() }
+        }
     }
 
-    fun stopScan() {
-        isScanning = false
-        disposable?.dispose()
+    fun stopImport() {
+        isImporting = false
     }
 
-    fun rescan() {
-        songProvider?.let { songProvider -> startScan(songProvider) }
+    /**
+     * Re-imports all media, using the previously-set [mediaProvider] (if set).
+     */
+    fun reImport() {
+        mediaProvider?.let { mediaProvider -> import(mediaProvider) }
     }
 
     inner class ScanningContentObserver(private val handler: Handler) : ContentObserver(handler) {
@@ -92,7 +86,7 @@ class MediaImporter(
         override fun onChange(selfChange: Boolean, uri: Uri?) {
             handler.removeCallbacksAndMessages(null)
             handler.postDelayed({
-                songProvider?.let { songProvider -> startScan(songProvider) }
+                mediaProvider?.let { songProvider -> import(songProvider) }
             }, 10 * 1000)
         }
     }

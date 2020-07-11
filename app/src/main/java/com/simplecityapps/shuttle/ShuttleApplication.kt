@@ -19,6 +19,7 @@ import okhttp3.OkHttpClient
 import timber.log.Timber
 import javax.inject.Inject
 
+
 class ShuttleApplication : Application(),
     HasAndroidInjector,
     ActivityIntentProvider,

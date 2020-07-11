@@ -18,12 +18,14 @@ import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 import com.simplecityapps.shuttle.ui.common.view.increaseTouchableArea
 import com.simplecityapps.shuttle.ui.common.viewbinders.DetailSongBinder
 import com.simplecityapps.shuttle.ui.common.viewbinders.DiscNumberBinder
+import kotlinx.coroutines.CoroutineScope
 
 class ExpandableAlbumBinder(
     val album: Album,
     val songs: List<Song>,
     val imageLoader: ArtworkImageLoader,
     val expanded: Boolean = false,
+    val scope: CoroutineScope,
     val listener: Listener?
 ) : ViewBinder,
     SectionViewBinder {
@@ -37,7 +39,7 @@ class ExpandableAlbumBinder(
     }
 
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_album_expandable, parent, false))
+        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_album_expandable, parent, false), scope)
     }
 
     override fun viewType(): Int {
@@ -64,7 +66,7 @@ class ExpandableAlbumBinder(
     override fun areContentsTheSame(other: Any): Boolean {
         return (other as? ExpandableAlbumBinder)?.let {
             album.name == other.album.name
-                    && album.albumArtistName == other.album.albumArtistName
+                    && album.albumArtist == other.album.albumArtist
                     && expanded == other.expanded
                     && album.songCount == other.album.songCount
                     && songs == other.songs
@@ -72,14 +74,14 @@ class ExpandableAlbumBinder(
     }
 
 
-    class ViewHolder(itemView: View) : ViewBinder.ViewHolder<ExpandableAlbumBinder>(itemView) {
+    class ViewHolder(itemView: View, scope: CoroutineScope) : ViewBinder.ViewHolder<ExpandableAlbumBinder>(itemView) {
 
         private val title: TextView = itemView.findViewById(R.id.title)
         private val subtitle: TextView = itemView.findViewById(R.id.subtitle)
         val imageView: ImageView = itemView.findViewById(R.id.imageView)
         private val overflowButton: ImageButton = itemView.findViewById(R.id.overflowButton)
         private val recyclerView: RecyclerView = itemView.findViewById(R.id.recyclerView)
-        private val adapter: RecyclerAdapter = RecyclerAdapter()
+        private val adapter: RecyclerAdapter = RecyclerAdapter(scope)
 
         init {
             itemView.setOnClickListener {
@@ -110,7 +112,7 @@ class ExpandableAlbumBinder(
             recyclerView.adapter = adapter
 
             val discSongsMap = viewBinder.songs.groupBy { song -> song.disc }.toSortedMap()
-            adapter.setData(discSongsMap.flatMap { entry ->
+            adapter.update(discSongsMap.flatMap { entry ->
                 val viewBinders = mutableListOf<ViewBinder>()
                 if (discSongsMap.size > 1) {
                     viewBinders.add(DiscNumberBinder(entry.key))
@@ -122,7 +124,7 @@ class ExpandableAlbumBinder(
 
         override fun recycle() {
             viewBinder?.imageLoader?.clear(imageView)
-            adapter.dispose()
+
         }
 
         private val songBinderListener = object : DetailSongBinder.Listener {
@@ -147,5 +149,5 @@ class ExpandableAlbumBinder(
 }
 
 fun ExpandableAlbumBinder.clone(expanded: Boolean): ExpandableAlbumBinder {
-    return ExpandableAlbumBinder(album, songs, imageLoader, expanded, listener)
+    return ExpandableAlbumBinder(album, songs, imageLoader, expanded, scope, listener)
 }

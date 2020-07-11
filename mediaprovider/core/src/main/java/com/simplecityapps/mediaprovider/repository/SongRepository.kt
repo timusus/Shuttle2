@@ -1,68 +1,81 @@
 package com.simplecityapps.mediaprovider.repository
 
-import com.simplecityapps.mediaprovider.SongProvider
 import com.simplecityapps.mediaprovider.model.Song
-import io.reactivex.Completable
-import io.reactivex.Observable
+import kotlinx.coroutines.flow.Flow
 import java.io.Serializable
 import java.util.*
 import kotlin.Comparator
 
 interface SongRepository {
-
-    fun populate(songProvider: SongProvider, callback: ((Float, String) -> Unit)? = null): Completable {
-        return Completable.complete()
-    }
-
-    fun getSongs(query: SongQuery? = null, includeBlacklisted: Boolean = false): Observable<List<Song>>
-
-    fun incrementPlayCount(song: Song): Completable
-
-    fun setPlaybackPosition(song: Song, playbackPosition: Int): Completable
-
-    fun setBlacklisted(songs: List<Song>, blacklisted: Boolean): Completable
-
-    fun clearBlacklist(): Completable
-
-    fun removeSong(song: Song): Completable
+    suspend fun insert(songs: List<Song>)
+    fun getSongs(query: SongQuery): Flow<List<Song>>
+    suspend fun incrementPlayCount(song: Song)
+    suspend fun setPlaybackPosition(song: Song, playbackPosition: Int)
+    suspend fun setBlacklisted(songs: List<Song>, blacklisted: Boolean)
+    suspend fun clearBlacklist()
+    suspend fun removeSong(song: Song)
 }
 
 sealed class SongQuery(
     val predicate: ((Song) -> Boolean),
-    val sortOrder: SongSortOrder? = null
+    val sortOrder: SongSortOrder? = null,
+    val includeBlacklisted: Boolean = false
 ) : Serializable {
 
-    class AlbumArtistIds(private val albumArtistIds: List<Long>) :
+    class All(includeBlacklisted: Boolean = false) : SongQuery(predicate = { true }, includeBlacklisted = includeBlacklisted)
+
+    class AlbumArtist(val name: String) : SongQuery({ song -> song.albumArtist.equals(name, ignoreCase = true) })
+
+    class AlbumArtists(val albumArtists: List<AlbumArtist>) :
         SongQuery(
-            { song -> albumArtistIds.contains(song.albumArtistId) },
-            SongSortOrder.Track
+            predicate = { song -> albumArtists.any { albumArtist -> AlbumArtist(name = albumArtist.name).predicate(song) } },
+            sortOrder = SongSortOrder.Track
         )
 
-    class AlbumIds(private val albumIds: List<Long>) :
+    class Album(val name: String, val albumArtistName: String) :
         SongQuery(
-            { song -> albumIds.contains(song.albumId) },
-            SongSortOrder.Track
+            predicate = { song -> song.album.equals(name, ignoreCase = true) && song.albumArtist.equals(albumArtistName, ignoreCase = true) }
         )
 
-    class SongIds(private val songIds: List<Long>) :
-        SongQuery({ song -> songIds.contains(song.id) })
+    class Albums(val albums: List<Album>) :
+        SongQuery(
+            predicate = { song -> albums.any { album -> Album(name = album.name, albumArtistName = album.albumArtistName).predicate(song) } },
+            sortOrder = SongSortOrder.Track
+        )
 
-    class LastPlayed(private val after: Date) :
-        SongQuery({ song -> song.lastPlayed?.after(after) ?: false })
+    class SongIds(val songIds: List<Long>) :
+        SongQuery(
+            predicate = { song -> songIds.contains(song.id) }
+        )
 
-    class LastCompleted(private val after: Date) :
-        SongQuery({ song -> song.lastCompleted?.after(after) ?: false })
+    class LastPlayed(val after: Date) :
+        SongQuery(
+            predicate = { song -> song.lastPlayed?.after(after) ?: false }
+        )
 
-    class Search(private val query: String) :
-        SongQuery({ song -> song.name.contains(query, true) || song.albumName.contains(query, true) || song.albumArtistName.contains(query, true) })
+    class LastCompleted(val after: Date) :
+        SongQuery(
+            predicate = { song -> song.lastCompleted?.after(after) ?: false }
+        )
 
-    class PlayCount(private val count: Int, sortOrder: SongSortOrder) :
-        SongQuery({ song -> song.playCount >= count }, sortOrder)
+    class Search(val query: String) :
+        SongQuery(
+            predicate = { song -> song.name.contains(query, true) || song.album.contains(query, true) || song.albumArtist.contains(query, true) }
+        )
+
+    class PlayCount(val count: Int, sortOrder: SongSortOrder) :
+        SongQuery(
+            predicate = { song -> song.playCount >= count },
+            sortOrder = sortOrder
+        )
 
     // Todo: This isn't really 'recently added', any songs which have had their contents modified will show up here.
     //   Best to add a 'dateAdded' column.
     class RecentlyAdded :
-        SongQuery({ song -> (Date().time - song.lastModified.time < (2 * 7 * 24 * 60 * 60 * 1000L)) }, SongSortOrder.RecentlyAdded) // 2 weeks
+        SongQuery(
+            predicate = { song -> (Date().time - song.lastModified.time < (2 * 7 * 24 * 60 * 60 * 1000L)) },
+            sortOrder = SongSortOrder.RecentlyAdded
+        ) // 2 weeks
 }
 
 enum class SongSortOrder : Serializable {
@@ -74,7 +87,7 @@ enum class SongSortOrder : Serializable {
                 Track -> compareBy<Song> { song -> song.disc }.thenBy { song -> song.track }
                 PlayCount -> Comparator { a, b -> a.playCount.compareTo(b.playCount) }
                 RecentlyAdded -> compareByDescending<Song> { song -> song.lastModified.time / 1000 / 60 } // Round to the nearest minute
-                    .thenBy { song -> song.albumArtistName }
+                    .thenBy { song -> song.albumArtist }
                     .thenBy { song -> song.year }
                     .thenBy { song -> song.track }
                 RecentlyPlayed -> Comparator { a, b -> b.lastCompleted?.compareTo(a.lastCompleted) ?: 0 }

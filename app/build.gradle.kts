@@ -82,45 +82,24 @@ android {
         // Storage Access Framework Helper
         implementation(project(":saf"))
 
-        // Kotlin Standard Library
-        implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.71")
-
-        // Kotlin Extensions
-        implementation("androidx.core:core-ktx:1.2.0")
-        implementation("androidx.fragment:fragment-ktx:1.2.4")
-
         // RecyclerView FastScroll
         implementation("com.github.timusus:RecyclerView-FastScroll:dev-SNAPSHOT")
-
-        // Material Design
-        implementation("com.google.android.material:material:1.2.0-alpha06")
 
         // AppCompat
         implementation("androidx.appcompat:appcompat:1.1.0")
 
         // Constraint Layout
-        implementation("androidx.constraintlayout:constraintlayout:2.0.0-beta4")
+        implementation("androidx.constraintlayout:constraintlayout:2.0.0-beta8")
 
         // Android Arch
         implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
 
         // AndroidX Navigation
-        implementation("androidx.navigation:navigation-fragment-ktx:2.3.0-alpha05")
-        implementation("androidx.navigation:navigation-ui-ktx:2.3.0-alpha05")
-
-        // RxJava
-        implementation("io.reactivex.rxjava2:rxjava:2.2.19")
-        implementation("io.reactivex.rxjava2:rxandroid:2.1.1")
-
-        // RxKotlin
-        implementation("io.reactivex.rxjava2:rxkotlin:2.4.0")
-
-        // RxDogTag
-        implementation("com.uber.rxdogtag:rxdogtag:1.0.0")
+        implementation("androidx.navigation:navigation-fragment-ktx:2.3.0")
+        implementation("androidx.navigation:navigation-ui-ktx:2.3.0")
 
         // Dagger core
-        implementation("com.google.dagger:dagger-android:2.27")
-        kapt("com.google.dagger:dagger-compiler:2.27")
+        kapt("com.google.dagger:dagger-compiler:2.28")
 
         // Dagger Android
         implementation("com.google.dagger:dagger-android-support:2.27")
@@ -129,12 +108,6 @@ android {
         // AssistedInject
         compileOnly("com.squareup.inject:assisted-inject-annotations-dagger2:0.5.2")
         kapt("com.squareup.inject:assisted-inject-processor-dagger2:0.5.2")
-
-        // Timber
-        implementation("com.jakewharton.timber:timber:4.7.1")
-
-        // OKHttp
-        implementation("com.squareup.okhttp3:okhttp:4.4.1")
 
         // Leak Canary
         debugImplementation("com.squareup.leakcanary:leakcanary-android:2.2")
@@ -149,8 +122,8 @@ android {
         implementation("androidx.media:media:1.1.0")
 
         // AndroidX Preference
-        implementation("androidx.preference:preference:1.1.0")
-        implementation("androidx.preference:preference-ktx:1.1.0")
+        implementation("androidx.preference:preference:1.1.1")
+        implementation("androidx.preference:preference-ktx:1.1.1")
 
         // ChromeCast
         implementation("com.google.android.gms:play-services-cast-framework:18.1.0")
@@ -177,6 +150,9 @@ android {
 
         // BugSnag
         implementation("com.bugsnag:bugsnag-android:5.0.0")
+
+        // AndroidX Lifecycle
+        implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.3.0-alpha05")
     }
 }
 

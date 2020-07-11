@@ -14,8 +14,8 @@ import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.schedulers.Schedulers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -91,8 +91,8 @@ class MediaSessionManager @Inject constructor(
             mediaSession.setPlaybackState(playbackStateBuilder.build())
             val mediaMetadataCompat = MediaMetadataCompat.Builder()
                 .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, currentItem.song.id.toString())
-                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, currentItem.song.albumArtistName)
-                .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, currentItem.song.albumName)
+                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, currentItem.song.albumArtist)
+                .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, currentItem.song.album)
                 .putString(MediaMetadataCompat.METADATA_KEY_TITLE, currentItem.song.name)
                 .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, currentItem.song.duration.toLong())
                 .putLong(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, currentItem.song.track.toLong())
@@ -157,23 +157,21 @@ class MediaSessionManager @Inject constructor(
         }
 
         override fun onSetShuffleMode(shuffleMode: Int) {
-            queueManager.setShuffleMode(shuffleMode.toShuffleMode(), reshuffle = true)
+            GlobalScope.launch {
+                queueManager.setShuffleMode(shuffleMode.toShuffleMode(), reshuffle = true)
+            }
         }
 
         override fun onPlayFromMediaId(mediaId: String?, extras: Bundle?) {
-            mediaId?.let {
-                mediaIdHelper.getPlayQueue(mediaId)
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(
-                        { playQueue ->
-                            playbackManager.load(playQueue.songs, playQueue.playbackPosition) { result ->
-                                result.onSuccess { playbackManager.play() }
-                                result.onFailure { error -> Timber.e(error, "Failed to load playback after onPlayFromMediaId") }
-                            }
-                        },
-                        { throwable -> Timber.e(throwable, "onPlayFromMediaId failed") })
-            } ?: Timber.e("onPlayFromMediaId requested with null parentMediaId")
+            GlobalScope.launch {
+                mediaId?.let {
+                    val playQueue = mediaIdHelper.getPlayQueue(mediaId)
+                    playbackManager.load(playQueue.songs, playQueue.playbackPosition) { result ->
+                        result.onSuccess { playbackManager.play() }
+                        result.onFailure { error -> Timber.e(error, "Failed to load playback after onPlayFromMediaId") }
+                    }
+                }
+            }
         }
     }
 }

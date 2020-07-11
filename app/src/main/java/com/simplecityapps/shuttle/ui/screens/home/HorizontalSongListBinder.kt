@@ -13,16 +13,18 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.SpacesItemDecoration
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 import com.simplecityapps.shuttle.ui.screens.library.songs.GridSongBinder
+import kotlinx.coroutines.CoroutineScope
 
 class HorizontalSongListBinder(
     val title: String,
     val subtitle: String,
     val songs: List<Song>,
-    val imageLoader: ArtworkImageLoader
+    val imageLoader: ArtworkImageLoader,
+    val scope: CoroutineScope
 ) : ViewBinder {
 
     override fun createViewHolder(parent: ViewGroup): ViewBinder.ViewHolder<out ViewBinder> {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_horizontal_list, parent, false))
+        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_horizontal_list, parent, false), scope)
     }
 
     override fun viewType(): Int {
@@ -52,14 +54,14 @@ class HorizontalSongListBinder(
     }
 
 
-    class ViewHolder(itemView: View) : ViewBinder.ViewHolder<HorizontalSongListBinder>(itemView) {
+    class ViewHolder(itemView: View, scope: CoroutineScope) : ViewBinder.ViewHolder<HorizontalSongListBinder>(itemView) {
 
         private val titleLabel: TextView = itemView.findViewById(R.id.titleLabel)
         private val subtitleLabel: TextView = itemView.findViewById(R.id.subtitleLabel)
         private val headerContainer: View = itemView.findViewById(R.id.headerContainer)
         private val recyclerView: RecyclerView = itemView.findViewById(R.id.recyclerView)
 
-        val adapter: RecyclerAdapter = RecyclerAdapter()
+        val adapter: RecyclerAdapter = RecyclerAdapter(scope)
 
         init {
             recyclerView.addItemDecoration(SpacesItemDecoration(4))
@@ -73,7 +75,7 @@ class HorizontalSongListBinder(
             subtitleLabel.text = viewBinder.subtitle
 
             recyclerView.adapter = adapter
-            adapter.setData(viewBinder.songs.map { song ->
+            adapter.update(viewBinder.songs.map { song ->
                 GridSongBinder(song, viewBinder.imageLoader, object : GridSongBinder.Listener {
                     override fun onSongClicked(song: Song) {
 
@@ -83,7 +85,7 @@ class HorizontalSongListBinder(
         }
 
         override fun recycle() {
-            adapter.dispose()
+
             super.recycle()
         }
     }

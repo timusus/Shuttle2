@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.coroutineScope
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
@@ -40,11 +41,8 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFr
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.CompositeDisposable
-import io.reactivex.rxkotlin.subscribeBy
-import io.reactivex.schedulers.Schedulers
-import timber.log.Timber
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.firstOrNull
 import java.util.*
 import javax.inject.Inject
 
@@ -66,11 +64,11 @@ class HomeFragment :
 
     private var imageLoader: ArtworkImageLoader by autoCleared()
 
-    private val disposable: CompositeDisposable = CompositeDisposable()
-
     private lateinit var playlistMenuView: PlaylistMenuView
 
     private var recyclerViewState: Parcelable? = null
+
+    private val coroutineScope = CoroutineScope(Dispatchers.Main)
 
 
     // Lifecycle
@@ -78,7 +76,7 @@ class HomeFragment :
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        adapter = RecyclerAdapter()
+        adapter = RecyclerAdapter(lifecycle.coroutineScope)
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -156,8 +154,8 @@ class HomeFragment :
     override fun onDestroyView() {
         presenter.unbindView()
         playlistMenuPresenter.unbindView()
-        adapter.dispose()
-        disposable.clear()
+
+        coroutineScope.cancel()
         super.onDestroyView()
     }
 
@@ -172,25 +170,47 @@ class HomeFragment :
         val viewBinders = mutableListOf<ViewBinder>()
         if (data.recentlyPlayedAlbums.isNotEmpty()) {
             viewBinders.add(
-                HorizontalAlbumListBinder("Recent", "Recently played albums", data.recentlyPlayedAlbums, imageLoader, listener = albumBinderListener)
+                HorizontalAlbumListBinder("Recent", "Recently played albums", data.recentlyPlayedAlbums, imageLoader, scope = lifecycle.coroutineScope, listener = albumBinderListener)
             )
         }
         if (data.mostPlayedAlbums.isNotEmpty()) {
             viewBinders.add(
-                HorizontalAlbumListBinder("Most Played", "Albums in heavy rotation", data.mostPlayedAlbums, imageLoader, showPlayCountBadge = true, listener = albumBinderListener)
+                HorizontalAlbumListBinder(
+                    "Most Played",
+                    "Albums in heavy rotation",
+                    data.mostPlayedAlbums,
+                    imageLoader,
+                    showPlayCountBadge = true,
+                    scope = lifecycle.coroutineScope,
+                    listener = albumBinderListener
+                )
             )
         }
         if (data.albumsFromThisYear.isNotEmpty()) {
             viewBinders.add(
-                HorizontalAlbumListBinder("This Year", "Albums released in ${Calendar.getInstance().get(Calendar.YEAR)}", data.albumsFromThisYear, imageLoader, listener = albumBinderListener)
+                HorizontalAlbumListBinder(
+                    "This Year",
+                    "Albums released in ${Calendar.getInstance().get(Calendar.YEAR)}",
+                    data.albumsFromThisYear,
+                    imageLoader,
+                    scope = lifecycle.coroutineScope,
+                    listener = albumBinderListener
+                )
             )
         }
         if (data.unplayedAlbumArtists.isNotEmpty()) {
             viewBinders.add(
-                HorizontalAlbumArtistListBinder("Something Different", "Artists you haven't listened to in a while", data.unplayedAlbumArtists, imageLoader, listener = albumArtistBinderListener)
+                HorizontalAlbumArtistListBinder(
+                    "Something Different",
+                    "Artists you haven't listened to in a while",
+                    data.unplayedAlbumArtists,
+                    imageLoader,
+                    scope = lifecycle.coroutineScope,
+                    listener = albumArtistBinderListener
+                )
             )
         }
-        adapter.setData(viewBinders.toList(), completion = {
+        adapter.update(viewBinders, completion = {
             recyclerViewState?.let {
                 recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
             }
@@ -305,30 +325,16 @@ class HomeFragment :
     }
 
     private fun navigateToPlaylist(query: PlaylistQuery) {
-        disposable.add(playlistRepository
-            .getPlaylists(query)
-            .first(emptyList())
-            .map { playlists -> playlists.first() }
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(
-                onSuccess = { playlist ->
-                    if (playlist.songCount == 0) {
-                        Toast.makeText(context, "Playlist empty", Toast.LENGTH_SHORT).show()
-                    } else {
-                        if (findNavController().currentDestination?.id != R.id.playlistDetailFragment) {
-                            findNavController().navigate(R.id.action_homeFragment_to_playlistDetailFragment, PlaylistDetailFragmentArgs(playlist).toBundle())
-                        }
-                    }
-                },
-                onError = { throwable ->
-                    if (throwable is NoSuchElementException) {
-                        Toast.makeText(context, "Playlist empty", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Timber.e(throwable, "Failed to retrieve favorites playlist")
-                    }
+        coroutineScope.launch {
+            val playlist = playlistRepository.getPlaylists(query).firstOrNull().orEmpty().firstOrNull()
+            if (playlist == null || playlist.songCount == 0) {
+                Toast.makeText(context, "Playlist empty", Toast.LENGTH_SHORT).show()
+            } else {
+                if (findNavController().currentDestination?.id != R.id.playlistDetailFragment) {
+                    findNavController().navigate(R.id.action_homeFragment_to_playlistDetailFragment, PlaylistDetailFragmentArgs(playlist).toBundle())
                 }
-            ))
+            }
+        }
     }
 
 

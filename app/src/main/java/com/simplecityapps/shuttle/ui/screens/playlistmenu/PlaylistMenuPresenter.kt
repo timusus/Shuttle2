@@ -6,10 +6,9 @@ import com.simplecityapps.mediaprovider.repository.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
-import io.reactivex.Single
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.rxkotlin.subscribeBy
-import io.reactivex.schedulers.Schedulers
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -28,56 +27,44 @@ class PlaylistMenuPresenter @Inject constructor(
     }
 
     override fun loadPlaylists() {
-        addDisposable(
-            playlistRepository.getPlaylists()
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeBy(
-                    onNext = { playlists -> this.playlists = playlists },
-                    onError = { error -> Timber.e(error, "Failed to load playlists") })
-        )
+        launch {
+            playlistRepository.getPlaylists().collect { playlists ->
+                this@PlaylistMenuPresenter.playlists = playlists
+            }
+        }
     }
 
     override fun createPlaylist(name: String, playlistData: PlaylistData?) {
-        addDisposable((playlistData?.getSongs() ?: Single.just(emptyList())).flatMap { songs ->
-            playlistRepository.createPlaylist(name, null, songs)
+        launch {
+            val songs = playlistData?.getSongs()
+            val playlist = playlistRepository.createPlaylist(name, null, songs)
+
+            if (playlistData != null) {
+                view?.onAddedToPlaylist(playlist, playlistData)
+            } else {
+                view?.onPlaylistCreated(playlist)
+            }
         }
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(
-                onSuccess = { playlist ->
-                    if (playlistData != null) {
-                        view?.onAddedToPlaylist(playlist, playlistData)
-                    } else {
-                        view?.onPlaylistCreated(playlist)
-                    }
-                },
-                onError = { error ->
-                    Timber.e(error, "Failed to create playlist")
-                }
-            ))
     }
 
     override fun addToPlaylist(playlist: Playlist, playlistData: PlaylistData) {
-        addDisposable(playlistData.getSongs().flatMapCompletable { songs ->
-            playlistRepository.addToPlaylist(playlist, songs)
+        launch {
+            val songs = playlistData.getSongs()
+            try {
+                playlistRepository.addToPlaylist(playlist, songs)
+                view?.onAddedToPlaylist(playlist, playlistData)
+            } catch (e: Exception) {
+                Timber.e(e, "Failed to add to playlist")
+                view?.onPlaylistAddFailed(Error(e))
+            }
         }
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(
-                onComplete = { view?.onAddedToPlaylist(playlist, playlistData) },
-                onError = { throwable ->
-                    Timber.e(throwable, "Failed to add song to playlist")
-                    view?.onPlaylistAddFailed(Error(throwable))
-                }
-            ))
     }
 
-    private fun PlaylistData.getSongs(): Single<List<Song>> {
+    private suspend fun PlaylistData.getSongs(): List<Song> {
         return when (this) {
-            is PlaylistData.Songs -> return Single.just(data)
-            is PlaylistData.Albums -> songRepository.getSongs(SongQuery.AlbumIds(data.map { album -> album.id })).first(emptyList())
-            is PlaylistData.AlbumArtists -> songRepository.getSongs(SongQuery.AlbumArtistIds(data.map { albumArtist -> albumArtist.id })).first(emptyList())
+            is PlaylistData.Songs -> return data
+            is PlaylistData.Albums -> songRepository.getSongs(SongQuery.Albums(data.map { album -> SongQuery.Album(name = album.name, albumArtistName = album.albumArtist) })).firstOrNull().orEmpty()
+            is PlaylistData.AlbumArtists -> songRepository.getSongs(SongQuery.AlbumArtists(data.map { albumArtist -> SongQuery.AlbumArtist(name = albumArtist.name) })).firstOrNull().orEmpty()
         }
     }
 }

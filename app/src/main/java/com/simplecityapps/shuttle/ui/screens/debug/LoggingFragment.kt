@@ -12,6 +12,7 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.coroutineScope
 import androidx.recyclerview.widget.RecyclerView
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.shuttle.BuildConfig
@@ -49,7 +50,7 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        adapter = RecyclerAdapter()
+        adapter = RecyclerAdapter(lifecycle.coroutineScope)
         adapter.loggingEnabled = false
 
         debugLoggingTree.addCallback(this)
@@ -80,7 +81,7 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
     }
 
     override fun onDestroyView() {
-        adapter.dispose()
+
 
         debugLoggingTree.removeCallback(this)
 
@@ -118,7 +119,7 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
         }
         if (canLog) {
             recyclerView.post {
-                adapter.setData(adapter.items.toMutableList() + LogMessageBinder(logMessage), false)
+                adapter.update(adapter.items + LogMessageBinder(logMessage))
             }
         }
     }

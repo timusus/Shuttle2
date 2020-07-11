@@ -67,7 +67,7 @@ class PlaybackNotificationManager(
         val notificationBuilder = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
             .apply {
                 song?.let { song ->
-                    setContentText(song.albumArtistName)
+                    setContentText(song.albumArtist)
                         .setContentTitle(song.name)
                 }
             }
@@ -93,7 +93,7 @@ class PlaybackNotificationManager(
                 artworkImageLoader.loadBitmap(song, 512, 512) { image ->
                     if (song == queueManager.getCurrentItem()?.song) {
                         notificationBuilder
-                            .setContentText(song.albumArtistName)
+                            .setContentText(song.albumArtist)
                             .setContentTitle(song.name)
                             .setLargeIcon(image)
                         val notification = notificationBuilder.build()

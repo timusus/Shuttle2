@@ -4,6 +4,11 @@ import android.content.ContentResolver
 import android.net.Uri
 import android.provider.DocumentsContract
 import android.util.Log
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import timber.log.Timber
 import java.io.Serializable
 
 object SafDirectoryHelper {
@@ -86,40 +91,43 @@ object SafDirectoryHelper {
      *
      * This task is resource intensive. Should be called from a background thread.
      */
-    fun buildFolderNodeTree(
+    suspend fun buildFolderNodeTree(
         contentResolver: ContentResolver,
-        treeUri: Uri,
-        callback: ((tree: DocumentNodeTree?, traversalComplete: Boolean) -> Unit)? = null
-    ): DocumentNodeTree? {
-        val docUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, DocumentsContract.getTreeDocumentId(treeUri))
-        retrieveDocumentNodes(contentResolver, docUri, treeUri).firstOrNull()?.let { rootDocumentNode ->
-            val tree = DocumentNodeTree(docUri, treeUri, rootDocumentNode.documentId, rootDocumentNode.displayName, rootDocumentNode.mimeType)
-            callback?.invoke(tree, false)
+        treeUri: Uri
+    ): Flow<DocumentNodeTree> {
+        return flow {
+            try {
+                val docUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, DocumentsContract.getTreeDocumentId(treeUri))
+                retrieveDocumentNodes(contentResolver, docUri, treeUri).firstOrNull()?.let { rootDocumentNode ->
+                    val tree = DocumentNodeTree(docUri, treeUri, rootDocumentNode.documentId, rootDocumentNode.displayName, rootDocumentNode.mimeType)
 
-            fun traverseDocumentNodes(parent: DocumentNodeTree) {
-                val documentNodes = retrieveDocumentNodes(contentResolver, DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, parent.documentId), treeUri)
-                for (documentNode in documentNodes) {
-                    when (documentNode) {
-                        is DocumentNodeTree -> traverseDocumentNodes(parent.addTreeNode(documentNode))
-                        else -> {
-                            if (documentNode.mimeType.startsWith("audio") ||
-                                arrayOf("mp3", "3gp", "mp4", "m4a", "m4b", "aac", "ts", "flac", "mid", "xmf", "mxmf", "midi", "rtttl", "rtx", "ota", "imy", "ogg", "mkv", "wav")
-                                    .contains(documentNode.displayName.substringAfterLast('.'))
-                            ) {
-                                parent.addLeafNode(documentNode)
+                    emit(tree)
+
+                    fun traverseDocumentNodes(parent: DocumentNodeTree) {
+                        val documentNodes = retrieveDocumentNodes(contentResolver, DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, parent.documentId), treeUri)
+                        for (documentNode in documentNodes) {
+                            when (documentNode) {
+                                is DocumentNodeTree -> traverseDocumentNodes(parent.addTreeNode(documentNode))
+                                else -> {
+                                    if (documentNode.mimeType.startsWith("audio") ||
+                                        arrayOf("mp3", "3gp", "mp4", "m4a", "m4b", "aac", "ts", "flac", "mid", "xmf", "mxmf", "midi", "rtttl", "rtx", "ota", "imy", "ogg", "mkv", "wav")
+                                            .contains(documentNode.displayName.substringAfterLast('.'))
+                                    ) {
+                                        parent.addLeafNode(documentNode)
+                                    }
+                                }
                             }
                         }
                     }
-                }
-            }
 
-            traverseDocumentNodes(tree)
-            callback?.invoke(tree, true)
-            return tree
-        } ?: run {
-            callback?.invoke(null, false)
-            return null
-        }
+                    traverseDocumentNodes(tree)
+
+                    emit(tree)
+                }
+            } catch (e: SecurityException) {
+                Timber.e(e, "Failed to build folder tree ($treeUri)")
+            }
+        }.flowOn(Dispatchers.IO)
     }
 
     /**
@@ -127,7 +135,7 @@ object SafDirectoryHelper {
      *
      * This involves a content resolver query, and should be called from a background thread.
      */
-    private fun retrieveDocumentNodes(contentResolver: ContentResolver, uri: Uri, rootUri: Uri): List<DocumentNode> {
+    private fun retrieveDocumentNodes(contentResolver: ContentResolver, uri: Uri, rootUri: Uri): List<SafDirectoryHelper.DocumentNode> {
         val documentNodes = mutableListOf<DocumentNode>()
 
         contentResolver.query(

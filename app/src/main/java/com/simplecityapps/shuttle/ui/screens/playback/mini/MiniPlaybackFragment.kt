@@ -72,7 +72,7 @@ class MiniPlaybackFragment : Fragment(), Injectable, MiniPlayerContract.View {
     override fun setCurrentSong(song: Song?) {
         song?.let {
             titleTextView.text = song.name
-            subtitleTextView.text = "${song.albumArtistName} • ${song.albumName}"
+            subtitleTextView.text = "${song.albumArtist} • ${song.album}"
             imageLoader.loadArtwork(imageView, song, ArtworkImageLoader.Options.RoundedCorners(16), completionHandler = null)
         }
     }

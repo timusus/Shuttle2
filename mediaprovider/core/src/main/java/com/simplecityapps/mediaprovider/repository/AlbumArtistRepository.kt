@@ -1,27 +1,20 @@
 package com.simplecityapps.mediaprovider.repository
 
 import com.simplecityapps.mediaprovider.model.AlbumArtist
-import io.reactivex.Completable
-import io.reactivex.Observable
+import kotlinx.coroutines.flow.Flow
 import java.io.Serializable
 
 interface AlbumArtistRepository {
-
-    fun populate(): Completable {
-        return Completable.complete()
-    }
-
-    fun getAlbumArtists(): Observable<List<AlbumArtist>>
-
-    fun getAlbumArtists(query: AlbumArtistQuery): Observable<List<AlbumArtist>>
+    fun getAlbumArtists(): Flow<List<AlbumArtist>>
+    fun getAlbumArtists(query: AlbumArtistQuery): Flow<List<AlbumArtist>>
 }
 
 sealed class AlbumArtistQuery(
-    val predicate: ((AlbumArtist) -> Boolean),
+    val predicate: ((com.simplecityapps.mediaprovider.model.AlbumArtist) -> Boolean),
     val sortOrder: AlbumArtistSortOrder? = null
 ) {
-    class AlbumArtistId(val albumArtistId: Long) : AlbumArtistQuery({ albumArtist -> albumArtist.id == albumArtistId })
-    class Search(private val query: String) : AlbumArtistQuery({ albumArtist -> albumArtist.name.contains(query, true) })
+    class AlbumArtist(val name: String) : AlbumArtistQuery({ albumArtist -> albumArtist.name.equals(name, ignoreCase = true) })
+    class Search(private val query: String) : AlbumArtistQuery({ albumArtist -> albumArtist.name.contains(query, ignoreCase = true) })
     class PlayCount(private val count: Int, sortOrder: AlbumArtistSortOrder) : AlbumArtistQuery({ albumArtist -> albumArtist.playCount >= count }, sortOrder)
 }
 

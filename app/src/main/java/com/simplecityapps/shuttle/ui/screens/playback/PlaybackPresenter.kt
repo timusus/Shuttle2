@@ -8,13 +8,9 @@ import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
-import io.reactivex.Completable
-import io.reactivex.Observable
-import io.reactivex.Single
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.Disposable
-import io.reactivex.rxkotlin.subscribeBy
-import io.reactivex.schedulers.Schedulers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 import kotlin.math.abs
@@ -32,7 +28,7 @@ class PlaybackPresenter @Inject constructor(
     QueueChangeCallback,
     PlaybackWatcherCallback {
 
-    private var isFavoriteDisposable: Disposable? = null
+    private var favoriteUpdater: Job? = null
 
     override fun bindView(view: PlaybackContract.View) {
         super.bindView(view)
@@ -48,27 +44,14 @@ class PlaybackPresenter @Inject constructor(
         onShuffleChanged()
         onRepeatChanged()
 
-        addDisposable(playlistRepository.getPlaylists(PlaylistQuery.PlaylistName("Favorites"))
-            .first(emptyList())
-            .flatMapObservable { playlists ->
-                playlists.firstOrNull()?.let { favoritesPlaylist ->
-                    playlistRepository.getSongsForPlaylist(favoritesPlaylist.id)
-                } ?: Observable.just(emptyList())
-            }
-            .map { it.contains(queueManager.getCurrentItem()?.song) }
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeBy(
-                onNext = { isFavorite -> view?.setIsFavorite(isFavorite) },
-                onError = { error -> Timber.e(error, "Failed to ") }
-            )
-        )
 
     }
 
     override fun unbindView() {
         playbackWatcher.removeCallback(this)
         queueWatcher.removeCallback(this)
+
+        updateFavorite()
 
         super.unbindView()
     }
@@ -82,6 +65,23 @@ class PlaybackPresenter @Inject constructor(
         }
     }
 
+    private fun updateFavorite() {
+        favoriteUpdater?.cancel()
+        val job = launch {
+            val isFavorite = (playlistRepository.getPlaylists(PlaylistQuery.PlaylistName("Favorites"))
+                .firstOrNull()
+                .orEmpty()
+                .firstOrNull()
+                ?.let { favoritesPlaylist ->
+                    playlistRepository.getSongsForPlaylist(favoritesPlaylist.id).firstOrNull().orEmpty()
+                } ?: emptyList()).contains(queueManager.getCurrentItem()?.song)
+
+            this@PlaybackPresenter.view?.setIsFavorite(isFavorite)
+        }
+
+        favoriteUpdater = job
+    }
+
 
     // PlaybackContract.Presenter Implementation
 
@@ -90,7 +90,9 @@ class PlaybackPresenter @Inject constructor(
     }
 
     override fun toggleShuffle() {
-        queueManager.toggleShuffleMode()
+        launch {
+            queueManager.toggleShuffleMode()
+        }
     }
 
     override fun toggleRepeat() {
@@ -140,62 +142,38 @@ class PlaybackPresenter @Inject constructor(
     }
 
     override fun setFavorite(isFavorite: Boolean) {
-        queueManager.getCurrentItem()?.song?.let { song ->
-            addDisposable(
-                playlistRepository.getPlaylists(PlaylistQuery.PlaylistName("Favorites"))
-                    .doOnNext { Timber.i("Retrieved ${it.size} playlists") }
-                    .first(emptyList())
-                    .flatMapCompletable { playlists ->
-                        playlists.firstOrNull()?.let { playlist ->
-                            if (isFavorite) {
-                                playlistRepository.addToPlaylist(playlist, listOf(song))
-                            } else {
-                                playlistRepository.removeFromPlaylist(playlist, listOf(song))
-                            }
-                        } ?: Completable.error(Error("Favorites playlist not found"))
+        launch {
+            queueManager.getCurrentItem()?.song?.let { song ->
+                playlistRepository.getPlaylists(PlaylistQuery.PlaylistName("Favorites")).firstOrNull().orEmpty().firstOrNull()?.let { favoritesPlaylist ->
+                    if (isFavorite) {
+                        playlistRepository.addToPlaylist(favoritesPlaylist, listOf(song))
+                    } else {
+                        playlistRepository.removeFromPlaylist(favoritesPlaylist, listOf(song))
                     }
-                    .subscribeOn(Schedulers.io())
-                    .subscribeBy(onError = { error ->
-                        Timber.e(error, "Failed to add to favorites")
-                    })
-            )
+                }
+            }
         }
     }
 
     override fun goToAlbum() {
-        queueManager.getCurrentItem()?.song?.let { song ->
-            albumRepository.getAlbums(AlbumQuery.AlbumIds(listOf(song.albumId))).first(emptyList())
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeBy(
-                    onSuccess = { albums ->
-                        albums.firstOrNull()?.let { album ->
-                            view?.goToAlbum(album)
-                        } ?: Timber.e("Failed to retrieve album for song: ${song.name}")
-                    },
-                    onError = {
-                        Timber.e(it, "Failed to retrieve album for song: ${song.name}")
-                    }
-                )
+        launch {
+            queueManager.getCurrentItem()?.song?.let { song ->
+                val albums = albumRepository.getAlbums(AlbumQuery.Albums(listOf(AlbumQuery.Album(name = song.album, albumArtistName = song.albumArtist)))).firstOrNull().orEmpty()
+                albums.firstOrNull()?.let { album ->
+                    view?.goToAlbum(album)
+                } ?: Timber.e("Failed to retrieve album for song: ${song.name}")
+            }
         }
-
     }
 
     override fun goToArtist() {
-        queueManager.getCurrentItem()?.song?.let { song ->
-            albumArtistRepository.getAlbumArtists(AlbumArtistQuery.AlbumArtistId(song.albumArtistId)).first(emptyList())
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeBy(
-                    onSuccess = { artists ->
-                        artists.firstOrNull()?.let { artist ->
-                            view?.goToArtist(artist)
-                        } ?: Timber.e("Failed to retrieve album artist for song: ${song.name}")
-                    },
-                    onError = {
-                        Timber.e(it, "Failed to retrieve album artist for song: ${song.name}")
-                    }
-                )
+        launch {
+            queueManager.getCurrentItem()?.song?.let { song ->
+                val artists = albumArtistRepository.getAlbumArtists(AlbumArtistQuery.AlbumArtist(name = song.albumArtist)).firstOrNull().orEmpty()
+                artists.firstOrNull()?.let { artist ->
+                    view?.goToArtist(artist)
+                } ?: Timber.e("Failed to retrieve album artist for song: ${song.name}")
+            }
         }
     }
 
@@ -224,24 +202,7 @@ class PlaybackPresenter @Inject constructor(
         view?.setCurrentSong(queueManager.getCurrentItem()?.song)
         view?.setQueuePosition(queueManager.getCurrentPosition(), queueManager.getSize(), abs((newPosition ?: 0) - (oldPosition ?: 0)) <= 1)
 
-        isFavoriteDisposable?.dispose()
-        queueManager.getCurrentItem()?.song?.let { song ->
-            isFavoriteDisposable = playlistRepository
-                .getPlaylists(PlaylistQuery.PlaylistName("Favorites"))
-                .first(emptyList()).flatMap { playlists ->
-                    playlists.firstOrNull()?.let { playlist ->
-                        playlistRepository.getSongsForPlaylist(playlist.id).first(emptyList()).flatMap { songs ->
-                            Single.just(songs.contains(song))
-                        }
-                    } ?: Single.just(false)
-                }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeBy(
-                    onSuccess = { isFavorite -> view?.setIsFavorite(isFavorite) },
-                    onError = { error -> Timber.e(error, "Failed to determine if song is favorite") }
-                )
-        }
+        updateFavorite()
     }
 
     override fun onShuffleChanged() {

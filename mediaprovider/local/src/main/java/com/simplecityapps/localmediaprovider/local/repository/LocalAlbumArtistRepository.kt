@@ -1,37 +1,45 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
-import com.jakewharton.rxrelay2.BehaviorRelay
-import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
+import com.simplecityapps.localmediaprovider.local.data.room.dao.AlbumArtistDataDao
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.repository.AlbumArtistQuery
 import com.simplecityapps.mediaprovider.repository.AlbumArtistRepository
-import io.reactivex.Observable
-import io.reactivex.functions.Consumer
-import timber.log.Timber
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 
-class LocalAlbumArtistRepository(private val database: MediaDatabase) : AlbumArtistRepository {
+class LocalAlbumArtistRepository(private val albumArtistDataDao: AlbumArtistDataDao) : AlbumArtistRepository {
 
-    private val albumArtistsRelay: BehaviorRelay<List<AlbumArtist>> by lazy {
-        val relay = BehaviorRelay.create<List<AlbumArtist>>()
-        database.albumArtistDataDao().getAll().toObservable()
-            .subscribe(
-                relay,
-                Consumer { throwable -> Timber.e(throwable, "Failed to subscribe to album artists relay") }
-            )
-        relay
+    private val albumArtistsRelay: Flow<List<AlbumArtist>> by lazy {
+        MutableStateFlow<List<AlbumArtist>?>(null)
+            .apply {
+                CoroutineScope(Dispatchers.IO)
+                    .launch {
+                        albumArtistDataDao
+                            .getAll()
+                            .collect {
+                                value = it
+                            }
+                    }
+            }
+            .filterNotNull()
+            .flowOn(Dispatchers.IO)
     }
 
-    override fun getAlbumArtists(): Observable<List<AlbumArtist>> {
+    override fun getAlbumArtists(): Flow<List<AlbumArtist>> {
         return albumArtistsRelay
     }
 
-    override fun getAlbumArtists(query: AlbumArtistQuery): Observable<List<AlbumArtist>> {
-        return albumArtistsRelay.map { albumArtists ->
-            var result = albumArtists.filter(query.predicate)
-            query.sortOrder?.let { sortOrder ->
-                result = result.sortedWith(sortOrder.comparator)
+    override fun getAlbumArtists(query: AlbumArtistQuery): Flow<List<AlbumArtist>> {
+        return getAlbumArtists()
+            .map { albumArtists ->
+                var result = albumArtists.filter(query.predicate)
+                query.sortOrder?.let { sortOrder ->
+                    result = result.sortedWith(sortOrder.comparator)
+                }
+                result
             }
-            result
-        }
+            .flowOn(Dispatchers.IO)
     }
 }

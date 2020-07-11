@@ -5,80 +5,124 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListUpdateCallback
 import androidx.recyclerview.widget.RecyclerView
 import com.simplecityapps.diff.DiffCallbacks
-import io.reactivex.Single
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.Disposable
-import io.reactivex.schedulers.Schedulers
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.actor
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
-open class RecyclerAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+open class RecyclerAdapter(scope: CoroutineScope) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     var items = mutableListOf<ViewBinder>()
         private set
 
     var loggingEnabled = false
 
-    private var disposable: Disposable? = null
+    sealed class AdapterOperation {
+        class Update(val newItems: MutableList<ViewBinder>, val callback: (() -> Unit)?) : AdapterOperation()
+        class Add(val index: Int, val newItem: ViewBinder) : AdapterOperation()
+        class Remove(val index: Int) : AdapterOperation()
+        object Clear : AdapterOperation()
+        class Move(val fromPosition: Int, val toPosition: Int) : AdapterOperation()
+    }
 
-    fun setData(newItems: List<ViewBinder>, animateChanges: Boolean = true, completion: (() -> Unit)? = null) {
-        dispose()
+    private val loggingListUpdateCallback by lazy {
+        LoggingListUpdateCallback()
+    }
 
-        if (animateChanges) {
-            disposable = Single.fromCallable { DiffUtil.calculateDiff(DiffCallbacks(items, newItems)) }
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe { diffResult ->
-                    items = newItems.toMutableList()
-                    if (loggingEnabled) {
-                        diffResult.dispatchUpdatesTo(LoggingListUpdateCallback())
-                    }
-                    diffResult.dispatchUpdatesTo(this)
-                    completion?.invoke()
-                }
-        } else {
+    private val actor = scope.actor<AdapterOperation>(capacity = Channel.CONFLATED) {
+        for (operation in channel) {
+            if (!isActive) {
+                return@actor
+            }
+            when (operation) {
+                is AdapterOperation.Update -> updateInternal(operation.newItems, operation.callback)
+                is AdapterOperation.Add -> addInternal(operation.index, operation.newItem)
+                is AdapterOperation.Remove -> removeInternal(operation.index)
+                is AdapterOperation.Clear -> clearInternal()
+                is AdapterOperation.Move -> moveInternal(operation.fromPosition, operation.toPosition)
+            }
+        }
+    }
+
+
+    // Public
+
+    fun update(newList: List<ViewBinder>, completion: (() -> Unit)? = null) {
+        actor.offer(AdapterOperation.Update(newList.toMutableList(), completion))
+    }
+
+    fun add(index: Int = items.size, newItem: ViewBinder) {
+        actor.offer(AdapterOperation.Add(index, newItem))
+    }
+
+    fun remove(index: Int) {
+        actor.offer(AdapterOperation.Remove(index))
+    }
+
+    fun remove(item: ViewBinder) {
+        actor.offer(AdapterOperation.Remove(items.indexOf(item)))
+    }
+
+    fun move(fromPosition: Int, toPosition: Int) {
+        actor.offer(AdapterOperation.Move(fromPosition, toPosition))
+    }
+
+    fun clear() {
+        actor.offer(AdapterOperation.Clear)
+    }
+
+
+    // Private
+
+    private suspend fun updateInternal(newItems: MutableList<ViewBinder>, callback: (() -> Unit)? = null) {
+        val diffResult = withContext(Dispatchers.IO) {
+            DiffUtil.calculateDiff(DiffCallbacks(items, newItems))
+        }
+
+        withContext(Dispatchers.Main) {
             items = newItems.toMutableList()
-            notifyDataSetChanged()
-            completion?.invoke()
+            diffResult.dispatchUpdatesTo(this@RecyclerAdapter)
+            if (loggingEnabled) {
+                diffResult.dispatchUpdatesTo(loggingListUpdateCallback)
+            }
+            callback?.invoke()
         }
     }
 
-    fun addItem(index: Int, newItem: ViewBinder) {
-        items.add(index, newItem)
-        notifyItemInserted(index)
+    private suspend fun addInternal(index: Int, newItem: ViewBinder) {
+        withContext(Dispatchers.Main) {
+            items.add(index, newItem)
+            notifyItemInserted(index)
+        }
     }
 
-    fun addItem(newItem: ViewBinder) {
-        addItem(items.size, newItem)
+    private suspend fun removeInternal(index: Int) {
+        withContext(Dispatchers.Main) {
+            items.removeAt(index)
+            notifyItemRemoved(index)
+        }
     }
 
-    fun removeItem(index: Int) {
-        items.removeAt(index)
-        notifyItemRemoved(index)
-    }
-
-    fun removeItem(item: ViewBinder) {
-        removeItem(items.indexOf(item))
-    }
-
-    fun moveItem(fromPosition: Int, toPosition: Int) {
-        items.add(toPosition, items.removeAt(fromPosition))
-        notifyItemMoved(fromPosition, toPosition)
-    }
-
-    fun clear(animateChanges: Boolean = true) {
-        val count = items.size
-        items.clear()
-
-        if (animateChanges) {
+    private suspend fun clearInternal() {
+        withContext(Dispatchers.Main) {
+            val count = items.size
+            items.clear()
             notifyItemRangeRemoved(0, count)
-        } else {
-            notifyDataSetChanged()
         }
     }
 
-    fun dispose() {
-        disposable?.dispose()
+    private suspend fun moveInternal(fromPosition: Int, toPosition: Int) {
+        withContext(Dispatchers.Main) {
+            items.add(toPosition, items.removeAt(fromPosition))
+            notifyItemMoved(fromPosition, toPosition)
+        }
     }
+
+
+    // RecyclerView.Adapter Implementation
 
     override fun getItemViewType(position: Int): Int {
         return items[position].viewType()
@@ -112,6 +156,9 @@ open class RecyclerAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         (holder as? AttachAwareViewHolder)?.onDetach()
         super.onViewDetachedFromWindow(holder)
     }
+
+
+    // Logging Callback
 
     private class LoggingListUpdateCallback : ListUpdateCallback {
         override fun onChanged(position: Int, count: Int, payload: Any?) {

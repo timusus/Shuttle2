@@ -16,6 +16,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.os.postDelayed
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.coroutineScope
 import androidx.navigation.fragment.NavHostFragment
 import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.Transition
@@ -96,7 +97,7 @@ class AlbumDetailFragment :
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        adapter = RecyclerAdapter()
+        adapter = RecyclerAdapter(lifecycle.coroutineScope)
 
         sharedElementEnterTransition = TransitionInflater.from(context).inflateTransition(R.transition.image_shared_element_transition)
         (sharedElementEnterTransition as Transition).duration = 200L
@@ -192,7 +193,7 @@ class AlbumDetailFragment :
     }
 
     override fun onDestroyView() {
-        adapter.dispose()
+
 
         presenter.unbindView()
         playlistMenuPresenter.unbindView()
@@ -205,7 +206,7 @@ class AlbumDetailFragment :
 
     override fun setData(songs: List<Song>) {
         val discSongsMap = songs.groupBy { song -> song.disc }.toSortedMap()
-        adapter.setData(discSongsMap.flatMap { entry ->
+        adapter.update(discSongsMap.flatMap { entry ->
             val viewBinders = mutableListOf<ViewBinder>()
             if (discSongsMap.size > 1) {
                 viewBinders.add(DiscNumberBinder(entry.key))

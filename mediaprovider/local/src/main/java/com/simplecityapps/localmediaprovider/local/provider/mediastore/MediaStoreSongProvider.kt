@@ -2,17 +2,22 @@ package com.simplecityapps.localmediaprovider.local.provider.mediastore
 
 import android.content.Context
 import android.provider.MediaStore
-import com.simplecityapps.mediaprovider.SongProvider
+import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.Song
-import io.reactivex.Observable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.isActive
 import java.util.*
+import kotlin.coroutines.coroutineContext
 
 class MediaStoreSongProvider(
     private val context: Context
-) : SongProvider {
+) : MediaProvider {
 
-    override fun findSongs(): Observable<Pair<Song, Float>> {
-        return Observable.create { emitter ->
+    override fun findSongs(): Flow<Pair<Song, Float>> {
+        return flow {
             val cursor = context.contentResolver.query(
                 MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 arrayOf(
@@ -39,56 +44,49 @@ class MediaStoreSongProvider(
             )
 
             cursor?.use {
-                try {
-                    while (cursor.moveToNext()) {
-                        if (emitter.isDisposed) {
-                            return@use
+                val size = cursor.count
+                var progress = 0
+                while (coroutineContext.isActive && cursor.moveToNext()) {
+                    val album = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM))
+                    val artist = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST))
+                    val albumArtist = cursor.getString(cursor.getColumnIndex("album_artist")) ?: artist
+
+                    var track = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK))
+                    var disc = 1
+                    if (track >= 1000) {
+                        track %= 1000
+
+                        disc = track / 1000
+                        if (disc == 0) {
+                            disc = 1
                         }
-                        val album = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM))
-                        val artist = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST))
-                        val albumArtist = cursor.getString(cursor.getColumnIndex("album_artist")) ?: artist
-
-                        var track = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK))
-                        var disc = 1
-                        if (track >= 1000) {
-                            track %= 1000
-
-                            disc = track / 1000
-                            if (disc == 0) {
-                                disc = 1
-                            }
-                        }
-
-                        val song = Song(
-                            id = 0,
-                            name = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)),
-                            albumArtistId = 0,
-                            albumArtistName = albumArtist,
-                            albumId = 0,
-                            albumName = album,
-                            track = track,
-                            disc = disc,
-                            duration = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)),
-                            year = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)),
-                            path = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)),
-                            size = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)),
-                            mimeType = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)),
-                            lastModified = Date(cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_MODIFIED)) * 1000),
-                            lastPlayed = null,
-                            lastCompleted = null,
-                            playCount = 0,
-                            playbackPosition = 0,
-                            blacklisted = false,
-                            mediaStoreId = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID))
-                        )
-                        emitter.onNext(Pair(song, cursor.position / cursor.count.toFloat()))
                     }
-                } catch (e: Exception) {
-                    emitter.onError(e)
+
+                    val song = Song(
+                        id = 0,
+                        name = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)),
+                        albumArtist = albumArtist,
+                        album = album,
+                        track = track,
+                        disc = disc,
+                        duration = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)),
+                        year = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)),
+                        path = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)),
+                        size = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)),
+                        mimeType = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)),
+                        lastModified = Date(cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATE_MODIFIED)) * 1000),
+                        lastPlayed = null,
+                        lastCompleted = null,
+                        playCount = 0,
+                        playbackPosition = 0,
+                        blacklisted = false,
+                        mediaStoreId = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID))
+                    )
+                    emit(Pair(song, progress / size.toFloat()))
+                    progress++
                 }
             }
-            emitter.onComplete()
-        }
+        }.flowOn(Dispatchers.IO)
     }
 
     override fun equals(other: Any?): Boolean {

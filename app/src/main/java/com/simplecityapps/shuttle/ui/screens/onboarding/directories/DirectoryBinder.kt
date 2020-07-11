@@ -6,17 +6,18 @@ import android.widget.ImageButton
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.core.view.isVisible
+import com.simplecityappds.saf.SafDirectoryHelper
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 
 class DirectoryBinder(
-    val data: MusicDirectoriesContract.View.Data,
+    val directory: MusicDirectoriesContract.Directory,
     val listener: Listener
 ) : ViewBinder {
 
     interface Listener {
-        fun onRemoveClicked(data: MusicDirectoriesContract.View.Data)
+        fun onRemoveClicked(directory: MusicDirectoriesContract.Directory)
     }
 
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
@@ -27,6 +28,26 @@ class DirectoryBinder(
         return ViewTypes.OnboardingDirectory
     }
 
+    override fun areContentsTheSame(other: Any): Boolean {
+        return directory.traversalComplete == (other as? DirectoryBinder)?.directory?.traversalComplete
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as DirectoryBinder
+
+        if (directory != other.directory) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return directory.hashCode()
+    }
+
+
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<DirectoryBinder>(itemView) {
 
         private val title: TextView = itemView.findViewById(R.id.titleLabel)
@@ -35,16 +56,16 @@ class DirectoryBinder(
         private val removeButton: ImageButton = itemView.findViewById(R.id.removeButton)
 
         init {
-            removeButton.setOnClickListener { viewBinder?.listener?.onRemoveClicked(viewBinder!!.data) }
+            removeButton.setOnClickListener { viewBinder?.listener?.onRemoveClicked(viewBinder!!.directory) }
         }
 
         override fun bind(viewBinder: DirectoryBinder, isPartial: Boolean) {
             super.bind(viewBinder, isPartial)
 
-            title.text = viewBinder.data.tree.documentId
-            progressBar.isVisible = !viewBinder.data.traversalComplete
-            if (viewBinder.data.traversalComplete) {
-                val leaves = viewBinder.data.tree.getLeaves()
+            title.text = viewBinder.directory.tree.documentId
+            progressBar.isVisible = !viewBinder.directory.traversalComplete
+            if (viewBinder.directory.traversalComplete) {
+                val leaves = viewBinder.directory.tree.getLeaves()
                 subtitle.text = "${leaves.size} audio file${if (leaves.size == 1) "" else "s"}"
                 progressBar.isVisible = false
             } else {

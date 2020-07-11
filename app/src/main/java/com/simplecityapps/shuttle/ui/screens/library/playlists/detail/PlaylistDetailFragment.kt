@@ -12,6 +12,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.coroutineScope
 import androidx.navigation.fragment.NavHostFragment
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
@@ -84,7 +85,7 @@ class PlaylistDetailFragment :
 
         playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
 
-        adapter = RecyclerAdapter()
+        adapter = RecyclerAdapter(lifecycle.coroutineScope)
 
         imageLoader = GlideImageLoader(this)
 
@@ -122,7 +123,7 @@ class PlaylistDetailFragment :
     }
 
     override fun onDestroyView() {
-        adapter.dispose()
+
 
         presenter.unbindView()
         playlistMenuPresenter.unbindView()
@@ -152,7 +153,7 @@ class PlaylistDetailFragment :
             heroImage.setImageResource(R.drawable.ic_music_note_black_24dp)
         }
 
-        adapter.setData(songs.map { song ->
+        adapter.update(songs.map { song ->
             SongBinder(song, imageLoader, songBinderListener)
         })
     }

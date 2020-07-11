@@ -17,6 +17,7 @@ import androidx.core.os.postDelayed
 import androidx.core.view.doOnPreDraw
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.coroutineScope
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.NavHostFragment
@@ -99,7 +100,7 @@ class AlbumArtistDetailFragment :
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        adapter = RecyclerAdapter()
+        adapter = RecyclerAdapter(lifecycle.coroutineScope)
 
         sharedElementEnterTransition = TransitionInflater.from(context).inflateTransition(R.transition.image_shared_element_transition)
         (sharedElementEnterTransition as Transition).duration = 200L
@@ -196,7 +197,7 @@ class AlbumArtistDetailFragment :
     }
 
     override fun onDestroyView() {
-        adapter.dispose()
+
 
         presenter.unbindView()
         playlistMenuPresenter.unbindView()
@@ -215,13 +216,14 @@ class AlbumArtistDetailFragment :
     // AlbumArtistDetailContract.View Implementation
 
     override fun setListData(albums: Map<Album, List<Song>>) {
-        adapter.setData(albums.map { entry ->
+        adapter.update(albums.map { entry ->
             ExpandableAlbumBinder(
                 entry.key,
                 entry.value,
                 imageLoader,
-                listener = this,
-                expanded = adapter.items.filterIsInstance<ExpandableAlbumBinder>().find { binder -> binder.album == entry.key }?.expanded ?: false
+                expanded = adapter.items.filterIsInstance<ExpandableAlbumBinder>().find { binder -> binder.album == entry.key }?.expanded ?: false,
+                scope = lifecycle.coroutineScope,
+                listener = this
             )
         })
     }
@@ -259,7 +261,7 @@ class AlbumArtistDetailFragment :
     override fun onItemClicked(position: Int, expanded: Boolean) {
         val items = adapter.items.toMutableList()
         items[position] = (items[position] as ExpandableAlbumBinder).clone(!expanded)
-        adapter.setData(items)
+        adapter.update(items)
     }
 
     override fun onSongClicked(song: Song, songs: List<Song>) {

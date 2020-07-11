@@ -10,12 +10,14 @@ import com.simplecityapps.localmediaprovider.local.data.room.entity.*
 @Database(
     entities = [
         SongData::class,
-        AlbumArtistData::class,
-        AlbumData::class,
         PlaylistData::class,
         PlaylistSongJoin::class
     ],
-    version = 28,
+    views = [
+        AlbumData::class,
+        AlbumArtistData::class
+    ],
+    version = 29,
     exportSchema = true
 )
 @TypeConverters(Converters::class)

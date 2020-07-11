@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.coroutineScope
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
@@ -61,7 +62,7 @@ class SongListFragment :
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        adapter = object : SectionedAdapter() {
+        adapter = object : SectionedAdapter(lifecycle.coroutineScope) {
             override fun getSectionName(viewBinder: ViewBinder?): String {
                 return (viewBinder as? SongBinder)?.song?.name?.firstOrNull()?.toString() ?: ""
             }
@@ -132,7 +133,7 @@ class SongListFragment :
     }
 
     override fun onDestroyView() {
-        adapter.dispose()
+
 
         presenter.unbindView()
         playlistMenuPresenter.unbindView()
@@ -144,7 +145,7 @@ class SongListFragment :
     // SongListContract.View Implementation
 
     override fun setData(songs: List<Song>) {
-        adapter.setData(songs.map { song ->
+        adapter.update(songs.map { song ->
             SongBinder(song, imageLoader, songBinderListener)
         }, completion = {
             recyclerViewState?.let {
