@@ -10,16 +10,17 @@
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:requestLegacyExternalStorage="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme.DayNight"
         tools:ignore="GoogleAppIndexingWarning">
 
         <activity
-            android:screenOrientation="userPortrait"
             android:name=".ui.MainActivity"
             android:label="@string/app_name"
             android:launchMode="singleInstance"
+            android:screenOrientation="userPortrait"
             android:windowSoftInputMode="adjustNothing">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -33,7 +34,7 @@
 
         <meta-data
             android:name="com.bugsnag.android.API_KEY"
-            android:value="3b26e2392a564498165a38914012ee41"/>
+            android:value="3b26e2392a564498165a38914012ee41" />
 
 
         <!-- Widget -->
