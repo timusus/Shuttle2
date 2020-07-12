@@ -1,8 +1,7 @@
 {
   "commits": [
-    "Reduced app size",
-    "Added placeholder images for artists & songs",
-    "Update progress position while seeking",
-    "Updated onboarding screens (less text)"
+    "Disabled code minification (fixed crash when launching)",
+    "Enabled 'legacy storage', potentially fixing playback issues on some devices",
+    "Replaced Crashlytics with Bugsnag"
   ]
 }
