@@ -3,14 +3,13 @@ buildscript {
         google()
         jcenter()
         maven(url = "https://dl.bintray.com/kotlin/kotlin-eap")
-        maven(url = "https://maven.fabric.io/public")
     }
     dependencies {
         classpath(BuildPlugins.androidGradlePlugin)
         classpath(BuildPlugins.kotlinGradlePlugin)
         classpath(BuildPlugins.safeArgsPlugin)
         classpath(BuildPlugins.googleServicesPlugin)
-        classpath(BuildPlugins.fabricPlugin)
+        classpath(BuildPlugins.bugsnagPlugin)
     }
 }
 

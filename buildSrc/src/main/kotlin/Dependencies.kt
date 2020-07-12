@@ -1,17 +1,17 @@
-const val kotlinVersion = "1.4-M1"
+const val kotlinVersion = "1.3.72"
 
 object BuildPlugins {
 
     object Versions {
         // Top level
-        const val androidGradlePlugin = "4.1.0-alpha09"
+        const val androidGradlePlugin = "4.0.0"
         const val safeArgsPlugin = "2.2.0-rc04"
         const val googleServicesPlugin = "4.3.3"
-        const val fabricPlugin = "1.31.0"
+        const val bugsnagPlugin = "4.7.5"
         const val gradleVersionPlugin = "0.27.0"
 
         // Module
-        const val playPublisher = "2.7.5"
+        const val playPublisher = "2.8.0"
     }
 
     // Top level
@@ -19,7 +19,7 @@ object BuildPlugins {
     const val kotlinGradlePlugin = "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlinVersion"
     const val safeArgsPlugin = "androidx.navigation:navigation-safe-args-gradle-plugin:${Versions.safeArgsPlugin}"
     const val googleServicesPlugin = "com.google.gms:google-services:${Versions.googleServicesPlugin}"
-    const val fabricPlugin = "io.fabric.tools:gradle:${Versions.fabricPlugin}"
+    const val bugsnagPlugin = "com.bugsnag:bugsnag-android-gradle-plugin:${Versions.bugsnagPlugin}"
     const val gradleVersionPlugin = "com.github.ben-manes.versions"
 
     // Module
@@ -29,7 +29,7 @@ object BuildPlugins {
     const val kotlinAndroidExtensions = "kotlin-android-extensions"
     const val safeArgs = "androidx.navigation.safeargs.kotlin"
     const val kapt = "kotlin-kapt"
-    const val fabric = "io.fabric"
+    const val bugsnag = "com.bugsnag.android.gradle"
 }
 
 object AndroidSdk {

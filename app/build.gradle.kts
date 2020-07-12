@@ -5,7 +5,7 @@ plugins {
     id(BuildPlugins.kotlinAndroidExtensions)
     id(BuildPlugins.safeArgs)
     id(BuildPlugins.kapt)
-    id(BuildPlugins.fabric)
+    id(BuildPlugins.bugsnag)
 }
 
 android {
@@ -136,12 +136,6 @@ android {
         // OKHttp
         implementation("com.squareup.okhttp3:okhttp:4.4.1")
 
-        // Firebase
-        implementation("com.google.firebase:firebase-core:17.3.0")
-
-        // Crashlytics
-        implementation("com.crashlytics.sdk.android:crashlytics:2.10.1")
-
         // Leak Canary
         debugImplementation("com.squareup.leakcanary:leakcanary-android:2.2")
 
@@ -180,6 +174,9 @@ android {
 
         // MpAndroidChart
         implementation("com.github.PhilJay:MPAndroidChart:3.1.0")
+
+        // BugSnag
+        implementation("com.bugsnag:bugsnag-android:5.0.0")
     }
 }
 

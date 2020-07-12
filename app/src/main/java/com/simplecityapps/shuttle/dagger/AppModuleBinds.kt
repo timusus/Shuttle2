@@ -15,7 +15,7 @@ abstract class AppModuleBinds {
 
     @Binds
     @IntoSet
-    abstract fun provideCrashlyticsInitializer(bind: CrashlyticsInitializer): AppInitializer
+    abstract fun provideBugsnagInitializer(bind: BugsnagInitializer): AppInitializer
 
     @Binds
     @IntoSet

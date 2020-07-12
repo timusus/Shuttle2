@@ -29,11 +29,11 @@
         </activity>
 
 
-        <!-- Crashlytics -->
+        <!-- Bugsnag -->
 
         <meta-data
-            android:name="firebase_crashlytics_collection_enabled"
-            android:value="false" />
+            android:name="com.bugsnag.android.API_KEY"
+            android:value="3b26e2392a564498165a38914012ee41"/>
 
 
         <!-- Widget -->

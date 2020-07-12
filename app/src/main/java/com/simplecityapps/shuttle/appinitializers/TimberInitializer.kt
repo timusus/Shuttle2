@@ -2,7 +2,7 @@ package com.simplecityapps.shuttle.appinitializers
 
 import android.app.Application
 import android.util.Log
-import com.crashlytics.android.Crashlytics
+import com.bugsnag.android.Bugsnag
 import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.debug.DebugLoggingTree
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
@@ -29,10 +29,8 @@ class CrashReportingTree : Timber.Tree() {
 
     override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
         try {
-            Crashlytics.log(priority, tag, message)
-
             t?.let { throwable ->
-                Crashlytics.logException(throwable)
+                Bugsnag.notify(throwable)
             }
         } catch (error: Exception) {
             Log.e("TimberInit", "Failed to log to CrashReportingTree. \n[ tag: $tag\nmessage: $message. ]", error)

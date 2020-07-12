@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="CompilerConfiguration">
-    <bytecodeTargetLevel>
+    <bytecodeTargetLevel target="1.8">
       <module name="exoplayer-extension-av1" target="1.8" />
       <module name="exoplayer-extension-cast" target="1.8" />
       <module name="exoplayer-extension-cronet" target="1.8" />
@@ -24,36 +24,6 @@
       <module name="exoplayer-library-smoothstreaming" target="1.8" />
       <module name="exoplayer-library-ui" target="1.8" />
       <module name="exoplayer-testutils" target="1.8" />
-      <module name="Shuttle2.app" target="1.8" />
-      <module name="Shuttle2.buildSrc" target="1.8" />
-      <module name="Shuttle2.core" target="1.7" />
-      <module name="Shuttle2.exoplayer-extension-av1" target="1.8" />
-      <module name="Shuttle2.exoplayer-extension-cast" target="1.8" />
-      <module name="Shuttle2.exoplayer-extension-cronet" target="1.8" />
-      <module name="Shuttle2.exoplayer-extension-ffmpeg" target="1.8" />
-      <module name="Shuttle2.exoplayer-extension-flac" target="1.8" />
-      <module name="Shuttle2.exoplayer-extension-gvr" target="1.8" />
-      <module name="Shuttle2.exoplayer-extension-ima" target="1.8" />
-      <module name="Shuttle2.exoplayer-extension-jobdispatcher" target="1.8" />
-      <module name="Shuttle2.exoplayer-extension-leanback" target="1.8" />
-      <module name="Shuttle2.exoplayer-extension-mediasession" target="1.8" />
-      <module name="Shuttle2.exoplayer-extension-okhttp" target="1.8" />
-      <module name="Shuttle2.exoplayer-extension-opus" target="1.8" />
-      <module name="Shuttle2.exoplayer-extension-rtmp" target="1.8" />
-      <module name="Shuttle2.exoplayer-extension-vp9" target="1.8" />
-      <module name="Shuttle2.exoplayer-extension-workmanager" target="1.8" />
-      <module name="Shuttle2.exoplayer-library" target="1.7" />
-      <module name="Shuttle2.exoplayer-library-core" target="1.8" />
-      <module name="Shuttle2.exoplayer-library-dash" target="1.8" />
-      <module name="Shuttle2.exoplayer-library-hls" target="1.8" />
-      <module name="Shuttle2.exoplayer-library-smoothstreaming" target="1.8" />
-      <module name="Shuttle2.exoplayer-library-ui" target="1.8" />
-      <module name="Shuttle2.exoplayer-testutils" target="1.8" />
-      <module name="Shuttle2.imageloader" target="1.8" />
-      <module name="Shuttle2.mediaprovider.core" target="1.7" />
-      <module name="Shuttle2.mediaprovider.local" target="1.7" />
-      <module name="Shuttle2.playback" target="1.7" />
-      <module name="Shuttle2.recyclerview-adapter" target="1.7" />
       <module name="Shuttle2.saf" target="1.7" />
       <module name="Shuttle2.taglib.lib" target="1.7" />
     </bytecodeTargetLevel>

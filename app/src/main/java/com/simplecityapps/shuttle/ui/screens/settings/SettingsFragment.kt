@@ -83,7 +83,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
             if (!preferenceManager.crashReportingEnabled) {
                 AlertDialog.Builder(requireContext())
                     .setTitle("Requires Restart")
-                    .setMessage("In order to completely opt-out of Crashlytics, please restart Shuttle. Make sure to pause, swipe away the notification, and clear the app from recents.")
+                    .setMessage("In order to completely opt-out of crash reporting, please restart Shuttle. Make sure to pause, swipe away the notification, and clear the app from recents.")
                     .setNegativeButton("Close", null)
                     .show()
             }
