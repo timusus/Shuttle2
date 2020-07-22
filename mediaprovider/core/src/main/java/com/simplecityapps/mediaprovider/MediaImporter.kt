@@ -40,7 +40,8 @@ class MediaImporter(
 
     fun import(mediaProvider: MediaProvider) {
         if (isImporting && mediaProvider == this.mediaProvider) {
-            throw Exception("Import already in progress")
+            Timber.i("Import already in progress")
+            return
         }
 
         Timber.v("Scanning media...")
