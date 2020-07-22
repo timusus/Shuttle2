@@ -91,7 +91,7 @@ object SafDirectoryHelper {
      *
      * This task is resource intensive. Should be called from a background thread.
      */
-    suspend fun buildFolderNodeTree(
+    fun buildFolderNodeTree(
         contentResolver: ContentResolver,
         treeUri: Uri
     ): Flow<DocumentNodeTree> {
