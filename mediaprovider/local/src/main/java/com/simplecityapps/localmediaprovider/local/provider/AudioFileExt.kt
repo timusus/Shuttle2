@@ -22,6 +22,6 @@ fun AudioFile.toSong(mimeType: String): Song {
         lastCompleted = null,
         playCount = 0,
         playbackPosition = 0,
-        blacklisted = false
+        excluded = false
     )
 }

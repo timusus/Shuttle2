@@ -266,8 +266,8 @@ class HomeFragment :
                             presenter.playNext(albumArtist)
                             return@setOnMenuItemClickListener true
                         }
-                        R.id.blacklist -> {
-                            presenter.blacklist(albumArtist)
+                        R.id.exclude -> {
+                            presenter.exclude(albumArtist)
                             return@setOnMenuItemClickListener true
                         }
                     }
@@ -312,8 +312,8 @@ class HomeFragment :
                             presenter.playNext(album)
                             return@setOnMenuItemClickListener true
                         }
-                        R.id.blacklist -> {
-                            presenter.blacklist(album)
+                        R.id.exclude -> {
+                            presenter.exclude(album)
                             return@setOnMenuItemClickListener true
                         }
                     }

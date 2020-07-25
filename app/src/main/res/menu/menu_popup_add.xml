@@ -19,7 +19,7 @@
         android:title="Play Next" />
 
     <item
-        android:id="@+id/blacklist"
-        android:title="Blacklist" />
+        android:id="@+id/exclude"
+        android:title="Exclude" />
 
 </menu>

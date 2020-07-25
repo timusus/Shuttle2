@@ -13,7 +13,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 
-class BlacklistBinder(
+class ExcludeBinder(
     val song: Song,
     val imageLoader: ArtworkImageLoader,
     val listener: Listener? = null
@@ -25,11 +25,11 @@ class BlacklistBinder(
     }
 
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_blacklist, parent, false))
+        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_exclude, parent, false))
     }
 
     override fun viewType(): Int {
-        return ViewTypes.Blacklist
+        return ViewTypes.ExcludeList
     }
 
     override fun getSectionName(): String? {
@@ -38,7 +38,7 @@ class BlacklistBinder(
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is BlacklistBinder) return false
+        if (other !is ExcludeBinder) return false
 
         if (song != other.song) return false
 
@@ -50,7 +50,7 @@ class BlacklistBinder(
     }
 
 
-    class ViewHolder(itemView: View) : ViewBinder.ViewHolder<BlacklistBinder>(itemView) {
+    class ViewHolder(itemView: View) : ViewBinder.ViewHolder<ExcludeBinder>(itemView) {
 
         private val title: TextView = itemView.findViewById(R.id.title)
         private val subtitle: TextView = itemView.findViewById(R.id.subtitle)
@@ -63,7 +63,7 @@ class BlacklistBinder(
             }
         }
 
-        override fun bind(viewBinder: BlacklistBinder, isPartial: Boolean) {
+        override fun bind(viewBinder: ExcludeBinder, isPartial: Boolean) {
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.song.name

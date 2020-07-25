@@ -30,9 +30,9 @@
             android:title="Rescan"
             app:iconSpaceReserved="false" />
         <Preference
-            android:key="pref_blacklist"
-            android:summary="View/Edit blacklist"
-            android:title="Blacklist"
+            android:key="pref_excluded"
+            android:summary="View/Edit excluded"
+            android:title="Excluded"
             app:iconSpaceReserved="false" />
     </PreferenceCategory>
 

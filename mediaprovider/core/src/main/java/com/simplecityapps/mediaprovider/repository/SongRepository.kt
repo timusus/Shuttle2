@@ -11,18 +11,18 @@ interface SongRepository {
     fun getSongs(query: SongQuery): Flow<List<Song>>
     suspend fun incrementPlayCount(song: Song)
     suspend fun setPlaybackPosition(song: Song, playbackPosition: Int)
-    suspend fun setBlacklisted(songs: List<Song>, blacklisted: Boolean)
-    suspend fun clearBlacklist()
+    suspend fun setExcluded(songs: List<Song>, excluded: Boolean)
+    suspend fun clearExcludeList()
     suspend fun removeSong(song: Song)
 }
 
 sealed class SongQuery(
     val predicate: ((Song) -> Boolean),
     val sortOrder: SongSortOrder? = null,
-    val includeBlacklisted: Boolean = false
+    val includeExcluded: Boolean = false
 ) : Serializable {
 
-    class All(includeBlacklisted: Boolean = false) : SongQuery(predicate = { true }, includeBlacklisted = includeBlacklisted)
+    class All(includeExcluded: Boolean = false) : SongQuery(predicate = { true }, includeExcluded = includeExcluded)
 
     class AlbumArtist(val name: String) : SongQuery({ song -> song.albumArtist.equals(name, ignoreCase = true) })
 

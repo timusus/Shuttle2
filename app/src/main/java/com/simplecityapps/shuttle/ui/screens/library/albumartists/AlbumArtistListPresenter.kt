@@ -36,7 +36,7 @@ interface AlbumArtistListContract {
         fun addToQueue(albumArtist: AlbumArtist)
         fun playNext(albumArtist: AlbumArtist)
         fun rescanLibrary()
-        fun blacklist(albumArtist: AlbumArtist)
+        fun exclude(albumArtist: AlbumArtist)
         fun play(albumArtist: AlbumArtist)
     }
 }
@@ -102,10 +102,10 @@ class AlbumArtistListPresenter @Inject constructor(
         mediaImporter.reImport()
     }
 
-    override fun blacklist(albumArtist: AlbumArtist) {
+    override fun exclude(albumArtist: AlbumArtist) {
         launch {
             val songs = songRepository.getSongs(SongQuery.AlbumArtists(listOf(SongQuery.AlbumArtist(name = albumArtist.name)))).firstOrNull().orEmpty()
-            songRepository.setBlacklisted(songs, true)
+            songRepository.setExcluded(songs, true)
         }
     }
 

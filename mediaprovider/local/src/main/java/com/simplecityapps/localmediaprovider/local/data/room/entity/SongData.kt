@@ -29,7 +29,7 @@ data class SongData(
     @ColumnInfo(name = "playCount") var playCount: Int = 0,
     @ColumnInfo(name = "lastPlayed") var lastPlayed: Date? = null,
     @ColumnInfo(name = "lastCompleted") var lastCompleted: Date? = null,
-    @ColumnInfo(name = "blacklisted") var blacklisted: Boolean = false,
+    @ColumnInfo(name = "blacklisted") var excluded: Boolean = false,
     @ColumnInfo(name = "mediaStoreId") var mediaStoreId: Long? = null
 ) {
     @PrimaryKey(autoGenerate = true)
@@ -53,7 +53,7 @@ fun Song.toSongData(): SongData {
         playCount = playCount,
         lastPlayed = lastPlayed,
         lastCompleted = lastCompleted,
-        blacklisted = false,
+        excluded = false,
         mediaStoreId = mediaStoreId
     ).apply {
         id = this@toSongData.id

@@ -98,27 +98,27 @@ class SettingsFragment : PreferenceFragmentCompat(),
             true
         }
 
-        preferenceScreen.findPreference<Preference>("pref_blacklist")?.setOnPreferenceClickListener {
+        preferenceScreen.findPreference<Preference>("pref_exclude")?.setOnPreferenceClickListener {
             val adapter = SectionedAdapter(lifecycle.coroutineScope)
-            val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_blacklist, null)
+            val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_exclude_list, null)
             val recyclerView = dialogView.findViewById<RecyclerView>(R.id.recyclerView)
             val emptyLabel = dialogView.findViewById<TextView>(R.id.emptyLabel)
             recyclerView.adapter = adapter
 
-            val blacklistListener = object : BlacklistBinder.Listener {
+            val excludeListener = object : ExcludeBinder.Listener {
                 override fun onRemoveClicked(song: Song) {
                     coroutineScope.launch {
-                        songRepository.setBlacklisted(listOf(song), false)
+                        songRepository.setExcluded(listOf(song), false)
                     }
                 }
             }
 
             coroutineScope.launch {
                 songRepository
-                    .getSongs(SongQuery.All(includeBlacklisted = true))
-                    .map { songList -> songList.filter { song -> song.blacklisted } }
+                    .getSongs(SongQuery.All(includeExcluded = true))
+                    .map { songList -> songList.filter { song -> song.excluded } }
                     .collect { songs ->
-                        adapter.update(songs.map { BlacklistBinder(it, imageLoader, blacklistListener) })
+                        adapter.update(songs.map { ExcludeBinder(it, imageLoader, excludeListener) })
                         emptyLabel.isVisible = songs.isEmpty()
                     }
             }
@@ -128,7 +128,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
                 .setPositiveButton("Close", null)
                 .setNegativeButton("Clear") { _, _ ->
                     coroutineScope.launch {
-                        songRepository.clearBlacklist()
+                        songRepository.clearExcludeList()
                     }
                 }
                 .show()

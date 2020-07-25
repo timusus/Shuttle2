@@ -208,8 +208,8 @@ class QueueFragment :
                             presenter.playNext(queueItem)
                             return@setOnMenuItemClickListener true
                         }
-                        R.id.blacklist -> {
-                            presenter.blacklist(queueItem)
+                        R.id.exclude -> {
+                            presenter.exclude(queueItem)
                             return@setOnMenuItemClickListener true
                         }
                     }

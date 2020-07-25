@@ -67,10 +67,10 @@ class QueuePresenter @Inject constructor(
         }
     }
 
-    override fun blacklist(queueItem: QueueItem) {
+    override fun exclude(queueItem: QueueItem) {
         removeFromQueue(queueItem)
         launch {
-            songRepository.setBlacklisted(listOf(queueItem.song), true)
+            songRepository.setExcluded(listOf(queueItem.song), true)
         }
     }
 

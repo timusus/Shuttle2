@@ -269,8 +269,8 @@ class AlbumDetailFragment :
                             SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
                             return@setOnMenuItemClickListener true
                         }
-                        R.id.blacklist -> {
-                            presenter.blacklist(song)
+                        R.id.exclude -> {
+                            presenter.exclude(song)
                             return@setOnMenuItemClickListener true
                         }
                         R.id.delete -> {

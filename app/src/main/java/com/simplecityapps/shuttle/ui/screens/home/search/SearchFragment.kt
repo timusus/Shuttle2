@@ -230,8 +230,8 @@ class SearchFragment : Fragment(),
                             SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
                             return@setOnMenuItemClickListener true
                         }
-                        R.id.blacklist -> {
-                            presenter.blacklist(song)
+                        R.id.exclude -> {
+                            presenter.exclude(song)
                             return@setOnMenuItemClickListener true
                         }
                         R.id.delete -> {
@@ -288,8 +288,8 @@ class SearchFragment : Fragment(),
                             presenter.playNext(albumArtist)
                             return@setOnMenuItemClickListener true
                         }
-                        R.id.blacklist -> {
-                            presenter.blacklist(albumArtist)
+                        R.id.exclude -> {
+                            presenter.exclude(albumArtist)
                             return@setOnMenuItemClickListener true
                         }
                     }
@@ -335,8 +335,8 @@ class SearchFragment : Fragment(),
                             presenter.playNext(album)
                             return@setOnMenuItemClickListener true
                         }
-                        R.id.blacklist -> {
-                            presenter.blacklist(album)
+                        R.id.exclude -> {
+                            presenter.exclude(album)
                             return@setOnMenuItemClickListener true
                         }
                     }

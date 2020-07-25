@@ -15,7 +15,7 @@ object ViewTypes {
     const val Settings = 11
     const val OnboardingDirectory = 12
     const val SearchHeader = 13
-    const val Blacklist = 14
+    const val ExcludeList = 14
     const val HorizontalAlbumSection = 15
     const val HorizontalAlbumArtistSection = 16
     const val HorizontalSongSection = 17

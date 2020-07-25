@@ -39,8 +39,8 @@ class AlbumArtistDetailContract {
         fun playNext(album: AlbumArtist)
         fun playNext(album: Album)
         fun playNext(song: Song)
-        fun blacklist(song: Song)
-        fun blacklist(album: Album)
+        fun exclude(song: Song)
+        fun exclude(album: Album)
         fun delete(song: Song)
     }
 }
@@ -157,16 +157,16 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
         }
     }
 
-    override fun blacklist(song: Song) {
+    override fun exclude(song: Song) {
         launch {
-            songRepository.setBlacklisted(listOf(song), true)
+            songRepository.setExcluded(listOf(song), true)
         }
     }
 
-    override fun blacklist(album: Album) {
+    override fun exclude(album: Album) {
         launch {
             val songs = songRepository.getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = album.name, albumArtistName = album.albumArtist)))).firstOrNull().orEmpty()
-            songRepository.setBlacklisted(songs, true)
+            songRepository.setExcluded(songs, true)
         }
     }
 

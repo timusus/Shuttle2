@@ -12,7 +12,7 @@ interface QueueContract {
         fun scrollToCurrent()
         fun moveQueueItem(from: Int, to: Int)
         fun removeFromQueue(queueItem: QueueItem)
-        fun blacklist(queueItem: QueueItem)
+        fun exclude(queueItem: QueueItem)
     }
 
     interface View {

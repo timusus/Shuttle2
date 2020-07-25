@@ -36,7 +36,7 @@ class AlbumListContract {
         fun addToQueue(album: Album)
         fun playNext(album: Album)
         fun rescanLibrary()
-        fun blacklist(album: Album)
+        fun exclude(album: Album)
         fun play(album: Album)
     }
 }
@@ -109,13 +109,13 @@ class AlbumListPresenter @Inject constructor(
         mediaImporter.reImport()
     }
 
-    override fun blacklist(album: Album) {
+    override fun exclude(album: Album) {
         launch {
             val songs = songRepository
                 .getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = album.name, albumArtistName = album.albumArtist))))
                 .firstOrNull()
                 .orEmpty()
-            songRepository.setBlacklisted(songs, true)
+            songRepository.setExcluded(songs, true)
         }
     }
 

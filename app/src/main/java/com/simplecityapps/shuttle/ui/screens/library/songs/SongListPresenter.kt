@@ -43,7 +43,7 @@ interface SongListContract {
         fun addToQueue(song: Song)
         fun playNext(song: Song)
         fun rescanLibrary()
-        fun blacklist(song: Song)
+        fun exclude(song: Song)
         fun delete(song: Song)
     }
 }
@@ -127,9 +127,9 @@ class SongListPresenter @Inject constructor(
         mediaImporter.reImport()
     }
 
-    override fun blacklist(song: Song) {
+    override fun exclude(song: Song) {
         launch {
-            songRepository.setBlacklisted(listOf(song), true)
+            songRepository.setExcluded(listOf(song), true)
         }
     }
 

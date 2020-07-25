@@ -42,8 +42,8 @@ class LocalSongRepository(
             .map { songs ->
                 var result = songs
 
-                if (!query.includeBlacklisted) {
-                    result = songs.filterNot { it.blacklisted }
+                if (!query.includeExcluded) {
+                    result = songs.filterNot { it.excluded }
                 }
 
                 result = result.filter(query.predicate)
@@ -66,14 +66,14 @@ class LocalSongRepository(
         songDataDao.updatePlaybackPosition(song.id, playbackPosition)
     }
 
-    override suspend fun setBlacklisted(songs: List<Song>, blacklisted: Boolean) {
-        val count = songDataDao.setBlacklisted(songs.map { it.id }, blacklisted)
-        Timber.v("$count song(s) blacklisted")
+    override suspend fun setExcluded(songs: List<Song>, excluded: Boolean) {
+        val count = songDataDao.setExcluded(songs.map { it.id }, excluded)
+        Timber.v("$count song(s) excluded")
     }
 
-    override suspend fun clearBlacklist() {
-        Timber.v("Clearing blacklist")
-        songDataDao.clearBlacklist()
+    override suspend fun clearExcludeList() {
+        Timber.v("Clearing excluded")
+        songDataDao.clearExcludeList()
     }
 
     override suspend fun removeSong(song: Song) {

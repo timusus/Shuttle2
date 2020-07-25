@@ -27,10 +27,10 @@ abstract class SongDataDao {
     abstract suspend fun updatePlaybackPosition(id: Long, playbackPosition: Int, lastPlayed: Date = Date())
 
     @Query("UPDATE songs SET blacklisted = :blacklisted WHERE id IN (:ids)")
-    abstract suspend fun setBlacklisted(ids: List<Long>, blacklisted: Boolean): Int
+    abstract suspend fun setExcluded(ids: List<Long>, blacklisted: Boolean): Int
 
     @Query("UPDATE songs SET blacklisted = 0")
-    abstract suspend fun clearBlacklist()
+    abstract suspend fun clearExcludeList()
 
     @Query("DELETE from songs")
     abstract suspend fun deleteAll()

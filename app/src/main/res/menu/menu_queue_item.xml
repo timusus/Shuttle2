@@ -8,7 +8,7 @@
         android:id="@+id/removeFromQueue"
         android:title="Remove from Queue" />
     <item
-        android:id="@+id/blacklist"
-        android:title="Blacklist" />
+        android:id="@+id/exclude"
+        android:title="Exclude" />
 
 </menu>
