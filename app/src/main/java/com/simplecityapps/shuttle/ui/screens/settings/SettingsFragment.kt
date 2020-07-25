@@ -116,7 +116,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
             coroutineScope.launch {
                 songRepository
                     .getSongs(SongQuery.All(includeExcluded = true))
-                    .map { songList -> songList.filter { song -> song.excluded } }
+                    .map { songList -> songList.filter { song -> song.blacklisted } }
                     .collect { songs ->
                         adapter.update(songs.map { ExcludeBinder(it, imageLoader, excludeListener) })
                         emptyLabel.isVisible = songs.isEmpty()

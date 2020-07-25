@@ -22,7 +22,7 @@ class Song(
     val lastCompleted: Date?,
     val playCount: Int,
     var playbackPosition: Int,
-    val excluded: Boolean,
+    val blacklisted: Boolean,
     var mediaStoreId: Long? = null
 ) : Serializable {
 

@@ -79,7 +79,7 @@ class MediaStoreSongProvider(
                         lastCompleted = null,
                         playCount = 0,
                         playbackPosition = 0,
-                        excluded = false,
+                        blacklisted = false,
                         mediaStoreId = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID))
                     )
                     emit(Pair(song, progress / size.toFloat()))

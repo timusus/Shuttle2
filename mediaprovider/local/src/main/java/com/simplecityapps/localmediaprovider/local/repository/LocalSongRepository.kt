@@ -43,7 +43,7 @@ class LocalSongRepository(
                 var result = songs
 
                 if (!query.includeExcluded) {
-                    result = songs.filterNot { it.excluded }
+                    result = songs.filterNot { it.blacklisted }
                 }
 
                 result = result.filter(query.predicate)
