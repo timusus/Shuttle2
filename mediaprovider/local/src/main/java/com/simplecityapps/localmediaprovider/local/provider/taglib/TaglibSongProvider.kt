@@ -83,6 +83,8 @@ class FileScanner(private val tagLib: KTagLib) {
                         Timber.e(e, "Failed to retrieve audio file for uri: $uri")
                     } catch (e: IllegalStateException) {
                         Timber.e(e, "Failed to retrieve audio file for uri: $uri")
+                    } catch (e: SecurityException) {
+                        Timber.e(e, "Failed to retrieve audio file for uri: $uri")
                     }
                 } else {
                     Timber.e("Document file doesn't exist for uri: $uri")

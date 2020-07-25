@@ -53,8 +53,9 @@ class SongBinder(
     override fun areContentsTheSame(other: Any): Boolean {
         return other is SongBinder
                 && song.name == other.song.name
-                && song.album == other.song.album
                 && song.albumArtist == other.song.albumArtist
+                && song.artist == other.song.artist
+                && song.album == other.song.album
                 && song.year == other.song.year
                 && song.track == other.song.track
                 && song.disc == other.song.disc

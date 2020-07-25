@@ -19,5 +19,7 @@
     <item
         android:id="@+id/playNext"
         android:title="Play Next" />
-
+    <item
+        android:id="@+id/editTags"
+        android:title="Edit Tags" />
 </menu>

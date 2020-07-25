@@ -24,6 +24,10 @@
         android:title="Exclude" />
 
     <item
+        android:id="@+id/editTags"
+        android:title="Edit Tags" />
+
+    <item
         android:id="@+id/delete"
         android:title="Delete" />
 

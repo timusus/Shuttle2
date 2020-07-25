@@ -14,6 +14,7 @@ interface SongRepository {
     suspend fun setExcluded(songs: List<Song>, excluded: Boolean)
     suspend fun clearExcludeList()
     suspend fun removeSong(song: Song)
+    suspend fun updateSong(song: Song): Int
 }
 
 sealed class SongQuery(

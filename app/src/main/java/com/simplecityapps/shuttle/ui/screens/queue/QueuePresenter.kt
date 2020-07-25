@@ -74,6 +74,10 @@ class QueuePresenter @Inject constructor(
         }
     }
 
+    override fun editTags(queueItem: QueueItem) {
+        view?.showTagEditor(listOf(queueItem.song))
+    }
+
     // QueueBinder.Listener Implementation
 
     override fun onQueueItemClicked(queueItem: QueueItem) {

@@ -34,6 +34,7 @@ interface AlbumArtistListContract {
         fun setLoadingState(state: LoadingState)
         fun setLoadingProgress(progress: Float)
         fun showLoadError(error: Error)
+        fun showTagEditor(songs: List<Song>)
         fun setViewMode(viewMode: ViewMode)
     }
 
@@ -43,6 +44,7 @@ interface AlbumArtistListContract {
         fun playNext(albumArtist: AlbumArtist)
         fun rescanLibrary()
         fun exclude(albumArtist: AlbumArtist)
+        fun editTags(albumArtist: AlbumArtist)
         fun play(albumArtist: AlbumArtist)
         fun toggleViewMode()
     }
@@ -145,6 +147,13 @@ class AlbumArtistListPresenter @Inject constructor(
                 .firstOrNull()
                 .orEmpty()
             songRepository.setExcluded(songs, true)
+        }
+    }
+
+    override fun editTags(albumArtist: AlbumArtist) {
+        launch {
+            val songs = songRepository.getSongs(SongQuery.AlbumArtists(listOf(SongQuery.AlbumArtist(name = albumArtist.name)))).firstOrNull().orEmpty()
+            view?.showTagEditor(songs)
         }
     }
 

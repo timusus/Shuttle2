@@ -53,7 +53,7 @@ class MusicDirectoriesPresenter @Inject constructor(
 
     override fun loadData(contentResolver: ContentResolver) {
         contentResolver.persistedUriPermissions
-            .filter { uriPermission -> uriPermission.isReadPermission }
+            .filter { uriPermission -> uriPermission.isWritePermission }
             .forEach { uriPermission ->
                 parseUri(contentResolver, uriPermission.uri)
             }
@@ -62,7 +62,7 @@ class MusicDirectoriesPresenter @Inject constructor(
 
     override fun removeItem(directory: MusicDirectoriesContract.Directory) {
         try {
-            context.contentResolver?.releasePersistableUriPermission(directory.tree.rootUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            context.contentResolver?.releasePersistableUriPermission(directory.tree.rootUri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
         } catch (e: SecurityException) {
             Timber.e("Failed to release persistable uri permission: ${directory.tree.rootUri}")
         }
@@ -72,7 +72,7 @@ class MusicDirectoriesPresenter @Inject constructor(
 
     override fun handleSafResult(contentResolver: ContentResolver, intent: Intent) {
         intent.data?.let { uri ->
-            contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
             parseUri(contentResolver, uri)
         }
     }

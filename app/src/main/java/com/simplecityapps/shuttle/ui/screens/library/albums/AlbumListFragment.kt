@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.coroutineScope
@@ -20,10 +21,12 @@ import com.bumptech.glide.util.ViewPreloadSizeProvider
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.mediaprovider.model.Album
+import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.R.id.viewMode
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.GridSpacingItemDecoration
 import com.simplecityapps.shuttle.ui.common.recyclerview.MyPreloadModelProvider
@@ -225,6 +228,10 @@ class AlbumListFragment :
         }
     }
 
+    override fun showTagEditor(songs: List<Song>) {
+        TagEditorAlertDialog.newInstance(songs).show(childFragmentManager)
+    }
+
 
     // AlbumBinder.Listener Implementation
 
@@ -239,7 +246,7 @@ class AlbumListFragment :
 
     override fun onOverflowClicked(view: View, album: Album) {
         val popupMenu = PopupMenu(requireContext(), view)
-        popupMenu.inflate(R.menu.menu_popup_add)
+        popupMenu.inflate(R.menu.menu_popup)
 
         playlistMenuView.createPlaylistMenu(popupMenu.menu)
 
@@ -261,7 +268,18 @@ class AlbumListFragment :
                         return@setOnMenuItemClickListener true
                     }
                     R.id.exclude -> {
-                        presenter.exclude(album)
+                        AlertDialog.Builder(requireContext())
+                            .setTitle("Exclude Album")
+                            .setMessage("\"${album.name}\" will be hidden from your library.\n\nYou can view excluded songs in settings.")
+                            .setPositiveButton("Exclude") { _, _ ->
+                                presenter.exclude(album)
+                            }
+                            .setNegativeButton("Cancel", null)
+                            .show()
+                        return@setOnMenuItemClickListener true
+                    }
+                    R.id.editTags -> {
+                        presenter.editTags(album)
                         return@setOnMenuItemClickListener true
                     }
                 }

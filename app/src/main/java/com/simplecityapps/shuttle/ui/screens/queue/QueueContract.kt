@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.queue
 
+import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 
@@ -13,6 +14,7 @@ interface QueueContract {
         fun moveQueueItem(from: Int, to: Int)
         fun removeFromQueue(queueItem: QueueItem)
         fun exclude(queueItem: QueueItem)
+        fun editTags(queueItem: QueueItem)
     }
 
     interface View {
@@ -22,5 +24,6 @@ interface QueueContract {
         fun setQueuePosition(position: Int, total: Int)
         fun showLoadError(error: Error)
         fun scrollToPosition(position: Int, fromUser: Boolean)
+        fun showTagEditor(songs: List<Song>)
     }
 }

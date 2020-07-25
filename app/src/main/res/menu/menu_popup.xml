@@ -22,4 +22,8 @@
         android:id="@+id/exclude"
         android:title="Exclude" />
 
+    <item
+        android:id="@+id/editTags"
+        android:title="Edit Tags" />
+
 </menu>

@@ -35,6 +35,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.autoClearedNullable
+import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.DetailImageAnimationHelper
@@ -152,6 +153,10 @@ class AlbumArtistDetailFragment :
                         presenter.playNext(albumArtist)
                         true
                     }
+                    R.id.editTags -> {
+                        presenter.editTags(albumArtist)
+                        return@setOnMenuItemClickListener true
+                    }
                     else -> {
                         playlistMenuView.handleMenuItem(menuItem, PlaylistData.AlbumArtists(albumArtist))
                     }
@@ -197,8 +202,6 @@ class AlbumArtistDetailFragment :
     }
 
     override fun onDestroyView() {
-
-
         presenter.unbindView()
         playlistMenuPresenter.unbindView()
 
@@ -244,6 +247,10 @@ class AlbumArtistDetailFragment :
 
     override fun showDeleteError(error: Error) {
         Toast.makeText(requireContext(), error.userDescription(), Toast.LENGTH_LONG).show()
+    }
+
+    override fun showTagEditor(songs: List<Song>) {
+        TagEditorAlertDialog.newInstance(songs).show(childFragmentManager)
     }
 
 
@@ -296,7 +303,18 @@ class AlbumArtistDetailFragment :
                         return@setOnMenuItemClickListener true
                     }
                     R.id.exclude -> {
-                        presenter.exclude(song)
+                        AlertDialog.Builder(requireContext())
+                            .setTitle("Exclude Song")
+                            .setMessage("\"${song.name}\" will be hidden from your library.\n\nYou can view excluded songs in settings.")
+                            .setPositiveButton("Exclude") { _, _ ->
+                                presenter.exclude(song)
+                            }
+                            .setNegativeButton("Cancel", null)
+                            .show()
+                        return@setOnMenuItemClickListener true
+                    }
+                    R.id.editTags -> {
+                        presenter.editTags(song)
                         return@setOnMenuItemClickListener true
                     }
                     R.id.delete -> {
@@ -319,7 +337,7 @@ class AlbumArtistDetailFragment :
 
     override fun onOverflowClicked(view: View, album: Album) {
         val popupMenu = PopupMenu(requireContext(), view)
-        popupMenu.inflate(R.menu.menu_popup_add)
+        popupMenu.inflate(R.menu.menu_popup)
 
         playlistMenuView.createPlaylistMenu(popupMenu.menu)
 
@@ -342,6 +360,10 @@ class AlbumArtistDetailFragment :
                     }
                     R.id.exclude -> {
                         presenter.exclude(album)
+                        return@setOnMenuItemClickListener true
+                    }
+                    R.id.editTags -> {
+                        presenter.editTags(album)
                         return@setOnMenuItemClickListener true
                     }
                 }

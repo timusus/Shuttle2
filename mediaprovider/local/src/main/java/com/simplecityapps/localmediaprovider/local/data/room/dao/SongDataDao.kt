@@ -93,4 +93,7 @@ abstract class SongDataDao {
 
     @Query("DELETE from songs WHERE id = :id")
     abstract suspend fun delete(id: Long)
+
+    @Update
+    abstract suspend fun update(songData: SongData): Int
 }

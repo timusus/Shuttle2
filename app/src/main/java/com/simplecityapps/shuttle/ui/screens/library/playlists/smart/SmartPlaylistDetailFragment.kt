@@ -200,8 +200,15 @@ class SmartPlaylistDetailFragment :
                             SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
                             return@setOnMenuItemClickListener true
                         }
-                        R.id.exclude ->  {
-                            presenter.exclude(song)
+                        R.id.exclude -> {
+                            AlertDialog.Builder(requireContext())
+                                .setTitle("Exclude Song")
+                                .setMessage("\"${song.name}\" will be hidden from your library.\n\nYou can view excluded songs in settings.")
+                                .setPositiveButton("Exclude") { _, _ ->
+                                    presenter.exclude(song)
+                                }
+                                .setNegativeButton("Cancel", null)
+                                .show()
                             return@setOnMenuItemClickListener true
                         }
                         R.id.delete -> {

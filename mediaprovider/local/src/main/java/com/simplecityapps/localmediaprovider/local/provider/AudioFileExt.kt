@@ -8,6 +8,7 @@ fun AudioFile.toSong(mimeType: String): Song {
     return Song(
         id = 0,
         name = title ?: "Unknown",
+        artist = artist ?: "Unknown",
         albumArtist = albumArtist ?: artist ?: "Unknown",
         album = album ?: "Unknown",
         track = track ?: 1,

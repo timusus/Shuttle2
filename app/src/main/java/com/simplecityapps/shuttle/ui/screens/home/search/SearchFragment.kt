@@ -233,7 +233,14 @@ class SearchFragment : Fragment(),
                             return@setOnMenuItemClickListener true
                         }
                         R.id.exclude -> {
-                            presenter.exclude(song)
+                            AlertDialog.Builder(requireContext())
+                                .setTitle("Exclude Song")
+                                .setMessage("\"${song.name}\" will be hidden from your library.\n\nYou can view excluded songs in settings.")
+                                .setPositiveButton("Exclude") { _, _ ->
+                                    presenter.exclude(song)
+                                }
+                                .setNegativeButton("Cancel", null)
+                                .show()
                             return@setOnMenuItemClickListener true
                         }
                         R.id.delete -> {
@@ -269,7 +276,7 @@ class SearchFragment : Fragment(),
 
         override fun onOverflowClicked(view: View, albumArtist: AlbumArtist) {
             val popupMenu = PopupMenu(requireContext(), view)
-            popupMenu.inflate(R.menu.menu_popup_add)
+            popupMenu.inflate(R.menu.menu_popup)
 
             playlistMenuView.createPlaylistMenu(popupMenu.menu)
 
@@ -316,7 +323,7 @@ class SearchFragment : Fragment(),
 
         override fun onOverflowClicked(view: View, album: Album) {
             val popupMenu = PopupMenu(requireContext(), view)
-            popupMenu.inflate(R.menu.menu_popup_add)
+            popupMenu.inflate(R.menu.menu_popup)
 
             playlistMenuView.createPlaylistMenu(popupMenu.menu)
 

@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.coroutineScope
@@ -20,9 +21,12 @@ import com.bumptech.glide.util.ViewPreloadSizeProvider
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.mediaprovider.model.AlbumArtist
+import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.autoClearedNullable
+import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.GridSpacingItemDecoration
 import com.simplecityapps.shuttle.ui.common.recyclerview.MyPreloadModelProvider
@@ -50,7 +54,7 @@ class AlbumArtistListFragment :
 
     private var imageLoader: GlideImageLoader by autoCleared()
 
-    private var recyclerView: RecyclerView by autoCleared()
+    private var recyclerView: RecyclerView? by autoClearedNullable()
     private var circularLoadingView: CircularLoadingView by autoCleared()
     private var horizontalLoadingView: HorizontalLoadingView by autoCleared()
 
@@ -86,17 +90,17 @@ class AlbumArtistListFragment :
         imageLoader = GlideImageLoader(this)
 
         recyclerView = view.findViewById(R.id.recyclerView)
-        recyclerView.adapter = adapter
-        recyclerView.setRecyclerListener(RecyclerListener())
-        recyclerView.clearAdapterOnDetach()
+        recyclerView?.adapter = adapter
+        recyclerView?.setRecyclerListener(RecyclerListener())
+        recyclerView?.clearAdapterOnDetach()
         val preloader: RecyclerViewPreloader<AlbumArtist> = RecyclerViewPreloader(
             imageLoader.requestManager,
             preloadModelProvider,
             viewPreloadSizeProvider,
             12
         )
-        recyclerView.addOnScrollListener(preloader)
-        recyclerView.setItemViewCacheSize(0)
+        recyclerView?.addOnScrollListener(preloader)
+        recyclerView?.setItemViewCacheSize(0)
 
         circularLoadingView = view.findViewById(R.id.circularLoadingView)
         horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
@@ -110,7 +114,7 @@ class AlbumArtistListFragment :
     override fun onResume() {
         super.onResume()
 
-        recyclerViewState?.let { recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState) }
+        recyclerViewState?.let { recyclerView?.layoutManager?.onRestoreInstanceState(recyclerViewState) }
 
         presenter.loadAlbumArtists()
 
@@ -143,7 +147,7 @@ class AlbumArtistListFragment :
             toolbar.setOnMenuItemClickListener(null)
         }
 
-        recyclerViewState = recyclerView.layoutManager?.onSaveInstanceState()
+        recyclerViewState = recyclerView?.layoutManager?.onSaveInstanceState()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -172,7 +176,7 @@ class AlbumArtistListFragment :
             }
         }, completion = {
             recyclerViewState?.let {
-                recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
+                recyclerView?.layoutManager?.onRestoreInstanceState(recyclerViewState)
                 recyclerViewState = null
             }
         })
@@ -207,19 +211,23 @@ class AlbumArtistListFragment :
         Toast.makeText(context, error.userDescription(), Toast.LENGTH_LONG).show()
     }
 
+    override fun showTagEditor(songs: List<Song>) {
+        TagEditorAlertDialog.newInstance(songs).show(childFragmentManager)
+    }
+
     override fun setViewMode(viewMode: ViewMode) {
         when (viewMode) {
             ViewMode.List -> {
-                (recyclerView.layoutManager as GridLayoutManager).spanCount = 1
-                if (recyclerView.itemDecorationCount != 0) {
-                    recyclerView.removeItemDecorationAt(0)
+                (recyclerView?.layoutManager as GridLayoutManager).spanCount = 1
+                if (recyclerView?.itemDecorationCount != 0) {
+                    recyclerView?.removeItemDecorationAt(0)
                 }
                 findToolbarHost()?.getToolbar()?.menu?.findItem(R.id.viewMode)?.setIcon(R.drawable.ic_grid_outline_24)
             }
             ViewMode.Grid -> {
-                (recyclerView.layoutManager as GridLayoutManager).spanCount = 3
-                if (recyclerView.itemDecorationCount == 0) {
-                    recyclerView.addItemDecoration(GridSpacingItemDecoration(8, true))
+                (recyclerView?.layoutManager as GridLayoutManager).spanCount = 3
+                if (recyclerView?.itemDecorationCount == 0) {
+                    recyclerView?.addItemDecoration(GridSpacingItemDecoration(8, true))
                 }
                 findToolbarHost()?.getToolbar()?.menu?.findItem(R.id.viewMode)?.setIcon(R.drawable.ic_list_outline_24)
             }
@@ -240,7 +248,7 @@ class AlbumArtistListFragment :
 
     override fun onOverflowClicked(view: View, albumArtist: AlbumArtist) {
         val popupMenu = PopupMenu(requireContext(), view)
-        popupMenu.inflate(R.menu.menu_popup_add)
+        popupMenu.inflate(R.menu.menu_popup)
 
         playlistMenuView.createPlaylistMenu(popupMenu.menu)
 
@@ -262,7 +270,18 @@ class AlbumArtistListFragment :
                         return@setOnMenuItemClickListener true
                     }
                     R.id.exclude -> {
-                        presenter.exclude(albumArtist)
+                        AlertDialog.Builder(requireContext())
+                            .setTitle("Exclude Artist")
+                            .setMessage("\"${albumArtist.name}\" will be hidden from your library.\n\nYou can view excluded songs in settings.")
+                            .setPositiveButton("Exclude") { _, _ ->
+                                presenter.exclude(albumArtist)
+                            }
+                            .setNegativeButton("Cancel", null)
+                            .show()
+                        return@setOnMenuItemClickListener true
+                    }
+                    R.id.editTags -> {
+                        presenter.editTags(albumArtist)
                         return@setOnMenuItemClickListener true
                     }
                 }

@@ -5,10 +5,11 @@ import java.io.Serializable
 import java.util.*
 
 @Keep
-class Song(
+data class Song(
     val id: Long,
     val name: String,
     val albumArtist: String,
+    val artist: String,
     val album: String,
     val track: Int,
     val disc: Int,
@@ -49,20 +50,27 @@ class Song(
     }
 
     override fun toString(): String {
-        return "id=$id," +
-                "\nname='$name'," +
-                "\nalbumArtist=$albumArtist," +
-                "\nalbumArtistName='$albumArtist'," +
-                "\nalbum=$album," +
-                "\nalbumName='$album'," +
-                "\ntrack=$track," +
-                "\ndisc=$disc," +
-                "\nduration=$duration," +
-                "\nyear=$year," +
-                "\npath='$path'," +
-                "\nsize=$size," +
-                "\nlastModified=$lastModified"
+        return "Song(" +
+                "name='$name'," +
+                " albumArtist='$albumArtist'," +
+                " artist='$artist'," +
+                " album='$album'," +
+                " track=$track," +
+                " disc=$disc," +
+                " duration=$duration," +
+                " year=$year," +
+                " path='$path'," +
+                " size=$size," +
+                " mimeType='$mimeType'," +
+                " lastModified=$lastModified," +
+                " lastPlayed=$lastPlayed," +
+                " lastCompleted=$lastCompleted," +
+                " playCount=$playCount," +
+                " playbackPosition=$playbackPosition," +
+                " blacklisted=$blacklisted" +
+                ")"
     }
+
 
     enum class Type {
         Audio, Audiobook, Podcast

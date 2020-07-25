@@ -80,4 +80,8 @@ class LocalSongRepository(
         Timber.v("Deleting song")
         songDataDao.delete(song.id)
     }
+
+    override suspend fun updateSong(song: Song): Int {
+        return songDataDao.update(song.toSongData())
+    }
 }

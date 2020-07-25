@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -23,11 +24,13 @@ import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.AlbumArtist
+import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.PlaylistRepository
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.HomeButton
@@ -230,6 +233,10 @@ class HomeFragment :
         Toast.makeText(requireContext(), error.userDescription(), Toast.LENGTH_LONG).show()
     }
 
+    override fun showTagEditor(songs: List<Song>) {
+        TagEditorAlertDialog.newInstance(songs).show(childFragmentManager)
+    }
+
     override fun onAddedToQueue(albumArtist: AlbumArtist) {
         Toast.makeText(context, "${albumArtist.name} added to queue", Toast.LENGTH_SHORT).show()
     }
@@ -254,7 +261,7 @@ class HomeFragment :
 
         override fun onOverflowClicked(view: View, albumArtist: AlbumArtist) {
             val popupMenu = PopupMenu(requireContext(), view)
-            popupMenu.inflate(R.menu.menu_popup_add)
+            popupMenu.inflate(R.menu.menu_popup)
 
             playlistMenuView.createPlaylistMenu(popupMenu.menu)
 
@@ -276,7 +283,18 @@ class HomeFragment :
                             return@setOnMenuItemClickListener true
                         }
                         R.id.exclude -> {
-                            presenter.exclude(albumArtist)
+                            AlertDialog.Builder(requireContext())
+                                .setTitle("Exclude Artist")
+                                .setMessage("\"${albumArtist.name}\" will be hidden from your library.\n\nYou can view excluded songs in settings.")
+                                .setPositiveButton("Exclude") { _, _ ->
+                                    presenter.exclude(albumArtist)
+                                }
+                                .setNegativeButton("Cancel", null)
+                                .show()
+                            return@setOnMenuItemClickListener true
+                        }
+                        R.id.editTags -> {
+                            presenter.editTags(albumArtist)
                             return@setOnMenuItemClickListener true
                         }
                     }
@@ -301,7 +319,7 @@ class HomeFragment :
 
         override fun onOverflowClicked(view: View, album: Album) {
             val popupMenu = PopupMenu(requireContext(), view)
-            popupMenu.inflate(R.menu.menu_popup_add)
+            popupMenu.inflate(R.menu.menu_popup)
 
             playlistMenuView.createPlaylistMenu(popupMenu.menu)
 

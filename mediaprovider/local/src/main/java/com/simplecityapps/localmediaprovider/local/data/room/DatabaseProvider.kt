@@ -18,7 +18,7 @@ class DatabaseProvider constructor(
 
     val database: MediaDatabase by lazy {
         Room.databaseBuilder(context, MediaDatabase::class.java, "song.db")
-            .addMigrations(MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26, MIGRATION_26_27, MIGRATION_27_28, MIGRATION_28_29)
+            .addMigrations(MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26, MIGRATION_26_27, MIGRATION_27_28, MIGRATION_28_29, MIGRATION_29_30)
             .addCallback(callback)
             .build()
     }
@@ -80,6 +80,13 @@ class DatabaseProvider constructor(
             database.execSQL("DROP TABLE albums")
             database.execSQL("CREATE VIEW `AlbumData` AS SELECT songs.album as name, songs.albumArtist as albumArtist, count(distinct songs.id) as songCount, sum(distinct songs.duration) as duration, min(distinct songs.year) as year, min(distinct songs.playCount) as playCount FROM songs WHERE songs.blacklisted == 0 GROUP BY LOWER(songs.albumArtist), LOWER(songs.album) ORDER BY name")
             database.execSQL("CREATE VIEW `AlbumArtistData` AS SELECT songs.albumArtist as name, count(distinct songs.album) as albumCount, count(distinct songs.id) as songCount, min(distinct songs.playCount) as playCount FROM songs WHERE songs.blacklisted == 0 GROUP BY LOWER(songs.albumArtist) ORDER BY name")
+        }
+    }
+
+    private val MIGRATION_29_30 = object : Migration(29, 30) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            database.execSQL("ALTER TABLE songs ADD COLUMN artist TEXT NOT NULL DEFAULT ''")
+            database.execSQL("UPDATE songs SET artist = albumArtist")
         }
     }
 }

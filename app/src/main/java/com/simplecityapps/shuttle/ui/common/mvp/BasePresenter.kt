@@ -13,7 +13,7 @@ abstract class BasePresenter<T : Any> : BaseContract.Presenter<T>, CoroutineScop
 
     private var job = SupervisorJob()
 
-    private val exceptionHandler by lazy {
+    val exceptionHandler by lazy {
         CoroutineExceptionHandler { _, exception -> Timber.e(exception) }
     }
 

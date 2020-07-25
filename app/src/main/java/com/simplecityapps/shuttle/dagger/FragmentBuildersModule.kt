@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.dagger
 
+import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.screens.changelog.ChangelogDialogFragment
 import com.simplecityapps.shuttle.ui.screens.debug.DebugDrawerFragment
 import com.simplecityapps.shuttle.ui.screens.debug.LoggingFragment
@@ -114,4 +115,7 @@ abstract class FragmentBuildersModule {
 
     @ContributesAndroidInjector
     abstract fun contributeSongInfoDialog(): SongInfoDialogFragment
+
+    @ContributesAndroidInjector
+    abstract fun contributeTagEditorDialog(): TagEditorAlertDialog
 }

@@ -26,6 +26,7 @@ interface PlaylistDetailContract {
         fun onAddedToQueue(song: Song)
         fun setPlaylist(playlist: Playlist)
         fun showDeleteError(error: Error)
+        fun showTagEditor(songs: List<Song>)
     }
 
     interface Presenter : BaseContract.Presenter<View> {
@@ -35,6 +36,7 @@ interface PlaylistDetailContract {
         fun addToQueue(song: Song)
         fun playNext(song: Song)
         fun exclude(song: Song)
+        fun editTags(song: Song)
         fun remove(song: Song)
         fun delete(song: Song)
     }
@@ -121,6 +123,10 @@ class PlaylistDetailPresenter @AssistedInject constructor(
         launch {
             songRepository.setExcluded(listOf(song), true)
         }
+    }
+
+    override fun editTags(song: Song) {
+        view?.showTagEditor(listOf(song))
     }
 
     override fun remove(song: Song) {

@@ -65,6 +65,7 @@ class MediaStoreSongProvider(
                     val song = Song(
                         id = 0,
                         name = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)),
+                        artist = artist,
                         albumArtist = albumArtist,
                         album = album,
                         track = track,

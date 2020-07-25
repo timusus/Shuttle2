@@ -26,6 +26,7 @@ class AlbumArtistDetailContract {
         fun onAddedToQueue(name: String)
         fun setAlbumArtist(albumArtist: AlbumArtist)
         fun showDeleteError(error: Error)
+        fun showTagEditor(songs: List<Song>)
     }
 
     interface Presenter : BaseContract.Presenter<View> {
@@ -40,7 +41,10 @@ class AlbumArtistDetailContract {
         fun playNext(album: Album)
         fun playNext(song: Song)
         fun exclude(song: Song)
+        fun editTags(song: Song)
         fun exclude(album: Album)
+        fun editTags(album: Album)
+        fun editTags(albumArtist: AlbumArtist)
         fun delete(song: Song)
     }
 }
@@ -163,6 +167,10 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
         }
     }
 
+    override fun editTags(song: Song) {
+        view?.showTagEditor(listOf(song))
+    }
+
     override fun exclude(album: Album) {
         launch {
             val songs = songRepository.getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = album.name, albumArtistName = album.albumArtist)))).firstOrNull().orEmpty()
@@ -170,6 +178,20 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
         }
     }
 
+    override fun editTags(album: Album) {
+        launch {
+            val songs = songRepository.getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = album.name, albumArtistName = album.albumArtist)))).firstOrNull().orEmpty()
+            view?.showTagEditor(songs)
+        }
+    }
+
+    override fun editTags(albumArtist: AlbumArtist) {
+        launch {
+            val songs = songRepository.getSongs(SongQuery.AlbumArtists(listOf(SongQuery.AlbumArtist(name = albumArtist.name)))).firstOrNull().orEmpty()
+            view?.showTagEditor(songs)
+        }
+    }
+    
     override fun delete(song: Song) {
         val uri = song.path.toUri()
         val documentFile = DocumentFile.fromSingleUri(context, uri)

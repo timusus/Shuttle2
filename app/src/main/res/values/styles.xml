@@ -30,6 +30,8 @@
         <item name="guidelineColor">@color/vertical_seekbar_guideline_light</item>
 
         <item name="placeholderBackgroundColor">@color/bg_placeholder</item>
+
+        <item name="helperTextTextColor">@color/helperTextColor</item>
     </style>
 
     <style name="AppTheme.Dark" parent="Theme.MaterialComponents.NoActionBar">
@@ -63,6 +65,8 @@
         <item name="guidelineColor">@color/vertical_seekbar_guideline_dark</item>
 
         <item name="placeholderBackgroundColor">@color/bg_placeholder_dark</item>
+
+        <item name="helperTextTextColor">@color/helperTextColor</item>
     </style>
 
     <style name="AppTheme.DayNight" parent="AppTheme.Light" />

@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
@@ -20,12 +21,14 @@ import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
+import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
@@ -210,7 +213,18 @@ class QueueFragment :
                             return@setOnMenuItemClickListener true
                         }
                         R.id.exclude -> {
-                            presenter.exclude(queueItem)
+                            AlertDialog.Builder(requireContext())
+                                .setTitle("Exclude Song")
+                                .setMessage("\"${queueItem.song.name}\" will be hidden from your library.\n\nYou can view excluded songs in settings.")
+                                .setPositiveButton("Exclude") { _, _ ->
+                                    presenter.exclude(queueItem)
+                                }
+                                .setNegativeButton("Cancel", null)
+                                .show()
+                            return@setOnMenuItemClickListener true
+                        }
+                        R.id.editTags -> {
+                            presenter.editTags(queueItem)
                             return@setOnMenuItemClickListener true
                         }
                     }
@@ -219,6 +233,10 @@ class QueueFragment :
                 popupMenu.show()
             } ?: Timber.e("Failed to show popup menu, queue item null")
         }
+    }
+
+    override fun showTagEditor(songs: List<Song>) {
+        TagEditorAlertDialog.newInstance(songs).show(childFragmentManager)
     }
 
 

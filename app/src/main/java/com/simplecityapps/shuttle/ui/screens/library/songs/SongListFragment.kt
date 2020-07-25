@@ -20,6 +20,7 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
@@ -224,7 +225,14 @@ class SongListFragment :
                             return@setOnMenuItemClickListener true
                         }
                         R.id.exclude -> {
-                            presenter.exclude(song)
+                            AlertDialog.Builder(requireContext())
+                                .setTitle("Exclude Song")
+                                .setMessage("\"${song.name}\" will be hidden from your library.\n\nYou can view excluded songs in settings.")
+                                .setPositiveButton("Exclude") { _, _ ->
+                                    presenter.exclude(song)
+                                }
+                                .setNegativeButton("Cancel", null)
+                                .show()
                             return@setOnMenuItemClickListener true
                         }
                         R.id.delete -> {
@@ -237,6 +245,9 @@ class SongListFragment :
                                 .setNegativeButton("Cancel", null)
                                 .show()
                             return@setOnMenuItemClickListener true
+                        }
+                        R.id.editTags -> {
+                            TagEditorAlertDialog.newInstance(listOf(song)).show(childFragmentManager)
                         }
                     }
                 }

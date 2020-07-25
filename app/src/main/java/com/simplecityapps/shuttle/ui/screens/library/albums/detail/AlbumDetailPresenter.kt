@@ -27,6 +27,7 @@ interface AlbumDetailContract {
         fun onAddedToQueue(name: String)
         fun setAlbum(album: Album)
         fun showDeleteError(error: Error)
+        fun showTagEditor(songs: List<Song>)
     }
 
     interface Presenter : BaseContract.Presenter<View> {
@@ -38,6 +39,8 @@ interface AlbumDetailContract {
         fun playNext(album: Album)
         fun playNext(song: Song)
         fun exclude(song: Song)
+        fun editTags(song: Song)
+        fun editTags(album: Album)
         fun delete(song: Song)
     }
 }
@@ -134,6 +137,17 @@ class AlbumDetailPresenter @AssistedInject constructor(
     override fun exclude(song: Song) {
         launch {
             songRepository.setExcluded(listOf(song), true)
+        }
+    }
+
+    override fun editTags(song: Song) {
+        view?.showTagEditor(listOf(song))
+    }
+
+    override fun editTags(album: Album) {
+        launch {
+            val songs = songRepository.getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = album.name, albumArtistName = album.albumArtist)))).firstOrNull().orEmpty()
+            view?.showTagEditor(songs)
         }
     }
 

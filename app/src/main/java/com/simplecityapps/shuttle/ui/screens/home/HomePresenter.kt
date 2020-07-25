@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.home
 
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.AlbumArtist
+import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
@@ -30,6 +31,7 @@ interface HomeContract {
         fun onAddedToQueue(albumArtist: AlbumArtist)
         fun onAddedToQueue(album: Album)
         fun showDeleteError(error: Error)
+        fun showTagEditor(songs: List<Song>)
     }
 
     interface Presenter {
@@ -38,9 +40,11 @@ interface HomeContract {
         fun addToQueue(albumArtist: AlbumArtist)
         fun playNext(albumArtist: AlbumArtist)
         fun exclude(albumArtist: AlbumArtist)
+        fun editTags(albumArtist: AlbumArtist)
         fun addToQueue(album: Album)
         fun playNext(album: Album)
         fun exclude(album: Album)
+        fun editTags(album: Album)
         fun play(albumArtist: AlbumArtist)
         fun play(album: Album)
     }
@@ -139,10 +143,24 @@ class HomePresenter @Inject constructor(
         }
     }
 
+    override fun editTags(albumArtist: AlbumArtist) {
+        launch {
+            val songs = songRepository.getSongs(SongQuery.AlbumArtists(listOf(SongQuery.AlbumArtist(name = albumArtist.name)))).firstOrNull().orEmpty()
+            view?.showTagEditor(songs)
+        }
+    }
+
     override fun exclude(album: Album) {
         launch {
             val songs = songRepository.getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = album.name, albumArtistName = album.albumArtist)))).firstOrNull().orEmpty()
             songRepository.setExcluded(songs, true)
+        }
+    }
+
+    override fun editTags(album: Album) {
+        launch {
+            val songs = songRepository.getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = album.name, albumArtistName = album.albumArtist)))).firstOrNull().orEmpty()
+            view?.showTagEditor(songs)
         }
     }
 
