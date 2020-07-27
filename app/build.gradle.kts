@@ -64,7 +64,7 @@ android {
         implementation(project(":core"))
 
         // TagLib
-        implementation("com.github.timusus:KTagLib:shuttle2-SNAPSHOT")
+        implementation("com.github.timusus:KTagLib:release-SNAPSHOT")
 
         // Shuttle MediaProvider Core
         implementation(project(":mediaprovider:core"))

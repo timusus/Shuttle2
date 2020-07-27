@@ -13,7 +13,7 @@ fun AudioFile.toSong(mimeType: String): Song {
         track = track ?: 1,
         disc = disc ?: 1,
         duration = duration ?: 0,
-        year = year ?: 0,
+        year = date?.toIntOrNull() ?: 0,
         path = path,
         size = size,
         mimeType = mimeType,

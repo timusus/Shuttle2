@@ -40,7 +40,7 @@ dependencies {
     implementation project(path: ':mediaprovider:core')
 
     // TagLib
-    implementation("com.github.timusus:KTagLib:shuttle2-SNAPSHOT")
+    implementation("com.github.timusus:KTagLib:release-SNAPSHOT")
 
     // Glide
     implementation 'com.github.bumptech.glide:glide:4.11.0'
