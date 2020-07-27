@@ -14,8 +14,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.withContext
 import timber.log.Timber
-import java.util.*
 import kotlin.coroutines.coroutineContext
 
 class TaglibSongProvider(
@@ -48,39 +48,38 @@ class TaglibSongProvider(
 
 class FileScanner(private val tagLib: KTagLib) {
 
-    fun getAudioFile(context: Context, uri: Uri): AudioFile? {
-        DocumentFile.fromSingleUri(context, uri)?.let { documentFile ->
-            try {
-                context.contentResolver.openFileDescriptor(documentFile.uri, "r")?.use { pfd ->
-                    val audioFile = tagLib.getAudioFile(pfd.fd, uri.toString(), documentFile.name?.substringBeforeLast(".") ?: "Unknown")
-                    if (audioFile != null) {
-                        return audioFile
-                    } else {
-                        Calendar.getInstance().time
-
-                        return AudioFile(
-                            path = uri.toString(),
-                            size = documentFile.length(),
-                            lastModified = documentFile.lastModified(),
-                            title = documentFile.name?.substringBeforeLast("."),
-                            albumArtist = null,
-                            artist = null,
-                            album = documentFile.parentFile?.name,
-                            track = 1,
-                            trackTotal = 1,
-                            disc = 1,
-                            discTotal = 1,
-                            duration = 0,
-                            year = Calendar.getInstance().apply { time = Date(documentFile.lastModified()) }.get(Calendar.YEAR),
-                            genre = null
-                        )
+    suspend fun getAudioFile(context: Context, uri: Uri): AudioFile? {
+        return withContext(Dispatchers.IO) {
+            DocumentFile.fromSingleUri(context, uri)?.let { documentFile ->
+                try {
+                    context.contentResolver.openFileDescriptor(documentFile.uri, "r")?.use { pfd ->
+                        val audioFile = tagLib.getAudioFile(pfd.detachFd(), uri.toString(), documentFile.name?.substringBeforeLast(".") ?: "Unknown")
+                        if (audioFile != null) {
+                            return@withContext audioFile
+                        } else {
+                            return@withContext AudioFile(
+                                path = uri.toString(),
+                                size = documentFile.length(),
+                                lastModified = documentFile.lastModified(),
+                                title = documentFile.name?.substringBeforeLast("."),
+                                albumArtist = null,
+                                artist = null,
+                                album = documentFile.parentFile?.name,
+                                track = 1,
+                                trackTotal = 1,
+                                disc = 1,
+                                discTotal = 1,
+                                duration = 0,
+                                date = null,
+                                genre = null
+                            )
+                        }
                     }
+                } catch (e: IllegalArgumentException) {
+                    Timber.e(e, "Failed to retrieve audio file for uri: $uri")
                 }
-            } catch (e: IllegalArgumentException) {
-                Timber.e(e, "Failed to retrieve audio file for uri: $uri")
             }
+            return@withContext null
         }
-
-        return null
     }
 }
