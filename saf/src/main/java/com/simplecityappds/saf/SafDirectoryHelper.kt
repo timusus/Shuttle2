@@ -110,7 +110,7 @@ object SafDirectoryHelper {
                                 is DocumentNodeTree -> traverseDocumentNodes(parent.addTreeNode(documentNode))
                                 else -> {
                                     if (documentNode.mimeType.startsWith("audio") ||
-                                        arrayOf("mp3", "3gp", "mp4", "m4a", "m4b", "aac", "ts", "flac", "mid", "xmf", "mxmf", "midi", "rtttl", "rtx", "ota", "imy", "ogg", "mkv", "wav")
+                                        arrayOf("mp3", "3gp", "mp4", "m4a", "m4b", "aac", "ts", "flac", "mid", "xmf", "mxmf", "midi", "rtttl", "rtx", "ota", "imy", "ogg", "mkv", "wav", "opus")
                                             .contains(documentNode.displayName.substringAfterLast('.'))
                                     ) {
                                         parent.addLeafNode(documentNode)
