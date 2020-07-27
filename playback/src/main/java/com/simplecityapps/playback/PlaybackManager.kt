@@ -9,8 +9,6 @@ import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import timber.log.Timber
 import kotlin.math.max
 
@@ -64,20 +62,18 @@ class PlaybackManager(
         queueManager.setQueue(songs, shuffleSongs, queuePosition)
 
         // Some players (Exo/CasT) like to be loaded from the main thread
-        withContext(Dispatchers.Main) {
-            val currentQueueItem = queueManager.getCurrentItem()
-            currentQueueItem?.let {
-                attemptLoad(currentQueueItem.song, queueManager.getNext()?.song, seekPosition) { result ->
-                    result.onSuccess { didLoadFirst ->
-                        if (didLoadFirst) {
-                            playback.seek(songs[queuePosition].getStartPosition())
-                        }
+        val currentQueueItem = queueManager.getCurrentItem()
+        currentQueueItem?.let {
+            attemptLoad(currentQueueItem.song, queueManager.getNext()?.song, seekPosition) { result ->
+                result.onSuccess { didLoadFirst ->
+                    if (didLoadFirst) {
+                        playback.seek(songs[queuePosition].getStartPosition())
                     }
-                    result.onFailure {
-                        queueManager.setCurrentItem(currentQueueItem)
-                    }
-                    completion(result)
                 }
+                result.onFailure {
+                    queueManager.setCurrentItem(currentQueueItem)
+                }
+                completion(result)
             }
         }
     }

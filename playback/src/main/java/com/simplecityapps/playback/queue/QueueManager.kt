@@ -52,19 +52,17 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
         withContext(Dispatchers.IO) {
             val queueItems = songs.map { song -> song.toQueueItem(false) }
             queue.setQueue(queueItems)
-                shuffleSongs?.mapNotNull { song ->
+            shuffleSongs?.mapNotNull { song ->
                 queueItems.firstOrNull { queueItem -> queueItem.song == song }
             }?.let { shuffleQueueItems ->
                 queue.setShuffleQueue(shuffleQueueItems)
             } ?: queue.generateShuffleQueue()
         }
 
-        withContext(Dispatchers.Main) {
-            queue.getItem(shuffleMode, position)?.let { currentItem ->
-                setCurrentItem(currentItem)
-            }
-            queueWatcher.onQueueChanged()
+        queue.getItem(shuffleMode, position)?.let { currentItem ->
+            setCurrentItem(currentItem)
         }
+        queueWatcher.onQueueChanged()
     }
 
     fun setCurrentItem(currentItem: QueueItem) {
@@ -164,10 +162,9 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
                     queue.generateShuffleQueue()
                 }
             }
-            withContext(Dispatchers.Main) {
-                queueWatcher.onQueueChanged()
-                queueWatcher.onShuffleChanged()
-            }
+
+            queueWatcher.onQueueChanged()
+            queueWatcher.onShuffleChanged()
         }
     }
 

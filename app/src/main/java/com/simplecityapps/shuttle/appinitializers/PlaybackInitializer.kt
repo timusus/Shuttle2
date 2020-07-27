@@ -18,8 +18,8 @@ import com.simplecityapps.playback.queue.QueueWatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -49,7 +49,7 @@ class PlaybackInitializer @Inject constructor(
         queueWatcher.addCallback(this)
         playbackWatcher.addCallback(this)
 
-        GlobalScope.launch {
+        GlobalScope.launch(Dispatchers.Main) {
             val seekPosition = playbackPreferenceManager.playbackPosition ?: 0
             val queuePosition = playbackPreferenceManager.queuePosition
             val shuffleMode = playbackPreferenceManager.shuffleMode
@@ -76,10 +76,11 @@ class PlaybackInitializer @Inject constructor(
                     return@launch
                 }
 
-                val songs = songRepository.getSongs(SongQuery.SongIds(allSongIds.toList()))
-                    .flowOn(Dispatchers.IO)
-                    .firstOrNull()
-                    .orEmpty()
+                val songs = withContext(Dispatchers.IO) {
+                    songRepository.getSongs(SongQuery.SongIds(allSongIds.toList()))
+                        .firstOrNull()
+                        .orEmpty()
+                }
 
                 playbackManager.load(
                     songIds.mapNotNull { songId -> songs.firstOrNull { song -> song.id == songId } },
@@ -148,7 +149,7 @@ class PlaybackInitializer @Inject constructor(
             queueManager.getCurrentItem()?.song?.let { song ->
                 val playbackPosition = playbackManager.getProgress() ?: 0
                 song.playbackPosition = playbackPosition
-                GlobalScope.launch {
+                GlobalScope.launch(Dispatchers.IO) {
                     songRepository.setPlaybackPosition(song, playbackPosition)
                 }
             }
@@ -159,7 +160,7 @@ class PlaybackInitializer @Inject constructor(
     override fun onPlaybackComplete(song: Song) {
         playbackPreferenceManager.playbackPosition = 0
 
-        GlobalScope.launch {
+        GlobalScope.launch(Dispatchers.IO) {
             songRepository.setPlaybackPosition(song, song.duration)
             songRepository.incrementPlayCount(song)
         }
