@@ -69,7 +69,14 @@ class PlaybackService :
         MediaButtonReceiver.handleIntent(mediaSessionManager.mediaSession, intent)
 
         when (intent?.action) {
-            ACTION_TOGGLE_PLAYBACK -> playbackManager.togglePlayback()
+            ACTION_TOGGLE_PLAYBACK -> {
+                val wasPlaying = playbackManager.isPlaying()
+                playbackManager.togglePlayback()
+                if (wasPlaying) {
+                    // If playback was playing, we've now toggled it to pause. Return early, as we don't need to start the foreground service.
+                    return START_STICKY
+                }
+            }
             ACTION_SKIP_PREV -> playbackManager.skipToPrev()
             ACTION_SKIP_NEXT -> playbackManager.skipToNext(true)
             ACTION_NOTIFICATION_DISMISS -> {
