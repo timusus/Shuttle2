@@ -1,7 +1,9 @@
 {
   "commits": [
-    "Disabled code minification (fixed crash when launching)",
-    "Enabled 'legacy storage', potentially fixing playback issues on some devices",
-    "Replaced Crashlytics with Bugsnag"
+    "Improved media importing. Media changes should be better reflected in album/artist lists",
+    "Migrated from RxJava to Coroutines. This is a major code change, so expect some issues",
+    "Fixed crash when importing media",
+    "Fixed an issue where Opus files weren't detected on some devices",
+    "Replaced 'blacklist' with 'exclude'"
   ]
 }
