@@ -26,7 +26,7 @@ sealed class AlbumQuery(
 
     class Albums(val albums: List<Album>) :
         AlbumQuery(
-            predicate = { album -> albums.any { Album(name = album.name, albumArtistName = album.albumArtist).predicate(album) } }
+            predicate = { album -> albums.any { it.predicate(album) } }
         )
 
     class Search(val query: String) :

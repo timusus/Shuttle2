@@ -28,7 +28,7 @@ sealed class SongQuery(
 
     class AlbumArtists(val albumArtists: List<AlbumArtist>) :
         SongQuery(
-            predicate = { song -> albumArtists.any { albumArtist -> AlbumArtist(name = albumArtist.name).predicate(song) } },
+            predicate = { song -> albumArtists.any { albumArtist -> albumArtist.predicate(song) } },
             sortOrder = SongSortOrder.Track
         )
 
