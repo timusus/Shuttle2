@@ -63,17 +63,17 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
         dumpButton.setOnClickListener {
             val clipboardManager: ClipboardManager = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             val file = requireContext().getFileStreamPath(DebugLoggingTree.FILE_NAME)
-            if (file.exists()) {
-                val clip = ClipData.newPlainText("Shuttle Logs", requireContext().getFileStreamPath(DebugLoggingTree.FILE_NAME).readText(Charsets.UTF_8))
-                try {
-                    clipboardManager.setPrimaryClip(clip)
-                } catch (e: TransactionTooLargeException) {
-                    Toast.makeText(requireContext(), "Log file is too big large clipboard", Toast.LENGTH_SHORT).show()
-                }
-                Toast.makeText(requireContext(), "Logs copied to clipboard", Toast.LENGTH_SHORT).show()
+            val clip = if (file.exists()) {
+                ClipData.newPlainText("Shuttle Logs", requireContext().getFileStreamPath(DebugLoggingTree.FILE_NAME).readText(Charsets.UTF_8))
             } else {
-                Toast.makeText(requireContext(), "Log file is empty", Toast.LENGTH_SHORT).show()
+                ClipData.newPlainText("Shuttle Logs", adapter.items.filterIsInstance<LogMessageBinder>().joinToString("\n\n") { it.logMessage.toString() })
             }
+            try {
+                clipboardManager.setPrimaryClip(clip)
+            } catch (e: TransactionTooLargeException) {
+                Toast.makeText(requireContext(), "Log file is too big large clipboard", Toast.LENGTH_SHORT).show()
+            }
+            Toast.makeText(requireContext(), "Logs copied to clipboard", Toast.LENGTH_SHORT).show()
         }
 
         val versionInfo: TextView = view.findViewById(R.id.versionInfoLabel)
@@ -81,8 +81,6 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
     }
 
     override fun onDestroyView() {
-
-
         debugLoggingTree.removeCallback(this)
 
         super.onDestroyView()

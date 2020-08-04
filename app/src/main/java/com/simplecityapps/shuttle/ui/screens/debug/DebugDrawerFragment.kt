@@ -27,10 +27,11 @@ class DebugDrawerFragment : Fragment(), Injectable {
         val tabLayout: TabLayout = view.findViewById(R.id.tabLayout)
         val viewPager: ViewPager = view.findViewById(R.id.viewPager)
         tabLayout.setupWithViewPager(viewPager, true)
+        tabLayout.visibility = View.GONE
 
         val adapter = PagerAdapter(childFragmentManager)
         adapter.addFragment("All", LoggingFragment.newInstance(LoggingFragment.Filter(excludesTag = NetworkingModule.NETWORK_LOG_TAG)))
-        adapter.addFragment("OkHttp", LoggingFragment.newInstance(LoggingFragment.Filter(includesTag = NetworkingModule.NETWORK_LOG_TAG)))
+//        adapter.addFragment("OkHttp", LoggingFragment.newInstance(LoggingFragment.Filter(includesTag = NetworkingModule.NETWORK_LOG_TAG)))
         adapter.notifyDataSetChanged()
 
         viewPager.adapter = adapter
