@@ -28,6 +28,8 @@ import com.simplecityapps.shuttle.dagger.AppScope
 import com.squareup.moshi.Moshi
 import dagger.Module
 import dagger.Provides
+import kotlinx.coroutines.CoroutineScope
+import javax.inject.Named
 
 @Module
 class PlaybackModule {
@@ -129,13 +131,14 @@ class PlaybackModule {
     @Provides
     fun provideMediaSessionManager(
         context: Context,
+        @Named("AppCoroutineScope") appCoroutineScope: CoroutineScope,
         playbackManager: PlaybackManager,
         queueManager: QueueManager,
         playbackWatcher: PlaybackWatcher,
         queueWatcher: QueueWatcher,
         mediaIdHelper: MediaIdHelper
     ): MediaSessionManager {
-        return MediaSessionManager(context, playbackManager, queueManager, mediaIdHelper, playbackWatcher, queueWatcher)
+        return MediaSessionManager(context, appCoroutineScope, playbackManager, queueManager, mediaIdHelper, playbackWatcher, queueWatcher)
     }
 
     @AppScope

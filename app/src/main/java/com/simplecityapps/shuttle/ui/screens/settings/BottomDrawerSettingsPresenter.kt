@@ -8,11 +8,11 @@ import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import javax.inject.Named
 
 interface BottomDrawerSettingsContract {
 
@@ -29,7 +29,8 @@ interface BottomDrawerSettingsContract {
 
 class BottomDrawerSettingsPresenter @Inject constructor(
     private val songRepository: SongRepository,
-    private val playbackManager: PlaybackManager
+    private val playbackManager: PlaybackManager,
+    @Named("AppCoroutineScope") private val appCoroutineScope: CoroutineScope
 ) :
     BasePresenter<BottomDrawerSettingsContract.View>(),
     BottomDrawerSettingsContract.Presenter {
@@ -53,7 +54,7 @@ class BottomDrawerSettingsPresenter @Inject constructor(
 
     @SuppressLint("CheckResult")
     override fun shuffleAll() {
-        GlobalScope.launch(Dispatchers.Main) {
+        appCoroutineScope.launch {
             val songs = songRepository
                 .getSongs(SongQuery.All())
                 .firstOrNull()

@@ -7,10 +7,14 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistData
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import javax.inject.Named
 
-class DatabaseProvider constructor(private val context: Context) {
+class DatabaseProvider constructor(
+    private val context: Context,
+    @Named("AppCoroutineScope") private val appCoroutineScope: CoroutineScope
+) {
 
     val database: MediaDatabase by lazy {
         Room.databaseBuilder(context, MediaDatabase::class.java, "song.db")
@@ -23,7 +27,7 @@ class DatabaseProvider constructor(private val context: Context) {
         override fun onCreate(db: SupportSQLiteDatabase) {
             super.onCreate(db)
 
-            GlobalScope.launch {
+            appCoroutineScope.launch {
                 database.playlistDataDao().insert(PlaylistData(name = favoritesName))
             }
         }

@@ -15,13 +15,14 @@ import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import javax.inject.Inject
+import javax.inject.Named
 
 /**
  * Restores the queue when the app is launched. Saves the queue and queue position when they change.
@@ -36,7 +37,8 @@ class PlaybackInitializer @Inject constructor(
     private val playbackPreferenceManager: PlaybackPreferenceManager,
     @Suppress("unused") private val castSessionManager: CastSessionManager,
     @Suppress("unused") private val mediaSessionManager: MediaSessionManager,
-    @Suppress("unused") private val noiseManager: NoiseManager
+    @Suppress("unused") private val noiseManager: NoiseManager,
+    @Named("AppCoroutineScope") private val appCoroutineScope: CoroutineScope
 ) : AppInitializer,
     QueueChangeCallback,
     PlaybackWatcherCallback {
@@ -49,7 +51,7 @@ class PlaybackInitializer @Inject constructor(
         queueWatcher.addCallback(this)
         playbackWatcher.addCallback(this)
 
-        GlobalScope.launch(Dispatchers.Main) {
+        appCoroutineScope.launch {
             val seekPosition = playbackPreferenceManager.playbackPosition ?: 0
             val queuePosition = playbackPreferenceManager.queuePosition
             val shuffleMode = playbackPreferenceManager.shuffleMode
@@ -149,8 +151,10 @@ class PlaybackInitializer @Inject constructor(
             queueManager.getCurrentItem()?.song?.let { song ->
                 val playbackPosition = playbackManager.getProgress() ?: 0
                 song.playbackPosition = playbackPosition
-                GlobalScope.launch(Dispatchers.IO) {
-                    songRepository.setPlaybackPosition(song, playbackPosition)
+                appCoroutineScope.launch {
+                    withContext(Dispatchers.IO) {
+                        songRepository.setPlaybackPosition(song, playbackPosition)
+                    }
                 }
             }
         }
@@ -160,9 +164,11 @@ class PlaybackInitializer @Inject constructor(
     override fun onPlaybackComplete(song: Song) {
         playbackPreferenceManager.playbackPosition = 0
 
-        GlobalScope.launch(Dispatchers.IO) {
-            songRepository.setPlaybackPosition(song, song.duration)
-            songRepository.incrementPlayCount(song)
+        appCoroutineScope.launch {
+            withContext(Dispatchers.IO) {
+                songRepository.setPlaybackPosition(song, song.duration)
+                songRepository.incrementPlayCount(song)
+            }
         }
     }
 

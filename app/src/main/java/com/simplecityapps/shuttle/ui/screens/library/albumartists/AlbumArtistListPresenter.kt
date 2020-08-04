@@ -8,12 +8,14 @@ import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.text.Collator
 import javax.inject.Inject
+import javax.inject.Named
 
 interface AlbumArtistListContract {
 
@@ -45,7 +47,8 @@ class AlbumArtistListPresenter @Inject constructor(
     private val albumArtistRepository: AlbumArtistRepository,
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackManager,
-    private val mediaImporter: MediaImporter
+    private val mediaImporter: MediaImporter,
+    @Named("AppCoroutineScope") private val appCoroutineScope: CoroutineScope
 ) : AlbumArtistListContract.Presenter,
     BasePresenter<AlbumArtistListContract.View>() {
 
@@ -99,7 +102,9 @@ class AlbumArtistListPresenter @Inject constructor(
     }
 
     override fun rescanLibrary() {
-        mediaImporter.reImport()
+        appCoroutineScope.launch {
+            mediaImporter.reImport()
+        }
     }
 
     override fun exclude(albumArtist: AlbumArtist) {

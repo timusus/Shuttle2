@@ -33,6 +33,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
 import timber.log.Timber
 import javax.inject.Inject
+import javax.inject.Named
 
 @Suppress("NAME_SHADOWING")
 class SettingsFragment : PreferenceFragmentCompat(),
@@ -46,6 +47,8 @@ class SettingsFragment : PreferenceFragmentCompat(),
     @Inject lateinit var mediaImporter: MediaImporter
 
     @Inject lateinit var songRepository: SongRepository
+
+    @Named("AppCoroutineScope") @Inject lateinit var appCoroutineScope: CoroutineScope
 
     private var scanningProgressView: ProgressBar? = null
     private var scanningDialog: AlertDialog? = null
@@ -86,7 +89,9 @@ class SettingsFragment : PreferenceFragmentCompat(),
         }
 
         preferenceScreen.findPreference<Preference>("pref_media_rescan")?.setOnPreferenceClickListener {
-            mediaImporter.reImport()
+            appCoroutineScope.launch {
+                mediaImporter.reImport()
+            }
 
             val customView = View.inflate(requireContext(), R.layout.progress_dialog_loading_horizontal, null)
             scanningProgressView = customView.findViewById(R.id.progressBar)

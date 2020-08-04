@@ -9,8 +9,10 @@ import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import javax.inject.Named
 
 interface ScannerContract {
 
@@ -32,6 +34,7 @@ interface ScannerContract {
 
 class ScannerPresenter @Inject constructor(
     private val context: Context,
+    @Named("AppCoroutineScope") private val appCoroutineScope: CoroutineScope,
     private val fileScanner: FileScanner,
     private val mediaImporter: MediaImporter
 ) : ScannerContract.Presenter,
@@ -48,7 +51,7 @@ class ScannerPresenter @Inject constructor(
     }
 
     override fun startScan(scanType: ScannerContract.ScanType) {
-        launch {
+        appCoroutineScope.launch {
             mediaImporter.import(
                 when (scanType) {
                     is ScannerContract.ScanType.MediaStore -> MediaStoreSongProvider(context)

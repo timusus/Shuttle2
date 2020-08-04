@@ -15,18 +15,16 @@ import com.simplecityapps.mediaprovider.repository.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import dagger.Module
 import dagger.Provides
-import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import timber.log.Timber
+import javax.inject.Named
 
 @Module
 class RepositoryModule {
 
     @Provides
     @AppScope
-    fun provideMediaDatabase(context: Context): MediaDatabase {
-        return DatabaseProvider(context).database
+    fun provideMediaDatabase(context: Context, @Named("AppCoroutineScope") appCoroutineScope: CoroutineScope): MediaDatabase {
+        return DatabaseProvider(context, appCoroutineScope).database
     }
 
     @Provides
@@ -37,8 +35,8 @@ class RepositoryModule {
 
     @Provides
     @AppScope
-    fun provideMediaImporter(context: Context, songRepository: SongRepository): MediaImporter {
-        return MediaImporter(context, songRepository, CoroutineScope(Dispatchers.Main + CoroutineExceptionHandler { _, exception -> Timber.e(exception) }))
+    fun provideMediaImporter(songRepository: SongRepository): MediaImporter {
+        return MediaImporter(songRepository)
     }
 
     @Provides

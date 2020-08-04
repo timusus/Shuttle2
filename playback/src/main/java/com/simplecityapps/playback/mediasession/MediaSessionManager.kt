@@ -14,13 +14,15 @@ import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
+import javax.inject.Named
 
 class MediaSessionManager @Inject constructor(
     private val context: Context,
+    @Named("AppCoroutineScope") private val appCoroutineScope: CoroutineScope,
     private val playbackManager: PlaybackManager,
     private val queueManager: QueueManager,
     private val mediaIdHelper: MediaIdHelper,
@@ -157,13 +159,13 @@ class MediaSessionManager @Inject constructor(
         }
 
         override fun onSetShuffleMode(shuffleMode: Int) {
-            GlobalScope.launch {
+            appCoroutineScope.launch {
                 queueManager.setShuffleMode(shuffleMode.toShuffleMode(), reshuffle = true)
             }
         }
 
         override fun onPlayFromMediaId(mediaId: String?, extras: Bundle?) {
-            GlobalScope.launch {
+            appCoroutineScope.launch {
                 mediaId?.let {
                     val playQueue = mediaIdHelper.getPlayQueue(mediaId)
                     playbackManager.load(playQueue.songs, playQueue.playbackPosition) { result ->

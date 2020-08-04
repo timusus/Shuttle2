@@ -11,6 +11,7 @@ import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flowOn
@@ -19,6 +20,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.text.Collator
 import javax.inject.Inject
+import javax.inject.Named
 
 interface SongListContract {
 
@@ -52,7 +54,9 @@ class SongListPresenter @Inject constructor(
     private val context: Context,
     private val playbackManager: PlaybackManager,
     private val songRepository: SongRepository,
-    private val mediaImporter: MediaImporter
+    private val mediaImporter: MediaImporter,
+    @Named("AppCoroutineScope") private val appCoroutineScope: CoroutineScope
+
 ) : BasePresenter<SongListContract.View>(),
     SongListContract.Presenter {
 
@@ -124,7 +128,9 @@ class SongListPresenter @Inject constructor(
     }
 
     override fun rescanLibrary() {
-        mediaImporter.reImport()
+        appCoroutineScope.launch {
+            mediaImporter.reImport()
+        }
     }
 
     override fun exclude(song: Song) {

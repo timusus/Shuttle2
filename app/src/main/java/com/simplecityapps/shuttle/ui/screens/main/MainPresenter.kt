@@ -12,10 +12,12 @@ import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import javax.inject.Named
 
 interface MainContract {
 
@@ -31,6 +33,7 @@ interface MainContract {
 
 class MainPresenter @Inject constructor(
     private val context: Context,
+    @Named("AppCoroutineScope") private val appCoroutineScope: CoroutineScope,
     private val queueManager: QueueManager,
     private val queueWatcher: QueueWatcher,
     private val mediaImporter: MediaImporter,
@@ -54,7 +57,7 @@ class MainPresenter @Inject constructor(
 
         // Don't bother scanning for media again if we've already scanned once this session
         if (mediaImporter.importCount < 1) {
-            launch {
+            appCoroutineScope.launch {
                 scanMedia()
             }
         }
@@ -85,7 +88,7 @@ class MainPresenter @Inject constructor(
         }
     }
 
-// QueueChangeCallback Implementation
+    // QueueChangeCallback Implementation
 
     override fun onQueueChanged() {
         view?.toggleSheet(visible = queueManager.getSize() != 0)
