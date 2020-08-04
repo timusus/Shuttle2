@@ -1,5 +1,9 @@
 {
   "commits": [
-    "Fixed a crash on launch occurring for some users"
+    "Possible crash fix when importing media / seemingly random crashes",
+    "Fixed an issue where 'rescan' didn't",
+    "Fixed an issue where tapping the album on the now playing screen would open the wrong album",
+    "Removed noisy http logs from debug drawer",
+    "'Copy logs' now works even if 'file logging' is turned off"
   ]
 }
