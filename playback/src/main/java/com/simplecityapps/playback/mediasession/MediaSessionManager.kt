@@ -167,10 +167,11 @@ class MediaSessionManager @Inject constructor(
         override fun onPlayFromMediaId(mediaId: String?, extras: Bundle?) {
             appCoroutineScope.launch {
                 mediaId?.let {
-                    val playQueue = mediaIdHelper.getPlayQueue(mediaId)
-                    playbackManager.load(playQueue.songs, playQueue.playbackPosition) { result ->
-                        result.onSuccess { playbackManager.play() }
-                        result.onFailure { error -> Timber.e(error, "Failed to load playback after onPlayFromMediaId") }
+                    mediaIdHelper.getPlayQueue(mediaId)?.let { playQueue ->
+                        playbackManager.load(playQueue.songs, playQueue.playbackPosition) { result ->
+                            result.onSuccess { playbackManager.play() }
+                            result.onFailure { error -> Timber.e(error, "Failed to load playback after onPlayFromMediaId") }
+                        }
                     }
                 }
             }

@@ -11,6 +11,7 @@ import com.simplecityapps.mediaprovider.repository.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import javax.inject.Inject
 
 class MediaIdHelper @Inject constructor(
@@ -30,19 +31,23 @@ class MediaIdHelper @Inject constructor(
                     MediaBrowserCompat.MediaItem(
                         MediaDescriptionCompat.Builder()
                             .setTitle("Artists")
-                            .setMediaId("media:/artists/")
+                            .setMediaId("media:/artist_root/")
                             .build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
-                    ),
-                    MediaBrowserCompat.MediaItem(
+                    ), MediaBrowserCompat.MediaItem(
                         MediaDescriptionCompat.Builder()
                             .setTitle("Albums")
-                            .setMediaId("media:/albums/")
+                            .setMediaId("media:/album_root/")
                             .build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
                     ), MediaBrowserCompat.MediaItem(
                         MediaDescriptionCompat.Builder()
                             .setTitle("Playlists")
-                            .setMediaId("media:/playlists/")
+                            .setMediaId("media:/playlist_root/")
                             .build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
+                    ), MediaBrowserCompat.MediaItem(
+                        MediaDescriptionCompat.Builder()
+                            .setTitle("Shuffle All")
+                            .setMediaId("media:/shuffle_all")
+                            .build(), MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
                     )
                 )
             }
@@ -76,7 +81,7 @@ class MediaIdHelper @Inject constructor(
         return MediaBrowserCompat.MediaItem(
             MediaDescriptionCompat.Builder()
                 .setTitle(name)
-                .setMediaId("$parentMediaId${name}/albums/")
+                .setMediaId("${parentMediaId}artist/$name/albums/")
                 .build(),
             MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
         )
@@ -86,7 +91,7 @@ class MediaIdHelper @Inject constructor(
         return MediaBrowserCompat.MediaItem(
             MediaDescriptionCompat.Builder()
                 .setTitle(name)
-                .setMediaId("$parentMediaId${id}/songs/")
+                .setMediaId("${parentMediaId}playlist/$id/songs/")
                 .build(),
             MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
         )
@@ -96,7 +101,7 @@ class MediaIdHelper @Inject constructor(
         return MediaBrowserCompat.MediaItem(
             MediaDescriptionCompat.Builder()
                 .setTitle(name)
-                .setMediaId("$parentMediaId${name}/songs/")
+                .setMediaId("${parentMediaId}artist/$albumArtist/album/$name/songs/")
                 .build(),
             MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
         )
@@ -106,7 +111,7 @@ class MediaIdHelper @Inject constructor(
         return MediaBrowserCompat.MediaItem(
             MediaDescriptionCompat.Builder()
                 .setTitle(name)
-                .setMediaId("$parentMediaId${id}")
+                .setMediaId("$parentMediaId$id")
                 .build(),
             MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
         )
@@ -134,10 +139,13 @@ class MediaIdHelper @Inject constructor(
         }
 
         class Song(val songId: Long, val directory: Directory) : MediaIdWrapper()
+
+        object ShuffleAll : MediaIdWrapper()
     }
 
     @Throws(IllegalStateException::class)
     fun parseMediaId(mediaId: String): MediaIdWrapper {
+        Timber.i("Parsing mediaId: $mediaId")
         return parsePathSegments(Uri.parse(mediaId).pathSegments)
     }
 
@@ -145,30 +153,27 @@ class MediaIdHelper @Inject constructor(
     fun parsePathSegments(pathSegments: List<String>): MediaIdWrapper {
         return when (pathSegments.last()) {
             "root" -> MediaIdWrapper.Directory.Root
-            "artists" -> MediaIdWrapper.Directory.Artists
+            "artist_root" -> MediaIdWrapper.Directory.Artists
+            "album_root" -> MediaIdWrapper.Directory.Albums.All
+            "playlist_root" -> MediaIdWrapper.Directory.Playlists
+            "shuffle_all" -> MediaIdWrapper.ShuffleAll
             "albums" -> {
-                if (pathSegments.contains("artists")) {
-                    MediaIdWrapper.Directory.Albums.Artist(pathSegments.getNextSegment("artists")!!)
+                if (pathSegments.contains("artist")) {
+                    MediaIdWrapper.Directory.Albums.Artist(pathSegments.getNextSegment("artist")!!)
                 } else {
                     MediaIdWrapper.Directory.Albums.All
                 }
             }
             "songs" -> {
                 when {
-                    pathSegments.contains("albums") -> {
-                        if (pathSegments.contains("artists")) {
-                            MediaIdWrapper.Directory.Songs.Album(albumName = pathSegments.getNextSegment("albums")!!, albumArtistName = pathSegments.getNextSegment("artists")!!)
-                        } else {
-                            // Todo: Handle
-                            throw IllegalStateException("artists missing from path segment")
-                        }
+                    pathSegments.contains("album") -> {
+                        MediaIdWrapper.Directory.Songs.Album(albumName = pathSegments.getNextSegment("album")!!, albumArtistName = pathSegments.getNextSegment("artist")!!)
                     }
-                    pathSegments.contains("playlists") -> MediaIdWrapper.Directory.Songs.Playlist(pathSegments.getNextSegment("playlists")!!.toLong())
+                    pathSegments.contains("playlist") -> MediaIdWrapper.Directory.Songs.Playlist(pathSegments.getNextSegment("playlist")!!.toLong())
                     else -> throw IllegalStateException()
                 }
 
             }
-            "playlists" -> MediaIdWrapper.Directory.Playlists
             else -> {
                 val directoryPath = pathSegments.toMutableList()
                 directoryPath.removeAt(directoryPath.size - 1)
@@ -185,22 +190,35 @@ class MediaIdHelper @Inject constructor(
         return null
     }
 
-    suspend fun getPlayQueue(mediaId: String): PlayQueue {
+    suspend fun getPlayQueue(mediaId: String): PlayQueue? {
         return withContext(Dispatchers.IO) {
-            val mediaIdWrapper = parseMediaId(mediaId) as MediaIdWrapper.Song
-            when (mediaIdWrapper.directory) {
-                is MediaIdWrapper.Directory.Songs.Album -> {
+            when (val mediaIdWrapper = parseMediaId(mediaId)) {
+                is MediaIdWrapper.Song -> {
+                    when (mediaIdWrapper.directory) {
+                        is MediaIdWrapper.Directory.Songs.Album -> {
+                            val songs = songRepository
+                                .getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = mediaIdWrapper.directory.albumName, albumArtistName = mediaIdWrapper.directory.albumArtistName))))
+                                .firstOrNull()
+                                .orEmpty()
+                            PlayQueue(songs, songs.indexOfFirst { it.id == mediaIdWrapper.songId })
+                        }
+                        is MediaIdWrapper.Directory.Songs.Playlist -> {
+                            val songs = playlistRepository.getSongsForPlaylist(mediaIdWrapper.directory.playlistId).firstOrNull().orEmpty()
+                            PlayQueue(songs, songs.indexOfFirst { it.id == mediaIdWrapper.songId })
+                        }
+                        else -> throw IllegalStateException("Cannot retrieve play queue for songId: ${mediaIdWrapper.songId}, directory: ${mediaIdWrapper.directory}")
+                    }
+                }
+                is MediaIdWrapper.ShuffleAll -> {
                     val songs = songRepository
-                        .getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = mediaIdWrapper.directory.albumName, albumArtistName = mediaIdWrapper.directory.albumArtistName))))
+                        .getSongs(SongQuery.All())
                         .firstOrNull()
                         .orEmpty()
-                    PlayQueue(songs, songs.indexOfFirst { it.id == mediaIdWrapper.songId })
+                    PlayQueue(songs.shuffled(), 0)
                 }
-                is MediaIdWrapper.Directory.Songs.Playlist -> {
-                    val songs = playlistRepository.getSongsForPlaylist(mediaIdWrapper.directory.playlistId).firstOrNull().orEmpty()
-                    PlayQueue(songs, songs.indexOfFirst { it.id == mediaIdWrapper.songId })
+                else -> {
+                    null
                 }
-                else -> throw IllegalStateException("Cannot retrieve play queue for songId: ${mediaIdWrapper.songId}, directory: ${mediaIdWrapper.directory}")
             }
         }
     }
