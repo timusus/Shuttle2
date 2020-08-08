@@ -143,14 +143,12 @@ class MediaIdHelper @Inject constructor(
         object ShuffleAll : MediaIdWrapper()
     }
 
-    @Throws(IllegalStateException::class)
-    fun parseMediaId(mediaId: String): MediaIdWrapper {
+    private fun parseMediaId(mediaId: String): MediaIdWrapper? {
         Timber.i("Parsing mediaId: $mediaId")
         return parsePathSegments(Uri.parse(mediaId).pathSegments)
     }
 
-    @Throws(IllegalStateException::class)
-    fun parsePathSegments(pathSegments: List<String>): MediaIdWrapper {
+    private fun parsePathSegments(pathSegments: List<String>): MediaIdWrapper? {
         return when (pathSegments.last()) {
             "root" -> MediaIdWrapper.Directory.Root
             "artist_root" -> MediaIdWrapper.Directory.Artists
@@ -177,7 +175,12 @@ class MediaIdHelper @Inject constructor(
             else -> {
                 val directoryPath = pathSegments.toMutableList()
                 directoryPath.removeAt(directoryPath.size - 1)
-                MediaIdWrapper.Song(pathSegments.getNextSegment("songs")!!.toLong(), parsePathSegments(directoryPath) as MediaIdWrapper.Directory)
+                pathSegments.getNextSegment("songs")?.let { thing ->
+                    MediaIdWrapper.Song(thing.toLong(), parsePathSegments(directoryPath) as MediaIdWrapper.Directory)
+                } ?: run {
+                    Timber.e("Failed to parse path segments: ${pathSegments.joinToString("/") { it }}")
+                    null
+                }
             }
         }
     }
