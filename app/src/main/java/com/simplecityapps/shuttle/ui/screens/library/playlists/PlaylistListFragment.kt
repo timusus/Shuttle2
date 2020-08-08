@@ -19,6 +19,7 @@ import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.autoClearedNullable
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
@@ -40,7 +41,7 @@ class PlaylistListFragment :
     private var circularLoadingView: CircularLoadingView by autoCleared()
     private var horizontalLoadingView: HorizontalLoadingView by autoCleared()
 
-    private var recyclerView: RecyclerView by autoCleared()
+    private var recyclerView: RecyclerView? by autoClearedNullable()
 
     private var recyclerViewState: Parcelable? = null
 
@@ -61,9 +62,9 @@ class PlaylistListFragment :
         super.onViewCreated(view, savedInstanceState)
 
         recyclerView = view.findViewById(R.id.recyclerView)
-        recyclerView.adapter = adapter
-        recyclerView.setRecyclerListener(RecyclerListener())
-        recyclerView.clearAdapterOnDetach()
+        recyclerView?.adapter = adapter
+        recyclerView?.setRecyclerListener(RecyclerListener())
+        recyclerView?.clearAdapterOnDetach()
 
         circularLoadingView = view.findViewById(R.id.circularLoadingView)
         horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
@@ -96,7 +97,7 @@ class PlaylistListFragment :
             }
         }
 
-        recyclerViewState?.let { recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState) }
+        recyclerViewState?.let { recyclerView?.layoutManager?.onRestoreInstanceState(recyclerViewState) }
     }
 
     override fun onPause() {
@@ -107,7 +108,7 @@ class PlaylistListFragment :
             toolbar.setOnMenuItemClickListener(null)
         }
 
-        recyclerViewState = recyclerView.layoutManager?.onSaveInstanceState()
+        recyclerViewState = recyclerView?.layoutManager?.onSaveInstanceState()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -116,8 +117,6 @@ class PlaylistListFragment :
     }
 
     override fun onDestroyView() {
-
-
         presenter.unbindView()
 
         super.onDestroyView()
@@ -131,7 +130,7 @@ class PlaylistListFragment :
             PlaylistBinder(playlist, playlistBinderListener)
         }, completion = {
             recyclerViewState?.let {
-                recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
+                recyclerView?.layoutManager?.onRestoreInstanceState(recyclerViewState)
             }
         })
     }

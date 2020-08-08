@@ -88,7 +88,9 @@ open class RecyclerAdapter(scope: CoroutineScope) : RecyclerView.Adapter<Recycle
             if (loggingEnabled) {
                 diffResult.dispatchUpdatesTo(loggingListUpdateCallback)
             }
-            callback?.invoke()
+            if (isActive) {
+                callback?.invoke()
+            }
         }
     }
 
