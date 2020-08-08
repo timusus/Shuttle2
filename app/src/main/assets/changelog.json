@@ -1,7 +1,8 @@
 {
   "commits": [
-    "Fixed Android Auto / Wear crashes when browsing albums",
-    "Added 'shuffle all' option to Android Auto / Wear",
-    "Possible fix for media importing crash"
+    "Attempt to prevent crash when importing media",
+    "Fixed a bug where media couldn't be re-imported after an import was cancelled",
+    "Fixed a bug when onboarding, and hitting 'back' after starting a scan",
+    "Fixed a crash when using Android Auto/Wear"
   ]
 }
