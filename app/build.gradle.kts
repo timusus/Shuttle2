@@ -64,7 +64,7 @@ android {
         implementation(project(":core"))
 
         // TagLib
-        implementation("com.github.timusus:KTagLib:release-SNAPSHOT")
+        implementation("com.github.timusus:KTagLib:0.1")
 
         // Shuttle MediaProvider Core
         implementation(project(":mediaprovider:core"))
@@ -86,10 +86,10 @@ android {
         implementation("com.github.timusus:RecyclerView-FastScroll:dev-SNAPSHOT")
 
         // AppCompat
-        implementation("androidx.appcompat:appcompat:1.1.0")
+        implementation("androidx.appcompat:appcompat:1.2.0")
 
         // Constraint Layout
-        implementation("androidx.constraintlayout:constraintlayout:2.0.0-beta8")
+        implementation("androidx.constraintlayout:constraintlayout:2.0.0-rc1")
 
         // Android Arch
         implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
@@ -99,18 +99,18 @@ android {
         implementation("androidx.navigation:navigation-ui-ktx:2.3.0")
 
         // Dagger core
-        kapt("com.google.dagger:dagger-compiler:2.28")
+        kapt("com.google.dagger:dagger-compiler:2.28.3")
 
         // Dagger Android
-        implementation("com.google.dagger:dagger-android-support:2.27")
-        kapt("com.google.dagger:dagger-android-processor:2.27")
+        implementation("com.google.dagger:dagger-android-support:2.28.3")
+        kapt("com.google.dagger:dagger-android-processor:2.28.3")
 
         // AssistedInject
         compileOnly("com.squareup.inject:assisted-inject-annotations-dagger2:0.5.2")
         kapt("com.squareup.inject:assisted-inject-processor-dagger2:0.5.2")
 
         // Leak Canary
-        debugImplementation("com.squareup.leakcanary:leakcanary-android:2.2")
+        debugImplementation("com.squareup.leakcanary:leakcanary-android:2.4")
 
         // ViewPager 2
         implementation("androidx.viewpager2:viewpager2:1.0.0")
@@ -126,7 +126,7 @@ android {
         implementation("androidx.preference:preference-ktx:1.1.1")
 
         // ChromeCast
-        implementation("com.google.android.gms:play-services-cast-framework:18.1.0")
+        implementation("com.google.android.gms:play-services-cast-framework:19.0.0")
 
         // NanoHttp
         implementation("org.nanohttpd:nanohttpd-webserver:2.3.1")
@@ -137,7 +137,7 @@ android {
         implementation("com.github.bumptech.glide:okhttp3-integration:4.11.0")
 
         // Moshi
-        kapt("com.squareup.moshi:moshi-kotlin-codegen:1.9.2")
+        kapt("com.squareup.moshi:moshi-kotlin-codegen:1.9.3")
 
         // AndroidX Lifecycle
         implementation("androidx.lifecycle:lifecycle-common-java8:2.2.0")
@@ -149,10 +149,10 @@ android {
         implementation("com.github.PhilJay:MPAndroidChart:3.1.0")
 
         // BugSnag
-        implementation("com.bugsnag:bugsnag-android:5.0.0")
+        implementation("com.bugsnag:bugsnag-android:5.0.1")
 
         // AndroidX Lifecycle
-        implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.3.0-alpha05")
+        implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.3.0-alpha06")
     }
 }
 
