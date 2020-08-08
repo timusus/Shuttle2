@@ -10,6 +10,7 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Named
@@ -40,6 +41,8 @@ class ScannerPresenter @Inject constructor(
 ) : ScannerContract.Presenter,
     BasePresenter<ScannerContract.View>() {
 
+    var scanJob: Job? = null
+
     override fun bindView(view: ScannerContract.View) {
         super.bindView(view)
         mediaImporter.listeners.add(listener)
@@ -51,7 +54,7 @@ class ScannerPresenter @Inject constructor(
     }
 
     override fun startScan(scanType: ScannerContract.ScanType) {
-        appCoroutineScope.launch {
+        scanJob = appCoroutineScope.launch {
             mediaImporter.import(
                 when (scanType) {
                     is ScannerContract.ScanType.MediaStore -> MediaStoreSongProvider(context)
@@ -62,7 +65,7 @@ class ScannerPresenter @Inject constructor(
     }
 
     override fun stopScan() {
-        mediaImporter.stopImport()
+        scanJob?.cancel()
     }
 
     private val listener = object : MediaImporter.Listener {

@@ -38,27 +38,25 @@ class MediaImporter(
 
         this.mediaProvider = mediaProvider
 
-        withContext(Dispatchers.IO) {
-            val songs = mutableListOf<Song>()
-            mediaProvider.findSongs().collect { (song, progress) ->
-                songs.add(song)
+        try {
+            withContext(Dispatchers.IO) {
+                val songs = mutableListOf<Song>()
+                mediaProvider.findSongs().collect { (song, progress) ->
+                    songs.add(song)
 
-                withContext(Dispatchers.Main) {
-                    listeners.forEach { listener -> listener.onProgress(progress, song) }
+                    withContext(Dispatchers.Main) {
+                        listeners.forEach { listener -> listener.onProgress(progress, song) }
+                    }
                 }
+                songRepository.insert(songs)
             }
-
-            songRepository.insert(songs)
+            listeners.forEach { listener -> listener.onComplete() }
+            Timber.i("Populated media in ${"%.1f".format((System.currentTimeMillis() - time) / 1000f)}s")
+        } catch (e: Exception) {
+            Timber.e(e, "Failed to import media")
+        } finally {
+            isImporting = false
         }
-
-        isImporting = false
-
-        Timber.i("Populated media in ${"%.1f".format((System.currentTimeMillis() - time) / 1000f)}s")
-        listeners.forEach { listener -> listener.onComplete() }
-    }
-
-    fun stopImport() {
-        isImporting = false
     }
 
     /**
