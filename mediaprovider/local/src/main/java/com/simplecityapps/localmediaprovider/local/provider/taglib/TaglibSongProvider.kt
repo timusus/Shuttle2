@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+import java.io.FileNotFoundException
 import kotlin.coroutines.coroutineContext
 
 class TaglibSongProvider(
@@ -53,7 +54,7 @@ class FileScanner(private val tagLib: KTagLib) {
             DocumentFile.fromSingleUri(context, uri)?.let { documentFile ->
                 try {
                     context.contentResolver.openFileDescriptor(documentFile.uri, "r")?.use { pfd ->
-                        val audioFile = tagLib.getAudioFile(pfd.detachFd(), uri.toString(), documentFile.name?.substringBeforeLast(".") ?: "Unknown")
+                        val audioFile = tagLib.getAudioFile(pfd.fd, uri.toString(), documentFile.name?.substringBeforeLast(".") ?: "Unknown")
                         if (audioFile != null) {
                             return@withContext audioFile
                         } else {
@@ -76,6 +77,10 @@ class FileScanner(private val tagLib: KTagLib) {
                         }
                     }
                 } catch (e: IllegalArgumentException) {
+                    Timber.e(e, "Failed to retrieve audio file for uri: $uri")
+                } catch (e: FileNotFoundException) {
+                    Timber.e(e, "Failed to retrieve audio file for uri: $uri")
+                } catch (e: IllegalStateException) {
                     Timber.e(e, "Failed to retrieve audio file for uri: $uri")
                 }
             }
