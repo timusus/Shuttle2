@@ -6,23 +6,25 @@ import com.simplecityapps.mediaprovider.repository.AlbumQuery
 import com.simplecityapps.mediaprovider.repository.AlbumRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class LocalAlbumRepository(private val albumDataDao: AlbumDataDao) : AlbumRepository {
 
     private val albumsRelay: Flow<List<Album>> by lazy {
-        MutableStateFlow<List<Album>?>(null)
+        ConflatedBroadcastChannel<List<Album>?>(null)
             .apply {
                 CoroutineScope(Dispatchers.IO)
                     .launch {
                         albumDataDao
                             .getAll()
-                            .collect {
-                                value = it
+                            .collect { albums ->
+                                send(albums)
                             }
                     }
             }
+            .asFlow()
             .filterNotNull()
             .flowOn(Dispatchers.IO)
     }

@@ -34,7 +34,7 @@ class LocalSongRepository(
     }
 
     override suspend fun insert(songs: List<Song>) {
-        songDataDao.insertAll(songs.toSongData())
+        songDataDao.insertUpdateAndDelete(songs.toSongData())
     }
 
     override fun getSongs(query: SongQuery): Flow<List<Song>> {

@@ -56,6 +56,7 @@ class AlbumBinder(
         return album.name == other.album.name
                 && album.albumArtist == other.album.albumArtist
                 && album.songCount == other.album.songCount
+                && album.year == other.album.year
     }
 
 

@@ -69,6 +69,7 @@ class ExpandableAlbumBinder(
                     && album.albumArtist == other.album.albumArtist
                     && expanded == other.expanded
                     && album.songCount == other.album.songCount
+                    && album.year == other.album.year
                     && songs == other.songs
         } ?: false
     }
