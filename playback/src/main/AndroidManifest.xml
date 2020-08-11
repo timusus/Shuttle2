@@ -4,6 +4,9 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
+    <!-- Used by ExoPlayer-->
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+
     <application>
         <service
             android:name=".PlaybackService"

@@ -81,7 +81,9 @@ class ExoPlayerPlayback(
 
         renderersFactory.setExtensionRendererMode(EXTENSION_RENDERER_MODE_ON)
 
-        return SimpleExoPlayer.Builder(context, renderersFactory).build()
+        val simpleExoPlayer =  SimpleExoPlayer.Builder(context, renderersFactory).build()
+        simpleExoPlayer.setHandleWakeLock(true)
+        return simpleExoPlayer
     }
 
     override fun load(current: Song, next: Song?, seekPosition: Int, completion: (Result<Any?>) -> Unit) {
