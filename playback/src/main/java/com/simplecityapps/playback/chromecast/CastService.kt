@@ -11,7 +11,9 @@ import com.simplecityapps.mediaprovider.repository.SongRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import java.io.File
+import java.io.FileNotFoundException
 import java.io.InputStream
 
 class CastService(
@@ -41,17 +43,40 @@ class CastService(
                     if (DocumentsContract.isDocumentUri(context, uri)) {
                         val documentFile = DocumentFile.fromSingleUri(context, uri)
                         documentFile?.let {
-                            context.contentResolver.openInputStream(documentFile.uri)?.let { inputStream ->
-                                AudioStream(inputStream, documentFile.length(), documentFile.type ?: "audio/*")
+                            if (it.exists()) {
+                                try {
+                                    context.contentResolver.openInputStream(documentFile.uri)?.let { inputStream ->
+                                        AudioStream(inputStream, documentFile.length(), documentFile.type ?: "audio/*")
+                                    }
+                                } catch (e: FileNotFoundException) {
+                                    Timber.e(e, "Failed to retrieve audio from songId: $songId")
+                                    null
+                                }
+                            } else {
+                                Timber.e("Failed to retrieve audio from songId: $songId (Document file doesn't exist)")
+                                null
                             }
                         }
                     } else {
-                        context.contentResolver.openInputStream(uri)?.let { inputStream ->
-                            AudioStream(inputStream, song.size, song.mimeType)
+                        try {
+                            context.contentResolver.openInputStream(uri)?.let { inputStream ->
+                                AudioStream(inputStream, song.size, song.mimeType)
+                            }
+                        } catch (e: FileNotFoundException) {
+                            Timber.e(e, "Failed to retrieve audio from songId: $songId")
+                            null
                         }
                     }
                 } else {
-                    AudioStream(File(uri.toString()).inputStream(), song.size, song.mimeType)
+                    try {
+                        AudioStream(File(uri.toString()).inputStream(), song.size, song.mimeType)
+                    } catch (e: FileNotFoundException) {
+                        Timber.e(e, "Failed to retrieve audio from songId: $songId")
+                        null
+                    } catch (e: SecurityException) {
+                        Timber.e(e, "Failed to retrieve audio from songId: $songId")
+                        null
+                    }
                 }
             }
         }
