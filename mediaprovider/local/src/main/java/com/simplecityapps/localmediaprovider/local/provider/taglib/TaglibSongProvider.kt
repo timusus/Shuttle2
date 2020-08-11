@@ -52,36 +52,40 @@ class FileScanner(private val tagLib: KTagLib) {
     suspend fun getAudioFile(context: Context, uri: Uri): AudioFile? {
         return withContext(Dispatchers.IO) {
             DocumentFile.fromSingleUri(context, uri)?.let { documentFile ->
-                try {
-                    context.contentResolver.openFileDescriptor(documentFile.uri, "r")?.use { pfd ->
-                        val audioFile = tagLib.getAudioFile(pfd.fd, uri.toString(), documentFile.name?.substringBeforeLast(".") ?: "Unknown")
-                        if (audioFile != null) {
-                            return@withContext audioFile
-                        } else {
-                            return@withContext AudioFile(
-                                path = uri.toString(),
-                                size = documentFile.length(),
-                                lastModified = documentFile.lastModified(),
-                                title = documentFile.name?.substringBeforeLast("."),
-                                albumArtist = null,
-                                artist = null,
-                                album = documentFile.parentFile?.name,
-                                track = 1,
-                                trackTotal = 1,
-                                disc = 1,
-                                discTotal = 1,
-                                duration = 0,
-                                date = null,
-                                genre = null
-                            )
+                if (documentFile.exists()) {
+                    try {
+                        context.contentResolver.openFileDescriptor(documentFile.uri, "r")?.use { pfd ->
+                            val audioFile = tagLib.getAudioFile(pfd.fd, uri.toString(), documentFile.name?.substringBeforeLast(".") ?: "Unknown")
+                            if (audioFile != null) {
+                                return@withContext audioFile
+                            } else {
+                                return@withContext AudioFile(
+                                    path = uri.toString(),
+                                    size = documentFile.length(),
+                                    lastModified = documentFile.lastModified(),
+                                    title = documentFile.name?.substringBeforeLast("."),
+                                    albumArtist = null,
+                                    artist = null,
+                                    album = documentFile.parentFile?.name,
+                                    track = 1,
+                                    trackTotal = 1,
+                                    disc = 1,
+                                    discTotal = 1,
+                                    duration = 0,
+                                    date = null,
+                                    genre = null
+                                )
+                            }
                         }
+                    } catch (e: IllegalArgumentException) {
+                        Timber.e(e, "Failed to retrieve audio file for uri: $uri")
+                    } catch (e: FileNotFoundException) {
+                        Timber.e(e, "Failed to retrieve audio file for uri: $uri")
+                    } catch (e: IllegalStateException) {
+                        Timber.e(e, "Failed to retrieve audio file for uri: $uri")
                     }
-                } catch (e: IllegalArgumentException) {
-                    Timber.e(e, "Failed to retrieve audio file for uri: $uri")
-                } catch (e: FileNotFoundException) {
-                    Timber.e(e, "Failed to retrieve audio file for uri: $uri")
-                } catch (e: IllegalStateException) {
-                    Timber.e(e, "Failed to retrieve audio file for uri: $uri")
+                } else {
+                    Timber.e("Document file doesn't exist for uri: $uri")
                 }
             }
             return@withContext null
