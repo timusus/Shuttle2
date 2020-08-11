@@ -3,7 +3,6 @@ package com.simplecityappds.saf
 import android.content.ContentResolver
 import android.net.Uri
 import android.provider.DocumentsContract
-import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -135,31 +134,34 @@ object SafDirectoryHelper {
      *
      * This involves a content resolver query, and should be called from a background thread.
      */
-    private fun retrieveDocumentNodes(contentResolver: ContentResolver, uri: Uri, rootUri: Uri): List<SafDirectoryHelper.DocumentNode> {
+    private fun retrieveDocumentNodes(contentResolver: ContentResolver, uri: Uri, rootUri: Uri): List<DocumentNode> {
         val documentNodes = mutableListOf<DocumentNode>()
-
-        contentResolver.query(
-            uri,
-            arrayOf(
-                DocumentsContract.Document.COLUMN_DOCUMENT_ID,
-                DocumentsContract.Document.COLUMN_DISPLAY_NAME,
-                DocumentsContract.Document.COLUMN_MIME_TYPE
-            ),
-            null,
-            null,
-            null
-        ).use { cursor ->
-            cursor?.let { cursor ->
-                while (cursor.moveToNext()) {
-                    val mimeType = cursor.getString(2)
-                    val documentId = cursor.getString(0)
-                    if (mimeType == DocumentsContract.Document.MIME_TYPE_DIR) {
-                        documentNodes.add(DocumentNodeTree(DocumentsContract.buildDocumentUriUsingTree(uri, documentId), rootUri, documentId, cursor.getString(1), mimeType))
-                    } else {
-                        documentNodes.add(DocumentNode(DocumentsContract.buildDocumentUriUsingTree(uri, documentId), documentId, cursor.getString(1), mimeType))
+        try {
+            contentResolver.query(
+                uri,
+                arrayOf(
+                    DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+                    DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                    DocumentsContract.Document.COLUMN_MIME_TYPE
+                ),
+                null,
+                null,
+                null
+            ).use { cursor ->
+                cursor?.let { cursor ->
+                    while (cursor.moveToNext()) {
+                        val mimeType = cursor.getString(2)
+                        val documentId = cursor.getString(0)
+                        if (mimeType == DocumentsContract.Document.MIME_TYPE_DIR) {
+                            documentNodes.add(DocumentNodeTree(DocumentsContract.buildDocumentUriUsingTree(uri, documentId), rootUri, documentId, cursor.getString(1), mimeType))
+                        } else {
+                            documentNodes.add(DocumentNode(DocumentsContract.buildDocumentUriUsingTree(uri, documentId), documentId, cursor.getString(1), mimeType))
+                        }
                     }
-                }
-            } ?: Log.e(TAG, "Failed to iterate cursor (null)")
+                } ?: Timber.e("Failed to iterate cursor (null)")
+            }
+        } catch (e: SecurityException) {
+            Timber.e("Failed to retrieve document node for uri: $uri")
         }
         return documentNodes
     }
