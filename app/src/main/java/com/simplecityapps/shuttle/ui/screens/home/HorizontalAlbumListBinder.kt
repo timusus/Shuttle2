@@ -12,7 +12,8 @@ import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.SpacesItemDecoration
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
-import com.simplecityapps.shuttle.ui.screens.library.songs.GridAlbumBinder
+import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumBinder
+import com.simplecityapps.shuttle.ui.screens.library.albums.GridAlbumBinder
 import kotlinx.coroutines.CoroutineScope
 
 class HorizontalAlbumListBinder(
@@ -22,7 +23,7 @@ class HorizontalAlbumListBinder(
     val imageLoader: ArtworkImageLoader,
     val showPlayCountBadge: Boolean = false,
     val scope: CoroutineScope,
-    val listener: GridAlbumBinder.Listener? = null
+    val listener: AlbumBinder.Listener
 ) : ViewBinder {
 
     override fun createViewHolder(parent: ViewGroup): ViewBinder.ViewHolder<out ViewBinder> {
@@ -60,7 +61,6 @@ class HorizontalAlbumListBinder(
 
         private val titleLabel: TextView = itemView.findViewById(R.id.titleLabel)
         private val subtitleLabel: TextView = itemView.findViewById(R.id.subtitleLabel)
-        private val headerContainer: View = itemView.findViewById(R.id.headerContainer)
         private val recyclerView: RecyclerView = itemView.findViewById(R.id.recyclerView)
 
         val adapter: RecyclerAdapter = RecyclerAdapter(scope)
@@ -77,13 +77,14 @@ class HorizontalAlbumListBinder(
 
             recyclerView.adapter = adapter
             adapter.update(viewBinder.albums.map { album ->
-                GridAlbumBinder(album, viewBinder.imageLoader, showPlayCountBadge = viewBinder.showPlayCountBadge, listener = viewBinder.listener)
+                GridAlbumBinder(
+                    album,
+                    viewBinder.imageLoader,
+                    listener = viewBinder.listener,
+                    showPlayCountBadge = viewBinder.showPlayCountBadge,
+                    fixedWidthDp = 108
+                )
             })
-        }
-
-        override fun recycle() {
-
-            super.recycle()
         }
     }
 }

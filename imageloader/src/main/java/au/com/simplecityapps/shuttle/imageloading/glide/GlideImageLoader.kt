@@ -26,6 +26,7 @@ import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.AppWidgetTarget
 import com.bumptech.glide.request.target.Target
+import com.bumptech.glide.request.transition.DrawableCrossFadeFactory
 import com.simplecity.amp_library.glide.palette.ColorSet
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.AlbumArtist
@@ -108,6 +109,9 @@ class GlideImageLoader : ArtworkImageLoader {
                 is ArtworkImageLoader.Options.Crossfade -> {
                     throw NotImplementedError()
                 }
+                is ArtworkImageLoader.Options.CenterCrop -> {
+                    glideRequest.apply(RequestOptions.centerCropTransform())
+                }
             }
         }
 
@@ -115,7 +119,6 @@ class GlideImageLoader : ArtworkImageLoader {
     }
 
     fun loadIntoRemoteViews(song: Song, target: AppWidgetTarget, vararg options: ArtworkImageLoader.Options) {
-
         val glideRequest = requestManager
             .asBitmap()
             .load(song)
@@ -138,6 +141,9 @@ class GlideImageLoader : ArtworkImageLoader {
                 }
                 is ArtworkImageLoader.Options.Crossfade -> {
                     throw NotImplementedError()
+                }
+                is ArtworkImageLoader.Options.CenterCrop -> {
+                    glideRequest.apply(RequestOptions.centerCropTransform())
                 }
             }
         }
@@ -267,6 +273,9 @@ class GlideImageLoader : ArtworkImageLoader {
                 }
                 is ArtworkImageLoader.Options.Placeholder -> {
                     glideRequest.placeholder(option.placeholderResId)
+                }
+                is ArtworkImageLoader.Options.CenterCrop -> {
+                    glideRequest.apply(RequestOptions.centerCropTransform())
                 }
             }
         }

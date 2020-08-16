@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.coroutineScope
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.adapter.RecyclerAdapter
@@ -20,11 +21,13 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.error.userDescription
+import com.simplecityapps.shuttle.ui.common.recyclerview.GridSpacingItemDecoration
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
+import com.simplecityapps.shuttle.ui.screens.library.ViewMode
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
@@ -97,9 +100,14 @@ class AlbumArtistListFragment :
         presenter.loadAlbumArtists()
 
         findToolbarHost()?.getToolbar()?.let { toolbar ->
-            toolbar.inflateMenu(R.menu.menu_library)
+            toolbar.inflateMenu(R.menu.menu_artist_list)
             toolbar.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
+                    R.id.viewMode -> {
+                        adapter.clear()
+                        presenter.toggleViewMode()
+                        true
+                    }
                     R.id.rescan -> {
                         presenter.rescanLibrary()
                         Toast.makeText(requireContext(), "Library scan started", Toast.LENGTH_SHORT).show()
@@ -116,6 +124,7 @@ class AlbumArtistListFragment :
 
         findToolbarHost()?.getToolbar()?.let { toolbar ->
             toolbar.menu.removeItem(R.id.rescan)
+            toolbar.menu.removeItem(R.id.viewMode)
             toolbar.setOnMenuItemClickListener(null)
         }
 
@@ -128,8 +137,6 @@ class AlbumArtistListFragment :
     }
 
     override fun onDestroyView() {
-
-
         presenter.unbindView()
         playlistMenuPresenter.unbindView()
 
@@ -139,9 +146,12 @@ class AlbumArtistListFragment :
 
     // AlbumArtistListContact.View Implementation
 
-    override fun setAlbumArtists(albumArtists: List<AlbumArtist>) {
+    override fun setAlbumArtists(albumArtists: List<AlbumArtist>, viewMode: ViewMode) {
         adapter.update(albumArtists.map { albumArtist ->
-            AlbumArtistBinder(albumArtist, imageLoader, this)
+            when (viewMode) {
+                ViewMode.Grid -> GridAlbumArtistBinder(albumArtist, imageLoader, this)
+                ViewMode.List -> ListAlbumArtistBinder(albumArtist, imageLoader, this)
+            }
         }, completion = {
             recyclerViewState?.let {
                 recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
@@ -176,6 +186,25 @@ class AlbumArtistListFragment :
 
     override fun showLoadError(error: Error) {
         Toast.makeText(context, error.userDescription(), Toast.LENGTH_LONG).show()
+    }
+
+    override fun setViewMode(viewMode: ViewMode) {
+        when (viewMode) {
+            ViewMode.List -> {
+                (recyclerView.layoutManager as GridLayoutManager).spanCount = 1
+                if (recyclerView.itemDecorationCount != 0) {
+                    recyclerView.removeItemDecorationAt(0)
+                }
+                findToolbarHost()?.getToolbar()?.menu?.findItem(R.id.viewMode)?.setIcon(R.drawable.ic_grid_outline_24)
+            }
+            ViewMode.Grid -> {
+                (recyclerView.layoutManager as GridLayoutManager).spanCount = 3
+                if (recyclerView.itemDecorationCount == 0) {
+                    recyclerView.addItemDecoration(GridSpacingItemDecoration(8, true))
+                }
+                findToolbarHost()?.getToolbar()?.menu?.findItem(R.id.viewMode)?.setIcon(R.drawable.ic_list_outline_24)
+            }
+        }
     }
 
 
@@ -224,7 +253,8 @@ class AlbumArtistListFragment :
         popupMenu.show()
     }
 
-    // CreatePlaylistDialogFragment.Listener
+
+    // CreatePlaylistDialogFragment.Listener Implementation
 
     override fun onSave(text: String, playlistData: PlaylistData) {
         playlistMenuView.onSave(text, playlistData)

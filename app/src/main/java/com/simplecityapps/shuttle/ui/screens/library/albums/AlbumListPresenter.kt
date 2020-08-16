@@ -7,7 +7,10 @@ import com.simplecityapps.mediaprovider.repository.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
+import com.simplecityapps.shuttle.ui.screens.library.ViewMode
+import com.simplecityapps.shuttle.ui.screens.library.toViewMode
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.firstOrNull
@@ -26,11 +29,12 @@ class AlbumListContract {
     }
 
     interface View {
-        fun setAlbums(albums: List<Album>)
+        fun setAlbums(albums: List<Album>, viewMode: ViewMode)
         fun onAddedToQueue(album: Album)
         fun setLoadingState(state: LoadingState)
         fun setLoadingProgress(progress: Float)
         fun showLoadError(error: Error)
+        fun setViewMode(viewMode: ViewMode)
     }
 
     interface Presenter {
@@ -40,6 +44,7 @@ class AlbumListContract {
         fun rescanLibrary()
         fun exclude(album: Album)
         fun play(album: Album)
+        fun toggleViewMode()
     }
 }
 
@@ -48,14 +53,23 @@ class AlbumListPresenter @Inject constructor(
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackManager,
     private val mediaImporter: MediaImporter,
+    private val preferenceManager: GeneralPreferenceManager,
     @Named("AppCoroutineScope") private val appCoroutineScope: CoroutineScope
 ) : AlbumListContract.Presenter,
     BasePresenter<AlbumListContract.View>() {
+
+    private var albums: List<Album> = emptyList()
 
     private val mediaImporterListener = object : MediaImporter.Listener {
         override fun onProgress(progress: Float, song: Song) {
             view?.setLoadingProgress(progress)
         }
+    }
+
+    override fun bindView(view: AlbumListContract.View) {
+        super.bindView(view)
+
+        view.setViewMode(preferenceManager.albumListViewMode.toViewMode())
     }
 
     override fun unbindView() {
@@ -81,7 +95,9 @@ class AlbumListPresenter @Inject constructor(
                         mediaImporter.listeners.remove(mediaImporterListener)
                         view?.setLoadingState(AlbumListContract.LoadingState.None)
                     }
-                    view?.setAlbums(albums)
+                    this@AlbumListPresenter.albums = albums
+                    view?.setViewMode(preferenceManager.albumListViewMode.toViewMode())
+                    view?.setAlbums(albums, preferenceManager.albumListViewMode.toViewMode())
                 }
         }
     }
@@ -112,6 +128,16 @@ class AlbumListPresenter @Inject constructor(
         appCoroutineScope.launch {
             mediaImporter.reImport()
         }
+    }
+
+    override fun toggleViewMode() {
+        val viewMode = when (preferenceManager.albumListViewMode.toViewMode()) {
+            ViewMode.List -> ViewMode.Grid
+            ViewMode.Grid -> ViewMode.List
+        }
+        preferenceManager.albumListViewMode = viewMode.name
+        view?.setViewMode(viewMode)
+        view?.setAlbums(albums, viewMode)
     }
 
     override fun exclude(album: Album) {

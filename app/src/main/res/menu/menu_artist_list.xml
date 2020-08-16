@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/viewMode"
+        android:icon="@drawable/ic_grid_outline_24"
+        android:title="View mode"
+        app:showAsAction="ifRoom" />
+
+    <item
+        android:id="@+id/rescan"
+        android:icon="@drawable/ic_outline_sync_24"
+        android:title="Rescan"
+        app:showAsAction="ifRoom" />
+
+</menu>
