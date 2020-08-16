@@ -26,7 +26,6 @@ import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.AppWidgetTarget
 import com.bumptech.glide.request.target.Target
-import com.bumptech.glide.request.transition.DrawableCrossFadeFactory
 import com.simplecity.amp_library.glide.palette.ColorSet
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.AlbumArtist
@@ -43,7 +42,7 @@ class GlideImageLoader : ArtworkImageLoader {
         object Failure : LoadResult()
     }
 
-    private var requestManager: RequestManager
+    var requestManager: RequestManager
 
     constructor(fragment: Fragment) {
         this.requestManager = GlideApp.with(fragment)
@@ -247,7 +246,7 @@ class GlideImageLoader : ArtworkImageLoader {
             .into(imageView)
     }
 
-    private fun getRequestBuilder(vararg options: ArtworkImageLoader.Options): RequestBuilder<Drawable> {
+    fun getRequestBuilder(vararg options: ArtworkImageLoader.Options): RequestBuilder<Drawable> {
         val glideRequest = requestManager
             .asDrawable()
             .placeholder(placeHolderResId)

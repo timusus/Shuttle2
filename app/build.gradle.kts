@@ -152,7 +152,12 @@ android {
         implementation("com.bugsnag:bugsnag-android:5.0.1")
 
         // AndroidX Lifecycle
-        implementation ("androidx.lifecycle:lifecycle-runtime-ktx:2.3.0-alpha06")
+        implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.3.0-alpha06")
+
+        compile("com.github.bumptech.glide:recyclerview-integration:4.11.0") {
+            // Excludes the support library because it's already included by Glide.
+            isTransitive = false
+        }
     }
 }
 

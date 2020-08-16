@@ -17,6 +17,7 @@ abstract class AlbumArtistBinder(
     interface Listener {
         fun onAlbumArtistClicked(albumArtist: AlbumArtist, viewHolder: ViewHolder)
         fun onOverflowClicked(view: View, albumArtist: AlbumArtist) {}
+        fun onViewHolderCreated(holder: ViewHolder) {}
     }
 
     override fun getSectionName(): String? {
@@ -47,5 +48,9 @@ abstract class AlbumArtistBinder(
 
     abstract class ViewHolder(itemView: View) : ViewBinder.ViewHolder<AlbumArtistBinder>(itemView) {
         abstract val imageView: ImageView
+
+        init {
+            viewBinder?.listener?.onViewHolderCreated(this)
+        }
     }
 }
