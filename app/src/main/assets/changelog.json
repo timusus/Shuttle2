@@ -1,9 +1,5 @@
 {
   "commits": [
-    "Fixed issue where updates and deletes weren't occurring",
-    "Fixed issue where duplicates may appear in library",
-    "Fixed crash when scanning library",
-    "Fixed crashes that may occur when casting",
-    "Prevent device from sleeping app when music is playing"
+    "Added option to switch between list/grid mode for albums & artists"
   ]
 }
