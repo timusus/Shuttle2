@@ -30,19 +30,22 @@ import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.HomeButton
+import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistBinder
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragmentArgs
+import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumBinder
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.library.playlists.detail.PlaylistDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylist
 import com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylistDetailFragmentArgs
-import com.simplecityapps.shuttle.ui.screens.library.songs.GridAlbumArtistBinder
-import com.simplecityapps.shuttle.ui.screens.library.songs.GridAlbumBinder
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
 
@@ -232,9 +235,9 @@ class HomeFragment :
 
     // Private
 
-    private val albumArtistBinderListener = object : GridAlbumArtistBinder.Listener {
+    private val albumArtistBinderListener = object : AlbumArtistBinder.Listener {
 
-        override fun onAlbumArtistClicked(albumArtist: AlbumArtist, viewHolder: GridAlbumArtistBinder.ViewHolder) {
+        override fun onAlbumArtistClicked(albumArtist: AlbumArtist, viewHolder: AlbumArtistBinder.ViewHolder) {
             findNavController().navigate(
                 R.id.action_homeFragment_to_albumArtistDetailFragment,
                 AlbumArtistDetailFragmentArgs(albumArtist, true).toBundle(),
@@ -243,7 +246,7 @@ class HomeFragment :
             )
         }
 
-        override fun onAlbumArtistLongPressed(view: View, albumArtist: AlbumArtist) {
+        override fun onOverflowClicked(view: View, albumArtist: AlbumArtist) {
             val popupMenu = PopupMenu(requireContext(), view)
             popupMenu.inflate(R.menu.menu_popup_add)
 
@@ -278,9 +281,9 @@ class HomeFragment :
         }
     }
 
-    private val albumBinderListener = object : GridAlbumBinder.Listener {
+    private val albumBinderListener = object : AlbumBinder.Listener {
 
-        override fun onAlbumClicked(album: Album, viewHolder: GridAlbumBinder.ViewHolder) {
+        override fun onAlbumClicked(album: Album, viewHolder: AlbumBinder.ViewHolder) {
             findNavController().navigate(
                 R.id.action_homeFragment_to_albumDetailFragment,
                 AlbumDetailFragmentArgs(album, true).toBundle(),
@@ -289,7 +292,8 @@ class HomeFragment :
             )
         }
 
-        override fun onAlbumLongPressed(view: View, album: Album) {
+
+        override fun onOverflowClicked(view: View, album: Album) {
             val popupMenu = PopupMenu(requireContext(), view)
             popupMenu.inflate(R.menu.menu_popup_add)
 

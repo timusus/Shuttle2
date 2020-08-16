@@ -31,8 +31,10 @@ import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistBinder
+import com.simplecityapps.shuttle.ui.screens.library.albumartists.ListAlbumArtistBinder
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumBinder
+import com.simplecityapps.shuttle.ui.screens.library.albums.ListAlbumBinder
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongBinder
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
@@ -159,11 +161,11 @@ class SearchFragment : Fragment(),
         val list = mutableListOf<ViewBinder>().apply {
             if (searchResult.first.isNotEmpty()) {
                 add(SearchHeaderBinder("Artists"))
-                addAll(searchResult.first.map { albumArtist -> AlbumArtistBinder(albumArtist, imageLoader, albumArtistBinderListener) })
+                addAll(searchResult.first.map { albumArtist -> ListAlbumArtistBinder(albumArtist, imageLoader, albumArtistBinderListener) })
             }
             if (searchResult.second.isNotEmpty()) {
                 add(SearchHeaderBinder("Albums"))
-                addAll(searchResult.second.map { album -> AlbumBinder(album, imageLoader, albumBinderListener) })
+                addAll(searchResult.second.map { album -> ListAlbumBinder(album, imageLoader, albumBinderListener) })
             }
             if (searchResult.third.isNotEmpty()) {
                 add(SearchHeaderBinder("Songs"))

@@ -59,4 +59,20 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
         get() {
             return sharedPreferences.get("pref_crash_reporting", true)
         }
+
+    var artistListViewMode: String?
+        set(value) {
+            sharedPreferences.put("pref_artist_view_mode", value)
+        }
+        get() {
+            return sharedPreferences.getString("pref_artist_view_mode", null)
+        }
+
+    var albumListViewMode: String?
+        set(value) {
+            sharedPreferences.put("pref_album_view_mode", value)
+        }
+        get() {
+            return sharedPreferences.getString("pref_album_view_mode", null)
+        }
 }

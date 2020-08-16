@@ -12,7 +12,8 @@ import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.SpacesItemDecoration
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
-import com.simplecityapps.shuttle.ui.screens.library.songs.GridAlbumArtistBinder
+import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistBinder
+import com.simplecityapps.shuttle.ui.screens.library.albumartists.GridAlbumArtistBinder
 import kotlinx.coroutines.CoroutineScope
 
 class HorizontalAlbumArtistListBinder(
@@ -21,7 +22,7 @@ class HorizontalAlbumArtistListBinder(
     val albumArtists: List<AlbumArtist>,
     val imageLoader: ArtworkImageLoader,
     val scope: CoroutineScope,
-    val listener: GridAlbumArtistBinder.Listener? = null
+    val listener: AlbumArtistBinder.Listener
 ) : ViewBinder {
 
     override fun createViewHolder(parent: ViewGroup): ViewBinder.ViewHolder<out ViewBinder> {
@@ -59,14 +60,12 @@ class HorizontalAlbumArtistListBinder(
 
         private val titleLabel: TextView = itemView.findViewById(R.id.titleLabel)
         private val subtitleLabel: TextView = itemView.findViewById(R.id.subtitleLabel)
-        private val headerContainer: View = itemView.findViewById(R.id.headerContainer)
         private val recyclerView: RecyclerView = itemView.findViewById(R.id.recyclerView)
 
         val adapter: RecyclerAdapter = RecyclerAdapter(scope)
 
         init {
             recyclerView.addItemDecoration(SpacesItemDecoration(4))
-//            headerContainer.setOnClickListener { viewBinder?.listener?.onHeaderClicked() }
         }
 
         override fun bind(viewBinder: HorizontalAlbumArtistListBinder, isPartial: Boolean) {
@@ -77,13 +76,13 @@ class HorizontalAlbumArtistListBinder(
 
             recyclerView.adapter = adapter
             adapter.update(viewBinder.albumArtists.map { albumArtist ->
-                GridAlbumArtistBinder(albumArtist, viewBinder.imageLoader, listener = viewBinder.listener)
+                GridAlbumArtistBinder(
+                    albumArtist,
+                    viewBinder.imageLoader,
+                    listener = viewBinder.listener,
+                    fixedWidthDp = 108
+                )
             })
-        }
-
-        override fun recycle() {
-
-            super.recycle()
         }
     }
 }
