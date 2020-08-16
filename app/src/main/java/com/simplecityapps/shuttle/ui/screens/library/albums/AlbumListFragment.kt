@@ -15,6 +15,8 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
+import com.bumptech.glide.integration.recyclerview.RecyclerViewPreloader
+import com.bumptech.glide.util.ViewPreloadSizeProvider
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.mediaprovider.model.Album
@@ -24,6 +26,7 @@ import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.GridSpacingItemDecoration
+import com.simplecityapps.shuttle.ui.common.recyclerview.MyPreloadModelProvider
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
@@ -46,7 +49,7 @@ class AlbumListFragment :
 
     private lateinit var adapter: RecyclerAdapter
 
-    private var imageLoader: ArtworkImageLoader by autoCleared()
+    private var imageLoader: GlideImageLoader by autoCleared()
 
     private var recyclerView: RecyclerView by autoCleared()
     private var circularLoadingView: CircularLoadingView by autoCleared()
@@ -59,6 +62,9 @@ class AlbumListFragment :
     private lateinit var playlistMenuView: PlaylistMenuView
 
     private var recyclerViewState: Parcelable? = null
+
+    private val viewPreloadSizeProvider by lazy { ViewPreloadSizeProvider<Album>() }
+    private val preloadModelProvider by lazy { MyPreloadModelProvider<Album>(imageLoader, arrayOf(ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_album))) }
 
 
     // Lifecycle
@@ -84,6 +90,14 @@ class AlbumListFragment :
         recyclerView.adapter = adapter
         recyclerView.setRecyclerListener(RecyclerListener())
         recyclerView.clearAdapterOnDetach()
+        val preloader: RecyclerViewPreloader<Album> = RecyclerViewPreloader(
+            imageLoader.requestManager,
+            preloadModelProvider,
+            viewPreloadSizeProvider,
+            12
+        )
+        recyclerView.addOnScrollListener(preloader)
+        recyclerView.setItemViewCacheSize(0)
 
         circularLoadingView = view.findViewById(R.id.circularLoadingView)
         horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
@@ -149,6 +163,7 @@ class AlbumListFragment :
     // AlbumListContract.View Implementation
 
     override fun setAlbums(albums: List<Album>, viewMode: ViewMode) {
+        preloadModelProvider.items = albums
         adapter.update(albums.map { album ->
             when (viewMode) {
                 ViewMode.Grid -> GridAlbumBinder(album, imageLoader, this)
@@ -253,6 +268,10 @@ class AlbumListFragment :
             false
         }
         popupMenu.show()
+    }
+
+    override fun onViewHolderCreated(holder: AlbumBinder.ViewHolder) {
+        viewPreloadSizeProvider.setView(holder.imageView)
     }
 
 

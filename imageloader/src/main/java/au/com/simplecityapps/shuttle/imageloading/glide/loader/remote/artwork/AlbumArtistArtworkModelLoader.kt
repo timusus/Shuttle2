@@ -43,4 +43,3 @@ class AlbumArtistArtworkModelLoader(
         override fun teardown() {}
     }
 }
-
