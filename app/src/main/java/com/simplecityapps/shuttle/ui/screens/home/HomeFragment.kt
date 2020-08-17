@@ -216,6 +216,7 @@ class HomeFragment :
         adapter.update(viewBinders, completion = {
             recyclerViewState?.let {
                 recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
+                recyclerViewState = null
             }
         })
     }

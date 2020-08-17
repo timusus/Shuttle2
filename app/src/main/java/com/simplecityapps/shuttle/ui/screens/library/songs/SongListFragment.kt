@@ -150,6 +150,7 @@ class SongListFragment :
         }, completion = {
             recyclerViewState?.let {
                 recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
+                recyclerViewState = null
             }
         })
     }
