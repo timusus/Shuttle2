@@ -7,6 +7,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:elevation="0dp"
+    android:foreground="?selectableItemBackground"
     app:cardCornerRadius="4dp"
     tools:layout_marginRight="8dp"
     tools:layout_width="108dp">
@@ -48,7 +49,7 @@
                 android:layout_marginStart="8dp"
                 android:layout_marginEnd="8dp"
                 android:alpha="0.86"
-                android:textSize="12sp"
+                android:textSize="13sp"
                 tools:text="Lateralus" />
 
             <TextView
