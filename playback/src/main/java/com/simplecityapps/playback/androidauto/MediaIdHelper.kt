@@ -22,58 +22,57 @@ class MediaIdHelper @Inject constructor(
 ) {
 
     suspend fun getChildren(mediaId: String): List<MediaBrowserCompat.MediaItem> {
-
-        val mediaIdWrapper: MediaIdWrapper? = parseMediaId(mediaId)
-
-        return when (mediaIdWrapper) {
-            is MediaIdWrapper.Directory.Root -> {
-                mutableListOf(
-                    MediaBrowserCompat.MediaItem(
-                        MediaDescriptionCompat.Builder()
-                            .setTitle("Artists")
-                            .setMediaId("media:/artist_root/")
-                            .build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
-                    ), MediaBrowserCompat.MediaItem(
-                        MediaDescriptionCompat.Builder()
-                            .setTitle("Albums")
-                            .setMediaId("media:/album_root/")
-                            .build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
-                    ), MediaBrowserCompat.MediaItem(
-                        MediaDescriptionCompat.Builder()
-                            .setTitle("Playlists")
-                            .setMediaId("media:/playlist_root/")
-                            .build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
-                    ), MediaBrowserCompat.MediaItem(
-                        MediaDescriptionCompat.Builder()
-                            .setTitle("Shuffle All")
-                            .setMediaId("media:/shuffle_all")
-                            .build(), MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
+        return withContext(Dispatchers.IO) {
+            when (val mediaIdWrapper: MediaIdWrapper? = parseMediaId(mediaId)) {
+                is MediaIdWrapper.Directory.Root -> {
+                    mutableListOf(
+                        MediaBrowserCompat.MediaItem(
+                            MediaDescriptionCompat.Builder()
+                                .setTitle("Artists")
+                                .setMediaId("media:/artist_root/")
+                                .build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
+                        ), MediaBrowserCompat.MediaItem(
+                            MediaDescriptionCompat.Builder()
+                                .setTitle("Albums")
+                                .setMediaId("media:/album_root/")
+                                .build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
+                        ), MediaBrowserCompat.MediaItem(
+                            MediaDescriptionCompat.Builder()
+                                .setTitle("Playlists")
+                                .setMediaId("media:/playlist_root/")
+                                .build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
+                        ), MediaBrowserCompat.MediaItem(
+                            MediaDescriptionCompat.Builder()
+                                .setTitle("Shuffle All")
+                                .setMediaId("media:/shuffle_all")
+                                .build(), MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
+                        )
                     )
-                )
+                }
+                is MediaIdWrapper.Directory.Artists -> {
+                    artistRepository.getAlbumArtists().firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
+                }
+                is MediaIdWrapper.Directory.Albums.All -> {
+                    albumRepository.getAlbums().firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
+                }
+                is MediaIdWrapper.Directory.Albums.Artist -> {
+                    albumRepository.getAlbums(AlbumQuery.AlbumArtist(mediaIdWrapper.artistName)).firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
+                }
+                is MediaIdWrapper.Directory.Playlists -> {
+                    playlistRepository.getPlaylists().firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
+                }
+                is MediaIdWrapper.Directory.Songs.Album -> {
+                    songRepository
+                        .getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = mediaIdWrapper.albumName, albumArtistName = mediaIdWrapper.albumArtistName))))
+                        .firstOrNull()
+                        .orEmpty()
+                        .map { it.toMediaItem(mediaId) }
+                }
+                is MediaIdWrapper.Directory.Songs.Playlist -> {
+                    playlistRepository.getSongsForPlaylist(mediaIdWrapper.playlistId).firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
+                }
+                else -> mutableListOf()
             }
-            is MediaIdWrapper.Directory.Artists -> {
-                artistRepository.getAlbumArtists().firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
-            }
-            is MediaIdWrapper.Directory.Albums.All -> {
-                albumRepository.getAlbums().firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
-            }
-            is MediaIdWrapper.Directory.Albums.Artist -> {
-                albumRepository.getAlbums(AlbumQuery.AlbumArtist(mediaIdWrapper.artistName)).firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
-            }
-            is MediaIdWrapper.Directory.Playlists -> {
-                playlistRepository.getPlaylists().firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
-            }
-            is MediaIdWrapper.Directory.Songs.Album -> {
-                songRepository
-                    .getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = mediaIdWrapper.albumName, albumArtistName = mediaIdWrapper.albumArtistName))))
-                    .firstOrNull()
-                    .orEmpty()
-                    .map { it.toMediaItem(mediaId) }
-            }
-            is MediaIdWrapper.Directory.Songs.Playlist -> {
-                playlistRepository.getSongsForPlaylist(mediaIdWrapper.playlistId).firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
-            }
-            else -> mutableListOf()
         }
     }
 

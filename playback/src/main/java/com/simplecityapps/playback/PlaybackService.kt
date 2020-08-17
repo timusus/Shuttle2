@@ -41,7 +41,7 @@ class PlaybackService :
 
     private val packageValidator: PackageValidator by lazy { PackageValidator(this, R.xml.allowed_media_browser_callers) }
 
-    private val coroutineScope = CoroutineScope(Dispatchers.IO)
+    private val coroutineScope = CoroutineScope(Dispatchers.Main)
 
     override fun onCreate() {
         Timber.v("onCreate()")
