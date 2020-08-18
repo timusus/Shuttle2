@@ -277,9 +277,14 @@ class PlaybackManager(
         this.playback = playback
         playback.callback = this
 
-        loadCurrent(seekPosition ?: 0) {
-            if (wasPlaying && playback.getResumeWhenSwitched()) {
-                play()
+        loadCurrent(seekPosition ?: 0) { result ->
+            result.onSuccess {
+                playbackPreferenceManager.playbackPosition?.let { playbackPosition ->
+                    seekTo(playbackPosition)
+                }
+                if (wasPlaying && playback.getResumeWhenSwitched(oldPlayback)) {
+                    play()
+                }
             }
         }
     }

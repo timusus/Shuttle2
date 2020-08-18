@@ -6,11 +6,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.SwitchCompat
 import androidx.appcompat.widget.Toolbar
-import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
 import androidx.navigation.fragment.findNavController
 import com.simplecityapps.playback.equalizer.Equalizer
 import com.simplecityapps.playback.equalizer.EqualizerBand
@@ -84,11 +83,12 @@ class EqualizerFragment : Fragment(), Injectable, EqualizerContract.View {
 
     // EqualizerContract.View Implementation
 
-    override fun initializeEqualizerView(activated: Boolean, equalizer: Equalizer.Presets.Preset, maxBandGain: Int) {
-        (toolbar.menu.findItem(R.id.enableEqualizer).actionView as SwitchCompat).isChecked = activated
+    override fun initializeEqualizerView(activated: Boolean, enabled: Boolean, equalizer: Equalizer.Presets.Preset, maxBandGain: Int) {
+        val switch = toolbar.menu.findItem(R.id.enableEqualizer).actionView as SwitchCompat
+        switch.isChecked = activated && enabled
 
         equalizerView.configure(maxBandGain, equalizer)
-        equalizerView.isActivated = activated
+        equalizerView.isActivated = activated && enabled
 
         autoCompleteTextView.setText(equalizer.name, false)
     }
@@ -103,6 +103,17 @@ class EqualizerFragment : Fragment(), Injectable, EqualizerContract.View {
 
     override fun showEnabled(enabled: Boolean) {
         equalizerView.isActivated = enabled
+    }
+
+    override fun showEqDisabled() {
+        val switch = toolbar.menu.findItem(R.id.enableEqualizer).actionView as SwitchCompat
+        switch.isChecked = false
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Equalizer Disabled")
+            .setMessage("The custom EQ is not compatible with the Android MediaPlayer. \n\n`You can change the media player in playback settings.")
+            .setPositiveButton("Close", null)
+            .show()
     }
 
 

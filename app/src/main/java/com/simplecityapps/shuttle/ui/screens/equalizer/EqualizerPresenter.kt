@@ -11,10 +11,11 @@ import javax.inject.Inject
 interface EqualizerContract {
 
     interface View {
-        fun initializeEqualizerView(activated: Boolean, equalizer: Equalizer.Presets.Preset, maxBandGain: Int)
+        fun initializeEqualizerView(activated: Boolean, enabled: Boolean, equalizer: Equalizer.Presets.Preset, maxBandGain: Int)
         fun updateEqualizerView(preset: Equalizer.Presets.Preset)
         fun updateSelectedPreset(preset: Equalizer.Presets.Preset)
         fun showEnabled(enabled: Boolean)
+        fun showEqDisabled()
     }
 
     interface Presenter : BaseContract.Presenter<View> {
@@ -32,13 +33,18 @@ class EqualizerPresenter @Inject constructor(
     override fun bindView(view: EqualizerContract.View) {
         super.bindView(view)
 
-        view.initializeEqualizerView(equalizerAudioProcessor.enabled, equalizerAudioProcessor.preset, equalizerAudioProcessor.maxBandGain)
+        view.initializeEqualizerView(equalizerAudioProcessor.enabled, !playbackPreferenceManager.useAndroidMediaPlayer, equalizerAudioProcessor.preset, equalizerAudioProcessor.maxBandGain)
     }
 
     override fun toggleEqualizer(activated: Boolean) {
-        playbackPreferenceManager.equalizerEnabled = activated
-        equalizerAudioProcessor.enabled = activated
-        view?.showEnabled(activated)
+
+        if(playbackPreferenceManager.useAndroidMediaPlayer) {
+            view?.showEqDisabled()
+        } else {
+            playbackPreferenceManager.equalizerEnabled = activated
+            equalizerAudioProcessor.enabled = activated
+            view?.showEnabled(activated)
+        }
     }
 
     override fun updateBand(band: EqualizerBand) {

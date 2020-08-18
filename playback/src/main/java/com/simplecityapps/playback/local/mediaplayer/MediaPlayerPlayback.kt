@@ -3,6 +3,7 @@ package com.simplecityapps.playback.local.mediaplayer
 import android.content.Context
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.Playback
+import com.simplecityapps.playback.chromecast.CastPlayback
 import timber.log.Timber
 
 class MediaPlayerPlayback(
@@ -89,6 +90,10 @@ class MediaPlayerPlayback(
     override fun setVolume(volume: Float) {
         currentMediaPlayerHelper.volume = volume
         nextMediaPlayerHelper.volume = volume
+    }
+
+    override fun getResumeWhenSwitched(oldPlayback: Playback): Boolean {
+        return oldPlayback !is CastPlayback
     }
 
     private val currentPlayerCallback = object : Playback.Callback {

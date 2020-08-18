@@ -125,4 +125,12 @@ class PlaybackPreferenceManager(
                 adapter.fromJson(json)
             }
         }
+
+    var useAndroidMediaPlayer : Boolean
+        set(value) {
+            sharedPreferences.put("playback_media_player", value)
+        }
+        get() {
+            return sharedPreferences.get("playback_media_player", false)
+        }
 }

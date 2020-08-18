@@ -149,6 +149,10 @@ class CastPlayback(
         // Nothing to do
     }
 
+    override fun getResumeWhenSwitched(oldPlayback: Playback): Boolean {
+        return true
+    }
+
     override fun updateLastKnownStreamPosition() {
         super.updateLastKnownStreamPosition()
 

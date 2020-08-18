@@ -11,6 +11,7 @@ import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.Playback
+import com.simplecityapps.playback.chromecast.CastPlayback
 import timber.log.Timber
 
 class ExoPlayerPlayback(
@@ -158,6 +159,10 @@ class ExoPlayerPlayback(
 
     override fun setVolume(volume: Float) {
         player.audioComponent?.volume = volume
+    }
+
+    override fun getResumeWhenSwitched(oldPlayback: Playback): Boolean {
+        return oldPlayback !is CastPlayback
     }
 
 

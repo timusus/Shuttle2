@@ -19,6 +19,7 @@ import com.simplecityapps.playback.chromecast.HttpServer
 import com.simplecityapps.playback.equalizer.Equalizer
 import com.simplecityapps.playback.local.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.local.exoplayer.ExoPlayerPlayback
+import com.simplecityapps.playback.local.mediaplayer.MediaPlayerPlayback
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
@@ -64,9 +65,19 @@ class PlaybackModule {
         }
     }
 
+    @AppScope
     @Provides
-    fun providePlayback(context: Context, equalizerAudioProcessor: EqualizerAudioProcessor): Playback {
-        return ExoPlayerPlayback(context, equalizerAudioProcessor)
+    fun providePlaybackPreferenceManager(sharedPreferences: SharedPreferences, moshi: Moshi): PlaybackPreferenceManager {
+        return PlaybackPreferenceManager(sharedPreferences, moshi)
+    }
+
+    @Provides
+    fun providePlayback(context: Context, playbackPreferenceManager: PlaybackPreferenceManager, equalizerAudioProcessor: EqualizerAudioProcessor): Playback {
+        return if (playbackPreferenceManager.useAndroidMediaPlayer) {
+            MediaPlayerPlayback(context)
+        } else {
+            ExoPlayerPlayback(context, equalizerAudioProcessor)
+        }
     }
 
     @AppScope
@@ -88,12 +99,6 @@ class PlaybackModule {
     @Provides
     fun provideMediaIdHelper(playlistRepository: PlaylistRepository, artistRepository: AlbumArtistRepository, albumRepository: AlbumRepository, songRepository: SongRepository): MediaIdHelper {
         return MediaIdHelper(playlistRepository, artistRepository, albumRepository, songRepository)
-    }
-
-    @AppScope
-    @Provides
-    fun providePlaybackPreferenceManager(sharedPreferences: SharedPreferences, moshi: Moshi): PlaybackPreferenceManager {
-        return PlaybackPreferenceManager(sharedPreferences, moshi)
     }
 
     @AppScope

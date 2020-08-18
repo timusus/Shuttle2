@@ -20,6 +20,10 @@ import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
+import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.local.exoplayer.EqualizerAudioProcessor
+import com.simplecityapps.playback.local.exoplayer.ExoPlayerPlayback
+import com.simplecityapps.playback.local.mediaplayer.MediaPlayerPlayback
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
@@ -47,6 +51,9 @@ class SettingsFragment : PreferenceFragmentCompat(),
     @Inject lateinit var mediaImporter: MediaImporter
 
     @Inject lateinit var songRepository: SongRepository
+
+    @Inject lateinit var playbackManager: PlaybackManager
+    @Inject lateinit var equalizerAudioProcessor: EqualizerAudioProcessor
 
     @Named("AppCoroutineScope") @Inject lateinit var appCoroutineScope: CoroutineScope
 
@@ -181,6 +188,11 @@ class SettingsFragment : PreferenceFragmentCompat(),
         when (key) {
             "pref_night_mode" -> {
                 setNightMode(sharedPreferences.getString(key, "0") ?: "0")
+            }
+            "playback_media_player" -> {
+                playbackManager.switchToPlayback(
+                    if (playbackPreferenceManager.useAndroidMediaPlayer) MediaPlayerPlayback(requireContext().applicationContext) else ExoPlayerPlayback(requireContext(), equalizerAudioProcessor)
+                )
             }
         }
     }

@@ -39,7 +39,7 @@ interface Playback {
 
     fun updateLastKnownStreamPosition() {}
 
-    fun getResumeWhenSwitched(): Boolean {
+    fun getResumeWhenSwitched(oldPlayback: Playback): Boolean {
         return false
     }
 
