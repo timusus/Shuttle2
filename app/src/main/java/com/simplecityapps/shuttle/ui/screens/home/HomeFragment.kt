@@ -11,6 +11,7 @@ import androidx.appcompat.widget.PopupMenu
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.coroutineScope
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
@@ -114,7 +115,11 @@ class HomeFragment :
                 )
             }
         }
-        favoritesButton.setOnClickListener { navigateToPlaylist(PlaylistQuery.PlaylistName("Favorites")) }
+        favoritesButton.setOnClickListener {
+            lifecycleScope.launch(Dispatchers.Main) {
+                navigateToPlaylist(PlaylistQuery.PlaylistId(playlistRepository.getFavoritesPlaylist().id))
+            }
+        }
         shuffleButton.setOnClickListener { presenter.shuffleAll() }
 
         recyclerView = view.findViewById(R.id.recyclerView)

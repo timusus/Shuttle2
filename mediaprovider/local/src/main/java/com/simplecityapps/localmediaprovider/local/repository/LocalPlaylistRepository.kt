@@ -14,6 +14,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 class LocalPlaylistRepository(
@@ -46,6 +47,12 @@ class LocalPlaylistRepository(
 
     override fun getPlaylists(): Flow<List<Playlist>> {
         return playlistsRelay
+    }
+
+    override suspend fun getFavoritesPlaylist(): Playlist {
+        return withContext(Dispatchers.IO) {
+            playlistsRelay.firstOrNull()?.firstOrNull { it.name == "Favorites" } ?: createPlaylist("Favorites", null, null)
+        }
     }
 
     override suspend fun createPlaylist(name: String, mediaStoreId: Long?, songs: List<Song>?): Playlist {

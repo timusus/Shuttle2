@@ -17,10 +17,12 @@ abstract class PlaylistSongJoinDao {
     abstract suspend fun insert(playlistSongJoins: List<PlaylistSongJoin>)
 
     @Query(
-        "SELECT songs.* " +
-                "FROM songs " +
-                "INNER JOIN playlist_song_join ON songs.id = playlist_song_join.songId " +
-                "WHERE playlist_song_join.playlistId = :playlistId AND songs.blacklisted == 0;"
+        """
+            SELECT songs.* 
+            FROM songs 
+            LEFT JOIN playlist_song_join ON songs.id = playlist_song_join.songId AND songs.blacklisted == 0
+            WHERE playlist_song_join.playlistId = :playlistId AND songs.blacklisted == 0;
+            """
     )
     abstract fun getSongsForPlaylist(playlistId: Long): Flow<List<Song>>
 

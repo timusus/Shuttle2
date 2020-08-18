@@ -68,14 +68,11 @@ class PlaybackPresenter @Inject constructor(
     private fun updateFavorite() {
         favoriteUpdater?.cancel()
         val job = launch {
-            val isFavorite = (playlistRepository.getPlaylists(PlaylistQuery.PlaylistName("Favorites"))
+            val isFavorite = playlistRepository
+                .getSongsForPlaylist(playlistRepository.getFavoritesPlaylist().id)
                 .firstOrNull()
                 .orEmpty()
-                .firstOrNull()
-                ?.let { favoritesPlaylist ->
-                    playlistRepository.getSongsForPlaylist(favoritesPlaylist.id).firstOrNull().orEmpty()
-                } ?: emptyList()).contains(queueManager.getCurrentItem()?.song)
-
+                .contains(queueManager.getCurrentItem()?.song)
             this@PlaybackPresenter.view?.setIsFavorite(isFavorite)
         }
 
@@ -144,12 +141,11 @@ class PlaybackPresenter @Inject constructor(
     override fun setFavorite(isFavorite: Boolean) {
         launch {
             queueManager.getCurrentItem()?.song?.let { song ->
-                playlistRepository.getPlaylists(PlaylistQuery.PlaylistName("Favorites")).firstOrNull().orEmpty().firstOrNull()?.let { favoritesPlaylist ->
-                    if (isFavorite) {
-                        playlistRepository.addToPlaylist(favoritesPlaylist, listOf(song))
-                    } else {
-                        playlistRepository.removeFromPlaylist(favoritesPlaylist, listOf(song))
-                    }
+                val favoritesPlaylist = playlistRepository.getFavoritesPlaylist()
+                if (isFavorite) {
+                    playlistRepository.addToPlaylist(favoritesPlaylist, listOf(song))
+                } else {
+                    playlistRepository.removeFromPlaylist(favoritesPlaylist, listOf(song))
                 }
             }
         }

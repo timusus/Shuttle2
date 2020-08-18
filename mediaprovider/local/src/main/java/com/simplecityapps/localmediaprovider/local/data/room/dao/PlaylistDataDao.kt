@@ -18,30 +18,27 @@ abstract class PlaylistDataDao {
     abstract suspend fun update(playlistData: PlaylistData)
 
     @Query(
-        "SELECT playlists.*, " +
-                "count(songs.id) as songCount, " +
-                "sum(songs.duration) as duration, " +
-                "media_store_id as mediaStoreId " +
-                "FROM playlists " +
-                "LEFT JOIN playlist_song_join ON playlists.id = playlist_song_join.playlistId " +
-                "LEFT JOIN songs ON songs.id = playlist_song_join.songId " +
-                "WHERE songs.blacklisted == 0 " +
-                "GROUP BY playlists.id " +
-                "ORDER BY playlists.name;"
+        """
+            SELECT playlists.*, count(songs.id) as songCount, sum(songs.duration) as duration, media_store_id as mediaStoreId 
+            FROM playlists 
+            LEFT JOIN playlist_song_join ON playlists.id = playlist_song_join.playlistId 
+            LEFT JOIN songs ON songs.id = playlist_song_join.songId AND songs.blacklisted == 0 
+            GROUP BY playlists.id
+            ORDER BY playlists.name;
+            """
     )
     abstract fun getAll(): Flow<List<Playlist>>
 
     @Query(
-        "SELECT playlists.*, " +
-                "count(songs.id) as songCount, " +
-                "sum(songs.duration) as duration, " +
-                "media_store_id as mediaStoreId " +
-                "FROM playlists " +
-                "LEFT JOIN playlist_song_join ON playlists.id = playlist_song_join.playlistId " +
-                "LEFT JOIN songs ON songs.id = playlist_song_join.songId " +
-                "WHERE playlists.id = :playlistId AND songs.blacklisted == 0 " +
-                "GROUP BY playlists.id " +
-                "ORDER BY playlists.name;"
+        """
+            SELECT playlists.*, count(songs.id) as songCount, sum(songs.duration) as duration, media_store_id as mediaStoreId 
+            FROM playlists 
+            LEFT JOIN playlist_song_join ON playlists.id = playlist_song_join.playlistId 
+            LEFT JOIN songs ON songs.id = playlist_song_join.songId AND songs.blacklisted == 0 
+            WHERE playlists.id = :playlistId 
+            GROUP BY playlists.id 
+            ORDER BY playlists.name
+            """
     )
     abstract suspend fun getPlaylist(playlistId: Long): Playlist
 

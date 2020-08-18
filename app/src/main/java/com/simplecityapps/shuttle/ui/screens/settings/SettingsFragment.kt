@@ -103,7 +103,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
             true
         }
 
-        preferenceScreen.findPreference<Preference>("pref_exclude")?.setOnPreferenceClickListener {
+        preferenceScreen.findPreference<Preference>("pref_excluded")?.setOnPreferenceClickListener {
             val adapter = SectionedAdapter(lifecycle.coroutineScope)
             val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_exclude_list, null)
             val recyclerView = dialogView.findViewById<RecyclerView>(R.id.recyclerView)
@@ -128,7 +128,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
                     }
             }
 
-            AlertDialog.Builder(requireContext()).setTitle("Blacklist")
+            AlertDialog.Builder(requireContext()).setTitle("Excluded")
                 .setView(dialogView)
                 .setPositiveButton("Close", null)
                 .setNegativeButton("Clear") { _, _ ->
