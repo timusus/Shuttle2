@@ -1,5 +1,8 @@
 {
   "commits": [
-    "Added option to switch between list/grid mode for albums & artists"
+    "Added an option to switch to Android MediaPlayer",
+    "Fixed a bug preventing playlists from being displayed",
+    "Fixed a bug where lists would scroll in response to various events",
+    "Fixed a minor crash"
   ]
 }
