@@ -1,4 +1,4 @@
-/Users/tim/Projects/Exoplayer/extensions/opus/src/main/obj/local/x86_64/objs/opus/silk/tables_LTP.o: \
+/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/opus/src/main/obj/local/x86_64/objs/opus/silk/tables_LTP.o: \
   libopus/silk/tables_LTP.c libopus/silk/tables.h libopus/silk/define.h \
   libopus/silk/errors.h libopus/silk/typedef.h \
   libopus/include/opus_types.h libopus/include/opus_defines.h \

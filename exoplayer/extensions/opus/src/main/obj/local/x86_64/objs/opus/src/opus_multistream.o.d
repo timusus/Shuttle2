@@ -1,4 +1,4 @@
-/Users/tim/Projects/Exoplayer/extensions/opus/src/main/obj/local/x86_64/objs/opus/src/opus_multistream.o: \
+/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/opus/src/main/obj/local/x86_64/objs/opus/src/opus_multistream.o: \
   libopus/src/opus_multistream.c libopus/include/opus_multistream.h \
   libopus/include/opus.h libopus/include/opus_types.h \
   libopus/include/opus_defines.h libopus/src/opus_private.h \

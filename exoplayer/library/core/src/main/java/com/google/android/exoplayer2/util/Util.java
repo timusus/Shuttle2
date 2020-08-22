@@ -727,6 +727,24 @@ public final class Util {
   }
 
   /**
+   * Returns the index of the first occurrence of {@code value} in {@code array}, or {@link
+   * C#INDEX_UNSET} if {@code value} is not contained in {@code array}.
+   *
+   * @param array The array to search.
+   * @param value The value to search for.
+   * @return The index of the first occurrence of value in {@code array}, or {@link C#INDEX_UNSET}
+   *     if {@code value} is not contained in {@code array}.
+   */
+  public static int linearSearch(long[] array, long value) {
+    for (int i = 0; i < array.length; i++) {
+      if (array[i] == value) {
+        return i;
+      }
+    }
+    return C.INDEX_UNSET;
+  }
+
+  /**
    * Returns the index of the largest element in {@code array} that is less than (or optionally
    * equal to) a specified {@code value}.
    *
@@ -1360,13 +1378,15 @@ public final class Util {
   }
 
   /**
-   * Returns whether {@code encoding} is high resolution (&gt; 16-bit) integer PCM.
+   * Returns whether {@code encoding} is high resolution (&gt; 16-bit) PCM.
    *
    * @param encoding The encoding of the audio data.
-   * @return Whether the encoding is high resolution integer PCM.
+   * @return Whether the encoding is high resolution PCM.
    */
-  public static boolean isEncodingHighResolutionIntegerPcm(@C.PcmEncoding int encoding) {
-    return encoding == C.ENCODING_PCM_24BIT || encoding == C.ENCODING_PCM_32BIT;
+  public static boolean isEncodingHighResolutionPcm(@C.PcmEncoding int encoding) {
+    return encoding == C.ENCODING_PCM_24BIT
+        || encoding == C.ENCODING_PCM_32BIT
+        || encoding == C.ENCODING_PCM_FLOAT;
   }
 
   /**

@@ -1,4 +1,4 @@
-/Users/tim/Projects/Exoplayer/extensions/opus/src/main/obj/local/x86/objs/opus/silk/encode_pulses.o: \
+/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/opus/src/main/obj/local/x86/objs/opus/silk/encode_pulses.o: \
   libopus/silk/encode_pulses.c libopus/silk/main.h \
   libopus/silk/SigProc_FIX.h libopus/silk/typedef.h \
   libopus/include/opus_types.h libopus/include/opus_defines.h \

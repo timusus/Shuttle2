@@ -1,4 +1,4 @@
-/Users/tim/Projects/Exoplayer/extensions/opus/src/main/obj/local/x86/objs/opus/celt/laplace.o: \
+/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/opus/src/main/obj/local/x86/objs/opus/celt/laplace.o: \
   libopus/celt/laplace.c libopus/celt/laplace.h libopus/celt/entenc.h \
   libopus/celt/entcode.h libopus/include/opus_types.h \
   libopus/include/opus_defines.h libopus/celt/ecintrin.h \

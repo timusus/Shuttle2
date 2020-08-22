@@ -1,4 +1,4 @@
-/Users/tim/Projects/Exoplayer/extensions/opus/src/main/obj/local/arm64-v8a/objs/opus/silk/fixed/residual_energy_FIX.o: \
+/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/opus/src/main/obj/local/arm64-v8a/objs/opus/silk/fixed/residual_energy_FIX.o: \
   libopus/silk/fixed/residual_energy_FIX.c libopus/silk/fixed/main_FIX.h \
   libopus/silk/SigProc_FIX.h libopus/silk/typedef.h \
   libopus/include/opus_types.h libopus/include/opus_defines.h \

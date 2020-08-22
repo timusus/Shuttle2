@@ -1,4 +1,4 @@
-/Users/tim/Projects/Exoplayer/extensions/opus/src/main/obj/local/x86_64/objs/opus/silk/NLSF_del_dec_quant.o: \
+/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/opus/src/main/obj/local/x86_64/objs/opus/silk/NLSF_del_dec_quant.o: \
   libopus/silk/NLSF_del_dec_quant.c libopus/silk/main.h \
   libopus/silk/SigProc_FIX.h libopus/silk/typedef.h \
   libopus/include/opus_types.h libopus/include/opus_defines.h \

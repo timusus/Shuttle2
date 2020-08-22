@@ -1,4 +1,4 @@
-/Users/tim/Projects/Exoplayer/extensions/opus/src/main/obj/local/x86/objs/opus/silk/fixed/find_LTP_FIX.o: \
+/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/opus/src/main/obj/local/x86/objs/opus/silk/fixed/find_LTP_FIX.o: \
   libopus/silk/fixed/find_LTP_FIX.c libopus/silk/fixed/main_FIX.h \
   libopus/silk/SigProc_FIX.h libopus/silk/typedef.h \
   libopus/include/opus_types.h libopus/include/opus_defines.h \

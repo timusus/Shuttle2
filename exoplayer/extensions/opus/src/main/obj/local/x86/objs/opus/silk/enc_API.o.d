@@ -1,4 +1,4 @@
-/Users/tim/Projects/Exoplayer/extensions/opus/src/main/obj/local/x86/objs/opus/silk/enc_API.o: \
+/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/opus/src/main/obj/local/x86/objs/opus/silk/enc_API.o: \
   libopus/silk/enc_API.c libopus/silk/define.h libopus/silk/errors.h \
   libopus/silk/typedef.h libopus/include/opus_types.h \
   libopus/include/opus_defines.h libopus/silk/API.h \

@@ -1,4 +1,4 @@
-/Users/tim/Projects/Exoplayer/extensions/opus/src/main/obj/local/arm64-v8a/objs/opus/silk/tables_NLSF_CB_WB.o: \
+/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/opus/src/main/obj/local/arm64-v8a/objs/opus/silk/tables_NLSF_CB_WB.o: \
   libopus/silk/tables_NLSF_CB_WB.c libopus/silk/tables.h \
   libopus/silk/define.h libopus/silk/errors.h libopus/silk/typedef.h \
   libopus/include/opus_types.h libopus/include/opus_defines.h \

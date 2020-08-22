@@ -1,4 +1,4 @@
-/Users/tim/Projects/Exoplayer/extensions/opus/src/main/obj/local/armeabi-v7a/objs/opus/celt/mdct.o: \
+/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/opus/src/main/obj/local/armeabi-v7a/objs/opus/celt/mdct.o: \
   libopus/celt/mdct.c libopus/celt/mdct.h libopus/include/opus_defines.h \
   libopus/include/opus_types.h libopus/celt/kiss_fft.h \
   libopus/celt/arch.h libopus/celt/fixed_generic.h \

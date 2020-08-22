@@ -1,4 +1,4 @@
-/Users/tim/Projects/Exoplayer/extensions/opus/src/main/obj/local/armeabi-v7a/objs/opus/silk/HP_variable_cutoff.o: \
+/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/opus/src/main/obj/local/armeabi-v7a/objs/opus/silk/HP_variable_cutoff.o: \
   libopus/silk/HP_variable_cutoff.c libopus/silk/fixed/main_FIX.h \
   libopus/silk/SigProc_FIX.h libopus/silk/typedef.h \
   libopus/include/opus_types.h libopus/include/opus_defines.h \

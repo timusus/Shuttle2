@@ -1,4 +1,4 @@
-/Users/tim/Projects/Exoplayer/extensions/opus/src/main/obj/local/arm64-v8a/objs/opus/celt/quant_bands.o: \
+/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/opus/src/main/obj/local/arm64-v8a/objs/opus/celt/quant_bands.o: \
   libopus/celt/quant_bands.c libopus/celt/quant_bands.h \
   libopus/celt/arch.h libopus/include/opus_types.h \
   libopus/include/opus_defines.h libopus/celt/fixed_generic.h \

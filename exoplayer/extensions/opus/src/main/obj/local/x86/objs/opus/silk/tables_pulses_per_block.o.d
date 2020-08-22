@@ -1,4 +1,4 @@
-/Users/tim/Projects/Exoplayer/extensions/opus/src/main/obj/local/x86/objs/opus/silk/tables_pulses_per_block.o: \
+/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/opus/src/main/obj/local/x86/objs/opus/silk/tables_pulses_per_block.o: \
   libopus/silk/tables_pulses_per_block.c libopus/silk/tables.h \
   libopus/silk/define.h libopus/silk/errors.h libopus/silk/typedef.h \
   libopus/include/opus_types.h libopus/include/opus_defines.h \

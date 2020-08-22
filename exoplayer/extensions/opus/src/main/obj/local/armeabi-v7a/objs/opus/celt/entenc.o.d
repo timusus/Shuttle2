@@ -1,4 +1,4 @@
-/Users/tim/Projects/Exoplayer/extensions/opus/src/main/obj/local/armeabi-v7a/objs/opus/celt/entenc.o: \
+/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/opus/src/main/obj/local/armeabi-v7a/objs/opus/celt/entenc.o: \
   libopus/celt/entenc.c libopus/celt/os_support.h \
   libopus/include/opus_types.h libopus/include/opus_defines.h \
   libopus/celt/arch.h libopus/celt/fixed_generic.h \

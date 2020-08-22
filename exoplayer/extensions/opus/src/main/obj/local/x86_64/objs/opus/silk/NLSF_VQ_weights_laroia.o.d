@@ -1,4 +1,4 @@
-/Users/tim/Projects/Exoplayer/extensions/opus/src/main/obj/local/x86_64/objs/opus/silk/NLSF_VQ_weights_laroia.o: \
+/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/opus/src/main/obj/local/x86_64/objs/opus/silk/NLSF_VQ_weights_laroia.o: \
   libopus/silk/NLSF_VQ_weights_laroia.c libopus/silk/define.h \
   libopus/silk/errors.h libopus/silk/typedef.h \
   libopus/include/opus_types.h libopus/include/opus_defines.h \

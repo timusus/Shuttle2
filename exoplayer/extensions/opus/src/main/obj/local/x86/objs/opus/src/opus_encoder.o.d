@@ -1,4 +1,4 @@
-/Users/tim/Projects/Exoplayer/extensions/opus/src/main/obj/local/x86/objs/opus/src/opus_encoder.o: \
+/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/opus/src/main/obj/local/x86/objs/opus/src/opus_encoder.o: \
   libopus/src/opus_encoder.c libopus/celt/celt.h \
   libopus/include/opus_types.h libopus/include/opus_defines.h \
   libopus/include/opus_custom.h libopus/celt/entenc.h \

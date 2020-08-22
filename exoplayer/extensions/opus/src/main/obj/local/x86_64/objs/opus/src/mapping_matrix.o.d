@@ -1,4 +1,4 @@
-/Users/tim/Projects/Exoplayer/extensions/opus/src/main/obj/local/x86_64/objs/opus/src/mapping_matrix.o: \
+/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/opus/src/main/obj/local/x86_64/objs/opus/src/mapping_matrix.o: \
   libopus/src/mapping_matrix.c libopus/celt/arch.h \
   libopus/include/opus_types.h libopus/include/opus_defines.h \
   libopus/celt/fixed_generic.h libopus/celt/float_cast.h \

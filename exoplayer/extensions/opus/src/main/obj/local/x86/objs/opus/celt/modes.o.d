@@ -1,4 +1,4 @@
-/Users/tim/Projects/Exoplayer/extensions/opus/src/main/obj/local/x86/objs/opus/celt/modes.o: \
+/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/opus/src/main/obj/local/x86/objs/opus/celt/modes.o: \
   libopus/celt/modes.c libopus/celt/celt.h libopus/include/opus_types.h \
   libopus/include/opus_defines.h libopus/include/opus_custom.h \
   libopus/celt/entenc.h libopus/celt/entcode.h libopus/celt/ecintrin.h \

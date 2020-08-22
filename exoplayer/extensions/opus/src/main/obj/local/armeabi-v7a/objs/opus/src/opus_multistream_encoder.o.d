@@ -1,4 +1,4 @@
-/Users/tim/Projects/Exoplayer/extensions/opus/src/main/obj/local/armeabi-v7a/objs/opus/src/opus_multistream_encoder.o: \
+/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/opus/src/main/obj/local/armeabi-v7a/objs/opus/src/opus_multistream_encoder.o: \
   libopus/src/opus_multistream_encoder.c \
   libopus/include/opus_multistream.h libopus/include/opus.h \
   libopus/include/opus_types.h libopus/include/opus_defines.h \

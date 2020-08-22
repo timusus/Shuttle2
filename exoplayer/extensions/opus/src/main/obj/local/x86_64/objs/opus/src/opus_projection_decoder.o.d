@@ -1,4 +1,4 @@
-/Users/tim/Projects/Exoplayer/extensions/opus/src/main/obj/local/x86_64/objs/opus/src/opus_projection_decoder.o: \
+/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/opus/src/main/obj/local/x86_64/objs/opus/src/opus_projection_decoder.o: \
   libopus/src/opus_projection_decoder.c libopus/celt/mathops.h \
   libopus/celt/arch.h libopus/include/opus_types.h \
   libopus/include/opus_defines.h libopus/celt/fixed_generic.h \

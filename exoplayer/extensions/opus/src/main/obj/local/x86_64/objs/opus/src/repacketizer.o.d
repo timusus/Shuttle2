@@ -1,4 +1,4 @@
-/Users/tim/Projects/Exoplayer/extensions/opus/src/main/obj/local/x86_64/objs/opus/src/repacketizer.o: \
+/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/opus/src/main/obj/local/x86_64/objs/opus/src/repacketizer.o: \
   libopus/src/repacketizer.c libopus/include/opus.h \
   libopus/include/opus_types.h libopus/include/opus_defines.h \
   libopus/src/opus_private.h libopus/celt/arch.h \

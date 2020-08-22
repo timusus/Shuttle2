@@ -1,4 +1,4 @@
-/Users/tim/Projects/Exoplayer/extensions/opus/src/main/obj/local/x86_64/objs/opus/celt/celt.o: \
+/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/opus/src/main/obj/local/x86_64/objs/opus/celt/celt.o: \
   libopus/celt/celt.c libopus/celt/os_support.h \
   libopus/include/opus_types.h libopus/include/opus_defines.h \
   libopus/celt/mdct.h libopus/celt/kiss_fft.h libopus/celt/arch.h \

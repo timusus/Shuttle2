@@ -1,4 +1,4 @@
-/Users/tim/Projects/Exoplayer/extensions/opus/src/main/obj/local/x86_64/objs/opus/celt/vq.o: \
+/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/opus/src/main/obj/local/x86_64/objs/opus/celt/vq.o: \
   libopus/celt/vq.c libopus/celt/mathops.h libopus/celt/arch.h \
   libopus/include/opus_types.h libopus/include/opus_defines.h \
   libopus/celt/fixed_generic.h libopus/celt/entcode.h \
