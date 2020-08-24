@@ -55,28 +55,26 @@ class FileScanner(private val tagLib: KTagLib) {
                 if (documentFile.exists()) {
                     try {
                         context.contentResolver.openFileDescriptor(documentFile.uri, "r")?.use { pfd ->
-                            pfd.use {
-                                val audioFile = tagLib.getAudioFile(pfd.fd, uri.toString(), documentFile.name?.substringBeforeLast(".") ?: "Unknown")
-                                if (audioFile != null) {
-                                    return@withContext audioFile
-                                } else {
-                                    return@withContext AudioFile(
-                                        path = uri.toString(),
-                                        size = documentFile.length(),
-                                        lastModified = documentFile.lastModified(),
-                                        title = documentFile.name?.substringBeforeLast("."),
-                                        albumArtist = null,
-                                        artist = null,
-                                        album = documentFile.parentFile?.name,
-                                        track = 1,
-                                        trackTotal = 1,
-                                        disc = 1,
-                                        discTotal = 1,
-                                        duration = 0,
-                                        date = null,
-                                        genre = null
-                                    )
-                                }
+                            val audioFile = tagLib.getAudioFile(pfd.detachFd(), uri.toString(), documentFile.name?.substringBeforeLast(".") ?: "Unknown")
+                            if (audioFile != null) {
+                                return@withContext audioFile
+                            } else {
+                                return@withContext AudioFile(
+                                    path = uri.toString(),
+                                    size = documentFile.length(),
+                                    lastModified = documentFile.lastModified(),
+                                    title = documentFile.name?.substringBeforeLast("."),
+                                    albumArtist = null,
+                                    artist = null,
+                                    album = documentFile.parentFile?.name,
+                                    track = 1,
+                                    trackTotal = 1,
+                                    disc = 1,
+                                    discTotal = 1,
+                                    duration = 0,
+                                    date = null,
+                                    genre = null
+                                )
                             }
                         }
                     } catch (e: IllegalArgumentException) {

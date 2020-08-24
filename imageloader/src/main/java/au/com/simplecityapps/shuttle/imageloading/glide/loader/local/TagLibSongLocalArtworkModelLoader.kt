@@ -58,9 +58,7 @@ class TagLibSongLocalArtworkModelLoader(
             }
             try {
                 context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
-                    pfd.use {
-                        return tagLib.getArtwork(pfd.fd)?.inputStream()
-                    }
+                    return tagLib.getArtwork(pfd.detachFd())?.inputStream()
                 }
             } catch (e: SecurityException) {
                 Timber.v("Failed to retrieve artwork (permission denial)")

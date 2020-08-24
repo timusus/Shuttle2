@@ -43,7 +43,7 @@ dependencies {
     implementation project(path: ':mediaprovider:core')
 
     // TagLib
-    implementation("com.github.timusus:KTagLib:0.5")
+    implementation("com.github.timusus:KTagLib:0.7")
 
     // Storage Access Framework
     implementation project(path: ':saf')
