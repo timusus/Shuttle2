@@ -13,6 +13,7 @@ import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
@@ -78,7 +79,7 @@ class MainPresenter @Inject constructor(
                 val directories = context.contentResolver?.persistedUriPermissions
                     ?.filter { uriPermission -> uriPermission.isReadPermission }
                     ?.mapNotNull { uriPermission ->
-                        SafDirectoryHelper.buildFolderNodeTree(context.contentResolver, uriPermission.uri)
+                        SafDirectoryHelper.buildFolderNodeTree(context.contentResolver, uriPermission.uri).distinctUntilChanged()
                     }
                     .orEmpty()
                     .merge()
