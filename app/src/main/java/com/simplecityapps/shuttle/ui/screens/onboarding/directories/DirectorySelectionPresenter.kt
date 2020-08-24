@@ -9,6 +9,7 @@ import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 interface MusicDirectoriesContract {
@@ -60,7 +61,11 @@ class MusicDirectoriesPresenter @Inject constructor(
     }
 
     override fun removeItem(directory: MusicDirectoriesContract.Directory) {
-        context.contentResolver?.releasePersistableUriPermission(directory.tree.rootUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        try {
+            context.contentResolver?.releasePersistableUriPermission(directory.tree.rootUri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        } catch (e: SecurityException) {
+            Timber.e("Failed to release persistable uri permission: ${directory.tree.rootUri}")
+        }
         data.remove(directory)
         view?.setData(data)
     }
