@@ -1,8 +1,8 @@
 {
   "commits": [
-    "Added an option to switch to Android MediaPlayer",
-    "Fixed a bug preventing playlists from being displayed",
-    "Fixed a bug where lists would scroll in response to various events",
-    "Fixed a minor crash"
+    "Updated Exoplayer, Opus and Flac libraries",
+    "Fixed an issue where directories were scanned twice when scanning",
+    "Fixed a crash when removing a directory from 'directory selection'",
+    "Fixed an issue where files weren't properly closed after reading them when scanning"
   ]
 }
