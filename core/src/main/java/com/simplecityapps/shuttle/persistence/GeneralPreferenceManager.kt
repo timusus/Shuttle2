@@ -75,4 +75,12 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
         get() {
             return sharedPreferences.getString("pref_album_view_mode", null)
         }
+
+    var hasOnboarded: Boolean
+        set(value) {
+            sharedPreferences.put("has_onboarded", value)
+        }
+        get() {
+            return sharedPreferences.getBoolean("has_onboarded", false)
+        }
 }

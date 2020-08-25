@@ -1,10 +1,8 @@
 package com.simplecityapps.shuttle.ui.screens.onboarding
 
 import android.Manifest
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.preference.PreferenceManager
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -20,7 +18,7 @@ import com.simplecityappds.saf.SafDirectoryHelper
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
-import com.simplecityapps.shuttle.persistence.put
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.screens.onboarding.directories.DirectorySelectionFragment
@@ -71,30 +69,17 @@ class OnboardingParentFragment : Fragment(),
 
     private var indicator: CircleIndicator3 by autoCleared()
 
-    private val preferences: SharedPreferences by lazy {
-        PreferenceManager.getDefaultSharedPreferences(context)
-    }
-
-    private var hasOnboarded: Boolean
-        get() = preferences.getBoolean(PREF_HAS_ONBOARDED, false)
-        set(value) = preferences.put(PREF_HAS_ONBOARDED, value)
-
-    private var earlyExit = false
-
     private val args: OnboardingParentFragmentArgs by navArgs()
 
     @Inject lateinit var playbackPreferenceManager: PlaybackPreferenceManager
+
+    @Inject lateinit var generalPreferenceManager: GeneralPreferenceManager
 
 
     // Lifecycle
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        if (args.isOnboarding && hasOnboarded && hasStoragePermission()) {
-            earlyExit = true
-            return
-        }
 
         adapter = OnboardingAdapter(this, args.isOnboarding)
     }
@@ -105,11 +90,6 @@ class OnboardingParentFragment : Fragment(),
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        if (earlyExit) {
-            exit()
-            return
-        }
 
         viewPager = view.findViewById(R.id.viewPager)
         viewPager.adapter = adapter
@@ -148,10 +128,6 @@ class OnboardingParentFragment : Fragment(),
         }
     }
 
-    override fun onDestroyView() {
-        earlyExit = false
-        super.onDestroyView()
-    }
 
     // PageCompletionListener Implementation
 
@@ -205,8 +181,7 @@ class OnboardingParentFragment : Fragment(),
     }
 
     override fun exit() {
-        earlyExit = true
-        hasOnboarded = true
+        generalPreferenceManager.hasOnboarded = true
 
         if (args.isOnboarding) {
             findNavController().navigate(R.id.action_onboardingFragment_to_mainFragment)
@@ -226,7 +201,6 @@ class OnboardingParentFragment : Fragment(),
     // Static
 
     companion object {
-        const val PREF_HAS_ONBOARDED = "has_onboarded"
         const val REQUEST_CODE_READ_STORAGE = 100
 
         const val TAG = "OnboardingParentFragment"
