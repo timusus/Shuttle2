@@ -1,8 +1,8 @@
 {
   "commits": [
-    "Updated Exoplayer, Opus and Flac libraries",
-    "Fixed an issue where directories were scanned twice when scanning",
-    "Fixed a crash when removing a directory from 'directory selection'",
-    "Fixed an issue where files weren't properly closed after reading them when scanning"
+    "Added tag editing",
+    "Slight optimisation of app launch.. should be a little faster",
+    "Show dialog allowing you to confirm before excluding artists/albums/songs after hitting exclude button",
+    "Minor crash fixes"
   ]
 }
