@@ -77,7 +77,7 @@ class MainPresenter @Inject constructor(
             }
             PlaybackPreferenceManager.SongProvider.TagLib -> {
                 val directories = context.contentResolver?.persistedUriPermissions
-                    ?.filter { uriPermission -> uriPermission.isReadPermission }
+                    ?.filter { uriPermission -> uriPermission.isWritePermission }
                     ?.mapNotNull { uriPermission ->
                         SafDirectoryHelper.buildFolderNodeTree(context.contentResolver, uriPermission.uri).distinctUntilChanged()
                     }
