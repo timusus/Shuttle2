@@ -1,8 +1,5 @@
 {
   "commits": [
-    "Added tag editing",
-    "Slight optimisation of app launch.. should be a little faster",
-    "Show dialog allowing you to confirm before excluding artists/albums/songs after hitting exclude button",
-    "Minor crash fixes"
+    "Fixed a bug causing the library to disappear after relaunching. If this has happened to you, please remove & re-add your media directories, via the media scanner settings."
   ]
 }
