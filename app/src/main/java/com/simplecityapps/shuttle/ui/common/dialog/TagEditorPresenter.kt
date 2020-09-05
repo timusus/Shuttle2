@@ -3,9 +3,10 @@ package com.simplecityapps.shuttle.ui.common.dialog
 import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract
-import com.simplecityapps.ktaglib.AudioFile
 import com.simplecityapps.ktaglib.KTagLib
+import com.simplecityapps.localmediaprovider.local.provider.TagLibProperty
 import com.simplecityapps.localmediaprovider.local.provider.taglib.FileScanner
+import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
@@ -25,13 +26,6 @@ interface TagEditorContract {
         var currentValue: String? = initialValue
 
         val hasChanged get() = currentValue != initialValue
-
-        fun getValueIfChanged(): String? {
-            if (hasChanged) {
-                return currentValue
-            }
-            return null
-        }
 
         fun reset() {
             currentValue = initialValue
@@ -53,6 +47,48 @@ interface TagEditorContract {
 
         val all: List<Field>
             get() = listOf(titleField, artistField, albumField, albumArtistField, dateField, trackField, trackTotalField, discField, discTotalField, genreField)
+
+        val mapOfChangedValues: HashMap<String, ArrayList<String?>>
+            get() {
+                val map = hashMapOf<String, ArrayList<String?>>()
+                if (titleField.hasChanged) {
+                    map[TagLibProperty.Title.key] = ArrayList(listOf(titleField.currentValue))
+                }
+                if (artistField.hasChanged) {
+                    map[TagLibProperty.Artist.key] = ArrayList(listOf(artistField.currentValue))
+                }
+                if (albumField.hasChanged) {
+                    map[TagLibProperty.Album.key] = ArrayList(listOf(albumField.currentValue))
+                }
+                if (albumArtistField.hasChanged) {
+                    map[TagLibProperty.AlbumArtist.key] = ArrayList(listOf(albumArtistField.currentValue))
+                }
+                if (dateField.hasChanged) {
+                    map[TagLibProperty.Date.key] = ArrayList(listOf(dateField.currentValue))
+                }
+                if (trackField.hasChanged || trackTotalField.hasChanged) {
+                    if (trackField.currentValue != null) {
+                        var track = trackField.currentValue!!.padStart(2, '0')
+                        if (trackTotalField.currentValue != null) {
+                            track += "/${trackTotalField.currentValue!!.padStart(2, '0')}"
+                        }
+                        map[TagLibProperty.Track.key] = ArrayList(listOf(track))
+                    }
+                }
+                if (discField.hasChanged || discTotalField.hasChanged) {
+                    if (discField.currentValue != null) {
+                        var disc = discField.currentValue!!.padStart(2, '0')
+                        if (discTotalField.currentValue != null) {
+                            disc += "/${discTotalField.currentValue!!.padStart(2, '0')}"
+                        }
+                        map[TagLibProperty.Disc.key] = ArrayList(listOf(disc))
+                    }
+                }
+                if (genreField.hasChanged) {
+                    map[TagLibProperty.Genre.key] = ArrayList(listOf(genreField.currentValue))
+                }
+                return map
+            }
     }
 
     enum class LoadingState {
@@ -74,7 +110,6 @@ interface TagEditorContract {
 class TagEditorPresenter @Inject constructor(
     private val context: Context,
     private val fileScanner: FileScanner,
-    private val tagLib: KTagLib,
     private val songRepository: SongRepository
 ) : BasePresenter<TagEditorContract.View>(), TagEditorContract.Presenter {
 
@@ -174,40 +209,31 @@ class TagEditorPresenter @Inject constructor(
                 editables.map { (song, _) ->
                     songRepository.updateSong(
                         song.copy(
-                            name = data.titleField.getValueIfChanged() ?: song.name,
-                            album = data.albumField.getValueIfChanged() ?: song.album,
-                            albumArtist = data.albumArtistField.getValueIfChanged() ?: song.albumArtist,
-                            year = data.dateField.getValueIfChanged()?.toIntOrNull() ?: song.year,
-                            track = data.trackField.getValueIfChanged()?.toIntOrNull() ?: song.track,
-                            disc = data.discField.getValueIfChanged()?.toIntOrNull() ?: song.disc
+                            name = if (data.titleField.hasChanged) data.titleField.currentValue ?: "Unknown" else song.name,
+                            album = if (data.albumField.hasChanged) data.albumField.currentValue ?: "Unknown" else song.album,
+                            albumArtist = if (data.albumArtistField.hasChanged) data.albumArtistField.currentValue ?: "Unknown" else song.albumArtist,
+                            year = if (data.dateField.hasChanged) data.dateField.currentValue?.toIntOrNull() ?: 0 else song.year,
+                            track = if (data.trackField.hasChanged) data.trackField.currentValue?.toIntOrNull() ?: 1 else song.track,
+                            disc = if (data.discField.hasChanged) data.discField.currentValue?.toIntOrNull() ?: 1 else song.disc
                         )
                     )
 
                     val uri = Uri.parse(song.path)
                     if (song.path.startsWith("content://")) {
                         if (DocumentsContract.isDocumentUri(context, uri)) {
-                            try {
-                                context.contentResolver.openFileDescriptor(uri, "rw")?.use { pfd ->
-                                    return@map song to tagLib.updateTags(
-                                        pfd.detachFd(),
-                                        data.titleField.getValueIfChanged(),
-                                        data.artistField.getValueIfChanged(),
-                                        data.albumField.getValueIfChanged(),
-                                        data.albumArtistField.getValueIfChanged(),
-                                        data.dateField.getValueIfChanged(),
-                                        data.trackField.getValueIfChanged()?.toIntOrNull(),
-                                        data.trackTotalField.getValueIfChanged()?.toIntOrNull(),
-                                        data.discField.getValueIfChanged()?.toIntOrNull(),
-                                        data.discTotalField.getValueIfChanged()?.toIntOrNull(),
-                                        data.genreField.getValueIfChanged()
-                                    )
+                            val metadata = data.mapOfChangedValues
+                            if (metadata.isNotEmpty()) {
+                                try {
+                                    context.contentResolver.openFileDescriptor(uri, "rw")?.use { pfd ->
+                                        return@map song to KTagLib.writeMetadata(pfd.detachFd(), metadata)
+                                    }
+                                } catch (e: IllegalStateException) {
+                                    Timber.e(e, "Failed to update tags")
+                                } catch (e: FileNotFoundException) {
+                                    Timber.e(e, "Failed to update tags")
+                                } catch (e: SecurityException) {
+                                    Timber.e(e, "FFailed to update tags")
                                 }
-                            } catch (e: IllegalStateException) {
-                                Timber.e(e, "Failed to update tags")
-                            } catch (e: FileNotFoundException) {
-                                Timber.e(e, "Failed to update tags")
-                            } catch (e: SecurityException) {
-                                Timber.e(e, "FFailed to update tags")
                             }
                         }
                     }

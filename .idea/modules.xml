@@ -27,6 +27,8 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/exoplayer/library/ui/exoplayer-library-ui.iml" filepath="$PROJECT_DIR$/.idea/modules/exoplayer/library/ui/exoplayer-library-ui.iml" group="shuttle2/exoplayer-library-ui" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/exoplayer/testutils/exoplayer-testutils.iml" filepath="$PROJECT_DIR$/.idea/modules/exoplayer/testutils/exoplayer-testutils.iml" group="shuttle2/exoplayer-testutils" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/imageloader/imageloader.iml" filepath="$PROJECT_DIR$/.idea/modules/imageloader/imageloader.iml" group="shuttle2/imageloader" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ktaglib/ktaglib.iml" filepath="$PROJECT_DIR$/.idea/modules/ktaglib/ktaglib.iml" group="shuttle2/ktaglib" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ktaglib/lib/lib.iml" filepath="$PROJECT_DIR$/.idea/modules/ktaglib/lib/lib.iml" group="shuttle2/ktaglib/lib" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/mediaprovider/local/local.iml" filepath="$PROJECT_DIR$/.idea/modules/mediaprovider/local/local.iml" group="shuttle2/mediaprovider/local" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/mediaprovider/mediaprovider.iml" filepath="$PROJECT_DIR$/.idea/modules/mediaprovider/mediaprovider.iml" group="shuttle2/mediaprovider" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/mediaprovider/core/mediaprovider-core.iml" filepath="$PROJECT_DIR$/.idea/modules/mediaprovider/core/mediaprovider-core.iml" group="shuttle2/mediaprovider/core" />

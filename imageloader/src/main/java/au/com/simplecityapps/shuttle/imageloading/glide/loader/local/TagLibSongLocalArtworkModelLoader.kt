@@ -15,12 +15,11 @@ import java.io.InputStream
 
 class TagLibSongLocalArtworkModelLoader(
     private val context: Context,
-    private val tagLib: KTagLib,
     private val localArtworkModelLoader: LocalArtworkModelLoader
 ) : ModelLoader<Song, InputStream> {
 
     override fun buildLoadData(model: Song, width: Int, height: Int, options: Options): ModelLoader.LoadData<InputStream>? {
-        return localArtworkModelLoader.buildLoadData(TagLibSongLocalArtworkProvider(context, tagLib, model), width, height, options)
+        return localArtworkModelLoader.buildLoadData(TagLibSongLocalArtworkProvider(context, model), width, height, options)
     }
 
     override fun handles(model: Song): Boolean {
@@ -29,12 +28,11 @@ class TagLibSongLocalArtworkModelLoader(
 
 
     class Factory(
-        private val context: Context,
-        private val tagLib: KTagLib
+        private val context: Context
     ) : ModelLoaderFactory<Song, InputStream> {
 
         override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Song, InputStream> {
-            return TagLibSongLocalArtworkModelLoader(context, tagLib, multiFactory.build(LocalArtworkProvider::class.java, InputStream::class.java) as LocalArtworkModelLoader)
+            return TagLibSongLocalArtworkModelLoader(context, multiFactory.build(LocalArtworkProvider::class.java, InputStream::class.java) as LocalArtworkModelLoader)
         }
 
         override fun teardown() {
@@ -45,7 +43,6 @@ class TagLibSongLocalArtworkModelLoader(
 
     class TagLibSongLocalArtworkProvider(
         private val context: Context,
-        private val tagLib: KTagLib,
         private val song: Song
     ) : SongArtworkProvider(song),
         LocalArtworkProvider {
@@ -58,7 +55,7 @@ class TagLibSongLocalArtworkModelLoader(
             }
             try {
                 context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
-                    return tagLib.getArtwork(pfd.detachFd())?.inputStream()
+                    return KTagLib.getArtwork(pfd.detachFd())?.inputStream()
                 }
             } catch (e: SecurityException) {
                 Timber.v("Failed to retrieve artwork (permission denial)")

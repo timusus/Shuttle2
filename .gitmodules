@@ -1,0 +1,3 @@
+[submodule "ktaglib"]
+	path = ktaglib
+	url = https://github.com/timusus/KTagLib.git

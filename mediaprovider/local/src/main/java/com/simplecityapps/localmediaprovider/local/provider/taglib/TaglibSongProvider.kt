@@ -4,10 +4,10 @@ import android.content.Context
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
 import com.simplecityappds.saf.SafDirectoryHelper
-import com.simplecityapps.ktaglib.AudioFile
-import com.simplecityapps.ktaglib.KTagLib
+import com.simplecityapps.localmediaprovider.local.provider.getAudioFile
 import com.simplecityapps.localmediaprovider.local.provider.toSong
 import com.simplecityapps.mediaprovider.MediaProvider
+import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.mediaprovider.model.Song
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -47,7 +47,7 @@ class TaglibSongProvider(
 }
 
 
-class FileScanner(private val tagLib: KTagLib) {
+class FileScanner {
 
     suspend fun getAudioFile(context: Context, uri: Uri): AudioFile? {
         return withContext(Dispatchers.IO) {
@@ -55,7 +55,7 @@ class FileScanner(private val tagLib: KTagLib) {
                 if (documentFile.exists()) {
                     try {
                         context.contentResolver.openFileDescriptor(documentFile.uri, "r")?.use { pfd ->
-                            val audioFile = tagLib.getAudioFile(pfd.detachFd(), uri.toString(), documentFile.name?.substringBeforeLast(".") ?: "Unknown")
+                            val audioFile = getAudioFile(pfd.detachFd(), uri.toString(), documentFile.name?.substringBeforeLast(".") ?: "Unknown", documentFile.lastModified(), documentFile.length())
                             if (audioFile != null) {
                                 return@withContext audioFile
                             } else {

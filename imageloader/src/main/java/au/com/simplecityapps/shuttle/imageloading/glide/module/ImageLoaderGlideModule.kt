@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.net.ConnectivityManager
 import android.util.Log
-import au.com.simplecityapps.shuttle.imageloading.glide.loader.common.ArtworkProvider
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.*
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.artwork.AlbumArtistArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.artwork.AlbumArtworkModelLoader
@@ -18,7 +17,6 @@ import com.bumptech.glide.integration.okhttp3.OkHttpUrlLoader
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.module.AppGlideModule
 import com.simplecity.amp_library.glide.palette.ColorSet
-import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
@@ -65,7 +63,7 @@ class ImageLoaderGlideModule : AppGlideModule() {
         // Local
 
         registry.append(Song::class.java, InputStream::class.java, DiskSongLocalArtworkModelLoader.Factory())
-        registry.append(Song::class.java, InputStream::class.java, TagLibSongLocalArtworkModelLoader.Factory(context, KTagLib()))
+        registry.append(Song::class.java, InputStream::class.java, TagLibSongLocalArtworkModelLoader.Factory(context))
         registry.append(Album::class.java, InputStream::class.java, DelegatingAlbumLocalArtworkModelLoader.Factory(songRepository))
 
 

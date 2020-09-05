@@ -6,6 +6,7 @@ include ':mediaprovider:local'
 include ':imageloader'
 include ':playback'
 include ':saf'
+include ':ktaglib:lib'
 
 gradle.ext.exoplayerRoot = 'exoplayer'
 gradle.ext.exoplayerModulePrefix = 'exoplayer-'
