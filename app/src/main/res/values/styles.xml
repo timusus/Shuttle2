@@ -164,12 +164,12 @@
     <!-- Material Shapes-->
 
     <style name="ShapeAppearance.Shuttle.SmallComponent" parent="ShapeAppearance.MaterialComponents.SmallComponent">
-        <item name="cornerFamily">cut</item>
+        <item name="cornerFamily">rounded</item>
         <item name="cornerSize">4dp</item>
     </style>
 
     <style name="ShapeAppearance.Shuttle.MediumComponent" parent="ShapeAppearance.MaterialComponents.MediumComponent">
-        <item name="cornerFamily">cut</item>
+        <item name="cornerFamily">rounded</item>
         <item name="cornerSize">8dp</item>
     </style>
 
@@ -205,6 +205,24 @@
     <!-- Placeholder-->
 
     <attr name="placeholderBackgroundColor" format="reference|color" />
+
+
+    <!-- Chips -->
+
+    <style name="ThinnerChip" parent="Widget.MaterialComponents.Chip.Action">
+        <item name="chipMinHeight">24dp</item>
+        <item name="chipMinTouchTargetSize">24dp</item>
+        <item name="shapeAppearanceOverlay">@style/ShapeAppearanceOverlay.MaterialComponents.Chip_Thin</item>
+        <item name="android:textAppearance">@style/TextAppearance.MaterialComponents.Body2_Thin</item>
+    </style>
+
+    <style name="ShapeAppearanceOverlay.MaterialComponents.Chip_Thin" parent="">
+        <item name="cornerSize">50%</item>
+    </style>
+
+    <style name="TextAppearance.MaterialComponents.Body2_Thin" parent="TextAppearance.MaterialComponents.Body2">
+        <item name="android:textSize">12sp</item>
+    </style>
 
 
 </resources>

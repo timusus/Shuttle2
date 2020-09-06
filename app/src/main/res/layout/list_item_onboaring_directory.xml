@@ -18,7 +18,7 @@
         app:layout_constraintBottom_toBottomOf="@+id/subtitleLabel"
         app:layout_constraintEnd_toStartOf="@id/subtitleLabel"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/subtitleLabel"/>
+        app:layout_constraintTop_toTopOf="@+id/subtitleLabel" />
 
     <TextView
         android:id="@+id/titleLabel"
@@ -28,18 +28,50 @@
         app:layout_constraintEnd_toStartOf="@+id/removeButton"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:text="Music/Downloads/"/>
+        tools:text="Music/Downloads/" />
 
     <TextView
         android:id="@+id/subtitleLabel"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="8dp"
         android:layout_marginEnd="8dp"
+        android:textSize="13sp"
         app:layout_constraintEnd_toStartOf="@+id/removeButton"
         app:layout_constraintStart_toEndOf="@id/progressBar"
         app:layout_constraintTop_toBottomOf="@id/titleLabel"
-        tools:text="Scanning:   /Tool/Lateralus/Triad.mp3"/>
+        tools:text="Scanning:   /Tool/Lateralus/Triad.mp3" />
+
+    <com.google.android.material.chip.ChipGroup
+        android:id="@+id/chipGroup"
+        style="@style/Widget.MaterialComponents.ChipGroup"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        app:layout_constraintEnd_toStartOf="@+id/removeButton"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/subtitleLabel"
+        tools:text="Write access">
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/readPermissionChip"
+            style="@style/ThinnerChip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Read only" />
+
+        <com.google.android.material.chip.Chip
+            android:id="@+id/writePermissionChip"
+            style="@style/ThinnerChip"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Write"
+            android:visibility="gone" />
+
+    </com.google.android.material.chip.ChipGroup>
+
+
 
     <ImageButton
         android:id="@+id/removeButton"
@@ -48,6 +80,6 @@
         android:background="?selectableItemBackgroundBorderless"
         android:src="@drawable/ic_close_black_24dp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"/>
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

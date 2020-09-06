@@ -84,7 +84,7 @@ object SafDirectoryHelper {
     }
 
     /**
-     * Traverses the contents of [treeUri], building a [DocumentNodeTree] (Trie) representing the directory structure.
+     * Traverses the contents of [rootUri], building a [DocumentNodeTree] (Trie) representing the directory structure.
      *
      * Leaves are represented by [FileNode], and only those whose mime type starts with 'audio' are included.
      *
@@ -92,18 +92,22 @@ object SafDirectoryHelper {
      */
     fun buildFolderNodeTree(
         contentResolver: ContentResolver,
-        treeUri: Uri
+        rootUri: Uri
     ): Flow<DocumentNodeTree> {
         return flow {
             try {
-                val docUri = DocumentsContract.buildDocumentUriUsingTree(treeUri, DocumentsContract.getTreeDocumentId(treeUri))
-                retrieveDocumentNodes(contentResolver, docUri, treeUri).firstOrNull()?.let { rootDocumentNode ->
-                    val tree = DocumentNodeTree(docUri, treeUri, rootDocumentNode.documentId, rootDocumentNode.displayName, rootDocumentNode.mimeType)
+                val docUri = DocumentsContract.buildDocumentUriUsingTree(rootUri, DocumentsContract.getTreeDocumentId(rootUri))
+                retrieveDocumentNodes(contentResolver, docUri, rootUri).firstOrNull()?.let { rootDocumentNode ->
+                    val tree = DocumentNodeTree(docUri, rootUri, rootDocumentNode.documentId, rootDocumentNode.displayName, rootDocumentNode.mimeType)
 
                     emit(tree)
 
                     fun traverseDocumentNodes(parent: DocumentNodeTree) {
-                        val documentNodes = retrieveDocumentNodes(contentResolver, DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, parent.documentId), treeUri)
+                        val documentNodes = retrieveDocumentNodes(
+                            contentResolver,
+                            DocumentsContract.buildChildDocumentsUriUsingTree(rootUri, parent.documentId),
+                            rootUri
+                        )
                         for (documentNode in documentNodes) {
                             when (documentNode) {
                                 is DocumentNodeTree -> traverseDocumentNodes(parent.addTreeNode(documentNode))
@@ -124,7 +128,7 @@ object SafDirectoryHelper {
                     emit(tree)
                 }
             } catch (e: SecurityException) {
-                Timber.e(e, "Failed to build folder tree ($treeUri)")
+                Timber.e(e, "Failed to build folder tree ($rootUri)")
             }
         }.flowOn(Dispatchers.IO)
     }
@@ -153,9 +157,24 @@ object SafDirectoryHelper {
                         val mimeType = cursor.getString(2)
                         val documentId = cursor.getString(0)
                         if (mimeType == DocumentsContract.Document.MIME_TYPE_DIR) {
-                            documentNodes.add(DocumentNodeTree(DocumentsContract.buildDocumentUriUsingTree(uri, documentId), rootUri, documentId, cursor.getString(1), mimeType))
+                            documentNodes.add(
+                                DocumentNodeTree(
+                                    uri = DocumentsContract.buildDocumentUriUsingTree(uri, documentId),
+                                    rootUri = rootUri,
+                                    documentId = documentId,
+                                    displayName = cursor.getString(1),
+                                    mimeType = mimeType
+                                )
+                            )
                         } else {
-                            documentNodes.add(DocumentNode(DocumentsContract.buildDocumentUriUsingTree(uri, documentId), documentId, cursor.getString(1), mimeType))
+                            documentNodes.add(
+                                DocumentNode(
+                                    uri = DocumentsContract.buildDocumentUriUsingTree(uri, documentId),
+                                    documentId = documentId,
+                                    displayName = cursor.getString(1),
+                                    mimeType = mimeType
+                                )
+                            )
                         }
                     }
                 } ?: Timber.e("Failed to iterate cursor (null)")
