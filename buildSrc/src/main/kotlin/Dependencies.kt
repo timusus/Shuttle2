@@ -1,14 +1,14 @@
-const val kotlinVersion = "1.3.72"
+const val kotlinVersion = "1.4.0"
 
 object BuildPlugins {
 
     object Versions {
         // Top level
-        const val androidGradlePlugin = "4.0.1"
-        const val safeArgsPlugin = "2.2.0-rc04"
+        const val androidGradlePlugin = "4.2.0-alpha09"
+        const val safeArgsPlugin = "2.3.0"
         const val googleServicesPlugin = "4.3.3"
-        const val bugsnagPlugin = "4.7.5"
-        const val gradleVersionPlugin = "0.27.0"
+        const val bugsnagPlugin = "5.0.1"
+        const val gradleVersionPlugin = "0.30.0"
 
         // Module
         const val playPublisher = "2.8.0"
