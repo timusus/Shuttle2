@@ -1,6 +1,5 @@
 package com.simplecityapps.playback.widgets
 
-import android.appwidget.AppWidgetManager
 import android.content.Context
 import com.simplecityapps.playback.ActivityIntentProvider
 import com.simplecityapps.playback.PlaybackWatcher
@@ -32,12 +31,7 @@ class WidgetManager @Inject constructor(
     }
 
     private fun updateWidget(updateReason: UpdateReason) {
-        context.sendBroadcast((context.applicationContext as ActivityIntentProvider).provideAppWidgetIntent().apply {
-            action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-            val ids = AppWidgetManager.getInstance(context).getAppWidgetIds(component)
-            putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
-            putExtra(ARG_UPDATE_REASON, updateReason.ordinal)
-        })
+        (context.applicationContext as ActivityIntentProvider).updateAppWidgets(updateReason)
     }
 
     // PlaybackWatcherCallback Implementation
@@ -61,7 +55,6 @@ class WidgetManager @Inject constructor(
 
         updateWidget(UpdateReason.QueuePositionChanged)
     }
-
 
     companion object {
         const val ARG_UPDATE_REASON = "update_reason"

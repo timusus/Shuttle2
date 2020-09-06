@@ -7,11 +7,13 @@ import androidx.appcompat.app.AppCompatDelegate
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.mediaprovider.repository.SongRepositoryProvider
 import com.simplecityapps.playback.ActivityIntentProvider
+import com.simplecityapps.playback.widgets.WidgetManager
 import com.simplecityapps.shuttle.appinitializers.AppInitializers
 import com.simplecityapps.shuttle.dagger.*
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.MainActivity
-import com.simplecityapps.shuttle.ui.widgets.ShuttleAppWidgetProvider
+import com.simplecityapps.shuttle.ui.widgets.WidgetProvider41
+import com.simplecityapps.shuttle.ui.widgets.WidgetProvider42
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasAndroidInjector
@@ -61,11 +63,7 @@ class ShuttleApplication : Application(),
 
         initializers.init(this)
 
-        sendBroadcast(provideAppWidgetIntent().apply {
-            action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-            val ids = AppWidgetManager.getInstance(this@ShuttleApplication).getAppWidgetIds(component)
-            putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
-        })
+        updateAppWidgets(WidgetManager.UpdateReason.Unknown)
     }
 
     override fun onLowMemory() {
@@ -87,10 +85,23 @@ class ShuttleApplication : Application(),
         return Intent(this, MainActivity::class.java)
     }
 
-    override fun provideAppWidgetIntent(): Intent {
-        return Intent(this, ShuttleAppWidgetProvider::class.java)
+    override fun provideAppWidgetIntents(): List<Intent> {
+        return listOf(
+            Intent(this, WidgetProvider41::class.java),
+            Intent(this, WidgetProvider42::class.java)
+        )
     }
 
+    override fun updateAppWidgets(updateReason: WidgetManager.UpdateReason) {
+        provideAppWidgetIntents().forEach { intent ->
+            sendBroadcast(intent.apply {
+                action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                val ids = AppWidgetManager.getInstance(this@ShuttleApplication).getAppWidgetIds(component)
+                putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
+                putExtra(WidgetManager.ARG_UPDATE_REASON, updateReason.ordinal)
+            })
+        }
+    }
 
     // OkHttpClientProvider Implementation
 

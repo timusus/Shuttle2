@@ -2,7 +2,9 @@ package com.simplecityapps.playback.dagger
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.graphics.Bitmap
 import android.os.Build
+import android.util.LruCache
 import androidx.core.content.getSystemService
 import com.simplecityapps.mediaprovider.repository.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.AlbumRepository
@@ -160,7 +162,8 @@ class PlaybackModule {
         queueManager: QueueManager,
         mediaSessionManager: MediaSessionManager,
         playbackWatcher: PlaybackWatcher,
-        queueWatcher: QueueWatcher
+        queueWatcher: QueueWatcher,
+        lruCache: LruCache<String, Bitmap>
     ): PlaybackNotificationManager {
         return PlaybackNotificationManager(
             context,
@@ -169,7 +172,8 @@ class PlaybackModule {
             queueManager,
             mediaSessionManager,
             playbackWatcher,
-            queueWatcher
+            queueWatcher,
+            lruCache
         )
     }
 

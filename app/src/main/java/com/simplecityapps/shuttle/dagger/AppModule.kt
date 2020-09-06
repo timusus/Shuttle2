@@ -3,7 +3,7 @@ package com.simplecityapps.shuttle.dagger
 import android.content.Context
 import android.content.SharedPreferences
 import android.graphics.Bitmap
-import com.simplecityapps.mediaprovider.model.Song
+import android.util.LruCache
 import com.simplecityapps.shuttle.ShuttleApplication
 import com.simplecityapps.shuttle.debug.DebugLoggingTree
 import dagger.Module
@@ -29,10 +29,10 @@ class AppModule {
 
     @AppScope
     @Provides
-    fun provideArtworkCache(): HashMap<Song, Bitmap?> {
-        return object : LinkedHashMap<Song, Bitmap?>(5) {
-            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Song, Bitmap?>?): Boolean {
-                return size > 4
+    fun provideArtworkCache(): LruCache<String, Bitmap> {
+        return object : LruCache<String, Bitmap>(10 * 1024 * 1024) {
+            override fun sizeOf(key: String, value: Bitmap): Int {
+                return value.allocationByteCount
             }
         }
     }

@@ -8,6 +8,9 @@ import dagger.android.ContributesAndroidInjector
 abstract class WidgetModule {
 
     @ContributesAndroidInjector
-    abstract fun bindWidgetProvider(): ShuttleAppWidgetProvider
+    abstract fun bindWidgetProvider41(): WidgetProvider41
+
+    @ContributesAndroidInjector
+    abstract fun bindWidgetProvider42(): WidgetProvider42
 
 }

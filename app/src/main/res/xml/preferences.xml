@@ -74,6 +74,24 @@
     </PreferenceCategory>
 
     <PreferenceCategory
+        android:title="Widgets"
+        app:iconSpaceReserved="false">
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="widget_dark_mode"
+            android:title="Dark mode"
+            app:iconSpaceReserved="false" />
+
+        <SeekBarPreference
+            android:defaultValue="false"
+            android:key="widget_background_opacity"
+            android:max="100"
+            android:title="Background Opacity"
+            app:defaultValue="100"
+            app:iconSpaceReserved="false" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
         android:title="Changelog"
         app:iconSpaceReserved="false">
 

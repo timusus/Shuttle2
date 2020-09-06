@@ -39,13 +39,26 @@
 
         <!-- Widget -->
 
-        <receiver android:name=".ui.widgets.ShuttleAppWidgetProvider">
+        <receiver
+            android:name=".ui.widgets.WidgetProvider41"
+            android:label="Shuttle 4x1">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/appwidget_info" />
+                android:resource="@xml/appwidget_info_41" />
+        </receiver>
+
+        <receiver
+            android:name=".ui.widgets.WidgetProvider42"
+            android:label="Shuttle 4x2">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/appwidget_info_42" />
         </receiver>
 
     </application>

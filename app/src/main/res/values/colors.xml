@@ -26,9 +26,16 @@
     <color name="shuffle_blue_primary_dark">#1F0492EA</color>
     <color name="shuffle_blue_tint">#0492ea</color>
 
-    <color name="bg_window_dark">#000000</color>
     <color name="bg_window_light">#FFFFFF</color>
-    <color name="bg_card_dark">#33b5e5</color>
+    <color name="bg_window_dark">#000000</color>
+
+    <color name="bg_card_light">#FFFFFF</color>
+    <color name="bg_card_dark">#121212</color>
+
+    <color name="text_primary_light">#DE000000</color>
+    <color name="text_secondary_light">#DE000000</color>
+    <color name="text_primary_dark">#DEFFFFFF</color>
+    <color name="text_secondary_dark">#DEFFFFFF</color>
 
 
     <!-- Vertical Seekbar-->

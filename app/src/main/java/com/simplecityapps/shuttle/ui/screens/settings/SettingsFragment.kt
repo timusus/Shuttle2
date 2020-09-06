@@ -14,17 +14,20 @@ import androidx.lifecycle.coroutineScope
 import androidx.navigation.fragment.findNavController
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
+import androidx.preference.SeekBarPreference
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
+import com.simplecityapps.playback.ActivityIntentProvider
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.local.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.local.exoplayer.ExoPlayerPlayback
 import com.simplecityapps.playback.local.mediaplayer.MediaPlayerPlayback
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
+import com.simplecityapps.playback.widgets.WidgetManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
@@ -162,6 +165,16 @@ class SettingsFragment : PreferenceFragmentCompat(),
                 .setNegativeButton("Close", null)
                 .show()
 
+            true
+        }
+
+        preferenceScreen.findPreference<Preference>("widget_dark_mode")?.setOnPreferenceClickListener {
+            (requireContext().applicationContext as ActivityIntentProvider).updateAppWidgets(WidgetManager.UpdateReason.Unknown)
+            true
+        }
+
+        preferenceScreen.findPreference<SeekBarPreference>("widget_background_opacity")?.setOnPreferenceChangeListener { preference, newValue ->
+            (requireContext().applicationContext as ActivityIntentProvider).updateAppWidgets(WidgetManager.UpdateReason.Unknown)
             true
         }
 

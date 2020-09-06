@@ -11,10 +11,10 @@ import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Build
+import android.util.LruCache
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationCompat.VISIBILITY_PUBLIC
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
-import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
@@ -28,7 +28,8 @@ class PlaybackNotificationManager(
     private val queueManager: QueueManager,
     private val mediaSessionManager: MediaSessionManager,
     private val playbackWatcher: PlaybackWatcher,
-    private val queueWatcher: QueueWatcher
+    private val queueWatcher: QueueWatcher,
+    private val artworkCache: LruCache<String, Bitmap>
 ) : PlaybackWatcherCallback,
     QueueChangeCallback {
 
@@ -36,12 +37,6 @@ class PlaybackNotificationManager(
 
     private val placeholder: Bitmap? by lazy {
         drawableToBitmap(context.resources.getDrawable(R.drawable.ic_music_note_black_24dp, context.theme))
-    }
-
-    private val artworkCache = object : LinkedHashMap<Song, Bitmap?>(5) {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<Song, Bitmap?>?): Boolean {
-            return size > 4
-        }
     }
 
     private var hasDisplayedNotification = false
@@ -86,11 +81,13 @@ class PlaybackNotificationManager(
             .addAction(nextAction)
             .setLargeIcon(placeholder)
 
+        val artworkSize = 512
+
         song?.let { song ->
-            artworkCache[song]?.let { image ->
+            artworkCache[song.getArtworkCacheKey(artworkSize, artworkSize)]?.let { image ->
                 notificationBuilder.setLargeIcon(image)
             } ?: run {
-                artworkImageLoader.loadBitmap(song, 512, 512) { image ->
+                artworkImageLoader.loadBitmap(song, artworkSize, artworkSize) { image ->
                     if (song == queueManager.getCurrentItem()?.song) {
                         notificationBuilder
                             .setContentText(song.albumArtist)
@@ -99,15 +96,19 @@ class PlaybackNotificationManager(
                         val notification = notificationBuilder.build()
                         notificationManager.notify(NOTIFICATION_ID, notification)
                     }
-                    artworkCache[song] = image
+                    if (image != null) {
+                        artworkCache.put(song.getArtworkCacheKey(artworkSize, artworkSize), image)
+                    }
                 }
             }
         }
 
         // Load the next song's artwork as well
         queueManager.getNext(true)?.song?.let { song ->
-            artworkCache[song] ?: artworkImageLoader.loadBitmap(song, 512, 512) { image ->
-                artworkCache[song] = image
+            artworkCache[song.getArtworkCacheKey(artworkSize, artworkSize)] ?: artworkImageLoader.loadBitmap(song, 512, 512) { image ->
+                if (image != null) {
+                    artworkCache.put(song.getArtworkCacheKey(artworkSize, artworkSize), image)
+                }
             }
         }
 

@@ -83,4 +83,23 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
         get() {
             return sharedPreferences.getBoolean("has_onboarded", false)
         }
+
+
+    // Widgets
+
+    var widgetDarkMode: Boolean
+        set(value) {
+            sharedPreferences.put("widget_dark_mode", value)
+        }
+        get() {
+            return sharedPreferences.getBoolean("widget_dark_mode", false)
+        }
+
+    var widgetBackgroundTransparency: Int
+        set(value) {
+            sharedPreferences.put("widget_background_opacity", value)
+        }
+        get() {
+            return sharedPreferences.getInt("widget_background_opacity", 100)
+        }
 }
