@@ -20,6 +20,8 @@ import com.bumptech.glide.integration.recyclerview.RecyclerViewPreloader
 import com.bumptech.glide.util.ViewPreloadSizeProvider
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
+import com.simplecityapps.adapter.SpanSizeLookup
+import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
@@ -69,6 +71,8 @@ class AlbumListFragment :
     private val viewPreloadSizeProvider by lazy { ViewPreloadSizeProvider<Album>() }
     private val preloadModelProvider by lazy { MyPreloadModelProvider<Album>(imageLoader, arrayOf(ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_album))) }
 
+    private lateinit var shuffleBinder: ShuffleBinder
+
 
     // Lifecycle
 
@@ -109,6 +113,12 @@ class AlbumListFragment :
         playlistMenuPresenter.bindView(playlistMenuView)
 
         savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
+
+        shuffleBinder = ShuffleBinder(object : ShuffleBinder.Listener {
+            override fun onClicked() {
+                presenter.albumShuffle()
+            }
+        })
     }
 
     override fun onResume() {
@@ -167,12 +177,17 @@ class AlbumListFragment :
 
     override fun setAlbums(albums: List<Album>, viewMode: ViewMode) {
         preloadModelProvider.items = albums
-        adapter.update(albums.map { album ->
+
+        val data = albums.map { album ->
             when (viewMode) {
                 ViewMode.Grid -> GridAlbumBinder(album, imageLoader, this)
                 ViewMode.List -> ListAlbumBinder(album, imageLoader, this)
             }
-        }, completion = {
+        }.toMutableList<ViewBinder>()
+
+        data.add(0, shuffleBinder)
+
+        adapter.update(data, completion = {
             recyclerViewState?.let {
                 recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
                 recyclerViewState = null
@@ -212,6 +227,7 @@ class AlbumListFragment :
     override fun setViewMode(viewMode: ViewMode) {
         when (viewMode) {
             ViewMode.List -> {
+                (recyclerView.layoutManager as GridLayoutManager).spanSizeLookup = SpanSizeLookup(adapter, 1)
                 (recyclerView.layoutManager as GridLayoutManager).spanCount = 1
                 if (recyclerView.itemDecorationCount != 0) {
                     recyclerView.removeItemDecorationAt(0)
@@ -220,8 +236,9 @@ class AlbumListFragment :
             }
             ViewMode.Grid -> {
                 (recyclerView.layoutManager as GridLayoutManager).spanCount = 3
+                (recyclerView.layoutManager as GridLayoutManager).spanSizeLookup = SpanSizeLookup(adapter, 3)
                 if (recyclerView.itemDecorationCount == 0) {
-                    recyclerView.addItemDecoration(GridSpacingItemDecoration(8, true))
+                    recyclerView.addItemDecoration(GridSpacingItemDecoration(8, true, 1))
                 }
                 findToolbarHost()?.getToolbar()?.menu?.findItem(R.id.viewMode)?.setIcon(R.drawable.ic_list_outline_24)
             }

@@ -38,6 +38,10 @@ class GridAlbumBinder(
         return album.name.firstOrNull().toString()
     }
 
+    override fun spanSize(spanCount: Int): Int {
+        return 1
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is GridAlbumBinder) return false

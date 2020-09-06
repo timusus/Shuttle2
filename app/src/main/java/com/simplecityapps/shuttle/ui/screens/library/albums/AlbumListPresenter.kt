@@ -47,6 +47,7 @@ class AlbumListContract {
         fun editTags(album: Album)
         fun play(album: Album)
         fun toggleViewMode()
+        fun albumShuffle()
     }
 }
 
@@ -166,6 +167,25 @@ class AlbumListPresenter @Inject constructor(
                 .firstOrNull()
                 .orEmpty()
             playbackManager.load(songs, 0) { result ->
+                result.onSuccess { playbackManager.play() }
+                result.onFailure { error -> view?.showLoadError(error as Error) }
+            }
+        }
+    }
+
+    override fun albumShuffle() {
+        launch {
+            val albums = songRepository
+                .getSongs(SongQuery.All())
+                .firstOrNull()
+                .orEmpty()
+                .groupBy { it.album }
+
+            val songs = albums.keys.shuffled().flatMap { key ->
+                albums.getValue(key)
+            }
+
+            playbackManager.load(songs) { result ->
                 result.onSuccess { playbackManager.play() }
                 result.onFailure { error -> view?.showLoadError(error as Error) }
             }

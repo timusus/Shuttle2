@@ -25,6 +25,7 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.queue.QueueItem
+import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
@@ -45,7 +46,7 @@ class QueueFragment :
 
     private var imageLoader: ArtworkImageLoader by autoCleared()
 
-    private var recyclerView: RecyclerView by autoCleared()
+    private var recyclerView: FastScrollRecyclerView by autoCleared()
 
     private var toolbar: Toolbar by autoCleared()
     private var toolbarTitleTextView: TextView by autoCleared()

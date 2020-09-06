@@ -8,7 +8,8 @@ import com.simplecityapps.shuttle.ui.common.utils.dp
 
 class GridSpacingItemDecoration(
     space: Int,
-    private val includeEdge: Boolean = true
+    private val includeEdge: Boolean = true,
+    private val offset: Int = 0
 ) : RecyclerView.ItemDecoration() {
 
     private val space: Int = space.dp
@@ -21,7 +22,16 @@ class GridSpacingItemDecoration(
     ) {
 
         val spanCount = (parent.layoutManager as GridLayoutManager).spanCount
-        val position = parent.getChildAdapterPosition(view)
+        var position = parent.getChildAdapterPosition(view)
+
+        if (offset != 0) {
+            if (position < offset) {
+                outRect.bottom = space / 2
+                return
+            }
+            position -= offset
+        }
+
         val column = position % spanCount
 
         if (includeEdge) {
