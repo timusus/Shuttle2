@@ -13,6 +13,6 @@ data class AudioFile(
     val disc: Int?,
     val discTotal: Int?,
     val duration: Int?,
-    val date: String?,
+    val year: String?,
     var genre: String?
 )

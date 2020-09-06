@@ -72,7 +72,7 @@ class FileScanner {
                                     disc = 1,
                                     discTotal = 1,
                                     duration = 0,
-                                    date = null,
+                                    year = null,
                                     genre = null
                                 )
                             }

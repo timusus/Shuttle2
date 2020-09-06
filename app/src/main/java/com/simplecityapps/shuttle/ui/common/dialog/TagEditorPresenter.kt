@@ -144,7 +144,7 @@ class TagEditorPresenter @Inject constructor(
             val artists = editables.map { it.second?.artist }.distinct()
             val albums = editables.map { it.second?.album }.distinct()
             val albumArtists = editables.map { it.second?.albumArtist }.distinct()
-            val dates = editables.map { it.second?.date }.distinct()
+            val dates = editables.map { it.second?.year }.distinct()
             val tracks = editables.map { it.second?.track }.distinct()
             val trackTotals = editables.map { it.second?.trackTotal }.distinct()
             val discs = editables.map { it.second?.disc }.distinct()

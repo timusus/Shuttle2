@@ -15,7 +15,7 @@ fun AudioFile.toSong(mimeType: String): Song {
         track = track ?: 1,
         disc = disc ?: 1,
         duration = duration ?: 0,
-        year = date?.toIntOrNull() ?: 0,
+        year = year?.toIntOrNull() ?: 0,
         path = path,
         size = size,
         mimeType = mimeType,
@@ -41,6 +41,7 @@ enum class TagLibProperty(val key: String) {
 
 fun getAudioFile(fileDescriptor: Int, filePath: String, fileName: String, lastModified: Long, size: Long): AudioFile {
     val metadata = KTagLib.getMetadata(fileDescriptor)
+
     return AudioFile(
         filePath,
         size,
@@ -54,7 +55,17 @@ fun getAudioFile(fileDescriptor: Int, filePath: String, fileName: String, lastMo
         disc = metadata?.propertyMap?.get(TagLibProperty.Disc.key)?.firstOrNull()?.substringBefore('/')?.toIntOrNull(),
         discTotal = metadata?.propertyMap?.get(TagLibProperty.Disc.key)?.firstOrNull()?.substringAfter('/', "")?.toIntOrNull(),
         duration = metadata?.audioProperties?.duration,
-        date = metadata?.propertyMap?.get(TagLibProperty.Date.key)?.firstOrNull(),
+        year = metadata?.propertyMap?.get(TagLibProperty.Date.key)?.firstOrNull()?.parseDate(),
         genre = metadata?.propertyMap?.get(TagLibProperty.Genre.key)?.firstOrNull()
     )
+}
+
+
+fun String.parseDate(): String? {
+    if (length < 4) {
+        return null
+    } else if (length > 4) {
+        return substring(0, 4)
+    }
+    return this
 }
