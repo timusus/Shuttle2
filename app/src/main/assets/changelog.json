@@ -1,5 +1,12 @@
 {
   "commits": [
-    "Fixed a bug causing the library to disappear after relaunching. If this has happened to you, please remove & re-add your media directories, via the media scanner settings."
+    "Added album shuffle",
+    "Added 4x2 widget",
+    "Added settings option to control widget transparency & dark mode",
+    "Fixed another issue causing library to be deleted on launch. Hopefully that's the end of that..",
+    "Fixed an issue where track total & disc total couldn't be edited in tag editor",
+    "Improved parsing of date/year tags",
+    "Improved parsing of disc/track numbers",
+    "Improved parsing of date/year tags"
   ]
 }
