@@ -1,3 +1,6 @@
 [submodule "ktaglib"]
 	path = ktaglib
 	url = https://github.com/timusus/KTagLib.git
+[submodule "libopus"]
+    path = exoplayer/extensions/opus/src/main/jni/libopus
+    url = https://github.com/xiph/opus.git
