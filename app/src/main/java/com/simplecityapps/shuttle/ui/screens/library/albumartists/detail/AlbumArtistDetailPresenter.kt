@@ -33,6 +33,7 @@ class AlbumArtistDetailContract {
         fun loadData()
         fun onSongClicked(song: Song, songs: List<Song>)
         fun shuffle()
+        fun shuffleAlbums()
         fun addToQueue(albumArtist: AlbumArtist)
         fun play(album: Album)
         fun addToQueue(album: Album)
@@ -105,11 +106,31 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
 
     override fun shuffle() {
         launch {
-            val songs = songRepository.getSongs(SongQuery.AlbumArtists(listOf(SongQuery.AlbumArtist(name = albumArtist.name)))).firstOrNull().orEmpty()
+            val songs = songRepository
+                .getSongs(SongQuery.AlbumArtists(listOf(SongQuery.AlbumArtist(name = albumArtist.name))))
+                .firstOrNull()
+                .orEmpty()
             playbackManager.shuffle(songs) { result ->
-                result.onSuccess {
-                    playbackManager.play()
-                }
+                result.onSuccess { playbackManager.play() }
+                result.onFailure { error -> view?.showLoadError(error as Error) }
+            }
+        }
+    }
+
+    override fun shuffleAlbums() {
+        launch {
+            val albums = songRepository
+                .getSongs(SongQuery.AlbumArtists(listOf(SongQuery.AlbumArtist(name = albumArtist.name))))
+                .firstOrNull()
+                .orEmpty()
+                .groupBy { it.album }
+
+            val songs = albums.keys.shuffled().flatMap { key ->
+                albums.getValue(key)
+            }
+
+            playbackManager.load(songs) { result ->
+                result.onSuccess { playbackManager.play() }
                 result.onFailure { error -> view?.showLoadError(error as Error) }
             }
         }
@@ -191,7 +212,7 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
             view?.showTagEditor(songs)
         }
     }
-    
+
     override fun delete(song: Song) {
         val uri = song.path.toUri()
         val documentFile = DocumentFile.fromSingleUri(context, uri)

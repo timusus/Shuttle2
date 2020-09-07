@@ -145,6 +145,10 @@ class AlbumArtistDetailFragment :
                         presenter.shuffle()
                         true
                     }
+                    R.id.albumShuffle -> {
+                        presenter.shuffleAlbums()
+                        true
+                    }
                     R.id.queue -> {
                         presenter.addToQueue(albumArtist)
                         true

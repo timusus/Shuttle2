@@ -5,6 +5,9 @@
         android:id="@+id/shuffle"
         android:title="Shuffle" />
     <item
+        android:id="@+id/albumShuffle"
+        android:title="Album Shuffle" />
+    <item
         android:id="@+id/queue"
         android:title="Add to Queue" />
     <item
