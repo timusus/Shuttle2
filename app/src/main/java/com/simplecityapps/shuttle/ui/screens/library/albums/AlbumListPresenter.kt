@@ -42,7 +42,6 @@ class AlbumListContract {
         fun loadAlbums()
         fun addToQueue(album: Album)
         fun playNext(album: Album)
-        fun rescanLibrary()
         fun exclude(album: Album)
         fun editTags(album: Album)
         fun play(album: Album)
@@ -124,12 +123,6 @@ class AlbumListPresenter @Inject constructor(
                 .orEmpty()
             playbackManager.playNext(songs)
             view?.onAddedToQueue(album)
-        }
-    }
-
-    override fun rescanLibrary() {
-        appCoroutineScope.launch {
-            mediaImporter.reImport()
         }
     }
 

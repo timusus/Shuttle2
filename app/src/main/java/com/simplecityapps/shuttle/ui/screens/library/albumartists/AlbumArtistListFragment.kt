@@ -127,11 +127,6 @@ class AlbumArtistListFragment :
                         presenter.toggleViewMode()
                         true
                     }
-                    R.id.rescan -> {
-                        presenter.rescanLibrary()
-                        Toast.makeText(requireContext(), "Library scan started", Toast.LENGTH_SHORT).show()
-                        true
-                    }
                     else -> false
                 }
             }
@@ -142,7 +137,6 @@ class AlbumArtistListFragment :
         super.onPause()
 
         findToolbarHost()?.getToolbar()?.let { toolbar ->
-            toolbar.menu.removeItem(R.id.rescan)
             toolbar.menu.removeItem(R.id.viewMode)
             toolbar.setOnMenuItemClickListener(null)
         }

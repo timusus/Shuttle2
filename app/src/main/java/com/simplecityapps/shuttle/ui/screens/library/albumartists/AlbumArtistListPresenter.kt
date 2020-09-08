@@ -42,7 +42,6 @@ interface AlbumArtistListContract {
         fun loadAlbumArtists()
         fun addToQueue(albumArtist: AlbumArtist)
         fun playNext(albumArtist: AlbumArtist)
-        fun rescanLibrary()
         fun exclude(albumArtist: AlbumArtist)
         fun editTags(albumArtist: AlbumArtist)
         fun play(albumArtist: AlbumArtist)
@@ -122,12 +121,6 @@ class AlbumArtistListPresenter @Inject constructor(
                 .orEmpty()
             playbackManager.playNext(songs)
             view?.onAddedToQueue(albumArtist)
-        }
-    }
-
-    override fun rescanLibrary() {
-        appCoroutineScope.launch {
-            mediaImporter.reImport()
         }
     }
 

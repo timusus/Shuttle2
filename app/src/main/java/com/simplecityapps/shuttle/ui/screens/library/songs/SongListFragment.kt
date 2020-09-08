@@ -103,16 +103,9 @@ class SongListFragment :
         presenter.loadSongs()
 
         findToolbarHost()?.getToolbar()?.let { toolbar ->
-            toolbar.inflateMenu(R.menu.menu_library)
+            toolbar.inflateMenu(R.menu.menu_song_list)
             toolbar.setOnMenuItemClickListener { menuItem ->
-                when (menuItem.itemId) {
-                    R.id.rescan -> {
-                        presenter.rescanLibrary()
-                        Toast.makeText(requireContext(), "Library scan started", Toast.LENGTH_SHORT).show()
-                        true
-                    }
-                    else -> false
-                }
+                false
             }
         }
     }
@@ -121,7 +114,6 @@ class SongListFragment :
         super.onPause()
 
         findToolbarHost()?.getToolbar()?.let { toolbar ->
-            toolbar.menu.removeItem(R.id.rescan)
             toolbar.setOnMenuItemClickListener(null)
         }
 

@@ -44,7 +44,6 @@ interface SongListContract {
         fun onSongClicked(song: Song)
         fun addToQueue(song: Song)
         fun playNext(song: Song)
-        fun rescanLibrary()
         fun exclude(song: Song)
         fun delete(song: Song)
     }
@@ -124,12 +123,6 @@ class SongListPresenter @Inject constructor(
         launch {
             playbackManager.playNext(listOf(song))
             view?.onAddedToQueue(song)
-        }
-    }
-
-    override fun rescanLibrary() {
-        appCoroutineScope.launch {
-            mediaImporter.reImport()
         }
     }
 
