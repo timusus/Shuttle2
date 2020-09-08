@@ -1,5 +1,5 @@
 {
   "commits": [
-    "Fixed a crash when scrolling album list"
+    "Fixed an issue preventing Cast from working"
   ]
 }
