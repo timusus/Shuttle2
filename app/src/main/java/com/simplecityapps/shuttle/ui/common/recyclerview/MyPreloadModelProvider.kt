@@ -13,10 +13,10 @@ class MyPreloadModelProvider<T>(
     var items: List<T> = emptyList()
 
     override fun getPreloadItems(position: Int): List<T> {
-        if (items.isEmpty()) {
+        if (items.isEmpty() || position > items.size - 1) {
             return emptyList()
         }
-        return items.subList(position, position + 1);
+        return listOf(items[position])
     }
 
     override fun getPreloadRequestBuilder(item: T): RequestBuilder<*>? {
