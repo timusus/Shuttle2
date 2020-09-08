@@ -11,7 +11,6 @@ import java.io.InputStream
 class HttpServer(private val castService: CastService) : NanoHTTPD(5000) {
 
     override fun serve(session: IHTTPSession): Response {
-
         val uri = Uri.parse(session.uri)
 
         val paths = uri.pathSegments
@@ -20,22 +19,22 @@ class HttpServer(private val castService: CastService) : NanoHTTPD(5000) {
 
             when (uri.lastPathSegment) {
                 "audio" -> {
-                    runBlocking {
+                    return runBlocking {
                         castService.getAudio(songId)?.let { audioStream ->
-                            return@runBlocking serveAudio(session.headers, audioStream.stream, audioStream.length, audioStream.mimeType)
-                        }
+                            serveAudio(session.headers, audioStream.stream, audioStream.length, audioStream.mimeType)
+                        } ?: newFixedLengthResponse(Response.Status.NOT_FOUND, "text/html", "File not found")
                     }
                 }
                 "artwork" -> {
-                    runBlocking {
+                    return runBlocking {
                         castService.getArtwork(songId)?.let { byteArray ->
-                            return@runBlocking serveArtwork(ByteArrayInputStream(byteArray), "image/jpeg", byteArray.size.toLong())
-                        }
+                            serveArtwork(ByteArrayInputStream(byteArray), "image/jpeg", byteArray.size.toLong())
+                        } ?: newFixedLengthResponse(Response.Status.NOT_FOUND, "text/html", "File not found")
                     }
                 }
             }
         }
-        return newFixedLengthResponse(Response.Status.NOT_FOUND, "text/html", "File not found")
+        return newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/html", "Invalid request url")
     }
 
     private fun serveAudio(headers: MutableMap<String, String>, inputStream: InputStream, length: Long, mimeType: String): Response {
