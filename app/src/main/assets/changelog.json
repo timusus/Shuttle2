@@ -1,5 +1,6 @@
 {
   "commits": [
-    "Fixed an issue preventing Cast from working"
+    "Added album & song sorting options",
+    "Fixed an issue where search would freeze/lag"
   ]
 }
