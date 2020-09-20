@@ -23,7 +23,7 @@ import okhttp3.OkHttpClient
         RepositoryModule::class,
         NetworkingModule::class,
         PersistenceModule::class,
-        TagLibModule::class
+        MediaProviderModule::class
     ]
 )
 @AppScope

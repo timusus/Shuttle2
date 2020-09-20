@@ -67,8 +67,8 @@ class AlbumListPresenter @Inject constructor(
     private var albums: List<Album> = emptyList()
 
     private val mediaImporterListener = object : MediaImporter.Listener {
-        override fun onProgress(progress: Float, song: Song) {
-            view?.setLoadingProgress(progress)
+        override fun onProgress(progress: Int, total: Int, song: Song) {
+            view?.setLoadingProgress(progress / total.toFloat())
         }
     }
 
@@ -212,7 +212,7 @@ class AlbumListPresenter @Inject constructor(
     }
 
     override fun getFastscrollPrefix(album: Album): String? {
-        return when(sortPreferenceManager.sortOrderAlbumList) {
+        return when (sortPreferenceManager.sortOrderAlbumList) {
             AlbumSortOrder.AlbumName -> album.sortKey?.firstOrNull().toString()
             AlbumSortOrder.ArtistName -> album.albumArtist.removeArticles().firstOrNull().toString()
             AlbumSortOrder.Year -> album.year.toString()

@@ -50,7 +50,7 @@ class MediaIdHelper @Inject constructor(
                     )
                 }
                 is MediaIdWrapper.Directory.Artists -> {
-                    artistRepository.getAlbumArtists().firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
+                    artistRepository.getAlbumArtists(AlbumArtistQuery.All()).firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
                 }
                 is MediaIdWrapper.Directory.Albums.All -> {
                     albumRepository.getAlbums(AlbumQuery.All()).firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
@@ -59,7 +59,7 @@ class MediaIdHelper @Inject constructor(
                     albumRepository.getAlbums(AlbumQuery.AlbumArtist(mediaIdWrapper.artistName)).firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
                 }
                 is MediaIdWrapper.Directory.Playlists -> {
-                    playlistRepository.getPlaylists().firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
+                    playlistRepository.getPlaylists(PlaylistQuery.All()).firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
                 }
                 is MediaIdWrapper.Directory.Songs.Album -> {
                     songRepository

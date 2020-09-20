@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.playlistmenu
 
 import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.mediaprovider.repository.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
@@ -28,9 +29,10 @@ class PlaylistMenuPresenter @Inject constructor(
 
     override fun loadPlaylists() {
         launch {
-            playlistRepository.getPlaylists().collect { playlists ->
-                this@PlaylistMenuPresenter.playlists = playlists
-            }
+            playlistRepository.getPlaylists(PlaylistQuery.All())
+                .collect { playlists ->
+                    this@PlaylistMenuPresenter.playlists = playlists
+                }
         }
     }
 

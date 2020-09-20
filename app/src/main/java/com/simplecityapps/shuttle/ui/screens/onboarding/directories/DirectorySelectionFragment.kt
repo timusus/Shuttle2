@@ -30,10 +30,10 @@ import javax.inject.Inject
 
 class DirectorySelectionFragment : Fragment(),
     Injectable,
-    MusicDirectoriesContract.View,
+    DirectorySelectionContract.View,
     OnboardingChild {
 
-    @Inject lateinit var presenter: MusicDirectoriesPresenter
+    @Inject lateinit var presenter: DirectorySelectionPresenter
 
     lateinit var adapter: RecyclerAdapter
 
@@ -80,12 +80,7 @@ class DirectorySelectionFragment : Fragment(),
 
         val addDirectoryButton: Button = view.findViewById(R.id.addDirectoryButton)
         addDirectoryButton.setOnClickListener {
-            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
-            if (intent.resolveActivity(requireContext().packageManager) != null) {
-                startActivityForResult(intent, REQUEST_CODE_OPEN_DOCUMENT)
-            } else {
-                showDocumentProviderNotAvailable()
-            }
+           presenter.presentDocumentProvider()
         }
 
         val helpButton: Button = view.findViewById(R.id.helpButton)
@@ -128,14 +123,7 @@ class DirectorySelectionFragment : Fragment(),
 
     // MusicDirectoriesContract.View Implementation
 
-    override fun setData(data: List<MusicDirectoriesContract.Directory>) {
-        getParent()?.let { parent ->
-            parent.directories = data
-                .filter { it.traversalComplete }
-                .map { it.tree }
-
-        } ?: Timber.e("Failed to set parent uri data - getParent() returned null")
-
+    override fun setData(data: List<DirectorySelectionContract.Directory>) {
         adapter.update(data.map { DirectoryBinder(it, directoryBinderListener) }.toMutableList()) {
             getParent()?.let { parent ->
                 if (adapter.items.none { binder -> binder is DirectoryBinder } || adapter.items.any { binder -> binder is DirectoryBinder && !binder.directory.traversalComplete }) {
@@ -173,7 +161,7 @@ class DirectorySelectionFragment : Fragment(),
 
     private val directoryBinderListener = object : DirectoryBinder.Listener {
 
-        override fun onRemoveClicked(directory: MusicDirectoriesContract.Directory) {
+        override fun onRemoveClicked(directory: DirectorySelectionContract.Directory) {
             presenter.removeItem(directory)
         }
     }

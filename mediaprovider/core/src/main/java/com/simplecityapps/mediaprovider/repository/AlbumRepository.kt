@@ -1,6 +1,7 @@
 package com.simplecityapps.mediaprovider.repository
 
 import com.simplecityapps.mediaprovider.model.Album
+import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.model.removeArticles
 import kotlinx.coroutines.flow.Flow
 import java.io.Serializable
@@ -60,8 +61,8 @@ enum class AlbumSortOrder : Serializable {
         get() {
             return when (this) {
                 Default -> Comparator<Album> { a, b -> zeroLastComparator.compare(a.year, b.year) }.then(compareBy { album -> album.year })
-                AlbumName -> compareBy<Album> { album -> album.sortKey }.then(Default.comparator)
-                ArtistName -> Comparator<Album> { a, b -> Collator.getInstance().compare(a.albumArtist.removeArticles(), b.albumArtist.removeArticles()) }.then(Default.comparator)
+                AlbumName -> Comparator<Album> { a, b -> Collator.getInstance().apply { strength = Collator.TERTIARY }.compare(a.sortKey, b.sortKey) }.then(Default.comparator)
+                ArtistName -> Comparator<Album> { a, b -> Collator.getInstance().apply { strength = Collator.TERTIARY }.compare(a.albumArtist.removeArticles(), b.albumArtist.removeArticles()) }.then(Default.comparator)
                 PlayCount -> compareBy<Album> { song -> song.playCount }.then(Default.comparator)
                 Year -> Default.comparator
             }

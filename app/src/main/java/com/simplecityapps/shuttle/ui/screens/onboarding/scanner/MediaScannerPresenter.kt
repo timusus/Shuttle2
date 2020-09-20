@@ -1,14 +1,13 @@
 package com.simplecityapps.shuttle.ui.screens.onboarding.scanner
 
-import android.content.Context
-import com.simplecityappds.saf.SafDirectoryHelper
 import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStoreSongProvider
-import com.simplecityapps.localmediaprovider.local.provider.taglib.FileScanner
 import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibSongProvider
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
+import com.squareup.inject.assisted.Assisted
+import com.squareup.inject.assisted.AssistedInject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -17,35 +16,42 @@ import javax.inject.Named
 
 interface ScannerContract {
 
-    sealed class ScanType {
-        object MediaStore : ScanType()
-        class Taglib(val directories: List<SafDirectoryHelper.DocumentNodeTree>) : ScanType()
-    }
-
     interface View {
-        fun setProgress(progress: Float, message: String)
+        fun setProgress(progress: Int, total: Int, message: String)
         fun dismiss()
+        fun setTitle(title: String)
+        fun setScanComplete(inserts: Int, updates: Int, deletes: Int)
+        fun setScanFailed()
     }
 
     interface Presenter : BaseContract.Presenter<View> {
-        fun startScan(scanType: ScanType)
+        fun startScanOrExit()
+        fun startScan()
         fun stopScan()
     }
 }
 
 class ScannerPresenter @Inject constructor(
-    private val context: Context,
     @Named("AppCoroutineScope") private val appCoroutineScope: CoroutineScope,
-    private val fileScanner: FileScanner,
     private val mediaImporter: MediaImporter
 ) : ScannerContract.Presenter,
     BasePresenter<ScannerContract.View>() {
 
-    var scanJob: Job? = null
+    private var scanJob: Job? = null
 
     override fun bindView(view: ScannerContract.View) {
         super.bindView(view)
+
         mediaImporter.listeners.add(listener)
+
+        when (mediaImporter.mediaProvider) {
+            is TaglibSongProvider -> {
+                view.setTitle("Reading song tags…")
+            }
+            is MediaStoreSongProvider -> {
+                view.setTitle("Scanning Media Store…")
+            }
+        }
     }
 
     override fun unbindView() {
@@ -53,14 +59,24 @@ class ScannerPresenter @Inject constructor(
         super.unbindView()
     }
 
-    override fun startScan(scanType: ScannerContract.ScanType) {
+
+    // Private
+
+    override fun startScanOrExit() {
+        if (mediaImporter.isImporting) {
+            return
+        }
+        if (mediaImporter.importCount == 0) {
+            startScan()
+        } else {
+            view?.dismiss()
+        }
+    }
+
+    override fun startScan() {
+        stopScan()
         scanJob = appCoroutineScope.launch {
-            mediaImporter.import(
-                when (scanType) {
-                    is ScannerContract.ScanType.MediaStore -> MediaStoreSongProvider(context)
-                    is ScannerContract.ScanType.Taglib -> TaglibSongProvider(context, fileScanner, scanType.directories)
-                }
-            )
+            mediaImporter.import()
         }
     }
 
@@ -68,13 +84,28 @@ class ScannerPresenter @Inject constructor(
         scanJob?.cancel()
     }
 
+
+    // MediaImporter.Listener Implementation
+
     private val listener = object : MediaImporter.Listener {
-        override fun onProgress(progress: Float, song: Song) {
-            view?.setProgress(progress, "${song.albumArtist} - ${song.name}")
+        override fun onProgress(progress: Int, total: Int, song: Song) {
+            when (mediaImporter.mediaProvider) {
+                is TaglibSongProvider -> {
+                    view?.setTitle("Reading song tags…")
+                }
+                is MediaStoreSongProvider -> {
+                    view?.setTitle("Scanning Media Store…")
+                }
+            }
+            view?.setProgress(progress, total, "${song.albumArtist} - ${song.name}")
         }
 
-        override fun onComplete() {
-            view?.dismiss()
+        override fun onComplete(inserts: Int, updates: Int, deletes: Int) {
+            view?.setScanComplete(inserts, updates, deletes)
+        }
+
+        override fun onFail() {
+            view?.setScanFailed()
         }
     }
 }

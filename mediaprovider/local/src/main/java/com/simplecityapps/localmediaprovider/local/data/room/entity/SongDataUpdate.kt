@@ -2,6 +2,7 @@ package com.simplecityapps.localmediaprovider.local.data.room.entity
 
 import androidx.room.ColumnInfo
 import androidx.room.PrimaryKey
+import com.simplecityapps.mediaprovider.model.Song
 import java.util.*
 
 data class SongDataUpdate(
@@ -15,12 +16,14 @@ data class SongDataUpdate(
     @ColumnInfo(name = "album") var album: String,
     @ColumnInfo(name = "size") var size: Long,
     @ColumnInfo(name = "mimeType") var mimeType: String,
-    @ColumnInfo(name = "lastModified") var lastModified: Date
+    @ColumnInfo(name = "lastModified") var lastModified: Date,
+    @ColumnInfo(name = "mediaStoreId") var mediaStoreId: Long? = null
 )
 
 fun SongData.toSongDataUpdate(): SongDataUpdate {
     return SongDataUpdate(
-        id = id, name = name,
+        id = id,
+        name = name,
         track = track,
         disc = disc,
         duration = duration,
@@ -29,6 +32,11 @@ fun SongData.toSongDataUpdate(): SongDataUpdate {
         album = album,
         size = size,
         mimeType = mimeType,
-        lastModified = lastModified
+        lastModified = lastModified,
+        mediaStoreId = mediaStoreId
     )
+}
+
+fun List<Song>.toSongDataUpdate(): List<SongDataUpdate> {
+    return map { song -> song.toSongData().toSongDataUpdate() }
 }

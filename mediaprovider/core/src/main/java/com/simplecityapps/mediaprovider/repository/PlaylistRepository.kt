@@ -1,11 +1,14 @@
 package com.simplecityapps.mediaprovider.repository
 
+import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.mediaprovider.model.removeArticles
 import kotlinx.coroutines.flow.Flow
+import java.io.Serializable
+import java.text.Collator
 
 interface PlaylistRepository {
-    fun getPlaylists(): Flow<List<Playlist>>
     fun getPlaylists(query: PlaylistQuery): Flow<List<Playlist>>
     suspend fun getFavoritesPlaylist(): Playlist
     suspend fun createPlaylist(name: String, mediaStoreId: Long?, songs: List<Song>?): Playlist
@@ -17,12 +20,28 @@ interface PlaylistRepository {
     suspend fun clearPlaylist(playlist: Playlist)
 }
 
-sealed class PlaylistQuery {
-    class PlaylistId(val playlistId: Long) : PlaylistQuery()
+sealed class PlaylistQuery(
+    val predicate: ((Playlist) -> Boolean),
+    val sortOrder: PlaylistSortOrder = PlaylistSortOrder.Default
+) {
+    class All(sortOrder: PlaylistSortOrder = PlaylistSortOrder.Default) : PlaylistQuery(
+        predicate = { true },
+        sortOrder = sortOrder
+    )
+
+    class PlaylistId(val playlistId: Long) : PlaylistQuery(
+        predicate = { playlist -> playlist.id == playlistId },
+        sortOrder = PlaylistSortOrder.Default
+    )
 }
 
-fun PlaylistQuery.predicate(): (Playlist) -> Boolean {
-    return when (this) {
-        is PlaylistQuery.PlaylistId -> { playlist -> playlist.id == playlistId }
-    }
+enum class PlaylistSortOrder : Serializable {
+    Default;
+
+    val comparator: Comparator<Playlist>
+        get() {
+            return when (this) {
+                Default -> compareBy { playlist -> playlist.id }
+            }
+        }
 }

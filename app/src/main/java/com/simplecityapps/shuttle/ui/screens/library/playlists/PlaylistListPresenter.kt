@@ -4,15 +4,13 @@ import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStor
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.mediaprovider.repository.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.PlaylistRepository
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.text.Collator
 import javax.inject.Inject
@@ -52,8 +50,8 @@ class PlaylistListPresenter @Inject constructor(
     BasePresenter<PlaylistListContract.View>() {
 
     private val mediaImporterListener = object : MediaImporter.Listener {
-        override fun onProgress(progress: Float, song: Song) {
-            view?.setLoadingProgress(progress)
+        override fun onProgress(progress: Int, total: Int, song: Song) {
+            view?.setLoadingProgress(progress / total.toFloat())
         }
     }
 
@@ -65,7 +63,8 @@ class PlaylistListPresenter @Inject constructor(
 
     override fun loadPlaylists() {
         launch {
-            playlistRepository.getPlaylists().map { playlist -> playlist.sortedWith(Comparator { a, b -> Collator.getInstance().compare(a.name, b.name) }) }
+            playlistRepository.getPlaylists(PlaylistQuery.All())
+                .distinctUntilChanged()
                 .flowOn(Dispatchers.IO)
                 .collect { playlists ->
                     if (playlists.isEmpty()) {

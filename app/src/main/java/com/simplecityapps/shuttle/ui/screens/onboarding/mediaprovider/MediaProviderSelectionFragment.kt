@@ -27,24 +27,29 @@ import javax.inject.Inject
 class MediaProviderSelectionFragment :
     Fragment(),
     Injectable,
-    OnboardingChild {
+    OnboardingChild,
+    MediaProviderSelectionContract.View {
 
     private var radioGroup: RadioGroup by autoCleared()
     private var basicRadioButton: RadioButton by autoCleared()
     private var advancedRadioButton: RadioButton by autoCleared()
     private var toolbar: Toolbar by autoCleared()
 
-    @Inject lateinit var playbackPreferenceManager: PlaybackPreferenceManager
+    private var warningLabel: TextView by autoCleared()
 
     private var isOnboarding = true
+
+    @Inject lateinit var presenterFactory: MediaProviderSelectionPresenter.Factory
+    private lateinit var presenter: MediaProviderSelectionPresenter
+
+
+    // Lifecycle
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         isOnboarding = requireArguments().getBoolean(ARG_ONBOARDING)
     }
-
-    // Lifecycle
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_media_provider_selector, container, false)
@@ -59,47 +64,13 @@ class MediaProviderSelectionFragment :
 
         toolbar = view.findViewById(R.id.toolbar)
 
+        warningLabel = view.findViewById(R.id.warningLabel)
+
         val subtitleLabel: TextView = view.findViewById(R.id.subtitleLabel)
         if (isOnboarding) {
             subtitleLabel.text = "Shuttle can find your music using two different modes. You can change this later."
         } else {
             subtitleLabel.text = "Shuttle can find your music using two different modes:"
-        }
-
-        val initialSongProvider = playbackPreferenceManager.songProvider
-        when (initialSongProvider) {
-            PlaybackPreferenceManager.SongProvider.MediaStore -> {
-                radioGroup.check(R.id.basic)
-            }
-            PlaybackPreferenceManager.SongProvider.TagLib -> {
-                radioGroup.check(R.id.advanced)
-            }
-        }
-
-        val warningLabel: TextView = view.findViewById(R.id.warningLabel)
-
-        radioGroup.setOnCheckedChangeListener { _, checkedId ->
-            getParent()?.let { parent ->
-                val pages = parent.getPages().toMutableList()
-                when (checkedId) {
-                    R.id.basic -> {
-                        playbackPreferenceManager.songProvider = PlaybackPreferenceManager.SongProvider.MediaStore
-                        parent.directories = null
-                        pages.remove(OnboardingPage.MusicDirectories)
-                        parent.setPages(pages)
-                    }
-                    R.id.advanced -> {
-                        playbackPreferenceManager.songProvider = PlaybackPreferenceManager.SongProvider.TagLib
-                        if (!pages.contains(OnboardingPage.MusicDirectories)) {
-                            pages.add(pages.indexOf(OnboardingPage.Scanner), OnboardingPage.MusicDirectories)
-                            parent.setPages(pages)
-                        }
-                    }
-                }
-                if (!isOnboarding) {
-                    warningLabel.isVisible = playbackPreferenceManager.songProvider != initialSongProvider
-                }
-            } ?: Timber.e("Failed to update state - getParent() returned null")
         }
 
         val moreInfoButton: Button = view.findViewById(R.id.moreInfoButton)
@@ -109,6 +80,20 @@ class MediaProviderSelectionFragment :
                 .setMessage("• Shuttle File Scanner\n\nSearches for music in directories you specify, and scans the files for metadata. More accurate than the Android Media Store, and allows you to modify/delete songs. \n\n• Android Media Store\n\nFaster, and easier to set up, but less reliable.")
                 .setNegativeButton("Close", null)
                 .show()
+        }
+
+        presenter = presenterFactory.create(isOnboarding)
+        presenter.bindView(this)
+
+        // Called after bind view, so our radio group can have its selection set without triggering the change listener
+        radioGroup.setOnCheckedChangeListener { _, checkedId ->
+            presenter.setSongProvider(
+                when (checkedId) {
+                    R.id.basic -> PlaybackPreferenceManager.SongProvider.MediaStore
+                    R.id.advanced -> PlaybackPreferenceManager.SongProvider.TagLib
+                    else -> PlaybackPreferenceManager.SongProvider.TagLib
+                }
+            )
         }
     }
 
@@ -133,6 +118,50 @@ class MediaProviderSelectionFragment :
                 parent.showNextButton("Next")
             } ?: Timber.e("Failed to update state - getParent() returned null")
         }, 50)
+    }
+
+    override fun onDestroyView() {
+        presenter.unbindView()
+        super.onDestroyView()
+    }
+
+
+    // MediaProviderSelectionContract.View Implementation
+
+    override fun setSongProvider(songProvider: PlaybackPreferenceManager.SongProvider) {
+        when (songProvider) {
+            PlaybackPreferenceManager.SongProvider.MediaStore -> radioGroup.check(R.id.basic)
+            PlaybackPreferenceManager.SongProvider.TagLib -> radioGroup.check(R.id.advanced)
+        }
+    }
+
+    override fun updateViewPager(songProvider: PlaybackPreferenceManager.SongProvider) {
+        when (songProvider) {
+            PlaybackPreferenceManager.SongProvider.MediaStore -> {
+                radioGroup.check(R.id.basic)
+                getParent()?.let { parent ->
+                    val pages = parent.getPages().toMutableList()
+                    if (pages.contains(OnboardingPage.MusicDirectories)) {
+                        pages.remove(OnboardingPage.MusicDirectories)
+                        parent.setPages(pages)
+                    }
+                }
+            }
+            PlaybackPreferenceManager.SongProvider.TagLib -> {
+                radioGroup.check(R.id.advanced)
+                getParent()?.let { parent ->
+                    val pages = parent.getPages().toMutableList()
+                    if (!pages.contains(OnboardingPage.MusicDirectories)) {
+                        pages.add(pages.indexOf(OnboardingPage.Scanner), OnboardingPage.MusicDirectories)
+                        parent.setPages(pages)
+                    }
+                }
+            }
+        }
+    }
+
+    override fun showChangeSongProviderWarning(show: Boolean) {
+        warningLabel.isVisible = show
     }
 
 

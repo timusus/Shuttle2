@@ -67,8 +67,8 @@ class SongListPresenter @Inject constructor(
     var songs: List<Song> = emptyList()
 
     private val mediaImporterListener = object : MediaImporter.Listener {
-        override fun onProgress(progress: Float, song: Song) {
-            view?.setLoadingProgress(progress)
+        override fun onProgress(progress: Int, total: Int, song: Song) {
+            view?.setLoadingProgress(progress / total.toFloat())
         }
     }
 
@@ -148,7 +148,7 @@ class SongListPresenter @Inject constructor(
         val documentFile = DocumentFile.fromSingleUri(context, uri)
         if (documentFile?.delete() == true) {
             launch {
-                songRepository.removeSong(song)
+                songRepository.remove(song)
             }
         } else {
             view?.showDeleteError(UserFriendlyError("The song couldn't be deleted"))

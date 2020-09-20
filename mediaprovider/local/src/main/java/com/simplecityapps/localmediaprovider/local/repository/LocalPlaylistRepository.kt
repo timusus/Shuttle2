@@ -8,7 +8,6 @@ import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.PlaylistRepository
-import com.simplecityapps.mediaprovider.repository.predicate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
@@ -41,12 +40,11 @@ class LocalPlaylistRepository(
 
     override fun getPlaylists(query: PlaylistQuery): Flow<List<Playlist>> {
         return playlistsRelay.map { playlists ->
-            playlists.filter(query.predicate())
+            playlists
+                .filter(query.predicate)
+                .toMutableList()
+                .sortedWith(query.sortOrder.comparator)
         }
-    }
-
-    override fun getPlaylists(): Flow<List<Playlist>> {
-        return playlistsRelay
     }
 
     override suspend fun getFavoritesPlaylist(): Playlist {

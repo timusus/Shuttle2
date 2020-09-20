@@ -87,7 +87,7 @@ class HomePresenter @Inject constructor(
             val albumsFromThisYear = albumRepository.getAlbums(AlbumQuery.Year(Calendar.getInstance().get(Calendar.YEAR)))
                 .map { it.take(20) }
 
-            val unplayedAlbumArtists = albumArtistRepository.getAlbumArtists(AlbumArtistQuery.PlayCount(0, AlbumArtistSortOrder.PlayCount))
+            val unplayedAlbumArtists = albumArtistRepository.getAlbumArtists(AlbumArtistQuery.PlayCount(0))
                 .map { it.shuffled() }
                 .map { it.take(20) }
 

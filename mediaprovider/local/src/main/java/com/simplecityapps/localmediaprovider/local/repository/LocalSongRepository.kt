@@ -2,6 +2,7 @@ package com.simplecityapps.localmediaprovider.local.repository
 
 import com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao
 import com.simplecityapps.localmediaprovider.local.data.room.entity.toSongData
+import com.simplecityapps.localmediaprovider.local.data.room.entity.toSongDataUpdate
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
@@ -33,10 +34,6 @@ class LocalSongRepository(
             .flowOn(Dispatchers.IO)
     }
 
-    override suspend fun insert(songs: List<Song>) {
-        songDataDao.insertUpdateAndDelete(songs.toSongData())
-    }
-
     override fun getSongs(query: SongQuery): Flow<List<Song>> {
         return songsRelay
             .map { songs ->
@@ -50,6 +47,31 @@ class LocalSongRepository(
                     .filter(query.predicate)
                     .sortedWith(query.sortOrder.comparator)
             }
+    }
+
+    override suspend fun insert(songs: List<Song>) {
+        songDataDao.insert(songs.toSongData())
+    }
+
+    override suspend fun update(songs: List<Song>) {
+        songDataDao.update(songs.toSongDataUpdate())
+    }
+
+    override suspend fun update(song: Song): Int {
+        return songDataDao.update(song.toSongData())
+    }
+
+    override suspend fun remove(songs: List<Song>) {
+        songDataDao.delete(songs.toSongData())
+    }
+
+    override suspend fun remove(song: Song) {
+        Timber.v("Deleting song")
+        songDataDao.delete(song.id)
+    }
+
+    override suspend fun insertUpdateAndDelete(inserts: List<Song>, updates: List<Song>, deletes: List<Song>): Triple<Int, Int, Int> {
+        return songDataDao.insertUpdateAndDelete(inserts.toSongData(), updates.toSongDataUpdate(), deletes.toSongData())
     }
 
     override suspend fun incrementPlayCount(song: Song) {
@@ -70,14 +92,5 @@ class LocalSongRepository(
     override suspend fun clearExcludeList() {
         Timber.v("Clearing excluded")
         songDataDao.clearExcludeList()
-    }
-
-    override suspend fun removeSong(song: Song) {
-        Timber.v("Deleting song")
-        songDataDao.delete(song.id)
-    }
-
-    override suspend fun updateSong(song: Song): Int {
-        return songDataDao.update(song.toSongData())
     }
 }

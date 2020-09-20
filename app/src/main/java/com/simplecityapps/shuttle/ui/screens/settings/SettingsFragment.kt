@@ -100,7 +100,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
 
         preferenceScreen.findPreference<Preference>("pref_media_rescan")?.setOnPreferenceClickListener {
             appCoroutineScope.launch {
-                mediaImporter.reImport()
+                mediaImporter.import()
             }
 
             val customView = View.inflate(requireContext(), R.layout.progress_dialog_loading_horizontal, null)
@@ -220,12 +220,11 @@ class SettingsFragment : PreferenceFragmentCompat(),
 
     // MediaImporter.Listener Implementation
 
-    override fun onProgress(progress: Float, song: Song) {
-        scanningProgressView?.progress = (progress * 100).toInt()
+    override fun onProgress(progress: Int, total: Int, song: Song) {
+        scanningProgressView?.progress = ((progress / total.toFloat()) * 100).toInt()
     }
 
-    override fun onComplete() {
-        super.onComplete()
+    override fun onComplete(inserts: Int, updates: Int, deletes: Int) {
         scanningDialog?.dismiss()
     }
 

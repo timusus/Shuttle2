@@ -9,14 +9,17 @@ import java.util.*
 import kotlin.Comparator
 
 interface SongRepository {
-    suspend fun insert(songs: List<Song>)
     fun getSongs(query: SongQuery): Flow<List<Song>>
+    suspend fun insert(songs: List<Song>)
+    suspend fun update(song: Song): Int
+    suspend fun update(songs: List<Song>)
+    suspend fun remove(songs: List<Song>)
+    suspend fun remove(song: Song)
+    suspend fun insertUpdateAndDelete(inserts: List<Song>, updates: List<Song>, deletes: List<Song>): Triple<Int, Int, Int>
     suspend fun incrementPlayCount(song: Song)
     suspend fun setPlaybackPosition(song: Song, playbackPosition: Int)
     suspend fun setExcluded(songs: List<Song>, excluded: Boolean)
     suspend fun clearExcludeList()
-    suspend fun removeSong(song: Song)
-    suspend fun updateSong(song: Song): Int
 }
 
 sealed class SongQuery(
@@ -96,9 +99,9 @@ enum class SongSortOrder : Serializable {
         get() {
             return when (this) {
                 Default -> compareBy({ song -> song.album }, { song -> song.disc }, { song -> song.track })
-                SongName -> compareBy<Song> { song -> song.name }.then(Default.comparator)
-                ArtistName -> Comparator<Song> { a, b -> Collator.getInstance().compare(a.albumArtist.removeArticles(), b.albumArtist.removeArticles()) }.then(compareBy { song -> song.album }).then(Default.comparator)
-                AlbumName -> Comparator<Song> { a, b -> Collator.getInstance().compare(a.album.removeArticles(), b.album.removeArticles()) }.then(Default.comparator)
+                SongName -> Comparator<Song> { a, b -> Collator.getInstance().apply { strength = Collator.TERTIARY }.compare(a.name, b.name) }.then(Default.comparator)
+                ArtistName -> Comparator<Song> { a, b -> Collator.getInstance().apply { strength = Collator.TERTIARY }.compare(a.albumArtist.removeArticles(), b.albumArtist.removeArticles()) }.then(compareBy { song -> song.album }).then(Default.comparator)
+                AlbumName -> Comparator<Song> { a, b -> Collator.getInstance().apply { strength = Collator.TERTIARY }.compare(a.album.removeArticles(), b.album.removeArticles()) }.then(Default.comparator)
                 Year -> Comparator<Song> { a, b -> zeroLastComparator.compare(a.year, b.year) }.then(compareBy({ song -> song.year }, { song -> song.album })).then(Default.comparator)
                 Duration -> compareBy<Song> { song -> song.duration }.then(Default.comparator)
                 Track -> compareBy<Song>({ song -> song.disc }, { song -> song.track }).then(Default.comparator)

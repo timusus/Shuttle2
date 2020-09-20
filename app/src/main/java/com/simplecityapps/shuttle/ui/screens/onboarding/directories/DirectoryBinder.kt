@@ -12,12 +12,12 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 
 class DirectoryBinder(
-    val directory: MusicDirectoriesContract.Directory,
+    val directory: DirectorySelectionContract.Directory,
     val listener: Listener
 ) : ViewBinder {
 
     interface Listener {
-        fun onRemoveClicked(directory: MusicDirectoriesContract.Directory)
+        fun onRemoveClicked(directory: DirectorySelectionContract.Directory)
     }
 
     override fun createViewHolder(parent: ViewGroup): ViewHolder {

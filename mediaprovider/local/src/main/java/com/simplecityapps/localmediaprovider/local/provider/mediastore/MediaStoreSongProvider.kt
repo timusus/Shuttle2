@@ -5,19 +5,17 @@ import android.provider.MediaStore
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.Song
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.withContext
 import java.util.*
-import kotlin.coroutines.coroutineContext
 
 class MediaStoreSongProvider(
     private val context: Context
 ) : MediaProvider {
 
-    override fun findSongs(): Flow<Pair<Song, Float>> {
-        return flow {
+    override suspend fun findSongs(callback: ((song: Song, progress: Int, total: Int) -> Unit)?): List<Song> {
+        val songs = mutableListOf<Song>()
+        withContext(Dispatchers.IO) {
             val cursor = context.contentResolver.query(
                 MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                 arrayOf(
@@ -83,11 +81,15 @@ class MediaStoreSongProvider(
                         blacklisted = false,
                         mediaStoreId = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID))
                     )
-                    emit(Pair(song, progress / size.toFloat()))
+                    songs.add(song)
                     progress++
+                    withContext(Dispatchers.Main) {
+                        callback?.invoke(song, progress, size)
+                    }
                 }
             }
-        }.flowOn(Dispatchers.IO)
+        }
+        return songs
     }
 
     override fun equals(other: Any?): Boolean {

@@ -29,18 +29,13 @@ class LocalAlbumArtistRepository(private val albumArtistDataDao: AlbumArtistData
             .flowOn(Dispatchers.IO)
     }
 
-    override fun getAlbumArtists(): Flow<List<AlbumArtist>> {
-        return albumArtistsRelay
-    }
-
     override fun getAlbumArtists(query: AlbumArtistQuery): Flow<List<AlbumArtist>> {
-        return getAlbumArtists()
+        return albumArtistsRelay
             .map { albumArtists ->
-                var result = albumArtists.filter(query.predicate)
-                query.sortOrder?.let { sortOrder ->
-                    result = result.sortedWith(sortOrder.comparator)
-                }
-                result
+                albumArtists
+                    .filter(query.predicate)
+                    .toMutableList()
+                    .sortedWith(query.sortOrder.comparator)
             }
             .flowOn(Dispatchers.IO)
     }

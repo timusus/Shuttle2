@@ -28,4 +28,8 @@ abstract class AppModuleBinds {
     @Binds
     @IntoSet
     abstract fun provideWidgetInitializer(bind: WidgetInitializer): AppInitializer
+
+    @Binds
+    @IntoSet
+    abstract fun provideMediaProviderInitializer(bind: MediaProviderInitializer): AppInitializer
 }

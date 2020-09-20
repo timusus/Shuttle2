@@ -28,7 +28,7 @@ class MediaStoreContentObserverInitializer @Inject constructor(
             withContext(Dispatchers.IO) {
                 delay(10 * 1000)
                 Timber.i("Reimporting media due to MediaStore content observer change")
-                mediaImporter.reImport()
+                mediaImporter.import()
             }
         }
     }

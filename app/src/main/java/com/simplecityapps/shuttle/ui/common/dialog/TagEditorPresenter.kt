@@ -207,7 +207,7 @@ class TagEditorPresenter @Inject constructor(
         saveTagsScope.launch {
             val result = withContext(Dispatchers.IO) {
                 editables.map { (song, _) ->
-                    songRepository.updateSong(
+                    songRepository.update(
                         song.copy(
                             name = if (data.titleField.hasChanged) data.titleField.currentValue ?: "Unknown" else song.name,
                             album = if (data.albumField.hasChanged) data.albumField.currentValue ?: "Unknown" else song.album,

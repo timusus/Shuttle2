@@ -14,7 +14,6 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
-import com.simplecityappds.saf.SafDirectoryHelper
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
@@ -46,7 +45,6 @@ interface OnboardingParent {
     fun getPages(): List<OnboardingPage>
     fun setPages(pages: List<OnboardingPage>)
     fun exit()
-    var directories: List<SafDirectoryHelper.DocumentNodeTree>?
 }
 
 interface OnboardingChild {
@@ -130,8 +128,6 @@ class OnboardingParentFragment : Fragment(),
 
 
     // PageCompletionListener Implementation
-
-    override var directories: List<SafDirectoryHelper.DocumentNodeTree>? = null
 
     override fun getPages(): List<OnboardingPage> {
         return adapter.data
@@ -233,7 +229,7 @@ class OnboardingParentFragment : Fragment(),
                 OnboardingPage.StoragePermission -> StoragePermissionFragment()
                 OnboardingPage.MediaProviderSelector -> MediaProviderSelectionFragment.newInstance(isOnboarding)
                 OnboardingPage.MusicDirectories -> DirectorySelectionFragment()
-                OnboardingPage.Scanner -> MediaScannerFragment()
+                OnboardingPage.Scanner -> MediaScannerFragment.newInstance(scanAutomatically = true, showRescanButton = false, dismissOnScanComplete = true, showToolbar = true)
             }
         }
     }

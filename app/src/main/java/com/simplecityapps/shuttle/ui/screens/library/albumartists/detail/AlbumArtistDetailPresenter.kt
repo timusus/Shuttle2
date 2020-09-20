@@ -218,7 +218,7 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
         val documentFile = DocumentFile.fromSingleUri(context, uri)
         if (documentFile?.delete() == true) {
             launch {
-                songRepository.removeSong(song)
+                songRepository.remove(song)
             }
         } else {
             view?.showDeleteError(UserFriendlyError("The song couldn't be deleted"))

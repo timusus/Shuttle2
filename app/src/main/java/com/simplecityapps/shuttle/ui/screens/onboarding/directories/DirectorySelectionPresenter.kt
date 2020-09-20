@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import com.simplecityappds.saf.SafDirectoryHelper
+import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibSongProvider
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import kotlinx.coroutines.flow.collect
@@ -12,7 +13,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
-interface MusicDirectoriesContract {
+interface DirectorySelectionContract {
 
     data class Directory(val tree: SafDirectoryHelper.DocumentNodeTree, val traversalComplete: Boolean, val hasWritePermission: Boolean) {
 
@@ -49,11 +50,12 @@ interface MusicDirectoriesContract {
     }
 }
 
-class MusicDirectoriesPresenter @Inject constructor(
-    private val context: Context
-) : MusicDirectoriesContract.Presenter, BasePresenter<MusicDirectoriesContract.View>() {
+class DirectorySelectionPresenter @Inject constructor(
+    private val context: Context,
+    private val taglibSongProvider: TaglibSongProvider
+) : DirectorySelectionContract.Presenter, BasePresenter<DirectorySelectionContract.View>() {
 
-    private var data: MutableList<MusicDirectoriesContract.Directory> = mutableListOf()
+    private var data: MutableList<DirectorySelectionContract.Directory> = mutableListOf()
 
     override fun loadData(contentResolver: ContentResolver) {
         contentResolver.persistedUriPermissions
@@ -61,22 +63,22 @@ class MusicDirectoriesPresenter @Inject constructor(
             .forEach { uriPermission ->
                 parseUri(contentResolver, uriPermission.uri, uriPermission.isWritePermission)
             }
-        view?.setData(emptyList())
+        setData(emptyList())
     }
 
-    override fun removeItem(directory: MusicDirectoriesContract.Directory) {
+    override fun removeItem(directory: DirectorySelectionContract.Directory) {
         try {
             context.contentResolver?.releasePersistableUriPermission(directory.tree.rootUri, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
         } catch (e: SecurityException) {
             Timber.e("Failed to release persistable uri permission: ${directory.tree.rootUri}")
         }
         data.remove(directory)
-        view?.setData(data)
+        setData(data)
     }
 
     override fun handleSafResult(contentResolver: ContentResolver, intent: Intent) {
         intent.data?.let { uri ->
-            contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+            contentResolver.takePersistableUriPermission(uri, intent.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION))
             parseUri(contentResolver, uri, true)
         }
     }
@@ -94,16 +96,21 @@ class MusicDirectoriesPresenter @Inject constructor(
         launch {
             SafDirectoryHelper.buildFolderNodeTree(contentResolver, uri)
                 .collect { tree ->
-                    val directory = MusicDirectoriesContract.Directory(tree, false, hasWritePermission)
+                    val directory = DirectorySelectionContract.Directory(tree, false, hasWritePermission)
                     val index = data.indexOf(directory)
                     if (index != -1) {
                         data[index] = directory
                     } else {
                         data.add(directory)
                     }
-                    view?.setData(data)
+                    setData(data)
                 }
-            view?.setData(data.map { MusicDirectoriesContract.Directory(it.tree, true, hasWritePermission) })
+            setData(data.map { DirectorySelectionContract.Directory(it.tree, true, hasWritePermission) })
         }
+    }
+
+    fun setData(directories: List<DirectorySelectionContract.Directory>) {
+        taglibSongProvider.directories = directories.map { directory -> directory.tree }
+        view?.setData(directories)
     }
 }

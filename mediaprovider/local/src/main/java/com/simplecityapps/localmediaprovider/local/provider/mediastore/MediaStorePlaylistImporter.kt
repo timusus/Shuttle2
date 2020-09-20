@@ -3,6 +3,7 @@ package com.simplecityapps.localmediaprovider.local.provider.mediastore
 import android.content.Context
 import android.provider.MediaStore
 import androidx.core.database.getStringOrNull
+import com.simplecityapps.mediaprovider.repository.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
@@ -21,7 +22,7 @@ class MediaStorePlaylistImporter(
 
     suspend fun importPlaylists() {
         val allSongs = songRepository.getSongs(SongQuery.All()).firstOrNull().orEmpty()
-        val allPlaylists = playlistRepository.getPlaylists().firstOrNull().orEmpty()
+        val allPlaylists = playlistRepository.getPlaylists(PlaylistQuery.All()).firstOrNull().orEmpty()
 
         findMediaStorePlaylists()
             .map { playlist ->

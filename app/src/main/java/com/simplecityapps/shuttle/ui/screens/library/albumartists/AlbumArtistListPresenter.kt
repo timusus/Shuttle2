@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.library.albumartists
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.mediaprovider.repository.AlbumArtistQuery
 import com.simplecityapps.mediaprovider.repository.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
@@ -12,9 +13,8 @@ import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.simplecityapps.shuttle.ui.screens.library.ViewMode
 import com.simplecityapps.shuttle.ui.screens.library.toViewMode
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.text.Collator
 import javax.inject.Inject
@@ -62,8 +62,8 @@ class AlbumArtistListPresenter @Inject constructor(
     private var albumArtists: List<AlbumArtist> = emptyList()
 
     private val mediaImporterListener = object : MediaImporter.Listener {
-        override fun onProgress(progress: Float, song: Song) {
-            view?.setLoadingProgress(progress)
+        override fun onProgress(progress: Int, total: Int, song: Song) {
+            view?.setLoadingProgress(progress / total.toFloat())
         }
     }
 
@@ -81,7 +81,9 @@ class AlbumArtistListPresenter @Inject constructor(
 
     override fun loadAlbumArtists() {
         launch {
-            albumArtistRepository.getAlbumArtists().map { albumArtist -> albumArtist.sortedWith(Comparator { a, b -> Collator.getInstance().compare(a.sortKey, b.sortKey) }) }
+            albumArtistRepository.getAlbumArtists(AlbumArtistQuery.All())
+                .distinctUntilChanged()
+                .flowOn(Dispatchers.IO)
                 .collect { artists ->
                     if (artists.isEmpty()) {
                         if (mediaImporter.isImporting) {

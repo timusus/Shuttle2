@@ -9,3 +9,7 @@ Shuttle Music Player 2.0
   <img src="assets/Designs/Martin%20Kornelyuk/Shuttle%20Music%20Player%20v4%20Refresh%20Now%20Playing%20WIP9.png" width="20%"/>
 
 </p>
+
+### Remember to init git submodules:
+
+`git submodule update --init --recursive`
