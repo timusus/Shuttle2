@@ -48,6 +48,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -137,10 +138,11 @@ class SearchFragment : Fragment(),
         playlistMenuPresenter.bindView(playlistMenuView)
         searchView.setQuery(query, true)
 
-        lifecycleScope.launch(Dispatchers.Default) {
+        lifecycleScope.launch {
             queryChannel
                 .asFlow()
-                .debounce(300)
+                .debounce(500)
+                .flowOn(Dispatchers.IO)
                 .collect { query ->
                     presenter.loadData(query)
                 }
@@ -158,6 +160,10 @@ class SearchFragment : Fragment(),
     // SearchContract.View Implementation
 
     override fun setData(searchResult: Triple<List<AlbumArtist>, List<Album>, List<Song>>) {
+        // If we're displaying too many items, clear the adapter data, so calculating the diff is faster
+        if (adapter.itemCount > 100) {
+            adapter.clear()
+        }
         val list = mutableListOf<ViewBinder>().apply {
             if (searchResult.first.isNotEmpty()) {
                 add(SearchHeaderBinder("Artists"))
