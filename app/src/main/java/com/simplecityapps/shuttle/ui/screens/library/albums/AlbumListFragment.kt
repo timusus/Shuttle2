@@ -79,7 +79,13 @@ class AlbumListFragment :
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        adapter = SectionedAdapter(lifecycle.coroutineScope)
+        adapter = object : SectionedAdapter(lifecycle.coroutineScope) {
+            override fun getSectionName(viewBinder: ViewBinder?): String {
+                return (viewBinder as? AlbumBinder)?.album?.let { album ->
+                    presenter.getFastscrollPrefix(album)
+                } ?: ""
+            }
+        }
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {

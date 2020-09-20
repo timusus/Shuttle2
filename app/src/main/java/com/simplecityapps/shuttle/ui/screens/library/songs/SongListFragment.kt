@@ -66,7 +66,9 @@ class SongListFragment :
 
         adapter = object : SectionedAdapter(lifecycle.coroutineScope) {
             override fun getSectionName(viewBinder: ViewBinder?): String {
-                return (viewBinder as? SongBinder)?.song?.name?.firstOrNull()?.toString() ?: ""
+                return (viewBinder as? SongBinder)?.song?.let { song ->
+                    presenter.getFastscrollPrefix(song)
+                } ?: ""
             }
         }
 
@@ -138,7 +140,7 @@ class SongListFragment :
 
     // Private
 
-    private fun updateToolbar(){
+    private fun updateToolbar() {
         findToolbarHost()?.getToolbar()?.let { toolbar ->
             toolbar.menu.clear()
             toolbar.inflateMenu(R.menu.menu_song_list)

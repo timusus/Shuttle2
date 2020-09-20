@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.library.albums
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.mediaprovider.model.removeArticles
 import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
@@ -49,6 +50,7 @@ class AlbumListContract {
         fun albumShuffle()
         fun setSortOrder(albumSortOrder: AlbumSortOrder)
         fun updateSortOrder()
+        fun getFastscrollPrefix(album: Album): String?
     }
 }
 
@@ -207,5 +209,14 @@ class AlbumListPresenter @Inject constructor(
 
     override fun updateSortOrder() {
         view?.updateSortOrder(sortPreferenceManager.sortOrderAlbumList)
+    }
+
+    override fun getFastscrollPrefix(album: Album): String? {
+        return when(sortPreferenceManager.sortOrderAlbumList) {
+            AlbumSortOrder.AlbumName -> album.sortKey?.firstOrNull().toString()
+            AlbumSortOrder.ArtistName -> album.albumArtist.removeArticles().firstOrNull().toString()
+            AlbumSortOrder.Year -> album.year.toString()
+            else -> null
+        }
     }
 }

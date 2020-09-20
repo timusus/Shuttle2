@@ -5,6 +5,7 @@ import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.mediaprovider.model.removeArticles
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.mediaprovider.repository.SongSortOrder
@@ -49,6 +50,7 @@ interface SongListContract {
         fun delete(song: Song)
         fun setSortOrder(songSortOrder: SongSortOrder)
         fun updateSortOrder()
+        fun getFastscrollPrefix(song: Song): String?
     }
 }
 
@@ -168,5 +170,15 @@ class SongListPresenter @Inject constructor(
 
     override fun updateSortOrder() {
         view?.updateSortOrder(sortPreferenceManager.sortOrderSongList)
+    }
+
+    override fun getFastscrollPrefix(song: Song): String? {
+        return when (sortPreferenceManager.sortOrderSongList) {
+            SongSortOrder.SongName -> song.name.firstOrNull().toString()
+            SongSortOrder.ArtistName -> song.artist.removeArticles().firstOrNull().toString()
+            SongSortOrder.AlbumName -> song.album.removeArticles().firstOrNull().toString()
+            SongSortOrder.Year -> song.year.toString()
+            else -> null
+        }
     }
 }
