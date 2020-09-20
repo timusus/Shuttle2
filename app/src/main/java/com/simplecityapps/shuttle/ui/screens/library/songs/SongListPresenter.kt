@@ -7,20 +7,20 @@ import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
+import com.simplecityapps.mediaprovider.repository.SongSortOrder
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
-import kotlinx.coroutines.CoroutineScope
+import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
-import java.text.Collator
 import javax.inject.Inject
-import javax.inject.Named
 
 interface SongListContract {
 
@@ -31,7 +31,8 @@ interface SongListContract {
     }
 
     interface View {
-        fun setData(songs: List<Song>)
+        fun setData(songs: List<Song>, resetPosition: Boolean)
+        fun updateSortOrder(sortOrder: SongSortOrder)
         fun showLoadError(error: Error)
         fun onAddedToQueue(song: Song)
         fun setLoadingState(state: LoadingState)
@@ -40,12 +41,14 @@ interface SongListContract {
     }
 
     interface Presenter : BaseContract.Presenter<View> {
-        fun loadSongs()
+        fun loadSongs(resetPosition: Boolean)
         fun onSongClicked(song: Song)
         fun addToQueue(song: Song)
         fun playNext(song: Song)
         fun exclude(song: Song)
         fun delete(song: Song)
+        fun setSortOrder(songSortOrder: SongSortOrder)
+        fun updateSortOrder()
     }
 }
 
@@ -54,7 +57,7 @@ class SongListPresenter @Inject constructor(
     private val playbackManager: PlaybackManager,
     private val songRepository: SongRepository,
     private val mediaImporter: MediaImporter,
-    @Named("AppCoroutineScope") private val appCoroutineScope: CoroutineScope
+    private val sortPreferenceManager: SortPreferenceManager
 
 ) : BasePresenter<SongListContract.View>(),
     SongListContract.Presenter {
@@ -67,17 +70,23 @@ class SongListPresenter @Inject constructor(
         }
     }
 
+    override fun bindView(view: SongListContract.View) {
+        super.bindView(view)
+
+        view.updateSortOrder(sortPreferenceManager.sortOrderSongList)
+    }
+
     override fun unbindView() {
         super.unbindView()
 
         mediaImporter.listeners.remove(mediaImporterListener)
     }
 
-    override fun loadSongs() {
-        Timber.i("loadSongs()")
+    override fun loadSongs(resetPosition: Boolean) {
         launch {
-            songRepository.getSongs(SongQuery.All())
-                .map { songs -> songs.sortedWith(Comparator { a, b -> Collator.getInstance().compare(a.name, b.name) }) }
+            songRepository
+                .getSongs(SongQuery.All(sortOrder = sortPreferenceManager.sortOrderSongList))
+                .distinctUntilChanged()
                 .flowOn(Dispatchers.IO)
                 .collect { songs ->
                     Timber.i("loadSongs collected ${songs.size} songs")
@@ -94,7 +103,7 @@ class SongListPresenter @Inject constructor(
                         mediaImporter.listeners.remove(mediaImporterListener)
                         view?.setLoadingState(SongListContract.LoadingState.None)
                     }
-                    view?.setData(songs)
+                    view?.setData(songs, resetPosition)
                 }
         }
     }
@@ -142,5 +151,22 @@ class SongListPresenter @Inject constructor(
         } else {
             view?.showDeleteError(UserFriendlyError("The song couldn't be deleted"))
         }
+    }
+
+    override fun setSortOrder(songSortOrder: SongSortOrder) {
+        if (sortPreferenceManager.sortOrderSongList != songSortOrder) {
+            launch {
+                withContext(Dispatchers.IO) {
+                    sortPreferenceManager.sortOrderSongList = songSortOrder
+                    this@SongListPresenter.songs = songs.sortedWith(songSortOrder.comparator)
+                }
+                view?.setData(songs, true)
+                view?.updateSortOrder(songSortOrder)
+            }
+        }
+    }
+
+    override fun updateSortOrder() {
+        view?.updateSortOrder(sortPreferenceManager.sortOrderSongList)
     }
 }

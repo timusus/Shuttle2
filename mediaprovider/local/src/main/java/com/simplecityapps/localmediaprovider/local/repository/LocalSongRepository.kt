@@ -46,13 +46,9 @@ class LocalSongRepository(
                     result = songs.filterNot { it.blacklisted }
                 }
 
-                result = result.filter(query.predicate)
-
-                query.sortOrder?.let { sortOrder ->
-                    result = result.sortedWith(sortOrder.comparator)
-                }
-
                 result
+                    .filter(query.predicate)
+                    .sortedWith(query.sortOrder.comparator)
             }
     }
 

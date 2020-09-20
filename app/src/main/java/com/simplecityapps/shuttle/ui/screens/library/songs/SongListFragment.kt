@@ -17,6 +17,7 @@ import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.mediaprovider.repository.SongSortOrder
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
@@ -68,6 +69,8 @@ class SongListFragment :
                 return (viewBinder as? SongBinder)?.song?.name?.firstOrNull()?.toString() ?: ""
             }
         }
+
+        setHasOptionsMenu(true)
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -89,31 +92,30 @@ class SongListFragment :
         circularLoadingView = view.findViewById(R.id.circularLoadingView)
         horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
 
+        updateToolbar()
+
+        savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
+
         presenter.bindView(this)
         playlistMenuPresenter.bindView(playlistMenuView)
 
-        savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
     }
 
     override fun onResume() {
         super.onResume()
 
+        updateToolbar()
+
         recyclerViewState?.let { recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState) }
-
-        presenter.loadSongs()
-
-        findToolbarHost()?.getToolbar()?.let { toolbar ->
-            toolbar.inflateMenu(R.menu.menu_song_list)
-            toolbar.setOnMenuItemClickListener { menuItem ->
-                false
-            }
-        }
+        presenter.updateSortOrder()
+        presenter.loadSongs(false)
     }
 
     override fun onPause() {
         super.onPause()
 
         findToolbarHost()?.getToolbar()?.let { toolbar ->
+            toolbar.menu.removeItem(R.id.songSortOrder)
             toolbar.setOnMenuItemClickListener(null)
         }
 
@@ -127,7 +129,6 @@ class SongListFragment :
 
     override fun onDestroyView() {
 
-
         presenter.unbindView()
         playlistMenuPresenter.unbindView()
 
@@ -135,9 +136,33 @@ class SongListFragment :
     }
 
 
+    // Private
+
+    private fun updateToolbar(){
+        findToolbarHost()?.getToolbar()?.let { toolbar ->
+            toolbar.menu.clear()
+            toolbar.inflateMenu(R.menu.menu_song_list)
+            toolbar.setOnMenuItemClickListener { menuItem ->
+                when (menuItem.itemId) {
+                    R.id.sortSongName -> presenter.setSortOrder(SongSortOrder.SongName)
+                    R.id.sortArtistName -> presenter.setSortOrder(SongSortOrder.ArtistName)
+                    R.id.sortAlbumName -> presenter.setSortOrder(SongSortOrder.AlbumName)
+                    R.id.sortSongYear -> presenter.setSortOrder(SongSortOrder.Year)
+                    R.id.sortSongDuration -> presenter.setSortOrder(SongSortOrder.Duration)
+                }
+                false
+            }
+        }
+    }
+
+
     // SongListContract.View Implementation
 
-    override fun setData(songs: List<Song>) {
+    override fun setData(songs: List<Song>, resetPosition: Boolean) {
+        if (resetPosition) {
+            adapter.clear()
+        }
+
         adapter.update(songs.map { song ->
             SongBinder(song, imageLoader, songBinderListener)
         }, completion = {
@@ -146,6 +171,21 @@ class SongListFragment :
                 recyclerViewState = null
             }
         })
+    }
+
+    override fun updateSortOrder(sortOrder: SongSortOrder) {
+        findToolbarHost()?.getToolbar()?.menu?.let { menu ->
+            when (sortOrder) {
+                SongSortOrder.SongName -> menu.findItem(R.id.sortSongName)?.isChecked = true
+                SongSortOrder.ArtistName -> menu.findItem(R.id.sortArtistName)?.isChecked = true
+                SongSortOrder.AlbumName -> menu.findItem(R.id.sortAlbumName)?.isChecked = true
+                SongSortOrder.Year -> menu.findItem(R.id.sortSongYear)?.isChecked = true
+                SongSortOrder.Duration -> menu.findItem(R.id.sortSongDuration)?.isChecked = true
+                else -> {
+                    // Nothing to do
+                }
+            }
+        }
     }
 
     override fun showLoadError(error: Error) {

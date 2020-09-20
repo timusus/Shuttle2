@@ -5,7 +5,7 @@
     <item
         android:id="@+id/syncPlaylists"
         android:icon="@drawable/ic_content_copy"
-        android:title="MediaStore Sync"
-        app:showAsAction="ifRoom" />
+        android:title="Import"
+        app:showAsAction="never" />
 
 </menu>

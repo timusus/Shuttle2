@@ -1,8 +1,10 @@
 package com.simplecityapps.mediaprovider.repository
 
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.mediaprovider.model.removeArticles
 import kotlinx.coroutines.flow.Flow
 import java.io.Serializable
+import java.text.Collator
 import java.util.*
 import kotlin.Comparator
 
@@ -19,13 +21,21 @@ interface SongRepository {
 
 sealed class SongQuery(
     val predicate: ((Song) -> Boolean),
-    val sortOrder: SongSortOrder? = null,
+    val sortOrder: SongSortOrder = SongSortOrder.Default,
     val includeExcluded: Boolean = false
 ) : Serializable {
 
-    class All(includeExcluded: Boolean = false) : SongQuery(predicate = { true }, includeExcluded = includeExcluded)
+    class All(includeExcluded: Boolean = false, sortOrder: SongSortOrder = SongSortOrder.Default) :
+        SongQuery(
+            predicate = { true },
+            sortOrder = sortOrder,
+            includeExcluded = includeExcluded
+        )
 
-    class AlbumArtist(val name: String) : SongQuery({ song -> song.albumArtist.equals(name, ignoreCase = true) })
+    class AlbumArtist(val name: String) :
+        SongQuery(
+            predicate = { song -> song.albumArtist.equals(name, ignoreCase = true) }
+        )
 
     class AlbumArtists(val albumArtists: List<AlbumArtist>) :
         SongQuery(
@@ -80,18 +90,21 @@ sealed class SongQuery(
 }
 
 enum class SongSortOrder : Serializable {
-    Track, PlayCount, RecentlyAdded, RecentlyPlayed;
+    Default, SongName, ArtistName, AlbumName, Year, Duration, Track, PlayCount, RecentlyAdded, RecentlyPlayed;
 
     val comparator: Comparator<Song>
         get() {
             return when (this) {
-                Track -> compareBy<Song> { song -> song.disc }.thenBy { song -> song.track }
-                PlayCount -> Comparator { a, b -> a.playCount.compareTo(b.playCount) }
-                RecentlyAdded -> compareByDescending<Song> { song -> song.lastModified.time / 1000 / 60 } // Round to the nearest minute
-                    .thenBy { song -> song.albumArtist }
-                    .thenBy { song -> song.year }
-                    .thenBy { song -> song.track }
-                RecentlyPlayed -> Comparator { a, b -> b.lastCompleted?.compareTo(a.lastCompleted) ?: 0 }
+                Default -> compareBy({ song -> song.album }, { song -> song.disc }, { song -> song.track })
+                SongName -> compareBy<Song> { song -> song.name }.then(Default.comparator)
+                ArtistName -> Comparator<Song> { a, b -> Collator.getInstance().compare(a.albumArtist.removeArticles(), b.albumArtist.removeArticles()) }.then(compareBy { song -> song.album }).then(Default.comparator)
+                AlbumName -> Comparator<Song> { a, b -> Collator.getInstance().compare(a.album.removeArticles(), b.album.removeArticles()) }.then(Default.comparator)
+                Year -> Comparator<Song> { a, b -> zeroLastComparator.compare(a.year, b.year) }.then(compareBy({ song -> song.year }, { song -> song.album })).then(Default.comparator)
+                Duration -> compareBy<Song> { song -> song.duration }.then(Default.comparator)
+                Track -> compareBy<Song>({ song -> song.disc }, { song -> song.track }).then(Default.comparator)
+                PlayCount -> compareBy<Song> { song -> song.playCount }.then(Default.comparator)
+                RecentlyAdded -> compareByDescending<Song> { song -> song.lastModified.time / 1000 / 60 }.then(Default.comparator) // Round to the nearest minute
+                RecentlyPlayed -> compareBy<Song> { song -> song.lastCompleted }.then(Default.comparator)
             }
         }
 }

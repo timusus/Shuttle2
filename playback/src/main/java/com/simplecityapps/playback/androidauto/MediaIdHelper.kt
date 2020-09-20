@@ -53,7 +53,7 @@ class MediaIdHelper @Inject constructor(
                     artistRepository.getAlbumArtists().firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
                 }
                 is MediaIdWrapper.Directory.Albums.All -> {
-                    albumRepository.getAlbums().firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
+                    albumRepository.getAlbums(AlbumQuery.All()).firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
                 }
                 is MediaIdWrapper.Directory.Albums.Artist -> {
                     albumRepository.getAlbums(AlbumQuery.AlbumArtist(mediaIdWrapper.artistName)).firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }

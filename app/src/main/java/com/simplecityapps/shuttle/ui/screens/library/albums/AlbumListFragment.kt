@@ -24,8 +24,8 @@ import com.simplecityapps.adapter.SpanSizeLookup
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.mediaprovider.repository.AlbumSortOrder
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.R.id.viewMode
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
@@ -109,45 +109,36 @@ class AlbumListFragment :
         circularLoadingView = view.findViewById(R.id.circularLoadingView)
         horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
 
-        presenter.bindView(this)
-        playlistMenuPresenter.bindView(playlistMenuView)
-
-        savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
+        updateToolbar()
 
         shuffleBinder = ShuffleBinder(object : ShuffleBinder.Listener {
             override fun onClicked() {
                 presenter.albumShuffle()
             }
         })
+
+        savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
+
+        presenter.bindView(this)
+        playlistMenuPresenter.bindView(playlistMenuView)
     }
 
     override fun onResume() {
         super.onResume()
 
+        updateToolbar()
+
         recyclerViewState?.let { recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState) }
-
-        presenter.loadAlbums()
-
-        findToolbarHost()?.getToolbar()?.let { toolbar ->
-            toolbar.inflateMenu(R.menu.menu_album_list)
-            toolbar.setOnMenuItemClickListener { menuItem ->
-                when (menuItem.itemId) {
-                    viewMode -> {
-                        adapter.clear()
-                        presenter.toggleViewMode()
-                        true
-                    }
-                    else -> false
-                }
-            }
-        }
+        presenter.updateSortOrder()
+        presenter.loadAlbums(false)
     }
 
     override fun onPause() {
         super.onPause()
 
         findToolbarHost()?.getToolbar()?.let { toolbar ->
-            toolbar.menu.removeItem(viewMode)
+            toolbar.menu.removeItem(R.id.viewMode)
+            toolbar.menu.removeItem(R.id.albumSortOrder)
             toolbar.setOnMenuItemClickListener(null)
         }
 
@@ -167,9 +158,45 @@ class AlbumListFragment :
     }
 
 
+    // Private
+
+    private fun updateToolbar() {
+        findToolbarHost()?.getToolbar()?.let { toolbar ->
+            toolbar.menu.clear()
+            toolbar.inflateMenu(R.menu.menu_album_list)
+            toolbar.setOnMenuItemClickListener { menuItem ->
+                when (menuItem.itemId) {
+                    R.id.viewMode -> {
+                        adapter.clear()
+                        presenter.toggleViewMode()
+                        true
+                    }
+                    R.id.sortAlbumName -> {
+                        presenter.setSortOrder(AlbumSortOrder.AlbumName)
+                        true
+                    }
+                    R.id.sortArtistName -> {
+                        presenter.setSortOrder(AlbumSortOrder.ArtistName)
+                        true
+                    }
+                    R.id.sortAlbumYear -> {
+                        presenter.setSortOrder(AlbumSortOrder.Year)
+                        true
+                    }
+                    else -> false
+                }
+            }
+        }
+    }
+
+
     // AlbumListContract.View Implementation
 
-    override fun setAlbums(albums: List<Album>, viewMode: ViewMode) {
+    override fun setAlbums(albums: List<Album>, viewMode: ViewMode, resetPosition: Boolean) {
+        if (resetPosition) {
+            adapter.clear()
+        }
+
         preloadModelProvider.items = albums
 
         val data = albums.map { album ->
@@ -187,6 +214,19 @@ class AlbumListFragment :
                 recyclerViewState = null
             }
         })
+    }
+
+    override fun updateSortOrder(sortOrder: AlbumSortOrder) {
+        findToolbarHost()?.getToolbar()?.menu?.let { menu ->
+            when (sortOrder) {
+                AlbumSortOrder.AlbumName -> menu.findItem(R.id.sortAlbumName)?.isChecked = true
+                AlbumSortOrder.ArtistName -> menu.findItem(R.id.sortArtistName)?.isChecked = true
+                AlbumSortOrder.Year -> menu.findItem(R.id.sortAlbumYear)?.isChecked = true
+                else -> {
+                    // Nothing to do
+                }
+            }
+        }
     }
 
     override fun onAddedToQueue(album: Album) {

@@ -1,19 +1,26 @@
 package com.simplecityapps.mediaprovider.repository
 
 import com.simplecityapps.mediaprovider.model.Album
+import com.simplecityapps.mediaprovider.model.removeArticles
 import kotlinx.coroutines.flow.Flow
 import java.io.Serializable
+import java.text.Collator
 
 interface AlbumRepository {
-    fun getAlbums(): Flow<List<Album>>
     fun getAlbums(query: AlbumQuery): Flow<List<Album>>
 }
 
 sealed class AlbumQuery(
     val predicate: ((com.simplecityapps.mediaprovider.model.Album) -> Boolean),
-    val sortOrder: AlbumSortOrder? = null
-
+    val sortOrder: AlbumSortOrder = AlbumSortOrder.Default
 ) {
+
+    class All(sortOrder: AlbumSortOrder = AlbumSortOrder.Default) :
+        AlbumQuery(
+            predicate = { true },
+            sortOrder = sortOrder
+        )
+
     class AlbumArtist(val name: String) :
         AlbumQuery(
             predicate = { album -> album.albumArtist.equals(name, ignoreCase = true) }
@@ -47,12 +54,16 @@ sealed class AlbumQuery(
 }
 
 enum class AlbumSortOrder : Serializable {
-    PlayCount;
+    Default, AlbumName, ArtistName, Year, PlayCount;
 
     val comparator: Comparator<Album>
         get() {
             return when (this) {
-                PlayCount -> Comparator { a, b -> b.playCount.compareTo(a.playCount) }
+                Default -> Comparator<Album> { a, b -> zeroLastComparator.compare(a.year, b.year) }.then(compareBy { album -> album.year })
+                AlbumName -> compareBy<Album> { album -> album.sortKey }.then(Default.comparator)
+                ArtistName -> Comparator<Album> { a, b -> Collator.getInstance().compare(a.albumArtist.removeArticles(), b.albumArtist.removeArticles()) }.then(Default.comparator)
+                PlayCount -> compareBy<Album> { song -> song.playCount }.then(Default.comparator)
+                Year -> Default.comparator
             }
         }
 }

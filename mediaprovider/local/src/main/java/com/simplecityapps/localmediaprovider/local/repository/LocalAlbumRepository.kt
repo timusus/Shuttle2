@@ -29,23 +29,13 @@ class LocalAlbumRepository(private val albumDataDao: AlbumDataDao) : AlbumReposi
             .flowOn(Dispatchers.IO)
     }
 
-    override fun getAlbums(): Flow<List<Album>> {
-        return albumsRelay
-            .map { albumList -> albumList.filter { album -> album.songCount > 0 } }
-            .flowOn(Dispatchers.IO)
-    }
-
     override fun getAlbums(query: AlbumQuery): Flow<List<Album>> {
-        return getAlbums()
+        return albumsRelay
             .map { albums ->
-                var result = albums.filter(query.predicate)
-
-                query.sortOrder?.let { sortOrder ->
-                    result = result.sortedWith(sortOrder.comparator)
-                }
-
-                result
+                albums
+                    .filter(query.predicate)
+                    .toMutableList()
+                    .sortedWith(query.sortOrder.comparator)
             }
-            .flowOn(Dispatchers.IO)
     }
 }

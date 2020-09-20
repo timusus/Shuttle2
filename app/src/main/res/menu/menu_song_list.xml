@@ -1,3 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"/>
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/songSortOrder"
+        android:icon="@drawable/ic_baseline_sort_24"
+        android:title="Sort by"
+        app:showAsAction="ifRoom">
+
+        <menu>
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/sortSongName"
+                    android:checked="true"
+                    android:title="Song Name" />
+                <item
+                    android:id="@+id/sortArtistName"
+                    android:title="Artist Name" />
+                <item
+                    android:id="@+id/sortAlbumName"
+                    android:title="Album Name" />
+                <item
+                    android:id="@+id/sortSongYear"
+                    android:title="Year" />
+                <item
+                    android:id="@+id/sortSongDuration"
+                    android:title="Duration" />
+            </group>
+        </menu>
+    </item>
+</menu>

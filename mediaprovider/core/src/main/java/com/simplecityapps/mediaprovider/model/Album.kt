@@ -13,7 +13,7 @@ class Album(
     val playCount: Int
 ) : Serializable {
 
-    var sortKey: String? = Regex.articlePattern.matcher(name).replaceAll("")
+    var sortKey: String? = name.removeArticles()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

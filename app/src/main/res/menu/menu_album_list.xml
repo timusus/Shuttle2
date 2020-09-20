@@ -8,4 +8,25 @@
         android:title="View mode"
         app:showAsAction="ifRoom" />
 
+    <item
+        android:id="@+id/albumSortOrder"
+        android:icon="@drawable/ic_baseline_sort_24"
+        android:title="Sort by"
+        app:showAsAction="ifRoom">
+
+        <menu>
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/sortAlbumName"
+                    android:checked="true"
+                    android:title="Album Name" />
+                <item
+                    android:id="@+id/sortArtistName"
+                    android:title="Artist Name" />
+                <item
+                    android:id="@+id/sortAlbumYear"
+                    android:title="Album Year" />
+            </group>
+        </menu>
+    </item>
 </menu>

@@ -3,22 +3,21 @@ package com.simplecityapps.shuttle.ui.screens.library.albums
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.Song
-import com.simplecityapps.mediaprovider.repository.AlbumRepository
-import com.simplecityapps.mediaprovider.repository.SongQuery
-import com.simplecityapps.mediaprovider.repository.SongRepository
+import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
+import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
 import com.simplecityapps.shuttle.ui.screens.library.ViewMode
 import com.simplecityapps.shuttle.ui.screens.library.toViewMode
-import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
-import java.text.Collator
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
-import javax.inject.Named
 
 class AlbumListContract {
 
@@ -29,7 +28,8 @@ class AlbumListContract {
     }
 
     interface View {
-        fun setAlbums(albums: List<Album>, viewMode: ViewMode)
+        fun setAlbums(albums: List<Album>, viewMode: ViewMode, resetPosition: Boolean)
+        fun updateSortOrder(sortOrder: AlbumSortOrder)
         fun onAddedToQueue(album: Album)
         fun setLoadingState(state: LoadingState)
         fun setLoadingProgress(progress: Float)
@@ -39,7 +39,7 @@ class AlbumListContract {
     }
 
     interface Presenter {
-        fun loadAlbums()
+        fun loadAlbums(resetPosition: Boolean)
         fun addToQueue(album: Album)
         fun playNext(album: Album)
         fun exclude(album: Album)
@@ -47,6 +47,8 @@ class AlbumListContract {
         fun play(album: Album)
         fun toggleViewMode()
         fun albumShuffle()
+        fun setSortOrder(albumSortOrder: AlbumSortOrder)
+        fun updateSortOrder()
     }
 }
 
@@ -56,7 +58,7 @@ class AlbumListPresenter @Inject constructor(
     private val playbackManager: PlaybackManager,
     private val mediaImporter: MediaImporter,
     private val preferenceManager: GeneralPreferenceManager,
-    @Named("AppCoroutineScope") private val appCoroutineScope: CoroutineScope
+    private val sortPreferenceManager: SortPreferenceManager
 ) : AlbumListContract.Presenter,
     BasePresenter<AlbumListContract.View>() {
 
@@ -71,6 +73,7 @@ class AlbumListPresenter @Inject constructor(
     override fun bindView(view: AlbumListContract.View) {
         super.bindView(view)
 
+        view.updateSortOrder(sortPreferenceManager.sortOrderAlbumList)
         view.setViewMode(preferenceManager.albumListViewMode.toViewMode())
     }
 
@@ -80,10 +83,11 @@ class AlbumListPresenter @Inject constructor(
         mediaImporter.listeners.remove(mediaImporterListener)
     }
 
-    override fun loadAlbums() {
+    override fun loadAlbums(resetPosition: Boolean) {
         launch {
-            albumRepository.getAlbums()
-                .map { albums -> albums.sortedWith(Comparator { a, b -> Collator.getInstance().compare(a.sortKey, b.sortKey) }) }
+            albumRepository.getAlbums(AlbumQuery.All(sortOrder = sortPreferenceManager.sortOrderAlbumList))
+                .distinctUntilChanged()
+                .flowOn(Dispatchers.IO)
                 .collect { albums ->
                     if (albums.isEmpty()) {
                         if (mediaImporter.isImporting) {
@@ -99,7 +103,7 @@ class AlbumListPresenter @Inject constructor(
                     }
                     this@AlbumListPresenter.albums = albums
                     view?.setViewMode(preferenceManager.albumListViewMode.toViewMode())
-                    view?.setAlbums(albums, preferenceManager.albumListViewMode.toViewMode())
+                    view?.setAlbums(albums, preferenceManager.albumListViewMode.toViewMode(), resetPosition)
                 }
         }
     }
@@ -133,7 +137,7 @@ class AlbumListPresenter @Inject constructor(
         }
         preferenceManager.albumListViewMode = viewMode.name
         view?.setViewMode(viewMode)
-        view?.setAlbums(albums, viewMode)
+        view?.setAlbums(albums, viewMode, false)
     }
 
     override fun exclude(album: Album) {
@@ -148,7 +152,10 @@ class AlbumListPresenter @Inject constructor(
 
     override fun editTags(album: Album) {
         launch {
-            val songs = songRepository.getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = album.name, albumArtistName = album.albumArtist)))).firstOrNull().orEmpty()
+            val songs = songRepository
+                .getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = album.name, albumArtistName = album.albumArtist))))
+                .firstOrNull()
+                .orEmpty()
             view?.showTagEditor(songs)
         }
     }
@@ -183,5 +190,22 @@ class AlbumListPresenter @Inject constructor(
                 result.onFailure { error -> view?.showLoadError(error as Error) }
             }
         }
+    }
+
+    override fun setSortOrder(albumSortOrder: AlbumSortOrder) {
+        if (sortPreferenceManager.sortOrderAlbumList != albumSortOrder) {
+            launch {
+                withContext(Dispatchers.IO) {
+                    sortPreferenceManager.sortOrderAlbumList = albumSortOrder
+                    this@AlbumListPresenter.albums = albums.sortedWith(albumSortOrder.comparator)
+                }
+                view?.setAlbums(albums, preferenceManager.albumListViewMode.toViewMode(), true)
+                view?.updateSortOrder(albumSortOrder)
+            }
+        }
+    }
+
+    override fun updateSortOrder() {
+        view?.updateSortOrder(sortPreferenceManager.sortOrderAlbumList)
     }
 }
