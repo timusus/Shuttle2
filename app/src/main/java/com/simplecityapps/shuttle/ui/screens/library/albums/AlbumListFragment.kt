@@ -212,7 +212,9 @@ class AlbumListFragment :
             }
         }.toMutableList<ViewBinder>()
 
-        data.add(0, shuffleBinder)
+        if (albums.isNotEmpty()) {
+            data.add(0, shuffleBinder)
+        }
 
         adapter.update(data, completion = {
             recyclerViewState?.let {
