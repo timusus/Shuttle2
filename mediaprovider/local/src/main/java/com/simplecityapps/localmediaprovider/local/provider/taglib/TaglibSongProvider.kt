@@ -5,10 +5,7 @@ import com.simplecityappds.saf.SafDirectoryHelper
 import com.simplecityapps.localmediaprovider.local.provider.toSong
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.Song
-import com.simplecityapps.mediaprovider.repository.SongSortOrder
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 
 class TaglibSongProvider(
     private val context: Context,
@@ -19,27 +16,25 @@ class TaglibSongProvider(
 
     override suspend fun findSongs(callback: ((song: Song, progress: Int, total: Int) -> Unit)?): List<Song>? {
         return directories?.let { directories ->
-            val songs = mutableListOf<Song>()
-            withContext(Dispatchers.IO) {
-                directories.flatMap { directory ->
+            var index = 0
+            return withContext(Dispatchers.IO) {
+                val uris = directories.flatMap { directory ->
                     directory.getLeaves()
                         .map { documentNode ->
                             documentNode as SafDirectoryHelper.DocumentNode
                             Pair(documentNode.uri, documentNode.mimeType)
                         }
-                }.apply {
-                    forEachIndexed { index, (uri, mimeType) ->
-                        if (coroutineContext.isActive) {
-                            fileScanner.getAudioFile(context, uri)?.toSong(mimeType)?.let { song ->
-                                withContext(Dispatchers.Main) {
-                                    callback?.invoke(song, index, size)
-                                }
-                                songs.add(song)
-                            }
+                }
+                uris.pmap { (uri, mimeType) ->
+                    val song = fileScanner.getAudioFile(context, uri)?.toSong(mimeType)
+                    song?.let {
+                        withContext(Dispatchers.Main) {
+                            callback?.invoke(song, index, uris.size)
+                            index++
                         }
                     }
-                }
-                songs.sortedWith(SongSortOrder.ArtistName.comparator)
+                    song
+                }.mapNotNull { it }
             }
         }
     }

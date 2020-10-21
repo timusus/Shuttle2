@@ -39,7 +39,7 @@ class MediaImporter(
         }
 
         Timber.i("Starting import..")
-
+        val time = System.currentTimeMillis()
 
         isImporting = true
 
@@ -50,7 +50,6 @@ class MediaImporter(
         }?.let { newSongs ->
             val diffResult = Diff(existingSongs, newSongs).apply()
             Timber.i("Diff completed: $diffResult")
-
             try {
                 val result = songRepository.insertUpdateAndDelete(diffResult.inserts, diffResult.updates, diffResult.deletes)
                 withContext(Dispatchers.Main) {
@@ -69,7 +68,7 @@ class MediaImporter(
 
         importCount++
         isImporting = false
-        Timber.i("Import complete")
+        Timber.i("Import complete in ${System.currentTimeMillis() - time}ms)")
     }
 
 

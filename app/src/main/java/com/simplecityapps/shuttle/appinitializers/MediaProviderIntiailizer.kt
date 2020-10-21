@@ -4,6 +4,7 @@ import android.app.Application
 import com.simplecityappds.saf.SafDirectoryHelper
 import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStoreSongProvider
 import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibSongProvider
+import com.simplecityapps.localmediaprovider.local.provider.taglib.pmap
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import kotlinx.coroutines.*
@@ -22,7 +23,6 @@ class MediaProviderInitializer @Inject constructor(
 ) : AppInitializer {
 
     override fun init(application: Application) {
-
         when (playbackPreferenceManager.songProvider) {
             PlaybackPreferenceManager.SongProvider.TagLib -> {
                 mediaImporter.mediaProvider = taglibSongProvider
@@ -31,9 +31,7 @@ class MediaProviderInitializer @Inject constructor(
                     withContext(Dispatchers.IO) {
                         application.contentResolver?.persistedUriPermissions
                             ?.filter { uriPermission -> uriPermission.isReadPermission || uriPermission.isWritePermission }
-                            ?.mapNotNull { uriPermission ->
-                                SafDirectoryHelper.buildFolderNodeTree(application.contentResolver, uriPermission.uri).distinctUntilChanged()
-                            }
+                            ?.map { uriPermission -> SafDirectoryHelper.buildFolderNodeTree(application.contentResolver, uriPermission.uri).distinctUntilChanged() }
                             ?.merge()
                             ?.toList()
                             ?.let { directories ->
