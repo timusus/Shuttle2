@@ -1,5 +1,6 @@
 {
   "commits": [
+    "(v81 patch) Fixed a crash due to missing database migration",
     "Prevent media import from deleting library when directories can't be scanned",
     "Significantly improved performance of media scanner (7x faster on my device)",
     "Show media import progress in debug drawer (swipe from right)",
