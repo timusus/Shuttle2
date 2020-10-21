@@ -18,7 +18,7 @@ class DatabaseProvider constructor(
 
     val database: MediaDatabase by lazy {
         Room.databaseBuilder(context, MediaDatabase::class.java, "song.db")
-            .addMigrations(MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26, MIGRATION_26_27, MIGRATION_27_28, MIGRATION_28_29, MIGRATION_29_30)
+            .addMigrations(MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26, MIGRATION_26_27, MIGRATION_27_28, MIGRATION_28_29, MIGRATION_29_30, MIGRATION_30_31)
             .addCallback(callback)
             .build()
     }
@@ -87,6 +87,12 @@ class DatabaseProvider constructor(
         override fun migrate(database: SupportSQLiteDatabase) {
             database.execSQL("ALTER TABLE songs ADD COLUMN artist TEXT NOT NULL DEFAULT ''")
             database.execSQL("UPDATE songs SET artist = albumArtist")
+        }
+    }
+
+    private val MIGRATION_30_31 = object : Migration(30, 31) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            // No actual schema changes
         }
     }
 }
