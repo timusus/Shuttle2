@@ -1,19 +1,47 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
+    <!-- Theme specific -->
+
+    <!-- Shuttle -->
     <color name="colorPrimary">#FF0492ea</color>
     <color name="colorPrimaryDark">#FF0068A5</color>
-    <color name="colorAccent">#FFe5f4fd</color>
+    <color name="colorPrimarySemiTransparent">#300492ea</color>
+    <color name="colorPrimaryTransparent">#200492ea</color>
 
-    <color name="selected_background">#100492ea</color>
+    <!-- Orange-->
+    <color name="colorPrimaryOrange">#F44336</color>
+    <color name="colorPrimaryOrangeDark">#B71C1C</color>
+    <color name="colorPrimaryOrangeSemiTransparent">#30B71C1C</color>
+    <color name="colorPrimaryOrangeTransparent">#20B71C1C</color>
+
+    <!-- Cyan-->
+    <color name="colorPrimaryCyan">#00FFFF</color>
+    <color name="colorPrimaryCyanDark">#00AFAF</color>
+    <color name="colorPrimaryCyanSemiTransparent">#3000FFFF</color>
+    <color name="colorPrimaryCyanTransparent">#2000FFFF</color>
+
+    <!-- Purple-->
+    <color name="colorPrimaryPurple">#DB17DF</color>
+    <color name="colorPrimaryPurpleDark">#8B0F8E</color>
+    <color name="colorPrimaryPurpleSemiTransparent">#30DB17DF</color>
+    <color name="colorPrimaryPurpleTransparent">#20DB17DF</color>
+
+    <!-- Green-->
+    <color name="colorPrimaryGreen">#4CAF50</color>
+    <color name="colorPrimaryGreenDark">#306E32</color>
+    <color name="colorPrimaryGreenSemiTransparent">#304CAF50</color>
+    <color name="colorPrimaryGreenTransparent">#204CAF50</color>
+
+
+    <!-- General -->
 
     <color name="ic_launcher_background">#FF03A9F4</color>
-
-    <color name="colorPrimaryTransparent">#200492ea</color>
 
     <color name="history_green_primary">#05000000</color>
     <color name="history_green_primary_dark">#1F74BDB0</color>
     <color name="history_green_tint">#74bdb0</color>
-
+    Ø
     <color name="recently_added_yellow_primary">#05000000</color>
     <color name="recently_added_yellow_primary_dark">#1FFBBC05</color>
     <color name="recently_added_yellow_tint">#fbbc05</color>
@@ -27,10 +55,11 @@
     <color name="shuffle_blue_tint">#0492ea</color>
 
     <color name="bg_window_light">#FFFFFF</color>
-    <color name="bg_window_dark">#000000</color>
+    <color name="bg_window_dark">#111111</color>
+    <color name="bg_window_black">#000000</color>
 
     <color name="bg_card_light">#FFFFFF</color>
-    <color name="bg_card_dark">#121212</color>
+    <color name="bg_card_dark">#1E1E1E</color>
 
     <color name="text_primary_light">#DE000000</color>
     <color name="text_secondary_light">#DE000000</color>
@@ -39,17 +68,12 @@
 
 
     <!-- Vertical Seekbar-->
-
-    <color name="vertical_seekbar_progress">@color/colorPrimary</color>
     <color name="vertical_seekbar_progress_disabled">#A8272727</color>
-
-    <color name="vertical_seekbar_track">#300492ea</color>
     <color name="vertical_seekbar_track_disabled">#30b2b2b2</color>
-
     <color name="vertical_seekbar_thumb">#ececec</color>
-
     <color name="vertical_seekbar_guideline_light">#10000000</color>
     <color name="vertical_seekbar_guideline_dark">#20FFFFFF</color>
+
 
     <!-- TextInputLayout -->
     <color name="helperTextColorDark">#E65100</color>

@@ -8,6 +8,7 @@
     android:layout_height="wrap_content"
     android:elevation="0dp"
     android:foreground="?selectableItemBackground"
+    app:cardBackgroundColor="?cardBackgroundColor"
     app:cardCornerRadius="4dp"
     tools:layout_marginRight="8dp"
     tools:layout_width="108dp">

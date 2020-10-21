@@ -7,6 +7,8 @@
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorPrimary</item>
+        <item name="colorPrimaryTransparent">@color/colorPrimaryTransparent</item>
+        <item name="colorPrimarySemiTransparent">@color/colorPrimarySemiTransparent</item>
         <item name="tabLayoutStyle">@style/TabLayout.AppTheme.Dark</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar" tools:targetApi="23">true</item>
@@ -32,6 +34,10 @@
         <item name="placeholderBackgroundColor">@color/bg_placeholder</item>
 
         <item name="helperTextTextColor">@color/helperTextColor</item>
+
+        <item name="cardBackgroundColor">@color/bg_card_light</item>
+
+        <item name="colorPlayPauseTint">#FFFFFFFF</item>
     </style>
 
     <style name="AppTheme.Dark" parent="Theme.MaterialComponents.NoActionBar">
@@ -40,6 +46,8 @@
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="tabLayoutStyle">@style/TabLayout.AppTheme.Dark</item>
         <item name="colorAccent">@color/colorPrimary</item>
+        <item name="colorPrimaryTransparent">@color/colorPrimaryTransparent</item>
+        <item name="colorPrimarySemiTransparent">@color/colorPrimarySemiTransparent</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:textViewStyle">@style/Widget.Shuttle.TextView</item>
         <item name="toolbarStyle">@style/Widget.Shuttle.Toolbar</item>
@@ -67,9 +75,28 @@
         <item name="placeholderBackgroundColor">@color/bg_placeholder_dark</item>
 
         <item name="helperTextTextColor">@color/helperTextColor</item>
+        <item name="cardBackgroundColor">@color/bg_card_dark</item>
+
+        <item name="colorPlayPauseTint">#FFFFFFFF</item>
     </style>
 
     <style name="AppTheme.DayNight" parent="AppTheme.Light" />
+
+    <style name="AppTheme.DayNight.ExtraDark" />
+
+    <style name="AppTheme.Dark.ExtraDark">
+        <item name="android:windowBackground">@color/bg_window_black</item>
+        <item name="cardBackgroundColor">@color/bg_window_black</item>
+    </style>
+
+
+    <!-- Semi transparent primary color -->
+
+    <attr name="colorPrimaryTransparent" format="reference|color" />
+    <attr name="colorPrimarySemiTransparent" format="reference|color" />
+
+    <!-- Play/Pause Button-->
+    <attr name="colorPlayPauseTint" format="reference|color" />
 
 
     <!-- Image Buttons-->
@@ -105,6 +132,7 @@
 
     <style name="Widget.Shuttle.Toolbar" parent="Widget.AppCompat.Toolbar">
         <item name="titleTextAppearance">@style/TextAppearance.Shuttle.Toolbar</item>
+        <item name="backgroundColor">?cardBackgroundColor</item>
     </style>
 
 
@@ -119,10 +147,10 @@
     <!-- FastScroll -->
 
     <style name="FastScrollRecyclerView">
-        <item name="fastScrollPopupBgColor">@color/colorPrimary</item>
+        <item name="fastScrollPopupBgColor">?colorAccent</item>
         <item name="fastScrollPopupTextColor">@android:color/primary_text_dark</item>
-        <item name="fastScrollThumbColor">@color/colorPrimary</item>
-        <item name="fastScrollThumbInactiveColor">@color/colorPrimary</item>
+        <item name="fastScrollThumbColor">?colorAccent</item>
+        <item name="fastScrollThumbInactiveColor">?colorAccent</item>
     </style>
 
 
@@ -224,5 +252,194 @@
         <item name="android:textSize">12sp</item>
     </style>
 
+
+    <!-- Orange theme-->
+
+    <style name="AppTheme.Light.Orange">
+        <item name="colorPrimary">@color/colorPrimaryOrange</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryOrangeDark</item>
+        <item name="colorAccent">@color/colorPrimaryOrange</item>
+        <item name="colorPrimaryTransparent">@color/colorPrimaryOrangeTransparent</item>
+        <item name="colorPrimarySemiTransparent">@color/colorPrimaryOrangeSemiTransparent</item>
+        <item name="colorPlayPauseTint">#FFFFFFFF</item>
+    </style>
+
+    <style name="AppTheme.Dark.Orange">
+        <item name="colorPrimary">@color/colorPrimaryOrange</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryOrangeDark</item>
+        <item name="colorAccent">@color/colorPrimaryOrange</item>
+        <item name="colorPrimaryTransparent">@color/colorPrimaryOrangeTransparent</item>
+        <item name="colorPrimarySemiTransparent">@color/colorPrimaryOrangeSemiTransparent</item>
+        <item name="colorPlayPauseTint">#FFFFFFFF</item>
+    </style>
+
+    <style name="AppTheme.Dark.ExtraDark.Orange">
+        <item name="colorPrimary">@color/colorPrimaryOrange</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryOrangeDark</item>
+        <item name="colorAccent">@color/colorPrimaryOrange</item>
+        <item name="colorPrimaryTransparent">@color/colorPrimaryOrangeTransparent</item>
+        <item name="colorPrimarySemiTransparent">@color/colorPrimaryOrangeSemiTransparent</item>
+        <item name="colorPlayPauseTint">#FFFFFFFF</item>
+    </style>
+
+    <style name="AppTheme.DayNight.Orange">
+        <item name="colorPrimary">@color/colorPrimaryOrange</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryOrangeDark</item>
+        <item name="colorAccent">@color/colorPrimaryOrange</item>
+        <item name="colorPrimaryTransparent">@color/colorPrimaryOrangeTransparent</item>
+        <item name="colorPrimarySemiTransparent">@color/colorPrimaryOrangeSemiTransparent</item>
+        <item name="colorPlayPauseTint">#FFFFFFFF</item>
+    </style>
+
+    <style name="AppTheme.DayNight.ExtraDark.Orange">
+        <item name="colorPrimary">@color/colorPrimaryOrange</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryOrangeDark</item>
+        <item name="colorAccent">@color/colorPrimaryOrange</item>
+        <item name="colorPrimaryTransparent">@color/colorPrimaryOrangeTransparent</item>
+        <item name="colorPrimarySemiTransparent">@color/colorPrimaryOrangeSemiTransparent</item>
+        <item name="colorPlayPauseTint">#FFFFFFFF</item>
+    </style>
+
+
+    <!-- Cyan theme-->
+
+    <style name="AppTheme.Light.Cyan">
+        <item name="colorPrimary">@color/colorPrimaryCyanDark</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryCyanDark</item>
+        <item name="colorAccent">@color/colorPrimaryCyanDark</item>
+        <item name="colorPrimaryTransparent">@color/colorPrimaryCyanTransparent</item>
+        <item name="colorPrimarySemiTransparent">@color/colorPrimaryCyanSemiTransparent</item>
+        <item name="colorPlayPauseTint">@color/text_primary_light</item>
+    </style>
+
+    <style name="AppTheme.Dark.Cyan">
+        <item name="colorPrimary">@color/colorPrimaryCyan</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryCyanDark</item>
+        <item name="colorAccent">@color/colorPrimaryCyan</item>
+        <item name="colorPrimaryTransparent">@color/colorPrimaryCyanTransparent</item>
+        <item name="colorPrimarySemiTransparent">@color/colorPrimaryCyanSemiTransparent</item>
+        <item name="colorPlayPauseTint">@color/text_primary_light</item>
+    </style>
+
+    <style name="AppTheme.Dark.ExtraDark.Cyan">
+        <item name="colorPrimary">@color/colorPrimaryCyan</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryCyanDark</item>
+        <item name="colorAccent">@color/colorPrimaryCyan</item>
+        <item name="colorPrimaryTransparent">@color/colorPrimaryCyanTransparent</item>
+        <item name="colorPrimarySemiTransparent">@color/colorPrimaryCyanSemiTransparent</item>
+        <item name="colorPlayPauseTint">@color/text_primary_light</item>
+    </style>
+
+    <style name="AppTheme.DayNight.Cyan">
+        <item name="colorPrimary">@color/colorPrimaryCyan</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryCyanDark</item>
+        <item name="colorAccent">@color/colorPrimaryCyan</item>
+        <item name="colorPrimaryTransparent">@color/colorPrimaryCyanTransparent</item>
+        <item name="colorPrimarySemiTransparent">@color/colorPrimaryCyanSemiTransparent</item>
+        <item name="colorPlayPauseTint">@color/text_primary_light</item>
+    </style>
+
+    <style name="AppTheme.DayNight.ExtraDark.Cyan">
+        <item name="colorPrimary">@color/colorPrimaryCyan</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryCyanDark</item>
+        <item name="colorAccent">@color/colorPrimaryCyan</item>
+        <item name="colorPrimaryTransparent">@color/colorPrimaryCyanTransparent</item>
+        <item name="colorPrimarySemiTransparent">@color/colorPrimaryCyanSemiTransparent</item>
+        <item name="colorPlayPauseTint">@color/text_primary_light</item>
+    </style>
+
+    <!-- Purple theme-->
+
+    <style name="AppTheme.Light.Purple">
+        <item name="colorPrimary">@color/colorPrimaryPurpleDark</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryPurpleDark</item>
+        <item name="colorAccent">@color/colorPrimaryPurpleDark</item>
+        <item name="colorPrimaryTransparent">@color/colorPrimaryPurpleTransparent</item>
+        <item name="colorPrimarySemiTransparent">@color/colorPrimaryPurpleSemiTransparent</item>
+        <item name="colorPlayPauseTint">#FFFFFFFF</item>
+    </style>
+
+    <style name="AppTheme.Dark.Purple">
+        <item name="colorPrimary">@color/colorPrimaryPurple</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryPurpleDark</item>
+        <item name="colorAccent">@color/colorPrimaryPurple</item>
+        <item name="colorPrimaryTransparent">@color/colorPrimaryPurpleTransparent</item>
+        <item name="colorPrimarySemiTransparent">@color/colorPrimaryPurpleSemiTransparent</item>
+        <item name="colorPlayPauseTint">#FFFFFFFF</item>
+    </style>
+
+    <style name="AppTheme.Dark.ExtraDark.Purple">
+        <item name="colorPrimary">@color/colorPrimaryPurple</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryPurpleDark</item>
+        <item name="colorAccent">@color/colorPrimaryPurple</item>
+        <item name="colorPrimaryTransparent">@color/colorPrimaryPurpleTransparent</item>
+        <item name="colorPrimarySemiTransparent">@color/colorPrimaryPurpleSemiTransparent</item>
+        <item name="colorPlayPauseTint">#FFFFFFFF</item>
+    </style>
+
+    <style name="AppTheme.DayNight.Purple">
+        <item name="colorPrimary">@color/colorPrimaryPurple</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryPurpleDark</item>
+        <item name="colorAccent">@color/colorPrimaryPurple</item>
+        <item name="colorPrimaryTransparent">@color/colorPrimaryPurpleTransparent</item>
+        <item name="colorPrimarySemiTransparent">@color/colorPrimaryPurpleSemiTransparent</item>
+        <item name="colorPlayPauseTint">#FFFFFFFF</item>
+    </style>
+
+    <style name="AppTheme.DayNight.ExtraDark.Purple">
+        <item name="colorPrimary">@color/colorPrimaryPurple</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryPurpleDark</item>
+        <item name="colorAccent">@color/colorPrimaryPurple</item>
+        <item name="colorPrimaryTransparent">@color/colorPrimaryPurpleTransparent</item>
+        <item name="colorPrimarySemiTransparent">@color/colorPrimaryPurpleSemiTransparent</item>
+        <item name="colorPlayPauseTint">#FFFFFFFF</item>
+    </style>
+
+    <!-- Green theme-->
+
+    <style name="AppTheme.Light.Green">
+        <item name="colorPrimary">@color/colorPrimaryGreen</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryGreenDark</item>
+        <item name="colorAccent">@color/colorPrimaryGreen</item>
+        <item name="colorPrimaryTransparent">@color/colorPrimaryGreenTransparent</item>
+        <item name="colorPrimarySemiTransparent">@color/colorPrimaryGreenSemiTransparent</item>
+        <item name="colorPlayPauseTint">#FFFFFFFF</item>
+    </style>
+
+    <style name="AppTheme.Dark.Green">
+        <item name="colorPrimary">@color/colorPrimaryGreen</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryGreenDark</item>
+        <item name="colorAccent">@color/colorPrimaryGreen</item>
+        <item name="colorPrimaryTransparent">@color/colorPrimaryGreenTransparent</item>
+        <item name="colorPrimarySemiTransparent">@color/colorPrimaryGreenSemiTransparent</item>
+        <item name="colorPlayPauseTint">#FFFFFFFF</item>
+    </style>
+
+    <style name="AppTheme.Dark.ExtraDark.Green">
+        <item name="colorPrimary">@color/colorPrimaryGreen</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryGreenDark</item>
+        <item name="colorAccent">@color/colorPrimaryGreen</item>
+        <item name="colorPrimaryTransparent">@color/colorPrimaryGreenTransparent</item>
+        <item name="colorPrimarySemiTransparent">@color/colorPrimaryGreenSemiTransparent</item>
+        <item name="colorPlayPauseTint">#FFFFFFFF</item>
+    </style>
+
+    <style name="AppTheme.DayNight.Green">
+        <item name="colorPrimary">@color/colorPrimaryGreen</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryGreenDark</item>
+        <item name="colorAccent">@color/colorPrimaryGreen</item>
+        <item name="colorPrimaryTransparent">@color/colorPrimaryGreenTransparent</item>
+        <item name="colorPrimarySemiTransparent">@color/colorPrimaryGreenSemiTransparent</item>
+        <item name="colorPlayPauseTint">#FFFFFFFF</item>
+    </style>
+
+    <style name="AppTheme.DayNight.ExtraDark.Green">
+        <item name="colorPrimary">@color/colorPrimaryGreen</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryGreenDark</item>
+        <item name="colorAccent">@color/colorPrimaryGreen</item>
+        <item name="colorPrimaryTransparent">@color/colorPrimaryGreenTransparent</item>
+        <item name="colorPrimarySemiTransparent">@color/colorPrimaryGreenSemiTransparent</item>
+        <item name="colorPlayPauseTint">#FFFFFFFF</item>
+    </style>
 
 </resources>

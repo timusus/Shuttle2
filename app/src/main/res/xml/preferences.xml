@@ -5,15 +5,34 @@
     <PreferenceCategory
         android:title="Display"
         app:iconSpaceReserved="false">
+
         <ListPreference
             android:defaultValue="0"
-            android:dialogTitle="Night Mode"
-            android:entries="@array/pref_night_mode_entries"
-            android:entryValues="@array/pref_night_mode_values"
-            android:key="pref_night_mode"
-            android:summary="Matches the system preference for night mode by default"
-            android:title="Night mode"
+            android:dialogTitle="Theme"
+            android:entries="@array/pref_theme_entries"
+            android:entryValues="@array/pref_theme_values"
+            android:key="pref_theme"
+            android:summary="Choose between day/night (default), light and dark"
+            android:title="Theme"
             app:iconSpaceReserved="false" />
+
+        <ListPreference
+            android:defaultValue="0"
+            android:dialogTitle="Accent"
+            android:entries="@array/pref_theme_accent_entries"
+            android:entryValues="@array/pref_theme_accent_values"
+            android:key="pref_theme_accent"
+            android:summary="Theme accent colour"
+            android:title="Accent"
+            app:iconSpaceReserved="false" />
+
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="pref_theme_extra_dark"
+            android:summary="Use darker colours for minor battery savings on AMOLED screens"
+            android:title="Extra Dark"
+            app:iconSpaceReserved="false" />
+
     </PreferenceCategory>
 
     <PreferenceCategory
@@ -35,19 +54,6 @@
             android:title="Excluded"
             app:iconSpaceReserved="false" />
     </PreferenceCategory>
-
-<!--    <PreferenceCategory-->
-<!--        android:title="Playback"-->
-<!--        app:iconSpaceReserved="false">-->
-
-<!--        <SwitchPreference-->
-<!--            android:defaultValue="false"-->
-<!--            android:key="playback_media_player"-->
-<!--            android:summary="Android MediaPlayer consumes less battery on some devices. ExoPlayer (default) is generally more reliable, supports more formats and is required for the EQ"-->
-<!--            android:title="Use MediaPlayer"-->
-<!--            app:iconSpaceReserved="false" />-->
-
-<!--    </PreferenceCategory>-->
 
     <PreferenceCategory
         android:title="Artwork"

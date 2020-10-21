@@ -13,17 +13,33 @@
     <string name="btn_favorite">Favorites</string>
     <string name="btn_shuffle">Shuffle</string>
 
-    <!-- Settings Option -->
-    <string-array name="pref_night_mode_entries">
-        <item>Default</item>
-        <item>Off</item>
-        <item>On</item>
+    <!-- Settings Options -->
+    <string-array name="pref_theme_entries">
+        <item>Day/Night</item>
+        <item>Light</item>
+        <item>Dark</item>
     </string-array>
 
-    <string-array name="pref_night_mode_values">
+    <string-array name="pref_theme_values">
         <item>0</item>
         <item>1</item>
         <item>2</item>
+    </string-array>
+
+    <string-array name="pref_theme_accent_entries">
+        <item>Shuttle Blue</item>
+        <item>Agent Orange</item>
+        <item>Cyanogen</item>
+        <item>Furple</item>
+        <item>Green Apple Splatter</item>
+    </string-array>
+
+    <string-array name="pref_theme_accent_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
     </string-array>
 
     <plurals name="songsPlural">

@@ -3,7 +3,6 @@ package com.simplecityapps.shuttle
 import android.app.Application
 import android.appwidget.AppWidgetManager
 import android.content.Intent
-import androidx.appcompat.app.AppCompatDelegate
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.mediaprovider.repository.SongRepositoryProvider
 import com.simplecityapps.playback.ActivityIntentProvider
@@ -12,6 +11,7 @@ import com.simplecityapps.shuttle.appinitializers.AppInitializers
 import com.simplecityapps.shuttle.dagger.*
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.MainActivity
+import com.simplecityapps.shuttle.ui.ThemeManager
 import com.simplecityapps.shuttle.ui.widgets.WidgetProvider41
 import com.simplecityapps.shuttle.ui.widgets.WidgetProvider42
 import dagger.android.AndroidInjector
@@ -37,6 +37,8 @@ class ShuttleApplication : Application(),
 
     @Inject lateinit var preferenceManager: GeneralPreferenceManager
 
+    @Inject lateinit var themeManager: ThemeManager
+
     lateinit var appComponent: AppComponent
 
     override fun onCreate() {
@@ -51,11 +53,7 @@ class ShuttleApplication : Application(),
 
         AppInjector.init(this)
 
-        when (preferenceManager.nightMode) {
-            "0" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
-            "1" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-            "2" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-        }
+        themeManager.setDayNightMode()
 
         if (preferenceManager.previousVersionCode != BuildConfig.VERSION_CODE) {
             // This is the first time the user has seen this build

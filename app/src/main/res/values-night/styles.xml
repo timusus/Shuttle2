@@ -1,5 +1,10 @@
 <resources>
 
-    <style name="AppTheme.DayNight" parent="AppTheme.Dark"/>
+    <style name="AppTheme.DayNight" parent="AppTheme.Dark" />
+
+    <style name="AppTheme.DayNight.ExtraDark" parent="AppTheme.DayNight">
+        <item name="android:windowBackground">@color/bg_window_black</item>
+        <item name="cardBackgroundColor">@color/bg_window_black</item>
+    </style>
 
 </resources>

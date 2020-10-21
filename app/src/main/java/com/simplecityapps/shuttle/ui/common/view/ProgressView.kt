@@ -6,8 +6,10 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
 import android.util.AttributeSet
+import android.util.TypedValue
 import android.view.View
 import androidx.core.content.ContextCompat
+import androidx.core.content.res.use
 import com.simplecityapps.shuttle.R
 
 class ProgressView @JvmOverloads constructor(
@@ -24,7 +26,12 @@ class ProgressView @JvmOverloads constructor(
         setWillNotDraw(false)
 
         paint = Paint(Paint.ANTI_ALIAS_FLAG)
-        paint.color = ContextCompat.getColor(context, R.color.colorPrimary)
+
+        TypedValue().apply {
+            context.obtainStyledAttributes(data, intArrayOf(R.attr.colorAccent)).use { typedArray ->
+                paint.color = typedArray.getColor(0, ContextCompat.getColor(context, R.color.colorPrimary))
+            }
+        }
 
         if (isInEditMode) {
             progress = 0.66f

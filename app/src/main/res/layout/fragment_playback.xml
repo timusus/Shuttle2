@@ -204,6 +204,7 @@
         android:layout_marginBottom="32dp"
         android:background="@drawable/circle_filled"
         android:contentDescription="Toggle Playback"
+        android:tint="?colorPlayPauseTint"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/skipNextContainer"
         app:layout_constraintHorizontal_bias="0.5"

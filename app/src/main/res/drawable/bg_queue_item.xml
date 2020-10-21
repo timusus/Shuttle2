@@ -3,7 +3,7 @@
     <item>
         <selector>
             <item android:state_activated="true">
-                <color android:color="@color/selected_background" />
+                <color android:color="?attr/colorPrimaryTransparent" />
             </item>
             <item>
                 <color android:color="@android:color/transparent" />

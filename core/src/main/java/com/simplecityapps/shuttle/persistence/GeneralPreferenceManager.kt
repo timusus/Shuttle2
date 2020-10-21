@@ -28,12 +28,36 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
             return sharedPreferences.get("changelog_show_on_launch", true)
         }
 
-    var nightMode: String
+    enum class Theme {
+        DayNight, Light, Dark
+    }
+
+    var themeBase: Theme
         set(value) {
-            sharedPreferences.put("pref_night_mode", value)
+            sharedPreferences.put("pref_theme", value.ordinal.toString())
         }
         get() {
-            return sharedPreferences.get("pref_night_mode", "0")
+            return Theme.values()[sharedPreferences.get("pref_theme", "0").toInt()]
+        }
+
+    enum class Accent {
+        Default, Orange, Cyan, Purple, Green
+    }
+
+    var themeAccent: Accent
+        set(value) {
+            sharedPreferences.put("pref_theme_accent", value.ordinal.toString())
+        }
+        get() {
+            return Accent.values()[sharedPreferences.get("pref_theme_accent", "0").toInt()]
+        }
+
+    var themeExtraDark: Boolean
+        set(value) {
+            sharedPreferences.put("pref_theme_extra_dark", value)
+        }
+        get() {
+            return sharedPreferences.get("pref_theme_extra_dark", false)
         }
 
     var artworkWifiOnly: Boolean

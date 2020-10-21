@@ -8,6 +8,7 @@ import android.util.TypedValue
 import android.view.View
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
+import androidx.core.content.res.use
 import androidx.core.view.isVisible
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
@@ -48,6 +49,7 @@ class FrequencyResponseDialogFragment : DialogFragment(), Injectable {
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
 
     private var textColor: Int = 0
+    private var lineColor: Int = 0
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -63,6 +65,9 @@ class FrequencyResponseDialogFragment : DialogFragment(), Injectable {
         TypedValue().apply {
             requireContext().theme.resolveAttribute(android.R.attr.textColorSecondary, this, true)
             textColor = ContextCompat.getColor(requireContext(), resourceId)
+            requireContext().obtainStyledAttributes(data, intArrayOf(R.attr.colorPrimary)).use { typedArray ->
+                lineColor = typedArray.getColor(0, ContextCompat.getColor(requireContext(), R.color.colorPrimary))
+            }
         }
     }
 
@@ -105,7 +110,7 @@ class FrequencyResponseDialogFragment : DialogFragment(), Injectable {
         dataset.setDrawCircles(false)
         dataset.setDrawHorizontalHighlightIndicator(false)
         dataset.setDrawVerticalHighlightIndicator(false)
-        dataset.color = ContextCompat.getColor(requireContext(), R.color.colorPrimary)
+        dataset.color = lineColor
 
         val chartData = LineData(dataset)
         chartData.setDrawValues(false)

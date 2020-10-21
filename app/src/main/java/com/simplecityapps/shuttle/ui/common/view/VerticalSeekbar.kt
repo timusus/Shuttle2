@@ -9,6 +9,7 @@ import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.View
 import androidx.core.content.ContextCompat
+import androidx.core.content.res.use
 import androidx.core.math.MathUtils.clamp
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.utils.dp
@@ -44,19 +45,30 @@ class VerticalSeekbar @JvmOverloads constructor(
     var numLines = 24
     private val numGuidelines = numLines / 2
 
-    private val progressColorEnabled: Int
-    private val progressColorDisabled: Int
+    private var progressColorEnabled: Int = 0
+    private var progressColorDisabled: Int = 0
 
-    private val trackColorEnabled: Int
+    private var trackColorEnabled: Int = 0
     private val trackColorDisabled: Int
 
     init {
-        trackColorEnabled = resources.getColor(R.color.vertical_seekbar_track)
         trackColorDisabled = resources.getColor(R.color.vertical_seekbar_track_disabled)
         trackPaint.color = if (isActivated) trackColorEnabled else trackColorDisabled
 
-        progressColorEnabled = resources.getColor(R.color.vertical_seekbar_progress)
-        progressColorDisabled = resources.getColor(R.color.vertical_seekbar_progress_disabled)
+        TypedValue().apply {
+            context.obtainStyledAttributes(
+                data,
+                intArrayOf(
+                    R.attr.colorPrimary,
+                    R.attr.colorPrimaryTransparent,
+                    R.attr.colorPrimarySemiTransparent
+                )
+            ).use { typedArray ->
+                progressColorEnabled = typedArray.getColor(0, ContextCompat.getColor(context, R.color.colorPrimary))
+                progressColorDisabled = typedArray.getColor(1, ContextCompat.getColor(context, R.color.colorPrimaryTransparent))
+                trackColorEnabled = typedArray.getColor(2, ContextCompat.getColor(context, R.color.colorPrimarySemiTransparent))
+            }
+        }
         progressPaint.color = if (isActivated) progressColorEnabled else progressColorDisabled
 
         thumbPaint.color = resources.getColor(R.color.vertical_seekbar_thumb)

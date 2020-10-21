@@ -45,5 +45,5 @@
         app:layout_constraintBottom_toBottomOf="@id/subtitleLabel"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/titleLabel"
-        app:tint="@color/colorPrimary" />
+        app:tint="?colorPrimary" />
 </androidx.constraintlayout.widget.ConstraintLayout>

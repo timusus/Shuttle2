@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.ui.screens.playback
 
-import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -146,8 +145,6 @@ class PlaybackFragment :
         }
 
         recyclerView.addItemDecoration(SpacesItemDecoration(8))
-
-        playPauseButton.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.colorPrimary))
 
         toolbar.inflateMenu(R.menu.menu_playback)
         toolbar.setOnMenuItemClickListener { item ->

@@ -23,13 +23,16 @@ class MainActivity :
 
     @Inject lateinit var dispatchingAndroidInjector: DispatchingAndroidInjector<Any>
 
-    @Inject lateinit var generalPreferenceManager: GeneralPreferenceManager
+    @Inject lateinit var preferenceManager: GeneralPreferenceManager
 
+    @Inject lateinit var themeManager: ThemeManager
 
     // Lifecycle
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        themeManager.setTheme(this)
 
         setContentView(R.layout.activity_main)
 
@@ -39,7 +42,7 @@ class MainActivity :
         val navInflater = navController.navInflater
         val graph = navInflater.inflate(R.navigation.launch)
 
-        if (!generalPreferenceManager.hasOnboarded || !hasStoragePermission()) {
+        if (!preferenceManager.hasOnboarded || !hasStoragePermission()) {
             graph.startDestination = R.id.onboardingFragment
         } else {
             graph.startDestination = R.id.mainFragment

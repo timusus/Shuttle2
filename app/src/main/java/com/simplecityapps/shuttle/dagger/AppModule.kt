@@ -6,6 +6,8 @@ import android.graphics.Bitmap
 import android.util.LruCache
 import com.simplecityapps.shuttle.ShuttleApplication
 import com.simplecityapps.shuttle.debug.DebugLoggingTree
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.ui.ThemeManager
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
 import dagger.Module
 import dagger.Provides
@@ -64,5 +66,11 @@ class AppModule {
     @Provides
     fun provideSortPreferenceManager(preference: SharedPreferences): SortPreferenceManager {
         return SortPreferenceManager(preference)
+    }
+
+    @AppScope
+    @Provides
+    fun provideThemeManager(preferenceManager: GeneralPreferenceManager): ThemeManager {
+        return ThemeManager(preferenceManager)
     }
 }

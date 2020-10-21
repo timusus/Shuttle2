@@ -7,7 +7,6 @@ import android.view.View
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
@@ -31,6 +30,7 @@ import com.simplecityapps.provider.emby.EmbyAuthenticationManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.ui.ThemeManager
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.screens.changelog.ChangelogDialogFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParentFragmentArgs
@@ -59,20 +59,27 @@ class SettingsFragment : PreferenceFragmentCompat(),
 
     @Inject lateinit var embyAuthenticationManager: EmbyAuthenticationManager
 
+    @Inject lateinit var imageLoader: ArtworkImageLoader
+
+    @Inject lateinit var themeManager: ThemeManager
+
     @Named("AppCoroutineScope") @Inject lateinit var appCoroutineScope: CoroutineScope
 
     private var scanningProgressView: ProgressBar? = null
     private var scanningDialog: AlertDialog? = null
 
-    @Inject lateinit var imageLoader: ArtworkImageLoader
 
     private val coroutineScope = CoroutineScope(Dispatchers.Main + CoroutineExceptionHandler { _, throwable -> Timber.e(throwable) })
+
+    private var theme: GeneralPreferenceManager.Theme? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         val toolbar: Toolbar = view.findViewById(R.id.toolbar)
         toolbar.setNavigationOnClickListener { findNavController().popBackStack() }
+
+        theme = preferenceManager.themeBase
 
         preferenceScreen.sharedPreferences.registerOnSharedPreferenceChangeListener(this)
 
@@ -177,6 +184,15 @@ class SettingsFragment : PreferenceFragmentCompat(),
             true
         }
 
+        preferenceScreen.findPreference<Preference>("pref_amoled_mode")?.setOnPreferenceChangeListener { _, _ ->
+            AlertDialog.Builder(requireContext())
+                .setTitle("Requires Restart")
+                .setMessage("S2 must be restarted for theme changes to take effect")
+                .setNegativeButton("Close", null)
+                .show()
+            true
+        }
+
         mediaImporter.listeners.add(this)
     }
 
@@ -198,19 +214,17 @@ class SettingsFragment : PreferenceFragmentCompat(),
 
     override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences, key: String) {
         when (key) {
-            "pref_night_mode" -> {
-                setNightMode(sharedPreferences.getString(key, "0") ?: "0")
+            "pref_theme", "pref_theme_accent", "pref_theme_extra_dark" -> {
+                setTheme()
             }
         }
     }
 
-    private fun setNightMode(value: String) {
-        when (value) {
-            "0" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
-            "1" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
-            "2" -> AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-        }
+    private fun setTheme() {
+        themeManager.setDayNightMode()
+        activity?.recreate()
     }
+
 
     // MediaImporter.Listener Implementation
 

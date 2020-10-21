@@ -22,7 +22,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/ic_baseline_psychology_24"
-        app:tint="@color/colorPrimary" />
+        app:tint="?colorPrimary" />
 
     <TextView
         android:id="@+id/title"
