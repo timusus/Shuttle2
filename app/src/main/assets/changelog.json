@@ -1,6 +1,9 @@
 {
   "commits": [
-    "Added album & song sorting options",
-    "Fixed an issue where search would freeze/lag"
+    "Prevent media import from deleting library when directories can't be scanned",
+    "Significantly improved performance of media scanner (7x faster on my device)",
+    "Show media import progress in debug drawer (swipe from right)",
+    "Various other behind the scenes media import changes",
+    "Don't show 'album shuffle' when there are no albums"
   ]
 }
