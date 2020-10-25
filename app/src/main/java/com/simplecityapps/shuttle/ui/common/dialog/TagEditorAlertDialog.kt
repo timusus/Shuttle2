@@ -18,6 +18,7 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.closeKeyboard
 import com.simplecityapps.shuttle.ui.common.utils.withArgs
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import java.io.Serializable
@@ -130,7 +131,7 @@ class TagEditorAlertDialog : DialogFragment(), Injectable, TagEditorContract.Vie
             .setTitle("Edit Tags")
             .setView(view)
             .setNegativeButton("Close", null)
-            .setPositiveButton("Save") { _, _ -> }
+            .setPositiveButton("Save") { _, _ -> genreInputLayout.closeKeyboard() }
             .create()
 
         dialog.setOnShowListener {
@@ -281,7 +282,7 @@ class TagEditorAlertDialog : DialogFragment(), Injectable, TagEditorContract.Vie
                 genreInputLayout.helperText = "Multiple values"
             }
         }
-        setupResetButton(albumArtistInputLayout, albumArtistEditText, _data.genreField, textChangeListener)
+        setupResetButton(genreInputLayout, genreEditText, _data.genreField, textChangeListener)
     }
 
     override fun setLoading(loadingState: TagEditorContract.LoadingState) {
@@ -297,14 +298,14 @@ class TagEditorAlertDialog : DialogFragment(), Injectable, TagEditorContract.Vie
         }
 
         when (loadingState) {
-            TagEditorContract.LoadingState.None -> {
+            is TagEditorContract.LoadingState.None -> {
                 loadingView.setState(CircularLoadingView.State.None)
             }
-            TagEditorContract.LoadingState.ReadingTags -> {
-                loadingView.setState(CircularLoadingView.State.Loading("Reading tags…"))
+            is TagEditorContract.LoadingState.ReadingTags -> {
+                loadingView.setState(CircularLoadingView.State.Loading("Reading tags (${loadingState.progress + 1} / ${loadingState.total})"))
             }
-            TagEditorContract.LoadingState.WritingTags -> {
-                loadingView.setState(CircularLoadingView.State.Loading("Saving tags…"))
+            is TagEditorContract.LoadingState.WritingTags -> {
+                loadingView.setState(CircularLoadingView.State.Loading("Saving tags (${loadingState.progress + 1} / ${loadingState.total})"))
             }
         }
     }

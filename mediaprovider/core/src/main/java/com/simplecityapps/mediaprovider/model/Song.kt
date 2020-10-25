@@ -15,6 +15,7 @@ data class Song(
     val disc: Int,
     val duration: Int,
     val year: Int,
+    val genres: List<String>,
     val path: String,
     val size: Long,
     val mimeType: String,
@@ -59,6 +60,7 @@ data class Song(
                 " disc=$disc," +
                 " duration=$duration," +
                 " year=$year," +
+                " genres=$genres," +
                 " path='$path'," +
                 " size=$size," +
                 " mimeType='$mimeType'," +

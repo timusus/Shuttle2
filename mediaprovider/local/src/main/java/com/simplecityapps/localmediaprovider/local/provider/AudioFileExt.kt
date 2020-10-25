@@ -5,7 +5,7 @@ import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.mediaprovider.model.Song
 import java.util.*
 
-fun AudioFile.toSong(mimeType: String): Song {
+fun AudioFile.toSong(): Song {
     return Song(
         id = 0,
         name = title ?: "Unknown",
@@ -16,6 +16,7 @@ fun AudioFile.toSong(mimeType: String): Song {
         disc = disc ?: 1,
         duration = duration ?: 0,
         year = year?.toIntOrNull() ?: 0,
+        genres = genres,
         path = path,
         size = size,
         mimeType = mimeType,
@@ -39,13 +40,14 @@ enum class TagLibProperty(val key: String) {
     Genre("GENRE")
 }
 
-fun getAudioFile(fileDescriptor: Int, filePath: String, fileName: String, lastModified: Long, size: Long): AudioFile {
+fun getAudioFile(fileDescriptor: Int, filePath: String, fileName: String, lastModified: Long, size: Long, mimeType: String): AudioFile {
     val metadata = KTagLib.getMetadata(fileDescriptor)
 
     return AudioFile(
         filePath,
         size,
         lastModified,
+        mimeType,
         title = metadata?.propertyMap?.get(TagLibProperty.Title.key)?.firstOrNull() ?: fileName,
         albumArtist = metadata?.propertyMap?.get(TagLibProperty.AlbumArtist.key)?.firstOrNull(),
         artist = metadata?.propertyMap?.get(TagLibProperty.Artist.key)?.firstOrNull(),
@@ -56,7 +58,11 @@ fun getAudioFile(fileDescriptor: Int, filePath: String, fileName: String, lastMo
         discTotal = metadata?.propertyMap?.get(TagLibProperty.Disc.key)?.firstOrNull()?.substringAfter('/', "")?.toIntOrNull(),
         duration = metadata?.audioProperties?.duration,
         year = metadata?.propertyMap?.get(TagLibProperty.Date.key)?.firstOrNull()?.parseDate(),
-        genre = metadata?.propertyMap?.get(TagLibProperty.Genre.key)?.firstOrNull()
+        genres = metadata?.propertyMap?.get(TagLibProperty.Genre.key).orEmpty().flatMap { genre ->
+            genre.split(",", ";", "/", "&")
+                .map { genre -> genre.trim() }
+                .filterNot { genre -> genre.isEmpty() }
+        }
     )
 }
 

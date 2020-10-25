@@ -28,6 +28,7 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.closeKeyboard
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistBinder
@@ -108,7 +109,7 @@ class SearchFragment : Fragment(),
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
 
             override fun onQueryTextSubmit(s: String): Boolean {
-                closeKeyboard()
+                view.closeKeyboard()
                 return true
             }
 
@@ -207,7 +208,7 @@ class SearchFragment : Fragment(),
     private val songBinderListener = object : SongBinder.Listener {
 
         override fun onSongClicked(song: Song) {
-            closeKeyboard()
+            view?.closeKeyboard()
             presenter.play(song)
         }
 
@@ -271,7 +272,7 @@ class SearchFragment : Fragment(),
     private val albumArtistBinderListener = object : AlbumArtistBinder.Listener {
 
         override fun onAlbumArtistClicked(albumArtist: AlbumArtist, viewHolder: AlbumArtistBinder.ViewHolder) {
-            closeKeyboard()
+            view?.closeKeyboard()
             findNavController().navigate(
                 R.id.action_searchFragment_to_albumArtistDetailFragment,
                 AlbumArtistDetailFragmentArgs(albumArtist, true).toBundle(),
@@ -318,7 +319,7 @@ class SearchFragment : Fragment(),
     private val albumBinderListener = object : AlbumBinder.Listener {
 
         override fun onAlbumClicked(album: Album, viewHolder: AlbumBinder.ViewHolder) {
-            closeKeyboard()
+            view?.closeKeyboard()
             findNavController().navigate(
                 R.id.action_searchFragment_to_albumDetailFragment,
                 AlbumDetailFragmentArgs(album, true).toBundle(),
@@ -359,12 +360,6 @@ class SearchFragment : Fragment(),
                 false
             }
             popupMenu.show()
-        }
-    }
-
-    private fun closeKeyboard() {
-        view?.let { view ->
-            (context?.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager)?.hideSoftInputFromWindow(view.windowToken, 0)
         }
     }
 

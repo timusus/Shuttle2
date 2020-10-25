@@ -1,7 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider
 
 import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStoreSongProvider
-import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibSongProvider
+import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibMediaProvider
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
@@ -25,7 +25,7 @@ class MediaProviderSelectionPresenter @AssistedInject constructor(
     @Assisted private val isOnboarding: Boolean,
     private val playbackPreferenceManager: PlaybackPreferenceManager,
     private val mediaImporter: MediaImporter,
-    private val taglibSongProvider: TaglibSongProvider,
+    private val taglibMediaProvider: TaglibMediaProvider,
     private val mediaStoreSongProvider: MediaStoreSongProvider
 ) : BasePresenter<MediaProviderSelectionContract.View>(),
     MediaProviderSelectionContract.Presenter {
@@ -48,7 +48,7 @@ class MediaProviderSelectionPresenter @AssistedInject constructor(
 
         mediaImporter.mediaProvider = when (songProvider) {
             PlaybackPreferenceManager.SongProvider.TagLib -> {
-                taglibSongProvider
+                taglibMediaProvider
             }
             PlaybackPreferenceManager.SongProvider.MediaStore -> {
                 mediaStoreSongProvider

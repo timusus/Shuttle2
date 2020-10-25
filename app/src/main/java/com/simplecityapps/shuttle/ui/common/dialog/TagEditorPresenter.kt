@@ -91,8 +91,10 @@ interface TagEditorContract {
             }
     }
 
-    enum class LoadingState {
-        None, ReadingTags, WritingTags
+    sealed class LoadingState {
+        object None : LoadingState()
+        class ReadingTags(val progress: Int, val total: Int) : LoadingState()
+        class WritingTags(val progress: Int, val total: Int) : LoadingState()
     }
 
     interface View {
@@ -119,16 +121,18 @@ class TagEditorPresenter @Inject constructor(
     private val saveTagsScope = CoroutineScope(Dispatchers.Main + exceptionHandler)
 
     override fun load(songs: List<Song>) {
-        view?.setLoading(TagEditorContract.LoadingState.ReadingTags)
+        view?.setLoading(TagEditorContract.LoadingState.ReadingTags(0, songs.size))
 
         launch {
-            val songAudioFilePairs = songs.map { song: Song ->
+            val songAudioFilePairs = songs.mapIndexed { index: Int, song: Song ->
                 val uri = Uri.parse(song.path)
                 if (song.path.startsWith("content://")) {
                     if (DocumentsContract.isDocumentUri(context, uri)) {
-                        return@map song to fileScanner.getAudioFile(context, uri)
+                        view?.setLoading(TagEditorContract.LoadingState.ReadingTags(index, songs.size))
+                        return@mapIndexed song to fileScanner.getAudioFile(context, uri)
                     }
                 }
+                view?.setLoading(TagEditorContract.LoadingState.ReadingTags(index, songs.size))
                 song to (null as AudioFile?)
             }
 
@@ -149,7 +153,7 @@ class TagEditorPresenter @Inject constructor(
             val trackTotals = editables.map { it.second?.trackTotal }.distinct()
             val discs = editables.map { it.second?.disc }.distinct()
             val discTotals = editables.map { it.second?.discTotal }.distinct()
-            val genres = editables.map { it.second?.genre }.distinct()
+            val genres = editables.map { it.second?.genres }.distinct()
 
             view?.setLoading(TagEditorContract.LoadingState.None)
             view?.setData(
@@ -194,7 +198,7 @@ class TagEditorPresenter @Inject constructor(
                         hasMultipleValues = discTotals.size > 1
                     ),
                     genreField = TagEditorContract.Field(
-                        initialValue = if (genres.size > 1) null else genres.firstOrNull(),
+                        initialValue = genres.flatMap { genres -> genres.orEmpty() }.joinToString(", "),
                         hasMultipleValues = genres.size > 1
                     )
                 )
@@ -203,16 +207,17 @@ class TagEditorPresenter @Inject constructor(
     }
 
     override fun save(data: TagEditorContract.Data) {
-        view?.setLoading(TagEditorContract.LoadingState.WritingTags)
+        view?.setLoading(TagEditorContract.LoadingState.WritingTags(0, editables.size))
         saveTagsScope.launch {
             val result = withContext(Dispatchers.IO) {
-                editables.map { (song, _) ->
+                editables.mapIndexed { index, (song, _) ->
                     songRepository.update(
                         song.copy(
                             name = if (data.titleField.hasChanged) data.titleField.currentValue ?: "Unknown" else song.name,
                             album = if (data.albumField.hasChanged) data.albumField.currentValue ?: "Unknown" else song.album,
                             albumArtist = if (data.albumArtistField.hasChanged) data.albumArtistField.currentValue ?: "Unknown" else song.albumArtist,
                             year = if (data.dateField.hasChanged) data.dateField.currentValue?.toIntOrNull() ?: 0 else song.year,
+                            genres = if (data.genreField.hasChanged) data.genreField.currentValue?.split(",").orEmpty().map { it.trim() } else song.genres,
                             track = if (data.trackField.hasChanged) data.trackField.currentValue?.toIntOrNull() ?: 1 else song.track,
                             disc = if (data.discField.hasChanged) data.discField.currentValue?.toIntOrNull() ?: 1 else song.disc
                         )
@@ -225,7 +230,10 @@ class TagEditorPresenter @Inject constructor(
                             if (metadata.isNotEmpty()) {
                                 try {
                                     context.contentResolver.openFileDescriptor(uri, "rw")?.use { pfd ->
-                                        return@map song to KTagLib.writeMetadata(pfd.detachFd(), metadata)
+                                        withContext(Dispatchers.Main) {
+                                            view?.setLoading(TagEditorContract.LoadingState.WritingTags(index, editables.size))
+                                        }
+                                        return@mapIndexed song to KTagLib.writeMetadata(pfd.detachFd(), metadata)
                                     }
                                 } catch (e: IllegalStateException) {
                                     Timber.e(e, "Failed to update tags")
@@ -237,7 +245,12 @@ class TagEditorPresenter @Inject constructor(
                             }
                         }
                     }
-                    return@map song to false
+
+                    withContext(Dispatchers.Main) {
+                        view?.setLoading(TagEditorContract.LoadingState.WritingTags(index, editables.size))
+                    }
+
+                    return@mapIndexed song to false
                 }
             }
 

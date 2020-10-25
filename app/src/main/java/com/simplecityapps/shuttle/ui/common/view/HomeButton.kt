@@ -6,7 +6,9 @@ import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.LayoutInflater
+import android.widget.ImageView
 import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.annotation.AttrRes
 import androidx.annotation.ColorRes
 import androidx.annotation.DrawableRes
@@ -14,7 +16,6 @@ import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.use
 import com.simplecityapps.shuttle.R
-import kotlinx.android.synthetic.main.button_home.view.*
 
 class HomeButton @JvmOverloads constructor(
     context: Context,
@@ -22,8 +23,14 @@ class HomeButton @JvmOverloads constructor(
     defStyleAttr: Int = 0
 ) : LinearLayout(context, attrs, defStyleAttr) {
 
+    private val image: ImageView
+    private val label: TextView
+
     init {
         LayoutInflater.from(context).inflate(R.layout.button_home, this, true)
+
+        image = findViewById(R.id.image)
+        label = findViewById(R.id.label)
 
         isClickable = true
         isFocusable = true

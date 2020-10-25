@@ -26,7 +26,7 @@ interface Trie<TN : TreeNode<TN, N>, N : Node> : TreeNode<TN, N> {
         leafNodes.add(leafNode)
     }
 
-    fun getLeaves(): List<Node> {
+    fun getLeaves(): List<N> {
         val leaves = leafNodes.toMutableList()
 
         fun traverseTree(parentTreeNode: TreeNode<TN, N>) {

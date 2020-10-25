@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import com.simplecityappds.saf.SafDirectoryHelper
-import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibSongProvider
+import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibMediaProvider
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import kotlinx.coroutines.flow.collect
@@ -52,7 +52,7 @@ interface DirectorySelectionContract {
 
 class DirectorySelectionPresenter @Inject constructor(
     private val context: Context,
-    private val taglibSongProvider: TaglibSongProvider
+    private val taglibMediaProvider: TaglibMediaProvider
 ) : DirectorySelectionContract.Presenter, BasePresenter<DirectorySelectionContract.View>() {
 
     private var data: MutableList<DirectorySelectionContract.Directory> = mutableListOf()
@@ -110,7 +110,7 @@ class DirectorySelectionPresenter @Inject constructor(
     }
 
     fun setData(directories: List<DirectorySelectionContract.Directory>) {
-        taglibSongProvider.directories = directories.map { directory -> directory.tree }
+        taglibMediaProvider.directories = directories.map { directory -> directory.tree }
         view?.setData(directories)
     }
 }

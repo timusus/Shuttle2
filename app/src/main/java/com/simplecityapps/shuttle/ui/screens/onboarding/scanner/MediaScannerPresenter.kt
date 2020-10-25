@@ -1,13 +1,11 @@
 package com.simplecityapps.shuttle.ui.screens.onboarding.scanner
 
 import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStoreSongProvider
-import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibSongProvider
+import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibMediaProvider
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
-import com.squareup.inject.assisted.Assisted
-import com.squareup.inject.assisted.AssistedInject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -43,15 +41,6 @@ class ScannerPresenter @Inject constructor(
         super.bindView(view)
 
         mediaImporter.listeners.add(listener)
-
-        when (mediaImporter.mediaProvider) {
-            is TaglibSongProvider -> {
-                view.setTitle("Reading song tags…")
-            }
-            is MediaStoreSongProvider -> {
-                view.setTitle("Scanning Media Store…")
-            }
-        }
     }
 
     override fun unbindView() {
@@ -65,6 +54,14 @@ class ScannerPresenter @Inject constructor(
     override fun startScanOrExit() {
         if (mediaImporter.isImporting) {
             return
+        }
+        when (mediaImporter.mediaProvider) {
+            is TaglibMediaProvider -> {
+                view?.setTitle("Reading song tags…")
+            }
+            is MediaStoreSongProvider -> {
+                view?.setTitle("Scanning Media Store…")
+            }
         }
         if (mediaImporter.importCount == 0) {
             startScan()
@@ -90,7 +87,7 @@ class ScannerPresenter @Inject constructor(
     private val listener = object : MediaImporter.Listener {
         override fun onProgress(progress: Int, total: Int, song: Song) {
             when (mediaImporter.mediaProvider) {
-                is TaglibSongProvider -> {
+                is TaglibMediaProvider -> {
                     view?.setTitle("Reading song tags…")
                 }
                 is MediaStoreSongProvider -> {

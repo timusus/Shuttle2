@@ -17,19 +17,14 @@ import com.simplecityapps.localmediaprovider.local.data.room.entity.*
         AlbumData::class,
         AlbumArtistData::class
     ],
-    version = 30,
+    version = 31,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
 abstract class MediaDatabase : RoomDatabase() {
-
     abstract fun songDataDao(): SongDataDao
-
     abstract fun albumDataDao(): AlbumDataDao
-
     abstract fun albumArtistDataDao(): AlbumArtistDataDao
-
     abstract fun playlistSongJoinDataDao(): PlaylistSongJoinDao
-
     abstract fun playlistDataDao(): PlaylistDataDao
 }

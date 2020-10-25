@@ -3,8 +3,7 @@ package com.simplecityapps.shuttle.appinitializers
 import android.app.Application
 import com.simplecityappds.saf.SafDirectoryHelper
 import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStoreSongProvider
-import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibSongProvider
-import com.simplecityapps.localmediaprovider.local.provider.taglib.pmap
+import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibMediaProvider
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import kotlinx.coroutines.*
@@ -17,7 +16,7 @@ import javax.inject.Named
 class MediaProviderInitializer @Inject constructor(
     private val mediaImporter: MediaImporter,
     private val playbackPreferenceManager: PlaybackPreferenceManager,
-    private val taglibSongProvider: TaglibSongProvider,
+    private val taglibMediaProvider: TaglibMediaProvider,
     private val mediaStoreSongProvider: MediaStoreSongProvider,
     @Named("AppCoroutineScope") private val appCoroutineScope: CoroutineScope
 ) : AppInitializer {
@@ -25,9 +24,8 @@ class MediaProviderInitializer @Inject constructor(
     override fun init(application: Application) {
         when (playbackPreferenceManager.songProvider) {
             PlaybackPreferenceManager.SongProvider.TagLib -> {
-                mediaImporter.mediaProvider = taglibSongProvider
+                mediaImporter.mediaProvider = taglibMediaProvider
                 appCoroutineScope.launch {
-                    delay(2000)
                     withContext(Dispatchers.IO) {
                         application.contentResolver?.persistedUriPermissions
                             ?.filter { uriPermission -> uriPermission.isReadPermission || uriPermission.isWritePermission }
@@ -35,20 +33,13 @@ class MediaProviderInitializer @Inject constructor(
                             ?.merge()
                             ?.toList()
                             ?.let { directories ->
-                                taglibSongProvider.directories = directories
-                                if (directories.isNotEmpty()) {
-                                    mediaImporter.import()
-                                }
+                                taglibMediaProvider.directories = directories
                             }
                     }
                 }
             }
             PlaybackPreferenceManager.SongProvider.MediaStore -> {
                 mediaImporter.mediaProvider = mediaStoreSongProvider
-                appCoroutineScope.launch {
-                    delay(2000)
-                    mediaImporter.import()
-                }
             }
         }
     }

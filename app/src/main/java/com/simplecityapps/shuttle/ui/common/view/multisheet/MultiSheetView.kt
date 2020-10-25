@@ -5,12 +5,13 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.util.AttributeSet
 import android.view.View
+import android.widget.FrameLayout
 import androidx.annotation.IdRes
 import androidx.coordinatorlayout.widget.CoordinatorLayout
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.view.setMargins
-import kotlinx.android.synthetic.main.fragment_main.view.*
 
 class MultiSheetView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) : CoordinatorLayout(context, attrs, defStyleAttr) {
 
@@ -25,6 +26,12 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
 
     private lateinit var navHostFragment: View
 
+    private lateinit var sheet1: FrameLayout
+    private lateinit var sheet1Container: FrameLayout
+    private lateinit var sheet2PeekView: FrameLayout
+
+    private lateinit var bottomNavigationView: BottomNavigationView
+
     private var sheetStateChangeListeners = mutableSetOf<SheetStateChangeListener>()
 
     init {
@@ -34,7 +41,12 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
     override fun onFinishInflate() {
         super.onFinishInflate()
 
-        navHostFragment = findViewById<View>(R.id.navHostFragment)
+        navHostFragment = findViewById(R.id.navHostFragment)
+
+        bottomNavigationView = findViewById(R.id.bottomNavigationView)
+        sheet1 = findViewById(R.id.sheet1)
+        sheet1Container = findViewById(R.id.sheet1Container)
+        sheet2PeekView = findViewById(R.id.sheet2PeekView)
 
         val sheet1 = findViewById<View>(R.id.sheet1)
         bottomSheetBehavior1 = BottomSheetBehavior.from(sheet1) as CustomBottomSheetBehavior<*>

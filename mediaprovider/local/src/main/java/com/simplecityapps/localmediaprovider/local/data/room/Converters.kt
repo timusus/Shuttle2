@@ -14,4 +14,14 @@ class Converters {
     fun dateToTimestamp(date: Date?): Long? {
         return date?.time
     }
+
+    @TypeConverter
+    fun fromString(string: String): List<String> {
+        return string.split(";").map { it }
+    }
+
+    @TypeConverter
+    fun toString(stringList: List<String>): String {
+        return stringList.joinToString(separator = ";")
+    }
 }

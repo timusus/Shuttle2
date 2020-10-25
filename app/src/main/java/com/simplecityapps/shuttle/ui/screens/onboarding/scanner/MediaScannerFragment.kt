@@ -70,6 +70,12 @@ class MediaScannerFragment :
             presenter.startScan()
         }
 
+        setTitle("No scan in progress")
+        subtitleTextView.text = "What is my purpose?"
+        progressBar.isVisible = false
+        songCountTextView.isVisible = false
+        rescanButton.isVisible = true
+
         toolbar.isVisible = shouldShowToolbar
 
         presenter.bindView(this)

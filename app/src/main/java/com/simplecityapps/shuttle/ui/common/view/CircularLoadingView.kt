@@ -46,8 +46,12 @@ class CircularLoadingView @JvmOverloads constructor(
         if (state != currentState) {
             when (state) {
                 is State.Loading -> {
-                    animation?.cancel()
-                    animation = fadeOut(completion = { animation = fadeIn() })
+                    if (currentState is State.Loading) {
+                        animation = fadeIn()
+                    } else {
+                        animation?.cancel()
+                        animation = fadeOut(completion = { animation = fadeIn() })
+                    }
 
                     textView.text = state.message
                     errorImageView.isVisible = false

@@ -54,11 +54,11 @@ object SafDirectoryHelper {
         override val documentId: String,
         override val displayName: String,
         override val mimeType: String
-    ) : Trie<DocumentNodeTree, FileNode>,
+    ) : Trie<DocumentNodeTree, DocumentNode>,
         DocumentNode(uri, documentId, displayName, mimeType) {
 
         override val treeNodes: LinkedHashSet<DocumentNodeTree> = linkedSetOf()
-        override val leafNodes: LinkedHashSet<FileNode> = linkedSetOf()
+        override val leafNodes: LinkedHashSet<DocumentNode> = linkedSetOf()
 
         override fun equals(other: Any?): Boolean {
             if (this === other) return true

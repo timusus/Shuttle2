@@ -40,7 +40,7 @@ fun View.increaseTouchableArea(amount: Int) {
 
 fun View.fadeIn(): ValueAnimator? {
     if (isVisible && alpha == 1f) return null
-    alpha = 0f
+    alpha = this.alpha
     isVisible = true
     val animator = ObjectAnimator.ofFloat(this, View.ALPHA, alpha, 1f)
     animator.duration = 250

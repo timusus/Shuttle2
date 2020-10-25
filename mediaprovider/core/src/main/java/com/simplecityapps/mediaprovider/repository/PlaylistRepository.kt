@@ -1,12 +1,9 @@
 package com.simplecityapps.mediaprovider.repository
 
-import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.mediaprovider.model.Song
-import com.simplecityapps.mediaprovider.model.removeArticles
 import kotlinx.coroutines.flow.Flow
 import java.io.Serializable
-import java.text.Collator
 
 interface PlaylistRepository {
     fun getPlaylists(query: PlaylistQuery): Flow<List<Playlist>>
