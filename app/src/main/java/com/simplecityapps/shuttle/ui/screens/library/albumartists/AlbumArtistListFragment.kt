@@ -232,12 +232,14 @@ class AlbumArtistListFragment :
     // AlbumArtistBinder.Listener Implementation
 
     override fun onAlbumArtistClicked(albumArtist: AlbumArtist, viewHolder: AlbumArtistBinder.ViewHolder) {
-        findNavController().navigate(
-            R.id.action_libraryFragment_to_albumArtistDetailFragment,
-            AlbumArtistDetailFragmentArgs(albumArtist).toBundle(),
-            null,
-            FragmentNavigatorExtras(viewHolder.imageView to viewHolder.imageView.transitionName)
-        )
+        if (findNavController().currentDestination?.id != R.id.albumArtistDetailFragment) {
+            findNavController().navigate(
+                R.id.action_libraryFragment_to_albumArtistDetailFragment,
+                AlbumArtistDetailFragmentArgs(albumArtist).toBundle(),
+                null,
+                FragmentNavigatorExtras(viewHolder.imageView to viewHolder.imageView.transitionName)
+            )
+        }
     }
 
     override fun onOverflowClicked(view: View, albumArtist: AlbumArtist) {

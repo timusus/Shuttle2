@@ -172,12 +172,14 @@ class PlaylistListFragment :
 
         override fun onPlaylistSelected(playlist: Playlist, viewHolder: PlaylistBinder.ViewHolder) {
             if (playlist.songCount != 0) {
-                findNavController().navigate(
-                    R.id.action_libraryFragment_to_playlistDetailFragment,
-                    PlaylistDetailFragmentArgs(playlist).toBundle(),
-                    null,
-                    null
-                )
+                if (findNavController().currentDestination?.id != R.id.playlistDetailFragment) {
+                    findNavController().navigate(
+                        R.id.action_libraryFragment_to_playlistDetailFragment,
+                        PlaylistDetailFragmentArgs(playlist).toBundle(),
+                        null,
+                        null
+                    )
+                }
             }
         }
 
