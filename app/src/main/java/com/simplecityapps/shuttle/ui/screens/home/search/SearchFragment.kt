@@ -28,6 +28,7 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.autoClearedNullable
 import com.simplecityapps.shuttle.ui.common.closeKeyboard
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
@@ -62,7 +63,7 @@ class SearchFragment : Fragment(),
 
     private var searchView: SearchView by autoCleared()
 
-    private var recyclerView: RecyclerView by autoCleared()
+    private var recyclerView: RecyclerView? by autoClearedNullable()
 
     private var toolbar: Toolbar by autoCleared()
 
@@ -102,8 +103,8 @@ class SearchFragment : Fragment(),
         imageLoader = GlideImageLoader(this)
 
         recyclerView = view.findViewById(R.id.recyclerView)
-        recyclerView.adapter = adapter
-        recyclerView.clearAdapterOnDetach()
+        recyclerView?.adapter = adapter
+        recyclerView?.clearAdapterOnDetach()
 
         searchView = view.findViewById(R.id.searchView)
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
@@ -179,7 +180,7 @@ class SearchFragment : Fragment(),
                 addAll(searchResult.third.map { song -> SongBinder(song, imageLoader, songBinderListener) })
             }
         }
-        adapter.update(list, completion = { recyclerView.scrollToPosition(0) })
+        adapter.update(list, completion = { recyclerView?.scrollToPosition(0) })
     }
 
     override fun showLoadError(error: Error) {
