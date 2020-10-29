@@ -1,10 +1,12 @@
 {
   "commits": [
-    "(v81, v82 patch) Fixed a crash due to database migration problem",
-    "Prevent media import from deleting library when directories can't be scanned",
-    "Significantly improved performance of media scanner (7x faster on my device)",
-    "Show media import progress in debug drawer (swipe from right)",
-    "Various other behind the scenes media import changes",
-    "Don't show 'album shuffle' when there are no albums"
+    "Fixed an issue where app would lock up during a scan",
+    "Don't scan the device every time the app launches",
+    "Show progress when reading/writing tags with the tag editor",
+    "Fixed an issue where tag editor 'save' button doesn't show when genres are edited",
+    "Close keyboard when saving tags",
+    "Behind the scenes work on genre support",
+    "Possible fix for crash when selecting multiple list items at once",
+    "Fixed a crash when exiting search screen before search results are applied"
   ]
 }
