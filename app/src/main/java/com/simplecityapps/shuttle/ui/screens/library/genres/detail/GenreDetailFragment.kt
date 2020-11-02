@@ -1,43 +1,38 @@
-package com.simplecityapps.shuttle.ui.screens.home.search
+package com.simplecityapps.shuttle.ui.screens.library.genres.detail
 
 import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.MenuInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
-import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.FragmentNavigatorExtras
+import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
-import androidx.transition.Transition
-import androidx.transition.TransitionInflater
+import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Album
-import com.simplecityapps.mediaprovider.model.AlbumArtist
+import com.simplecityapps.mediaprovider.model.Genre
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
-import com.simplecityapps.shuttle.ui.common.autoClearedNullable
-import com.simplecityapps.shuttle.ui.common.closeKeyboard
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
-import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistBinder
-import com.simplecityapps.shuttle.ui.screens.library.albumartists.ListAlbumArtistBinder
-import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragmentArgs
+import com.simplecityapps.shuttle.ui.screens.home.HorizontalAlbumListBinder
+import com.simplecityapps.shuttle.ui.screens.home.search.HeaderBinder
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumBinder
-import com.simplecityapps.shuttle.ui.screens.library.albums.ListAlbumBinder
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongBinder
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
@@ -45,55 +40,53 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.BroadcastChannel
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.launch
+import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
 
-class SearchFragment : Fragment(),
+class GenreDetailFragment :
+    Fragment(),
     Injectable,
-    SearchContract.View,
+    GenreDetailContract.View,
     CreatePlaylistDialogFragment.Listener {
 
-    private lateinit var adapter: RecyclerAdapter
-
-    private var searchView: SearchView by autoCleared()
-
-    private var recyclerView: RecyclerView? by autoClearedNullable()
-
-    private var toolbar: Toolbar by autoCleared()
-
-    @Inject lateinit var presenter: SearchPresenter
+    @Inject lateinit var presenterFactory: GenreDetailPresenter.Factory
 
     @Inject lateinit var playlistMenuPresenter: PlaylistMenuPresenter
 
-    private var imageLoader: GlideImageLoader by autoCleared()
+    private var imageLoader: ArtworkImageLoader by autoCleared()
+
+    private lateinit var presenter: GenreDetailPresenter
+
+    private lateinit var adapter: RecyclerAdapter
+
+    private lateinit var genre: Genre
 
     private lateinit var playlistMenuView: PlaylistMenuView
 
-    private var query = ""
+    private var recyclerView: RecyclerView by autoCleared()
 
-    private val queryChannel = BroadcastChannel<String>(Channel.CONFLATED)
+    private var toolbar: Toolbar by autoCleared()
 
 
     // Lifecycle
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+
+        AndroidSupportInjection.inject(this)
+
+        genre = GenreDetailFragmentArgs.fromBundle(requireArguments()).genre
+        presenter = presenterFactory.create(genre)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         adapter = RecyclerAdapter(lifecycle.coroutineScope)
-
-        sharedElementEnterTransition = TransitionInflater.from(context).inflateTransition(android.R.transition.move)
-        (sharedElementEnterTransition as Transition).duration = 200L
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_search, container, false)
+        return inflater.inflate(R.layout.fragment_genre_detail, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -103,53 +96,50 @@ class SearchFragment : Fragment(),
 
         imageLoader = GlideImageLoader(this)
 
-        recyclerView = view.findViewById(R.id.recyclerView)
-        recyclerView?.adapter = adapter
-        recyclerView?.clearAdapterOnDetach()
-
-        searchView = view.findViewById(R.id.searchView)
-        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-
-            override fun onQueryTextSubmit(s: String): Boolean {
-                view.closeKeyboard()
-                return true
-            }
-
-            override fun onQueryTextChange(text: String): Boolean {
-                query = text.trim()
-                lifecycleScope.launch {
-                    queryChannel.send(query)
-                }
-                return true
-            }
-        })
-        searchView.setOnQueryTextFocusChangeListener { v, hasFocus ->
-            if (hasFocus) {
-                val inputMethodManager = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-                inputMethodManager.showSoftInput(v.findFocus(), 0)
-            }
-        }
-        searchView.post { searchView.requestFocus() }
-
         toolbar = view.findViewById(R.id.toolbar)
-        toolbar.setNavigationOnClickListener {
-            searchView.clearFocus()
-            findNavController().popBackStack()
+        toolbar.let { toolbar ->
+            toolbar.setNavigationOnClickListener {
+                NavHostFragment.findNavController(this).popBackStack()
+            }
+            MenuInflater(context).inflate(R.menu.menu_album_detail, toolbar.menu)
+            playlistMenuView.createPlaylistMenu(toolbar.menu)
+            toolbar.setOnMenuItemClickListener { menuItem ->
+                when (menuItem.itemId) {
+                    R.id.shuffle -> {
+                        presenter.shuffle()
+                        true
+                    }
+                    R.id.queue -> {
+                        presenter.addToQueue(genre)
+                        true
+                    }
+                    R.id.playNext -> {
+                        presenter.playNext(genre)
+                        return@setOnMenuItemClickListener true
+                    }
+                    R.id.editTags -> {
+                        presenter.editTags(genre)
+                        return@setOnMenuItemClickListener true
+                    }
+                    else -> {
+                        playlistMenuView.handleMenuItem(menuItem, PlaylistData.Genres(genre))
+                    }
+                }
+            }
         }
+
+        recyclerView = view.findViewById(R.id.recyclerView)
+        recyclerView.adapter = adapter
+        recyclerView.clearAdapterOnDetach()
 
         presenter.bindView(this)
         playlistMenuPresenter.bindView(playlistMenuView)
-        searchView.setQuery(query, true)
+    }
 
-        lifecycleScope.launch {
-            queryChannel
-                .asFlow()
-                .debounce(500)
-                .flowOn(Dispatchers.IO)
-                .collect { query ->
-                    presenter.loadData(query)
-                }
-        }
+    override fun onResume() {
+        super.onResume()
+
+        presenter.loadData()
     }
 
     override fun onDestroyView() {
@@ -160,44 +150,32 @@ class SearchFragment : Fragment(),
     }
 
 
-    // SearchContract.View Implementation
+    // GenreDetailContract.View Implementation
 
-    override fun setData(searchResult: Triple<List<AlbumArtist>, List<Album>, List<Song>>) {
-        // If we're displaying too many items, clear the adapter data, so calculating the diff is faster
-        if (adapter.itemCount > 100) {
-            adapter.clear()
-        }
-        val list = mutableListOf<ViewBinder>().apply {
-            if (searchResult.first.isNotEmpty()) {
-                add(HeaderBinder("Artists"))
-                addAll(searchResult.first.map { albumArtist -> ListAlbumArtistBinder(albumArtist, imageLoader, albumArtistBinderListener) })
-            }
-            if (searchResult.second.isNotEmpty()) {
-                add(HeaderBinder("Albums"))
-                addAll(searchResult.second.map { album -> ListAlbumBinder(album, imageLoader, albumBinderListener) })
-            }
-            if (searchResult.third.isNotEmpty()) {
-                add(HeaderBinder("Songs"))
-                addAll(searchResult.third.map { song -> SongBinder(song, imageLoader, songBinderListener) })
-            }
-        }
-        adapter.update(list, completion = { recyclerView?.scrollToPosition(0) })
+    override fun setData(albums: List<Album>, songs: List<Song>) {
+        val viewBinders = mutableListOf<ViewBinder>()
+        viewBinders.add(HeaderBinder("Albums"))
+        viewBinders.add(HorizontalAlbumListBinder(albums, imageLoader, false, lifecycleScope, albumBinderListener))
+        viewBinders.add(HeaderBinder("Songs"))
+        viewBinders.addAll(songs.map { song -> SongBinder(song, imageLoader, songBinderListener) })
+        adapter.update(viewBinders)
     }
 
     override fun showLoadError(error: Error) {
         Toast.makeText(context, error.userDescription(), Toast.LENGTH_LONG).show()
     }
 
-    override fun onAddedToQueue(albumArtist: AlbumArtist) {
-        Toast.makeText(context, "${albumArtist.name} added to queue", Toast.LENGTH_SHORT).show()
-    }
-
     override fun onAddedToQueue(album: Album) {
         Toast.makeText(context, "${album.name} added to queue", Toast.LENGTH_SHORT).show()
     }
 
-    override fun onAddedToQueue(song: Song) {
-        Toast.makeText(context, "${song.name} added to queue", Toast.LENGTH_SHORT).show()
+    override fun onAddedToQueue(name: String) {
+        Toast.makeText(context, "$name added to queue", Toast.LENGTH_SHORT).show()
+    }
+
+    override fun setGenre(genre: Genre) {
+        toolbar.title = genre.name
+        toolbar.subtitle = resources.getQuantityString(R.plurals.songsPlural, genre.songCount, genre.songCount)
     }
 
     override fun showDeleteError(error: Error) {
@@ -209,13 +187,12 @@ class SearchFragment : Fragment(),
     }
 
 
-    // Private
+    // SongBinder.Listener Implementation
 
     private val songBinderListener = object : SongBinder.Listener {
 
         override fun onSongClicked(song: Song) {
-            view?.closeKeyboard()
-            presenter.play(song)
+            presenter.onSongClicked(song)
         }
 
         override fun onOverflowClicked(view: View, song: Song) {
@@ -256,6 +233,10 @@ class SearchFragment : Fragment(),
                                 .show()
                             return@setOnMenuItemClickListener true
                         }
+                        R.id.editTags -> {
+                            presenter.editTags(song)
+                            return@setOnMenuItemClickListener true
+                        }
                         R.id.delete -> {
                             AlertDialog.Builder(requireContext())
                                 .setTitle("Delete Song")
@@ -275,64 +256,17 @@ class SearchFragment : Fragment(),
         }
     }
 
-    private val albumArtistBinderListener = object : AlbumArtistBinder.Listener {
-
-        override fun onAlbumArtistClicked(albumArtist: AlbumArtist, viewHolder: AlbumArtistBinder.ViewHolder) {
-            view?.closeKeyboard()
-            findNavController().navigate(
-                R.id.action_searchFragment_to_albumArtistDetailFragment,
-                AlbumArtistDetailFragmentArgs(albumArtist, true).toBundle(),
-                null,
-                FragmentNavigatorExtras(viewHolder.imageView to viewHolder.imageView.transitionName)
-            )
-        }
-
-        override fun onOverflowClicked(view: View, albumArtist: AlbumArtist) {
-            val popupMenu = PopupMenu(requireContext(), view)
-            popupMenu.inflate(R.menu.menu_popup)
-
-            playlistMenuView.createPlaylistMenu(popupMenu.menu)
-
-            popupMenu.setOnMenuItemClickListener { menuItem ->
-                if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.AlbumArtists(albumArtist))) {
-                    return@setOnMenuItemClickListener true
-                } else {
-                    when (menuItem.itemId) {
-                        R.id.play -> {
-                            presenter.play(albumArtist)
-                            return@setOnMenuItemClickListener true
-                        }
-                        R.id.queue -> {
-                            presenter.addToQueue(albumArtist)
-                            return@setOnMenuItemClickListener true
-                        }
-                        R.id.playNext -> {
-                            presenter.playNext(albumArtist)
-                            return@setOnMenuItemClickListener true
-                        }
-                        R.id.exclude -> {
-                            presenter.exclude(albumArtist)
-                            return@setOnMenuItemClickListener true
-                        }
-                    }
-                }
-                false
-            }
-            popupMenu.show()
-        }
-    }
-
     private val albumBinderListener = object : AlbumBinder.Listener {
 
         override fun onAlbumClicked(album: Album, viewHolder: AlbumBinder.ViewHolder) {
-            view?.closeKeyboard()
             findNavController().navigate(
-                R.id.action_searchFragment_to_albumDetailFragment,
+                R.id.action_genreDetailFragment_to_albumDetailFragment,
                 AlbumDetailFragmentArgs(album, true).toBundle(),
                 null,
                 FragmentNavigatorExtras(viewHolder.imageView to viewHolder.imageView.transitionName)
             )
         }
+
 
         override fun onOverflowClicked(view: View, album: Album) {
             val popupMenu = PopupMenu(requireContext(), view)
@@ -373,10 +307,10 @@ class SearchFragment : Fragment(),
         }
     }
 
-
     // CreatePlaylistDialogFragment.Listener Implementation
 
     override fun onSave(text: String, playlistData: PlaylistData) {
         playlistMenuPresenter.createPlaylist(text, playlistData)
     }
 }
+

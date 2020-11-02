@@ -12,6 +12,8 @@ import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistLis
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragment
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListFragment
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragment
+import com.simplecityapps.shuttle.ui.screens.library.genres.GenreListFragment
+import com.simplecityapps.shuttle.ui.screens.library.genres.detail.GenreDetailFragment
 import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListFragment
 import com.simplecityapps.shuttle.ui.screens.library.playlists.detail.PlaylistDetailFragment
 import com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylistDetailFragment
@@ -55,6 +57,12 @@ abstract class FragmentBuildersModule {
 
     @ContributesAndroidInjector
     abstract fun contributePlaylistDetailFragment(): PlaylistDetailFragment
+
+    @ContributesAndroidInjector
+    abstract fun contributeGenresFragment(): GenreListFragment
+
+    @ContributesAndroidInjector
+    abstract fun contributeGenreDetailFragment(): GenreDetailFragment
 
     @ContributesAndroidInjector
     abstract fun contributeSmartPlaylistDetailFragment(): SmartPlaylistDetailFragment

@@ -14,6 +14,7 @@ class MediaStoreSongProvider(
 ) : MediaProvider {
 
     override suspend fun findSongs(callback: ((song: Song, progress: Int, total: Int) -> Unit)?): List<Song> {
+
         val songs = mutableListOf<Song>()
         withContext(Dispatchers.IO) {
             val cursor = context.contentResolver.query(

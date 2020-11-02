@@ -46,4 +46,9 @@
         <item quantity="other">%d Artists</item>
     </plurals>
 
+    <plurals name="genresPlural">
+        <item quantity="one">%d Genre</item>
+        <item quantity="other">%d Genres</item>
+    </plurals>
+
 </resources>

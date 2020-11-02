@@ -198,7 +198,7 @@ class TagEditorPresenter @Inject constructor(
                         hasMultipleValues = discTotals.size > 1
                     ),
                     genreField = TagEditorContract.Field(
-                        initialValue = genres.flatMap { genres -> genres.orEmpty() }.joinToString(", "),
+                        initialValue = if (genres.size > 1) null else genres.flatMap { genres -> genres.orEmpty() }.distinct().joinToString(", "),
                         hasMultipleValues = genres.size > 1
                     )
                 )

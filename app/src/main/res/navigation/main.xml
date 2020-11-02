@@ -86,6 +86,22 @@
             android:defaultValue="true" />
     </fragment>
     <fragment
+        android:id="@+id/genreDetailFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.library.genres.detail.GenreDetailFragment"
+        android:label="GenreDetailFragment"
+        tools:layout="@layout/fragment_genre_detail">
+        <argument
+            android:name="genre"
+            app:argType="com.simplecityapps.mediaprovider.model.Genre" />
+        <action
+            android:id="@+id/action_genreDetailFragment_to_albumDetailFragment"
+            app:destination="@id/albumDetailFragment" />
+        <argument
+            android:name="animateTransition"
+            android:defaultValue="true"
+            app:argType="boolean" />
+    </fragment>
+    <fragment
         android:id="@+id/libraryFragment"
         android:name="com.simplecityapps.shuttle.ui.screens.library.LibraryFragment"
         android:label="LibraryFragment"
@@ -99,6 +115,9 @@
         <action
             android:id="@+id/action_libraryFragment_to_playlistDetailFragment"
             app:destination="@id/playlistDetailFragment" />
+        <action
+            android:id="@+id/action_libraryFragment_to_genreDetailFragment"
+            app:destination="@id/genreDetailFragment" />
     </fragment>
 
 </navigation>

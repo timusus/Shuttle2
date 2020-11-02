@@ -26,6 +26,7 @@ interface SearchContract : BaseContract.Presenter<SearchContract.View> {
         fun onAddedToQueue(album: Album)
         fun onAddedToQueue(song: Song)
         fun showDeleteError(error: Error)
+        fun showTagEditor(songs: List<Song>)
     }
 
     interface Presenter {
@@ -34,15 +35,18 @@ interface SearchContract : BaseContract.Presenter<SearchContract.View> {
         fun addToQueue(albumArtist: AlbumArtist)
         fun playNext(albumArtist: AlbumArtist)
         fun exclude(albumArtist: AlbumArtist)
+        fun editTags(albumArtist: AlbumArtist)
         fun play(album: Album)
         fun addToQueue(album: Album)
         fun playNext(album: Album)
         fun exclude(album: Album)
+        fun editTags(album: Album)
         fun play(song: Song)
         fun addToQueue(song: Song)
         fun playNext(song: Song)
         fun exclude(song: Song)
         fun delete(song: Song)
+        fun editTags(song: Song)
     }
 }
 
@@ -196,6 +200,24 @@ class SearchPresenter @Inject constructor(
         launch {
             songRepository.setExcluded(listOf(song), true)
         }
+    }
+
+    override fun editTags(albumArtist: AlbumArtist) {
+        launch {
+            val songs = songRepository.getSongs(SongQuery.AlbumArtists(listOf(SongQuery.AlbumArtist(name = albumArtist.name)))).firstOrNull().orEmpty()
+            view?.showTagEditor(songs)
+        }
+    }
+
+    override fun editTags(album: Album) {
+        launch {
+            val songs = songRepository.getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = album.name, albumArtistName = album.albumArtist)))).firstOrNull().orEmpty()
+            view?.showTagEditor(songs)
+        }
+    }
+
+    override fun editTags(song: Song) {
+        view?.showTagEditor(listOf(song))
     }
 
     override fun delete(song: Song) {

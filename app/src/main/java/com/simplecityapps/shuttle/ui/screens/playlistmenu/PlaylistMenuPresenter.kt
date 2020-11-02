@@ -2,10 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.playlistmenu
 
 import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.mediaprovider.model.Song
-import com.simplecityapps.mediaprovider.repository.PlaylistQuery
-import com.simplecityapps.mediaprovider.repository.PlaylistRepository
-import com.simplecityapps.mediaprovider.repository.SongQuery
-import com.simplecityapps.mediaprovider.repository.SongRepository
+import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.firstOrNull
@@ -15,7 +12,8 @@ import javax.inject.Inject
 
 class PlaylistMenuPresenter @Inject constructor(
     private val playlistRepository: PlaylistRepository,
-    private val songRepository: SongRepository
+    private val songRepository: SongRepository,
+    private val genreRepository: GenreRepository
 ) : PlaylistMenuContract.Presenter,
     BasePresenter<PlaylistMenuContract.View>() {
 
@@ -67,6 +65,7 @@ class PlaylistMenuPresenter @Inject constructor(
             is PlaylistData.Songs -> return data
             is PlaylistData.Albums -> songRepository.getSongs(SongQuery.Albums(data.map { album -> SongQuery.Album(name = album.name, albumArtistName = album.albumArtist) })).firstOrNull().orEmpty()
             is PlaylistData.AlbumArtists -> songRepository.getSongs(SongQuery.AlbumArtists(data.map { albumArtist -> SongQuery.AlbumArtist(name = albumArtist.name) })).firstOrNull().orEmpty()
+            is PlaylistData.Genres -> genreRepository.getSongsForGenres(data.map { it.name }, SongQuery.All()).firstOrNull().orEmpty()
         }
     }
 }

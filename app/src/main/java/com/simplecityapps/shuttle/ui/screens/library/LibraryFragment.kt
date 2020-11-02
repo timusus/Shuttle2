@@ -14,9 +14,9 @@ import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.view.ToolbarHost
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistListFragment
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListFragment
+import com.simplecityapps.shuttle.ui.screens.library.genres.GenreListFragment
 import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListFragment
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListFragment
-import timber.log.Timber
 
 class LibraryFragment : Fragment(), ToolbarHost {
 
@@ -43,6 +43,7 @@ class LibraryFragment : Fragment(), ToolbarHost {
         tabLayout.setupWithViewPager(viewPager, true)
 
         val adapter = PagerAdapter(childFragmentManager)
+        adapter.addFragment("Genres", GenreListFragment.newInstance())
         adapter.addFragment("Playlists", PlaylistListFragment.newInstance())
         adapter.addFragment("Artists", AlbumArtistListFragment.newInstance())
         adapter.addFragment("Albums", AlbumListFragment.newInstance())
@@ -51,7 +52,7 @@ class LibraryFragment : Fragment(), ToolbarHost {
 
         viewPager.adapter = adapter
         viewPager.offscreenPageLimit = 3
-        viewPager.setCurrentItem(1, false)
+        viewPager.setCurrentItem(2, false)
 
         toolbar = view.findViewById(R.id.toolbar)
     }

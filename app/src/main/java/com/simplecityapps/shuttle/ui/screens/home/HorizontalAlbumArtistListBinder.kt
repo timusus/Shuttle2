@@ -3,7 +3,6 @@ package com.simplecityapps.shuttle.ui.screens.home
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.RecyclerAdapter
@@ -17,8 +16,6 @@ import com.simplecityapps.shuttle.ui.screens.library.albumartists.GridAlbumArtis
 import kotlinx.coroutines.CoroutineScope
 
 class HorizontalAlbumArtistListBinder(
-    val title: String,
-    val subtitle: String,
     val albumArtists: List<AlbumArtist>,
     val imageLoader: ArtworkImageLoader,
     val scope: CoroutineScope,
@@ -43,23 +40,18 @@ class HorizontalAlbumArtistListBinder(
 
         other as HorizontalAlbumArtistListBinder
 
-        if (title != other.title) return false
-        if (subtitle != other.subtitle) return false
+        if (albumArtists != other.albumArtists) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        var result = title.hashCode()
-        result = 31 * result + subtitle.hashCode()
-        return result
+        return albumArtists.hashCode()
     }
 
 
     class ViewHolder(itemView: View, scope: CoroutineScope) : ViewBinder.ViewHolder<HorizontalAlbumArtistListBinder>(itemView) {
 
-        private val titleLabel: TextView = itemView.findViewById(R.id.titleLabel)
-        private val subtitleLabel: TextView = itemView.findViewById(R.id.subtitleLabel)
         private val recyclerView: RecyclerView = itemView.findViewById(R.id.recyclerView)
 
         val adapter: RecyclerAdapter = RecyclerAdapter(scope)
@@ -70,9 +62,6 @@ class HorizontalAlbumArtistListBinder(
 
         override fun bind(viewBinder: HorizontalAlbumArtistListBinder, isPartial: Boolean) {
             super.bind(viewBinder, isPartial)
-
-            titleLabel.text = viewBinder.title
-            subtitleLabel.text = viewBinder.subtitle
 
             recyclerView.adapter = adapter
             adapter.update(viewBinder.albumArtists.map { albumArtist ->

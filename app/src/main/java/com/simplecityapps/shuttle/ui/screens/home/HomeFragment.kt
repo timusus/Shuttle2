@@ -34,6 +34,7 @@ import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.HomeButton
+import com.simplecityapps.shuttle.ui.screens.home.search.HeaderBinder
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistBinder
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumBinder
@@ -180,15 +181,12 @@ class HomeFragment :
     override fun setData(data: HomeContract.HomeData) {
         val viewBinders = mutableListOf<ViewBinder>()
         if (data.recentlyPlayedAlbums.isNotEmpty()) {
-            viewBinders.add(
-                HorizontalAlbumListBinder("Recent", "Recently played albums", data.recentlyPlayedAlbums, imageLoader, scope = lifecycle.coroutineScope, listener = albumBinderListener)
-            )
+            viewBinders.add(HeaderBinder("Recent", "Recently played albums"))
+            viewBinders.add(HorizontalAlbumListBinder(data.recentlyPlayedAlbums, imageLoader, scope = lifecycle.coroutineScope, listener = albumBinderListener))
         }
         if (data.mostPlayedAlbums.isNotEmpty()) {
             viewBinders.add(
                 HorizontalAlbumListBinder(
-                    "Most Played",
-                    "Albums in heavy rotation",
                     data.mostPlayedAlbums,
                     imageLoader,
                     showPlayCountBadge = true,
@@ -198,10 +196,9 @@ class HomeFragment :
             )
         }
         if (data.albumsFromThisYear.isNotEmpty()) {
+            viewBinders.add(HeaderBinder("This Year", "Albums released in ${Calendar.getInstance().get(Calendar.YEAR)}"))
             viewBinders.add(
                 HorizontalAlbumListBinder(
-                    "This Year",
-                    "Albums released in ${Calendar.getInstance().get(Calendar.YEAR)}",
                     data.albumsFromThisYear,
                     imageLoader,
                     scope = lifecycle.coroutineScope,
@@ -210,10 +207,9 @@ class HomeFragment :
             )
         }
         if (data.unplayedAlbumArtists.isNotEmpty()) {
+            viewBinders.add(HeaderBinder("Something Different", "Artists you haven't listened to in a while"))
             viewBinders.add(
                 HorizontalAlbumArtistListBinder(
-                    "Something Different",
-                    "Artists you haven't listened to in a while",
                     data.unplayedAlbumArtists,
                     imageLoader,
                     scope = lifecycle.coroutineScope,
@@ -342,6 +338,10 @@ class HomeFragment :
                         }
                         R.id.exclude -> {
                             presenter.exclude(album)
+                            return@setOnMenuItemClickListener true
+                        }
+                        R.id.editTags -> {
+                            presenter.editTags(album)
                             return@setOnMenuItemClickListener true
                         }
                     }

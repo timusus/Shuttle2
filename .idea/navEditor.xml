@@ -332,13 +332,13 @@
                       </LayoutPositions>
                     </value>
                   </entry>
-                  <entry key="folderFragment">
+                  <entry key="genreDetailFragment">
                     <value>
                       <LayoutPositions>
                         <option name="myPosition">
                           <Point>
-                            <option name="x" value="-169" />
-                            <option name="y" value="-240" />
+                            <option name="x" value="5" />
+                            <option name="y" value="-210" />
                           </Point>
                         </option>
                       </LayoutPositions>
@@ -355,12 +355,17 @@
                         </option>
                         <option name="myPositions">
                           <map>
-                            <entry key="action_homeFragment_to_playlistDetailFragment">
+                            <entry key="action_homeFragment_to_albumArtistDetailFragment">
                               <value>
                                 <LayoutPositions />
                               </value>
                             </entry>
-                            <entry key="action_homeFragment_to_searchFragment">
+                            <entry key="action_homeFragment_to_albumDetailFragment">
+                              <value>
+                                <LayoutPositions />
+                              </value>
+                            </entry>
+                            <entry key="action_homeFragment_to_playlistDetailFragment">
                               <value>
                                 <LayoutPositions />
                               </value>
@@ -396,6 +401,11 @@
                                 <LayoutPositions />
                               </value>
                             </entry>
+                            <entry key="action_libraryFragment_to_genreDetailFragment">
+                              <value>
+                                <LayoutPositions />
+                              </value>
+                            </entry>
                             <entry key="action_libraryFragment_to_playlistDetailFragment">
                               <value>
                                 <LayoutPositions />
@@ -426,6 +436,25 @@
                             <option name="x" value="739" />
                             <option name="y" value="684" />
                           </Point>
+                        </option>
+                        <option name="myPositions">
+                          <map>
+                            <entry key="action_searchFragment_to_albumArtistDetailFragment">
+                              <value>
+                                <LayoutPositions />
+                              </value>
+                            </entry>
+                            <entry key="action_searchFragment_to_albumDetailFragment">
+                              <value>
+                                <LayoutPositions />
+                              </value>
+                            </entry>
+                            <entry key="action_searchFragment_to_playlistDetailFragment">
+                              <value>
+                                <LayoutPositions />
+                              </value>
+                            </entry>
+                          </map>
                         </option>
                       </LayoutPositions>
                     </value>

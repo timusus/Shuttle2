@@ -11,12 +11,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import timber.log.Timber
 
 class LocalGenreRepository(
     val songRepository: SongRepository
 ) : GenreRepository {
 
-    private val relay: Flow<Map<String, List<Song>>> by lazy {
+    private val genreRelay: Flow<Map<String, List<Song>>> by lazy {
         ConflatedBroadcastChannel<Map<String, List<Song>>?>(null)
             .apply {
                 CoroutineScope(Dispatchers.IO)
@@ -24,10 +25,16 @@ class LocalGenreRepository(
                         songRepository
                             .getSongs(SongQuery.All())
                             .collect { songs ->
+                                val time = System.currentTimeMillis()
+                                Timber.i("Song repository emitting ${songs.size} songs")
                                 val genres = songs
-                                    .flatMap { song -> song.genres }
+                                    .fold(mutableSetOf<String>()) { genres, song ->
+                                        genres.addAll(song.genres)
+                                        genres
+                                    }
                                     .filterNot { it.isEmpty() }
                                     .associateWith { genre -> songs.filter { song -> song.genres.contains(genre) } }
+                                Timber.i("Generating genres from ${songs.size} songs. ${genres.size} genres took ${System.currentTimeMillis() - time}ms")
                                 send(genres)
                             }
                     }
@@ -38,7 +45,7 @@ class LocalGenreRepository(
     }
 
     override fun getGenres(query: GenreQuery): Flow<List<Genre>> {
-        return relay
+        return genreRelay
             .map { genres ->
                 genres
                     .map { entry ->
@@ -50,9 +57,12 @@ class LocalGenreRepository(
             }
     }
 
-    override fun getSongsForGenre(genre: String, songQuery: SongQuery): Flow<List<Song>> {
-        return relay
-            .map { it[genre].orEmpty() }
+    override fun getSongsForGenres(genres: List<String>, songQuery: SongQuery): Flow<List<Song>> {
+        return genreRelay
+            .map {
+                genres.flatMap { genre ->
+                    it[genre].orEmpty() }
+            }
             .map { songs ->
                 var result = songs
 

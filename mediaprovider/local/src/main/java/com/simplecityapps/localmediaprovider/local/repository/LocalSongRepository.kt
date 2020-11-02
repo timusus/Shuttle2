@@ -17,7 +17,9 @@ class LocalSongRepository(
     private val songDataDao: SongDataDao
 ) : SongRepository {
 
-    private val songsRelay: Flow<List<Song>> by lazy {
+    private val songsRelay: Flow<List<Song>> = run {
+        val time = System.currentTimeMillis()
+        Timber.i("Initialising songs relay")
         ConflatedBroadcastChannel<List<Song>?>(null)
             .apply {
                 CoroutineScope(Dispatchers.IO)
@@ -25,6 +27,7 @@ class LocalSongRepository(
                         songDataDao
                             .getAll()
                             .collect { songs ->
+                                Timber.i("Songs relay sending  ${songs.size} songs, took ${System.currentTimeMillis() - time}ms")
                                 send(songs)
                             }
                     }

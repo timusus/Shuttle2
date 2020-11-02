@@ -267,7 +267,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:hint="Genre"
+            android:hint="Genre(s)"
             app:endIconDrawable="@drawable/ic_baseline_undo_12"
             app:endIconMode="custom"
             app:helperTextTextColor="?helperTextTextColor"
