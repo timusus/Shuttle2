@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.playback
 
+import android.content.Context
 import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackWatcher
@@ -8,6 +9,7 @@ import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
+import com.simplecityapps.shuttle.ui.screens.lyrics.QuickLyricManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
@@ -22,7 +24,8 @@ class PlaybackPresenter @Inject constructor(
     private val queueWatcher: QueueWatcher,
     private val playlistRepository: PlaylistRepository,
     private val albumRepository: AlbumRepository,
-    private val albumArtistRepository: AlbumArtistRepository
+    private val albumArtistRepository: AlbumArtistRepository,
+    private val context: Context
 ) : BasePresenter<PlaybackContract.View>(),
     PlaybackContract.Presenter,
     QueueChangeCallback,
@@ -43,8 +46,6 @@ class PlaybackPresenter @Inject constructor(
         onPlaystateChanged(playbackManager.isPlaying())
         onShuffleChanged()
         onRepeatChanged()
-
-
     }
 
     override fun unbindView() {
@@ -169,6 +170,20 @@ class PlaybackPresenter @Inject constructor(
                 artists.firstOrNull()?.let { artist ->
                     view?.goToArtist(artist)
                 } ?: Timber.e("Failed to retrieve album artist for song: ${song.name}")
+            }
+        }
+    }
+
+    override fun launchQuickLyric() {
+        queueManager.getCurrentItem()?.let { queueItem ->
+            if (QuickLyricManager.isQuickLyricInstalled(context)) {
+                view?.launchQuickLyric(queueItem.song.albumArtist, queueItem.song.name)
+            } else {
+                if (QuickLyricManager.canDownloadQuickLyric(context)) {
+                    view?.getQuickLyric()
+                } else {
+                    view?.showQuickLyricUnavailable()
+                }
             }
         }
     }

@@ -22,4 +22,9 @@
         app:actionLayout="@layout/button_favorite"
         app:showAsAction="ifRoom" />
 
+    <item
+        android:id="@+id/quickLyric"
+        android:title="QuickLyric"
+        app:showAsAction="never" />
+
 </menu>

@@ -20,6 +20,9 @@ interface PlaybackContract {
         fun presentSleepTimer()
         fun goToAlbum(album: Album)
         fun goToArtist(artist: AlbumArtist)
+        fun launchQuickLyric(artistName: String, songTime: String)
+        fun getQuickLyric()
+        fun showQuickLyricUnavailable()
     }
 
     interface Presenter {
@@ -37,5 +40,6 @@ interface PlaybackContract {
         fun setFavorite(isFavorite: Boolean)
         fun goToAlbum()
         fun goToArtist()
+        fun launchQuickLyric()
     }
 }

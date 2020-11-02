@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.SeekBar
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
@@ -42,6 +43,7 @@ import com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
 import com.simplecityapps.shuttle.ui.common.view.multisheet.findParentMultiSheetView
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragmentArgs
+import com.simplecityapps.shuttle.ui.screens.lyrics.QuickLyricManager
 import com.simplecityapps.shuttle.ui.screens.sleeptimer.SleepTimerDialogFragment
 import javax.inject.Inject
 
@@ -148,6 +150,10 @@ class PlaybackFragment :
             when (item.itemId) {
                 R.id.sleepTimer -> {
                     presenter.sleepTimerClicked()
+                    true
+                }
+                R.id.quickLyric -> {
+                    presenter.launchQuickLyric()
                     true
                 }
                 else -> false
@@ -266,6 +272,21 @@ class PlaybackFragment :
         view?.postDelayed({
             view?.findParentMultiSheetView()?.goToSheet(MultiSheetView.Sheet.NONE)
         }, 200)
+    }
+
+    override fun launchQuickLyric(artistName: String, songName: String) {
+        val intent = QuickLyricManager.buildLyricsIntent(artistName, songName)
+        if (intent.resolveActivity(requireContext().packageManager) != null) {
+            requireContext().startActivity(intent)
+        }
+    }
+
+    override fun getQuickLyric() {
+        requireContext().startActivity(QuickLyricManager.quickLyricIntent)
+    }
+
+    override fun showQuickLyricUnavailable() {
+        Toast.makeText(requireContext(), "Failed to download QuickLyric", Toast.LENGTH_LONG).show()
     }
 
 
