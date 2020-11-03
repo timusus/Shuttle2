@@ -1,7 +1,7 @@
 package com.simplecityapps.shuttle.dagger
 
 import android.content.Context
-import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStoreSongProvider
+import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStoreMediaProvider
 import com.simplecityapps.localmediaprovider.local.provider.taglib.FileScanner
 import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibMediaProvider
 import dagger.Module
@@ -24,7 +24,7 @@ class MediaProviderModule {
 
     @Provides
     @AppScope
-    fun provideMediaStoreSongProvider(context: Context): MediaStoreSongProvider {
-        return MediaStoreSongProvider(context)
+    fun provideMediaStoreSongProvider(context: Context): MediaStoreMediaProvider {
+        return MediaStoreMediaProvider(context)
     }
 }

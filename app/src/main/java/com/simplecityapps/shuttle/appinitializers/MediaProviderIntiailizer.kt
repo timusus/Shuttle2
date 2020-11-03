@@ -2,7 +2,7 @@ package com.simplecityapps.shuttle.appinitializers
 
 import android.app.Application
 import com.simplecityappds.saf.SafDirectoryHelper
-import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStoreSongProvider
+import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStoreMediaProvider
 import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibMediaProvider
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
@@ -17,7 +17,7 @@ class MediaProviderInitializer @Inject constructor(
     private val mediaImporter: MediaImporter,
     private val playbackPreferenceManager: PlaybackPreferenceManager,
     private val taglibMediaProvider: TaglibMediaProvider,
-    private val mediaStoreSongProvider: MediaStoreSongProvider,
+    private val mediaStoreMediaProvider: MediaStoreMediaProvider,
     @Named("AppCoroutineScope") private val appCoroutineScope: CoroutineScope
 ) : AppInitializer {
 
@@ -39,7 +39,7 @@ class MediaProviderInitializer @Inject constructor(
                 }
             }
             PlaybackPreferenceManager.SongProvider.MediaStore -> {
-                mediaImporter.mediaProvider = mediaStoreSongProvider
+                mediaImporter.mediaProvider = mediaStoreMediaProvider
             }
         }
     }

@@ -1,6 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.onboarding.scanner
 
-import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStoreSongProvider
+import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStoreMediaProvider
 import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibMediaProvider
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.model.Song
@@ -59,7 +59,7 @@ class ScannerPresenter @Inject constructor(
             is TaglibMediaProvider -> {
                 view?.setTitle("Reading song tags…")
             }
-            is MediaStoreSongProvider -> {
+            is MediaStoreMediaProvider -> {
                 view?.setTitle("Scanning Media Store…")
             }
         }
@@ -90,7 +90,7 @@ class ScannerPresenter @Inject constructor(
                 is TaglibMediaProvider -> {
                     view?.setTitle("Reading song tags…")
                 }
-                is MediaStoreSongProvider -> {
+                is MediaStoreMediaProvider -> {
                     view?.setTitle("Scanning Media Store…")
                 }
             }
