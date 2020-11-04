@@ -100,7 +100,6 @@ class SongListFragment :
 
         presenter.bindView(this)
         playlistMenuPresenter.bindView(playlistMenuView)
-
     }
 
     override fun onResume() {

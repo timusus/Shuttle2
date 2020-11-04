@@ -8,4 +8,14 @@
         android:title="Scroll to Current"
         app:showAsAction="ifRoom" />
 
+    <item
+        android:id="@+id/playlist"
+        android:icon="@drawable/ic_playlist_add_black_24dp"
+        android:title="Save Queue to Playlist"
+        app:showAsAction="ifRoom">
+
+        <menu />
+
+    </item>
+
 </menu>

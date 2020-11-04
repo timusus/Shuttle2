@@ -1,14 +1,41 @@
 package com.simplecityapps.shuttle.ui.screens.queue
 
+import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
+import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
+interface QueueContract {
+
+    interface Presenter : BaseContract.Presenter<View> {
+        fun loadQueue()
+        fun onQueueItemClicked(queueItem: QueueItem)
+        fun togglePlayback()
+        fun scrollToCurrent()
+        fun moveQueueItem(from: Int, to: Int)
+        fun removeFromQueue(queueItem: QueueItem)
+        fun exclude(queueItem: QueueItem)
+        fun editTags(queueItem: QueueItem)
+        fun saveQueueToPlaylist()
+    }
+
+    interface View {
+        fun setData(queue: List<QueueItem>, progress: Float, isPlaying: Boolean)
+        fun toggleEmptyView(empty: Boolean)
+        fun toggleLoadingView(loading: Boolean)
+        fun setQueuePosition(position: Int, total: Int)
+        fun showLoadError(error: Error)
+        fun scrollToPosition(position: Int, fromUser: Boolean)
+        fun showTagEditor(songs: List<Song>)
+    }
+}
 
 class QueuePresenter @Inject constructor(
     private val queueManager: QueueManager,
@@ -77,6 +104,12 @@ class QueuePresenter @Inject constructor(
     override fun editTags(queueItem: QueueItem) {
         view?.showTagEditor(listOf(queueItem.song))
     }
+
+    override fun saveQueueToPlaylist() {
+
+        queueManager.getQueue()
+    }
+
 
     // QueueBinder.Listener Implementation
 

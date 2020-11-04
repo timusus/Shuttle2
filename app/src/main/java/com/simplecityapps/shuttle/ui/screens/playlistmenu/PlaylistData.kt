@@ -47,4 +47,11 @@ sealed class PlaylistData : Serializable {
             return "${resources.getQuantityString(R.plurals.genresPlural, data.size, data.size)} added to $playlistName"
         }
     }
+
+    object Queue : PlaylistData() {
+
+        override fun getPlaylistSavedMessage(resources: Resources, playlistName: String): String {
+            return "Queue added to $playlistName"
+        }
+    }
 }

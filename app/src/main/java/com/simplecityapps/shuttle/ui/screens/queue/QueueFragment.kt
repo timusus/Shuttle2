@@ -34,13 +34,18 @@ import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
 import com.simplecityapps.shuttle.ui.common.view.multisheet.findParentMultiSheetView
+import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
+import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
+import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
+import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import timber.log.Timber
 import javax.inject.Inject
 
 class QueueFragment :
     Fragment(),
     Injectable,
-    QueueContract.View {
+    QueueContract.View,
+    CreatePlaylistDialogFragment.Listener {
 
     private lateinit var adapter: RecyclerAdapter
 
@@ -56,11 +61,15 @@ class QueueFragment :
 
     @Inject lateinit var presenter: QueuePresenter
 
+    @Inject lateinit var playlistMenuPresenter: PlaylistMenuPresenter
+
     @Inject lateinit var playbackWatcher: PlaybackWatcher
 
     @Inject lateinit var playbackManager: PlaybackManager
 
     private var recyclerViewState: Parcelable? = null
+
+    private lateinit var playlistMenuView: PlaylistMenuView
 
 
     // Lifecycle
@@ -71,6 +80,8 @@ class QueueFragment :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
 
         adapter = RecyclerAdapter(lifecycle.coroutineScope)
 
@@ -91,19 +102,28 @@ class QueueFragment :
 
         toolbar = view.findViewById(R.id.toolbar)
         toolbar.inflateMenu(R.menu.menu_up_next)
-        toolbar.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
+        toolbar.setOnMenuItemClickListener { menuItem ->
+            when (menuItem.itemId) {
                 R.id.scrollToCurrent -> {
                     presenter.scrollToCurrent()
                     return@setOnMenuItemClickListener true
                 }
+                R.id.playlist -> {
+                    playlistMenuView.createPlaylistMenu(toolbar.menu)
+                    return@setOnMenuItemClickListener true
+                }
+                else -> {
+                    return@setOnMenuItemClickListener playlistMenuView.handleMenuItem(menuItem, PlaylistData.Queue)
+                }
             }
-            false
         }
 
         savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
 
         presenter.bindView(this)
+        playlistMenuPresenter.bindView(playlistMenuView)
+
+        playlistMenuView.createPlaylistMenu(toolbar.menu)
     }
 
     override fun onResume() {
@@ -125,11 +145,10 @@ class QueueFragment :
 
     override fun onDestroyView() {
         presenter.unbindView()
+        playlistMenuPresenter.unbindView()
 
         itemTouchHelper.attachToRecyclerView(null)
         view.findParentMultiSheetView()?.removeSheetStateChangeListener(sheetStateChangeListener)
-
-
 
         super.onDestroyView()
     }
@@ -247,6 +266,7 @@ class QueueFragment :
 
         override fun onSheetStateChanged(sheet: Int, state: Int) {
             toolbar.menu.findItem(R.id.scrollToCurrent)?.isVisible = sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_EXPANDED
+            toolbar.menu.findItem(R.id.playlist)?.isVisible = sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_EXPANDED
         }
 
         override fun onSlide(sheet: Int, slideOffset: Float) {
@@ -254,6 +274,13 @@ class QueueFragment :
                 toolbarTitleTextView.textSize = 15 + (5 * slideOffset)
             }
         }
+    }
+
+
+    // CreatePlaylistDialogFragment.Listener Implementation
+
+    override fun onSave(text: String, playlistData: PlaylistData) {
+        playlistMenuPresenter.createPlaylist(text, playlistData)
     }
 
 
