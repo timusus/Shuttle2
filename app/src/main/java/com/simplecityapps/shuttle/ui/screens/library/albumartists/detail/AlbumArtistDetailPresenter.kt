@@ -33,6 +33,7 @@ class AlbumArtistDetailContract {
     interface Presenter : BaseContract.Presenter<View> {
         fun loadData()
         fun onSongClicked(song: Song, songs: List<Song>)
+        fun onSongClicked(song: Song)
         fun shuffle()
         fun shuffleAlbums()
         fun addToQueue(albumArtist: AlbumArtist)
@@ -67,6 +68,8 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
         fun create(albumArtist: AlbumArtist): AlbumArtistDetailPresenter
     }
 
+    private var songs: List<Song> = emptyList()
+
     override fun bindView(view: AlbumArtistDetailContract.View) {
         super.bindView(view)
 
@@ -88,13 +91,18 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
             albumRepository.getAlbums(AlbumQuery.AlbumArtist(albumArtist.name))
                 .combine(songRepository.getSongs(SongQuery.AlbumArtists(listOf(SongQuery.AlbumArtist(name = albumArtist.name))))) { albums, songs ->
                     albums.map { album -> Pair(album, songs.filter { song -> song.album == album.name }) }
-                        .sortedWith(Comparator { a, b -> b.first.year.compareTo(a.first.year) })
+                        .sortedWith { a, b -> b.first.year.compareTo(a.first.year) }
                         .toMap()
                 }
                 .collect { map ->
+                    this@AlbumArtistDetailPresenter.songs = map.values.flatten()
                     view?.setListData(map)
                 }
         }
+    }
+
+    override fun onSongClicked(song: Song) {
+        onSongClicked(song, this.songs)
     }
 
     override fun onSongClicked(song: Song, songs: List<Song>) {

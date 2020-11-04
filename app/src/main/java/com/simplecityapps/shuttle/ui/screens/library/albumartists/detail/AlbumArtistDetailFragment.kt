@@ -28,6 +28,7 @@ import androidx.transition.TransitionListenerAdapter
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.adapter.RecyclerAdapter
+import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
@@ -39,7 +40,9 @@ import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.DetailImageAnimationHelper
+import com.simplecityapps.shuttle.ui.screens.home.search.HeaderBinder
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragmentArgs
+import com.simplecityapps.shuttle.ui.screens.library.songs.SongBinder
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
@@ -223,7 +226,9 @@ class AlbumArtistDetailFragment :
     // AlbumArtistDetailContract.View Implementation
 
     override fun setListData(albums: Map<Album, List<Song>>) {
-        adapter.update(albums.map { entry ->
+        val viewBinders = mutableListOf<ViewBinder>()
+        viewBinders.add(HeaderBinder("Albums"))
+        viewBinders.addAll(albums.map { entry ->
             ExpandableAlbumBinder(
                 entry.key,
                 entry.value,
@@ -233,6 +238,11 @@ class AlbumArtistDetailFragment :
                 listener = this
             )
         })
+        viewBinders.add(HeaderBinder("Songs"))
+        viewBinders.addAll(albums.values.flatten().map { song ->
+            SongBinder(song, imageLoader, songBinderListener)
+        })
+        adapter.update(viewBinders)
     }
 
     override fun showLoadError(error: Error) {
@@ -375,6 +385,76 @@ class AlbumArtistDetailFragment :
             false
         }
         popupMenu.show()
+    }
+
+
+    // SongBinder.Listener Implementation
+
+    private val songBinderListener = object : SongBinder.Listener {
+
+        override fun onSongClicked(song: Song) {
+            presenter.onSongClicked(song)
+        }
+
+        override fun onOverflowClicked(view: View, song: Song) {
+            val popupMenu = PopupMenu(requireContext(), view)
+            popupMenu.inflate(R.menu.menu_popup_song)
+
+            playlistMenuView.createPlaylistMenu(popupMenu.menu)
+
+            if (song.mediaStoreId != null) {
+                popupMenu.menu.findItem(R.id.delete)?.isVisible = false
+            }
+
+            popupMenu.setOnMenuItemClickListener { menuItem ->
+                if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Songs(song))) {
+                    return@setOnMenuItemClickListener true
+                } else {
+                    when (menuItem.itemId) {
+                        R.id.queue -> {
+                            presenter.addToQueue(song)
+                            return@setOnMenuItemClickListener true
+                        }
+                        R.id.playNext -> {
+                            presenter.playNext(song)
+                            return@setOnMenuItemClickListener true
+                        }
+                        R.id.songInfo -> {
+                            SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
+                            return@setOnMenuItemClickListener true
+                        }
+                        R.id.exclude -> {
+                            AlertDialog.Builder(requireContext())
+                                .setTitle("Exclude Song")
+                                .setMessage("\"${song.name}\" will be hidden from your library.\n\nYou can view excluded songs in settings.")
+                                .setPositiveButton("Exclude") { _, _ ->
+                                    presenter.exclude(song)
+                                }
+                                .setNegativeButton("Cancel", null)
+                                .show()
+                            return@setOnMenuItemClickListener true
+                        }
+                        R.id.editTags -> {
+                            presenter.editTags(song)
+                            return@setOnMenuItemClickListener true
+                        }
+                        R.id.delete -> {
+                            AlertDialog.Builder(requireContext())
+                                .setTitle("Delete Song")
+                                .setMessage("\"${song.name}\" will be permanently deleted")
+                                .setPositiveButton("Delete") { _, _ ->
+                                    presenter.delete(song)
+                                }
+                                .setNegativeButton("Cancel", null)
+                                .show()
+                            return@setOnMenuItemClickListener true
+                        }
+                    }
+                }
+                false
+            }
+            popupMenu.show()
+        }
     }
 
 
