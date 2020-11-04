@@ -24,7 +24,7 @@ class MiniPlayerPresenter @Inject constructor(
     }
 
     override fun skipToNext() {
-        playbackManager.skipToNext()
+        playbackManager.skipToNext(ignoreRepeat = true)
     }
 
     override fun bindView(view: MiniPlayerContract.View) {

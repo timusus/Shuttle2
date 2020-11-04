@@ -78,7 +78,7 @@ class PlaybackService :
                 }
             }
             ACTION_SKIP_PREV -> playbackManager.skipToPrev()
-            ACTION_SKIP_NEXT -> playbackManager.skipToNext(true)
+            ACTION_SKIP_NEXT -> playbackManager.skipToNext(ignoreRepeat = true)
             ACTION_NOTIFICATION_DISMISS -> {
                 Timber.v("Stopping due to notification dismiss")
                 stopSelf()

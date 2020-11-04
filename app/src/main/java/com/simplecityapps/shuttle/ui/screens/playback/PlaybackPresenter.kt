@@ -98,7 +98,7 @@ class PlaybackPresenter @Inject constructor(
     }
 
     override fun skipNext() {
-        playbackManager.skipToNext(true)
+        playbackManager.skipToNext(ignoreRepeat = true)
     }
 
     override fun skipPrev() {
