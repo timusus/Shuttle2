@@ -45,7 +45,7 @@
         tools:layout="@layout/fragment_smart_playlist_detail">
         <argument
             android:name="playlist"
-            app:argType="com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylist" />
+            app:argType="com.simplecityapps.mediaprovider.model.SmartPlaylist" />
     </fragment>
     <fragment
         android:id="@+id/playlistDetailFragment"
@@ -118,6 +118,9 @@
         <action
             android:id="@+id/action_libraryFragment_to_genreDetailFragment"
             app:destination="@id/genreDetailFragment" />
+        <action
+            android:id="@+id/action_libraryFragment_to_smartPlaylistDetailFragment"
+            app:destination="@id/smartPlaylistDetailFragment" />
     </fragment>
 
 </navigation>

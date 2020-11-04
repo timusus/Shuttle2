@@ -22,11 +22,11 @@ import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.adapter.ViewBinder
-import com.simplecityapps.mediaprovider.model.Album
-import com.simplecityapps.mediaprovider.model.AlbumArtist
-import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.mediaprovider.model.*
 import com.simplecityapps.mediaprovider.repository.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.PlaylistRepository
+import com.simplecityapps.mediaprovider.repository.SongQuery
+import com.simplecityapps.mediaprovider.repository.SongSortOrder
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
@@ -40,7 +40,6 @@ import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumAr
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumBinder
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.library.playlists.detail.PlaylistDetailFragmentArgs
-import com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylist
 import com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylistDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
@@ -106,7 +105,12 @@ class HomeFragment :
             if (navController.currentDestination?.id != R.id.smartPlaylistDetailFragment) {
                 navController.navigate(
                     R.id.action_homeFragment_to_smartPlaylistDetailFragment,
-                    SmartPlaylistDetailFragmentArgs(SmartPlaylist.RecentlyPlayed).toBundle()
+                    SmartPlaylistDetailFragmentArgs(
+                        SmartPlaylist(
+                            R.string.playlist_title_history,
+                            SongQuery.PlayCount(1, SongSortOrder.RecentlyPlayed)
+                        )
+                    ).toBundle()
                 )
             }
         }
@@ -115,7 +119,12 @@ class HomeFragment :
             if (navController.currentDestination?.id != R.id.smartPlaylistDetailFragment) {
                 navController.navigate(
                     R.id.action_homeFragment_to_smartPlaylistDetailFragment,
-                    SmartPlaylistDetailFragmentArgs(SmartPlaylist.RecentlyAdded).toBundle()
+                    SmartPlaylistDetailFragmentArgs(
+                        SmartPlaylist(
+                            R.string.playlist_title_recently_added,
+                            SongQuery.RecentlyAdded()
+                        )
+                    ).toBundle()
                 )
             }
         }

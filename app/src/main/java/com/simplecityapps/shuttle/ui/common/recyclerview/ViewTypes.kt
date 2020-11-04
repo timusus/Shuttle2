@@ -22,4 +22,5 @@ object ViewTypes {
     const val HorizontalAlbumArtistSection = 18
     const val HorizontalSongSection = 19
     const val Genre = 20
+    const val SmartPlaylist = 21
 }

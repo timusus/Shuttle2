@@ -146,12 +146,12 @@ class PlaylistDetailFragment :
                 imageLoader.loadArtwork(
                     heroImage,
                     songs.random(),
+                    ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_playlist),
                     ArtworkImageLoader.Options.Priority(ArtworkImageLoader.Options.Priority.Priority.Max),
-                    ArtworkImageLoader.Options.Crossfade(600)
                 )
             }
         } else {
-            heroImage.setImageResource(R.drawable.ic_music_note_black_24dp)
+            heroImage.setImageResource(R.drawable.ic_placeholder_playlist)
         }
 
         adapter.update(songs.map { song ->

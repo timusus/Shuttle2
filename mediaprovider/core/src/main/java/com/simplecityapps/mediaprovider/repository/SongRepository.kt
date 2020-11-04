@@ -22,7 +22,7 @@ interface SongRepository {
     suspend fun clearExcludeList()
 }
 
-sealed class SongQuery(
+open class SongQuery(
     val predicate: ((Song) -> Boolean),
     val sortOrder: SongSortOrder = SongSortOrder.Default,
     val includeExcluded: Boolean = false
@@ -100,8 +100,11 @@ enum class SongSortOrder : Serializable {
             return when (this) {
                 Default -> compareBy({ song -> song.album }, { song -> song.disc }, { song -> song.track })
                 SongName -> Comparator<Song> { a, b -> Collator.getInstance().apply { strength = Collator.TERTIARY }.compare(a.name, b.name) }.then(Default.comparator)
-                ArtistName -> Comparator<Song> { a, b -> Collator.getInstance().apply { strength = Collator.TERTIARY }.compare(a.albumArtist.removeArticles(), b.albumArtist.removeArticles()) }.then(compareBy { song -> song.album }).then(Default.comparator)
-                AlbumName -> Comparator<Song> { a, b -> Collator.getInstance().apply { strength = Collator.TERTIARY }.compare(a.album.removeArticles(), b.album.removeArticles()) }.then(Default.comparator)
+                ArtistName -> Comparator<Song> { a, b -> Collator.getInstance().apply { strength = Collator.TERTIARY }.compare(a.albumArtist.removeArticles(), b.albumArtist.removeArticles()) }.then(
+                    compareBy { song -> song.album }).then(Default.comparator)
+                AlbumName -> Comparator<Song> { a, b ->
+                    Collator.getInstance().apply { strength = Collator.TERTIARY }.compare(a.album.removeArticles(), b.album.removeArticles())
+                }.then(Default.comparator)
                 Year -> Comparator<Song> { a, b -> zeroLastComparator.compare(a.year, b.year) }.then(compareBy({ song -> song.year }, { song -> song.album })).then(Default.comparator)
                 Duration -> compareBy<Song> { song -> song.duration }.then(Default.comparator)
                 Track -> compareBy<Song>({ song -> song.disc }, { song -> song.track }).then(Default.comparator)

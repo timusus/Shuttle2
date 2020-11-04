@@ -13,12 +13,6 @@
     <string name="btn_favorite">Favorites</string>
     <string name="btn_shuffle">Shuffle</string>
 
-    <!-- Smart Playlists -->
-    <string name="playlist_title_most_played">Most Played</string>
-    <string name="playlist_title_recently_played">Recently Played</string>
-    <string name="playlist_title_recently_added">Recently Added</string>
-
-
     <!-- Settings Option -->
     <string-array name="pref_night_mode_entries">
         <item>Default</item>

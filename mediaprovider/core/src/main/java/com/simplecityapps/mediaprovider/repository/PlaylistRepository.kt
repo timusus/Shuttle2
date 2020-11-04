@@ -1,6 +1,7 @@
 package com.simplecityapps.mediaprovider.repository
 
 import com.simplecityapps.mediaprovider.model.Playlist
+import com.simplecityapps.mediaprovider.model.SmartPlaylist
 import com.simplecityapps.mediaprovider.model.Song
 import kotlinx.coroutines.flow.Flow
 import java.io.Serializable
@@ -15,6 +16,7 @@ interface PlaylistRepository {
     suspend fun deletePlaylist(playlist: Playlist)
     suspend fun updatePlaylistMediaStoreId(playlist: Playlist, mediaStoreId: Long?)
     suspend fun clearPlaylist(playlist: Playlist)
+    fun getSmartPlaylists(): Flow<List<SmartPlaylist>>
 }
 
 sealed class PlaylistQuery(

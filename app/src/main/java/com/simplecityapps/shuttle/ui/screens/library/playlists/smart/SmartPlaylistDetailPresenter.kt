@@ -1,16 +1,13 @@
 package com.simplecityapps.shuttle.ui.screens.library.playlists.smart
 
 import android.content.Context
-import androidx.annotation.Keep
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
+import com.simplecityapps.mediaprovider.model.SmartPlaylist
 import com.simplecityapps.mediaprovider.model.Song
-import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
-import com.simplecityapps.mediaprovider.repository.SongSortOrder
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
@@ -20,26 +17,6 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.io.Serializable
-
-@Keep
-data class SmartPlaylist(val nameResId: Int, val songQuery: SongQuery) : Serializable {
-
-    companion object {
-        val MostPlayedAlbums = SmartPlaylist(
-            R.string.playlist_title_most_played,
-            SongQuery.PlayCount(2, SongSortOrder.PlayCount)
-        )
-        val RecentlyPlayed = SmartPlaylist(
-            R.string.playlist_title_recently_played,
-            SongQuery.PlayCount(1, SongSortOrder.RecentlyPlayed)
-        )
-        val RecentlyAdded = SmartPlaylist(
-            R.string.btn_recently_added,
-            SongQuery.RecentlyAdded()
-        )
-    }
-}
 
 interface SmartPlaylistDetailContract {
 

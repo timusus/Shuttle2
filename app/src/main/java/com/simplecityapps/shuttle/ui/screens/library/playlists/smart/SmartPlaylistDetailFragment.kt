@@ -18,7 +18,9 @@ import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.adapter.RecyclerAdapter
+import com.simplecityapps.mediaprovider.model.SmartPlaylist
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
@@ -139,16 +141,16 @@ class SmartPlaylistDetailFragment :
                 imageLoader.loadArtwork(
                     heroImageView,
                     songs.random(),
+                    ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_playlist),
                     ArtworkImageLoader.Options.Priority(ArtworkImageLoader.Options.Priority.Priority.Max),
-                    ArtworkImageLoader.Options.Crossfade(600)
                 )
             }
         } else {
-            heroImageView.setImageResource(R.drawable.ic_music_note_black_24dp)
+            heroImageView.setImageResource(R.drawable.ic_placeholder_playlist)
         }
 
         adapter.update(songs.map { song ->
-            SongBinder(song, imageLoader, songBinderListener)
+            SongBinder(song, imageLoader, songBinderListener, showPlayCountBadge = playlist.songQuery is SongQuery.PlayCount)
         })
     }
 

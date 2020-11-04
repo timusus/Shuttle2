@@ -15,7 +15,9 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
+import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Playlist
+import com.simplecityapps.mediaprovider.model.SmartPlaylist
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
@@ -25,7 +27,9 @@ import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
+import com.simplecityapps.shuttle.ui.screens.home.search.HeaderBinder
 import com.simplecityapps.shuttle.ui.screens.library.playlists.detail.PlaylistDetailFragmentArgs
+import com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylistDetailFragmentArgs
 import javax.inject.Inject
 
 
@@ -126,10 +130,26 @@ class PlaylistListFragment :
 
     // PlaylistListContract.View Implementation
 
-    override fun setPlaylists(playlists: List<Playlist>) {
-        adapter.update(playlists.map { playlist ->
+    override fun setPlaylists(playlists: List<Playlist>, smartPlaylists: List<SmartPlaylist>) {
+
+        val viewBinders = mutableListOf<ViewBinder>()
+
+        if (smartPlaylists.isNotEmpty()) {
+            viewBinders.add(HeaderBinder("Smart Playlists"))
+            viewBinders.addAll(smartPlaylists.map { smartPlaylist ->
+                SmartPlaylistBinder(smartPlaylist, smartPlaylistBinderListener)
+            })
+        }
+
+        if (smartPlaylists.isNotEmpty()) {
+            viewBinders.add(HeaderBinder("Dumb Playlists"))
+        }
+        viewBinders.addAll(playlists.map { playlist ->
             PlaylistBinder(playlist, playlistBinderListener)
-        }, completion = {
+        })
+
+
+        adapter.update(viewBinders, completion = {
             recyclerViewState?.let {
                 recyclerView?.layoutManager?.onRestoreInstanceState(recyclerViewState)
                 recyclerViewState = null
@@ -167,7 +187,7 @@ class PlaylistListFragment :
     }
 
 
-    // PlaylistBinder.Listener
+    // PlaylistBinder.Listener Implementation
 
     private val playlistBinderListener = object : PlaylistBinder.Listener {
 
@@ -215,6 +235,23 @@ class PlaylistListFragment :
                 }
             }
             popupMenu.show()
+        }
+    }
+
+
+    // SmartPlaylistBinder.Listener Implementation
+
+    private val smartPlaylistBinderListener = object : SmartPlaylistBinder.Listener {
+
+        override fun onSmartPlaylistSelected(smartPlaylist: SmartPlaylist, viewHolder: SmartPlaylistBinder.ViewHolder) {
+            if (findNavController().currentDestination?.id != R.id.playlistDetailFragment) {
+                findNavController().navigate(
+                    R.id.action_libraryFragment_to_smartPlaylistDetailFragment,
+                    SmartPlaylistDetailFragmentArgs(smartPlaylist).toBundle(),
+                    null,
+                    null
+                )
+            }
         }
     }
 

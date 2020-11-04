@@ -6,17 +6,20 @@ import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.view.isVisible
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
+import com.simplecityapps.shuttle.ui.common.view.BadgeView
 
 class SongBinder(
     val song: Song,
     val imageLoader: ArtworkImageLoader,
-    val listener: Listener? = null
+    val listener: Listener,
+    val showPlayCountBadge: Boolean = false,
 ) : ViewBinder,
     SectionViewBinder {
 
@@ -67,6 +70,7 @@ class SongBinder(
         private val subtitle: TextView = itemView.findViewById(R.id.subtitle)
         private val imageView: ImageView = itemView.findViewById(R.id.imageView)
         private val overflowButton: ImageButton = itemView.findViewById(R.id.overflowButton)
+        private val badgeView: BadgeView = itemView.findViewById(R.id.badgeImageView)
 
         init {
             itemView.setOnClickListener {
@@ -89,6 +93,18 @@ class SongBinder(
                 ArtworkImageLoader.Options.Crossfade(200),
                 ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_song_rounded)
             )
+
+            if (viewBinder.showPlayCountBadge) {
+                badgeView.badgeCount = viewBinder.song.playCount
+                badgeView.isVisible = true
+
+                viewBinder.imageLoader.loadColorSet(viewBinder.song) { newColorSet ->
+                    newColorSet?.let {
+                        badgeView.setCircleBackgroundColor(newColorSet.primaryColor)
+                        badgeView.setTextColor(newColorSet.primaryTextColor)
+                    }
+                }
+            }
         }
 
         override fun recycle() {

@@ -1,13 +1,17 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
+import com.simplecityapps.localmediaprovider.R
 import com.simplecityapps.localmediaprovider.local.data.room.dao.PlaylistDataDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.PlaylistSongJoinDao
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistSongJoin
 import com.simplecityapps.mediaprovider.model.Playlist
+import com.simplecityapps.mediaprovider.model.SmartPlaylist
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.PlaylistRepository
+import com.simplecityapps.mediaprovider.repository.SongQuery
+import com.simplecityapps.mediaprovider.repository.SongSortOrder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
@@ -44,6 +48,17 @@ class LocalPlaylistRepository(
                 .filter(query.predicate)
                 .toMutableList()
                 .sortedWith(query.sortOrder.comparator)
+        }
+    }
+
+    override fun getSmartPlaylists(): Flow<List<SmartPlaylist>> {
+        return flow {
+            emit(
+                listOf(
+                    SmartPlaylist(R.string.playlist_title_recently_added, SongQuery.RecentlyAdded()),
+                    SmartPlaylist(R.string.playlist_title_most_played, SongQuery.PlayCount(2, SongSortOrder.PlayCount))
+                )
+            )
         }
     }
 

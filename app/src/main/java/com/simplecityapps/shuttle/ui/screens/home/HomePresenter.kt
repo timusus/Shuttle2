@@ -7,7 +7,6 @@ import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
-import com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylist
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.firstOrNull
@@ -76,18 +75,28 @@ class HomePresenter @Inject constructor(
 
     override fun loadData() {
         launch {
-            val mostPlayedAlbums = albumRepository.getAlbums(AlbumQuery.PlayCount(2, AlbumSortOrder.PlayCount))
+            val mostPlayedAlbums = albumRepository
+                .getAlbums(AlbumQuery.PlayCount(2, AlbumSortOrder.PlayCount))
                 .map { it.take(20) }
 
-            var songs = songRepository.getSongs(SmartPlaylist.RecentlyPlayed.songQuery).firstOrNull().orEmpty()
-            songs = SmartPlaylist.RecentlyPlayed.songQuery?.sortOrder?.let { songSortOrder -> songs.sortedWith(songSortOrder.comparator) } ?: songs
-            val recentlyPlayedAlbums = albumRepository.getAlbums(AlbumQuery.Albums(songs.distinctBy { it.album }.map { AlbumQuery.Album(name = it.album, albumArtistName = it.albumArtist) }))
+            val recentlyPlayedAlbums =
+                albumRepository
+                    .getAlbums(AlbumQuery.Albums(
+                        songRepository
+                            .getSongs(SongQuery.All(sortOrder = SongSortOrder.RecentlyPlayed))
+                            .firstOrNull()
+                            .orEmpty()
+                            .distinctBy { song -> song.album }
+                            .map { album -> AlbumQuery.Album(name = album.album, albumArtistName = album.albumArtist) })
+                    )
+                    .map { it.take(20) }
+
+            val albumsFromThisYear = albumRepository
+                .getAlbums(AlbumQuery.Year(Calendar.getInstance().get(Calendar.YEAR)))
                 .map { it.take(20) }
 
-            val albumsFromThisYear = albumRepository.getAlbums(AlbumQuery.Year(Calendar.getInstance().get(Calendar.YEAR)))
-                .map { it.take(20) }
-
-            val unplayedAlbumArtists = albumArtistRepository.getAlbumArtists(AlbumArtistQuery.PlayCount(0))
+            val unplayedAlbumArtists = albumArtistRepository
+                .getAlbumArtists(AlbumArtistQuery.PlayCount(0))
                 .map { it.shuffled() }
                 .map { it.take(20) }
 

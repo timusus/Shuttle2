@@ -3,7 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.library.playlists
 import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStorePlaylistImporter
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.model.Playlist
-import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.mediaprovider.model.SmartPlaylist
 import com.simplecityapps.mediaprovider.repository.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.PlaylistRepository
 import com.simplecityapps.playback.PlaybackManager
@@ -12,7 +12,6 @@ import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import java.text.Collator
 import javax.inject.Inject
 
 interface PlaylistListContract {
@@ -24,7 +23,7 @@ interface PlaylistListContract {
     }
 
     interface View {
-        fun setPlaylists(playlists: List<Playlist>)
+        fun setPlaylists(playlists: List<Playlist>, smartPlaylists: List<SmartPlaylist>)
         fun onAddedToQueue(playlist: Playlist)
         fun setLoadingState(state: LoadingState)
         fun setLoadingProgress(progress: Float)
@@ -49,37 +48,22 @@ class PlaylistListPresenter @Inject constructor(
 ) : PlaylistListContract.Presenter,
     BasePresenter<PlaylistListContract.View>() {
 
-    private val mediaImporterListener = object : MediaImporter.Listener {
-        override fun onProgress(progress: Int, total: Int, song: Song) {
-            view?.setLoadingProgress(progress / total.toFloat())
-        }
-    }
-
-    override fun unbindView() {
-        super.unbindView()
-
-        mediaImporter.listeners.remove(mediaImporterListener)
-    }
-
     override fun loadPlaylists() {
         launch {
-            playlistRepository.getPlaylists(PlaylistQuery.All())
+            combine(
+                playlistRepository.getPlaylists(PlaylistQuery.All()),
+                playlistRepository.getSmartPlaylists()
+            ) { smartPlaylists, playlists ->
+                Pair(smartPlaylists, playlists)
+            }
                 .distinctUntilChanged()
                 .flowOn(Dispatchers.IO)
-                .collect { playlists ->
-                    if (playlists.isEmpty()) {
-                        if (mediaImporter.isImporting) {
-                            mediaImporter.listeners.add(mediaImporterListener)
-                            view?.setLoadingState(PlaylistListContract.LoadingState.Scanning)
-                        } else {
-                            mediaImporter.listeners.remove(mediaImporterListener)
-                            view?.setLoadingState(PlaylistListContract.LoadingState.Empty)
-                        }
+                .collect { (playlists, smartPlaylists) ->
+                    if (playlists.isEmpty() && smartPlaylists.isEmpty()) {
+                        view?.setLoadingState(PlaylistListContract.LoadingState.Empty)
                     } else {
-                        mediaImporter.listeners.remove(mediaImporterListener)
-                        view?.setLoadingState(PlaylistListContract.LoadingState.None)
+                        view?.setPlaylists(playlists, smartPlaylists)
                     }
-                    view?.setPlaylists(playlists)
                 }
         }
     }
