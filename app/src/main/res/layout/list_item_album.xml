@@ -17,10 +17,10 @@
         android:id="@+id/imageView"
         android:layout_width="40dp"
         android:layout_height="40dp"
-        tools:src="@drawable/ic_placeholder_album_rounded"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        tools:src="@drawable/ic_placeholder_album_rounded" />
 
     <TextView
         android:id="@+id/title"

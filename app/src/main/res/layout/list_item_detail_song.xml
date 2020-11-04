@@ -10,8 +10,7 @@
     android:focusable="true"
     android:minHeight="48dp"
     android:orientation="vertical"
-    android:paddingStart="16dp"
-    android:paddingEnd="4dp">
+    android:paddingStart="16dp">
 
     <TextView
         android:id="@+id/trackTextView"
@@ -20,7 +19,7 @@
         android:layout_height="wrap_content"
         android:width="36dp"
         android:textSize="14sp"
-        android:layout_marginStart="12dp"
+        android:layout_marginStart="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"

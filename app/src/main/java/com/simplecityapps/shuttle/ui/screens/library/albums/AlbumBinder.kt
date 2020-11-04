@@ -17,7 +17,7 @@ abstract class AlbumBinder(
     interface Listener {
         fun onAlbumClicked(album: Album, viewHolder: ViewHolder)
         fun onOverflowClicked(view: View, album: Album) {}
-        fun onViewHolderCreated(holder: AlbumBinder.ViewHolder) {}
+        fun onViewHolderCreated(holder: ViewHolder) {}
     }
 
     override fun getSectionName(): String? {

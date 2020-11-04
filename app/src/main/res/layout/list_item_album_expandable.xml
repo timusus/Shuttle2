@@ -16,7 +16,7 @@
         android:layout_marginTop="12dp"
         android:layout_width="40dp"
         android:layout_height="40dp"
-        android:layout_marginStart="12dp"
+        android:layout_marginStart="16dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -65,7 +65,6 @@
     <ImageButton
         android:id="@+id/overflowButton"
         style="@style/Widget.Shuttle.OverflowButton"
-        android:layout_marginEnd="4dp"
         app:layout_constraintBottom_toBottomOf="@+id/imageView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/imageView" />
