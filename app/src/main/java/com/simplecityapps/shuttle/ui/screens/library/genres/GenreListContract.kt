@@ -5,6 +5,7 @@ import com.simplecityapps.mediaprovider.model.Genre
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
@@ -46,8 +47,9 @@ class GenreListPresenter @Inject constructor(
     private val genreRepository: GenreRepository,
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackManager,
-    private val mediaImporter: MediaImporter
-) : GenreListContract.Presenter,
+    private val mediaImporter: MediaImporter,
+    private val queueManager: QueueManager
+    ) : GenreListContract.Presenter,
     BasePresenter<GenreListContract.View>() {
 
     private var genres: List<Genre> = emptyList()
@@ -114,6 +116,7 @@ class GenreListPresenter @Inject constructor(
                 .firstOrNull()
                 .orEmpty()
             songRepository.setExcluded(songs, true)
+            queueManager.remove(queueManager.getQueue().filter { queueItem -> songs.contains(queueItem.song) })
         }
     }
 

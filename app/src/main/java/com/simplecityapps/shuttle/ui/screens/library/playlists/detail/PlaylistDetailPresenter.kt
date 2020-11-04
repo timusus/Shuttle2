@@ -9,6 +9,7 @@ import com.simplecityapps.mediaprovider.repository.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
@@ -47,6 +48,7 @@ class PlaylistDetailPresenter @AssistedInject constructor(
     private val playlistRepository: PlaylistRepository,
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackManager,
+    private val queueManager: QueueManager,
     @Assisted private val playlist: Playlist
 ) : BasePresenter<PlaylistDetailContract.View>(),
     PlaylistDetailContract.Presenter {
@@ -122,6 +124,7 @@ class PlaylistDetailPresenter @AssistedInject constructor(
     override fun exclude(song: Song) {
         launch {
             songRepository.setExcluded(listOf(song), true)
+            queueManager.remove(queueManager.getQueue().filter { it.song == song })
         }
     }
 
@@ -145,5 +148,6 @@ class PlaylistDetailPresenter @AssistedInject constructor(
         } else {
             view?.showDeleteError(UserFriendlyError("The song couldn't be deleted"))
         }
+        queueManager.remove(queueManager.getQueue().filter { it.song == song })
     }
 }

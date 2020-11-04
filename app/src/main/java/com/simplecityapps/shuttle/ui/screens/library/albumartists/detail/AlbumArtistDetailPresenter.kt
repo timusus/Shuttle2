@@ -8,6 +8,7 @@ import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
@@ -56,6 +57,7 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
     private val albumRepository: AlbumRepository,
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackManager,
+    private val queueManager: QueueManager,
     @Assisted private val albumArtist: AlbumArtist
 ) : BasePresenter<AlbumArtistDetailContract.View>(),
     AlbumArtistDetailContract.Presenter {
@@ -196,6 +198,7 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
         launch {
             val songs = songRepository.getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = album.name, albumArtistName = album.albumArtist)))).firstOrNull().orEmpty()
             songRepository.setExcluded(songs, true)
+            queueManager.remove(queueManager.getQueue().filter { queueItem -> songs.contains(queueItem.song) })
         }
     }
 
@@ -223,6 +226,7 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
         } else {
             view?.showDeleteError(UserFriendlyError("The song couldn't be deleted"))
         }
+        queueManager.remove(queueManager.getQueue().filter { it.song == song })
     }
 
     override fun play(album: Album) {

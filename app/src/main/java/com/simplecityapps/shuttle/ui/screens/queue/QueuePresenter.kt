@@ -14,7 +14,7 @@ class QueuePresenter @Inject constructor(
     private val queueManager: QueueManager,
     private val playbackManager: PlaybackManager,
     private val queueWatcher: QueueWatcher,
-    private val songRepository: SongRepository
+    private val songRepository: SongRepository,
 ) : BasePresenter<QueueContract.View>(),
     QueueContract.Presenter,
     QueueChangeCallback {

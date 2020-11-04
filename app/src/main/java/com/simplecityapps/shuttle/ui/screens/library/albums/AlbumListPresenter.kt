@@ -6,6 +6,7 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.model.removeArticles
 import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
@@ -60,7 +61,8 @@ class AlbumListPresenter @Inject constructor(
     private val playbackManager: PlaybackManager,
     private val mediaImporter: MediaImporter,
     private val preferenceManager: GeneralPreferenceManager,
-    private val sortPreferenceManager: SortPreferenceManager
+    private val sortPreferenceManager: SortPreferenceManager,
+    private val queueManager: QueueManager
 ) : AlbumListContract.Presenter,
     BasePresenter<AlbumListContract.View>() {
 
@@ -149,6 +151,7 @@ class AlbumListPresenter @Inject constructor(
                 .firstOrNull()
                 .orEmpty()
             songRepository.setExcluded(songs, true)
+            queueManager.remove(queueManager.getQueue().filter { queueItem -> songs.contains(queueItem.song) })
         }
     }
 
