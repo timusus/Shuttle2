@@ -1,12 +1,13 @@
 {
   "commits": [
-    "Fixed an issue where app would lock up during a scan",
-    "Don't scan the device every time the app launches",
-    "Show progress when reading/writing tags with the tag editor",
-    "Fixed an issue where tag editor 'save' button doesn't show when genres are edited",
-    "Close keyboard when saving tags",
-    "Behind the scenes work on genre support",
-    "Possible fix for crash when selecting multiple list items at once",
-    "Fixed a crash when exiting search screen before search results are applied"
+    "Implemented Genres",
+    "Added QuickLyric",
+    "Added some default 'smart' playlists",
+    "Added option to save queue to playlist",
+    "Collapsing toolbar no longer 'snaps' (could cause you to select the wrong song)",
+    "Remove songs from queue when they're deleted or excluded",
+    "Fixed a layout issue on now playing screen, when returning to app with queue open",
+    "Fixed an issue where album list sorting menu was shown on artist list screen",
+    "Fixed an issue where mini-player 'skip' didn't work after the queue ended"
   ]
 }
