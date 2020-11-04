@@ -110,7 +110,7 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
 
         if (changed) {
             sheet1.translationY = -bottomNavigationView.height.toFloat() + bottomNavigationView.translationY
-            sheet1Container.setMargins(bottomMargin = sheet2PeekView.height)
+            sheet1Container.setMargins(bottomMargin = bottomSheetBehavior2.peekHeight)
             navHostFragment.setMargins(bottomMargin = bottomNavigationView.height + bottomSheetBehavior1.peekHeight)
         }
     }
