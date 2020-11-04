@@ -119,6 +119,7 @@ class AlbumArtistListFragment :
         presenter.loadAlbumArtists()
 
         findToolbarHost()?.getToolbar()?.let { toolbar ->
+            toolbar.menu.clear()
             toolbar.inflateMenu(R.menu.menu_artist_list)
             toolbar.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {

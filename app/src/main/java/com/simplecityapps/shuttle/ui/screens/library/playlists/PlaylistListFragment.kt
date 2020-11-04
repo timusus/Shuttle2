@@ -80,6 +80,7 @@ class PlaylistListFragment :
         presenter.loadPlaylists()
 
         findToolbarHost()?.getToolbar()?.let { toolbar ->
+            toolbar.menu.clear()
             toolbar.inflateMenu(R.menu.menu_playlists)
             toolbar.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
