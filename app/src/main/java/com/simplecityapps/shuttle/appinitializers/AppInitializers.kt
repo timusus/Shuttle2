@@ -8,9 +8,11 @@ class AppInitializers @Inject constructor(
     private val initializers: Set<@JvmSuppressWildcards AppInitializer>
 ) {
     fun init(application: Application) {
-        initializers.forEach {
-            Log.i("AppInit", "Initialising ${it::class.java.simpleName}")
-            it.init(application)
-        }
+        initializers
+            .sortedByDescending { it.priority() }
+            .forEach {
+                Log.i("AppInit", "Initialising ${it::class.java.simpleName}")
+                it.init(application)
+            }
     }
 }

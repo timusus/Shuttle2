@@ -11,7 +11,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 class LocalGenreRepository(
     val songRepository: SongRepository
@@ -25,8 +24,6 @@ class LocalGenreRepository(
                         songRepository
                             .getSongs(SongQuery.All())
                             .collect { songs ->
-                                val time = System.currentTimeMillis()
-                                Timber.i("Song repository emitting ${songs.size} songs")
                                 val genres = songs
                                     .fold(mutableSetOf<String>()) { genres, song ->
                                         genres.addAll(song.genres)
@@ -34,7 +31,6 @@ class LocalGenreRepository(
                                     }
                                     .filterNot { it.isEmpty() }
                                     .associateWith { genre -> songs.filter { song -> song.genres.contains(genre) } }
-                                Timber.i("Generating genres from ${songs.size} songs. ${genres.size} genres took ${System.currentTimeMillis() - time}ms")
                                 send(genres)
                             }
                     }
@@ -61,7 +57,8 @@ class LocalGenreRepository(
         return genreRelay
             .map {
                 genres.flatMap { genre ->
-                    it[genre].orEmpty() }
+                    it[genre].orEmpty()
+                }
             }
             .map { songs ->
                 var result = songs

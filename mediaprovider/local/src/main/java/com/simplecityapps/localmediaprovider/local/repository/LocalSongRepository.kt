@@ -27,7 +27,6 @@ class LocalSongRepository(
                         songDataDao
                             .getAll()
                             .collect { songs ->
-                                Timber.i("Songs relay sending  ${songs.size} songs, took ${System.currentTimeMillis() - time}ms")
                                 send(songs)
                             }
                     }

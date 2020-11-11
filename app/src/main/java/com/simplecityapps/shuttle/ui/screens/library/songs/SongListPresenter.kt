@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import timber.log.Timber
 import javax.inject.Inject
 
 interface SongListContract {
@@ -92,7 +91,6 @@ class SongListPresenter @Inject constructor(
                 .distinctUntilChanged()
                 .flowOn(Dispatchers.IO)
                 .collect { songs ->
-                    Timber.i("loadSongs collected ${songs.size} songs")
                     this@SongListPresenter.songs = songs
                     if (songs.isEmpty()) {
                         if (mediaImporter.isImporting) {
