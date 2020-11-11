@@ -23,8 +23,11 @@ sealed class GenreQuery(
     )
 
     class GenreName(val genreName: String) : GenreQuery(
-        predicate = { genre -> genre.name == genreName },
-        sortOrder = GenreSortOrder.Default
+        predicate = { genre -> genre.name == genreName }
+    )
+
+    class Search(val query: String) : GenreQuery(
+        predicate = { genre -> genre.name.contains(query, true) }
     )
 }
 

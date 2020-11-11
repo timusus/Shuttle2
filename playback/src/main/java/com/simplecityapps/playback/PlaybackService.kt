@@ -1,5 +1,6 @@
 package com.simplecityapps.playback
 
+import android.app.SearchManager
 import android.app.Service
 import android.content.Intent
 import android.content.ServiceConnection
@@ -79,6 +80,7 @@ class PlaybackService :
             }
             ACTION_SKIP_PREV -> playbackManager.skipToPrev()
             ACTION_SKIP_NEXT -> playbackManager.skipToNext(ignoreRepeat = true)
+            ACTION_SEARCH -> mediaSessionManager.mediaSession.controller?.transportControls?.playFromSearch(intent.extras?.getString(SearchManager.QUERY), Bundle())
             ACTION_NOTIFICATION_DISMISS -> {
                 Timber.v("Stopping due to notification dismiss")
                 stopSelf()
@@ -193,6 +195,8 @@ class PlaybackService :
         const val ACTION_TOGGLE_PLAYBACK: String = "com.simplecityapps.playback.toggle"
         const val ACTION_SKIP_PREV: String = "com.simplecityapps.playback.prev"
         const val ACTION_SKIP_NEXT: String = "com.simplecityapps.playback.next"
+        const val ACTION_SEARCH: String = "com.simplecityapps.playback.search"
+        const val ARG_SEARECH_QUERY: String = "com.simplecityapps.playback.search"
         const val ACTION_NOTIFICATION_DISMISS: String = "com.simplecityapps.playback.notification.dismiss"
     }
 

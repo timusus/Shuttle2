@@ -1,11 +1,14 @@
 package com.simplecityapps.shuttle.ui
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.provider.MediaStore
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.navigation.fragment.NavHostFragment
+import com.simplecityapps.playback.PlaybackService
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import dagger.android.AndroidInjector
@@ -43,8 +46,15 @@ class MainActivity :
         }
 
         navController.graph = graph
+
+        handleSearchQuery(intent)
     }
 
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+
+        handleSearchQuery(intent)
+    }
 
     // Private
 
@@ -52,6 +62,16 @@ class MainActivity :
         return (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
     }
 
+    private fun handleSearchQuery(intent: Intent?) {
+        if (intent?.action == MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH) {
+            ContextCompat.startForegroundService(this, (Intent(this, PlaybackService::class.java).apply {
+                action = PlaybackService.ACTION_SEARCH
+                intent.extras?.let { extras ->
+                    putExtras(extras)
+                }
+            }))
+        }
+    }
 
     // HasAndroidInjector Implementation
 

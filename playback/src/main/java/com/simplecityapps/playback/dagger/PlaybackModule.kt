@@ -6,10 +6,7 @@ import android.graphics.Bitmap
 import android.os.Build
 import android.util.LruCache
 import androidx.core.content.getSystemService
-import com.simplecityapps.mediaprovider.repository.AlbumArtistRepository
-import com.simplecityapps.mediaprovider.repository.AlbumRepository
-import com.simplecityapps.mediaprovider.repository.PlaylistRepository
-import com.simplecityapps.mediaprovider.repository.SongRepository
+import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.playback.*
 import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
@@ -141,11 +138,27 @@ class PlaybackModule {
         @Named("AppCoroutineScope") appCoroutineScope: CoroutineScope,
         playbackManager: PlaybackManager,
         queueManager: QueueManager,
+        artistRepository: AlbumArtistRepository,
+        albumRepository: AlbumRepository,
+        songRepository: SongRepository,
+        genreRepository: GenreRepository,
         playbackWatcher: PlaybackWatcher,
         queueWatcher: QueueWatcher,
         mediaIdHelper: MediaIdHelper
     ): MediaSessionManager {
-        return MediaSessionManager(context, appCoroutineScope, playbackManager, queueManager, mediaIdHelper, playbackWatcher, queueWatcher)
+        return MediaSessionManager(
+            context,
+            appCoroutineScope,
+            playbackManager,
+            queueManager,
+            mediaIdHelper,
+            artistRepository,
+            albumRepository,
+            songRepository,
+            genreRepository,
+            playbackWatcher,
+            queueWatcher
+        )
     }
 
     @AppScope
