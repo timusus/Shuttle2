@@ -7,6 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.io.Serializable
 
@@ -99,32 +100,8 @@ object SafDirectoryHelper {
                 val docUri = DocumentsContract.buildDocumentUriUsingTree(rootUri, DocumentsContract.getTreeDocumentId(rootUri))
                 retrieveDocumentNodes(contentResolver, docUri, rootUri).firstOrNull()?.let { rootDocumentNode ->
                     val tree = DocumentNodeTree(docUri, rootUri, rootDocumentNode.documentId, rootDocumentNode.displayName, rootDocumentNode.mimeType)
-
                     emit(tree)
-
-                    fun traverseDocumentNodes(parent: DocumentNodeTree) {
-                        val documentNodes = retrieveDocumentNodes(
-                            contentResolver,
-                            DocumentsContract.buildChildDocumentsUriUsingTree(rootUri, parent.documentId),
-                            rootUri
-                        )
-                        for (documentNode in documentNodes) {
-                            when (documentNode) {
-                                is DocumentNodeTree -> traverseDocumentNodes(parent.addTreeNode(documentNode))
-                                else -> {
-                                    if (documentNode.mimeType.startsWith("audio") ||
-                                        arrayOf("mp3", "3gp", "mp4", "m4a", "m4b", "aac", "ts", "flac", "mid", "xmf", "mxmf", "midi", "rtttl", "rtx", "ota", "imy", "ogg", "mkv", "wav", "opus")
-                                            .contains(documentNode.displayName.substringAfterLast('.'))
-                                    ) {
-                                        parent.addLeafNode(documentNode)
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    traverseDocumentNodes(tree)
-
+                    traverseDocumentNodes(tree, contentResolver, rootUri)
                     emit(tree)
                 }
             } catch (e: SecurityException) {
@@ -133,55 +110,74 @@ object SafDirectoryHelper {
         }.flowOn(Dispatchers.IO)
     }
 
+    private suspend fun traverseDocumentNodes(parent: DocumentNodeTree, contentResolver: ContentResolver, rootUri: Uri) {
+        val documentNodes = retrieveDocumentNodes(contentResolver, DocumentsContract.buildChildDocumentsUriUsingTree(rootUri, parent.documentId), rootUri)
+        for (documentNode in documentNodes) {
+            when (documentNode) {
+                is DocumentNodeTree -> traverseDocumentNodes(parent.addTreeNode(documentNode), contentResolver, rootUri)
+                else -> {
+                    if (documentNode.mimeType.startsWith("audio") ||
+                        arrayOf("mp3", "3gp", "mp4", "m4a", "m4b", "aac", "ts", "flac", "mid", "xmf", "mxmf", "midi", "rtttl", "rtx", "ota", "imy", "ogg", "mkv", "wav", "opus")
+                            .contains(documentNode.displayName.substringAfterLast('.'))
+                    ) {
+                        parent.addLeafNode(documentNode)
+                    }
+                }
+            }
+        }
+    }
+
     /**
      * Builds a list of [DocumentNode] from the passed in [Uri].
      *
      * This involves a content resolver query, and should be called from a background thread.
      */
-    private fun retrieveDocumentNodes(contentResolver: ContentResolver, uri: Uri, rootUri: Uri): List<DocumentNode> {
-        val documentNodes = mutableListOf<DocumentNode>()
-        try {
-            contentResolver.query(
-                uri,
-                arrayOf(
-                    DocumentsContract.Document.COLUMN_DOCUMENT_ID,
-                    DocumentsContract.Document.COLUMN_DISPLAY_NAME,
-                    DocumentsContract.Document.COLUMN_MIME_TYPE
-                ),
-                null,
-                null,
-                null
-            ).use { cursor ->
-                cursor?.let { cursor ->
-                    while (cursor.moveToNext()) {
-                        val mimeType = cursor.getString(2)
-                        val documentId = cursor.getString(0)
-                        if (mimeType == DocumentsContract.Document.MIME_TYPE_DIR) {
-                            documentNodes.add(
-                                DocumentNodeTree(
-                                    uri = DocumentsContract.buildDocumentUriUsingTree(uri, documentId),
-                                    rootUri = rootUri,
-                                    documentId = documentId,
-                                    displayName = cursor.getString(1),
-                                    mimeType = mimeType
+    private suspend fun retrieveDocumentNodes(contentResolver: ContentResolver, uri: Uri, rootUri: Uri): List<DocumentNode> {
+        return withContext(Dispatchers.IO) {
+            val documentNodes = mutableListOf<DocumentNode>()
+            try {
+                contentResolver.query(
+                    uri,
+                    arrayOf(
+                        DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+                        DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                        DocumentsContract.Document.COLUMN_MIME_TYPE
+                    ),
+                    null,
+                    null,
+                    null
+                ).use { cursor ->
+                    cursor?.let {
+                        while (cursor.moveToNext()) {
+                            val mimeType = cursor.getString(2)
+                            val documentId = cursor.getString(0)
+                            if (mimeType == DocumentsContract.Document.MIME_TYPE_DIR) {
+                                documentNodes.add(
+                                    DocumentNodeTree(
+                                        uri = DocumentsContract.buildDocumentUriUsingTree(uri, documentId),
+                                        rootUri = rootUri,
+                                        documentId = documentId,
+                                        displayName = cursor.getString(1),
+                                        mimeType = mimeType
+                                    )
                                 )
-                            )
-                        } else {
-                            documentNodes.add(
-                                DocumentNode(
-                                    uri = DocumentsContract.buildDocumentUriUsingTree(uri, documentId),
-                                    documentId = documentId,
-                                    displayName = cursor.getString(1),
-                                    mimeType = mimeType
+                            } else {
+                                documentNodes.add(
+                                    DocumentNode(
+                                        uri = DocumentsContract.buildDocumentUriUsingTree(uri, documentId),
+                                        documentId = documentId,
+                                        displayName = cursor.getString(1),
+                                        mimeType = mimeType
+                                    )
                                 )
-                            )
+                            }
                         }
-                    }
-                } ?: Timber.e("Failed to iterate cursor (null)")
+                    } ?: Timber.e("Failed to iterate cursor (null)")
+                }
+            } catch (e: SecurityException) {
+                Timber.e("Failed to retrieve document node for uri: $uri")
             }
-        } catch (e: SecurityException) {
-            Timber.e("Failed to retrieve document node for uri: $uri")
+            documentNodes
         }
-        return documentNodes
     }
 }
