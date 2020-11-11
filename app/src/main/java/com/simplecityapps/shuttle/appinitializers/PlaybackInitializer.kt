@@ -104,6 +104,7 @@ class PlaybackInitializer @Inject constructor(
     }
 
     private fun onRestoreComplete() {
+        Timber.i("Queue restoration complete")
         queueWatcher.hasRestoredQueue = true
     }
 
