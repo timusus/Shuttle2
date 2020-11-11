@@ -59,7 +59,7 @@ fun getAudioFile(fileDescriptor: Int, filePath: String, fileName: String, lastMo
         duration = metadata?.audioProperties?.duration,
         year = metadata?.propertyMap?.get(TagLibProperty.Date.key)?.firstOrNull()?.parseDate(),
         genres = metadata?.propertyMap?.get(TagLibProperty.Genre.key).orEmpty().flatMap { genre ->
-            genre.split(",", ";", "/", "&")
+            genre.split(",", ";", "/")
                 .map { genre -> genre.trim() }
                 .filterNot { genre -> genre.isEmpty() }
         }

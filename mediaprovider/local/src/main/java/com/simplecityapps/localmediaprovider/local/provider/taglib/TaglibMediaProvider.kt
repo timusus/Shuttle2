@@ -42,13 +42,14 @@ class TaglibMediaProvider(
     override suspend fun findSongs(callback: ((song: Song, progress: Int, total: Int) -> Unit)?): List<Song>? {
         return getDocumentNodes()?.let { nodes ->
             val songs = mutableListOf<Song>()
-            getAudioFiles(nodes).collectIndexed { index, audioFile ->
-                val song = audioFile.toSong()
-                withContext(Dispatchers.Main) {
-                    callback?.invoke(song, index, nodes.size)
+            getAudioFiles(nodes)
+                .collectIndexed { index, audioFile ->
+                    val song = audioFile.toSong()
+                    withContext(Dispatchers.Main) {
+                        callback?.invoke(song, index, nodes.size)
+                    }
+                    songs.add(song)
                 }
-                songs.add(song)
-            }
             songs
         }
     }
