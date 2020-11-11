@@ -17,6 +17,8 @@ import com.simplecityapps.shuttle.ui.widgets.WidgetProvider42
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasAndroidInjector
+import kotlinx.coroutines.DEBUG_PROPERTY_NAME
+import kotlinx.coroutines.DEBUG_PROPERTY_VALUE_ON
 import okhttp3.OkHttpClient
 import timber.log.Timber
 import javax.inject.Inject
@@ -62,6 +64,12 @@ class ShuttleApplication : Application(),
         }
 
         initializers.init(this)
+
+        try {
+            System.setProperty(DEBUG_PROPERTY_NAME, DEBUG_PROPERTY_VALUE_ON)
+        } catch (e: SecurityException) {
+            Timber.e(e, "Failed to enable coroutine debugging")
+        }
 
         updateAppWidgets(WidgetManager.UpdateReason.Unknown)
     }
