@@ -1,7 +1,7 @@
 package com.simplecityapps.localmediaprovider.local.provider.taglib
 
 import android.content.Context
-import com.simplecityappds.saf.SafDirectoryHelper
+import com.simplecityapps.saf.SafDirectoryHelper
 import com.simplecityapps.localmediaprovider.local.provider.toSong
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.AudioFile

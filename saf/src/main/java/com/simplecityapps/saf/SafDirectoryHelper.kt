@@ -1,4 +1,4 @@
-package com.simplecityappds.saf
+package com.simplecityapps.saf
 
 import android.content.ContentResolver
 import android.net.Uri
