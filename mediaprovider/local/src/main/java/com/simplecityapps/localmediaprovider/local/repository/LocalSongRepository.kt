@@ -3,6 +3,7 @@ package com.simplecityapps.localmediaprovider.local.repository
 import com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao
 import com.simplecityapps.localmediaprovider.local.data.room.entity.toSongData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.toSongDataUpdate
+import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
@@ -45,14 +46,18 @@ class LocalSongRepository(
                     result = songs.filterNot { it.blacklisted }
                 }
 
+                query.providerType?.let { providerType ->
+                    result = songs.filter { song -> song.mediaProvider == providerType }
+                }
+
                 result
                     .filter(query.predicate)
                     .sortedWith(query.sortOrder.comparator)
             }
     }
 
-    override suspend fun insert(songs: List<Song>) {
-        songDataDao.insert(songs.toSongData())
+    override suspend fun insert(songs: List<Song>, mediaProviderType: MediaProvider.Type) {
+        songDataDao.insert(songs.toSongData(mediaProviderType))
     }
 
     override suspend fun update(songs: List<Song>) {
@@ -60,11 +65,7 @@ class LocalSongRepository(
     }
 
     override suspend fun update(song: Song): Int {
-        return songDataDao.update(song.toSongData())
-    }
-
-    override suspend fun remove(songs: List<Song>) {
-        songDataDao.delete(songs.toSongData())
+        return songDataDao.update(song.toSongDataUpdate())
     }
 
     override suspend fun remove(song: Song) {
@@ -72,8 +73,12 @@ class LocalSongRepository(
         songDataDao.delete(song.id)
     }
 
-    override suspend fun insertUpdateAndDelete(inserts: List<Song>, updates: List<Song>, deletes: List<Song>): Triple<Int, Int, Int> {
-        return songDataDao.insertUpdateAndDelete(inserts.toSongData(), updates.toSongDataUpdate(), deletes.toSongData())
+    override suspend fun removeAll(mediaProviderType: MediaProvider.Type) {
+        songDataDao.deleteAll(mediaProviderType)
+    }
+
+    override suspend fun insertUpdateAndDelete(inserts: List<Song>, updates: List<Song>, deletes: List<Song>, mediaProviderType: MediaProvider.Type): Triple<Int, Int, Int> {
+        return songDataDao.insertUpdateAndDelete(inserts.toSongData(mediaProviderType), updates.toSongDataUpdate(), deletes.toSongData(mediaProviderType))
     }
 
     override suspend fun incrementPlayCount(song: Song) {

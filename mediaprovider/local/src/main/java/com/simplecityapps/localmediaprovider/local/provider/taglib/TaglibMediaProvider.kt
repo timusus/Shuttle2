@@ -1,11 +1,11 @@
 package com.simplecityapps.localmediaprovider.local.provider.taglib
 
 import android.content.Context
-import com.simplecityapps.saf.SafDirectoryHelper
 import com.simplecityapps.localmediaprovider.local.provider.toSong
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.saf.SafDirectoryHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
@@ -15,6 +15,9 @@ class TaglibMediaProvider(
     private val context: Context,
     private val fileScanner: FileScanner,
 ) : MediaProvider {
+
+    override val type: MediaProvider.Type
+        get() = MediaProvider.Type.Shuttle
 
     var directories: List<SafDirectoryHelper.DocumentNodeTree>? = null
 
@@ -44,7 +47,7 @@ class TaglibMediaProvider(
             val songs = mutableListOf<Song>()
             getAudioFiles(nodes)
                 .collectIndexed { index, audioFile ->
-                    val song = audioFile.toSong()
+                    val song = audioFile.toSong(type)
                     withContext(Dispatchers.Main) {
                         callback?.invoke(song, index, nodes.size)
                     }

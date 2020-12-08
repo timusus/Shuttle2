@@ -14,6 +14,9 @@ class MediaStoreMediaProvider(
     private val context: Context
 ) : MediaProvider {
 
+    override val type: MediaProvider.Type
+        get() = MediaProvider.Type.MediaStore
+
     override suspend fun findSongs(callback: ((song: Song, progress: Int, total: Int) -> Unit)?): List<Song> {
 
         var songs = mutableListOf<Song>()
@@ -82,7 +85,8 @@ class MediaStoreMediaProvider(
                         playCount = 0,
                         playbackPosition = 0,
                         blacklisted = false,
-                        mediaStoreId = songCursor.getLong(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID))
+                        mediaStoreId = songCursor.getLong(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)),
+                        mediaProvider = type
                     )
                     songs.add(song)
                     progress++

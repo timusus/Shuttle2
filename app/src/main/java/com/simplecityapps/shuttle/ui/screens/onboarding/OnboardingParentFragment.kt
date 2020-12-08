@@ -20,10 +20,10 @@ import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
-import com.simplecityapps.shuttle.ui.screens.onboarding.directories.DirectorySelectionFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.MediaProviderSelectionFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.scanner.MediaScannerFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.storage.StoragePermissionFragment
+import com.simplecityapps.shuttle.ui.screens.onboarding.taglib.DirectorySelectionFragment
 import me.relex.circleindicator.CircleIndicator3
 import javax.inject.Inject
 
@@ -104,12 +104,6 @@ class OnboardingParentFragment : Fragment(),
         }
         pages.add(OnboardingPage.MediaProviderSelector)
         pages.add(OnboardingPage.Scanner)
-
-        // If we've previously chosen the tag lib song provider as our default song provider (in which case we're probably not onboarding for the first time), we need to
-        // add the directory selection page after the scanner page
-        if (playbackPreferenceManager.songProvider == PlaybackPreferenceManager.SongProvider.TagLib) {
-            pages.add(pages.indexOf(OnboardingPage.Scanner), OnboardingPage.MusicDirectories)
-        }
 
         adapter.data = pages
 
@@ -229,7 +223,7 @@ class OnboardingParentFragment : Fragment(),
                 OnboardingPage.StoragePermission -> StoragePermissionFragment()
                 OnboardingPage.MediaProviderSelector -> MediaProviderSelectionFragment.newInstance(isOnboarding)
                 OnboardingPage.MusicDirectories -> DirectorySelectionFragment()
-                OnboardingPage.Scanner -> MediaScannerFragment.newInstance(scanAutomatically = true, showRescanButton = false, dismissOnScanComplete = true, showToolbar = true)
+                OnboardingPage.Scanner -> MediaScannerFragment.newInstance(scanAutomatically = true, showRescanButton = false, dismissOnScanComplete = isOnboarding, showToolbar = true)
             }
         }
     }

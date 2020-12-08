@@ -20,9 +20,10 @@ import com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlayli
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListFragment
 import com.simplecityapps.shuttle.ui.screens.main.MainFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParentFragment
-import com.simplecityapps.shuttle.ui.screens.onboarding.directories.DirectorySelectionFragment
+import com.simplecityapps.shuttle.ui.screens.onboarding.emby.EmbyConfigurationFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.MediaProviderSelectionFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.scanner.MediaScannerFragment
+import com.simplecityapps.shuttle.ui.screens.onboarding.taglib.DirectorySelectionFragment
 import com.simplecityapps.shuttle.ui.screens.playback.PlaybackFragment
 import com.simplecityapps.shuttle.ui.screens.playback.mini.MiniPlaybackFragment
 import com.simplecityapps.shuttle.ui.screens.queue.QueueFragment
@@ -126,4 +127,7 @@ abstract class FragmentBuildersModule {
 
     @ContributesAndroidInjector
     abstract fun contributeTagEditorDialog(): TagEditorAlertDialog
+
+    @ContributesAndroidInjector
+    abstract fun contributeEmbyConfigurationFragment(): EmbyConfigurationFragment
 }

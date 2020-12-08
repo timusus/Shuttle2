@@ -22,66 +22,45 @@
 
     <TextView
         android:id="@+id/subtitleLabel"
+        style="@style/TextTitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
+        android:layout_marginStart="16dp"
         android:layout_marginTop="16dp"
-        android:layout_marginEnd="24dp"
-        android:text="Shuttle can find your music using two different modes. You can change this later."
+        android:layout_marginEnd="16dp"
+        android:maxLines="3"
+        android:text="Add media provider(s). You can change this later."
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/toolbar" />
 
-    <RadioGroup
-        android:id="@+id/radioGroup"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerView"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="32dp"
-        android:layout_marginEnd="24dp"
-        android:checkedButton="@id/advanced"
-        app:layout_constraintTop_toBottomOf="@id/subtitleLabel">
-
-        <RadioButton
-            android:id="@+id/advanced"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingStart="4dp"
-            android:text="Shuttle File Scanner (Advanced)" />
-
-        <RadioButton
-            android:id="@+id/basic"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingStart="4dp"
-            android:text="Android Media Store (Basic)" />
-
-    </RadioGroup>
+        android:layout_height="0dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="8dp"
+        android:orientation="vertical"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        app:layout_constraintBottom_toTopOf="@id/addProviderButton"
+        app:layout_constraintTop_toBottomOf="@id/subtitleLabel"
+        tools:itemCount="4"
+        tools:listitem="@layout/list_item_media_provider" />
 
     <Button
-        android:id="@+id/moreInfoButton"
+        android:id="@+id/addProviderButton"
         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="24dp"
-        android:text="More Info"
+        android:layout_marginBottom="24dp"
+        android:text="Add Media Provider"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/radioGroup" />
-
-    <TextView
-        android:id="@+id/warningLabel"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="24dp"
-        android:layout_marginEnd="24dp"
-        android:text="Warning: Changing media providers will reset your database (playlists, history, play count, etc.)"
-        android:textColor="#B00020"
-        android:visibility="gone"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/moreInfoButton"
-        tools:visibility="visible" />
+        app:layout_constraintTop_toTopOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

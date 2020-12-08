@@ -11,12 +11,18 @@ android {
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
+        buildConfigField("String", "PROXY_ADDR", "\"192.168.0.14\"")
+        buildConfigField("Integer", "PROXY_PORT", "8888")
     }
 
     buildTypes {
+        debug {
+            buildConfigField("Boolean", "PROXY_ENABLED", "false")
+        }
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            buildConfigField("Boolean", "PROXY_ENABLED", "false")
         }
     }
 
@@ -28,47 +34,47 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
+    // AndroidX Preferences
+    implementation "androidx.preference:preference-ktx:1.1.1"
+
+    // OkHttp Logging Interceptor
+    api 'com.squareup.okhttp3:logging-interceptor:4.8.1'
+
     // Kotlin Standard Library
-    api "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.3.72"
+    api "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.20-RC"
+
+//    // Shuttle Networking
+//    api project(":networking")
 
     // Kotlin Extensions
-    api 'androidx.core:core-ktx:1.3.1'
+    api 'androidx.core:core-ktx:1.3.2'
 
-    // AnroidX Annotations
+    // AndroidX Annotations
     api "androidx.annotation:annotation:1.1.0"
 
     // Dagger core
-    api 'com.google.dagger:dagger-android:2.28.3'
-    kapt 'com.google.dagger:dagger-compiler:2.28.3'
+    api 'com.google.dagger:dagger-android:2.29.1'
+    kapt 'com.google.dagger:dagger-compiler:2.29.1'
 
     // Timber
     api 'com.jakewharton.timber:timber:4.7.1'
 
-    // OKHttp
-    api 'com.squareup.okhttp3:okhttp:4.8.1'
-    api 'com.squareup.okhttp3:logging-interceptor:4.8.1'
-
-    // Retrofit
-    api "com.squareup.retrofit2:converter-moshi:2.9.0"
-
-    // Moshi
-    api("com.squareup.moshi:moshi-kotlin:1.9.3")
-    kapt("com.squareup.moshi:moshi-kotlin-codegen:1.9.3")
-
-    // Material Design
-    implementation("com.google.android.material:material:1.3.0-alpha02")
-
-    // AndroidX Preferences
-    implementation "androidx.preference:preference:1.1.1"
-
-    // NanoHttp
-    implementation 'org.nanohttpd:nanohttpd-webserver:2.3.1'
-
-    // ExoPlayer
-    implementation project(':exoplayer-library-core')
-
     // Coroutines
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.7")
+
+    // OKHttp
+    implementation 'com.squareup.okhttp3:okhttp:4.9.0'
+
+    // Retrofit
+    implementation "com.squareup.retrofit2:converter-moshi:2.4.0"
+
+    // Moshi
+    implementation 'com.squareup.moshi:moshi:1.9.2'
+    implementation 'com.squareup.moshi:moshi-kotlin:1.9.2'
+    implementation 'com.squareup.moshi:moshi-adapters:1.9.2'
+
+    // Encrypted Shared Preferences
+    api 'androidx.security:security-crypto:1.1.0-alpha03'
 }
 
 repositories {

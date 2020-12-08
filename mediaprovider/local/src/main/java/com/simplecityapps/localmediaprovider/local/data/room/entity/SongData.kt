@@ -4,6 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.Song
 import java.util.*
 
@@ -32,13 +33,14 @@ data class SongData(
     @ColumnInfo(name = "lastPlayed") var lastPlayed: Date? = null,
     @ColumnInfo(name = "lastCompleted") var lastCompleted: Date? = null,
     @ColumnInfo(name = "blacklisted") var excluded: Boolean = false,
-    @ColumnInfo(name = "mediaStoreId") var mediaStoreId: Long? = null
+    @ColumnInfo(name = "mediaStoreId") var mediaStoreId: Long? = null,
+    @ColumnInfo(name = "mediaProvider") var mediaProvider: MediaProvider.Type
 ) {
     @PrimaryKey(autoGenerate = true)
     var id: Long = 0
 }
 
-fun Song.toSongData(): SongData {
+fun Song.toSongData(mediaProviderType: MediaProvider.Type): SongData {
     return SongData(
         name = name,
         track = track,
@@ -58,12 +60,13 @@ fun Song.toSongData(): SongData {
         lastPlayed = lastPlayed,
         lastCompleted = lastCompleted,
         excluded = false,
-        mediaStoreId = mediaStoreId
+        mediaStoreId = mediaStoreId,
+        mediaProviderType
     ).apply {
         id = this@toSongData.id
     }
 }
 
-fun List<Song>.toSongData(): List<SongData> {
-    return map { song -> song.toSongData() }
+fun List<Song>.toSongData(mediaProviderType: MediaProvider.Type): List<SongData> {
+    return map { song -> song.toSongData(mediaProviderType) }
 }

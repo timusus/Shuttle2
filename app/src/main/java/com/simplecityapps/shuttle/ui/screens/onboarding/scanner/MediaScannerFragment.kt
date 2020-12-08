@@ -10,6 +10,7 @@ import android.widget.TextView
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
@@ -17,7 +18,6 @@ import com.simplecityapps.shuttle.ui.common.utils.withArgs
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingChild
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingPage
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParent
-import timber.log.Timber
 import javax.inject.Inject
 
 class MediaScannerFragment :
@@ -33,7 +33,8 @@ class MediaScannerFragment :
     private var songCountTextView: TextView by autoCleared()
     private var rescanButton: Button by autoCleared()
 
-    @Inject lateinit var presenter: ScannerPresenter
+    @Inject lateinit var presenterFactory: ScannerPresenter.Factory
+    lateinit var presenter: ScannerPresenter
 
     private var shouldScanAutomatically: Boolean = false
     private var canShowRescanButton: Boolean = false
@@ -59,6 +60,8 @@ class MediaScannerFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        presenter = presenterFactory.create(shouldDismissOnScanComplete)
+
         toolbar = view.findViewById(R.id.toolbar)
         progressBar = view.findViewById(R.id.progressBar)
         titleTextView = view.findViewById(R.id.title)
@@ -71,7 +74,7 @@ class MediaScannerFragment :
         }
 
         setTitle("No scan in progress")
-        subtitleTextView.text = "What is my purpose?"
+        subtitleTextView.text = null
         progressBar.isVisible = false
         songCountTextView.isVisible = false
         rescanButton.isVisible = true
@@ -99,6 +102,22 @@ class MediaScannerFragment :
 
     // ScannerContract.View Implementation
 
+    override fun setTitle(title: String) {
+        titleTextView.text = title
+    }
+
+    override fun dismiss() {
+        getParent()?.exit()
+    }
+
+    override fun setScanStarted(providerType: MediaProvider.Type) {
+        setTitle("Scanning…")
+        subtitleTextView.text = "${providerType.title()} media provider"
+        progressBar.isVisible = true
+        progressBar.isIndeterminate = true
+        rescanButton.isVisible = false
+    }
+
     override fun setProgress(progress: Int, total: Int, message: String) {
         progressBar.progress = ((progress / total.toFloat()) * 100).toInt()
         subtitleTextView.text = message
@@ -109,28 +128,17 @@ class MediaScannerFragment :
         rescanButton.isVisible = false
     }
 
-    override fun setTitle(title: String) {
-        titleTextView.text = title
-    }
-
-    override fun dismiss() {
-        Timber.i("Dismiss called")
-        if (shouldDismissOnScanComplete) {
-            getParent()?.exit()
-        }
-    }
-
-    override fun setScanComplete(inserts: Int, updates: Int, deletes: Int) {
-        setTitle("Scan complete")
+    override fun setScanComplete(providerType: MediaProvider.Type, inserts: Int, updates: Int, deletes: Int) {
+        setTitle("${providerType.title()} scan complete")
         subtitleTextView.text = "$inserts inserts, $updates updates, $deletes deletes"
         progressBar.isVisible = false
         songCountTextView.isVisible = false
+    }
 
+    override fun setAllScansComplete() {
         if (canShowRescanButton) {
             rescanButton.isVisible = true
         }
-
-        dismiss()
     }
 
     override fun setScanFailed() {
@@ -140,7 +148,6 @@ class MediaScannerFragment :
         songCountTextView.isVisible = false
         rescanButton.isVisible = true
     }
-
 
     // OnboardingChild Implementation
 
@@ -167,7 +174,7 @@ class MediaScannerFragment :
         private const val ARG_SCAN_AUTOMATICALLY = "scan_automatically"
         private const val ARG_SHOW_RESCAN_BUTTON = "show_rescan_button"
         private const val ARG_DISMISS_ON_SCAN_COMPLETE = "dismiss_on_complete"
-        private const val ARG_SHOW_TOOLBAR = "dismiss_on_complete"
+        private const val ARG_SHOW_TOOLBAR = "show_toolbar"
 
         fun newInstance(scanAutomatically: Boolean, showRescanButton: Boolean, dismissOnScanComplete: Boolean, showToolbar: Boolean) = MediaScannerFragment().withArgs {
             putBoolean(ARG_SCAN_AUTOMATICALLY, scanAutomatically)

@@ -21,7 +21,9 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:visibility="gone"
-            app:srcCompat="@drawable/ic_error_outline_black_24dp" />
+            app:srcCompat="@drawable/ic_error_outline_black_24dp"
+            app:tint="?colorControlNormal"
+            tools:visibility="visible" />
 
         <ProgressBar
             android:id="@+id/progressBar"
@@ -39,5 +41,15 @@
         android:gravity="center"
         android:lines="1"
         android:text="Loading…" />
+
+    <Button
+        android:id="@+id/retryButton"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="retry"
+        android:visibility="gone"
+        tools:visibility="visible" />
 
 </merge>

@@ -24,6 +24,7 @@ import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.playback.sleeptimer.SleepTimer
+import com.simplecityapps.provider.emby.EmbyAuthenticationManager
 import com.simplecityapps.shuttle.dagger.AppScope
 import com.squareup.moshi.Moshi
 import dagger.Module
@@ -71,11 +72,16 @@ class PlaybackModule {
     }
 
     @Provides
-    fun providePlayback(context: Context, playbackPreferenceManager: PlaybackPreferenceManager, equalizerAudioProcessor: EqualizerAudioProcessor): Playback {
+    fun providePlayback(
+        context: Context,
+        playbackPreferenceManager: PlaybackPreferenceManager,
+        equalizerAudioProcessor: EqualizerAudioProcessor,
+        embyAuthenticationManager: EmbyAuthenticationManager
+    ): Playback {
         return if (playbackPreferenceManager.useAndroidMediaPlayer) {
             MediaPlayerPlayback(context)
         } else {
-            ExoPlayerPlayback(context, equalizerAudioProcessor)
+            ExoPlayerPlayback(context, equalizerAudioProcessor, embyAuthenticationManager)
         }
     }
 

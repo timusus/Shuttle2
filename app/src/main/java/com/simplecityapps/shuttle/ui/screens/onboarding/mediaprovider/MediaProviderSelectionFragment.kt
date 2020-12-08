@@ -5,15 +5,23 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.RadioButton
-import android.widget.RadioGroup
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.Toolbar
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import androidx.transition.ChangeBounds
+import androidx.transition.TransitionManager
+import com.simplecityapps.adapter.RecyclerAdapter
+import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
@@ -21,6 +29,8 @@ import com.simplecityapps.shuttle.ui.common.utils.withArgs
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingChild
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingPage
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParent
+import com.simplecityapps.shuttle.ui.screens.onboarding.emby.EmbyConfigurationFragment
+import com.simplecityapps.shuttle.ui.screens.onboarding.taglib.DirectorySelectionFragment
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -28,19 +38,24 @@ class MediaProviderSelectionFragment :
     Fragment(),
     Injectable,
     OnboardingChild,
-    MediaProviderSelectionContract.View {
+    MediaProviderSelectionContract.View,
+    MediaProviderOptionsFragment.Listener {
 
-    private var radioGroup: RadioGroup by autoCleared()
-    private var basicRadioButton: RadioButton by autoCleared()
-    private var advancedRadioButton: RadioButton by autoCleared()
     private var toolbar: Toolbar by autoCleared()
-
-    private var warningLabel: TextView by autoCleared()
 
     private var isOnboarding = true
 
-    @Inject lateinit var presenterFactory: MediaProviderSelectionPresenter.Factory
-    private lateinit var presenter: MediaProviderSelectionPresenter
+    private var recyclerView: RecyclerView by autoCleared()
+
+    private var addProviderButton: Button by autoCleared()
+
+    private lateinit var adapter: RecyclerAdapter
+
+    @Inject lateinit var presenter: MediaProviderSelectionPresenter
+
+    private val preAnimationConstraints = ConstraintSet()
+    private val postAnimationConstraints = ConstraintSet()
+    private val transition = ChangeBounds()
 
 
     // Lifecycle
@@ -49,6 +64,8 @@ class MediaProviderSelectionFragment :
         super.onCreate(savedInstanceState)
 
         isOnboarding = requireArguments().getBoolean(ARG_ONBOARDING)
+
+        adapter = RecyclerAdapter(lifecycleScope)
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -58,43 +75,32 @@ class MediaProviderSelectionFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        radioGroup = view.findViewById(R.id.radioGroup)
-        basicRadioButton = view.findViewById(R.id.basic)
-        advancedRadioButton = view.findViewById(R.id.advanced)
+        recyclerView = view.findViewById(R.id.recyclerView)
+        recyclerView.layoutManager = LinearLayoutManager(requireContext())
+        recyclerView.adapter = adapter
 
         toolbar = view.findViewById(R.id.toolbar)
 
-        warningLabel = view.findViewById(R.id.warningLabel)
-
         val subtitleLabel: TextView = view.findViewById(R.id.subtitleLabel)
         if (isOnboarding) {
-            subtitleLabel.text = "Shuttle can find your music using two different modes. You can change this later."
+            subtitleLabel.text = "Add media provider(s). You can change this later"
         } else {
-            subtitleLabel.text = "Shuttle can find your music using two different modes:"
+            subtitleLabel.text = "Add media provider(s)"
         }
 
-        val moreInfoButton: Button = view.findViewById(R.id.moreInfoButton)
-        moreInfoButton.setOnClickListener {
-            AlertDialog.Builder(requireContext())
-                .setTitle("Media Provider")
-                .setMessage("• Shuttle File Scanner\n\nSearches for music in directories you specify, and scans the files for metadata. More accurate than the Android Media Store, and allows you to modify/delete songs. \n\n• Android Media Store\n\nFaster, and easier to set up, but less reliable.")
-                .setNegativeButton("Close", null)
-                .show()
+        addProviderButton = view.findViewById(R.id.addProviderButton)
+        addProviderButton.setOnClickListener {
+            presenter.addProviderClicked()
         }
 
-        presenter = presenterFactory.create(isOnboarding)
+        preAnimationConstraints.clone(view as ConstraintLayout)
+        postAnimationConstraints.clone(view)
+        postAnimationConstraints.clear(R.id.addProviderButton, ConstraintSet.TOP)
+
+        transition.interpolator = FastOutSlowInInterpolator()
+        transition.duration = 300
+
         presenter.bindView(this)
-
-        // Called after bind view, so our radio group can have its selection set without triggering the change listener
-        radioGroup.setOnCheckedChangeListener { _, checkedId ->
-            presenter.setSongProvider(
-                when (checkedId) {
-                    R.id.basic -> PlaybackPreferenceManager.SongProvider.MediaStore
-                    R.id.advanced -> PlaybackPreferenceManager.SongProvider.TagLib
-                    else -> PlaybackPreferenceManager.SongProvider.TagLib
-                }
-            )
-        }
     }
 
     override fun onResume() {
@@ -128,40 +134,80 @@ class MediaProviderSelectionFragment :
 
     // MediaProviderSelectionContract.View Implementation
 
-    override fun setSongProvider(songProvider: PlaybackPreferenceManager.SongProvider) {
-        when (songProvider) {
-            PlaybackPreferenceManager.SongProvider.MediaStore -> radioGroup.check(R.id.basic)
-            PlaybackPreferenceManager.SongProvider.TagLib -> radioGroup.check(R.id.advanced)
-        }
+    override fun showMediaProviderSelectionDialog(mediaProviderTypes: List<MediaProvider.Type>) {
+        MediaProviderOptionsFragment.newInstance(mediaProviderTypes).show(childFragmentManager)
     }
 
-    override fun updateViewPager(songProvider: PlaybackPreferenceManager.SongProvider) {
-        when (songProvider) {
-            PlaybackPreferenceManager.SongProvider.MediaStore -> {
-                radioGroup.check(R.id.basic)
-                getParent()?.let { parent ->
-                    val pages = parent.getPages().toMutableList()
-                    if (pages.contains(OnboardingPage.MusicDirectories)) {
-                        pages.remove(OnboardingPage.MusicDirectories)
-                        parent.setPages(pages)
-                    }
-                }
-            }
-            PlaybackPreferenceManager.SongProvider.TagLib -> {
-                radioGroup.check(R.id.advanced)
-                getParent()?.let { parent ->
-                    val pages = parent.getPages().toMutableList()
-                    if (!pages.contains(OnboardingPage.MusicDirectories)) {
-                        pages.add(pages.indexOf(OnboardingPage.Scanner), OnboardingPage.MusicDirectories)
-                        parent.setPages(pages)
-                    }
-                }
+    override fun setMediaProviders(mediaProviderTypes: List<MediaProvider.Type>) {
+        adapter.update(mediaProviderTypes.map { provider -> MediaProviderBinder(providerType = provider, listener = listener, showRemoveButton = true, showSubtitle = false) })
+
+        addProviderButton.isVisible = mediaProviderTypes.size != MediaProvider.Type.values().size
+
+        (view as? ConstraintLayout)?.let { constraintLayout ->
+            TransitionManager.beginDelayedTransition(constraintLayout, transition)
+            if (mediaProviderTypes.isEmpty()) {
+                Timber.i("Applying pre constraints")
+                preAnimationConstraints.applyTo(constraintLayout)
+            } else {
+                Timber.i("Applying post constraints")
+                postAnimationConstraints.applyTo(constraintLayout)
             }
         }
     }
 
-    override fun showChangeSongProviderWarning(show: Boolean) {
-        warningLabel.isVisible = show
+
+    // MediaProviderSelectionFragment.Listener Implementation
+
+    override fun onMediaProviderSelected(providerType: MediaProvider.Type) {
+        when (providerType) {
+            MediaProvider.Type.MediaStore -> {
+                presenter.addMediaProviderType(providerType)
+            }
+            MediaProvider.Type.Shuttle -> {
+                presenter.addMediaProviderType(providerType)
+                DirectorySelectionFragment.newInstance().show(childFragmentManager)
+            }
+            MediaProvider.Type.Emby -> {
+                presenter.addMediaProviderType(providerType)
+                EmbyConfigurationFragment.newInstance().show(childFragmentManager)
+            }
+        }
+    }
+
+
+    // MediaProviderViewBinder.Listener Implementation
+
+    val listener = object : MediaProviderBinder.Listener {
+        override fun onOverflowClicked(view: View, providerType: MediaProvider.Type) {
+            val popupMenu = PopupMenu(requireContext(), view)
+            popupMenu.inflate(R.menu.menu_media_provider_popup)
+            popupMenu.menu.findItem(R.id.configure).isVisible = providerType != MediaProvider.Type.MediaStore
+            popupMenu.setOnMenuItemClickListener {
+                when (it.itemId) {
+                    R.id.configure -> {
+                        when (providerType) {
+                            MediaProvider.Type.Shuttle -> {
+                                DirectorySelectionFragment.newInstance().show(childFragmentManager)
+                            }
+                            MediaProvider.Type.Emby -> {
+                                EmbyConfigurationFragment.newInstance().show(childFragmentManager)
+                            }
+                        }
+                    }
+                    R.id.remove -> {
+                        AlertDialog.Builder(requireContext())
+                            .setTitle("Remove ${providerType.title()}")
+                            .setMessage("This will remove all songs, playlists & play counts associated with ${providerType.title()} media provder")
+                            .setPositiveButton("Remove") { _, _ -> presenter.removeMediaProviderType(providerType) }
+                            .setNegativeButton("Cancel", null)
+                            .show()
+                        return@setOnMenuItemClickListener true
+                    }
+                }
+                true
+            }
+            popupMenu.show()
+        }
     }
 
 

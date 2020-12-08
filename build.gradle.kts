@@ -1,4 +1,5 @@
 buildscript {
+    val kotlin_version by extra("1.4.20-RC")
     repositories {
         google()
         jcenter()
@@ -10,6 +11,8 @@ buildscript {
         classpath(BuildPlugins.safeArgsPlugin)
         classpath(BuildPlugins.googleServicesPlugin)
         classpath(BuildPlugins.bugsnagPlugin)
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version")
+        classpath("com.android.tools.build:gradle:4.1.1")
     }
 }
 

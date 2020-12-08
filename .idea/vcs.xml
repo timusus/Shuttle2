@@ -3,7 +3,6 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/exoplayer" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/exoplayer/extensions/opus/src/main/jni/libopus" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/ktaglib" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/ktaglib/taglib" vcs="Git" />
   </component>

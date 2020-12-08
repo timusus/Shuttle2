@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.library.albums
 
 import com.simplecityapps.mediaprovider.MediaImporter
+import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.model.removeArticles
@@ -69,7 +70,7 @@ class AlbumListPresenter @Inject constructor(
     private var albums: List<Album> = emptyList()
 
     private val mediaImporterListener = object : MediaImporter.Listener {
-        override fun onProgress(progress: Int, total: Int, song: Song) {
+        override fun onProgress(providerType: MediaProvider.Type, progress: Int, total: Int, song: Song) {
             view?.setLoadingProgress(progress / total.toFloat())
         }
     }

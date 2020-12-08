@@ -11,6 +11,7 @@ import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.mediaprovider.model.Song
 import timber.log.Timber
 import java.io.File
+import java.io.FileNotFoundException
 import java.io.InputStream
 
 class TagLibSongLocalArtworkModelLoader(
@@ -65,6 +66,9 @@ class TagLibSongLocalArtworkModelLoader(
                 return null
             } catch (e: SecurityException) {
                 Timber.v("Failed to retrieve artwork (security problem)")
+                return null
+            } catch (e: FileNotFoundException) {
+                Timber.v("Failed to retrieve artwork (file not found)")
                 return null
             }
 

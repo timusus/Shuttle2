@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.library.genres
 
 import com.simplecityapps.mediaprovider.MediaImporter
+import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.Genre
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.*
@@ -55,7 +56,7 @@ class GenreListPresenter @Inject constructor(
     private var genres: List<Genre> = emptyList()
 
     private val mediaImporterListener = object : MediaImporter.Listener {
-        override fun onProgress(progress: Int, total: Int, song: Song) {
+        override fun onProgress(providerType: MediaProvider.Type, progress: Int, total: Int, song: Song) {
             view?.setLoadingProgress(progress / total.toFloat())
         }
     }

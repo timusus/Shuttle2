@@ -6,7 +6,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="?selectableItemBackground"
-    android:padding="16dp">
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp">
 
     <ProgressBar
         android:id="@+id/progressBar"
@@ -41,37 +42,6 @@
         app:layout_constraintStart_toEndOf="@id/progressBar"
         app:layout_constraintTop_toBottomOf="@id/titleLabel"
         tools:text="Scanning:   /Tool/Lateralus/Triad.mp3" />
-
-    <com.google.android.material.chip.ChipGroup
-        android:id="@+id/chipGroup"
-        style="@style/Widget.MaterialComponents.ChipGroup"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        app:layout_constraintEnd_toStartOf="@+id/removeButton"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/subtitleLabel"
-        tools:text="Write access">
-
-        <com.google.android.material.chip.Chip
-            android:id="@+id/readPermissionChip"
-            style="@style/ThinnerChip"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Read only" />
-
-        <com.google.android.material.chip.Chip
-            android:id="@+id/writePermissionChip"
-            style="@style/ThinnerChip"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Write"
-            android:visibility="gone" />
-
-    </com.google.android.material.chip.ChipGroup>
-
-
 
     <ImageButton
         android:id="@+id/removeButton"

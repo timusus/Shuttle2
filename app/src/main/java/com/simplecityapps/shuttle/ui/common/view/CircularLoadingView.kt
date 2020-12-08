@@ -5,10 +5,7 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.Gravity
 import android.view.View
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.ProgressBar
-import android.widget.TextView
+import android.widget.*
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.view.isVisible
 import com.simplecityapps.shuttle.R
@@ -18,6 +15,10 @@ class CircularLoadingView @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : LinearLayout(context, attrs, defStyleAttr) {
 
+    interface Listener {
+        fun onRetryClicked()
+    }
+
     private var currentState: State? = null
 
     private var animation: ValueAnimator? = null
@@ -25,6 +26,9 @@ class CircularLoadingView @JvmOverloads constructor(
     private lateinit var textView: TextView
     private lateinit var progressBar: ProgressBar
     private lateinit var errorImageView: ImageView
+    private lateinit var retryButton: Button
+
+    var listener: Listener? = null
 
     init {
         View.inflate(context, R.layout.view_loading, this)
@@ -40,6 +44,11 @@ class CircularLoadingView @JvmOverloads constructor(
         textView = findViewById(R.id.textView)
         progressBar = findViewById(R.id.progressBar)
         errorImageView = findViewById(R.id.errorImageView)
+        retryButton = findViewById(R.id.retryButton)
+
+        retryButton.setOnClickListener {
+            listener?.onRetryClicked()
+        }
     }
 
     fun setState(state: State) {
@@ -47,6 +56,7 @@ class CircularLoadingView @JvmOverloads constructor(
             when (state) {
                 is State.Loading -> {
                     if (currentState is State.Loading) {
+                        animation?.cancel()
                         animation = fadeIn()
                     } else {
                         animation?.cancel()
@@ -55,7 +65,7 @@ class CircularLoadingView @JvmOverloads constructor(
 
                     textView.text = state.message
                     errorImageView.isVisible = false
-
+                    retryButton.isVisible = false
                     progressBar.isVisible = true
                 }
                 is State.Error -> {
@@ -65,6 +75,7 @@ class CircularLoadingView @JvmOverloads constructor(
                     textView.text = state.message
                     errorImageView.isVisible = true
                     progressBar.isVisible = false
+                    retryButton.isVisible = false
                 }
                 is State.Empty -> {
                     animation?.cancel()
@@ -72,6 +83,16 @@ class CircularLoadingView @JvmOverloads constructor(
 
                     textView.text = state.message
                     errorImageView.isVisible = true
+                    progressBar.isVisible = false
+                    retryButton.isVisible = false
+                }
+                is State.Retry -> {
+                    animation?.cancel()
+                    animation = fadeOut(completion = { animation = fadeIn() })
+
+                    textView.text = state.message
+                    retryButton.isVisible = true
+                    errorImageView.isVisible = false
                     progressBar.isVisible = false
                 }
                 is State.None -> {
@@ -99,6 +120,7 @@ class CircularLoadingView @JvmOverloads constructor(
         data class Loading(val message: String = "Loading…") : State()
         data class Empty(val message: String) : State()
         data class Error(val message: String) : State()
+        data class Retry(val message: String) : State()
         object None : State()
     }
 }

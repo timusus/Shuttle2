@@ -7,6 +7,7 @@
         </trust-anchors>
     </debug-overrides>
     <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">192.168.0.18</domain>
+        <domain includeSubdomains="true">192.168.0.16</domain>
+        <domain includeSubdomains="true">192.168.0.22</domain>
     </domain-config>
 </network-security-config>

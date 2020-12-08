@@ -1,11 +1,12 @@
 package com.simplecityapps.localmediaprovider.local.provider
 
 import com.simplecityapps.ktaglib.KTagLib
+import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.mediaprovider.model.Song
 import java.util.*
 
-fun AudioFile.toSong(): Song {
+fun AudioFile.toSong(providerType: MediaProvider.Type): Song {
     return Song(
         id = 0,
         name = title ?: "Unknown",
@@ -25,7 +26,8 @@ fun AudioFile.toSong(): Song {
         lastCompleted = null,
         playCount = 0,
         playbackPosition = 0,
-        blacklisted = false
+        blacklisted = false,
+        mediaProvider = providerType
     )
 }
 

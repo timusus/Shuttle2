@@ -1,5 +1,6 @@
 package com.simplecityapps.mediaprovider.repository
 
+import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.model.removeArticles
 import kotlinx.coroutines.flow.Flow
@@ -10,12 +11,12 @@ import kotlin.Comparator
 
 interface SongRepository {
     fun getSongs(query: SongQuery): Flow<List<Song>>
-    suspend fun insert(songs: List<Song>)
+    suspend fun insert(songs: List<Song>, mediaProviderType: MediaProvider.Type)
     suspend fun update(song: Song): Int
     suspend fun update(songs: List<Song>)
-    suspend fun remove(songs: List<Song>)
     suspend fun remove(song: Song)
-    suspend fun insertUpdateAndDelete(inserts: List<Song>, updates: List<Song>, deletes: List<Song>): Triple<Int, Int, Int>
+    suspend fun removeAll(mediaProviderType: MediaProvider.Type)
+    suspend fun insertUpdateAndDelete(inserts: List<Song>, updates: List<Song>, deletes: List<Song>, mediaProviderType: MediaProvider.Type): Triple<Int, Int, Int>
     suspend fun incrementPlayCount(song: Song)
     suspend fun setPlaybackPosition(song: Song, playbackPosition: Int)
     suspend fun setExcluded(songs: List<Song>, excluded: Boolean)
@@ -25,14 +26,16 @@ interface SongRepository {
 open class SongQuery(
     val predicate: ((Song) -> Boolean),
     val sortOrder: SongSortOrder = SongSortOrder.Default,
-    val includeExcluded: Boolean = false
+    val includeExcluded: Boolean = false,
+    val providerType: MediaProvider.Type? = null
 ) : Serializable {
 
-    class All(includeExcluded: Boolean = false, sortOrder: SongSortOrder = SongSortOrder.Default) :
+    class All(includeExcluded: Boolean = false, sortOrder: SongSortOrder = SongSortOrder.Default, providerType: MediaProvider.Type? = null) :
         SongQuery(
             predicate = { true },
             sortOrder = sortOrder,
-            includeExcluded = includeExcluded
+            includeExcluded = includeExcluded,
+            providerType = providerType
         )
 
     class AlbumArtist(val name: String) :

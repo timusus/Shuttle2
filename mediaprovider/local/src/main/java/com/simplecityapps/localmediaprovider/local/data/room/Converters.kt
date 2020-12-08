@@ -1,6 +1,7 @@
 package com.simplecityapps.localmediaprovider.local.data.room
 
 import androidx.room.TypeConverter
+import com.simplecityapps.mediaprovider.MediaProvider
 import java.util.*
 
 class Converters {
@@ -23,5 +24,15 @@ class Converters {
     @TypeConverter
     fun toString(stringList: List<String>): String {
         return stringList.joinToString(separator = ";")
+    }
+
+    @TypeConverter
+    fun fromMediaProvider(mediaProviderType: MediaProvider.Type): String {
+        return mediaProviderType.name
+    }
+
+    @TypeConverter
+    fun toMediaProvider(string: String): MediaProvider.Type {
+        return MediaProvider.Type.valueOf(string)
     }
 }

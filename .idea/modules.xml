@@ -38,7 +38,9 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/ktaglib/lib/shuttle2.ktaglib.lib.iml" filepath="$PROJECT_DIR$/.idea/modules/ktaglib/lib/shuttle2.ktaglib.lib.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/mediaprovider/Shuttle2.mediaprovider.iml" filepath="$PROJECT_DIR$/.idea/modules/mediaprovider/Shuttle2.mediaprovider.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/mediaprovider/core/Shuttle2.mediaprovider.core.iml" filepath="$PROJECT_DIR$/.idea/modules/mediaprovider/core/Shuttle2.mediaprovider.core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/mediaprovider/emby/Shuttle2.mediaprovider.emby.iml" filepath="$PROJECT_DIR$/.idea/modules/mediaprovider/emby/Shuttle2.mediaprovider.emby.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/mediaprovider/local/Shuttle2.mediaprovider.local.iml" filepath="$PROJECT_DIR$/.idea/modules/mediaprovider/local/Shuttle2.mediaprovider.local.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/networking/Shuttle2.networking.iml" filepath="$PROJECT_DIR$/.idea/modules/networking/Shuttle2.networking.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/playback/Shuttle2.playback.iml" filepath="$PROJECT_DIR$/.idea/modules/playback/Shuttle2.playback.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/recyclerview-adapter/Shuttle2.recyclerview-adapter.iml" filepath="$PROJECT_DIR$/.idea/modules/recyclerview-adapter/Shuttle2.recyclerview-adapter.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/saf/Shuttle2.saf.iml" filepath="$PROJECT_DIR$/.idea/modules/saf/Shuttle2.saf.iml" />

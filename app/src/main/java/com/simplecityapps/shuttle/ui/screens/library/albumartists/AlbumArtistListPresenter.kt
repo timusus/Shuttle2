@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.library.albumartists
 
 import com.simplecityapps.mediaprovider.MediaImporter
+import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.AlbumArtistQuery
@@ -16,7 +17,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import java.text.Collator
 import javax.inject.Inject
 import javax.inject.Named
 
@@ -62,7 +62,7 @@ class AlbumArtistListPresenter @Inject constructor(
     private var albumArtists: List<AlbumArtist> = emptyList()
 
     private val mediaImporterListener = object : MediaImporter.Listener {
-        override fun onProgress(progress: Int, total: Int, song: Song) {
+        override fun onProgress(providerType: MediaProvider.Type, progress: Int, total: Int, song: Song) {
             view?.setLoadingProgress(progress / total.toFloat())
         }
     }

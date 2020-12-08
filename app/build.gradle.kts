@@ -64,12 +64,16 @@ android {
         // Shuttle Core
         implementation(project(":core"))
 
+        // Shuttle Networking
+        implementation(project(":networking"))
+
         // TagLib
         implementation(project(":ktaglib:lib"))
 
         // Shuttle MediaProvider Core
         implementation(project(":mediaprovider:core"))
         implementation(project(":mediaprovider:local"))
+        implementation(project(":mediaprovider:emby"))
 
         // Shuttle Image Loader
         implementation(project(":imageloader"))
@@ -90,25 +94,25 @@ android {
         implementation("androidx.appcompat:appcompat:1.2.0")
 
         // Constraint Layout
-        implementation("androidx.constraintlayout:constraintlayout:2.0.0-rc1")
+        implementation("androidx.constraintlayout:constraintlayout:2.0.4")
 
         // Android Arch
         implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
 
         // AndroidX Navigation
-        implementation("androidx.navigation:navigation-fragment-ktx:2.3.0")
-        implementation("androidx.navigation:navigation-ui-ktx:2.3.0")
+        implementation("androidx.navigation:navigation-fragment-ktx:2.3.1")
+        implementation("androidx.navigation:navigation-ui-ktx:2.3.1")
 
         // Dagger core
-        kapt("com.google.dagger:dagger-compiler:2.28.3")
+        kapt("com.google.dagger:dagger-compiler:2.29.1")
 
         // Dagger Android
-        implementation("com.google.dagger:dagger-android-support:2.28.3")
-        kapt("com.google.dagger:dagger-android-processor:2.28.3")
+        implementation("com.google.dagger:dagger-android-support:2.29.1")
+        kapt("com.google.dagger:dagger-android-processor:2.29.1")
 
         // AssistedInject
-        compileOnly("com.squareup.inject:assisted-inject-annotations-dagger2:0.5.2")
-        kapt("com.squareup.inject:assisted-inject-processor-dagger2:0.5.2")
+        compileOnly("com.squareup.inject:assisted-inject-annotations-dagger2:0.6.0")
+        kapt("com.squareup.inject:assisted-inject-processor-dagger2:0.6.0")
 
         // Leak Canary
         debugImplementation("com.squareup.leakcanary:leakcanary-android:2.4")
@@ -120,7 +124,7 @@ android {
         implementation("me.relex:circleindicator:2.1.4")
 
         // AndroidX Media
-        implementation("androidx.media:media:1.1.0")
+        implementation("androidx.media:media:1.2.0")
 
         // AndroidX Preference
         implementation("androidx.preference:preference:1.1.1")
@@ -153,12 +157,18 @@ android {
         implementation("com.bugsnag:bugsnag-android:5.0.1")
 
         // AndroidX Lifecycle
-        implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.3.0-alpha06")
+        implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.3.0-beta01")
 
         compile("com.github.bumptech.glide:recyclerview-integration:4.11.0") {
             // Excludes the support library because it's already included by Glide.
             isTransitive = false
         }
+
+        // ExoPlayer
+        implementation(project(":exoplayer-library-core"))
+        implementation(project(":exoplayer-library-hls"))
+
+        implementation("androidx.drawerlayout:drawerlayout:1.1.1")
     }
 }
 

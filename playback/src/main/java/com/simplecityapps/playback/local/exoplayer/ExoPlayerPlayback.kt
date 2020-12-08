@@ -1,6 +1,7 @@
 package com.simplecityapps.playback.local.exoplayer
 
 import android.content.Context
+import android.net.Uri
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON
 import com.google.android.exoplayer2.audio.AudioCapabilities
@@ -14,11 +15,13 @@ import com.google.android.exoplayer2.util.Util
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.chromecast.CastPlayback
+import com.simplecityapps.provider.emby.EmbyAuthenticationManager
 import timber.log.Timber
 
 class ExoPlayerPlayback(
     context: Context,
-    private val audioProcessor: AudioProcessor
+    private val audioProcessor: AudioProcessor,
+    private val embyAuthenticationManager: EmbyAuthenticationManager
 ) : Playback {
 
     override var callback: Playback.Callback? = null
@@ -88,7 +91,7 @@ class ExoPlayerPlayback(
     private fun initPlayer(context: Context): ExoPlayer {
 
         val renderersFactory = object : DefaultRenderersFactory(context) {
-            override fun buildAudioSink(context: Context, enableFloatOutput: Boolean, enableAudioTrackPlaybackParams: Boolean, enableOffload: Boolean): AudioSink {
+            override fun buildAudioSink(context: Context, enableFloatOutput: Boolean, enableAudioTrackPlaybackParams: Boolean, enableOffload: Boolean): AudioSink? {
                 return DefaultAudioSink(AudioCapabilities.DEFAULT_AUDIO_CAPABILITIES, DefaultAudioSink.DefaultAudioProcessorChain(audioProcessor).audioProcessors)
             }
         }
@@ -108,12 +111,33 @@ class ExoPlayerPlayback(
         player.seekTo(seekPosition.toLong())
 
         concatenatingMediaSource.clear()
-        concatenatingMediaSource.addMediaSource(mediaSourceFactory.createMediaSource(MediaItem.fromUri(current.path)))
+
+        val uri = Uri.parse(current.path)
+        if (uri.scheme == "emby") {
+            embyAuthenticationManager.getAuthenticatedCredentials()?.let { authenticatedCredentials ->
+                embyAuthenticationManager.buildEmbyPath(
+                    uri.pathSegments.last(),
+                    authenticatedCredentials
+                )?.let { path ->
+                    concatenatingMediaSource.addMediaSource(
+                        mediaSourceFactory.createMediaSource(MediaItem.fromUri(path))
+                    )
+                } ?: run {
+                    completion(Result.failure(IllegalStateException("Failed to build emby path")))
+                }
+            } ?: run {
+                completion(Result.failure(IllegalStateException("Failed to authenticate")))
+                return@run
+            }
+        } else {
+            concatenatingMediaSource.addMediaSource(mediaSourceFactory.createMediaSource(MediaItem.fromUri(current.path)))
+        }
+
         Timber.v("load() calling updateWindowIndex()")
         trackChangeListener.updateWindowIndex()
 
         player.setMediaSource(concatenatingMediaSource)
-        player.prepare()
+        player.prepare(concatenatingMediaSource)
 
         completion(Result.success(null))
 

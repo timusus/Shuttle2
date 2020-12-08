@@ -1,6 +1,7 @@
 package com.simplecityapps.mediaprovider.model
 
 import androidx.annotation.Keep
+import com.simplecityapps.mediaprovider.MediaProvider
 import java.io.Serializable
 import java.util.*
 
@@ -25,7 +26,8 @@ data class Song(
     val playCount: Int,
     var playbackPosition: Int,
     val blacklisted: Boolean,
-    var mediaStoreId: Long? = null
+    var mediaStoreId: Long? = null,
+    var mediaProvider: MediaProvider.Type
 ) : Serializable {
 
     val type: Type

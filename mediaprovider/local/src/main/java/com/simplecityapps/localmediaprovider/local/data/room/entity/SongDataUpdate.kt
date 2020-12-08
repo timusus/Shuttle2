@@ -2,6 +2,7 @@ package com.simplecityapps.localmediaprovider.local.data.room.entity
 
 import androidx.room.ColumnInfo
 import androidx.room.PrimaryKey
+import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.Song
 import java.util.*
 
@@ -39,6 +40,10 @@ fun SongData.toSongDataUpdate(): SongDataUpdate {
     )
 }
 
+fun Song.toSongDataUpdate(): SongDataUpdate {
+    return toSongData(MediaProvider.Type.Shuttle).toSongDataUpdate()
+}
+
 fun List<Song>.toSongDataUpdate(): List<SongDataUpdate> {
-    return map { song -> song.toSongData().toSongDataUpdate() }
+    return map { song -> song.toSongDataUpdate() }
 }

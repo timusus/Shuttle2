@@ -1,11 +1,11 @@
-package com.simplecityapps.shuttle.ui.screens.onboarding.directories
+package com.simplecityapps.shuttle.ui.screens.onboarding.taglib
 
 import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import com.simplecityapps.saf.SafDirectoryHelper
 import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibMediaProvider
+import com.simplecityapps.saf.SafDirectoryHelper
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import kotlinx.coroutines.flow.collect
@@ -63,7 +63,7 @@ class DirectorySelectionPresenter @Inject constructor(
             .forEach { uriPermission ->
                 parseUri(contentResolver, uriPermission.uri, uriPermission.isWritePermission)
             }
-        setData(emptyList())
+        setData(data)
     }
 
     override fun removeItem(directory: DirectorySelectionContract.Directory) {

@@ -1,6 +1,7 @@
 package com.simplecityapps.playback.persistence
 
 import android.content.SharedPreferences
+import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.playback.equalizer.Equalizer
 import com.simplecityapps.playback.equalizer.EqualizerBand
 import com.simplecityapps.playback.queue.QueueManager
@@ -75,26 +76,17 @@ class PlaybackPreferenceManager(
             return QueueManager.RepeatMode.init(sharedPreferences.get("repeat_mode", -1))
         }
 
-    enum class SongProvider {
-        TagLib, MediaStore;
-
-        companion object {
-            fun init(ordinal: Int): SongProvider {
-                return when (ordinal) {
-                    TagLib.ordinal -> TagLib
-                    MediaStore.ordinal -> MediaStore
-                    else -> TagLib
-                }
-            }
-        }
-    }
-
-    var songProvider: SongProvider
+    var mediaProviderTypes: List<MediaProvider.Type>
         set(value) {
-            sharedPreferences.put("song_provider", value.ordinal)
+            sharedPreferences.put("media_providers", value.map { it.ordinal }.joinToString(","))
         }
         get() {
-            return SongProvider.init(sharedPreferences.get("song_provider", -1))
+            return sharedPreferences.get("media_providers", "")
+                .split(",")
+                .filter { it.isNotEmpty() }
+                .map {
+                    MediaProvider.Type.init(it.toInt())
+                }
         }
 
     var equalizerEnabled: Boolean
@@ -115,7 +107,7 @@ class PlaybackPreferenceManager(
         }
 
     private val listEqualizerBandType: Type = Types.newParameterizedType(MutableList::class.java, EqualizerBand::class.java)
-    private val adapter: JsonAdapter<List<EqualizerBand>> by lazy { moshi.adapter<List<EqualizerBand>>(listEqualizerBandType) }
+    private val adapter: JsonAdapter<List<EqualizerBand>> by lazy { moshi.adapter(listEqualizerBandType) }
     var customPresetBands: List<EqualizerBand>?
         set(value) {
             sharedPreferences.put("custom_preset_bands", adapter.toJson(value))
@@ -126,7 +118,7 @@ class PlaybackPreferenceManager(
             }
         }
 
-    var useAndroidMediaPlayer : Boolean
+    var useAndroidMediaPlayer: Boolean
         set(value) {
             sharedPreferences.put("playback_media_player", value)
         }

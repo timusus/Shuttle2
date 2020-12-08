@@ -4,6 +4,7 @@ import androidx.room.*
 import androidx.room.OnConflictStrategy.IGNORE
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongDataUpdate
+import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.Song
 import kotlinx.coroutines.flow.Flow
 import java.util.*
@@ -24,6 +25,9 @@ abstract class SongDataDao {
 
     @Update(onConflict = IGNORE, entity = SongData::class)
     abstract suspend fun update(songData: List<SongDataUpdate>): Int
+
+    @Update(onConflict = IGNORE, entity = SongData::class)
+    abstract suspend fun update(songData: SongDataUpdate): Int
 
     @Delete
     abstract suspend fun delete(songData: List<SongData>): Int
@@ -49,15 +53,12 @@ abstract class SongDataDao {
     @Query("UPDATE songs SET blacklisted = 0")
     abstract suspend fun clearExcludeList()
 
-    @Query("DELETE FROM songs")
-    abstract suspend fun deleteAll()
+    @Query("DELETE FROM songs where mediaProvider = :mediaProviderType")
+    abstract suspend fun deleteAll(mediaProviderType: MediaProvider.Type)
 
     @Delete
     abstract suspend fun deleteAll(songData: List<SongData>): Int
 
     @Query("DELETE FROM songs WHERE id = :id")
     abstract suspend fun delete(id: Long)
-
-    @Update
-    abstract suspend fun update(songData: SongData): Int
 }

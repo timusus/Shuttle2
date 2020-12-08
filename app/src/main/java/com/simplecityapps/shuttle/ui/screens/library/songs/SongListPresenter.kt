@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.simplecityapps.mediaprovider.MediaImporter
+import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.model.removeArticles
 import com.simplecityapps.mediaprovider.repository.SongQuery
@@ -67,7 +68,7 @@ class SongListPresenter @Inject constructor(
     var songs: List<Song> = emptyList()
 
     private val mediaImporterListener = object : MediaImporter.Listener {
-        override fun onProgress(progress: Int, total: Int, song: Song) {
+        override fun onProgress(providerType: MediaProvider.Type, progress: Int, total: Int, song: Song) {
             view?.setLoadingProgress(progress / total.toFloat())
         }
     }

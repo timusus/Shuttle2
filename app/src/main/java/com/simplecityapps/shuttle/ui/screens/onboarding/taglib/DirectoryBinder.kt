@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.screens.onboarding.directories
+package com.simplecityapps.shuttle.ui.screens.onboarding.taglib
 
 import android.view.View
 import android.view.ViewGroup
@@ -6,7 +6,6 @@ import android.widget.ImageButton
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.core.view.isVisible
-import com.google.android.material.chip.Chip
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
@@ -54,8 +53,6 @@ class DirectoryBinder(
         private val subtitle: TextView = itemView.findViewById(R.id.subtitleLabel)
         private val progressBar: ProgressBar = itemView.findViewById(R.id.progressBar)
         private val removeButton: ImageButton = itemView.findViewById(R.id.removeButton)
-        private val readPermissionChip: Chip = itemView.findViewById(R.id.readPermissionChip)
-        private val writePermissionChip: Chip = itemView.findViewById(R.id.writePermissionChip)
 
         init {
             removeButton.setOnClickListener { viewBinder?.listener?.onRemoveClicked(viewBinder!!.directory) }
@@ -73,14 +70,6 @@ class DirectoryBinder(
             } else {
                 progressBar.isVisible = true
                 subtitle.text = "Scanning..."
-            }
-
-            if(viewBinder.directory.hasWritePermission) {
-                readPermissionChip.text = "Read"
-                writePermissionChip.isVisible = true
-            } else {
-                readPermissionChip.text = "Read only"
-                writePermissionChip.isVisible = false
             }
         }
     }

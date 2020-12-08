@@ -1,3 +1,5 @@
+include ':networking'
+include ':mediaprovider:emby'
 include ':app'
 include ':core'
 include ':recyclerview-adapter'

@@ -18,6 +18,7 @@ import androidx.preference.SeekBarPreference
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.mediaprovider.MediaImporter
+import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
@@ -28,6 +29,7 @@ import com.simplecityapps.playback.local.exoplayer.ExoPlayerPlayback
 import com.simplecityapps.playback.local.mediaplayer.MediaPlayerPlayback
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.widgets.WidgetManager
+import com.simplecityapps.provider.emby.EmbyAuthenticationManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
@@ -57,6 +59,8 @@ class SettingsFragment : PreferenceFragmentCompat(),
 
     @Inject lateinit var playbackManager: PlaybackManager
     @Inject lateinit var equalizerAudioProcessor: EqualizerAudioProcessor
+
+    @Inject lateinit var embyAuthenticationManager: EmbyAuthenticationManager
 
     @Named("AppCoroutineScope") @Inject lateinit var appCoroutineScope: CoroutineScope
 
@@ -204,7 +208,11 @@ class SettingsFragment : PreferenceFragmentCompat(),
             }
             "playback_media_player" -> {
                 playbackManager.switchToPlayback(
-                    if (playbackPreferenceManager.useAndroidMediaPlayer) MediaPlayerPlayback(requireContext().applicationContext) else ExoPlayerPlayback(requireContext(), equalizerAudioProcessor)
+                    if (playbackPreferenceManager.useAndroidMediaPlayer) MediaPlayerPlayback(requireContext().applicationContext) else ExoPlayerPlayback(
+                        requireContext(),
+                        equalizerAudioProcessor,
+                        embyAuthenticationManager
+                    )
                 )
             }
         }
@@ -220,11 +228,11 @@ class SettingsFragment : PreferenceFragmentCompat(),
 
     // MediaImporter.Listener Implementation
 
-    override fun onProgress(progress: Int, total: Int, song: Song) {
+    override fun onProgress(providerType: MediaProvider.Type, progress: Int, total: Int, song: Song) {
         scanningProgressView?.progress = ((progress / total.toFloat()) * 100).toInt()
     }
 
-    override fun onComplete(inserts: Int, updates: Int, deletes: Int) {
+    override fun onAllComplete() {
         scanningDialog?.dismiss()
     }
 

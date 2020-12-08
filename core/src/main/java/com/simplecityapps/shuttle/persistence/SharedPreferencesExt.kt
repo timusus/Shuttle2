@@ -29,7 +29,7 @@ inline fun <reified T> SharedPreferences.put(key: String, value: T) {
         Float::class -> editor.putFloat(key, value as Float)
         Int::class -> editor.putInt(key, value as Int)
         Long::class -> editor.putLong(key, value as Long)
-        String::class -> editor.putString(key, value as String)
+        String::class -> editor.putString(key, value as? String)
         else -> {
             if (value is Set<*>) {
                 editor.putStringSet(key, value as Set<String>)
