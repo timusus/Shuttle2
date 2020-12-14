@@ -15,6 +15,7 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/exoplayer/extensions/ima/Shuttle2.exoplayer-extension-ima.iml" filepath="$PROJECT_DIR$/.idea/modules/exoplayer/extensions/ima/Shuttle2.exoplayer-extension-ima.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/exoplayer/extensions/jobdispatcher/Shuttle2.exoplayer-extension-jobdispatcher.iml" filepath="$PROJECT_DIR$/.idea/modules/exoplayer/extensions/jobdispatcher/Shuttle2.exoplayer-extension-jobdispatcher.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/exoplayer/extensions/leanback/Shuttle2.exoplayer-extension-leanback.iml" filepath="$PROJECT_DIR$/.idea/modules/exoplayer/extensions/leanback/Shuttle2.exoplayer-extension-leanback.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/exoplayer/extensions/media2/Shuttle2.exoplayer-extension-media2.iml" filepath="$PROJECT_DIR$/.idea/modules/exoplayer/extensions/media2/Shuttle2.exoplayer-extension-media2.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/exoplayer/extensions/mediasession/Shuttle2.exoplayer-extension-mediasession.iml" filepath="$PROJECT_DIR$/.idea/modules/exoplayer/extensions/mediasession/Shuttle2.exoplayer-extension-mediasession.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/exoplayer/extensions/okhttp/Shuttle2.exoplayer-extension-okhttp.iml" filepath="$PROJECT_DIR$/.idea/modules/exoplayer/extensions/okhttp/Shuttle2.exoplayer-extension-okhttp.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/exoplayer/extensions/opus/Shuttle2.exoplayer-extension-opus.iml" filepath="$PROJECT_DIR$/.idea/modules/exoplayer/extensions/opus/Shuttle2.exoplayer-extension-opus.iml" />
@@ -22,21 +23,25 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/exoplayer/extensions/vp9/Shuttle2.exoplayer-extension-vp9.iml" filepath="$PROJECT_DIR$/.idea/modules/exoplayer/extensions/vp9/Shuttle2.exoplayer-extension-vp9.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/exoplayer/extensions/workmanager/Shuttle2.exoplayer-extension-workmanager.iml" filepath="$PROJECT_DIR$/.idea/modules/exoplayer/extensions/workmanager/Shuttle2.exoplayer-extension-workmanager.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/exoplayer/library/all/Shuttle2.exoplayer-library.iml" filepath="$PROJECT_DIR$/.idea/modules/exoplayer/library/all/Shuttle2.exoplayer-library.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/exoplayer/library/common/Shuttle2.exoplayer-library-common.iml" filepath="$PROJECT_DIR$/.idea/modules/exoplayer/library/common/Shuttle2.exoplayer-library-common.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/exoplayer/library/core/Shuttle2.exoplayer-library-core.iml" filepath="$PROJECT_DIR$/.idea/modules/exoplayer/library/core/Shuttle2.exoplayer-library-core.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/exoplayer/library/dash/Shuttle2.exoplayer-library-dash.iml" filepath="$PROJECT_DIR$/.idea/modules/exoplayer/library/dash/Shuttle2.exoplayer-library-dash.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/exoplayer/library/extractor/Shuttle2.exoplayer-library-extractor.iml" filepath="$PROJECT_DIR$/.idea/modules/exoplayer/library/extractor/Shuttle2.exoplayer-library-extractor.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/exoplayer/library/hls/Shuttle2.exoplayer-library-hls.iml" filepath="$PROJECT_DIR$/.idea/modules/exoplayer/library/hls/Shuttle2.exoplayer-library-hls.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/exoplayer/library/smoothstreaming/Shuttle2.exoplayer-library-smoothstreaming.iml" filepath="$PROJECT_DIR$/.idea/modules/exoplayer/library/smoothstreaming/Shuttle2.exoplayer-library-smoothstreaming.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/exoplayer/library/ui/Shuttle2.exoplayer-library-ui.iml" filepath="$PROJECT_DIR$/.idea/modules/exoplayer/library/ui/Shuttle2.exoplayer-library-ui.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/exoplayer/robolectricutils/Shuttle2.exoplayer-robolectricutils.iml" filepath="$PROJECT_DIR$/.idea/modules/exoplayer/robolectricutils/Shuttle2.exoplayer-robolectricutils.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/exoplayer/testdata/Shuttle2.exoplayer-testdata.iml" filepath="$PROJECT_DIR$/.idea/modules/exoplayer/testdata/Shuttle2.exoplayer-testdata.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/exoplayer/testutils/Shuttle2.exoplayer-testutils.iml" filepath="$PROJECT_DIR$/.idea/modules/exoplayer/testutils/Shuttle2.exoplayer-testutils.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/imageloader/Shuttle2.imageloader.iml" filepath="$PROJECT_DIR$/.idea/modules/imageloader/Shuttle2.imageloader.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ktaglib/shuttle2.ktaglib.iml" filepath="$PROJECT_DIR$/.idea/modules/ktaglib/shuttle2.ktaglib.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ktaglib/lib/shuttle2.ktaglib.lib.iml" filepath="$PROJECT_DIR$/.idea/modules/ktaglib/lib/shuttle2.ktaglib.lib.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/mediaprovider/Shuttle2.mediaprovider.iml" filepath="$PROJECT_DIR$/.idea/modules/mediaprovider/Shuttle2.mediaprovider.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/mediaprovider/core/Shuttle2.mediaprovider.core.iml" filepath="$PROJECT_DIR$/.idea/modules/mediaprovider/core/Shuttle2.mediaprovider.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/mediaprovider/local/Shuttle2.mediaprovider.local.iml" filepath="$PROJECT_DIR$/.idea/modules/mediaprovider/local/Shuttle2.mediaprovider.local.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/playback/Shuttle2.playback.iml" filepath="$PROJECT_DIR$/.idea/modules/playback/Shuttle2.playback.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/recyclerview-adapter/Shuttle2.recyclerview-adapter.iml" filepath="$PROJECT_DIR$/.idea/modules/recyclerview-adapter/Shuttle2.recyclerview-adapter.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/saf/Shuttle2.saf.iml" filepath="$PROJECT_DIR$/.idea/modules/saf/Shuttle2.saf.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ktaglib/shuttle2.ktaglib.iml" filepath="$PROJECT_DIR$/.idea/modules/ktaglib/shuttle2.ktaglib.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ktaglib/lib/shuttle2.ktaglib.lib.iml" filepath="$PROJECT_DIR$/.idea/modules/ktaglib/lib/shuttle2.ktaglib.lib.iml" />
     </modules>
   </component>
 </project>

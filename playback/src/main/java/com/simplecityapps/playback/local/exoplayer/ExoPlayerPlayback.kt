@@ -1,12 +1,14 @@
 package com.simplecityapps.playback.local.exoplayer
 
 import android.content.Context
-import android.net.Uri
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON
+import com.google.android.exoplayer2.audio.AudioCapabilities
 import com.google.android.exoplayer2.audio.AudioProcessor
+import com.google.android.exoplayer2.audio.AudioSink
+import com.google.android.exoplayer2.audio.DefaultAudioSink
 import com.google.android.exoplayer2.source.ConcatenatingMediaSource
-import com.google.android.exoplayer2.source.ProgressiveMediaSource
+import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
 import com.google.android.exoplayer2.util.Util
 import com.simplecityapps.mediaprovider.model.Song
@@ -28,12 +30,17 @@ class ExoPlayerPlayback(
     }
 
     private val concatenatingMediaSource by lazy { ConcatenatingMediaSource() }
-    private val dataSourceFactory by lazy { DefaultDataSourceFactory(context, Util.getUserAgent(context, "Shuttle")) }
-    private val mediaSourceFactory by lazy { ProgressiveMediaSource.Factory(dataSourceFactory) }
+
+    private val dataSourceFactory by lazy { DefaultDataSourceFactory(context, Util.getUserAgent(context, "Shuttle 2.0")) }
+
+    private val mediaSourceFactory by lazy { DefaultMediaSourceFactory(dataSourceFactory) }
 
     private var playWhenReady = false
 
+    private var isPlaybackReady = false
+
     private val trackChangeListener by lazy {
+
         object : TrackChangeEventListener(player) {
             override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
                 val state = playbackState.toState()
@@ -44,11 +51,18 @@ class ExoPlayerPlayback(
                     this@ExoPlayerPlayback.playWhenReady = playWhenReady
                 }
 
+                if (state == PlaybackState.Ready) {
+                    isPlaybackReady = true
+                }
+
                 if (state == PlaybackState.Ended) {
-                    player.playWhenReady = false
-                    this@ExoPlayerPlayback.playWhenReady = false
-                    callback?.onPlayStateChanged(isPlaying = false)
-                    callback?.onPlaybackComplete(trackWentToNext = false)
+                    if (isPlaybackReady) {
+                        player.playWhenReady = false
+                        this@ExoPlayerPlayback.playWhenReady = false
+                        callback?.onPlayStateChanged(isPlaying = false)
+                        callback?.onPlaybackComplete(trackWentToNext = false)
+                        isPlaybackReady = false
+                    }
                 }
             }
 
@@ -74,16 +88,15 @@ class ExoPlayerPlayback(
     private fun initPlayer(context: Context): ExoPlayer {
 
         val renderersFactory = object : DefaultRenderersFactory(context) {
-
-            override fun buildAudioProcessors(): Array<AudioProcessor> {
-                return super.buildAudioProcessors().plus(audioProcessor)
+            override fun buildAudioSink(context: Context, enableFloatOutput: Boolean, enableAudioTrackPlaybackParams: Boolean, enableOffload: Boolean): AudioSink {
+                return DefaultAudioSink(AudioCapabilities.DEFAULT_AUDIO_CAPABILITIES, DefaultAudioSink.DefaultAudioProcessorChain(audioProcessor).audioProcessors)
             }
         }
 
         renderersFactory.setExtensionRendererMode(EXTENSION_RENDERER_MODE_ON)
 
-        val simpleExoPlayer =  SimpleExoPlayer.Builder(context, renderersFactory).build()
-        simpleExoPlayer.setHandleWakeLock(true)
+        val simpleExoPlayer = SimpleExoPlayer.Builder(context, renderersFactory).build()
+        simpleExoPlayer.setWakeMode(C.WAKE_MODE_LOCAL)
         return simpleExoPlayer
     }
 
@@ -95,11 +108,12 @@ class ExoPlayerPlayback(
         player.seekTo(seekPosition.toLong())
 
         concatenatingMediaSource.clear()
-        concatenatingMediaSource.addMediaSource(mediaSourceFactory.createMediaSource(Uri.parse(current.path)))
+        concatenatingMediaSource.addMediaSource(mediaSourceFactory.createMediaSource(MediaItem.fromUri(current.path)))
         Timber.v("load() calling updateWindowIndex()")
         trackChangeListener.updateWindowIndex()
 
-        player.prepare(concatenatingMediaSource)
+        player.setMediaSource(concatenatingMediaSource)
+        player.prepare()
 
         completion(Result.success(null))
 
@@ -119,7 +133,7 @@ class ExoPlayerPlayback(
                     concatenatingMediaSource.removeMediaSource(0)
                 }
             }
-            concatenatingMediaSource.addMediaSource(mediaSourceFactory.createMediaSource(Uri.parse(song.path)))
+            concatenatingMediaSource.addMediaSource(mediaSourceFactory.createMediaSource(MediaItem.fromUri(song.path)))
         }
 
         // Let the track change listener know that the window index has changed, so we don't get a false 'track changed' call
@@ -149,7 +163,7 @@ class ExoPlayerPlayback(
         player.seekTo(position.toLong())
     }
 
-    override fun getProgress(): Int? {
+    override fun getProgress(): Int {
         return player.contentPosition.toInt()
     }
 
