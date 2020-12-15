@@ -2,6 +2,7 @@ package com.simplecityapps.playback.local.exoplayer
 
 import android.content.Context
 import android.net.Uri
+import androidx.core.net.toUri
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON
 import com.google.android.exoplayer2.audio.AudioCapabilities
@@ -91,7 +92,7 @@ class ExoPlayerPlayback(
     private fun initPlayer(context: Context): ExoPlayer {
 
         val renderersFactory = object : DefaultRenderersFactory(context) {
-            override fun buildAudioSink(context: Context, enableFloatOutput: Boolean, enableAudioTrackPlaybackParams: Boolean, enableOffload: Boolean): AudioSink? {
+            override fun buildAudioSink(context: Context, enableFloatOutput: Boolean, enableAudioTrackPlaybackParams: Boolean, enableOffload: Boolean): AudioSink {
                 return DefaultAudioSink(AudioCapabilities.DEFAULT_AUDIO_CAPABILITIES, DefaultAudioSink.DefaultAudioProcessorChain(audioProcessor).audioProcessors)
             }
         }
@@ -112,32 +113,17 @@ class ExoPlayerPlayback(
 
         concatenatingMediaSource.clear()
 
-        val uri = Uri.parse(current.path)
-        if (uri.scheme == "emby") {
-            embyAuthenticationManager.getAuthenticatedCredentials()?.let { authenticatedCredentials ->
-                embyAuthenticationManager.buildEmbyPath(
-                    uri.pathSegments.last(),
-                    authenticatedCredentials
-                )?.let { path ->
-                    concatenatingMediaSource.addMediaSource(
-                        mediaSourceFactory.createMediaSource(MediaItem.fromUri(path))
-                    )
-                } ?: run {
-                    completion(Result.failure(IllegalStateException("Failed to build emby path")))
-                }
-            } ?: run {
-                completion(Result.failure(IllegalStateException("Failed to authenticate")))
-                return@run
-            }
-        } else {
-            concatenatingMediaSource.addMediaSource(mediaSourceFactory.createMediaSource(MediaItem.fromUri(current.path)))
+        try {
+            concatenatingMediaSource.addMediaSource(mediaSourceFactory.createMediaSource(getMediaItem(current.path.toUri())))
+        } catch (e: IllegalStateException) {
+            completion(Result.failure(e))
         }
 
         Timber.v("load() calling updateWindowIndex()")
         trackChangeListener.updateWindowIndex()
 
         player.setMediaSource(concatenatingMediaSource)
-        player.prepare(concatenatingMediaSource)
+        player.prepare()
 
         completion(Result.success(null))
 
@@ -157,7 +143,7 @@ class ExoPlayerPlayback(
                     concatenatingMediaSource.removeMediaSource(0)
                 }
             }
-            concatenatingMediaSource.addMediaSource(mediaSourceFactory.createMediaSource(MediaItem.fromUri(song.path)))
+            concatenatingMediaSource.addMediaSource(mediaSourceFactory.createMediaSource(getMediaItem(song.path.toUri())))
         }
 
         // Let the track change listener know that the window index has changed, so we don't get a false 'track changed' call
@@ -215,6 +201,26 @@ class ExoPlayerPlayback(
             3 -> PlaybackState.Ready
             4 -> PlaybackState.Ended
             else -> PlaybackState.Unknown
+        }
+    }
+
+    @Throws(IllegalStateException::class)
+    fun getMediaItem(uri: Uri): MediaItem {
+        if (uri.scheme == "emby") {
+            embyAuthenticationManager.getAuthenticatedCredentials()?.let { authenticatedCredentials ->
+                embyAuthenticationManager.buildEmbyPath(
+                    uri.pathSegments.last(),
+                    authenticatedCredentials
+                )?.let { path ->
+                    return MediaItem.fromUri(path)
+                } ?: run {
+                    throw IllegalStateException("Failed to build emby path")
+                }
+            } ?: run {
+                throw IllegalStateException("Failed to authenticate")
+            }
+        } else {
+            return MediaItem.fromUri(uri)
         }
     }
 
