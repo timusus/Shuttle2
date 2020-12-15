@@ -21,7 +21,11 @@ import android.net.Uri;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.ParserException;
+import com.google.android.exoplayer2.source.LoadEventInfo;
+import com.google.android.exoplayer2.source.MediaLoadData;
 import com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException;
+import com.google.android.exoplayer2.upstream.LoadErrorHandlingPolicy.LoadErrorInfo;
+import com.google.android.exoplayer2.util.Util;
 import java.io.IOException;
 import java.util.Collections;
 import org.junit.Test;
@@ -31,36 +35,65 @@ import org.junit.runner.RunWith;
 @RunWith(AndroidJUnit4.class)
 public final class DefaultLoadErrorHandlingPolicyTest {
 
+  private static final LoadEventInfo PLACEHOLDER_LOAD_EVENT_INFO =
+      new LoadEventInfo(
+          LoadEventInfo.getNewId(),
+          new DataSpec(Uri.EMPTY),
+          Uri.EMPTY,
+          /* responseHeaders= */ Collections.emptyMap(),
+          /* elapsedRealtimeMs= */ 5000,
+          /* loadDurationMs= */ 1000,
+          /* bytesLoaded= */ 0);
+  private static final MediaLoadData PLACEHOLDER_MEDIA_LOAD_DATA =
+      new MediaLoadData(/* dataType= */ C.DATA_TYPE_UNKNOWN);
+
   @Test
-  public void getBlacklistDurationMsFor_blacklist404() {
-    InvalidResponseCodeException exception =
-        new InvalidResponseCodeException(
-            404, "Not Found", Collections.emptyMap(), new DataSpec(Uri.EMPTY));
-    assertThat(getDefaultPolicyBlacklistOutputFor(exception))
+  public void getExclusionDurationMsFor_responseCode403() {
+    InvalidResponseCodeException exception = buildInvalidResponseCodeException(403, "Forbidden");
+    assertThat(getDefaultPolicyExclusionDurationMsFor(exception))
         .isEqualTo(DefaultLoadErrorHandlingPolicy.DEFAULT_TRACK_BLACKLIST_MS);
   }
 
   @Test
-  public void getBlacklistDurationMsFor_blacklist410() {
-    InvalidResponseCodeException exception =
-        new InvalidResponseCodeException(
-            410, "Gone", Collections.emptyMap(), new DataSpec(Uri.EMPTY));
-    assertThat(getDefaultPolicyBlacklistOutputFor(exception))
+  public void getExclusionDurationMsFor_responseCode404() {
+    InvalidResponseCodeException exception = buildInvalidResponseCodeException(404, "Not found");
+    assertThat(getDefaultPolicyExclusionDurationMsFor(exception))
         .isEqualTo(DefaultLoadErrorHandlingPolicy.DEFAULT_TRACK_BLACKLIST_MS);
   }
 
   @Test
-  public void getBlacklistDurationMsFor_dontBlacklistUnexpectedHttpCodes() {
-    InvalidResponseCodeException exception =
-        new InvalidResponseCodeException(
-            500, "Internal Server Error", Collections.emptyMap(), new DataSpec(Uri.EMPTY));
-    assertThat(getDefaultPolicyBlacklistOutputFor(exception)).isEqualTo(C.TIME_UNSET);
+  public void getExclusionDurationMsFor_responseCode410() {
+    InvalidResponseCodeException exception = buildInvalidResponseCodeException(410, "Gone");
+    assertThat(getDefaultPolicyExclusionDurationMsFor(exception))
+        .isEqualTo(DefaultLoadErrorHandlingPolicy.DEFAULT_TRACK_BLACKLIST_MS);
   }
 
   @Test
-  public void getBlacklistDurationMsFor_dontBlacklistUnexpectedExceptions() {
+  public void getExclusionDurationMsFor_responseCode500() {
+    InvalidResponseCodeException exception =
+        buildInvalidResponseCodeException(500, "Internal server error");
+    assertThat(getDefaultPolicyExclusionDurationMsFor(exception))
+        .isEqualTo(DefaultLoadErrorHandlingPolicy.DEFAULT_TRACK_BLACKLIST_MS);
+  }
+
+  @Test
+  public void getExclusionDurationMsFor_responseCode503() {
+    InvalidResponseCodeException exception =
+        buildInvalidResponseCodeException(503, "Service unavailable");
+    assertThat(getDefaultPolicyExclusionDurationMsFor(exception))
+        .isEqualTo(DefaultLoadErrorHandlingPolicy.DEFAULT_TRACK_BLACKLIST_MS);
+  }
+
+  @Test
+  public void getExclusionDurationMsFor_dontExcludeUnexpectedHttpCodes() {
+    InvalidResponseCodeException exception = buildInvalidResponseCodeException(418, "I'm a teapot");
+    assertThat(getDefaultPolicyExclusionDurationMsFor(exception)).isEqualTo(C.TIME_UNSET);
+  }
+
+  @Test
+  public void getExclusionDurationMsFor_dontExcludeUnexpectedExceptions() {
     IOException exception = new IOException();
-    assertThat(getDefaultPolicyBlacklistOutputFor(exception)).isEqualTo(C.TIME_UNSET);
+    assertThat(getDefaultPolicyExclusionDurationMsFor(exception)).isEqualTo(C.TIME_UNSET);
   }
 
   @Test
@@ -76,14 +109,30 @@ public final class DefaultLoadErrorHandlingPolicyTest {
     assertThat(getDefaultPolicyRetryDelayOutputFor(new IOException(), 9)).isEqualTo(5000);
   }
 
-  private static long getDefaultPolicyBlacklistOutputFor(IOException exception) {
-    return new DefaultLoadErrorHandlingPolicy()
-        .getBlacklistDurationMsFor(
-            C.DATA_TYPE_MEDIA, /* loadDurationMs= */ 1000, exception, /* errorCount= */ 1);
+  private static long getDefaultPolicyExclusionDurationMsFor(IOException exception) {
+    LoadErrorInfo loadErrorInfo =
+        new LoadErrorInfo(
+            PLACEHOLDER_LOAD_EVENT_INFO,
+            PLACEHOLDER_MEDIA_LOAD_DATA,
+            exception,
+            /* errorCount= */ 1);
+    return new DefaultLoadErrorHandlingPolicy().getBlacklistDurationMsFor(loadErrorInfo);
   }
 
   private static long getDefaultPolicyRetryDelayOutputFor(IOException exception, int errorCount) {
-    return new DefaultLoadErrorHandlingPolicy()
-        .getRetryDelayMsFor(C.DATA_TYPE_MEDIA, /* loadDurationMs= */ 1000, exception, errorCount);
+    LoadErrorInfo loadErrorInfo =
+        new LoadErrorInfo(
+            PLACEHOLDER_LOAD_EVENT_INFO, PLACEHOLDER_MEDIA_LOAD_DATA, exception, errorCount);
+    return new DefaultLoadErrorHandlingPolicy().getRetryDelayMsFor(loadErrorInfo);
+  }
+
+  private static InvalidResponseCodeException buildInvalidResponseCodeException(
+      int statusCode, String message) {
+    return new InvalidResponseCodeException(
+        statusCode,
+        message,
+        Collections.emptyMap(),
+        new DataSpec(Uri.EMPTY),
+        /* responseBody= */ Util.EMPTY_BYTE_ARRAY);
   }
 }

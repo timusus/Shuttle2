@@ -1,50 +1,50 @@
-/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/flac/src/main/obj/local/x86_64/objs/flacJNI/flac/src/libFLAC/metadata_object.o: \
-  /Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/flac/src/main/jni/flac/src/libFLAC/metadata_object.c \
-  /Users/tim/Library/Android/sdk/ndk/21.1.6352462/sources/cxx-stl/llvm-libc++/include/stdlib.h \
-  /Users/tim/Library/Android/sdk/ndk/21.1.6352462/sources/cxx-stl/llvm-libc++/include/__config \
-  /Users/tim/Library/Android/sdk/ndk/21.1.6352462/sources/cxx-stl/llvm-libc++/include/string.h \
-  /Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/flac/src/main/jni/flac/src/libFLAC/include/private/metadata.h \
-  /Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/flac/src/main/jni/flac/include/FLAC/metadata.h \
-  /Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/flac/src/main/jni/flac/include/FLAC/export.h \
-  /Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/flac/src/main/jni/flac/include/FLAC/callback.h \
-  /Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/flac/src/main/jni/flac/include/FLAC/ordinals.h \
-  /Users/tim/Library/Android/sdk/ndk/21.1.6352462/sources/cxx-stl/llvm-libc++/include/stdint.h \
-  /Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/flac/src/main/jni/flac/include/FLAC/format.h \
-  /Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/flac/src/main/jni/flac/src/libFLAC/include/private/memory.h \
-  /Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/flac/src/main/jni/flac/src/libFLAC/include/private/float.h \
-  /Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/flac/src/main/jni/flac/include/FLAC/assert.h \
-  /Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/flac/src/main/jni/flac/include/share/alloc.h \
-  /Users/tim/Library/Android/sdk/ndk/21.1.6352462/sources/cxx-stl/llvm-libc++/include/limits.h \
-  /Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/flac/src/main/jni/flac/include/share/compat.h
+C:/Users/tim/StudioProjects/Shuttle2/exoplayer/extensions/flac/src/main/obj/local/x86_64/objs/flacJNI/flac/src/libFLAC/metadata_object.o: \
+  C:\Users\tim\StudioProjects\Shuttle2\exoplayer\extensions\flac\src\main\jni\flac\src\libFLAC\metadata_object.c \
+  C:\Users\tim\AppData\Local\Android\Sdk\ndk\21.3.6528147\build\\..\sources\cxx-stl\llvm-libc++\include\stdlib.h \
+  C:\Users\tim\AppData\Local\Android\Sdk\ndk\21.3.6528147\build\\..\sources\cxx-stl\llvm-libc++\include\__config \
+  C:\Users\tim\AppData\Local\Android\Sdk\ndk\21.3.6528147\build\\..\sources\cxx-stl\llvm-libc++\include\string.h \
+  C:\Users\tim\StudioProjects\Shuttle2\exoplayer\extensions\flac\src\main\jni\flac\src\libFLAC\include\private\metadata.h \
+  C:\Users\tim\StudioProjects\Shuttle2\exoplayer\extensions\flac\src\main\jni\flac\include\FLAC\metadata.h \
+  C:\Users\tim\StudioProjects\Shuttle2\exoplayer\extensions\flac\src\main\jni\flac\include\FLAC\export.h \
+  C:\Users\tim\StudioProjects\Shuttle2\exoplayer\extensions\flac\src\main\jni\flac\include\FLAC\callback.h \
+  C:\Users\tim\StudioProjects\Shuttle2\exoplayer\extensions\flac\src\main\jni\flac\include\FLAC\ordinals.h \
+  C:\Users\tim\AppData\Local\Android\Sdk\ndk\21.3.6528147\build\\..\sources\cxx-stl\llvm-libc++\include\stdint.h \
+  C:\Users\tim\StudioProjects\Shuttle2\exoplayer\extensions\flac\src\main\jni\flac\include\FLAC\format.h \
+  C:\Users\tim\StudioProjects\Shuttle2\exoplayer\extensions\flac\src\main\jni\flac\src\libFLAC\include\private\memory.h \
+  C:\Users\tim\StudioProjects\Shuttle2\exoplayer\extensions\flac\src\main\jni\flac\src\libFLAC\include\private\float.h \
+  C:\Users\tim\StudioProjects\Shuttle2\exoplayer\extensions\flac\src\main\jni\flac\include\FLAC\assert.h \
+  C:\Users\tim\StudioProjects\Shuttle2\exoplayer\extensions\flac\src\main\jni\flac\include\share\alloc.h \
+  C:\Users\tim\AppData\Local\Android\Sdk\ndk\21.3.6528147\build\\..\sources\cxx-stl\llvm-libc++\include\limits.h \
+  C:\Users\tim\StudioProjects\Shuttle2\exoplayer\extensions\flac\src\main\jni\flac\include\share\compat.h
 
-/Users/tim/Library/Android/sdk/ndk/21.1.6352462/sources/cxx-stl/llvm-libc++/include/stdlib.h:
+C:\Users\tim\AppData\Local\Android\Sdk\ndk\21.3.6528147\build\\..\sources\cxx-stl\llvm-libc++\include\stdlib.h:
 
-/Users/tim/Library/Android/sdk/ndk/21.1.6352462/sources/cxx-stl/llvm-libc++/include/__config:
+C:\Users\tim\AppData\Local\Android\Sdk\ndk\21.3.6528147\build\\..\sources\cxx-stl\llvm-libc++\include\__config:
 
-/Users/tim/Library/Android/sdk/ndk/21.1.6352462/sources/cxx-stl/llvm-libc++/include/string.h:
+C:\Users\tim\AppData\Local\Android\Sdk\ndk\21.3.6528147\build\\..\sources\cxx-stl\llvm-libc++\include\string.h:
 
-/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/flac/src/main/jni/flac/src/libFLAC/include/private/metadata.h:
+C:\Users\tim\StudioProjects\Shuttle2\exoplayer\extensions\flac\src\main\jni\flac\src\libFLAC\include\private\metadata.h:
 
-/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/flac/src/main/jni/flac/include/FLAC/metadata.h:
+C:\Users\tim\StudioProjects\Shuttle2\exoplayer\extensions\flac\src\main\jni\flac\include\FLAC\metadata.h:
 
-/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/flac/src/main/jni/flac/include/FLAC/export.h:
+C:\Users\tim\StudioProjects\Shuttle2\exoplayer\extensions\flac\src\main\jni\flac\include\FLAC\export.h:
 
-/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/flac/src/main/jni/flac/include/FLAC/callback.h:
+C:\Users\tim\StudioProjects\Shuttle2\exoplayer\extensions\flac\src\main\jni\flac\include\FLAC\callback.h:
 
-/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/flac/src/main/jni/flac/include/FLAC/ordinals.h:
+C:\Users\tim\StudioProjects\Shuttle2\exoplayer\extensions\flac\src\main\jni\flac\include\FLAC\ordinals.h:
 
-/Users/tim/Library/Android/sdk/ndk/21.1.6352462/sources/cxx-stl/llvm-libc++/include/stdint.h:
+C:\Users\tim\AppData\Local\Android\Sdk\ndk\21.3.6528147\build\\..\sources\cxx-stl\llvm-libc++\include\stdint.h:
 
-/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/flac/src/main/jni/flac/include/FLAC/format.h:
+C:\Users\tim\StudioProjects\Shuttle2\exoplayer\extensions\flac\src\main\jni\flac\include\FLAC\format.h:
 
-/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/flac/src/main/jni/flac/src/libFLAC/include/private/memory.h:
+C:\Users\tim\StudioProjects\Shuttle2\exoplayer\extensions\flac\src\main\jni\flac\src\libFLAC\include\private\memory.h:
 
-/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/flac/src/main/jni/flac/src/libFLAC/include/private/float.h:
+C:\Users\tim\StudioProjects\Shuttle2\exoplayer\extensions\flac\src\main\jni\flac\src\libFLAC\include\private\float.h:
 
-/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/flac/src/main/jni/flac/include/FLAC/assert.h:
+C:\Users\tim\StudioProjects\Shuttle2\exoplayer\extensions\flac\src\main\jni\flac\include\FLAC\assert.h:
 
-/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/flac/src/main/jni/flac/include/share/alloc.h:
+C:\Users\tim\StudioProjects\Shuttle2\exoplayer\extensions\flac\src\main\jni\flac\include\share\alloc.h:
 
-/Users/tim/Library/Android/sdk/ndk/21.1.6352462/sources/cxx-stl/llvm-libc++/include/limits.h:
+C:\Users\tim\AppData\Local\Android\Sdk\ndk\21.3.6528147\build\\..\sources\cxx-stl\llvm-libc++\include\limits.h:
 
-/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/flac/src/main/jni/flac/include/share/compat.h:
+C:\Users\tim\StudioProjects\Shuttle2\exoplayer\extensions\flac\src\main\jni\flac\include\share\compat.h:

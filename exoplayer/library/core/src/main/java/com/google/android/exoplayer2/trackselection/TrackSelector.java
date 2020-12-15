@@ -61,6 +61,8 @@ import com.google.android.exoplayer2.util.Assertions;
  *       prefer audio tracks in a particular language. This will trigger the player to make new
  *       track selections. Note that the player will have to re-buffer in the case that the new
  *       track selection for the currently playing period differs from the one that was invalidated.
+ *       Implementing subclasses can trigger invalidation by calling {@link #invalidate()}, which
+ *       will call {@link InvalidationListener#onTrackSelectionsInvalidated()}.
  * </ul>
  *
  * <h3>Renderer configuration</h3>
@@ -135,7 +137,7 @@ public abstract class TrackSelector {
    *
    * @param info The value of {@link TrackSelectorResult#info} in the activated selection.
    */
-  public abstract void onSelectionActivated(Object info);
+  public abstract void onSelectionActivated(@Nullable Object info);
 
   /**
    * Calls {@link InvalidationListener#onTrackSelectionsInvalidated()} to invalidate all previously

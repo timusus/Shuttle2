@@ -1,24 +1,27 @@
-/Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/opus/src/main/obj/local/armeabi-v7a/objs/opusV2JNI/opus_jni.o: \
-  /Users/tim/Projects/Android/Shuttle2/exoplayer/extensions/opus/src/main/jni/opus_jni.cc \
-  /Users/tim/Library/Android/sdk/ndk/21.1.6352462/sources/cxx-stl/llvm-libc++/include/cstdlib \
-  /Users/tim/Library/Android/sdk/ndk/21.1.6352462/sources/cxx-stl/llvm-libc++/include/__config \
-  /Users/tim/Library/Android/sdk/ndk/21.1.6352462/sources/cxx-stl/llvm-libc++/include/stdlib.h \
-  libopus/include/opus.h libopus/include/opus_types.h \
-  /Users/tim/Library/Android/sdk/ndk/21.1.6352462/sources/cxx-stl/llvm-libc++/include/stdint.h \
-  libopus/include/opus_defines.h libopus/include/opus_multistream.h
+C:/Users/tim/StudioProjects/Shuttle2/exoplayer/extensions/opus/src/main/obj/local/armeabi-v7a/objs/opusV2JNI/opus_jni.o: \
+  C:\Users\tim\StudioProjects\Shuttle2\exoplayer\extensions\opus\src\main\jni\opus_jni.cc \
+  C:\Users\tim\AppData\Local\Android\Sdk\ndk\21.3.6528147\build\\..\sources\cxx-stl\llvm-libc++\include\cstdlib \
+  C:\Users\tim\AppData\Local\Android\Sdk\ndk\21.3.6528147\build\\..\sources\cxx-stl\llvm-libc++\include\__config \
+  C:\Users\tim\AppData\Local\Android\Sdk\ndk\21.3.6528147\build\\..\sources\cxx-stl\llvm-libc++\include\stdlib.h \
+  libopus\include\opus.h libopus\include\opus_types.h \
+  C:\Users\tim\AppData\Local\Android\Sdk\ndk\21.3.6528147\build\\..\sources\cxx-stl\llvm-libc++\include\stdint.h \
+  libopus\include\opus_defines.h libopus\include\opus_multistream.h \
+  libopus\include\opus.h
 
-/Users/tim/Library/Android/sdk/ndk/21.1.6352462/sources/cxx-stl/llvm-libc++/include/cstdlib:
+C:\Users\tim\AppData\Local\Android\Sdk\ndk\21.3.6528147\build\\..\sources\cxx-stl\llvm-libc++\include\cstdlib:
 
-/Users/tim/Library/Android/sdk/ndk/21.1.6352462/sources/cxx-stl/llvm-libc++/include/__config:
+C:\Users\tim\AppData\Local\Android\Sdk\ndk\21.3.6528147\build\\..\sources\cxx-stl\llvm-libc++\include\__config:
 
-/Users/tim/Library/Android/sdk/ndk/21.1.6352462/sources/cxx-stl/llvm-libc++/include/stdlib.h:
+C:\Users\tim\AppData\Local\Android\Sdk\ndk\21.3.6528147\build\\..\sources\cxx-stl\llvm-libc++\include\stdlib.h:
 
-libopus/include/opus.h:
+libopus\include\opus.h:
 
-libopus/include/opus_types.h:
+libopus\include\opus_types.h:
 
-/Users/tim/Library/Android/sdk/ndk/21.1.6352462/sources/cxx-stl/llvm-libc++/include/stdint.h:
+C:\Users\tim\AppData\Local\Android\Sdk\ndk\21.3.6528147\build\\..\sources\cxx-stl\llvm-libc++\include\stdint.h:
 
-libopus/include/opus_defines.h:
+libopus\include\opus_defines.h:
 
-libopus/include/opus_multistream.h:
+libopus\include\opus_multistream.h:
+
+libopus\include\opus.h:

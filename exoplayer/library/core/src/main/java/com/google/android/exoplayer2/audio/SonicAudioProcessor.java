@@ -15,10 +15,11 @@
  */
 package com.google.android.exoplayer2.audio;
 
+import static com.google.android.exoplayer2.util.Assertions.checkNotNull;
+
 import androidx.annotation.Nullable;
 import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.Format;
-import com.google.android.exoplayer2.util.Assertions;
 import com.google.android.exoplayer2.util.Util;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -29,37 +30,17 @@ import java.nio.ShortBuffer;
  */
 public final class SonicAudioProcessor implements AudioProcessor {
 
-  /**
-   * The maximum allowed playback speed in {@link #setSpeed(float)}.
-   */
-  public static final float MAXIMUM_SPEED = 8.0f;
-  /**
-   * The minimum allowed playback speed in {@link #setSpeed(float)}.
-   */
-  public static final float MINIMUM_SPEED = 0.1f;
-  /**
-   * The maximum allowed pitch in {@link #setPitch(float)}.
-   */
-  public static final float MAXIMUM_PITCH = 8.0f;
-  /**
-   * The minimum allowed pitch in {@link #setPitch(float)}.
-   */
-  public static final float MINIMUM_PITCH = 0.1f;
-  /**
-   * Indicates that the output sample rate should be the same as the input.
-   */
+  /** Indicates that the output sample rate should be the same as the input. */
   public static final int SAMPLE_RATE_NO_CHANGE = -1;
 
-  /**
-   * The threshold below which the difference between two pitch/speed factors is negligible.
-   */
+  /** The threshold below which the difference between two pitch/speed factors is negligible. */
   private static final float CLOSE_THRESHOLD = 0.01f;
 
   /**
-   * The minimum number of output bytes at which the speedup is calculated using the input/output
-   * byte counts, rather than using the current playback parameters speed.
+   * The minimum number of output bytes required for duration scaling to be calculated using the
+   * input and output byte counts, rather than using the current playback speed.
    */
-  private static final int MIN_BYTES_FOR_SPEEDUP_CALCULATION = 1024;
+  private static final int MIN_BYTES_FOR_DURATION_SCALING_CALCULATION = 1024;
 
   private int pendingOutputSampleRate;
   private float speed;
@@ -79,9 +60,7 @@ public final class SonicAudioProcessor implements AudioProcessor {
   private long outputBytes;
   private boolean inputEnded;
 
-  /**
-   * Creates a new Sonic audio processor.
-   */
+  /** Creates a new Sonic audio processor. */
   public SonicAudioProcessor() {
     speed = 1f;
     pitch = 1f;
@@ -96,37 +75,31 @@ public final class SonicAudioProcessor implements AudioProcessor {
   }
 
   /**
-   * Sets the playback speed. This method may only be called after draining data through the
+   * Sets the target playback speed. This method may only be called after draining data through the
    * processor. The value returned by {@link #isActive()} may change, and the processor must be
    * {@link #flush() flushed} before queueing more data.
    *
-   * @param speed The requested new playback speed.
-   * @return The actual new playback speed.
+   * @param speed The target playback speed.
    */
-  public float setSpeed(float speed) {
-    speed = Util.constrainValue(speed, MINIMUM_SPEED, MAXIMUM_SPEED);
+  public void setSpeed(float speed) {
     if (this.speed != speed) {
       this.speed = speed;
       pendingSonicRecreation = true;
     }
-    return speed;
   }
 
   /**
-   * Sets the playback pitch. This method may only be called after draining data through the
+   * Sets the target playback pitch. This method may only be called after draining data through the
    * processor. The value returned by {@link #isActive()} may change, and the processor must be
    * {@link #flush() flushed} before queueing more data.
    *
-   * @param pitch The requested new pitch.
-   * @return The actual new pitch.
+   * @param pitch The target pitch.
    */
-  public float setPitch(float pitch) {
-    pitch = Util.constrainValue(pitch, MINIMUM_PITCH, MAXIMUM_PITCH);
+  public void setPitch(float pitch) {
     if (this.pitch != pitch) {
       this.pitch = pitch;
       pendingSonicRecreation = true;
     }
-    return pitch;
   }
 
   /**
@@ -142,23 +115,27 @@ public final class SonicAudioProcessor implements AudioProcessor {
   }
 
   /**
-   * Returns the specified duration scaled to take into account the speedup factor of this instance,
-   * in the same units as {@code duration}.
+   * Returns the media duration corresponding to the specified playout duration, taking speed
+   * adjustment into account.
    *
-   * @param duration The duration to scale taking into account speedup.
-   * @return The specified duration scaled to take into account speedup, in the same units as
-   *     {@code duration}.
+   * <p>The scaling performed by this method will use the actual playback speed achieved by the
+   * audio processor, on average, since it was last flushed. This may differ very slightly from the
+   * target playback speed.
+   *
+   * @param playoutDuration The playout duration to scale.
+   * @return The corresponding media duration, in the same units as {@code duration}.
    */
-  public long scaleDurationForSpeedup(long duration) {
-    if (outputBytes >= MIN_BYTES_FOR_SPEEDUP_CALCULATION) {
+  public long getMediaDuration(long playoutDuration) {
+    if (outputBytes >= MIN_BYTES_FOR_DURATION_SCALING_CALCULATION) {
+      long processedInputBytes = inputBytes - checkNotNull(sonic).getPendingInputBytes();
       return outputAudioFormat.sampleRate == inputAudioFormat.sampleRate
-          ? Util.scaleLargeTimestamp(duration, inputBytes, outputBytes)
+          ? Util.scaleLargeTimestamp(playoutDuration, processedInputBytes, outputBytes)
           : Util.scaleLargeTimestamp(
-              duration,
-              inputBytes * outputAudioFormat.sampleRate,
+              playoutDuration,
+              processedInputBytes * outputAudioFormat.sampleRate,
               outputBytes * inputAudioFormat.sampleRate);
     } else {
-      return (long) ((double) speed * duration);
+      return (long) ((double) speed * playoutDuration);
     }
   }
 
@@ -188,7 +165,7 @@ public final class SonicAudioProcessor implements AudioProcessor {
 
   @Override
   public void queueInput(ByteBuffer inputBuffer) {
-    Sonic sonic = Assertions.checkNotNull(this.sonic);
+    Sonic sonic = checkNotNull(this.sonic);
     if (inputBuffer.hasRemaining()) {
       ShortBuffer shortBuffer = inputBuffer.asShortBuffer();
       int inputSize = inputBuffer.remaining();

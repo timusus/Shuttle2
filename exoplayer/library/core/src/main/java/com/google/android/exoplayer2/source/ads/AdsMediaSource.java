@@ -22,15 +22,16 @@ import android.os.SystemClock;
 import androidx.annotation.IntDef;
 import androidx.annotation.Nullable;
 import com.google.android.exoplayer2.C;
+import com.google.android.exoplayer2.MediaItem;
 import com.google.android.exoplayer2.Timeline;
 import com.google.android.exoplayer2.source.CompositeMediaSource;
+import com.google.android.exoplayer2.source.LoadEventInfo;
 import com.google.android.exoplayer2.source.MaskingMediaPeriod;
+import com.google.android.exoplayer2.source.MediaLoadData;
 import com.google.android.exoplayer2.source.MediaPeriod;
 import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.source.MediaSource.MediaPeriodId;
 import com.google.android.exoplayer2.source.MediaSourceEventListener;
-import com.google.android.exoplayer2.source.MediaSourceEventListener.LoadEventInfo;
-import com.google.android.exoplayer2.source.MediaSourceEventListener.MediaLoadData;
 import com.google.android.exoplayer2.source.MediaSourceFactory;
 import com.google.android.exoplayer2.source.ProgressiveMediaSource;
 import com.google.android.exoplayer2.upstream.Allocator;
@@ -38,13 +39,13 @@ import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DataSpec;
 import com.google.android.exoplayer2.upstream.TransferListener;
 import com.google.android.exoplayer2.util.Assertions;
+import com.google.android.exoplayer2.util.Util;
 import java.io.IOException;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import org.checkerframework.checker.nullness.compatqual.NullableType;
 import org.checkerframework.checker.nullness.qual.MonotonicNonNull;
@@ -120,13 +121,14 @@ public final class AdsMediaSource extends CompositeMediaSource<MediaPeriodId> {
   }
 
   // Used to identify the content "child" source for CompositeMediaSource.
-  private static final MediaPeriodId DUMMY_CONTENT_MEDIA_PERIOD_ID =
+  private static final MediaPeriodId CHILD_SOURCE_MEDIA_PERIOD_ID =
       new MediaPeriodId(/* periodUid= */ new Object());
 
   private final MediaSource contentMediaSource;
   private final MediaSourceFactory adMediaSourceFactory;
   private final AdsLoader adsLoader;
   private final AdsLoader.AdViewProvider adViewProvider;
+  @Nullable private final DataSpec adTagDataSpec;
   private final Handler mainHandler;
   private final Timeline.Period period;
 
@@ -144,7 +146,10 @@ public final class AdsMediaSource extends CompositeMediaSource<MediaPeriodId> {
    * @param dataSourceFactory Factory for data sources used to load ad media.
    * @param adsLoader The loader for ads.
    * @param adViewProvider Provider of views for the ad UI.
+   * @deprecated Use {@link AdsMediaSource#AdsMediaSource(MediaSource, DataSpec, MediaSourceFactory,
+   *     AdsLoader, AdsLoader.AdViewProvider)} instead.
    */
+  @Deprecated
   public AdsMediaSource(
       MediaSource contentMediaSource,
       DataSource.Factory dataSourceFactory,
@@ -154,7 +159,8 @@ public final class AdsMediaSource extends CompositeMediaSource<MediaPeriodId> {
         contentMediaSource,
         new ProgressiveMediaSource.Factory(dataSourceFactory),
         adsLoader,
-        adViewProvider);
+        adViewProvider,
+        /* adTagDataSpec= */ null);
   }
 
   /**
@@ -165,22 +171,64 @@ public final class AdsMediaSource extends CompositeMediaSource<MediaPeriodId> {
    * @param adMediaSourceFactory Factory for media sources used to load ad media.
    * @param adsLoader The loader for ads.
    * @param adViewProvider Provider of views for the ad UI.
+   * @deprecated Use {@link AdsMediaSource#AdsMediaSource(MediaSource, DataSpec, MediaSourceFactory,
+   *     AdsLoader, AdsLoader.AdViewProvider)} instead.
    */
+  @Deprecated
   public AdsMediaSource(
       MediaSource contentMediaSource,
       MediaSourceFactory adMediaSourceFactory,
       AdsLoader adsLoader,
       AdsLoader.AdViewProvider adViewProvider) {
+    this(
+        contentMediaSource,
+        adMediaSourceFactory,
+        adsLoader,
+        adViewProvider,
+        /* adTagDataSpec= */ null);
+  }
+
+  /**
+   * Constructs a new source that inserts ads linearly with the content specified by {@code
+   * contentMediaSource}.
+   *
+   * @param contentMediaSource The {@link MediaSource} providing the content to play.
+   * @param adTagDataSpec The data specification of the ad tag to load.
+   * @param adMediaSourceFactory Factory for media sources used to load ad media.
+   * @param adsLoader The loader for ads.
+   * @param adViewProvider Provider of views for the ad UI.
+   */
+  public AdsMediaSource(
+      MediaSource contentMediaSource,
+      DataSpec adTagDataSpec,
+      MediaSourceFactory adMediaSourceFactory,
+      AdsLoader adsLoader,
+      AdsLoader.AdViewProvider adViewProvider) {
+    this(contentMediaSource, adMediaSourceFactory, adsLoader, adViewProvider, adTagDataSpec);
+  }
+
+  private AdsMediaSource(
+      MediaSource contentMediaSource,
+      MediaSourceFactory adMediaSourceFactory,
+      AdsLoader adsLoader,
+      AdsLoader.AdViewProvider adViewProvider,
+      @Nullable DataSpec adTagDataSpec) {
     this.contentMediaSource = contentMediaSource;
     this.adMediaSourceFactory = adMediaSourceFactory;
     this.adsLoader = adsLoader;
     this.adViewProvider = adViewProvider;
+    this.adTagDataSpec = adTagDataSpec;
     mainHandler = new Handler(Looper.getMainLooper());
     period = new Timeline.Period();
     adMediaSourceHolders = new AdMediaSourceHolder[0][];
     adsLoader.setSupportedContentTypes(adMediaSourceFactory.getSupportedTypes());
   }
 
+  /**
+   * @deprecated Use {@link #getMediaItem()} and {@link MediaItem.PlaybackProperties#tag} instead.
+   */
+  @SuppressWarnings("deprecation")
+  @Deprecated
   @Override
   @Nullable
   public Object getTag() {
@@ -188,12 +236,23 @@ public final class AdsMediaSource extends CompositeMediaSource<MediaPeriodId> {
   }
 
   @Override
+  public MediaItem getMediaItem() {
+    return contentMediaSource.getMediaItem();
+  }
+
+  @Override
   protected void prepareSourceInternal(@Nullable TransferListener mediaTransferListener) {
     super.prepareSourceInternal(mediaTransferListener);
     ComponentListener componentListener = new ComponentListener();
     this.componentListener = componentListener;
-    prepareChildSource(DUMMY_CONTENT_MEDIA_PERIOD_ID, contentMediaSource);
-    mainHandler.post(() -> adsLoader.start(componentListener, adViewProvider));
+    prepareChildSource(CHILD_SOURCE_MEDIA_PERIOD_ID, contentMediaSource);
+    mainHandler.post(
+        () -> {
+          if (adTagDataSpec != null) {
+            adsLoader.setAdTagDataSpec(adTagDataSpec);
+          }
+          adsLoader.start(componentListener, adViewProvider);
+        });
   }
 
   @Override
@@ -213,7 +272,8 @@ public final class AdsMediaSource extends CompositeMediaSource<MediaPeriodId> {
       AdMediaSourceHolder adMediaSourceHolder =
           adMediaSourceHolders[adGroupIndex][adIndexInAdGroup];
       if (adMediaSourceHolder == null) {
-        MediaSource adMediaSource = adMediaSourceFactory.createMediaSource(adUri);
+        MediaSource adMediaSource =
+            adMediaSourceFactory.createMediaSource(MediaItem.fromUri(adUri));
         adMediaSourceHolder = new AdMediaSourceHolder(adMediaSource);
         adMediaSourceHolders[adGroupIndex][adIndexInAdGroup] = adMediaSourceHolder;
         prepareChildSource(id, adMediaSource);
@@ -273,8 +333,8 @@ public final class AdsMediaSource extends CompositeMediaSource<MediaPeriodId> {
   @Override
   protected MediaPeriodId getMediaPeriodIdForChildMediaPeriodId(
       MediaPeriodId childId, MediaPeriodId mediaPeriodId) {
-    // The child id for the content period is just DUMMY_CONTENT_MEDIA_PERIOD_ID. That's why we need
-    // to forward the reported mediaPeriodId in this case.
+    // The child id for the content period is just CHILD_SOURCE_MEDIA_PERIOD_ID. That's why
+    // we need to forward the reported mediaPeriodId in this case.
     return childId.isAd() ? childId : mediaPeriodId;
   }
 
@@ -325,7 +385,7 @@ public final class AdsMediaSource extends CompositeMediaSource<MediaPeriodId> {
      * events on the external event listener thread.
      */
     public ComponentListener() {
-      playerHandler = new Handler();
+      playerHandler = Util.createHandlerForCurrentLooper();
     }
 
     /** Releases the component listener. */
@@ -355,45 +415,47 @@ public final class AdsMediaSource extends CompositeMediaSource<MediaPeriodId> {
       }
       createEventDispatcher(/* mediaPeriodId= */ null)
           .loadError(
-              dataSpec,
-              dataSpec.uri,
-              /* responseHeaders= */ Collections.emptyMap(),
+              new LoadEventInfo(
+                  LoadEventInfo.getNewId(),
+                  dataSpec,
+                  /* elapsedRealtimeMs= */ SystemClock.elapsedRealtime()),
               C.DATA_TYPE_AD,
-              /* elapsedRealtimeMs= */ SystemClock.elapsedRealtime(),
-              /* loadDurationMs= */ 0,
-              /* bytesLoaded= */ 0,
               error,
               /* wasCanceled= */ true);
     }
   }
 
-  private final class AdPrepareErrorListener implements MaskingMediaPeriod.PrepareErrorListener {
+  private final class AdPrepareListener implements MaskingMediaPeriod.PrepareListener {
 
     private final Uri adUri;
-    private final int adGroupIndex;
-    private final int adIndexInAdGroup;
 
-    public AdPrepareErrorListener(Uri adUri, int adGroupIndex, int adIndexInAdGroup) {
+    public AdPrepareListener(Uri adUri) {
       this.adUri = adUri;
-      this.adGroupIndex = adGroupIndex;
-      this.adIndexInAdGroup = adIndexInAdGroup;
     }
 
     @Override
-    public void onPrepareError(MediaPeriodId mediaPeriodId, final IOException exception) {
+    public void onPrepareComplete(MediaPeriodId mediaPeriodId) {
+      mainHandler.post(
+          () ->
+              adsLoader.handlePrepareComplete(
+                  mediaPeriodId.adGroupIndex, mediaPeriodId.adIndexInAdGroup));
+    }
+
+    @Override
+    public void onPrepareError(MediaPeriodId mediaPeriodId, IOException exception) {
       createEventDispatcher(mediaPeriodId)
           .loadError(
-              new DataSpec(adUri),
-              adUri,
-              /* responseHeaders= */ Collections.emptyMap(),
+              new LoadEventInfo(
+                  LoadEventInfo.getNewId(),
+                  new DataSpec(adUri),
+                  /* elapsedRealtimeMs= */ SystemClock.elapsedRealtime()),
               C.DATA_TYPE_AD,
-              C.TRACK_TYPE_UNKNOWN,
-              /* loadDurationMs= */ 0,
-              /* bytesLoaded= */ 0,
               AdLoadException.createForAd(exception),
               /* wasCanceled= */ true);
       mainHandler.post(
-          () -> adsLoader.handlePrepareError(adGroupIndex, adIndexInAdGroup, exception));
+          () ->
+              adsLoader.handlePrepareError(
+                  mediaPeriodId.adGroupIndex, mediaPeriodId.adIndexInAdGroup, exception));
     }
   }
 
@@ -402,7 +464,7 @@ public final class AdsMediaSource extends CompositeMediaSource<MediaPeriodId> {
     private final MediaSource adMediaSource;
     private final List<MaskingMediaPeriod> activeMediaPeriods;
 
-    @MonotonicNonNull private Timeline timeline;
+    private @MonotonicNonNull Timeline timeline;
 
     public AdMediaSourceHolder(MediaSource adMediaSource) {
       this.adMediaSource = adMediaSource;
@@ -413,8 +475,7 @@ public final class AdsMediaSource extends CompositeMediaSource<MediaPeriodId> {
         Uri adUri, MediaPeriodId id, Allocator allocator, long startPositionUs) {
       MaskingMediaPeriod maskingMediaPeriod =
           new MaskingMediaPeriod(adMediaSource, id, allocator, startPositionUs);
-      maskingMediaPeriod.setPrepareErrorListener(
-          new AdPrepareErrorListener(adUri, id.adGroupIndex, id.adIndexInAdGroup));
+      maskingMediaPeriod.setPrepareListener(new AdPrepareListener(adUri));
       activeMediaPeriods.add(maskingMediaPeriod);
       if (timeline != null) {
         Object periodUid = timeline.getUidOfPeriod(/* periodIndex= */ 0);

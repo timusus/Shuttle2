@@ -15,6 +15,9 @@
  */
 package com.google.android.exoplayer2.text.tx3g;
 
+import static com.google.android.exoplayer2.text.Cue.ANCHOR_TYPE_START;
+import static com.google.android.exoplayer2.text.Cue.LINE_TYPE_FRACTION;
+
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.text.SpannableStringBuilder;
@@ -28,9 +31,10 @@ import com.google.android.exoplayer2.text.Cue;
 import com.google.android.exoplayer2.text.SimpleSubtitleDecoder;
 import com.google.android.exoplayer2.text.Subtitle;
 import com.google.android.exoplayer2.text.SubtitleDecoderException;
+import com.google.android.exoplayer2.util.Log;
 import com.google.android.exoplayer2.util.ParsableByteArray;
 import com.google.android.exoplayer2.util.Util;
-import java.nio.charset.Charset;
+import com.google.common.base.Charsets;
 import java.util.List;
 
 /**
@@ -39,6 +43,8 @@ import java.util.List;
  * Currently supports parsing of a single text track with embedded styles.
  */
 public final class Tx3gDecoder extends SimpleSubtitleDecoder {
+
+  private static final String TAG = "Tx3gDecoder";
 
   private static final char BOM_UTF16_BE = '\uFEFF';
   private static final char BOM_UTF16_LE = '\uFFFE';
@@ -150,15 +156,11 @@ public final class Tx3gDecoder extends SimpleSubtitleDecoder {
       parsableByteArray.setPosition(position + atomSize);
     }
     return new Tx3gSubtitle(
-        new Cue(
-            cueText,
-            /* textAlignment= */ null,
-            verticalPlacement,
-            Cue.LINE_TYPE_FRACTION,
-            Cue.ANCHOR_TYPE_START,
-            Cue.DIMEN_UNSET,
-            Cue.TYPE_UNSET,
-            Cue.DIMEN_UNSET));
+        new Cue.Builder()
+            .setText(cueText)
+            .setLine(verticalPlacement, LINE_TYPE_FRACTION)
+            .setLineAnchor(ANCHOR_TYPE_START)
+            .build());
   }
 
   private static String readSubtitleText(ParsableByteArray parsableByteArray)
@@ -171,10 +173,10 @@ public final class Tx3gDecoder extends SimpleSubtitleDecoder {
     if (parsableByteArray.bytesLeft() >= SIZE_BOM_UTF16) {
       char firstChar = parsableByteArray.peekChar();
       if (firstChar == BOM_UTF16_BE || firstChar == BOM_UTF16_LE) {
-        return parsableByteArray.readString(textLength, Charset.forName(C.UTF16_NAME));
+        return parsableByteArray.readString(textLength, Charsets.UTF_16);
       }
     }
-    return parsableByteArray.readString(textLength, Charset.forName(C.UTF8_NAME));
+    return parsableByteArray.readString(textLength, Charsets.UTF_8);
   }
 
   private void applyStyleRecord(ParsableByteArray parsableByteArray,
@@ -186,6 +188,16 @@ public final class Tx3gDecoder extends SimpleSubtitleDecoder {
     int fontFace = parsableByteArray.readUnsignedByte();
     parsableByteArray.skipBytes(1); // font size
     int colorRgba = parsableByteArray.readInt();
+
+    if (end > cueText.length()) {
+      Log.w(
+          TAG, "Truncating styl end (" + end + ") to cueText.length() (" + cueText.length() + ").");
+      end = cueText.length();
+    }
+    if (start >= end) {
+      Log.w(TAG, "Ignoring styl with start (" + start + ") >= end (" + end + ").");
+      return;
+    }
     attachFontFace(cueText, fontFace, defaultFontFace, start, end, SPAN_PRIORITY_HIGH);
     attachColor(cueText, colorRgba, defaultColorRgba, start, end, SPAN_PRIORITY_HIGH);
   }
