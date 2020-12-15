@@ -123,6 +123,6 @@ class PlaybackPreferenceManager(
             sharedPreferences.put("playback_media_player", value)
         }
         get() {
-            return sharedPreferences.get("playback_media_player", false)
+            return false //sharedPreferences.get("playback_media_player", false)
         }
 }

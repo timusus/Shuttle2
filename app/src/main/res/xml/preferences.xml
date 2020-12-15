@@ -36,18 +36,18 @@
             app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
-    <PreferenceCategory
-        android:title="Playback"
-        app:iconSpaceReserved="false">
+<!--    <PreferenceCategory-->
+<!--        android:title="Playback"-->
+<!--        app:iconSpaceReserved="false">-->
 
-        <SwitchPreference
-            android:defaultValue="false"
-            android:key="playback_media_player"
-            android:summary="Android MediaPlayer consumes less battery on some devices. ExoPlayer (default) is generally more reliable, supports more formats and is required for the EQ"
-            android:title="Use MediaPlayer"
-            app:iconSpaceReserved="false" />
+<!--        <SwitchPreference-->
+<!--            android:defaultValue="false"-->
+<!--            android:key="playback_media_player"-->
+<!--            android:summary="Android MediaPlayer consumes less battery on some devices. ExoPlayer (default) is generally more reliable, supports more formats and is required for the EQ"-->
+<!--            android:title="Use MediaPlayer"-->
+<!--            app:iconSpaceReserved="false" />-->
 
-    </PreferenceCategory>
+<!--    </PreferenceCategory>-->
 
     <PreferenceCategory
         android:title="Artwork"
