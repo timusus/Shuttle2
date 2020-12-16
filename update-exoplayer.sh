@@ -1,11 +1,11 @@
-cd ./exoplayer
-EXOPLAYER_ROOT="$(pwd)"
-
 # Fetch latest exoplayer
-git pull
+rm -rf  ./exoplayer/*
+git clone https://github.com/google/ExoPlayer.git exoplayer
 
 # Update Opus
 
+cd ./exoplayer
+EXOPLAYER_ROOT="$(pwd)"
 OPUS_EXT_PATH="${EXOPLAYER_ROOT}/extensions/opus/src/main"
 
 NDK_PATH="/Users/tim/Library/Android/sdk/ndk/21.1.6352462"

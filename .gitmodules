@@ -1,6 +1,3 @@
 [submodule "ktaglib"]
 	path = ktaglib
 	url = https://github.com/timusus/KTagLib.git
-[submodule "exoplayer"]
-	path = exoplayer
-	url = https://github.com/google/ExoPlayer.git

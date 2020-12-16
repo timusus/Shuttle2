@@ -70,3 +70,4 @@ fastlane/readme.md
 # Native
 cmake-compiler-settings/
 .cxx/
+/exoplayer/
