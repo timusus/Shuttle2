@@ -57,6 +57,8 @@ dependencies {
     // ExoPlayer
     implementation project(':exoplayer-library-core')
     implementation project(':exoplayer-library-hls')
+    implementation project(':exoplayer-extension-opus')
+    implementation project(':exoplayer-extension-flac')
 
     // Moshi
     implementation 'com.squareup.moshi:moshi-kotlin:1.11.0'
