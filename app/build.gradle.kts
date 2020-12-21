@@ -174,11 +174,11 @@ android {
 
 play {
     if (System.getenv("JENKINS_URL") != null) {
-        serviceAccountCredentials = file(System.getenv("DEPLOYMENT_KEYS"))
-        defaultToAppBundles = true
-        track = "alpha"
+        serviceAccountCredentials.set(file(System.getenv("DEPLOYMENT_KEYS")))
+        defaultToAppBundles.set(true)
+        track.set("alpha")
     } else {
-        serviceAccountCredentials = file("../deployment_keys.json")
+        serviceAccountCredentials.set(file("../deployment_keys.json"))
     }
 }
 
