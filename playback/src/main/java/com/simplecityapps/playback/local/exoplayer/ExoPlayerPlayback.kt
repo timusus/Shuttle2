@@ -9,10 +9,6 @@ import com.google.android.exoplayer2.audio.AudioCapabilities
 import com.google.android.exoplayer2.audio.AudioProcessor
 import com.google.android.exoplayer2.audio.AudioSink
 import com.google.android.exoplayer2.audio.DefaultAudioSink
-import com.google.android.exoplayer2.source.ConcatenatingMediaSource
-import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
-import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
-import com.google.android.exoplayer2.util.Util
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.chromecast.CastPlayback
@@ -33,33 +29,34 @@ class ExoPlayerPlayback(
         initPlayer(context)
     }
 
-    private val concatenatingMediaSource by lazy { ConcatenatingMediaSource() }
-
-    private val dataSourceFactory by lazy { DefaultDataSourceFactory(context, Util.getUserAgent(context, "Shuttle 2.0")) }
-
-    private val mediaSourceFactory by lazy { DefaultMediaSourceFactory(dataSourceFactory) }
-
     private var playWhenReady = false
 
     private var isPlaybackReady = false
 
     private val trackChangeListener by lazy {
 
-        object : TrackChangeEventListener(player) {
-            override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
-                val state = playbackState.toState()
-                Timber.v("onPlayerStateChanged(playWhenReady: $playWhenReady, playbackState: ${state})")
+        object : Player.EventListener {
+
+            override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
+                super.onPlayWhenReadyChanged(playWhenReady, reason)
 
                 if (playWhenReady != this@ExoPlayerPlayback.playWhenReady) {
                     callback?.onPlayStateChanged(playWhenReady)
                     this@ExoPlayerPlayback.playWhenReady = playWhenReady
                 }
+            }
 
-                if (state == PlaybackState.Ready) {
+            override fun onPlaybackStateChanged(state: Int) {
+                super.onPlaybackStateChanged(state)
+
+                val playbackState = state.toState()
+                Timber.v("onPlayerStateChanged(playWhenReady: $playWhenReady, playbackState: ${playbackState})")
+
+                if (playbackState == PlaybackState.Ready) {
                     isPlaybackReady = true
                 }
 
-                if (state == PlaybackState.Ended) {
+                if (playbackState == PlaybackState.Ended) {
                     if (isPlaybackReady) {
                         player.playWhenReady = false
                         this@ExoPlayerPlayback.playWhenReady = false
@@ -70,15 +67,17 @@ class ExoPlayerPlayback(
                 }
             }
 
-            override fun onTimelineChanged(timeline: Timeline, reason: Int) {
-                super.onTimelineChanged(timeline, reason)
-
-                updateWindowIndex()
-            }
-
-            override fun onTrackChanged() {
-                Timber.v("onTrackChanged()")
-                callback?.onPlaybackComplete(trackWentToNext = true)
+            override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                super.onMediaItemTransition(mediaItem, reason)
+                Timber.v("onMediaItemTransition(reason: $reason)")
+                when (reason) {
+                    Player.MEDIA_ITEM_TRANSITION_REASON_AUTO -> callback?.onPlaybackComplete(trackWentToNext = true)
+                    Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT,
+                    Player.MEDIA_ITEM_TRANSITION_REASON_SEEK,
+                    Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED -> {
+                        // Nothing to do
+                    }
+                }
             }
 
             override fun onPlayerError(error: ExoPlaybackException) {
@@ -110,19 +109,7 @@ class ExoPlayerPlayback(
 
         player.addListener(trackChangeListener)
         player.seekTo(seekPosition.toLong())
-
-        concatenatingMediaSource.clear()
-
-        try {
-            concatenatingMediaSource.addMediaSource(mediaSourceFactory.createMediaSource(getMediaItem(current.path.toUri())))
-        } catch (e: IllegalStateException) {
-            completion(Result.failure(e))
-        }
-
-        Timber.v("load() calling updateWindowIndex()")
-        trackChangeListener.updateWindowIndex()
-
-        player.setMediaSource(concatenatingMediaSource)
+        player.setMediaItem(getMediaItem(current.path.toUri()))
         player.prepare()
 
         completion(Result.success(null))
@@ -132,22 +119,9 @@ class ExoPlayerPlayback(
 
     override fun loadNext(song: Song?) {
         Timber.v("loadNext(${song?.name})")
-        val currentWindowIndex = player.currentWindowIndex
         song?.let {
-            if (concatenatingMediaSource.size > 1) {
-                if (currentWindowIndex == 0) {
-                    // We're at the first track. Remove the second
-                    concatenatingMediaSource.removeMediaSource(1)
-                } else if (currentWindowIndex == 1) {
-                    // We're at the second track. Move the first
-                    concatenatingMediaSource.removeMediaSource(0)
-                }
-            }
-            concatenatingMediaSource.addMediaSource(mediaSourceFactory.createMediaSource(getMediaItem(song.path.toUri())))
+            player.addMediaItem(getMediaItem(song.path.toUri()))
         }
-
-        // Let the track change listener know that the window index has changed, so we don't get a false 'track changed' call
-        trackChangeListener.updateWindowIndex()
     }
 
     override fun play() {
@@ -221,41 +195,6 @@ class ExoPlayerPlayback(
             }
         } else {
             return MediaItem.fromUri(uri)
-        }
-    }
-
-
-    /**
-     * A custom [Player.EventListener] which calls [onTrackChanged] when appropriate.
-     */
-    abstract class TrackChangeEventListener(private val player: ExoPlayer) : Player.EventListener {
-        private var currentWindowIndex: Int = 0
-
-        fun updateWindowIndex() {
-            currentWindowIndex = player.currentWindowIndex
-        }
-
-        override fun onPositionDiscontinuity(reason: Int) {
-            if (currentWindowIndex != player.currentWindowIndex && reason.toDiscontinuityReason() == DiscontinuityReason.PeriodTransition) {
-                onTrackChanged()
-            }
-        }
-
-        abstract fun onTrackChanged()
-
-        enum class DiscontinuityReason {
-            PeriodTransition, Seek, SeekAdjustment, AdInsertion, Internal, Unknown
-        }
-
-        private fun Int.toDiscontinuityReason(): DiscontinuityReason {
-            return when (this) {
-                0 -> DiscontinuityReason.PeriodTransition
-                1 -> DiscontinuityReason.Seek
-                2 -> DiscontinuityReason.SeekAdjustment
-                3 -> DiscontinuityReason.AdInsertion
-                4 -> DiscontinuityReason.Internal
-                else -> DiscontinuityReason.Unknown
-            }
         }
     }
 }
