@@ -1,9 +1,5 @@
 {
   "commits": [
-    "Added Emby as a media provider",
-    "Fixed an issue where Flac & Opus software decoders weren't enabled",
-    "Added option to use multiple media providers at once",
-    "Removed option to use Android MediaPlayer, in favour of ExoPlayer",
-    "Fixed some minor issues with media scan progress reporting"
+    "Fixed an issue where tracks would skip incorrectly"
   ]
 }
