@@ -21,7 +21,6 @@ import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.debug.DebugLoggingTree
 import com.simplecityapps.shuttle.debug.LogMessage
 import com.simplecityapps.shuttle.ui.common.autoCleared
-import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.utils.withArgs
 import java.io.Serializable
 import javax.inject.Inject
@@ -57,7 +56,10 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
 
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
-        recyclerView.clearAdapterOnDetach()
+
+        debugLoggingTree.history.forEach { logMessage ->
+            onLog(logMessage)
+        }
 
         val dumpButton: Button = view.findViewById(R.id.dumpButton)
         dumpButton.setOnClickListener {
@@ -78,6 +80,12 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
 
         val versionInfo: TextView = view.findViewById(R.id.versionInfoLabel)
         versionInfo.text = "v${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        recyclerView.scrollToPosition(adapter.itemCount - 1)
     }
 
     override fun onDestroyView() {
@@ -117,7 +125,7 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
         }
         if (canLog) {
             recyclerView.post {
-                adapter.update(adapter.items + LogMessageBinder(logMessage))
+                adapter.add(newItem = LogMessageBinder(logMessage))
             }
         }
     }

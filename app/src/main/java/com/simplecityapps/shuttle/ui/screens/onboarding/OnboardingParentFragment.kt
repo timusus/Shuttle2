@@ -19,7 +19,6 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.autoCleared
-import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.MediaProviderSelectionFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.scanner.MediaScannerFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.storage.StoragePermissionFragment
@@ -92,7 +91,6 @@ class OnboardingParentFragment : Fragment(),
         viewPager = view.findViewById(R.id.viewPager)
         viewPager.adapter = adapter
         viewPager.isUserInputEnabled = false
-        viewPager.clearAdapterOnDetach()
 
         indicator = view.findViewById(R.id.indicator)
         indicator.setViewPager(viewPager)

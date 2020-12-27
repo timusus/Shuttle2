@@ -14,6 +14,8 @@ class DebugLoggingTree(
         fun onLog(logMessage: LogMessage)
     }
 
+    var history = mutableListOf<LogMessage>()
+
     var callbacks: MutableList<Callback> = mutableListOf()
 
     fun addCallback(callback: Callback) {
@@ -29,7 +31,11 @@ class DebugLoggingTree(
     override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
         super.log(priority, tag, message, t)
 
-        callbacks.forEach { callback -> callback.onLog(LogMessage(priority, tag, message, t)) }
+        val logMessage = LogMessage(priority, tag, message, t)
+
+        history.add(logMessage)
+
+        callbacks.forEach { callback -> callback.onLog(logMessage) }
 
         if (sharedPreferences.getBoolean("pref_file_logging", false)) {
             writeToFile(context, LogMessage(priority, tag, message, t))

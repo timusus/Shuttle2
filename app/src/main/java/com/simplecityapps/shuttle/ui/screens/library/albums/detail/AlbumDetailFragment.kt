@@ -34,7 +34,6 @@ import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.autoClearedNullable
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
-import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.utils.toHms
 import com.simplecityapps.shuttle.ui.common.view.DetailImageAnimationHelper
 import com.simplecityapps.shuttle.ui.common.viewbinders.DetailSongBinder
@@ -183,7 +182,6 @@ class AlbumDetailFragment :
 
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
-        recyclerView.clearAdapterOnDetach()
 
         animationHelper = DetailImageAnimationHelper(heroImage, dummyImage)
 

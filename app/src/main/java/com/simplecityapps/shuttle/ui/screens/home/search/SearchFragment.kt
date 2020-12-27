@@ -32,7 +32,6 @@ import com.simplecityapps.shuttle.ui.common.autoClearedNullable
 import com.simplecityapps.shuttle.ui.common.closeKeyboard
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
-import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistBinder
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.ListAlbumArtistBinder
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragmentArgs
@@ -105,7 +104,6 @@ class SearchFragment : Fragment(),
 
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView?.adapter = adapter
-        recyclerView?.clearAdapterOnDetach()
 
         searchView = view.findViewById(R.id.searchView)
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
