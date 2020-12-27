@@ -34,6 +34,8 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/exoplayer/testdata/Shuttle2.exoplayer-testdata.iml" filepath="$PROJECT_DIR$/.idea/modules/exoplayer/testdata/Shuttle2.exoplayer-testdata.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/exoplayer/testutils/Shuttle2.exoplayer-testutils.iml" filepath="$PROJECT_DIR$/.idea/modules/exoplayer/testutils/Shuttle2.exoplayer-testutils.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/imageloader/Shuttle2.imageloader.iml" filepath="$PROJECT_DIR$/.idea/modules/imageloader/Shuttle2.imageloader.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ktaglib/shuttle2.ktaglib.iml" filepath="$PROJECT_DIR$/.idea/modules/ktaglib/shuttle2.ktaglib.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ktaglib/lib/shuttle2.ktaglib.lib.iml" filepath="$PROJECT_DIR$/.idea/modules/ktaglib/lib/shuttle2.ktaglib.lib.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/mediaprovider/Shuttle2.mediaprovider.iml" filepath="$PROJECT_DIR$/.idea/modules/mediaprovider/Shuttle2.mediaprovider.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/mediaprovider/core/Shuttle2.mediaprovider.core.iml" filepath="$PROJECT_DIR$/.idea/modules/mediaprovider/core/Shuttle2.mediaprovider.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/mediaprovider/emby/Shuttle2.mediaprovider.emby.iml" filepath="$PROJECT_DIR$/.idea/modules/mediaprovider/emby/Shuttle2.mediaprovider.emby.iml" />
@@ -42,8 +44,6 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/playback/Shuttle2.playback.iml" filepath="$PROJECT_DIR$/.idea/modules/playback/Shuttle2.playback.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/recyclerview-adapter/Shuttle2.recyclerview-adapter.iml" filepath="$PROJECT_DIR$/.idea/modules/recyclerview-adapter/Shuttle2.recyclerview-adapter.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/saf/Shuttle2.saf.iml" filepath="$PROJECT_DIR$/.idea/modules/saf/Shuttle2.saf.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ktaglib/shuttle2.ktaglib.iml" filepath="$PROJECT_DIR$/.idea/modules/ktaglib/shuttle2.ktaglib.iml" />
-      <module fileurl="file://$PROJECT_DIR$/.idea/modules/ktaglib/lib/shuttle2.ktaglib.lib.iml" filepath="$PROJECT_DIR$/.idea/modules/ktaglib/lib/shuttle2.ktaglib.lib.iml" />
     </modules>
   </component>
 </project>

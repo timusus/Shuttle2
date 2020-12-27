@@ -26,7 +26,6 @@ object BuildPlugins {
     const val androidApplication = "com.android.application"
     const val playPublisher = "com.github.triplet.play"
     const val kotlinAndroid = "kotlin-android"
-    const val kotlinAndroidExtensions = "kotlin-android-extensions"
     const val safeArgs = "androidx.navigation.safeargs.kotlin"
     const val kapt = "kotlin-kapt"
     const val bugsnag = "com.bugsnag.android.gradle"

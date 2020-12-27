@@ -2,7 +2,6 @@ plugins {
     id(BuildPlugins.androidApplication)
     id(BuildPlugins.playPublisher) version BuildPlugins.Versions.playPublisher
     id(BuildPlugins.kotlinAndroid)
-    id(BuildPlugins.kotlinAndroidExtensions)
     id(BuildPlugins.safeArgs)
     id(BuildPlugins.kapt)
     id(BuildPlugins.bugsnag)
@@ -159,7 +158,7 @@ android {
         // AndroidX Lifecycle
         implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.3.0-beta01")
 
-        compile("com.github.bumptech.glide:recyclerview-integration:4.11.0") {
+        implementation("com.github.bumptech.glide:recyclerview-integration:4.11.0") {
             // Excludes the support library because it's already included by Glide.
             isTransitive = false
         }
