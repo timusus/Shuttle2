@@ -218,6 +218,10 @@ class SearchFragment : Fragment(),
             presenter.play(song)
         }
 
+        override fun onSongLongClicked(song: Song) {
+
+        }
+
         override fun onOverflowClicked(view: View, song: Song) {
             val popupMenu = PopupMenu(requireContext(), view)
             popupMenu.inflate(R.menu.menu_popup_song)
@@ -287,6 +291,10 @@ class SearchFragment : Fragment(),
             )
         }
 
+        override fun onAlbumArtistLongClicked(view: View, albumArtist: AlbumArtist) {
+
+        }
+
         override fun onOverflowClicked(view: View, albumArtist: AlbumArtist) {
             val popupMenu = PopupMenu(requireContext(), view)
             popupMenu.inflate(R.menu.menu_popup)
@@ -332,6 +340,10 @@ class SearchFragment : Fragment(),
                 null,
                 FragmentNavigatorExtras(viewHolder.imageView to viewHolder.imageView.transitionName)
             )
+        }
+
+        override fun onAlbumLongClicked(album: Album, viewHolder: AlbumBinder.ViewHolder) {
+
         }
 
         override fun onOverflowClicked(view: View, album: Album) {

@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.view.isVisible
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.shuttle.R
@@ -27,42 +28,20 @@ class ListAlbumBinder(
         return ViewTypes.AlbumList
     }
 
-    override fun getSectionName(): String? {
-        return album.sortKey?.firstOrNull().toString()
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is ListAlbumBinder) return false
-
-        if (album != other.album) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        return album.hashCode()
-    }
-
-    override fun areContentsTheSame(other: Any): Boolean {
-        if (other !is ListAlbumBinder) return false
-
-        return album.name == other.album.name
-                && album.albumArtist == other.album.albumArtist
-                && album.songCount == other.album.songCount
-                && album.year == other.album.year
-    }
-
-
     class ViewHolder(itemView: View) : AlbumBinder.ViewHolder(itemView) {
 
         private val title: TextView = itemView.findViewById(R.id.title)
         private val subtitle: TextView = itemView.findViewById(R.id.subtitle)
         override val imageView: ImageView = itemView.findViewById(R.id.imageView)
         private val overflowButton: ImageButton = itemView.findViewById(R.id.overflowButton)
+        private val checkImageView: ImageView = itemView.findViewById(R.id.checkImageView)
 
         init {
             itemView.setOnClickListener { viewBinder?.listener?.onAlbumClicked(viewBinder!!.album, this) }
+            itemView.setOnLongClickListener {
+                viewBinder?.listener?.onAlbumLongClicked(viewBinder!!.album, this)
+                true
+            }
             overflowButton.setOnClickListener {
                 viewBinder?.listener?.onOverflowClicked(it, viewBinder!!.album)
             }
@@ -81,6 +60,8 @@ class ListAlbumBinder(
             )
 
             imageView.transitionName = "album_${viewBinder.album.name}"
+
+            checkImageView.isVisible = viewBinder.selected
         }
 
         override fun recycle() {

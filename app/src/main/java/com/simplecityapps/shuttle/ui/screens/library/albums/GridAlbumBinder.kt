@@ -34,29 +34,8 @@ class GridAlbumBinder(
         return ViewTypes.AlbumGrid
     }
 
-    override fun getSectionName(): String? {
-        return album.name.firstOrNull().toString()
-    }
-
     override fun spanSize(spanCount: Int): Int {
         return 1
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is GridAlbumBinder) return false
-
-        if (album != other.album) return false
-
-        return true
-    }
-
-    override fun areContentsTheSame(other: Any): Boolean {
-        return album.playCount == (other as? GridAlbumBinder)?.album?.playCount
-    }
-
-    override fun hashCode(): Int {
-        return album.hashCode()
     }
 
 
@@ -66,6 +45,7 @@ class GridAlbumBinder(
         private val subtitle: TextView = itemView.findViewById(R.id.subtitle)
         override val imageView: ImageView = itemView.findViewById(R.id.imageView)
         private val badgeView: BadgeView = itemView.findViewById(R.id.badgeImageView)
+        private val checkImageView: ImageView = itemView.findViewById(R.id.checkImageView)
 
         private var animator: ValueAnimator? = null
 
@@ -74,7 +54,7 @@ class GridAlbumBinder(
                 viewBinder?.listener?.onAlbumClicked(viewBinder!!.album, this)
             }
             itemView.setOnLongClickListener {
-                viewBinder?.listener?.onOverflowClicked(itemView, viewBinder!!.album)
+                viewBinder?.listener?.onAlbumLongClicked(viewBinder!!.album, this)
                 true
             }
         }
@@ -115,6 +95,8 @@ class GridAlbumBinder(
             }
 
             imageView.transitionName = "album_${viewBinder.album.name}"
+
+            checkImageView.isVisible = viewBinder.selected
         }
 
         override fun recycle() {

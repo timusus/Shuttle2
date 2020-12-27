@@ -30,7 +30,7 @@ interface AlbumArtistListContract {
 
     interface View {
         fun setAlbumArtists(albumArtists: List<AlbumArtist>, viewMode: ViewMode)
-        fun onAddedToQueue(albumArtist: AlbumArtist)
+        fun onAddedToQueue(albumArtists: List<AlbumArtist>)
         fun setLoadingState(state: LoadingState)
         fun setLoadingProgress(progress: Float)
         fun showLoadError(error: Error)
@@ -40,10 +40,10 @@ interface AlbumArtistListContract {
 
     interface Presenter {
         fun loadAlbumArtists()
-        fun addToQueue(albumArtist: AlbumArtist)
+        fun addToQueue(albumArtists: List<AlbumArtist>)
         fun playNext(albumArtist: AlbumArtist)
         fun exclude(albumArtist: AlbumArtist)
-        fun editTags(albumArtist: AlbumArtist)
+        fun editTags(albumArtists: List<AlbumArtist>)
         fun play(albumArtist: AlbumArtist)
         fun toggleViewMode()
     }
@@ -82,7 +82,6 @@ class AlbumArtistListPresenter @Inject constructor(
     override fun loadAlbumArtists() {
         launch {
             albumArtistRepository.getAlbumArtists(AlbumArtistQuery.All())
-                .distinctUntilChanged()
                 .flowOn(Dispatchers.IO)
                 .collect { artists ->
                     if (artists.isEmpty()) {
@@ -104,14 +103,14 @@ class AlbumArtistListPresenter @Inject constructor(
         }
     }
 
-    override fun addToQueue(albumArtist: AlbumArtist) {
+    override fun addToQueue(albumArtists: List<AlbumArtist>) {
         launch {
             val songs = songRepository
-                .getSongs(SongQuery.AlbumArtists(listOf(SongQuery.AlbumArtist(name = albumArtist.name))))
+                .getSongs(SongQuery.AlbumArtists(albumArtists.map { albumArtist -> SongQuery.AlbumArtist(name = albumArtist.name) }))
                 .firstOrNull()
                 .orEmpty()
             playbackManager.addToQueue(songs)
-            view?.onAddedToQueue(albumArtist)
+            view?.onAddedToQueue(albumArtists)
         }
     }
 
@@ -122,7 +121,7 @@ class AlbumArtistListPresenter @Inject constructor(
                 .firstOrNull()
                 .orEmpty()
             playbackManager.playNext(songs)
-            view?.onAddedToQueue(albumArtist)
+            view?.onAddedToQueue(listOf(albumArtist))
         }
     }
 
@@ -145,9 +144,9 @@ class AlbumArtistListPresenter @Inject constructor(
         }
     }
 
-    override fun editTags(albumArtist: AlbumArtist) {
+    override fun editTags(albumArtists: List<AlbumArtist>) {
         launch {
-            val songs = songRepository.getSongs(SongQuery.AlbumArtists(listOf(SongQuery.AlbumArtist(name = albumArtist.name)))).firstOrNull().orEmpty()
+            val songs = songRepository.getSongs(SongQuery.AlbumArtists(albumArtists.map { albumArtist -> SongQuery.AlbumArtist(name = albumArtist.name) })).firstOrNull().orEmpty()
             view?.showTagEditor(songs)
         }
     }

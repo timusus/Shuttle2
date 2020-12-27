@@ -4,8 +4,8 @@ import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 
 interface ToolbarHost {
-
-    fun getToolbar(): Toolbar?
+    val toolbar: Toolbar?
+    val contextualToolbar: Toolbar?
 }
 
 fun Fragment.findToolbarHost(): ToolbarHost? {

@@ -20,11 +20,11 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongSortOrder
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.ContextualToolbarHelper
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
-import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
@@ -45,7 +45,7 @@ class SongListFragment :
 
     @Inject lateinit var playlistMenuPresenter: PlaylistMenuPresenter
 
-    private lateinit var adapter: RecyclerAdapter
+    private var adapter: RecyclerAdapter by autoCleared()
 
     private var imageLoader: ArtworkImageLoader by autoCleared()
 
@@ -58,22 +58,10 @@ class SongListFragment :
 
     private var recyclerViewState: Parcelable? = null
 
+    private var contextualToolbarHelper: ContextualToolbarHelper<Song> by autoCleared()
+
 
     // Lifecycle
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        adapter = object : SectionedAdapter(lifecycle.coroutineScope) {
-            override fun getSectionName(viewBinder: ViewBinder?): String {
-                return (viewBinder as? SongBinder)?.song?.let { song ->
-                    presenter.getFastscrollPrefix(song)
-                } ?: ""
-            }
-        }
-
-        setHasOptionsMenu(true)
-    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_songs, container, false)
@@ -82,24 +70,36 @@ class SongListFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        setHasOptionsMenu(true)
+
         playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
 
         imageLoader = GlideImageLoader(this)
 
+        adapter = object : SectionedAdapter(lifecycle.coroutineScope) {
+            override fun getSectionName(viewBinder: ViewBinder?): String {
+                return (viewBinder as? SongBinder)?.song?.let { song ->
+                    presenter.getFastscrollPrefix(song)
+                } ?: ""
+            }
+        }
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
         recyclerView.setRecyclerListener(RecyclerListener())
-        recyclerView.clearAdapterOnDetach()
 
         circularLoadingView = view.findViewById(R.id.circularLoadingView)
         horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
 
-        updateToolbar()
-
         savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
+
+        contextualToolbarHelper = ContextualToolbarHelper()
+
+        updateToolbar()
 
         presenter.bindView(this)
         playlistMenuPresenter.bindView(playlistMenuView)
+
+        presenter.loadSongs(false)
     }
 
     override fun onResume() {
@@ -107,17 +107,19 @@ class SongListFragment :
 
         updateToolbar()
 
-        recyclerViewState?.let { recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState) }
         presenter.updateSortOrder()
-        presenter.loadSongs(false)
     }
 
     override fun onPause() {
         super.onPause()
 
-        findToolbarHost()?.getToolbar()?.let { toolbar ->
-            toolbar.menu.removeItem(R.id.songSortOrder)
-            toolbar.setOnMenuItemClickListener(null)
+        findToolbarHost()?.apply {
+            toolbar?.let { toolbar ->
+                toolbar.menu?.removeItem(R.id.songSortOrder)
+                toolbar.setOnMenuItemClickListener(null)
+            }
+
+            contextualToolbar?.setOnMenuItemClickListener(null)
         }
 
         recyclerViewState = recyclerView.layoutManager?.onSaveInstanceState()
@@ -129,7 +131,6 @@ class SongListFragment :
     }
 
     override fun onDestroyView() {
-
         presenter.unbindView()
         playlistMenuPresenter.unbindView()
 
@@ -140,18 +141,52 @@ class SongListFragment :
     // Private
 
     private fun updateToolbar() {
-        findToolbarHost()?.getToolbar()?.let { toolbar ->
-            toolbar.menu.clear()
-            toolbar.inflateMenu(R.menu.menu_song_list)
-            toolbar.setOnMenuItemClickListener { menuItem ->
-                when (menuItem.itemId) {
-                    R.id.sortSongName -> presenter.setSortOrder(SongSortOrder.SongName)
-                    R.id.sortArtistName -> presenter.setSortOrder(SongSortOrder.ArtistName)
-                    R.id.sortAlbumName -> presenter.setSortOrder(SongSortOrder.AlbumName)
-                    R.id.sortSongYear -> presenter.setSortOrder(SongSortOrder.Year)
-                    R.id.sortSongDuration -> presenter.setSortOrder(SongSortOrder.Duration)
+        findToolbarHost()?.apply {
+            toolbar?.let { toolbar ->
+                toolbar.menu.clear()
+                toolbar.inflateMenu(R.menu.menu_song_list)
+                toolbar.setOnMenuItemClickListener { menuItem ->
+                    when (menuItem.itemId) {
+                        R.id.sortSongName -> presenter.setSortOrder(SongSortOrder.SongName)
+                        R.id.sortArtistName -> presenter.setSortOrder(SongSortOrder.ArtistName)
+                        R.id.sortAlbumName -> presenter.setSortOrder(SongSortOrder.AlbumName)
+                        R.id.sortSongYear -> presenter.setSortOrder(SongSortOrder.Year)
+                        R.id.sortSongDuration -> presenter.setSortOrder(SongSortOrder.Duration)
+                    }
+                    false
                 }
-                false
+            }
+
+            contextualToolbar?.let { contextualToolbar ->
+                contextualToolbar.menu.clear()
+                contextualToolbar.inflateMenu(R.menu.menu_multi_select)
+                contextualToolbar.setOnMenuItemClickListener { menuItem ->
+                    playlistMenuView.createPlaylistMenu(contextualToolbar.menu)
+                    if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Songs(contextualToolbarHelper.selectedItems.toList()))) {
+                        contextualToolbarHelper.hide()
+                        return@setOnMenuItemClickListener true
+                    }
+                    when (menuItem.itemId) {
+                        R.id.queue -> {
+                            presenter.addToQueue(contextualToolbarHelper.selectedItems.toList())
+                            contextualToolbarHelper.hide()
+                            true
+                        }
+                        R.id.editTags -> {
+                            TagEditorAlertDialog.newInstance(contextualToolbarHelper.selectedItems.toList()).show(childFragmentManager)
+                            contextualToolbarHelper.hide()
+                            true
+                        }
+                        else -> false
+                    }
+                }
+            }
+            contextualToolbarHelper.contextualToolbar = contextualToolbar
+            contextualToolbarHelper.toolbar = toolbar
+            contextualToolbarHelper.callback = contextualToolbarCallback
+
+            if (contextualToolbarHelper.selectedItems.isNotEmpty()) {
+                contextualToolbarHelper.show()
             }
         }
     }
@@ -165,7 +200,9 @@ class SongListFragment :
         }
 
         adapter.update(songs.map { song ->
-            SongBinder(song, imageLoader, songBinderListener)
+            SongBinder(song, imageLoader, songBinderListener).apply {
+                selected = contextualToolbarHelper.selectedItems.contains(song)
+            }
         }, completion = {
             recyclerViewState?.let {
                 recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
@@ -175,7 +212,7 @@ class SongListFragment :
     }
 
     override fun updateSortOrder(sortOrder: SongSortOrder) {
-        findToolbarHost()?.getToolbar()?.menu?.let { menu ->
+        findToolbarHost()?.toolbar?.menu?.let { menu ->
             when (sortOrder) {
                 SongSortOrder.SongName -> menu.findItem(R.id.sortSongName)?.isChecked = true
                 SongSortOrder.ArtistName -> menu.findItem(R.id.sortArtistName)?.isChecked = true
@@ -193,8 +230,8 @@ class SongListFragment :
         Toast.makeText(context, error.userDescription(), Toast.LENGTH_LONG).show()
     }
 
-    override fun onAddedToQueue(song: Song) {
-        Toast.makeText(context, "${song.name} added to queue", Toast.LENGTH_SHORT).show()
+    override fun onAddedToQueue(songs: List<Song>) {
+        Toast.makeText(context, "${songs.size} song(s) added to queue", Toast.LENGTH_SHORT).show()
     }
 
     override fun setLoadingState(state: SongListContract.LoadingState) {
@@ -227,7 +264,13 @@ class SongListFragment :
     private val songBinderListener = object : SongBinder.Listener {
 
         override fun onSongClicked(song: Song) {
-            presenter.onSongClicked(song)
+            if (!contextualToolbarHelper.handleClick(song)) {
+                presenter.onSongClicked(song)
+            }
+        }
+
+        override fun onSongLongClicked(song: Song) {
+            contextualToolbarHelper.handleLongClick(song)
         }
 
         override fun onOverflowClicked(view: View, song: Song) {
@@ -246,7 +289,7 @@ class SongListFragment :
                 } else {
                     when (menuItem.itemId) {
                         R.id.queue -> {
-                            presenter.addToQueue(song)
+                            presenter.addToQueue(listOf(song))
                             return@setOnMenuItemClickListener true
                         }
                         R.id.playNext -> {
@@ -295,6 +338,26 @@ class SongListFragment :
 
     override fun onSave(text: String, playlistData: PlaylistData) {
         playlistMenuPresenter.createPlaylist(text, playlistData)
+    }
+
+
+    // ContextualToolbarHelper.Callback Implementation
+
+    private val contextualToolbarCallback = object : ContextualToolbarHelper.Callback<Song> {
+
+        override fun onCountChanged(count: Int) {
+            contextualToolbarHelper.contextualToolbar?.title = "$count selected"
+        }
+
+        override fun onItemUpdated(item: Song, isSelected: Boolean) {
+            adapter.items
+                .filterIsInstance<SongBinder>()
+                .firstOrNull { it.song == item }
+                ?.let { viewBinder ->
+                    viewBinder.selected = isSelected
+                    adapter.notifyItemChanged(adapter.items.indexOf(viewBinder))
+                }
+        }
     }
 
 

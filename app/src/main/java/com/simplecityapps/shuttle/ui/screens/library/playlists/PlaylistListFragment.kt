@@ -23,7 +23,6 @@ import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.autoClearedNullable
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
-import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
@@ -38,9 +37,9 @@ class PlaylistListFragment :
     Injectable,
     PlaylistListContract.View {
 
-    private lateinit var adapter: RecyclerAdapter
-
     @Inject lateinit var presenter: PlaylistListPresenter
+
+    private var adapter: RecyclerAdapter by autoCleared()
 
     private var circularLoadingView: CircularLoadingView by autoCleared()
     private var horizontalLoadingView: HorizontalLoadingView by autoCleared()
@@ -52,12 +51,6 @@ class PlaylistListFragment :
 
     // Lifecycle
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        adapter = SectionedAdapter(lifecycle.coroutineScope)
-    }
-
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_playlists, container, false)
     }
@@ -65,10 +58,10 @@ class PlaylistListFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        adapter = SectionedAdapter(lifecycle.coroutineScope)
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView?.adapter = adapter
         recyclerView?.setRecyclerListener(RecyclerListener())
-        recyclerView?.clearAdapterOnDetach()
 
         circularLoadingView = view.findViewById(R.id.circularLoadingView)
         horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
@@ -76,14 +69,13 @@ class PlaylistListFragment :
         savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
 
         presenter.bindView(this)
+        presenter.loadPlaylists()
     }
 
     override fun onResume() {
         super.onResume()
 
-        presenter.loadPlaylists()
-
-        findToolbarHost()?.getToolbar()?.let { toolbar ->
+        findToolbarHost()?.toolbar?.let { toolbar ->
             toolbar.menu.clear()
             toolbar.inflateMenu(R.menu.menu_playlists)
             toolbar.setOnMenuItemClickListener { menuItem ->
@@ -101,14 +93,12 @@ class PlaylistListFragment :
                 }
             }
         }
-
-        recyclerViewState?.let { recyclerView?.layoutManager?.onRestoreInstanceState(recyclerViewState) }
     }
 
     override fun onPause() {
         super.onPause()
 
-        findToolbarHost()?.getToolbar()?.let { toolbar ->
+        findToolbarHost()?.toolbar?.let { toolbar ->
             toolbar.menu.removeItem(R.id.syncPlaylists)
             toolbar.setOnMenuItemClickListener(null)
         }
@@ -142,7 +132,7 @@ class PlaylistListFragment :
         }
 
         if (smartPlaylists.isNotEmpty()) {
-            viewBinders.add(HeaderBinder("Dumb Playlists"))
+            viewBinders.add(HeaderBinder("Playlists"))
         }
         viewBinders.addAll(playlists.map { playlist ->
             PlaylistBinder(playlist, playlistBinderListener)

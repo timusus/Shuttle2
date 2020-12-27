@@ -1,7 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library.playlists
 
 import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStorePlaylistImporter
-import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.mediaprovider.model.SmartPlaylist
 import com.simplecityapps.mediaprovider.repository.PlaylistQuery
@@ -10,7 +9,10 @@ import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -43,7 +45,6 @@ interface PlaylistListContract {
 class PlaylistListPresenter @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val playbackManager: PlaybackManager,
-    private val mediaImporter: MediaImporter,
     private val playlistImporter: MediaStorePlaylistImporter
 ) : PlaylistListContract.Presenter,
     BasePresenter<PlaylistListContract.View>() {
@@ -56,7 +57,7 @@ class PlaylistListPresenter @Inject constructor(
             ) { smartPlaylists, playlists ->
                 Pair(smartPlaylists, playlists)
             }
-                .distinctUntilChanged()
+//                .distinctUntilChanged()
                 .flowOn(Dispatchers.IO)
                 .collect { (playlists, smartPlaylists) ->
                     if (playlists.isEmpty() && smartPlaylists.isEmpty()) {

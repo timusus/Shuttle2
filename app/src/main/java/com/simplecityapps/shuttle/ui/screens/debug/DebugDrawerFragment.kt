@@ -5,8 +5,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.viewpager.widget.ViewPager
+import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayout
+import com.google.android.material.tabs.TabLayoutMediator
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.dagger.NetworkingModule
@@ -25,14 +26,31 @@ class DebugDrawerFragment : Fragment(), Injectable {
         super.onViewCreated(view, savedInstanceState)
 
         val tabLayout: TabLayout = view.findViewById(R.id.tabLayout)
-        val viewPager: ViewPager = view.findViewById(R.id.viewPager)
-        tabLayout.setupWithViewPager(viewPager, true)
+        val viewPager: ViewPager2 = view.findViewById(R.id.viewPager)
 
-        val adapter = PagerAdapter(childFragmentManager)
-        adapter.addFragment("Media Scanner", MediaScannerFragment.newInstance(scanAutomatically = false, showRescanButton = true, dismissOnScanComplete = false, showToolbar = false))
-        adapter.addFragment("Debug", LoggingFragment.newInstance(LoggingFragment.Filter(excludesTag = NetworkingModule.NETWORK_LOG_TAG)))
-        adapter.notifyDataSetChanged()
+        val adapter = PagerAdapter(
+            fragmentManager = childFragmentManager,
+            lifecycle = lifecycle,
+            size = 2,
+            fragmentFactory = { position ->
+                when (position) {
+                    0 -> MediaScannerFragment.newInstance(scanAutomatically = false, showRescanButton = true, dismissOnScanComplete = false, showToolbar = false)
+                    1 -> LoggingFragment.newInstance(LoggingFragment.Filter(excludesTag = NetworkingModule.NETWORK_LOG_TAG))
+                    else -> throw IllegalArgumentException()
+                }
+            },
+            titleFactory = { position ->
+                when (position) {
+                    0 -> "Media Scanner"
+                    1 -> "Debug"
+                    else -> throw IllegalArgumentException()
+                }
+            })
 
         viewPager.adapter = adapter
+
+        TabLayoutMediator(tabLayout, viewPager) { tab, position ->
+            tab.text = adapter.getPageTitle(position)
+        }.attach()
     }
 }

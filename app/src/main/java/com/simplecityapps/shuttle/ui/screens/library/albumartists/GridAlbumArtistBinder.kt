@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.cardview.widget.CardView
+import androidx.core.view.isVisible
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.shuttle.R
@@ -35,13 +36,14 @@ class GridAlbumArtistBinder(
         private val title: TextView = itemView.findViewById(R.id.title)
         private val subtitle: TextView = itemView.findViewById(R.id.subtitle)
         override val imageView: ImageView = itemView.findViewById(R.id.imageView)
+        private val checkImageView: ImageView = itemView.findViewById(R.id.checkImageView)
 
         init {
             itemView.setOnClickListener {
                 viewBinder?.listener?.onAlbumArtistClicked(viewBinder!!.albumArtist, this)
             }
             itemView.setOnLongClickListener {
-                viewBinder?.listener?.onOverflowClicked(itemView, viewBinder!!.albumArtist)
+                viewBinder?.listener?.onAlbumArtistLongClicked(itemView, viewBinder!!.albumArtist)
                 true
             }
             subtitle.visibility = View.GONE
@@ -75,6 +77,8 @@ class GridAlbumArtistBinder(
             }
 
             imageView.transitionName = "album_artist_${viewBinder.albumArtist.name}"
+
+            checkImageView.isVisible = viewBinder.selected
         }
 
         override fun recycle() {

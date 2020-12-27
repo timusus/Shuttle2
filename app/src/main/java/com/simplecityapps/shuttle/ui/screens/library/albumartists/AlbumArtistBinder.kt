@@ -14,10 +14,13 @@ abstract class AlbumArtistBinder(
 ) : ViewBinder,
     SectionViewBinder {
 
+    var selected: Boolean = false
+
     interface Listener {
         fun onAlbumArtistClicked(albumArtist: AlbumArtist, viewHolder: ViewHolder)
         fun onOverflowClicked(view: View, albumArtist: AlbumArtist) {}
         fun onViewHolderCreated(holder: ViewHolder) {}
+        fun onAlbumArtistLongClicked(view: View, albumArtist: AlbumArtist)
     }
 
     override fun getSectionName(): String? {
@@ -43,6 +46,7 @@ abstract class AlbumArtistBinder(
         return albumArtist.name == other.albumArtist.name
                 && albumArtist.albumCount == other.albumArtist.albumCount
                 && albumArtist.songCount == other.albumArtist.songCount
+                && selected == other.selected
     }
 
 

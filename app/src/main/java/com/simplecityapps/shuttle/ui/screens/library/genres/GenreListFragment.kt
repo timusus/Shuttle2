@@ -23,7 +23,6 @@ import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
-import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
@@ -41,7 +40,7 @@ class GenreListFragment :
     GenreListContract.View,
     CreatePlaylistDialogFragment.Listener {
 
-    private lateinit var adapter: RecyclerAdapter
+    private var adapter: RecyclerAdapter by autoCleared()
 
     private var recyclerView: RecyclerView by autoCleared()
     private var circularLoadingView: CircularLoadingView by autoCleared()
@@ -58,18 +57,6 @@ class GenreListFragment :
 
     // Lifecycle
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        adapter = object : SectionedAdapter(lifecycle.coroutineScope) {
-            override fun getSectionName(viewBinder: ViewBinder?): String {
-                return (viewBinder as? GenreBinder)?.genre?.let { genre ->
-                    presenter.getFastscrollPrefix(genre)
-                } ?: ""
-            }
-        }
-    }
-
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_genres, container, false)
     }
@@ -79,11 +66,16 @@ class GenreListFragment :
 
         playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
 
+        adapter = object : SectionedAdapter(lifecycle.coroutineScope) {
+            override fun getSectionName(viewBinder: ViewBinder?): String {
+                return (viewBinder as? GenreBinder)?.genre?.let { genre ->
+                    presenter.getFastscrollPrefix(genre)
+                } ?: ""
+            }
+        }
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
         recyclerView.setRecyclerListener(RecyclerListener())
-        recyclerView.clearAdapterOnDetach()
-        recyclerView.setItemViewCacheSize(0)
 
         circularLoadingView = view.findViewById(R.id.circularLoadingView)
         horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
@@ -92,21 +84,20 @@ class GenreListFragment :
 
         presenter.bindView(this)
         playlistMenuPresenter.bindView(playlistMenuView)
+
+        presenter.loadGenres(false)
     }
 
     override fun onResume() {
         super.onResume()
 
-        findToolbarHost()?.getToolbar()?.menu?.clear()
-
-        recyclerViewState?.let { recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState) }
-        presenter.loadGenres(false)
+        findToolbarHost()?.toolbar?.menu?.clear()
     }
 
     override fun onPause() {
         super.onPause()
 
-        findToolbarHost()?.getToolbar()?.let { toolbar ->
+        findToolbarHost()?.toolbar?.let { toolbar ->
             toolbar.menu.removeItem(R.id.viewMode)
             toolbar.setOnMenuItemClickListener(null)
         }
@@ -135,7 +126,6 @@ class GenreListFragment :
         }
 
         val data = genres.map { genre -> GenreBinder(genre, this) }.toMutableList<ViewBinder>()
-
 
         adapter.update(data, completion = {
             recyclerViewState?.let {

@@ -195,6 +195,10 @@ class GenreDetailFragment :
             presenter.onSongClicked(song)
         }
 
+        override fun onSongLongClicked(song: Song) {
+
+        }
+
         override fun onOverflowClicked(view: View, song: Song) {
             val popupMenu = PopupMenu(requireContext(), view)
             popupMenu.inflate(R.menu.menu_popup_song)
@@ -267,6 +271,9 @@ class GenreDetailFragment :
             )
         }
 
+        override fun onAlbumLongClicked(album: Album, viewHolder: AlbumBinder.ViewHolder) {
+
+        }
 
         override fun onOverflowClicked(view: View, album: Album) {
             val popupMenu = PopupMenu(requireContext(), view)

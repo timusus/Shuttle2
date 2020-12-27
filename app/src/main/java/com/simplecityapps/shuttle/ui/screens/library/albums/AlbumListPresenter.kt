@@ -15,7 +15,6 @@ import com.simplecityapps.shuttle.ui.screens.library.ViewMode
 import com.simplecityapps.shuttle.ui.screens.library.toViewMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
@@ -33,7 +32,7 @@ class AlbumListContract {
     interface View {
         fun setAlbums(albums: List<Album>, viewMode: ViewMode, resetPosition: Boolean)
         fun updateSortOrder(sortOrder: AlbumSortOrder)
-        fun onAddedToQueue(album: Album)
+        fun onAddedToQueue(albums: List<Album>)
         fun setLoadingState(state: LoadingState)
         fun setLoadingProgress(progress: Float)
         fun showLoadError(error: Error)
@@ -43,10 +42,10 @@ class AlbumListContract {
 
     interface Presenter {
         fun loadAlbums(resetPosition: Boolean)
-        fun addToQueue(album: Album)
+        fun addToQueue(albums: List<Album>)
         fun playNext(album: Album)
         fun exclude(album: Album)
-        fun editTags(album: Album)
+        fun editTags(albums: List<Album>)
         fun play(album: Album)
         fun toggleViewMode()
         fun albumShuffle()
@@ -91,7 +90,6 @@ class AlbumListPresenter @Inject constructor(
     override fun loadAlbums(resetPosition: Boolean) {
         launch {
             albumRepository.getAlbums(AlbumQuery.All(sortOrder = sortPreferenceManager.sortOrderAlbumList))
-                .distinctUntilChanged()
                 .flowOn(Dispatchers.IO)
                 .collect { albums ->
                     if (albums.isEmpty()) {
@@ -113,14 +111,14 @@ class AlbumListPresenter @Inject constructor(
         }
     }
 
-    override fun addToQueue(album: Album) {
+    override fun addToQueue(albums: List<Album>) {
         launch {
             val songs = songRepository
-                .getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = album.name, albumArtistName = album.albumArtist))))
+                .getSongs(SongQuery.Albums(albums.map { SongQuery.Album(name = it.name, albumArtistName = it.albumArtist) }))
                 .firstOrNull()
                 .orEmpty()
             playbackManager.addToQueue(songs)
-            view?.onAddedToQueue(album)
+            view?.onAddedToQueue(albums)
         }
     }
 
@@ -131,7 +129,7 @@ class AlbumListPresenter @Inject constructor(
                 .firstOrNull()
                 .orEmpty()
             playbackManager.playNext(songs)
-            view?.onAddedToQueue(album)
+            view?.onAddedToQueue(listOf(album))
         }
     }
 
@@ -156,10 +154,10 @@ class AlbumListPresenter @Inject constructor(
         }
     }
 
-    override fun editTags(album: Album) {
+    override fun editTags(albums: List<Album>) {
         launch {
             val songs = songRepository
-                .getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = album.name, albumArtistName = album.albumArtist))))
+                .getSongs(SongQuery.Albums(albums.map { album -> SongQuery.Album(name = album.name, albumArtistName = album.albumArtist) }))
                 .firstOrNull()
                 .orEmpty()
             view?.showTagEditor(songs)

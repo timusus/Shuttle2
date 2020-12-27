@@ -184,6 +184,10 @@ class PlaylistDetailFragment :
             presenter.onSongClicked(song)
         }
 
+        override fun onSongLongClicked(song: Song) {
+
+        }
+
         override fun onOverflowClicked(view: View, song: Song) {
             val popupMenu = PopupMenu(requireContext(), view)
             popupMenu.inflate(R.menu.menu_popup_playlist_song)

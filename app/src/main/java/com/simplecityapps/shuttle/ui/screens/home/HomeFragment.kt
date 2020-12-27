@@ -264,6 +264,10 @@ class HomeFragment :
             )
         }
 
+        override fun onAlbumArtistLongClicked(view: View, albumArtist: AlbumArtist) {
+            onOverflowClicked(view, albumArtist)
+        }
+
         override fun onOverflowClicked(view: View, albumArtist: AlbumArtist) {
             val popupMenu = PopupMenu(requireContext(), view)
             popupMenu.inflate(R.menu.menu_popup)
@@ -319,6 +323,10 @@ class HomeFragment :
                 null,
                 FragmentNavigatorExtras(viewHolder.imageView to viewHolder.imageView.transitionName)
             )
+        }
+
+        override fun onAlbumLongClicked(album: Album, viewHolder: AlbumBinder.ViewHolder) {
+            onOverflowClicked(viewHolder.itemView, album)
         }
 
 

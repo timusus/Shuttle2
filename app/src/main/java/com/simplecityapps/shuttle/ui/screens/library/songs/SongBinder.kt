@@ -23,8 +23,11 @@ class SongBinder(
 ) : ViewBinder,
     SectionViewBinder {
 
+    var selected: Boolean = false
+
     interface Listener {
         fun onSongClicked(song: Song)
+        fun onSongLongClicked(song: Song)
         fun onOverflowClicked(view: View, song: Song) {}
     }
 
@@ -36,7 +39,7 @@ class SongBinder(
         return ViewTypes.Song
     }
 
-    override fun getSectionName(): String? {
+    override fun getSectionName(): String {
         return song.name.firstOrNull().toString()
     }
 
@@ -62,6 +65,7 @@ class SongBinder(
                 && song.year == other.song.year
                 && song.track == other.song.track
                 && song.disc == other.song.disc
+                && selected == other.selected
     }
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<SongBinder>(itemView) {
@@ -71,6 +75,7 @@ class SongBinder(
         private val imageView: ImageView = itemView.findViewById(R.id.imageView)
         private val overflowButton: ImageButton = itemView.findViewById(R.id.overflowButton)
         private val badgeView: BadgeView = itemView.findViewById(R.id.badgeImageView)
+        private val checkImageView: ImageView = itemView.findViewById(R.id.checkImageView)
 
         init {
             itemView.setOnClickListener {
@@ -78,6 +83,10 @@ class SongBinder(
             }
             overflowButton.setOnClickListener {
                 viewBinder?.listener?.onOverflowClicked(it, viewBinder!!.song)
+            }
+            itemView.setOnLongClickListener {
+                viewBinder?.listener?.onSongLongClicked(viewBinder!!.song)
+                true
             }
         }
 
@@ -105,6 +114,8 @@ class SongBinder(
                     }
                 }
             }
+
+            checkImageView.isVisible = viewBinder.selected
         }
 
         override fun recycle() {

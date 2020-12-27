@@ -18,7 +18,6 @@ import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -36,7 +35,7 @@ interface SongListContract {
         fun setData(songs: List<Song>, resetPosition: Boolean)
         fun updateSortOrder(sortOrder: SongSortOrder)
         fun showLoadError(error: Error)
-        fun onAddedToQueue(song: Song)
+        fun onAddedToQueue(songs: List<Song>)
         fun setLoadingState(state: LoadingState)
         fun setLoadingProgress(progress: Float)
         fun showDeleteError(error: Error)
@@ -45,7 +44,7 @@ interface SongListContract {
     interface Presenter : BaseContract.Presenter<View> {
         fun loadSongs(resetPosition: Boolean)
         fun onSongClicked(song: Song)
-        fun addToQueue(song: Song)
+        fun addToQueue(songs: List<Song>)
         fun playNext(song: Song)
         fun exclude(song: Song)
         fun delete(song: Song)
@@ -89,7 +88,6 @@ class SongListPresenter @Inject constructor(
         launch {
             songRepository
                 .getSongs(SongQuery.All(sortOrder = sortPreferenceManager.sortOrderSongList))
-                .distinctUntilChanged()
                 .flowOn(Dispatchers.IO)
                 .collect { songs ->
                     this@SongListPresenter.songs = songs
@@ -123,17 +121,17 @@ class SongListPresenter @Inject constructor(
         }
     }
 
-    override fun addToQueue(song: Song) {
+    override fun addToQueue(songs: List<Song>) {
         launch {
-            playbackManager.addToQueue(listOf(song))
-            view?.onAddedToQueue(song)
+            playbackManager.addToQueue(songs)
+            view?.onAddedToQueue(songs)
         }
     }
 
     override fun playNext(song: Song) {
         launch {
             playbackManager.playNext(listOf(song))
-            view?.onAddedToQueue(song)
+            view?.onAddedToQueue(listOf(song))
         }
     }
 
