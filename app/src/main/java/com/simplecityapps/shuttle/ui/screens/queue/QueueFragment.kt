@@ -24,6 +24,7 @@ import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackWatcher
+import com.simplecityapps.playback.PlaybackWatcherCallback
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
 import com.simplecityapps.shuttle.R
@@ -127,12 +128,14 @@ class QueueFragment :
     override fun onResume() {
         super.onResume()
 
+        playbackWatcher.addCallback(playbackWatcherCallback)
         recyclerViewState?.let { recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState) }
     }
 
     override fun onPause() {
         super.onPause()
 
+        playbackWatcher.removeCallback(playbackWatcherCallback)
         recyclerViewState = recyclerView.layoutManager?.onSaveInstanceState()
     }
 
@@ -161,7 +164,7 @@ class QueueFragment :
     // QueueContract.View Implementation
 
     override fun setData(queue: List<QueueItem>, progress: Float, isPlaying: Boolean) {
-        adapter.update(queue.map { queueItem -> QueueBinder(queueItem, imageLoader, playbackManager, playbackWatcher, queueBinderListener) },
+        adapter.update(queue.map { queueItem -> QueueBinder(queueItem, isPlaying, progress, imageLoader, playbackManager, queueBinderListener) },
             completion = {
                 recyclerViewState?.let {
                     recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
@@ -255,6 +258,30 @@ class QueueFragment :
 
     override fun showTagEditor(songs: List<Song>) {
         TagEditorAlertDialog.newInstance(songs).show(childFragmentManager)
+    }
+
+
+    // PlaybackWatcherCallback Implementation
+
+    private val playbackWatcherCallback = object : PlaybackWatcherCallback {
+
+        fun getCurrentViewBinder(): QueueBinder? {
+            return adapter.items.filterIsInstance<QueueBinder>().firstOrNull { it.queueItem.isCurrent }
+        }
+
+        override fun onProgressChanged(position: Int, duration: Int, fromUser: Boolean) {
+            getCurrentViewBinder()?.let { queueBinder ->
+                queueBinder.progress = position / duration.toFloat()
+                adapter.notifyItemChanged(adapter.items.indexOf(queueBinder), "")
+            }
+        }
+
+        override fun onPlaystateChanged(isPlaying: Boolean) {
+            getCurrentViewBinder()?.let { queueBinder ->
+                queueBinder.isPlaying = isPlaying
+                adapter.notifyItemChanged(adapter.items.indexOf(queueBinder), "")
+            }
+        }
     }
 
 
