@@ -71,6 +71,7 @@ class LibraryFragment : Fragment(), ToolbarHost {
             })
 
         viewPager.adapter = adapter
+        viewPager.offscreenPageLimit = 2
         viewPager.setCurrentItem(2, false)
         viewPager.registerOnPageChangeCallback(pageChangeListener)
 
