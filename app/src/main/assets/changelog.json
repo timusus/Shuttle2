@@ -1,5 +1,6 @@
 {
   "commits": [
-    "Fixed an issue where tracks would skip incorrectly"
+    "Multi-select artists, albums & songs to add to playlist, queue or edit tags",
+    "Minor improvements"
   ]
 }
