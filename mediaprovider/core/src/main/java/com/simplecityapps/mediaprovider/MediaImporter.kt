@@ -71,7 +71,9 @@ class MediaImporter(
                     }
                 } ?: run {
                     Timber.e("Failed to import songs.. new song list null")
-                    listeners.forEach { listener -> listener.onFail() }
+                    withContext(Dispatchers.Main) {
+                        listeners.forEach { listener -> listener.onFail() }
+                    }
                 }
                 // Small delay between providers scanning, to allow user to view results of each scan
                 if (mediaProviders.size > 1) {
