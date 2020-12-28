@@ -203,7 +203,7 @@ apply(plugin = "com.google.gms.google-services")
 fun computeVersionName(): String {
     // Basic <major>.<minor> version name
     if (System.getenv("JENKINS_URL") != null) {
-        return String.format("%d.%d.%d-%s", AppVersion.versionMajor, AppVersion.versionMinor, AppVersion.versionPatch, System.getenv("GIT_TAG_NAME"))
+        return String.format("%d.%d.%d", AppVersion.versionMajor, AppVersion.versionMinor, AppVersion.versionPatch)
     }
     return String.format("%d.%d.%d", AppVersion.versionMajor, AppVersion.versionMinor, AppVersion.versionPatch)
 }
