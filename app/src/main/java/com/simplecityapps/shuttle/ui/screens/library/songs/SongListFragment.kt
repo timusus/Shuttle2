@@ -22,9 +22,11 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.ContextualToolbarHelper
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.autoClearedNullable
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
+import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
@@ -54,7 +56,7 @@ class SongListFragment :
     private var circularLoadingView: CircularLoadingView by autoCleared()
     private var horizontalLoadingView: HorizontalLoadingView by autoCleared()
 
-    private var recyclerView: RecyclerView by autoCleared()
+    private var recyclerView: RecyclerView? by autoClearedNullable()
 
     private var recyclerViewState: Parcelable? = null
 
@@ -84,8 +86,9 @@ class SongListFragment :
             }
         }
         recyclerView = view.findViewById(R.id.recyclerView)
-        recyclerView.adapter = adapter
-        recyclerView.setRecyclerListener(RecyclerListener())
+        recyclerView?.adapter = adapter
+        recyclerView?.clearAdapterOnDetach()
+        recyclerView?.setRecyclerListener(RecyclerListener())
 
         circularLoadingView = view.findViewById(R.id.circularLoadingView)
         horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
@@ -122,7 +125,7 @@ class SongListFragment :
             contextualToolbar?.setOnMenuItemClickListener(null)
         }
 
-        recyclerViewState = recyclerView.layoutManager?.onSaveInstanceState()
+        recyclerViewState = recyclerView?.layoutManager?.onSaveInstanceState()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -205,7 +208,7 @@ class SongListFragment :
             }
         }, completion = {
             recyclerViewState?.let {
-                recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
+                recyclerView?.layoutManager?.onRestoreInstanceState(recyclerViewState)
                 recyclerViewState = null
             }
         })

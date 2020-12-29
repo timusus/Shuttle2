@@ -23,6 +23,7 @@ import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.autoClearedNullable
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
+import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
@@ -61,6 +62,7 @@ class PlaylistListFragment :
         adapter = SectionedAdapter(lifecycle.coroutineScope)
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView?.adapter = adapter
+        recyclerView?.clearAdapterOnDetach()
         recyclerView?.setRecyclerListener(RecyclerListener())
 
         circularLoadingView = view.findViewById(R.id.circularLoadingView)

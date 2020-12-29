@@ -21,6 +21,7 @@ import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.debug.DebugLoggingTree
 import com.simplecityapps.shuttle.debug.LogMessage
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.utils.withArgs
 import java.io.Serializable
 import javax.inject.Inject
@@ -59,6 +60,7 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
 
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
+        recyclerView.clearAdapterOnDetach()
 
         adapter.update(
             debugLoggingTree.history

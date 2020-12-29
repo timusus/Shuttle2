@@ -32,6 +32,7 @@ import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.GridSpacingItemDecoration
 import com.simplecityapps.shuttle.ui.common.recyclerview.MyPreloadModelProvider
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
+import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
@@ -88,6 +89,7 @@ class AlbumArtistListFragment :
         adapter = SectionedAdapter(lifecycle.coroutineScope)
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView?.adapter = adapter
+        recyclerView?.clearAdapterOnDetach()
         recyclerView?.setRecyclerListener(RecyclerListener())
         val preloader: RecyclerViewPreloader<AlbumArtist> = RecyclerViewPreloader(
             imageLoader.requestManager,

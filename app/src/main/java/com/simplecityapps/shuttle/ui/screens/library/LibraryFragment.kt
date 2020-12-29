@@ -14,6 +14,7 @@ import com.simplecityapps.shuttle.ui.common.ContextualToolbarHelper
 import com.simplecityapps.shuttle.ui.common.PagerAdapter
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.autoClearedNullable
+import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.ToolbarHost
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistListFragment
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListFragment
@@ -23,7 +24,7 @@ import com.simplecityapps.shuttle.ui.screens.library.songs.SongListFragment
 
 class LibraryFragment : Fragment(), ToolbarHost {
 
-    private var viewPager: ViewPager2 by autoCleared()
+    private var viewPager: ViewPager2? = null
 
     private var tabLayout: TabLayout by autoCleared()
 
@@ -31,6 +32,8 @@ class LibraryFragment : Fragment(), ToolbarHost {
     private var _contextualToolbar: Toolbar? by autoClearedNullable()
 
     private var contextualToolbarHelper: ContextualToolbarHelper<*> by autoCleared()
+
+    private var tabLayoutMediator: TabLayoutMediator? = null
 
 
     // Lifecycle
@@ -70,14 +73,18 @@ class LibraryFragment : Fragment(), ToolbarHost {
                 }
             })
 
-        viewPager.adapter = adapter
-        viewPager.offscreenPageLimit = 2
-        viewPager.setCurrentItem(2, false)
-        viewPager.registerOnPageChangeCallback(pageChangeListener)
+        viewPager?.let { viewPager ->
+            viewPager.adapter = adapter
+            viewPager.offscreenPageLimit = 2
+            viewPager.clearAdapterOnDetach()
+            viewPager.setCurrentItem(2, false)
+            viewPager.registerOnPageChangeCallback(pageChangeListener)
 
-        TabLayoutMediator(tabLayout, viewPager) { tab, position ->
-            tab.text = adapter.getPageTitle(position)
-        }.attach()
+            tabLayoutMediator = TabLayoutMediator(tabLayout, viewPager) { tab, position ->
+                tab.text = adapter.getPageTitle(position)
+            }
+        }
+        tabLayoutMediator?.attach()
 
         _toolbar = view.findViewById(R.id.toolbar)
         _contextualToolbar = view.findViewById(R.id.contextualToolbar)
@@ -85,6 +92,13 @@ class LibraryFragment : Fragment(), ToolbarHost {
         contextualToolbarHelper = ContextualToolbarHelper<Any>()
         contextualToolbarHelper.toolbar = toolbar
         contextualToolbarHelper.contextualToolbar = contextualToolbar
+    }
+
+    override fun onDestroyView() {
+        tabLayoutMediator?.detach()
+        viewPager?.unregisterOnPageChangeCallback(pageChangeListener)
+        viewPager = null
+        super.onDestroyView()
     }
 
 
