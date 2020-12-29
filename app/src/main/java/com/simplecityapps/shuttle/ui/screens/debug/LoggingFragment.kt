@@ -36,6 +36,9 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
 
     private var filter: Filter? = null
 
+
+    // Lifecycle
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -57,9 +60,11 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
 
-        debugLoggingTree.history.forEach { logMessage ->
-            onLog(logMessage)
-        }
+        adapter.update(
+            debugLoggingTree.history
+                .filter { logMessage -> canLog(logMessage) }
+                .map { logMessage -> LogMessageBinder(logMessage) }
+        )
 
         val dumpButton: Button = view.findViewById(R.id.dumpButton)
         dumpButton.setOnClickListener {
@@ -95,10 +100,9 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
     }
 
 
-    // DebugLoggingTree.Callback Implementation
+    // Private
 
-    override fun onLog(logMessage: LogMessage) {
-
+    private fun canLog(logMessage: LogMessage): Boolean {
         var canLog = true
 
         filter?.let { filter ->
@@ -123,7 +127,14 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
                 }
             }
         }
-        if (canLog) {
+        return canLog
+    }
+
+
+    // DebugLoggingTree.Callback Implementation
+
+    override fun onLog(logMessage: LogMessage) {
+        if (canLog(logMessage)) {
             recyclerView.post {
                 adapter.add(newItem = LogMessageBinder(logMessage))
             }
