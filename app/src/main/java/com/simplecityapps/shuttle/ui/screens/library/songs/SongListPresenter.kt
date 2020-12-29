@@ -18,6 +18,7 @@ import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -88,6 +89,7 @@ class SongListPresenter @Inject constructor(
         launch {
             songRepository
                 .getSongs(SongQuery.All(sortOrder = sortPreferenceManager.sortOrderSongList))
+                .distinctUntilChanged()
                 .flowOn(Dispatchers.IO)
                 .collect { songs ->
                     this@SongListPresenter.songs = songs

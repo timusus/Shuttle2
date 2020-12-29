@@ -83,6 +83,7 @@ class AlbumArtistListPresenter @Inject constructor(
         launch {
             albumArtistRepository.getAlbumArtists(AlbumArtistQuery.All())
                 .flowOn(Dispatchers.IO)
+                .distinctUntilChanged()
                 .collect { artists ->
                     if (artists.isEmpty()) {
                         if (mediaImporter.isImporting) {

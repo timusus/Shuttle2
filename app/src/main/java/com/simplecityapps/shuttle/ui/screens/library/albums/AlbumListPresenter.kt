@@ -15,6 +15,7 @@ import com.simplecityapps.shuttle.ui.screens.library.ViewMode
 import com.simplecityapps.shuttle.ui.screens.library.toViewMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
@@ -91,6 +92,7 @@ class AlbumListPresenter @Inject constructor(
         launch {
             albumRepository.getAlbums(AlbumQuery.All(sortOrder = sortPreferenceManager.sortOrderAlbumList))
                 .flowOn(Dispatchers.IO)
+                .distinctUntilChanged()
                 .collect { albums ->
                     if (albums.isEmpty()) {
                         if (mediaImporter.isImporting) {
