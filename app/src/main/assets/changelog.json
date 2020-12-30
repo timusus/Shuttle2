@@ -1,6 +1,7 @@
 {
   "commits": [
-    "Multi-select artists, albums & songs to add to playlist, queue or edit tags",
-    "Minor improvements"
+    "Fixed a bug where scanner would get stuck saying 'scan failed'",
+    "Various optimisations.. attempting to fix lag introduced in 0.1.0",
+    "The app seems to be locking up a lot in the last build or two. I've spent a few hours on this so far but haven't been able to fix it. Will keep trying.."
   ]
 }
