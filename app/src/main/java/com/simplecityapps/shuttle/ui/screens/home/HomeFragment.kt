@@ -45,11 +45,8 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFr
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
 
@@ -123,8 +120,9 @@ class HomeFragment :
             }
         }
         favoritesButton.setOnClickListener {
-            viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Main) {
-                navigateToPlaylist(PlaylistQuery.PlaylistId(playlistRepository.getFavoritesPlaylist().id))
+            coroutineScope.launch(Dispatchers.Main) {
+                val playlistQuery = PlaylistQuery.PlaylistId(playlistRepository.getFavoritesPlaylist().id)
+                navigateToPlaylist(playlistQuery)
             }
         }
         shuffleButton.setOnClickListener { presenter.shuffleAll() }
@@ -170,7 +168,7 @@ class HomeFragment :
         presenter.unbindView()
         playlistMenuPresenter.unbindView()
 
-        coroutineScope.cancel()
+        coroutineScope.coroutineContext.cancelChildren()
         super.onDestroyView()
     }
 
