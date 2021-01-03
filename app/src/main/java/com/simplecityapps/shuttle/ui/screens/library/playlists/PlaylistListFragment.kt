@@ -10,7 +10,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.coroutineScope
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.simplecityapps.adapter.RecyclerAdapter
@@ -21,9 +21,7 @@ import com.simplecityapps.mediaprovider.model.SmartPlaylist
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
-import com.simplecityapps.shuttle.ui.common.autoClearedNullable
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
-import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
@@ -45,7 +43,7 @@ class PlaylistListFragment :
     private var circularLoadingView: CircularLoadingView by autoCleared()
     private var horizontalLoadingView: HorizontalLoadingView by autoCleared()
 
-    private var recyclerView: RecyclerView? by autoClearedNullable()
+    private var recyclerView: RecyclerView by autoCleared()
 
     private var recyclerViewState: Parcelable? = null
 
@@ -59,11 +57,10 @@ class PlaylistListFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        adapter = SectionedAdapter(lifecycle.coroutineScope)
+        adapter = SectionedAdapter(viewLifecycleOwner.lifecycleScope)
         recyclerView = view.findViewById(R.id.recyclerView)
-        recyclerView?.adapter = adapter
-        recyclerView?.clearAdapterOnDetach()
-        recyclerView?.setRecyclerListener(RecyclerListener())
+        recyclerView.adapter = adapter
+        recyclerView.setRecyclerListener(RecyclerListener())
 
         circularLoadingView = view.findViewById(R.id.circularLoadingView)
         horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
@@ -71,11 +68,12 @@ class PlaylistListFragment :
         savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
 
         presenter.bindView(this)
-        presenter.loadPlaylists()
     }
 
     override fun onResume() {
         super.onResume()
+
+        presenter.loadPlaylists()
 
         findToolbarHost()?.toolbar?.let { toolbar ->
             toolbar.menu.clear()
@@ -105,7 +103,7 @@ class PlaylistListFragment :
             toolbar.setOnMenuItemClickListener(null)
         }
 
-        recyclerViewState = recyclerView?.layoutManager?.onSaveInstanceState()
+        recyclerViewState = recyclerView.layoutManager?.onSaveInstanceState()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -143,7 +141,7 @@ class PlaylistListFragment :
 
         adapter.update(viewBinders, completion = {
             recyclerViewState?.let {
-                recyclerView?.layoutManager?.onRestoreInstanceState(recyclerViewState)
+                recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
                 recyclerViewState = null
             }
         })
@@ -158,6 +156,10 @@ class PlaylistListFragment :
             is PlaylistListContract.LoadingState.Scanning -> {
                 horizontalLoadingView.setState(HorizontalLoadingView.State.Loading("Scanning your library"))
                 circularLoadingView.setState(CircularLoadingView.State.None)
+            }
+            is PlaylistListContract.LoadingState.Loading -> {
+                horizontalLoadingView.setState(HorizontalLoadingView.State.None)
+                circularLoadingView.setState(CircularLoadingView.State.Loading())
             }
             is PlaylistListContract.LoadingState.Empty -> {
                 horizontalLoadingView.setState(HorizontalLoadingView.State.None)

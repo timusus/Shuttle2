@@ -168,6 +168,8 @@ android {
         implementation(project(":exoplayer-library-hls"))
 
         implementation("androidx.drawerlayout:drawerlayout:1.1.1")
+
+        implementation("androidx.fragment:fragment:1.3.0-rc01")
     }
 }
 

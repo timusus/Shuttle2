@@ -10,7 +10,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
-import androidx.lifecycle.coroutineScope
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.shuttle.R
@@ -26,7 +26,7 @@ class DirectorySelectionFragment : DialogFragment(),
 
     @Inject lateinit var presenter: DirectorySelectionPresenter
 
-    lateinit var adapter: RecyclerAdapter
+    private var adapter: RecyclerAdapter by autoCleared()
 
     private var recyclerView: RecyclerView by autoCleared()
 
@@ -38,7 +38,7 @@ class DirectorySelectionFragment : DialogFragment(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        adapter = RecyclerAdapter(lifecycle.coroutineScope)
+        adapter = RecyclerAdapter(viewLifecycleOwner.lifecycleScope)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

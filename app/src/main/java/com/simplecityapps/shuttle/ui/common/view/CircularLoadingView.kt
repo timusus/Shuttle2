@@ -56,44 +56,52 @@ class CircularLoadingView @JvmOverloads constructor(
             when (state) {
                 is State.Loading -> {
                     if (currentState is State.Loading) {
+                        textView.text = state.message
+                        errorImageView.isVisible = false
+                        retryButton.isVisible = false
+                        progressBar.isVisible = true
                         animation?.cancel()
                         animation = fadeIn()
                     } else {
                         animation?.cancel()
-                        animation = fadeOut(completion = { animation = fadeIn() })
+                        animation = fadeOut(completion = {
+                            textView.text = state.message
+                            errorImageView.isVisible = false
+                            retryButton.isVisible = false
+                            progressBar.isVisible = true
+                            animation = fadeIn()
+                        })
                     }
-
-                    textView.text = state.message
-                    errorImageView.isVisible = false
-                    retryButton.isVisible = false
-                    progressBar.isVisible = true
                 }
                 is State.Error -> {
                     animation?.cancel()
-                    animation = fadeOut(completion = { animation = fadeIn() })
-
-                    textView.text = state.message
-                    errorImageView.isVisible = true
-                    progressBar.isVisible = false
-                    retryButton.isVisible = false
+                    animation = fadeOut(completion = {
+                        textView.text = state.message
+                        errorImageView.isVisible = true
+                        progressBar.isVisible = false
+                        retryButton.isVisible = false
+                        animation = fadeIn()
+                    })
                 }
                 is State.Empty -> {
                     animation?.cancel()
-                    animation = fadeOut(completion = { animation = fadeIn() })
-
-                    textView.text = state.message
-                    errorImageView.isVisible = true
-                    progressBar.isVisible = false
-                    retryButton.isVisible = false
+                    animation = fadeOut(completion = {
+                        textView.text = state.message
+                        errorImageView.isVisible = true
+                        progressBar.isVisible = false
+                        retryButton.isVisible = false
+                        animation = fadeIn()
+                    })
                 }
                 is State.Retry -> {
                     animation?.cancel()
-                    animation = fadeOut(completion = { animation = fadeIn() })
-
-                    textView.text = state.message
-                    retryButton.isVisible = true
-                    errorImageView.isVisible = false
-                    progressBar.isVisible = false
+                    animation = fadeOut(completion = {
+                        textView.text = state.message
+                        retryButton.isVisible = true
+                        errorImageView.isVisible = false
+                        progressBar.isVisible = false
+                        animation = fadeIn()
+                    })
                 }
                 is State.None -> {
                     animation?.cancel()

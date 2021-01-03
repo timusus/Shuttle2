@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.annotation.NavigationRes
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.coroutineScope
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
@@ -15,8 +16,9 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.error.userDescription
-import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
+
 import com.simplecityapps.shuttle.ui.screens.sleeptimer.SleepTimerDialogFragment
 import javax.inject.Inject
 
@@ -30,7 +32,7 @@ class BottomDrawerSettingsFragment :
 
     @Inject lateinit var presenter: BottomDrawerSettingsPresenter
 
-    private lateinit var adapter: RecyclerAdapter
+    private var adapter: RecyclerAdapter by autoCleared()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_bottom_drawer, container, false)
@@ -39,14 +41,12 @@ class BottomDrawerSettingsFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        adapter = RecyclerAdapter(lifecycle.coroutineScope)
+        adapter = RecyclerAdapter(viewLifecycleOwner.lifecycleScope)
 
         val recyclerView: RecyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
-        recyclerView.clearAdapterOnDetach()
 
         presenter.bindView(this)
-        presenter.loadData()
     }
 
     override fun onResume() {
@@ -55,6 +55,8 @@ class BottomDrawerSettingsFragment :
         setSelectedItem(findNavController().currentDestination?.id)
 
         findNavController().addOnDestinationChangedListener(destinationChangedListener)
+
+        presenter.loadData()
     }
 
     override fun onPause() {

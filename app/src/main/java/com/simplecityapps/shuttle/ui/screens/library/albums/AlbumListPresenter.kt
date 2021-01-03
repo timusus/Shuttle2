@@ -26,6 +26,7 @@ class AlbumListContract {
 
     sealed class LoadingState {
         object Scanning : LoadingState()
+        object Loading : LoadingState()
         object Empty : LoadingState()
         object None : LoadingState()
     }
@@ -89,6 +90,13 @@ class AlbumListPresenter @Inject constructor(
     }
 
     override fun loadAlbums(resetPosition: Boolean) {
+        if (albums.isEmpty()) {
+            if (mediaImporter.isImporting) {
+                view?.setLoadingState(AlbumListContract.LoadingState.Scanning)
+            } else {
+                view?.setLoadingState(AlbumListContract.LoadingState.Loading)
+            }
+        }
         launch {
             albumRepository.getAlbums(AlbumQuery.All(sortOrder = sortPreferenceManager.sortOrderAlbumList))
                 .flowOn(Dispatchers.IO)

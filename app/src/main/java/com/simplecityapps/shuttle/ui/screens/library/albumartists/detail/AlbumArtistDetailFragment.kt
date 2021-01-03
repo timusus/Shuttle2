@@ -18,6 +18,7 @@ import androidx.core.view.doOnPreDraw
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.coroutineScope
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.NavHostFragment
@@ -38,7 +39,7 @@ import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.autoClearedNullable
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
-import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
+
 import com.simplecityapps.shuttle.ui.common.view.DetailImageAnimationHelper
 import com.simplecityapps.shuttle.ui.screens.home.search.HeaderBinder
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragmentArgs
@@ -66,7 +67,7 @@ class AlbumArtistDetailFragment :
 
     private lateinit var presenter: AlbumArtistDetailPresenter
 
-    private lateinit var adapter: RecyclerAdapter
+    private var adapter: RecyclerAdapter by autoCleared()
 
     private var animationHelper: DetailImageAnimationHelper? by autoClearedNullable()
 
@@ -103,8 +104,6 @@ class AlbumArtistDetailFragment :
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        adapter = RecyclerAdapter(lifecycle.coroutineScope)
 
         sharedElementEnterTransition = TransitionInflater.from(context).inflateTransition(R.transition.image_shared_element_transition)
         (sharedElementEnterTransition as Transition).duration = 200L
@@ -195,15 +194,19 @@ class AlbumArtistDetailFragment :
             dummyImage.isVisible = false
         }
 
+        adapter = RecyclerAdapter(viewLifecycleOwner.lifecycleScope)
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
         recyclerView.doOnPreDraw { maybeStartPostponedEnterTransition() }
-        recyclerView.clearAdapterOnDetach()
 
         animationHelper = DetailImageAnimationHelper(heroImage, dummyImage)
 
         presenter.bindView(this)
         playlistMenuPresenter.bindView(playlistMenuView)
+    }
+
+    override fun onResume() {
+        super.onResume()
 
         presenter.loadData()
     }

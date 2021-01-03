@@ -29,7 +29,7 @@ import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
-import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
+
 import com.simplecityapps.shuttle.ui.screens.home.HorizontalAlbumListBinder
 import com.simplecityapps.shuttle.ui.screens.home.search.HeaderBinder
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumBinder
@@ -55,9 +55,9 @@ class GenreDetailFragment :
 
     private var imageLoader: ArtworkImageLoader by autoCleared()
 
-    private lateinit var presenter: GenreDetailPresenter
+    private var adapter: RecyclerAdapter by autoCleared()
 
-    private lateinit var adapter: RecyclerAdapter
+    private lateinit var presenter: GenreDetailPresenter
 
     private lateinit var genre: Genre
 
@@ -82,7 +82,7 @@ class GenreDetailFragment :
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        adapter = RecyclerAdapter(lifecycle.coroutineScope)
+        adapter = RecyclerAdapter(viewLifecycleOwner.lifecycleScope)
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -130,7 +130,6 @@ class GenreDetailFragment :
 
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
-        recyclerView.clearAdapterOnDetach()
 
         presenter.bindView(this)
         playlistMenuPresenter.bindView(playlistMenuView)
@@ -155,7 +154,7 @@ class GenreDetailFragment :
     override fun setData(albums: List<Album>, songs: List<Song>) {
         val viewBinders = mutableListOf<ViewBinder>()
         viewBinders.add(HeaderBinder("Albums"))
-        viewBinders.add(HorizontalAlbumListBinder(albums, imageLoader, false, lifecycleScope, albumBinderListener))
+        viewBinders.add(HorizontalAlbumListBinder(albums, imageLoader, false, viewLifecycleOwner.lifecycleScope, albumBinderListener))
         viewBinders.add(HeaderBinder("Songs"))
         viewBinders.addAll(songs.map { song -> SongBinder(song, imageLoader, songBinderListener) })
         adapter.update(viewBinders)

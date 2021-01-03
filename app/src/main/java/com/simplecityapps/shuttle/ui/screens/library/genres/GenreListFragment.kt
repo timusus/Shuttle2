@@ -9,7 +9,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.coroutineScope
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import com.simplecityapps.adapter.RecyclerAdapter
@@ -20,11 +20,9 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
-import com.simplecityapps.shuttle.ui.common.autoClearedNullable
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
-import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
@@ -44,7 +42,7 @@ class GenreListFragment :
 
     private var adapter: RecyclerAdapter by autoCleared()
 
-    private var recyclerView: RecyclerView? by autoClearedNullable()
+    private var recyclerView: RecyclerView by autoCleared()
     private var circularLoadingView: CircularLoadingView by autoCleared()
     private var horizontalLoadingView: HorizontalLoadingView by autoCleared()
 
@@ -68,7 +66,7 @@ class GenreListFragment :
 
         playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
 
-        adapter = object : SectionedAdapter(lifecycle.coroutineScope) {
+        adapter = object : SectionedAdapter(viewLifecycleOwner.lifecycleScope) {
             override fun getSectionName(viewBinder: ViewBinder?): String {
                 return (viewBinder as? GenreBinder)?.genre?.let { genre ->
                     presenter.getFastscrollPrefix(genre)
@@ -76,9 +74,8 @@ class GenreListFragment :
             }
         }
         recyclerView = view.findViewById(R.id.recyclerView)
-        recyclerView?.adapter = adapter
-        recyclerView?.clearAdapterOnDetach()
-        recyclerView?.setRecyclerListener(RecyclerListener())
+        recyclerView.adapter = adapter
+        recyclerView.setRecyclerListener(RecyclerListener())
 
         circularLoadingView = view.findViewById(R.id.circularLoadingView)
         horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
@@ -87,12 +84,12 @@ class GenreListFragment :
 
         presenter.bindView(this)
         playlistMenuPresenter.bindView(playlistMenuView)
-
-        presenter.loadGenres(false)
     }
 
     override fun onResume() {
         super.onResume()
+
+        presenter.loadGenres(false)
 
         findToolbarHost()?.toolbar?.menu?.clear()
     }
@@ -105,7 +102,7 @@ class GenreListFragment :
             toolbar.setOnMenuItemClickListener(null)
         }
 
-        recyclerViewState = recyclerView?.layoutManager?.onSaveInstanceState()
+        recyclerViewState = recyclerView.layoutManager?.onSaveInstanceState()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -132,7 +129,7 @@ class GenreListFragment :
 
         adapter.update(data, completion = {
             recyclerViewState?.let {
-                recyclerView?.layoutManager?.onRestoreInstanceState(recyclerViewState)
+                recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
                 recyclerViewState = null
             }
         })
@@ -147,6 +144,10 @@ class GenreListFragment :
             is GenreListContract.LoadingState.Scanning -> {
                 horizontalLoadingView.setState(HorizontalLoadingView.State.Loading("Scanning your library"))
                 circularLoadingView.setState(CircularLoadingView.State.None)
+            }
+            is GenreListContract.LoadingState.Loading -> {
+                horizontalLoadingView.setState(HorizontalLoadingView.State.None)
+                circularLoadingView.setState(CircularLoadingView.State.Loading())
             }
             is GenreListContract.LoadingState.Empty -> {
                 horizontalLoadingView.setState(HorizontalLoadingView.State.None)

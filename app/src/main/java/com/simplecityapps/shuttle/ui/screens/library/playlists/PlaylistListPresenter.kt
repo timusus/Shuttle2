@@ -9,10 +9,7 @@ import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -20,6 +17,7 @@ interface PlaylistListContract {
 
     sealed class LoadingState {
         object Scanning : LoadingState()
+        object Loading : LoadingState()
         object Empty : LoadingState()
         object None : LoadingState()
     }
@@ -50,6 +48,8 @@ class PlaylistListPresenter @Inject constructor(
     BasePresenter<PlaylistListContract.View>() {
 
     override fun loadPlaylists() {
+        view?.setLoadingState(PlaylistListContract.LoadingState.Loading)
+
         launch {
             combine(
                 playlistRepository.getPlaylists(PlaylistQuery.All()),
@@ -57,12 +57,13 @@ class PlaylistListPresenter @Inject constructor(
             ) { smartPlaylists, playlists ->
                 Pair(smartPlaylists, playlists)
             }
-//                .distinctUntilChanged()
+                .distinctUntilChanged()
                 .flowOn(Dispatchers.IO)
                 .collect { (playlists, smartPlaylists) ->
                     if (playlists.isEmpty() && smartPlaylists.isEmpty()) {
                         view?.setLoadingState(PlaylistListContract.LoadingState.Empty)
                     } else {
+                        view?.setLoadingState(PlaylistListContract.LoadingState.None)
                         view?.setPlaylists(playlists, smartPlaylists)
                     }
                 }

@@ -14,7 +14,7 @@ import com.simplecityapps.shuttle.ui.common.ContextualToolbarHelper
 import com.simplecityapps.shuttle.ui.common.PagerAdapter
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.autoClearedNullable
-import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
+
 import com.simplecityapps.shuttle.ui.common.view.ToolbarHost
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistListFragment
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListFragment
@@ -35,6 +35,8 @@ class LibraryFragment : Fragment(), ToolbarHost {
 
     private var tabLayoutMediator: TabLayoutMediator? = null
 
+    private var adapter: PagerAdapter? = null
+
 
     // Lifecycle
 
@@ -48,7 +50,7 @@ class LibraryFragment : Fragment(), ToolbarHost {
         tabLayout = view.findViewById(R.id.tabLayout)
         viewPager = view.findViewById(R.id.viewPager)
 
-        val adapter = PagerAdapter(
+        adapter = PagerAdapter(
             fragmentManager = childFragmentManager,
             lifecycle = lifecycle,
             size = 5,
@@ -75,13 +77,11 @@ class LibraryFragment : Fragment(), ToolbarHost {
 
         viewPager?.let { viewPager ->
             viewPager.adapter = adapter
-            viewPager.offscreenPageLimit = 2
-            viewPager.clearAdapterOnDetach()
             viewPager.setCurrentItem(2, false)
             viewPager.registerOnPageChangeCallback(pageChangeListener)
 
             tabLayoutMediator = TabLayoutMediator(tabLayout, viewPager) { tab, position ->
-                tab.text = adapter.getPageTitle(position)
+                tab.text = adapter!!.getPageTitle(position)
             }
         }
         tabLayoutMediator?.attach()
@@ -96,7 +96,9 @@ class LibraryFragment : Fragment(), ToolbarHost {
 
     override fun onDestroyView() {
         tabLayoutMediator?.detach()
+        tabLayoutMediator = null
         viewPager?.unregisterOnPageChangeCallback(pageChangeListener)
+        viewPager?.adapter = null
         viewPager = null
         super.onDestroyView()
     }

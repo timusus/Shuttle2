@@ -13,7 +13,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.coroutineScope
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.PagerSnapHelper
 import androidx.recyclerview.widget.RecyclerView
@@ -33,7 +33,6 @@ import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.recyclerview.SnapOnScrollListener
 import com.simplecityapps.shuttle.ui.common.recyclerview.SpacesItemDecoration
 import com.simplecityapps.shuttle.ui.common.recyclerview.attachSnapHelperWithListener
-import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.utils.toHms
 import com.simplecityapps.shuttle.ui.common.view.FavoriteButton
 import com.simplecityapps.shuttle.ui.common.view.RepeatButton
@@ -59,7 +58,7 @@ class PlaybackFragment :
 
     private var recyclerView: RecyclerView by autoCleared()
 
-    private lateinit var adapter: RecyclerAdapter
+    private var adapter: RecyclerAdapter by autoCleared()
 
     private var playPauseButton: ImageButton by autoCleared()
     private var skipNextButton: ImageButton by autoCleared()
@@ -105,7 +104,7 @@ class PlaybackFragment :
         currentTimeTextView = view.findViewById(R.id.currentTimeTextView)
         durationTextView = view.findViewById(R.id.durationTextView)
 
-        adapter = RecyclerAdapter(lifecycle.coroutineScope)
+        adapter = RecyclerAdapter(viewLifecycleOwner.lifecycleScope)
         imageLoader = GlideImageLoader(this)
 
         playPauseButton.setOnClickListener { presenter.togglePlayback() }
@@ -133,7 +132,6 @@ class PlaybackFragment :
 
         recyclerView.adapter = adapter
         recyclerView.setRecyclerListener(RecyclerListener())
-        recyclerView.clearAdapterOnDetach()
 
         val snapHelper = PagerSnapHelper()
         snapHelper.attachToRecyclerView(recyclerView)

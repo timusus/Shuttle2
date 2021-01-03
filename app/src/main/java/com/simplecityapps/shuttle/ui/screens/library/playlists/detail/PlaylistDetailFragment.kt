@@ -12,7 +12,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.coroutineScope
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
@@ -25,7 +25,6 @@ import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
-import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.utils.toHms
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongBinder
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
@@ -50,7 +49,7 @@ class PlaylistDetailFragment :
 
     private lateinit var presenter: PlaylistDetailPresenter
 
-    private lateinit var adapter: RecyclerAdapter
+    private var adapter: RecyclerAdapter by autoCleared()
 
     private lateinit var playlist: Playlist
 
@@ -86,7 +85,7 @@ class PlaylistDetailFragment :
 
         playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
 
-        adapter = RecyclerAdapter(lifecycle.coroutineScope)
+        adapter = RecyclerAdapter(viewLifecycleOwner.lifecycleScope)
 
         imageLoader = GlideImageLoader(this)
 
@@ -109,7 +108,6 @@ class PlaylistDetailFragment :
         }
 
         recyclerView.adapter = adapter
-        recyclerView.clearAdapterOnDetach()
 
         heroImage = view.findViewById(R.id.heroImage)
 

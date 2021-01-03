@@ -12,7 +12,6 @@ import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
@@ -28,11 +27,9 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
-import com.simplecityapps.shuttle.ui.common.autoClearedNullable
 import com.simplecityapps.shuttle.ui.common.closeKeyboard
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
-import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistBinder
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.ListAlbumArtistBinder
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragmentArgs
@@ -60,11 +57,11 @@ class SearchFragment : Fragment(),
     SearchContract.View,
     CreatePlaylistDialogFragment.Listener {
 
-    private lateinit var adapter: RecyclerAdapter
+    private var adapter: RecyclerAdapter by autoCleared()
 
     private var searchView: SearchView by autoCleared()
 
-    private var recyclerView: RecyclerView? by autoClearedNullable()
+    private var recyclerView: RecyclerView by autoCleared()
 
     private var toolbar: Toolbar by autoCleared()
 
@@ -86,8 +83,6 @@ class SearchFragment : Fragment(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        adapter = RecyclerAdapter(lifecycle.coroutineScope)
-
         sharedElementEnterTransition = TransitionInflater.from(context).inflateTransition(android.R.transition.move)
         (sharedElementEnterTransition as Transition).duration = 200L
     }
@@ -99,13 +94,14 @@ class SearchFragment : Fragment(),
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        adapter = RecyclerAdapter(viewLifecycleOwner.lifecycleScope)
+
         playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
 
         imageLoader = GlideImageLoader(this)
 
         recyclerView = view.findViewById(R.id.recyclerView)
-        recyclerView?.adapter = adapter
-        recyclerView?.clearAdapterOnDetach()
+        recyclerView.adapter = adapter
 
         searchView = view.findViewById(R.id.searchView)
         searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
@@ -117,7 +113,7 @@ class SearchFragment : Fragment(),
 
             override fun onQueryTextChange(text: String): Boolean {
                 query = text.trim()
-                lifecycleScope.launch {
+                viewLifecycleOwner.lifecycleScope.launch {
                     queryChannel.send(query)
                 }
                 return true
@@ -139,9 +135,14 @@ class SearchFragment : Fragment(),
 
         presenter.bindView(this)
         playlistMenuPresenter.bindView(playlistMenuView)
-        searchView.setQuery(query, true)
 
-        lifecycleScope.launch {
+        searchView.setQuery(query, true)
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        viewLifecycleOwner.lifecycleScope.launch {
             queryChannel
                 .asFlow()
                 .debounce(500)
@@ -181,7 +182,7 @@ class SearchFragment : Fragment(),
                 addAll(searchResult.third.map { song -> SongBinder(song, imageLoader, songBinderListener) })
             }
         }
-        adapter.update(list, completion = { recyclerView?.scrollToPosition(0) })
+        adapter.update(list, completion = { recyclerView.scrollToPosition(0) })
     }
 
     override fun showLoadError(error: Error) {

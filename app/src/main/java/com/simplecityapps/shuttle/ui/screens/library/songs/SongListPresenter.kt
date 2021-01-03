@@ -28,6 +28,7 @@ interface SongListContract {
 
     sealed class LoadingState {
         object Scanning : LoadingState()
+        object Loading : LoadingState()
         object Empty : LoadingState()
         object None : LoadingState()
     }
@@ -86,6 +87,13 @@ class SongListPresenter @Inject constructor(
     }
 
     override fun loadSongs(resetPosition: Boolean) {
+        if (songs.isEmpty()) {
+            if (mediaImporter.isImporting) {
+                view?.setLoadingState(SongListContract.LoadingState.Scanning)
+            } else {
+                view?.setLoadingState(SongListContract.LoadingState.Loading)
+            }
+        }
         launch {
             songRepository
                 .getSongs(SongQuery.All(sortOrder = sortPreferenceManager.sortOrderSongList))

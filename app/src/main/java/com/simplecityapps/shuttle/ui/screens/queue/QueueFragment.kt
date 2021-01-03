@@ -13,7 +13,7 @@ import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.coroutineScope
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
@@ -24,6 +24,7 @@ import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackWatcher
+import com.simplecityapps.playback.PlaybackWatcherCallback
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
 import com.simplecityapps.shuttle.R
@@ -46,11 +47,11 @@ class QueueFragment :
     QueueContract.View,
     CreatePlaylistDialogFragment.Listener {
 
-    private var adapter: RecyclerAdapter? = null
+    private var adapter: RecyclerAdapter by autoCleared()
 
     private var imageLoader: ArtworkImageLoader by autoCleared()
 
-    private var recyclerView: FastScrollRecyclerView? = null
+    private var recyclerView: FastScrollRecyclerView by autoCleared()
 
     private var toolbar: Toolbar by autoCleared()
     private var toolbarTitleTextView: TextView by autoCleared()
@@ -82,13 +83,13 @@ class QueueFragment :
 
         playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
 
-        adapter = RecyclerAdapter(lifecycle.coroutineScope)
+        adapter = RecyclerAdapter(viewLifecycleOwner.lifecycleScope)
 
         imageLoader = GlideImageLoader(this)
 
         recyclerView = view.findViewById(R.id.recyclerView)
-        recyclerView?.adapter = adapter
-        recyclerView?.setRecyclerListener(RecyclerListener())
+        recyclerView.adapter = adapter
+        recyclerView.setRecyclerListener(RecyclerListener())
         itemTouchHelper.attachToRecyclerView(recyclerView)
 
         toolbarTitleTextView = view.findViewById(R.id.toolbarTitleTextView)
@@ -127,13 +128,14 @@ class QueueFragment :
     override fun onResume() {
         super.onResume()
 
-        recyclerViewState?.let { recyclerView?.layoutManager?.onRestoreInstanceState(recyclerViewState) }
+        playbackWatcher.addCallback(playbackWatcherCallback)
     }
 
     override fun onPause() {
         super.onPause()
 
-        recyclerViewState = recyclerView?.layoutManager?.onSaveInstanceState()
+        playbackWatcher.removeCallback(playbackWatcherCallback)
+        recyclerViewState = recyclerView.layoutManager?.onSaveInstanceState()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -148,10 +150,6 @@ class QueueFragment :
         itemTouchHelper.attachToRecyclerView(null)
         view.findParentMultiSheetView()?.removeSheetStateChangeListener(sheetStateChangeListener)
 
-        recyclerView?.adapter = null
-        recyclerView = null
-        adapter = null
-
         super.onDestroyView()
     }
 
@@ -165,10 +163,10 @@ class QueueFragment :
     // QueueContract.View Implementation
 
     override fun setData(queue: List<QueueItem>, progress: Float, isPlaying: Boolean) {
-        adapter?.update(queue.map { queueItem -> QueueBinder(queueItem, imageLoader, playbackManager, playbackWatcher, queueBinderListener) },
+        adapter.update(queue.map { queueItem -> QueueBinder(queueItem, isPlaying, progress, imageLoader, playbackManager, queueBinderListener) },
             completion = {
                 recyclerViewState?.let {
-                    recyclerView?.layoutManager?.onRestoreInstanceState(recyclerViewState)
+                    recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
                     recyclerViewState = null
                 }
             })
@@ -192,11 +190,11 @@ class QueueFragment :
 
     override fun scrollToPosition(position: Int, fromUser: Boolean) {
         if (fromUser) {
-            recyclerView?.scrollToPosition(position)
+            recyclerView.scrollToPosition(position)
         } else {
             view?.findParentMultiSheetView()?.let { multiSheetView ->
                 if (multiSheetView.currentSheet != MultiSheetView.Sheet.SECOND) {
-                    recyclerView?.scrollToPosition(position)
+                    recyclerView.scrollToPosition(position)
                 }
             }
         }
@@ -259,6 +257,30 @@ class QueueFragment :
 
     override fun showTagEditor(songs: List<Song>) {
         TagEditorAlertDialog.newInstance(songs).show(childFragmentManager)
+    }
+
+
+    // PlaybackWatcherCallback Implementation
+
+    private val playbackWatcherCallback = object : PlaybackWatcherCallback {
+
+        fun getCurrentViewBinder(): QueueBinder? {
+            return adapter.items.filterIsInstance<QueueBinder>().firstOrNull { it.queueItem.isCurrent }
+        }
+
+        override fun onProgressChanged(position: Int, duration: Int, fromUser: Boolean) {
+            getCurrentViewBinder()?.let { queueBinder ->
+                queueBinder.progress = position / duration.toFloat()
+                adapter.notifyItemChanged(adapter.items.indexOf(queueBinder), "")
+            }
+        }
+
+        override fun onPlaystateChanged(isPlaying: Boolean) {
+            getCurrentViewBinder()?.let { queueBinder ->
+                queueBinder.isPlaying = isPlaying
+                adapter.notifyItemChanged(adapter.items.indexOf(queueBinder), "")
+            }
+        }
     }
 
 

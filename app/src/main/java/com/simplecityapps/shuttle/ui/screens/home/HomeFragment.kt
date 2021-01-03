@@ -32,7 +32,7 @@ import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
-import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
+
 import com.simplecityapps.shuttle.ui.common.view.HomeButton
 import com.simplecityapps.shuttle.ui.screens.home.search.HeaderBinder
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistBinder
@@ -67,7 +67,7 @@ class HomeFragment :
 
     private var recyclerView: RecyclerView by autoCleared()
 
-    private lateinit var adapter: RecyclerAdapter
+    private var adapter: RecyclerAdapter by autoCleared()
 
     private var imageLoader: ArtworkImageLoader by autoCleared()
 
@@ -79,12 +79,6 @@ class HomeFragment :
 
 
     // Lifecycle
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        adapter = RecyclerAdapter(lifecycle.coroutineScope)
-    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_home, container, false)
@@ -129,16 +123,16 @@ class HomeFragment :
             }
         }
         favoritesButton.setOnClickListener {
-            lifecycleScope.launch(Dispatchers.Main) {
+            viewLifecycleOwner.lifecycleScope.launch(Dispatchers.Main) {
                 navigateToPlaylist(PlaylistQuery.PlaylistId(playlistRepository.getFavoritesPlaylist().id))
             }
         }
         shuffleButton.setOnClickListener { presenter.shuffleAll() }
 
+        adapter = RecyclerAdapter(viewLifecycleOwner.lifecycleScope)
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
         recyclerView.setRecyclerListener(RecyclerListener())
-        recyclerView.clearAdapterOnDetach()
 
         val decoration = DividerItemDecoration(context, LinearLayout.VERTICAL)
         decoration.setDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.divider)!!)

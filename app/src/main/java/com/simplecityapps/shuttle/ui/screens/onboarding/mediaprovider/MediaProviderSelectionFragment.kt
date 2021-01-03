@@ -64,8 +64,6 @@ class MediaProviderSelectionFragment :
         super.onCreate(savedInstanceState)
 
         isOnboarding = requireArguments().getBoolean(ARG_ONBOARDING)
-
-        adapter = RecyclerAdapter(lifecycleScope)
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -75,6 +73,7 @@ class MediaProviderSelectionFragment :
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        adapter = RecyclerAdapter(viewLifecycleOwner.lifecycleScope)
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         recyclerView.adapter = adapter

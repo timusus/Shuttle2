@@ -20,6 +20,7 @@ class GenreListContract {
 
     sealed class LoadingState {
         object Scanning : LoadingState()
+        object Loading : LoadingState()
         object Empty : LoadingState()
         object None : LoadingState()
     }
@@ -50,10 +51,10 @@ class GenreListPresenter @Inject constructor(
     private val playbackManager: PlaybackManager,
     private val mediaImporter: MediaImporter,
     private val queueManager: QueueManager
-    ) : GenreListContract.Presenter,
+) : GenreListContract.Presenter,
     BasePresenter<GenreListContract.View>() {
 
-    private var genres: List<Genre> = emptyList()
+    private var genres: List<Genre>? = null
 
     private val mediaImporterListener = object : MediaImporter.Listener {
         override fun onProgress(providerType: MediaProvider.Type, progress: Int, total: Int, song: Song) {
@@ -68,6 +69,13 @@ class GenreListPresenter @Inject constructor(
     }
 
     override fun loadGenres(resetPosition: Boolean) {
+        if (genres == null) {
+            if (mediaImporter.isImporting) {
+                view?.setLoadingState(GenreListContract.LoadingState.Scanning)
+            } else {
+                view?.setLoadingState(GenreListContract.LoadingState.Loading)
+            }
+        }
         launch {
             genreRepository.getGenres(GenreQuery.All())
                 .distinctUntilChanged()

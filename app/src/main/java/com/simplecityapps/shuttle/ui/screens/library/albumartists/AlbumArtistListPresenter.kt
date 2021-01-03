@@ -24,6 +24,7 @@ interface AlbumArtistListContract {
 
     sealed class LoadingState {
         object Scanning : LoadingState()
+        object Loading : LoadingState()
         object Empty : LoadingState()
         object None : LoadingState()
     }
@@ -80,6 +81,13 @@ class AlbumArtistListPresenter @Inject constructor(
     }
 
     override fun loadAlbumArtists() {
+        if (albumArtists.isEmpty()) {
+            if (mediaImporter.isImporting) {
+                view?.setLoadingState(AlbumArtistListContract.LoadingState.Scanning)
+            } else {
+                view?.setLoadingState(AlbumArtistListContract.LoadingState.Loading)
+            }
+        }
         launch {
             albumArtistRepository.getAlbumArtists(AlbumArtistQuery.All())
                 .flowOn(Dispatchers.IO)

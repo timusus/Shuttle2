@@ -9,7 +9,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.coroutineScope
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.FragmentNavigatorExtras
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
@@ -29,13 +29,11 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.ContextualToolbarHelper
 import com.simplecityapps.shuttle.ui.common.autoCleared
-import com.simplecityapps.shuttle.ui.common.autoClearedNullable
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.GridSpacingItemDecoration
 import com.simplecityapps.shuttle.ui.common.recyclerview.MyPreloadModelProvider
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
-import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
@@ -58,7 +56,7 @@ class AlbumListFragment :
 
     private var imageLoader: GlideImageLoader by autoCleared()
 
-    private var recyclerView: RecyclerView? by autoClearedNullable()
+    private var recyclerView: RecyclerView by autoCleared()
     private var circularLoadingView: CircularLoadingView by autoCleared()
     private var horizontalLoadingView: HorizontalLoadingView by autoCleared()
 
@@ -91,7 +89,7 @@ class AlbumListFragment :
 
         imageLoader = GlideImageLoader(this)
 
-        adapter = object : SectionedAdapter(lifecycle.coroutineScope) {
+        adapter = object : SectionedAdapter(viewLifecycleOwner.lifecycleScope) {
             override fun getSectionName(viewBinder: ViewBinder?): String {
                 return (viewBinder as? AlbumBinder)?.album?.let { album ->
                     presenter.getFastscrollPrefix(album)
@@ -99,16 +97,15 @@ class AlbumListFragment :
             }
         }
         recyclerView = view.findViewById(R.id.recyclerView)
-        recyclerView?.adapter = adapter
-        recyclerView?.clearAdapterOnDetach()
-        recyclerView?.setRecyclerListener(RecyclerListener())
+        recyclerView.adapter = adapter
+        recyclerView.setRecyclerListener(RecyclerListener())
         val preloader: RecyclerViewPreloader<Album> = RecyclerViewPreloader(
             imageLoader.requestManager,
             preloadModelProvider,
             viewPreloadSizeProvider,
             12
         )
-        recyclerView?.addOnScrollListener(preloader)
+        recyclerView.addOnScrollListener(preloader)
 
         circularLoadingView = view.findViewById(R.id.circularLoadingView)
         horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
@@ -127,12 +124,12 @@ class AlbumListFragment :
 
         presenter.bindView(this)
         playlistMenuPresenter.bindView(playlistMenuView)
-
-        presenter.loadAlbums(false)
     }
 
     override fun onResume() {
         super.onResume()
+
+        presenter.loadAlbums(false)
 
         updateToolbar()
 
@@ -152,7 +149,7 @@ class AlbumListFragment :
             contextualToolbar?.setOnMenuItemClickListener(null)
         }
 
-        recyclerViewState = recyclerView?.layoutManager?.onSaveInstanceState()
+        recyclerViewState = recyclerView.layoutManager?.onSaveInstanceState()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -263,7 +260,7 @@ class AlbumListFragment :
 
         adapter.update(data, completion = {
             recyclerViewState?.let {
-                recyclerView?.layoutManager?.onRestoreInstanceState(recyclerViewState)
+                recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
                 recyclerViewState = null
             }
         })
@@ -292,6 +289,10 @@ class AlbumListFragment :
                 horizontalLoadingView.setState(HorizontalLoadingView.State.Loading("Scanning your library"))
                 circularLoadingView.setState(CircularLoadingView.State.None)
             }
+            is AlbumListContract.LoadingState.Loading -> {
+                horizontalLoadingView.setState(HorizontalLoadingView.State.None)
+                circularLoadingView.setState(CircularLoadingView.State.Loading())
+            }
             is AlbumListContract.LoadingState.Empty -> {
                 horizontalLoadingView.setState(HorizontalLoadingView.State.None)
                 circularLoadingView.setState(CircularLoadingView.State.Empty("No albums"))
@@ -314,18 +315,18 @@ class AlbumListFragment :
     override fun setViewMode(viewMode: ViewMode) {
         when (viewMode) {
             ViewMode.List -> {
-                (recyclerView?.layoutManager as GridLayoutManager).spanSizeLookup = SpanSizeLookup(adapter, 1)
-                (recyclerView?.layoutManager as GridLayoutManager).spanCount = 1
-                if (recyclerView?.itemDecorationCount != 0) {
-                    recyclerView?.removeItemDecorationAt(0)
+                (recyclerView.layoutManager as GridLayoutManager).spanSizeLookup = SpanSizeLookup(adapter, 1)
+                (recyclerView.layoutManager as GridLayoutManager).spanCount = 1
+                if (recyclerView.itemDecorationCount != 0) {
+                    recyclerView.removeItemDecorationAt(0)
                 }
                 findToolbarHost()?.toolbar?.menu?.findItem(R.id.viewMode)?.setIcon(R.drawable.ic_grid_outline_24)
             }
             ViewMode.Grid -> {
-                (recyclerView?.layoutManager as GridLayoutManager).spanCount = 3
-                (recyclerView?.layoutManager as GridLayoutManager).spanSizeLookup = SpanSizeLookup(adapter, 3)
-                if (recyclerView?.itemDecorationCount == 0) {
-                    recyclerView?.addItemDecoration(GridSpacingItemDecoration(8, true, 1))
+                (recyclerView.layoutManager as GridLayoutManager).spanCount = 3
+                (recyclerView.layoutManager as GridLayoutManager).spanSizeLookup = SpanSizeLookup(adapter, 3)
+                if (recyclerView.itemDecorationCount == 0) {
+                    recyclerView.addItemDecoration(GridSpacingItemDecoration(8, true, 1))
                 }
                 findToolbarHost()?.toolbar?.menu?.findItem(R.id.viewMode)?.setIcon(R.drawable.ic_list_outline_24)
             }

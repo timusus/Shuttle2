@@ -10,7 +10,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
-import androidx.lifecycle.coroutineScope
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -118,7 +118,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
         }
 
         preferenceScreen.findPreference<Preference>("pref_excluded")?.setOnPreferenceClickListener {
-            val adapter = SectionedAdapter(lifecycle.coroutineScope)
+            val adapter = SectionedAdapter(viewLifecycleOwner.lifecycleScope)
             val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_exclude_list, null)
             val recyclerView = dialogView.findViewById<RecyclerView>(R.id.recyclerView)
             val emptyLabel = dialogView.findViewById<TextView>(R.id.emptyLabel)

@@ -12,7 +12,7 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.coroutineScope
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.shuttle.BuildConfig
@@ -21,7 +21,6 @@ import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.debug.DebugLoggingTree
 import com.simplecityapps.shuttle.debug.LogMessage
 import com.simplecityapps.shuttle.ui.common.autoCleared
-import com.simplecityapps.shuttle.ui.common.recyclerview.clearAdapterOnDetach
 import com.simplecityapps.shuttle.ui.common.utils.withArgs
 import java.io.Serializable
 import javax.inject.Inject
@@ -31,7 +30,7 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
 
     @Inject lateinit var debugLoggingTree: DebugLoggingTree
 
-    private lateinit var adapter: RecyclerAdapter
+    private var adapter: RecyclerAdapter by autoCleared()
 
     private var recyclerView: RecyclerView by autoCleared()
 
@@ -53,14 +52,13 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        adapter = RecyclerAdapter(lifecycle.coroutineScope)
+        adapter = RecyclerAdapter(viewLifecycleOwner.lifecycleScope)
         adapter.loggingEnabled = false
 
         debugLoggingTree.addCallback(this)
 
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
-        recyclerView.clearAdapterOnDetach()
 
         adapter.update(
             debugLoggingTree.history
