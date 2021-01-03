@@ -1,5 +1,7 @@
 {
   "commits": [
+    "Fixed a crash when attempting to add directories to S2 scanner",
+    "0.1.2:",
     "Performance improvements and bug fixes..",
     "This update aims to resolve a bunch of issues resulting in the app locking up and becoming unresponsive",
     "Resolved several memory leaks, reduced overall memory footprint",
