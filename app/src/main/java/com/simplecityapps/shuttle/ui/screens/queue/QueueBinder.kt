@@ -110,28 +110,10 @@ class QueueBinder(
         override fun bind(viewBinder: QueueBinder, isPartial: Boolean) {
             super.bind(viewBinder, isPartial)
 
-            if (isPartial) {
-                progressView.setProgress(viewBinder.progress)
-                playPauseButton.state = if (viewBinder.isPlaying) PlayPauseButton.State.Playing else PlayPauseButton.State.Paused
-            } else {
+            if (!isPartial) {
                 title.text = viewBinder.queueItem.song.name
                 subtitle.text = "${viewBinder.queueItem.song.albumArtist} • ${viewBinder.queueItem.song.album}"
                 tertiary.text = viewBinder.queueItem.song.duration.toHms("--:--")
-
-                if (viewBinder.queueItem.isCurrent) {
-                    itemView.isActivated = true
-                    artworkImageView.isInvisible = true
-                    playPauseButton.isVisible = true
-                    progressView.isVisible = true
-
-                    progressView.setProgress(viewBinder.progress)
-                    playPauseButton.state = if (viewBinder.isPlaying) PlayPauseButton.State.Playing else PlayPauseButton.State.Paused
-                } else {
-                    itemView.isActivated = false
-                    artworkImageView.isVisible = true
-                    playPauseButton.isVisible = false
-                    progressView.isVisible = false
-                }
 
                 viewBinder.imageLoader.loadArtwork(
                     artworkImageView,
@@ -140,6 +122,21 @@ class QueueBinder(
                     ArtworkImageLoader.Options.Crossfade(200),
                     ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_song_rounded)
                 )
+            }
+
+            if (viewBinder.queueItem.isCurrent) {
+                itemView.isActivated = true
+                artworkImageView.isInvisible = true
+                playPauseButton.isVisible = true
+                progressView.isVisible = true
+
+                progressView.setProgress(viewBinder.progress)
+                playPauseButton.state = if (viewBinder.isPlaying) PlayPauseButton.State.Playing else PlayPauseButton.State.Paused
+            } else {
+                itemView.isActivated = false
+                artworkImageView.isVisible = true
+                playPauseButton.isVisible = false
+                progressView.isVisible = false
             }
         }
 
