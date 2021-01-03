@@ -35,12 +35,6 @@ class DirectorySelectionFragment : DialogFragment(),
 
     // Lifecycle
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        adapter = RecyclerAdapter(viewLifecycleOwner.lifecycleScope)
-    }
-
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
@@ -58,6 +52,7 @@ class DirectorySelectionFragment : DialogFragment(),
 
         emptyLabel = view.findViewById(R.id.emptyLabel)
 
+        adapter = RecyclerAdapter(lifecycleScope)
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
 
