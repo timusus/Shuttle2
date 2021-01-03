@@ -1,5 +1,9 @@
 {
   "commits": [
+    "Fixed an issue where incorrect song played after rearranging the queue",
+    "Fixed an issue where favourites button didn't work on now playing screen",
+    "Fixed an issue where you couldn't navigate from home -> favourites playlist more than once",
+    "0.1.4",
     "Fixed a crash when opening Genre detail screen",
     "Limit MediaSession queue length to 50 items",
     "Fixed an issue where queue item playback state wasn't updated correctly",
