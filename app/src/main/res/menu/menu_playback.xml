@@ -20,7 +20,7 @@
         android:id="@+id/favorite"
         android:title="Favourite"
         app:actionLayout="@layout/button_favorite"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="always" />
 
     <item
         android:id="@+id/quickLyric"
