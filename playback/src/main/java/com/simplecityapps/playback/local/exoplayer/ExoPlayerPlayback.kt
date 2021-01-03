@@ -118,7 +118,21 @@ class ExoPlayerPlayback(
     }
 
     override fun loadNext(song: Song?) {
-        Timber.v("loadNext(${song?.name})")
+        // Remove any songs after the current media item
+        val currentMediaItem = player.currentMediaItem
+        val count = player.mediaItemCount
+        var currentIndex = 0
+        for (i in 0 until player.mediaItemCount) {
+            if (player.getMediaItemAt(i) == currentMediaItem) {
+                currentIndex = i
+                break
+            }
+        }
+        if (currentIndex < count - 1) {
+            player.removeMediaItems(count - 1, count)
+        }
+
+        // Now we can insert our new next track
         song?.let {
             player.addMediaItem(getMediaItem(song.path.toUri()))
         }
