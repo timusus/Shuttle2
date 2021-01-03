@@ -92,7 +92,15 @@ class MediaSessionManager @Inject constructor(
     // QueueChangeCallback Implementation
 
     override fun onQueueChanged() {
-        mediaSession.setQueue(queueManager.getQueue().map { queueItem -> queueItem.toQueueItem() })
+        val queue = queueManager.getQueue()
+        if (queue.isNotEmpty()) {
+            mediaSession.setQueue(queueManager.getQueue()
+                .subList(((queueManager.getCurrentPosition() ?: 0) - 10).coerceAtLeast(0), queueManager.getSize() - 1)
+                .take(50)
+                .map { queueItem -> queueItem.toQueueItem() })
+        } else {
+            mediaSession.setQueue(emptyList())
+        }
     }
 
     override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
