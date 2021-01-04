@@ -65,7 +65,9 @@ class SongBinder(
                 && song.year == other.song.year
                 && song.track == other.song.track
                 && song.disc == other.song.disc
+                && song.playCount == other.song.playCount
                 && selected == other.selected
+                && showPlayCountBadge == other.showPlayCountBadge
     }
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<SongBinder>(itemView) {
