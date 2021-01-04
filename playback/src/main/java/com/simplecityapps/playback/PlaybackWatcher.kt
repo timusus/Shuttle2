@@ -4,7 +4,7 @@ import com.simplecityapps.mediaprovider.model.Song
 
 interface PlaybackWatcherCallback {
 
-    fun onProgressChanged(position: Int, duration: Int, fromUser: Boolean = false) {
+    fun onProgressChanged(position: Int, duration: Int) {
 
     }
 
@@ -33,8 +33,8 @@ class PlaybackWatcher : PlaybackWatcherCallback {
 
     // PlaybackWatcherCallback Implementation
 
-    override fun onProgressChanged(position: Int, duration: Int, fromUser: Boolean) {
-        callbacks.forEach { callback -> callback.onProgressChanged(position, duration, fromUser) }
+    override fun onProgressChanged(position: Int, duration: Int) {
+        callbacks.forEach { callback -> callback.onProgressChanged(position, duration) }
     }
 
     override fun onPlaystateChanged(isPlaying: Boolean) {

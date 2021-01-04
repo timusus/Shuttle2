@@ -303,7 +303,7 @@ class PlaybackManager(
     private fun updateProgress(fromUser: Boolean) {
         playback.getProgress()?.let { position ->
             (playback.getDuration() ?: queueManager.getCurrentItem()?.song?.duration)?.let { duration ->
-                playbackWatcher.onProgressChanged(position, duration, fromUser)
+                playbackWatcher.onProgressChanged(position, duration)
             }
         }
     }

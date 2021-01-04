@@ -79,13 +79,9 @@ class MediaSessionManager @Inject constructor(
         mediaSession.setPlaybackState(playbackStateBuilder.build())
     }
 
-    override fun onProgressChanged(position: Int, duration: Int, fromUser: Boolean) {
-        super.onProgressChanged(position, duration, fromUser)
-
-        if (fromUser) {
-            playbackStateBuilder.setState(getPlaybackState(), position.toLong(), 1.0f)
-            mediaSession.setPlaybackState(playbackStateBuilder.build())
-        }
+    override fun onProgressChanged(position: Int, duration: Int) {
+        playbackStateBuilder.setState(getPlaybackState(), position.toLong(), 1.0f)
+        mediaSession.setPlaybackState(playbackStateBuilder.build())
     }
 
 
