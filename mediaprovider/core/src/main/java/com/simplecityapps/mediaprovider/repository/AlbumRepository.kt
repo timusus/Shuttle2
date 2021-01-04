@@ -64,7 +64,7 @@ enum class AlbumSortOrder : Serializable {
                 ArtistName -> Comparator<Album> { a, b -> Collator.getInstance().apply { strength = Collator.TERTIARY }.compare(a.albumArtist.removeArticles(), b.albumArtist.removeArticles()) }.then(
                     Default.comparator
                 )
-                PlayCount -> compareBy<Album> { song -> song.playCount }.then(Default.comparator)
+                PlayCount -> compareByDescending<Album> { album -> album.playCount }.then(Default.comparator)
                 Year -> Default.comparator
             }
         }

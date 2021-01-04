@@ -111,9 +111,9 @@ enum class SongSortOrder : Serializable {
                 Year -> Comparator<Song> { a, b -> zeroLastComparator.compare(a.year, b.year) }.then(compareBy({ song -> song.year }, { song -> song.album })).then(Default.comparator)
                 Duration -> compareBy<Song> { song -> song.duration }.then(Default.comparator)
                 Track -> compareBy<Song>({ song -> song.disc }, { song -> song.track }).then(Default.comparator)
-                PlayCount -> compareBy<Song> { song -> song.playCount }.then(Default.comparator)
+                PlayCount -> compareByDescending<Song> { song -> song.playCount }.then(Default.comparator)
                 RecentlyAdded -> compareByDescending<Song> { song -> song.lastModified.time / 1000 / 60 }.then(Default.comparator) // Round to the nearest minute
-                RecentlyPlayed -> compareBy<Song> { song -> song.lastCompleted }.then(Default.comparator)
+                RecentlyPlayed -> compareByDescending<Song> { song -> song.lastCompleted }.then(Default.comparator)
             }
         }
 }
