@@ -56,7 +56,8 @@ class SmartPlaylistDetailPresenter @AssistedInject constructor(
 
     override fun loadData() {
         launch {
-            songRepository.getSongs(playlist.songQuery).map { songs -> playlist.songQuery?.sortOrder?.let { sortOrder -> songs.sortedWith(sortOrder.comparator) } ?: songs }
+            songRepository.getSongs(playlist.songQuery)
+                .map { songs -> playlist.songQuery.sortOrder.let { sortOrder -> songs.sortedWith(sortOrder.comparator) } }
                 .collect { songs ->
                     this@SmartPlaylistDetailPresenter.songs = songs
                     view?.setData(songs)

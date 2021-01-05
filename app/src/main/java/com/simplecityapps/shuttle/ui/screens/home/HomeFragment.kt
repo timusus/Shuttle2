@@ -26,13 +26,11 @@ import com.simplecityapps.mediaprovider.model.*
 import com.simplecityapps.mediaprovider.repository.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.SongQuery
-import com.simplecityapps.mediaprovider.repository.SongSortOrder
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
-
 import com.simplecityapps.shuttle.ui.common.view.HomeButton
 import com.simplecityapps.shuttle.ui.screens.home.search.HeaderBinder
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistBinder
@@ -99,7 +97,7 @@ class HomeFragment :
                     SmartPlaylistDetailFragmentArgs(
                         SmartPlaylist(
                             R.string.playlist_title_history,
-                            SongQuery.PlayCount(1, SongSortOrder.RecentlyPlayed)
+                            SongQuery.LastCompleted(Date(0))
                         )
                     ).toBundle()
                 )

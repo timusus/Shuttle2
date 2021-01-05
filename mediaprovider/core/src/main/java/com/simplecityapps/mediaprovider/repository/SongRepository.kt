@@ -67,12 +67,14 @@ open class SongQuery(
 
     class LastPlayed(val after: Date) :
         SongQuery(
-            predicate = { song -> song.lastPlayed?.after(after) ?: false }
+            predicate = { song -> song.lastPlayed?.after(after) ?: false },
+            sortOrder = SongSortOrder.RecentlyPlayed
         )
 
     class LastCompleted(val after: Date) :
         SongQuery(
-            predicate = { song -> song.lastCompleted?.after(after) ?: false }
+            predicate = { song -> song.lastCompleted?.after(after) ?: false },
+            sortOrder = SongSortOrder.RecentlyPlayed
         )
 
     class Search(val query: String) :
