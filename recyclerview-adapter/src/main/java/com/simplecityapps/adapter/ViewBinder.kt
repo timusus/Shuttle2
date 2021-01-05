@@ -23,7 +23,7 @@ interface ViewBinder : ContentsComparator {
     }
 
     override fun areContentsTheSame(other: Any): Boolean {
-        return this == other
+        return true
     }
 
     open class ViewHolder<B : ViewBinder>(itemView: View) : RecyclerView.ViewHolder(itemView),
