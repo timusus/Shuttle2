@@ -41,7 +41,7 @@ class BadgeView @JvmOverloads constructor(
     private val bounds = RectF()
 
     init {
-        paint.setShadowLayer(1f, 1f, 1f, 0x30000000)
+        paint.setShadowLayer(2f, 0f, 0f, 0xCC000000.toInt())
         paint.isAntiAlias = true
 
         textPaint.textAlign = Paint.Align.CENTER
@@ -78,7 +78,7 @@ class BadgeView @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
-        bounds.set(0f, 0f, width.toFloat(), height.toFloat())
+        bounds.set(1f, 1f, width.toFloat() - 1f, height.toFloat() - 1f)
 
         canvas.drawRoundRect(bounds, height / 2f, height / 2f, paint)
 

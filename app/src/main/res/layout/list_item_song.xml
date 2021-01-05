@@ -67,18 +67,14 @@
         android:id="@+id/badgeImageView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:layout_marginEnd="36dp"
         android:background="#40000000"
         android:fontFamily="@font/opensans_semibold"
         android:textColor="@android:color/white"
         android:textSize="12sp"
         android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/title"
-        app:layout_constraintTop_toBottomOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintCircle="@id/imageView"
+        app:layout_constraintCircleAngle="135"
+        app:layout_constraintCircleRadius="20dp"
         tools:visibility="visible" />
 
     <ImageButton
