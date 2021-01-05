@@ -23,6 +23,22 @@ class ArtworkBinder(
         return ViewTypes.Artwork
     }
 
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as ArtworkBinder
+
+        if (song != other.song) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        return song.hashCode()
+    }
+
+
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<ArtworkBinder>(itemView) {
 
         val imageView: ImageView = itemView.findViewById(R.id.imageView)
