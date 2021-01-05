@@ -118,6 +118,7 @@ class ExoPlayerPlayback(
     }
 
     override fun loadNext(song: Song?) {
+        Timber.v("loadNext(${song?.name})")
         // Remove any songs after the current media item
         val currentMediaItem = player.currentMediaItem
         val count = player.mediaItemCount
@@ -194,6 +195,7 @@ class ExoPlayerPlayback(
 
     @Throws(IllegalStateException::class)
     fun getMediaItem(uri: Uri): MediaItem {
+        // Todo: This could be delegated to another class, to remove knowledge of Emby from ExoPlayerPlayback
         if (uri.scheme == "emby") {
             embyAuthenticationManager.getAuthenticatedCredentials()?.let { authenticatedCredentials ->
                 embyAuthenticationManager.buildEmbyPath(
