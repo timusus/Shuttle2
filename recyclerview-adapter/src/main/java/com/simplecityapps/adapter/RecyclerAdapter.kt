@@ -5,12 +5,9 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListUpdateCallback
 import androidx.recyclerview.widget.RecyclerView
 import com.simplecityapps.diff.DiffCallbacks
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 open class RecyclerAdapter(scope: CoroutineScope) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
@@ -19,6 +16,8 @@ open class RecyclerAdapter(scope: CoroutineScope) : RecyclerView.Adapter<Recycle
         private set
 
     var loggingEnabled = false
+
+    var updateJob: Job? = null
 
     sealed class AdapterOperation {
         class Update(val newItems: MutableList<ViewBinder>, val callback: (() -> Unit)?) : AdapterOperation()
@@ -34,19 +33,23 @@ open class RecyclerAdapter(scope: CoroutineScope) : RecyclerView.Adapter<Recycle
 
     private val actor = scope.actor<AdapterOperation>(capacity = Channel.CONFLATED) {
         for (operation in channel) {
-            if (!isActive) {
-                return@actor
-            }
             when (operation) {
-                is AdapterOperation.Update -> updateInternal(operation.newItems, operation.callback)
+                is AdapterOperation.Update -> {
+                    updateJob?.cancel()
+                    updateJob = launch {
+                        updateInternal(operation.newItems, operation.callback)
+                    }
+                }
                 is AdapterOperation.Add -> addInternal(operation.index, operation.newItem)
                 is AdapterOperation.Remove -> removeInternal(operation.index)
-                is AdapterOperation.Clear -> clearInternal()
+                is AdapterOperation.Clear -> {
+                    updateJob?.cancel() // If there's a pending update we may as well cancel it
+                    clearInternal()
+                }
                 is AdapterOperation.Move -> moveInternal(operation.fromPosition, operation.toPosition)
             }
         }
     }
-
 
     // Public
 
@@ -79,6 +82,7 @@ open class RecyclerAdapter(scope: CoroutineScope) : RecyclerView.Adapter<Recycle
 
     private suspend fun updateInternal(newItems: MutableList<ViewBinder>, callback: (() -> Unit)? = null) {
         val diffResult = withContext(Dispatchers.IO) {
+            delay(50) // Acts as a debounce, there's a 50ms window for a new job to come in and cancel this one
             DiffUtil.calculateDiff(DiffCallbacks(items, newItems))
         }
 
@@ -88,9 +92,7 @@ open class RecyclerAdapter(scope: CoroutineScope) : RecyclerView.Adapter<Recycle
             if (loggingEnabled) {
                 diffResult.dispatchUpdatesTo(loggingListUpdateCallback)
             }
-            if (isActive) {
-                callback?.invoke()
-            }
+            callback?.invoke()
         }
     }
 
