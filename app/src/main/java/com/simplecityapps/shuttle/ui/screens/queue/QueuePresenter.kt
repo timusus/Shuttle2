@@ -128,7 +128,7 @@ class QueuePresenter @Inject constructor(
         loadQueue()
     }
 
-    override fun onShuffleChanged() {
+    override fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
         loadQueue()
     }
 

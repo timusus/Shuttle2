@@ -5,14 +5,15 @@ import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.CastSession
 import com.google.android.gms.cast.framework.SessionManagerListener
 import com.simplecityapps.playback.PlaybackManager
-import com.simplecityapps.playback.local.mediaplayer.MediaPlayerPlayback
+import com.simplecityapps.playback.local.exoplayer.ExoPlayerPlayback
 import timber.log.Timber
 import javax.inject.Inject
 
 class CastSessionManager @Inject constructor(
     private val playbackManager: PlaybackManager,
     private val applicationContext: Context,
-    private val httpServer: HttpServer
+    private val httpServer: HttpServer,
+    private val exoPlayerPlayback: ExoPlayerPlayback
 ) : SessionManagerListener<CastSession> {
 
     init {
@@ -44,8 +45,7 @@ class CastSessionManager @Inject constructor(
             // is disconnected and hence we update our local value of stream position to the latest position.
             playbackManager.getPlayback().updateLastKnownStreamPosition()
 
-            val playback = MediaPlayerPlayback(applicationContext)
-            playbackManager.switchToPlayback(playback)
+            playbackManager.switchToPlayback(exoPlayerPlayback)
         }
     }
 

@@ -1,6 +1,7 @@
 package com.simplecityapps.playback
 
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.playback.queue.QueueManager
 
 interface Playback {
 
@@ -43,10 +44,14 @@ interface Playback {
         return false
     }
 
-    interface Callback {
+    fun setRepeatMode(repeatMode: QueueManager.RepeatMode)
 
+    interface Callback {
         fun onPlayStateChanged(isPlaying: Boolean)
 
-        fun onPlaybackComplete(trackWentToNext: Boolean)
+        /**
+         * @param trackWentToNext whether the player automatically started playing the next song
+         */
+        fun onTrackEnded(trackWentToNext: Boolean)
     }
 }

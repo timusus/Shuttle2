@@ -132,12 +132,12 @@ class PlaybackInitializer @Inject constructor(
         }
     }
 
-    override fun onShuffleChanged() {
-        playbackPreferenceManager.shuffleMode = queueManager.getShuffleMode()
+    override fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
+        playbackPreferenceManager.shuffleMode = shuffleMode
     }
 
-    override fun onRepeatChanged() {
-        playbackPreferenceManager.repeatMode = queueManager.getRepeatMode()
+    override fun onRepeatChanged(repeatMode: QueueManager.RepeatMode) {
+        playbackPreferenceManager.repeatMode = repeatMode
     }
 
 
@@ -162,7 +162,7 @@ class PlaybackInitializer @Inject constructor(
     }
 
     @SuppressLint("CheckResult")
-    override fun onPlaybackComplete(song: Song) {
+    override fun onTrackEnded(song: Song) {
         playbackPreferenceManager.playbackPosition = 0
 
         appCoroutineScope.launch {

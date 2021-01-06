@@ -1,6 +1,7 @@
 package com.simplecityapps.playback
 
 import com.simplecityapps.mediaprovider.model.Song
+import timber.log.Timber
 
 interface PlaybackWatcherCallback {
 
@@ -12,7 +13,7 @@ interface PlaybackWatcherCallback {
 
     }
 
-    fun onPlaybackComplete(song: Song) {
+    fun onTrackEnded(song: Song) {
 
     }
 }
@@ -38,10 +39,12 @@ class PlaybackWatcher : PlaybackWatcherCallback {
     }
 
     override fun onPlaystateChanged(isPlaying: Boolean) {
+        Timber.v("onPlaystateChanged(isPlaying: ${isPlaying})")
         callbacks.forEach { callback -> callback.onPlaystateChanged(isPlaying) }
     }
 
-    override fun onPlaybackComplete(song: Song) {
-        callbacks.forEach { callback -> callback.onPlaybackComplete(song) }
+    override fun onTrackEnded(song: Song) {
+        Timber.v("onPlaybackComplete(song: ${song.name})")
+        callbacks.forEach { callback -> callback.onTrackEnded(song) }
     }
 }

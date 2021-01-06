@@ -4,6 +4,7 @@ import android.os.Handler
 import android.os.Looper
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
+import com.simplecityapps.playback.local.exoplayer.ExoPlayerPlayback
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueItem
@@ -14,10 +15,10 @@ import kotlin.math.max
 
 class PlaybackManager(
     private val queueManager: QueueManager,
-    private var playback: Playback,
     private val playbackWatcher: PlaybackWatcher,
     private val audioFocusHelper: AudioFocusHelper,
     private val playbackPreferenceManager: PlaybackPreferenceManager,
+    exoplayerPlayback: ExoPlayerPlayback,
     queueWatcher: QueueWatcher
 ) : Playback.Callback,
     AudioFocusHelper.Listener,
@@ -25,7 +26,10 @@ class PlaybackManager(
 
     private var handler: ProgressHandler = ProgressHandler()
 
+    private var playback: Playback = exoplayerPlayback
+
     init {
+        playback.setRepeatMode(queueManager.getRepeatMode())
         playback.callback = this
         audioFocusHelper.listener = this
 
@@ -140,6 +144,9 @@ class PlaybackManager(
                     Timber.e("play() failed. Exceeded max number of attempts (2)")
                 }
             } else {
+                if (getProgress() ?: 0 > (getDuration() ?: Int.MAX_VALUE) - 200) {
+                    playback.seek(0)
+                }
                 playback.play()
             }
         } else {
@@ -184,14 +191,13 @@ class PlaybackManager(
         }
     }
 
-    fun skipTo(position: Int, completion: ((Result<Any?>) -> Unit)? = null) {
+    fun skipTo(position: Int) {
         if (queueManager.getCurrentPosition() != position) {
             queueManager.skipTo(position)
             queueManager.getCurrentItem()?.let { currentQueueItem ->
                 playback.load(currentQueueItem.song, queueManager.getNext()?.song, 0) { result ->
                     result.onSuccess { play() }
                     result.onFailure { error -> Timber.w("load() failed. Error: $error") }
-                    completion?.invoke(result)
                 }
             }
         }
@@ -220,7 +226,7 @@ class PlaybackManager(
      */
     fun seekTo(position: Int) {
         playback.seek(position)
-        updateProgress(true)
+        updateProgress()
     }
 
     suspend fun addToQueue(songs: List<Song>) {
@@ -275,6 +281,7 @@ class PlaybackManager(
         oldPlayback.release()
 
         this.playback = playback
+        playback.setRepeatMode(queueManager.getRepeatMode())
         playback.callback = this
 
         loadCurrent(seekPosition ?: 0) { result ->
@@ -294,13 +301,13 @@ class PlaybackManager(
 
     private fun monitorProgress(isPlaying: Boolean) {
         if (isPlaying) {
-            handler.start { updateProgress(false) }
+            handler.start { updateProgress() }
         } else {
             handler.stop()
         }
     }
 
-    private fun updateProgress(fromUser: Boolean) {
+    private fun updateProgress() {
         playback.getProgress()?.let { position ->
             (playback.getDuration() ?: queueManager.getCurrentItem()?.song?.duration)?.let { duration ->
                 playbackWatcher.onProgressChanged(position, duration)
@@ -312,41 +319,40 @@ class PlaybackManager(
     // Playback.Callback Implementation
 
     override fun onPlayStateChanged(isPlaying: Boolean) {
-        Timber.v("onPlayStateChanged() isPlaying: $isPlaying")
+        Timber.v("onPlayStateChanged(isPlaying: $isPlaying)")
         playbackWatcher.onPlaystateChanged(isPlaying)
 
         monitorProgress(isPlaying)
     }
 
-    override fun onPlaybackComplete(trackWentToNext: Boolean) {
-        Timber.v("onPlaybackComplete(trackWentToNext: $trackWentToNext)")
-        queueManager.getCurrentItem()?.let { currentQueueItem ->
-            playbackWatcher.onPlaybackComplete(currentQueueItem.song)
-        } ?: Timber.e("onPlaybackComplete() called, but current queue item is null")
+    override fun onTrackEnded(trackWentToNext: Boolean) {
+        Timber.v("onTrackChanged(trackWentToNext: $trackWentToNext)")
 
-        updateProgress(false)
+        queueManager.getCurrentItem()?.let { currentQueueItem ->
+            playbackWatcher.onTrackEnded(currentQueueItem.song)
+        } ?: Timber.e("onTrackChanged() called, but current queue item is null")
 
         if (trackWentToNext) {
-            Timber.v("Updating queue")
             queueManager.skipToNext()
             playback.loadNext(queueManager.getNext()?.song)
         } else {
             skipToNext(false)
         }
+
+        updateProgress()
     }
 
 
     // QueueChangeCallback Implementation
 
-    override fun onRepeatChanged() {
-        super.onRepeatChanged()
-
-        playback.loadNext(queueManager.getNext()?.song)
+    override fun onRepeatChanged(repeatMode: QueueManager.RepeatMode) {
+        playback.setRepeatMode(repeatMode)
+        if (repeatMode != QueueManager.RepeatMode.One) {
+            playback.loadNext(queueManager.getNext()?.song)
+        }
     }
 
-    override fun onShuffleChanged() {
-        super.onShuffleChanged()
-
+    override fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
         playback.loadNext(queueManager.getNext()?.song)
     }
 

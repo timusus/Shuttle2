@@ -12,11 +12,11 @@ interface QueueChangeCallback {
 
     }
 
-    fun onShuffleChanged(){
+    fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode){
 
     }
 
-    fun onRepeatChanged(){
+    fun onRepeatChanged(repeatMode: QueueManager.RepeatMode){
 
     }
 }
@@ -45,17 +45,17 @@ class QueueWatcher : QueueChangeCallback {
     }
 
     override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
-        Timber.v("onQueuePositionChanged()")
+        Timber.v("onQueuePositionChanged(oldPosition: $oldPosition, newPosition: $newPosition)")
         callbacks.forEach { callback -> callback.onQueuePositionChanged(oldPosition, newPosition) }
     }
 
-    override fun onShuffleChanged() {
-        Timber.v("onShuffleChanged()")
-        callbacks.forEach { callback -> callback.onShuffleChanged() }
+    override fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
+        Timber.v("onShuffleChanged(shuffleMode: $shuffleMode)")
+        callbacks.forEach { callback -> callback.onShuffleChanged(shuffleMode) }
     }
 
-    override fun onRepeatChanged() {
-        Timber.v("onRepeatChanged()")
-        callbacks.forEach { callback -> callback.onRepeatChanged() }
+    override fun onRepeatChanged(repeatMode: QueueManager.RepeatMode) {
+        Timber.v("onRepeatChanged(repeatMode: $repeatMode)")
+        callbacks.forEach { callback -> callback.onRepeatChanged(repeatMode) }
     }
 }

@@ -66,7 +66,7 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
     }
 
     fun setCurrentItem(currentItem: QueueItem) {
-        Timber.v("setCurrentItem(): ${currentItem.song.path}, previous item: ${this.currentItem?.song?.path}")
+        Timber.v("setCurrentItem(currentItem: ${currentItem.song.name}|${currentItem.song.mimeType}), previous item: ${this.currentItem?.song?.name}|${this.currentItem?.song?.mimeType}")
         val oldPosition = getCurrentPosition()
         if (this.currentItem != currentItem) {
             this.currentItem = currentItem.clone(isCurrent = true)
@@ -156,15 +156,15 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
 
     suspend fun setShuffleMode(shuffleMode: ShuffleMode, reshuffle: Boolean) {
         if (this.shuffleMode != shuffleMode) {
+            this.shuffleMode = shuffleMode
+            queueWatcher.onShuffleChanged(shuffleMode)
+
             withContext(Dispatchers.IO) {
-                this@QueueManager.shuffleMode = shuffleMode
                 if (shuffleMode == ShuffleMode.On && reshuffle) {
                     queue.generateShuffleQueue()
                 }
             }
-
             queueWatcher.onQueueChanged()
-            queueWatcher.onShuffleChanged()
         }
     }
 
@@ -182,7 +182,7 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
     fun setRepeatMode(repeatMode: RepeatMode) {
         if (this.repeatMode != repeatMode) {
             this.repeatMode = repeatMode
-            queueWatcher.onRepeatChanged()
+            queueWatcher.onRepeatChanged(repeatMode)
         }
     }
 

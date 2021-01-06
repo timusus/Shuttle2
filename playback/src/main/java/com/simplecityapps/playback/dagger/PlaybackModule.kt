@@ -7,7 +7,10 @@ import android.os.Build
 import android.util.LruCache
 import androidx.core.content.getSystemService
 import com.simplecityapps.mediaprovider.repository.*
-import com.simplecityapps.playback.*
+import com.simplecityapps.playback.NoiseManager
+import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackNotificationManager
+import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi21
@@ -18,7 +21,6 @@ import com.simplecityapps.playback.chromecast.HttpServer
 import com.simplecityapps.playback.equalizer.Equalizer
 import com.simplecityapps.playback.local.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.local.exoplayer.ExoPlayerPlayback
-import com.simplecityapps.playback.local.mediaplayer.MediaPlayerPlayback
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
@@ -72,17 +74,12 @@ class PlaybackModule {
     }
 
     @Provides
-    fun providePlayback(
+    fun provideExoPlayerPlayback(
         context: Context,
-        playbackPreferenceManager: PlaybackPreferenceManager,
         equalizerAudioProcessor: EqualizerAudioProcessor,
         embyAuthenticationManager: EmbyAuthenticationManager
-    ): Playback {
-        return if (playbackPreferenceManager.useAndroidMediaPlayer) {
-            MediaPlayerPlayback(context)
-        } else {
-            ExoPlayerPlayback(context, equalizerAudioProcessor, embyAuthenticationManager)
-        }
+    ): ExoPlayerPlayback {
+        return ExoPlayerPlayback(context, equalizerAudioProcessor, embyAuthenticationManager)
     }
 
     @AppScope
@@ -110,13 +107,13 @@ class PlaybackModule {
     @Provides
     fun providePlaybackManager(
         queueManager: QueueManager,
-        playback: Playback,
+        playback: ExoPlayerPlayback,
         playbackWatcher: PlaybackWatcher,
         audioFocusHelper: AudioFocusHelper,
         playbackPreferenceManager: PlaybackPreferenceManager,
         queueWatcher: QueueWatcher
     ): PlaybackManager {
-        return PlaybackManager(queueManager, playback, playbackWatcher, audioFocusHelper, playbackPreferenceManager, queueWatcher)
+        return PlaybackManager(queueManager, playbackWatcher, audioFocusHelper, playbackPreferenceManager, playback, queueWatcher)
     }
 
     @AppScope
@@ -133,8 +130,8 @@ class PlaybackModule {
 
     @AppScope
     @Provides
-    fun provideCastSessionManager(context: Context, playbackManager: PlaybackManager, httpServer: HttpServer): CastSessionManager {
-        return CastSessionManager(playbackManager, context, httpServer)
+    fun provideCastSessionManager(context: Context, playbackManager: PlaybackManager, httpServer: HttpServer, exoPlayerPlayback: ExoPlayerPlayback): CastSessionManager {
+        return CastSessionManager(playbackManager, context, httpServer, exoPlayerPlayback)
     }
 
     @AppScope

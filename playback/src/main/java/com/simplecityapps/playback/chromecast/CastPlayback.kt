@@ -10,6 +10,7 @@ import com.google.android.gms.cast.framework.media.RemoteMediaClient
 import com.google.android.gms.common.images.WebImage
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.Playback
+import com.simplecityapps.playback.queue.QueueManager
 import org.json.JSONException
 import timber.log.Timber
 
@@ -153,6 +154,10 @@ class CastPlayback(
         return true
     }
 
+    override fun setRepeatMode(repeatMode: QueueManager.RepeatMode) {
+
+    }
+
     override fun updateLastKnownStreamPosition() {
         super.updateLastKnownStreamPosition()
 
@@ -170,7 +175,7 @@ class CastPlayback(
                 Timber.v("onRemoteMediaPlayerStatusUpdated... IDLE, reason: $idleReason")
                 if (idleReason == MediaStatus.IDLE_REASON_FINISHED) {
                     currentPosition = 0
-                    callback?.onPlaybackComplete(false)
+                    callback?.onTrackEnded(false)
                 }
             }
             MediaStatus.PLAYER_STATE_PLAYING -> {

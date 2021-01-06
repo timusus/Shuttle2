@@ -181,13 +181,13 @@ class PlaybackNotificationManager(
         }
     }
 
-    override fun onShuffleChanged() {
+    override fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
         if (queueWatcher.hasRestoredQueue) {
             displayNotification()
         }
     }
 
-    override fun onRepeatChanged() {
+    override fun onRepeatChanged(repeatMode: QueueManager.RepeatMode) {
         if (queueWatcher.hasRestoredQueue) {
             displayNotification()
         }

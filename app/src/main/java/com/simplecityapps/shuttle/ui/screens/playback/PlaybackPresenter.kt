@@ -44,8 +44,8 @@ class PlaybackPresenter @Inject constructor(
         onQueueChanged()
         onQueuePositionChanged(null, queueManager.getCurrentPosition())
         onPlaystateChanged(playbackManager.isPlaying())
-        onShuffleChanged()
-        onRepeatChanged()
+        onShuffleChanged(queueManager.getShuffleMode())
+        onRepeatChanged(queueManager.getRepeatMode())
     }
 
     override fun unbindView() {
@@ -216,11 +216,11 @@ class PlaybackPresenter @Inject constructor(
         updateFavorite()
     }
 
-    override fun onShuffleChanged() {
-        view?.setShuffleMode(queueManager.getShuffleMode())
+    override fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
+        view?.setShuffleMode(shuffleMode)
     }
 
-    override fun onRepeatChanged() {
-        view?.setRepeatMode(queueManager.getRepeatMode())
+    override fun onRepeatChanged(repeatMode: QueueManager.RepeatMode) {
+        view?.setRepeatMode(repeatMode)
     }
 }

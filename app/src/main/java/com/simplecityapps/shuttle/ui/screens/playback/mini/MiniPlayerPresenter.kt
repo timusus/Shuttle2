@@ -38,8 +38,8 @@ class MiniPlayerPresenter @Inject constructor(
         onQueueChanged()
         onQueuePositionChanged(null, queueManager.getCurrentPosition())
         onPlaystateChanged(playbackManager.isPlaying())
-        onShuffleChanged()
-        onRepeatChanged()
+        onShuffleChanged(queueManager.getShuffleMode())
+        onRepeatChanged(queueManager.getRepeatMode())
     }
 
     override fun unbindView() {

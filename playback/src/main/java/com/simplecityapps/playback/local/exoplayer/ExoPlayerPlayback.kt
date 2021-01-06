@@ -12,6 +12,8 @@ import com.google.android.exoplayer2.audio.DefaultAudioSink
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.chromecast.CastPlayback
+import com.simplecityapps.playback.mediasession.toRepeatMode
+import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.provider.emby.EmbyAuthenticationManager
 import timber.log.Timber
 
@@ -25,7 +27,7 @@ class ExoPlayerPlayback(
 
     override var isReleased: Boolean = false
 
-    private val player: ExoPlayer by lazy {
+    private val player: SimpleExoPlayer by lazy {
         initPlayer(context)
     }
 
@@ -33,10 +35,8 @@ class ExoPlayerPlayback(
 
     private var isPlaybackReady = false
 
-    private val trackChangeListener by lazy {
-
+    private val eventListener by lazy {
         object : Player.EventListener {
-
             override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
                 super.onPlayWhenReadyChanged(playWhenReady, reason)
 
@@ -49,7 +49,7 @@ class ExoPlayerPlayback(
             override fun onPlaybackStateChanged(state: Int) {
                 super.onPlaybackStateChanged(state)
 
-                val playbackState = state.toState()
+                val playbackState = state.toPlaybackState()
                 Timber.v("onPlayerStateChanged(playWhenReady: $playWhenReady, playbackState: ${playbackState})")
 
                 if (playbackState == PlaybackState.Ready) {
@@ -61,7 +61,7 @@ class ExoPlayerPlayback(
                         player.playWhenReady = false
                         this@ExoPlayerPlayback.playWhenReady = false
                         callback?.onPlayStateChanged(isPlaying = false)
-                        callback?.onPlaybackComplete(trackWentToNext = false)
+                        callback?.onTrackEnded(false)
                         isPlaybackReady = false
                     }
                 }
@@ -69,12 +69,16 @@ class ExoPlayerPlayback(
 
             override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
                 super.onMediaItemTransition(mediaItem, reason)
-                Timber.v("onMediaItemTransition(reason: $reason)")
-                when (reason) {
-                    Player.MEDIA_ITEM_TRANSITION_REASON_AUTO -> callback?.onPlaybackComplete(trackWentToNext = true)
-                    Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT,
-                    Player.MEDIA_ITEM_TRANSITION_REASON_SEEK,
-                    Player.MEDIA_ITEM_TRANSITION_REASON_PLAYLIST_CHANGED -> {
+
+                val transitionReason = reason.toTransitionReason()
+                Timber.v("onMediaItemTransition(reason: ${reason.toTransitionReason()})")
+
+                when (transitionReason) {
+                    TransitionReason.Repeat -> callback?.onTrackEnded(true)
+                    TransitionReason.Auto -> callback?.onTrackEnded(true)
+                    TransitionReason.Seek,
+                    TransitionReason.PlaylistChanged,
+                    TransitionReason.Unknown -> {
                         // Nothing to do
                     }
                 }
@@ -88,7 +92,7 @@ class ExoPlayerPlayback(
         }
     }
 
-    private fun initPlayer(context: Context): ExoPlayer {
+    private fun initPlayer(context: Context): SimpleExoPlayer {
 
         val renderersFactory = object : DefaultRenderersFactory(context) {
             override fun buildAudioSink(context: Context, enableFloatOutput: Boolean, enableAudioTrackPlaybackParams: Boolean, enableOffload: Boolean): AudioSink {
@@ -100,17 +104,26 @@ class ExoPlayerPlayback(
 
         val simpleExoPlayer = SimpleExoPlayer.Builder(context, renderersFactory).build()
         simpleExoPlayer.setWakeMode(C.WAKE_MODE_LOCAL)
+
         return simpleExoPlayer
     }
 
     override fun load(current: Song, next: Song?, seekPosition: Int, completion: (Result<Any?>) -> Unit) {
-        Timber.v("load(current: ${current.name})")
+        Timber.v("load(current: ${current.name}|${current.mimeType})")
         isReleased = false
 
-        player.addListener(trackChangeListener)
+        player.addListener(eventListener)
         player.seekTo(seekPosition.toLong())
-        player.setMediaItem(getMediaItem(current.path.toUri()))
+        val mediaItem = getMediaItem(current.path.toUri())
+        player.setMediaItem(mediaItem)
         player.prepare()
+
+        // Todo: Make this generic (encode whether media item is remote or not via custom tag)
+        if (mediaItem.playbackProperties?.uri?.scheme == "emby") {
+            player.setWakeMode(C.WAKE_MODE_NETWORK)
+        } else {
+            player.setWakeMode(C.WAKE_MODE_LOCAL)
+        }
 
         completion(Result.success(null))
 
@@ -118,8 +131,10 @@ class ExoPlayerPlayback(
     }
 
     override fun loadNext(song: Song?) {
-        Timber.v("loadNext(${song?.name})")
-        // Remove any songs after the current media item
+        Timber.v("loadNext(song: ${song?.name}|${song?.mimeType})")
+
+        val nextMediaItem = song?.let { getMediaItem(song.path.toUri()) }
+
         val currentMediaItem = player.currentMediaItem
         val count = player.mediaItemCount
         var currentIndex = 0
@@ -129,13 +144,23 @@ class ExoPlayerPlayback(
                 break
             }
         }
+
+        // Shortcut if the track is already next in the queue
+        val nextIndex = currentIndex + 1
+        if (count > nextIndex) {
+            if (player.getMediaItemAt(nextIndex) == nextMediaItem) {
+                return
+            }
+        }
+
+        // Remove any songs after the current media item
         if (currentIndex < count - 1) {
             player.removeMediaItems(count - 1, count)
         }
 
-        // Now we can insert our new next track
-        song?.let {
-            player.addMediaItem(getMediaItem(song.path.toUri()))
+        // Now insert our new next track
+        nextMediaItem?.let {
+            player.addMediaItem(nextMediaItem)
         }
     }
 
@@ -178,18 +203,36 @@ class ExoPlayerPlayback(
         return oldPlayback !is CastPlayback
     }
 
+    override fun setRepeatMode(repeatMode: QueueManager.RepeatMode) {
+        player.repeatMode = repeatMode.toRepeatMode()
+    }
+
 
     enum class PlaybackState {
         Idle, Buffering, Ready, Ended, Unknown;
     }
 
-    fun Int.toState(): PlaybackState {
+    fun Int.toPlaybackState(): PlaybackState {
         return when (this) {
             1 -> PlaybackState.Idle
             2 -> PlaybackState.Buffering
             3 -> PlaybackState.Ready
             4 -> PlaybackState.Ended
             else -> PlaybackState.Unknown
+        }
+    }
+
+    enum class TransitionReason {
+        Repeat, Auto, Seek, PlaylistChanged, Unknown;
+    }
+
+    fun Int.toTransitionReason(): TransitionReason {
+        return when (this) {
+            0 -> TransitionReason.Repeat
+            1 -> TransitionReason.Auto
+            2 -> TransitionReason.Seek
+            3 -> TransitionReason.PlaylistChanged
+            else -> TransitionReason.Unknown
         }
     }
 

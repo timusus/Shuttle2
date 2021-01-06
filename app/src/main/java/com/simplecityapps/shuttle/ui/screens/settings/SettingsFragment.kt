@@ -25,8 +25,6 @@ import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.ActivityIntentProvider
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.local.exoplayer.EqualizerAudioProcessor
-import com.simplecityapps.playback.local.exoplayer.ExoPlayerPlayback
-import com.simplecityapps.playback.local.mediaplayer.MediaPlayerPlayback
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.widgets.WidgetManager
 import com.simplecityapps.provider.emby.EmbyAuthenticationManager
@@ -177,7 +175,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
             true
         }
 
-        preferenceScreen.findPreference<SeekBarPreference>("widget_background_opacity")?.setOnPreferenceChangeListener { preference, newValue ->
+        preferenceScreen.findPreference<SeekBarPreference>("widget_background_opacity")?.setOnPreferenceChangeListener { _, _ ->
             (requireContext().applicationContext as ActivityIntentProvider).updateAppWidgets(WidgetManager.UpdateReason.Unknown)
             true
         }
@@ -205,15 +203,6 @@ class SettingsFragment : PreferenceFragmentCompat(),
         when (key) {
             "pref_night_mode" -> {
                 setNightMode(sharedPreferences.getString(key, "0") ?: "0")
-            }
-            "playback_media_player" -> {
-                playbackManager.switchToPlayback(
-                    if (playbackPreferenceManager.useAndroidMediaPlayer) MediaPlayerPlayback(requireContext().applicationContext) else ExoPlayerPlayback(
-                        requireContext(),
-                        equalizerAudioProcessor,
-                        embyAuthenticationManager
-                    )
-                )
             }
         }
     }

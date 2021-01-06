@@ -129,12 +129,12 @@ class MediaSessionManager @Inject constructor(
         }
     }
 
-    override fun onShuffleChanged() {
-        mediaSession.setShuffleMode(queueManager.getShuffleMode().toShuffleMode())
+    override fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
+        mediaSession.setShuffleMode(shuffleMode.toShuffleMode())
     }
 
-    override fun onRepeatChanged() {
-        mediaSession.setRepeatMode(queueManager.getRepeatMode().toRepeatMode())
+    override fun onRepeatChanged(repeatMode: QueueManager.RepeatMode) {
+        mediaSession.setRepeatMode(repeatMode.toRepeatMode())
     }
 
 

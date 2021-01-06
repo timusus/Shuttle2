@@ -81,7 +81,7 @@ class SleepTimer(
 
     // PlaybackWatcherCallback Implementation
 
-    override fun onPlaybackComplete(song: Song) {
+    override fun onTrackEnded(song: Song) {
         Timber.v("onPlaybackComplete, playToEnd: $playToEnd, timeRemaining: ${timeRemaining()}")
         if (playToEnd && timeRemaining() == 0L) {
             sleep()
