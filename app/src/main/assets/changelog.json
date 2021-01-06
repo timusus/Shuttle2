@@ -1,20 +1,14 @@
 {
   "commits": [
-    "Fixed another performance issue, possibly causing the app to stop responding",
-    "Fixed issue where genre detail screen was blank",
-    "Fixed most played & recently played reversed sort order issue",
-    "Previous:",
-    "Fixed an issue where incorrect song played after rearranging the queue",
-    "Fixed an issue where favourites button didn't work on now playing screen",
-    "Fixed an issue where you couldn't navigate from home -> favourites playlist more than once",
-    "Fixed a crash when opening Genre detail screen",
-    "Limit MediaSession queue length to 50 items",
-    "Fixed an issue where queue item playback state wasn't updated correctly",
-    "Prevent long-named song list items from overlapping overflow button",
-    "Fixed a crash when attempting to add directories to S2 scanner",
-    "Performance improvements and bug fixes..",
-    "This update aims to resolve a bunch of issues resulting in the app locking up and becoming unresponsive",
-    "Resolved several memory leaks, reduced overall memory footprint",
-    "Library tabs are now loaded on demand. So you're more likely to see a loading indicator when swiping to, say, the songs list. This reduces the load when the app is starting up, and when returning to the library screen"
+    "Added Jellyfin support",
+    "Fixed an issue where notification progress would get out of sync after skipping tracks",
+    "Fixed an issue preventing Emby from connection to local IP addresses",
+    "Fixed an issue where play count was incremented twice when repeat mode is on (thanks @Crusader)",
+    "Performance optimisations when lists are updated with a large number of items",
+    "Artwork no longer flickers when toggling shuffle mode",
+    "Fixed an issue where most played play count didn't update in real time",
+    "Don't show play count in 'history' playlist",
+    "Moved play count badge to sit on top of artwork image",
+    "Fixed an issue where nothing happened after pressing play after the last song in the queue has completed"
   ]
 }
