@@ -48,6 +48,7 @@ class JellyfinAuthenticationManager(
     }
 
     suspend fun authenticate(address: String, loginCredentials: LoginCredentials): Result<AuthenticatedCredentials> {
+        Timber.d("authenticate(address: $address)")
         val authenticationResult = userService.authenticate(
             url = address,
             username = loginCredentials.username,

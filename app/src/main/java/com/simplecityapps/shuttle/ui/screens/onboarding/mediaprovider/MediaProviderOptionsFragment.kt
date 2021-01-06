@@ -40,14 +40,14 @@ class MediaProviderOptionsFragment : DialogFragment() {
         if (localMediaTypes.isNotEmpty()) {
             viewBinders.add(HeaderBinder("Local"))
             viewBinders.addAll(
-                localMediaTypes.map { provider -> MediaProviderBinder(providerType = provider, listener = listener, showRemoveButton = true, showSubtitle = true) }
+                localMediaTypes.map { provider -> MediaProviderBinder(providerType = provider, listener = listener, showRemoveButton = false, showSubtitle = true) }
             )
         }
         val remoteMediaTypes = providerTypes.filter { it.isRemote }
         if (remoteMediaTypes.isNotEmpty()) {
             viewBinders.add(HeaderBinder("Remote"))
             viewBinders.addAll(
-                remoteMediaTypes.map { provider -> MediaProviderBinder(providerType = provider, listener = listener, showRemoveButton = true, showSubtitle = true) }
+                remoteMediaTypes.map { provider -> MediaProviderBinder(providerType = provider, listener = listener, showRemoveButton = false, showSubtitle = true) }
             )
         }
         adapter.update(viewBinders)

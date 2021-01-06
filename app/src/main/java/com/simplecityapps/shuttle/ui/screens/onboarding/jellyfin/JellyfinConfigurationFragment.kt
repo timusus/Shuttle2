@@ -21,6 +21,7 @@ import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 
 class JellyfinConfigurationFragment : DialogFragment(), Injectable {
@@ -128,6 +129,7 @@ class JellyfinConfigurationFragment : DialogFragment(), Injectable {
                         dialog.dismiss()
                     }
                     result.onFailure { error ->
+                        Timber.e("Jellyfin authentication failed. Error ${error.localizedMessage}")
                         loadingView.setState(CircularLoadingView.State.Retry(error.userDescription()))
                     }
                 }
