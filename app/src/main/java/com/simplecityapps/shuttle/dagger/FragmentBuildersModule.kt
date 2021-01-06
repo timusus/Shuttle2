@@ -21,6 +21,7 @@ import com.simplecityapps.shuttle.ui.screens.library.songs.SongListFragment
 import com.simplecityapps.shuttle.ui.screens.main.MainFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParentFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.emby.EmbyConfigurationFragment
+import com.simplecityapps.shuttle.ui.screens.onboarding.jellyfin.JellyfinConfigurationFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.MediaProviderSelectionFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.scanner.MediaScannerFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.taglib.DirectorySelectionFragment
@@ -130,4 +131,7 @@ abstract class FragmentBuildersModule {
 
     @ContributesAndroidInjector
     abstract fun contributeEmbyConfigurationFragment(): EmbyConfigurationFragment
+
+    @ContributesAndroidInjector
+    abstract fun contributeJellyfinConfigurationFragment(): JellyfinConfigurationFragment
 }

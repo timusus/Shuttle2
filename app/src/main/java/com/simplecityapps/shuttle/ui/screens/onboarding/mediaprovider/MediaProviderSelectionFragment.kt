@@ -21,15 +21,18 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.ChangeBounds
 import androidx.transition.TransitionManager
 import com.simplecityapps.adapter.RecyclerAdapter
+import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.utils.withArgs
+import com.simplecityapps.shuttle.ui.screens.home.search.HeaderBinder
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingChild
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingPage
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParent
 import com.simplecityapps.shuttle.ui.screens.onboarding.emby.EmbyConfigurationFragment
+import com.simplecityapps.shuttle.ui.screens.onboarding.jellyfin.JellyfinConfigurationFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.taglib.DirectorySelectionFragment
 import timber.log.Timber
 import javax.inject.Inject
@@ -138,17 +141,31 @@ class MediaProviderSelectionFragment :
     }
 
     override fun setMediaProviders(mediaProviderTypes: List<MediaProvider.Type>) {
-        adapter.update(mediaProviderTypes.map { provider -> MediaProviderBinder(providerType = provider, listener = listener, showRemoveButton = true, showSubtitle = false) })
+        val viewBinders = mutableListOf<ViewBinder>()
+        val localMediaTypes = mediaProviderTypes.filter { !it.isRemote }
+        if (localMediaTypes.isNotEmpty()) {
+            viewBinders.add(HeaderBinder("Local"))
+            viewBinders.addAll(
+                localMediaTypes.map { provider -> MediaProviderBinder(providerType = provider, listener = listener, showRemoveButton = true, showSubtitle = false) }
+            )
+        }
+        val remoteMediaTypes = mediaProviderTypes.filter { it.isRemote }
+        if (remoteMediaTypes.isNotEmpty()) {
+            viewBinders.add(HeaderBinder("Remote"))
+            viewBinders.addAll(
+                remoteMediaTypes.map { provider -> MediaProviderBinder(providerType = provider, listener = listener, showRemoveButton = true, showSubtitle = false) }
+            )
+        }
+
+        adapter.update(viewBinders)
 
         addProviderButton.isVisible = mediaProviderTypes.size != MediaProvider.Type.values().size
 
         (view as? ConstraintLayout)?.let { constraintLayout ->
             TransitionManager.beginDelayedTransition(constraintLayout, transition)
             if (mediaProviderTypes.isEmpty()) {
-                Timber.i("Applying pre constraints")
                 preAnimationConstraints.applyTo(constraintLayout)
             } else {
-                Timber.i("Applying post constraints")
                 postAnimationConstraints.applyTo(constraintLayout)
             }
         }
@@ -170,6 +187,10 @@ class MediaProviderSelectionFragment :
                 presenter.addMediaProviderType(providerType)
                 EmbyConfigurationFragment.newInstance().show(childFragmentManager)
             }
+            MediaProvider.Type.Jellyfin -> {
+                presenter.addMediaProviderType(providerType)
+                JellyfinConfigurationFragment.newInstance().show(childFragmentManager)
+            }
         }
     }
 
@@ -185,11 +206,11 @@ class MediaProviderSelectionFragment :
                 when (it.itemId) {
                     R.id.configure -> {
                         when (providerType) {
-                            MediaProvider.Type.Shuttle -> {
-                                DirectorySelectionFragment.newInstance().show(childFragmentManager)
-                            }
-                            MediaProvider.Type.Emby -> {
-                                EmbyConfigurationFragment.newInstance().show(childFragmentManager)
+                            MediaProvider.Type.Shuttle -> DirectorySelectionFragment.newInstance().show(childFragmentManager)
+                            MediaProvider.Type.Emby -> EmbyConfigurationFragment.newInstance().show(childFragmentManager)
+                            MediaProvider.Type.Jellyfin -> JellyfinConfigurationFragment.newInstance().show(childFragmentManager)
+                            MediaProvider.Type.MediaStore -> {
+                                // Nothing to do
                             }
                         }
                     }

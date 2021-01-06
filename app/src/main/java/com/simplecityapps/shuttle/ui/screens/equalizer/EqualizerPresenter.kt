@@ -2,7 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.equalizer
 
 import com.simplecityapps.playback.equalizer.Equalizer
 import com.simplecityapps.playback.equalizer.EqualizerBand
-import com.simplecityapps.playback.local.exoplayer.EqualizerAudioProcessor
+import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter

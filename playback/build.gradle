@@ -33,12 +33,13 @@ dependencies {
     // Shuttle Media Provider
     implementation project(path: ':mediaprovider:core')
     implementation project(path: ':mediaprovider:emby')
+    implementation project(path: ':mediaprovider:jellyfin')
 
     // Shuttle Image Loader
     implementation project(path: ':imageloader')
 
     // AndroidX Media
-    implementation 'androidx.media:media:1.2.0'
+    implementation 'androidx.media:media:1.2.1'
 
     // Dagger
     kapt 'com.google.dagger:dagger-compiler:2.29.1'

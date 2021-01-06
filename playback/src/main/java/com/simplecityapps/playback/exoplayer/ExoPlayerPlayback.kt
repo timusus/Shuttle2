@@ -1,4 +1,4 @@
-package com.simplecityapps.playback.local.exoplayer
+package com.simplecityapps.playback.exoplayer
 
 import android.content.Context
 import android.net.Uri
@@ -9,18 +9,18 @@ import com.google.android.exoplayer2.audio.AudioCapabilities
 import com.google.android.exoplayer2.audio.AudioProcessor
 import com.google.android.exoplayer2.audio.AudioSink
 import com.google.android.exoplayer2.audio.DefaultAudioSink
+import com.simplecityapps.mediaprovider.MediaPathProvider
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.chromecast.CastPlayback
 import com.simplecityapps.playback.mediasession.toRepeatMode
 import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.provider.emby.EmbyAuthenticationManager
 import timber.log.Timber
 
 class ExoPlayerPlayback(
     context: Context,
     private val audioProcessor: AudioProcessor,
-    private val embyAuthenticationManager: EmbyAuthenticationManager
+    private val mediaItemProvider: MediaPathProvider
 ) : Playback {
 
     override var callback: Playback.Callback? = null
@@ -238,22 +238,6 @@ class ExoPlayerPlayback(
 
     @Throws(IllegalStateException::class)
     fun getMediaItem(uri: Uri): MediaItem {
-        // Todo: This could be delegated to another class, to remove knowledge of Emby from ExoPlayerPlayback
-        if (uri.scheme == "emby") {
-            embyAuthenticationManager.getAuthenticatedCredentials()?.let { authenticatedCredentials ->
-                embyAuthenticationManager.buildEmbyPath(
-                    uri.pathSegments.last(),
-                    authenticatedCredentials
-                )?.let { path ->
-                    return MediaItem.fromUri(path)
-                } ?: run {
-                    throw IllegalStateException("Failed to build emby path")
-                }
-            } ?: run {
-                throw IllegalStateException("Failed to authenticate")
-            }
-        } else {
-            return MediaItem.fromUri(uri)
-        }
+        return MediaItem.fromUri(mediaItemProvider.getPath(uri))
     }
 }

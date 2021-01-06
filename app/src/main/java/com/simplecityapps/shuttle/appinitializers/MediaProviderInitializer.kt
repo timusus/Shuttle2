@@ -7,6 +7,7 @@ import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.provider.emby.EmbyMediaProvider
+import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
 import com.simplecityapps.saf.SafDirectoryHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -24,6 +25,7 @@ class MediaProviderInitializer @Inject constructor(
     private val taglibMediaProvider: TaglibMediaProvider,
     private val mediaStoreMediaProvider: MediaStoreMediaProvider,
     private val embyMediaProvider: EmbyMediaProvider,
+    private val jellyfinMediaProvider: JellyfinMediaProvider,
     @Named("AppCoroutineScope") private val appCoroutineScope: CoroutineScope
 ) : AppInitializer {
 
@@ -50,6 +52,9 @@ class MediaProviderInitializer @Inject constructor(
                 }
                 MediaProvider.Type.Emby -> {
                     mediaImporter.mediaProviders += embyMediaProvider
+                }
+                MediaProvider.Type.Jellyfin-> {
+                    mediaImporter.mediaProviders += jellyfinMediaProvider
                 }
             }
         }

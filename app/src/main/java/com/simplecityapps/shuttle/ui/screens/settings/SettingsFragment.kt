@@ -24,7 +24,7 @@ import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.ActivityIntentProvider
 import com.simplecityapps.playback.PlaybackManager
-import com.simplecityapps.playback.local.exoplayer.EqualizerAudioProcessor
+import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.widgets.WidgetManager
 import com.simplecityapps.provider.emby.EmbyAuthenticationManager

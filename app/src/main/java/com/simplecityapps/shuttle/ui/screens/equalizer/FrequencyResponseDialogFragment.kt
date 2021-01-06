@@ -22,7 +22,7 @@ import com.google.android.exoplayer2.audio.AudioProcessor
 import com.paramsen.noise.Noise
 import com.simplecityapps.playback.equalizer.Equalizer
 import com.simplecityapps.playback.equalizer.fromDb
-import com.simplecityapps.playback.local.exoplayer.EqualizerAudioProcessor
+import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable

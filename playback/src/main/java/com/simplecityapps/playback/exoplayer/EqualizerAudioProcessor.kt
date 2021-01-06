@@ -1,4 +1,4 @@
-package com.simplecityapps.playback.local.exoplayer
+package com.simplecityapps.playback.exoplayer
 
 import androidx.core.math.MathUtils.clamp
 import com.google.android.exoplayer2.C

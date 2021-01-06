@@ -1,14 +1,14 @@
-package com.simplecityapps.provider.emby.di
+package com.simplecityapps.provider.jellyfin.di
 
 import android.content.Context
 import androidx.core.content.getSystemService
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
-import com.simplecityapps.provider.emby.CredentialStore
-import com.simplecityapps.provider.emby.EmbyAuthenticationManager
-import com.simplecityapps.provider.emby.EmbyMediaPathProvider
-import com.simplecityapps.provider.emby.EmbyMediaProvider
-import com.simplecityapps.provider.emby.http.ItemsService
-import com.simplecityapps.provider.emby.http.UserService
+import com.simplecityapps.provider.jellyfin.CredentialStore
+import com.simplecityapps.provider.jellyfin.JellyfinAuthenticationManager
+import com.simplecityapps.provider.jellyfin.JellyfinMediaPathProvider
+import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
+import com.simplecityapps.provider.jellyfin.http.ItemsService
+import com.simplecityapps.provider.jellyfin.http.UserService
 import com.simplecityapps.shuttle.dagger.AppScope
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import com.squareup.moshi.Moshi
@@ -21,11 +21,11 @@ import retrofit2.create
 import javax.inject.Named
 
 @Module
-open class EmbyMediaProviderModule {
+open class JellyfinMediaProviderModule {
 
     @Provides
     @AppScope
-    @Named("EmbyRetrofit")
+    @Named("JellyfinRetrofit")
     fun provideRetrofit(context: Context, okHttpClient: OkHttpClient, moshi: Moshi): Retrofit {
         return Retrofit.Builder()
             .baseUrl("http://localhost/") // unused
@@ -37,13 +37,13 @@ open class EmbyMediaProviderModule {
 
     @Provides
     @AppScope
-    fun provideUserService(@Named("EmbyRetrofit") retrofit: Retrofit): UserService {
+    fun provideUserService(@Named("JellyfinRetrofit") retrofit: Retrofit): UserService {
         return retrofit.create()
     }
 
     @Provides
     @AppScope
-    fun provideItemsService(@Named("EmbyRetrofit") retrofit: Retrofit): ItemsService {
+    fun provideItemsService(@Named("JellyfinRetrofit") retrofit: Retrofit): ItemsService {
         return retrofit.create()
     }
 
@@ -55,19 +55,19 @@ open class EmbyMediaProviderModule {
 
     @Provides
     @AppScope
-    fun provideEmbyAuthenticationManager(userService: UserService, credentialStore: CredentialStore): EmbyAuthenticationManager {
-        return EmbyAuthenticationManager(userService, credentialStore)
+    fun provideJellyfinAuthenticationManager(userService: UserService, credentialStore: CredentialStore): JellyfinAuthenticationManager {
+        return JellyfinAuthenticationManager(userService, credentialStore)
     }
 
     @Provides
     @AppScope
-    fun provideEmbyMediaProvider(authenticationManager: EmbyAuthenticationManager, itemsService: ItemsService): EmbyMediaProvider {
-        return EmbyMediaProvider(authenticationManager, itemsService)
+    fun provideJellyfinMediaProvider(authenticationManager: JellyfinAuthenticationManager, itemsService: ItemsService): JellyfinMediaProvider {
+        return JellyfinMediaProvider(authenticationManager, itemsService)
     }
 
     @Provides
     @AppScope
-    fun provideEmbyMediaPathProvider(authenticationManager: EmbyAuthenticationManager): EmbyMediaPathProvider {
-        return EmbyMediaPathProvider(authenticationManager)
+    fun provideJellyfinMediaPathProvider(authenticationManager: JellyfinAuthenticationManager): JellyfinMediaPathProvider {
+        return JellyfinMediaPathProvider(authenticationManager)
     }
 }

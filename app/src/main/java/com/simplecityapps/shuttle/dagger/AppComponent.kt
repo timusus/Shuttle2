@@ -4,6 +4,7 @@ import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.dagger.PlaybackModule
 import com.simplecityapps.playback.dagger.PlaybackServiceModule
 import com.simplecityapps.provider.emby.di.EmbyMediaProviderModule
+import com.simplecityapps.provider.jellyfin.di.JellyfinMediaProviderModule
 import com.simplecityapps.shuttle.ShuttleApplication
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.widgets.WidgetModule
@@ -25,7 +26,8 @@ import okhttp3.OkHttpClient
         NetworkingModule::class,
         PersistenceModule::class,
         MediaProviderModule::class,
-        EmbyMediaProviderModule::class
+        EmbyMediaProviderModule::class,
+        JellyfinMediaProviderModule::class,
     ]
 )
 @AppScope

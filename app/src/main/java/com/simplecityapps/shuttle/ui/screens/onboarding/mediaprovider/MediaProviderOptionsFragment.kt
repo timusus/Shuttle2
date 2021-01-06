@@ -8,10 +8,12 @@ import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.simplecityapps.adapter.RecyclerAdapter
+import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.SpacesItemDecoration
 import com.simplecityapps.shuttle.ui.common.utils.withArgs
+import com.simplecityapps.shuttle.ui.screens.home.search.HeaderBinder
 import java.io.Serializable
 
 class MediaProviderOptionsFragment : DialogFragment() {
@@ -33,11 +35,22 @@ class MediaProviderOptionsFragment : DialogFragment() {
 
         val providerTypes = requireArguments().getSerializable(ARG_PROVIDER_TYPES) as List<MediaProvider.Type>
 
-        adapter.update(
-            providerTypes.map { providerType ->
-                MediaProviderBinder(providerType = providerType, listener = listener, showRemoveButton = false, showSubtitle = true)
-            }
-        )
+        val viewBinders = mutableListOf<ViewBinder>()
+        val localMediaTypes = providerTypes.filter { !it.isRemote }
+        if (localMediaTypes.isNotEmpty()) {
+            viewBinders.add(HeaderBinder("Local"))
+            viewBinders.addAll(
+                localMediaTypes.map { provider -> MediaProviderBinder(providerType = provider, listener = listener, showRemoveButton = true, showSubtitle = true) }
+            )
+        }
+        val remoteMediaTypes = providerTypes.filter { it.isRemote }
+        if (remoteMediaTypes.isNotEmpty()) {
+            viewBinders.add(HeaderBinder("Remote"))
+            viewBinders.addAll(
+                remoteMediaTypes.map { provider -> MediaProviderBinder(providerType = provider, listener = listener, showRemoveButton = true, showSubtitle = true) }
+            )
+        }
+        adapter.update(viewBinders)
 
         return AlertDialog.Builder(requireContext())
             .setTitle("Add Media Provider")

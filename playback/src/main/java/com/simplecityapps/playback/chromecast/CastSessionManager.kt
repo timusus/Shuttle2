@@ -5,7 +5,7 @@ import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.CastSession
 import com.google.android.gms.cast.framework.SessionManagerListener
 import com.simplecityapps.playback.PlaybackManager
-import com.simplecityapps.playback.local.exoplayer.ExoPlayerPlayback
+import com.simplecityapps.playback.exoplayer.ExoPlayerPlayback
 import timber.log.Timber
 import javax.inject.Inject
 

@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.os.Build
 import android.util.LruCache
 import androidx.core.content.getSystemService
+import com.simplecityapps.mediaprovider.AggregateMediaPathProvider
 import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.playback.NoiseManager
 import com.simplecityapps.playback.PlaybackManager
@@ -19,14 +20,15 @@ import com.simplecityapps.playback.chromecast.CastService
 import com.simplecityapps.playback.chromecast.CastSessionManager
 import com.simplecityapps.playback.chromecast.HttpServer
 import com.simplecityapps.playback.equalizer.Equalizer
-import com.simplecityapps.playback.local.exoplayer.EqualizerAudioProcessor
-import com.simplecityapps.playback.local.exoplayer.ExoPlayerPlayback
+import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
+import com.simplecityapps.playback.exoplayer.ExoPlayerPlayback
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.playback.sleeptimer.SleepTimer
-import com.simplecityapps.provider.emby.EmbyAuthenticationManager
+import com.simplecityapps.provider.emby.EmbyMediaPathProvider
+import com.simplecityapps.provider.jellyfin.JellyfinMediaPathProvider
 import com.simplecityapps.shuttle.dagger.AppScope
 import com.squareup.moshi.Moshi
 import dagger.Module
@@ -73,13 +75,22 @@ class PlaybackModule {
         return PlaybackPreferenceManager(sharedPreferences, moshi)
     }
 
+    @AppScope
+    @Provides
+    fun provideAggregateMediaPathProvider(embyMediaPathProvider: EmbyMediaPathProvider, jellyfinMediaPathProvider: JellyfinMediaPathProvider): AggregateMediaPathProvider {
+        return AggregateMediaPathProvider().apply {
+            addProvider(embyMediaPathProvider)
+            addProvider(jellyfinMediaPathProvider)
+        }
+    }
+
     @Provides
     fun provideExoPlayerPlayback(
         context: Context,
         equalizerAudioProcessor: EqualizerAudioProcessor,
-        embyAuthenticationManager: EmbyAuthenticationManager
+        mediaPathProvider: AggregateMediaPathProvider
     ): ExoPlayerPlayback {
-        return ExoPlayerPlayback(context, equalizerAudioProcessor, embyAuthenticationManager)
+        return ExoPlayerPlayback(context, equalizerAudioProcessor, mediaPathProvider)
     }
 
     @AppScope
