@@ -36,7 +36,7 @@ class EmbyMediaProvider(
                                 disc = 0,
                                 duration = (item.runTime / (10 * 1000)).toInt(),
                                 year = item.productionYear ?: 0,
-                                genres = emptyList(),
+                                genres = item.genres,
                                 path = "emby://item/${item.id}",
                                 size = 0,
                                 mimeType = "Audio/*",
