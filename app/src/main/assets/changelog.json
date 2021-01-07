@@ -1,5 +1,9 @@
 {
   "commits": [
+    "Fixed an issue preventing Jellyfin from scanning media",
+    "Added support for Emby & Jellyfin genres",
+    "Fixed a crash when attempting to retrieve pictures from tags",
+    "0.2.0:",
     "Added Jellyfin support",
     "Fixed an issue where notification progress would get out of sync after skipping tracks",
     "Fixed an issue preventing Emby from connection to local IP addresses",
