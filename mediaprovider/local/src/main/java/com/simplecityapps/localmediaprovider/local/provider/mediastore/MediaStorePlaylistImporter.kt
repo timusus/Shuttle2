@@ -8,11 +8,10 @@ import com.simplecityapps.mediaprovider.repository.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.NonCancellable.isActive
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
-import kotlin.coroutines.coroutineContext
 
 class MediaStorePlaylistImporter(
     private val context: Context,
@@ -80,7 +79,7 @@ class MediaStorePlaylistImporter(
 
             cursor?.use {
                 while (cursor.moveToNext()) {
-                    if (!coroutineContext.isActive) {
+                    if (!currentCoroutineContext().isActive) {
                         return@use
                     }
                     emit(

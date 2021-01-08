@@ -10,13 +10,13 @@ android {
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
-        buildConfigField("String", "PROXY_ADDR", "\"192.168.0.16\"")
+        buildConfigField("String", "PROXY_ADDR", "\"192.168.0.14\"")
         buildConfigField("Integer", "PROXY_PORT", "8888")
     }
 
     buildTypes {
         debug {
-            buildConfigField("Boolean", "PROXY_ENABLED", "false")
+            buildConfigField("Boolean", "PROXY_ENABLED", "true")
         }
         release {
             minifyEnabled true
@@ -37,10 +37,10 @@ dependencies {
     implementation "androidx.preference:preference-ktx:1.1.1"
 
     // OkHttp Logging Interceptor
-    api 'com.squareup.okhttp3:logging-interceptor:4.8.1'
+    api 'com.squareup.okhttp3:logging-interceptor:4.9.0'
 
     // Kotlin Standard Library
-    api "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.20"
+    api 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.21'
 
     // Kotlin Extensions
     api 'androidx.core:core-ktx:1.3.2'
@@ -49,25 +49,25 @@ dependencies {
     api "androidx.annotation:annotation:1.1.0"
 
     // Dagger core
-    api 'com.google.dagger:dagger-android:2.29.1'
-    kapt 'com.google.dagger:dagger-compiler:2.29.1'
+    api 'com.google.dagger:dagger-android:2.30.1'
+    kapt 'com.google.dagger:dagger-compiler:2.30.1'
 
     // Timber
     api 'com.jakewharton.timber:timber:4.7.1'
 
     // Coroutines
-    api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.7")
+    api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
 
     // OKHttp
     implementation 'com.squareup.okhttp3:okhttp:4.9.0'
 
     // Retrofit
-    implementation "com.squareup.retrofit2:converter-moshi:2.4.0"
+    implementation 'com.squareup.retrofit2:converter-moshi:2.9.0'
 
     // Moshi
-    implementation 'com.squareup.moshi:moshi:1.9.2'
-    implementation 'com.squareup.moshi:moshi-kotlin:1.9.2'
-    implementation 'com.squareup.moshi:moshi-adapters:1.9.2'
+    implementation 'com.squareup.moshi:moshi:1.11.0'
+    implementation 'com.squareup.moshi:moshi-kotlin:1.11.0'
+    implementation 'com.squareup.moshi:moshi-adapters:1.11.0'
 
     // Encrypted Shared Preferences
     api 'androidx.security:security-crypto:1.1.0-alpha03'

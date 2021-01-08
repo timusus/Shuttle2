@@ -26,13 +26,13 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     // Kotlin Standard Library
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.20"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.21"
 
     // Timber
     implementation 'com.jakewharton.timber:timber:4.7.1'
 
     // Kotlin Coroutines
-    api 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.7'
+    api 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2'
 
     // AndroidX Annotations
     api "androidx.annotation:annotation:1.1.0"

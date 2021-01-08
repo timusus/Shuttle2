@@ -100,8 +100,8 @@ android {
         implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
 
         // AndroidX Navigation
-        implementation("androidx.navigation:navigation-fragment-ktx:2.3.1")
-        implementation("androidx.navigation:navigation-ui-ktx:2.3.1")
+        implementation("androidx.navigation:navigation-fragment-ktx:2.3.2")
+        implementation("androidx.navigation:navigation-ui-ktx:2.3.2")
 
         // Dagger core
         kapt("com.google.dagger:dagger-compiler:2.29.1")
@@ -124,7 +124,7 @@ android {
         implementation("me.relex:circleindicator:2.1.4")
 
         // AndroidX Media
-        implementation("androidx.media:media:1.2.0")
+        implementation("androidx.media:media:1.2.1")
 
         // AndroidX Preference
         implementation("androidx.preference:preference:1.1.1")
@@ -142,7 +142,7 @@ android {
         implementation("com.github.bumptech.glide:okhttp3-integration:4.11.0")
 
         // Moshi
-        kapt("com.squareup.moshi:moshi-kotlin-codegen:1.9.3")
+        kapt("com.squareup.moshi:moshi-kotlin-codegen:1.11.0")
 
         // AndroidX Lifecycle
         implementation("androidx.lifecycle:lifecycle-common-java8:2.2.0")
@@ -154,10 +154,10 @@ android {
         implementation("com.github.PhilJay:MPAndroidChart:3.1.0")
 
         // BugSnag
-        implementation("com.bugsnag:bugsnag-android:5.0.1")
+        implementation("com.bugsnag:bugsnag-android:5.4.0")
 
         // AndroidX Lifecycle
-        implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.3.0-beta01")
+        implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.3.0-rc01")
 
         implementation("com.github.bumptech.glide:recyclerview-integration:4.11.0") {
             // Excludes the support library because it's already included by Glide.
