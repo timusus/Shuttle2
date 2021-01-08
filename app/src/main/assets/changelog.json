@@ -1,5 +1,9 @@
 {
   "commits": [
+    "Fixed an issue with Jellyfin track durations",
+    "Fixed an issue where Emby tracks were missing year data",
+    "Dependency updates",
+    "0.2.1:",
     "Fixed an issue preventing Jellyfin from scanning media",
     "Added support for Emby & Jellyfin genres",
     "Fixed a crash when attempting to retrieve pictures from tags",
