@@ -12,13 +12,14 @@ interface TreeNode<TN, N> : Serializable {
 interface Trie<TN : TreeNode<TN, N>, N : Node> : TreeNode<TN, N> {
 
     fun addTreeNode(treeNode: TN): TN {
-
         treeNodes
             .firstOrNull { childTreeNode -> childTreeNode == treeNode }?.let { existingChildNode ->
-            return existingChildNode
-        }
+                return existingChildNode
+            }
 
-        treeNodes.add(treeNode)
+        synchronized(this) {
+            treeNodes.add(treeNode)
+        }
         return treeNode
     }
 
@@ -30,9 +31,11 @@ interface Trie<TN : TreeNode<TN, N>, N : Node> : TreeNode<TN, N> {
         val leaves = leafNodes.toMutableList()
 
         fun traverseTree(parentTreeNode: TreeNode<TN, N>) {
-            for (treeNode in parentTreeNode.treeNodes) {
-                leaves.addAll(treeNode.leafNodes.toList())
-                traverseTree(treeNode)
+            synchronized(parentTreeNode) {
+                for (treeNode in parentTreeNode.treeNodes) {
+                    leaves.addAll(treeNode.leafNodes.toList())
+                    traverseTree(treeNode)
+                }
             }
         }
         traverseTree(this)
