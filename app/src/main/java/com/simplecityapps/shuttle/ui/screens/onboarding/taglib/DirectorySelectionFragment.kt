@@ -62,12 +62,12 @@ class DirectorySelectionFragment : DialogFragment(),
         val dialog = AlertDialog.Builder(requireContext())
             .setTitle("Media Directories")
             .setView(view)
-            .setPositiveButton("Add Directory", null)
-            .setNegativeButton("Close", null)
+            .setNeutralButton("Add Directory", null)
+            .setPositiveButton("Done", null)
             .create()
 
         dialog.setOnShowListener {
-            dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+            dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
                 presenter.presentDocumentProvider()
             }
         }

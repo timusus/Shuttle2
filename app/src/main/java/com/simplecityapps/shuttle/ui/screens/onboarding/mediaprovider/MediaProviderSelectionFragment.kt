@@ -123,7 +123,7 @@ class MediaProviderSelectionFragment :
             getParent()?.let { parent ->
                 parent.hideBackButton()
                 parent.toggleNextButton(true)
-                parent.showNextButton("Next")
+                parent.showNextButton("Scan")
             } ?: Timber.e("Failed to update state - getParent() returned null")
         }, 50)
     }
