@@ -34,7 +34,7 @@ class EmbyMediaProvider(
                                 album = item.album,
                                 track = item.indexNumber ?: 0,
                                 disc = 0,
-                                duration = (item.runTime / (10 * 1000)).toInt(),
+                                duration = ((item.runTime ?: 0) / (10 * 1000)).toInt(),
                                 year = item.productionYear ?: 0,
                                 genres = item.genres,
                                 path = "emby://item/${item.id}",
