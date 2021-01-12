@@ -1,4 +1,4 @@
-package au.com.simplecityapps.shuttle.imageloading.glide.loader.common
+package au.com.simplecityapps.shuttle.imageloading.coil
 
 import java.net.URLEncoder
 

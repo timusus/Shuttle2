@@ -15,11 +15,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
-import com.bumptech.glide.integration.recyclerview.RecyclerViewPreloader
-import com.bumptech.glide.util.ViewPreloadSizeProvider
 import com.simplecityapps.adapter.RecyclerAdapter
-import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.adapter.SpanSizeLookup
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Album
@@ -32,7 +28,6 @@ import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.GridSpacingItemDecoration
-import com.simplecityapps.shuttle.ui.common.recyclerview.MyPreloadModelProvider
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
@@ -54,7 +49,7 @@ class AlbumListFragment :
 
     private var adapter: RecyclerAdapter by autoCleared()
 
-    private var imageLoader: GlideImageLoader by autoCleared()
+    @Inject lateinit var imageLoader: ArtworkImageLoader
 
     private var recyclerView: RecyclerView by autoCleared()
     private var circularLoadingView: CircularLoadingView by autoCleared()
@@ -67,9 +62,6 @@ class AlbumListFragment :
     private lateinit var playlistMenuView: PlaylistMenuView
 
     private var recyclerViewState: Parcelable? = null
-
-    private val viewPreloadSizeProvider by lazy { ViewPreloadSizeProvider<Album>() }
-    private val preloadModelProvider by lazy { MyPreloadModelProvider<Album>(imageLoader, arrayOf(ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_album))) }
 
     private lateinit var shuffleBinder: ShuffleBinder
 
@@ -87,8 +79,6 @@ class AlbumListFragment :
 
         playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
 
-        imageLoader = GlideImageLoader(this)
-
         adapter = object : SectionedAdapter(viewLifecycleOwner.lifecycleScope) {
             override fun getSectionName(viewBinder: ViewBinder?): String {
                 return (viewBinder as? AlbumBinder)?.album?.let { album ->
@@ -98,14 +88,8 @@ class AlbumListFragment :
         }
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
-        recyclerView.setRecyclerListener(RecyclerListener())
-        val preloader: RecyclerViewPreloader<Album> = RecyclerViewPreloader(
-            imageLoader.requestManager,
-            preloadModelProvider,
-            viewPreloadSizeProvider,
-            12
-        )
-        recyclerView.addOnScrollListener(preloader)
+        recyclerView.setItemViewCacheSize(0)
+        recyclerView.setHasFixedSize(true)
 
         circularLoadingView = view.findViewById(R.id.circularLoadingView)
         horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
@@ -239,7 +223,7 @@ class AlbumListFragment :
             adapter.clear()
         }
 
-        preloadModelProvider.items = albums
+//        preloadModelProvider.items = albums
 
         val data = albums.map { album ->
             when (viewMode) {
@@ -400,10 +384,6 @@ class AlbumListFragment :
             false
         }
         popupMenu.show()
-    }
-
-    override fun onViewHolderCreated(holder: AlbumBinder.ViewHolder) {
-        viewPreloadSizeProvider.setView(holder.imageView)
     }
 
 

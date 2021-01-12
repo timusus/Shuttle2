@@ -7,7 +7,6 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackWatcher
@@ -37,6 +36,7 @@ class MediaSessionManager @Inject constructor(
     private val albumRepository: AlbumRepository,
     private val songRepository: SongRepository,
     private val genreRepository: GenreRepository,
+    private val artworkImageLoader: ArtworkImageLoader,
     playbackWatcher: PlaybackWatcher,
     queueWatcher: QueueWatcher
 ) : PlaybackWatcherCallback,
@@ -60,12 +60,9 @@ class MediaSessionManager @Inject constructor(
                     or PlaybackStateCompat.ACTION_SET_SHUFFLE_MODE
         )
 
-    private var artworkImageLoader: ArtworkImageLoader
-
     init {
         playbackWatcher.addCallback(this)
         queueWatcher.addCallback(this)
-        artworkImageLoader = GlideImageLoader(context)
     }
 
     private fun getPlaybackState() = if (playbackManager.isPlaying()) PlaybackStateCompat.STATE_PLAYING else PlaybackStateCompat.STATE_PAUSED

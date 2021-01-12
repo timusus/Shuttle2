@@ -18,7 +18,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.Transition
 import androidx.transition.TransitionInflater
-import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
+import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Album
@@ -69,7 +69,7 @@ class SearchFragment : Fragment(),
 
     @Inject lateinit var playlistMenuPresenter: PlaylistMenuPresenter
 
-    private var imageLoader: GlideImageLoader by autoCleared()
+    @Inject lateinit var imageLoader: ArtworkImageLoader
 
     private lateinit var playlistMenuView: PlaylistMenuView
 
@@ -84,7 +84,7 @@ class SearchFragment : Fragment(),
         super.onCreate(savedInstanceState)
 
         sharedElementEnterTransition = TransitionInflater.from(context).inflateTransition(android.R.transition.move)
-        (sharedElementEnterTransition as Transition).duration = 200L
+        (sharedElementEnterTransition as Transition).duration = 150L
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -97,8 +97,6 @@ class SearchFragment : Fragment(),
         adapter = RecyclerAdapter(viewLifecycleOwner.lifecycleScope)
 
         playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
-
-        imageLoader = GlideImageLoader(this)
 
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter

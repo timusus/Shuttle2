@@ -6,7 +6,6 @@ import android.content.Context
 import android.view.View
 import android.widget.RemoteViews
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.playback.getArtworkCacheKey
 import com.simplecityapps.playback.widgets.WidgetManager
 import com.simplecityapps.shuttle.R
@@ -20,7 +19,7 @@ class WidgetProvider41 : ShuttleAppWidgetProvider() {
     override val layoutResIdDark: Int
         get() = R.layout.appwidget_41_dark
 
-    override fun RemoteViews.bind(context: Context, appWidgetId: Int, contentIntent: PendingIntent, imageLoader: GlideImageLoader, appWidgetManager: AppWidgetManager, transparency: Float) {
+    override fun RemoteViews.bind(context: Context, appWidgetId: Int, contentIntent: PendingIntent, imageLoader: ArtworkImageLoader, appWidgetManager: AppWidgetManager, transparency: Float) {
         setOnClickPendingIntent(R.id.container, contentIntent)
         setOnClickPendingIntent(R.id.playPauseButton, playbackPendingIntent(context))
         setOnClickPendingIntent(R.id.nextButton, nextPendingIntent(context))
@@ -42,7 +41,12 @@ class WidgetProvider41 : ShuttleAppWidgetProvider() {
             } ?: run {
                 setImageViewResource(R.id.artwork, getPlaceholderDrawable())
 
-                imageLoader.loadBitmap(song, artworkSize, artworkSize, ArtworkImageLoader.Options.RoundedCorners(4.dp)) { image ->
+                imageLoader.loadBitmap(
+                    song,
+                    artworkSize,
+                    artworkSize,
+                    listOf(ArtworkImageLoader.Options.RoundedCorners(4.dp))
+                ) { image ->
                     if (image != null) {
                         artworkCache.put(song.getArtworkCacheKey(artworkSize, artworkSize), image)
                     }
@@ -60,7 +64,12 @@ class WidgetProvider41 : ShuttleAppWidgetProvider() {
 
             // Load the next song's artwork as well
             queueManager.getNext(true)?.song?.let { song ->
-                artworkCache[song.getArtworkCacheKey(artworkSize, artworkSize)] ?: imageLoader.loadBitmap(song, artworkSize, artworkSize, ArtworkImageLoader.Options.RoundedCorners(4.dp)) { image ->
+                artworkCache[song.getArtworkCacheKey(artworkSize, artworkSize)] ?: imageLoader.loadBitmap(
+                    song,
+                    artworkSize,
+                    artworkSize,
+                    listOf(ArtworkImageLoader.Options.RoundedCorners(4.dp))
+                ) { image ->
                     if (image != null) {
                         artworkCache.put(song.getArtworkCacheKey(artworkSize, artworkSize), image)
                     }

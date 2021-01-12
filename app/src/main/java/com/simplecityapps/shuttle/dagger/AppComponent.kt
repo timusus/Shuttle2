@@ -28,6 +28,7 @@ import okhttp3.OkHttpClient
         MediaProviderModule::class,
         EmbyMediaProviderModule::class,
         JellyfinMediaProviderModule::class,
+        ImageLoaderModule::class
     ]
 )
 @AppScope

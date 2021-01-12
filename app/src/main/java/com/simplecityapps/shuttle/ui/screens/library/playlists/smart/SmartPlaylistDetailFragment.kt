@@ -16,7 +16,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.mediaprovider.model.SmartPlaylist
 import com.simplecityapps.mediaprovider.model.Song
@@ -48,7 +47,7 @@ class SmartPlaylistDetailFragment :
 
     private var toolbar: Toolbar by autoCleared()
 
-    private var imageLoader: ArtworkImageLoader by autoCleared()
+    @Inject lateinit var imageLoader: ArtworkImageLoader
 
     private var heroImageView: ImageView by autoCleared()
 
@@ -82,8 +81,6 @@ class SmartPlaylistDetailFragment :
         playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
 
         adapter = RecyclerAdapter(viewLifecycleOwner.lifecycleScope)
-
-        imageLoader = GlideImageLoader(this)
 
         toolbar = view.findViewById(R.id.toolbar)
         toolbar.let { toolbar ->
@@ -137,8 +134,10 @@ class SmartPlaylistDetailFragment :
                 imageLoader.loadArtwork(
                     heroImageView,
                     songs.random(),
-                    ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_playlist),
-                    ArtworkImageLoader.Options.Priority(ArtworkImageLoader.Options.Priority.Priority.Max),
+                    listOf(
+                        ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_playlist),
+                        ArtworkImageLoader.Options.Priority.Max
+                    )
                 )
             }
         } else {

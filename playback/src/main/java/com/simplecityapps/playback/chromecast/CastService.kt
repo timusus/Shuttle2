@@ -5,7 +5,6 @@ import android.net.Uri
 import android.provider.DocumentsContract
 import androidx.documentfile.provider.DocumentFile
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import kotlinx.coroutines.Dispatchers
@@ -18,20 +17,15 @@ import java.io.InputStream
 
 class CastService(
     private val context: Context,
-    private val songRepository: SongRepository
+    private val songRepository: SongRepository,
+    private val artworkImageLoader: ArtworkImageLoader
 ) {
-
-    private val imageLoader: ArtworkImageLoader
-
-    init {
-        imageLoader = GlideImageLoader(context)
-    }
 
     class AudioStream(val stream: InputStream, val length: Long, val mimeType: String)
 
     suspend fun getArtwork(songId: Long): ByteArray? {
         return songRepository.getSongs(SongQuery.SongIds(listOf(songId))).firstOrNull()?.firstOrNull()?.let { song ->
-            imageLoader.loadBitmap(song)
+            artworkImageLoader.loadBitmap(song)
         }
     }
 

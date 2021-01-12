@@ -16,7 +16,7 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SeekBarPreference
 import androidx.recyclerview.widget.RecyclerView
-import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
+import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.Song
@@ -31,7 +31,6 @@ import com.simplecityapps.provider.emby.EmbyAuthenticationManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
-import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.screens.changelog.ChangelogDialogFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParentFragmentArgs
@@ -65,14 +64,12 @@ class SettingsFragment : PreferenceFragmentCompat(),
     private var scanningProgressView: ProgressBar? = null
     private var scanningDialog: AlertDialog? = null
 
-    private var imageLoader: GlideImageLoader by autoCleared()
+    @Inject lateinit var imageLoader: ArtworkImageLoader
 
     private val coroutineScope = CoroutineScope(Dispatchers.Main + CoroutineExceptionHandler { _, throwable -> Timber.e(throwable) })
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        imageLoader = GlideImageLoader(this)
 
         val toolbar: Toolbar = view.findViewById(R.id.toolbar)
         toolbar.setNavigationOnClickListener { findNavController().popBackStack() }

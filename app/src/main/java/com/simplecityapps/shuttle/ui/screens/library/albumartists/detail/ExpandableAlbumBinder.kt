@@ -104,8 +104,10 @@ class ExpandableAlbumBinder(
 
             viewBinder.imageLoader.loadArtwork(
                 imageView, viewBinder.album,
-                ArtworkImageLoader.Options.RoundedCorners(16),
-                ArtworkImageLoader.Options.Crossfade(200)
+                listOf(
+                    ArtworkImageLoader.Options.RoundedCorners(16),
+                    ArtworkImageLoader.Options.Crossfade(200)
+                )
             )
 
             imageView.transitionName = "album_${viewBinder.album.name}"

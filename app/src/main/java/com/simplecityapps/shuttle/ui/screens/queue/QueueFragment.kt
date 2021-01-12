@@ -17,7 +17,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
@@ -48,7 +47,7 @@ class QueueFragment :
 
     private var adapter: RecyclerAdapter by autoCleared()
 
-    private var imageLoader: ArtworkImageLoader by autoCleared()
+    @Inject lateinit var imageLoader: ArtworkImageLoader
 
     private var recyclerView: FastScrollRecyclerView by autoCleared()
 
@@ -83,8 +82,6 @@ class QueueFragment :
         playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
 
         adapter = RecyclerAdapter(viewLifecycleOwner.lifecycleScope)
-
-        imageLoader = GlideImageLoader(this)
 
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter

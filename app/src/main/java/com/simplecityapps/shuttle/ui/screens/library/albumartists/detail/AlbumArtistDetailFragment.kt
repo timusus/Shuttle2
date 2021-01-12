@@ -27,7 +27,6 @@ import androidx.transition.Transition
 import androidx.transition.TransitionInflater
 import androidx.transition.TransitionListenerAdapter
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Album
@@ -50,6 +49,8 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
 import dagger.android.support.AndroidSupportInjection
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class AlbumArtistDetailFragment :
@@ -63,7 +64,7 @@ class AlbumArtistDetailFragment :
 
     @Inject lateinit var playlistMenuPresenter: PlaylistMenuPresenter
 
-    private var imageLoader: ArtworkImageLoader by autoCleared()
+    @Inject lateinit var imageLoader: ArtworkImageLoader
 
     private lateinit var presenter: AlbumArtistDetailPresenter
 
@@ -106,7 +107,7 @@ class AlbumArtistDetailFragment :
         super.onCreate(savedInstanceState)
 
         sharedElementEnterTransition = TransitionInflater.from(context).inflateTransition(R.transition.image_shared_element_transition)
-        (sharedElementEnterTransition as Transition).duration = 200L
+        (sharedElementEnterTransition as Transition).duration = 150L
         (sharedElementEnterTransition as Transition).addListener(object : TransitionListenerAdapter() {
             override fun onTransitionEnd(transition: Transition) {
                 animationHelper?.showHeroView()
@@ -116,7 +117,7 @@ class AlbumArtistDetailFragment :
         })
 
         sharedElementReturnTransition = TransitionInflater.from(context).inflateTransition(R.transition.image_shared_element_transition)
-        (sharedElementReturnTransition as Transition).duration = 200L
+        (sharedElementReturnTransition as Transition).duration = 150L
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -130,10 +131,8 @@ class AlbumArtistDetailFragment :
 
         playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
 
-        imageLoader = GlideImageLoader(this)
-
-        handler.postDelayed(500) {
-            startPostponedEnterTransition() // In case our Glide load takes too long
+        handler.postDelayed(300) {
+            startPostponedEnterTransition() // In case our image load takes too long
         }
 
         toolbar = view.findViewById(R.id.toolbar)
@@ -176,8 +175,10 @@ class AlbumArtistDetailFragment :
         imageLoader.loadArtwork(
             dummyImage,
             albumArtist,
-            ArtworkImageLoader.Options.CircleCrop,
-            ArtworkImageLoader.Options.Priority(ArtworkImageLoader.Options.Priority.Priority.Max)
+            listOf(
+                ArtworkImageLoader.Options.CircleCrop,
+                ArtworkImageLoader.Options.Priority.Max
+            )
         ) {
             maybeStartPostponedEnterTransition()
         }
@@ -185,9 +186,10 @@ class AlbumArtistDetailFragment :
         heroImage = view.findViewById(R.id.heroImage)
         imageLoader.loadArtwork(
             heroImage, albumArtist,
-            ArtworkImageLoader.Options.Priority(ArtworkImageLoader.Options.Priority.Priority.Max),
-            ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_artist),
-            completionHandler = null
+            listOf(
+                ArtworkImageLoader.Options.Priority.Max,
+                ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_artist)
+            )
         )
         if (showHeroView || !animateTransition) {
             heroImage.isVisible = true
@@ -208,7 +210,10 @@ class AlbumArtistDetailFragment :
     override fun onResume() {
         super.onResume()
 
-        presenter.loadData()
+        viewLifecycleOwner.lifecycleScope.launch {
+            delay(150)
+            presenter.loadData()
+        }
     }
 
     override fun onDestroyView() {

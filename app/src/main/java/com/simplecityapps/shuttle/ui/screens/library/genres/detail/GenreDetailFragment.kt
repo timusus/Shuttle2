@@ -17,7 +17,6 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Album
@@ -51,7 +50,7 @@ class GenreDetailFragment :
 
     @Inject lateinit var playlistMenuPresenter: PlaylistMenuPresenter
 
-    private var imageLoader: ArtworkImageLoader by autoCleared()
+    @Inject lateinit var imageLoader: ArtworkImageLoader
 
     private var adapter: RecyclerAdapter by autoCleared()
 
@@ -87,8 +86,6 @@ class GenreDetailFragment :
         adapter = RecyclerAdapter(viewLifecycleOwner.lifecycleScope)
 
         playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
-
-        imageLoader = GlideImageLoader(this)
 
         toolbar = view.findViewById(R.id.toolbar)
         toolbar.let { toolbar ->

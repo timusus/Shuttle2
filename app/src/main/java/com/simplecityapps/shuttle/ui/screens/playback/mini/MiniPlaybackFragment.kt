@@ -10,7 +10,6 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
@@ -22,7 +21,7 @@ class MiniPlaybackFragment : Fragment(), Injectable, MiniPlayerContract.View {
 
     @Inject lateinit var presenter: MiniPlayerPresenter
 
-    private var imageLoader: ArtworkImageLoader by autoCleared()
+    @Inject lateinit var imageLoader: ArtworkImageLoader
 
     private var imageView: ImageView by autoCleared()
     private var playPauseButton: ImageButton by autoCleared()
@@ -37,8 +36,6 @@ class MiniPlaybackFragment : Fragment(), Injectable, MiniPlayerContract.View {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        imageLoader = GlideImageLoader(this)
 
         imageView = view.findViewById(R.id.imageView)
         playPauseButton = view.findViewById(R.id.playPauseButton)
@@ -73,7 +70,11 @@ class MiniPlaybackFragment : Fragment(), Injectable, MiniPlayerContract.View {
         song?.let {
             titleTextView.text = song.name
             subtitleTextView.text = "${song.albumArtist} • ${song.album}"
-            imageLoader.loadArtwork(imageView, song, ArtworkImageLoader.Options.RoundedCorners(16), completionHandler = null)
+            imageLoader.loadArtwork(
+                imageView,
+                song,
+                listOf(ArtworkImageLoader.Options.RoundedCorners(16)),
+            )
         }
     }
 

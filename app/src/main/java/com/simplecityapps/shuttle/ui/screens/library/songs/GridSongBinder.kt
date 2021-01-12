@@ -1,4 +1,3 @@
-
 package com.simplecityapps.shuttle.ui.screens.library.songs
 
 import android.animation.ValueAnimator
@@ -79,15 +78,11 @@ class GridSongBinder(
             viewBinder.imageLoader.loadArtwork(
                 imageView,
                 viewBinder.song,
-                ArtworkImageLoader.Options.Crossfade(200)
-            )
-
-            viewBinder.imageLoader.loadColorSet(viewBinder.song) { newColorSet ->
-                newColorSet?.let {
-                    (itemView as CardView).setCardBackgroundColor(newColorSet.primaryColor)
-                    title.setTextColor(newColorSet.primaryTextColor)
-                    subtitle.setTextColor(newColorSet.primaryTextColor)
-                }
+                listOf(ArtworkImageLoader.Options.Crossfade(200))
+            ) { colorSet ->
+                (itemView as CardView).setCardBackgroundColor(colorSet.primaryColor)
+                title.setTextColor(colorSet.primaryTextColor)
+                subtitle.setTextColor(colorSet.primaryTextColor)
             }
         }
 

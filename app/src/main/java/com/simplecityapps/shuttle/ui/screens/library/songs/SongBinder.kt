@@ -97,9 +97,8 @@ class SongBinder(
 
             title.text = viewBinder.song.name
             subtitle.text = "${viewBinder.song.albumArtist} • ${viewBinder.song.album}"
-            viewBinder.imageLoader.loadArtwork(
-                imageView,
-                viewBinder.song,
+
+            val options = mutableListOf(
                 ArtworkImageLoader.Options.RoundedCorners(16),
                 ArtworkImageLoader.Options.Crossfade(200),
                 ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_song_rounded)
@@ -108,13 +107,16 @@ class SongBinder(
             if (viewBinder.showPlayCountBadge) {
                 badgeView.badgeCount = viewBinder.song.playCount
                 badgeView.isVisible = true
+                options.add(ArtworkImageLoader.Options.LoadColorSet)
+            }
 
-                viewBinder.imageLoader.loadColorSet(viewBinder.song) { newColorSet ->
-                    newColorSet?.let {
-                        badgeView.setCircleBackgroundColor(newColorSet.primaryColor)
-                        badgeView.setTextColor(newColorSet.primaryTextColor)
-                    }
-                }
+            viewBinder.imageLoader.loadArtwork(
+                imageView,
+                viewBinder.song,
+                options
+            ) { colorSet ->
+                badgeView.setCircleBackgroundColor(colorSet.primaryColor)
+                badgeView.setTextColor(colorSet.primaryTextColor)
             }
 
             checkImageView.isVisible = viewBinder.selected

@@ -54,26 +54,26 @@ class GridAlbumArtistBinder(
 
             title.text = viewBinder.albumArtist.name
 
-            viewBinder.imageLoader.loadArtwork(
-                imageView,
-                viewBinder.albumArtist,
-                ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_artist)
-            )
-
             viewBinder as GridAlbumArtistBinder
-
-            if (viewBinder.coloredBackground) {
-                viewBinder.imageLoader.loadColorSet(viewBinder.albumArtist) { newColorSet ->
-                    newColorSet?.let {
-                        (itemView as CardView).setCardBackgroundColor(newColorSet.primaryColor)
-                        title.setTextColor(newColorSet.primaryTextColor)
-                        subtitle.setTextColor(newColorSet.primaryTextColor)
-                    }
-                }
-            }
 
             viewBinder.fixedWidthDp?.let { width ->
                 itemView.layoutParams.width = width.dp
+            }
+
+            val options = mutableListOf<ArtworkImageLoader.Options>(
+                ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_artist)
+            )
+            if (viewBinder.coloredBackground) {
+                options.add(ArtworkImageLoader.Options.LoadColorSet)
+            }
+            viewBinder.imageLoader.loadArtwork(
+                imageView,
+                viewBinder.albumArtist,
+                options
+            ) { colorSet ->
+                (itemView as CardView).setCardBackgroundColor(colorSet.primaryColor)
+                title.setTextColor(colorSet.primaryTextColor)
+                subtitle.setTextColor(colorSet.primaryTextColor)
             }
 
             imageView.transitionName = "album_artist_${viewBinder.albumArtist.name}"

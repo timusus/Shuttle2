@@ -18,7 +18,6 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.PagerSnapHelper
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.google.android.gms.cast.framework.CastButtonFactory
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
@@ -54,7 +53,9 @@ class PlaybackFragment :
 
     @Inject lateinit var presenter: PlaybackPresenter
 
-    private var imageLoader: ArtworkImageLoader by autoCleared()
+    @Inject lateinit var imageLoader: ArtworkImageLoader
+
+    @Inject lateinit var queueManager: QueueManager
 
     private var recyclerView: RecyclerView by autoCleared()
 
@@ -73,6 +74,7 @@ class PlaybackFragment :
     private var albumTextView: TextView by autoCleared()
     private var currentTimeTextView: TextView by autoCleared()
     private var durationTextView: TextView by autoCleared()
+    private var separatorTextView: TextView by autoCleared()
     private var toolbar: Toolbar by autoCleared()
     private var favoriteButton: FavoriteButton by autoCleared()
 
@@ -103,9 +105,9 @@ class PlaybackFragment :
         albumTextView = view.findViewById(R.id.albumTextView)
         currentTimeTextView = view.findViewById(R.id.currentTimeTextView)
         durationTextView = view.findViewById(R.id.durationTextView)
+        separatorTextView = view.findViewById(R.id.separatorTextView)
 
         adapter = RecyclerAdapter(viewLifecycleOwner.lifecycleScope)
-        imageLoader = GlideImageLoader(this)
 
         playPauseButton.setOnClickListener { presenter.togglePlayback() }
         shuffleButton.setOnClickListener { presenter.toggleShuffle() }
@@ -227,7 +229,9 @@ class PlaybackFragment :
 
     override fun setQueue(queue: List<QueueItem>, position: Int?) {
         adapter.update(
-            queue.map { queueItem -> ArtworkBinder(queueItem.song, imageLoader) },
+            queue.map { queueItem ->
+                ArtworkBinder(queueItem, imageLoader)
+            },
             completion = {
                 position?.let { position ->
                     recyclerView.scrollToPosition(position)

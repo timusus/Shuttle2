@@ -14,7 +14,7 @@ import android.os.Build
 import android.util.LruCache
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationCompat.VISIBILITY_PUBLIC
-import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
+import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
@@ -29,11 +29,10 @@ class PlaybackNotificationManager(
     private val mediaSessionManager: MediaSessionManager,
     private val playbackWatcher: PlaybackWatcher,
     private val queueWatcher: QueueWatcher,
-    private val artworkCache: LruCache<String, Bitmap>
+    private val artworkCache: LruCache<String, Bitmap>,
+    private val artworkImageLoader: ArtworkImageLoader
 ) : PlaybackWatcherCallback,
     QueueChangeCallback {
-
-    private var artworkImageLoader = GlideImageLoader(context)
 
     private val placeholder: Bitmap? by lazy {
         drawableToBitmap(context.resources.getDrawable(R.drawable.ic_music_note_black_24dp, context.theme))

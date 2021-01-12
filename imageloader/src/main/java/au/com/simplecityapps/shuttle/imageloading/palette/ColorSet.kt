@@ -1,4 +1,4 @@
-package com.simplecity.amp_library.glide.palette
+package au.com.simplecityapps.shuttle.imageloading.palette
 
 import android.animation.ArgbEvaluator
 import android.animation.TypeEvaluator
@@ -6,8 +6,6 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
 import androidx.annotation.WorkerThread
-import au.com.simplecityapps.shuttle.imageloading.palette.BitmapPaletteProcessor
-import au.com.simplecityapps.shuttle.imageloading.palette.ColorHelper
 
 class ColorSet(
     var primaryColor: Int,
@@ -50,10 +48,10 @@ class ColorSet(
         }
 
         /**
-         * @return an approximate byte size for this object. Currently based on 6 integers @ 4 bytes each and a safety factor of 5
+         * @return an approximate byte size for this object. Currently based on 6 integers @ 4 bytes each and a safety factor of 3
          */
         fun estimatedSize(): Int {
-            return 6 * 4 * 5
+            return 6 * 4 * 3
         }
     }
 

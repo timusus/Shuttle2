@@ -10,7 +10,7 @@ import android.os.Build
 import android.util.LruCache
 import android.widget.RemoteViews
 import androidx.annotation.LayoutRes
-import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
+import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.playback.ActivityIntentProvider
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackService
@@ -26,6 +26,7 @@ abstract class ShuttleAppWidgetProvider : AppWidgetProvider() {
     @Inject lateinit var queueManager: QueueManager
     @Inject lateinit var artworkCache: LruCache<String, Bitmap?>
     @Inject lateinit var preferenceManager: GeneralPreferenceManager
+    @Inject lateinit var imageLoader: ArtworkImageLoader
 
     internal var updateReason = WidgetManager.UpdateReason.Unknown
 
@@ -54,8 +55,6 @@ abstract class ShuttleAppWidgetProvider : AppWidgetProvider() {
     override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
         super.onUpdate(context, appWidgetManager, appWidgetIds)
 
-        val imageLoader = GlideImageLoader(context)
-
         appWidgetIds.forEach { appWidgetId ->
 
             val contentIntent: PendingIntent = (context.applicationContext as ActivityIntentProvider).provideMainActivityIntent()
@@ -74,7 +73,7 @@ abstract class ShuttleAppWidgetProvider : AppWidgetProvider() {
         context: Context,
         appWidgetId: Int,
         contentIntent: PendingIntent,
-        imageLoader: GlideImageLoader,
+        imageLoader: ArtworkImageLoader,
         appWidgetManager: AppWidgetManager,
         backgroundTransparency: Float
     )
@@ -117,6 +116,6 @@ abstract class ShuttleAppWidgetProvider : AppWidgetProvider() {
     }
 
     fun getPlaceholderDrawable(): Int {
-       return  if (isDarkMode) R.drawable.ic_music_note_white_24dp else R.drawable.ic_music_note_black_24dp
+        return if (isDarkMode) R.drawable.ic_music_note_white_24dp else R.drawable.ic_music_note_black_24dp
     }
 }

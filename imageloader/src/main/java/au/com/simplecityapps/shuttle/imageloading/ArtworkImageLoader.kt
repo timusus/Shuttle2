@@ -4,54 +4,59 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.widget.ImageView
 import androidx.annotation.WorkerThread
-import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
-import com.simplecity.amp_library.glide.palette.ColorSet
-import com.simplecityapps.mediaprovider.model.Album
-import com.simplecityapps.mediaprovider.model.AlbumArtist
-import com.simplecityapps.mediaprovider.model.Song
-
-typealias CompletionHandler = ((GlideImageLoader.LoadResult) -> Unit)?
+import au.com.simplecityapps.shuttle.imageloading.palette.ColorSet
 
 interface ArtworkImageLoader {
 
-    sealed class Options {
-        object CircleCrop : Options()
+    fun loadArtwork(
+        imageView: ImageView,
+        data: Any,
+        options: List<Options> = emptyList(),
+        onCompletion: ((Result<Unit>) -> Unit)? = null,
+        onColorSetGenerated: ((ColorSet) -> Unit)? = null
+    )
 
+    fun loadBitmap(
+        data: Any,
+        width: Int,
+        height: Int,
+        options: List<Options> = emptyList(),
+        onCompletion: (Bitmap?) -> Unit
+    )
+
+    fun loadColorSet(
+        data: Any,
+        callback: (ColorSet?) -> Unit
+    )
+
+    @WorkerThread
+    fun loadBitmap(data: Any): ByteArray?
+
+    fun clear(imageView: ImageView)
+
+    suspend fun clearCache(context: Context?)
+
+    sealed class Options {
         /**
          * @param radius corner radius, in DP
          */
         class RoundedCorners(val radius: Int) : Options()
 
-        class Priority(val priority: Priority) : Options() {
-
-            enum class Priority {
-                Low, Default, High, Max
-            }
-        }
-
         class Crossfade(val duration: Int) : Options()
 
         class Placeholder(val placeholderResId: Int) : Options()
-        
-        object CenterCrop: Options()
+
+        object CircleCrop : Options()
+
+        object CenterCrop : Options()
+
+        sealed class Priority : Options() {
+            object Low : Options.Priority()
+            object Default : Options.Priority()
+            object High : Options.Priority()
+            object Max : Options.Priority()
+        }
+
+        object LoadColorSet : Options()
     }
-
-    fun loadArtwork(imageView: ImageView, albumArtist: AlbumArtist, vararg options: Options, completionHandler: CompletionHandler = null)
-
-    fun loadArtwork(imageView: ImageView, album: Album, vararg options: Options, completionHandler: CompletionHandler = null)
-
-    fun loadArtwork(imageView: ImageView, song: Song, vararg options: Options, completionHandler: CompletionHandler = null)
-
-    fun loadBitmap(song: Song, width: Int, height: Int, vararg options: Options, completionHandler: (Bitmap?) -> Unit)
-
-    @WorkerThread
-    fun loadBitmap(song: Song): ByteArray?
-
-    fun loadColorSet(song: Song, callback: (ColorSet?) -> Unit)
-    fun loadColorSet(album: Album, callback: (ColorSet?) -> Unit)
-    fun loadColorSet(albumArtist: AlbumArtist, callback: (ColorSet?) -> Unit)
-
-    fun clear(imageView: ImageView)
-
-    suspend fun clearCache(context: Context?)
 }

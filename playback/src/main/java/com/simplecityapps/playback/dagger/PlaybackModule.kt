@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.os.Build
 import android.util.LruCache
 import androidx.core.content.getSystemService
+import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.AggregateMediaPathProvider
 import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.playback.NoiseManager
@@ -129,8 +130,8 @@ class PlaybackModule {
 
     @AppScope
     @Provides
-    fun provideCastService(context: Context, songRepository: SongRepository): CastService {
-        return CastService(context, songRepository)
+    fun provideCastService(context: Context, songRepository: SongRepository, artworkImageLoader: ArtworkImageLoader): CastService {
+        return CastService(context, songRepository, artworkImageLoader)
     }
 
     @AppScope
@@ -156,6 +157,7 @@ class PlaybackModule {
         albumRepository: AlbumRepository,
         songRepository: SongRepository,
         genreRepository: GenreRepository,
+        artworkImageLoader: ArtworkImageLoader,
         playbackWatcher: PlaybackWatcher,
         queueWatcher: QueueWatcher,
         mediaIdHelper: MediaIdHelper
@@ -170,6 +172,7 @@ class PlaybackModule {
             albumRepository,
             songRepository,
             genreRepository,
+            artworkImageLoader,
             playbackWatcher,
             queueWatcher
         )
@@ -190,7 +193,8 @@ class PlaybackModule {
         mediaSessionManager: MediaSessionManager,
         playbackWatcher: PlaybackWatcher,
         queueWatcher: QueueWatcher,
-        lruCache: LruCache<String, Bitmap>
+        lruCache: LruCache<String, Bitmap>,
+        artworkImageLoader: ArtworkImageLoader
     ): PlaybackNotificationManager {
         return PlaybackNotificationManager(
             context,
@@ -200,7 +204,8 @@ class PlaybackModule {
             mediaSessionManager,
             playbackWatcher,
             queueWatcher,
-            lruCache
+            lruCache,
+            artworkImageLoader
         )
     }
 

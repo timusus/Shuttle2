@@ -16,7 +16,6 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.os.postDelayed
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
 import androidx.recyclerview.widget.RecyclerView
@@ -24,7 +23,6 @@ import androidx.transition.Transition
 import androidx.transition.TransitionInflater
 import androidx.transition.TransitionListenerAdapter
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Album
@@ -45,6 +43,8 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
 import dagger.android.support.AndroidSupportInjection
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class AlbumDetailFragment :
@@ -57,7 +57,7 @@ class AlbumDetailFragment :
 
     @Inject lateinit var playlistMenuPresenter: PlaylistMenuPresenter
 
-    private var imageLoader: ArtworkImageLoader by autoCleared()
+    @Inject lateinit var imageLoader: ArtworkImageLoader
 
     private lateinit var presenter: AlbumDetailPresenter
 
@@ -99,7 +99,7 @@ class AlbumDetailFragment :
         super.onCreate(savedInstanceState)
 
         sharedElementEnterTransition = TransitionInflater.from(context).inflateTransition(R.transition.image_shared_element_transition)
-        (sharedElementEnterTransition as Transition).duration = 200L
+        (sharedElementEnterTransition as Transition).duration = 150L
         (sharedElementEnterTransition as Transition).addListener(object : TransitionListenerAdapter() {
             override fun onTransitionEnd(transition: Transition) {
                 animationHelper?.showHeroView()
@@ -119,18 +119,20 @@ class AlbumDetailFragment :
 
         playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
 
-        imageLoader = GlideImageLoader(this)
-
-        handler.postDelayed(500) {
-            startPostponedEnterTransition() // In case our Glide load takes too long
+        handler.postDelayed(300) {
+            startPostponedEnterTransition() // In case our artwork load takes too long
         }
 
         dummyImage = view.findViewById(R.id.dummyImage)
         dummyImage.transitionName = "album_${album.name}"
 
         imageLoader.loadArtwork(
-            dummyImage, album, ArtworkImageLoader.Options.CircleCrop,
-            ArtworkImageLoader.Options.Priority(ArtworkImageLoader.Options.Priority.Priority.Max)
+            dummyImage,
+            album,
+            listOf(
+                ArtworkImageLoader.Options.CircleCrop,
+                ArtworkImageLoader.Options.Priority.Max
+            )
         ) {
             startPostponedEnterTransition()
         }
@@ -139,8 +141,10 @@ class AlbumDetailFragment :
         imageLoader.loadArtwork(
             heroImage,
             album,
-            ArtworkImageLoader.Options.Priority(ArtworkImageLoader.Options.Priority.Priority.Max),
-            ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_album)
+            listOf(
+                ArtworkImageLoader.Options.Priority.Max,
+                ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_album)
+            )
         )
         if (showHeroView || !animateTransition) {
             heroImage.isVisible = true
@@ -192,7 +196,10 @@ class AlbumDetailFragment :
     override fun onResume() {
         super.onResume()
 
-        presenter.loadData()
+        viewLifecycleOwner.lifecycleScope.launch {
+            delay(150)
+            presenter.loadData()
+        }
     }
 
     override fun onDestroyView() {

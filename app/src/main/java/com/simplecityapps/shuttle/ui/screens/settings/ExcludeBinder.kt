@@ -71,8 +71,10 @@ class ExcludeBinder(
             viewBinder.imageLoader.loadArtwork(
                 imageView,
                 viewBinder.song,
-                ArtworkImageLoader.Options.RoundedCorners(16),
-                ArtworkImageLoader.Options.Crossfade(200)
+                listOf(
+                    ArtworkImageLoader.Options.RoundedCorners(16),
+                    ArtworkImageLoader.Options.Crossfade(200)
+                )
             )
         }
 

@@ -43,9 +43,9 @@ dependencies {
     implementation(project(":core"))
     implementation(project(":networking"))
 
-    kapt 'com.squareup.moshi:moshi-kotlin-codegen:1.9.2'
+    kapt 'com.squareup.moshi:moshi-kotlin-codegen:1.11.0'
 
     implementation 'com.jaredrummler:android-device-names:2.0.0'
 
-    kapt 'com.google.dagger:dagger-compiler:2.29.1'
+    kapt 'com.google.dagger:dagger-compiler:2.30.1'
 }

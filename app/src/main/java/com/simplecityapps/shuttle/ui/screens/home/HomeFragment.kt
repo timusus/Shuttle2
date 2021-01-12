@@ -18,7 +18,6 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.adapter.ViewBinder
@@ -64,7 +63,7 @@ class HomeFragment :
 
     private var adapter: RecyclerAdapter by autoCleared()
 
-    private var imageLoader: ArtworkImageLoader by autoCleared()
+    @Inject lateinit var imageLoader: ArtworkImageLoader
 
     private lateinit var playlistMenuView: PlaylistMenuView
 
@@ -133,8 +132,6 @@ class HomeFragment :
         val decoration = DividerItemDecoration(context, LinearLayout.VERTICAL)
         decoration.setDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.divider)!!)
         recyclerView.addItemDecoration(decoration)
-
-        imageLoader = GlideImageLoader(this)
 
         savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
 

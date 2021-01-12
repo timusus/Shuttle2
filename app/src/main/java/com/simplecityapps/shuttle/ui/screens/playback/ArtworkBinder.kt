@@ -6,12 +6,12 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
-import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 
 class ArtworkBinder(
-    val song: Song,
+    val queueItem: QueueItem,
     val imageLoader: ArtworkImageLoader
 ) : ViewBinder {
 
@@ -29,13 +29,13 @@ class ArtworkBinder(
 
         other as ArtworkBinder
 
-        if (song != other.song) return false
+        if (queueItem != other.queueItem) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        return song.hashCode()
+        return queueItem.hashCode()
     }
 
 
@@ -47,10 +47,12 @@ class ArtworkBinder(
             super.bind(viewBinder, isPartial)
 
             viewBinder.imageLoader.loadArtwork(
-                imageView, viewBinder.song,
-                ArtworkImageLoader.Options.RoundedCorners(32),
-                ArtworkImageLoader.Options.Crossfade(200),
-                ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_song)
+                imageView, viewBinder.queueItem.song,
+                listOf(
+                    ArtworkImageLoader.Options.RoundedCorners(32),
+                    ArtworkImageLoader.Options.Crossfade(200),
+                    ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_song)
+                )
             )
         }
 

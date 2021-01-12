@@ -20,7 +20,6 @@ abstract class AlbumBinder(
         fun onAlbumClicked(album: Album, viewHolder: ViewHolder)
         fun onAlbumLongClicked(album: Album, viewHolder: ViewHolder)
         fun onOverflowClicked(view: View, album: Album) {}
-        fun onViewHolderCreated(holder: ViewHolder) {}
     }
 
     override fun getSectionName(): String? {
@@ -53,9 +52,5 @@ abstract class AlbumBinder(
 
     abstract class ViewHolder(itemView: View) : ViewBinder.ViewHolder<AlbumBinder>(itemView) {
         abstract val imageView: ImageView
-
-        init {
-            viewBinder?.listener?.onViewHolderCreated(this)
-        }
     }
 }

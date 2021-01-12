@@ -12,7 +12,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.adapter.ViewBinder
@@ -47,7 +46,7 @@ class SongListFragment :
 
     private var adapter: RecyclerAdapter by autoCleared()
 
-    private var imageLoader: ArtworkImageLoader by autoCleared()
+    @Inject lateinit var imageLoader: ArtworkImageLoader
 
     private lateinit var playlistMenuView: PlaylistMenuView
 
@@ -73,8 +72,6 @@ class SongListFragment :
         setHasOptionsMenu(true)
 
         playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
-
-        imageLoader = GlideImageLoader(this)
 
         adapter = object : SectionedAdapter(viewLifecycleOwner.lifecycleScope) {
             override fun getSectionName(viewBinder: ViewBinder?): String {

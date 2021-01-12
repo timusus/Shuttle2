@@ -104,11 +104,11 @@ android {
         implementation("androidx.navigation:navigation-ui-ktx:2.3.2")
 
         // Dagger core
-        kapt("com.google.dagger:dagger-compiler:2.29.1")
+        kapt("com.google.dagger:dagger-compiler:2.30.1")
 
         // Dagger Android
-        implementation("com.google.dagger:dagger-android-support:2.29.1")
-        kapt("com.google.dagger:dagger-android-processor:2.29.1")
+        implementation("com.google.dagger:dagger-android-support:2.30.1")
+        kapt("com.google.dagger:dagger-android-processor:2.30.1")
 
         // AssistedInject
         compileOnly("com.squareup.inject:assisted-inject-annotations-dagger2:0.6.0")
@@ -136,11 +136,6 @@ android {
         // NanoHttp
         implementation("org.nanohttpd:nanohttpd-webserver:2.3.1")
 
-        // Glide
-        implementation("com.github.bumptech.glide:glide:4.11.0")
-        kapt("com.github.bumptech.glide:compiler:4.11.0")
-        implementation("com.github.bumptech.glide:okhttp3-integration:4.11.0")
-
         // Moshi
         kapt("com.squareup.moshi:moshi-kotlin-codegen:1.11.0")
 
@@ -159,18 +154,17 @@ android {
         // AndroidX Lifecycle
         implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.3.0-rc01")
 
-        implementation("com.github.bumptech.glide:recyclerview-integration:4.11.0") {
-            // Excludes the support library because it's already included by Glide.
-            isTransitive = false
-        }
-
         // ExoPlayer
         implementation(project(":exoplayer-library-core"))
         implementation(project(":exoplayer-library-hls"))
 
         implementation("androidx.drawerlayout:drawerlayout:1.1.1")
 
+        // New fragment manager
         implementation("androidx.fragment:fragment:1.3.0-rc01")
+
+        // Coil
+        implementation("io.coil-kt:coil-base:1.1.0")
     }
 }
 

@@ -65,23 +65,26 @@ class GridAlbumBinder(
             title.text = viewBinder.album.name
             subtitle.text = viewBinder.album.albumArtist
 
+            viewBinder as GridAlbumBinder
+
+            val options = mutableListOf<ArtworkImageLoader.Options>(
+                ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_album),
+            )
+            if (viewBinder.coloredBackground) {
+                options.add(ArtworkImageLoader.Options.LoadColorSet)
+            }
+
             viewBinder.imageLoader.loadArtwork(
                 imageView,
                 viewBinder.album,
-                ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_album)
-            )
-
-            viewBinder as GridAlbumBinder
-
-            if (viewBinder.coloredBackground) {
-                viewBinder.imageLoader.loadColorSet(viewBinder.album) { newColorSet ->
-                    newColorSet?.let {
-                        (itemView as CardView).setCardBackgroundColor(newColorSet.primaryColor)
-                        title.setTextColor(newColorSet.primaryTextColor)
-                        subtitle.setTextColor(newColorSet.primaryTextColor)
-                        badgeView.setCircleBackgroundColor(newColorSet.primaryColor)
-                        badgeView.setTextColor(newColorSet.primaryTextColor)
-                    }
+                options
+            ) { colorSet ->
+                if (viewBinder.coloredBackground) {
+                    (itemView as CardView).setCardBackgroundColor(colorSet.primaryColor)
+                    title.setTextColor(colorSet.primaryTextColor)
+                    subtitle.setTextColor(colorSet.primaryTextColor)
+                    badgeView.setCircleBackgroundColor(colorSet.primaryColor)
+                    badgeView.setTextColor(colorSet.primaryTextColor)
                 }
             }
 

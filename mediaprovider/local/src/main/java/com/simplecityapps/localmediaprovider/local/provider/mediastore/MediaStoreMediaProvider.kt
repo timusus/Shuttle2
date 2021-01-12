@@ -7,7 +7,6 @@ import com.simplecityapps.mediaprovider.model.Song
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
-import timber.log.Timber
 import java.util.*
 
 class MediaStoreMediaProvider(
@@ -113,7 +112,6 @@ class MediaStoreMediaProvider(
                         null,
                         null
                     )?.use { genreSongCursor ->
-                        Timber.i("Genre song cursor size: ${genreSongCursor.count}")
                         while (coroutineContext.isActive && genreSongCursor.moveToNext()) {
                             val songId = genreSongCursor.getLong(genreSongCursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID))
                             songs = songs.map { song ->
