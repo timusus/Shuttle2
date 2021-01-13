@@ -1,4 +1,4 @@
-package au.com.simplecityapps.shuttle.imageloading.coil.fetcher
+package au.com.simplecityapps.shuttle.imageloading.coil.fetcher.tag
 
 import coil.bitmap.BitmapPool
 import coil.decode.Options
@@ -10,14 +10,14 @@ import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import kotlinx.coroutines.flow.firstOrNull
 
-class DirectoryAlbumFetcher(
+class TagLibAlbumFetcher(
     private val songRepository: SongRepository,
-    private val directorySongFetcher: DirectorySongFetcher
+    private val tagLibSongFetcher: TagLibSongFetcher
 ) : Fetcher<Album> {
 
     override suspend fun fetch(pool: BitmapPool, data: Album, size: Size, options: Options): FetchResult {
         return songRepository.getSongs(SongQuery.Album(data.name, data.albumArtist)).firstOrNull()?.firstOrNull()?.let { song ->
-            directorySongFetcher.fetch(pool, song, size, options)
+            tagLibSongFetcher.fetch(pool, song, size, options)
         } ?: throw IllegalStateException("Failed to retrieve song associated with album")
     }
 

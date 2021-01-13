@@ -164,7 +164,7 @@ android {
         implementation("androidx.fragment:fragment:1.3.0-rc01")
 
         // Coil
-        implementation("io.coil-kt:coil-base:1.1.0")
+        implementation("io.coil-kt:coil-base:1.1.1")
     }
 }
 

@@ -7,11 +7,15 @@ import android.widget.ImageView
 import androidx.core.content.getSystemService
 import androidx.core.graphics.drawable.toBitmap
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import au.com.simplecityapps.shuttle.imageloading.coil.fetcher.TagLibAlbumFetcher
-import au.com.simplecityapps.shuttle.imageloading.coil.fetcher.TagLibSongFetcher
-import au.com.simplecityapps.shuttle.imageloading.coil.mapper.AlbumArtistUrlMapper
-import au.com.simplecityapps.shuttle.imageloading.coil.mapper.AlbumUrlMapper
-import au.com.simplecityapps.shuttle.imageloading.coil.mapper.SongUrlMapper
+import au.com.simplecityapps.shuttle.imageloading.coil.clone.HttpFetcher
+import au.com.simplecityapps.shuttle.imageloading.coil.fetcher.MultiFetcher
+import au.com.simplecityapps.shuttle.imageloading.coil.fetcher.directory.DirectoryAlbumFetcher
+import au.com.simplecityapps.shuttle.imageloading.coil.fetcher.directory.DirectorySongFetcher
+import au.com.simplecityapps.shuttle.imageloading.coil.fetcher.remote.RemoteAlbumArtistFetcher
+import au.com.simplecityapps.shuttle.imageloading.coil.fetcher.remote.RemoteAlbumFetcher
+import au.com.simplecityapps.shuttle.imageloading.coil.fetcher.remote.RemoteSongFetcher
+import au.com.simplecityapps.shuttle.imageloading.coil.fetcher.tag.TagLibAlbumFetcher
+import au.com.simplecityapps.shuttle.imageloading.coil.fetcher.tag.TagLibSongFetcher
 import au.com.simplecityapps.shuttle.imageloading.coil.transition.ColorSetTransition
 import au.com.simplecityapps.shuttle.imageloading.palette.ColorSet
 import coil.ImageLoader
@@ -28,6 +32,7 @@ import coil.util.CoilUtils
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import okhttp3.CacheControl
+import okhttp3.Call
 import okhttp3.OkHttpClient
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.TimeUnit
@@ -40,40 +45,61 @@ class CoilImageLoader(
 ) : ArtworkImageLoader {
 
     private val imageLoader: ImageLoader by lazy {
+
+        val callFactory: Call.Factory by lazy {
+            val connectivityManager: ConnectivityManager? = context.getSystemService()
+            httpClient.newBuilder()
+                .addNetworkInterceptor { chain ->
+                    // Don't make a network request if we're not allowed to
+                    if (preferenceManager.artworkWifiOnly && connectivityManager?.isActiveNetworkMetered == true) {
+                        throw IllegalStateException("Network disabled")
+                    }
+                    // Add custom cache control headers to ensure our result is stored in the cache
+                    val response = chain.proceed(chain.request())
+                    response.newBuilder()
+                        .apply {
+                            header(
+                                name = "Cache-Control",
+                                value = CacheControl
+                                    .Builder()
+                                    .maxAge(14, TimeUnit.DAYS)
+                                    .build()
+                                    .toString()
+                            )
+                        }
+                        .build()
+                }
+                .cache(CoilUtils.createDefaultCache(context))
+                .build()
+        }
+
         ImageLoader.Builder(context)
             .callFactory {
-                val connectivityManager: ConnectivityManager? = context.getSystemService()
-                httpClient.newBuilder()
-                    .addNetworkInterceptor { chain ->
-                        // Don't make a network request if we're not allowed to
-                        if (preferenceManager.artworkWifiOnly && connectivityManager?.isActiveNetworkMetered == true) {
-                            throw IllegalStateException("Network disabled")
-                        }
-                        // Add custom cache control headers to ensure our result is stored in the cache
-                        val response = chain.proceed(chain.request())
-                        response.newBuilder()
-                            .apply {
-                                header(
-                                    name = "Cache-Control",
-                                    value = CacheControl
-                                        .Builder()
-                                        .maxAge(14, TimeUnit.DAYS)
-                                        .build()
-                                        .toString()
-                                )
-                            }
-                            .build()
-                    }
-                    .cache(CoilUtils.createDefaultCache(context))
-                    .build()
+                callFactory
             }
             .componentRegistry {
                 val tagLibSongFetcher = TagLibSongFetcher(context)
-                add(tagLibSongFetcher)
-                add(TagLibAlbumFetcher(songRepository, tagLibSongFetcher))
-                add(SongUrlMapper(preferenceManager))
-                add(AlbumUrlMapper(preferenceManager))
-                add(AlbumArtistUrlMapper(preferenceManager))
+                val directorySongFetcher = DirectorySongFetcher(context)
+                val httpFetcher = HttpFetcher(callFactory)
+                add(
+                    MultiFetcher(
+                        setOf(
+                            tagLibSongFetcher,
+                            directorySongFetcher,
+                            RemoteSongFetcher(preferenceManager, httpFetcher)
+                        )
+                    )
+                )
+                add(
+                    MultiFetcher(
+                        setOf(
+                            TagLibAlbumFetcher(songRepository, tagLibSongFetcher),
+                            DirectoryAlbumFetcher(songRepository, directorySongFetcher),
+                            RemoteAlbumFetcher(preferenceManager, httpFetcher)
+                        )
+                    )
+                )
+                add(RemoteAlbumArtistFetcher(preferenceManager, httpFetcher))
             }
             .allowHardware(false)
             .build()

@@ -1,4 +1,4 @@
-package au.com.simplecityapps.shuttle.imageloading.coil.fetcher
+package au.com.simplecityapps.shuttle.imageloading.coil.fetcher.directory
 
 import android.content.Context
 import android.provider.DocumentsContract
@@ -12,6 +12,8 @@ import coil.fetch.Fetcher
 import coil.fetch.SourceResult
 import coil.size.Size
 import com.simplecityapps.mediaprovider.model.Song
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okio.buffer
 import okio.source
 import timber.log.Timber
@@ -23,20 +25,20 @@ class DirectorySongFetcher(private val context: Context) : Fetcher<Song> {
     private val pattern by lazy { Pattern.compile("(folder|cover|album).*\\.(jpg|jpeg|png)", Pattern.CASE_INSENSITIVE) }
 
     override suspend fun fetch(pool: BitmapPool, data: Song, size: Size, options: Options): FetchResult {
-        val parentDocumentFile = if (DocumentsContract.isDocumentUri(context, data.path.toUri())) {
-            val parent = data.path.substringBeforeLast("%2F", "")
-            if (parent.isNotEmpty()) {
-                DocumentFile.fromTreeUri(context, parent.toUri())
+        return withContext(Dispatchers.Default) {
+            val parentDocumentFile = if (DocumentsContract.isDocumentUri(context, data.path.toUri())) {
+                val parent = data.path.substringBeforeLast("%2F", "")
+                if (parent.isNotEmpty()) {
+                    DocumentFile.fromTreeUri(context, parent.toUri())
+                } else {
+                    null
+                }
             } else {
-                null
+                File(data.path).parentFile?.let { parent ->
+                    DocumentFile.fromFile(parent)
+                }
             }
-        } else {
-            File(data.path).parentFile?.let { parent ->
-                DocumentFile.fromFile(parent)
-            }
-        }
 
-        try {
             parentDocumentFile?.listFiles()
                 ?.filter {
                     it.type?.startsWith("image") == true
@@ -46,18 +48,15 @@ class DirectorySongFetcher(private val context: Context) : Fetcher<Song> {
                 ?.maxByOrNull { it.length() }
                 ?.let { documentFile ->
                     context.contentResolver.openInputStream(documentFile.uri)?.let { inputStream ->
-                        return SourceResult(
+                        Timber.i("Directory song fetcher")
+                        SourceResult(
                             inputStream.source().buffer(),
                             documentFile.type,
                             DataSource.DISK
                         )
                     }
                 }
-        } catch (e: UnsupportedOperationException) {
-            Timber.i("Failed to list files.")
-        }
-
-        throw IllegalArgumentException("Failed to find image")
+        } ?: throw IllegalStateException("Image not found")
     }
 
     override fun key(data: Song): String? {
