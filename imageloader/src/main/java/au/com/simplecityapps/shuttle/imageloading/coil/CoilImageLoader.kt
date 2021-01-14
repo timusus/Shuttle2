@@ -34,6 +34,7 @@ import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import okhttp3.CacheControl
 import okhttp3.Call
 import okhttp3.OkHttpClient
+import okio.IOException
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.TimeUnit
 
@@ -52,7 +53,7 @@ class CoilImageLoader(
                 .addNetworkInterceptor { chain ->
                     // Don't make a network request if we're not allowed to
                     if (preferenceManager.artworkWifiOnly && connectivityManager?.isActiveNetworkMetered == true) {
-                        throw IllegalStateException("Network disabled")
+                        throw IOException("Network disabled")
                     }
                     // Add custom cache control headers to ensure our result is stored in the cache
                     val response = chain.proceed(chain.request())
