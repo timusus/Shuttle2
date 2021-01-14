@@ -16,7 +16,7 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("Boolean", "PROXY_ENABLED", "true")
+            buildConfigField("Boolean", "PROXY_ENABLED", "false")
         }
         release {
             minifyEnabled true
