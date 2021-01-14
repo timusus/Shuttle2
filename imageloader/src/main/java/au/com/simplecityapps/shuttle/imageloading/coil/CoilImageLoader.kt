@@ -117,6 +117,7 @@ class CoilImageLoader(
             ImageRequest
                 .Builder(context)
                 .data(data)
+                .size(width, height)
                 .applyOptions(options = options)
                 .target(
                     onSuccess = { drawable -> onCompletion(drawable.toBitmap()) },
