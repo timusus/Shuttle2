@@ -14,7 +14,6 @@ import com.simplecityapps.shuttle.ui.common.ContextualToolbarHelper
 import com.simplecityapps.shuttle.ui.common.PagerAdapter
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.autoClearedNullable
-
 import com.simplecityapps.shuttle.ui.common.view.ToolbarHost
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistListFragment
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListFragment
@@ -50,6 +49,13 @@ class LibraryFragment : Fragment(), ToolbarHost {
         tabLayout = view.findViewById(R.id.tabLayout)
         viewPager = view.findViewById(R.id.viewPager)
 
+        _toolbar = view.findViewById(R.id.toolbar)
+        _contextualToolbar = view.findViewById(R.id.contextualToolbar)
+
+        contextualToolbarHelper = ContextualToolbarHelper<Any>()
+        contextualToolbarHelper.toolbar = toolbar
+        contextualToolbarHelper.contextualToolbar = contextualToolbar
+
         adapter = PagerAdapter(
             fragmentManager = childFragmentManager,
             lifecycle = lifecycle,
@@ -77,7 +83,9 @@ class LibraryFragment : Fragment(), ToolbarHost {
 
         viewPager?.let { viewPager ->
             viewPager.adapter = adapter
-            viewPager.setCurrentItem(2, false)
+            if (savedInstanceState == null) {
+                viewPager.setCurrentItem(2, false)
+            }
             viewPager.registerOnPageChangeCallback(pageChangeListener)
 
             tabLayoutMediator = TabLayoutMediator(tabLayout, viewPager) { tab, position ->
@@ -85,13 +93,6 @@ class LibraryFragment : Fragment(), ToolbarHost {
             }
         }
         tabLayoutMediator?.attach()
-
-        _toolbar = view.findViewById(R.id.toolbar)
-        _contextualToolbar = view.findViewById(R.id.contextualToolbar)
-
-        contextualToolbarHelper = ContextualToolbarHelper<Any>()
-        contextualToolbarHelper.toolbar = toolbar
-        contextualToolbarHelper.contextualToolbar = contextualToolbar
     }
 
     override fun onDestroyView() {
