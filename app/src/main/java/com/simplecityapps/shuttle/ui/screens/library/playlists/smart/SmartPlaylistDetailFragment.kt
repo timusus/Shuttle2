@@ -23,6 +23,7 @@ import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongBinder
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
@@ -221,6 +222,10 @@ class SmartPlaylistDetailFragment :
                                 }
                                 .setNegativeButton("Cancel", null)
                                 .show()
+                            return@setOnMenuItemClickListener true
+                        }
+                        R.id.editTags -> {
+                            TagEditorAlertDialog.newInstance(listOf(song)).show(childFragmentManager)
                             return@setOnMenuItemClickListener true
                         }
                     }

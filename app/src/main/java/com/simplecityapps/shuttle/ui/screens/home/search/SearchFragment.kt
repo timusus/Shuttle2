@@ -270,6 +270,10 @@ class SearchFragment : Fragment(),
                                 .show()
                             return@setOnMenuItemClickListener true
                         }
+                        R.id.editTags -> {
+                            presenter.editTags(song)
+                            return@setOnMenuItemClickListener true
+                        }
                     }
                 }
                 false
@@ -319,6 +323,10 @@ class SearchFragment : Fragment(),
                         }
                         R.id.exclude -> {
                             presenter.exclude(albumArtist)
+                            return@setOnMenuItemClickListener true
+                        }
+                        R.id.editTags -> {
+                            presenter.editTags(albumArtist)
                             return@setOnMenuItemClickListener true
                         }
                     }
