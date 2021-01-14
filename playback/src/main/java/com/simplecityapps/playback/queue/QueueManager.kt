@@ -157,13 +157,15 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
     suspend fun setShuffleMode(shuffleMode: ShuffleMode, reshuffle: Boolean) {
         if (this.shuffleMode != shuffleMode) {
             this.shuffleMode = shuffleMode
-            queueWatcher.onShuffleChanged(shuffleMode)
 
             withContext(Dispatchers.IO) {
                 if (shuffleMode == ShuffleMode.On && reshuffle) {
                     queue.generateShuffleQueue()
                 }
             }
+
+            queueWatcher.onShuffleChanged(shuffleMode)
+
             queueWatcher.onQueueChanged()
         }
     }
