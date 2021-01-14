@@ -87,6 +87,8 @@ class DirectorySelectionFragment : DialogFragment(),
         emptyLabel.isVisible = data.isEmpty()
         recyclerView.isVisible = data.isNotEmpty()
         adapter.update(data.map { DirectoryBinder(it, directoryBinderListener) }.toMutableList())
+
+        (dialog as? AlertDialog)?.getButton(AlertDialog.BUTTON_POSITIVE)?.isEnabled = data.all { it.traversalComplete }
     }
 
     override fun startActivity(intent: Intent, requestCode: Int) {
