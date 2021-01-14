@@ -1,11 +1,13 @@
 {
   "commits": [
+    "Fixed an issue preventing Emby scan from completing if item is missing certain required information",
+    "Fixed missing artwork placeholder for expandable album image",
+    "Since 0.2.0:",
     "Fixed a crash when attempting to load artwork with wifi off and 'Wi-Fi only' on",
     "Fixed image scaling issue for widgets",
     "Fixed an issue where the wrong song would play next, after enabling shuffle",
     "Fixed an issue where library tabs would stop responding to click events",
     "Partial fix for issue where user can start scan before all of their media directories have been discovered",
-    "Since 0.2.0:",
     "S2 now scans folders for artwork, under the name folder/cover/album.jpg/jpeg/png (case insensitive)",
     "Fixed an issue preventing Emby media scan from completing",
     "Fixed a crash when viewing/adding directories to Shuttle scanner",
