@@ -16,7 +16,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okio.buffer
 import okio.source
-import timber.log.Timber
 import java.io.File
 import java.util.regex.Pattern
 
@@ -48,7 +47,6 @@ class DirectorySongFetcher(private val context: Context) : Fetcher<Song> {
                 ?.maxByOrNull { it.length() }
                 ?.let { documentFile ->
                     context.contentResolver.openInputStream(documentFile.uri)?.let { inputStream ->
-                        Timber.i("Directory song fetcher")
                         SourceResult(
                             inputStream.source().buffer(),
                             documentFile.type,

@@ -15,7 +15,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okio.buffer
 import okio.source
-import timber.log.Timber
 import java.io.File
 
 class TagLibSongFetcher(private val context: Context) : Fetcher<Song> {
@@ -29,7 +28,6 @@ class TagLibSongFetcher(private val context: Context) : Fetcher<Song> {
             }
             context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
                 KTagLib.getArtwork(pfd.detachFd())?.inputStream()?.let { inputStream ->
-                    Timber.i("Taglib song fetcher")
                     SourceResult(
                         source = inputStream.source().buffer(),
                         mimeType = "image/*",
