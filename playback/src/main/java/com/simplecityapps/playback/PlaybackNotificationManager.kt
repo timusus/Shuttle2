@@ -83,10 +83,17 @@ class PlaybackNotificationManager(
         val artworkSize = 512
 
         song?.let { song ->
-            artworkCache[song.getArtworkCacheKey(artworkSize, artworkSize)]?.let { image ->
-                notificationBuilder.setLargeIcon(image)
+            synchronized(artworkCache) {
+                artworkCache[song.getArtworkCacheKey(artworkSize, artworkSize)]?.let { image ->
+                    notificationBuilder.setLargeIcon(image)
+                }
             } ?: run {
-                artworkImageLoader.loadBitmap(song, artworkSize, artworkSize) { image ->
+                artworkImageLoader.loadBitmap(
+                    data = song,
+                    width = artworkSize,
+                    height = artworkSize,
+                    options = listOf(ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_song))
+                ) { image ->
                     if (song == queueManager.getCurrentItem()?.song) {
                         notificationBuilder
                             .setContentText(song.albumArtist)
@@ -96,7 +103,9 @@ class PlaybackNotificationManager(
                         notificationManager.notify(NOTIFICATION_ID, notification)
                     }
                     if (image != null) {
-                        artworkCache.put(song.getArtworkCacheKey(artworkSize, artworkSize), image)
+                        synchronized(artworkCache) {
+                            artworkCache.put(song.getArtworkCacheKey(artworkSize, artworkSize), image)
+                        }
                     }
                 }
             }
@@ -106,7 +115,9 @@ class PlaybackNotificationManager(
         queueManager.getNext(true)?.song?.let { song ->
             artworkCache[song.getArtworkCacheKey(artworkSize, artworkSize)] ?: artworkImageLoader.loadBitmap(song, 512, 512) { image ->
                 if (image != null) {
-                    artworkCache.put(song.getArtworkCacheKey(artworkSize, artworkSize), image)
+                    synchronized(artworkCache) {
+                        artworkCache.put(song.getArtworkCacheKey(artworkSize, artworkSize), image)
+                    }
                 }
             }
         }

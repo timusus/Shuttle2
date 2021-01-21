@@ -1,16 +1,16 @@
 package com.simplecityapps.playback.mediasession
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.os.Bundle
 import android.provider.MediaStore
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
+import android.util.LruCache
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.repository.*
-import com.simplecityapps.playback.PlaybackManager
-import com.simplecityapps.playback.PlaybackWatcher
-import com.simplecityapps.playback.PlaybackWatcherCallback
+import com.simplecityapps.playback.*
 import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
@@ -37,6 +37,7 @@ class MediaSessionManager @Inject constructor(
     private val songRepository: SongRepository,
     private val genreRepository: GenreRepository,
     private val artworkImageLoader: ArtworkImageLoader,
+    private val artworkCache: LruCache<String, Bitmap?>,
     playbackWatcher: PlaybackWatcher,
     queueWatcher: QueueWatcher
 ) : PlaybackWatcherCallback,
@@ -58,6 +59,10 @@ class MediaSessionManager @Inject constructor(
                     or PlaybackStateCompat.ACTION_SEEK_TO
                     or PlaybackStateCompat.ACTION_SET_REPEAT_MODE
                     or PlaybackStateCompat.ACTION_SET_SHUFFLE_MODE
+                    or PlaybackStateCompat.ACTION_PREPARE_FROM_SEARCH
+                    or PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH
+                    or PlaybackStateCompat.ACTION_PREPARE_FROM_MEDIA_ID
+                    or PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID
         )
 
     init {
@@ -102,6 +107,8 @@ class MediaSessionManager @Inject constructor(
 
             playbackStateBuilder.setState(getPlaybackState(), playbackManager.getProgress()?.toLong() ?: 0, 1.0f)
 
+            val artworkSize = 512
+
             mediaSession.setPlaybackState(playbackStateBuilder.build())
             val mediaMetadataCompat = MediaMetadataCompat.Builder()
                 .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, currentItem.song.id.toString())
@@ -111,17 +118,31 @@ class MediaSessionManager @Inject constructor(
                 .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, currentItem.song.duration.toLong())
                 .putLong(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, currentItem.song.track.toLong())
                 .putLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS, queueManager.getSize().toLong())
-                .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, null)
 
-            mediaSession.setMetadata(
-                mediaMetadataCompat.build()
-            )
-
-            artworkImageLoader.loadBitmap(currentItem.song, 512, 512) { bitmap ->
-                mediaMetadataCompat.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, bitmap)
-                mediaSession.setMetadata(
-                    mediaMetadataCompat.build()
-                )
+            synchronized(artworkCache) {
+                artworkCache[currentItem.song.getArtworkCacheKey(artworkSize, artworkSize)]?.let { image ->
+                    mediaMetadataCompat.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, image)
+                    mediaSession.setMetadata(
+                        mediaMetadataCompat.build()
+                    )
+                }
+            } ?: run {
+                artworkImageLoader.loadBitmap(
+                    data = currentItem.song,
+                    width = artworkSize,
+                    height = artworkSize,
+                    options = listOf(ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_song))
+                ) { image ->
+                    mediaMetadataCompat.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, image)
+                    mediaSession.setMetadata(
+                        mediaMetadataCompat.build()
+                    )
+                    if (image != null) {
+                        synchronized(artworkCache) {
+                            artworkCache.put(currentItem.song.getArtworkCacheKey(artworkSize, artworkSize), image)
+                        }
+                    }
+                }
             }
         }
     }
@@ -177,11 +198,23 @@ class MediaSessionManager @Inject constructor(
         }
 
         override fun onPlayFromMediaId(mediaId: String?, extras: Bundle?) {
+            playFromMediaId(playWhenReady = true, mediaId = mediaId, extras = extras)
+        }
+
+        override fun onPrepareFromMediaId(mediaId: String?, extras: Bundle?) {
+            playFromMediaId(playWhenReady = false, mediaId = mediaId, extras = extras)
+        }
+
+        private fun playFromMediaId(playWhenReady: Boolean, mediaId: String?, extras: Bundle?) {
             appCoroutineScope.launch {
                 mediaId?.let {
                     mediaIdHelper.getPlayQueue(mediaId)?.let { playQueue ->
                         playbackManager.load(playQueue.songs, playQueue.playbackPosition) { result ->
-                            result.onSuccess { playbackManager.play() }
+                            result.onSuccess {
+                                if (playWhenReady) {
+                                    playbackManager.play()
+                                }
+                            }
                             result.onFailure { error -> Timber.e(error, "Failed to load playback after onPlayFromMediaId") }
                         }
                     }
@@ -190,14 +223,14 @@ class MediaSessionManager @Inject constructor(
         }
 
         override fun onPlayFromSearch(query: String?, extras: Bundle?) {
-            performSearch(playWhenReady = true, query = query, extras = extras)
+            playFromSearch(playWhenReady = true, query = query, extras = extras)
         }
 
         override fun onPrepareFromSearch(query: String?, extras: Bundle?) {
-            performSearch(playWhenReady = false, query = query, extras = extras)
+            playFromSearch(playWhenReady = false, query = query, extras = extras)
         }
 
-        private fun performSearch(playWhenReady: Boolean, query: String?, extras: Bundle?) {
+        private fun playFromSearch(playWhenReady: Boolean, query: String?, extras: Bundle?) {
             Timber.i("performSearch($query)")
 
             val mediaFocus = extras?.get(MediaStore.EXTRA_MEDIA_FOCUS)

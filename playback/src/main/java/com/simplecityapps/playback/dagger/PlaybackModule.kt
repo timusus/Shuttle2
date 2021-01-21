@@ -158,6 +158,7 @@ class PlaybackModule {
         songRepository: SongRepository,
         genreRepository: GenreRepository,
         artworkImageLoader: ArtworkImageLoader,
+        artworkCache: LruCache<String, Bitmap?>,
         playbackWatcher: PlaybackWatcher,
         queueWatcher: QueueWatcher,
         mediaIdHelper: MediaIdHelper
@@ -173,6 +174,7 @@ class PlaybackModule {
             songRepository,
             genreRepository,
             artworkImageLoader,
+            artworkCache,
             playbackWatcher,
             queueWatcher
         )
