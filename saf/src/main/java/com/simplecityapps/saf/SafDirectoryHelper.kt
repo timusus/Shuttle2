@@ -116,11 +116,24 @@ object SafDirectoryHelper {
             when (documentNode) {
                 is DocumentNodeTree -> traverseDocumentNodes(parent.addTreeNode(documentNode), contentResolver, rootUri)
                 else -> {
-                    if (documentNode.mimeType.startsWith("audio") ||
-                        arrayOf("mp3", "3gp", "mp4", "m4a", "m4b", "aac", "ts", "flac", "mid", "xmf", "mxmf", "midi", "rtttl", "rtx", "ota", "imy", "ogg", "mkv", "wav", "opus")
-                            .contains(documentNode.displayName.substringAfterLast('.'))
-                    ) {
+                    val ext = documentNode.displayName.substringAfterLast('.')
+                    if ("m3u".contains(ext)) {
+                        // Skip .m3u files
+                        break
+                    }
+
+                    if (documentNode.mimeType.startsWith("audio")) {
+                        // Add files with mimetype "audio/*"
                         parent.addLeafNode(documentNode)
+                        break
+                    }
+
+                    if (arrayOf("mp3", "3gp", "mp4", "m4a", "m4b", "aac", "ts", "flac", "mid", "xmf", "mxmf", "midi", "rtttl", "rtx", "ota", "imy", "ogg", "mkv", "wav", "opus")
+                            .contains(ext)
+                    ) {
+                        // Add files with audio-related extensions
+                        parent.addLeafNode(documentNode)
+                        break
                     }
                 }
             }
@@ -132,9 +145,9 @@ object SafDirectoryHelper {
      *
      * This involves a content resolver query, and should be called from a background thread.
      */
-    private suspend fun retrieveDocumentNodes(contentResolver: ContentResolver, uri: Uri, rootUri: Uri): List<DocumentNode> {
+    private suspend fun retrieveDocumentNodes(contentResolver: ContentResolver, uri: Uri, rootUri: Uri): List<SafDirectoryHelper.DocumentNode> {
         return withContext(Dispatchers.IO) {
-            val documentNodes = mutableListOf<DocumentNode>()
+            val documentNodes = mutableListOf<SafDirectoryHelper.DocumentNode>()
             try {
                 contentResolver.query(
                     uri,
@@ -153,7 +166,7 @@ object SafDirectoryHelper {
                             val documentId = cursor.getString(0)
                             if (mimeType == DocumentsContract.Document.MIME_TYPE_DIR) {
                                 documentNodes.add(
-                                    DocumentNodeTree(
+                                    SafDirectoryHelper.DocumentNodeTree(
                                         uri = DocumentsContract.buildDocumentUriUsingTree(uri, documentId),
                                         rootUri = rootUri,
                                         documentId = documentId,
@@ -163,7 +176,7 @@ object SafDirectoryHelper {
                                 )
                             } else {
                                 documentNodes.add(
-                                    DocumentNode(
+                                    SafDirectoryHelper.DocumentNode(
                                         uri = DocumentsContract.buildDocumentUriUsingTree(uri, documentId),
                                         documentId = documentId,
                                         displayName = cursor.getString(1),
