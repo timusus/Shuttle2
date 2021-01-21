@@ -29,6 +29,7 @@ import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.provider.emby.EmbyMediaPathProvider
 import com.simplecityapps.provider.jellyfin.JellyfinMediaPathProvider
+import com.simplecityapps.provider.plex.PlexMediaPathProvider
 import com.simplecityapps.shuttle.dagger.AppScope
 import com.squareup.moshi.Moshi
 import dagger.Module
@@ -83,10 +84,15 @@ class PlaybackModule {
 
     @AppScope
     @Provides
-    fun provideAggregateMediaPathProvider(embyMediaPathProvider: EmbyMediaPathProvider, jellyfinMediaPathProvider: JellyfinMediaPathProvider): AggregateMediaPathProvider {
+    fun provideAggregateMediaPathProvider(
+        embyMediaPathProvider: EmbyMediaPathProvider,
+        jellyfinMediaPathProvider: JellyfinMediaPathProvider,
+        plexMediaPathProvider: PlexMediaPathProvider
+    ): AggregateMediaPathProvider {
         return AggregateMediaPathProvider().apply {
             addProvider(embyMediaPathProvider)
             addProvider(jellyfinMediaPathProvider)
+            addProvider(plexMediaPathProvider)
         }
     }
 

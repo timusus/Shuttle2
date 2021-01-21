@@ -1,18 +1,17 @@
-package com.simplecityapps.provider.jellyfin
+package com.simplecityapps.provider.plex
 
+import android.net.Uri
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.networking.retrofit.error.HttpStatusCode
 import com.simplecityapps.networking.retrofit.error.RemoteServiceHttpError
-import com.simplecityapps.provider.jellyfin.http.*
+import com.simplecityapps.provider.plex.http.*
 import timber.log.Timber
-import java.util.*
+import java.net.URLEncoder
 
-class JellyfinAuthenticationManager(
+class PlexAuthenticationManager(
     private val userService: UserService,
     private val credentialStore: CredentialStore
 ) {
-
-    private val deviceId = UUID.randomUUID().toString()
 
     fun getLoginCredentials(): LoginCredentials? {
         return credentialStore.loginCredentials
@@ -50,15 +49,13 @@ class JellyfinAuthenticationManager(
     suspend fun authenticate(address: String, loginCredentials: LoginCredentials): Result<AuthenticatedCredentials> {
         Timber.d("authenticate(address: $address)")
         val authenticationResult = userService.authenticate(
-            url = address,
             username = loginCredentials.username,
-            password = loginCredentials.password,
-            deviceId = deviceId
+            password = loginCredentials.password
         )
 
         return when (authenticationResult) {
             is NetworkResult.Success<AuthenticationResult> -> {
-                val authenticatedCredentials = AuthenticatedCredentials(authenticationResult.body.accessToken, authenticationResult.body.user.id)
+                val authenticatedCredentials = AuthenticatedCredentials(authenticationResult.body.user.authToken, authenticationResult.body.user.id)
                 credentialStore.authenticatedCredentials = authenticatedCredentials
                 Result.success(authenticatedCredentials)
             }
@@ -73,27 +70,24 @@ class JellyfinAuthenticationManager(
         }
     }
 
-    fun buildJellyfinPath(itemId: String, authenticatedCredentials: AuthenticatedCredentials): String? {
-
+    fun buildPlexPath(path: Uri, authenticatedCredentials: AuthenticatedCredentials): String? {
         if (credentialStore.host == null || credentialStore.port == null) {
-            Timber.w("Invalid jellyfin address")
+            Timber.w("Invalid plex address")
             return null
         }
 
         return "${credentialStore.host}:${credentialStore.port}" +
-                "/Audio/$itemId" +
-                "/universal" +
-                "?UserId=${authenticatedCredentials.userId}" +
-                "&DeviceId=$deviceId" +
-                "&PlaySessionId=${UUID.randomUUID()}" +
-                "&MaxStreamingBitrate=140000000" +
-                "&Container=opus,mp3|mp3,aac,m4a,m4b|aac,flac,webma,webm,wav,ogg" +
-                "&TranscodingContainer=ts" +
-                "&TranscodingProtocol=hls" +
-                "&MaxSampleRate=48000" +
-                "&EnableRedirection=true" +
-                "&EnableRemoteMedia=true" +
-                "&AudioCodec=aac" +
-                "&api_key=${authenticatedCredentials.accessToken}"
+                "/music/:/transcode/universal/start.m3u8" +
+                "?path=${URLEncoder.encode(path.path, Charsets.UTF_8.name())}" +
+                "?directStreamAudio=true" +
+                "&protocol=hls" +
+                "&directPlay=0" +
+                "&hasMDE=1" +
+                "&download=1" +
+                "&X-Plex-Token=${authenticatedCredentials.accessToken}" +
+                "&X-Plex-Client-Identifier=s2-music-payer" +
+                "&X-Plex-Device=Android" +
+                "&X-Plex-Session-Identifier=715b12da-8ac9-11eb-8dcd-0242ac130003" +
+                "&X-Plex-Client-Profile-Extra=${URLEncoder.encode("add-transcode-target(type=musicProfile&context=streaming&protocol=hls&container=mpegts&audioCodec=mp3)", Charsets.UTF_8.name())}"
     }
 }

@@ -34,6 +34,7 @@ import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingPage
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParent
 import com.simplecityapps.shuttle.ui.screens.onboarding.emby.EmbyConfigurationFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.jellyfin.JellyfinConfigurationFragment
+import com.simplecityapps.shuttle.ui.screens.onboarding.plex.PlexConfigurationFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.taglib.DirectorySelectionFragment
 import timber.log.Timber
 import javax.inject.Inject
@@ -192,6 +193,10 @@ class MediaProviderSelectionFragment :
                 presenter.addMediaProviderType(providerType)
                 JellyfinConfigurationFragment.newInstance().show(childFragmentManager)
             }
+            MediaProvider.Type.Plex -> {
+                presenter.addMediaProviderType(providerType)
+                PlexConfigurationFragment.newInstance().show(childFragmentManager)
+            }
         }
     }
 
@@ -210,6 +215,7 @@ class MediaProviderSelectionFragment :
                             MediaProvider.Type.Shuttle -> DirectorySelectionFragment.newInstance().show(childFragmentManager)
                             MediaProvider.Type.Emby -> EmbyConfigurationFragment.newInstance().show(childFragmentManager)
                             MediaProvider.Type.Jellyfin -> JellyfinConfigurationFragment.newInstance().show(childFragmentManager)
+                            MediaProvider.Type.Plex -> PlexConfigurationFragment.newInstance().show(childFragmentManager)
                             MediaProvider.Type.MediaStore -> {
                                 // Nothing to do
                             }

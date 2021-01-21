@@ -122,6 +122,7 @@ class ExoPlayerPlayback(
         player.seekTo(seekPosition.toLong())
         val uri = current.path.toUri()
         val mediaItem = getMediaItem(uri)
+        Timber.i("Loading uri: $uri")
         player.setMediaItem(mediaItem)
         player.prepare()
 

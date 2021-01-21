@@ -24,6 +24,7 @@ import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParentFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.emby.EmbyConfigurationFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.jellyfin.JellyfinConfigurationFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.MediaProviderSelectionFragment
+import com.simplecityapps.shuttle.ui.screens.onboarding.plex.PlexConfigurationFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.scanner.MediaScannerFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.taglib.DirectorySelectionFragment
 import com.simplecityapps.shuttle.ui.screens.opensource.LicensesDialogFragment
@@ -142,4 +143,7 @@ abstract class FragmentBuildersModule {
 
     @ContributesAndroidInjector
     abstract fun contributeJellyfinConfigurationFragment(): JellyfinConfigurationFragment
+
+    @ContributesAndroidInjector
+    abstract fun contributePlexConfigurationFragment(): PlexConfigurationFragment
 }

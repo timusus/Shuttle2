@@ -8,6 +8,7 @@ import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.provider.emby.EmbyMediaProvider
 import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
+import com.simplecityapps.provider.plex.PlexMediaProvider
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -35,6 +36,7 @@ class MediaProviderSelectionPresenter @Inject constructor(
     private val mediaStoreMediaProvider: MediaStoreMediaProvider,
     private val embyMediaProvider: EmbyMediaProvider,
     private val jellyfinMediaProvider: JellyfinMediaProvider,
+    private val plexMediaProvider: PlexMediaProvider,
     private val songRepository: SongRepository,
     @Named("AppCoroutineScope") private val appCoroutineScope: CoroutineScope,
 ) : BasePresenter<MediaProviderSelectionContract.View>(),
@@ -83,6 +85,7 @@ class MediaProviderSelectionPresenter @Inject constructor(
             MediaProvider.Type.Shuttle -> taglibMediaProvider
             MediaProvider.Type.Emby -> embyMediaProvider
             MediaProvider.Type.Jellyfin -> jellyfinMediaProvider
+            MediaProvider.Type.Plex -> plexMediaProvider
         }
     }
 }

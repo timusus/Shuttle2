@@ -6,7 +6,11 @@ import com.simplecityapps.mediaprovider.model.Song
 interface MediaProvider {
 
     enum class Type(val isRemote: Boolean) {
-        Shuttle(false), MediaStore(false), Emby(true), Jellyfin(true);
+        Shuttle(false),
+        MediaStore(false),
+        Emby(true),
+        Jellyfin(true),
+        Plex(true);
 
         companion object {
             fun init(ordinal: Int): Type {
@@ -15,6 +19,7 @@ interface MediaProvider {
                     MediaStore.ordinal -> MediaStore
                     Emby.ordinal -> Emby
                     Jellyfin.ordinal -> Jellyfin
+                    Plex.ordinal -> Plex
                     else -> Shuttle
                 }
             }
@@ -26,6 +31,7 @@ interface MediaProvider {
                 MediaStore -> "Android Media Store"
                 Jellyfin -> "Jellyfin"
                 Emby -> "Emby"
+                Plex -> "Plex"
             }
         }
 
@@ -33,8 +39,9 @@ interface MediaProvider {
             return when (this) {
                 Shuttle -> "Scans selected folders & files"
                 MediaStore -> "Android-managed database"
-                Jellyfin -> "Open source personal media server"
+                Jellyfin -> "Personal media server"
                 Emby -> "Personal media server"
+                Plex -> "Personal media server"
             }
         }
 
@@ -45,6 +52,7 @@ interface MediaProvider {
                 MediaStore -> R.drawable.ic_baseline_android_24
                 Jellyfin -> R.drawable.ic_jellyfin
                 Emby -> R.drawable.ic_emby
+                Plex -> R.drawable.ic_plex
             }
         }
     }

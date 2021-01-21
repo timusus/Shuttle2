@@ -75,6 +75,7 @@ android {
         implementation(project(":mediaprovider:local"))
         implementation(project(":mediaprovider:emby"))
         implementation(project(":mediaprovider:jellyfin"))
+        implementation(project(":mediaprovider:plex"))
 
         // Shuttle Image Loader
         implementation(project(":imageloader"))

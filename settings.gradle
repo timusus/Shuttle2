@@ -1,6 +1,7 @@
 include ':networking'
 include ':mediaprovider:emby'
 include ':mediaprovider:jellyfin'
+include ':mediaprovider:plex'
 include ':app'
 include ':core'
 include ':recyclerview-adapter'

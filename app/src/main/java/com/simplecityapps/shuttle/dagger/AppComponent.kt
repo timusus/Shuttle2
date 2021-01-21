@@ -5,6 +5,7 @@ import com.simplecityapps.playback.dagger.PlaybackModule
 import com.simplecityapps.playback.dagger.PlaybackServiceModule
 import com.simplecityapps.provider.emby.di.EmbyMediaProviderModule
 import com.simplecityapps.provider.jellyfin.di.JellyfinMediaProviderModule
+import com.simplecityapps.provider.plex.di.PlexMediaProviderModule
 import com.simplecityapps.shuttle.ShuttleApplication
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.widgets.WidgetModule
@@ -28,6 +29,7 @@ import okhttp3.OkHttpClient
         MediaProviderModule::class,
         EmbyMediaProviderModule::class,
         JellyfinMediaProviderModule::class,
+        PlexMediaProviderModule::class,
         ImageLoaderModule::class
     ]
 )
