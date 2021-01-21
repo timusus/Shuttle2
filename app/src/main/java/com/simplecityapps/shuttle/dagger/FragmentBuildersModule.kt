@@ -8,6 +8,7 @@ import com.simplecityapps.shuttle.ui.screens.equalizer.EqualizerFragment
 import com.simplecityapps.shuttle.ui.screens.equalizer.FrequencyResponseDialogFragment
 import com.simplecityapps.shuttle.ui.screens.home.HomeFragment
 import com.simplecityapps.shuttle.ui.screens.home.search.SearchFragment
+import com.simplecityapps.shuttle.ui.screens.library.LibraryFragment
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistListFragment
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragment
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListFragment
@@ -41,6 +42,9 @@ abstract class FragmentBuildersModule {
 
     @ContributesAndroidInjector
     abstract fun contributeMainFragment(): MainFragment
+
+    @ContributesAndroidInjector
+    abstract fun contributeLibraryFragment(): LibraryFragment
 
     @ContributesAndroidInjector
     abstract fun contributeOnboardingFragment(): OnboardingParentFragment

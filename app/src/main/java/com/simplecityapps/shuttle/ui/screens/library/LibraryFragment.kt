@@ -10,6 +10,8 @@ import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.ContextualToolbarHelper
 import com.simplecityapps.shuttle.ui.common.PagerAdapter
 import com.simplecityapps.shuttle.ui.common.autoCleared
@@ -20,8 +22,9 @@ import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListFragment
 import com.simplecityapps.shuttle.ui.screens.library.genres.GenreListFragment
 import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListFragment
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListFragment
+import javax.inject.Inject
 
-class LibraryFragment : Fragment(), ToolbarHost {
+class LibraryFragment : Fragment(), Injectable, ToolbarHost {
 
     private var viewPager: ViewPager2? = null
 
@@ -35,6 +38,8 @@ class LibraryFragment : Fragment(), ToolbarHost {
     private var tabLayoutMediator: TabLayoutMediator? = null
 
     private var adapter: PagerAdapter? = null
+
+    @Inject lateinit var preferenceManager: GeneralPreferenceManager
 
 
     // Lifecycle
@@ -84,7 +89,12 @@ class LibraryFragment : Fragment(), ToolbarHost {
         viewPager?.let { viewPager ->
             viewPager.adapter = adapter
             if (savedInstanceState == null) {
-                viewPager.setCurrentItem(2, false)
+                var tabIndex = preferenceManager.libraryTabIndex
+                if (tabIndex == -1) {
+                    tabIndex = 2
+                }
+                tabIndex.coerceAtMost(adapter!!.size - 1)
+                viewPager.setCurrentItem(tabIndex, false)
             }
             viewPager.registerOnPageChangeCallback(pageChangeListener)
 
@@ -110,6 +120,7 @@ class LibraryFragment : Fragment(), ToolbarHost {
     private val pageChangeListener = object : ViewPager2.OnPageChangeCallback() {
         override fun onPageSelected(position: Int) {
             contextualToolbarHelper.hide()
+            preferenceManager.libraryTabIndex = position
         }
     }
 

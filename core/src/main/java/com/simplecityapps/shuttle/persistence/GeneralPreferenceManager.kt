@@ -84,6 +84,14 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
             return sharedPreferences.getBoolean("has_onboarded", false)
         }
 
+    var libraryTabIndex: Int
+        set(value) {
+            sharedPreferences.put("library_tab_index", value)
+        }
+        get() {
+            return sharedPreferences.getInt("library_tab_index", -1)
+        }
+
 
     // Widgets
 
