@@ -41,5 +41,6 @@ interface PlaybackContract {
         fun goToAlbum()
         fun goToArtist()
         fun launchQuickLyric()
+        fun clearQueue()
     }
 }

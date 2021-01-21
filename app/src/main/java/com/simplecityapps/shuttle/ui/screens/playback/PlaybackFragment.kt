@@ -156,6 +156,10 @@ class PlaybackFragment :
                     presenter.launchQuickLyric()
                     true
                 }
+                R.id.clearQueue -> {
+                    presenter.clearQueue()
+                    true
+                }
                 else -> false
             }
         }

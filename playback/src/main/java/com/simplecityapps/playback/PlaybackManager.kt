@@ -253,6 +253,11 @@ class PlaybackManager(
         queueManager.remove(listOf(queueItem))
     }
 
+    fun clearQueue() {
+        playback.pause()
+        queueManager.clear()
+    }
+
     suspend fun playNext(songs: List<Song>) {
         if (queueManager.getQueue().isEmpty()) {
             load(songs, 0) { result ->

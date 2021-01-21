@@ -107,6 +107,11 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
         queueWatcher.onQueueChanged()
     }
 
+    fun clear() {
+        queue.clear()
+        queueWatcher.onQueueChanged()
+    }
+
     /**
      * Retrieves the next queue item, accounting for the current repeat mode.
      *
@@ -307,6 +312,11 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
         fun remove(items: List<QueueItem>) {
             baseList.removeAll(items)
             shuffleList.removeAll(items)
+        }
+
+        fun clear() {
+            baseList.clear()
+            shuffleList.clear()
         }
 
         fun replace(old: QueueItem, new: QueueItem) {

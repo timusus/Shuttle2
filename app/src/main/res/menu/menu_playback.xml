@@ -27,4 +27,9 @@
         android:title="QuickLyric"
         app:showAsAction="never" />
 
+    <item
+        android:id="@+id/clearQueue"
+        android:title="Clear Queue"
+        app:showAsAction="never" />
+
 </menu>
