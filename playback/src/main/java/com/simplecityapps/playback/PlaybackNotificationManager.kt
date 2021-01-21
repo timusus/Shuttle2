@@ -92,7 +92,6 @@ class PlaybackNotificationManager(
                     data = song,
                     width = artworkSize,
                     height = artworkSize,
-                    options = listOf(ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_song))
                 ) { image ->
                     if (song == queueManager.getCurrentItem()?.song) {
                         notificationBuilder

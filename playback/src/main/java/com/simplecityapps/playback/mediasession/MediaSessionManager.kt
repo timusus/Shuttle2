@@ -43,6 +43,10 @@ class MediaSessionManager @Inject constructor(
 ) : PlaybackWatcherCallback,
     QueueChangeCallback {
 
+    private val placeholder: Bitmap? by lazy {
+        PlaybackNotificationManager.drawableToBitmap(context.resources.getDrawable(R.drawable.ic_music_note_black_24dp, context.theme))
+    }
+
     val mediaSession: MediaSessionCompat by lazy {
         val mediaSession = MediaSessionCompat(context, "ShuttleMediaSession")
         mediaSession.setCallback(mediaSessionCallback)
@@ -118,20 +122,17 @@ class MediaSessionManager @Inject constructor(
                 .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, currentItem.song.duration.toLong())
                 .putLong(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, currentItem.song.track.toLong())
                 .putLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS, queueManager.getSize().toLong())
+                .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, placeholder)
 
             synchronized(artworkCache) {
                 artworkCache[currentItem.song.getArtworkCacheKey(artworkSize, artworkSize)]?.let { image ->
                     mediaMetadataCompat.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, image)
-                    mediaSession.setMetadata(
-                        mediaMetadataCompat.build()
-                    )
                 }
             } ?: run {
                 artworkImageLoader.loadBitmap(
                     data = currentItem.song,
                     width = artworkSize,
                     height = artworkSize,
-                    options = listOf(ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_song))
                 ) { image ->
                     mediaMetadataCompat.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, image)
                     mediaSession.setMetadata(
@@ -144,6 +145,10 @@ class MediaSessionManager @Inject constructor(
                     }
                 }
             }
+
+            mediaSession.setMetadata(
+                mediaMetadataCompat.build()
+            )
         }
     }
 
