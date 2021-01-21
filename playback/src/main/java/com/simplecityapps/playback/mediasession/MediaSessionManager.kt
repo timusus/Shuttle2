@@ -190,9 +190,15 @@ class MediaSessionManager @Inject constructor(
         }
 
         override fun onPlayFromSearch(query: String?, extras: Bundle?) {
-            super.onPlayFromSearch(query, extras)
+            performSearch(playWhenReady = true, query = query, extras = extras)
+        }
 
-            Timber.i("onPlayFromSearch($query)")
+        override fun onPrepareFromSearch(query: String?, extras: Bundle?) {
+            performSearch(playWhenReady = false, query = query, extras = extras)
+        }
+
+        private fun performSearch(playWhenReady: Boolean, query: String?, extras: Bundle?) {
+            Timber.i("performSearch($query)")
 
             val mediaFocus = extras?.get(MediaStore.EXTRA_MEDIA_FOCUS)
             val artist = extras?.getString(MediaStore.EXTRA_MEDIA_ARTIST)
@@ -232,7 +238,11 @@ class MediaSessionManager @Inject constructor(
                 flow.firstOrNull()?.let { songs ->
                     if (songs.isNotEmpty()) {
                         playbackManager.load(songs, 0, 0) { result ->
-                            result.onSuccess { playbackManager.play() }
+                            result.onSuccess {
+                                if (playWhenReady) {
+                                    playbackManager.play()
+                                }
+                            }
                             result.onFailure { error -> Timber.e("Failed to load songs") }
                         }
                     } else {
