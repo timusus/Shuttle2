@@ -94,8 +94,8 @@ class CoilImageLoader(
                 add(
                     MultiFetcher(
                         setOf(
-                            TagLibAlbumFetcher(songRepository, tagLibSongFetcher),
                             DirectoryAlbumFetcher(songRepository, directorySongFetcher),
+                            TagLibAlbumFetcher(songRepository, tagLibSongFetcher),
                             RemoteAlbumFetcher(preferenceManager, httpFetcher)
                         )
                     )
