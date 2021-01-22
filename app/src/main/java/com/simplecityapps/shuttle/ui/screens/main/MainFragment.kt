@@ -17,14 +17,12 @@ import androidx.navigation.ui.NavigationUI
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
-import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.autoClearedNullable
 import com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
 import com.simplecityapps.shuttle.ui.screens.changelog.ChangelogDialogFragment
 import com.simplecityapps.shuttle.ui.screens.playback.PlaybackFragment
 import com.simplecityapps.shuttle.ui.screens.playback.mini.MiniPlaybackFragment
 import com.simplecityapps.shuttle.ui.screens.queue.QueueFragment
-import com.simplecityapps.shuttle.ui.screens.settings.BottomDrawerSettingsFragment
 import timber.log.Timber
 import java.lang.ref.WeakReference
 import javax.inject.Inject
@@ -149,8 +147,13 @@ class MainFragment : Fragment(),
 fun BottomNavigationView.setupWithNavController(navController: NavController, onItemSelected: (MenuItem) -> (Unit)) {
 
     setOnNavigationItemSelectedListener { item ->
-        val didNavigate = NavigationUI.onNavDestinationSelected(item, navController)
-        onItemSelected(item)
+        var didNavigate = false
+        try {
+            didNavigate = NavigationUI.onNavDestinationSelected(item, navController)
+            onItemSelected(item)
+        } catch (e: NullPointerException) {
+            Timber.e(e, "Failed to setup bottom nav view")
+        }
         didNavigate
     }
 
