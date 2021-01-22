@@ -107,7 +107,7 @@ class CastPlayback(
             castSession.remoteMediaClient.stop()
         }
 
-        castSession.remoteMediaClient.unregisterCallback(remoteMediaClientCallback)
+        castSession.remoteMediaClient?.unregisterCallback(remoteMediaClientCallback)
 
         httpServer.stop()
 
