@@ -31,14 +31,16 @@ class DebugLoggingTree(
     override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
         super.log(priority, tag, message, t)
 
-        val logMessage = LogMessage(priority, tag, message, t)
+        synchronized(this) {
+            val logMessage = LogMessage(priority, tag, message, t)
 
-        history.add(logMessage)
+            history.add(logMessage)
 
-        callbacks.forEach { callback -> callback.onLog(logMessage) }
+            callbacks.forEach { callback -> callback.onLog(logMessage) }
 
-        if (sharedPreferences.getBoolean("pref_file_logging", false)) {
-            writeToFile(context, LogMessage(priority, tag, message, t))
+            if (sharedPreferences.getBoolean("pref_file_logging", false)) {
+                writeToFile(context, LogMessage(priority, tag, message, t))
+            }
         }
     }
 
