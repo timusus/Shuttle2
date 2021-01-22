@@ -127,9 +127,11 @@ class MainFragment : Fragment(),
 
         if (multiSheetView?.currentSheet != MultiSheetView.Sheet.NONE) {
             // Todo: Remove activity dependency.
-            onBackPressCallback = requireActivity().onBackPressedDispatcher.addCallback {
-                multiSheetView?.consumeBackPress()
-            }
+                activity?.let {activity->
+                    onBackPressCallback = activity.onBackPressedDispatcher.addCallback {
+                        multiSheetView?.consumeBackPress()
+                    }
+                }
         }
     }
 
