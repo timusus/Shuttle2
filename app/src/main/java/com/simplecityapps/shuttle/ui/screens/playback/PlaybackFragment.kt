@@ -44,6 +44,7 @@ import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFr
 import com.simplecityapps.shuttle.ui.screens.lyrics.QuickLyricManager
 import com.simplecityapps.shuttle.ui.screens.sleeptimer.SleepTimerDialogFragment
 import javax.inject.Inject
+import kotlin.math.abs
 
 class PlaybackFragment :
     Fragment(),
@@ -77,6 +78,9 @@ class PlaybackFragment :
     private var separatorTextView: TextView by autoCleared()
     private var toolbar: Toolbar by autoCleared()
     private var favoriteButton: FavoriteButton by autoCleared()
+
+    var position: Int = 0
+    var duration: Int = 0
 
 
     // Lifecycle
@@ -246,8 +250,14 @@ class PlaybackFragment :
 
     override fun setProgress(position: Int, duration: Int) {
         if (!isSeeking) {
-            durationTextView.text = duration.toHms("--:--")
-            currentTimeTextView.text = position.toHms()
+            if (abs(position - this.position) >= 1000) {
+                currentTimeTextView.text = position.toHms()
+                this.position = position
+            }
+            if (abs(duration - this.duration) >= 1000) {
+                durationTextView.text = duration.toHms("--:--")
+                this.duration = duration
+            }
             seekBar.progress = ((position.toFloat() / duration) * 1000).toInt()
         }
     }
