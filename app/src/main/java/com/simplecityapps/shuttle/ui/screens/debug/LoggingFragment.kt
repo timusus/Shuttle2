@@ -55,8 +55,6 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
         adapter = RecyclerAdapter(viewLifecycleOwner.lifecycleScope)
         adapter.loggingEnabled = false
 
-        debugLoggingTree.addCallback(this)
-
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
 
@@ -78,7 +76,7 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
             try {
                 clipboardManager.setPrimaryClip(clip)
             } catch (e: TransactionTooLargeException) {
-                Toast.makeText(requireContext(), "Log file is too big large clipboard", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), "Log file is too large for clipboard", Toast.LENGTH_SHORT).show()
             }
             Toast.makeText(requireContext(), "Logs copied to clipboard", Toast.LENGTH_SHORT).show()
         }
@@ -91,12 +89,14 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
         super.onResume()
 
         recyclerView.scrollToPosition(adapter.itemCount - 1)
+
+        debugLoggingTree.addCallback(this)
     }
 
-    override fun onDestroyView() {
-        debugLoggingTree.removeCallback(this)
+    override fun onPause() {
+        super.onPause()
 
-        super.onDestroyView()
+        debugLoggingTree.removeCallback(this)
     }
 
 
@@ -135,9 +135,7 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
 
     override fun onLog(logMessage: LogMessage) {
         if (canLog(logMessage)) {
-            recyclerView.post {
-                adapter.add(newItem = LogMessageBinder(logMessage))
-            }
+            adapter.add(newItem = LogMessageBinder(logMessage))
         }
     }
 
