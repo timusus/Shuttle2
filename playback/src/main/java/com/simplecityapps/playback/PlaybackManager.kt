@@ -1,5 +1,6 @@
 package com.simplecityapps.playback
 
+import android.media.AudioManager
 import android.os.Handler
 import android.os.Looper
 import com.simplecityapps.mediaprovider.model.Song
@@ -19,7 +20,8 @@ class PlaybackManager(
     private val audioFocusHelper: AudioFocusHelper,
     private val playbackPreferenceManager: PlaybackPreferenceManager,
     exoplayerPlayback: ExoPlayerPlayback,
-    queueWatcher: QueueWatcher
+    queueWatcher: QueueWatcher,
+    audioManager: AudioManager?
 ) : Playback.Callback,
     AudioFocusHelper.Listener,
     QueueChangeCallback {
@@ -28,9 +30,12 @@ class PlaybackManager(
 
     private var playback: Playback = exoplayerPlayback
 
+    private val audioSessionId = audioManager?.generateAudioSessionId() ?: -1
+
     init {
         playback.setRepeatMode(queueManager.getRepeatMode())
         playback.callback = this
+        playback.setAudioSessionId(audioSessionId)
         audioFocusHelper.listener = this
 
         queueWatcher.addCallback(this)
@@ -44,34 +49,18 @@ class PlaybackManager(
         }
     }
 
-    suspend fun load(songs: List<Song>, queuePosition: Int = 0, seekPosition: Int = 0, completion: (Result<Any?>) -> Unit) {
-        load(songs, null, queuePosition, seekPosition, completion)
-    }
-
-    suspend fun load(songs: List<Song>, shuffleSongs: List<Song>?, queuePosition: Int = 0, seekPosition: Int = 0, completion: (Result<Boolean>) -> Unit) {
-        if (songs.isEmpty()) {
-            Timber.e("Attempted to load empty song list")
-            completion(Result.failure(Error("Failed to load songs. The song list is empty.")))
-            return
-        }
-        if (queuePosition < 0 || queuePosition >= songs.size) {
-            Timber.e("Invalid queue position: $queuePosition (songs.size: ${songs.size})")
-            completion(Result.failure(Error("Failed to load songs. The queue position is invalid.")))
-            return
-        }
-
-        if (shuffleSongs == null) {
-            queueManager.setShuffleMode(QueueManager.ShuffleMode.Off, reshuffle = false)
-        }
-        queueManager.setQueue(songs, shuffleSongs, queuePosition)
-
-        // Some players (Exo/CasT) like to be loaded from the main thread
-        val currentQueueItem = queueManager.getCurrentItem()
-        currentQueueItem?.let {
+    /**
+     * Loads the current queue. The boolean in [Result] indicates whether the current queue item successfully loaded.
+     * Note: If the current queue item fails to load, the next item in the queue is attempted
+     */
+    fun load(seekPosition: Int = 0, completion: (Result<Boolean>) -> Unit) {
+        Timber.v("load(seekPosition: ${seekPosition})")
+        // Some players (ExoPlayer/ChromeCast) like to be loaded on the main thread
+        queueManager.getCurrentItem()?.let { currentQueueItem ->
             attemptLoad(currentQueueItem.song, queueManager.getNext()?.song, seekPosition) { result ->
                 result.onSuccess { didLoadFirst ->
                     if (didLoadFirst) {
-                        playback.seek(songs[queuePosition].getStartPosition())
+                        playback.seek(currentQueueItem.song.getStartPosition())
                     }
                 }
                 result.onFailure {
@@ -79,13 +68,7 @@ class PlaybackManager(
                 }
                 completion(result)
             }
-        }
-    }
-
-    fun loadCurrent(seekPosition: Int, completion: (Result<Any?>) -> Unit) {
-        queueManager.getCurrentItem()?.let { currentQueueItem ->
-            playback.load(currentQueueItem.song, queueManager.getNext()?.song, seekPosition, completion)
-        }
+        } ?: Timber.e("Load failed - no current queue item")
     }
 
     private fun attemptLoad(current: Song, next: Song?, seekPosition: Int, attempt: Int = 1, completion: (Result<Boolean>) -> Unit) {
@@ -117,7 +100,9 @@ class PlaybackManager(
 
     suspend fun shuffle(songs: List<Song>, completion: (Result<Any?>) -> Unit) {
         queueManager.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = false)
-        load(songs, songs.shuffled(), 0, completion = completion)
+        if (queueManager.setQueue(songs, songs.shuffled(), 0)) {
+            load(0, completion)
+        }
     }
 
     /**
@@ -131,7 +116,7 @@ class PlaybackManager(
             if (playback.isReleased) {
                 if (attempt <= 2) {
                     Timber.v("Playback released.. reloading.")
-                    loadCurrent(getProgress() ?: 0) { result ->
+                    load(getProgress() ?: 0) { result ->
                         result.onSuccess {
                             playbackPreferenceManager.playbackPosition?.let { playbackPosition ->
                                 seekTo(playbackPosition)
@@ -231,10 +216,11 @@ class PlaybackManager(
 
     suspend fun addToQueue(songs: List<Song>) {
         if (queueManager.getQueue().isEmpty()) {
-            load(songs, 0) { result ->
-                result.onSuccess { play() }
-                result.onFailure { throwable -> Timber.e(throwable, "Failed to load songs (addToQueue())") }
-            }
+            if (queueManager.setQueue(songs))
+                load { result ->
+                    result.onSuccess { play() }
+                    result.onFailure { throwable -> Timber.e(throwable, "Failed to load songs (addToQueue())") }
+                }
         } else {
             queueManager.addToQueue(songs)
         }
@@ -260,12 +246,14 @@ class PlaybackManager(
 
     suspend fun playNext(songs: List<Song>) {
         if (queueManager.getQueue().isEmpty()) {
-            load(songs, 0) { result ->
-                result.onSuccess { play() }
-                result.onFailure { throwable -> Timber.e(throwable, "Failed to load songs (addToQueue())") }
+            if (queueManager.setQueue(songs)) {
+                load { result ->
+                    result.onSuccess { play() }
+                    result.onFailure { throwable -> Timber.e(throwable, "Failed to load songs (addToQueue())") }
+                }
             }
         } else {
-            queueManager.playNext(songs)
+            queueManager.addToNext(songs)
             playback.loadNext(queueManager.getNext()?.song)
         }
     }
@@ -288,8 +276,9 @@ class PlaybackManager(
         this.playback = playback
         playback.setRepeatMode(queueManager.getRepeatMode())
         playback.callback = this
+        playback.setAudioSessionId(audioSessionId)
 
-        loadCurrent(seekPosition ?: 0) { result ->
+        load(seekPosition ?: 0) { result ->
             result.onSuccess {
                 playbackPreferenceManager.playbackPosition?.let { playbackPosition ->
                     seekTo(playbackPosition)

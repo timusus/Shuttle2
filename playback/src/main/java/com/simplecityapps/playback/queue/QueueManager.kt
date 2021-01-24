@@ -44,14 +44,29 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
 
     private var currentItem: QueueItem? = null
 
-    suspend fun setQueue(songs: List<Song>, shuffleSongs: List<Song>? = null, position: Int = 0) {
-        if (position < 0) {
-            throw IllegalArgumentException("Queue position must be >= 0 (position $position)")
+    /**
+     * Replaces the current queue.
+     *
+     * @param songs the songs to replace the current non-shuffle queue.
+     * @param shuffleSongs the songs to replace the shuffle queue. If null, shuffle mode will be disabled. Defaults to null.
+     * @param position the neq queue position. Defaults to 0.
+     *
+     * @return true if the queue was successfully set, and is not empty.
+     */
+    suspend fun setQueue(songs: List<Song>, shuffleSongs: List<Song>? = null, position: Int = 0): Boolean {
+        if (position < 0 || position >= songs.size) {
+            Timber.e("Invalid queue position: $position (songs.size: ${songs.size})")
+            return false
+        }
+
+        if (shuffleSongs == null) {
+            setShuffleMode(ShuffleMode.Off, reshuffle = false)
         }
 
         withContext(Dispatchers.IO) {
             val queueItems = songs.map { song -> song.toQueueItem(false) }
             queue.setQueue(queueItems)
+
             shuffleSongs?.mapNotNull { song ->
                 queueItems.firstOrNull { queueItem -> queueItem.song == song }
             }?.let { shuffleQueueItems ->
@@ -62,7 +77,10 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
         queue.getItem(shuffleMode, position)?.let { currentItem ->
             setCurrentItem(currentItem)
         }
+
         queueWatcher.onQueueChanged()
+
+        return queue.size() != 0
     }
 
     fun setCurrentItem(currentItem: QueueItem) {
@@ -71,7 +89,7 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
         if (this.currentItem != currentItem) {
             this.currentItem = currentItem.clone(isCurrent = true)
 
-            queue.get(ShuffleMode.On).forEach { queueItem ->
+            queue.get(shuffleMode).forEach { queueItem ->
                 if (queueItem == currentItem) {
                     queue.replace(queueItem, this.currentItem!!)
                 } else if (queueItem.isCurrent) {
@@ -247,7 +265,7 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
         }
     }
 
-    fun playNext(songs: List<Song>) {
+    fun addToNext(songs: List<Song>) {
         queue.insert((getCurrentPosition() ?: -1) + 1, songs.map { song -> song.toQueueItem(false) })
         queueWatcher.onQueueChanged()
     }
@@ -269,10 +287,7 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
         }
 
         fun getItem(shuffleMode: ShuffleMode, position: Int): QueueItem? {
-            return when (shuffleMode) {
-                ShuffleMode.Off -> baseList.getOrNull(position)
-                ShuffleMode.On -> shuffleList.getOrNull(position)
-            }
+            return get(shuffleMode).getOrNull(position)
         }
 
         fun setQueue(items: List<QueueItem>) {

@@ -180,9 +180,11 @@ class AlbumListPresenter @Inject constructor(
                 .getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = album.name, albumArtistName = album.albumArtist))))
                 .firstOrNull()
                 .orEmpty()
-            playbackManager.load(songs, 0) { result ->
-                result.onSuccess { playbackManager.play() }
-                result.onFailure { error -> view?.showLoadError(error as Error) }
+            if (queueManager.setQueue(songs)) {
+                playbackManager.load { result ->
+                    result.onSuccess { playbackManager.play() }
+                    result.onFailure { error -> view?.showLoadError(error as Error) }
+                }
             }
         }
     }
@@ -199,9 +201,11 @@ class AlbumListPresenter @Inject constructor(
                 albums.getValue(key)
             }
 
-            playbackManager.load(songs) { result ->
-                result.onSuccess { playbackManager.play() }
-                result.onFailure { error -> view?.showLoadError(error as Error) }
+            if (queueManager.setQueue(songs)) {
+                playbackManager.load { result ->
+                    result.onSuccess { playbackManager.play() }
+                    result.onFailure { error -> view?.showLoadError(error as Error) }
+                }
             }
         }
     }

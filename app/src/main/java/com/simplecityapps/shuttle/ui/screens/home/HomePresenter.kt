@@ -5,6 +5,7 @@ import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import kotlinx.coroutines.flow.collect
@@ -53,8 +54,8 @@ class HomePresenter @Inject constructor(
     private val songRepository: SongRepository,
     private val albumRepository: AlbumRepository,
     private val albumArtistRepository: AlbumArtistRepository,
-    private val playbackManager: PlaybackManager
-
+    private val playbackManager: PlaybackManager,
+    private val queueManager: QueueManager
 ) : HomeContract.Presenter, BasePresenter<HomeContract.View>() {
 
     override fun shuffleAll() {
@@ -176,9 +177,11 @@ class HomePresenter @Inject constructor(
     override fun play(albumArtist: AlbumArtist) {
         launch {
             val songs = songRepository.getSongs(SongQuery.AlbumArtists(listOf(SongQuery.AlbumArtist(name = albumArtist.name)))).firstOrNull().orEmpty()
-            playbackManager.load(songs, 0) { result ->
-                result.onSuccess { playbackManager.play() }
-                result.onFailure { error -> view?.showLoadError(error as Error) }
+            if (queueManager.setQueue(songs)) {
+                playbackManager.load { result ->
+                    result.onSuccess { playbackManager.play() }
+                    result.onFailure { error -> view?.showLoadError(error as Error) }
+                }
             }
         }
     }
@@ -186,9 +189,11 @@ class HomePresenter @Inject constructor(
     override fun play(album: Album) {
         launch {
             val songs = songRepository.getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = album.name, albumArtistName = album.albumArtist)))).firstOrNull().orEmpty()
-            playbackManager.load(songs, 0) { result ->
-                result.onSuccess { playbackManager.play() }
-                result.onFailure { error -> view?.showLoadError(error as Error) }
+            if (queueManager.setQueue(songs)) {
+                playbackManager.load { result ->
+                    result.onSuccess { playbackManager.play() }
+                    result.onFailure { error -> view?.showLoadError(error as Error) }
+                }
             }
         }
     }

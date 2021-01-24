@@ -207,6 +207,14 @@ class ExoPlayerPlayback(
         player.repeatMode = repeatMode.toRepeatMode()
     }
 
+    override fun setAudioSessionId(sessionId: Int) {
+        if (sessionId != -1) {
+            player.audioSessionId = sessionId
+        } else {
+            Timber.e("Failed to set audio session id (sessionId: -1)")
+        }
+    }
+
 
     enum class PlaybackState {
         Idle, Buffering, Ready, Ended, Unknown;

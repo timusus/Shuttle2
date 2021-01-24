@@ -67,9 +67,11 @@ class SmartPlaylistDetailPresenter @AssistedInject constructor(
 
     override fun onSongClicked(song: Song) {
         launch {
-            playbackManager.load(songs, songs.indexOf(song)) { result ->
-                result.onSuccess { playbackManager.play() }
-                result.onFailure { error -> view?.showLoadError(error as Error) }
+            if (queueManager.setQueue(songs = songs, position = songs.indexOf(song))) {
+                playbackManager.load { result ->
+                    result.onSuccess { playbackManager.play() }
+                    result.onFailure { error -> view?.showLoadError(error as Error) }
+                }
             }
         }
     }

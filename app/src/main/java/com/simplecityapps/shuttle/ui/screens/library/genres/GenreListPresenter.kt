@@ -143,9 +143,11 @@ class GenreListPresenter @Inject constructor(
             val songs = genreRepository.getSongsForGenre(genre.name, SongQuery.All())
                 .firstOrNull()
                 .orEmpty()
-            playbackManager.load(songs, 0) { result ->
-                result.onSuccess { playbackManager.play() }
-                result.onFailure { error -> view?.showLoadError(error as Error) }
+            if (queueManager.setQueue(songs)) {
+                playbackManager.load { result ->
+                    result.onSuccess { playbackManager.play() }
+                    result.onFailure { error -> view?.showLoadError(error as Error) }
+                }
             }
         }
     }

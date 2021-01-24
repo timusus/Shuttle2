@@ -3,6 +3,7 @@ package com.simplecityapps.playback.dagger
 import android.content.Context
 import android.content.SharedPreferences
 import android.graphics.Bitmap
+import android.media.AudioManager
 import android.os.Build
 import android.util.LruCache
 import androidx.core.content.getSystemService
@@ -115,6 +116,11 @@ class PlaybackModule {
         return MediaIdHelper(playlistRepository, artistRepository, albumRepository, songRepository)
     }
 
+    @Provides
+    fun provideAudioManager(context: Context): AudioManager? {
+        return context.getSystemService()
+    }
+
     @AppScope
     @Provides
     fun providePlaybackManager(
@@ -123,9 +129,10 @@ class PlaybackModule {
         playbackWatcher: PlaybackWatcher,
         audioFocusHelper: AudioFocusHelper,
         playbackPreferenceManager: PlaybackPreferenceManager,
-        queueWatcher: QueueWatcher
+        queueWatcher: QueueWatcher,
+        audioManager: AudioManager?
     ): PlaybackManager {
-        return PlaybackManager(queueManager, playbackWatcher, audioFocusHelper, playbackPreferenceManager, playback, queueWatcher)
+        return PlaybackManager(queueManager, playbackWatcher, audioFocusHelper, playbackPreferenceManager, playback, queueWatcher, audioManager)
     }
 
     @AppScope

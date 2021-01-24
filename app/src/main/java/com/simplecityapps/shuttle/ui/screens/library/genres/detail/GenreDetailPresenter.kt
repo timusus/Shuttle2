@@ -99,9 +99,11 @@ class GenreDetailPresenter @AssistedInject constructor(
 
     override fun onSongClicked(song: Song) {
         launch {
-            playbackManager.load(songs, songs.indexOf(song)) { result ->
-                result.onSuccess { playbackManager.play() }
-                result.onFailure { error -> view?.showLoadError(error as Error) }
+            if (queueManager.setQueue(songs = songs, position = songs.indexOf(song))) {
+                playbackManager.load { result ->
+                    result.onSuccess { playbackManager.play() }
+                    result.onFailure { error -> view?.showLoadError(error as Error) }
+                }
             }
         }
     }
@@ -209,9 +211,11 @@ class GenreDetailPresenter @AssistedInject constructor(
     override fun play(album: Album) {
         launch {
             val songs = songRepository.getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = album.name, albumArtistName = album.albumArtist)))).firstOrNull().orEmpty()
-            playbackManager.load(songs, 0) { result ->
-                result.onSuccess { playbackManager.play() }
-                result.onFailure { error -> view?.showLoadError(error as Error) }
+            if (queueManager.setQueue(songs)) {
+                playbackManager.load { result ->
+                    result.onSuccess { playbackManager.play() }
+                    result.onFailure { error -> view?.showLoadError(error as Error) }
+                }
             }
         }
     }

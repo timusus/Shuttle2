@@ -214,13 +214,15 @@ class MediaSessionManager @Inject constructor(
             appCoroutineScope.launch {
                 mediaId?.let {
                     mediaIdHelper.getPlayQueue(mediaId)?.let { playQueue ->
-                        playbackManager.load(playQueue.songs, playQueue.playbackPosition) { result ->
-                            result.onSuccess {
-                                if (playWhenReady) {
-                                    playbackManager.play()
+                        if (queueManager.setQueue(songs = playQueue.songs)) {
+                            playbackManager.load { result ->
+                                result.onSuccess {
+                                    if (playWhenReady) {
+                                        playbackManager.play()
+                                    }
                                 }
+                                result.onFailure { error -> Timber.e(error, "Failed to load playback after onPlayFromMediaId") }
                             }
-                            result.onFailure { error -> Timber.e(error, "Failed to load playback after onPlayFromMediaId") }
                         }
                     }
                 }
@@ -275,13 +277,15 @@ class MediaSessionManager @Inject constructor(
             appCoroutineScope.launch {
                 flow.firstOrNull()?.let { songs ->
                     if (songs.isNotEmpty()) {
-                        playbackManager.load(songs, 0, 0) { result ->
-                            result.onSuccess {
-                                if (playWhenReady) {
-                                    playbackManager.play()
+                        if (queueManager.setQueue(songs)) {
+                            playbackManager.load { result ->
+                                result.onSuccess {
+                                    if (playWhenReady) {
+                                        playbackManager.play()
+                                    }
                                 }
+                                result.onFailure { error -> Timber.e(error, "Failed to load songs") }
                             }
-                            result.onFailure { error -> Timber.e("Failed to load songs") }
                         }
                     } else {
                         Timber.i("Search query $query with focus $mediaFocus yielded no results")

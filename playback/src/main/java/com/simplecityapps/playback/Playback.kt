@@ -46,6 +46,10 @@ interface Playback {
 
     fun setRepeatMode(repeatMode: QueueManager.RepeatMode)
 
+    fun setAudioSessionId(id: Int) {
+
+    }
+
     interface Callback {
         fun onPlayStateChanged(isPlaying: Boolean)
 

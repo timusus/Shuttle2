@@ -84,15 +84,18 @@ class PlaybackInitializer @Inject constructor(
                         val shuffleSongs = shuffleSongIds?.mapNotNull { shuffleSongId -> allSongs.firstOrNull { song -> song.id == shuffleSongId } }
 
                         withContext(Dispatchers.Main) {
-                            playbackManager.load(
-                                songs = songs,
-                                shuffleSongs = shuffleSongs,
-                                queuePosition = queuePosition
-                            ) { result ->
-                                result.onFailure { error -> Timber.e("Failed to load playback after reloading queue. Error: $error") }
-                                result.onSuccess { didLoadFirst ->
-                                    if (didLoadFirst) {
-                                        playbackManager.seekTo(seekPosition)
+                            if (queueManager.setQueue(
+                                    songs = songs,
+                                    shuffleSongs = shuffleSongs,
+                                    position = queuePosition
+                                )
+                            ) {
+                                playbackManager.load { result ->
+                                    result.onFailure { error -> Timber.e("Failed to load playback after reloading queue. Error: $error") }
+                                    result.onSuccess { didLoadFirst ->
+                                        if (didLoadFirst) {
+                                            playbackManager.seekTo(seekPosition)
+                                        }
                                     }
                                 }
                             }

@@ -9,16 +9,15 @@ import com.simplecityapps.mediaprovider.repository.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.simplecityapps.shuttle.ui.screens.library.ViewMode
 import com.simplecityapps.shuttle.ui.screens.library.toViewMode
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import javax.inject.Named
 
 interface AlbumArtistListContract {
 
@@ -56,7 +55,7 @@ class AlbumArtistListPresenter @Inject constructor(
     private val playbackManager: PlaybackManager,
     private val mediaImporter: MediaImporter,
     private val preferenceManager: GeneralPreferenceManager,
-    @Named("AppCoroutineScope") private val appCoroutineScope: CoroutineScope
+    private val queueManager: QueueManager
 ) : AlbumArtistListContract.Presenter,
     BasePresenter<AlbumArtistListContract.View>() {
 
@@ -166,9 +165,11 @@ class AlbumArtistListPresenter @Inject constructor(
                 .getSongs(SongQuery.AlbumArtists(listOf(SongQuery.AlbumArtist(name = albumArtist.name))))
                 .firstOrNull()
                 .orEmpty()
-            playbackManager.load(songs, 0) { result ->
-                result.onSuccess { playbackManager.play() }
-                result.onFailure { error -> view?.showLoadError(error as Error) }
+            if (queueManager.setQueue(songs)) {
+                playbackManager.load { result ->
+                    result.onSuccess { playbackManager.play() }
+                    result.onFailure { error -> view?.showLoadError(error as Error) }
+                }
             }
         }
     }
