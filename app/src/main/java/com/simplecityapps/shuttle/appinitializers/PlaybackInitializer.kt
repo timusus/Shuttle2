@@ -69,34 +69,38 @@ class PlaybackInitializer @Inject constructor(
 
             queuePosition?.let {
                 val songIds = playbackPreferenceManager.queueIds?.split(",")?.map { id -> id.toLong() }
-                val shuffleSongIds = playbackPreferenceManager.shuffleQueueIds?.split(",")?.map { id -> id.toLong() }
-                val allSongIds = songIds.orEmpty().toMutableSet()
-                allSongIds.addAll(shuffleSongIds.orEmpty())
 
-                if (songIds.isNullOrEmpty()) {
-                    onRestoreComplete()
-                    return@launch
-                }
+                if (!songIds.isNullOrEmpty()) {
+                    withContext(Dispatchers.IO) {
+                        val shuffleSongIds = playbackPreferenceManager.shuffleQueueIds?.split(",")?.map { id -> id.toLong() }
+                        val allSongIds = songIds.orEmpty().toMutableSet()
+                        allSongIds.addAll(shuffleSongIds.orEmpty())
 
-                val songs = withContext(Dispatchers.IO) {
-                    songRepository.getSongs(SongQuery.SongIds(allSongIds.toList()))
-                        .firstOrNull()
-                        .orEmpty()
-                }
+                        val allSongs = songRepository.getSongs(SongQuery.SongIds(allSongIds.toList()))
+                            .firstOrNull()
+                            .orEmpty()
 
-                playbackManager.load(
-                    songIds.mapNotNull { songId -> songs.firstOrNull { song -> song.id == songId } },
-                    shuffleSongIds?.mapNotNull { shuffleSongId -> songs.firstOrNull { song -> song.id == shuffleSongId } },
-                    queuePosition
-                ) { result ->
-                    result.onFailure { error -> Timber.e("Failed to load playback after reloading queue. Error: $error") }
-                    result.onSuccess { didLoadFirst ->
-                        if (didLoadFirst) {
-                            playbackManager.seekTo(seekPosition)
+                        val songs = songIds.mapNotNull { songId -> allSongs.firstOrNull { song -> song.id == songId } }
+                        val shuffleSongs = shuffleSongIds?.mapNotNull { shuffleSongId -> allSongs.firstOrNull { song -> song.id == shuffleSongId } }
+
+                        withContext(Dispatchers.Main) {
+                            playbackManager.load(
+                                songs = songs,
+                                shuffleSongs = shuffleSongs,
+                                queuePosition = queuePosition
+                            ) { result ->
+                                result.onFailure { error -> Timber.e("Failed to load playback after reloading queue. Error: $error") }
+                                result.onSuccess { didLoadFirst ->
+                                    if (didLoadFirst) {
+                                        playbackManager.seekTo(seekPosition)
+                                    }
+                                }
+                            }
+
+                            onRestoreComplete()
                         }
                     }
                 }
-                onRestoreComplete()
             } ?: run {
                 onRestoreComplete()
             }
