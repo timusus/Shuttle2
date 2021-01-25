@@ -119,13 +119,13 @@ object SafDirectoryHelper {
                     val ext = documentNode.displayName.substringAfterLast('.')
                     if ("m3u".contains(ext)) {
                         // Skip .m3u files
-                        break
+                        continue
                     }
 
                     if (documentNode.mimeType.startsWith("audio")) {
                         // Add files with mimetype "audio/*"
                         parent.addLeafNode(documentNode)
-                        break
+                        continue
                     }
 
                     if (arrayOf("mp3", "3gp", "mp4", "m4a", "m4b", "aac", "ts", "flac", "mid", "xmf", "mxmf", "midi", "rtttl", "rtx", "ota", "imy", "ogg", "mkv", "wav", "opus")
@@ -133,7 +133,7 @@ object SafDirectoryHelper {
                     ) {
                         // Add files with audio-related extensions
                         parent.addLeafNode(documentNode)
-                        break
+                        continue
                     }
                 }
             }
