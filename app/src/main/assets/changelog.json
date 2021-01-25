@@ -1,5 +1,7 @@
 {
   "commits": [
+    "Fixed an issue preventing scanner from finding files",
+    "0.2.6:",
     "Prioritise folder artwork over embedded (tag) artwork",
     "Prevent .m3u files from being imported as music by S2 scanner",
     "Possible fix for bluetooth metadata not updating",
