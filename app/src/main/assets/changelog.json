@@ -1,17 +1,5 @@
 {
   "commits": [
-    "Fixed an issue preventing scanner from finding files",
-    "0.2.6:",
-    "Prioritise folder artwork over embedded (tag) artwork",
-    "Prevent .m3u files from being imported as music by S2 scanner",
-    "Possible fix for bluetooth metadata not updating",
-    "Remember last selected library tab",
-    "Added option to clear queue",
-    "Increased Emby & Jellyfin server read timeout (S2 waits longer for a response when asking for song listing during scan)",
-    "Fall back to 'original date' if year is missing, when reading tags",
-    "Fixed an issue where notification was shown without placeholder art",
-    "Fixed ~6 unique crashes and potentially resolved a couple of ANRs (application not responding)",
-    "Fixed an issue causing slow loading of app when there are lots of tracks in the queue",
-    "Possible (unlikely?) fix for assistant not working with S2 - now implements 'MediaSession.onPrepareFromSearch()' API"
+    "Added various theme options"
   ]
 }
