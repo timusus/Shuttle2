@@ -56,7 +56,7 @@ class CrashReportingInitializer @Inject constructor(
 class CrashReportingTree : Timber.Tree() {
 
     override fun log(priority: Int, tag: String?, message: String, throwable: Throwable?) {
-        Bugsnag.leaveBreadcrumb(message)
+        Bugsnag.leaveBreadcrumb("${priority.getPriorityString()}/$tag\n$message")
 
         try {
             throwable?.let {
@@ -64,6 +64,17 @@ class CrashReportingTree : Timber.Tree() {
             }
         } catch (error: Exception) {
             Log.e("TimberInit", "Failed to log to CrashReportingTree. \n[ tag: $tag\nmessage: $message. ]", error)
+        }
+    }
+
+    private fun Int.getPriorityString(): String {
+        return when (this) {
+            Log.VERBOSE -> "V"
+            Log.DEBUG -> "D"
+            Log.INFO -> "I"
+            Log.WARN -> "W"
+            Log.ERROR -> "E"
+            else -> ""
         }
     }
 }
