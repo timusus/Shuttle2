@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.core.view.isVisible
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.MediaProvider
@@ -69,7 +70,7 @@ class MediaProviderBinder(
 
             title.text = viewBinder.providerType.title()
             subtitle.text = viewBinder.providerType.description()
-            icon.setImageResource(viewBinder.providerType.iconResId())
+            icon.setImageDrawable(AppCompatResources.getDrawable(itemView.context, viewBinder.providerType.iconResId()))
 
             overflowButton.isVisible = viewBinder.showRemoveButton
             subtitle.isVisible = viewBinder.showSubtitle
