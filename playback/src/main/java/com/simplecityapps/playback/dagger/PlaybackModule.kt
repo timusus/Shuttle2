@@ -10,10 +10,7 @@ import androidx.core.content.getSystemService
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.AggregateMediaPathProvider
 import com.simplecityapps.mediaprovider.repository.*
-import com.simplecityapps.playback.NoiseManager
-import com.simplecityapps.playback.PlaybackManager
-import com.simplecityapps.playback.PlaybackNotificationManager
-import com.simplecityapps.playback.PlaybackWatcher
+import com.simplecityapps.playback.*
 import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi21
@@ -121,6 +118,11 @@ class PlaybackModule {
         return context.getSystemService()
     }
 
+    @Provides
+    fun provideAudioEffectSessionManager(context: Context): AudioEffectSessionManager {
+        return AudioEffectSessionManager(context)
+    }
+
     @AppScope
     @Provides
     fun providePlaybackManager(
@@ -129,10 +131,11 @@ class PlaybackModule {
         playbackWatcher: PlaybackWatcher,
         audioFocusHelper: AudioFocusHelper,
         playbackPreferenceManager: PlaybackPreferenceManager,
+        audioEffectSessionManager: AudioEffectSessionManager,
         queueWatcher: QueueWatcher,
         audioManager: AudioManager?
     ): PlaybackManager {
-        return PlaybackManager(queueManager, playbackWatcher, audioFocusHelper, playbackPreferenceManager, playback, queueWatcher, audioManager)
+        return PlaybackManager(queueManager, playbackWatcher, audioFocusHelper, playbackPreferenceManager, audioEffectSessionManager, playback, queueWatcher, audioManager)
     }
 
     @AppScope

@@ -19,6 +19,7 @@ class PlaybackManager(
     private val playbackWatcher: PlaybackWatcher,
     private val audioFocusHelper: AudioFocusHelper,
     private val playbackPreferenceManager: PlaybackPreferenceManager,
+    private val audioEffectSessionManager: AudioEffectSessionManager,
     exoplayerPlayback: ExoPlayerPlayback,
     queueWatcher: QueueWatcher,
     audioManager: AudioManager?
@@ -36,9 +37,12 @@ class PlaybackManager(
         playback.setRepeatMode(queueManager.getRepeatMode())
         playback.callback = this
         playback.setAudioSessionId(audioSessionId)
+        audioEffectSessionManager.sessionId = audioSessionId
         audioFocusHelper.listener = this
 
         queueWatcher.addCallback(this)
+
+        audioEffectSessionManager.openAudioEffectSession()
     }
 
     fun togglePlayback() {
@@ -147,6 +151,7 @@ class PlaybackManager(
     fun release() {
         Timber.v("release()")
         playback.release()
+        audioEffectSessionManager.closeAudioEffectSession()
     }
 
     fun skipToNext(ignoreRepeat: Boolean = false, completion: ((Result<Any?>) -> Unit)? = null) {
