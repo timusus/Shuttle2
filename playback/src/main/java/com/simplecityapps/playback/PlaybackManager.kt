@@ -27,7 +27,7 @@ class PlaybackManager(
     AudioFocusHelper.Listener,
     QueueChangeCallback {
 
-    private var handler: ProgressHandler = ProgressHandler()
+    private var progressHandler: ProgressHandler = ProgressHandler()
 
     private var playback: Playback = exoplayerPlayback
 
@@ -254,7 +254,7 @@ class PlaybackManager(
             if (queueManager.setQueue(songs)) {
                 load { result ->
                     result.onSuccess { play() }
-                    result.onFailure { throwable -> Timber.e(throwable, "Failed to load songs (addToQueue())") }
+                    result.onFailure { throwable -> Timber.e(throwable, "Failed to load songs (playNext())") }
                 }
             }
         } else {
@@ -300,9 +300,9 @@ class PlaybackManager(
 
     private fun monitorProgress(isPlaying: Boolean) {
         if (isPlaying) {
-            handler.start { updateProgress() }
+            progressHandler.start { updateProgress() }
         } else {
-            handler.stop()
+            progressHandler.stop()
         }
     }
 
