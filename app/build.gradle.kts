@@ -100,8 +100,8 @@ android {
         implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
 
         // AndroidX Navigation
-        implementation("androidx.navigation:navigation-fragment-ktx:2.3.2")
-        implementation("androidx.navigation:navigation-ui-ktx:2.3.2")
+        implementation("androidx.navigation:navigation-fragment-ktx:2.3.3")
+        implementation("androidx.navigation:navigation-ui-ktx:2.3.3")
 
         // Dagger core
         kapt("com.google.dagger:dagger-compiler:2.30.1")
@@ -161,7 +161,7 @@ android {
         implementation("androidx.drawerlayout:drawerlayout:1.1.1")
 
         // New fragment manager
-        implementation("androidx.fragment:fragment:1.3.0-rc01")
+        implementation("androidx.fragment:fragment:1.3.0")
 
         // Coil
         implementation("io.coil-kt:coil-base:1.1.1")
