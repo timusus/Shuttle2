@@ -34,7 +34,6 @@ import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import okhttp3.CacheControl
 import okhttp3.Call
 import okhttp3.OkHttpClient
-import okio.IOException
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.TimeUnit
 
@@ -50,14 +49,25 @@ class CoilImageLoader(
         val callFactory: Call.Factory by lazy {
             val connectivityManager: ConnectivityManager? = context.getSystemService()
             httpClient.newBuilder()
-                .addNetworkInterceptor { chain ->
+                .addInterceptor { chain ->
                     // Don't make a network request if we're not allowed to
-                    if (preferenceManager.artworkWifiOnly && connectivityManager?.isActiveNetworkMetered == true) {
-                        throw IOException("Network disabled")
-                    }
+                    chain.proceed(
+                        chain.request().newBuilder()
+                            .apply {
+                                if (preferenceManager.artworkWifiOnly && connectivityManager?.isActiveNetworkMetered == true) {
+                                    cacheControl(
+                                        CacheControl
+                                            .Builder()
+                                            .onlyIfCached()
+                                            .build()
+                                    )
+                                }
+                            }.build()
+                    )
+                }
+                .addNetworkInterceptor { chain ->
                     // Add custom cache control headers to ensure our result is stored in the cache
-                    val response = chain.proceed(chain.request())
-                    response.newBuilder()
+                    chain.proceed(chain.request()).newBuilder()
                         .apply {
                             header(
                                 name = "Cache-Control",
@@ -67,8 +77,8 @@ class CoilImageLoader(
                                     .build()
                                     .toString()
                             )
-                        }
-                        .build()
+                        }.build()
+
                 }
                 .cache(CoilUtils.createDefaultCache(context))
                 .build()

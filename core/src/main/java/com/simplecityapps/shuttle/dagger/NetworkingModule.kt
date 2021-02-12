@@ -17,11 +17,9 @@ open class NetworkingModule {
     @AppScope
     @Provides
     fun provideLoggingInterceptor(): HttpLoggingInterceptor {
-        return HttpLoggingInterceptor(object : HttpLoggingInterceptor.Logger {
-            override fun log(message: String) {
-                Timber.tag(NETWORK_LOG_TAG).d(message)
-            }
-        }).apply {
+        return HttpLoggingInterceptor { message ->
+            Timber.tag(NETWORK_LOG_TAG).v(message)
+        }.apply {
             level = HttpLoggingInterceptor.Level.NONE
         }
     }
