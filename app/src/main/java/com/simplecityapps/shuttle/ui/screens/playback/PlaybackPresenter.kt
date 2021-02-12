@@ -62,7 +62,11 @@ class PlaybackPresenter @Inject constructor(
 
     private fun updateProgress() {
         queueManager.getCurrentItem()?.song?.let { currentSong ->
-            onProgressChanged(playbackManager.getProgress() ?: 0, playbackManager.getDuration() ?: currentSong.duration)
+            onProgressChanged(
+                position = playbackManager.getProgress() ?: 0,
+                duration = playbackManager.getDuration() ?: currentSong.duration,
+                fromUser = false
+            )
         }
     }
 
@@ -202,7 +206,7 @@ class PlaybackPresenter @Inject constructor(
 
     // PlaybackManager.ProgressCallback
 
-    override fun onProgressChanged(position: Int, duration: Int) {
+    override fun onProgressChanged(position: Int, duration: Int, fromUser: Boolean) {
         view?.setProgress(position, duration)
     }
 

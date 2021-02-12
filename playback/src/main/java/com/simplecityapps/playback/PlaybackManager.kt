@@ -216,7 +216,7 @@ class PlaybackManager(
      */
     fun seekTo(position: Int) {
         playback.seek(position)
-        updateProgress()
+        updateProgress(fromUser = true)
     }
 
     suspend fun addToQueue(songs: List<Song>) {
@@ -306,10 +306,10 @@ class PlaybackManager(
         }
     }
 
-    private fun updateProgress() {
+    private fun updateProgress(fromUser: Boolean = false) {
         playback.getProgress()?.let { position ->
             (playback.getDuration() ?: queueManager.getCurrentItem()?.song?.duration)?.let { duration ->
-                playbackWatcher.onProgressChanged(position, duration)
+                playbackWatcher.onProgressChanged(position, duration, fromUser)
             }
         }
     }

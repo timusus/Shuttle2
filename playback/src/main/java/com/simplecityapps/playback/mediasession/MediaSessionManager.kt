@@ -8,6 +8,7 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.LruCache
+import androidx.core.content.res.ResourcesCompat
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.playback.*
@@ -44,7 +45,7 @@ class MediaSessionManager @Inject constructor(
     QueueChangeCallback {
 
     private val placeholder: Bitmap? by lazy {
-        PlaybackNotificationManager.drawableToBitmap(context.resources.getDrawable(R.drawable.ic_music_note_black_24dp, context.theme))
+        PlaybackNotificationManager.drawableToBitmap(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_music_note_black_24dp, context.theme)!!)
     }
 
     val mediaSession: MediaSessionCompat by lazy {
@@ -53,8 +54,15 @@ class MediaSessionManager @Inject constructor(
         mediaSession
     }
 
+    private var activeQueueItemId = -1L
+
     private var playbackStateBuilder = PlaybackStateCompat.Builder()
-        .setActions(
+
+    init {
+        playbackWatcher.addCallback(this)
+        queueWatcher.addCallback(this)
+
+        playbackStateBuilder.setActions(
             PlaybackStateCompat.ACTION_PLAY
                     or PlaybackStateCompat.ACTION_PAUSE
                     or PlaybackStateCompat.ACTION_SKIP_TO_NEXT
@@ -68,52 +76,20 @@ class MediaSessionManager @Inject constructor(
                     or PlaybackStateCompat.ACTION_PREPARE_FROM_MEDIA_ID
                     or PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID
         )
-
-    init {
-        playbackWatcher.addCallback(this)
-        queueWatcher.addCallback(this)
     }
 
     private fun getPlaybackState() = if (playbackManager.isPlaying()) PlaybackStateCompat.STATE_PLAYING else PlaybackStateCompat.STATE_PAUSED
 
-
-    // PlaybackWatcherCallback Implementation
-
-    override fun onPlaystateChanged(isPlaying: Boolean) {
-        mediaSession.isActive = isPlaying
-        playbackStateBuilder.setState(getPlaybackState(), playbackManager.getProgress()?.toLong() ?: 0, 1.0f)
-        mediaSession.setPlaybackState(playbackStateBuilder.build())
+    private fun updatePlaybackState() {
+        Timber.i("updatePlaybackState()")
+        val playbackState = playbackStateBuilder.build()
+        activeQueueItemId = playbackState.activeQueueItemId
+        mediaSession.setPlaybackState(playbackState)
     }
 
-    override fun onProgressChanged(position: Int, duration: Int) {
-        playbackStateBuilder.setState(getPlaybackState(), position.toLong(), 1.0f)
-        mediaSession.setPlaybackState(playbackStateBuilder.build())
-    }
-
-
-    // QueueChangeCallback Implementation
-
-    override fun onQueueChanged() {
-        val queue = queueManager.getQueue()
-        if (queue.isNotEmpty()) {
-            mediaSession.setQueue(queueManager.getQueue()
-                .subList(((queueManager.getCurrentPosition() ?: 0) - 10).coerceAtLeast(0), queueManager.getSize() - 1)
-                .take(50)
-                .map { queueItem -> queueItem.toQueueItem() })
-        } else {
-            mediaSession.setQueue(emptyList())
-        }
-    }
-
-    override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
+    private fun updateMetadata() {
+        Timber.i("updateMetadata()")
         queueManager.getCurrentItem()?.let { currentItem ->
-            playbackStateBuilder.setActiveQueueItemId(currentItem.toQueueItem().queueId)
-
-            playbackStateBuilder.setState(getPlaybackState(), playbackManager.getProgress()?.toLong() ?: 0, 1.0f)
-
-            val artworkSize = 512
-
-            mediaSession.setPlaybackState(playbackStateBuilder.build())
             val mediaMetadataCompat = MediaMetadataCompat.Builder()
                 .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, currentItem.song.id.toString())
                 .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, currentItem.song.albumArtist)
@@ -123,6 +99,8 @@ class MediaSessionManager @Inject constructor(
                 .putLong(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, currentItem.song.track.toLong())
                 .putLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS, queueManager.getSize().toLong())
                 .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, placeholder)
+
+            val artworkSize = 512
 
             synchronized(artworkCache) {
                 artworkCache[currentItem.song.getArtworkCacheKey(artworkSize, artworkSize)]?.let { image ->
@@ -135,9 +113,7 @@ class MediaSessionManager @Inject constructor(
                     height = artworkSize,
                 ) { image ->
                     mediaMetadataCompat.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, image)
-                    mediaSession.setMetadata(
-                        mediaMetadataCompat.build()
-                    )
+                    mediaSession.setMetadata(mediaMetadataCompat.build())
                     if (image != null) {
                         synchronized(artworkCache) {
                             artworkCache.put(currentItem.song.getArtworkCacheKey(artworkSize, artworkSize), image)
@@ -146,9 +122,55 @@ class MediaSessionManager @Inject constructor(
                 }
             }
 
-            mediaSession.setMetadata(
-                mediaMetadataCompat.build()
-            )
+            mediaSession.setMetadata(mediaMetadataCompat.build())
+        } ?: Timber.e("Metadata update failed.. current item null")
+    }
+
+    private fun updateQueue() {
+        Timber.i("updateQueue()")
+        val queue = queueManager.getQueue()
+        if (queue.isNotEmpty()) {
+            mediaSession.setQueue(queueManager.getQueue()
+                .subList(((queueManager.getCurrentPosition() ?: 0) - 5).coerceAtLeast(0), queueManager.getSize() - 1)
+                .take(30)
+                .map { queueItem -> queueItem.toQueueItem() })
+        } else {
+            mediaSession.setQueue(emptyList())
+        }
+    }
+
+    // PlaybackWatcherCallback Implementation
+
+    override fun onPlaystateChanged(isPlaying: Boolean) {
+        mediaSession.isActive = isPlaying
+        playbackStateBuilder.setState(getPlaybackState(), playbackManager.getProgress()?.toLong() ?: PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, 1.0f)
+        updatePlaybackState()
+    }
+
+    override fun onProgressChanged(position: Int, duration: Int, fromUser: Boolean) {
+        if (fromUser) {
+            playbackStateBuilder.setState(getPlaybackState(), position.toLong(), 1.0f)
+            updatePlaybackState()
+        }
+    }
+
+
+    // QueueChangeCallback Implementation
+
+    override fun onQueueChanged() {
+        updateQueue()
+    }
+
+    override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
+        queueManager.getCurrentItem()?.let { currentItem ->
+            val activeQueueItemId = currentItem.toQueueItem().queueId
+            if (activeQueueItemId != this.activeQueueItemId) {
+                updateQueue()
+                playbackStateBuilder.setActiveQueueItemId(activeQueueItemId)
+                playbackStateBuilder.setState(getPlaybackState(), 0L, 1.0f)
+                updatePlaybackState()
+                updateMetadata()
+            }
         }
     }
 

@@ -59,7 +59,7 @@ class MiniPlayerPresenter @Inject constructor(
 
     // PlaybackManager.ProgressCallback
 
-    override fun onProgressChanged(position: Int, duration: Int) {
+    override fun onProgressChanged(position: Int, duration: Int, fromUser: Boolean) {
         view?.setProgress(position, duration)
     }
 
