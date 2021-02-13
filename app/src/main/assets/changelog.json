@@ -1,5 +1,11 @@
 {
   "commits": [
-    "Added various theme options"
+    "Proper fix for notification progress not updating",
+    "Fixed an issue where bluetooth metadata didn't update correctly",
+    "Send 'audio effect' intents to allow 3rd party DSP effects",
+    "Removed the debug drawer (debug logging still available in settings)",
+    "Fixed issue where cached images weren't displayed when offline",
+    "Various other minor crash fixes",
+    "Various optimisations & attempts to reduce ANRs"
   ]
 }
