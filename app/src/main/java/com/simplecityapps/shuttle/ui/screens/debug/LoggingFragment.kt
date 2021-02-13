@@ -45,7 +45,7 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
         super.onViewCreated(view, savedInstanceState)
 
         adapter = RecyclerAdapter(viewLifecycleOwner.lifecycleScope)
-        adapter.loggingEnabled = false
+        adapter.loggingEnabled = true
 
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
@@ -54,21 +54,15 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
             debugLoggingTree.history
                 .filter { logMessage -> canLog(logMessage) }
                 .map { logMessage -> LogMessageBinder(logMessage) }
-        )
+        ) {
+            recyclerView.scrollToPosition(adapter.itemCount - 1)
+            debugLoggingTree.addCallback(this)
+        }
     }
 
-    override fun onResume() {
-        super.onResume()
-
-        recyclerView.scrollToPosition(adapter.itemCount - 1)
-
-        debugLoggingTree.addCallback(this)
-    }
-
-    override fun onPause() {
-        super.onPause()
-
+    override fun onDestroyView() {
         debugLoggingTree.removeCallback(this)
+        super.onDestroyView()
     }
 
 
