@@ -10,7 +10,6 @@ class TimberInitializer @Inject constructor(
 ) : AppInitializer {
 
     override fun init(application: Application) {
-        // Todo: Disable for release builds
         Timber.plant(debugLoggingTree)
     }
 

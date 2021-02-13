@@ -26,8 +26,8 @@ class AppModule {
 
     @AppScope
     @Provides
-    fun provideDebugLoggingTree(context: Context, sharedPreferences: SharedPreferences): DebugLoggingTree {
-        return DebugLoggingTree(context, sharedPreferences)
+    fun provideDebugLoggingTree(context: Context, generalPreferenceManager: GeneralPreferenceManager): DebugLoggingTree {
+        return DebugLoggingTree(context, generalPreferenceManager)
     }
 
     @AppScope

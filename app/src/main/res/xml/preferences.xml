@@ -129,10 +129,14 @@
         app:iconSpaceReserved="false">
         <SwitchPreference
             android:defaultValue="false"
-            android:dialogTitle="File Logging"
             android:key="pref_file_logging"
-            android:summary="Writes Shuttle logs to a file on disk, which can be copied via the debug drawer"
+            android:summary="Writes Shuttle logs to a file on disk"
             android:title="File logging"
+            app:iconSpaceReserved="false" />
+        <Preference
+            android:dependency="pref_file_logging"
+            android:key="pref_copy_debug_logs"
+            android:title="Copy debug logs"
             app:iconSpaceReserved="false" />
     </PreferenceCategory>
 

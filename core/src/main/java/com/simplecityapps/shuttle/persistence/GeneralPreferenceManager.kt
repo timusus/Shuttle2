@@ -134,4 +134,15 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
         get() {
             return sharedPreferences.getInt("widget_background_opacity", 100)
         }
+
+
+    // Debugging
+
+    var debugFileLogging: Boolean
+        set(value) {
+            sharedPreferences.put("pref_file_logging", value)
+        }
+        get() {
+            return sharedPreferences.getBoolean("pref_file_logging", false)
+        }
 }

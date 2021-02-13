@@ -12,7 +12,6 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.dagger.NetworkingModule
 import com.simplecityapps.shuttle.ui.common.PagerAdapter
-import com.simplecityapps.shuttle.ui.screens.onboarding.scanner.MediaScannerFragment
 
 class DebugDrawerFragment : Fragment(), Injectable {
 
@@ -31,18 +30,16 @@ class DebugDrawerFragment : Fragment(), Injectable {
         val adapter = PagerAdapter(
             fragmentManager = childFragmentManager,
             lifecycle = lifecycle,
-            size = 2,
+            size = 1,
             fragmentFactory = { position ->
                 when (position) {
-                    0 -> MediaScannerFragment.newInstance(scanAutomatically = false, showRescanButton = true, dismissOnScanComplete = false, showToolbar = false)
-                    1 -> LoggingFragment.newInstance(LoggingFragment.Filter(excludesTag = NetworkingModule.NETWORK_LOG_TAG))
+                    0 -> LoggingFragment.newInstance(LoggingFragment.Filter(excludesTag = NetworkingModule.NETWORK_LOG_TAG))
                     else -> throw IllegalArgumentException()
                 }
             },
             titleFactory = { position ->
                 when (position) {
-                    0 -> "Media Scanner"
-                    1 -> "Debug"
+                    0 -> "Debug"
                     else -> throw IllegalArgumentException()
                 }
             })

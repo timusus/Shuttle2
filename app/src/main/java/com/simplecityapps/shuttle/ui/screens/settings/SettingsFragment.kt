@@ -1,11 +1,16 @@
 package com.simplecityapps.shuttle.ui.screens.settings
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.os.TransactionTooLargeException
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.ProgressBar
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
@@ -29,6 +34,7 @@ import com.simplecityapps.playback.widgets.WidgetManager
 import com.simplecityapps.provider.emby.EmbyAuthenticationManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.debug.DebugLoggingTree
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.ThemeManager
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
@@ -190,6 +196,24 @@ class SettingsFragment : PreferenceFragmentCompat(),
                 .setMessage("S2 must be restarted for theme changes to take effect")
                 .setNegativeButton("Close", null)
                 .show()
+            true
+        }
+
+        preferenceScreen.findPreference<Preference>("pref_copy_debug_logs")?.setOnPreferenceClickListener {
+            val clipboardManager: ClipboardManager = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+            val file = requireContext().getFileStreamPath(DebugLoggingTree.FILE_NAME)
+            if (file.exists()) {
+                val clip = ClipData.newPlainText("Shuttle Logs", requireContext().getFileStreamPath(DebugLoggingTree.FILE_NAME).readText(Charsets.UTF_8))
+                try {
+                    clipboardManager.setPrimaryClip(clip)
+                    Toast.makeText(requireContext(), "Logs copied to clipboard", Toast.LENGTH_SHORT).show()
+                } catch (e: TransactionTooLargeException) {
+                    Toast.makeText(requireContext(), "Log file is too large for clipboard", Toast.LENGTH_SHORT).show()
+                }
+            } else {
+                Toast.makeText(requireContext(), "Log file empty", Toast.LENGTH_SHORT).show()
+            }
+
             true
         }
 
