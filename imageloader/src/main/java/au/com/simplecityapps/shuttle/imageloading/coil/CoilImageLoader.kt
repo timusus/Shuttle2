@@ -31,6 +31,7 @@ import coil.transition.Transition
 import coil.util.CoilUtils
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import kotlinx.coroutines.Dispatchers
 import okhttp3.CacheControl
 import okhttp3.Call
 import okhttp3.OkHttpClient
@@ -45,7 +46,6 @@ class CoilImageLoader(
 ) : ArtworkImageLoader {
 
     private val imageLoader: ImageLoader by lazy {
-
         val callFactory: Call.Factory by lazy {
             val connectivityManager: ConnectivityManager? = context.getSystemService()
             httpClient.newBuilder()
@@ -65,9 +65,10 @@ class CoilImageLoader(
                             }.build()
                     )
                 }
-                .addNetworkInterceptor { chain ->
+                .addInterceptor { chain ->
                     // Add custom cache control headers to ensure our result is stored in the cache
-                    chain.proceed(chain.request()).newBuilder()
+                    val response = chain.proceed(chain.request())
+                    response.newBuilder()
                         .apply {
                             header(
                                 name = "Cache-Control",
@@ -77,6 +78,7 @@ class CoilImageLoader(
                                     .build()
                                     .toString()
                             )
+                            removeHeader("Pragma")
                         }.build()
 
                 }
@@ -113,6 +115,7 @@ class CoilImageLoader(
                 add(RemoteAlbumArtistFetcher(preferenceManager, httpFetcher))
             }
             .allowHardware(false)
+            .dispatcher(Dispatchers.Default)
             .build()
     }
 
