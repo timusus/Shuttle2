@@ -4,10 +4,12 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.net.wifi.WifiManager
+import androidx.core.net.toUri
 import com.google.android.gms.cast.*
 import com.google.android.gms.cast.framework.CastSession
 import com.google.android.gms.cast.framework.media.RemoteMediaClient
 import com.google.android.gms.common.images.WebImage
+import com.simplecityapps.mediaprovider.MediaPathProvider
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.queue.QueueManager
@@ -18,7 +20,8 @@ import timber.log.Timber
 class CastPlayback(
     private val context: Context,
     private val castSession: CastSession,
-    private val httpServer: HttpServer
+    private val httpServer: HttpServer,
+    private val mediaPathProvider: MediaPathProvider
 ) : Playback {
 
     override var callback: Playback.Callback? = null
@@ -48,7 +51,12 @@ class CastPlayback(
         metadata.putString(MediaMetadata.KEY_TITLE, current.name)
         metadata.addImage(WebImage(Uri.parse("http://$ipAddress:5000/songs/${current.id}/artwork")))
 
-        val mediaInfo = MediaInfo.Builder("http://$ipAddress:5000/songs/${current.id}/audio")
+        var path = "http://$ipAddress:5000/songs/${current.id}/audio"
+        val uri = current.path.toUri()
+        if (mediaPathProvider.isRemote(uri)) {
+            path = mediaPathProvider.getPath(uri).toString()
+        }
+        val mediaInfo = MediaInfo.Builder(path)
             .setStreamType(MediaInfo.STREAM_TYPE_BUFFERED)
             .setContentType(current.mimeType)
             .setStreamDuration(current.duration.toLong())

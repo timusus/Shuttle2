@@ -152,8 +152,8 @@ class PlaybackModule {
 
     @AppScope
     @Provides
-    fun provideCastSessionManager(context: Context, playbackManager: PlaybackManager, httpServer: HttpServer, exoPlayerPlayback: ExoPlayerPlayback): CastSessionManager {
-        return CastSessionManager(playbackManager, context, httpServer, exoPlayerPlayback)
+    fun provideCastSessionManager(context: Context, playbackManager: PlaybackManager, httpServer: HttpServer, exoPlayerPlayback: ExoPlayerPlayback, mediaPathProvider: AggregateMediaPathProvider): CastSessionManager {
+        return CastSessionManager(playbackManager, context, httpServer, exoPlayerPlayback, mediaPathProvider)
     }
 
     @AppScope

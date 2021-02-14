@@ -4,6 +4,7 @@ import android.content.Context
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.CastSession
 import com.google.android.gms.cast.framework.SessionManagerListener
+import com.simplecityapps.mediaprovider.MediaPathProvider
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.exoplayer.ExoPlayerPlayback
 import timber.log.Timber
@@ -13,7 +14,8 @@ class CastSessionManager @Inject constructor(
     private val playbackManager: PlaybackManager,
     private val applicationContext: Context,
     private val httpServer: HttpServer,
-    private val exoPlayerPlayback: ExoPlayerPlayback
+    private val exoPlayerPlayback: ExoPlayerPlayback,
+    private val mediaPathProvider: MediaPathProvider
 ) : SessionManagerListener<CastSession> {
 
     init {
@@ -28,7 +30,7 @@ class CastSessionManager @Inject constructor(
     override fun onSessionStarted(castSession: CastSession, s: String) {
         Timber.d("onSessionStarted")
 
-        val playback = CastPlayback(applicationContext, castSession, httpServer)
+        val playback = CastPlayback(applicationContext, castSession, httpServer, mediaPathProvider)
         playbackManager.switchToPlayback(playback)
     }
 
@@ -62,7 +64,7 @@ class CastSessionManager @Inject constructor(
 
         // If we're not already playing via CastPlayback, switch
         if (!(playbackManager.getPlayback() is CastPlayback)) {
-            val playback = CastPlayback(applicationContext, castSession, httpServer)
+            val playback = CastPlayback(applicationContext, castSession, httpServer, mediaPathProvider)
             playbackManager.switchToPlayback(playback)
         }
     }

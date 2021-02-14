@@ -20,7 +20,7 @@ import timber.log.Timber
 class ExoPlayerPlayback(
     context: Context,
     private val audioProcessor: AudioProcessor,
-    private val mediaItemProvider: MediaPathProvider
+    private val mediaPathProvider: MediaPathProvider
 ) : Playback {
 
     override var callback: Playback.Callback? = null
@@ -114,12 +114,12 @@ class ExoPlayerPlayback(
 
         player.addListener(eventListener)
         player.seekTo(seekPosition.toLong())
-        val mediaItem = getMediaItem(current.path.toUri())
+        val uri = current.path.toUri()
+        val mediaItem = getMediaItem(uri)
         player.setMediaItem(mediaItem)
         player.prepare()
 
-        // Todo: Make this generic (encode whether media item is remote or not via custom tag)
-        if (mediaItem.playbackProperties?.uri?.scheme == "emby") {
+        if (mediaPathProvider.isRemote(uri)) {
             player.setWakeMode(C.WAKE_MODE_NETWORK)
         } else {
             player.setWakeMode(C.WAKE_MODE_LOCAL)
@@ -246,6 +246,6 @@ class ExoPlayerPlayback(
 
     @Throws(IllegalStateException::class)
     fun getMediaItem(uri: Uri): MediaItem {
-        return MediaItem.fromUri(mediaItemProvider.getPath(uri))
+        return MediaItem.fromUri(mediaPathProvider.getPath(uri))
     }
 }
