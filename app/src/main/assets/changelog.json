@@ -1,5 +1,8 @@
 {
   "commits": [
+    "Fixed Chromecast issue for remote media providers (untested, please let me know if this works!)",
+    "Fixed an issue preventing certain images from being stored in the cache",
+    "0.2.9",
     "Proper fix for notification progress not updating",
     "Fixed an issue where bluetooth metadata didn't update correctly",
     "Send 'audio effect' intents to allow 3rd party DSP effects",
