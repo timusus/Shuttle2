@@ -7,11 +7,11 @@ object BuildPlugins {
         const val androidGradlePlugin = "4.0.1"
         const val safeArgsPlugin = "2.3.0"
         const val googleServicesPlugin = "4.3.3"
-        const val bugsnagPlugin = "5.0.1"
+        const val bugsnagPlugin = "5.7.3"
         const val gradleVersionPlugin = "0.27.0"
 
         // Module
-        const val playPublisher = "3.0.0"
+        const val playPublisher = "3.2.0-agp4.2"
     }
 
     // Top level

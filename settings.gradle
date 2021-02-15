@@ -11,6 +11,6 @@ include ':playback'
 include ':saf'
 include ':ktaglib:lib'
 
-gradle.ext.exoplayerRoot = 'exoplayer'
+gradle.ext.exoplayerRoot = "$rootDir/exoplayer"
 gradle.ext.exoplayerModulePrefix = 'exoplayer-'
 apply from: new File(gradle.ext.exoplayerRoot, 'core_settings.gradle')
