@@ -16,6 +16,8 @@ import com.simplecityapps.shuttle.ui.common.ContextualToolbarHelper
 import com.simplecityapps.shuttle.ui.common.PagerAdapter
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.autoClearedNullable
+import com.simplecityapps.shuttle.ui.common.recyclerview.enforceSingleScrollDirection
+import com.simplecityapps.shuttle.ui.common.recyclerview.recyclerView
 import com.simplecityapps.shuttle.ui.common.view.ToolbarHost
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistListFragment
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListFragment
@@ -87,6 +89,7 @@ class LibraryFragment : Fragment(), Injectable, ToolbarHost {
             })
 
         viewPager?.let { viewPager ->
+            viewPager.recyclerView.enforceSingleScrollDirection()
             viewPager.adapter = adapter
             if (savedInstanceState == null) {
                 var tabIndex = preferenceManager.libraryTabIndex
