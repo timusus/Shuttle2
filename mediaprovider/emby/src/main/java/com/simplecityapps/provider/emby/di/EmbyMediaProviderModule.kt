@@ -2,12 +2,11 @@ package com.simplecityapps.provider.emby.di
 
 import android.content.Context
 import androidx.core.content.getSystemService
+import com.jaredrummler.android.device.BuildConfig
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
-import com.simplecityapps.provider.emby.CredentialStore
-import com.simplecityapps.provider.emby.EmbyAuthenticationManager
-import com.simplecityapps.provider.emby.EmbyMediaPathProvider
-import com.simplecityapps.provider.emby.EmbyMediaProvider
+import com.simplecityapps.provider.emby.*
 import com.simplecityapps.provider.emby.http.ItemsService
+import com.simplecityapps.provider.emby.http.LoginCredentials
 import com.simplecityapps.provider.emby.http.UserService
 import com.simplecityapps.shuttle.dagger.AppScope
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
@@ -56,7 +55,15 @@ open class EmbyMediaProviderModule {
     @Provides
     @AppScope
     fun provideCredentialStore(securePreferenceManager: SecurePreferenceManager): CredentialStore {
-        return CredentialStore(securePreferenceManager)
+        return CredentialStore(securePreferenceManager).apply {
+            if (BuildConfig.DEBUG) {
+                if (loginCredentials == null) {
+                    loginCredentials = LoginCredentials("tim", "")
+                    host = "https://emby.mediaserver.timmalseed.dev"
+                    port = 443
+                }
+            }
+        }
     }
 
     @Provides
