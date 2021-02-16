@@ -20,6 +20,7 @@ import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.ValueFormatter
 import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.audio.AudioProcessor
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.paramsen.noise.Noise
 import com.simplecityapps.playback.equalizer.Equalizer
 import com.simplecityapps.playback.equalizer.fromDb
@@ -88,7 +89,7 @@ class FrequencyResponseDialogFragment : DialogFragment(), Injectable {
             lineChart.isVisible = true
         }
 
-        return AlertDialog.Builder(requireContext())
+        return MaterialAlertDialogBuilder(requireContext())
             .setTitle("Frequency Response")
             .setView(view)
             .setNegativeButton("Close", null)

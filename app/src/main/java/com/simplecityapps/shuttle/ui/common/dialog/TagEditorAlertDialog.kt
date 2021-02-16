@@ -13,6 +13,7 @@ import androidx.core.view.isVisible
 import androidx.core.widget.addTextChangedListener
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputLayout
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
@@ -127,7 +128,7 @@ class TagEditorAlertDialog : DialogFragment(), Injectable, TagEditorContract.Vie
         genreEditText = view.findViewById(R.id.genreEditText)
         genreInputLayout.isEndIconVisible = false
 
-        val dialog = AlertDialog.Builder(requireContext())
+        val dialog = MaterialAlertDialogBuilder(requireContext())
             .setTitle("Edit Tags")
             .setView(view)
             .setNegativeButton("Close", null)

@@ -6,6 +6,7 @@ import android.os.Handler
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.utils.toHms
@@ -19,7 +20,7 @@ class SleepTimerDialogFragment : DialogFragment(), Injectable {
     private var handler: Handler? = null
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val builder = AlertDialog.Builder(requireContext())
+        val builder = MaterialAlertDialogBuilder(requireContext())
             .setTitle("Sleep Timer")
 
         sleepTimer.timeRemaining()?.let { timeRemaining ->

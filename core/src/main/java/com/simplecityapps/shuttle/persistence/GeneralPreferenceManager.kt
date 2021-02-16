@@ -12,20 +12,20 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
             return sharedPreferences.get("previous_version_code", -1)
         }
 
-    var hasSeenChangelog: Boolean
-        set(value) {
-            sharedPreferences.put("changelog_viewed", value)
-        }
-        get() {
-            return sharedPreferences.get("changelog_viewed", false)
-        }
-
     var showChangelogOnLaunch: Boolean
         set(value) {
             sharedPreferences.put("changelog_show_on_launch", value)
         }
         get() {
             return sharedPreferences.get("changelog_show_on_launch", true)
+        }
+
+    var lastViewedChangelogVersion: String?
+        set(value) {
+            sharedPreferences.put("last_viewed_changelog_version", value)
+        }
+        get() {
+            return sharedPreferences.getString("last_viewed_changelog_version", null)
         }
 
     enum class Theme {

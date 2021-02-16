@@ -31,13 +31,17 @@ class ShuttleApplication : Application(),
     GeneralPreferenceManagerProvider,
     SongRepositoryProvider {
 
-    @Inject lateinit var dispatchingAndroidInjector: DispatchingAndroidInjector<Any>
+    @Inject
+    lateinit var dispatchingAndroidInjector: DispatchingAndroidInjector<Any>
 
-    @Inject lateinit var initializers: AppInitializers
+    @Inject
+    lateinit var initializers: AppInitializers
 
-    @Inject lateinit var preferenceManager: GeneralPreferenceManager
+    @Inject
+    lateinit var preferenceManager: GeneralPreferenceManager
 
-    @Inject lateinit var themeManager: ThemeManager
+    @Inject
+    lateinit var themeManager: ThemeManager
 
     lateinit var appComponent: AppComponent
 
@@ -56,8 +60,6 @@ class ShuttleApplication : Application(),
         themeManager.setDayNightMode()
 
         if (preferenceManager.previousVersionCode != BuildConfig.VERSION_CODE) {
-            // This is the first time the user has seen this build
-            preferenceManager.hasSeenChangelog = false
             preferenceManager.previousVersionCode = BuildConfig.VERSION_CODE
         }
 

@@ -18,6 +18,7 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.google.android.material.bottomsheet.BottomSheetBehavior
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.mediaprovider.model.Song
@@ -222,7 +223,7 @@ class QueueFragment :
                             return@setOnMenuItemClickListener true
                         }
                         R.id.exclude -> {
-                            AlertDialog.Builder(requireContext())
+                            MaterialAlertDialogBuilder(requireContext())
                                 .setTitle("Exclude Song")
                                 .setMessage("\"${queueItem.song.name}\" will be hidden from your library.\n\nYou can view excluded songs in settings.")
                                 .setPositiveButton("Exclude") { _, _ ->

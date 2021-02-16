@@ -13,6 +13,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.adapter.ViewBinder
@@ -81,7 +82,7 @@ class PlaylistListFragment :
             toolbar.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
                     R.id.syncPlaylists -> {
-                        AlertDialog.Builder(requireContext())
+                        MaterialAlertDialogBuilder(requireContext())
                             .setTitle("Sync Media Store Playlists")
                             .setMessage("Copies playlists from the Media Store. If the playlists already exists in Shuttle, the songs will be merged. \n\nNote: Songs are only added, and not removed.")
                             .setPositiveButton("Sync") { _, _ -> presenter.importMediaStorePlaylists() }
@@ -209,7 +210,7 @@ class PlaylistListFragment :
                         true
                     }
                     R.id.delete -> {
-                        AlertDialog.Builder(requireContext())
+                        MaterialAlertDialogBuilder(requireContext())
                             .setTitle("Delete Playlist")
                             .setMessage("${playlist.name} will be permanently deleted")
                             .setPositiveButton("Delete") { _, _ -> presenter.deletePlaylist(playlist) }

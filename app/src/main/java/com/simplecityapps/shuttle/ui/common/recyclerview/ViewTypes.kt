@@ -24,4 +24,5 @@ object ViewTypes {
     const val Genre = 20
     const val SmartPlaylist = 21
     const val MediaProvider = 22
+    const val Changelog = 23
 }

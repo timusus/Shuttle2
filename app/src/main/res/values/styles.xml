@@ -38,9 +38,15 @@
         <item name="cardBackgroundColor">@color/bg_card_light</item>
 
         <item name="colorPlayPauseTint">#FFFFFFFF</item>
+
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.Shuttle.MaterialAlertDialog</item>
+        <item name="alertDialogTheme">@style/ThemeOverlay.Shuttle.MaterialAlertDialog</item>
     </style>
 
     <style name="AppTheme.Dark" parent="Theme.MaterialComponents.NoActionBar">
+
+        <item name="colorBackgroundFloating">@color/bg_window_dark</item>
+
         <item name="android:windowBackground">@color/bg_window_dark</item>
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
@@ -78,6 +84,9 @@
         <item name="cardBackgroundColor">@color/bg_card_dark</item>
 
         <item name="colorPlayPauseTint">#FFFFFFFF</item>
+
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.Shuttle.MaterialAlertDialog</item>
+        <item name="alertDialogTheme">@style/ThemeOverlay.Shuttle.MaterialAlertDialog</item>
     </style>
 
     <style name="AppTheme.DayNight" parent="AppTheme.Light" />
@@ -250,6 +259,13 @@
 
     <style name="TextAppearance.MaterialComponents.Body2_Thin" parent="TextAppearance.MaterialComponents.Body2">
         <item name="android:textSize">12sp</item>
+    </style>
+
+
+    <!-- MAterial Alert Dialogs -->
+
+    <style name="ThemeOverlay.Shuttle.MaterialAlertDialog" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+        <item name="android:backgroundDimAmount">0.45</item>
     </style>
 
 

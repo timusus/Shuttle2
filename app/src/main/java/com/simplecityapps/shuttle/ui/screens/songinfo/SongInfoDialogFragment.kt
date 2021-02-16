@@ -7,12 +7,12 @@ import android.view.Gravity
 import android.widget.LinearLayout
 import android.widget.Space
 import android.widget.TextView
-import androidx.appcompat.app.AlertDialog
 import androidx.core.view.marginEnd
 import androidx.core.view.marginStart
 import androidx.core.view.setPadding
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.utils.dp
@@ -71,7 +71,7 @@ class SongInfoDialogFragment : DialogFragment(), Injectable {
             })
         }
 
-        return AlertDialog.Builder(requireContext())
+        return MaterialAlertDialogBuilder(requireContext())
             .setTitle("Song Info")
             .setView(rootView)
             .setNegativeButton("Close", null)

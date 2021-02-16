@@ -1,4 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="DesignSurface">
+    <option name="filePathToZoomLevelMap">
+      <map>
+        <entry key="..\:/Users/tim/StudioProjects/Shuttle2/app/src/main/res/layout/fragment_dialog_changelog.xml" value="0.5041580041580042" />
+        <entry key="..\:/Users/tim/StudioProjects/Shuttle2/app/src/main/res/layout/list_item_album_expandable.xml" value="0.39351851851851855" />
+        <entry key="..\:/Users/tim/StudioProjects/Shuttle2/app/src/main/res/layout/list_item_changelog.xml" value="0.39351851851851855" />
+        <entry key="..\:/Users/tim/StudioProjects/Shuttle2/app/src/main/res/layout/list_item_changeset.xml" value="0.5" />
+        <entry key="..\:/Users/tim/StudioProjects/Shuttle2/app/src/main/res/layout/list_item_genre.xml" value="0.5364583333333334" />
+        <entry key="..\:/Users/tim/StudioProjects/Shuttle2/core/src/main/res/drawable/background_placeholder_rounded.xml" value="0.5441025641025641" />
+      </map>
+    </option>
+  </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_11" default="true" project-jdk-name="11" project-jdk-type="JavaSDK" />
 </project>

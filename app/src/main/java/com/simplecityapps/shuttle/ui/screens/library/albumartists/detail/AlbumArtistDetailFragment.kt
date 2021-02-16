@@ -27,6 +27,7 @@ import androidx.transition.Transition
 import androidx.transition.TransitionInflater
 import androidx.transition.TransitionListenerAdapter
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Album
@@ -325,7 +326,7 @@ class AlbumArtistDetailFragment :
                         return@setOnMenuItemClickListener true
                     }
                     R.id.exclude -> {
-                        AlertDialog.Builder(requireContext())
+                        MaterialAlertDialogBuilder(requireContext())
                             .setTitle("Exclude Song")
                             .setMessage("\"${song.name}\" will be hidden from your library.\n\nYou can view excluded songs in settings.")
                             .setPositiveButton("Exclude") { _, _ ->
@@ -340,7 +341,7 @@ class AlbumArtistDetailFragment :
                         return@setOnMenuItemClickListener true
                     }
                     R.id.delete -> {
-                        AlertDialog.Builder(requireContext())
+                        MaterialAlertDialogBuilder(requireContext())
                             .setTitle("Delete Song")
                             .setMessage("\"${song.name}\" will be permanently deleted")
                             .setPositiveButton("Delete") { _, _ ->
@@ -436,7 +437,7 @@ class AlbumArtistDetailFragment :
                             return@setOnMenuItemClickListener true
                         }
                         R.id.exclude -> {
-                            AlertDialog.Builder(requireContext())
+                            MaterialAlertDialogBuilder(requireContext())
                                 .setTitle("Exclude Song")
                                 .setMessage("\"${song.name}\" will be hidden from your library.\n\nYou can view excluded songs in settings.")
                                 .setPositiveButton("Exclude") { _, _ ->
@@ -451,7 +452,7 @@ class AlbumArtistDetailFragment :
                             return@setOnMenuItemClickListener true
                         }
                         R.id.delete -> {
-                            AlertDialog.Builder(requireContext())
+                            MaterialAlertDialogBuilder(requireContext())
                                 .setTitle("Delete Song")
                                 .setMessage("\"${song.name}\" will be permanently deleted")
                                 .setPositiveButton("Delete") { _, _ ->

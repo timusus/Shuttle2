@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:clickable="true"
+    android:background="@drawable/background_placeholder_rounded"
+    android:focusable="true"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/title"
+        style="@style/TextTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:textColor="?colorPrimary"
+        app:layout_constraintBottom_toTopOf="@+id/subtitle"
+        app:layout_constraintEnd_toStartOf="@id/expandedIcon"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="packed"
+        tools:text="0.2.1" />
+
+    <TextView
+        android:id="@+id/subtitle"
+        style="@style/TextSubtitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        app:layout_constraintEnd_toStartOf="@id/expandedIcon"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/title"
+        tools:text="17 Feb 2021" />
+
+    <ImageView
+        android:id="@+id/expandedIcon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:rotation="180"
+        app:layout_constraintBottom_toBottomOf="@id/subtitle"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/title"
+        app:srcCompat="@drawable/ic_baseline_arrow_drop_up_24" />
+
+    <TextView
+        android:id="@+id/textArea"
+        style="@style/TextSubtitle"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="8dp"
+        android:textSize="14sp"
+        android:maxLines="200"
+        android:padding="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/subtitle"
+        tools:listitem="@layout/list_item_detail_song"
+        tools:text="Proper fix for notification progress not updating\n\nFixed an issue where bluetooth metadata didn't update correctly\n\nFixed issue where cached images weren't displayed when offline\n\nVarious other minor crash fixes\n\nVarious optimisations &amp; attempts to reduce ANRs"
+        tools:visibility="visible" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

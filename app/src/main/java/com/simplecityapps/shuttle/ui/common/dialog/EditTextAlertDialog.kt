@@ -12,6 +12,7 @@ import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputLayout
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.utils.withArgs
@@ -57,7 +58,7 @@ open class EditTextAlertDialog : DialogFragment() {
         })
         initialText?.let { editText.setText(initialText) }
 
-        return AlertDialog.Builder(requireContext())
+        return MaterialAlertDialogBuilder(requireContext())
             .setView(view)
             .setNegativeButton("Close", null)
             .setPositiveButton("Save") { _, _ -> onSave(editText.text.toString()) }

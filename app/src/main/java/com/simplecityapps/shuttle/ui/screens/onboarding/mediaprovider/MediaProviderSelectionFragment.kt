@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.ChangeBounds
 import androidx.transition.TransitionManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.MediaProvider
@@ -215,7 +216,7 @@ class MediaProviderSelectionFragment :
                         }
                     }
                     R.id.remove -> {
-                        AlertDialog.Builder(requireContext())
+                        MaterialAlertDialogBuilder(requireContext())
                             .setTitle("Remove ${providerType.title()}")
                             .setMessage("This will remove all songs, playlists & play counts associated with ${providerType.title()} media provder")
                             .setPositiveButton("Remove") { _, _ -> presenter.removeMediaProviderType(providerType) }

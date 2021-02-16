@@ -12,6 +12,7 @@ import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
@@ -59,7 +60,7 @@ class DirectorySelectionFragment : DialogFragment(),
         presenter.bindView(this)
         presenter.loadData(requireContext().contentResolver)
 
-        val dialog = AlertDialog.Builder(requireContext())
+        val dialog = MaterialAlertDialogBuilder(requireContext())
             .setTitle("Media Directories")
             .setView(view)
             .setNeutralButton("Add Directory", null)
@@ -96,7 +97,7 @@ class DirectorySelectionFragment : DialogFragment(),
     }
 
     override fun showDocumentProviderNotAvailable() {
-        AlertDialog.Builder(requireContext())
+        MaterialAlertDialogBuilder(requireContext())
             .setTitle("Missing Document Provider")
             .setMessage("A 'Document Provider' (file manager) app can't be found on your device. You may have to install one, or revert to using the 'basic' media scanner.")
             .setNeutralButton("Close", null)

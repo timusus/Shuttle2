@@ -1,14 +1,243 @@
-{
-  "commits": [
-    "Fixed Chromecast issue for remote media providers (untested, please let me know if this works!)",
-    "Fixed an issue preventing certain images from being stored in the cache",
-    "0.2.9",
-    "Proper fix for notification progress not updating",
-    "Fixed an issue where bluetooth metadata didn't update correctly",
-    "Send 'audio effect' intents to allow 3rd party DSP effects",
-    "Removed the debug drawer (debug logging still available in settings)",
-    "Fixed issue where cached images weren't displayed when offline",
-    "Various other minor crash fixes",
-    "Various optimisations & attempts to reduce ANRs"
-  ]
-}
+[
+  {
+    "versionName": "0.2.10",
+    "releaseDate": "15/02/2021",
+    "features": [],
+    "fixes": [
+      "Fixed Chromecast issue for remote media providers (untested, please let me know if this works!)",
+      "Fixed an issue preventing certain images from being stored in the cache"
+    ],
+    "improvements": [],
+    "notes": []
+  },
+  {
+    "versionName": "0.2.9",
+    "releaseDate": "13/02/2021",
+    "features": [],
+    "fixes": [
+      "Proper fix for notification progress not updating",
+      "Fixed an issue where bluetooth metadata didn't update correctly",
+      "Fixed issue where cached images weren't displayed when offline",
+      "Various other minor crash fixes",
+      "Various optimisations & attempts to reduce ANRs"
+    ],
+    "improvements": [
+      "Send 'audio effect' intents to allow 3rd party DSP effects",
+      "Removed the debug drawer (debug logging still available in settings)"
+    ],
+    "notes": []
+  },
+  {
+    "versionName": "0.2.8",
+    "releaseDate": "08/02/2021",
+    "features": [
+      "Added various theme options"
+    ],
+    "fixes": [],
+    "improvements": [],
+    "notes": []
+  },
+  {
+    "versionName": "0.2.7",
+    "releaseDate": "25/01/2021",
+    "features": [],
+    "fixes": [
+      "Fixed an issue preventing scanner from finding files"
+    ],
+    "improvements": [],
+    "notes": []
+  },
+  {
+    "versionName": "0.2.6",
+    "releaseDate": "24/01/2021",
+    "features": [],
+    "fixes": [
+      "Possible fix for bluetooth metadata not updating",
+      "Fixed an issue where notification was shown without placeholder art",
+      "Fixed ~6 unique crashes and potentially resolved a couple of ANRs (application not responding)",
+      "Fixed an issue causing slow loading of app when there are lots of tracks in the queue",
+      "Possible (unlikely?) fix for assistant not working with S2 - now implements 'MediaSession.onPrepareFromSearch()' API"
+    ],
+    "improvements": [
+      "Prioritise folder artwork over embedded (tag) artwork",
+      "Prevent .m3u files from being imported as music by S2 scanner",
+      "Remember last selected library tab",
+      "Added option to clear queue",
+      "Increased Emby & Jellyfin server read timeout (S2 waits longer for a response when asking for song listing during scan)",
+      "Fall back to 'original date' if year is missing, when reading tags"
+    ],
+    "notes": []
+  },
+  {
+    "versionName": "0.2.5",
+    "releaseDate": "14/01/2021",
+    "features": [],
+    "fixes": [
+      "Fixed an issue preventing Emby scan from completing if item is missing certain required information",
+      "Fixed missing artwork placeholder for expandable album image"
+    ],
+    "improvements": [],
+    "notes": []
+  },
+  {
+    "versionName": "0.2.4",
+    "releaseDate": "14/01/2021",
+    "features": [],
+    "fixes": [
+      "Fixed a crash when attempting to load artwork with wifi off and 'Wi-Fi only' on",
+      "Fixed image scaling issue for widgets",
+      "Fixed an issue where the wrong song would play next, after enabling shuffle",
+      "Fixed an issue where library tabs would stop responding to click events",
+      "Partial fix for issue where user can start scan before all of their media directories have been discovered"
+    ],
+    "improvements": [],
+    "notes": []
+  },
+  {
+    "versionName": "0.2.3",
+    "releaseDate": "13/01/2021",
+    "features": [],
+    "fixes": [
+      "Fixed an issue preventing Emby media scan from completing",
+      "Fixed a crash when viewing/adding directories to Shuttle scanner",
+      "Possible fix for various Application Not Responding (ANR) errors"
+    ],
+    "improvements": [
+      "S2 now scans folders for artwork, under the name folder/cover/album.jpg/jpeg/png (case insensitive)",
+      "Minor UI improvements when selecting directories for Shuttle scanner"
+    ],
+    "notes": []
+  },
+  {
+    "versionName": "0.2.2",
+    "releaseDate": "09/01/2021",
+    "features": [],
+    "fixes": [
+      "Fixed an issue with Jellyfin track durations",
+      "Fixed an issue where Emby tracks were missing year data"
+    ],
+    "improvements": [
+      "Dependency updates"
+    ],
+    "notes": []
+  },
+  {
+    "versionName": "0.2.1",
+    "releaseDate": "08/01/2021",
+    "features": [],
+    "fixes": [
+      "Fixed an issue preventing Jellyfin from scanning media",
+      "Fixed a crash when attempting to retrieve pictures from tags"
+    ],
+    "improvements": [
+      "Added support for Emby & Jellyfin genres"
+    ],
+    "notes": []
+  },
+  {
+    "versionName": "0.2.0",
+    "releaseDate": "07/01/2021",
+    "features": [
+      "Added Jellyfin support"
+    ],
+    "fixes": [
+      "Fixed an issue where notification progress would get out of sync after skipping tracks",
+      "Fixed an issue preventing Emby from connection to local IP addresses",
+      "Fixed an issue where play count was incremented twice when repeat mode is on (thanks @Crusader)",
+      "Fixed an issue where most played play count didn't update in real time",
+      "Fixed an issue where nothing happened after pressing play after the last song in the queue has completed",
+      "Performance optimisations when lists are updated with a large number of items"
+    ],
+    "improvements": [
+      "Artwork no longer flickers when toggling shuffle mode",
+      "Don't show play count in 'history' playlist",
+      "Moved play count badge to sit on top of artwork image"
+    ],
+    "notes": []
+  },
+  {
+    "versionName": "0.1.6",
+    "releaseDate": "04/01/2021",
+    "features": [],
+    "fixes": [
+      "Fixed another performance issue, possibly causing the app to stop responding",
+      "Fixed issue where genre detail screen was blank",
+      "Fixed most played & recently played reversed sort order issue"
+    ],
+    "improvements": [],
+    "notes": []
+  },
+  {
+    "versionName": "0.1.5",
+    "releaseDate": "04/01/2021",
+    "features": [],
+    "fixes": [
+      "Fixed an issue where incorrect song played after rearranging the queue",
+      "Fixed an issue where favourites button didn't work on now playing screen",
+      "Fixed an issue where you couldn't navigate from home -> favourites playlist more than once"
+    ],
+    "improvements": [],
+    "notes": []
+  },
+  {
+    "versionName": "0.1.4",
+    "releaseDate": "04/01/2021",
+    "features": [],
+    "fixes": [
+      "Fixed a crash when opening Genre detail screen",
+      "Fixed an issue where queue item playback state wasn't updated correctly"
+    ],
+    "improvements": [
+      "Limit MediaSession queue length to 50 items",
+      "Prevent long-named song list items from overlapping overflow button"
+    ],
+    "notes": []
+  },
+  {
+    "versionName": "0.1.3",
+    "releaseDate": "03/01/2021",
+    "features": [],
+    "fixes": [
+      "Fixed a crash when attempting to add directories to S2 scanner"
+    ],
+    "improvements": [],
+    "notes": []
+  },
+  {
+    "versionName": "0.1.2",
+    "releaseDate": "03/01/2021",
+    "features": [],
+    "fixes": [
+      "Performance improvements and bug fixes..",
+      "This update aims to resolve a bunch of issues resulting in the app locking up and becoming unresponsive",
+      "Resolved several memory leaks, reduced overall memory footprint"
+    ],
+    "improvements": [
+      "Library tabs are now loaded on demand. So you're more likely to see a loading indicator when swiping to, say, the songs list. This reduces the load when the app is starting up, and when returning to the library screen"
+    ],
+    "notes": []
+  },
+  {
+    "versionName": "0.1.1",
+    "releaseDate": "31/12/2020",
+    "features": [],
+    "fixes": [
+      "Fixed a bug where scanner would get stuck saying 'scan failed'",
+      "Various optimisations.. attempting to fix lag introduced in 0.1.0"
+    ],
+    "improvements": [],
+    "notes": []
+  },
+  {
+    "versionName": "0.1.0",
+    "releaseDate": "28/12/2020",
+    "features": [
+      "Multi-select artists, albums & songs to add to playlist, queue or edit tags"
+    ],
+    "fixes": [],
+    "improvements": [
+      "Minor improvements"
+    ],
+    "notes": []
+  }
+]

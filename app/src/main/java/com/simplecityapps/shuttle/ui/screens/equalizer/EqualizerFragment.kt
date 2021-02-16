@@ -11,6 +11,7 @@ import androidx.appcompat.widget.SwitchCompat
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.playback.equalizer.Equalizer
 import com.simplecityapps.playback.equalizer.EqualizerBand
 import com.simplecityapps.shuttle.R
@@ -109,7 +110,7 @@ class EqualizerFragment : Fragment(), Injectable, EqualizerContract.View {
         val switch = toolbar.menu.findItem(R.id.enableEqualizer).actionView as SwitchCompat
         switch.isChecked = false
 
-        AlertDialog.Builder(requireContext())
+        MaterialAlertDialogBuilder(requireContext())
             .setTitle("Equalizer Disabled")
             .setMessage("The custom EQ is not compatible with the Android MediaPlayer. \n\n`You can change the media player in playback settings.")
             .setPositiveButton("Close", null)

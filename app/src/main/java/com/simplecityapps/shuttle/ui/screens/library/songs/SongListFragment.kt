@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.adapter.ViewBinder
@@ -302,7 +303,7 @@ class SongListFragment :
                             return@setOnMenuItemClickListener true
                         }
                         R.id.exclude -> {
-                            AlertDialog.Builder(requireContext())
+                            MaterialAlertDialogBuilder(requireContext())
                                 .setTitle("Exclude Song")
                                 .setMessage("\"${song.name}\" will be hidden from your library.\n\nYou can view excluded songs in settings.")
                                 .setPositiveButton("Exclude") { _, _ ->
@@ -313,7 +314,7 @@ class SongListFragment :
                             return@setOnMenuItemClickListener true
                         }
                         R.id.delete -> {
-                            AlertDialog.Builder(requireContext())
+                            MaterialAlertDialogBuilder(requireContext())
                                 .setTitle("Delete Song")
                                 .setMessage("\"${song.name}\" will be permanently deleted")
                                 .setPositiveButton("Delete") { _, _ ->

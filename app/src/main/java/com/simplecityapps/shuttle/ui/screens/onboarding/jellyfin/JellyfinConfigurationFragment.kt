@@ -11,6 +11,7 @@ import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputLayout
 import com.simplecityapps.networking.userDescription
 import com.simplecityapps.provider.jellyfin.JellyfinAuthenticationManager
@@ -93,7 +94,7 @@ class JellyfinConfigurationFragment : DialogFragment(), Injectable {
             }
         }
 
-        val dialog = AlertDialog.Builder(requireContext())
+        val dialog = MaterialAlertDialogBuilder(requireContext())
             .setTitle("Jellyfin Media Server")
             .setView(view)
             .setPositiveButton("Authenticate", null)

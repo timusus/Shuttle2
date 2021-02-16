@@ -15,6 +15,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.SpanSizeLookup
 import com.simplecityapps.adapter.ViewBinder
@@ -365,7 +366,7 @@ class AlbumListFragment :
                         return@setOnMenuItemClickListener true
                     }
                     R.id.exclude -> {
-                        AlertDialog.Builder(requireContext())
+                        MaterialAlertDialogBuilder(requireContext())
                             .setTitle("Exclude Album")
                             .setMessage("\"${album.name}\" will be hidden from your library.\n\nYou can view excluded songs in settings.")
                             .setPositiveButton("Exclude") { _, _ ->

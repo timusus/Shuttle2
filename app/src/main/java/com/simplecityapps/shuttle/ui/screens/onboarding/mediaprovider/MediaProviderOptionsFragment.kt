@@ -2,11 +2,11 @@ package com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider
 
 import android.app.Dialog
 import android.os.Bundle
-import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.MediaProvider
@@ -52,7 +52,7 @@ class MediaProviderOptionsFragment : DialogFragment() {
         }
         adapter.update(viewBinders)
 
-        return AlertDialog.Builder(requireContext())
+        return MaterialAlertDialogBuilder(requireContext())
             .setTitle("Add Media Provider")
             .setView(view)
             .setNegativeButton("Close", null)

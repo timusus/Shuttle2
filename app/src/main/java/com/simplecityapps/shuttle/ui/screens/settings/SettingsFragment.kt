@@ -21,6 +21,7 @@ import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SeekBarPreference
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.Song
@@ -101,7 +102,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
 
         preferenceScreen.findPreference<Preference>("pref_crash_reporting")?.setOnPreferenceClickListener {
             if (!preferenceManager.crashReportingEnabled) {
-                AlertDialog.Builder(requireContext())
+                MaterialAlertDialogBuilder(requireContext())
                     .setTitle("Requires Restart")
                     .setMessage("In order to completely opt-out of crash reporting, please restart Shuttle. Make sure to pause, swipe away the notification, and clear the app from recents.")
                     .setNegativeButton("Close", null)
@@ -117,7 +118,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
 
             val customView = View.inflate(requireContext(), R.layout.progress_dialog_loading_horizontal, null)
             scanningProgressView = customView.findViewById(R.id.progressBar)
-            scanningDialog = AlertDialog.Builder(requireContext())
+            scanningDialog = MaterialAlertDialogBuilder(requireContext())
                 .setView(customView)
                 .setNegativeButton("Close", null)
                 .show()
@@ -150,7 +151,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
                     }
             }
 
-            AlertDialog.Builder(requireContext()).setTitle("Excluded")
+            MaterialAlertDialogBuilder(requireContext()).setTitle("Excluded")
                 .setView(dialogView)
                 .setPositiveButton("Close", null)
                 .setNegativeButton("Clear") { _, _ ->
@@ -164,7 +165,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
         }
 
         preferenceScreen.findPreference<Preference>("pref_clear_artwork")?.setOnPreferenceClickListener {
-            AlertDialog.Builder(requireContext())
+            MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Clear Artwork")
                 .setMessage("This will permanently remove all cached artwork")
                 .setPositiveButton("Clear") { _, _ ->
@@ -191,7 +192,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
         }
 
         preferenceScreen.findPreference<Preference>("pref_amoled_mode")?.setOnPreferenceChangeListener { _, _ ->
-            AlertDialog.Builder(requireContext())
+            MaterialAlertDialogBuilder(requireContext())
                 .setTitle("Requires Restart")
                 .setMessage("S2 must be restarted for theme changes to take effect")
                 .setNegativeButton("Close", null)

@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.main
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
+import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import javax.inject.Inject
@@ -32,7 +33,7 @@ class MainPresenter @Inject constructor(
 
         view.toggleSheet(visible = queueManager.getSize() != 0)
 
-        if (!preferenceManager.hasSeenChangelog && preferenceManager.showChangelogOnLaunch) {
+        if (preferenceManager.lastViewedChangelogVersion != BuildConfig.VERSION_NAME && preferenceManager.showChangelogOnLaunch) {
             view.showChangelog()
         }
     }
