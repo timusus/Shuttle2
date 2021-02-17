@@ -219,7 +219,7 @@ class PlaybackPresenter @Inject constructor(
 
     override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
         view?.setCurrentSong(queueManager.getCurrentItem()?.song)
-        view?.setQueuePosition(queueManager.getCurrentPosition(), queueManager.getSize(), abs((newPosition ?: 0) - (oldPosition ?: 0)) <= 1)
+        view?.setQueuePosition(queueManager.getCurrentPosition(), queueManager.getSize(), abs((newPosition ?: Int.MAX_VALUE) - (oldPosition ?: 0)) <= 1)
 
         updateFavorite()
     }
