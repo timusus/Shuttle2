@@ -59,13 +59,20 @@ enum class AlbumSortOrder : Serializable {
     val comparator: Comparator<Album>
         get() {
             return when (this) {
-                Default -> Comparator<Album> { a, b -> zeroLastComparator.compare(a.year, b.year) }.then(compareByDescending { album -> album.year })
-                AlbumName -> Comparator<Album> { a, b -> Collator.getInstance().apply { strength = Collator.TERTIARY }.compare(a.sortKey, b.sortKey) }.then(Default.comparator)
-                ArtistName -> Comparator<Album> { a, b -> Collator.getInstance().apply { strength = Collator.TERTIARY }.compare(a.albumArtist.removeArticles(), b.albumArtist.removeArticles()) }.then(
-                    Default.comparator
-                )
-                PlayCount -> compareByDescending<Album> { album -> album.playCount }.then(Default.comparator)
-                Year -> Default.comparator
+                Default -> defaultComparator
+                AlbumName -> albumNameComparator
+                ArtistName -> artistNameComparator
+                PlayCount -> playCountComparator
+                Year -> yearComparator
             }
         }
+
+    companion object {
+        private val collator by lazy { Collator.getInstance().apply { strength = Collator.TERTIARY } }
+        val defaultComparator: Comparator<Album> by lazy { Comparator<Album> { a, b -> zeroLastComparator.compare(a.year, b.year) }.then(compareByDescending { album -> album.year }) }
+        val albumNameComparator: Comparator<Album> by lazy { Comparator<Album> { a, b -> collator.compare(a.sortKey, b.sortKey) }.then(defaultComparator) }
+        val artistNameComparator: Comparator<Album> by lazy { Comparator<Album> { a, b -> collator.compare(a.albumArtist.removeArticles(), b.albumArtist.removeArticles()) }.then(defaultComparator) }
+        val playCountComparator: Comparator<Album> by lazy { compareByDescending<Album> { album -> album.playCount }.then(defaultComparator) }
+        val yearComparator: Comparator<Album> by lazy { defaultComparator }
+    }
 }

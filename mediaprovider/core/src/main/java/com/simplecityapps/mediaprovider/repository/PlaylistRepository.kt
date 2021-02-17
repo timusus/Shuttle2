@@ -40,7 +40,11 @@ enum class PlaylistSortOrder : Serializable {
     val comparator: Comparator<Playlist>
         get() {
             return when (this) {
-                Default -> compareBy { playlist -> playlist.id }
+                Default -> defaultComparator
             }
         }
+
+    companion object {
+        val defaultComparator: Comparator<Playlist> by lazy { compareBy { playlist -> playlist.id } }
+    }
 }

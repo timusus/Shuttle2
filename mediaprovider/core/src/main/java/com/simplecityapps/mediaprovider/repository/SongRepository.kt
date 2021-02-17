@@ -103,19 +103,39 @@ enum class SongSortOrder : Serializable {
     val comparator: Comparator<Song>
         get() {
             return when (this) {
-                Default -> compareBy({ song -> song.album }, { song -> song.disc }, { song -> song.track })
-                SongName -> Comparator<Song> { a, b -> Collator.getInstance().apply { strength = Collator.TERTIARY }.compare(a.name, b.name) }.then(Default.comparator)
-                ArtistName -> Comparator<Song> { a, b -> Collator.getInstance().apply { strength = Collator.TERTIARY }.compare(a.albumArtist.removeArticles(), b.albumArtist.removeArticles()) }.then(
-                    compareBy { song -> song.album }).then(Default.comparator)
-                AlbumName -> Comparator<Song> { a, b ->
-                    Collator.getInstance().apply { strength = Collator.TERTIARY }.compare(a.album.removeArticles(), b.album.removeArticles())
-                }.then(Default.comparator)
-                Year -> Comparator<Song> { a, b -> zeroLastComparator.compare(a.year, b.year) }.then(compareBy({ song -> song.year }, { song -> song.album })).then(Default.comparator)
-                Duration -> compareBy<Song> { song -> song.duration }.then(Default.comparator)
-                Track -> compareBy<Song>({ song -> song.disc }, { song -> song.track }).then(Default.comparator)
-                PlayCount -> compareByDescending<Song> { song -> song.playCount }.then(Default.comparator)
-                RecentlyAdded -> compareByDescending<Song> { song -> song.lastModified.time / 1000 / 60 }.then(Default.comparator) // Round to the nearest minute
-                RecentlyPlayed -> compareByDescending<Song> { song -> song.lastCompleted }.then(Default.comparator)
+                Default -> defaultComparator
+                SongName -> songNameComparator
+                ArtistName -> artistNameComparator
+                AlbumName -> albumNameComparator
+                Year -> yearComparator
+                Duration -> durationComparator
+                Track -> trackComparator
+                PlayCount -> playCountComparator
+                RecentlyAdded -> recentlyAddedComparator
+                RecentlyPlayed -> recentlyPlayedComparator
             }
         }
+
+    companion object {
+        private val collator: Collator by lazy { Collator.getInstance().apply { strength = Collator.TERTIARY } }
+        val defaultComparator: Comparator<Song> by lazy { compareBy({ song -> song.album }, { song -> song.disc }, { song -> song.track }) }
+        val songNameComparator: Comparator<Song> by lazy { Comparator<Song> { a, b -> collator.compare(a.name, b.name) }.then(defaultComparator) }
+        val artistNameComparator: Comparator<Song> by lazy {
+            Comparator<Song> { a, b ->
+                collator.compare(
+                    a.albumArtist.removeArticles(),
+                    b.albumArtist.removeArticles()
+                )
+            }.then(compareBy { song -> song.album }).then(defaultComparator)
+        }
+        val albumNameComparator: Comparator<Song> by lazy { Comparator<Song> { a, b -> collator.compare(a.album.removeArticles(), b.album.removeArticles()) }.then(defaultComparator) }
+        val yearComparator: Comparator<Song> by lazy {
+            Comparator<Song> { a, b -> zeroLastComparator.compare(a.year, b.year) }.then(compareBy({ song -> song.year }, { song -> song.album })).then(defaultComparator)
+        }
+        val durationComparator: Comparator<Song> by lazy { compareBy<Song> { song -> song.duration }.then(defaultComparator) }
+        val trackComparator: Comparator<Song> by lazy { compareBy<Song>({ song -> song.disc }, { song -> song.track }).then(defaultComparator) }
+        val playCountComparator: Comparator<Song> by lazy { compareByDescending<Song> { song -> song.playCount }.then(defaultComparator) }
+        val recentlyAddedComparator: Comparator<Song> by lazy { compareByDescending<Song> { song -> song.lastModified.time / 1000 / 60 }.then(defaultComparator) } // Round to the nearest minute
+        val recentlyPlayedComparator: Comparator<Song> by lazy { compareByDescending<Song> { song -> song.lastCompleted }.then(defaultComparator) }
+    }
 }

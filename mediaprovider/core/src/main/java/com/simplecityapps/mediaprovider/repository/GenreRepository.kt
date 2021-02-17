@@ -37,7 +37,11 @@ enum class GenreSortOrder : Serializable {
     val comparator: Comparator<Genre>
         get() {
             return when (this) {
-                Default -> compareBy { genre -> genre.name }
+                Default -> defaultComparator
             }
         }
+
+    companion object {
+        val defaultComparator: Comparator<Genre> by lazy { compareBy { genre -> genre.name } }
+    }
 }
