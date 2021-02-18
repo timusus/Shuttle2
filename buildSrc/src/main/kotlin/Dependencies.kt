@@ -11,7 +11,7 @@ object BuildPlugins {
         const val gradleVersionPlugin = "0.27.0"
 
         // Module
-        const val playPublisher = "3.2.0-agp4.2"
+        const val playPublisher = "3.2.0-agp4.2-2"
     }
 
     // Top level
