@@ -44,9 +44,6 @@
     </style>
 
     <style name="AppTheme.Dark" parent="Theme.MaterialComponents.NoActionBar">
-
-        <item name="colorBackgroundFloating">@color/bg_window_dark</item>
-
         <item name="android:windowBackground">@color/bg_window_dark</item>
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
@@ -85,8 +82,8 @@
 
         <item name="colorPlayPauseTint">#FFFFFFFF</item>
 
-        <item name="materialAlertDialogTheme">@style/ThemeOverlay.Shuttle.MaterialAlertDialog</item>
-        <item name="alertDialogTheme">@style/ThemeOverlay.Shuttle.MaterialAlertDialog</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.Shuttle.MaterialAlertDialog.Dark</item>
+        <item name="alertDialogTheme">@style/ThemeOverlay.Shuttle.MaterialAlertDialog.Dark</item>
     </style>
 
     <style name="AppTheme.DayNight" parent="AppTheme.Light" />
@@ -223,7 +220,7 @@
     </style>
 
     <style name="Shuttle.BottomSheetDialog.Dark" parent="Theme.Design.BottomSheetDialog">
-        <item name="colorBackgroundFloating">#121212</item>
+        <item name="colorBackgroundFloating">@color/bg_window_dark</item>
     </style>
 
 
@@ -262,10 +259,15 @@
     </style>
 
 
-    <!-- MAterial Alert Dialogs -->
+    <!-- Material Alert Dialogs -->
 
     <style name="ThemeOverlay.Shuttle.MaterialAlertDialog" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
         <item name="android:backgroundDimAmount">0.45</item>
+    </style>
+
+    <style name="ThemeOverlay.Shuttle.MaterialAlertDialog.Dark" parent="ThemeOverlay.MaterialComponents.MaterialAlertDialog">
+        <item name="android:backgroundDimAmount">0.45</item>
+        <item name="android:background">@color/bg_window_dark</item>
     </style>
 
 
