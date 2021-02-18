@@ -1,5 +1,19 @@
 [
   {
+    "versionName": "0.2.11",
+    "releaseDate": "18/02/2021",
+    "features": [],
+    "fixes": [
+      "Possible fix for mostly-vertical swipes causing horizontal paging",
+      "Fixed a performance issue causing excessive garbage collection and resulting in ANRs"
+    ],
+    "improvements": [
+      "Improved changelog",
+      "Updated compile sdk to Android 30"
+    ],
+    "notes": []
+  },
+  {
     "versionName": "0.2.10",
     "releaseDate": "15/02/2021",
     "features": [],
