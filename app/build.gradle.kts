@@ -178,23 +178,6 @@ play {
     }
 }
 
-afterEvaluate {
-    if (System.getenv("JENKINS_URL") != null) {
-        tasks.named("processReleaseGoogleServices") {
-            dependsOn("copyGoogleServices")
-        }
-    }
-}
-
-tasks.register<Copy>("copyGoogleServices") {
-    if (System.getenv("JENKINS_URL") != null) {
-        description = "Copies google-services.json from Jenkins secret file"
-        from(System.getenv("GOOGLE_SERVICES"))
-        include("google-services.json")
-        into(".")
-    }
-}
-
 apply(plugin = "com.google.gms.google-services")
 
 fun computeVersionName(): String {
