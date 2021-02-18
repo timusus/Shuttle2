@@ -2,7 +2,6 @@ package com.simplecityapps.provider.emby.di
 
 import android.content.Context
 import androidx.core.content.getSystemService
-import com.jaredrummler.android.device.BuildConfig
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
 import com.simplecityapps.provider.emby.*
 import com.simplecityapps.provider.emby.http.ItemsService
