@@ -12,7 +12,7 @@ buildscript {
         classpath(BuildPlugins.googleServicesPlugin)
         classpath(BuildPlugins.bugsnagPlugin)
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version")
-        classpath("com.android.tools.build:gradle:7.0.0-alpha06")
+        classpath("com.android.tools.build:gradle:7.0.0-alpha07")
     }
 }
 
