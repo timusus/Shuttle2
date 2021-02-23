@@ -25,17 +25,44 @@ class CastSessionManager @Inject constructor(
 
     override fun onSessionStarting(castSession: CastSession) {
         Timber.d("onSessionStarting")
+        httpServer.start()
     }
 
     override fun onSessionStarted(castSession: CastSession, s: String) {
         Timber.d("onSessionStarted")
 
-        val playback = CastPlayback(applicationContext, castSession, httpServer, mediaPathProvider)
+        val playback = CastPlayback(applicationContext, castSession, mediaPathProvider)
         playbackManager.switchToPlayback(playback)
     }
 
     override fun onSessionStartFailed(castSession: CastSession, i: Int) {
         Timber.e("onSessionStartFailed")
+    }
+
+    override fun onSessionResuming(castSession: CastSession, s: String) {
+        Timber.d("onSessionResuming")
+        if(!httpServer.wasStarted()) {
+            httpServer.start()
+        }
+    }
+
+    override fun onSessionResumed(castSession: CastSession, b: Boolean) {
+        Timber.d("onSessionResumed")
+
+        // If we're not already playing via CastPlayback, switch
+        if (playbackManager.getPlayback() !is CastPlayback) {
+            val playback = CastPlayback(applicationContext, castSession, mediaPathProvider)
+            playbackManager.switchToPlayback(playback)
+        }
+    }
+
+    override fun onSessionResumeFailed(castSession: CastSession, i: Int) {
+        Timber.e("onSessionResumeFailed ($i)")
+    }
+
+    override fun onSessionSuspended(castSession: CastSession, i: Int) {
+        Timber.d("onSessionSuspended ($i)")
+        httpServer.stop()
     }
 
     override fun onSessionEnding(castSession: CastSession) {
@@ -53,27 +80,6 @@ class CastSessionManager @Inject constructor(
 
     override fun onSessionEnded(castSession: CastSession, i: Int) {
         Timber.d("onSessionEnded")
-    }
-
-    override fun onSessionResuming(castSession: CastSession, s: String) {
-        Timber.d("onSessionResuming")
-    }
-
-    override fun onSessionResumed(castSession: CastSession, b: Boolean) {
-        Timber.d("onSessionResumed")
-
-        // If we're not already playing via CastPlayback, switch
-        if (!(playbackManager.getPlayback() is CastPlayback)) {
-            val playback = CastPlayback(applicationContext, castSession, httpServer, mediaPathProvider)
-            playbackManager.switchToPlayback(playback)
-        }
-    }
-
-    override fun onSessionResumeFailed(castSession: CastSession, i: Int) {
-        Timber.e("onSessionResumeFailed ($i)")
-    }
-
-    override fun onSessionSuspended(castSession: CastSession, i: Int) {
-        Timber.d("onSessionSuspended ($i)")
+        httpServer.stop()
     }
 }

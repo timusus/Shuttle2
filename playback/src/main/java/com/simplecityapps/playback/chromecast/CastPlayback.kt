@@ -20,7 +20,6 @@ import timber.log.Timber
 class CastPlayback(
     private val context: Context,
     private val castSession: CastSession,
-    private val httpServer: HttpServer,
     private val mediaPathProvider: MediaPathProvider
 ) : Playback {
 
@@ -38,7 +37,6 @@ class CastPlayback(
     private val remoteMediaClientCallback = CastMediaClientCallback()
 
     init {
-        httpServer.start()
         castSession.remoteMediaClient.registerCallback(remoteMediaClientCallback)
     }
 
@@ -116,8 +114,6 @@ class CastPlayback(
         }
 
         castSession.remoteMediaClient?.unregisterCallback(remoteMediaClientCallback)
-
-        httpServer.stop()
 
         isReleased = true
     }
@@ -214,7 +210,6 @@ class CastPlayback(
 
 
     private inner class CastMediaClientCallback : RemoteMediaClient.Callback() {
-
         override fun onMetadataUpdated() {
             Timber.v("RemoteMediaClient.onMetadataUpdated ${castSession.remoteMediaClient?.mediaInfo?.toJson()}")
         }
