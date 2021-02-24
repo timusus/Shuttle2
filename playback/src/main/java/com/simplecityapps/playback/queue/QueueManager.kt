@@ -67,8 +67,9 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
             val queueItems = songs.map { song -> song.toQueueItem(false) }
             queue.setQueue(queueItems)
 
-            shuffleSongs?.mapNotNull { song ->
-                queueItems.firstOrNull { queueItem -> queueItem.song == song }
+            shuffleSongs?.let { shuffleSongs ->
+                val queueOrderMap = shuffleSongs.withIndex().associate { songId -> songId.value.id to songId.index }
+                queueItems.sortedBy { queueItem -> queueOrderMap[queueItem.song.id] }
             }?.let { shuffleQueueItems ->
                 queue.setShuffleQueue(shuffleQueueItems)
             } ?: queue.generateShuffleQueue()

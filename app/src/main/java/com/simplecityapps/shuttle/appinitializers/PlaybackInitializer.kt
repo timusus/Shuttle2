@@ -68,11 +68,11 @@ class PlaybackInitializer @Inject constructor(
             queueManager.setRepeatMode(repeatMode)
 
             queuePosition?.let {
-                val songIds = playbackPreferenceManager.queueIds?.split(",")?.map { id -> id.toLong() }
+                val songIds = playbackPreferenceManager.queueIds?.split(',')?.map { id -> id.toLong() }
 
                 if (!songIds.isNullOrEmpty()) {
                     withContext(Dispatchers.IO) {
-                        val shuffleSongIds = playbackPreferenceManager.shuffleQueueIds?.split(",")?.map { id -> id.toLong() }
+                        val shuffleSongIds = playbackPreferenceManager.shuffleQueueIds?.split(',')?.map { id -> id.toLong() }
                         val allSongIds = songIds.orEmpty().toMutableSet()
                         allSongIds.addAll(shuffleSongIds.orEmpty())
 
@@ -80,8 +80,13 @@ class PlaybackInitializer @Inject constructor(
                             .firstOrNull()
                             .orEmpty()
 
-                        val songs = songIds.mapNotNull { songId -> allSongs.firstOrNull { song -> song.id == songId } }
-                        val shuffleSongs = shuffleSongIds?.mapNotNull { shuffleSongId -> allSongs.firstOrNull { song -> song.id == shuffleSongId } }
+                        val songOrderMap = songIds.withIndex().associate { songId -> songId.value to songId.index }
+                        val songs = allSongs.sortedBy { song -> songOrderMap[song.id] }
+
+                        val shuffleSongs = shuffleSongIds?.let {
+                            val shuffleSongOrderMap = shuffleSongIds.withIndex().associate { songId -> songId.value to songId.index }
+                            allSongs.sortedBy { song -> shuffleSongOrderMap[song.id] }
+                        }
 
                         withContext(Dispatchers.Main) {
                             if (queueManager.setQueue(
@@ -99,7 +104,6 @@ class PlaybackInitializer @Inject constructor(
                                     }
                                 }
                             }
-
                             onRestoreComplete()
                         }
                     }
