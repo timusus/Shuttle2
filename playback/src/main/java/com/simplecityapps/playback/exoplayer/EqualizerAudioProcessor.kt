@@ -7,11 +7,11 @@ import com.google.android.exoplayer2.audio.AudioProcessor.UnhandledAudioFormatEx
 import com.google.android.exoplayer2.audio.BaseAudioProcessor
 import com.simplecityapps.playback.equalizer.BandProcessor
 import com.simplecityapps.playback.equalizer.Equalizer
-import com.simplecityapps.playback.equalizer.fromDb
 import com.simplecityapps.playback.equalizer.toNyquistBand
+import com.simplecityapps.playback.exoplayer.ByteUtils.getInt24
+import com.simplecityapps.playback.exoplayer.ByteUtils.putInt24
 import timber.log.Timber
 import java.nio.ByteBuffer
-import kotlin.math.max
 
 class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
 
@@ -62,34 +62,42 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
 
     override fun queueInput(inputBuffer: ByteBuffer) {
         if (enabled) {
-            var position = inputBuffer.position()
-            val limit = inputBuffer.limit()
-            val frameCount = (limit - position) / (2 * outputAudioFormat.channelCount)
-            val outputSize = frameCount * outputAudioFormat.channelCount * 2
-            val buffer = replaceOutputBuffer(outputSize)
+            val size = inputBuffer.remaining()
+            val buffer = replaceOutputBuffer(size)
 
-            while (position < limit) {
-                for (channelIndex in 0 until outputAudioFormat.channelCount) {
-
-                    val samplePosition = position + 2 * channelIndex
-                    val originalSample = inputBuffer.getShort(samplePosition)
-                    var alteredSample = originalSample.toFloat()
-
-                    // Adjust overall gain to prevent clipping (create headroom). Used when max gain is above 3dB
-                    val maxBandGain = max(0, (preset.bands.map { band -> band.gain }.max() ?: 0))
-                    if (maxBandGain > 3) {
-                        alteredSample = (alteredSample * ((-maxBandGain).fromDb())).toFloat()
+            when (outputAudioFormat.encoding) {
+                C.ENCODING_PCM_16BIT -> {
+                    while (inputBuffer.hasRemaining()) {
+                        for (channelIndex in 0 until outputAudioFormat.channelCount) {
+                            val sample = inputBuffer.short
+                            var targetSample = sample.toFloat()
+                            for (band in bandProcessors) {
+                                targetSample = band.processSample(targetSample, channelIndex)
+                            }
+                            buffer.putShort(clamp(targetSample, Short.MIN_VALUE.toFloat(), Short.MAX_VALUE.toFloat()).toInt().toShort())
+                            if (!inputBuffer.hasRemaining()) {
+                                break
+                            }
+                        }
                     }
-
-                    for (band in bandProcessors) {
-                        alteredSample = band.processSample(alteredSample, channelIndex)
-                    }
-
-                    buffer.putShort(clamp(alteredSample, Short.MIN_VALUE.toFloat(), Short.MAX_VALUE.toFloat()).toShort())
                 }
-                position += outputAudioFormat.channelCount * 2
+                C.ENCODING_PCM_24BIT -> {
+                    while (inputBuffer.hasRemaining()) {
+                        for (channelIndex in 0 until outputAudioFormat.channelCount) {
+                            val sample = inputBuffer.getInt24()
+                            var targetSample = sample.toFloat()
+                            for (band in bandProcessors) {
+                                targetSample = band.processSample(targetSample, channelIndex)
+                            }
+                            buffer.putInt24(clamp(targetSample, ByteUtils.Int24_MIN_VALUE.toFloat(), ByteUtils.Int24_MAX_VALUE.toFloat()).toInt())
+                            if (!inputBuffer.hasRemaining()) {
+                                break
+                            }
+                        }
+                    }
+                }
             }
-            inputBuffer.position(limit)
+            inputBuffer.position(inputBuffer.limit())
             buffer.flip()
         } else {
             val remaining = inputBuffer.remaining()
