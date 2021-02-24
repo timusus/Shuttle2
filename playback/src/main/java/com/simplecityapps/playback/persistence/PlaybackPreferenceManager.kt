@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.playback.equalizer.Equalizer
 import com.simplecityapps.playback.equalizer.EqualizerBand
+import com.simplecityapps.playback.exoplayer.ReplayGainAudioProcessor
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.persistence.get
 import com.simplecityapps.shuttle.persistence.put
@@ -97,6 +98,14 @@ class PlaybackPreferenceManager(
             return sharedPreferences.get("equalizer_enabled", false)
         }
 
+    var replayGainMode: ReplayGainAudioProcessor.Mode
+        set(value) {
+            sharedPreferences.put("replaygain_mode", value.ordinal)
+        }
+        get() {
+            return ReplayGainAudioProcessor.Mode.init(sharedPreferences.get("replaygain_mode", ReplayGainAudioProcessor.Mode.Off.ordinal))
+        }
+
     var preset: Equalizer.Presets.Preset
         set(value) {
             sharedPreferences.put("preset_name", value.name)
@@ -116,13 +125,5 @@ class PlaybackPreferenceManager(
             return sharedPreferences.getString("custom_preset_bands", null)?.let { json ->
                 adapter.fromJson(json)
             }
-        }
-
-    var useAndroidMediaPlayer: Boolean
-        set(value) {
-            sharedPreferences.put("playback_media_player", value)
-        }
-        get() {
-            return false //sharedPreferences.get("playback_media_player", false)
         }
 }

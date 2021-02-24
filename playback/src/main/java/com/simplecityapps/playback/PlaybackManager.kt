@@ -80,6 +80,7 @@ class PlaybackManager(
 
         playback.load(current, next, seekPosition) { result ->
             result.onSuccess {
+                playback.setReplayGain(trackGain = current.replayGainTrack, albumGain = current.replayGainAlbum)
                 completion(Result.success(attempt == 1))
             }
             result.onFailure { error ->
@@ -355,6 +356,13 @@ class PlaybackManager(
         playback.loadNext(queueManager.getNext()?.song)
     }
 
+    override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
+        super.onQueuePositionChanged(oldPosition, newPosition)
+
+        queueManager.getCurrentItem()?.song?.let { song ->
+            playback.setReplayGain(trackGain = song.replayGainTrack, albumGain = song.replayGainAlbum)
+        }
+    }
 
     // AudioFocusHelper.Listener Implementation
 

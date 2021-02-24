@@ -9,6 +9,11 @@
         <entry key="..\:/Users/tim/StudioProjects/Shuttle2/app/src/main/res/layout/list_item_changeset.xml" value="0.5" />
         <entry key="..\:/Users/tim/StudioProjects/Shuttle2/app/src/main/res/layout/list_item_genre.xml" value="0.5364583333333334" />
         <entry key="..\:/Users/tim/StudioProjects/Shuttle2/core/src/main/res/drawable/background_placeholder_rounded.xml" value="0.5441025641025641" />
+        <entry key="app/src/main/res/drawable/ic_baseline_show_chart_24.xml" value="0.3212962962962963" />
+        <entry key="app/src/main/res/drawable/ic_equalizer_black_24dp.xml" value="0.3212962962962963" />
+        <entry key="app/src/main/res/layout/fragment_equalizer.xml" value="0.335" />
+        <entry key="app/src/main/res/layout/fragment_frequency_response_dialog.xml" value="0.25" />
+        <entry key="app/src/main/res/menu/menu_fragment_equalizer.xml" value="0.30694444444444446" />
       </map>
     </option>
   </component>

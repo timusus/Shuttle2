@@ -50,6 +50,10 @@ interface Playback {
 
     }
 
+    fun setReplayGain(trackGain: Double?, albumGain: Double?) {
+
+    }
+
     interface Callback {
         fun onPlayStateChanged(isPlaying: Boolean)
 

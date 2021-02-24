@@ -4,9 +4,9 @@ import kotlin.math.*
 
 class BandProcessor(val band: NyquistBand, val sampleRate: Int, val channelCount: Int, val referenceGain: Int) {
 
-    private val G0 = referenceGain.fromDb()
-    private val GB = band.bandwidthGain.fromDb()
-    private val G1 = band.gain.fromDb()
+    private val G0 = referenceGain.toDouble().fromDb()
+    private val GB = band.bandwidthGain.toDouble().fromDb()
+    private val G1 = band.gain.toDouble().fromDb()
 
     private val xHist = Array(channelCount) { FloatArray(2) { 0f } }
     private val yHist = Array(channelCount) { FloatArray(2) { 0f } }

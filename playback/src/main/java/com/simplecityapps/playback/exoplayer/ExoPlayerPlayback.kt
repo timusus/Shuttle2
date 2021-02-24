@@ -6,7 +6,6 @@ import androidx.core.net.toUri
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON
 import com.google.android.exoplayer2.audio.AudioCapabilities
-import com.google.android.exoplayer2.audio.AudioProcessor
 import com.google.android.exoplayer2.audio.AudioSink
 import com.google.android.exoplayer2.audio.DefaultAudioSink
 import com.simplecityapps.mediaprovider.MediaPathProvider
@@ -19,7 +18,8 @@ import timber.log.Timber
 
 class ExoPlayerPlayback(
     context: Context,
-    private val audioProcessor: AudioProcessor,
+    private val equalizerAudioProcessor: EqualizerAudioProcessor,
+    private val replayGainAudioProcessor: ReplayGainAudioProcessor,
     private val mediaPathProvider: MediaPathProvider
 ) : Playback {
 
@@ -93,10 +93,15 @@ class ExoPlayerPlayback(
     }
 
     private fun initPlayer(context: Context): SimpleExoPlayer {
-
         val renderersFactory = object : DefaultRenderersFactory(context) {
             override fun buildAudioSink(context: Context, enableFloatOutput: Boolean, enableAudioTrackPlaybackParams: Boolean, enableOffload: Boolean): AudioSink {
-                return DefaultAudioSink(AudioCapabilities.DEFAULT_AUDIO_CAPABILITIES, DefaultAudioSink.DefaultAudioProcessorChain(audioProcessor).audioProcessors)
+                return DefaultAudioSink(
+                    AudioCapabilities.DEFAULT_AUDIO_CAPABILITIES,
+                    DefaultAudioSink.DefaultAudioProcessorChain(
+                        equalizerAudioProcessor,
+                        replayGainAudioProcessor
+                    ).audioProcessors
+                )
             }
         }
 
@@ -215,6 +220,11 @@ class ExoPlayerPlayback(
         }
     }
 
+    override fun setReplayGain(trackGain: Double?, albumGain: Double?) {
+        Timber.i("setReplayGain(trackGain: $trackGain, albumGain: $albumGain)")
+        replayGainAudioProcessor.trackGain = trackGain
+        replayGainAudioProcessor.albumGain = albumGain
+    }
 
     enum class PlaybackState {
         Idle, Buffering, Ready, Ended, Unknown;

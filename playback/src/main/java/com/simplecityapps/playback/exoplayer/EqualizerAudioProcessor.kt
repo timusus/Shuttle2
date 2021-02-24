@@ -96,6 +96,9 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
                         }
                     }
                 }
+                else -> {
+                    // No op
+                }
             }
             inputBuffer.position(inputBuffer.limit())
             buffer.flip()

@@ -7,7 +7,6 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.annotation.NavigationRes
 import androidx.fragment.app.FragmentManager
-import androidx.lifecycle.coroutineScope
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.findNavController
@@ -95,7 +94,7 @@ class BottomDrawerSettingsFragment :
             when (settingsItem) {
                 SettingsMenuItem.Shuffle -> presenter.shuffleAll()
                 SettingsMenuItem.SleepTimer -> SleepTimerDialogFragment.newInstance().show(requireFragmentManager())
-                SettingsMenuItem.Equalizer -> findNavController().navigate(R.id.action_bottomSheetFragment_to_equalizerFragment)
+                SettingsMenuItem.Dsp -> findNavController().navigate(R.id.action_bottomSheetFragment_to_equalizerFragment)
                 SettingsMenuItem.Settings -> findNavController().navigate(R.id.action_bottomSheetFragment_to_settingsFragment)
             }
         }

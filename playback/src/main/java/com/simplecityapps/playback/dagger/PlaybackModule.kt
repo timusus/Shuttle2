@@ -21,6 +21,7 @@ import com.simplecityapps.playback.chromecast.HttpServer
 import com.simplecityapps.playback.equalizer.Equalizer
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.exoplayer.ExoPlayerPlayback
+import com.simplecityapps.playback.exoplayer.ReplayGainAudioProcessor
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
@@ -70,6 +71,12 @@ class PlaybackModule {
 
     @AppScope
     @Provides
+    fun provideReplayGainAudioProcessor(playbackPreferenceManager: PlaybackPreferenceManager): ReplayGainAudioProcessor {
+        return ReplayGainAudioProcessor(playbackPreferenceManager.replayGainMode)
+    }
+
+    @AppScope
+    @Provides
     fun providePlaybackPreferenceManager(sharedPreferences: SharedPreferences, moshi: Moshi): PlaybackPreferenceManager {
         return PlaybackPreferenceManager(sharedPreferences, moshi)
     }
@@ -87,9 +94,10 @@ class PlaybackModule {
     fun provideExoPlayerPlayback(
         context: Context,
         equalizerAudioProcessor: EqualizerAudioProcessor,
+        replayGainAudioProcessor: ReplayGainAudioProcessor,
         mediaPathProvider: AggregateMediaPathProvider
     ): ExoPlayerPlayback {
-        return ExoPlayerPlayback(context, equalizerAudioProcessor, mediaPathProvider)
+        return ExoPlayerPlayback(context, equalizerAudioProcessor, replayGainAudioProcessor, mediaPathProvider)
     }
 
     @AppScope

@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/Shuttle2.iml" filepath="$PROJECT_DIR$/.idea/Shuttle2.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/Android.Shuttle2.iml" filepath="$PROJECT_DIR$/.idea/modules/Android.Shuttle2.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/app/Shuttle2.app.iml" filepath="$PROJECT_DIR$/.idea/modules/app/Shuttle2.app.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/Shuttle2.buildSrc.iml" filepath="$PROJECT_DIR$/.idea/modules/Shuttle2.buildSrc.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/core/Shuttle2.core.iml" filepath="$PROJECT_DIR$/.idea/modules/core/Shuttle2.core.iml" />

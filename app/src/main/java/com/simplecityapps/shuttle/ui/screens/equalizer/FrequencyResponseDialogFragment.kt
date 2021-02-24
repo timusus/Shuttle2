@@ -6,7 +6,6 @@ import android.content.Context
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.View
-import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.use
 import androidx.core.view.isVisible
@@ -23,7 +22,6 @@ import com.google.android.exoplayer2.audio.AudioProcessor
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.paramsen.noise.Noise
 import com.simplecityapps.playback.equalizer.Equalizer
-import com.simplecityapps.playback.equalizer.fromDb
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.shuttle.R
@@ -34,7 +32,6 @@ import dagger.android.support.AndroidSupportInjection
 import kotlinx.coroutines.*
 import javax.inject.Inject
 import kotlin.math.log10
-import kotlin.math.max
 import kotlin.math.pow
 import kotlin.math.sqrt
 
@@ -43,7 +40,8 @@ class FrequencyResponseDialogFragment : DialogFragment(), Injectable {
     private var lineChart: LineChart by autoCleared()
     private var loadingView: CircularLoadingView by autoCleared()
 
-    @Inject lateinit var playbackPreferenceManager: PlaybackPreferenceManager
+    @Inject
+    lateinit var playbackPreferenceManager: PlaybackPreferenceManager
 
     private lateinit var preset: Equalizer.Presets.Preset
 
@@ -172,13 +170,6 @@ class FrequencyResponseDialogFragment : DialogFragment(), Injectable {
 
             src.forEachIndexed { index, value ->
                 var newValue = value
-
-                // Adjust overall gain to prevent clipping (create headroom). Used when max gain is above 3dB
-                val maxBandGain = max(0, (preset.bands.map { band -> band.gain }.max() ?: 0))
-                if (maxBandGain > 3) {
-                    newValue = (newValue * ((-maxBandGain).fromDb())).toFloat()
-                }
-
                 for (band in audioProcessor.bandProcessors) {
                     newValue = band.processSample(newValue, 0)
                 }

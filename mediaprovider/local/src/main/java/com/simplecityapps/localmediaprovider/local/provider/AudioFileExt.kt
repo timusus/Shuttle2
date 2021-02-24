@@ -27,7 +27,9 @@ fun AudioFile.toSong(providerType: MediaProvider.Type): Song {
         playCount = 0,
         playbackPosition = 0,
         blacklisted = false,
-        mediaProvider = providerType
+        mediaProvider = providerType,
+        replayGainTrack = replayGainTrack,
+        replayGainAlbum = replayGainAlbum
     )
 }
 
@@ -40,12 +42,13 @@ enum class TagLibProperty(val key: String) {
     Track("TRACKNUMBER"),
     Disc("DISCNUMBER"),
     Genre("GENRE"),
-    OriginalDate("ORIGINALDATE")
+    OriginalDate("ORIGINALDATE"),
+    ReplayGainTrack("REPLAYGAIN_TRACK_GAIN"),
+    ReplayGainAlbum("REPLAYGAIN_ALBUM_GAIN"),
 }
 
 fun getAudioFile(fileDescriptor: Int, filePath: String, fileName: String, lastModified: Long, size: Long, mimeType: String): AudioFile {
     val metadata = KTagLib.getMetadata(fileDescriptor)
-
     return AudioFile(
         filePath,
         size,
@@ -65,7 +68,9 @@ fun getAudioFile(fileDescriptor: Int, filePath: String, fileName: String, lastMo
             genre.split(",", ";", "/")
                 .map { genre -> genre.trim() }
                 .filterNot { genre -> genre.isEmpty() }
-        }
+        },
+        replayGainTrack = metadata?.propertyMap?.get(TagLibProperty.ReplayGainTrack.key)?.firstOrNull()?.take(9)?.toDoubleOrNull(),
+        replayGainAlbum = metadata?.propertyMap?.get(TagLibProperty.ReplayGainAlbum.key)?.firstOrNull()?.take(9)?.toDoubleOrNull(),
     )
 }
 

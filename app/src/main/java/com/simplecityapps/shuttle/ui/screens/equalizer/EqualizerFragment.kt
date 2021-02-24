@@ -6,14 +6,14 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
 import android.widget.AutoCompleteTextView
-import androidx.appcompat.app.AlertDialog
+import android.widget.ImageButton
 import androidx.appcompat.widget.SwitchCompat
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.playback.equalizer.Equalizer
 import com.simplecityapps.playback.equalizer.EqualizerBand
+import com.simplecityapps.playback.exoplayer.ReplayGainAudioProcessor
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
@@ -22,13 +22,20 @@ import javax.inject.Inject
 
 class EqualizerFragment : Fragment(), Injectable, EqualizerContract.View {
 
-    @Inject lateinit var presenter: EqualizerPresenter
+    @Inject
+    lateinit var presenter: EqualizerPresenter
 
     private var toolbar: Toolbar by autoCleared()
 
     private var equalizerView: EqualizerView by autoCleared()
 
-    private var autoCompleteTextView: AutoCompleteTextView by autoCleared()
+    private var eqPresetAutoComplete: AutoCompleteTextView by autoCleared()
+
+    private var equalizerSwitch: SwitchCompat by autoCleared()
+
+    private var frequencyResponseButton: ImageButton by autoCleared()
+
+    private var replayGainAutoComplete: AutoCompleteTextView by autoCleared()
 
 
     // Lifecycle
@@ -41,36 +48,45 @@ class EqualizerFragment : Fragment(), Injectable, EqualizerContract.View {
         super.onViewCreated(view, savedInstanceState)
 
         toolbar = view.findViewById(R.id.toolbar)
-        toolbar.inflateMenu(R.menu.menu_fragment_equalizer)
         toolbar.setNavigationOnClickListener { findNavController().popBackStack() }
 
-        (toolbar.menu.findItem(R.id.enableEqualizer).actionView as SwitchCompat).setOnClickListener { switch ->
-            presenter.toggleEqualizer((switch as SwitchCompat).isChecked)
+        equalizerSwitch = view.findViewById(R.id.equalizerSwitch)
+        equalizerSwitch.setOnCheckedChangeListener { _, isChecked ->
+            presenter.toggleEqualizer(isChecked)
         }
-        toolbar.setOnMenuItemClickListener { item ->
-            when (item.itemId) {
-                R.id.frequencyResponse -> {
-                    FrequencyResponseDialogFragment.newInstance().show(childFragmentManager)
-                    return@setOnMenuItemClickListener true
-                }
-            }
-            false
+
+        frequencyResponseButton = view.findViewById(R.id.frequencyResponseButton)
+        frequencyResponseButton.setOnClickListener {
+            FrequencyResponseDialogFragment.newInstance().show(childFragmentManager)
         }
 
         equalizerView = view.findViewById(R.id.equalizerView)
         equalizerView.listener = equalizerListener
 
         val presets = Equalizer.Presets.all
-        autoCompleteTextView = view.findViewById(R.id.autoCompleteTextView)
-        autoCompleteTextView.setAdapter(
+        eqPresetAutoComplete = view.findViewById(R.id.eqPresetAutoComplete)
+        eqPresetAutoComplete.setAdapter(
             ArrayAdapter(
                 requireContext(),
                 R.layout.dropdown_menu_popup_item,
                 presets.map { preset -> preset.name }
             )
         )
-        autoCompleteTextView.setOnItemClickListener { _, _, position, _ ->
-            presenter.setPreset(presets[position])
+        eqPresetAutoComplete.setOnItemClickListener { _, _, position, _ ->
+            presenter.setEqPreset(presets[position])
+        }
+
+        val modes = ReplayGainAudioProcessor.Mode.values()
+        replayGainAutoComplete = view.findViewById(R.id.replayGainAutoComplete)
+        replayGainAutoComplete.setAdapter(
+            ArrayAdapter(
+                requireContext(),
+                R.layout.dropdown_menu_popup_item,
+                modes.map { mode -> mode.displayName() }
+            )
+        )
+        replayGainAutoComplete.setOnItemClickListener { _, _, position, _ ->
+            presenter.setReplayGainMode(modes[position])
         }
 
         presenter.bindView(this)
@@ -82,39 +98,42 @@ class EqualizerFragment : Fragment(), Injectable, EqualizerContract.View {
     }
 
 
+    // Private
+
+    private fun ReplayGainAudioProcessor.Mode.displayName(): String {
+        return when (this) {
+            ReplayGainAudioProcessor.Mode.Track -> "Track Gain"
+            ReplayGainAudioProcessor.Mode.Album -> "Album Gain"
+            ReplayGainAudioProcessor.Mode.Off -> "Off"
+        }
+    }
+
+
     // EqualizerContract.View Implementation
 
-    override fun initializeEqualizerView(activated: Boolean, enabled: Boolean, equalizer: Equalizer.Presets.Preset, maxBandGain: Int) {
-        val switch = toolbar.menu.findItem(R.id.enableEqualizer).actionView as SwitchCompat
-        switch.isChecked = activated && enabled
+    override fun initializeEqualizerView(activated: Boolean, equalizer: Equalizer.Presets.Preset, maxBandGain: Int) {
+        equalizerSwitch.isChecked = activated
 
         equalizerView.configure(maxBandGain, equalizer)
-        equalizerView.isActivated = activated && enabled
+        equalizerView.isActivated = activated
 
-        autoCompleteTextView.setText(equalizer.name, false)
+        eqPresetAutoComplete.setText(equalizer.name, false)
     }
 
     override fun updateEqualizerView(preset: Equalizer.Presets.Preset) {
         equalizerView.equalizer = preset
     }
 
-    override fun updateSelectedPreset(preset: Equalizer.Presets.Preset) {
-        autoCompleteTextView.setText(preset.name, false)
+    override fun updateSelectedEqPreset(preset: Equalizer.Presets.Preset) {
+        eqPresetAutoComplete.setText(preset.name, false)
     }
 
-    override fun showEnabled(enabled: Boolean) {
+    override fun showEqEnabled(enabled: Boolean) {
         equalizerView.isActivated = enabled
     }
 
-    override fun showEqDisabled() {
-        val switch = toolbar.menu.findItem(R.id.enableEqualizer).actionView as SwitchCompat
-        switch.isChecked = false
-
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Equalizer Disabled")
-            .setMessage("The custom EQ is not compatible with the Android MediaPlayer. \n\n`You can change the media player in playback settings.")
-            .setPositiveButton("Close", null)
-            .show()
+    override fun updateSelectedReplayGainMode(mode: ReplayGainAudioProcessor.Mode) {
+        replayGainAutoComplete.setText(mode.displayName(), false)
     }
 
 

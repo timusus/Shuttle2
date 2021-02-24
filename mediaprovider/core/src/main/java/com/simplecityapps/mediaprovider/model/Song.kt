@@ -27,7 +27,9 @@ data class Song(
     var playbackPosition: Int,
     val blacklisted: Boolean,
     var mediaStoreId: Long? = null,
-    var mediaProvider: MediaProvider.Type
+    var mediaProvider: MediaProvider.Type,
+    val replayGainTrack: Double? = null,
+    val replayGainAlbum: Double? = null
 ) : Serializable {
 
     val type: Type
@@ -53,28 +55,8 @@ data class Song(
     }
 
     override fun toString(): String {
-        return "Song(" +
-                "name='$name'," +
-                " albumArtist='$albumArtist'," +
-                " artist='$artist'," +
-                " album='$album'," +
-                " track=$track," +
-                " disc=$disc," +
-                " duration=$duration," +
-                " year=$year," +
-                " genres=$genres," +
-                " path='$path'," +
-                " size=$size," +
-                " mimeType='$mimeType'," +
-                " lastModified=$lastModified," +
-                " lastPlayed=$lastPlayed," +
-                " lastCompleted=$lastCompleted," +
-                " playCount=$playCount," +
-                " playbackPosition=$playbackPosition," +
-                " blacklisted=$blacklisted" +
-                ")"
+        return "Song(id=$id, name='$name', albumArtist='$albumArtist', artist='$artist', album='$album', track=$track, disc=$disc, duration=$duration, year=$year, genres=$genres, path='$path', size=$size, mimeType='$mimeType', lastModified=$lastModified, lastPlayed=$lastPlayed, lastCompleted=$lastCompleted, playCount=$playCount, playbackPosition=$playbackPosition, blacklisted=$blacklisted, mediaStoreId=$mediaStoreId, mediaProvider=$mediaProvider, replayGainTrack=$replayGainTrack, replayGainAlbum=$replayGainAlbum)"
     }
-
 
     enum class Type {
         Audio, Audiobook, Podcast

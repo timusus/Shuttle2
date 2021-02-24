@@ -19,7 +19,9 @@ data class SongDataUpdate(
     @ColumnInfo(name = "size") var size: Long,
     @ColumnInfo(name = "mimeType") var mimeType: String,
     @ColumnInfo(name = "lastModified") var lastModified: Date,
-    @ColumnInfo(name = "mediaStoreId") var mediaStoreId: Long? = null
+    @ColumnInfo(name = "mediaStoreId") var mediaStoreId: Long? = null,
+    @ColumnInfo(name = "replayGainTrack") var replayGainTrack: Double? = null,
+    @ColumnInfo(name = "replayGainAlbum") var replayGainAlbum: Double? = null
 )
 
 fun SongData.toSongDataUpdate(): SongDataUpdate {
@@ -36,7 +38,10 @@ fun SongData.toSongDataUpdate(): SongDataUpdate {
         size = size,
         mimeType = mimeType,
         lastModified = lastModified,
-        mediaStoreId = mediaStoreId
+        mediaStoreId = mediaStoreId,
+        replayGainTrack = replayGainTrack,
+        replayGainAlbum = replayGainAlbum,
+
     )
 }
 

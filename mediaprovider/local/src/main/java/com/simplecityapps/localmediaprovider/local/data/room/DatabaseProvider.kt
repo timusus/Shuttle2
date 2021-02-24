@@ -18,7 +18,7 @@ class DatabaseProvider constructor(
 
     val database: MediaDatabase by lazy {
         Room.databaseBuilder(context, MediaDatabase::class.java, "song.db")
-            .addMigrations(MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26, MIGRATION_26_27, MIGRATION_27_28, MIGRATION_28_29, MIGRATION_29_30, MIGRATION_30_31, MIGRATION_31_32)
+            .addMigrations(MIGRATION_23_24, MIGRATION_24_25, MIGRATION_25_26, MIGRATION_26_27, MIGRATION_27_28, MIGRATION_28_29, MIGRATION_29_30, MIGRATION_30_31, MIGRATION_31_32, MIGRATION_32_33)
             .addCallback(callback)
             .fallbackToDestructiveMigration()
             .build()
@@ -100,6 +100,13 @@ class DatabaseProvider constructor(
     private val MIGRATION_31_32 = object : Migration(31, 32) {
         override fun migrate(database: SupportSQLiteDatabase) {
             database.execSQL("ALTER TABLE songs ADD COLUMN mediaProvider TEXT NOT NULL DEFAULT 'Shuttle'")
+        }
+    }
+
+    private val MIGRATION_32_33 = object : Migration(32, 33) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            database.execSQL("ALTER TABLE songs ADD COLUMN replayGainTrack REAL")
+            database.execSQL("ALTER TABLE songs ADD COLUMN replayGainAlbum REAL")
         }
     }
 }

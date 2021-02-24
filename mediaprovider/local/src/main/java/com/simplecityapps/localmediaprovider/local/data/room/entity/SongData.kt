@@ -34,7 +34,9 @@ data class SongData(
     @ColumnInfo(name = "lastCompleted") var lastCompleted: Date? = null,
     @ColumnInfo(name = "blacklisted") var excluded: Boolean = false,
     @ColumnInfo(name = "mediaStoreId") var mediaStoreId: Long? = null,
-    @ColumnInfo(name = "mediaProvider") var mediaProvider: MediaProvider.Type
+    @ColumnInfo(name = "mediaProvider") var mediaProvider: MediaProvider.Type,
+    @ColumnInfo(name = "replayGainTrack") var replayGainTrack: Double? = null,
+    @ColumnInfo(name = "replayGainAlbum") var replayGainAlbum: Double? = null
 ) {
     @PrimaryKey(autoGenerate = true)
     var id: Long = 0
@@ -61,7 +63,9 @@ fun Song.toSongData(mediaProviderType: MediaProvider.Type): SongData {
         lastCompleted = lastCompleted,
         excluded = false,
         mediaStoreId = mediaStoreId,
-        mediaProviderType
+        mediaProvider = mediaProviderType,
+        replayGainTrack = replayGainTrack,
+        replayGainAlbum = replayGainAlbum
     ).apply {
         id = this@toSongData.id
     }
