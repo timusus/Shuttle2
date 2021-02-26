@@ -1,5 +1,22 @@
 [
   {
+    "versionName": "0.2.12",
+    "releaseDate": "26/02/2021",
+    "features": [
+      "Added support for Replay Gain (read-only)",
+      "Added preamp to DSP settings"
+    ],
+    "fixes": [
+      "Fixed an issue preventing the file manager from being launched on Android R"
+    ],
+    "improvements": [
+      "Equalizer now supports 24-bit audio",
+      "Optimised queue restoration (queue loads faster when launching app)",
+      "Minor change to Chromecast HTTP server.. Now starts & stops in sync with 'CastSession'"
+    ],
+    "notes": []
+  },
+  {
     "versionName": "0.2.11",
     "releaseDate": "18/02/2021",
     "features": [],
