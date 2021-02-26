@@ -1,49 +1,27 @@
-package com.simplecityapps.playback.exoplayer
+package com.simplecityapps.playback.dsp.replaygain
 
 import androidx.core.math.MathUtils.clamp
 import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.audio.AudioProcessor
 import com.google.android.exoplayer2.audio.AudioProcessor.UnhandledAudioFormatException
 import com.google.android.exoplayer2.audio.BaseAudioProcessor
-import com.simplecityapps.playback.equalizer.fromDb
+import com.simplecityapps.playback.dsp.equalizer.fromDb
 import com.simplecityapps.playback.exoplayer.ByteUtils.Int24_MAX_VALUE
 import com.simplecityapps.playback.exoplayer.ByteUtils.Int24_MIN_VALUE
 import com.simplecityapps.playback.exoplayer.ByteUtils.getInt24
 import com.simplecityapps.playback.exoplayer.ByteUtils.putInt24
-import timber.log.Timber
 import java.nio.ByteBuffer
 
-class ReplayGainAudioProcessor(mode: Mode) : BaseAudioProcessor() {
-
-    enum class Mode {
-        Track, Album, Off;
-
-        companion object {
-            fun init(ordinal: Int): Mode {
-                return when (ordinal) {
-                    Track.ordinal -> Track
-                    Album.ordinal -> Album
-                    Off.ordinal -> Off
-                    else -> Off
-                }
-            }
-        }
-    }
+class ReplayGainAudioProcessor(var mode: ReplayGainMode, var preAmpGain: Double = 0.0) : BaseAudioProcessor() {
 
     var trackGain: Double? = null
     var albumGain: Double? = null
 
-    var mode: Mode = mode
-        set(value) {
-            field = value
-            Timber.v("Replay gain mode: $value")
-        }
-
     private val gain: Double
-        get() = when (mode) {
-            Mode.Track -> trackGain ?: albumGain ?: 0.0
-            Mode.Album -> albumGain ?: trackGain ?: 0.0
-            Mode.Off -> 0.0
+        get() = preAmpGain + when (mode) {
+            ReplayGainMode.Track -> trackGain ?: albumGain ?: 0.0
+            ReplayGainMode.Album -> albumGain ?: trackGain ?: 0.0
+            ReplayGainMode.Off -> 0.0
         }
 
     override fun onConfigure(inputAudioFormat: AudioProcessor.AudioFormat): AudioProcessor.AudioFormat {
@@ -88,5 +66,9 @@ class ReplayGainAudioProcessor(mode: Mode) : BaseAudioProcessor() {
             }
             replaceOutputBuffer(remaining).put(inputBuffer).flip()
         }
+    }
+
+    companion object {
+        const val maxPreAmpGain = 12
     }
 }

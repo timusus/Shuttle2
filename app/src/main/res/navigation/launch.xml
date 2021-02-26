@@ -32,9 +32,9 @@
 
     <fragment
         android:id="@+id/equalizerFragment"
-        android:name="com.simplecityapps.shuttle.ui.screens.equalizer.EqualizerFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.equalizer.DspFragment"
         android:label="EqualizerFragment"
-        tools:layout="@layout/fragment_equalizer" />
+        tools:layout="@layout/fragment_dsp" />
 
     <dialog
         android:id="@+id/bottomSheetFragment"

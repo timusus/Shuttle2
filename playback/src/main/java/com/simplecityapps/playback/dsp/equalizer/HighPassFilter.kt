@@ -1,4 +1,4 @@
-package com.simplecityapps.playback.equalizer
+package com.simplecityapps.playback.dsp.equalizer
 
 import kotlin.math.PI
 import kotlin.math.cos

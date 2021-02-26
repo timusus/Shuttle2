@@ -1,4 +1,4 @@
-package com.simplecityapps.playback.equalizer
+package com.simplecityapps.playback.dsp.equalizer
 
 object Equalizer {
 

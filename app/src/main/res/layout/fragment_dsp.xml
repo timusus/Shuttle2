@@ -62,6 +62,71 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <TextView
+                android:id="@+id/preAmpTitle"
+                style="@style/TextTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="16dp"
+                android:layout_marginTop="40dp"
+                android:layout_marginEnd="16dp"
+                android:text="Preamp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/frequencyResponseButton"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/replayGainDropdown" />
+
+            <com.simplecityapps.shuttle.ui.common.view.HorizontalSeekbar
+                android:id="@+id/preAmpSeekBar"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="16dp"
+                android:layout_marginEnd="24dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/preAmpTitle" />
+
+            <TextView
+                android:id="@+id/preAmpText1"
+                style="@style/TextAppearance.AppCompat.Caption"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="24dp"
+                android:layout_marginTop="4dp"
+                android:fontFamily="sans-serif"
+                android:gravity="center"
+                android:text="-12dB"
+                android:textSize="12sp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/preAmpSeekBar" />
+
+            <TextView
+                android:id="@+id/preAmpText2"
+                style="@style/TextAppearance.AppCompat.Caption"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:gravity="center"
+                android:text="0dB"
+                android:textSize="12sp"
+                app:layout_constraintEnd_toEndOf="@id/preAmpSeekBar"
+                app:layout_constraintStart_toStartOf="@id/preAmpSeekBar"
+                app:layout_constraintTop_toBottomOf="@id/preAmpSeekBar" />
+
+            <TextView
+                android:id="@+id/preAmpText3"
+                style="@style/TextAppearance.AppCompat.Caption"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:layout_marginEnd="24dp"
+                android:gravity="center"
+                android:text="12dB"
+                android:textSize="12sp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/preAmpSeekBar" />
+
+            <TextView
                 android:id="@+id/equalizerTitle"
                 style="@style/TextTitle"
                 android:layout_width="0dp"
@@ -73,7 +138,7 @@
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintEnd_toStartOf="@id/frequencyResponseButton"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/replayGainDropdown" />
+                app:layout_constraintTop_toBottomOf="@id/preAmpText2" />
 
             <androidx.appcompat.widget.SwitchCompat
                 android:id="@+id/equalizerSwitch"

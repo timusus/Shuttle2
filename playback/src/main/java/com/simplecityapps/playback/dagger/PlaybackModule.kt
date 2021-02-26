@@ -18,10 +18,10 @@ import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi26
 import com.simplecityapps.playback.chromecast.CastService
 import com.simplecityapps.playback.chromecast.CastSessionManager
 import com.simplecityapps.playback.chromecast.HttpServer
-import com.simplecityapps.playback.equalizer.Equalizer
+import com.simplecityapps.playback.dsp.equalizer.Equalizer
+import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.exoplayer.ExoPlayerPlayback
-import com.simplecityapps.playback.exoplayer.ReplayGainAudioProcessor
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
@@ -72,7 +72,7 @@ class PlaybackModule {
     @AppScope
     @Provides
     fun provideReplayGainAudioProcessor(playbackPreferenceManager: PlaybackPreferenceManager): ReplayGainAudioProcessor {
-        return ReplayGainAudioProcessor(playbackPreferenceManager.replayGainMode)
+        return ReplayGainAudioProcessor(playbackPreferenceManager.replayGainMode, playbackPreferenceManager.preAmpGain)
     }
 
     @AppScope
@@ -160,7 +160,13 @@ class PlaybackModule {
 
     @AppScope
     @Provides
-    fun provideCastSessionManager(context: Context, playbackManager: PlaybackManager, httpServer: HttpServer, exoPlayerPlayback: ExoPlayerPlayback, mediaPathProvider: AggregateMediaPathProvider): CastSessionManager {
+    fun provideCastSessionManager(
+        context: Context,
+        playbackManager: PlaybackManager,
+        httpServer: HttpServer,
+        exoPlayerPlayback: ExoPlayerPlayback,
+        mediaPathProvider: AggregateMediaPathProvider
+    ): CastSessionManager {
         return CastSessionManager(playbackManager, context, httpServer, exoPlayerPlayback, mediaPathProvider)
     }
 

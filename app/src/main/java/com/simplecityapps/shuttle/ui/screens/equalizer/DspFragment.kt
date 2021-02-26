@@ -11,37 +11,35 @@ import androidx.appcompat.widget.SwitchCompat
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import com.simplecityapps.playback.equalizer.Equalizer
-import com.simplecityapps.playback.equalizer.EqualizerBand
-import com.simplecityapps.playback.exoplayer.ReplayGainAudioProcessor
+import com.simplecityapps.playback.dsp.equalizer.Equalizer
+import com.simplecityapps.playback.dsp.equalizer.EqualizerBand
+import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
+import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.view.HorizontalSeekbar
 import javax.inject.Inject
 
 
-class EqualizerFragment : Fragment(), Injectable, EqualizerContract.View {
+class DspFragment : Fragment(), Injectable, EqualizerContract.View {
 
     @Inject
-    lateinit var presenter: EqualizerPresenter
+    lateinit var presenter: DspPresenter
 
     private var toolbar: Toolbar by autoCleared()
-
     private var equalizerView: EqualizerView by autoCleared()
-
     private var eqPresetAutoComplete: AutoCompleteTextView by autoCleared()
-
     private var equalizerSwitch: SwitchCompat by autoCleared()
-
     private var frequencyResponseButton: ImageButton by autoCleared()
-
     private var replayGainAutoComplete: AutoCompleteTextView by autoCleared()
+    private var preAmpSeekBar: HorizontalSeekbar by autoCleared()
 
 
     // Lifecycle
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(R.layout.fragment_equalizer, container, false)
+        return inflater.inflate(R.layout.fragment_dsp, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -76,7 +74,7 @@ class EqualizerFragment : Fragment(), Injectable, EqualizerContract.View {
             presenter.setEqPreset(presets[position])
         }
 
-        val modes = ReplayGainAudioProcessor.Mode.values()
+        val modes = ReplayGainMode.values()
         replayGainAutoComplete = view.findViewById(R.id.replayGainAutoComplete)
         replayGainAutoComplete.setAdapter(
             ArrayAdapter(
@@ -89,8 +87,12 @@ class EqualizerFragment : Fragment(), Injectable, EqualizerContract.View {
             presenter.setReplayGainMode(modes[position])
         }
 
+        preAmpSeekBar = view.findViewById(R.id.preAmpSeekBar)
+        preAmpSeekBar.listener = preAmpListener
+
         presenter.bindView(this)
     }
+
 
     override fun onDestroyView() {
         presenter.unbindView()
@@ -100,11 +102,11 @@ class EqualizerFragment : Fragment(), Injectable, EqualizerContract.View {
 
     // Private
 
-    private fun ReplayGainAudioProcessor.Mode.displayName(): String {
+    private fun ReplayGainMode.displayName(): String {
         return when (this) {
-            ReplayGainAudioProcessor.Mode.Track -> "Track Gain"
-            ReplayGainAudioProcessor.Mode.Album -> "Album Gain"
-            ReplayGainAudioProcessor.Mode.Off -> "Off"
+            ReplayGainMode.Track -> "Track Gain"
+            ReplayGainMode.Album -> "Album Gain"
+            ReplayGainMode.Off -> "Off"
         }
     }
 
@@ -132,25 +134,35 @@ class EqualizerFragment : Fragment(), Injectable, EqualizerContract.View {
         equalizerView.isActivated = enabled
     }
 
-    override fun updateSelectedReplayGainMode(mode: ReplayGainAudioProcessor.Mode) {
+    override fun updateSelectedReplayGainMode(mode: ReplayGainMode) {
         replayGainAutoComplete.setText(mode.displayName(), false)
+    }
+
+    override fun updatePreAmpGain(gain: Double) {
+        val progress = ((gain + ReplayGainAudioProcessor.maxPreAmpGain) / (2 * ReplayGainAudioProcessor.maxPreAmpGain)).toFloat()
+        preAmpSeekBar.progress = progress
     }
 
 
     // EqualizerView.Listener Implementation
 
     private val equalizerListener = object : EqualizerView.Listener {
-
         override fun onBandChanged(band: EqualizerBand) {
             presenter.updateBand(band)
         }
     }
 
+    private val preAmpListener = object : HorizontalSeekbar.Listener {
+        override fun onStopTracking(progress: Float) {
+            val gain = (progress * ReplayGainAudioProcessor.maxPreAmpGain * 2) - ReplayGainAudioProcessor.maxPreAmpGain
+            presenter.setPreAmpGain(gain.toDouble())
+        }
+    }
 
     // Static
 
     companion object {
         const val TAG = "EqualizerFragment"
-        fun newInstance() = EqualizerFragment()
+        fun newInstance() = DspFragment()
     }
 }

@@ -2,9 +2,9 @@ package com.simplecityapps.playback.persistence
 
 import android.content.SharedPreferences
 import com.simplecityapps.mediaprovider.MediaProvider
-import com.simplecityapps.playback.equalizer.Equalizer
-import com.simplecityapps.playback.equalizer.EqualizerBand
-import com.simplecityapps.playback.exoplayer.ReplayGainAudioProcessor
+import com.simplecityapps.playback.dsp.equalizer.Equalizer
+import com.simplecityapps.playback.dsp.equalizer.EqualizerBand
+import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.persistence.get
 import com.simplecityapps.shuttle.persistence.put
@@ -98,12 +98,20 @@ class PlaybackPreferenceManager(
             return sharedPreferences.get("equalizer_enabled", false)
         }
 
-    var replayGainMode: ReplayGainAudioProcessor.Mode
+    var replayGainMode: ReplayGainMode
         set(value) {
             sharedPreferences.put("replaygain_mode", value.ordinal)
         }
         get() {
-            return ReplayGainAudioProcessor.Mode.init(sharedPreferences.get("replaygain_mode", ReplayGainAudioProcessor.Mode.Off.ordinal))
+            return ReplayGainMode.init(sharedPreferences.get("replaygain_mode", ReplayGainMode.Off.ordinal))
+        }
+
+    var preAmpGain: Double
+        set(value) {
+            sharedPreferences.put("preamp_gain", value.toFloat())
+        }
+        get() {
+            return sharedPreferences.getFloat("preamp_gain", 0f).toDouble()
         }
 
     var preset: Equalizer.Presets.Preset

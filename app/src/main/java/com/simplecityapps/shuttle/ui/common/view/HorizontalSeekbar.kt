@@ -15,7 +15,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.utils.dp
 import kotlin.math.abs
 
-class VerticalSeekbar @JvmOverloads constructor(
+class HorizontalSeekbar @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
@@ -52,6 +52,8 @@ class VerticalSeekbar @JvmOverloads constructor(
     private val trackColorDisabled: Int
 
     init {
+        isActivated = true
+
         trackColorDisabled = resources.getColor(R.color.vertical_seekbar_track_disabled)
 
         TypedValue().apply {
@@ -89,18 +91,18 @@ class VerticalSeekbar @JvmOverloads constructor(
                     initialY = event.y
 
                     // If we're more than 4 x thumb radius from the center of the thumb, prevent interaction
-                    if (abs(event.y - progress * (height - thumbRadius * 2)) > thumbRadius * 4) {
+                    if (abs(event.x - progress * (width - thumbRadius * 2)) > thumbRadius * 4) {
                         return@setOnTouchListener false
                     }
                 }
                 MotionEvent.ACTION_MOVE -> {
 
-                    progress = mRound(clamp(event.y / height, 0f, 1f), 1f / numLines)
+                    progress = mRound(clamp(event.x / width, 0f, 1f), 1f / numLines)
 
                     invalidate()
 
                     // If we're moving generally along the vertical axis, prevent the parent from scrolling
-                    if (abs(event.y - initialY) > abs(event.x - initialX)) {
+                    if (abs(event.x - initialX) > abs(event.y - initialY)) {
                         parent.requestDisallowInterceptTouchEvent(true)
                     }
 
@@ -143,24 +145,39 @@ class VerticalSeekbar @JvmOverloads constructor(
                 guideLinePaint.strokeWidth = linePaintStrokeWidth
             }
             canvas.drawLine(
+                (thumbRadius) + i * ((width - thumbRadius * 2) / numGuidelines.toFloat()),
                 0f,
-                (thumbRadius) + i * ((height - thumbRadius * 2) / numGuidelines.toFloat()),
-                width.toFloat(),
-                (thumbRadius) + i * ((height - thumbRadius * 2) / numGuidelines.toFloat()),
+                (thumbRadius) + i * ((width - thumbRadius * 2) / numGuidelines.toFloat()),
+                height.toFloat(),
                 guideLinePaint
             )
         }
 
         // Track
-        rect.set((width / 2f - trackWidth / 2f), thumbRadius, width / 2f + trackWidth / 2f, height.toFloat() - thumbRadius)
+        rect.set(
+            thumbRadius,
+            (height / 2f - trackWidth / 2f),
+            width.toFloat() - thumbRadius,
+            height / 2f + trackWidth / 2f
+        )
         canvas.drawRoundRect(rect, trackWidth / 2, trackWidth / 2, trackPaint)
 
         // Progress
-        rect.set((width / 2f - trackWidth / 2f), height * progress, width / 2f + trackWidth / 2f, height / 2f)
+        rect.set(
+            width * progress,
+            (height / 2f - trackWidth / 2f),
+            width / 2f,
+            height / 2f + trackWidth / 2f
+        )
         canvas.drawRoundRect(rect, trackWidth / 2, trackWidth / 2, progressPaint)
 
         // Thumb
-        rect.set((width / 2f - thumbRadius), (height - thumbRadius * 2) * progress, width / 2f + thumbRadius, (height - thumbRadius * 2) * progress + thumbRadius * 2)
+        rect.set(
+            (width - thumbRadius * 2) * progress,
+            (height / 2f - thumbRadius),
+            (width - thumbRadius * 2) * progress + thumbRadius * 2,
+            height / 2f + thumbRadius
+        )
         canvas.drawRoundRect(rect, thumbRadius, thumbRadius, thumbPaint)
     }
 }

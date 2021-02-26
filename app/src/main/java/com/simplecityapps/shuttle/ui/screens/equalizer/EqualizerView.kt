@@ -10,8 +10,8 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.view.isVisible
 import com.google.android.material.math.MathUtils.lerp
-import com.simplecityapps.playback.equalizer.Equalizer
-import com.simplecityapps.playback.equalizer.EqualizerBand
+import com.simplecityapps.playback.dsp.equalizer.Equalizer
+import com.simplecityapps.playback.dsp.equalizer.EqualizerBand
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.view.VerticalSeekbar
 

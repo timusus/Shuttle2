@@ -12,6 +12,7 @@ import com.simplecityapps.mediaprovider.MediaPathProvider
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.chromecast.CastPlayback
+import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.mediasession.toRepeatMode
 import com.simplecityapps.playback.queue.QueueManager
 import timber.log.Timber

@@ -5,9 +5,9 @@ import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.audio.AudioProcessor
 import com.google.android.exoplayer2.audio.AudioProcessor.UnhandledAudioFormatException
 import com.google.android.exoplayer2.audio.BaseAudioProcessor
-import com.simplecityapps.playback.equalizer.BandProcessor
-import com.simplecityapps.playback.equalizer.Equalizer
-import com.simplecityapps.playback.equalizer.toNyquistBand
+import com.simplecityapps.playback.dsp.equalizer.BandProcessor
+import com.simplecityapps.playback.dsp.equalizer.Equalizer
+import com.simplecityapps.playback.dsp.equalizer.toNyquistBand
 import com.simplecityapps.playback.exoplayer.ByteUtils.getInt24
 import com.simplecityapps.playback.exoplayer.ByteUtils.putInt24
 import timber.log.Timber

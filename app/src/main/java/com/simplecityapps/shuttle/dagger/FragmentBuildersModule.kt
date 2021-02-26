@@ -4,7 +4,7 @@ import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.screens.changelog.ChangelogDialogFragment
 import com.simplecityapps.shuttle.ui.screens.debug.DebugDrawerFragment
 import com.simplecityapps.shuttle.ui.screens.debug.LoggingFragment
-import com.simplecityapps.shuttle.ui.screens.equalizer.EqualizerFragment
+import com.simplecityapps.shuttle.ui.screens.equalizer.DspFragment
 import com.simplecityapps.shuttle.ui.screens.equalizer.FrequencyResponseDialogFragment
 import com.simplecityapps.shuttle.ui.screens.home.HomeFragment
 import com.simplecityapps.shuttle.ui.screens.home.search.SearchFragment
@@ -116,7 +116,7 @@ abstract class FragmentBuildersModule {
     abstract fun contributeMediaProviderSelectionFragment(): MediaProviderSelectionFragment
 
     @ContributesAndroidInjector
-    abstract fun contributeEqualizerFragment(): EqualizerFragment
+    abstract fun contributeEqualizerFragment(): DspFragment
 
     @ContributesAndroidInjector
     abstract fun contributeChangelogDialog(): ChangelogDialogFragment

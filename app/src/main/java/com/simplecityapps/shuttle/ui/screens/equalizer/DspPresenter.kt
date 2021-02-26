@@ -1,9 +1,10 @@
 package com.simplecityapps.shuttle.ui.screens.equalizer
 
-import com.simplecityapps.playback.equalizer.Equalizer
-import com.simplecityapps.playback.equalizer.EqualizerBand
+import com.simplecityapps.playback.dsp.equalizer.Equalizer
+import com.simplecityapps.playback.dsp.equalizer.EqualizerBand
+import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
+import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
-import com.simplecityapps.playback.exoplayer.ReplayGainAudioProcessor
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
@@ -16,18 +17,20 @@ interface EqualizerContract {
         fun updateEqualizerView(preset: Equalizer.Presets.Preset)
         fun updateSelectedEqPreset(preset: Equalizer.Presets.Preset)
         fun showEqEnabled(enabled: Boolean)
-        fun updateSelectedReplayGainMode(mode: ReplayGainAudioProcessor.Mode)
+        fun updateSelectedReplayGainMode(mode: ReplayGainMode)
+        fun updatePreAmpGain(gain: Double)
     }
 
     interface Presenter : BaseContract.Presenter<View> {
         fun toggleEqualizer(activated: Boolean)
         fun updateBand(band: EqualizerBand)
         fun setEqPreset(preset: Equalizer.Presets.Preset)
-        fun setReplayGainMode(mode: ReplayGainAudioProcessor.Mode)
+        fun setReplayGainMode(mode: ReplayGainMode)
+        fun setPreAmpGain(gain: Double)
     }
 }
 
-class EqualizerPresenter @Inject constructor(
+class DspPresenter @Inject constructor(
     private val playbackPreferenceManager: PlaybackPreferenceManager,
     private val equalizerAudioProcessor: EqualizerAudioProcessor,
     private val replayGainAudioProcessor: ReplayGainAudioProcessor
@@ -38,6 +41,7 @@ class EqualizerPresenter @Inject constructor(
 
         view.initializeEqualizerView(equalizerAudioProcessor.enabled, equalizerAudioProcessor.preset, equalizerAudioProcessor.maxBandGain)
         view.updateSelectedReplayGainMode(playbackPreferenceManager.replayGainMode)
+        view.updatePreAmpGain(playbackPreferenceManager.preAmpGain)
     }
 
     override fun toggleEqualizer(activated: Boolean) {
@@ -71,8 +75,13 @@ class EqualizerPresenter @Inject constructor(
         view?.updateEqualizerView(preset)
     }
 
-    override fun setReplayGainMode(mode: ReplayGainAudioProcessor.Mode) {
+    override fun setReplayGainMode(mode: ReplayGainMode) {
         replayGainAudioProcessor.mode = mode
         playbackPreferenceManager.replayGainMode = mode
+    }
+
+    override fun setPreAmpGain(gain: Double) {
+        replayGainAudioProcessor.preAmpGain = gain
+        playbackPreferenceManager.preAmpGain = gain
     }
 }
