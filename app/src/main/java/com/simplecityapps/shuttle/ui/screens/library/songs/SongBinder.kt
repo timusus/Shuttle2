@@ -1,5 +1,9 @@
 package com.simplecityapps.shuttle.ui.screens.library.songs
 
+import android.animation.ArgbEvaluator
+import android.text.Spannable
+import android.text.SpannableStringBuilder
+import android.text.style.ForegroundColorSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,15 +15,18 @@ import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.ui.common.getAttrColor
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 import com.simplecityapps.shuttle.ui.common.view.BadgeView
+import com.simplecityapps.shuttle.ui.screens.home.search.SongJaroSimilarity
 
-class SongBinder(
+open class SongBinder(
     val song: Song,
     val imageLoader: ArtworkImageLoader,
     val listener: Listener,
     val showPlayCountBadge: Boolean = false,
+    val jaroSimilarity: SongJaroSimilarity? = null
 ) : ViewBinder,
     SectionViewBinder {
 
@@ -68,6 +75,7 @@ class SongBinder(
                 && song.playCount == other.song.playCount
                 && selected == other.selected
                 && showPlayCountBadge == other.showPlayCountBadge
+                && jaroSimilarity == other.jaroSimilarity
     }
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<SongBinder>(itemView) {
@@ -78,6 +86,9 @@ class SongBinder(
         private val overflowButton: ImageButton = itemView.findViewById(R.id.overflowButton)
         private val badgeView: BadgeView = itemView.findViewById(R.id.badgeImageView)
         private val checkImageView: ImageView = itemView.findViewById(R.id.checkImageView)
+
+        private val textColor = itemView.context.getAttrColor(android.R.attr.textColorPrimary)
+        private val accentColor = itemView.context.getAttrColor(R.attr.colorAccent)
 
         init {
             itemView.setOnClickListener {
@@ -120,6 +131,63 @@ class SongBinder(
             }
 
             checkImageView.isVisible = viewBinder.selected
+
+            highlightMatchedStrings(viewBinder)
+        }
+
+        private fun highlightMatchedStrings(viewBinder: SongBinder) {
+            viewBinder.jaroSimilarity?.let {
+                val nameStringBuilder = SpannableStringBuilder(viewBinder.song.name)
+                if (it.nameJaroSimilarity.score > 0.8) {
+                    it.nameJaroSimilarity.bMatchedIndices.forEach { (index, score) ->
+                        try {
+                            nameStringBuilder.setSpan(
+                                ForegroundColorSpan(ArgbEvaluator().evaluate(score.toFloat() - 0.25f, textColor, accentColor) as Int),
+                                index,
+                                index + 1,
+                                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                            )
+                        } catch (e: IndexOutOfBoundsException) {
+                            // This is possible because the jaro similarity function does string normalisation, so we're not necessarily using the exact same string
+                        }
+                    }
+                }
+                title.text = nameStringBuilder
+
+                val artistNameStringBuilder = SpannableStringBuilder(viewBinder.song.artist)
+                if (it.artistNameJaroSimilarity.score > 0.8) {
+                    it.artistNameJaroSimilarity.bMatchedIndices.forEach { (index, score) ->
+                        try {
+                            artistNameStringBuilder.setSpan(
+                                ForegroundColorSpan(ArgbEvaluator().evaluate(score.toFloat() - 0.25f, textColor, accentColor) as Int),
+                                index,
+                                index + 1,
+                                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                            )
+                        } catch (e: IndexOutOfBoundsException) {
+                            // This is possible because the jaro similarity function does string normalisation, so we're not necessarily using the exact same string
+                        }
+                    }
+                }
+                val albumNameStringBuilder = SpannableStringBuilder(viewBinder.song.album)
+                if (it.albumNameJaroSimilarity.score > 0.8) {
+                    it.albumNameJaroSimilarity.bMatchedIndices.forEach { (index, score) ->
+                        try {
+                            albumNameStringBuilder.setSpan(
+                                ForegroundColorSpan(ArgbEvaluator().evaluate(score.toFloat() - 0.25f, textColor, accentColor) as Int),
+                                index,
+                                index + 1,
+                                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                            )
+                        } catch (e: IndexOutOfBoundsException) {
+                            // This is possible because the jaro similarity function does string normalisation, so we're not necessarily using the exact same string
+                        }
+                    }
+                }
+                artistNameStringBuilder.append(" • ")
+                artistNameStringBuilder.append(albumNameStringBuilder)
+                subtitle.text = artistNameStringBuilder
+            }
         }
 
         override fun recycle() {

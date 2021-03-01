@@ -145,4 +145,39 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
         get() {
             return sharedPreferences.getBoolean("pref_file_logging", false)
         }
+
+
+    // Search
+
+    var searchFilterArtists: Boolean
+        set(value) {
+            sharedPreferences.put("search_filter_artists", value)
+        }
+        get() {
+            return sharedPreferences.getBoolean("search_filter_artists", true)
+        }
+
+    var searchFilterAlbums: Boolean
+        set(value) {
+            sharedPreferences.put("search_filter_albums", value)
+        }
+        get() {
+            return sharedPreferences.getBoolean("search_filter_albums", true)
+        }
+
+    var searchFilterSongs: Boolean
+        set(value) {
+            sharedPreferences.put("search_filter_songs", value)
+        }
+        get() {
+            return sharedPreferences.getBoolean("search_filter_songs", true)
+        }
+
+    var lastSearchQuery: String?
+        set(value) {
+            sharedPreferences.put("search_last_query", value)
+        }
+        get() {
+            return sharedPreferences.getString("search_last_query", null)
+        }
 }

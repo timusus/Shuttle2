@@ -9,6 +9,7 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
@@ -21,13 +22,15 @@ import javax.inject.Inject
 interface SearchContract : BaseContract.Presenter<SearchContract.View> {
 
     interface View {
-        fun setData(searchResult: Triple<List<AlbumArtist>, List<Album>, List<Song>>)
+        fun setData(searchResult: Triple<List<ArtistJaroSimilarity>, List<AlbumJaroSimilarity>, List<SongJaroSimilarity>>)
         fun showLoadError(error: Error)
         fun onAddedToQueue(albumArtist: AlbumArtist)
         fun onAddedToQueue(album: Album)
         fun onAddedToQueue(song: Song)
         fun showDeleteError(error: Error)
         fun showTagEditor(songs: List<Song>)
+        fun updateFilters(artists: Boolean, albums: Boolean, songs: Boolean)
+        fun updateQuery(query: String?)
     }
 
     interface Presenter {
@@ -48,6 +51,7 @@ interface SearchContract : BaseContract.Presenter<SearchContract.View> {
         fun exclude(song: Song)
         fun delete(song: Song)
         fun editTags(song: Song)
+        fun updateFilters(artists: Boolean, albums: Boolean, songs: Boolean)
     }
 }
 
@@ -57,48 +61,68 @@ class SearchPresenter @Inject constructor(
     private val artistRepository: AlbumArtistRepository,
     private val albumRepository: AlbumRepository,
     private val playbackManager: PlaybackManager,
-    private val queueManager: QueueManager
+    private val queueManager: QueueManager,
+    private val preferenceManager: GeneralPreferenceManager
 ) :
     BasePresenter<SearchContract.View>(),
     SearchContract.Presenter {
 
-    private var searchResult: Triple<List<AlbumArtist>, List<Album>, List<Song>> = Triple(emptyList(), emptyList(), emptyList())
+    private var query: String? = null
+
+    private var searchResult: Triple<List<ArtistJaroSimilarity>, List<AlbumJaroSimilarity>, List<SongJaroSimilarity>> =
+        Triple(emptyList(), emptyList(), emptyList())
 
     private var queryJob: Job? = null
 
+    private val jaroThreshold = 0.8
+
+    override fun bindView(view: SearchContract.View) {
+        super.bindView(view)
+
+        view.updateFilters(preferenceManager.searchFilterArtists, preferenceManager.searchFilterAlbums, preferenceManager.searchFilterSongs)
+        view.updateQuery(preferenceManager.lastSearchQuery)
+    }
+
     override fun loadData(query: String) {
+        preferenceManager.lastSearchQuery = query
         queryJob?.cancel()
         queryJob = launch {
-            val albumArtists = artistRepository.getAlbumArtists(AlbumArtistQuery.Search(query))
-                .map { albumArtists ->
-                    albumArtists.sortedBy { it.name }
-                }
+            var artistResults: Flow<List<ArtistJaroSimilarity>> = flowOf(emptyList())
+            if (preferenceManager.searchFilterArtists) {
+                artistResults = artistRepository.getAlbumArtists(AlbumArtistQuery.All())
+                    .map { albumArtists ->
+                        albumArtists
+                            .map { albumArtist -> ArtistJaroSimilarity(albumArtist, query) }
+                            .filter { it.nameJaroSimilarity.score > jaroThreshold }
+                            .sortedByDescending { it.nameJaroSimilarity.score }
+                    }
+            }
 
-            val albums = albumRepository.getAlbums(AlbumQuery.Search(query))
-                .map { albums ->
-                    albums
-                        .asSequence()
-                        .sortedBy { it.name }
-                        .sortedByDescending { it.name.contains(query, true) }
-                        .sortedByDescending { it.albumArtist.contains(query, true) }
-                        .toList()
-                }
+            var albumResults: Flow<List<AlbumJaroSimilarity>> = flowOf(emptyList())
+            if (preferenceManager.searchFilterAlbums) {
+                albumResults = albumRepository.getAlbums(AlbumQuery.All())
+                    .map { albums ->
+                        albums.map { album -> AlbumJaroSimilarity(album, query) }
+                            .filter { it.nameJaroSimilarity.score > jaroThreshold || it.artistNameJaroSimilarity.score > jaroThreshold }
+                            .sortedByDescending { if (it.artistNameJaroSimilarity.score > jaroThreshold) it.artistNameJaroSimilarity.score else 0.0 }
+                            .sortedByDescending { it.nameJaroSimilarity.score }
+                    }
 
-            val songs = songRepository.getSongs(SongQuery.Search(query))
-                .map { songs ->
-                    songs
-                        .asSequence()
-                        .sortedBy { it.track }
-                        .sortedBy { it.albumArtist }
-                        .sortedBy { it.album }
-                        .sortedByDescending { it.year }
-                        .sortedByDescending { it.name.contains(query, true) }
-                        .sortedByDescending { it.albumArtist.contains(query, true) }
-                        .sortedByDescending { it.album.contains(query, true) }
-                        .toList()
-                }
+            }
 
-            combine(albumArtists, albums, songs) { artists, albums, songs ->
+            var songResults: Flow<List<SongJaroSimilarity>> = flowOf(emptyList())
+            if (preferenceManager.searchFilterSongs) {
+                songResults = songRepository.getSongs(SongQuery.All())
+                    .map { songs ->
+                        songs.map { song -> SongJaroSimilarity(song, query) }
+                            .filter { it.nameJaroSimilarity.score > jaroThreshold || it.artistNameJaroSimilarity.score > jaroThreshold || it.albumNameJaroSimilarity.score > jaroThreshold }
+                            .sortedByDescending { if (it.artistNameJaroSimilarity.score > jaroThreshold) it.artistNameJaroSimilarity.score else 0.0 }
+                            .sortedByDescending { if (it.albumNameJaroSimilarity.score > jaroThreshold) it.albumNameJaroSimilarity.score else 0.0 }
+                            .sortedByDescending { if (it.nameJaroSimilarity.score > jaroThreshold) it.nameJaroSimilarity.score else 0.0 }
+                    }
+            }
+
+            combine(artistResults, albumResults, songResults) { artists, albums, songs ->
                 Triple(artists, albums, songs)
             }
                 .flowOn(Dispatchers.IO)
@@ -107,6 +131,7 @@ class SearchPresenter @Inject constructor(
                     view?.setData(results)
                 }
         }
+        this.query = query
     }
 
     override fun play(albumArtist: AlbumArtist) {
@@ -135,7 +160,8 @@ class SearchPresenter @Inject constructor(
 
     override fun play(song: Song) {
         launch {
-            if (queueManager.setQueue(songs = searchResult.third, position = searchResult.third.indexOf(song))) {
+            val songs = searchResult.third.map { it.song }
+            if (queueManager.setQueue(songs = songs, position = songs.indexOf(song))) {
                 playbackManager.load { result ->
                     result.onSuccess { playbackManager.play() }
                     result.onFailure { error -> view?.showLoadError(error as Error) }
@@ -240,5 +266,14 @@ class SearchPresenter @Inject constructor(
             view?.showDeleteError(UserFriendlyError("The song couldn't be deleted"))
         }
         queueManager.remove(queueManager.getQueue().filter { it.song == song })
+    }
+
+    override fun updateFilters(artists: Boolean, albums: Boolean, songs: Boolean) {
+        preferenceManager.searchFilterArtists = artists
+        preferenceManager.searchFilterAlbums = albums
+        preferenceManager.searchFilterSongs = songs
+        query?.let { query ->
+            loadData(query)
+        }
     }
 }

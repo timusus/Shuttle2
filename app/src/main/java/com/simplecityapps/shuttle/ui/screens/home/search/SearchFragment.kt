@@ -6,8 +6,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
+import android.widget.CompoundButton
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.Transition
 import androidx.transition.TransitionInflater
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
+import com.google.android.material.chip.Chip
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.ViewBinder
@@ -59,18 +60,21 @@ class SearchFragment : Fragment(),
     CreatePlaylistDialogFragment.Listener {
 
     private var adapter: RecyclerAdapter by autoCleared()
-
     private var searchView: SearchView by autoCleared()
-
     private var recyclerView: RecyclerView by autoCleared()
-
     private var toolbar: Toolbar by autoCleared()
+    private var artistsChip: Chip by autoCleared()
+    private var albumsChip: Chip by autoCleared()
+    private var songsChip: Chip by autoCleared()
 
-    @Inject lateinit var presenter: SearchPresenter
+    @Inject
+    lateinit var presenter: SearchPresenter
 
-    @Inject lateinit var playlistMenuPresenter: PlaylistMenuPresenter
+    @Inject
+    lateinit var playlistMenuPresenter: PlaylistMenuPresenter
 
-    @Inject lateinit var imageLoader: ArtworkImageLoader
+    @Inject
+    lateinit var imageLoader: ArtworkImageLoader
 
     private lateinit var playlistMenuView: PlaylistMenuView
 
@@ -132,10 +136,17 @@ class SearchFragment : Fragment(),
             findNavController().popBackStack()
         }
 
+        artistsChip = view.findViewById(R.id.artistsChip)
+        albumsChip = view.findViewById(R.id.albumsChip)
+        songsChip = view.findViewById(R.id.songsChip)
+
+        val checkedChangedListener = CompoundButton.OnCheckedChangeListener { _, _ -> presenter.updateFilters(artistsChip.isChecked, albumsChip.isChecked, songsChip.isChecked) }
+        artistsChip.setOnCheckedChangeListener(checkedChangedListener)
+        albumsChip.setOnCheckedChangeListener(checkedChangedListener)
+        songsChip.setOnCheckedChangeListener(checkedChangedListener)
+
         presenter.bindView(this)
         playlistMenuPresenter.bindView(playlistMenuView)
-
-        searchView.setQuery(query, true)
     }
 
     override fun onResume() {
@@ -162,7 +173,7 @@ class SearchFragment : Fragment(),
 
     // SearchContract.View Implementation
 
-    override fun setData(searchResult: Triple<List<AlbumArtist>, List<Album>, List<Song>>) {
+    override fun setData(searchResult: Triple<List<ArtistJaroSimilarity>, List<AlbumJaroSimilarity>, List<SongJaroSimilarity>>) {
         // If we're displaying too many items, clear the adapter data, so calculating the diff is faster
         if (adapter.itemCount > 100) {
             adapter.clear()
@@ -170,15 +181,36 @@ class SearchFragment : Fragment(),
         val list = mutableListOf<ViewBinder>().apply {
             if (searchResult.first.isNotEmpty()) {
                 add(HeaderBinder("Artists"))
-                addAll(searchResult.first.map { albumArtist -> ListAlbumArtistBinder(albumArtist, imageLoader, albumArtistBinderListener) })
+                addAll(searchResult.first.map { artistResult ->
+                    ListAlbumArtistBinder(
+                        albumArtist = artistResult.artist,
+                        imageLoader = imageLoader,
+                        listener = albumArtistBinderListener,
+                        jaroSimilarity = artistResult
+                    )
+                })
             }
             if (searchResult.second.isNotEmpty()) {
                 add(HeaderBinder("Albums"))
-                addAll(searchResult.second.map { album -> ListAlbumBinder(album, imageLoader, albumBinderListener) })
+                addAll(searchResult.second.map { albumResult ->
+                    ListAlbumBinder(
+                        album = albumResult.album,
+                        imageLoader = imageLoader,
+                        listener = albumBinderListener,
+                        jaroSimilarity = albumResult
+                    )
+                })
             }
             if (searchResult.third.isNotEmpty()) {
                 add(HeaderBinder("Songs"))
-                addAll(searchResult.third.map { song -> SongBinder(song, imageLoader, songBinderListener) })
+                addAll(searchResult.third.map { songResult ->
+                    SongBinder(
+                        song = songResult.song,
+                        imageLoader = imageLoader,
+                        listener = songBinderListener,
+                        jaroSimilarity = songResult
+                    )
+                })
             }
         }
         adapter.update(list, completion = { recyclerView.scrollToPosition(0) })
@@ -206,6 +238,17 @@ class SearchFragment : Fragment(),
 
     override fun showTagEditor(songs: List<Song>) {
         TagEditorAlertDialog.newInstance(songs).show(childFragmentManager)
+    }
+
+    override fun updateFilters(artists: Boolean, albums: Boolean, songs: Boolean) {
+        artistsChip.isChecked = artists
+        albumsChip.isChecked = albums
+        songsChip.isChecked = songs
+    }
+
+    override fun updateQuery(query: String?) {
+        this.query = query ?: ""
+        searchView.setQuery(query, false)
     }
 
 

@@ -270,14 +270,14 @@ class MediaSessionManager @Inject constructor(
             val flow = when (mediaFocus) {
                 MediaStore.Audio.Artists.CONTENT_TYPE -> {
                     artist?.let {
-                        artistRepository.getAlbumArtists(AlbumArtistQuery.Search(artist)).flatMapConcat { albumArtists ->
+                        artistRepository.getAlbumArtists(AlbumArtistQuery.Search(query = artist)).flatMapConcat { albumArtists ->
                             songRepository.getSongs(SongQuery.AlbumArtists(albumArtists.map { SongQuery.AlbumArtist(it.name) }))
                         }
                     } ?: emptyFlow()
                 }
                 MediaStore.Audio.Albums.ENTRY_CONTENT_TYPE -> {
                     album?.let {
-                        albumRepository.getAlbums(AlbumQuery.Search(album)).flatMapConcat { albums ->
+                        albumRepository.getAlbums(AlbumQuery.Search(query = album)).flatMapConcat { albums ->
                             songRepository.getSongs(SongQuery.Albums(albums.map { album -> SongQuery.Album(album.name, album.albumArtist) }))
                         }
                     } ?: emptyFlow()
@@ -292,7 +292,7 @@ class MediaSessionManager @Inject constructor(
                     } ?: emptyFlow()
                 }
                 else -> {
-                    songRepository.getSongs(query?.let { SongQuery.Search(query) } ?: SongQuery.All())
+                    songRepository.getSongs(query?.let { SongQuery.Search(query = query) } ?: SongQuery.All())
                 }
             }.flowOn(Dispatchers.IO)
 
