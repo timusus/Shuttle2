@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.ui.screens.library.albumartists.detail
 
-import android.content.Context
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -10,7 +9,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.Toolbar
 import androidx.core.os.postDelayed
@@ -39,7 +37,6 @@ import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.autoClearedNullable
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
-
 import com.simplecityapps.shuttle.ui.common.view.DetailImageAnimationHelper
 import com.simplecityapps.shuttle.ui.screens.home.search.HeaderBinder
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragmentArgs
@@ -49,7 +46,6 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
-import dagger.android.support.AndroidSupportInjection
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -61,11 +57,14 @@ class AlbumArtistDetailFragment :
     ExpandableAlbumBinder.Listener,
     CreatePlaylistDialogFragment.Listener {
 
-    @Inject lateinit var presenterFactory: AlbumArtistDetailPresenter.Factory
+    @Inject
+    lateinit var presenterFactory: AlbumArtistDetailPresenter.Factory
 
-    @Inject lateinit var playlistMenuPresenter: PlaylistMenuPresenter
+    @Inject
+    lateinit var playlistMenuPresenter: PlaylistMenuPresenter
 
-    @Inject lateinit var imageLoader: ArtworkImageLoader
+    @Inject
+    lateinit var imageLoader: ArtworkImageLoader
 
     private lateinit var presenter: AlbumArtistDetailPresenter
 
@@ -94,18 +93,12 @@ class AlbumArtistDetailFragment :
 
     // Lifecycle
 
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-
-        AndroidSupportInjection.inject(this)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
         albumArtist = AlbumArtistDetailFragmentArgs.fromBundle(requireArguments()).albumArtist
         animateTransition = AlbumArtistDetailFragmentArgs.fromBundle(requireArguments()).animateTransition
         presenter = presenterFactory.create(albumArtist)
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
 
         sharedElementEnterTransition = TransitionInflater.from(context).inflateTransition(R.transition.image_shared_element_transition)
         (sharedElementEnterTransition as Transition).duration = 150L
@@ -143,6 +136,10 @@ class AlbumArtistDetailFragment :
             playlistMenuView.createPlaylistMenu(toolbar.menu)
             toolbar.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
+                    R.id.play -> {
+                        presenter.play()
+                        true
+                    }
                     R.id.shuffle -> {
                         presenter.shuffle()
                         true

@@ -16,26 +16,32 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputLayout
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.utils.withArgs
+import java.io.Serializable
+
 
 open class EditTextAlertDialog : DialogFragment() {
 
     interface Listener {
-        fun onSave(text: String?)
-        fun validate(string: String?): Boolean {
+        fun onSave(text: String?, extra: Serializable? = null)
+        fun validate(string: String?, extra: Serializable? = null): Boolean {
             return !string.isNullOrEmpty()
         }
     }
 
     private lateinit var editText: EditText
 
+    private var title: String? = null
     private var hint: String? = null
     private var initialText: String? = null
+    private var extra: Serializable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        title = arguments?.getString(ARG_TITLE)
         hint = arguments?.getString(ARG_HINT)
         initialText = arguments?.getString(ARG_INITIAL_TEXT)
+        extra = arguments?.getSerializable(ARG_EXTRA)
     }
 
     @SuppressLint("InflateParams")
@@ -56,9 +62,13 @@ open class EditTextAlertDialog : DialogFragment() {
                 validate()
             }
         })
-        initialText?.let { editText.setText(initialText) }
+        initialText?.let {
+            editText.setText(initialText)
+            editText.setSelection(editText.length())
+        }
 
         return MaterialAlertDialogBuilder(requireContext())
+            .apply { title?.let { setTitle(title) } }
             .setView(view)
             .setNegativeButton("Close", null)
             .setPositiveButton("Save") { _, _ -> onSave(editText.text.toString()) }
@@ -78,7 +88,7 @@ open class EditTextAlertDialog : DialogFragment() {
     }
 
     open fun onSave(string: String) {
-        (parentFragment as? Listener)?.onSave(string)
+        (parentFragment as? Listener)?.onSave(string, extra)
     }
 
     private fun validate() {
@@ -86,7 +96,7 @@ open class EditTextAlertDialog : DialogFragment() {
     }
 
     open fun isValid(string: String?): Boolean {
-        return (parentFragment as? Listener)?.validate(string) ?: !string.isNullOrEmpty()
+        return (parentFragment as? Listener)?.validate(string, extra) ?: !string.isNullOrEmpty()
     }
 
     fun show(manager: FragmentManager) {
@@ -97,15 +107,21 @@ open class EditTextAlertDialog : DialogFragment() {
     companion object {
         const val TAG = "EditTextAlertDialog"
 
+        const val ARG_TITLE = "title"
         const val ARG_HINT = "hint"
         const val ARG_INITIAL_TEXT = "initial_text"
+        const val ARG_EXTRA = "extra"
 
         fun newInstance(
+            title: String? = null,
             hint: String? = null,
-            initialText: String? = null
+            initialText: String? = null,
+            extra: Serializable? = null
         ): EditTextAlertDialog = EditTextAlertDialog().withArgs {
+            putString(ARG_TITLE, title)
             putString(ARG_HINT, hint)
             putString(ARG_INITIAL_TEXT, initialText)
+            putSerializable(ARG_EXTRA, extra)
         }
     }
 }

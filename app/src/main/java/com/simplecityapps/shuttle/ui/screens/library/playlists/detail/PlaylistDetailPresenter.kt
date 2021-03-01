@@ -25,9 +25,11 @@ interface PlaylistDetailContract {
         fun setData(songs: List<Song>)
         fun showLoadError(error: Error)
         fun onAddedToQueue(song: Song)
+        fun onAddedToQueue(playlist: Playlist)
         fun setPlaylist(playlist: Playlist)
         fun showDeleteError(error: Error)
         fun showTagEditor(songs: List<Song>)
+        fun dismiss()
     }
 
     interface Presenter : BaseContract.Presenter<View> {
@@ -40,6 +42,10 @@ interface PlaylistDetailContract {
         fun editTags(song: Song)
         fun remove(song: Song)
         fun delete(song: Song)
+        fun addToQueue(playlist: Playlist)
+        fun delete(playlist: Playlist)
+        fun clear(playlist: Playlist)
+        fun rename(playlist: Playlist, name: String)
     }
 }
 
@@ -116,6 +122,13 @@ class PlaylistDetailPresenter @AssistedInject constructor(
         }
     }
 
+    override fun addToQueue(playlist: Playlist) {
+        launch {
+            playbackManager.addToQueue(songs)
+            view?.onAddedToQueue(playlist)
+        }
+    }
+
     override fun playNext(song: Song) {
         launch {
             playbackManager.playNext(listOf(song))
@@ -151,5 +164,24 @@ class PlaylistDetailPresenter @AssistedInject constructor(
             view?.showDeleteError(UserFriendlyError("The song couldn't be deleted"))
         }
         queueManager.remove(queueManager.getQueue().filter { it.song == song })
+    }
+
+    override fun delete(playlist: Playlist) {
+        launch {
+            playlistRepository.deletePlaylist(playlist)
+        }
+        view?.dismiss()
+    }
+
+    override fun clear(playlist: Playlist) {
+        launch {
+            playlistRepository.clearPlaylist(playlist)
+        }
+    }
+
+    override fun rename(playlist: Playlist, name: String) {
+        launch {
+            playlistRepository.renamePlaylist(playlist, name)
+        }
     }
 }

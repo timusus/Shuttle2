@@ -6,13 +6,18 @@
         android:title="Add to Queue" />
 
     <item
-        android:id="@+id/delete"
-        android:title="Delete">
+        android:id="@+id/rename"
+        android:title="Rename">
     </item>
 
     <item
         android:id="@+id/clear"
         android:title="Clear">
+    </item>
+
+    <item
+        android:id="@+id/delete"
+        android:title="Delete">
     </item>
 
 </menu>

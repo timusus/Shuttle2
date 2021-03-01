@@ -28,7 +28,6 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
-import dagger.android.support.AndroidSupportInjection
 import kotlinx.coroutines.*
 import javax.inject.Inject
 import kotlin.math.log10
@@ -52,8 +51,6 @@ class FrequencyResponseDialogFragment : DialogFragment(), Injectable {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-
-        AndroidSupportInjection.inject(this)
 
         preset = playbackPreferenceManager.preset
     }

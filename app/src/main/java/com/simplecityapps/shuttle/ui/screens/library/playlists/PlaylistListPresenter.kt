@@ -9,7 +9,10 @@ import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -34,9 +37,10 @@ interface PlaylistListContract {
         fun loadPlaylists()
         fun addToQueue(playlist: Playlist)
         fun playNext(playlist: Playlist)
-        fun deletePlaylist(playlist: Playlist)
+        fun delete(playlist: Playlist)
         fun importMediaStorePlaylists()
-        fun clearPlaylist(playlist: Playlist)
+        fun clear(playlist: Playlist)
+        fun rename(playlist: Playlist, name: String)
     }
 }
 
@@ -57,7 +61,6 @@ class PlaylistListPresenter @Inject constructor(
             ) { smartPlaylists, playlists ->
                 Pair(smartPlaylists, playlists)
             }
-                .distinctUntilChanged()
                 .flowOn(Dispatchers.IO)
                 .collect { (playlists, smartPlaylists) ->
                     if (playlists.isEmpty() && smartPlaylists.isEmpty()) {
@@ -70,7 +73,7 @@ class PlaylistListPresenter @Inject constructor(
         }
     }
 
-    override fun deletePlaylist(playlist: Playlist) {
+    override fun delete(playlist: Playlist) {
         launch {
             playlistRepository.deletePlaylist(playlist)
         }
@@ -99,9 +102,15 @@ class PlaylistListPresenter @Inject constructor(
         }
     }
 
-    override fun clearPlaylist(playlist: Playlist) {
+    override fun clear(playlist: Playlist) {
         launch {
             playlistRepository.clearPlaylist(playlist)
+        }
+    }
+
+    override fun rename(playlist: Playlist, name: String) {
+        launch {
+            playlistRepository.renamePlaylist(playlist, name)
         }
     }
 }

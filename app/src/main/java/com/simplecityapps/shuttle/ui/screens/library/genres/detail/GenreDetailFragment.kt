@@ -1,13 +1,11 @@
 package com.simplecityapps.shuttle.ui.screens.library.genres.detail
 
-import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MenuInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
@@ -38,7 +36,6 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
-import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
 
 class GenreDetailFragment :
@@ -47,11 +44,14 @@ class GenreDetailFragment :
     GenreDetailContract.View,
     CreatePlaylistDialogFragment.Listener {
 
-    @Inject lateinit var presenterFactory: GenreDetailPresenter.Factory
+    @Inject
+    lateinit var presenterFactory: GenreDetailPresenter.Factory
 
-    @Inject lateinit var playlistMenuPresenter: PlaylistMenuPresenter
+    @Inject
+    lateinit var playlistMenuPresenter: PlaylistMenuPresenter
 
-    @Inject lateinit var imageLoader: ArtworkImageLoader
+    @Inject
+    lateinit var imageLoader: ArtworkImageLoader
 
     private var adapter: RecyclerAdapter by autoCleared()
 
@@ -68,10 +68,8 @@ class GenreDetailFragment :
 
     // Lifecycle
 
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-
-        AndroidSupportInjection.inject(this)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
         genre = GenreDetailFragmentArgs.fromBundle(requireArguments()).genre
         presenter = presenterFactory.create(genre)

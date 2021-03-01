@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.ui.screens.library.playlists.smart
 
-import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MenuInflater
@@ -8,7 +7,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
@@ -32,7 +30,6 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
-import dagger.android.support.AndroidSupportInjection
 import javax.inject.Inject
 
 class SmartPlaylistDetailFragment :
@@ -41,15 +38,18 @@ class SmartPlaylistDetailFragment :
     SmartPlaylistDetailContract.View,
     CreatePlaylistDialogFragment.Listener {
 
-    @Inject lateinit var presenterFactory: SmartPlaylistDetailPresenter.Factory
+    @Inject
+    lateinit var presenterFactory: SmartPlaylistDetailPresenter.Factory
 
-    @Inject lateinit var playlistMenuPresenter: PlaylistMenuPresenter
+    @Inject
+    lateinit var playlistMenuPresenter: PlaylistMenuPresenter
 
     private var recyclerView: RecyclerView by autoCleared()
 
     private var toolbar: Toolbar by autoCleared()
 
-    @Inject lateinit var imageLoader: ArtworkImageLoader
+    @Inject
+    lateinit var imageLoader: ArtworkImageLoader
 
     private var heroImageView: ImageView by autoCleared()
 
@@ -64,10 +64,8 @@ class SmartPlaylistDetailFragment :
 
     // Lifecycle
 
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-
-        AndroidSupportInjection.inject(this)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
         playlist = SmartPlaylistDetailFragmentArgs.fromBundle(requireArguments()).playlist
         presenter = presenterFactory.create(playlist)
@@ -90,10 +88,17 @@ class SmartPlaylistDetailFragment :
                 NavHostFragment.findNavController(this).popBackStack()
             }
             MenuInflater(context).inflate(R.menu.menu_playlist_detail, toolbar.menu)
+            toolbar.menu.findItem(R.id.clear).isVisible = false
+            toolbar.menu.findItem(R.id.delete).isVisible = false
+            toolbar.menu.findItem(R.id.rename).isVisible = false
             toolbar.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
                     R.id.shuffle -> {
                         presenter.shuffle()
+                        true
+                    }
+                    R.id.queue -> {
+                        presenter.addToQueue(playlist)
                         true
                     }
                     else -> {
@@ -153,6 +158,10 @@ class SmartPlaylistDetailFragment :
 
     override fun onAddedToQueue(song: Song) {
         Toast.makeText(context, "${song.name} added to queue", Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onAddedToQueue(playlist: SmartPlaylist) {
+        Toast.makeText(context, "${requireContext().getString(playlist.nameResId)} added to queue", Toast.LENGTH_SHORT).show()
     }
 
     override fun showLoadError(error: Error) {

@@ -7,7 +7,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -22,6 +21,7 @@ import com.simplecityapps.mediaprovider.model.SmartPlaylist
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.dialog.EditTextAlertDialog
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
@@ -29,15 +29,18 @@ import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
 import com.simplecityapps.shuttle.ui.screens.home.search.HeaderBinder
 import com.simplecityapps.shuttle.ui.screens.library.playlists.detail.PlaylistDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylistDetailFragmentArgs
+import java.io.Serializable
 import javax.inject.Inject
 
 
 class PlaylistListFragment :
     Fragment(),
     Injectable,
-    PlaylistListContract.View {
+    PlaylistListContract.View,
+    EditTextAlertDialog.Listener {
 
-    @Inject lateinit var presenter: PlaylistListPresenter
+    @Inject
+    lateinit var presenter: PlaylistListPresenter
 
     private var adapter: RecyclerAdapter by autoCleared()
 
@@ -203,6 +206,7 @@ class PlaylistListFragment :
         override fun onOverflowClicked(view: View, playlist: Playlist) {
             val popupMenu = PopupMenu(requireContext(), view)
             popupMenu.inflate(R.menu.menu_playlist_overflow)
+
             popupMenu.setOnMenuItemClickListener { item ->
                 when (item.itemId) {
                     R.id.queue -> {
@@ -213,18 +217,29 @@ class PlaylistListFragment :
                         MaterialAlertDialogBuilder(requireContext())
                             .setTitle("Delete Playlist")
                             .setMessage("${playlist.name} will be permanently deleted")
-                            .setPositiveButton("Delete") { _, _ -> presenter.deletePlaylist(playlist) }
+                            .setPositiveButton("Delete") { _, _ -> presenter.delete(playlist) }
                             .setNegativeButton("Cancel", null)
                             .show()
                         true
                     }
                     R.id.playNext -> {
                         presenter.playNext(playlist)
-                        return@setOnMenuItemClickListener true
+                        true
                     }
                     R.id.clear -> {
-                        presenter.clearPlaylist(playlist)
-                        return@setOnMenuItemClickListener true
+                        MaterialAlertDialogBuilder(requireContext())
+                            .setTitle("Clear Playlist")
+                            .setMessage("All songs will be removed from${playlist.name}")
+                            .setPositiveButton("Clear") { _, _ -> presenter.clear(playlist) }
+                            .setNegativeButton("Cancel", null)
+                            .show()
+                        true
+                    }
+                    R.id.rename -> {
+                        EditTextAlertDialog
+                            .newInstance(title = "Playlist Name", hint = "Name", initialText = playlist.name, extra = playlist)
+                            .show(childFragmentManager)
+                        true
                     }
                     else -> false
                 }
@@ -260,5 +275,12 @@ class PlaylistListFragment :
         const val ARG_RECYCLER_STATE = "recycler_state"
 
         fun newInstance() = PlaylistListFragment()
+    }
+
+
+    // EditTextAlertDialog.Listener
+
+    override fun onSave(text: String?, extra: Serializable?) {
+        presenter.rename(extra as Playlist, text!!) // default validation ensures text is not null
     }
 }

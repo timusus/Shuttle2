@@ -34,6 +34,7 @@ class AlbumArtistDetailContract {
         fun loadData()
         fun onSongClicked(song: Song, songs: List<Song>)
         fun onSongClicked(song: Song)
+        fun play()
         fun shuffle()
         fun shuffleAlbums()
         fun addToQueue(albumArtist: AlbumArtist)
@@ -108,6 +109,21 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
     override fun onSongClicked(song: Song, songs: List<Song>) {
         launch {
             if (queueManager.setQueue(songs = songs, position = songs.indexOf(song))) {
+                playbackManager.load { result ->
+                    result.onSuccess { playbackManager.play() }
+                    result.onFailure { error -> view?.showLoadError(error as Error) }
+                }
+            }
+        }
+    }
+
+    override fun play() {
+        launch {
+            val songs = songRepository
+                .getSongs(SongQuery.AlbumArtists(listOf(SongQuery.AlbumArtist(name = albumArtist.name))))
+                .firstOrNull()
+                .orEmpty()
+            if (queueManager.setQueue(songs)) {
                 playbackManager.load { result ->
                     result.onSuccess { playbackManager.play() }
                     result.onFailure { error -> view?.showLoadError(error as Error) }

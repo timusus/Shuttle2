@@ -24,6 +24,7 @@ interface SmartPlaylistDetailContract {
         fun setData(songs: List<Song>)
         fun showLoadError(error: Error)
         fun onAddedToQueue(song: Song)
+        fun onAddedToQueue(playlist: SmartPlaylist)
         fun showDeleteError(error: Error)
     }
 
@@ -35,6 +36,7 @@ interface SmartPlaylistDetailContract {
         fun playNext(song: Song)
         fun exclude(song: Song)
         fun delete(song: Song)
+        fun addToQueue(playlist: SmartPlaylist)
     }
 }
 
@@ -93,6 +95,13 @@ class SmartPlaylistDetailPresenter @AssistedInject constructor(
         launch {
             playbackManager.addToQueue(listOf(song))
             view?.onAddedToQueue(song)
+        }
+    }
+
+    override fun addToQueue(playlist: SmartPlaylist) {
+        launch {
+            playbackManager.addToQueue(songs)
+            view?.onAddedToQueue(playlist)
         }
     }
 

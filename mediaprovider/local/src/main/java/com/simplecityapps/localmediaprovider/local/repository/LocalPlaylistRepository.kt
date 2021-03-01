@@ -101,4 +101,8 @@ class LocalPlaylistRepository(
     override suspend fun clearPlaylist(playlist: Playlist) {
         return playlistDataDao.delete(playlist.id)
     }
+
+    override suspend fun renamePlaylist(playlist: Playlist, name: String) {
+        return playlistDataDao.update(PlaylistData(playlist.id, name, playlist.mediaStoreId))
+    }
 }

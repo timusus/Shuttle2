@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.ui.screens.library.playlists.detail
 
-import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MenuInflater
@@ -8,12 +7,12 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -23,6 +22,7 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.dialog.EditTextAlertDialog
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.utils.toHms
@@ -32,20 +32,24 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
-import dagger.android.support.AndroidSupportInjection
+import java.io.Serializable
 import javax.inject.Inject
 
 class PlaylistDetailFragment :
     Fragment(),
     Injectable,
     PlaylistDetailContract.View,
-    CreatePlaylistDialogFragment.Listener {
+    CreatePlaylistDialogFragment.Listener,
+    EditTextAlertDialog.Listener {
 
-    @Inject lateinit var presenterFactory: PlaylistDetailPresenter.Factory
+    @Inject
+    lateinit var presenterFactory: PlaylistDetailPresenter.Factory
 
-    @Inject lateinit var playlistMenuPresenter: PlaylistMenuPresenter
+    @Inject
+    lateinit var playlistMenuPresenter: PlaylistMenuPresenter
 
-    @Inject lateinit var imageLoader: ArtworkImageLoader
+    @Inject
+    lateinit var imageLoader: ArtworkImageLoader
 
     private lateinit var presenter: PlaylistDetailPresenter
 
@@ -64,10 +68,8 @@ class PlaylistDetailFragment :
 
     // Lifecycle
 
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-
-        AndroidSupportInjection.inject(this)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
         playlist = PlaylistDetailFragmentArgs.fromBundle(requireArguments()).playlist
         presenter = presenterFactory.create(playlist)
@@ -98,6 +100,34 @@ class PlaylistDetailFragment :
                         presenter.shuffle()
                         true
                     }
+                    R.id.queue -> {
+                        presenter.addToQueue(playlist)
+                        true
+                    }
+                    R.id.rename -> {
+                        EditTextAlertDialog
+                            .newInstance(title = "Playlist Name", hint = "Name", initialText = playlist.name, extra = playlist)
+                            .show(childFragmentManager)
+                        true
+                    }
+                    R.id.clear -> {
+                        MaterialAlertDialogBuilder(requireContext())
+                            .setTitle("Clear Playlist")
+                            .setMessage("All songs will be removed from${playlist.name}")
+                            .setPositiveButton("Clear") { _, _ -> presenter.clear(playlist) }
+                            .setNegativeButton("Cancel", null)
+                            .show()
+                        true
+                    }
+                    R.id.delete -> {
+                        MaterialAlertDialogBuilder(requireContext())
+                            .setTitle("Delete Playlist")
+                            .setMessage("${playlist.name} will be permanently deleted")
+                            .setPositiveButton("Delete") { _, _ -> presenter.delete(playlist) }
+                            .setNegativeButton("Cancel", null)
+                            .show()
+                        true
+                    }
                     else -> {
                         false
                     }
@@ -120,8 +150,6 @@ class PlaylistDetailFragment :
     }
 
     override fun onDestroyView() {
-
-
         presenter.unbindView()
         playlistMenuPresenter.unbindView()
 
@@ -161,6 +189,10 @@ class PlaylistDetailFragment :
         Toast.makeText(context, "${song.name} added to queue", Toast.LENGTH_SHORT).show()
     }
 
+    override fun onAddedToQueue(playlist: Playlist) {
+        Toast.makeText(context, "${playlist.name} added to queue", Toast.LENGTH_SHORT).show()
+    }
+
     override fun showLoadError(error: Error) {
         Toast.makeText(context, error.userDescription(), Toast.LENGTH_LONG).show()
     }
@@ -171,6 +203,10 @@ class PlaylistDetailFragment :
 
     override fun showTagEditor(songs: List<Song>) {
         TagEditorAlertDialog.newInstance(songs).show(childFragmentManager)
+    }
+
+    override fun dismiss() {
+        findNavController().popBackStack()
     }
 
 
@@ -256,5 +292,12 @@ class PlaylistDetailFragment :
 
     override fun onSave(text: String, playlistData: PlaylistData) {
         playlistMenuPresenter.createPlaylist(text, playlistData)
+    }
+
+
+    // EditTextAlertDialog.Listener
+
+    override fun onSave(text: String?, extra: Serializable?) {
+        presenter.rename(extra as Playlist, text!!) // default validation ensures text is not null
     }
 }

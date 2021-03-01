@@ -10,7 +10,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.Toolbar
 import androidx.core.os.postDelayed
@@ -43,7 +42,6 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
-import dagger.android.support.AndroidSupportInjection
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -54,11 +52,14 @@ class AlbumDetailFragment :
     AlbumDetailContract.View,
     CreatePlaylistDialogFragment.Listener {
 
-    @Inject lateinit var presenterFactory: AlbumDetailPresenter.Factory
+    @Inject
+    lateinit var presenterFactory: AlbumDetailPresenter.Factory
 
-    @Inject lateinit var playlistMenuPresenter: PlaylistMenuPresenter
+    @Inject
+    lateinit var playlistMenuPresenter: PlaylistMenuPresenter
 
-    @Inject lateinit var imageLoader: ArtworkImageLoader
+    @Inject
+    lateinit var imageLoader: ArtworkImageLoader
 
     private lateinit var presenter: AlbumDetailPresenter
 
@@ -86,18 +87,12 @@ class AlbumDetailFragment :
 
     // Lifecycle
 
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-
-        AndroidSupportInjection.inject(this)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
         album = AlbumDetailFragmentArgs.fromBundle(requireArguments()).album
         animateTransition = AlbumDetailFragmentArgs.fromBundle(requireArguments()).animateTransition
         presenter = presenterFactory.create(album)
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
 
         sharedElementEnterTransition = TransitionInflater.from(context).inflateTransition(R.transition.image_shared_element_transition)
         (sharedElementEnterTransition as Transition).duration = 150L
