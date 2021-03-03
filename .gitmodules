@@ -3,4 +3,5 @@
 	url = https://github.com/timusus/KTagLib.git
 [submodule "exoplayer"]
 	path = exoplayer
-	url = https://github.com/timusus/ExoPlayer.git
+	url = https://github.com/google/ExoPlayer.git
+	branch = release-v2
