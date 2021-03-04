@@ -12,6 +12,7 @@ import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
+import kotlin.math.abs
 
 class MediaStorePlaylistImporter(
     private val context: Context,
@@ -36,7 +37,7 @@ class MediaStorePlaylistImporter(
                         song.name.equals(mediaStoreSong.title, ignoreCase = true)
                                 && song.album.equals(mediaStoreSong.album, ignoreCase = true)
                                 && song.albumArtist.equals(mediaStoreSong.albumArtist, ignoreCase = true)
-                                && song.duration == mediaStoreSong.duration
+                                && abs(song.duration - mediaStoreSong.duration) <= 1000 // song duration is within 1 second
                     }
                 }
 
