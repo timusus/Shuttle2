@@ -245,7 +245,7 @@ class PlaybackFragment :
 
     override fun setProgress(position: Int, duration: Int) {
         if (!isSeeking) {
-            if (abs(position - this.position) >= 1000) {
+            if (position == 0 || abs(position - this.position) >= 1000) {
                 currentTimeTextView.text = position.toHms()
                 this.position = position
             }
