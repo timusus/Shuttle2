@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 30
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 29
+        targetSdkVersion 30
         versionCode 1
         versionName "1.0"
         consumerProguardFiles 'consumer-rules.pro'
@@ -26,7 +26,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     // Kotlin Standard Library
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.21"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.30"
 
     // SAF
     api 'androidx.documentfile:documentfile:1.0.1'

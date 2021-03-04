@@ -2,11 +2,11 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 30
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 29
+        targetSdkVersion 30
     }
 
     buildTypes {
@@ -21,7 +21,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     // Kotlin Standard Library
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.21"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.30"
 
     // RecyclerView
     implementation 'androidx.recyclerview:recyclerview:1.1.0'

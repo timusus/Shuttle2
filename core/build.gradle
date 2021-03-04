@@ -3,11 +3,11 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 30
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 29
+        targetSdkVersion 30
         versionCode 1
         versionName "1.0"
         buildConfigField("String", "PROXY_ADDR", "\"192.168.0.14\"")
@@ -40,7 +40,7 @@ dependencies {
     api 'com.squareup.okhttp3:logging-interceptor:4.9.0'
 
     // Kotlin Standard Library
-    api 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.21'
+    api 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.4.30'
 
     // Kotlin Extensions
     api 'androidx.core:core-ktx:1.3.2'

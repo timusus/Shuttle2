@@ -31,6 +31,5 @@ class SpacesItemDecoration(space: Int, val skipFirst: Boolean = false) : Recycle
                 outRect.bottom = space
             }
         }
-
     }
 }

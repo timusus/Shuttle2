@@ -26,6 +26,7 @@ import com.simplecityapps.shuttle.ui.screens.onboarding.jellyfin.JellyfinConfigu
 import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.MediaProviderSelectionFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.scanner.MediaScannerFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.taglib.DirectorySelectionFragment
+import com.simplecityapps.shuttle.ui.screens.opensource.LicensesDialogFragment
 import com.simplecityapps.shuttle.ui.screens.playback.PlaybackFragment
 import com.simplecityapps.shuttle.ui.screens.playback.mini.MiniPlaybackFragment
 import com.simplecityapps.shuttle.ui.screens.queue.QueueFragment
@@ -120,6 +121,9 @@ abstract class FragmentBuildersModule {
 
     @ContributesAndroidInjector
     abstract fun contributeChangelogDialog(): ChangelogDialogFragment
+
+    @ContributesAndroidInjector
+    abstract fun contributeLicensesDialog(): LicensesDialogFragment
 
     @ContributesAndroidInjector
     abstract fun contributeSettingsFragment(): SettingsFragment

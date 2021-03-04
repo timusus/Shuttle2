@@ -41,6 +41,7 @@ import com.simplecityapps.shuttle.ui.ThemeManager
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.screens.changelog.ChangelogDialogFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParentFragmentArgs
+import com.simplecityapps.shuttle.ui.screens.opensource.LicensesDialogFragment
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
@@ -92,6 +93,11 @@ class SettingsFragment : PreferenceFragmentCompat(),
 
         preferenceScreen.findPreference<Preference>("changelog_show")?.setOnPreferenceClickListener {
             ChangelogDialogFragment.newInstance().show(childFragmentManager)
+            true
+        }
+
+        preferenceScreen.findPreference<Preference>("licenses_show")?.setOnPreferenceClickListener {
+            LicensesDialogFragment.newInstance().show(childFragmentManager)
             true
         }
 

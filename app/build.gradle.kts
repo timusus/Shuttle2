@@ -1,20 +1,21 @@
 plugins {
-    id(BuildPlugins.androidApplication)
-    id(BuildPlugins.playPublisher) version BuildPlugins.Versions.playPublisher
-    id(BuildPlugins.kotlinAndroid)
-    id(BuildPlugins.safeArgs)
-    id(BuildPlugins.kapt)
-    id(BuildPlugins.bugsnag)
+    id("com.android.application")
+    id("com.github.triplet.play") version "3.2.0-agp4.2-2"
+    id("kotlin-android")
+    id("androidx.navigation.safeargs.kotlin")
+    id("kotlin-kapt")
+    id("com.bugsnag.android.gradle")
+    id("com.mikepenz.aboutlibraries.plugin")
 }
 
 android {
 
-    compileSdkVersion(AndroidSdk.compileSdk)
+    compileSdkVersion(30)
 
     defaultConfig {
         applicationId = "com.simplecityapps.shuttle"
-        minSdkVersion(AndroidSdk.minSdk)
-        targetSdkVersion(AndroidSdk.targetSdk)
+        minSdkVersion(21)
+        targetSdkVersion(30)
         versionName = computeVersionName()
         versionCode = computeVersionCode()
         vectorDrawables.useSupportLibrary = true
@@ -127,7 +128,6 @@ android {
         implementation("androidx.media:media:1.2.1")
 
         // AndroidX Preference
-        implementation("androidx.preference:preference:1.1.1")
         implementation("androidx.preference:preference-ktx:1.1.1")
 
         // ChromeCast
@@ -140,7 +140,7 @@ android {
         kapt("com.squareup.moshi:moshi-kotlin-codegen:1.11.0")
 
         // AndroidX Lifecycle
-        implementation("androidx.lifecycle:lifecycle-common-java8:2.2.0")
+        implementation("androidx.lifecycle:lifecycle-common-java8:2.3.0")
 
         // Noise
         implementation("com.github.paramsen:noise:2.0.0")
@@ -152,7 +152,7 @@ android {
         implementation("com.bugsnag:bugsnag-android:5.4.0")
 
         // AndroidX Lifecycle
-        implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.3.0-rc01")
+        implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.3.0")
 
         // ExoPlayer
         implementation(project(":exoplayer-library-core"))
@@ -165,6 +165,9 @@ android {
 
         // Coil
         implementation("io.coil-kt:coil-base:1.1.1")
+
+        // About Libraries
+        implementation("com.mikepenz:aboutlibraries-core:8.8.3")
     }
 }
 

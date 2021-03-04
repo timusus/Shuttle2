@@ -137,6 +137,17 @@
     </PreferenceCategory>
 
     <PreferenceCategory
+        android:title="Open Source"
+        app:iconSpaceReserved="false">
+
+        <Preference
+            android:key="licenses_show"
+            app:iconSpaceReserved="false"
+            app:title="View licenses" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
         android:title="Debug"
         app:iconSpaceReserved="false">
         <SwitchPreference
