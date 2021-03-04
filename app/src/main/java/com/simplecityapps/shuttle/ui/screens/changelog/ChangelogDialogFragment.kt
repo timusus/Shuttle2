@@ -3,13 +3,13 @@ package com.simplecityapps.shuttle.ui.screens.changelog
 import android.app.Dialog
 import android.os.Bundle
 import android.view.LayoutInflater
-import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.adapter.RecyclerAdapter
+import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
@@ -49,11 +49,16 @@ class ChangelogDialogFragment : DialogFragment(), Injectable {
         adapter = RecyclerAdapter(lifecycleScope)
         recyclerView.adapter = adapter
 
-        adapter.update(
-            changelog?.mapIndexed { index, changeset ->
-                ChangesetBinder(index == 0 || changeset.version > preferenceManager.lastViewedChangelogVersion?.let { version -> Version(version) }, changeset, listener)
-            }.orEmpty()
-        )
+        val viewBinders = mutableListOf<ViewBinder>()
+        if (changelog?.firstOrNull()?.notes.orEmpty().isNotEmpty()) {
+            changelog?.firstOrNull()?.notes?.firstOrNull()?.let { notes ->
+                viewBinders.add(NotesBinder(notes))
+            }
+        }
+        viewBinders.addAll(changelog?.mapIndexed { index, changeset ->
+            ChangesetBinder(index == 0 || changeset.version > preferenceManager.lastViewedChangelogVersion?.let { version -> Version(version) }, changeset, listener)
+        }.orEmpty())
+        adapter.update(viewBinders)
 
         preferenceManager.lastViewedChangelogVersion = BuildConfig.VERSION_NAME
 

@@ -26,4 +26,5 @@ object ViewTypes {
     const val MediaProvider = 22
     const val Changelog = 23
     const val License = 24
+    const val Notes = 25
 }
