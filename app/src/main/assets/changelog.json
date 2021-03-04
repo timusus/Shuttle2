@@ -1,5 +1,28 @@
 [
   {
+    "versionName": "0.2.13",
+    "releaseDate": "04/03/2021",
+    "features": [
+      "Search is now fuzzy",
+      "Search results can now be filtered to display artists, albums and or songs",
+      "Playlists can now be renamed",
+      "Duplicates are detected when adding songs to playlist"
+    ],
+    "fixes": [
+
+    ],
+    "improvements": [
+      "Added more menu items for playlist list & detail screens (add to queue, rename, clear, delete)",
+      "Artist & album name are now displayed on separate lines on the Now Playing screen",
+      "Added 'play' option to artist detail screen context menu",
+      "The Media Store playlist importer is now more lenient when matching S2 tracks with Media Store tracks",
+      "Added an option to preferences to view open source licenses"
+    ],
+    "notes": [
+      "S2 has a very active community on Discord. If you haven't already, please come and join the conversation: https://discord.gg/YkhSuHJ"
+    ]
+  },
+  {
     "versionName": "0.2.12",
     "releaseDate": "26/02/2021",
     "features": [
