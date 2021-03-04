@@ -74,7 +74,6 @@ class PlaybackFragment :
     private var albumTextView: TextView by autoCleared()
     private var currentTimeTextView: TextView by autoCleared()
     private var durationTextView: TextView by autoCleared()
-    private var separatorTextView: TextView by autoCleared()
     private var toolbar: Toolbar by autoCleared()
     private var favoriteButton: FavoriteButton by autoCleared()
 
@@ -108,7 +107,6 @@ class PlaybackFragment :
         albumTextView = view.findViewById(R.id.albumTextView)
         currentTimeTextView = view.findViewById(R.id.currentTimeTextView)
         durationTextView = view.findViewById(R.id.durationTextView)
-        separatorTextView = view.findViewById(R.id.separatorTextView)
 
         adapter = RecyclerAdapter(viewLifecycleOwner.lifecycleScope)
 
