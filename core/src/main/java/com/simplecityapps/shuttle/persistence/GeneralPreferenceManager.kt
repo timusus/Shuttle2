@@ -180,4 +180,15 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
         get() {
             return sharedPreferences.getString("search_last_query", null)
         }
+
+
+    // Playlists
+
+    var ignorePlaylistDuplicates: Boolean
+        set(value) {
+            sharedPreferences.put("playlist_ignore_duplicates", value)
+        }
+        get() {
+            return sharedPreferences.getBoolean("playlist_ignore_duplicates", false)
+        }
 }

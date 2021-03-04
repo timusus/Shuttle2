@@ -98,6 +98,18 @@
     </PreferenceCategory>
 
     <PreferenceCategory
+        android:title="Playlists"
+        app:iconSpaceReserved="false">
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="playlist_ignore_duplicates"
+            android:summary="Don't prompt when attempting to add duplicate songs to a playlist"
+            android:title="Ignore duplicates"
+            app:iconSpaceReserved="false" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
         android:title="Changelog"
         app:iconSpaceReserved="false">
 

@@ -1,11 +1,17 @@
 package com.simplecityapps.shuttle.ui.screens.playlistmenu
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.widget.SwitchCompat
 import androidx.fragment.app.FragmentManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.mediaprovider.model.Playlist
+import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import timber.log.Timber
@@ -37,6 +43,29 @@ class PlaylistMenuView(
 
     override fun onSave(text: String, playlistData: PlaylistData) {
         presenter.createPlaylist(text, playlistData)
+    }
+
+    @SuppressLint("InflateParams")
+    override fun onAddToPlaylistWithDuplicates(playlist: Playlist, playlistData: PlaylistData, deduplicatedPlaylistData: PlaylistData.Songs, duplicates: List<Song>) {
+        val view = LayoutInflater.from(context).inflate(R.layout.dialog_playlist_duplicate, null)
+        val title: TextView = view.findViewById(R.id.title)
+        val alwaysAddSwitch: SwitchCompat = view.findViewById(R.id.alwaysAddSwitch)
+
+        title.text = "${duplicates.size} song(s) already exist in ${playlist.name}. Add them anyway?"
+        alwaysAddSwitch.setOnCheckedChangeListener { _, isChecked ->
+            presenter.setIgnorePlaylistDuplicates(isChecked)
+        }
+
+        MaterialAlertDialogBuilder(context)
+            .setTitle("Duplicates Found")
+            .setView(view)
+            .setNegativeButton("Skip") { _, _ ->
+                presenter.addToPlaylist(playlist, deduplicatedPlaylistData, true)
+            }
+            .setPositiveButton("Add") { _, _ ->
+                presenter.addToPlaylist(playlist, playlistData, true)
+            }
+            .show()
     }
 
     fun handleMenuItem(

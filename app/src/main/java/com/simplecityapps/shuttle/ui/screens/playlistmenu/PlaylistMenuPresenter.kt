@@ -4,6 +4,9 @@ import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
+import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.firstOrNull
@@ -11,11 +14,31 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
+interface PlaylistMenuContract {
+
+    interface View : CreatePlaylistDialogFragment.Listener {
+        fun onPlaylistCreated(playlist: Playlist)
+        fun onAddedToPlaylist(playlist: Playlist, playlistData: PlaylistData)
+        fun onPlaylistAddFailed(error: Error)
+        fun showCreatePlaylistDialog(playlistData: PlaylistData)
+        fun onAddToPlaylistWithDuplicates(playlist: Playlist, playlistData: PlaylistData, deduplicatedPlaylistData: PlaylistData.Songs, duplicates: List<Song>)
+    }
+
+    interface Presenter : BaseContract.Presenter<View> {
+        var playlists: List<Playlist>
+        fun loadPlaylists()
+        fun createPlaylist(name: String, playlistData: PlaylistData?)
+        fun addToPlaylist(playlist: Playlist, playlistData: PlaylistData, ignoreDuplicates: Boolean = false)
+        fun setIgnorePlaylistDuplicates(ignorePlaylistDuplicates: Boolean)
+    }
+}
+
 class PlaylistMenuPresenter @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val songRepository: SongRepository,
     private val genreRepository: GenreRepository,
-    private val queueManager: QueueManager
+    private val queueManager: QueueManager,
+    private val preferenceManager: GeneralPreferenceManager
 ) : PlaylistMenuContract.Presenter,
     BasePresenter<PlaylistMenuContract.View>() {
 
@@ -49,17 +72,44 @@ class PlaylistMenuPresenter @Inject constructor(
         }
     }
 
-    override fun addToPlaylist(playlist: Playlist, playlistData: PlaylistData) {
+    override fun addToPlaylist(playlist: Playlist, playlistData: PlaylistData, ignoreDuplicates: Boolean) {
         launch {
-            val songs = playlistData.getSongs()
-            try {
-                playlistRepository.addToPlaylist(playlist, songs)
-                view?.onAddedToPlaylist(playlist, playlistData)
-            } catch (e: Exception) {
-                Timber.e(e, "Failed to add to playlist")
-                view?.onPlaylistAddFailed(Error(e))
+            if (ignoreDuplicates || preferenceManager.ignorePlaylistDuplicates) {
+                addToPlaylist(playlist, playlistData)
+                return@launch
+            } else {
+                val existingSongs = playlistRepository.getSongsForPlaylist(playlist.id).firstOrNull().orEmpty()
+                val songsToAdd = playlistData.getSongs()
+                val duplicates = songsToAdd.filter { song -> existingSongs.contains(song) }
+                if (duplicates.isNotEmpty()) {
+                    val deduplicatedPlaylistData = PlaylistData.Songs(songsToAdd - duplicates)
+                    view?.onAddToPlaylistWithDuplicates(playlist, playlistData, deduplicatedPlaylistData, duplicates)
+                } else {
+                    addToPlaylist(playlist, playlistData)
+                }
             }
         }
+    }
+
+    private fun addToPlaylist(playlist: Playlist, playlistData: PlaylistData) {
+        launch {
+            val songs = playlistData.getSongs()
+            if (songs.isNotEmpty()) {
+                try {
+                    playlistRepository.addToPlaylist(playlist, songs)
+                    view?.onAddedToPlaylist(playlist, playlistData)
+                } catch (e: Exception) {
+                    Timber.e(e, "Failed to add to playlist")
+                    view?.onPlaylistAddFailed(Error(e))
+                }
+            } else {
+                view?.onPlaylistAddFailed(UserFriendlyError("No songs to add"))
+            }
+        }
+    }
+
+    override fun setIgnorePlaylistDuplicates(ignorePlaylistDuplicates: Boolean) {
+        preferenceManager.ignorePlaylistDuplicates = ignorePlaylistDuplicates
     }
 
     private suspend fun PlaylistData.getSongs(): List<Song> {
