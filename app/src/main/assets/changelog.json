@@ -1,5 +1,21 @@
 [
   {
+    "versionName": "0.2.14",
+    "releaseDate": "07/03/2021",
+    "features": [
+    ],
+    "fixes": [
+      "Fixed an issue where current time was occasionally blank on now playing screen",
+      "Fixed a crash when launching 'frequency response' screen"
+    ],
+    "improvements": [
+      "Additional logging when attempting to restore queue"
+    ],
+    "notes": [
+      "S2 has a very active community on Discord. If you haven't already, please come and join the conversation: https://discord.gg/YkhSuHJ"
+    ]
+  },
+  {
     "versionName": "0.2.13",
     "releaseDate": "04/03/2021",
     "features": [
@@ -9,7 +25,6 @@
       "Duplicates are detected when adding songs to playlist"
     ],
     "fixes": [
-
     ],
     "improvements": [
       "Added more menu items for playlist list & detail screens (add to queue, rename, clear, delete)",
