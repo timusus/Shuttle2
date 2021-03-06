@@ -48,6 +48,8 @@ class PlaybackInitializer @Inject constructor(
     @SuppressLint("BinaryOperationInTimber")
     override fun init(application: Application) {
 
+        Timber.i("PlaybackInitializer.init()")
+
         queueWatcher.addCallback(this)
         playbackWatcher.addCallback(this)
 
@@ -68,10 +70,14 @@ class PlaybackInitializer @Inject constructor(
             queueManager.setRepeatMode(repeatMode)
 
             queuePosition?.let {
-                val songIds = playbackPreferenceManager.queueIds?.split(',')?.map { id -> id.toLong() }
-
-                if (!songIds.isNullOrEmpty()) {
-                    withContext(Dispatchers.IO) {
+                withContext(Dispatchers.IO) {
+                    val songIds = playbackPreferenceManager.queueIds?.split(',')?.map { id -> id.toLong() }
+                    if (songIds.isNullOrEmpty()) {
+                        Timber.i("Queue restoration failed: no queue to restore (songIds.size: ${songIds?.size})")
+                        withContext(Dispatchers.Main) {
+                            onRestoreComplete()
+                        }
+                    } else {
                         val shuffleSongIds = playbackPreferenceManager.shuffleQueueIds?.split(',')?.map { id -> id.toLong() }
                         val allSongIds = songIds.orEmpty().toMutableSet()
                         allSongIds.addAll(shuffleSongIds.orEmpty())
@@ -109,6 +115,7 @@ class PlaybackInitializer @Inject constructor(
                     }
                 }
             } ?: run {
+                Timber.i("Queue restoration failed: queue position null")
                 onRestoreComplete()
             }
         }
