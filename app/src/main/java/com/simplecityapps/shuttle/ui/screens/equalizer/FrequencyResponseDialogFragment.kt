@@ -2,7 +2,6 @@ package com.simplecityapps.shuttle.ui.screens.equalizer
 
 import android.annotation.SuppressLint
 import android.app.Dialog
-import android.content.Context
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.View
@@ -49,14 +48,10 @@ class FrequencyResponseDialogFragment : DialogFragment(), Injectable {
     private var textColor: Int = 0
     private var lineColor: Int = 0
 
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-
-        preset = playbackPreferenceManager.preset
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        preset = playbackPreferenceManager.preset
 
         TypedValue().apply {
             requireContext().theme.resolveAttribute(android.R.attr.textColorSecondary, this, true)
