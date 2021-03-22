@@ -42,7 +42,7 @@ dependencies {
     implementation 'androidx.media:media:1.2.1'
 
     // Dagger
-    kapt 'com.google.dagger:dagger-compiler:2.30.1'
+    kapt 'com.google.dagger:dagger-compiler:2.33'
 
     // Dagger Android
     implementation 'com.google.dagger:dagger-android-support:2.30.1'

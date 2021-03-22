@@ -36,7 +36,7 @@ android {
 dependencies {
 
     // Kotlin std lib
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.4.30"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.4.31"
 
     // OkHttp
     implementation 'com.squareup.okhttp3:okhttp:4.9.0'

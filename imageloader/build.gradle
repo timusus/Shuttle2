@@ -45,7 +45,7 @@ dependencies {
     implementation(project(":ktaglib:lib"))
 
     // Dagger
-    kapt 'com.google.dagger:dagger-compiler:2.30.1'
+    kapt 'com.google.dagger:dagger-compiler:2.33'
 
     // Palette
     implementation 'androidx.palette:palette-ktx:1.0.0'
