@@ -50,7 +50,7 @@ class MediaProviderSelectionPresenter @Inject constructor(
 
     override fun addProviderClicked() {
         view?.showMediaProviderSelectionDialog(
-            (MediaProvider.Type.values().toList() - playbackPreferenceManager.mediaProviderTypes)
+            (MediaProvider.Type.values().toList() - playbackPreferenceManager.mediaProviderTypes).filterNot { it == MediaProvider.Type.Plex }
         )
     }
 
