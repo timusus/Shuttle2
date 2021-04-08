@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.core.content.getSystemService
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
 import com.simplecityapps.provider.emby.*
+import com.simplecityapps.provider.emby.http.EmbyTranscodeService
 import com.simplecityapps.provider.emby.http.ItemsService
 import com.simplecityapps.provider.emby.http.LoginCredentials
 import com.simplecityapps.provider.emby.http.UserService
@@ -53,6 +54,12 @@ open class EmbyMediaProviderModule {
 
     @Provides
     @AppScope
+    fun provideTranscodeService(@Named("EmbyRetrofit") retrofit: Retrofit): EmbyTranscodeService {
+        return retrofit.create()
+    }
+
+    @Provides
+    @AppScope
     fun provideCredentialStore(securePreferenceManager: SecurePreferenceManager): CredentialStore {
         return CredentialStore(securePreferenceManager).apply {
             if (BuildConfig.DEBUG) {
@@ -79,7 +86,7 @@ open class EmbyMediaProviderModule {
 
     @Provides
     @AppScope
-    fun provideEmbyMediaPathProvider(authenticationManager: EmbyAuthenticationManager): EmbyMediaPathProvider {
-        return EmbyMediaPathProvider(authenticationManager)
+    fun provideEmbyMediaPathProvider(authenticationManager: EmbyAuthenticationManager, embyTranscodeService: EmbyTranscodeService): EmbyMediaInfoProvider {
+        return EmbyMediaInfoProvider(authenticationManager, embyTranscodeService)
     }
 }

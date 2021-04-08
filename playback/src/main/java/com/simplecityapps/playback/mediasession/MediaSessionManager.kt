@@ -78,7 +78,11 @@ class MediaSessionManager @Inject constructor(
         )
     }
 
-    private fun getPlaybackState() = if (playbackManager.isPlaying()) PlaybackStateCompat.STATE_PLAYING else PlaybackStateCompat.STATE_PAUSED
+    private fun getPlaybackState() = when (playbackManager.playbackState()) {
+        is PlaybackState.Loading -> PlaybackStateCompat.STATE_BUFFERING
+        is PlaybackState.Playing -> PlaybackStateCompat.STATE_PLAYING
+        else -> PlaybackStateCompat.STATE_PAUSED
+    }
 
     private fun updatePlaybackState() {
         Timber.i("updatePlaybackState()")
@@ -141,8 +145,8 @@ class MediaSessionManager @Inject constructor(
 
     // PlaybackWatcherCallback Implementation
 
-    override fun onPlaystateChanged(isPlaying: Boolean) {
-        mediaSession.isActive = isPlaying
+    override fun onPlaybackStateChanged(playbackState: PlaybackState) {
+        mediaSession.isActive = playbackState == PlaybackState.Loading || playbackState == PlaybackState.Playing
         playbackStateBuilder.setState(getPlaybackState(), playbackManager.getProgress()?.toLong() ?: PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, 1.0f)
         updatePlaybackState()
     }

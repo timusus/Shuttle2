@@ -9,7 +9,6 @@ import android.widget.SeekBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.widget.Toolbar
-import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -23,6 +22,7 @@ import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.R
@@ -32,10 +32,7 @@ import com.simplecityapps.shuttle.ui.common.recyclerview.SnapOnScrollListener
 import com.simplecityapps.shuttle.ui.common.recyclerview.SpacesItemDecoration
 import com.simplecityapps.shuttle.ui.common.recyclerview.attachSnapHelperWithListener
 import com.simplecityapps.shuttle.ui.common.utils.toHms
-import com.simplecityapps.shuttle.ui.common.view.FavoriteButton
-import com.simplecityapps.shuttle.ui.common.view.RepeatButton
-import com.simplecityapps.shuttle.ui.common.view.SeekButton
-import com.simplecityapps.shuttle.ui.common.view.ShuffleButton
+import com.simplecityapps.shuttle.ui.common.view.*
 import com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
 import com.simplecityapps.shuttle.ui.common.view.multisheet.findParentMultiSheetView
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragmentArgs
@@ -51,17 +48,20 @@ class PlaybackFragment :
     PlaybackContract.View,
     SeekBar.OnSeekBarChangeListener {
 
-    @Inject lateinit var presenter: PlaybackPresenter
+    @Inject
+    lateinit var presenter: PlaybackPresenter
 
-    @Inject lateinit var imageLoader: ArtworkImageLoader
+    @Inject
+    lateinit var imageLoader: ArtworkImageLoader
 
-    @Inject lateinit var queueManager: QueueManager
+    @Inject
+    lateinit var queueManager: QueueManager
 
     private var recyclerView: RecyclerView by autoCleared()
 
     private var adapter: RecyclerAdapter by autoCleared()
 
-    private var playPauseButton: ImageButton by autoCleared()
+    private var playStateView: PlayStateView by autoCleared()
     private var skipNextButton: ImageButton by autoCleared()
     private var skipPrevButton: ImageButton by autoCleared()
     private var shuffleButton: ShuffleButton by autoCleared()
@@ -96,7 +96,7 @@ class PlaybackFragment :
 
         skipNextButton = view.findViewById(R.id.skipNextButton)
         skipPrevButton = view.findViewById(R.id.skipPrevButton)
-        playPauseButton = view.findViewById(R.id.playPauseButton)
+        playStateView = view.findViewById(R.id.playPauseButton)
         shuffleButton = view.findViewById(R.id.shuffleButton)
         repeatButton = view.findViewById(R.id.repeatButton)
         seekBackwardButton = view.findViewById(R.id.seekBackwardButton)
@@ -110,7 +110,9 @@ class PlaybackFragment :
 
         adapter = RecyclerAdapter(viewLifecycleOwner.lifecycleScope)
 
-        playPauseButton.setOnClickListener { presenter.togglePlayback() }
+        playStateView.setOnClickListener {
+            presenter.togglePlayback()
+        }
         shuffleButton.setOnClickListener { presenter.toggleShuffle() }
         repeatButton.setOnClickListener { presenter.toggleRepeat() }
         skipNextButton.setOnClickListener { presenter.skipNext() }
@@ -182,11 +184,8 @@ class PlaybackFragment :
 
     // PlaybackContract.View
 
-    override fun setPlayState(isPlaying: Boolean) {
-        when {
-            isPlaying -> playPauseButton.setImageDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.ic_pause_black_24dp))
-            else -> playPauseButton.setImageDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.ic_play_arrow_black_24dp))
-        }
+    override fun setPlaybackState(playbackState: PlaybackState) {
+        playStateView.playbackState = playbackState
     }
 
     override fun setShuffleMode(shuffleMode: QueueManager.ShuffleMode) {

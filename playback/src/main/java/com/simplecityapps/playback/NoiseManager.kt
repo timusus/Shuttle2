@@ -21,15 +21,19 @@ class NoiseManager(
 
     // PlaybackWatcherCallback Implementation
 
-    override fun onPlaystateChanged(isPlaying: Boolean) {
-        if (isPlaying) {
-            context.registerReceiver(broadcastReceiver, IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY))
-        } else {
-            context.safelyUnregisterReceiver(broadcastReceiver)
+    override fun onPlaybackStateChanged(playbackState: PlaybackState) {
+        when (playbackState) {
+            is PlaybackState.Loading, PlaybackState.Playing -> {
+                context.registerReceiver(broadcastReceiver, IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY))
+
+            }
+            else -> {
+                context.safelyUnregisterReceiver(broadcastReceiver)
+
+            }
         }
     }
 }
-
 
 class NoisyReceiver(val playbackManager: PlaybackManager) : BroadcastReceiver() {
 

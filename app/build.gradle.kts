@@ -1,6 +1,6 @@
 plugins {
     id("com.android.application")
-    id("com.github.triplet.play") version "3.2.0-agp4.2-2"
+    id("com.github.triplet.play") version "3.3.0"
     id("kotlin-android")
     id("androidx.navigation.safeargs.kotlin")
     id("kotlin-kapt")
@@ -102,8 +102,8 @@ android {
         implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
 
         // AndroidX Navigation
-        implementation("androidx.navigation:navigation-fragment-ktx:2.3.4")
-        implementation("androidx.navigation:navigation-ui-ktx:2.3.4")
+        implementation("androidx.navigation:navigation-fragment-ktx:2.3.5")
+        implementation("androidx.navigation:navigation-ui-ktx:2.3.5")
 
         // Dagger core
         kapt("com.google.dagger:dagger-compiler:2.33")
@@ -126,7 +126,7 @@ android {
         implementation("me.relex:circleindicator:2.1.4")
 
         // AndroidX Media
-        implementation("androidx.media:media:1.2.1")
+        implementation("androidx.media:media:1.3.0")
 
         // AndroidX Preference
         implementation("androidx.preference:preference-ktx:1.1.1")
@@ -141,7 +141,7 @@ android {
         kapt("com.squareup.moshi:moshi-kotlin-codegen:1.11.0")
 
         // AndroidX Lifecycle
-        implementation("androidx.lifecycle:lifecycle-common-java8:2.3.0")
+        implementation("androidx.lifecycle:lifecycle-common-java8:2.3.1")
 
         // Noise
         implementation("com.github.paramsen:noise:2.0.0")
@@ -153,7 +153,7 @@ android {
         implementation("com.bugsnag:bugsnag-android:5.4.0")
 
         // AndroidX Lifecycle
-        implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.3.0")
+        implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.3.1")
 
         // ExoPlayer
         implementation(project(":exoplayer-library-core"))
@@ -162,13 +162,13 @@ android {
         implementation("androidx.drawerlayout:drawerlayout:1.1.1")
 
         // New fragment manager
-        implementation("androidx.fragment:fragment:1.3.1")
+        implementation("androidx.fragment:fragment:1.3.2")
 
         // Coil
         implementation("io.coil-kt:coil-base:1.1.1")
 
         // About Libraries
-        implementation("com.mikepenz:aboutlibraries-core:8.8.3")
+        implementation("com.mikepenz:aboutlibraries-core:8.8.4")
     }
 }
 

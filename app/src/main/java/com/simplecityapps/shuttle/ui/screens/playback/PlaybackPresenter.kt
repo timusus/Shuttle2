@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.playback
 import android.content.Context
 import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.PlaybackWatcherCallback
 import com.simplecityapps.playback.queue.QueueChangeCallback
@@ -43,7 +44,7 @@ class PlaybackPresenter @Inject constructor(
         updateProgress()
         onQueueChanged()
         onQueuePositionChanged(null, queueManager.getCurrentPosition())
-        onPlaystateChanged(playbackManager.isPlaying())
+        onPlaybackStateChanged(playbackManager.playbackState())
         onShuffleChanged(queueManager.getShuffleMode())
         onRepeatChanged(queueManager.getRepeatMode())
     }
@@ -199,8 +200,8 @@ class PlaybackPresenter @Inject constructor(
 
     // PlaybackWatcherCallback Implementation
 
-    override fun onPlaystateChanged(isPlaying: Boolean) {
-        view?.setPlayState(isPlaying)
+    override fun onPlaybackStateChanged(playbackState: PlaybackState) {
+        view?.setPlaybackState(playbackState)
     }
 
 

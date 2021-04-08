@@ -1,16 +1,16 @@
 package com.simplecityapps.playback.exoplayer
 
 import android.content.Context
-import android.net.Uri
-import androidx.core.net.toUri
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON
 import com.google.android.exoplayer2.audio.AudioCapabilities
 import com.google.android.exoplayer2.audio.AudioSink
 import com.google.android.exoplayer2.audio.DefaultAudioSink
-import com.simplecityapps.mediaprovider.MediaPathProvider
+import com.simplecityapps.mediaprovider.MediaInfo
+import com.simplecityapps.mediaprovider.MediaInfoProvider
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.Playback
+import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.chromecast.CastPlayback
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.mediasession.toRepeatMode
@@ -21,7 +21,7 @@ class ExoPlayerPlayback(
     context: Context,
     private val equalizerAudioProcessor: EqualizerAudioProcessor,
     private val replayGainAudioProcessor: ReplayGainAudioProcessor,
-    private val mediaPathProvider: MediaPathProvider
+    private val mediaInfoProvider: MediaInfoProvider
 ) : Playback {
 
     override var callback: Playback.Callback? = null
@@ -42,7 +42,7 @@ class ExoPlayerPlayback(
                 super.onPlayWhenReadyChanged(playWhenReady, reason)
 
                 if (playWhenReady != this@ExoPlayerPlayback.playWhenReady) {
-                    callback?.onPlayStateChanged(playWhenReady)
+                    callback?.onPlaybackStateChanged(if (playWhenReady) PlaybackState.Playing else PlaybackState.Paused)
                     this@ExoPlayerPlayback.playWhenReady = playWhenReady
                 }
             }
@@ -50,20 +50,35 @@ class ExoPlayerPlayback(
             override fun onPlaybackStateChanged(state: Int) {
                 super.onPlaybackStateChanged(state)
 
-                val playbackState = state.toPlaybackState()
+                val playbackState = state.toExoPlaybackState()
                 Timber.v("onPlayerStateChanged(playWhenReady: $playWhenReady, playbackState: ${playbackState})")
 
-                if (playbackState == PlaybackState.Ready) {
-                    isPlaybackReady = true
-                }
+                when (playbackState) {
+                    ExoPlaybackState.Idle -> {
 
-                if (playbackState == PlaybackState.Ended) {
-                    if (isPlaybackReady) {
-                        player.playWhenReady = false
-                        this@ExoPlayerPlayback.playWhenReady = false
-                        callback?.onPlayStateChanged(isPlaying = false)
-                        callback?.onTrackEnded(false)
-                        isPlaybackReady = false
+                    }
+                    ExoPlaybackState.Buffering -> {
+
+                    }
+                    ExoPlaybackState.Ready -> {
+                        isPlaybackReady = true
+                        if (playWhenReady) {
+                            callback?.onPlaybackStateChanged(PlaybackState.Playing)
+                        } else {
+                            callback?.onPlaybackStateChanged(PlaybackState.Paused)
+                        }
+                    }
+                    ExoPlaybackState.Ended -> {
+                        if (isPlaybackReady) {
+                            player.playWhenReady = false
+                            this@ExoPlayerPlayback.playWhenReady = false
+                            callback?.onPlaybackStateChanged(PlaybackState.Paused)
+                            callback?.onTrackEnded(false)
+                            isPlaybackReady = false
+                        }
+                    }
+                    ExoPlaybackState.Unknown -> {
+
                     }
                 }
             }
@@ -89,6 +104,7 @@ class ExoPlayerPlayback(
                 super.onPlayerError(error)
 
                 Timber.e(error, "onPlayerError()")
+                callback?.onPlaybackStateChanged(PlaybackState.Paused)
             }
         }
     }
@@ -114,19 +130,25 @@ class ExoPlayerPlayback(
         return simpleExoPlayer
     }
 
-    override fun load(current: Song, next: Song?, seekPosition: Int, completion: (Result<Any?>) -> Unit) {
+    override suspend fun load(current: Song, next: Song?, seekPosition: Int, completion: (Result<Any?>) -> Unit) {
         Timber.v("load(current: ${current.name}|${current.mimeType})")
+
         isReleased = false
 
+        player.removeListener(eventListener)
+        player.pause()
+        player.seekTo(0)
+
+        callback?.onPlaybackStateChanged(PlaybackState.Loading)
+
+        val mediaInfo = mediaInfoProvider.getMediaInfo(current)
+        Timber.i("Path: ${mediaInfo.path}")
         player.addListener(eventListener)
         player.seekTo(seekPosition.toLong())
-        val uri = current.path.toUri()
-        val mediaItem = getMediaItem(uri)
-        Timber.i("Loading uri: $uri")
-        player.setMediaItem(mediaItem)
+        player.setMediaItem(getMediaItem(mediaInfo))
         player.prepare()
 
-        if (mediaPathProvider.isRemote(uri)) {
+        if (mediaInfo.isRemote) {
             player.setWakeMode(C.WAKE_MODE_NETWORK)
         } else {
             player.setWakeMode(C.WAKE_MODE_LOCAL)
@@ -137,10 +159,12 @@ class ExoPlayerPlayback(
         loadNext(next)
     }
 
-    override fun loadNext(song: Song?) {
+    override suspend fun loadNext(song: Song?) {
         Timber.v("loadNext(song: ${song?.name}|${song?.mimeType})")
 
-        val nextMediaItem = song?.let { getMediaItem(song.path.toUri()) }
+        val nextMediaItem: MediaItem? = song?.let {
+            getMediaItem(mediaInfoProvider.getMediaInfo(song))
+        }
 
         val currentMediaItem = player.currentMediaItem
         val count = player.mediaItemCount
@@ -186,8 +210,12 @@ class ExoPlayerPlayback(
         isReleased = true
     }
 
-    override fun isPlaying(): Boolean {
-        return player.isPlaying || player.playWhenReady
+    override fun playBackState(): PlaybackState {
+        return if (player.isPlaying || player.playWhenReady) {
+            PlaybackState.Playing
+        } else {
+            PlaybackState.Paused
+        }
     }
 
     override fun seek(position: Int) {
@@ -223,22 +251,22 @@ class ExoPlayerPlayback(
     }
 
     override fun setReplayGain(trackGain: Double?, albumGain: Double?) {
-        Timber.i("setReplayGain(trackGain: $trackGain, albumGain: $albumGain)")
+        Timber.v("setReplayGain(trackGain: $trackGain, albumGain: $albumGain)")
         replayGainAudioProcessor.trackGain = trackGain
         replayGainAudioProcessor.albumGain = albumGain
     }
 
-    enum class PlaybackState {
+    enum class ExoPlaybackState {
         Idle, Buffering, Ready, Ended, Unknown;
     }
 
-    fun Int.toPlaybackState(): PlaybackState {
+    fun Int.toExoPlaybackState(): ExoPlaybackState {
         return when (this) {
-            1 -> PlaybackState.Idle
-            2 -> PlaybackState.Buffering
-            3 -> PlaybackState.Ready
-            4 -> PlaybackState.Ended
-            else -> PlaybackState.Unknown
+            1 -> ExoPlaybackState.Idle
+            2 -> ExoPlaybackState.Buffering
+            3 -> ExoPlaybackState.Ready
+            4 -> ExoPlaybackState.Ended
+            else -> ExoPlaybackState.Unknown
         }
     }
 
@@ -257,7 +285,10 @@ class ExoPlayerPlayback(
     }
 
     @Throws(IllegalStateException::class)
-    fun getMediaItem(uri: Uri): MediaItem {
-        return MediaItem.fromUri(mediaPathProvider.getPath(uri))
+    fun getMediaItem(mediaInfo: MediaInfo): MediaItem {
+        return MediaItem.Builder()
+            .setMimeType(mediaInfo.mimeType)
+            .setUri(mediaInfo.path)
+            .build()
     }
 }

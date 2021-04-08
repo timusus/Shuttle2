@@ -14,6 +14,7 @@ import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.playback.ActivityIntentProvider
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackService
+import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.widgets.WidgetManager
 import com.simplecityapps.shuttle.R
@@ -22,11 +23,16 @@ import dagger.android.AndroidInjection
 import javax.inject.Inject
 
 abstract class ShuttleAppWidgetProvider : AppWidgetProvider() {
-    @Inject lateinit var playbackManager: PlaybackManager
-    @Inject lateinit var queueManager: QueueManager
-    @Inject lateinit var artworkCache: LruCache<String, Bitmap?>
-    @Inject lateinit var preferenceManager: GeneralPreferenceManager
-    @Inject lateinit var imageLoader: ArtworkImageLoader
+    @Inject
+    lateinit var playbackManager: PlaybackManager
+    @Inject
+    lateinit var queueManager: QueueManager
+    @Inject
+    lateinit var artworkCache: LruCache<String, Bitmap?>
+    @Inject
+    lateinit var preferenceManager: GeneralPreferenceManager
+    @Inject
+    lateinit var imageLoader: ArtworkImageLoader
 
     internal var updateReason = WidgetManager.UpdateReason.Unknown
 
@@ -108,10 +114,13 @@ abstract class ShuttleAppWidgetProvider : AppWidgetProvider() {
     }
 
     fun getPlaybackDrawable(): Int {
-        return if (playbackManager.isPlaying()) {
-            if (isDarkMode) R.drawable.ic_pause_white_24dp else R.drawable.ic_pause_black_24dp
-        } else {
-            if (isDarkMode) R.drawable.ic_play_arrow_white_24dp else R.drawable.ic_play_arrow_black_24dp
+        return when (playbackManager.playbackState()) {
+            is PlaybackState.Loading, PlaybackState.Playing -> {
+                if (isDarkMode) R.drawable.ic_pause_white_24dp else R.drawable.ic_pause_black_24dp
+            }
+            else -> {
+                if (isDarkMode) R.drawable.ic_play_arrow_white_24dp else R.drawable.ic_play_arrow_black_24dp
+            }
         }
     }
 

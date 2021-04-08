@@ -3,13 +3,14 @@ package com.simplecityapps.shuttle.ui.screens.playback
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
 
 interface PlaybackContract {
 
     interface View {
-        fun setPlayState(isPlaying: Boolean)
+        fun setPlaybackState(playbackState: PlaybackState)
         fun setShuffleMode(shuffleMode: QueueManager.ShuffleMode)
         fun setRepeatMode(repeatMode: QueueManager.RepeatMode)
         fun setCurrentSong(song: Song?)

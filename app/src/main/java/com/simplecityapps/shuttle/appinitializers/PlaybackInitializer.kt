@@ -161,18 +161,21 @@ class PlaybackInitializer @Inject constructor(
 
     // PlaybackWatcherCallback Implementation
 
-    override fun onPlaystateChanged(isPlaying: Boolean) {
-        if (isPlaying) {
-            ContextCompat.startForegroundService(context, Intent(context, PlaybackService::class.java))
-        } else {
-            playbackPreferenceManager.playbackPosition = playbackManager.getProgress()
+    override fun onPlaybackStateChanged(playbackState: PlaybackState) {
+        when (playbackState) {
+            is PlaybackState.Loading, PlaybackState.Playing -> {
+                ContextCompat.startForegroundService(context, Intent(context, PlaybackService::class.java))
+            }
+            else -> {
+                playbackPreferenceManager.playbackPosition = playbackManager.getProgress()
 
-            queueManager.getCurrentItem()?.song?.let { song ->
-                val playbackPosition = playbackManager.getProgress() ?: 0
-                song.playbackPosition = playbackPosition
-                appCoroutineScope.launch {
-                    withContext(Dispatchers.IO) {
-                        songRepository.setPlaybackPosition(song, playbackPosition)
+                queueManager.getCurrentItem()?.song?.let { song ->
+                    val playbackPosition = playbackManager.getProgress() ?: 0
+                    song.playbackPosition = playbackPosition
+                    appCoroutineScope.launch {
+                        withContext(Dispatchers.IO) {
+                            songRepository.setPlaybackPosition(song, playbackPosition)
+                        }
                     }
                 }
             }

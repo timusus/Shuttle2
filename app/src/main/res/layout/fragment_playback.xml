@@ -173,7 +173,7 @@
 
     </FrameLayout>
 
-    <ImageButton
+    <com.simplecityapps.shuttle.ui.common.view.PlayStateView
         android:id="@+id/playPauseButton"
         android:layout_width="48dp"
         android:layout_height="48dp"
@@ -187,8 +187,7 @@
         app:layout_constraintEnd_toStartOf="@+id/skipNextContainer"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@+id/skipPrevContainer"
-        app:layout_constraintTop_toBottomOf="@+id/seekBar"
-        app:srcCompat="@drawable/ic_play_arrow_black_24dp" />
+        app:layout_constraintTop_toBottomOf="@+id/seekBar" />
 
     <FrameLayout
         android:id="@+id/skipNextContainer"

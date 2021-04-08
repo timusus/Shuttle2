@@ -7,28 +7,31 @@ import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.view.PlayStateView
 import com.simplecityapps.shuttle.ui.common.view.ProgressView
 import javax.inject.Inject
 
 class MiniPlaybackFragment : Fragment(), Injectable, MiniPlayerContract.View {
 
-    @Inject lateinit var presenter: MiniPlayerPresenter
+    @Inject
+    lateinit var presenter: MiniPlayerPresenter
 
-    @Inject lateinit var imageLoader: ArtworkImageLoader
+    @Inject
+    lateinit var imageLoader: ArtworkImageLoader
 
     private var imageView: ImageView by autoCleared()
-    private var playPauseButton: ImageButton by autoCleared()
+    private var playStateView: PlayStateView by autoCleared()
     private var skipNextButton: ImageButton by autoCleared()
     private var titleTextView: TextView by autoCleared()
     private var subtitleTextView: TextView by autoCleared()
-    private var progressBar: ProgressView by autoCleared()
+    private var progressView: ProgressView by autoCleared()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_mini_playback, container, false)
@@ -38,15 +41,15 @@ class MiniPlaybackFragment : Fragment(), Injectable, MiniPlayerContract.View {
         super.onViewCreated(view, savedInstanceState)
 
         imageView = view.findViewById(R.id.imageView)
-        playPauseButton = view.findViewById(R.id.playPauseButton)
+        playStateView = view.findViewById(R.id.playPauseView)
         skipNextButton = view.findViewById(R.id.skipNextButton)
         titleTextView = view.findViewById(R.id.titleTextView)
         subtitleTextView = view.findViewById(R.id.subtitleTextView)
-        progressBar = view.findViewById(R.id.progressBar)
+        progressView = view.findViewById(R.id.progressView)
 
         presenter.bindView(this)
 
-        playPauseButton.setOnClickListener { presenter.togglePlayback() }
+        playStateView.setOnClickListener { presenter.togglePlayback() }
         skipNextButton.setOnClickListener { presenter.skipToNext() }
     }
 
@@ -59,11 +62,8 @@ class MiniPlaybackFragment : Fragment(), Injectable, MiniPlayerContract.View {
 
     // MiniPlayerContract.View Implementation
 
-    override fun setPlayState(isPlaying: Boolean) {
-        when {
-            isPlaying -> playPauseButton.setImageDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.ic_pause_black_24dp))
-            else -> playPauseButton.setImageDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.ic_play_arrow_black_24dp))
-        }
+    override fun setPlaybackState(playbackState: PlaybackState) {
+        playStateView.playbackState = playbackState
     }
 
     override fun setCurrentSong(song: Song?) {
@@ -79,6 +79,6 @@ class MiniPlaybackFragment : Fragment(), Injectable, MiniPlayerContract.View {
     }
 
     override fun setProgress(position: Int, duration: Int) {
-        progressBar.setProgress((position.toFloat() / duration))
+        progressView.setProgress((position.toFloat() / duration))
     }
 }

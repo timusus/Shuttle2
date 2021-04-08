@@ -7,9 +7,9 @@ interface Playback {
 
     var callback: Callback?
 
-    fun load(current: Song, next: Song?, seekPosition: Int, completion: (Result<Any?>) -> Unit)
+    suspend fun load(current: Song, next: Song?, seekPosition: Int, completion: (Result<Any?>) -> Unit)
 
-    fun loadNext(song: Song?)
+    suspend fun loadNext(song: Song?)
 
     fun play()
 
@@ -17,7 +17,7 @@ interface Playback {
 
     fun release()
 
-    fun isPlaying(): Boolean
+    fun playBackState(): PlaybackState
 
     var isReleased: Boolean
 
@@ -55,7 +55,7 @@ interface Playback {
     }
 
     interface Callback {
-        fun onPlayStateChanged(isPlaying: Boolean)
+        fun onPlaybackStateChanged(playbackState: PlaybackState)
 
         /**
          * @param trackWentToNext whether the player automatically started playing the next song

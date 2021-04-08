@@ -2,6 +2,7 @@ package com.simplecityapps.playback.widgets
 
 import android.content.Context
 import com.simplecityapps.playback.ActivityIntentProvider
+import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.PlaybackWatcherCallback
 import com.simplecityapps.playback.queue.QueueChangeCallback
@@ -36,8 +37,8 @@ class WidgetManager @Inject constructor(
 
     // PlaybackWatcherCallback Implementation
 
-    override fun onPlaystateChanged(isPlaying: Boolean) {
-        super.onPlaystateChanged(isPlaying)
+    override fun onPlaybackStateChanged(playbackState: PlaybackState) {
+        super.onPlaybackStateChanged(playbackState)
 
         updateWidget(UpdateReason.PlaystateChanged)
     }

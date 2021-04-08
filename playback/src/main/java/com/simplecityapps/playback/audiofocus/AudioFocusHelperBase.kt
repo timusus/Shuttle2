@@ -3,6 +3,7 @@ package com.simplecityapps.playback.audiofocus
 import android.content.Context
 import android.media.AudioManager
 import androidx.core.content.getSystemService
+import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.PlaybackWatcherCallback
 
@@ -74,7 +75,7 @@ abstract class AudioFocusHelperBase(
 
     // PlaybackWatcherCallback Implementation
 
-    override fun onPlaystateChanged(isPlaying: Boolean) {
-        this.isPlaying = isPlaying
+    override fun onPlaybackStateChanged(playbackState: PlaybackState) {
+        this.isPlaying = playbackState == PlaybackState.Loading || playbackState == PlaybackState.Playing
     }
 }

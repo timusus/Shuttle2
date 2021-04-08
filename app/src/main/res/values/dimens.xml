@@ -7,4 +7,10 @@
     <!-- MultiSheet -->
     <dimen name="bottom_sheet_peek_1_height">56dp</dimen>
     <dimen name="bottom_sheet_peek_2_height">56dp</dimen>
+
+
+    <!-- Play/Pause View -->
+    <dimen name="pause_bar_width">3.5dp</dimen>
+    <dimen name="pause_bar_distance">4dp</dimen>
+    <dimen name="pause_bar_height">14dp</dimen>
 </resources>

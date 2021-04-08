@@ -79,15 +79,15 @@ class PlexAuthenticationManager(
         return "${credentialStore.host}:${credentialStore.port}" +
                 "/music/:/transcode/universal/start.m3u8" +
                 "?path=${URLEncoder.encode(path.path, Charsets.UTF_8.name())}" +
-                "?directStreamAudio=true" +
+                "&directStreamAudio=1" +
                 "&protocol=hls" +
-                "&directPlay=0" +
+                "&directPlay=1" +
                 "&hasMDE=1" +
                 "&download=1" +
                 "&X-Plex-Token=${authenticatedCredentials.accessToken}" +
                 "&X-Plex-Client-Identifier=s2-music-payer" +
                 "&X-Plex-Device=Android" +
-                "&X-Plex-Session-Identifier=715b12da-8ac9-11eb-8dcd-0242ac130003" +
-                "&X-Plex-Client-Profile-Extra=${URLEncoder.encode("add-transcode-target(type=musicProfile&context=streaming&protocol=hls&container=mpegts&audioCodec=mp3)", Charsets.UTF_8.name())}"
+                "&X-Plex-Session-Identifier=${path}" +
+                "&X-Plex-Client-Profile-Extra=${URLEncoder.encode("add-transcode-target(type=musicProfile&context=streaming&protocol=hls&container=mpegts&audioCodec=aac,mp3)", Charsets.UTF_8.name())}"
     }
 }

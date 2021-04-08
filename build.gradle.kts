@@ -5,13 +5,12 @@ buildscript {
         maven(url = "https://dl.bintray.com/kotlin/kotlin-eap")
     }
     dependencies {
-        classpath("com.android.tools.build:gradle:4.0.2")
+        classpath("com.android.tools.build:gradle:4.1.3")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.31")
-        classpath("androidx.navigation:navigation-safe-args-gradle-plugin:2.3.4")
+        classpath("androidx.navigation:navigation-safe-args-gradle-plugin:2.3.5")
         classpath("com.google.gms:google-services:4.3.5")
         classpath("com.bugsnag:bugsnag-android-gradle-plugin:5.7.3")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.31")
-        classpath("com.android.tools.build:gradle:7.0.0-alpha10")
         classpath("com.mikepenz.aboutlibraries.plugin:aboutlibraries-plugin:8.8.3")
     }
 }

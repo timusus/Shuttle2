@@ -23,7 +23,7 @@
         app:layout_constraintTop_toTopOf="parent"
         tools:srcCompat="@drawable/ic_image_black_24dp" />
 
-    <com.simplecityapps.shuttle.ui.common.view.PlayPauseButton
+    <com.simplecityapps.shuttle.ui.common.view.PlayStateImageButton
         android:id="@+id/playPauseButton"
         android:layout_width="40dp"
         android:layout_height="40dp"

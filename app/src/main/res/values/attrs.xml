@@ -24,4 +24,12 @@
         <attr name="android:textSize" format="dimension|reference" />
     </declare-styleable>
 
+    <declare-styleable name="PlayPauseView">
+        <attr name="android:tint" format="color|reference" />
+    </declare-styleable>
+
+    <declare-styleable name="PlayPauseLoadView">
+        <attr name="android:tint" format="color|reference" />
+    </declare-styleable>
+
 </resources>

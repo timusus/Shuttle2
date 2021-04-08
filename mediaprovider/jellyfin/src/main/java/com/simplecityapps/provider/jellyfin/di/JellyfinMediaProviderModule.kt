@@ -5,9 +5,10 @@ import androidx.core.content.getSystemService
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
 import com.simplecityapps.provider.jellyfin.CredentialStore
 import com.simplecityapps.provider.jellyfin.JellyfinAuthenticationManager
-import com.simplecityapps.provider.jellyfin.JellyfinMediaPathProvider
+import com.simplecityapps.provider.jellyfin.JellyfinMediaInfoProvider
 import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
 import com.simplecityapps.provider.jellyfin.http.ItemsService
+import com.simplecityapps.provider.jellyfin.http.JellyfinTranscodeService
 import com.simplecityapps.provider.jellyfin.http.UserService
 import com.simplecityapps.shuttle.dagger.AppScope
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
@@ -55,6 +56,12 @@ open class JellyfinMediaProviderModule {
 
     @Provides
     @AppScope
+    fun provideTranscodeService(@Named("JellyfinRetrofit") retrofit: Retrofit): JellyfinTranscodeService {
+        return retrofit.create()
+    }
+
+    @Provides
+    @AppScope
     fun provideCredentialStore(securePreferenceManager: SecurePreferenceManager): CredentialStore {
         return CredentialStore(securePreferenceManager)
     }
@@ -73,7 +80,7 @@ open class JellyfinMediaProviderModule {
 
     @Provides
     @AppScope
-    fun provideJellyfinMediaPathProvider(authenticationManager: JellyfinAuthenticationManager): JellyfinMediaPathProvider {
-        return JellyfinMediaPathProvider(authenticationManager)
+    fun provideJellyfinMediaPathProvider(authenticationManager: JellyfinAuthenticationManager, transcodeService: JellyfinTranscodeService): JellyfinMediaInfoProvider {
+        return JellyfinMediaInfoProvider(authenticationManager, transcodeService)
     }
 }

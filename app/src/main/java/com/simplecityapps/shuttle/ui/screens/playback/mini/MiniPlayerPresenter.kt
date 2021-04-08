@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.playback.mini
 
 import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.PlaybackWatcherCallback
 import com.simplecityapps.playback.queue.QueueChangeCallback
@@ -37,7 +38,7 @@ class MiniPlayerPresenter @Inject constructor(
         updateProgress()
         onQueueChanged()
         onQueuePositionChanged(null, queueManager.getCurrentPosition())
-        onPlaystateChanged(playbackManager.isPlaying())
+        onPlaybackStateChanged(playbackManager.playbackState())
         onShuffleChanged(queueManager.getShuffleMode())
         onRepeatChanged(queueManager.getRepeatMode())
     }
@@ -52,10 +53,9 @@ class MiniPlayerPresenter @Inject constructor(
 
     // PlaybackWatcherCallback Implementation
 
-    override fun onPlaystateChanged(isPlaying: Boolean) {
-        view?.setPlayState(isPlaying)
+    override fun onPlaybackStateChanged(playbackState: PlaybackState) {
+        view?.setPlaybackState(playbackState)
     }
-
 
     // PlaybackManager.ProgressCallback
 

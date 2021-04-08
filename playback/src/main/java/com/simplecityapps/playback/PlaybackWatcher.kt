@@ -9,7 +9,7 @@ interface PlaybackWatcherCallback {
 
     }
 
-    fun onPlaystateChanged(isPlaying: Boolean) {
+    fun onPlaybackStateChanged(playbackState: PlaybackState) {
 
     }
 
@@ -38,9 +38,9 @@ class PlaybackWatcher : PlaybackWatcherCallback {
         callbacks.forEach { callback -> callback.onProgressChanged(position, duration, fromUser) }
     }
 
-    override fun onPlaystateChanged(isPlaying: Boolean) {
-        Timber.v("onPlaystateChanged(isPlaying: ${isPlaying})")
-        callbacks.forEach { callback -> callback.onPlaystateChanged(isPlaying) }
+    override fun onPlaybackStateChanged(playbackState: PlaybackState) {
+        Timber.v("onPlaystateChanged(playbackState: ${playbackState})")
+        callbacks.forEach { callback -> callback.onPlaybackStateChanged(playbackState) }
     }
 
     override fun onTrackEnded(song: Song) {

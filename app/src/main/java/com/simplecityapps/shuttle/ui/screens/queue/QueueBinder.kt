@@ -11,6 +11,7 @@ import androidx.core.view.isVisible
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.PlaybackWatcherCallback
 import com.simplecityapps.playback.queue.QueueItem
@@ -18,13 +19,13 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 import com.simplecityapps.shuttle.ui.common.utils.toHms
-import com.simplecityapps.shuttle.ui.common.view.PlayPauseButton
+import com.simplecityapps.shuttle.ui.common.view.PlayStateImageButton
 import com.simplecityapps.shuttle.ui.common.view.ProgressView
 import com.simplecityapps.shuttle.ui.common.view.increaseTouchableArea
 
 class QueueBinder(
     val queueItem: QueueItem,
-    var isPlaying: Boolean,
+    var playbackState: PlaybackState,
     var progress: Float,
     val imageLoader: ArtworkImageLoader,
     val playbackManager: PlaybackManager,
@@ -83,7 +84,7 @@ class QueueBinder(
         private val tertiary: TextView = itemView.findViewById(R.id.tertiary)
         private val artworkImageView: ImageView = itemView.findViewById(R.id.artwork)
         private val progressView: ProgressView = itemView.findViewById(R.id.progressView)
-        private val playPauseButton: PlayPauseButton = itemView.findViewById(R.id.playPauseButton)
+        private val playStateImageButton: PlayStateImageButton = itemView.findViewById(R.id.playPauseButton)
         private val dragHandle: ImageView = itemView.findViewById(R.id.dragHandle)
 
         init {
@@ -96,8 +97,8 @@ class QueueBinder(
                 true
             }
 
-            playPauseButton.increaseTouchableArea(8)
-            playPauseButton.setOnClickListener {
+            playStateImageButton.increaseTouchableArea(8)
+            playStateImageButton.setOnClickListener {
                 viewBinder?.listener?.onPlayPauseClicked()
             }
 
@@ -128,7 +129,7 @@ class QueueBinder(
 
             progressView.isVisible = viewBinder.queueItem.isCurrent
             progressView.setProgress((viewBinder.playbackManager.getProgress()?.toFloat() ?: 0f) / viewBinder.queueItem.song.duration.toFloat())
-            playPauseButton.state = if (viewBinder.playbackManager.isPlaying()) PlayPauseButton.State.Playing else PlayPauseButton.State.Paused
+            playStateImageButton.state = viewBinder.playbackManager.playbackState()
 
             viewBinder.playbackWatcher.removeCallback(this)
 
@@ -136,11 +137,11 @@ class QueueBinder(
                 viewBinder.playbackWatcher.addCallback(this)
                 itemView.isActivated = true
                 artworkImageView.isInvisible = true
-                playPauseButton.isVisible = true
+                playStateImageButton.isVisible = true
             } else {
                 itemView.isActivated = false
                 artworkImageView.isVisible = true
-                playPauseButton.isVisible = false
+                playStateImageButton.isVisible = false
             }
         }
 
@@ -162,8 +163,8 @@ class QueueBinder(
             progressView.setProgress((position / duration.toFloat()))
         }
 
-        override fun onPlaystateChanged(isPlaying: Boolean) {
-            playPauseButton.state = if (isPlaying) PlayPauseButton.State.Playing else PlayPauseButton.State.Paused
+        override fun onPlaybackStateChanged(playbackState: PlaybackState) {
+            playStateImageButton.state = playbackState
         }
     }
 }

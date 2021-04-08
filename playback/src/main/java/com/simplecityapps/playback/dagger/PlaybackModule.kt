@@ -8,7 +8,7 @@ import android.os.Build
 import android.util.LruCache
 import androidx.core.content.getSystemService
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import com.simplecityapps.mediaprovider.AggregateMediaPathProvider
+import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
 import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.playback.*
 import com.simplecityapps.playback.androidauto.MediaIdHelper
@@ -27,9 +27,9 @@ import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.playback.sleeptimer.SleepTimer
-import com.simplecityapps.provider.emby.EmbyMediaPathProvider
-import com.simplecityapps.provider.jellyfin.JellyfinMediaPathProvider
-import com.simplecityapps.provider.plex.PlexMediaPathProvider
+import com.simplecityapps.provider.emby.EmbyMediaInfoProvider
+import com.simplecityapps.provider.jellyfin.JellyfinMediaInfoProvider
+import com.simplecityapps.provider.plex.PlexMediaInfoProvider
 import com.simplecityapps.shuttle.dagger.AppScope
 import com.squareup.moshi.Moshi
 import dagger.Module
@@ -85,15 +85,17 @@ class PlaybackModule {
     @AppScope
     @Provides
     fun provideAggregateMediaPathProvider(
-        embyMediaPathProvider: EmbyMediaPathProvider,
-        jellyfinMediaPathProvider: JellyfinMediaPathProvider,
-        plexMediaPathProvider: PlexMediaPathProvider
-    ): AggregateMediaPathProvider {
-        return AggregateMediaPathProvider().apply {
-            addProvider(embyMediaPathProvider)
-            addProvider(jellyfinMediaPathProvider)
-            addProvider(plexMediaPathProvider)
-        }
+        embyMediaPathProvider: EmbyMediaInfoProvider,
+        jellyfinMediaPathProvider: JellyfinMediaInfoProvider,
+        plexMediaPathProvider: PlexMediaInfoProvider
+    ): AggregateMediaInfoProvider {
+        return AggregateMediaInfoProvider(
+            mutableSetOf(
+                embyMediaPathProvider,
+                jellyfinMediaPathProvider,
+                plexMediaPathProvider
+            )
+        )
     }
 
     @Provides
@@ -101,7 +103,7 @@ class PlaybackModule {
         context: Context,
         equalizerAudioProcessor: EqualizerAudioProcessor,
         replayGainAudioProcessor: ReplayGainAudioProcessor,
-        mediaPathProvider: AggregateMediaPathProvider
+        mediaPathProvider: AggregateMediaInfoProvider
     ): ExoPlayerPlayback {
         return ExoPlayerPlayback(context, equalizerAudioProcessor, replayGainAudioProcessor, mediaPathProvider)
     }
@@ -146,10 +148,11 @@ class PlaybackModule {
         audioFocusHelper: AudioFocusHelper,
         playbackPreferenceManager: PlaybackPreferenceManager,
         audioEffectSessionManager: AudioEffectSessionManager,
+        @Named("AppCoroutineScope") coroutineScope: CoroutineScope,
         queueWatcher: QueueWatcher,
         audioManager: AudioManager?
     ): PlaybackManager {
-        return PlaybackManager(queueManager, playbackWatcher, audioFocusHelper, playbackPreferenceManager, audioEffectSessionManager, playback, queueWatcher, audioManager)
+        return PlaybackManager(queueManager, playbackWatcher, audioFocusHelper, playbackPreferenceManager, audioEffectSessionManager, coroutineScope, playback, queueWatcher, audioManager)
     }
 
     @AppScope
@@ -171,7 +174,7 @@ class PlaybackModule {
         playbackManager: PlaybackManager,
         httpServer: HttpServer,
         exoPlayerPlayback: ExoPlayerPlayback,
-        mediaPathProvider: AggregateMediaPathProvider
+        mediaPathProvider: AggregateMediaInfoProvider
     ): CastSessionManager {
         return CastSessionManager(playbackManager, context, httpServer, exoPlayerPlayback, mediaPathProvider)
     }

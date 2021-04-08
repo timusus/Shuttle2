@@ -4,7 +4,7 @@ import android.content.Context
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.CastSession
 import com.google.android.gms.cast.framework.SessionManagerListener
-import com.simplecityapps.mediaprovider.MediaPathProvider
+import com.simplecityapps.mediaprovider.MediaInfoProvider
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.exoplayer.ExoPlayerPlayback
 import timber.log.Timber
@@ -15,7 +15,7 @@ class CastSessionManager @Inject constructor(
     private val applicationContext: Context,
     private val httpServer: HttpServer,
     private val exoPlayerPlayback: ExoPlayerPlayback,
-    private val mediaPathProvider: MediaPathProvider
+    private val mediaInfoProvider: MediaInfoProvider
 ) : SessionManagerListener<CastSession> {
 
     init {
@@ -31,7 +31,7 @@ class CastSessionManager @Inject constructor(
     override fun onSessionStarted(castSession: CastSession, s: String) {
         Timber.d("onSessionStarted")
 
-        val playback = CastPlayback(applicationContext, castSession, mediaPathProvider)
+        val playback = CastPlayback(applicationContext, castSession, mediaInfoProvider)
         playbackManager.switchToPlayback(playback)
     }
 
@@ -51,7 +51,7 @@ class CastSessionManager @Inject constructor(
 
         // If we're not already playing via CastPlayback, switch
         if (playbackManager.getPlayback() !is CastPlayback) {
-            val playback = CastPlayback(applicationContext, castSession, mediaPathProvider)
+            val playback = CastPlayback(applicationContext, castSession, mediaInfoProvider)
             playbackManager.switchToPlayback(playback)
         }
     }
@@ -66,7 +66,7 @@ class CastSessionManager @Inject constructor(
     }
 
     override fun onSessionEnding(castSession: CastSession) {
-        Timber.d("onSessionEnding() isPlaying: ${playbackManager.isPlaying()}")
+        Timber.d("onSessionEnding() playbackState: ${playbackManager.playbackState()}")
 
         if (playbackManager.getPlayback() is CastPlayback) {
 

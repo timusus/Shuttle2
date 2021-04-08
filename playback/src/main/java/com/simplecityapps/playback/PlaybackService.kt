@@ -26,15 +26,20 @@ class PlaybackService :
     MediaBrowserServiceCompat(),
     PlaybackWatcherCallback {
 
-    @Inject lateinit var playbackManager: PlaybackManager
+    @Inject
+    lateinit var playbackManager: PlaybackManager
 
-    @Inject lateinit var playbackWatcher: PlaybackWatcher
+    @Inject
+    lateinit var playbackWatcher: PlaybackWatcher
 
-    @Inject lateinit var mediaSessionManager: MediaSessionManager
+    @Inject
+    lateinit var mediaSessionManager: MediaSessionManager
 
-    @Inject lateinit var notificationManager: PlaybackNotificationManager
+    @Inject
+    lateinit var notificationManager: PlaybackNotificationManager
 
-    @Inject lateinit var mediaIdHelper: MediaIdHelper
+    @Inject
+    lateinit var mediaIdHelper: MediaIdHelper
 
     private var foregroundNotificationHandler: Handler? = null
 
@@ -71,7 +76,7 @@ class PlaybackService :
 
         when (intent?.action) {
             ACTION_TOGGLE_PLAYBACK -> {
-                val wasPlaying = playbackManager.isPlaying()
+                val wasPlaying = playbackManager.playbackState() is PlaybackState.Loading || playbackManager.playbackState() is PlaybackState.Playing
                 playbackManager.togglePlayback()
                 if (wasPlaying) {
                     // If playback was playing, we've now toggled it to pause. Return early, as we don't need to start the foreground service.
@@ -132,7 +137,7 @@ class PlaybackService :
 
     // PlaybackWatcherCallback Implementation
 
-    override fun onPlaystateChanged(isPlaying: Boolean) {
+    override fun onPlaybackStateChanged(playbackState: PlaybackState) {
         // We use the foreground notification handler here to slightly delay the call to stopForeground().
         // This appears to be necessary in order to allow our notification to become dismissable if pause() is called via onStartCommand() to this service.
         // Presumably, there is an issue in calling stopForeground() too soon after startForeground() which causes the notification to be stuck in the 'ongoing' state and not able to be dismissed.
@@ -141,7 +146,7 @@ class PlaybackService :
 
         delayedShutdownHandler?.removeCallbacksAndMessages(null)
 
-        if (!isPlaying) {
+        if (playbackState is PlaybackState.Paused) {
             foregroundNotificationHandler?.postDelayed({
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     Timber.v("stopForeground()")
@@ -155,7 +160,7 @@ class PlaybackService :
 
             // Shutdown this service after 30 seconds
             delayedShutdownHandler?.postDelayed({
-                if (!playbackManager.isPlaying()) {
+                if (playbackManager.playbackState() !is PlaybackState.Loading && playbackManager.playbackState() !is PlaybackState.Playing) {
                     Timber.v("Stopping service due to 30 second shutdown timer")
                     stopSelf()
                 }

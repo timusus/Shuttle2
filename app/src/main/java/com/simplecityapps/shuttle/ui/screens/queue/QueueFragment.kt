@@ -8,7 +8,6 @@ import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
@@ -23,6 +22,7 @@ import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
@@ -152,8 +152,8 @@ class QueueFragment :
 
     // QueueContract.View Implementation
 
-    override fun setData(queue: List<QueueItem>, progress: Float, isPlaying: Boolean) {
-        adapter.update(queue.map { queueItem -> QueueBinder(queueItem, isPlaying, progress, imageLoader, playbackManager, playbackWatcher, queueBinderListener) },
+    override fun setData(queue: List<QueueItem>, progress: Float, playbackState: PlaybackState) {
+        adapter.update(queue.map { queueItem -> QueueBinder(queueItem, playbackState, progress, imageLoader, playbackManager, playbackWatcher, queueBinderListener) },
             completion = {
                 recyclerViewState?.let {
                     recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)

@@ -5,9 +5,10 @@ import androidx.core.content.getSystemService
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
 import com.simplecityapps.provider.plex.CredentialStore
 import com.simplecityapps.provider.plex.PlexAuthenticationManager
-import com.simplecityapps.provider.plex.PlexMediaPathProvider
+import com.simplecityapps.provider.plex.PlexMediaInfoProvider
 import com.simplecityapps.provider.plex.PlexMediaProvider
 import com.simplecityapps.provider.plex.http.ItemsService
+import com.simplecityapps.provider.plex.http.PlexTranscodeService
 import com.simplecityapps.provider.plex.http.UserService
 import com.simplecityapps.shuttle.dagger.AppScope
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
@@ -55,6 +56,12 @@ open class PlexMediaProviderModule {
 
     @Provides
     @AppScope
+    fun provideTranscodeService(@Named("PlexRetrofit") retrofit: Retrofit): PlexTranscodeService {
+        return retrofit.create()
+    }
+
+    @Provides
+    @AppScope
     fun provideCredentialStore(securePreferenceManager: SecurePreferenceManager): CredentialStore {
         return CredentialStore(securePreferenceManager)
     }
@@ -73,7 +80,7 @@ open class PlexMediaProviderModule {
 
     @Provides
     @AppScope
-    fun providePlexMediaPathProvider(authenticationManager: PlexAuthenticationManager): PlexMediaPathProvider {
-        return PlexMediaPathProvider(authenticationManager)
+    fun providePlexMediaPathProvider(authenticationManager: PlexAuthenticationManager, plexTranscodeService: PlexTranscodeService): PlexMediaInfoProvider {
+        return PlexMediaInfoProvider(authenticationManager, plexTranscodeService)
     }
 }

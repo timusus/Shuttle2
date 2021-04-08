@@ -136,10 +136,13 @@ class PlaybackNotificationManager(
             }
             val pendingIntent = PendingIntent.getService(context, 1, intent, 0)
 
-            return if (playbackManager.isPlaying()) {
-                NotificationCompat.Action(R.drawable.ic_pause_black_24dp, "Pause", pendingIntent)
-            } else {
-                NotificationCompat.Action(R.drawable.ic_play_arrow_black_24dp, "Play", pendingIntent)
+            return when (playbackManager.getPlayback().playBackState()) {
+                is PlaybackState.Loading, PlaybackState.Playing -> {
+                    NotificationCompat.Action(R.drawable.ic_pause_black_24dp, "Pause", pendingIntent)
+                }
+                else -> {
+                    NotificationCompat.Action(R.drawable.ic_play_arrow_black_24dp, "Play", pendingIntent)
+                }
             }
         }
 
@@ -177,7 +180,7 @@ class PlaybackNotificationManager(
 
     // PlaybackWatcherCallback Implementation
 
-    override fun onPlaystateChanged(isPlaying: Boolean) {
+    override fun onPlaybackStateChanged(playbackState: PlaybackState) {
         displayNotification()
     }
 

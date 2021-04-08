@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.queue
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
@@ -27,7 +28,7 @@ interface QueueContract {
     }
 
     interface View {
-        fun setData(queue: List<QueueItem>, progress: Float, isPlaying: Boolean)
+        fun setData(queue: List<QueueItem>, progress: Float, playbackState: PlaybackState)
         fun toggleEmptyView(empty: Boolean)
         fun toggleLoadingView(loading: Boolean)
         fun setQueuePosition(position: Int, total: Int)
@@ -64,7 +65,7 @@ class QueuePresenter @Inject constructor(
         view?.setData(
             queueManager.getQueue(),
             (playbackManager.getProgress() ?: 0) / (queueManager.getCurrentItem()?.song?.duration?.toFloat() ?: Float.MAX_VALUE),
-            playbackManager.isPlaying()
+            playbackManager.playbackState()
         )
         view?.setQueuePosition(queueManager.getCurrentPosition() ?: 0, queueManager.getSize())
     }

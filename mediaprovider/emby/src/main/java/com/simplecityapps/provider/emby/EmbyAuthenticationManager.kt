@@ -86,7 +86,6 @@ class EmbyAuthenticationManager(
                 "?UserId=${authenticatedCredentials.userId}" +
                 "&DeviceId=$deviceId" +
                 "&PlaySessionId=${UUID.randomUUID()}" +
-                "&MaxStreamingBitrate=140000000" +
                 "&Container=opus,mp3|mp3,aac,m4a,m4b|aac,flac,webma,webm,wav,ogg" +
                 "&TranscodingContainer=ts" +
                 "&TranscodingProtocol=hls" +
