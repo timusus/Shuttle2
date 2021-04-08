@@ -80,11 +80,9 @@ class SearchPresenter @Inject constructor(
         super.bindView(view)
 
         view.updateFilters(preferenceManager.searchFilterArtists, preferenceManager.searchFilterAlbums, preferenceManager.searchFilterSongs)
-        view.updateQuery(preferenceManager.lastSearchQuery)
     }
 
     override fun loadData(query: String) {
-        preferenceManager.lastSearchQuery = query
         queryJob?.cancel()
         queryJob = launch {
             var artistResults: Flow<List<ArtistJaroSimilarity>> = flowOf(emptyList())

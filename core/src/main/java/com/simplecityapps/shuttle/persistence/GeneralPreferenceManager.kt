@@ -173,15 +173,6 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
             return sharedPreferences.getBoolean("search_filter_songs", true)
         }
 
-    var lastSearchQuery: String?
-        set(value) {
-            sharedPreferences.put("search_last_query", value)
-        }
-        get() {
-            return sharedPreferences.getString("search_last_query", null)
-        }
-
-
     // Playlists
 
     var ignorePlaylistDuplicates: Boolean
