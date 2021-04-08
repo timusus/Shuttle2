@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -12,12 +11,12 @@
         android:padding="24dp">
 
         <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/hostInputLayout"
+            android:id="@+id/addressInputLayout"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            app:helperText="e.g. http://my.server.com"
+            app:helperText="e.g. http://my.server.com:8080"
             app:hintEnabled="true"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -26,27 +25,9 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Host"
+                android:text="http://"
+                android:hint="Address"
                 android:inputType="textUri" />
-
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/portInputLayout"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/hostInputLayout">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Port"
-                android:inputType="number"
-                android:text="8096" />
 
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -58,7 +39,7 @@
             android:layout_marginTop="16dp"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/portInputLayout">
+            app:layout_constraintTop_toBottomOf="@id/addressInputLayout">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:layout_width="match_parent"
@@ -114,7 +95,7 @@
             android:id="@+id/inputGroup"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:constraint_referenced_ids="hostInputLayout, portInputLayout, loginInputLayout, passwordInputLayout, rememberPasswordSwitch" />
+            app:constraint_referenced_ids="addressInputLayout, loginInputLayout, passwordInputLayout, rememberPasswordSwitch" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

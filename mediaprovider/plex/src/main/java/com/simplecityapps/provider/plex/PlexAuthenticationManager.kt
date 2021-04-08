@@ -25,25 +25,12 @@ class PlexAuthenticationManager(
         return credentialStore.authenticatedCredentials
     }
 
-    fun setAddress(host: String, port: Int) {
-        credentialStore.host = host
-        credentialStore.port = port
-    }
-
-    fun getHost(): String? {
-        return credentialStore.host
-    }
-
-    fun getPort(): Int? {
-        return credentialStore.port
+    fun setAddress(address: String) {
+        credentialStore.address = address
     }
 
     fun getAddress(): String? {
-        return getHost()?.let { host ->
-            getPort()?.toString()?.let { port ->
-                "$host:$port"
-            }
-        }
+        return credentialStore.address
     }
 
     suspend fun authenticate(address: String, loginCredentials: LoginCredentials): Result<AuthenticatedCredentials> {
@@ -71,12 +58,12 @@ class PlexAuthenticationManager(
     }
 
     fun buildPlexPath(path: Uri, authenticatedCredentials: AuthenticatedCredentials): String? {
-        if (credentialStore.host == null || credentialStore.port == null) {
-            Timber.w("Invalid plex address")
+        if (credentialStore.address == null) {
+            Timber.w("Invalid plex address (${credentialStore.address})")
             return null
         }
 
-        return "${credentialStore.host}:${credentialStore.port}" +
+        return "${credentialStore.address}" +
                 "/music/:/transcode/universal/start.m3u8" +
                 "?path=${URLEncoder.encode(path.path, Charsets.UTF_8.name())}" +
                 "&directStreamAudio=1" +

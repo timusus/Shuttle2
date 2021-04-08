@@ -32,19 +32,11 @@ class CredentialStore(private val securePreferenceManager: SecurePreferenceManag
             securePreferenceManager.plexUserId = value?.userId
         }
 
-    var host: String?
+    var address: String?
         get() {
-            return securePreferenceManager.plexHost
+            return securePreferenceManager.plexAddress
         }
         set(value) {
-            securePreferenceManager.plexHost = value
-        }
-
-    var port: Int?
-        get() {
-            return securePreferenceManager.plexPort
-        }
-        set(value) {
-            securePreferenceManager.plexPort = value
+            securePreferenceManager.plexAddress = value
         }
 }

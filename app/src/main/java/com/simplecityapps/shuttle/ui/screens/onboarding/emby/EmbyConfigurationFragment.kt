@@ -29,8 +29,7 @@ class EmbyConfigurationFragment : DialogFragment(), Injectable {
 
     @Inject lateinit var embyAuthenticationManager: EmbyAuthenticationManager
 
-    var hostInputLayout: TextInputLayout by autoCleared()
-    var portInputLayout: TextInputLayout by autoCleared()
+    var addressInputLayout: TextInputLayout by autoCleared()
     var loginInputLayout: TextInputLayout by autoCleared()
     var passwordInputLayout: TextInputLayout by autoCleared()
     var rememberPasswordSwitch: SwitchCompat by autoCleared()
@@ -43,19 +42,15 @@ class EmbyConfigurationFragment : DialogFragment(), Injectable {
 
         val view = LayoutInflater.from(requireContext()).inflate(R.layout.fragment_emby_configuration, null)
 
-        hostInputLayout = view.findViewById(R.id.hostInputLayout)
-        portInputLayout = view.findViewById(R.id.portInputLayout)
+        addressInputLayout = view.findViewById(R.id.addressInputLayout)
         loginInputLayout = view.findViewById(R.id.loginInputLayout)
         passwordInputLayout = view.findViewById(R.id.passwordInputLayout)
         rememberPasswordSwitch = view.findViewById(R.id.rememberPasswordSwitch)
         loadingView = view.findViewById(R.id.loadingView)
         inputGroup = view.findViewById(R.id.inputGroup)
 
-        embyAuthenticationManager.getHost()?.let { host ->
-            hostInputLayout.editText?.setText(host)
-        }
-        embyAuthenticationManager.getPort()?.let { port ->
-            portInputLayout.editText?.setText(port.toString())
+        embyAuthenticationManager.getAddress()?.let { address ->
+            addressInputLayout.editText?.setText(address)
         }
         embyAuthenticationManager.getLoginCredentials()?.username?.let { username ->
             loginInputLayout.editText?.setText(username)
@@ -65,11 +60,8 @@ class EmbyConfigurationFragment : DialogFragment(), Injectable {
             passwordInputLayout.endIconMode = TextInputLayout.END_ICON_NONE
         }
 
-        hostInputLayout.editText!!.doOnTextChanged { _, _, _, _ ->
-            hostInputLayout.error = null
-        }
-        portInputLayout.editText!!.doOnTextChanged { _, _, _, _ ->
-            portInputLayout.error = null
+        addressInputLayout.editText!!.doOnTextChanged { _, _, _, _ ->
+            addressInputLayout.error = null
         }
         loginInputLayout.editText!!.doOnTextChanged { _, _, _, _ ->
             loginInputLayout.error = null
@@ -112,7 +104,7 @@ class EmbyConfigurationFragment : DialogFragment(), Injectable {
                 loadingView.setState(CircularLoadingView.State.Loading("Authenticating…"))
                 loadingView.isVisible = true
 
-                embyAuthenticationManager.setAddress(hostInputLayout.editText!!.text.toString(), portInputLayout.editText!!.text.toString().toInt())
+                embyAuthenticationManager.setAddress(addressInputLayout.editText!!.text.toString())
 
                 val loginCredentials = LoginCredentials(loginInputLayout.editText!!.text.toString(), passwordInputLayout.editText!!.text.toString())
 
@@ -154,18 +146,8 @@ class EmbyConfigurationFragment : DialogFragment(), Injectable {
         var hasError = false
 
         // Host
-        if (hostInputLayout.editText!!.text.isEmpty()) {
-            hostInputLayout.error = "Required"
-            hasError = true
-        }
-
-        // Port
-        if (portInputLayout.editText!!.text.isEmpty()) {
-            portInputLayout.error = "Required"
-            hasError = true
-        }
-        if (portInputLayout.editText!!.text.toString().toIntOrNull() == null) {
-            portInputLayout.error = "Invalid"
+        if (addressInputLayout.editText!!.text.isEmpty()) {
+            addressInputLayout.error = "Required"
             hasError = true
         }
 

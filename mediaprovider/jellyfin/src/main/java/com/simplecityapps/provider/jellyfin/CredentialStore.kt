@@ -32,19 +32,11 @@ class CredentialStore(private val securePreferenceManager: SecurePreferenceManag
             securePreferenceManager.jellyfinUserId = value?.userId
         }
 
-    var host: String?
+    var address: String?
         get() {
-            return securePreferenceManager.jellyfinHost
+            return securePreferenceManager.jellyfinAddress
         }
         set(value) {
-            securePreferenceManager.jellyfinHost = value
-        }
-
-    var port: Int?
-        get() {
-            return securePreferenceManager.jellyfinPort
-        }
-        set(value) {
-            securePreferenceManager.jellyfinPort = value
+            securePreferenceManager.jellyfinAddress = value
         }
 }

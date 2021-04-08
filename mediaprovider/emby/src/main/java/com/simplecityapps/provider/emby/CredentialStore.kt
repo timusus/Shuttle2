@@ -32,19 +32,11 @@ class CredentialStore(private val securePreferenceManager: SecurePreferenceManag
             securePreferenceManager.embyUserId = value?.userId
         }
 
-    var host: String?
+    var address: String?
         get() {
-            return securePreferenceManager.embyHost
+            return securePreferenceManager.embyAddress
         }
         set(value) {
-            securePreferenceManager.embyHost = value
-        }
-
-    var port: Int?
-        get() {
-            return securePreferenceManager.embyPort
-        }
-        set(value) {
-            securePreferenceManager.embyPort = value
+            securePreferenceManager.embyAddress = value
         }
 }

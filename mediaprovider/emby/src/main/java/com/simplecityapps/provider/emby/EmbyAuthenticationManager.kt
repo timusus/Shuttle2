@@ -26,25 +26,12 @@ class EmbyAuthenticationManager(
         return credentialStore.authenticatedCredentials
     }
 
-    fun setAddress(host: String, port: Int) {
-        credentialStore.host = host
-        credentialStore.port = port
-    }
-
-    fun getHost(): String? {
-        return credentialStore.host
-    }
-
-    fun getPort(): Int? {
-        return credentialStore.port
+    fun setAddress(address: String) {
+        credentialStore.address = address
     }
 
     fun getAddress(): String? {
-        return getHost()?.let { host ->
-            getPort()?.toString()?.let { port ->
-                "$host:$port"
-            }
-        }
+        return credentialStore.address
     }
 
     suspend fun authenticate(address: String, loginCredentials: LoginCredentials): Result<AuthenticatedCredentials> {
@@ -75,12 +62,12 @@ class EmbyAuthenticationManager(
 
     fun buildEmbyPath(itemId: String, authenticatedCredentials: AuthenticatedCredentials): String? {
 
-        if (credentialStore.host == null || credentialStore.port == null) {
+        if (credentialStore.address == null) {
             Timber.w("Invalid emby address")
             return null
         }
 
-        return "${credentialStore.host}:${credentialStore.port}/emby" +
+        return "${credentialStore.address}/emby" +
                 "/Audio/$itemId" +
                 "/universal" +
                 "?UserId=${authenticatedCredentials.userId}" +

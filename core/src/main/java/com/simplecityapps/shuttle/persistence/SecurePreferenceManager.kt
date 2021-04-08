@@ -38,21 +38,12 @@ class SecurePreferenceManager(private val sharedPreferences: SharedPreferences) 
             return sharedPreferences.getString("emby_user_id", null)
         }
 
-    var embyHost: String?
+    var embyAddress: String?
         set(value) {
-            sharedPreferences.put("emby_host", value)
+            sharedPreferences.put("emby_address", value)
         }
         get() {
-            return sharedPreferences.getString("emby_host", null)
-        }
-
-    var embyPort: Int?
-        set(value) {
-            sharedPreferences.put("emby_port", value)
-        }
-        get() {
-            val port = sharedPreferences.getInt("emby_port", -1)
-            return if (port != -1) port else null
+            return sharedPreferences.getString("emby_address", null)
         }
 
     
@@ -90,21 +81,12 @@ class SecurePreferenceManager(private val sharedPreferences: SharedPreferences) 
             return sharedPreferences.getString("jellyfin_user_id", null)
         }
 
-    var jellyfinHost: String?
+    var jellyfinAddress: String?
         set(value) {
-            sharedPreferences.put("jellyfin_host", value)
+            sharedPreferences.put("jellyfin_address", value)
         }
         get() {
-            return sharedPreferences.getString("jellyfin_host", null)
-        }
-
-    var jellyfinPort: Int?
-        set(value) {
-            sharedPreferences.put("jellyfin_port", value)
-        }
-        get() {
-            val port = sharedPreferences.getInt("jellyfin_port", -1)
-            return if (port != -1) port else null
+            return sharedPreferences.getString("jellyfin_address", null)
         }
 
 
@@ -142,20 +124,11 @@ class SecurePreferenceManager(private val sharedPreferences: SharedPreferences) 
             return sharedPreferences.getString("plex_user_id", null)
         }
 
-    var plexHost: String?
+    var plexAddress: String?
         set(value) {
             sharedPreferences.put("plex_host", value)
         }
         get() {
             return sharedPreferences.getString("plex_host", null)
-        }
-
-    var plexPort: Int?
-        set(value) {
-            sharedPreferences.put("plex_port", value)
-        }
-        get() {
-            val port = sharedPreferences.getInt("plex_port", -1)
-            return if (port != -1) port else null
         }
 }

@@ -65,8 +65,7 @@ open class EmbyMediaProviderModule {
             if (BuildConfig.DEBUG) {
                 if (loginCredentials == null) {
                     loginCredentials = LoginCredentials("tim", "")
-                    host = "https://emby.mediaserver.timmalseed.dev"
-                    port = 443
+                    address = "https://emby.mediaserver.timmalseed.dev"
                 }
             }
         }
