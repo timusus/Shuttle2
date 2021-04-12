@@ -169,12 +169,13 @@ class ExoPlayerPlayback(
         val currentMediaItem = player.currentMediaItem
         val count = player.mediaItemCount
         var currentIndex = 0
-        for (i in 0 until player.mediaItemCount) {
+        for (i in player.mediaItemCount -1 downTo 0) {
             if (player.getMediaItemAt(i) == currentMediaItem) {
                 currentIndex = i
                 break
             }
         }
+
 
         // Shortcut if the track is already next in the queue
         val nextIndex = currentIndex + 1
