@@ -50,7 +50,7 @@ class QueueBinder(
     }
 
     override fun getSectionName(): String? {
-        return queueItem.song.name.firstOrNull().toString()
+        return queueItem.song.name?.firstOrNull()?.toString()
     }
 
     override fun equals(other: Any?): Boolean {

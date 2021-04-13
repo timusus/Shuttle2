@@ -25,12 +25,12 @@ class LocalGenreRepository(
                             .getSongs(SongQuery.All())
                             .collect { songs ->
                                 val genres = songs
-                                    .fold(mutableSetOf<String>()) { genres, song ->
+                                    ?.fold(mutableSetOf<String>()) { genres, song ->
                                         genres.addAll(song.genres)
                                         genres
                                     }
-                                    .filterNot { it.isEmpty() }
-                                    .associateWith { genre -> songs.filter { song -> song.genres.contains(genre) } }
+                                    ?.filterNot { it.isEmpty() }
+                                    ?.associateWith { genre -> songs.filter { song -> song.genres.contains(genre) } }
                                 send(genres)
                             }
                     }

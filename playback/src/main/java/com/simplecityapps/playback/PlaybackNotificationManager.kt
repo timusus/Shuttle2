@@ -15,6 +15,7 @@ import android.util.LruCache
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationCompat.VISIBILITY_PUBLIC
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
+import com.simplecityapps.mediaprovider.model.friendlyArtistName
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
@@ -95,7 +96,7 @@ class PlaybackNotificationManager(
                 ) { image ->
                     if (song == queueManager.getCurrentItem()?.song) {
                         notificationBuilder
-                            .setContentText(song.albumArtist)
+                            .setContentText(song.friendlyArtistName)
                             .setContentTitle(song.name)
                             .setLargeIcon(image)
                         val notification = notificationBuilder.build()

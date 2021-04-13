@@ -112,11 +112,13 @@ class SearchPresenter @Inject constructor(
             if (preferenceManager.searchFilterSongs) {
                 songResults = songRepository.getSongs(SongQuery.All())
                     .map { songs ->
-                        songs.map { song -> SongJaroSimilarity(song, query) }
-                            .filter { it.nameJaroSimilarity.score > jaroThreshold || it.artistNameJaroSimilarity.score > jaroThreshold || it.albumNameJaroSimilarity.score > jaroThreshold }
-                            .sortedByDescending { if (it.artistNameJaroSimilarity.score > jaroThreshold) it.artistNameJaroSimilarity.score else 0.0 }
+                        songs.orEmpty()
+                            .asSequence()
+                            .map { song -> SongJaroSimilarity(song, query) }
+                            .filter { it.nameJaroSimilarity.score > jaroThreshold || it.albumArtistNameJaroSimilarity.score > jaroThreshold || it.albumNameJaroSimilarity.score > jaroThreshold }
+                            .sortedByDescending { if (it.albumArtistNameJaroSimilarity.score > jaroThreshold) it.albumArtistNameJaroSimilarity.score else 0.0 }
                             .sortedByDescending { if (it.albumNameJaroSimilarity.score > jaroThreshold) it.albumNameJaroSimilarity.score else 0.0 }
-                            .sortedByDescending { if (it.nameJaroSimilarity.score > jaroThreshold) it.nameJaroSimilarity.score else 0.0 }
+                            .sortedByDescending { if (it.nameJaroSimilarity.score > jaroThreshold) it.nameJaroSimilarity.score else 0.0 }.toList()
                     }
             }
 
@@ -134,7 +136,7 @@ class SearchPresenter @Inject constructor(
 
     override fun play(albumArtist: AlbumArtist) {
         launch {
-            val songs = songRepository.getSongs(SongQuery.AlbumArtists(listOf(SongQuery.AlbumArtist(name = albumArtist.name)))).firstOrNull().orEmpty()
+            val songs = songRepository.getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = albumArtist.groupKey)))).firstOrNull().orEmpty()
             if (queueManager.setQueue(songs)) {
                 playbackManager.load { result ->
                     result.onSuccess { playbackManager.play() }
@@ -146,7 +148,7 @@ class SearchPresenter @Inject constructor(
 
     override fun play(album: Album) {
         launch {
-            val songs = songRepository.getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = album.name, albumArtistName = album.albumArtist)))).firstOrNull().orEmpty()
+            val songs = songRepository.getSongs(SongQuery.AlbumGroupKeys(listOf(SongQuery.AlbumGroupKey(key = album.groupKey)))).firstOrNull().orEmpty()
             if (queueManager.setQueue(songs)) {
                 playbackManager.load { result ->
                     result.onSuccess { playbackManager.play() }
@@ -170,7 +172,7 @@ class SearchPresenter @Inject constructor(
 
     override fun addToQueue(albumArtist: AlbumArtist) {
         launch {
-            val songs = songRepository.getSongs(SongQuery.AlbumArtists(listOf(SongQuery.AlbumArtist(name = albumArtist.name)))).firstOrNull().orEmpty()
+            val songs = songRepository.getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = albumArtist.groupKey)))).firstOrNull().orEmpty()
             playbackManager.addToQueue(songs)
             view?.onAddedToQueue(albumArtist)
         }
@@ -178,7 +180,7 @@ class SearchPresenter @Inject constructor(
 
     override fun playNext(albumArtist: AlbumArtist) {
         launch {
-            val songs = songRepository.getSongs(SongQuery.AlbumArtists(listOf(SongQuery.AlbumArtist(name = albumArtist.name)))).firstOrNull().orEmpty()
+            val songs = songRepository.getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = albumArtist.groupKey)))).firstOrNull().orEmpty()
             playbackManager.playNext(songs)
             view?.onAddedToQueue(albumArtist)
         }
@@ -186,7 +188,7 @@ class SearchPresenter @Inject constructor(
 
     override fun addToQueue(album: Album) {
         launch {
-            val songs = songRepository.getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = album.name, albumArtistName = album.albumArtist)))).firstOrNull().orEmpty()
+            val songs = songRepository.getSongs(SongQuery.AlbumGroupKeys(listOf(SongQuery.AlbumGroupKey(key = album.groupKey)))).firstOrNull().orEmpty()
             playbackManager.addToQueue(songs)
             view?.onAddedToQueue(album)
         }
@@ -194,7 +196,7 @@ class SearchPresenter @Inject constructor(
 
     override fun playNext(album: Album) {
         launch {
-            val songs = songRepository.getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = album.name, albumArtistName = album.albumArtist)))).firstOrNull().orEmpty()
+            val songs = songRepository.getSongs(SongQuery.AlbumGroupKeys(listOf(SongQuery.AlbumGroupKey(key = album.groupKey)))).firstOrNull().orEmpty()
             playbackManager.playNext(songs)
             view?.onAddedToQueue(album)
         }
@@ -216,14 +218,14 @@ class SearchPresenter @Inject constructor(
 
     override fun exclude(albumArtist: AlbumArtist) {
         launch {
-            val songs = songRepository.getSongs(SongQuery.AlbumArtists(listOf(SongQuery.AlbumArtist(name = albumArtist.name)))).firstOrNull().orEmpty()
+            val songs = songRepository.getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = albumArtist.groupKey)))).firstOrNull().orEmpty()
             songRepository.setExcluded(songs, true)
         }
     }
 
     override fun exclude(album: Album) {
         launch {
-            val songs = songRepository.getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = album.name, albumArtistName = album.albumArtist)))).firstOrNull().orEmpty()
+            val songs = songRepository.getSongs(SongQuery.AlbumGroupKeys(listOf(SongQuery.AlbumGroupKey(key = album.groupKey)))).firstOrNull().orEmpty()
             songRepository.setExcluded(songs, true)
         }
     }
@@ -237,14 +239,14 @@ class SearchPresenter @Inject constructor(
 
     override fun editTags(albumArtist: AlbumArtist) {
         launch {
-            val songs = songRepository.getSongs(SongQuery.AlbumArtists(listOf(SongQuery.AlbumArtist(name = albumArtist.name)))).firstOrNull().orEmpty()
+            val songs = songRepository.getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = albumArtist.groupKey)))).firstOrNull().orEmpty()
             view?.showTagEditor(songs)
         }
     }
 
     override fun editTags(album: Album) {
         launch {
-            val songs = songRepository.getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = album.name, albumArtistName = album.albumArtist)))).firstOrNull().orEmpty()
+            val songs = songRepository.getSongs(SongQuery.AlbumGroupKeys(listOf(SongQuery.AlbumGroupKey(key = album.groupKey)))).firstOrNull().orEmpty()
             view?.showTagEditor(songs)
         }
     }

@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.ui.screens.library.albums.detail
 
-import android.content.Context
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -209,7 +208,7 @@ class AlbumDetailFragment :
     // AlbumDetailContract.View Implementation
 
     override fun setData(songs: List<Song>) {
-        val discSongsMap = songs.groupBy { song -> song.disc }.toSortedMap()
+        val discSongsMap = songs.groupBy { song -> song.disc ?: 1 }.toSortedMap()
         adapter.update(discSongsMap.flatMap { entry ->
             val viewBinders = mutableListOf<ViewBinder>()
             if (discSongsMap.size > 1) {
@@ -320,9 +319,8 @@ class AlbumDetailFragment :
 
     // Extensions
 
-    private fun Int.yearToString(): String {
-        if (this == 0) return "Year Unknown"
+    private fun Int?.yearToString(): String {
+        if (this == null) return "Year Unknown"
         return this.toString()
     }
 }
-

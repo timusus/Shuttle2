@@ -9,14 +9,14 @@ import java.util.*
 fun AudioFile.toSong(providerType: MediaProvider.Type): Song {
     return Song(
         id = 0,
-        name = title ?: "Unknown",
-        artist = artist ?: "Unknown",
-        albumArtist = albumArtist ?: artist ?: "Unknown",
-        album = album ?: "Unknown",
-        track = track ?: 1,
-        disc = disc ?: 1,
+        name = title,
+        artists = artists,
+        albumArtist = albumArtist,
+        album = album,
+        track = track,
+        disc = disc,
         duration = duration ?: 0,
-        year = year?.toIntOrNull() ?: 0,
+        year = year?.toIntOrNull(),
         genres = genres,
         path = path,
         size = size,
@@ -56,7 +56,11 @@ fun getAudioFile(fileDescriptor: Int, filePath: String, fileName: String, lastMo
         mimeType,
         title = metadata?.propertyMap?.get(TagLibProperty.Title.key)?.firstOrNull() ?: fileName,
         albumArtist = metadata?.propertyMap?.get(TagLibProperty.AlbumArtist.key)?.firstOrNull(),
-        artist = metadata?.propertyMap?.get(TagLibProperty.Artist.key)?.firstOrNull(),
+        artists = metadata?.propertyMap?.get(TagLibProperty.Artist.key).orEmpty().flatMap { artist ->
+            artist.split(",", ";", "/")
+                .map { artist -> artist.trim() }
+                .filterNot { artist -> artist.isEmpty() }
+        },
         album = metadata?.propertyMap?.get(TagLibProperty.Album.key)?.firstOrNull(),
         track = metadata?.propertyMap?.get(TagLibProperty.Track.key)?.firstOrNull()?.substringBefore('/')?.toIntOrNull(),
         trackTotal = metadata?.propertyMap?.get(TagLibProperty.Track.key)?.firstOrNull()?.substringAfter('/', "")?.toIntOrNull(),

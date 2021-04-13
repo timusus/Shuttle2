@@ -8,14 +8,15 @@ import java.util.*
 
 data class SongDataUpdate(
     @PrimaryKey val id: Long,
-    @ColumnInfo(name = "name") val name: String,
-    @ColumnInfo(name = "track") val track: Int,
-    @ColumnInfo(name = "disc") val disc: Int,
+    @ColumnInfo(name = "name") val name: String?,
+    @ColumnInfo(name = "track") val track: Int?,
+    @ColumnInfo(name = "disc") val disc: Int?,
     @ColumnInfo(name = "duration") val duration: Int,
-    @ColumnInfo(name = "year") val year: Int,
+    @ColumnInfo(name = "year") val year: Int?,
     @ColumnInfo(name = "genres") val genres: List<String>,
-    @ColumnInfo(name = "albumArtist") var albumArtist: String,
-    @ColumnInfo(name = "album") var album: String,
+    @ColumnInfo(name = "albumArtist") var albumArtist: String?,
+    @ColumnInfo(name = "artists") var artists: List<String>,
+    @ColumnInfo(name = "album") var album: String?,
     @ColumnInfo(name = "size") var size: Long,
     @ColumnInfo(name = "mimeType") var mimeType: String,
     @ColumnInfo(name = "lastModified") var lastModified: Date,
@@ -34,6 +35,7 @@ fun SongData.toSongDataUpdate(): SongDataUpdate {
         year = year,
         genres = genres,
         albumArtist = albumArtist,
+        artists = artists,
         album = album,
         size = size,
         mimeType = mimeType,
@@ -41,7 +43,6 @@ fun SongData.toSongDataUpdate(): SongDataUpdate {
         mediaStoreId = mediaStoreId,
         replayGainTrack = replayGainTrack,
         replayGainAlbum = replayGainAlbum,
-
     )
 }
 

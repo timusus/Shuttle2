@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 33,
-    "identityHash": "49335daa203258a161db53d4dfbf47e5",
+    "identityHash": "e7c0448ed5d4a52e6245b31919d0aa9b",
     "entities": [
       {
         "tableName": "songs",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `track` INTEGER NOT NULL, `disc` INTEGER NOT NULL, `duration` INTEGER NOT NULL, `year` INTEGER NOT NULL, `genres` TEXT NOT NULL, `path` TEXT NOT NULL, `albumArtist` TEXT NOT NULL, `artist` TEXT NOT NULL, `album` TEXT NOT NULL, `size` INTEGER NOT NULL, `mimeType` TEXT NOT NULL, `lastModified` INTEGER NOT NULL, `playbackPosition` INTEGER NOT NULL, `playCount` INTEGER NOT NULL, `lastPlayed` INTEGER, `lastCompleted` INTEGER, `blacklisted` INTEGER NOT NULL, `mediaStoreId` INTEGER, `mediaProvider` TEXT NOT NULL, `replayGainTrack` REAL, `replayGainAlbum` REAL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `track` INTEGER NOT NULL, `disc` INTEGER NOT NULL, `duration` INTEGER NOT NULL, `year` INTEGER NOT NULL, `genres` TEXT NOT NULL, `path` TEXT NOT NULL, `albumArtist` TEXT NOT NULL, `artists` TEXT NOT NULL, `album` TEXT NOT NULL, `size` INTEGER NOT NULL, `mimeType` TEXT NOT NULL, `lastModified` INTEGER NOT NULL, `playbackPosition` INTEGER NOT NULL, `playCount` INTEGER NOT NULL, `lastPlayed` INTEGER, `lastCompleted` INTEGER, `blacklisted` INTEGER NOT NULL, `mediaStoreId` INTEGER, `mediaProvider` TEXT NOT NULL, `replayGainTrack` REAL, `replayGainAlbum` REAL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -63,8 +63,8 @@
             "notNull": true
           },
           {
-            "fieldPath": "artist",
-            "columnName": "artist",
+            "fieldPath": "artists",
+            "columnName": "artists",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -282,7 +282,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '49335daa203258a161db53d4dfbf47e5')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e7c0448ed5d4a52e6245b31919d0aa9b')"
     ]
   }
 }

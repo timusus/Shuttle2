@@ -50,7 +50,7 @@ class MediaImporter(
         mediaProviders.forEach { mediaProvider ->
             listeners.forEach { it.onStart(mediaProvider.type) }
             withContext(Dispatchers.IO) {
-                val existingSongs = songRepository.getSongs(SongQuery.All(includeExcluded = true, providerType = mediaProvider.type)).first()
+                val existingSongs = songRepository.getSongs(SongQuery.All(includeExcluded = true, providerType = mediaProvider.type)).first().orEmpty()
                 val newSongs = mediaProvider.findSongs { song, progress, total ->
                     listeners.forEach { it.onProgress(mediaProvider.type, progress, total, song) }
                 }

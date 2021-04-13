@@ -160,7 +160,7 @@ class PlaybackPresenter @Inject constructor(
     override fun goToAlbum() {
         launch {
             queueManager.getCurrentItem()?.song?.let { song ->
-                val albums = albumRepository.getAlbums(AlbumQuery.Album(name = song.album, albumArtistName = song.albumArtist)).firstOrNull().orEmpty()
+                val albums = albumRepository.getAlbums(AlbumQuery.AlbumGroupKey(song.albumGroupKey)).firstOrNull().orEmpty()
                 albums.firstOrNull()?.let { album ->
                     view?.goToAlbum(album)
                 } ?: Timber.e("Failed to retrieve album for song: ${song.name}")
@@ -171,7 +171,7 @@ class PlaybackPresenter @Inject constructor(
     override fun goToArtist() {
         launch {
             queueManager.getCurrentItem()?.song?.let { song ->
-                val artists = albumArtistRepository.getAlbumArtists(AlbumArtistQuery.AlbumArtist(name = song.albumArtist)).firstOrNull().orEmpty()
+                val artists = albumArtistRepository.getAlbumArtists(AlbumArtistQuery.ArtistGroupKey(key = song.artistGroupKey)).firstOrNull().orEmpty()
                 artists.firstOrNull()?.let { artist ->
                     view?.goToArtist(artist)
                 } ?: Timber.e("Failed to retrieve album artist for song: ${song.name}")
@@ -182,7 +182,7 @@ class PlaybackPresenter @Inject constructor(
     override fun launchQuickLyric() {
         queueManager.getCurrentItem()?.let { queueItem ->
             if (QuickLyricManager.isQuickLyricInstalled(context)) {
-                view?.launchQuickLyric(queueItem.song.albumArtist, queueItem.song.name)
+                view?.launchQuickLyric(queueItem.song.albumArtist ?: "Unknown", queueItem.song.name ?: "Unknown")
             } else {
                 if (QuickLyricManager.canDownloadQuickLyric(context)) {
                     view?.getQuickLyric()

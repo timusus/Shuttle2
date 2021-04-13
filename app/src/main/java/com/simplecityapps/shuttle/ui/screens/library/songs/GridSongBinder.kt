@@ -34,7 +34,7 @@ class GridSongBinder(
     }
 
     override fun getSectionName(): String? {
-        return song.name.firstOrNull().toString()
+        return song.name?.firstOrNull()?.toString()
     }
 
     override fun equals(other: Any?): Boolean {

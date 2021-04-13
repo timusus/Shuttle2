@@ -7,7 +7,7 @@ data class AudioFile(
     val mimeType: String,
     val title: String?,
     val albumArtist: String?,
-    val artist: String?,
+    val artists: List<String>,
     val album: String?,
     val track: Int?,
     val trackTotal: Int?,

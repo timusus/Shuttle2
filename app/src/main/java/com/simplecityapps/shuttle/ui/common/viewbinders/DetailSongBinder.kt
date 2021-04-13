@@ -34,7 +34,7 @@ class DetailSongBinder(
     }
 
     override fun getSectionName(): String? {
-        return song.name.firstOrNull().toString()
+        return song.name?.firstOrNull()?.toString()
     }
 
     override fun areContentsTheSame(other: Any): Boolean {
@@ -45,13 +45,13 @@ class DetailSongBinder(
         if (this === other) return true
         if (other !is DetailSongBinder) return false
 
-        if (song != other.song) return false
+        if (song.id != other.song.id) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        return song.hashCode()
+        return song.id.hashCode()
     }
 
 

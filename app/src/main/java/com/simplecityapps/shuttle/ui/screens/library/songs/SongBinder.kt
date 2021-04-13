@@ -14,6 +14,7 @@ import androidx.core.view.isVisible
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.mediaprovider.model.friendlyArtistName
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.getAttrColor
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
@@ -46,8 +47,8 @@ open class SongBinder(
         return ViewTypes.Song
     }
 
-    override fun getSectionName(): String {
-        return song.name.firstOrNull().toString()
+    override fun getSectionName(): String? {
+        return song.name?.firstOrNull()?.toString()
     }
 
     override fun equals(other: Any?): Boolean {
@@ -67,7 +68,7 @@ open class SongBinder(
         return other is SongBinder
                 && song.name == other.song.name
                 && song.albumArtist == other.song.albumArtist
-                && song.artist == other.song.artist
+                && song.artists == other.song.artists
                 && song.album == other.song.album
                 && song.year == other.song.year
                 && song.track == other.song.track
@@ -107,7 +108,7 @@ open class SongBinder(
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.song.name
-            subtitle.text = "${viewBinder.song.albumArtist} • ${viewBinder.song.album}"
+            subtitle.text = "${viewBinder.song.friendlyArtistName} • ${viewBinder.song.album}"
 
             val options = mutableListOf(
                 ArtworkImageLoader.Options.RoundedCorners(16),
@@ -154,11 +155,11 @@ open class SongBinder(
                 }
                 title.text = nameStringBuilder
 
-                val artistNameStringBuilder = SpannableStringBuilder(viewBinder.song.artist)
-                if (it.artistNameJaroSimilarity.score > 0.8) {
-                    it.artistNameJaroSimilarity.bMatchedIndices.forEach { (index, score) ->
+                val albumArtistNameStringBuilder = SpannableStringBuilder(viewBinder.song.albumArtist)
+                if (it.albumArtistNameJaroSimilarity.score > 0.8) {
+                    it.albumArtistNameJaroSimilarity.bMatchedIndices.forEach { (index, score) ->
                         try {
-                            artistNameStringBuilder.setSpan(
+                            albumArtistNameStringBuilder.setSpan(
                                 ForegroundColorSpan(ArgbEvaluator().evaluate(score.toFloat() - 0.25f, textColor, accentColor) as Int),
                                 index,
                                 index + 1,
@@ -184,9 +185,9 @@ open class SongBinder(
                         }
                     }
                 }
-                artistNameStringBuilder.append(" • ")
-                artistNameStringBuilder.append(albumNameStringBuilder)
-                subtitle.text = artistNameStringBuilder
+                albumArtistNameStringBuilder.append(" • ")
+                albumArtistNameStringBuilder.append(albumNameStringBuilder)
+                subtitle.text = albumArtistNameStringBuilder
             }
         }
 

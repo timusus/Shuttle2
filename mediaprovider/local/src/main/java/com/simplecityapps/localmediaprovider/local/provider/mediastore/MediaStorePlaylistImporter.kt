@@ -2,6 +2,7 @@ package com.simplecityapps.localmediaprovider.local.provider.mediastore
 
 import android.content.Context
 import android.provider.MediaStore
+import androidx.core.database.getIntOrNull
 import androidx.core.database.getStringOrNull
 import com.simplecityapps.mediaprovider.repository.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.PlaylistRepository
@@ -95,7 +96,17 @@ class MediaStorePlaylistImporter(
     }
 
 
-    data class MediaStoreSong(val title: String, val album: String, val albumArtist: String, val duration: Int, val year: Int, val track: Int, val mimeType: String, val path: String)
+    data class MediaStoreSong(
+        val title: String?,
+        val album: String?,
+        val artist: String?,
+        val albumArtist: String?,
+        val duration: Int,
+        val year: Int?,
+        val track: Int,
+        val mimeType: String,
+        val path: String
+    )
 
     private suspend fun findSongsForPlaylist(playlistId: Long): List<MediaStoreSong> {
         return withContext(Dispatchers.IO) {
@@ -125,9 +136,6 @@ class MediaStorePlaylistImporter(
                         return@use
                     }
 
-                    val artist = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST))
-                    val albumArtist = cursor.getStringOrNull(cursor.getColumnIndex("album_artist")) ?: artist
-
                     var track = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK))
                     if (track >= 1000) {
                         track %= 1000
@@ -135,14 +143,15 @@ class MediaStorePlaylistImporter(
 
                     songs.add(
                         MediaStoreSong(
-                            cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.TITLE)),
-                            cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.ALBUM)),
-                            albumArtist,
-                            cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.DURATION)),
-                            cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.YEAR)),
-                            track,
-                            cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.MIME_TYPE)),
-                            cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.DATA))
+                            title = cursor.getStringOrNull(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.TITLE)),
+                            album = cursor.getStringOrNull(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.ALBUM)),
+                            artist = cursor.getStringOrNull(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)),
+                            albumArtist = cursor.getStringOrNull(cursor.getColumnIndex("album_artist")),
+                            duration = cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.DURATION)),
+                            year = cursor.getIntOrNull(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.YEAR)),
+                            track = track,
+                            mimeType = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.MIME_TYPE)),
+                            path = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.DATA))
                         )
                     )
                 }

@@ -2,6 +2,8 @@ package com.simplecityapps.localmediaprovider.local.provider.mediastore
 
 import android.content.Context
 import android.provider.MediaStore
+import androidx.core.database.getIntOrNull
+import androidx.core.database.getStringOrNull
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.Song
 import kotlinx.coroutines.Dispatchers
@@ -49,10 +51,6 @@ class MediaStoreMediaProvider(
                 val size = songCursor.count
                 var progress = 0
                 while (coroutineContext.isActive && songCursor.moveToNext()) {
-                    val album = songCursor.getString(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM))
-                    val artist = songCursor.getString(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST))
-                    val albumArtist = songCursor.getString(songCursor.getColumnIndex("album_artist")) ?: artist
-
                     var track = songCursor.getInt(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK))
                     var disc = 1
                     if (track >= 1000) {
@@ -66,14 +64,14 @@ class MediaStoreMediaProvider(
 
                     val song = Song(
                         id = 0,
-                        name = songCursor.getString(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)),
-                        artist = artist,
-                        albumArtist = albumArtist,
-                        album = album,
+                        name = songCursor.getStringOrNull(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)),
+                        artists = songCursor.getStringOrNull(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST))?.let { listOf(it) } ?: emptyList(),
+                        albumArtist = songCursor.getStringOrNull(songCursor.getColumnIndex("album_artist")),
+                        album = songCursor.getStringOrNull(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM)),
                         track = track,
                         disc = disc,
                         duration = songCursor.getInt(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)),
-                        year = songCursor.getInt(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)),
+                        year = songCursor.getIntOrNull(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR)),
                         genres = emptyList(),
                         path = songCursor.getString(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)),
                         size = songCursor.getLong(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)),

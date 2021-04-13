@@ -33,7 +33,7 @@ class MediaProviderOptionsFragment : DialogFragment() {
         recyclerView.adapter = adapter
         recyclerView.addItemDecoration(SpacesItemDecoration(8))
 
-        val providerTypes = requireArguments().getSerializable(ARG_PROVIDER_TYPES) as List<MediaProvider.Type>
+        val providerTypes = requireArguments().getParcelableArrayList<MediaProvider.Type>(ARG_PROVIDER_TYPES) as List<MediaProvider.Type>
 
         val viewBinders = mutableListOf<ViewBinder>()
         val localMediaTypes = providerTypes.filter { !it.isRemote }

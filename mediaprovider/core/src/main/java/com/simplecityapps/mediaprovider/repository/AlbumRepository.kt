@@ -11,7 +11,7 @@ interface AlbumRepository {
 }
 
 sealed class AlbumQuery(
-    val predicate: ((com.simplecityapps.mediaprovider.model.Album) -> Boolean),
+    val predicate: ((Album) -> Boolean),
     val sortOrder: AlbumSortOrder = AlbumSortOrder.Default
 ) {
 
@@ -21,24 +21,24 @@ sealed class AlbumQuery(
             sortOrder = sortOrder
         )
 
-    class AlbumArtist(val name: String) :
+    class ArtistGroupKey(val key: com.simplecityapps.mediaprovider.model.ArtistGroupKey) :
         AlbumQuery(
-            predicate = { album -> album.albumArtist.equals(name, ignoreCase = true) }
+            predicate = { album -> album.groupKey.artistGroupKey == key }
         )
 
-    class Album(val name: String, val albumArtistName: String) :
+    class AlbumGroupKey(private val albumGroupKey: com.simplecityapps.mediaprovider.model.AlbumGroupKey) :
         AlbumQuery(
-            predicate = { album -> album.name.equals(name, ignoreCase = true) && album.albumArtist.equals(albumArtistName, ignoreCase = true) }
+            predicate = { album -> album.groupKey == albumGroupKey }
         )
 
-    class Albums(val albums: List<Album>) :
+    class AlbumGroupKeys(val albums: List<AlbumGroupKey>) :
         AlbumQuery(
             predicate = { album -> albums.any { it.predicate(album) } }
         )
 
     class Search(val query: String) :
         AlbumQuery(
-            predicate = { album -> album.name.contains(query, true) || album.albumArtist.contains(query, true) }
+            predicate = { album -> album.name?.contains(query, true) ?: false || album.albumArtist?.contains(query, true) ?: false }
         )
 
     class PlayCount(val count: Int, sortOrder: AlbumSortOrder) :
@@ -71,7 +71,7 @@ enum class AlbumSortOrder : Serializable {
         private val collator by lazy { Collator.getInstance().apply { strength = Collator.TERTIARY } }
         val defaultComparator: Comparator<Album> by lazy { Comparator<Album> { a, b -> zeroLastComparator.compare(a.year, b.year) }.then(compareByDescending { album -> album.year }) }
         val albumNameComparator: Comparator<Album> by lazy { Comparator<Album> { a, b -> collator.compare(a.sortKey, b.sortKey) }.then(defaultComparator) }
-        val artistNameComparator: Comparator<Album> by lazy { Comparator<Album> { a, b -> collator.compare(a.albumArtist.removeArticles(), b.albumArtist.removeArticles()) }.then(defaultComparator) }
+        val artistNameComparator: Comparator<Album> by lazy { Comparator<Album> { a, b -> collator.compare(a.albumArtist?.removeArticles(), b.albumArtist?.removeArticles()) }.then(defaultComparator) }
         val playCountComparator: Comparator<Album> by lazy { compareByDescending<Album> { album -> album.playCount }.then(defaultComparator) }
         val yearComparator: Comparator<Album> by lazy { defaultComparator }
     }

@@ -7,5 +7,5 @@ data class ArtistJaroSimilarity(
     val artist: AlbumArtist,
     val query: String
 ) {
-    val nameJaroSimilarity = StringComparison.jaroWinklerDistance(query, artist.name)
+    val nameJaroSimilarity = artist.name?.let { name -> StringComparison.jaroWinklerDistance(query, name) } ?: StringComparison.JaroSimilarity(0.0, emptyMap(), emptyMap())
 }

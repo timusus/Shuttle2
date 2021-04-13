@@ -1,34 +1,31 @@
 package com.simplecityapps.mediaprovider.model
 
+import android.os.Parcelable
 import androidx.annotation.Keep
-import java.io.Serializable
+import kotlinx.parcelize.Parcelize
+import java.util.*
 
 @Keep
-class AlbumArtist(
-    val name: String,
+@Parcelize
+data class AlbumArtist(
+    val name: String?,
+    val artists: List<String>,
     val albumCount: Int,
     val songCount: Int,
-    val playCount: Int
-) : Serializable {
+    val playCount: Int,
+    val groupKey: ArtistGroupKey,
+    val sortKey: String? = groupKey.key
+) : Parcelable
 
-    var sortKey: String? = name.removeArticles()
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as AlbumArtist
-
-        if (name != other.name) return false
-
-        return true
+val AlbumArtist.friendlyName: String?
+    get() {
+        return name
+            ?: if (artists.size == 1) {
+                artists.first()
+            } else {
+                artists.groupBy { it.toLowerCase(Locale.getDefault()).removeArticles() }
+                    .map { map -> map.value.maxByOrNull { it.length } }
+                    .joinToString(", ")
+                    .ifEmpty { "Unknown" }
+            }
     }
-
-    override fun hashCode(): Int {
-        return name.hashCode()
-    }
-
-    override fun toString(): String {
-        return "AlbumArtist(name='$name', albumCount=$albumCount, songCount=$songCount, playCount=$playCount, sortKey=$sortKey)"
-    }
-}

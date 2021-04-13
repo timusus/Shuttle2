@@ -115,7 +115,7 @@ class ExpandableAlbumBinder(
 
             recyclerView.adapter = adapter
 
-            val discSongsMap = viewBinder.songs.groupBy { song -> song.disc }.toSortedMap()
+            val discSongsMap = viewBinder.songs.groupBy { song -> song.disc ?: 1 }.toSortedMap()
             adapter.update(discSongsMap.flatMap { entry ->
                 val viewBinders = mutableListOf<ViewBinder>()
                 if (discSongsMap.size > 1) {
@@ -145,8 +145,8 @@ class ExpandableAlbumBinder(
 
         // Extensions
 
-        private fun Int.yearToString(): String {
-            if (this == 0) return "Year Unknown"
+        private fun Int?.yearToString(): String {
+            if (this == null) return "Year Unknown"
             return this.toString()
         }
     }

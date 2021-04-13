@@ -27,7 +27,7 @@ class SongInfoDialogFragment : DialogFragment(), Injectable {
     override fun onAttach(context: Context) {
         super.onAttach(context)
 
-        song = requireArguments().getSerializable(ARG_SONG) as Song
+        song = requireArguments().getParcelable<Song>(ARG_SONG) as Song
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
@@ -42,12 +42,14 @@ class SongInfoDialogFragment : DialogFragment(), Injectable {
             "Track #" to song.track.toString(),
             "Duration" to song.duration.toHms("Unknown"),
             "Album Artist" to song.albumArtist,
-            "Artist" to song.artist,
+            "Artist(s)" to song.artists.joinToString(", "),
             "Album" to song.album,
             "Year" to song.year.toString(),
             "Disc" to song.disc.toString(),
             "Mime Type" to song.mimeType,
-            "Size" to "${"%.2f".format((song.size / 1024f / 1024f))}MB"
+            "Size" to "${"%.2f".format((song.size / 1024f / 1024f))}MB",
+            "Play count" to song.playCount.toString(),
+            "Genre(s)" to song.genres.joinToString(", ")
         )
 
         for ((key, value) in map) {
@@ -89,7 +91,7 @@ class SongInfoDialogFragment : DialogFragment(), Injectable {
         private const val TAG = "SongInfoDialogFragment"
 
         fun newInstance(song: Song): SongInfoDialogFragment = SongInfoDialogFragment().withArgs {
-            putSerializable(ARG_SONG, song)
+            putParcelable(ARG_SONG, song)
         }
     }
 }

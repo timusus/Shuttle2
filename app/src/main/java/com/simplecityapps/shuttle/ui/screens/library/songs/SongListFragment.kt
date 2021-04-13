@@ -145,7 +145,7 @@ class SongListFragment :
                 toolbar.setOnMenuItemClickListener { menuItem ->
                     when (menuItem.itemId) {
                         R.id.sortSongName -> presenter.setSortOrder(SongSortOrder.SongName)
-                        R.id.sortArtistName -> presenter.setSortOrder(SongSortOrder.ArtistName)
+                        R.id.sortArtistName -> presenter.setSortOrder(SongSortOrder.AlbumArtistName)
                         R.id.sortAlbumName -> presenter.setSortOrder(SongSortOrder.AlbumName)
                         R.id.sortSongYear -> presenter.setSortOrder(SongSortOrder.Year)
                         R.id.sortSongDuration -> presenter.setSortOrder(SongSortOrder.Duration)
@@ -212,7 +212,7 @@ class SongListFragment :
         findToolbarHost()?.toolbar?.menu?.let { menu ->
             when (sortOrder) {
                 SongSortOrder.SongName -> menu.findItem(R.id.sortSongName)?.isChecked = true
-                SongSortOrder.ArtistName -> menu.findItem(R.id.sortArtistName)?.isChecked = true
+                SongSortOrder.AlbumArtistName -> menu.findItem(R.id.sortArtistName)?.isChecked = true
                 SongSortOrder.AlbumName -> menu.findItem(R.id.sortAlbumName)?.isChecked = true
                 SongSortOrder.Year -> menu.findItem(R.id.sortSongYear)?.isChecked = true
                 SongSortOrder.Duration -> menu.findItem(R.id.sortSongDuration)?.isChecked = true

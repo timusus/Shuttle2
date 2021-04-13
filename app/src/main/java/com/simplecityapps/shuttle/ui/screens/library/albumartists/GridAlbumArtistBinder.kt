@@ -9,6 +9,7 @@ import androidx.cardview.widget.CardView
 import androidx.core.view.isVisible
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.model.AlbumArtist
+import com.simplecityapps.mediaprovider.model.friendlyName
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 import com.simplecityapps.shuttle.ui.common.utils.dp
@@ -52,7 +53,7 @@ class GridAlbumArtistBinder(
         override fun bind(viewBinder: AlbumArtistBinder, isPartial: Boolean) {
             super.bind(viewBinder, isPartial)
 
-            title.text = viewBinder.albumArtist.name
+            title.text = viewBinder.albumArtist.friendlyName
 
             viewBinder as GridAlbumArtistBinder
 
@@ -76,7 +77,7 @@ class GridAlbumArtistBinder(
                 subtitle.setTextColor(colorSet.primaryTextColor)
             }
 
-            imageView.transitionName = "album_artist_${viewBinder.albumArtist.name}"
+            imageView.transitionName = "album_artist_${viewBinder.albumArtist.friendlyName}"
 
             checkImageView.isVisible = viewBinder.selected
         }

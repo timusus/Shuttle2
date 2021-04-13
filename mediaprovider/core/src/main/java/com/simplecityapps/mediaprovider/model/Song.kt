@@ -1,21 +1,23 @@
 package com.simplecityapps.mediaprovider.model
 
+import android.os.Parcelable
 import androidx.annotation.Keep
 import com.simplecityapps.mediaprovider.MediaProvider
-import java.io.Serializable
+import kotlinx.parcelize.Parcelize
 import java.util.*
 
 @Keep
+@Parcelize
 data class Song(
     val id: Long,
-    val name: String,
-    val albumArtist: String,
-    val artist: String,
-    val album: String,
-    val track: Int,
-    val disc: Int,
+    val name: String?,
+    val albumArtist: String?,
+    val artists: List<String>,
+    val album: String?,
+    val track: Int?,
+    val disc: Int?,
     val duration: Int,
-    val year: Int,
+    val year: Int?,
     val genres: List<String>,
     val path: String,
     val size: Long,
@@ -30,7 +32,7 @@ data class Song(
     var mediaProvider: MediaProvider.Type,
     val replayGainTrack: Double? = null,
     val replayGainAlbum: Double? = null
-) : Serializable {
+) : Parcelable {
 
     val type: Type
         get() {
@@ -41,24 +43,33 @@ data class Song(
             }
         }
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is Song) return false
+    val artistGroupKey: ArtistGroupKey
+        get() = ArtistGroupKey(albumArtist?.toLowerCase(Locale.getDefault())?.removeArticles() ?: when (artists.size) {
+            0 -> "Unknown"
+            else -> artists.joinToString(", ") { it.toLowerCase(Locale.getDefault()).removeArticles() }.ifEmpty { "Unknown" }
+        })
 
-        if (id != other.id) return false
+    val albumGroupKey: AlbumGroupKey
+        get() = AlbumGroupKey(album?.toLowerCase(Locale.getDefault())?.removeArticles(), artistGroupKey)
 
-        return true
-    }
-
-    override fun hashCode(): Int {
-        return id.hashCode()
-    }
 
     override fun toString(): String {
-        return "Song(id=$id, name='$name', albumArtist='$albumArtist', artist='$artist', album='$album', track=$track, disc=$disc, duration=$duration, year=$year, genres=$genres, path='$path', size=$size, mimeType='$mimeType', lastModified=$lastModified, lastPlayed=$lastPlayed, lastCompleted=$lastCompleted, playCount=$playCount, playbackPosition=$playbackPosition, blacklisted=$blacklisted, mediaStoreId=$mediaStoreId, mediaProvider=$mediaProvider, replayGainTrack=$replayGainTrack, replayGainAlbum=$replayGainAlbum)"
+        return "Song(id=$id, name='$name', albumArtist='$albumArtist', artist='$artists', album='$album', track=$track, disc=$disc, duration=$duration, year=$year, genres=$genres, path='$path', size=$size, mimeType='$mimeType', lastModified=$lastModified, lastPlayed=$lastPlayed, lastCompleted=$lastCompleted, playCount=$playCount, playbackPosition=$playbackPosition, blacklisted=$blacklisted, mediaStoreId=$mediaStoreId, mediaProvider=$mediaProvider, replayGainTrack=$replayGainTrack, replayGainAlbum=$replayGainAlbum)"
     }
 
     enum class Type {
         Audio, Audiobook, Podcast
     }
 }
+
+val Song.friendlyArtistName: String?
+    get() {
+        return if (artists.isEmpty()) {
+            albumArtist
+        } else {
+            artists.groupBy { it.toLowerCase(Locale.getDefault()).removeArticles() }
+                .map { map -> map.value.maxByOrNull { it.length } }
+                .joinToString(", ")
+                .ifEmpty { "Unknown" }
+        }
+    }

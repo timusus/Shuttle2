@@ -28,10 +28,10 @@ class JellyfinMediaProvider(
                         return queryResult.body.items.map { item ->
                             Song(
                                 id = item.id.toLongOrNull() ?: 0,
-                                name = item.name ?: "Unknown",
-                                albumArtist = item.albumArtist ?: "Unknown",
-                                artist = item.albumArtist ?: "Unknown",
-                                album = item.album ?: "Unknown",
+                                name = item.name,
+                                albumArtist = item.albumArtist,
+                                artists = item.artists,
+                                album = item.album,
                                 track = item.indexNumber ?: 0,
                                 disc = 0,
                                 duration = ((item.runTime ?: 0) / (10 * 1000)).toInt(),

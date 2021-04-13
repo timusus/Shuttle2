@@ -7,7 +7,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -231,7 +230,7 @@ class HomeFragment :
     }
 
     override fun onAddedToQueue(albumArtist: AlbumArtist) {
-        Toast.makeText(context, "${albumArtist.name} added to queue", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "${albumArtist.friendlyName} added to queue", Toast.LENGTH_SHORT).show()
     }
 
     override fun onAddedToQueue(album: Album) {
@@ -284,7 +283,7 @@ class HomeFragment :
                         R.id.exclude -> {
                             MaterialAlertDialogBuilder(requireContext())
                                 .setTitle("Exclude Artist")
-                                .setMessage("\"${albumArtist.name}\" will be hidden from your library.\n\nYou can view excluded songs in settings.")
+                                .setMessage("\"${albumArtist.friendlyName}\" will be hidden from your library.\n\nYou can view excluded songs in settings.")
                                 .setPositiveButton("Exclude") { _, _ ->
                                     presenter.exclude(albumArtist)
                                 }

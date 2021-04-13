@@ -10,7 +10,7 @@ import java.util.*
 import kotlin.Comparator
 
 interface SongRepository {
-    fun getSongs(query: SongQuery): Flow<List<Song>>
+    fun getSongs(query: SongQuery): Flow<List<Song>?>
     suspend fun insert(songs: List<Song>, mediaProviderType: MediaProvider.Type)
     suspend fun update(song: Song): Int
     suspend fun update(songs: List<Song>)
@@ -38,25 +38,25 @@ open class SongQuery(
             providerType = providerType
         )
 
-    class AlbumArtist(val name: String) :
+    class ArtistGroupKey(val key: com.simplecityapps.mediaprovider.model.ArtistGroupKey) :
         SongQuery(
-            predicate = { song -> song.albumArtist.equals(name, ignoreCase = true) }
+            predicate = { song -> song.artistGroupKey == key }
         )
 
-    class AlbumArtists(val albumArtists: List<AlbumArtist>) :
+    class ArtistGroupKeys(private val artistGroupKeys: List<ArtistGroupKey>) :
         SongQuery(
-            predicate = { song -> albumArtists.any { albumArtist -> albumArtist.predicate(song) } },
+            predicate = { song -> artistGroupKeys.any { albumArtist -> albumArtist.predicate(song) } },
             sortOrder = SongSortOrder.Track
         )
 
-    class Album(val name: String, val albumArtistName: String) :
+    class AlbumGroupKey(val key: com.simplecityapps.mediaprovider.model.AlbumGroupKey?) :
         SongQuery(
-            predicate = { song -> song.album.equals(name, ignoreCase = true) && song.albumArtist.equals(albumArtistName, ignoreCase = true) }
+            predicate = { song -> song.albumGroupKey == key }
         )
 
-    class Albums(val albums: List<Album>) :
+    class AlbumGroupKeys(val albumGroupKeys: List<AlbumGroupKey>) :
         SongQuery(
-            predicate = { song -> albums.any { album -> Album(name = album.name, albumArtistName = album.albumArtistName).predicate(song) } },
+            predicate = { song -> albumGroupKeys.any { it.predicate(song) } },
             sortOrder = SongSortOrder.Track
         )
 
@@ -79,7 +79,7 @@ open class SongQuery(
 
     class Search(val query: String) :
         SongQuery(
-            predicate = { song -> song.name.contains(query, true) || song.album.contains(query, true) || song.albumArtist.contains(query, true) }
+            predicate = { song -> song.name?.contains(query, true) ?: false || song.album?.contains(query, true) ?: false || song.albumArtist?.contains(query, true) ?: false }
         )
 
     class PlayCount(val count: Int, sortOrder: SongSortOrder) :
@@ -98,14 +98,14 @@ open class SongQuery(
 }
 
 enum class SongSortOrder : Serializable {
-    Default, SongName, ArtistName, AlbumName, Year, Duration, Track, PlayCount, RecentlyAdded, RecentlyPlayed;
+    Default, SongName, AlbumArtistName, AlbumName, Year, Duration, Track, PlayCount, RecentlyAdded, RecentlyPlayed;
 
     val comparator: Comparator<Song>
         get() {
             return when (this) {
                 Default -> defaultComparator
                 SongName -> songNameComparator
-                ArtistName -> artistNameComparator
+                AlbumArtistName -> artistNameComparator
                 AlbumName -> albumNameComparator
                 Year -> yearComparator
                 Duration -> durationComparator
@@ -123,12 +123,12 @@ enum class SongSortOrder : Serializable {
         val artistNameComparator: Comparator<Song> by lazy {
             Comparator<Song> { a, b ->
                 collator.compare(
-                    a.albumArtist.removeArticles(),
-                    b.albumArtist.removeArticles()
+                    a.albumArtist?.removeArticles(),
+                    b.albumArtist?.removeArticles()
                 )
             }.then(compareBy { song -> song.album }).then(defaultComparator)
         }
-        val albumNameComparator: Comparator<Song> by lazy { Comparator<Song> { a, b -> collator.compare(a.album.removeArticles(), b.album.removeArticles()) }.then(defaultComparator) }
+        val albumNameComparator: Comparator<Song> by lazy { Comparator<Song> { a, b -> collator.compare(a.album?.removeArticles(), b.album?.removeArticles()) }.then(defaultComparator) }
         val yearComparator: Comparator<Song> by lazy {
             Comparator<Song> { a, b -> zeroLastComparator.compare(a.year, b.year) }.then(compareBy({ song -> song.year }, { song -> song.album })).then(defaultComparator)
         }

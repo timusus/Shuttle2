@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.Dialog
 import android.content.Context
 import android.os.Bundle
+import android.os.Parcelable
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.LayoutInflater
@@ -41,7 +42,7 @@ open class EditTextAlertDialog : DialogFragment() {
         title = arguments?.getString(ARG_TITLE)
         hint = arguments?.getString(ARG_HINT)
         initialText = arguments?.getString(ARG_INITIAL_TEXT)
-        extra = arguments?.getSerializable(ARG_EXTRA)
+        extra = arguments?.getParcelable(ARG_EXTRA)
     }
 
     @SuppressLint("InflateParams")
@@ -116,12 +117,12 @@ open class EditTextAlertDialog : DialogFragment() {
             title: String? = null,
             hint: String? = null,
             initialText: String? = null,
-            extra: Serializable? = null
+            extra: Parcelable? = null
         ): EditTextAlertDialog = EditTextAlertDialog().withArgs {
             putString(ARG_TITLE, title)
             putString(ARG_HINT, hint)
             putString(ARG_INITIAL_TEXT, initialText)
-            putSerializable(ARG_EXTRA, extra)
+            putParcelable(ARG_EXTRA, extra)
         }
     }
 }

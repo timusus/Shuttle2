@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.debug
 
 import android.os.Bundle
+import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,7 +15,7 @@ import com.simplecityapps.shuttle.debug.DebugLoggingTree
 import com.simplecityapps.shuttle.debug.LogMessage
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.utils.withArgs
-import java.io.Serializable
+import kotlinx.parcelize.Parcelize
 import javax.inject.Inject
 
 
@@ -34,7 +35,7 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        filter = arguments?.getSerializable(ARG_FILTER) as? Filter
+        filter = arguments?.getParcelable(ARG_FILTER)
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -111,16 +112,16 @@ class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
         private const val ARG_FILTER = "filter"
 
         fun newInstance(filter: Filter? = null) = LoggingFragment().withArgs {
-            putSerializable(ARG_FILTER, filter)
+            putParcelable(ARG_FILTER, filter)
         }
     }
 
 
+    @Parcelize
     class Filter(
         val includesPriority: Int? = null,
         val excludesPriority: Int? = null,
         val includesTag: String? = null,
         val excludesTag: String? = null
-
-    ) : Serializable
+    ) : Parcelable
 }

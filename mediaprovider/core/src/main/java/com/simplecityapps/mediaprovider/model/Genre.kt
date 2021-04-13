@@ -1,14 +1,16 @@
 package com.simplecityapps.mediaprovider.model
 
+import android.os.Parcelable
 import androidx.annotation.Keep
-import java.io.Serializable
+import kotlinx.parcelize.Parcelize
 
 @Keep
+@Parcelize
 data class Genre(
     val name: String,
     val songCount: Int,
     val duration: Int
-) : Serializable {
+) : Parcelable {
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

@@ -14,6 +14,7 @@ import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.squareup.inject.assisted.Assisted
 import com.squareup.inject.assisted.AssistedInject
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -59,6 +60,7 @@ class SmartPlaylistDetailPresenter @AssistedInject constructor(
     override fun loadData() {
         launch {
             songRepository.getSongs(playlist.songQuery)
+                .filterNotNull()
                 .map { songs -> playlist.songQuery.sortOrder.let { sortOrder -> songs.sortedWith(sortOrder.comparator) } }
                 .collect { songs ->
                     this@SmartPlaylistDetailPresenter.songs = songs

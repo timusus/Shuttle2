@@ -1,9 +1,6 @@
 package com.simplecityapps.localmediaprovider.local.data.room.entity
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.Index
-import androidx.room.PrimaryKey
+import androidx.room.*
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.Song
 import java.util.*
@@ -15,16 +12,16 @@ import java.util.*
     ]
 )
 data class SongData(
-    @ColumnInfo(name = "name") val name: String,
-    @ColumnInfo(name = "track") val track: Int,
-    @ColumnInfo(name = "disc") val disc: Int,
+    @ColumnInfo(name = "name") val name: String?,
+    @ColumnInfo(name = "track") val track: Int?,
+    @ColumnInfo(name = "disc") val disc: Int?,
     @ColumnInfo(name = "duration") val duration: Int,
-    @ColumnInfo(name = "year") val year: Int,
-    @ColumnInfo(name = "genres") val genres: List<String>,
+    @ColumnInfo(name = "year") val year: Int?,
+    @ColumnInfo(name = "genres") val genres: List<String> = emptyList(),
     @ColumnInfo(name = "path") val path: String,
-    @ColumnInfo(name = "albumArtist") var albumArtist: String,
-    @ColumnInfo(name = "artist") var artist: String,
-    @ColumnInfo(name = "album") var album: String,
+    @ColumnInfo(name = "albumArtist") var albumArtist: String?,
+    @ColumnInfo(name = "artists") var artists: List<String> = emptyList(),
+    @ColumnInfo(name = "album") var album: String?,
     @ColumnInfo(name = "size") var size: Long,
     @ColumnInfo(name = "mimeType") var mimeType: String,
     @ColumnInfo(name = "lastModified") var lastModified: Date,
@@ -34,7 +31,7 @@ data class SongData(
     @ColumnInfo(name = "lastCompleted") var lastCompleted: Date? = null,
     @ColumnInfo(name = "blacklisted") var excluded: Boolean = false,
     @ColumnInfo(name = "mediaStoreId") var mediaStoreId: Long? = null,
-    @ColumnInfo(name = "mediaProvider") var mediaProvider: MediaProvider.Type,
+    @ColumnInfo(name = "mediaProvider") var mediaProvider: MediaProvider.Type = MediaProvider.Type.Shuttle,
     @ColumnInfo(name = "replayGainTrack") var replayGainTrack: Double? = null,
     @ColumnInfo(name = "replayGainAlbum") var replayGainAlbum: Double? = null
 ) {
@@ -52,7 +49,7 @@ fun Song.toSongData(mediaProviderType: MediaProvider.Type): SongData {
         genres = genres,
         path = path,
         albumArtist = albumArtist,
-        artist = artist,
+        artists = artists,
         album = album,
         size = size,
         mimeType = mimeType,

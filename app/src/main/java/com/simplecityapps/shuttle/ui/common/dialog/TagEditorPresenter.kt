@@ -145,7 +145,7 @@ class TagEditorPresenter @Inject constructor(
             }
 
             val titles = editables.map { it.second?.title }.distinct()
-            val artists = editables.map { it.second?.artist }.distinct()
+            val artists = editables.map { it.second?.artists }.distinct()
             val albums = editables.map { it.second?.album }.distinct()
             val albumArtists = editables.map { it.second?.albumArtist }.distinct()
             val dates = editables.map { it.second?.year }.distinct()
@@ -164,7 +164,7 @@ class TagEditorPresenter @Inject constructor(
                         visible = editables.size <= 1
                     ),
                     artistField = TagEditorContract.Field(
-                        initialValue = if (artists.size > 1) null else artists.firstOrNull(),
+                        initialValue = if (artists.size > 1) null else artists.flatMap { artists -> artists.orEmpty() }.distinct().joinToString(", "),
                         hasMultipleValues = artists.size > 1
                     ),
                     albumField = TagEditorContract.Field(
@@ -213,13 +213,14 @@ class TagEditorPresenter @Inject constructor(
                 editables.mapIndexed { index, (song, _) ->
                     songRepository.update(
                         song.copy(
-                            name = if (data.titleField.hasChanged) data.titleField.currentValue ?: "Unknown" else song.name,
-                            album = if (data.albumField.hasChanged) data.albumField.currentValue ?: "Unknown" else song.album,
-                            albumArtist = if (data.albumArtistField.hasChanged) data.albumArtistField.currentValue ?: "Unknown" else song.albumArtist,
-                            year = if (data.dateField.hasChanged) data.dateField.currentValue?.toIntOrNull() ?: 0 else song.year,
+                            name = if (data.titleField.hasChanged) data.titleField.currentValue else song.name,
+                            album = if (data.albumField.hasChanged) data.albumField.currentValue else song.album,
+                            albumArtist = if (data.albumArtistField.hasChanged) data.albumArtistField.currentValue else song.albumArtist,
+                            artists = if (data.artistField.hasChanged) data.artistField.currentValue?.split(",").orEmpty().map { it.trim() } else song.artists,
+                            year = if (data.dateField.hasChanged) data.dateField.currentValue?.toIntOrNull() else song.year,
                             genres = if (data.genreField.hasChanged) data.genreField.currentValue?.split(",").orEmpty().map { it.trim() } else song.genres,
-                            track = if (data.trackField.hasChanged) data.trackField.currentValue?.toIntOrNull() ?: 1 else song.track,
-                            disc = if (data.discField.hasChanged) data.discField.currentValue?.toIntOrNull() ?: 1 else song.disc
+                            track = if (data.trackField.hasChanged) data.trackField.currentValue?.toIntOrNull() else song.track,
+                            disc = if (data.discField.hasChanged) data.discField.currentValue?.toIntOrNull() else song.disc
                         )
                     )
 

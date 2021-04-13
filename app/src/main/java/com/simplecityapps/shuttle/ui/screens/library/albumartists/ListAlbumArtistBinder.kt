@@ -14,6 +14,7 @@ import androidx.core.view.isVisible
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.AlbumArtist
+import com.simplecityapps.mediaprovider.model.friendlyName
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.getAttrColor
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
@@ -59,7 +60,7 @@ class ListAlbumArtistBinder(
         override fun bind(viewBinder: AlbumArtistBinder, isPartial: Boolean) {
             super.bind(viewBinder, isPartial)
 
-            title.text = viewBinder.albumArtist.name
+            title.text = viewBinder.albumArtist.friendlyName
             subtitle.text = "${
                 subtitle.resources.getQuantityString(
                     R.plurals.albumsPlural,
@@ -75,7 +76,7 @@ class ListAlbumArtistBinder(
                     ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_artist_rounded)
                 )
             )
-            imageView.transitionName = "album_artist_${viewBinder.albumArtist.name}"
+            imageView.transitionName = "album_artist_${viewBinder.albumArtist.friendlyName}"
 
             checkImageView.isVisible = viewBinder.selected
 
@@ -84,7 +85,7 @@ class ListAlbumArtistBinder(
 
         private fun highlightMatchedStrings(viewBinder: AlbumArtistBinder) {
             viewBinder.jaroSimilarity?.let {
-                val nameStringBuilder = SpannableStringBuilder(viewBinder.albumArtist.name)
+                val nameStringBuilder = SpannableStringBuilder(viewBinder.albumArtist.friendlyName)
                 if (it.nameJaroSimilarity.score > 0.8) {
                     it.nameJaroSimilarity.bMatchedIndices.forEach { (index, score) ->
                         try {

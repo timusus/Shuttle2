@@ -124,7 +124,7 @@ class AlbumListPresenter @Inject constructor(
     override fun addToQueue(albums: List<Album>) {
         launch {
             val songs = songRepository
-                .getSongs(SongQuery.Albums(albums.map { SongQuery.Album(name = it.name, albumArtistName = it.albumArtist) }))
+                .getSongs(SongQuery.AlbumGroupKeys(albums.map { SongQuery.AlbumGroupKey(key = it.groupKey) }))
                 .firstOrNull()
                 .orEmpty()
             playbackManager.addToQueue(songs)
@@ -135,7 +135,7 @@ class AlbumListPresenter @Inject constructor(
     override fun playNext(album: Album) {
         launch {
             val songs = songRepository
-                .getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = album.name, albumArtistName = album.albumArtist))))
+                .getSongs(SongQuery.AlbumGroupKeys(listOf(SongQuery.AlbumGroupKey(key = album.groupKey))))
                 .firstOrNull()
                 .orEmpty()
             playbackManager.playNext(songs)
@@ -156,7 +156,7 @@ class AlbumListPresenter @Inject constructor(
     override fun exclude(album: Album) {
         launch {
             val songs = songRepository
-                .getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = album.name, albumArtistName = album.albumArtist))))
+                .getSongs(SongQuery.AlbumGroupKeys(listOf(SongQuery.AlbumGroupKey(key = album.groupKey))))
                 .firstOrNull()
                 .orEmpty()
             songRepository.setExcluded(songs, true)
@@ -167,7 +167,7 @@ class AlbumListPresenter @Inject constructor(
     override fun editTags(albums: List<Album>) {
         launch {
             val songs = songRepository
-                .getSongs(SongQuery.Albums(albums.map { album -> SongQuery.Album(name = album.name, albumArtistName = album.albumArtist) }))
+                .getSongs(SongQuery.AlbumGroupKeys(albums.map { album -> SongQuery.AlbumGroupKey(key = album.groupKey) }))
                 .firstOrNull()
                 .orEmpty()
             view?.showTagEditor(songs)
@@ -177,7 +177,7 @@ class AlbumListPresenter @Inject constructor(
     override fun play(album: Album) {
         launch {
             val songs = songRepository
-                .getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = album.name, albumArtistName = album.albumArtist))))
+                .getSongs(SongQuery.AlbumGroupKeys(listOf(SongQuery.AlbumGroupKey(key = album.groupKey))))
                 .firstOrNull()
                 .orEmpty()
             if (queueManager.setQueue(songs)) {
@@ -230,7 +230,7 @@ class AlbumListPresenter @Inject constructor(
     override fun getFastscrollPrefix(album: Album): String? {
         return when (sortPreferenceManager.sortOrderAlbumList) {
             AlbumSortOrder.AlbumName -> album.sortKey?.firstOrNull().toString()
-            AlbumSortOrder.ArtistName -> album.albumArtist.removeArticles().firstOrNull().toString()
+            AlbumSortOrder.ArtistName -> album.albumArtist?.removeArticles()?.firstOrNull()?.toString()
             AlbumSortOrder.Year -> album.year.toString()
             else -> null
         }

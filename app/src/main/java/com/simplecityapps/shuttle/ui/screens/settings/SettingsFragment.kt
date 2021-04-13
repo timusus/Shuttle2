@@ -44,6 +44,7 @@ import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParentFragment
 import com.simplecityapps.shuttle.ui.screens.opensource.LicensesDialogFragment
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import timber.log.Timber
 import javax.inject.Inject
@@ -150,6 +151,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
             coroutineScope.launch {
                 songRepository
                     .getSongs(SongQuery.All(includeExcluded = true))
+                    .filterNotNull()
                     .map { songList -> songList.filter { song -> song.blacklisted } }
                     .collect { songs ->
                         adapter.update(songs.map { ExcludeBinder(it, imageLoader, excludeListener) })

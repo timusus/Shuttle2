@@ -6,7 +6,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -20,6 +19,7 @@ import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.mediaprovider.model.friendlyName
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.ContextualToolbarHelper
@@ -311,7 +311,7 @@ class AlbumArtistListFragment :
                     R.id.exclude -> {
                         MaterialAlertDialogBuilder(requireContext())
                             .setTitle("Exclude Artist")
-                            .setMessage("\"${albumArtist.name}\" will be hidden from your library.\n\nYou can view excluded songs in settings.")
+                            .setMessage("\"${albumArtist.friendlyName}\" will be hidden from your library.\n\nYou can view excluded songs in settings.")
                             .setPositiveButton("Exclude") { _, _ ->
                                 presenter.exclude(albumArtist)
                             }

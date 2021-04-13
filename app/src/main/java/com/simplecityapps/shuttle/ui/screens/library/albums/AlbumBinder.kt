@@ -45,6 +45,7 @@ abstract class AlbumBinder(
         if (other !is AlbumBinder) return false
 
         return album.name == other.album.name
+                && album.artists == other.album.artists
                 && album.albumArtist == other.album.albumArtist
                 && album.songCount == other.album.songCount
                 && album.year == other.album.year

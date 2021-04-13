@@ -16,6 +16,7 @@ abstract class PlaylistDataDao {
 
     @Update
     abstract suspend fun update(playlistData: PlaylistData)
+
     @Query(
         """
             SELECT playlists.*, count(songs.id) as songCount, sum(songs.duration) as duration, media_store_id as mediaStoreId 

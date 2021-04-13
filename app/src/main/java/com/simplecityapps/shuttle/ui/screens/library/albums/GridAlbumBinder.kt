@@ -63,7 +63,7 @@ class GridAlbumBinder(
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.album.name
-            subtitle.text = viewBinder.album.albumArtist
+            subtitle.text = viewBinder.album.albumArtist ?: viewBinder.album.artists.joinToString(", ")
 
             viewBinder as GridAlbumBinder
 

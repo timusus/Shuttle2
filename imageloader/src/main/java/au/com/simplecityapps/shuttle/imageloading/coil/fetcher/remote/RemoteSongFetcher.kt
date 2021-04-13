@@ -9,6 +9,7 @@ import coil.fetch.FetchResult
 import coil.fetch.Fetcher
 import coil.size.Size
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.mediaprovider.model.friendlyArtistName
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 
 class RemoteSongFetcher(
@@ -21,14 +22,18 @@ class RemoteSongFetcher(
     }
 
     override suspend fun fetch(pool: BitmapPool, data: Song, size: Size, options: Options): FetchResult {
-        return httpFetcher.fetch(pool, url(data).toUri(), size, options)
+        return url(data)?.let { url ->
+            httpFetcher.fetch(pool, url.toUri(), size, options)
+        } ?: throw IllegalStateException("Failed to retrieve artwork url for song")
     }
 
     override fun key(data: Song): String? {
         return url(data)
     }
 
-    private fun url(data: Song): String {
-        return "https://artwork.shuttlemusicplayer.app/api/v1/artwork?artist=${data.albumArtist.encode()}&album=${data.album.encode()}"
+    private fun url(data: Song): String? {
+        return data.friendlyArtistName?.let { artist ->
+            data.album?.let { album -> "https://artwork.shuttlemusicplayer.app/api/v1/artwork?artist=${artist.encode()}&album=${album.encode()}" }
+        }
     }
 }

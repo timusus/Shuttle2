@@ -16,7 +16,7 @@ class TagLibAlbumFetcher(
 ) : Fetcher<Album> {
 
     override suspend fun fetch(pool: BitmapPool, data: Album, size: Size, options: Options): FetchResult {
-        return songRepository.getSongs(SongQuery.Album(data.name, data.albumArtist)).firstOrNull()?.firstOrNull()?.let { song ->
+        return songRepository.getSongs(SongQuery.AlbumGroupKey(data.groupKey)).firstOrNull()?.firstOrNull()?.let { song ->
             tagLibSongFetcher.fetch(pool, song, size, options)
         } ?: throw IllegalStateException("Failed to retrieve song associated with album")
     }

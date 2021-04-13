@@ -22,7 +22,6 @@ import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.closeKeyboard
 import com.simplecityapps.shuttle.ui.common.utils.withArgs
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
-import java.io.Serializable
 import javax.inject.Inject
 
 class TagEditorAlertDialog : DialogFragment(), Injectable, TagEditorContract.View {
@@ -74,7 +73,7 @@ class TagEditorAlertDialog : DialogFragment(), Injectable, TagEditorContract.Vie
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        songs = arguments?.getSerializable(ARG_SONGS) as List<Song>
+        songs = arguments?.getParcelableArrayList<Song>(ARG_SONGS) as List<Song>
     }
 
     @SuppressLint("InflateParams")
@@ -327,7 +326,7 @@ class TagEditorAlertDialog : DialogFragment(), Injectable, TagEditorContract.Vie
         fun newInstance(
             songs: List<Song>? = emptyList()
         ): TagEditorAlertDialog = TagEditorAlertDialog().withArgs {
-            putSerializable(ARG_SONGS, songs as Serializable)
+            putParcelableArrayList(ARG_SONGS, ArrayList(songs))
         }
     }
 }

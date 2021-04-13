@@ -17,6 +17,7 @@ import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -83,6 +84,7 @@ class PlaybackInitializer @Inject constructor(
                         allSongIds.addAll(shuffleSongIds.orEmpty())
 
                         val allSongs = songRepository.getSongs(SongQuery.SongIds(allSongIds.toList()))
+                            .filterNotNull()
                             .firstOrNull()
                             .orEmpty()
 

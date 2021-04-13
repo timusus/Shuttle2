@@ -28,13 +28,13 @@ class PlexMediaProvider(
                         return queryResult.body.metadata.items.map { item ->
                             Song(
                                 id = item.guid.hashCode().toLong(),
-                                name = item.title ?: "Unknown",
-                                albumArtist = item.grandparentTitle ?: "Unknown",
-                                artist = item.grandparentTitle ?: "Unknown",
-                                album = item.parentTitle ?: "Unknown",
+                                name = item.title,
+                                albumArtist = item.grandparentTitle,
+                                artists = listOf(item.grandparentTitle),
+                                album = item.parentTitle,
                                 track = item.index ?: 0,
                                 disc = 0,
-                                duration = (item.duration ?: 0).toInt(),
+                                duration = item.duration.toInt(),
                                 year = 0,
                                 genres = emptyList(),
                                 path = "plex://${item.key}",

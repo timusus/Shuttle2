@@ -3,15 +3,13 @@ package com.simplecityapps.playback.androidauto
 import android.net.Uri
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaDescriptionCompat
-import com.simplecityapps.mediaprovider.model.Album
-import com.simplecityapps.mediaprovider.model.AlbumArtist
-import com.simplecityapps.mediaprovider.model.Playlist
-import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.mediaprovider.model.*
 import com.simplecityapps.mediaprovider.repository.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+import java.util.*
 import javax.inject.Inject
 
 class MediaIdHelper @Inject constructor(
@@ -56,14 +54,32 @@ class MediaIdHelper @Inject constructor(
                     albumRepository.getAlbums(AlbumQuery.All()).firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
                 }
                 is MediaIdWrapper.Directory.Albums.Artist -> {
-                    albumRepository.getAlbums(AlbumQuery.AlbumArtist(mediaIdWrapper.artistName)).firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
+                    albumRepository.getAlbums(
+                        AlbumQuery.ArtistGroupKey(
+                            ArtistGroupKey(
+                                mediaIdWrapper.artistName.toLowerCase(Locale.getDefault()).removeArticles()
+                            )
+                        )
+                    ).firstOrNull().orEmpty()
+                        .map { it.toMediaItem(mediaId) }
                 }
                 is MediaIdWrapper.Directory.Playlists -> {
                     playlistRepository.getPlaylists(PlaylistQuery.All()).firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
                 }
                 is MediaIdWrapper.Directory.Songs.Album -> {
                     songRepository
-                        .getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = mediaIdWrapper.albumName, albumArtistName = mediaIdWrapper.albumArtistName))))
+                        .getSongs(
+                            SongQuery.AlbumGroupKeys(
+                                listOf(
+                                    SongQuery.AlbumGroupKey(
+                                        key = AlbumGroupKey(
+                                            album = mediaIdWrapper.albumName.toLowerCase(Locale.getDefault()).removeArticles(),
+                                            artistGroupKey = ArtistGroupKey(mediaIdWrapper.albumArtistName.toLowerCase(Locale.getDefault()).removeArticles())
+                                        )
+                                    )
+                                )
+                            )
+                        )
                         .firstOrNull()
                         .orEmpty()
                         .map { it.toMediaItem(mediaId) }
@@ -199,7 +215,18 @@ class MediaIdHelper @Inject constructor(
                     when (mediaIdWrapper.directory) {
                         is MediaIdWrapper.Directory.Songs.Album -> {
                             val songs = songRepository
-                                .getSongs(SongQuery.Albums(listOf(SongQuery.Album(name = mediaIdWrapper.directory.albumName, albumArtistName = mediaIdWrapper.directory.albumArtistName))))
+                                .getSongs(
+                                    SongQuery.AlbumGroupKeys(
+                                        listOf(
+                                            SongQuery.AlbumGroupKey(
+                                                AlbumGroupKey(
+                                                    album = mediaIdWrapper.directory.albumName.toLowerCase(Locale.getDefault()).removeArticles(),
+                                                    artistGroupKey = ArtistGroupKey(mediaIdWrapper.directory.albumArtistName.toLowerCase(Locale.getDefault()).removeArticles())
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
                                 .firstOrNull()
                                 .orEmpty()
                             PlayQueue(songs, songs.indexOfFirst { it.id == mediaIdWrapper.songId })

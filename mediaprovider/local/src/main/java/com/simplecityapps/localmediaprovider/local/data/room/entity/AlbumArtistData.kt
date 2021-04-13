@@ -1,12 +1,10 @@
 package com.simplecityapps.localmediaprovider.local.data.room.entity
 
-import androidx.room.DatabaseView
-
-@DatabaseView(
-    "SELECT songs.albumArtist as name, count(distinct songs.album) as albumCount, count(distinct songs.id) as songCount, min(distinct songs.playCount) as playCount " +
-            "FROM songs " +
-            "WHERE songs.blacklisted == 0 " +
-            "GROUP BY LOWER(songs.albumArtist) " +
-            "ORDER BY name"
+data class AlbumArtistData(
+    val name: String?,
+    val artists: List<String>,
+    val albumArtist: String?,
+    val albumCount: Int?,
+    val songCount: Int?,
+    val playCount: Int
 )
-class AlbumArtistData

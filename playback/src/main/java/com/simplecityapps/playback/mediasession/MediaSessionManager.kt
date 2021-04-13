@@ -96,11 +96,12 @@ class MediaSessionManager @Inject constructor(
         queueManager.getCurrentItem()?.let { currentItem ->
             val mediaMetadataCompat = MediaMetadataCompat.Builder()
                 .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, currentItem.song.id.toString())
-                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, currentItem.song.albumArtist)
+                .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ARTIST, currentItem.song.albumArtist)
+                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, currentItem.song.artists.joinToString(", "))
                 .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, currentItem.song.album)
                 .putString(MediaMetadataCompat.METADATA_KEY_TITLE, currentItem.song.name)
                 .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, currentItem.song.duration.toLong())
-                .putLong(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, currentItem.song.track.toLong())
+                .putLong(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, currentItem.song.track?.toLong() ?: 1)
                 .putLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS, queueManager.getSize().toLong())
                 .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, placeholder)
 
@@ -274,25 +275,31 @@ class MediaSessionManager @Inject constructor(
             val flow = when (mediaFocus) {
                 MediaStore.Audio.Artists.CONTENT_TYPE -> {
                     artist?.let {
-                        artistRepository.getAlbumArtists(AlbumArtistQuery.Search(query = artist)).flatMapConcat { albumArtists ->
-                            songRepository.getSongs(SongQuery.AlbumArtists(albumArtists.map { SongQuery.AlbumArtist(it.name) }))
-                        }
+                        artistRepository
+                            .getAlbumArtists(AlbumArtistQuery.Search(query = artist))
+                            .flatMapConcat { albumArtists ->
+                                songRepository.getSongs(SongQuery.ArtistGroupKeys(albumArtists.map { albumArtist -> SongQuery.ArtistGroupKey(albumArtist.groupKey) }))
+                            }
                     } ?: emptyFlow()
                 }
                 MediaStore.Audio.Albums.ENTRY_CONTENT_TYPE -> {
                     album?.let {
-                        albumRepository.getAlbums(AlbumQuery.Search(query = album)).flatMapConcat { albums ->
-                            songRepository.getSongs(SongQuery.Albums(albums.map { album -> SongQuery.Album(album.name, album.albumArtist) }))
-                        }
+                        albumRepository
+                            .getAlbums(AlbumQuery.Search(query = album))
+                            .flatMapConcat { albums ->
+                                songRepository.getSongs(SongQuery.AlbumGroupKeys(albums.map { album -> SongQuery.AlbumGroupKey(album.groupKey) }))
+                            }
                     } ?: emptyFlow()
                 }
                 MediaStore.Audio.Genres.ENTRY_CONTENT_TYPE -> {
                     genre?.let {
-                        genreRepository.getGenres(GenreQuery.Search(genre)).flatMapConcat { genres ->
-                            genres.firstOrNull()?.let { genre ->
-                                genreRepository.getSongsForGenre(genre.name, SongQuery.All())
-                            } ?: emptyFlow()
-                        }
+                        genreRepository
+                            .getGenres(GenreQuery.Search(genre))
+                            .flatMapConcat { genres ->
+                                genres.firstOrNull()?.let { genre ->
+                                    genreRepository.getSongsForGenre(genre.name, SongQuery.All())
+                                } ?: emptyFlow()
+                            }
                     } ?: emptyFlow()
                 }
                 else -> {

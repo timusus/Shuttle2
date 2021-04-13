@@ -1,11 +1,14 @@
 package com.simplecityapps.mediaprovider
 
+import android.os.Parcelable
 import androidx.annotation.DrawableRes
 import com.simplecityapps.mediaprovider.model.Song
+import kotlinx.parcelize.Parcelize
 
 interface MediaProvider {
 
-    enum class Type(val isRemote: Boolean) {
+    @Parcelize
+    enum class Type(val isRemote: Boolean) : Parcelable {
         Shuttle(false),
         MediaStore(false),
         Emby(true),

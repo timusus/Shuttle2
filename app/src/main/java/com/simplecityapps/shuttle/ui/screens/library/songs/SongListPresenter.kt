@@ -19,6 +19,7 @@ import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -97,6 +98,7 @@ class SongListPresenter @Inject constructor(
         launch {
             songRepository
                 .getSongs(SongQuery.All(sortOrder = sortPreferenceManager.sortOrderSongList))
+                .filterNotNull()
                 .distinctUntilChanged()
                 .flowOn(Dispatchers.IO)
                 .collect { songs ->
@@ -186,9 +188,9 @@ class SongListPresenter @Inject constructor(
 
     override fun getFastscrollPrefix(song: Song): String? {
         return when (sortPreferenceManager.sortOrderSongList) {
-            SongSortOrder.SongName -> song.name.firstOrNull().toString()
-            SongSortOrder.ArtistName -> song.artist.removeArticles().firstOrNull().toString()
-            SongSortOrder.AlbumName -> song.album.removeArticles().firstOrNull().toString()
+            SongSortOrder.SongName -> song.name?.firstOrNull()?.toString()
+            SongSortOrder.AlbumArtistName -> song.albumArtist?.removeArticles()?.firstOrNull()?.toString()
+            SongSortOrder.AlbumName -> song.album?.removeArticles()?.firstOrNull()?.toString()
             SongSortOrder.Year -> song.year.toString()
             else -> null
         }

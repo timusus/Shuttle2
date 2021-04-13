@@ -115,8 +115,8 @@ class PlaylistMenuPresenter @Inject constructor(
     private suspend fun PlaylistData.getSongs(): List<Song> {
         return when (this) {
             is PlaylistData.Songs -> return data
-            is PlaylistData.Albums -> songRepository.getSongs(SongQuery.Albums(data.map { album -> SongQuery.Album(name = album.name, albumArtistName = album.albumArtist) })).firstOrNull().orEmpty()
-            is PlaylistData.AlbumArtists -> songRepository.getSongs(SongQuery.AlbumArtists(data.map { albumArtist -> SongQuery.AlbumArtist(name = albumArtist.name) })).firstOrNull().orEmpty()
+            is PlaylistData.Albums -> songRepository.getSongs(SongQuery.AlbumGroupKeys(data.map { album -> SongQuery.AlbumGroupKey(key = album.groupKey) })).firstOrNull().orEmpty()
+            is PlaylistData.AlbumArtists -> songRepository.getSongs(SongQuery.ArtistGroupKeys(data.map { albumArtist -> SongQuery.ArtistGroupKey(key = albumArtist.groupKey ) })).firstOrNull().orEmpty()
             is PlaylistData.Genres -> genreRepository.getSongsForGenres(data.map { it.name }, SongQuery.All()).firstOrNull().orEmpty()
             is PlaylistData.Queue -> queueManager.getQueue().map { queueItem -> queueItem.song }
         }

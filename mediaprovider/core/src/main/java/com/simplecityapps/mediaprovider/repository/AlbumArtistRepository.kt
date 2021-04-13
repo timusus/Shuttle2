@@ -10,7 +10,7 @@ interface AlbumArtistRepository {
 }
 
 sealed class AlbumArtistQuery(
-    val predicate: ((com.simplecityapps.mediaprovider.model.AlbumArtist) -> Boolean),
+    val predicate: ((AlbumArtist) -> Boolean),
     val sortOrder: AlbumArtistSortOrder = AlbumArtistSortOrder.Default
 ) {
     class All(sortOrder: AlbumArtistSortOrder = AlbumArtistSortOrder.Default) :
@@ -19,14 +19,14 @@ sealed class AlbumArtistQuery(
             sortOrder = sortOrder
         )
 
-    class AlbumArtist(val name: String) :
+    class ArtistGroupKey(val key: com.simplecityapps.mediaprovider.model.ArtistGroupKey) :
         AlbumArtistQuery(
-            predicate = { albumArtist -> albumArtist.name.equals(name, ignoreCase = true) }
+            predicate = { albumArtist -> albumArtist.groupKey == key }
         )
 
     class Search(private val query: String) :
         AlbumArtistQuery(
-            predicate = { albumArtist -> albumArtist.name.contains(query, ignoreCase = true) }
+            predicate = { albumArtist -> albumArtist.name?.contains(query, ignoreCase = true) ?: false }
         )
 
     class PlayCount(private val count: Int) :
@@ -49,7 +49,7 @@ enum class AlbumArtistSortOrder : Serializable {
 
     companion object {
         private val collator by lazy { Collator.getInstance().apply { strength = Collator.TERTIARY } }
-        val defaultComparator: Comparator<AlbumArtist> by lazy { Comparator { a, b -> collator.compare(a.sortKey, b.sortKey) } }
+        val defaultComparator: Comparator<AlbumArtist> by lazy { Comparator { a, b -> collator.compare(a.sortKey ?: "", b.sortKey ?: "") } }
         val playCountComparator: Comparator<AlbumArtist> by lazy { compareByDescending<AlbumArtist> { albumArtist -> albumArtist.playCount }.then(Default.comparator) }
     }
 }

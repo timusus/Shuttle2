@@ -31,6 +31,7 @@ import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.mediaprovider.model.friendlyName
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
@@ -168,7 +169,7 @@ class AlbumArtistDetailFragment :
         }
 
         dummyImage = view.findViewById(R.id.dummyImage)
-        dummyImage.transitionName = "album_artist_${albumArtist.name}"
+        dummyImage.transitionName = "album_artist_${albumArtist.friendlyName}"
 
         imageLoader.loadArtwork(
             dummyImage,
@@ -231,23 +232,28 @@ class AlbumArtistDetailFragment :
 
     // AlbumArtistDetailContract.View Implementation
 
-    override fun setListData(albums: Map<Album, List<Song>>) {
+    override fun setListData(albumSongsMap: Map<Album, List<Song>>) {
         val viewBinders = mutableListOf<ViewBinder>()
-        viewBinders.add(HeaderBinder("Albums"))
-        viewBinders.addAll(albums.map { entry ->
-            ExpandableAlbumBinder(
-                entry.key,
-                entry.value,
-                imageLoader,
-                expanded = adapter.items.filterIsInstance<ExpandableAlbumBinder>().find { binder -> binder.album == entry.key }?.expanded ?: false,
-                scope = lifecycle.coroutineScope,
-                listener = this
-            )
-        })
-        viewBinders.add(HeaderBinder("Songs"))
-        viewBinders.addAll(albums.values.flatten().map { song ->
-            SongBinder(song, imageLoader, songBinderListener)
-        })
+        if (albumSongsMap.isNotEmpty()) {
+            viewBinders.add(HeaderBinder("Albums"))
+            viewBinders.addAll(albumSongsMap.map { entry ->
+                ExpandableAlbumBinder(
+                    entry.key,
+                    entry.value,
+                    imageLoader,
+                    expanded = adapter.items.filterIsInstance<ExpandableAlbumBinder>().find { binder -> binder.album == entry.key }?.expanded ?: false,
+                    scope = lifecycle.coroutineScope,
+                    listener = this
+                )
+            })
+        }
+        val songs = albumSongsMap.values.flatten()
+        if (songs.isNotEmpty()) {
+            viewBinders.add(HeaderBinder("Songs"))
+            viewBinders.addAll(songs.map { song ->
+                SongBinder(song, imageLoader, songBinderListener)
+            })
+        }
         adapter.update(viewBinders)
     }
 
@@ -260,7 +266,7 @@ class AlbumArtistDetailFragment :
     }
 
     override fun setAlbumArtist(albumArtist: AlbumArtist) {
-        toolbar.title = albumArtist.name
+        toolbar.title = albumArtist.friendlyName
         toolbar.subtitle = "${resources.getQuantityString(R.plurals.albumsPlural, albumArtist.albumCount, albumArtist.albumCount)} " +
                 "• ${resources.getQuantityString(R.plurals.songsPlural, albumArtist.songCount, albumArtist.songCount)}"
     }

@@ -9,50 +9,37 @@ import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class LocalSongRepository(
+    val scope: CoroutineScope,
     private val songDataDao: SongDataDao
 ) : SongRepository {
 
-    private val songsRelay: Flow<List<Song>> = run {
-        val time = System.currentTimeMillis()
-        Timber.i("Initialising songs relay")
-        ConflatedBroadcastChannel<List<Song>?>(null)
-            .apply {
-                CoroutineScope(Dispatchers.IO)
-                    .launch {
-                        songDataDao
-                            .getAll()
-                            .collect { songs ->
-                                send(songs)
-                            }
-                    }
-            }
-            .asFlow()
-            .filterNotNull()
+    private val songsRelay: StateFlow<List<Song>?> by lazy {
+        songDataDao
+            .getAll()
             .flowOn(Dispatchers.IO)
+            .stateIn(scope, SharingStarted.WhileSubscribed(), null)
     }
 
-    override fun getSongs(query: SongQuery): Flow<List<Song>> {
+    override fun getSongs(query: SongQuery): Flow<List<Song>?> {
         return songsRelay
             .map { songs ->
                 var result = songs
 
                 if (!query.includeExcluded) {
-                    result = songs.filterNot { it.blacklisted }
+                    result = songs?.filterNot { it.blacklisted }
                 }
 
                 query.providerType?.let { providerType ->
-                    result = songs.filter { song -> song.mediaProvider == providerType }
+                    result = songs?.filter { song -> song.mediaProvider == providerType }
                 }
 
                 result
-                    .filter(query.predicate)
-                    .sortedWith(query.sortOrder.comparator)
+                    ?.filter(query.predicate)
+                    ?.sortedWith(query.sortOrder.comparator)
             }
     }
 

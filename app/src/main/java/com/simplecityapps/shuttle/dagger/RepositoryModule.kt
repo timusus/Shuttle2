@@ -23,8 +23,8 @@ class RepositoryModule {
 
     @Provides
     @AppScope
-    fun provideSongRepository(database: MediaDatabase): SongRepository {
-        return LocalSongRepository(database.songDataDao())
+    fun provideSongRepository(database: MediaDatabase, @Named("AppCoroutineScope") appCoroutineScope: CoroutineScope): SongRepository {
+        return LocalSongRepository(appCoroutineScope, database.songDataDao())
     }
 
     @Provides
@@ -35,14 +35,14 @@ class RepositoryModule {
 
     @Provides
     @AppScope
-    fun provideAlbumRepository(database: MediaDatabase): AlbumRepository {
-        return LocalAlbumRepository(database.albumDataDao())
+    fun provideAlbumRepository(database: MediaDatabase, @Named("AppCoroutineScope") appCoroutineScope: CoroutineScope): AlbumRepository {
+        return LocalAlbumRepository(appCoroutineScope, database.songDataDao())
     }
 
     @Provides
     @AppScope
-    fun provideAlbumArtistRepository(database: MediaDatabase): AlbumArtistRepository {
-        return LocalAlbumArtistRepository(database.albumArtistDataDao())
+    fun provideAlbumArtistRepository(database: MediaDatabase, @Named("AppCoroutineScope") appCoroutineScope: CoroutineScope): AlbumArtistRepository {
+        return LocalAlbumArtistRepository(appCoroutineScope, database.songDataDao())
     }
 
     @Provides

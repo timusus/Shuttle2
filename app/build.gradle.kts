@@ -6,6 +6,7 @@ plugins {
     id("kotlin-kapt")
     id("com.bugsnag.android.gradle")
     id("com.mikepenz.aboutlibraries.plugin")
+    id("kotlin-parcelize")
 }
 
 android {

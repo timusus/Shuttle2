@@ -15,7 +15,7 @@ class CreatePlaylistDialogFragment : EditTextAlertDialog() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        playlistData = arguments?.getSerializable(ARG_DATA) as PlaylistData
+        playlistData = arguments?.getParcelable(ARG_DATA)!!
     }
 
     override fun onSave(string: String) {
@@ -31,7 +31,7 @@ class CreatePlaylistDialogFragment : EditTextAlertDialog() {
         const val ARG_DATA = "data"
 
         fun newInstance(playlistData: PlaylistData) = CreatePlaylistDialogFragment().withArgs {
-            putSerializable(ARG_DATA, playlistData)
+            putParcelable(ARG_DATA, playlistData)
             putString(ARG_HINT, "Playlist Name")
         }
     }
