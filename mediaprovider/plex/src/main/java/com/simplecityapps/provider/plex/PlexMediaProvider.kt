@@ -47,7 +47,8 @@ class PlexMediaProvider(
                                 playbackPosition = 0,
                                 blacklisted = false,
                                 mediaStoreId = null,
-                                mediaProvider = type
+                                mediaProvider = type,
+                                lyrics = null
                             )
                         }
                     }

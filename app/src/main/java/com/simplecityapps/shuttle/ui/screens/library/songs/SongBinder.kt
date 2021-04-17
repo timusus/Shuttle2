@@ -138,7 +138,7 @@ open class SongBinder(
 
         private fun highlightMatchedStrings(viewBinder: SongBinder) {
             viewBinder.jaroSimilarity?.let {
-                val nameStringBuilder = SpannableStringBuilder(viewBinder.song.name)
+                val nameStringBuilder = SpannableStringBuilder(viewBinder.song.name ?: "")
                 if (it.nameJaroSimilarity.score > 0.8) {
                     it.nameJaroSimilarity.bMatchedIndices.forEach { (index, score) ->
                         try {
@@ -155,7 +155,7 @@ open class SongBinder(
                 }
                 title.text = nameStringBuilder
 
-                val albumArtistNameStringBuilder = SpannableStringBuilder(viewBinder.song.albumArtist)
+                val albumArtistNameStringBuilder = SpannableStringBuilder(viewBinder.song.albumArtist ?: "")
                 if (it.albumArtistNameJaroSimilarity.score > 0.8) {
                     it.albumArtistNameJaroSimilarity.bMatchedIndices.forEach { (index, score) ->
                         try {
@@ -170,7 +170,7 @@ open class SongBinder(
                         }
                     }
                 }
-                val albumNameStringBuilder = SpannableStringBuilder(viewBinder.song.album)
+                val albumNameStringBuilder = SpannableStringBuilder(viewBinder.song.album ?: "")
                 if (it.albumNameJaroSimilarity.score > 0.8) {
                     it.albumNameJaroSimilarity.bMatchedIndices.forEach { (index, score) ->
                         try {

@@ -4,10 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
-import android.widget.SeekBar
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -40,6 +37,7 @@ import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumAr
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.lyrics.QuickLyricManager
 import com.simplecityapps.shuttle.ui.screens.sleeptimer.SleepTimerDialogFragment
+import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
 import javax.inject.Inject
 import kotlin.math.abs
 
@@ -77,6 +75,10 @@ class PlaybackFragment :
     private var durationTextView: TextView by autoCleared()
     private var toolbar: Toolbar by autoCleared()
     private var favoriteButton: FavoriteButton by autoCleared()
+    private var lyricsView: View by autoCleared()
+    private var lyricsText: TextView by autoCleared()
+    private var closeLyricsButton: Button by autoCleared()
+    private var quickLyricButton: Button by autoCleared()
 
     var position: Int = 0
     var duration: Int = 0
@@ -136,6 +138,12 @@ class PlaybackFragment :
             presenter.goToAlbum()
         }
 
+        lyricsView = view.findViewById(R.id.lyricsView)
+        lyricsText = view.findViewById(R.id.lyricsTextView)
+        closeLyricsButton = view.findViewById(R.id.closeLyricsButton)
+        closeLyricsButton.setOnClickListener { lyricsView.fadeOut() }
+        quickLyricButton = view.findViewById(R.id.quickLyricButton)
+
         recyclerView.adapter = adapter
         recyclerView.setRecyclerListener(RecyclerListener())
 
@@ -154,8 +162,12 @@ class PlaybackFragment :
                     presenter.sleepTimerClicked()
                     true
                 }
-                R.id.quickLyric -> {
-                    presenter.launchQuickLyric()
+                R.id.lyrics -> {
+                    presenter.showLyrics()
+                    true
+                }
+                R.id.songInfo -> {
+                    presenter.showSongInfo()
                     true
                 }
                 R.id.clearQueue -> {
@@ -215,6 +227,13 @@ class PlaybackFragment :
                     seekForwardButton.isVisible = false
                     skipPrevButton.isVisible = true
                     skipNextButton.isVisible = true
+                }
+            }
+
+            if (lyricsView.isVisible) {
+                lyricsText.text = it.lyrics
+                if (it.lyrics == null) {
+                    lyricsView.fadeOut()
                 }
             }
         }
@@ -298,6 +317,15 @@ class PlaybackFragment :
 
     override fun showQuickLyricUnavailable() {
         Toast.makeText(requireContext(), "Failed to download QuickLyric", Toast.LENGTH_LONG).show()
+    }
+
+    override fun showSongInfoDialog(song: Song) {
+        SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
+    }
+
+    override fun displayLyrics(lyrics: String) {
+        lyricsText.text = lyrics
+        lyricsView.fadeIn()
     }
 
 

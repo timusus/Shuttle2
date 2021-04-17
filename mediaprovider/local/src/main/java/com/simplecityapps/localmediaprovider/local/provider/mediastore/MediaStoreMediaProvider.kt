@@ -83,7 +83,8 @@ class MediaStoreMediaProvider(
                         playbackPosition = 0,
                         blacklisted = false,
                         mediaStoreId = songCursor.getLong(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)),
-                        mediaProvider = type
+                        mediaProvider = type,
+                        lyrics = null
                     )
                     songs.add(song)
                     progress++

@@ -26,12 +26,13 @@ data class Song(
     val lastPlayed: Date?,
     val lastCompleted: Date?,
     val playCount: Int,
-    var playbackPosition: Int,
+    val playbackPosition: Int,
     val blacklisted: Boolean,
-    var mediaStoreId: Long? = null,
-    var mediaProvider: MediaProvider.Type,
+    val mediaStoreId: Long? = null,
+    val mediaProvider: MediaProvider.Type,
     val replayGainTrack: Double? = null,
-    val replayGainAlbum: Double? = null
+    val replayGainAlbum: Double? = null,
+    val lyrics: String?
 ) : Parcelable {
 
     val type: Type

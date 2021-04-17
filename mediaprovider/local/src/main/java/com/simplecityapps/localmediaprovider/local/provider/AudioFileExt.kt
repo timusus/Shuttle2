@@ -29,7 +29,8 @@ fun AudioFile.toSong(providerType: MediaProvider.Type): Song {
         blacklisted = false,
         mediaProvider = providerType,
         replayGainTrack = replayGainTrack,
-        replayGainAlbum = replayGainAlbum
+        replayGainAlbum = replayGainAlbum,
+        lyrics = lyrics
     )
 }
 
@@ -45,6 +46,7 @@ enum class TagLibProperty(val key: String) {
     OriginalDate("ORIGINALDATE"),
     ReplayGainTrack("REPLAYGAIN_TRACK_GAIN"),
     ReplayGainAlbum("REPLAYGAIN_ALBUM_GAIN"),
+    Lyrics("LYRICS")
 }
 
 fun getAudioFile(fileDescriptor: Int, filePath: String, fileName: String, lastModified: Long, size: Long, mimeType: String): AudioFile {
@@ -75,6 +77,7 @@ fun getAudioFile(fileDescriptor: Int, filePath: String, fileName: String, lastMo
         },
         replayGainTrack = metadata?.propertyMap?.get(TagLibProperty.ReplayGainTrack.key)?.firstOrNull()?.take(9)?.toDoubleOrNull(),
         replayGainAlbum = metadata?.propertyMap?.get(TagLibProperty.ReplayGainAlbum.key)?.firstOrNull()?.take(9)?.toDoubleOrNull(),
+        lyrics = metadata?.propertyMap?.get(TagLibProperty.Lyrics.key)?.firstOrNull()
     )
 }
 

@@ -23,8 +23,13 @@
         app:showAsAction="always" />
 
     <item
-        android:id="@+id/quickLyric"
-        android:title="QuickLyric"
+        android:id="@+id/lyrics"
+        android:title="Lyrics"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/songInfo"
+        android:title="Song Info"
         app:showAsAction="never" />
 
     <item

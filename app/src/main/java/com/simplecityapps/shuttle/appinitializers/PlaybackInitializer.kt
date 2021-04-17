@@ -173,7 +173,6 @@ class PlaybackInitializer @Inject constructor(
 
                 queueManager.getCurrentItem()?.song?.let { song ->
                     val playbackPosition = playbackManager.getProgress() ?: 0
-                    song.playbackPosition = playbackPosition
                     appCoroutineScope.launch {
                         withContext(Dispatchers.IO) {
                             songRepository.setPlaybackPosition(song, playbackPosition)

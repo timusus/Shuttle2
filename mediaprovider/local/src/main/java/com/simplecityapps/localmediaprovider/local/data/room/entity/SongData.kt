@@ -33,7 +33,8 @@ data class SongData(
     @ColumnInfo(name = "mediaStoreId") var mediaStoreId: Long? = null,
     @ColumnInfo(name = "mediaProvider") var mediaProvider: MediaProvider.Type = MediaProvider.Type.Shuttle,
     @ColumnInfo(name = "replayGainTrack") var replayGainTrack: Double? = null,
-    @ColumnInfo(name = "replayGainAlbum") var replayGainAlbum: Double? = null
+    @ColumnInfo(name = "replayGainAlbum") var replayGainAlbum: Double? = null,
+    @ColumnInfo(name = "lyrics") var lyrics: String?
 ) {
     @PrimaryKey(autoGenerate = true)
     var id: Long = 0
@@ -62,7 +63,8 @@ fun Song.toSongData(mediaProviderType: MediaProvider.Type): SongData {
         mediaStoreId = mediaStoreId,
         mediaProvider = mediaProviderType,
         replayGainTrack = replayGainTrack,
-        replayGainAlbum = replayGainAlbum
+        replayGainAlbum = replayGainAlbum,
+        lyrics = lyrics
     ).apply {
         id = this@toSongData.id
     }

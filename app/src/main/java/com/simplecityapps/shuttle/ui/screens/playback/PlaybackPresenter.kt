@@ -179,6 +179,20 @@ class PlaybackPresenter @Inject constructor(
         }
     }
 
+    override fun showSongInfo() {
+        queueManager.getCurrentItem()?.let { queueItem ->
+            view?.showSongInfoDialog(queueItem.song)
+        }
+    }
+
+    override fun showLyrics() {
+        queueManager.getCurrentItem()?.let { queueItem ->
+            queueItem.song.lyrics?.let { lyrics ->
+                view?.displayLyrics(lyrics)
+            }
+        }
+    }
+
     override fun launchQuickLyric() {
         queueManager.getCurrentItem()?.let { queueItem ->
             if (QuickLyricManager.isQuickLyricInstalled(context)) {

@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Bundle
 import android.view.Gravity
 import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.Space
 import android.widget.TextView
 import androidx.core.view.marginEnd
@@ -32,28 +33,30 @@ class SongInfoDialogFragment : DialogFragment(), Injectable {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
 
-        val rootView = LinearLayout(requireContext(), null).apply {
+        val scrollView = ScrollView(requireContext(), null)
+        val linearLayout = LinearLayout(requireContext(), null).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(24.dp)
         }
 
         val map = mapOf(
-            "Title" to song.name,
-            "Track #" to song.track.toString(),
+            "Title" to song.name.orEmpty(),
+            "Track #" to song.track?.toString().orEmpty(),
             "Duration" to song.duration.toHms("Unknown"),
-            "Album Artist" to song.albumArtist,
+            "Album Artist" to song.albumArtist.orEmpty(),
             "Artist(s)" to song.artists.joinToString(", "),
-            "Album" to song.album,
-            "Year" to song.year.toString(),
-            "Disc" to song.disc.toString(),
+            "Album" to song.album.orEmpty(),
+            "Year" to song.year?.toString().orEmpty(),
+            "Disc" to song.disc?.toString().orEmpty(),
             "Mime Type" to song.mimeType,
             "Size" to "${"%.2f".format((song.size / 1024f / 1024f))}MB",
             "Play count" to song.playCount.toString(),
-            "Genre(s)" to song.genres.joinToString(", ")
+            "Genre(s)" to song.genres.joinToString(", "),
+            "Lyrics" to song.lyrics,
         )
 
         for ((key, value) in map) {
-            rootView.addView(LinearLayout(requireContext(), null).apply {
+            linearLayout.addView(LinearLayout(requireContext(), null).apply {
 
                 orientation = LinearLayout.HORIZONTAL
                 layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
@@ -61,7 +64,7 @@ class SongInfoDialogFragment : DialogFragment(), Injectable {
 
                 addView(TextView(requireContext()).apply {
                     text = key
-                    gravity = Gravity.START or Gravity.CENTER_VERTICAL
+                    gravity = Gravity.START or Gravity.TOP
                     layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)
                 })
                 addView(Space(requireContext(), null), 8.dp, LinearLayout.LayoutParams.MATCH_PARENT)
@@ -73,9 +76,11 @@ class SongInfoDialogFragment : DialogFragment(), Injectable {
             })
         }
 
+        scrollView.addView(linearLayout)
+
         return MaterialAlertDialogBuilder(requireContext())
             .setTitle("Song Info")
-            .setView(rootView)
+            .setView(scrollView)
             .setNegativeButton("Close", null)
             .show()
     }

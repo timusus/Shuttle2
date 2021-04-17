@@ -24,6 +24,8 @@ interface PlaybackContract {
         fun launchQuickLyric(artistName: String, songTime: String)
         fun getQuickLyric()
         fun showQuickLyricUnavailable()
+        fun showSongInfoDialog(song: Song)
+        fun displayLyrics(lyrics: String)
     }
 
     interface Presenter {
@@ -41,6 +43,8 @@ interface PlaybackContract {
         fun setFavorite(isFavorite: Boolean)
         fun goToAlbum()
         fun goToArtist()
+        fun showSongInfo()
+        fun showLyrics()
         fun launchQuickLyric()
         fun clearQueue()
     }
