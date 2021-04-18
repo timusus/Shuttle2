@@ -26,6 +26,7 @@ import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.recyclerview.SnapOnScrollListener
 import com.simplecityapps.shuttle.ui.common.recyclerview.SpacesItemDecoration
 import com.simplecityapps.shuttle.ui.common.recyclerview.attachSnapHelperWithListener
@@ -173,6 +174,12 @@ class PlaybackFragment :
                 }
                 R.id.clearQueue -> {
                     presenter.clearQueue()
+                    true
+                }
+                R.id.editTags -> {
+                    queueManager.getCurrentItem()?.song?.let { song ->
+                        TagEditorAlertDialog.newInstance(listOf(song)).show(childFragmentManager)
+                    }
                     true
                 }
                 else -> false
