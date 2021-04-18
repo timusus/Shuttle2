@@ -185,11 +185,11 @@ class PlaybackPresenter @Inject constructor(
         }
     }
 
-    override fun showLyrics() {
+    override fun showOrLaunchLyrics() {
         queueManager.getCurrentItem()?.let { queueItem ->
             queueItem.song.lyrics?.let { lyrics ->
                 view?.displayLyrics(lyrics)
-            }
+            } ?: launchQuickLyric()
         }
     }
 

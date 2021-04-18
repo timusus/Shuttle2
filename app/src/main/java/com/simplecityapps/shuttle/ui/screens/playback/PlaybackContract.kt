@@ -21,7 +21,7 @@ interface PlaybackContract {
         fun presentSleepTimer()
         fun goToAlbum(album: Album)
         fun goToArtist(artist: AlbumArtist)
-        fun launchQuickLyric(artistName: String, songTime: String)
+        fun launchQuickLyric(artistName: String, songName: String)
         fun getQuickLyric()
         fun showQuickLyricUnavailable()
         fun showSongInfoDialog(song: Song)
@@ -44,7 +44,7 @@ interface PlaybackContract {
         fun goToAlbum()
         fun goToArtist()
         fun showSongInfo()
-        fun showLyrics()
+        fun showOrLaunchLyrics()
         fun launchQuickLyric()
         fun clearQueue()
     }

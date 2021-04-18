@@ -143,6 +143,7 @@ class PlaybackFragment :
         closeLyricsButton = view.findViewById(R.id.closeLyricsButton)
         closeLyricsButton.setOnClickListener { lyricsView.fadeOut() }
         quickLyricButton = view.findViewById(R.id.quickLyricButton)
+        quickLyricButton.setOnClickListener { presenter.launchQuickLyric() }
 
         recyclerView.adapter = adapter
         recyclerView.setRecyclerListener(RecyclerListener())
@@ -163,7 +164,7 @@ class PlaybackFragment :
                     true
                 }
                 R.id.lyrics -> {
-                    presenter.showLyrics()
+                    presenter.showOrLaunchLyrics()
                     true
                 }
                 R.id.songInfo -> {
@@ -210,7 +211,7 @@ class PlaybackFragment :
     }
 
     override fun setCurrentSong(song: Song?) {
-        song?.let {
+        song?.let { song ->
             titleTextView.text = song.name
             artistTextView.text = song.friendlyArtistName
             albumTextView.text = song.album
@@ -231,10 +232,14 @@ class PlaybackFragment :
             }
 
             if (lyricsView.isVisible) {
-                lyricsText.text = it.lyrics
-                if (it.lyrics == null) {
+                lyricsText.text = song.lyrics
+                if (song.lyrics == null) {
                     lyricsView.fadeOut()
                 }
+            }
+
+            toolbar.menu.findItem(R.id.lyrics)?.let { menuItem ->
+                menuItem.title = song.lyrics?.let { "Lyrics" } ?: "QuickLyric"
             }
         }
     }
