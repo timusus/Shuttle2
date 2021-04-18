@@ -207,10 +207,6 @@ class PlaybackPresenter @Inject constructor(
         }
     }
 
-    override fun clearQueue() {
-        playbackManager.clearQueue()
-    }
-
 
     // PlaybackWatcherCallback Implementation
 

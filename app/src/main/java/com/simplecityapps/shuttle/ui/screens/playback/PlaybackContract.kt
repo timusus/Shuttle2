@@ -46,6 +46,5 @@ interface PlaybackContract {
         fun showSongInfo()
         fun showOrLaunchLyrics()
         fun launchQuickLyric()
-        fun clearQueue()
     }
 }

@@ -108,6 +108,10 @@ class QueueFragment :
                     playlistMenuView.createPlaylistMenu(toolbar.menu)
                     return@setOnMenuItemClickListener true
                 }
+                R.id.clearQueue -> {
+                    presenter.clearQueue()
+                    true
+                }
                 else -> {
                     return@setOnMenuItemClickListener playlistMenuView.handleMenuItem(menuItem, PlaylistData.Queue)
                 }
@@ -257,6 +261,7 @@ class QueueFragment :
         override fun onSheetStateChanged(sheet: Int, state: Int) {
             toolbar.menu.findItem(R.id.scrollToCurrent)?.isVisible = sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_EXPANDED
             toolbar.menu.findItem(R.id.playlist)?.isVisible = sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_EXPANDED
+            toolbar.menu.findItem(R.id.clearQueue)?.isVisible = sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_EXPANDED
         }
 
         override fun onSlide(sheet: Int, slideOffset: Float) {

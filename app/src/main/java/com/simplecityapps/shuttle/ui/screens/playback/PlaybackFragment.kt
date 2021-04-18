@@ -172,10 +172,6 @@ class PlaybackFragment :
                     presenter.showSongInfo()
                     true
                 }
-                R.id.clearQueue -> {
-                    presenter.clearQueue()
-                    true
-                }
                 R.id.editTags -> {
                     queueManager.getCurrentItem()?.song?.let { song ->
                         TagEditorAlertDialog.newInstance(listOf(song)).show(childFragmentManager)

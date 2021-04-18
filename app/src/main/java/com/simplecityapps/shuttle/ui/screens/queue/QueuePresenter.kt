@@ -25,6 +25,7 @@ interface QueueContract {
         fun exclude(queueItem: QueueItem)
         fun editTags(queueItem: QueueItem)
         fun saveQueueToPlaylist()
+        fun clearQueue()
     }
 
     interface View {
@@ -109,6 +110,10 @@ class QueuePresenter @Inject constructor(
     override fun saveQueueToPlaylist() {
 
         queueManager.getQueue()
+    }
+
+    override fun clearQueue() {
+        playbackManager.clearQueue()
     }
 
 
