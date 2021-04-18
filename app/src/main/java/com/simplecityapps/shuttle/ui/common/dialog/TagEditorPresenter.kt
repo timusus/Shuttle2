@@ -42,11 +42,12 @@ interface TagEditorContract {
         val trackTotalField: Field,
         val discField: Field,
         val discTotalField: Field,
-        val genreField: Field
+        val genreField: Field,
+        val lyricsField: Field
     ) {
 
         val all: List<Field>
-            get() = listOf(titleField, artistField, albumField, albumArtistField, dateField, trackField, trackTotalField, discField, discTotalField, genreField)
+            get() = listOf(titleField, artistField, albumField, albumArtistField, dateField, trackField, trackTotalField, discField, discTotalField, genreField, lyricsField)
 
         val mapOfChangedValues: HashMap<String, ArrayList<String?>>
             get() {
@@ -86,6 +87,9 @@ interface TagEditorContract {
                 }
                 if (genreField.hasChanged) {
                     map[TagLibProperty.Genre.key] = ArrayList(listOf(genreField.currentValue))
+                }
+                if (lyricsField.hasChanged) {
+                    map[TagLibProperty.Lyrics.key] = ArrayList(listOf(lyricsField.currentValue))
                 }
                 return map
             }
@@ -154,6 +158,7 @@ class TagEditorPresenter @Inject constructor(
             val discs = editables.map { it.second?.disc }.distinct()
             val discTotals = editables.map { it.second?.discTotal }.distinct()
             val genres = editables.map { it.second?.genres }.distinct()
+            val lyrics = editables.map { it.second?.lyrics }.distinct()
 
             view?.setLoading(TagEditorContract.LoadingState.None)
             view?.setData(
@@ -190,8 +195,7 @@ class TagEditorPresenter @Inject constructor(
                     ),
                     discField = TagEditorContract.Field(
                         initialValue = if (discs.size > 1) null else discs.firstOrNull()?.toString(),
-                        hasMultipleValues = discs.size > 1,
-                        visible = editables.size <= 1
+                        hasMultipleValues = discs.size > 1
                     ),
                     discTotalField = TagEditorContract.Field(
                         initialValue = if (discTotals.size > 1) null else discTotals.firstOrNull()?.toString(),
@@ -200,7 +204,11 @@ class TagEditorPresenter @Inject constructor(
                     genreField = TagEditorContract.Field(
                         initialValue = if (genres.size > 1) null else genres.flatMap { genres -> genres.orEmpty() }.distinct().joinToString(", "),
                         hasMultipleValues = genres.size > 1
-                    )
+                    ),
+                    lyricsField = TagEditorContract.Field(
+                        initialValue = if (lyrics.size > 1) null else lyrics.firstOrNull(),
+                        hasMultipleValues = lyrics.size > 1
+                    ),
                 )
             )
         }
@@ -220,7 +228,8 @@ class TagEditorPresenter @Inject constructor(
                             year = if (data.dateField.hasChanged) data.dateField.currentValue?.toIntOrNull() else song.year,
                             genres = if (data.genreField.hasChanged) data.genreField.currentValue?.split(",").orEmpty().map { it.trim() } else song.genres,
                             track = if (data.trackField.hasChanged) data.trackField.currentValue?.toIntOrNull() else song.track,
-                            disc = if (data.discField.hasChanged) data.discField.currentValue?.toIntOrNull() else song.disc
+                            disc = if (data.discField.hasChanged) data.discField.currentValue?.toIntOrNull() else song.disc,
+                            lyrics = if (data.lyricsField.hasChanged) data.lyricsField.currentValue else song.lyrics
                         )
                     )
 

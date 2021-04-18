@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -220,7 +219,7 @@
             app:layout_constraintHorizontal_bias="0"
             app:layout_constraintHorizontal_chainStyle="packed"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/trackInputLayout"
+            app:layout_constraintTop_toBottomOf="@+id/trackTotalInputLayout"
             tools:visibility="visible">
 
             <com.google.android.material.textfield.TextInputEditText
@@ -283,12 +282,35 @@
 
         </com.google.android.material.textfield.TextInputLayout>
 
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/lyricsInputLayout"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:hint="Lyrics"
+            app:endIconDrawable="@drawable/ic_baseline_undo_12"
+            app:endIconMode="custom"
+            app:helperTextTextColor="?helperTextTextColor"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/genreInputLayout">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/lyricsEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textMultiLine|textCapSentences"
+                android:minLines="2" />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
         <androidx.constraintlayout.widget.Group
             android:id="@+id/uiGroup"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:visibility="invisible"
-            app:constraint_referenced_ids="titleInputLayout, artistInputLayout, albumInputLayout, albumArtistInputLayout, yearInputLayout, trackInputLayout, trackTotalInputLayout, discInputLayout, discTotalInputLayout, genreInputLayout"
+            app:constraint_referenced_ids="titleInputLayout, artistInputLayout, albumInputLayout, albumArtistInputLayout, yearInputLayout, trackInputLayout, trackTotalInputLayout, discInputLayout, discTotalInputLayout, genreInputLayout, lyricsInputLayout"
             tools:visibility="visible" />
 
         <com.simplecityapps.shuttle.ui.common.view.CircularLoadingView

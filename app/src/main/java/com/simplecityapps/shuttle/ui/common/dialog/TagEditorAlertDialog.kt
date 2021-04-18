@@ -67,6 +67,9 @@ class TagEditorAlertDialog : DialogFragment(), Injectable, TagEditorContract.Vie
     private var genreInputLayout: TextInputLayout by autoCleared()
     private var genreEditText: EditText by autoCleared()
 
+    private var lyricsInputLayout: TextInputLayout by autoCleared()
+    private var lyricsEditText: EditText by autoCleared()
+
 
     // Lifecycle
 
@@ -127,11 +130,15 @@ class TagEditorAlertDialog : DialogFragment(), Injectable, TagEditorContract.Vie
         genreEditText = view.findViewById(R.id.genreEditText)
         genreInputLayout.isEndIconVisible = false
 
+        lyricsInputLayout = view.findViewById(R.id.lyricsInputLayout)
+        lyricsEditText = view.findViewById(R.id.lyricsEditText)
+        lyricsInputLayout.isEndIconVisible = false
+
         val dialog = MaterialAlertDialogBuilder(requireContext())
             .setTitle("Edit Tags")
             .setView(view)
             .setNegativeButton("Close", null)
-            .setPositiveButton("Save") { _, _ -> genreInputLayout.closeKeyboard() }
+            .setPositiveButton("Save") { _, _ -> lyricsInputLayout.closeKeyboard() }
             .create()
 
         dialog.setOnShowListener {
@@ -282,7 +289,18 @@ class TagEditorAlertDialog : DialogFragment(), Injectable, TagEditorContract.Vie
                 genreInputLayout.helperText = "Multiple values"
             }
         }
+
         setupResetButton(genreInputLayout, genreEditText, _data.genreField, textChangeListener)
+
+        data.lyricsField.apply {
+            lyricsEditText.setText(initialValue)
+            lyricsInputLayout.isVisible = visible
+            if (hasMultipleValues) {
+                lyricsInputLayout.helperText = "Multiple values"
+            }
+        }
+
+        setupResetButton(lyricsInputLayout, lyricsEditText, _data.lyricsField, textChangeListener)
     }
 
     override fun setLoading(loadingState: TagEditorContract.LoadingState) {
