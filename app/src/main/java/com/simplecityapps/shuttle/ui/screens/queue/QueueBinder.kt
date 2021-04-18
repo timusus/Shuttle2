@@ -10,6 +10,7 @@ import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
+import com.simplecityapps.mediaprovider.model.friendlyArtistName
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.PlaybackWatcher
@@ -114,7 +115,7 @@ class QueueBinder(
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.queueItem.song.name
-            subtitle.text = "${viewBinder.queueItem.song.albumArtist} • ${viewBinder.queueItem.song.album}"
+            subtitle.text = "${viewBinder.queueItem.song.friendlyArtistName} • ${viewBinder.queueItem.song.album}"
             tertiary.text = viewBinder.queueItem.song.duration.toHms("--:--")
 
             viewBinder.imageLoader.loadArtwork(
