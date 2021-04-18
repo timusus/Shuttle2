@@ -19,6 +19,7 @@ import com.simplecityapps.shuttle.ui.common.view.increaseTouchableArea
 import com.simplecityapps.shuttle.ui.common.viewbinders.DetailSongBinder
 import com.simplecityapps.shuttle.ui.common.viewbinders.DiscNumberBinder
 import kotlinx.coroutines.CoroutineScope
+import java.util.*
 
 class ExpandableAlbumBinder(
     val album: Album,
@@ -47,7 +48,7 @@ class ExpandableAlbumBinder(
     }
 
     override fun getSectionName(): String? {
-        return album.sortKey?.firstOrNull().toString()
+        return album.groupKey?.album?.firstOrNull()?.toString()?.toUpperCase(Locale.getDefault())
     }
 
     override fun equals(other: Any?): Boolean {

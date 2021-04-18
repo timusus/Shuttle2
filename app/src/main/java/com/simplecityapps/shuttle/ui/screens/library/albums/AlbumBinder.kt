@@ -7,6 +7,7 @@ import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.screens.home.search.AlbumJaroSimilarity
+import java.util.*
 
 abstract class AlbumBinder(
     val album: Album,
@@ -25,7 +26,7 @@ abstract class AlbumBinder(
     }
 
     override fun getSectionName(): String? {
-        return album.sortKey?.firstOrNull().toString()
+        return album.groupKey?.album?.firstOrNull()?.toString()?.toUpperCase(Locale.getDefault())
     }
 
     override fun equals(other: Any?): Boolean {

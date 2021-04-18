@@ -4,7 +4,6 @@ import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.Song
-import com.simplecityapps.mediaprovider.model.removeArticles
 import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.queue.QueueManager
@@ -20,6 +19,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.*
 import javax.inject.Inject
 
 class AlbumListContract {
@@ -229,8 +229,8 @@ class AlbumListPresenter @Inject constructor(
 
     override fun getFastscrollPrefix(album: Album): String? {
         return when (sortPreferenceManager.sortOrderAlbumList) {
-            AlbumSortOrder.AlbumName -> album.sortKey?.firstOrNull().toString()
-            AlbumSortOrder.ArtistName -> album.albumArtist?.removeArticles()?.firstOrNull()?.toString()
+            AlbumSortOrder.AlbumName -> album.groupKey?.album?.firstOrNull()?.toString()?.toUpperCase(Locale.getDefault())
+            AlbumSortOrder.ArtistGroupKey -> album.groupKey?.artistGroupKey?.key?.firstOrNull()?.toString()?.toUpperCase(Locale.getDefault())
             AlbumSortOrder.Year -> album.year.toString()
             else -> null
         }

@@ -8,11 +8,11 @@ import kotlinx.coroutines.CoroutineScope
 open class SectionedAdapter(scope: CoroutineScope) : RecyclerAdapter(scope), FastScrollRecyclerView.SectionedAdapter {
 
     override fun getSectionName(position: Int): String {
-        return getSectionName(items.getOrNull(position))
+        return getSectionName(items.getOrNull(position)) ?: ""
     }
 
-    open fun getSectionName(viewBinder: ViewBinder?): String {
-        return (viewBinder as? SectionViewBinder)?.getSectionName() ?: ""
+    open fun getSectionName(viewBinder: ViewBinder?): String? {
+        return (viewBinder as? SectionViewBinder)?.getSectionName()
     }
 }
 

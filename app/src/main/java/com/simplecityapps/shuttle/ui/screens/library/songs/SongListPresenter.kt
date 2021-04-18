@@ -6,7 +6,6 @@ import androidx.documentfile.provider.DocumentFile
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.Song
-import com.simplecityapps.mediaprovider.model.removeArticles
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.mediaprovider.repository.SongSortOrder
@@ -23,7 +22,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import timber.log.Timber
+import java.util.*
 import javax.inject.Inject
 
 interface SongListContract {
@@ -103,7 +102,6 @@ class SongListPresenter @Inject constructor(
                 .distinctUntilChanged()
                 .flowOn(Dispatchers.IO)
                 .collect { songs ->
-                    Timber.i("Lyrics: ${songs.filter { it.lyrics != null }.joinToString(", ") { it.name ?: "" }}")
                     this@SongListPresenter.songs = songs
                     if (songs.isEmpty()) {
                         if (mediaImporter.isImporting) {
@@ -191,8 +189,8 @@ class SongListPresenter @Inject constructor(
     override fun getFastscrollPrefix(song: Song): String? {
         return when (sortPreferenceManager.sortOrderSongList) {
             SongSortOrder.SongName -> song.name?.firstOrNull()?.toString()
-            SongSortOrder.AlbumArtistName -> song.albumArtist?.removeArticles()?.firstOrNull()?.toString()
-            SongSortOrder.AlbumName -> song.album?.removeArticles()?.firstOrNull()?.toString()
+            SongSortOrder.ArtistGroupKeyComparator -> song.artistGroupKey.key?.firstOrNull()?.toString()?.toUpperCase(Locale.getDefault())
+            SongSortOrder.AlbumName -> song.albumGroupKey.album?.firstOrNull()?.toString()?.toUpperCase(Locale.getDefault())
             SongSortOrder.Year -> song.year.toString()
             else -> null
         }

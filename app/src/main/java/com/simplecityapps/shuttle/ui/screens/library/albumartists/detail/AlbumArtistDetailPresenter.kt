@@ -91,7 +91,7 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
 
     override fun loadData() {
         launch {
-            albumRepository.getAlbums(AlbumQuery.ArtistGroupKey(albumArtist.groupKey))
+            albumRepository.getAlbums(AlbumQuery.ArtistGroupKey(albumArtist?.groupKey))
                 .combine(
                     songRepository
                         .getSongs(

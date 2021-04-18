@@ -38,7 +38,7 @@ open class SongQuery(
             providerType = providerType
         )
 
-    class ArtistGroupKey(val key: com.simplecityapps.mediaprovider.model.ArtistGroupKey) :
+    class ArtistGroupKey(val key: com.simplecityapps.mediaprovider.model.ArtistGroupKey?) :
         SongQuery(
             predicate = { song -> song.artistGroupKey == key }
         )
@@ -98,14 +98,14 @@ open class SongQuery(
 }
 
 enum class SongSortOrder : Serializable {
-    Default, SongName, AlbumArtistName, AlbumName, Year, Duration, Track, PlayCount, RecentlyAdded, RecentlyPlayed;
+    Default, SongName, ArtistGroupKeyComparator, AlbumName, Year, Duration, Track, PlayCount, RecentlyAdded, RecentlyPlayed;
 
     val comparator: Comparator<Song>
         get() {
             return when (this) {
                 Default -> defaultComparator
                 SongName -> songNameComparator
-                AlbumArtistName -> artistNameComparator
+                ArtistGroupKeyComparator -> artistGroupKeyComparator
                 AlbumName -> albumNameComparator
                 Year -> yearComparator
                 Duration -> durationComparator
@@ -120,13 +120,8 @@ enum class SongSortOrder : Serializable {
         private val collator: Collator by lazy { Collator.getInstance().apply { strength = Collator.TERTIARY } }
         val defaultComparator: Comparator<Song> by lazy { compareBy({ song -> song.album }, { song -> song.disc }, { song -> song.track }) }
         val songNameComparator: Comparator<Song> by lazy { Comparator<Song> { a, b -> collator.compare(a.name, b.name) }.then(defaultComparator) }
-        val artistNameComparator: Comparator<Song> by lazy {
-            Comparator<Song> { a, b ->
-                collator.compare(
-                    a.albumArtist?.removeArticles(),
-                    b.albumArtist?.removeArticles()
-                )
-            }.then(compareBy { song -> song.album }).then(defaultComparator)
+        val artistGroupKeyComparator: Comparator<Song> by lazy {
+            Comparator<Song> { a, b -> collator.compare(a.artistGroupKey.key ?: "", b.artistGroupKey.key ?: "") }.then(compareBy { song -> song.album }).then(defaultComparator)
         }
         val albumNameComparator: Comparator<Song> by lazy { Comparator<Song> { a, b -> collator.compare(a.album?.removeArticles(), b.album?.removeArticles()) }.then(defaultComparator) }
         val yearComparator: Comparator<Song> by lazy {

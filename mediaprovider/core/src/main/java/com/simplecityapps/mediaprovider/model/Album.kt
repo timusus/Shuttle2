@@ -23,8 +23,7 @@ data class Album(
     val duration: Int,
     val year: Int?,
     val playCount: Int,
-    val groupKey: AlbumGroupKey,
-    val sortKey: String? = groupKey.album
+    val groupKey: AlbumGroupKey?
 ) : Parcelable
 
 val Album.friendlyArtistName: String

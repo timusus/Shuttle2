@@ -6,7 +6,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -81,10 +80,10 @@ class AlbumListFragment :
         playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
 
         adapter = object : SectionedAdapter(viewLifecycleOwner.lifecycleScope) {
-            override fun getSectionName(viewBinder: ViewBinder?): String {
+            override fun getSectionName(viewBinder: ViewBinder?): String? {
                 return (viewBinder as? AlbumBinder)?.album?.let { album ->
                     presenter.getFastscrollPrefix(album)
-                } ?: ""
+                }
             }
         }
         recyclerView = view.findViewById(R.id.recyclerView)
@@ -169,7 +168,7 @@ class AlbumListFragment :
                             true
                         }
                         R.id.sortArtistName -> {
-                            presenter.setSortOrder(AlbumSortOrder.ArtistName)
+                            presenter.setSortOrder(AlbumSortOrder.ArtistGroupKey)
                             true
                         }
                         R.id.sortAlbumYear -> {
@@ -255,7 +254,7 @@ class AlbumListFragment :
         findToolbarHost()?.toolbar?.menu?.let { menu ->
             when (sortOrder) {
                 AlbumSortOrder.AlbumName -> menu.findItem(R.id.sortAlbumName)?.isChecked = true
-                AlbumSortOrder.ArtistName -> menu.findItem(R.id.sortArtistName)?.isChecked = true
+                AlbumSortOrder.ArtistGroupKey -> menu.findItem(R.id.sortArtistName)?.isChecked = true
                 AlbumSortOrder.Year -> menu.findItem(R.id.sortAlbumYear)?.isChecked = true
                 else -> {
                     // Nothing to do
