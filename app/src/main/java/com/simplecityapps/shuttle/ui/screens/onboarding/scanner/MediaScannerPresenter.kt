@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.onboarding.scanner
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.mediaprovider.model.friendlyArtistName
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.squareup.inject.assisted.Assisted
@@ -99,7 +100,7 @@ class ScannerPresenter @AssistedInject constructor(
         }
 
         override fun onProgress(providerType: MediaProvider.Type, progress: Int, total: Int, song: Song) {
-            view?.setProgress(progress, total, "${song.albumArtist} - ${song.name}")
+            view?.setProgress(progress, total, "${song.friendlyArtistName} - ${song.name}")
         }
 
         override fun onComplete(providerType: MediaProvider.Type, inserts: Int, updates: Int, deletes: Int) {
