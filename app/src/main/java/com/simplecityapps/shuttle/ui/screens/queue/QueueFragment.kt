@@ -10,6 +10,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.Toolbar
+import androidx.core.view.children
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -47,11 +48,11 @@ class QueueFragment :
     QueueContract.View,
     CreatePlaylistDialogFragment.Listener {
 
-    private var adapter: RecyclerAdapter by autoCleared()
+    @Inject
+    lateinit var imageLoader: ArtworkImageLoader
 
-    @Inject lateinit var imageLoader: ArtworkImageLoader
-
-    private var recyclerView: FastScrollRecyclerView by autoCleared()
+    private var adapter: RecyclerAdapter? = null
+    private var recyclerView: FastScrollRecyclerView? = null
 
     private var toolbar: Toolbar by autoCleared()
     private var toolbarTitleTextView: TextView by autoCleared()
@@ -59,13 +60,17 @@ class QueueFragment :
     private var progressBar: ProgressBar by autoCleared()
     private var emptyLabel: TextView by autoCleared()
 
-    @Inject lateinit var presenter: QueuePresenter
+    @Inject
+    lateinit var presenter: QueuePresenter
 
-    @Inject lateinit var playlistMenuPresenter: PlaylistMenuPresenter
+    @Inject
+    lateinit var playlistMenuPresenter: PlaylistMenuPresenter
 
-    @Inject lateinit var playbackWatcher: PlaybackWatcher
+    @Inject
+    lateinit var playbackWatcher: PlaybackWatcher
 
-    @Inject lateinit var playbackManager: PlaybackManager
+    @Inject
+    lateinit var playbackManager: PlaybackManager
 
     private var recyclerViewState: Parcelable? = null
 
@@ -86,8 +91,8 @@ class QueueFragment :
         adapter = RecyclerAdapter(viewLifecycleOwner.lifecycleScope)
 
         recyclerView = view.findViewById(R.id.recyclerView)
-        recyclerView.adapter = adapter
-        recyclerView.setRecyclerListener(RecyclerListener())
+        recyclerView?.adapter = adapter
+        recyclerView?.setRecyclerListener(RecyclerListener())
         itemTouchHelper.attachToRecyclerView(recyclerView)
 
         toolbarTitleTextView = view.findViewById(R.id.toolbarTitleTextView)
@@ -130,7 +135,7 @@ class QueueFragment :
     override fun onPause() {
         super.onPause()
 
-        recyclerViewState = recyclerView.layoutManager?.onSaveInstanceState()
+        recyclerViewState = recyclerView?.layoutManager?.onSaveInstanceState()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -145,6 +150,16 @@ class QueueFragment :
         itemTouchHelper.attachToRecyclerView(null)
         view.findParentMultiSheetView()?.removeSheetStateChangeListener(sheetStateChangeListener)
 
+        recyclerView?.children
+            ?.map { child -> recyclerView?.getChildViewHolder(child) }
+            ?.filterIsInstance<QueueBinder.ViewHolder>()
+            ?.forEach { viewHolder ->
+                playbackWatcher.removeCallback(viewHolder)
+            }
+
+        adapter = null
+        recyclerView = null
+
         super.onDestroyView()
     }
 
@@ -158,10 +173,10 @@ class QueueFragment :
     // QueueContract.View Implementation
 
     override fun setData(queue: List<QueueItem>, progress: Float, playbackState: PlaybackState) {
-        adapter.update(queue.map { queueItem -> QueueBinder(queueItem, playbackState, progress, imageLoader, playbackManager, playbackWatcher, queueBinderListener) },
+        adapter?.update(queue.map { queueItem -> QueueBinder(queueItem, playbackState, progress, imageLoader, playbackManager, playbackWatcher, queueBinderListener) },
             completion = {
                 recyclerViewState?.let {
-                    recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
+                    recyclerView?.layoutManager?.onRestoreInstanceState(recyclerViewState)
                     recyclerViewState = null
                 }
             })
@@ -185,11 +200,11 @@ class QueueFragment :
 
     override fun scrollToPosition(position: Int, fromUser: Boolean) {
         if (fromUser) {
-            recyclerView.scrollToPosition(position)
+            recyclerView?.scrollToPosition(position)
         } else {
             view?.findParentMultiSheetView()?.let { multiSheetView ->
                 if (multiSheetView.currentSheet != MultiSheetView.Sheet.SECOND) {
-                    recyclerView.scrollToPosition(position)
+                    recyclerView?.scrollToPosition(position)
                 }
             }
         }
