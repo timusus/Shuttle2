@@ -25,6 +25,7 @@ import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.recyclerview.SnapOnScrollListener
@@ -158,6 +159,8 @@ class PlaybackFragment :
         recyclerView.addItemDecoration(SpacesItemDecoration(8))
 
         toolbar.inflateMenu(R.menu.menu_playback)
+        queueManager.getCurrentItem()?.song?.let { song -> TagEditorMenuSanitiser.sanitise(toolbar.menu, listOf(song.mediaProvider)) }
+
         toolbar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.sleepTimer -> {

@@ -8,12 +8,12 @@ import kotlinx.parcelize.Parcelize
 interface MediaProvider {
 
     @Parcelize
-    enum class Type(val isRemote: Boolean) : Parcelable {
-        Shuttle(false),
-        MediaStore(false),
-        Emby(true),
-        Jellyfin(true),
-        Plex(true);
+    enum class Type(val isRemote: Boolean, val supportsTagEditing: Boolean) : Parcelable {
+        Shuttle(isRemote = false, supportsTagEditing = true),
+        MediaStore(isRemote = false, supportsTagEditing = false),
+        Emby(isRemote = true, supportsTagEditing = false),
+        Jellyfin(isRemote = true, supportsTagEditing = false),
+        Plex(isRemote = true, supportsTagEditing = false);
 
         companion object {
             fun init(ordinal: Int): Type {

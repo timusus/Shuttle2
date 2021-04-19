@@ -28,6 +28,7 @@ import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
@@ -215,6 +216,7 @@ class QueueFragment :
             viewHolder.viewBinder?.queueItem?.let { queueItem ->
                 val popupMenu = PopupMenu(requireContext(), viewHolder.itemView)
                 popupMenu.inflate(R.menu.menu_queue_item)
+                TagEditorMenuSanitiser.sanitise(popupMenu.menu, listOf(queueItem.song.mediaProvider))
                 popupMenu.menu.findItem(R.id.playNext).isVisible = queueItem.isCurrent == false
                 popupMenu.setOnMenuItemClickListener {
                     when (it.itemId) {

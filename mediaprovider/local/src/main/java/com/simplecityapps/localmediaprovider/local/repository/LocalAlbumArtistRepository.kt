@@ -23,7 +23,8 @@ class LocalAlbumArtistRepository(val scope: CoroutineScope, private val songData
                             albumCount = songs.distinctBy { it.album }.size,
                             songCount = songs.size,
                             playCount = songs.minOfOrNull { it.playCount } ?: 0,
-                            groupKey = key
+                            groupKey = key,
+                            mediaProviders = songs.map { it.mediaProvider }.distinct()
                         )
                     }
             }

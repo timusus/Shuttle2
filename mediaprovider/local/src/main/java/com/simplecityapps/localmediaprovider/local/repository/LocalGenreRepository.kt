@@ -45,7 +45,7 @@ class LocalGenreRepository(
             .map { genres ->
                 genres
                     .map { entry ->
-                        Genre(entry.key, entry.value.size, entry.value.sumBy { song -> song.duration })
+                        Genre(entry.key, entry.value.size, entry.value.sumBy { song -> song.duration }, entry.value.map { song -> song.mediaProvider }.distinct())
                     }
                     .filter(query.predicate)
                     .toMutableList()

@@ -27,6 +27,7 @@ import com.simplecityapps.mediaprovider.repository.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
@@ -53,17 +54,21 @@ class HomeFragment :
     HomeContract.View,
     CreatePlaylistDialogFragment.Listener {
 
-    @Inject lateinit var presenter: HomePresenter
+    @Inject
+    lateinit var presenter: HomePresenter
 
-    @Inject lateinit var playlistMenuPresenter: PlaylistMenuPresenter
+    @Inject
+    lateinit var playlistMenuPresenter: PlaylistMenuPresenter
 
-    @Inject lateinit var playlistRepository: PlaylistRepository
+    @Inject
+    lateinit var playlistRepository: PlaylistRepository
 
     private var recyclerView: RecyclerView by autoCleared()
 
     private var adapter: RecyclerAdapter by autoCleared()
 
-    @Inject lateinit var imageLoader: ArtworkImageLoader
+    @Inject
+    lateinit var imageLoader: ArtworkImageLoader
 
     private lateinit var playlistMenuView: PlaylistMenuView
 
@@ -260,6 +265,7 @@ class HomeFragment :
         override fun onOverflowClicked(view: View, albumArtist: AlbumArtist) {
             val popupMenu = PopupMenu(requireContext(), view)
             popupMenu.inflate(R.menu.menu_popup)
+            TagEditorMenuSanitiser.sanitise(popupMenu.menu, albumArtist.mediaProviders)
 
             playlistMenuView.createPlaylistMenu(popupMenu.menu)
 
@@ -324,6 +330,7 @@ class HomeFragment :
         override fun onOverflowClicked(view: View, album: Album) {
             val popupMenu = PopupMenu(requireContext(), view)
             popupMenu.inflate(R.menu.menu_popup)
+            TagEditorMenuSanitiser.sanitise(popupMenu.menu, album.mediaProviders)
 
             playlistMenuView.createPlaylistMenu(popupMenu.menu)
 

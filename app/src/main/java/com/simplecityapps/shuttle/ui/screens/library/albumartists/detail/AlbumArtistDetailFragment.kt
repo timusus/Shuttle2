@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.LayoutInflater
-import android.view.MenuInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -34,6 +33,7 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.model.friendlyName
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.autoClearedNullable
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
@@ -133,7 +133,9 @@ class AlbumArtistDetailFragment :
         toolbar = view.findViewById(R.id.toolbar)
         toolbar.let { toolbar ->
             toolbar.setNavigationOnClickListener { NavHostFragment.findNavController(this).popBackStack() }
-            MenuInflater(context).inflate(R.menu.menu_album_artist_detail, toolbar.menu)
+            toolbar.inflateMenu(R.menu.menu_album_artist_detail)
+            TagEditorMenuSanitiser.sanitise(toolbar.menu, albumArtist.mediaProviders)
+
             playlistMenuView.createPlaylistMenu(toolbar.menu)
             toolbar.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
@@ -304,6 +306,7 @@ class AlbumArtistDetailFragment :
     override fun onOverflowClicked(view: View, song: Song) {
         val popupMenu = PopupMenu(requireContext(), view)
         popupMenu.inflate(R.menu.menu_popup_song)
+        TagEditorMenuSanitiser.sanitise(popupMenu.menu, listOf(song.mediaProvider))
 
         playlistMenuView.createPlaylistMenu(popupMenu.menu)
 
@@ -364,6 +367,7 @@ class AlbumArtistDetailFragment :
     override fun onOverflowClicked(view: View, album: Album) {
         val popupMenu = PopupMenu(requireContext(), view)
         popupMenu.inflate(R.menu.menu_popup)
+        TagEditorMenuSanitiser.sanitise(popupMenu.menu, album.mediaProviders)
 
         playlistMenuView.createPlaylistMenu(popupMenu.menu)
 
@@ -415,6 +419,7 @@ class AlbumArtistDetailFragment :
         override fun onOverflowClicked(view: View, song: Song) {
             val popupMenu = PopupMenu(requireContext(), view)
             popupMenu.inflate(R.menu.menu_popup_song)
+            TagEditorMenuSanitiser.sanitise(popupMenu.menu, listOf(song.mediaProvider))
 
             playlistMenuView.createPlaylistMenu(popupMenu.menu)
 

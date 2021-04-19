@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.LayoutInflater
-import android.view.MenuInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -28,6 +27,7 @@ import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.autoClearedNullable
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
@@ -151,7 +151,9 @@ class AlbumDetailFragment :
             toolbar.setNavigationOnClickListener {
                 NavHostFragment.findNavController(this).popBackStack()
             }
-            MenuInflater(context).inflate(R.menu.menu_album_detail, toolbar.menu)
+            toolbar.inflateMenu(R.menu.menu_album_detail)
+            TagEditorMenuSanitiser.sanitise(toolbar.menu, album.mediaProviders)
+
             playlistMenuView.createPlaylistMenu(toolbar.menu)
             toolbar.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
@@ -252,6 +254,7 @@ class AlbumDetailFragment :
         override fun onOverflowClicked(view: View, song: Song) {
             val popupMenu = PopupMenu(requireContext(), view)
             popupMenu.inflate(R.menu.menu_popup_song)
+            TagEditorMenuSanitiser.sanitise(popupMenu.menu, listOf(song.mediaProvider))
 
             playlistMenuView.createPlaylistMenu(popupMenu.menu)
 

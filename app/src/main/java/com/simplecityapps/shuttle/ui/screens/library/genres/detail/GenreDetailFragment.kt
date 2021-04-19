@@ -23,6 +23,7 @@ import com.simplecityapps.mediaprovider.model.Genre
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
@@ -92,6 +93,7 @@ class GenreDetailFragment :
                 NavHostFragment.findNavController(this).popBackStack()
             }
             MenuInflater(context).inflate(R.menu.menu_album_detail, toolbar.menu)
+            TagEditorMenuSanitiser.sanitise(toolbar.menu, genre.mediaProviders)
             playlistMenuView.createPlaylistMenu(toolbar.menu)
             toolbar.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {

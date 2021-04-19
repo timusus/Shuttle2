@@ -19,6 +19,7 @@ import com.simplecityapps.mediaprovider.model.Genre
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
@@ -187,6 +188,7 @@ class GenreListFragment :
     override fun onOverflowClicked(view: View, genre: Genre) {
         val popupMenu = PopupMenu(requireContext(), view)
         popupMenu.inflate(R.menu.menu_popup)
+        TagEditorMenuSanitiser.sanitise(popupMenu.menu, genre.mediaProviders)
 
         playlistMenuView.createPlaylistMenu(popupMenu.menu)
 

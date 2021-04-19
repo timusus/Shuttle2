@@ -23,6 +23,7 @@ import com.simplecityapps.mediaprovider.model.friendlyName
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.ContextualToolbarHelper
+import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
@@ -48,15 +49,18 @@ class AlbumArtistListFragment :
 
     private var adapter: RecyclerAdapter by autoCleared()
 
-    @Inject lateinit var imageLoader: ArtworkImageLoader
+    @Inject
+    lateinit var imageLoader: ArtworkImageLoader
 
     private var recyclerView: RecyclerView by autoCleared()
     private var circularLoadingView: CircularLoadingView by autoCleared()
     private var horizontalLoadingView: HorizontalLoadingView by autoCleared()
 
-    @Inject lateinit var presenter: AlbumArtistListPresenter
+    @Inject
+    lateinit var presenter: AlbumArtistListPresenter
 
-    @Inject lateinit var playlistMenuPresenter: PlaylistMenuPresenter
+    @Inject
+    lateinit var playlistMenuPresenter: PlaylistMenuPresenter
 
     private lateinit var playlistMenuView: PlaylistMenuView
 
@@ -153,6 +157,7 @@ class AlbumArtistListFragment :
             contextualToolbar?.let { contextualToolbar ->
                 contextualToolbar.menu.clear()
                 contextualToolbar.inflateMenu(R.menu.menu_multi_select)
+                TagEditorMenuSanitiser.sanitise(contextualToolbar.menu, contextualToolbarHelper.selectedItems.flatMap { it.mediaProviders }.distinct())
                 contextualToolbar.setOnMenuItemClickListener { menuItem ->
                     playlistMenuView.createPlaylistMenu(contextualToolbar.menu)
                     if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.AlbumArtists(contextualToolbarHelper.selectedItems.toList()))) {
@@ -288,6 +293,7 @@ class AlbumArtistListFragment :
     override fun onOverflowClicked(view: View, albumArtist: AlbumArtist) {
         val popupMenu = PopupMenu(requireContext(), view)
         popupMenu.inflate(R.menu.menu_popup)
+        TagEditorMenuSanitiser.sanitise(popupMenu.menu, albumArtist.mediaProviders)
 
         playlistMenuView.createPlaylistMenu(popupMenu.menu)
 
@@ -344,6 +350,9 @@ class AlbumArtistListFragment :
 
         override fun onCountChanged(count: Int) {
             contextualToolbarHelper.contextualToolbar?.title = "$count selected"
+            contextualToolbarHelper.contextualToolbar?.menu?.let { menu ->
+                TagEditorMenuSanitiser.sanitise(menu, contextualToolbarHelper.selectedItems.flatMap { albumArtist -> albumArtist.mediaProviders }.distinct())
+            }
         }
 
         override fun onItemUpdated(item: AlbumArtist, isSelected: Boolean) {

@@ -29,6 +29,7 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.model.friendlyName
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.closeKeyboard
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
@@ -269,6 +270,7 @@ class SearchFragment : Fragment(),
         override fun onOverflowClicked(view: View, song: Song) {
             val popupMenu = PopupMenu(requireContext(), view)
             popupMenu.inflate(R.menu.menu_popup_song)
+            TagEditorMenuSanitiser.sanitise(popupMenu.menu, listOf(song.mediaProvider))
 
             playlistMenuView.createPlaylistMenu(popupMenu.menu)
 
@@ -346,6 +348,7 @@ class SearchFragment : Fragment(),
         override fun onOverflowClicked(view: View, albumArtist: AlbumArtist) {
             val popupMenu = PopupMenu(requireContext(), view)
             popupMenu.inflate(R.menu.menu_popup)
+            TagEditorMenuSanitiser.sanitise(popupMenu.menu, albumArtist.mediaProviders)
 
             playlistMenuView.createPlaylistMenu(popupMenu.menu)
 
@@ -401,6 +404,7 @@ class SearchFragment : Fragment(),
         override fun onOverflowClicked(view: View, album: Album) {
             val popupMenu = PopupMenu(requireContext(), view)
             popupMenu.inflate(R.menu.menu_popup)
+            TagEditorMenuSanitiser.sanitise(popupMenu.menu, album.mediaProviders)
 
             playlistMenuView.createPlaylistMenu(popupMenu.menu)
 

@@ -26,6 +26,8 @@ class LocalAlbumRepository(private val scope: CoroutineScope, private val songDa
                             year = songs.mapNotNull { it.year }.minOrNull(),
                             playCount = songs.minOfOrNull { it.playCount } ?: 0,
                             groupKey = key,
+                            mediaProviders = songs.map { it.mediaProvider }.distinct()
+
                         )
                     }
             }

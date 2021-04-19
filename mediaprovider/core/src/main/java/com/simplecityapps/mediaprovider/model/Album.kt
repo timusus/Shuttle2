@@ -2,6 +2,7 @@ package com.simplecityapps.mediaprovider.model
 
 import android.os.Parcelable
 import androidx.annotation.Keep
+import com.simplecityapps.mediaprovider.MediaProvider
 import kotlinx.parcelize.Parcelize
 import java.util.*
 
@@ -23,7 +24,8 @@ data class Album(
     val duration: Int,
     val year: Int?,
     val playCount: Int,
-    val groupKey: AlbumGroupKey?
+    val groupKey: AlbumGroupKey?,
+    val mediaProviders: List<MediaProvider.Type>
 ) : Parcelable
 
 val Album.friendlyArtistName: String
