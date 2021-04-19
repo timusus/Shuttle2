@@ -47,14 +47,14 @@ class RepositoryModule {
 
     @Provides
     @AppScope
-    fun providePlaylistRepository(database: MediaDatabase): PlaylistRepository {
-        return LocalPlaylistRepository(database.playlistDataDao(), database.playlistSongJoinDataDao())
+    fun providePlaylistRepository(database: MediaDatabase, @Named("AppCoroutineScope") appCoroutineScope: CoroutineScope): PlaylistRepository {
+        return LocalPlaylistRepository(appCoroutineScope, database.playlistDataDao(), database.playlistSongJoinDataDao())
     }
 
     @Provides
     @AppScope
-    fun provideGenreRepository(songRepository: SongRepository): GenreRepository {
-        return LocalGenreRepository(songRepository)
+    fun provideGenreRepository(songRepository: SongRepository, @Named("AppCoroutineScope") appCoroutineScope: CoroutineScope): GenreRepository {
+        return LocalGenreRepository(appCoroutineScope, songRepository)
     }
 
     @Provides

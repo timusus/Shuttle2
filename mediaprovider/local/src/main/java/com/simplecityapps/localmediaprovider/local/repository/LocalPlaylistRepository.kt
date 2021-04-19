@@ -14,41 +14,32 @@ import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongSortOrder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 class LocalPlaylistRepository(
+    private val scope: CoroutineScope,
     private val playlistDataDao: PlaylistDataDao,
     private val playlistSongJoinDao: PlaylistSongJoinDao
 ) : PlaylistRepository {
 
-    private val playlistsRelay: Flow<List<Playlist>> by lazy {
-        ConflatedBroadcastChannel<List<Playlist>?>(null)
-            .apply {
-                CoroutineScope(Dispatchers.IO)
-                    .launch {
-                        playlistDataDao
-                            .getAll()
-                            .collect { playlists ->
-                                send(playlists)
-                            }
-                    }
-            }
-            .asFlow()
+    private val playlistsRelay: StateFlow<List<Playlist>?> by lazy {
+        playlistDataDao
+            .getAll()
             .flowOn(Dispatchers.IO)
-            .filterNotNull()
+            .stateIn(scope, SharingStarted.WhileSubscribed(), null)
     }
 
     override fun getPlaylists(query: PlaylistQuery): Flow<List<Playlist>> {
-        return playlistsRelay.map { playlists ->
-            playlists
-                .filter(query.predicate)
-                .toMutableList()
-                .sortedWith(query.sortOrder.comparator)
-        }
+        return playlistsRelay
+            .filterNotNull()
+            .map { playlists ->
+                playlists
+                    .filter(query.predicate)
+                    .toMutableList()
+                    .sortedWith(query.sortOrder.comparator)
+            }
     }
 
     override fun getSmartPlaylists(): Flow<List<SmartPlaylist>> {
@@ -64,7 +55,10 @@ class LocalPlaylistRepository(
 
     override suspend fun getFavoritesPlaylist(): Playlist {
         return withContext(Dispatchers.IO) {
-            playlistsRelay.firstOrNull()?.firstOrNull { it.name == "Favorites" } ?: createPlaylist("Favorites", null, null)
+            playlistsRelay
+                .filterNotNull()
+                .firstOrNull()
+                ?.firstOrNull { it.name == "Favorites" } ?: createPlaylist("Favorites", null, null)
         }
     }
 

@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.*
 
 class LocalAlbumArtistRepository(val scope: CoroutineScope, private val songDataDao: SongDataDao) : AlbumArtistRepository {
 
-    private val albumArtistsRelay: StateFlow<List<AlbumArtist>> by lazy {
+    private val albumArtistsRelay: StateFlow<List<AlbumArtist>?> by lazy {
         songDataDao
             .getAll()
             .map { songs ->
@@ -29,11 +29,12 @@ class LocalAlbumArtistRepository(val scope: CoroutineScope, private val songData
                     }
             }
             .flowOn(Dispatchers.IO)
-            .stateIn(scope, SharingStarted.WhileSubscribed(), emptyList())
+            .stateIn(scope, SharingStarted.WhileSubscribed(), null)
     }
 
     override fun getAlbumArtists(query: AlbumArtistQuery): Flow<List<AlbumArtist>> {
         return albumArtistsRelay
+            .filterNotNull()
             .map { albumArtists ->
                 albumArtists
                     .filter(query.predicate)
