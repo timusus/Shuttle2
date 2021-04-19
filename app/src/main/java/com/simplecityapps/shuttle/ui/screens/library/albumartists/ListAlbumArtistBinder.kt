@@ -86,8 +86,8 @@ class ListAlbumArtistBinder(
         private fun highlightMatchedStrings(viewBinder: AlbumArtistBinder) {
             viewBinder.jaroSimilarity?.let {
                 val nameStringBuilder = SpannableStringBuilder(viewBinder.albumArtist.friendlyName)
-                if (it.nameJaroSimilarity.score > 0.8) {
-                    it.nameJaroSimilarity.bMatchedIndices.forEach { (index, score) ->
+                if (it.albumArtistNameJaroSimilarity.score > 0.8) {
+                    it.albumArtistNameJaroSimilarity.bMatchedIndices.forEach { (index, score) ->
                         try {
                             nameStringBuilder.setSpan(
                                 ForegroundColorSpan(ArgbEvaluator().evaluate(score.toFloat() - 0.25f, textColor, accentColor) as Int),

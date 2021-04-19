@@ -105,8 +105,8 @@ class ListAlbumBinder(
                 title.text = nameStringBuilder
 
                 val artistNameStringBuilder = SpannableStringBuilder(viewBinder.album.albumArtist)
-                if (it.artistNameJaroSimilarity.score > 0.8) {
-                    it.artistNameJaroSimilarity.bMatchedIndices.forEach { (index, score) ->
+                if (it.albumArtistNameJaroSimilarity.score > 0.8) {
+                    it.albumArtistNameJaroSimilarity.bMatchedIndices.forEach { (index, score) ->
                         try {
                             artistNameStringBuilder.setSpan(
                                 ForegroundColorSpan(ArgbEvaluator().evaluate(score.toFloat() - 0.25f, textColor, accentColor) as Int),

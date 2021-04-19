@@ -91,8 +91,9 @@ class SearchPresenter @Inject constructor(
                     .map { albumArtists ->
                         albumArtists
                             .map { albumArtist -> ArtistJaroSimilarity(albumArtist, query) }
-                            .filter { it.nameJaroSimilarity.score > jaroThreshold }
-                            .sortedByDescending { it.nameJaroSimilarity.score }
+                            .filter { it.albumArtistNameJaroSimilarity.score > jaroThreshold || it.artistNameJaroSimilarity.score > jaroThreshold }
+                            .sortedByDescending { if (it.albumArtistNameJaroSimilarity.score > jaroThreshold) it.albumArtistNameJaroSimilarity.score else 0.0 }
+                            .sortedByDescending { if (it.artistNameJaroSimilarity.score > jaroThreshold) it.artistNameJaroSimilarity.score else 0.0 }
                     }
             }
 
@@ -101,7 +102,8 @@ class SearchPresenter @Inject constructor(
                 albumResults = albumRepository.getAlbums(AlbumQuery.All())
                     .map { albums ->
                         albums.map { album -> AlbumJaroSimilarity(album, query) }
-                            .filter { it.nameJaroSimilarity.score > jaroThreshold || it.artistNameJaroSimilarity.score > jaroThreshold }
+                            .filter { it.nameJaroSimilarity.score > jaroThreshold || it.albumArtistNameJaroSimilarity.score > jaroThreshold || it.artistNameJaroSimilarity.score > jaroThreshold }
+                            .sortedByDescending { if (it.albumArtistNameJaroSimilarity.score > jaroThreshold) it.albumArtistNameJaroSimilarity.score else 0.0 }
                             .sortedByDescending { if (it.artistNameJaroSimilarity.score > jaroThreshold) it.artistNameJaroSimilarity.score else 0.0 }
                             .sortedByDescending { it.nameJaroSimilarity.score }
                     }
@@ -115,8 +117,9 @@ class SearchPresenter @Inject constructor(
                         songs.orEmpty()
                             .asSequence()
                             .map { song -> SongJaroSimilarity(song, query) }
-                            .filter { it.nameJaroSimilarity.score > jaroThreshold || it.albumArtistNameJaroSimilarity.score > jaroThreshold || it.albumNameJaroSimilarity.score > jaroThreshold }
+                            .filter { it.nameJaroSimilarity.score > jaroThreshold || it.albumArtistNameJaroSimilarity.score > jaroThreshold || it.artistNameJaroSimilarity.score > jaroThreshold || it.albumNameJaroSimilarity.score > jaroThreshold }
                             .sortedByDescending { if (it.albumArtistNameJaroSimilarity.score > jaroThreshold) it.albumArtistNameJaroSimilarity.score else 0.0 }
+                            .sortedByDescending { if (it.artistNameJaroSimilarity.score > jaroThreshold) it.albumArtistNameJaroSimilarity.score else 0.0 }
                             .sortedByDescending { if (it.albumNameJaroSimilarity.score > jaroThreshold) it.albumNameJaroSimilarity.score else 0.0 }
                             .sortedByDescending { if (it.nameJaroSimilarity.score > jaroThreshold) it.nameJaroSimilarity.score else 0.0 }.toList()
                     }

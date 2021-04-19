@@ -184,7 +184,7 @@ class SearchFragment : Fragment(),
                 add(HeaderBinder("Artists"))
                 addAll(searchResult.first.map { artistResult ->
                     ListAlbumArtistBinder(
-                        albumArtist = artistResult.artist,
+                        albumArtist = artistResult.albumArtist,
                         imageLoader = imageLoader,
                         listener = albumArtistBinderListener,
                         jaroSimilarity = artistResult
