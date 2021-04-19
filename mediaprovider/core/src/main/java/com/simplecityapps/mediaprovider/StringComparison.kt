@@ -15,28 +15,7 @@ object StringComparison {
         val score: Double,
         val aMatchedIndices: Map<Int, Double>,
         val bMatchedIndices: Map<Int, Double>
-    ) {
-
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (javaClass != other?.javaClass) return false
-
-            other as JaroSimilarity
-
-            if (score != other.score) return false
-            if (aMatchedIndices != other.aMatchedIndices) return false
-            if (bMatchedIndices != other.bMatchedIndices) return false
-
-            return true
-        }
-
-        override fun hashCode(): Int {
-            var result = score.hashCode()
-            result = 31 * result + aMatchedIndices.hashCode()
-            result = 31 * result + bMatchedIndices.hashCode()
-            return result
-        }
-    }
+    )
 
     /**
      * A decimal representing the similarity of two strings. A value of 1.0 indicates an exact match
@@ -139,5 +118,25 @@ object StringComparison {
             aMatchedIndices = jaroSimilarity.aMatchedIndices,
             bMatchedIndices = jaroSimilarity.bMatchedIndices
         )
+    }
+
+    fun jaroWinklerMultiDistance(a: String, b: String): JaroSimilarity {
+        val aSplit = a.split(" ")
+        val bSplit = b.split(" ")
+
+        return aSplit.flatMapIndexed { aIndex, a ->
+            bSplit.mapIndexed { bIndex, b ->
+                val jaroSimilarity = jaroWinklerDistance(a, b)
+                jaroSimilarity.copy(
+                    aMatchedIndices = jaroSimilarity.aMatchedIndices.mapKeys { it.key + aIndex + aSplit.take(aIndex).sumBy { it.length } },
+                    bMatchedIndices = jaroSimilarity.bMatchedIndices.mapKeys { it.key + bIndex + bSplit.take(bIndex).sumBy { it.length } })
+            }
+        }.reduce { acc, jaroSimilarity ->
+            JaroSimilarity(
+                score = maxOf(acc.score, jaroSimilarity.score),
+                aMatchedIndices = (acc.aMatchedIndices.asSequence() + jaroSimilarity.aMatchedIndices.asSequence()).groupBy({ it.key }, { it.value }).mapValues { it.value.maxOf { it } },
+                bMatchedIndices = (acc.bMatchedIndices.asSequence() + jaroSimilarity.bMatchedIndices.asSequence()).groupBy({ it.key }, { it.value }).mapValues { it.value.maxOf { it } }
+            )
+        }
     }
 }
