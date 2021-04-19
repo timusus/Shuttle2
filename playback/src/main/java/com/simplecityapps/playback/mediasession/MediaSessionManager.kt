@@ -10,6 +10,7 @@ import android.support.v4.media.session.PlaybackStateCompat
 import android.util.LruCache
 import androidx.core.content.res.ResourcesCompat
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
+import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.playback.*
 import com.simplecityapps.playback.androidauto.MediaIdHelper
@@ -154,6 +155,7 @@ class MediaSessionManager @Inject constructor(
         mediaSession.isActive = playbackState == PlaybackState.Loading || playbackState == PlaybackState.Playing
         playbackStateBuilder.setState(getPlaybackState(), playbackManager.getProgress()?.toLong() ?: PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, 1.0f)
         updatePlaybackState()
+
     }
 
     override fun onProgressChanged(position: Int, duration: Int, fromUser: Boolean) {
@@ -161,6 +163,13 @@ class MediaSessionManager @Inject constructor(
             playbackStateBuilder.setState(getPlaybackState(), position.toLong(), 1.0f)
             updatePlaybackState()
         }
+    }
+
+    override fun onTrackEnded(song: Song) {
+        super.onTrackEnded(song)
+
+        playbackStateBuilder.setState(getPlaybackState(), playbackManager.getProgress()?.toLong() ?: PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, 1.0f)
+        updatePlaybackState()
     }
 
 
