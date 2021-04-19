@@ -116,6 +116,14 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
             return sharedPreferences.getInt("library_tab_index", -1)
         }
 
+    var mediaSessionArtwork: Boolean
+        set(value) {
+            sharedPreferences.put("media_session_artwork", value)
+        }
+        get() {
+            return sharedPreferences.getBoolean("media_session_artwork", true)
+        }
+
 
     // Widgets
 

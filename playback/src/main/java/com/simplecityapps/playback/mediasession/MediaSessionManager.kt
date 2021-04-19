@@ -16,6 +16,7 @@ import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.emptyFlow
@@ -39,6 +40,7 @@ class MediaSessionManager @Inject constructor(
     private val genreRepository: GenreRepository,
     private val artworkImageLoader: ArtworkImageLoader,
     private val artworkCache: LruCache<String, Bitmap?>,
+    private val preferenceManager: GeneralPreferenceManager,
     playbackWatcher: PlaybackWatcher,
     queueWatcher: QueueWatcher
 ) : PlaybackWatcherCallback,
@@ -103,25 +105,27 @@ class MediaSessionManager @Inject constructor(
                 .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, currentItem.song.duration.toLong())
                 .putLong(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, currentItem.song.track?.toLong() ?: 1)
                 .putLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS, queueManager.getSize().toLong())
-                .putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, placeholder)
 
-            val artworkSize = 512
+            if (preferenceManager.mediaSessionArtwork) {
+                mediaMetadataCompat.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, placeholder)
 
-            synchronized(artworkCache) {
-                artworkCache[currentItem.song.getArtworkCacheKey(artworkSize, artworkSize)]?.let { image ->
-                    mediaMetadataCompat.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, image)
-                }
-            } ?: run {
-                artworkImageLoader.loadBitmap(
-                    data = currentItem.song,
-                    width = artworkSize,
-                    height = artworkSize,
-                ) { image ->
-                    mediaMetadataCompat.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, image)
-                    mediaSession.setMetadata(mediaMetadataCompat.build())
-                    if (image != null) {
-                        synchronized(artworkCache) {
-                            artworkCache.put(currentItem.song.getArtworkCacheKey(artworkSize, artworkSize), image)
+                val artworkSize = 512
+                synchronized(artworkCache) {
+                    artworkCache[currentItem.song.getArtworkCacheKey(artworkSize, artworkSize)]?.let { image ->
+                        mediaMetadataCompat.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, image)
+                    }
+                } ?: run {
+                    artworkImageLoader.loadBitmap(
+                        data = currentItem.song,
+                        width = artworkSize,
+                        height = artworkSize,
+                    ) { image ->
+                        mediaMetadataCompat.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, image)
+                        mediaSession.setMetadata(mediaMetadataCompat.build())
+                        if (image != null) {
+                            synchronized(artworkCache) {
+                                artworkCache.put(currentItem.song.getArtworkCacheKey(artworkSize, artworkSize), image)
+                            }
                         }
                     }
                 }

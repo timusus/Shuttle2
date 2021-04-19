@@ -31,6 +31,7 @@ import com.simplecityapps.provider.emby.EmbyMediaInfoProvider
 import com.simplecityapps.provider.jellyfin.JellyfinMediaInfoProvider
 import com.simplecityapps.provider.plex.PlexMediaInfoProvider
 import com.simplecityapps.shuttle.dagger.AppScope
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.squareup.moshi.Moshi
 import dagger.Module
 import dagger.Provides
@@ -192,6 +193,7 @@ class PlaybackModule {
         genreRepository: GenreRepository,
         artworkImageLoader: ArtworkImageLoader,
         artworkCache: LruCache<String, Bitmap?>,
+        preferenceManager: GeneralPreferenceManager,
         playbackWatcher: PlaybackWatcher,
         queueWatcher: QueueWatcher,
         mediaIdHelper: MediaIdHelper
@@ -208,6 +210,7 @@ class PlaybackModule {
             genreRepository,
             artworkImageLoader,
             artworkCache,
+            preferenceManager,
             playbackWatcher,
             queueWatcher
         )
