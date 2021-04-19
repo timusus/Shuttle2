@@ -13,7 +13,7 @@ class AudioFocusHelperApi26(context: Context, playbackWatcher: PlaybackWatcher) 
 
     private val focusRequest: AudioFocusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
         .setAudioAttributes(AudioAttributes.Builder().run {
-            setUsage(AudioAttributes.USAGE_GAME)
+            setUsage(AudioAttributes.USAGE_MEDIA)
             setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
             build()
         })
