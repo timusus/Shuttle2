@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.screens.changelog
+Npackage com.simplecityapps.shuttle.ui.screens.changelog
 
 class Version(val version: String) : Comparable<Version?> {
 

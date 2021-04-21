@@ -1,5 +1,34 @@
 [
   {
+    "versionName": "0.2.15",
+    "releaseDate": "21/04/2021",
+    "features": [
+      "Artist & Album-Artist are now independent fields, and S2 uses a more intelligent approach to combining songs/albums together based on the artist/album-artist fields",
+      "Show artist instead of album-artist in various places",
+      "Added support for viewing & editing embedded lyrics (Shuttle Media Provider only)",
+      "Searching by artist now scans artist and album-artist tags",
+      "Added a settings option to disable lockscreen artwork"
+    ],
+    "fixes": [
+      "Fixed an issue preventing S2 and Chromecast from playing HLS streams from Emby & Jellyfin",
+      "Fixed a memory leak when related to the progress bar shown on queue items",
+      "Fixed an issue where notification progress wasn't updated when a song ends, in repeat-song mode",
+      "Fixed an issue where seekbar would highlight when you tap anywhere on now playing screen"
+    ],
+    "improvements": [
+      "Jellyfin & Emby address and port configuration are now combined, allowing for more liberal combinations of host & port",
+      "Search query is no longer saved. When you open search, the field will be empty",
+      "Fixed an issue where a song would incorrectly repeat, while the app would display the next song as now playing",
+      "Added option to edit tags from now playing screen",
+      "Option to clear queue moved from playback screen to queue screen",
+      "Edit tags no longer an option for media providers where it's not supported (MediaStore, Jellyfin, Emby)",
+      "Disc number is now editable when batch editing tags"
+    ],
+    "notes": [
+      "S2 has a very active community on Discord. If you haven't already, please come and join the conversation: https://discord.gg/YkhSuHJ"
+    ]
+  },
+  {
     "versionName": "0.2.14",
     "releaseDate": "07/03/2021",
     "features": [
