@@ -18,7 +18,7 @@ data class AlbumArtist(
     val mediaProviders: List<MediaProvider.Type>
 ) : Parcelable
 
-val AlbumArtist.friendlyName: String?
+val AlbumArtist.friendlyName: String
     get() {
         return name
             ?: if (artists.size == 1) {
