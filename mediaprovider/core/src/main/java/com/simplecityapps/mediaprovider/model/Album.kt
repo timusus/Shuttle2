@@ -6,7 +6,8 @@ import com.simplecityapps.mediaprovider.MediaProvider
 import kotlinx.parcelize.Parcelize
 import java.util.*
 
-inline class ArtistGroupKey(val key: String?)
+@Parcelize
+data class ArtistGroupKey(val key: String?) : Parcelable
 
 @Parcelize
 data class AlbumGroupKey(
