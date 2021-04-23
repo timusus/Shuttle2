@@ -1,5 +1,20 @@
 [
   {
+    "versionName": "0.2.16",
+    "releaseDate": "23/03/2021",
+    "features": [
+    ],
+    "fixes": [
+      "Fixed a database migration issue, causing app to load songs, albums, artists, etc. indefinitely & scanner to fail",
+      "Fixed a crash when attempting to highlight matched characters in search results",
+      "Fixed a crash when returning to app after a while in background"
+    ],
+    "improvements": [
+    ],
+    "notes": [
+    ]
+  },
+  {
     "versionName": "0.2.15",
     "releaseDate": "21/04/2021",
     "features": [
