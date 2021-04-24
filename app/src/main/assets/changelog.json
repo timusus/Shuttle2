@@ -1,5 +1,20 @@
 [
   {
+    "versionName": "0.2.17",
+    "releaseDate": "24/03/2021",
+    "features": [
+    ],
+    "fixes": [
+      "Another attempted database migration fix",
+      "Fixed layout issue on now playing screen",
+      "Fixed widget artist name display issue"
+    ],
+    "improvements": [
+    ],
+    "notes": [
+    ]
+  },
+  {
     "versionName": "0.2.16",
     "releaseDate": "23/03/2021",
     "features": [
@@ -7,7 +22,7 @@
     "fixes": [
       "Fixed a database migration issue, causing app to load songs, albums, artists, etc. indefinitely & scanner to fail",
       "Fixed a crash when attempting to highlight matched characters in search results",
-      "Fixed a crash when returning to app after a while in background"
+      "Fixed a crash when returning to app after a while in bacsckground"
     ],
     "improvements": [
     ],
