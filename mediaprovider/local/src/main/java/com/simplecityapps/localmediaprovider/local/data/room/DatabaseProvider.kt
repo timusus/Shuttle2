@@ -10,6 +10,7 @@ import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistData
 import com.simplecityapps.localmediaprovider.local.data.room.migrations.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Named
 
 class DatabaseProvider constructor(
@@ -43,6 +44,12 @@ class DatabaseProvider constructor(
     }
 
     val callback = object : RoomDatabase.Callback() {
+        override fun onOpen(db: SupportSQLiteDatabase) {
+            super.onOpen(db)
+
+            Timber.i("Database opened at version ${db.version}")
+        }
+
         override fun onCreate(db: SupportSQLiteDatabase) {
             super.onCreate(db)
 
