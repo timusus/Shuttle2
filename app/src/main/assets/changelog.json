@@ -1,7 +1,7 @@
 [
   {
     "versionName": "0.2.17",
-    "releaseDate": "24/03/2021",
+    "releaseDate": "24/04/2021",
     "features": [
     ],
     "fixes": [
@@ -12,11 +12,12 @@
     "improvements": [
     ],
     "notes": [
+      "If you notice that your library is showing 'null' instead of the artist name, go to settings -> media provider -> scan"
     ]
   },
   {
     "versionName": "0.2.16",
-    "releaseDate": "23/03/2021",
+    "releaseDate": "23/04/2021",
     "features": [
     ],
     "fixes": [
