@@ -4,69 +4,77 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/background_more_rounded_semi_dark"
     app:layout_constraintBottom_toBottomOf="parent"
-    app:layout_constraintDimensionRatio="1:1"
     app:layout_constraintEnd_toEndOf="parent"
     app:layout_constraintStart_toStartOf="parent"
     app:layout_constraintTop_toTopOf="parent">
 
-
-    <androidx.core.widget.NestedScrollView
-        android:id="@+id/scrollView"
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:clipToPadding="true"
-        android:fillViewport="true"
-        android:padding="16dp"
-        android:scrollbarAlwaysDrawVerticalTrack="true"
-        android:scrollbarDefaultDelayBeforeFade="2500"
-        android:scrollbarThumbVertical="?attr/colorPrimary"
-        android:scrollbars="vertical"
-        app:layout_constraintBottom_toTopOf="@id/closeLyricsButton"
+        android:background="@drawable/background_more_rounded_semi_dark"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0">
+        app:layout_constraintTop_toTopOf="parent">
 
-        <TextView
-            android:id="@+id/lyricsTextView"
-            style="@style/TextSubtitle"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:lineSpacingMultiplier="1.1"
-            android:maxLines="900"
-            android:padding="8dp"
-            android:textColor="#FFFFFF"
-            android:textSize="17sp"
-            tools:text="Lyrics lyrics all night long\nAll night long\nAll night long\n\nLyrics long all night the night\nThe night\nThe night\nLong long long" />
+        <androidx.core.widget.NestedScrollView
+            android:id="@+id/scrollView"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:clipToPadding="true"
+            android:fillViewport="true"
+            android:padding="16dp"
+            android:scrollbarAlwaysDrawVerticalTrack="true"
+            android:scrollbarDefaultDelayBeforeFade="2500"
+            android:scrollbarThumbVertical="?attr/colorPrimary"
+            android:scrollbars="vertical"
+            app:layout_constraintBottom_toTopOf="@id/closeLyricsButton"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0">
 
-    </androidx.core.widget.NestedScrollView>
+            <TextView
+                android:id="@+id/lyricsTextView"
+                style="@style/TextSubtitle"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:lineSpacingMultiplier="1.1"
+                android:maxLines="900"
+                android:padding="8dp"
+                android:textColor="#FFFFFF"
+                android:textSize="17sp"
+                tools:text="Lyrics lyrics all night long\nAll night long\nAll night long\n\nLyrics long all night the night\nThe night\nThe night\nLong long long" />
 
-    <Button
-        android:id="@+id/quickLyricButton"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-        android:layout_width="wrap_content"
-        android:layout_height="48dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
-        android:text="QuickLyric"
-        android:textAllCaps="false"
-        android:textColor="#FFF"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/closeLyricsButton"
-        app:strokeColor="#FF8F00" />
+        </androidx.core.widget.NestedScrollView>
 
-    <Button
-        android:id="@+id/closeLyricsButton"
-        style="@style/Widget.MaterialComponents.Button.TextButton"
-        android:layout_width="wrap_content"
-        android:layout_height="48dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginBottom="8dp"
-        android:text="Close"
-        android:textColor="#FFF"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        <Button
+            android:id="@+id/quickLyricButton"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="8dp"
+            android:text="QuickLyric"
+            android:textAllCaps="false"
+            android:textColor="#FFF"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/closeLyricsButton"
+            app:strokeColor="#FF8F00" />
 
+        <Button
+            android:id="@+id/closeLyricsButton"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginBottom="8dp"
+            android:text="Close"
+            android:textColor="#FFF"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
