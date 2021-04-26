@@ -1,5 +1,21 @@
 [
   {
+    "versionName": "0.2.18",
+    "releaseDate": "26/04/2021",
+    "features": [
+    ],
+    "fixes": [
+      "Another attempted database migration fix 🙏",
+      "Fixed lyrics layout issue",
+      "Possible fix for notification displaying when it shouldn't"
+    ],
+    "improvements": [
+    ],
+    "notes": [
+      "If you notice that your library is showing 'null' instead of the artist name, go to settings -> media provider -> scan"
+    ]
+  },
+  {
     "versionName": "0.2.17",
     "releaseDate": "24/04/2021",
     "features": [
@@ -23,7 +39,7 @@
     "fixes": [
       "Fixed a database migration issue, causing app to load songs, albums, artists, etc. indefinitely & scanner to fail",
       "Fixed a crash when attempting to highlight matched characters in search results",
-      "Fixed a crash when returning to app after a while in bacsckground"
+      "Fixed a crash when returning to app after a while in background"
     ],
     "improvements": [
     ],
