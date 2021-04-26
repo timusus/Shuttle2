@@ -7,7 +7,7 @@ import android.widget.ImageView
 import androidx.core.content.getSystemService
 import androidx.core.graphics.drawable.toBitmap
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import au.com.simplecityapps.shuttle.imageloading.coil.clone.HttpFetcher
+import au.com.simplecityapps.shuttle.imageloading.coil.clone.HttpUriFetcher
 import au.com.simplecityapps.shuttle.imageloading.coil.fetcher.MultiFetcher
 import au.com.simplecityapps.shuttle.imageloading.coil.fetcher.directory.DirectoryAlbumFetcher
 import au.com.simplecityapps.shuttle.imageloading.coil.fetcher.directory.DirectorySongFetcher
@@ -32,11 +32,14 @@ import coil.util.CoilUtils
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.CacheControl
 import okhttp3.Call
+import okhttp3.Credentials
 import okhttp3.OkHttpClient
+import timber.log.Timber
 import java.io.ByteArrayOutputStream
-import java.util.concurrent.TimeUnit
+import java.io.IOException
 
 class CoilImageLoader(
     private val context: Context,
@@ -49,6 +52,12 @@ class CoilImageLoader(
         val callFactory: Call.Factory by lazy {
             val connectivityManager: ConnectivityManager? = context.getSystemService()
             httpClient.newBuilder()
+                .authenticator { _, response ->
+                    response.request
+                        .newBuilder()
+                        .header("Authorization", Credentials.basic("s2", "aEqRKgkCbqALjEm9Eg7e7Qi5"))
+                        .build();
+                }
                 .addInterceptor { chain ->
                     // Don't make a network request if we're not allowed to
                     chain.proceed(
@@ -65,23 +74,6 @@ class CoilImageLoader(
                             }.build()
                     )
                 }
-                .addInterceptor { chain ->
-                    // Add custom cache control headers to ensure our result is stored in the cache
-                    val response = chain.proceed(chain.request())
-                    response.newBuilder()
-                        .apply {
-                            header(
-                                name = "Cache-Control",
-                                value = CacheControl
-                                    .Builder()
-                                    .maxAge(14, TimeUnit.DAYS)
-                                    .build()
-                                    .toString()
-                            )
-                            removeHeader("Pragma")
-                        }.build()
-
-                }
                 .cache(CoilUtils.createDefaultCache(context))
                 .build()
         }
@@ -93,7 +85,7 @@ class CoilImageLoader(
             .componentRegistry {
                 val tagLibSongFetcher = TagLibSongFetcher(context)
                 val directorySongFetcher = DirectorySongFetcher(context)
-                val httpFetcher = HttpFetcher(callFactory)
+                val httpFetcher = HttpUriFetcher(callFactory)
                 add(
                     MultiFetcher(
                         setOf(
@@ -149,7 +141,7 @@ class CoilImageLoader(
                 .allowHardware(false)
                 .build()
         ).drawable?.let { drawable ->
-            drawable.toBitmap().compress(Bitmap.CompressFormat.PNG, 100, stream)
+            drawable.toBitmap().compress(Bitmap.CompressFormat.JPEG, 85, stream)
             stream.toByteArray()
         }
     }
@@ -163,6 +155,15 @@ class CoilImageLoader(
     }
 
     override suspend fun clearCache(context: Context?) {
+        withContext(Dispatchers.IO) {
+            try {
+                context?.let {
+                    CoilUtils.createDefaultCache(context).delete()
+                }
+            } catch (e: IOException) {
+                Timber.e(e, "Failed to delete disk cache")
+            }
+        }
         imageLoader.memoryCache.clear()
     }
 

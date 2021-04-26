@@ -235,7 +235,7 @@ class HomeFragment :
     }
 
     override fun onAddedToQueue(albumArtist: AlbumArtist) {
-        Toast.makeText(context, "${albumArtist.friendlyName} added to queue", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "${albumArtist.friendlyNameOrArtistName} added to queue", Toast.LENGTH_SHORT).show()
     }
 
     override fun onAddedToQueue(album: Album) {
@@ -289,7 +289,7 @@ class HomeFragment :
                         R.id.exclude -> {
                             MaterialAlertDialogBuilder(requireContext())
                                 .setTitle("Exclude Artist")
-                                .setMessage("\"${albumArtist.friendlyName}\" will be hidden from your library.\n\nYou can view excluded songs in settings.")
+                                .setMessage("\"${albumArtist.friendlyNameOrArtistName}\" will be hidden from your library.\n\nYou can view excluded songs in settings.")
                                 .setPositiveButton("Exclude") { _, _ ->
                                     presenter.exclude(albumArtist)
                                 }

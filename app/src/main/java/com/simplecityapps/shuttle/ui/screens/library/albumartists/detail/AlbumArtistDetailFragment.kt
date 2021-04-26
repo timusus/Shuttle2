@@ -30,7 +30,7 @@ import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
-import com.simplecityapps.mediaprovider.model.friendlyName
+import com.simplecityapps.mediaprovider.model.friendlyNameOrArtistName
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
@@ -171,7 +171,7 @@ class AlbumArtistDetailFragment :
         }
 
         dummyImage = view.findViewById(R.id.dummyImage)
-        dummyImage.transitionName = "album_artist_${albumArtist.friendlyName}"
+        dummyImage.transitionName = "album_artist_${albumArtist.friendlyNameOrArtistName}"
 
         imageLoader.loadArtwork(
             dummyImage,
@@ -268,7 +268,7 @@ class AlbumArtistDetailFragment :
     }
 
     override fun setAlbumArtist(albumArtist: AlbumArtist) {
-        toolbar.title = albumArtist.friendlyName
+        toolbar.title = albumArtist.friendlyNameOrArtistName
         toolbar.subtitle = "${resources.getQuantityString(R.plurals.albumsPlural, albumArtist.albumCount, albumArtist.albumCount)} " +
                 "• ${resources.getQuantityString(R.plurals.songsPlural, albumArtist.songCount, albumArtist.songCount)}"
     }

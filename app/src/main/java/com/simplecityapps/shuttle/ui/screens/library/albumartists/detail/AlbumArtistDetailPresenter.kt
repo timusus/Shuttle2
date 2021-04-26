@@ -6,7 +6,7 @@ import androidx.documentfile.provider.DocumentFile
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
-import com.simplecityapps.mediaprovider.model.friendlyName
+import com.simplecityapps.mediaprovider.model.friendlyNameOrArtistName
 import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.queue.QueueManager
@@ -180,7 +180,7 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
         launch {
             val songs = songRepository.getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = albumArtist.groupKey)))).firstOrNull().orEmpty()
             playbackManager.addToQueue(songs)
-            view?.onAddedToQueue(albumArtist.friendlyName ?: "Unknown")
+            view?.onAddedToQueue(albumArtist.friendlyNameOrArtistName ?: "Unknown")
         }
     }
 
@@ -203,7 +203,7 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
         launch {
             val songs = songRepository.getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = albumArtist.groupKey)))).firstOrNull().orEmpty()
             playbackManager.playNext(songs)
-            view?.onAddedToQueue(albumArtist.friendlyName ?: "Unknown")
+            view?.onAddedToQueue(albumArtist.friendlyNameOrArtistName ?: "Unknown")
         }
     }
 

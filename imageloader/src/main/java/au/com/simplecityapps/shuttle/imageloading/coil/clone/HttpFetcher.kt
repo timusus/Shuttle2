@@ -10,6 +10,7 @@ import coil.decode.Options
 import coil.fetch.FetchResult
 import coil.fetch.Fetcher
 import coil.fetch.SourceResult
+import coil.map.Mapper
 import coil.network.HttpException
 import coil.size.Size
 import kotlinx.coroutines.CoroutineDispatcher
@@ -18,15 +19,38 @@ import okhttp3.*
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import kotlin.coroutines.coroutineContext
 
-class HttpFetcher(val callFactory: Call.Factory): Fetcher<Uri> {
+class HttpUriFetcher(callFactory: Call.Factory) : HttpFetcher<Uri>(callFactory) {
 
     override fun handles(data: Uri) = data.scheme == "http" || data.scheme == "https"
 
     override fun key(data: Uri) = data.toString()
 
+    override fun Uri.toHttpUrl(): HttpUrl = toString().toHttpUrl()
+}
+
+class HttpUrlFetcher(callFactory: Call.Factory) : HttpFetcher<HttpUrl>(callFactory) {
+
+    override fun key(data: HttpUrl) = data.toString()
+
+    override fun HttpUrl.toHttpUrl(): HttpUrl = this
+}
+
+abstract class HttpFetcher<T : Any>(private val callFactory: Call.Factory) : Fetcher<T> {
+
+    /**
+     * Perform this conversion in a [Fetcher] instead of a [Mapper] so
+     * [HttpUriFetcher] can execute [HttpUrl.get] on a background thread.
+     */
+    abstract fun T.toHttpUrl(): HttpUrl
+
     @OptIn(ExperimentalStdlibApi::class)
-    override suspend fun fetch(pool: BitmapPool, data: Uri, size: Size, options: Options): FetchResult {
-        val url = data.toString().toHttpUrl()
+    override suspend fun fetch(
+        pool: BitmapPool,
+        data: T,
+        size: Size,
+        options: Options
+    ): FetchResult {
+        val url = data.toHttpUrl()
         val request = Request.Builder().url(url).headers(options.headers)
 
         val networkRead = options.networkCachePolicy.readEnabled
@@ -72,7 +96,6 @@ class HttpFetcher(val callFactory: Call.Factory): Fetcher<Uri> {
         )
     }
 
-
     /**
      * Parse the response's `content-type` header.
      *
@@ -89,7 +112,6 @@ class HttpFetcher(val callFactory: Call.Factory): Fetcher<Uri> {
     }
 
     companion object {
-
         private const val MIME_TYPE_TEXT_PLAIN = "text/plain"
 
         private val CACHE_CONTROL_FORCE_NETWORK_NO_CACHE = CacheControl.Builder().noCache().noStore().build()

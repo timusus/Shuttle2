@@ -26,7 +26,7 @@ import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
-import com.simplecityapps.mediaprovider.model.friendlyName
+import com.simplecityapps.mediaprovider.model.friendlyNameOrArtistName
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
@@ -223,7 +223,7 @@ class SearchFragment : Fragment(),
     }
 
     override fun onAddedToQueue(albumArtist: AlbumArtist) {
-        Toast.makeText(context, "${albumArtist.friendlyName} added to queue", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "${albumArtist.friendlyNameOrArtistName} added to queue", Toast.LENGTH_SHORT).show()
     }
 
     override fun onAddedToQueue(album: Album) {

@@ -70,3 +70,17 @@ val Song.friendlyArtistName: String?
                 .ifEmpty { "Unknown" }
         }
     }
+
+
+val Song.friendlyAlbumArtistOrArtistName: String
+    get() {
+        return albumArtist
+            ?: if (artists.size == 1) {
+                artists.first()
+            } else {
+                artists.groupBy { it.toLowerCase(Locale.getDefault()).removeArticles() }
+                    .map { map -> map.value.maxByOrNull { it.length } }
+                    .joinToString(", ")
+                    .ifEmpty { "Unknown" }
+            }
+    }

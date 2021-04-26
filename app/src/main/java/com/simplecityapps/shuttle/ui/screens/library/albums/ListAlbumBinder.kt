@@ -13,7 +13,7 @@ import android.widget.TextView
 import androidx.core.view.isVisible
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.model.Album
-import com.simplecityapps.mediaprovider.model.friendlyArtistName
+import com.simplecityapps.mediaprovider.model.friendlyAlbumArtistOrArtistName
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.getAttrColor
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
@@ -105,7 +105,7 @@ class ListAlbumBinder(
                 }
                 title.text = nameStringBuilder
 
-                val artistNameStringBuilder = SpannableStringBuilder(viewBinder.album.friendlyArtistName)
+                val artistNameStringBuilder = SpannableStringBuilder(viewBinder.album.friendlyAlbumArtistOrArtistName)
                 if (it.albumArtistNameJaroSimilarity.score > 0.8) {
                     it.albumArtistNameJaroSimilarity.bMatchedIndices.forEach { (index, score) ->
                         try {

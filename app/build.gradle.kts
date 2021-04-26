@@ -166,7 +166,7 @@ android {
         implementation("androidx.fragment:fragment:1.3.2")
 
         // Coil
-        implementation("io.coil-kt:coil-base:1.1.1")
+        implementation("io.coil-kt:coil-base:1.2.0")
 
         // About Libraries
         implementation("com.mikepenz:aboutlibraries-core:8.8.4")
