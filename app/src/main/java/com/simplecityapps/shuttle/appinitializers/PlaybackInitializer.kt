@@ -165,7 +165,7 @@ class PlaybackInitializer @Inject constructor(
 
     override fun onPlaybackStateChanged(playbackState: PlaybackState) {
         when (playbackState) {
-            is PlaybackState.Loading, PlaybackState.Playing -> {
+            is PlaybackState.Playing -> {
                 ContextCompat.startForegroundService(context, Intent(context, PlaybackService::class.java))
             }
             else -> {
