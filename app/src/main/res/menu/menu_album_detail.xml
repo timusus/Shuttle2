@@ -4,8 +4,7 @@
 
     <item
         android:id="@+id/shuffle"
-        android:title="Shuffle"
-        app:showAsAction="always" />
+        android:title="Shuffle" />
     <item
         android:id="@+id/queue"
         android:title="Add to Queue" />
