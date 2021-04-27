@@ -32,7 +32,8 @@ data class Song(
     val mediaProvider: MediaProvider.Type,
     val replayGainTrack: Double? = null,
     val replayGainAlbum: Double? = null,
-    val lyrics: String?
+    val lyrics: String?,
+    val grouping: String?
 ) : Parcelable {
 
     val type: Type
@@ -52,11 +53,6 @@ data class Song(
 
     val albumGroupKey: AlbumGroupKey
         get() = AlbumGroupKey(album?.toLowerCase(Locale.getDefault())?.removeArticles(), artistGroupKey)
-
-
-    override fun toString(): String {
-        return "Song(id=$id, name='$name', albumArtist='$albumArtist', artist='$artists', album='$album', track=$track, disc=$disc, duration=$duration, year=$year, genres=$genres, path='$path', size=$size, mimeType='$mimeType', lastModified=$lastModified, lastPlayed=$lastPlayed, lastCompleted=$lastCompleted, playCount=$playCount, playbackPosition=$playbackPosition, blacklisted=$blacklisted, mediaStoreId=$mediaStoreId, mediaProvider=$mediaProvider, replayGainTrack=$replayGainTrack, replayGainAlbum=$replayGainAlbum)"
-    }
 
     enum class Type {
         Audio, Audiobook, Podcast

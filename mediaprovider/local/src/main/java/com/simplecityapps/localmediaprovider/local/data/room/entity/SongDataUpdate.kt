@@ -23,7 +23,8 @@ data class SongDataUpdate(
     @ColumnInfo(name = "mediaStoreId") var mediaStoreId: Long? = null,
     @ColumnInfo(name = "replayGainTrack") var replayGainTrack: Double? = null,
     @ColumnInfo(name = "replayGainAlbum") var replayGainAlbum: Double? = null,
-    @ColumnInfo(name = "lyrics") var lyrics: String? = null
+    @ColumnInfo(name = "lyrics") var lyrics: String? = null,
+    @ColumnInfo(name = "grouping") var grouping: String? = null,
 )
 
 fun SongData.toSongDataUpdate(): SongDataUpdate {
@@ -44,7 +45,8 @@ fun SongData.toSongDataUpdate(): SongDataUpdate {
         mediaStoreId = mediaStoreId,
         replayGainTrack = replayGainTrack,
         replayGainAlbum = replayGainAlbum,
-        lyrics = lyrics
+        lyrics = lyrics,
+        grouping = grouping
     )
 }
 

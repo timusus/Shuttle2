@@ -18,5 +18,6 @@ data class AudioFile(
     val genres: List<String>,
     val replayGainTrack: Double?,
     val replayGainAlbum: Double?,
-    val lyrics: String?
+    val lyrics: String?,
+    val grouping: String?
 )

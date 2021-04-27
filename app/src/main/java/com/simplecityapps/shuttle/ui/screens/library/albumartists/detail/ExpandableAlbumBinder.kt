@@ -18,6 +18,7 @@ import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 import com.simplecityapps.shuttle.ui.common.view.increaseTouchableArea
 import com.simplecityapps.shuttle.ui.common.viewbinders.DetailSongBinder
 import com.simplecityapps.shuttle.ui.common.viewbinders.DiscNumberBinder
+import com.simplecityapps.shuttle.ui.common.viewbinders.GroupingBinder
 import kotlinx.coroutines.CoroutineScope
 import java.util.*
 
@@ -116,13 +117,28 @@ class ExpandableAlbumBinder(
 
             recyclerView.adapter = adapter
 
-            val discSongsMap = viewBinder.songs.groupBy { song -> song.disc ?: 1 }.toSortedMap()
-            adapter.update(discSongsMap.flatMap { entry ->
-                val viewBinders = mutableListOf<ViewBinder>()
-                if (discSongsMap.size > 1) {
-                    viewBinders.add(DiscNumberBinder(entry.key))
+            val discGroupingSongsMap = viewBinder.songs
+                .groupBy { song -> song.disc ?: 1 }
+                .toSortedMap()
+                .mapValues { entry ->
+                    entry.value.groupBy { song -> song.grouping ?: "" }
                 }
-                viewBinders.addAll(entry.value.map { song -> DetailSongBinder(song, songBinderListener) })
+
+            adapter.update(discGroupingSongsMap.flatMap { discEntry ->
+                val viewBinders = mutableListOf<ViewBinder>()
+                if (discGroupingSongsMap.size > 1) {
+                    viewBinders.add(DiscNumberBinder("Disc ${discEntry.key}"))
+                }
+
+                val groupingMap = discEntry.value
+                groupingMap.flatMap { groupingEntry ->
+                    if (groupingEntry.key.isNotEmpty()) {
+                        viewBinders.add(GroupingBinder(groupingEntry.key))
+                    }
+                    viewBinders.addAll(groupingEntry.value.map { song -> DetailSongBinder(song, songBinderListener) })
+                    viewBinders
+                }
+
                 viewBinders
             })
         }

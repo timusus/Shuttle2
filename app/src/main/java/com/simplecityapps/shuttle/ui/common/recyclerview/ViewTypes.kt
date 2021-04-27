@@ -27,4 +27,5 @@ object ViewTypes {
     const val Changelog = 23
     const val License = 24
     const val Notes = 25
+    const val Grouping = 26
 }

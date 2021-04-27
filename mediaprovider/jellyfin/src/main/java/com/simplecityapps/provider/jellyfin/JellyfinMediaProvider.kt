@@ -48,7 +48,8 @@ class JellyfinMediaProvider(
                                 blacklisted = false,
                                 mediaStoreId = null,
                                 mediaProvider = type,
-                                lyrics = null
+                                lyrics = null,
+                                grouping = null
                             )
                         }
                     }
