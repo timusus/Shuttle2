@@ -2,7 +2,7 @@ package com.simplecityapps.shuttle.dagger
 
 import android.content.Context
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import au.com.simplecityapps.shuttle.imageloading.coil.CoilImageLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import dagger.Module
@@ -20,6 +20,6 @@ class ImageLoaderModule {
         okHttpClient: OkHttpClient,
         preferenceManager: GeneralPreferenceManager
     ): ArtworkImageLoader {
-        return CoilImageLoader(context, songRepository, okHttpClient, preferenceManager)
+        return GlideImageLoader(context)
     }
 }
