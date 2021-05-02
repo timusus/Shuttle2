@@ -58,5 +58,7 @@ interface ArtworkImageLoader {
         }
 
         object LoadColorSet : Options()
+
+        object CacheDecodedResource : Options()
     }
 }

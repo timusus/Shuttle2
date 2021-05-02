@@ -22,6 +22,7 @@ abstract class AlbumArtistBinder(
         fun onAlbumArtistClicked(albumArtist: AlbumArtist, viewHolder: ViewHolder)
         fun onOverflowClicked(view: View, albumArtist: AlbumArtist) {}
         fun onAlbumArtistLongClicked(view: View, albumArtist: AlbumArtist)
+        fun onViewHolderCreated(holder: ViewHolder) {}
     }
 
     override fun getSectionName(): String? {

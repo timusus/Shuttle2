@@ -14,6 +14,9 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
+import com.bumptech.glide.integration.recyclerview.RecyclerViewPreloader
+import com.bumptech.glide.util.ViewPreloadSizeProvider
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.SpanSizeLookup
@@ -29,6 +32,7 @@ import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.GridSpacingItemDecoration
+import com.simplecityapps.shuttle.ui.common.recyclerview.MyPreloadModelProvider
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
@@ -50,8 +54,7 @@ class AlbumListFragment :
 
     private var adapter: RecyclerAdapter by autoCleared()
 
-    @Inject
-    lateinit var imageLoader: ArtworkImageLoader
+    lateinit var imageLoader: GlideImageLoader
 
     private var recyclerView: RecyclerView by autoCleared()
     private var circularLoadingView: CircularLoadingView by autoCleared()
@@ -71,6 +74,12 @@ class AlbumListFragment :
 
     private var contextualToolbarHelper: ContextualToolbarHelper<Album> by autoCleared()
 
+    private val viewPreloadSizeProvider by lazy { ViewPreloadSizeProvider<Album>() }
+    private val preloadModelProvider by lazy {
+        MyPreloadModelProvider<Album>(
+            imageLoader as GlideImageLoader, listOf(ArtworkImageLoader.Options.CacheDecodedResource)
+        )
+    }
 
     // Lifecycle
 
@@ -80,6 +89,8 @@ class AlbumListFragment :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        imageLoader = GlideImageLoader(this)
 
         playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
 
@@ -94,6 +105,13 @@ class AlbumListFragment :
         recyclerView.adapter = adapter
         recyclerView.setItemViewCacheSize(0)
         recyclerView.setHasFixedSize(true)
+        val preloader: RecyclerViewPreloader<Album> = RecyclerViewPreloader(
+            imageLoader.requestManager,
+            preloadModelProvider,
+            viewPreloadSizeProvider,
+            12
+        )
+        recyclerView.addOnScrollListener(preloader)
 
         circularLoadingView = view.findViewById(R.id.circularLoadingView)
         horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
@@ -224,11 +242,11 @@ class AlbumListFragment :
     // AlbumListContract.View Implementation
 
     override fun setAlbums(albums: List<Album>, viewMode: ViewMode, resetPosition: Boolean) {
+        preloadModelProvider.items = albums
+
         if (resetPosition) {
             adapter.clear()
         }
-
-//        preloadModelProvider.items = albums
 
         val data = albums.map { album ->
             when (viewMode) {
@@ -392,6 +410,10 @@ class AlbumListFragment :
         popupMenu.show()
     }
 
+    override fun onViewHolderCreated(holder: AlbumBinder.ViewHolder) {
+        viewPreloadSizeProvider.setView(holder.imageView)
+    }
+
 
     // CreatePlaylistDialogFragment.Listener Implementation
 
@@ -407,7 +429,7 @@ class AlbumListFragment :
         override fun onCountChanged(count: Int) {
             contextualToolbarHelper.contextualToolbar?.title = "$count selected"
             contextualToolbarHelper.contextualToolbar?.menu?.let { menu ->
-                TagEditorMenuSanitiser.sanitise(menu,  contextualToolbarHelper.selectedItems.flatMap { it.mediaProviders }.distinct())
+                TagEditorMenuSanitiser.sanitise(menu, contextualToolbarHelper.selectedItems.flatMap { it.mediaProviders }.distinct())
             }
         }
 

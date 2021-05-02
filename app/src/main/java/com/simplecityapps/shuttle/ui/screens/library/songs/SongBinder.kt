@@ -37,6 +37,7 @@ open class SongBinder(
         fun onSongClicked(song: Song)
         fun onSongLongClicked(song: Song)
         fun onOverflowClicked(view: View, song: Song) {}
+        fun onViewHolderCreated(holder: ViewHolder) {}
     }
 
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
@@ -83,7 +84,7 @@ open class SongBinder(
 
         private val title: TextView = itemView.findViewById(R.id.title)
         private val subtitle: TextView = itemView.findViewById(R.id.subtitle)
-        private val imageView: ImageView = itemView.findViewById(R.id.imageView)
+        val imageView: ImageView = itemView.findViewById(R.id.imageView)
         private val overflowButton: ImageButton = itemView.findViewById(R.id.overflowButton)
         private val badgeView: BadgeView = itemView.findViewById(R.id.badgeImageView)
         private val checkImageView: ImageView = itemView.findViewById(R.id.checkImageView)
@@ -102,6 +103,7 @@ open class SongBinder(
                 viewBinder?.listener?.onSongLongClicked(viewBinder!!.song)
                 true
             }
+            viewBinder?.listener?.onViewHolderCreated(this)
         }
 
         override fun bind(viewBinder: SongBinder, isPartial: Boolean) {
@@ -113,7 +115,8 @@ open class SongBinder(
             val options = mutableListOf(
                 ArtworkImageLoader.Options.RoundedCorners(16),
                 ArtworkImageLoader.Options.Crossfade(200),
-                ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_song_rounded)
+                ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_song_rounded),
+                ArtworkImageLoader.Options.CacheDecodedResource
             )
 
             if (viewBinder.showPlayCountBadge) {

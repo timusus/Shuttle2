@@ -57,6 +57,7 @@ class GridAlbumBinder(
                 viewBinder?.listener?.onAlbumLongClicked(viewBinder!!.album, this)
                 true
             }
+            viewBinder?.listener?.onViewHolderCreated(this)
         }
 
         override fun bind(viewBinder: AlbumBinder, isPartial: Boolean) {
@@ -67,8 +68,9 @@ class GridAlbumBinder(
 
             viewBinder as GridAlbumBinder
 
-            val options = mutableListOf<ArtworkImageLoader.Options>(
+            val options = mutableListOf(
                 ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_album),
+                ArtworkImageLoader.Options.CacheDecodedResource
             )
             if (viewBinder.coloredBackground) {
                 options.add(ArtworkImageLoader.Options.LoadColorSet)

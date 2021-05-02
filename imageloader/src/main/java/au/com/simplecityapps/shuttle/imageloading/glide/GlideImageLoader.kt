@@ -17,6 +17,7 @@ import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.RequestManager
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.MultiTransformation
+import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
@@ -144,6 +145,15 @@ class GlideImageLoader : ArtworkImageLoader {
                 is ArtworkImageLoader.Options.CenterCrop -> {
                     glideRequest.apply(RequestOptions.centerCropTransform())
                 }
+                ArtworkImageLoader.Options.CacheDecodedResource -> {
+                    glideRequest.diskCacheStrategy(DiskCacheStrategy.ALL)
+                }
+                ArtworkImageLoader.Options.LoadColorSet -> {
+
+                }
+                is ArtworkImageLoader.Options.Placeholder -> {
+                    glideRequest.placeholder(option.placeholderResId)
+                }
             }
         }
 
@@ -182,6 +192,12 @@ class GlideImageLoader : ArtworkImageLoader {
                 }
                 is ArtworkImageLoader.Options.CenterCrop -> {
                     glideRequest.apply(RequestOptions.centerCropTransform())
+                }
+                is ArtworkImageLoader.Options.CacheDecodedResource -> {
+                    glideRequest.diskCacheStrategy(DiskCacheStrategy.ALL)
+                }
+                ArtworkImageLoader.Options.LoadColorSet -> {
+
                 }
             }
         }

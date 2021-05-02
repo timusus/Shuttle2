@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle
 import android.app.Application
 import android.appwidget.AppWidgetManager
 import android.content.Intent
+import coil.util.CoilUtils
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.mediaprovider.repository.SongRepositoryProvider
 import com.simplecityapps.playback.ActivityIntentProvider
@@ -17,11 +18,12 @@ import com.simplecityapps.shuttle.ui.widgets.WidgetProvider42
 import dagger.android.AndroidInjector
 import dagger.android.DispatchingAndroidInjector
 import dagger.android.HasAndroidInjector
-import kotlinx.coroutines.DEBUG_PROPERTY_NAME
-import kotlinx.coroutines.DEBUG_PROPERTY_VALUE_ON
+import kotlinx.coroutines.*
 import okhttp3.OkHttpClient
 import timber.log.Timber
+import java.io.IOException
 import javax.inject.Inject
+import javax.inject.Named
 
 
 class ShuttleApplication : Application(),
@@ -43,6 +45,10 @@ class ShuttleApplication : Application(),
     @Inject
     lateinit var themeManager: ThemeManager
 
+    @Named("AppCoroutineScope")
+    @Inject
+    lateinit var appCoroutineScope: CoroutineScope
+
     lateinit var appComponent: AppComponent
 
     override fun onCreate() {
@@ -60,6 +66,19 @@ class ShuttleApplication : Application(),
         themeManager.setDayNightMode()
 
         if (preferenceManager.previousVersionCode != BuildConfig.VERSION_CODE) {
+            // Todo: Remove sometime in future
+            if (preferenceManager.previousVersionCode <= 2180018) {
+                appCoroutineScope.launch {
+                    withContext(Dispatchers.IO) {
+                        try {
+                            CoilUtils.createDefaultCache(this@ShuttleApplication).delete()
+                        } catch (e: IOException) {
+                            Timber.e(e, "Failed to delete disk cache")
+                        }
+                    }
+                }
+            }
+
             preferenceManager.previousVersionCode = BuildConfig.VERSION_CODE
         }
 

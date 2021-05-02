@@ -48,6 +48,8 @@ class GridAlbumArtistBinder(
                 true
             }
             subtitle.visibility = View.GONE
+
+            viewBinder?.listener?.onViewHolderCreated(this)
         }
 
         override fun bind(viewBinder: AlbumArtistBinder, isPartial: Boolean) {
@@ -61,8 +63,9 @@ class GridAlbumArtistBinder(
                 itemView.layoutParams.width = width.dp
             }
 
-            val options = mutableListOf<ArtworkImageLoader.Options>(
-                ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_artist)
+            val options = mutableListOf(
+                ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_artist),
+                ArtworkImageLoader.Options.CacheDecodedResource
             )
             if (viewBinder.coloredBackground) {
                 options.add(ArtworkImageLoader.Options.LoadColorSet)

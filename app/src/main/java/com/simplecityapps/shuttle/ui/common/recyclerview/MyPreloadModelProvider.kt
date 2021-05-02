@@ -19,7 +19,7 @@ class MyPreloadModelProvider<T>(
         return listOf(items[position])
     }
 
-    override fun getPreloadRequestBuilder(item: T): RequestBuilder<*>? {
+    override fun getPreloadRequestBuilder(item: T): RequestBuilder<*> {
         return imageLoader.getRequestBuilder(options).load(item)
     }
 }

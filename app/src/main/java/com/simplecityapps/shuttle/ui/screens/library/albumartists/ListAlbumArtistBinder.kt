@@ -55,6 +55,7 @@ class ListAlbumArtistBinder(
             overflowButton.setOnClickListener {
                 viewBinder?.listener?.onOverflowClicked(it, viewBinder!!.albumArtist)
             }
+            viewBinder?.listener?.onViewHolderCreated(this)
         }
 
         override fun bind(viewBinder: AlbumArtistBinder, isPartial: Boolean) {
@@ -73,7 +74,8 @@ class ListAlbumArtistBinder(
                 listOf(
                     ArtworkImageLoader.Options.RoundedCorners(16),
                     ArtworkImageLoader.Options.Crossfade(200),
-                    ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_artist_rounded)
+                    ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_artist_rounded),
+                    ArtworkImageLoader.Options.CacheDecodedResource
                 )
             )
             imageView.transitionName = "album_artist_${viewBinder.albumArtist.friendlyNameOrArtistName}"

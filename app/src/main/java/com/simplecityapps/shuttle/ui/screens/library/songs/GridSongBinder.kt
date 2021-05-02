@@ -78,7 +78,10 @@ class GridSongBinder(
             viewBinder.imageLoader.loadArtwork(
                 imageView,
                 viewBinder.song,
-                listOf(ArtworkImageLoader.Options.Crossfade(200))
+                listOf(
+                    ArtworkImageLoader.Options.Crossfade(200),
+                    ArtworkImageLoader.Options.CacheDecodedResource
+                )
             ) { colorSet ->
                 (itemView as CardView).setCardBackgroundColor(colorSet.primaryColor)
                 title.setTextColor(colorSet.primaryTextColor)

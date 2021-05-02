@@ -56,6 +56,7 @@ class ListAlbumBinder(
             overflowButton.setOnClickListener {
                 viewBinder?.listener?.onOverflowClicked(it, viewBinder!!.album)
             }
+            viewBinder?.listener?.onViewHolderCreated(this)
         }
 
         override fun bind(viewBinder: AlbumBinder, isPartial: Boolean) {
@@ -75,7 +76,8 @@ class ListAlbumBinder(
                 listOf(
                     ArtworkImageLoader.Options.RoundedCorners(16),
                     ArtworkImageLoader.Options.Crossfade(200),
-                    ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_album_rounded)
+                    ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_album_rounded),
+                    ArtworkImageLoader.Options.CacheDecodedResource
                 )
             )
 

@@ -11,6 +11,9 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
+import com.bumptech.glide.integration.recyclerview.RecyclerViewPreloader
+import com.bumptech.glide.util.ViewPreloadSizeProvider
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
@@ -24,6 +27,7 @@ import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
+import com.simplecityapps.shuttle.ui.common.recyclerview.MyPreloadModelProvider
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
@@ -49,8 +53,7 @@ class SongListFragment :
 
     private var adapter: RecyclerAdapter by autoCleared()
 
-    @Inject
-    lateinit var imageLoader: ArtworkImageLoader
+    lateinit var imageLoader: GlideImageLoader
 
     private lateinit var playlistMenuView: PlaylistMenuView
 
@@ -63,6 +66,12 @@ class SongListFragment :
 
     private var contextualToolbarHelper: ContextualToolbarHelper<Song> by autoCleared()
 
+    private val viewPreloadSizeProvider by lazy { ViewPreloadSizeProvider<Song>() }
+    private val preloadModelProvider by lazy {
+        MyPreloadModelProvider<Song>(
+            imageLoader as GlideImageLoader, listOf(ArtworkImageLoader.Options.CacheDecodedResource)
+        )
+    }
 
     // Lifecycle
 
@@ -72,6 +81,8 @@ class SongListFragment :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        imageLoader = GlideImageLoader(this)
 
         setHasOptionsMenu(true)
 
@@ -87,6 +98,13 @@ class SongListFragment :
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
         recyclerView.setRecyclerListener(RecyclerListener())
+        val preloader: RecyclerViewPreloader<Song> = RecyclerViewPreloader(
+            imageLoader.requestManager,
+            preloadModelProvider,
+            viewPreloadSizeProvider,
+            12
+        )
+        recyclerView.addOnScrollListener(preloader)
 
         circularLoadingView = view.findViewById(R.id.circularLoadingView)
         horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
@@ -197,6 +215,9 @@ class SongListFragment :
     // SongListContract.View Implementation
 
     override fun setData(songs: List<Song>, resetPosition: Boolean) {
+
+        preloadModelProvider.items = songs
+
         if (resetPosition) {
             adapter.clear()
         }
@@ -337,6 +358,10 @@ class SongListFragment :
                 false
             }
             popupMenu.show()
+        }
+
+        override fun onViewHolderCreated(holder: SongBinder.ViewHolder) {
+            viewPreloadSizeProvider.setView(holder.imageView)
         }
     }
 
