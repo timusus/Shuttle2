@@ -110,7 +110,7 @@ class FrequencyResponseDialogFragment : DialogFragment(), Injectable {
         lineChart.axisLeft.textColor = textColor
         lineChart.axisLeft.axisMinimum = -20f
         lineChart.axisLeft.axisMaximum = 20f
-        lineChart.axisLeft.labelCount = 7
+        lineChart.axisLeft.labelCount = 10
         lineChart.axisLeft.valueFormatter = object : ValueFormatter() {
             override fun getFormattedValue(value: Float): String {
                 return "%.1f".format(value) + "dB"

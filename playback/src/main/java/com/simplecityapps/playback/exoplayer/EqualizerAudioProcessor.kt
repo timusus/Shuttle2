@@ -43,7 +43,7 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
                 band.toNyquistBand(),
                 sampleRate = outputAudioFormat.sampleRate,
                 channelCount = outputAudioFormat.channelCount,
-                referenceGain = 0
+                referenceGain = 0.0
             )
         }.toList()
     }

@@ -2,11 +2,11 @@ package com.simplecityapps.playback.dsp.equalizer
 
 import kotlin.math.*
 
-class BandProcessor(val band: NyquistBand, val sampleRate: Int, val channelCount: Int, val referenceGain: Int) {
+class BandProcessor(val band: NyquistBand, val sampleRate: Int, val channelCount: Int, val referenceGain: Double) {
 
-    private val G0 = referenceGain.toDouble().fromDb()
-    private val GB = band.bandwidthGain.toDouble().fromDb()
-    private val G1 = band.gain.toDouble().fromDb()
+    private val G0 = referenceGain.fromDb()
+    private val GB = band.bandwidthGain.fromDb()
+    private val G1 = band.gain.fromDb()
 
     private val xHist = Array(channelCount) { FloatArray(2) { 0f } }
     private val yHist = Array(channelCount) { FloatArray(2) { 0f } }
@@ -36,7 +36,7 @@ class BandProcessor(val band: NyquistBand, val sampleRate: Int, val channelCount
 
     fun processSample(sample: Float, channelIndex: Int): Float {
 
-        if (band.bandwidthGain == 0 && band.gain == 0) {
+        if (band.bandwidthGain == 0.0 && band.gain == 0.0) {
             return sample
         }
 

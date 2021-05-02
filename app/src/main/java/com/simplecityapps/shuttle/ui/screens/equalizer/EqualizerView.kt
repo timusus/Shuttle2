@@ -70,16 +70,16 @@ class EqualizerView @JvmOverloads constructor(
             val seekbar: VerticalSeekbar = bandView.findViewById(R.id.seekbar)
             seekbar.listener = object : VerticalSeekbar.Listener {
                 override fun onStopTracking(progress: Float) {
-                    val gain = (maxGain - ((maxGain * 2f) * progress)).toInt()
+                    val gain = (maxGain - ((maxGain * 2.0) * progress))
                     listener?.onBandChanged(EqualizerBand(band.centerFrequency, gain))
                 }
 
                 override fun onProgressChanged(progress: Float) {
-                    val gain = (maxGain - ((maxGain * 2f) * progress)).toInt()
+                    val gain = (maxGain - ((maxGain * 2.0) * progress))
                     listener?.onBandChanged(EqualizerBand(band.centerFrequency, gain))
                 }
             }
-            seekbar.progress = (maxGain - band.gain) / (maxGain * 2f)
+            seekbar.progress = ((maxGain - band.gain) / (maxGain * 2.0)).toFloat()
 
             val textView: TextView = bandView.findViewById(R.id.bandLabel)
 
@@ -111,7 +111,7 @@ class EqualizerView @JvmOverloads constructor(
             addUpdateListener {
                 equalizer.bands.forEachIndexed { index, band ->
                     seekbarViews.getOrNull(index)?.apply {
-                        progress = lerp(progress, ((maxGain - band.gain) / (maxGain * 2f)), animatedValue as Float)
+                        progress = lerp(progress, (((maxGain - band.gain) / (maxGain * 2.0)).toFloat()), animatedValue as Float)
                         invalidate()
                     }
                 }

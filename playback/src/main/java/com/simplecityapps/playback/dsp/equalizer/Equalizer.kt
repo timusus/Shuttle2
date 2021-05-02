@@ -4,97 +4,98 @@ object Equalizer {
 
     object Presets {
 
-        sealed class Preset(val name: String, val bands: List<EqualizerBand>) {
+        sealed class Preset(val name: String, val bands: List<NyquistBand>) {
 
             object Flat : Preset(
                 "Flat", listOf(
-                    EqualizerBand(32, 0),
-                    EqualizerBand(63, 0),
-                    EqualizerBand(125, 0),
-                    EqualizerBand(250, 0),
-                    EqualizerBand(500, 0),
-                    EqualizerBand(1000, 0),
-                    EqualizerBand(2000, 0),
-                    EqualizerBand(4000, 0),
-                    EqualizerBand(8000, 0),
-                    EqualizerBand(16000, 0)
+                    EqualizerBand(32, 0.0).toNyquistBand(),
+                    EqualizerBand(63, 0.0).toNyquistBand(),
+                    EqualizerBand(125, 0.0).toNyquistBand(),
+                    EqualizerBand(250, 0.0).toNyquistBand(),
+                    EqualizerBand(500, 0.0).toNyquistBand(),
+                    EqualizerBand(1000, 0.0).toNyquistBand(),
+                    EqualizerBand(2000, 0.0).toNyquistBand(),
+                    EqualizerBand(4000, 0.0).toNyquistBand(),
+                    EqualizerBand(8000, 0.0).toNyquistBand(),
+                    EqualizerBand(16000, 0.0).toNyquistBand()
                 )
             )
 
             object Custom : Preset(
                 "Custom", listOf(
-                    EqualizerBand(32, 0),
-                    EqualizerBand(63, 0),
-                    EqualizerBand(125, 0),
-                    EqualizerBand(250, 0),
-                    EqualizerBand(500, 0),
-                    EqualizerBand(1000, 0),
-                    EqualizerBand(2000, 0),
-                    EqualizerBand(4000, 0),
-                    EqualizerBand(8000, 0),
-                    EqualizerBand(16000, 0)
+                    EqualizerBand(32, 0.0).toNyquistBand(),
+                    EqualizerBand(63, 0.0).toNyquistBand(),
+                    EqualizerBand(125, 0.0).toNyquistBand(),
+                    EqualizerBand(250, 0.0).toNyquistBand(),
+                    EqualizerBand(500, 0.0).toNyquistBand(),
+                    EqualizerBand(1000, 0.0).toNyquistBand(),
+                    EqualizerBand(2000, 0.0).toNyquistBand(),
+                    EqualizerBand(4000, 0.0).toNyquistBand(),
+                    EqualizerBand(8000, 0.0).toNyquistBand(),
+                    EqualizerBand(16000, 0.0).toNyquistBand()
                 )
             )
 
             object BassBoost : Preset(
                 "Bass Boost", listOf(
-                    EqualizerBand(32, 6),
-                    EqualizerBand(63, 5),
-                    EqualizerBand(125, 4),
-                    EqualizerBand(250, 3),
-                    EqualizerBand(500, 2),
-                    EqualizerBand(1000, 0),
-                    EqualizerBand(2000, 0),
-                    EqualizerBand(4000, 0),
-                    EqualizerBand(8000, 0),
-                    EqualizerBand(16000, 0)
+                    EqualizerBand(32, 6.0).toNyquistBand(),
+                    EqualizerBand(63, 5.0).toNyquistBand(),
+                    EqualizerBand(125, 4.0).toNyquistBand(),
+                    EqualizerBand(250, 3.0).toNyquistBand(),
+                    EqualizerBand(500, 2.0).toNyquistBand(),
+                    EqualizerBand(1000, 0.0).toNyquistBand(),
+                    EqualizerBand(2000, 0.0).toNyquistBand(),
+                    EqualizerBand(4000, 0.0).toNyquistBand(),
+                    EqualizerBand(8000, 0.0).toNyquistBand(),
+                    EqualizerBand(16000, 0.0).toNyquistBand()
                 )
             )
 
             object BassReducer : Preset(
                 "Bass Reduction", listOf(
-                    EqualizerBand(32, -6),
-                    EqualizerBand(63, -5),
-                    EqualizerBand(125, -4),
-                    EqualizerBand(250, -3),
-                    EqualizerBand(500, -2),
-                    EqualizerBand(1000, 0),
-                    EqualizerBand(2000, 0),
-                    EqualizerBand(4000, 0),
-                    EqualizerBand(8000, 0),
-                    EqualizerBand(16000, 0)
+                    EqualizerBand(32, -6.0).toNyquistBand(),
+                    EqualizerBand(63, -5.0).toNyquistBand(),
+                    EqualizerBand(125, -4.0).toNyquistBand(),
+                    EqualizerBand(250, -3.0).toNyquistBand(),
+                    EqualizerBand(500, -2.0).toNyquistBand(),
+                    EqualizerBand(1000, 0.0).toNyquistBand(),
+                    EqualizerBand(2000, 0.0).toNyquistBand(),
+                    EqualizerBand(4000, 0.0).toNyquistBand(),
+                    EqualizerBand(8000, 0.0).toNyquistBand(),
+                    EqualizerBand(16000, 0.0).toNyquistBand()
                 )
             )
 
             object VocalBoost : Preset(
                 "Vocal Boost", listOf(
-                    EqualizerBand(32, -2),
-                    EqualizerBand(63, -3),
-                    EqualizerBand(125, -3),
-                    EqualizerBand(250, 2),
-                    EqualizerBand(500, 5),
-                    EqualizerBand(1000, 5),
-                    EqualizerBand(2000, 4),
-                    EqualizerBand(4000, 3),
-                    EqualizerBand(8000, 0),
-                    EqualizerBand(16000, -2)
+                    EqualizerBand(32, -2.0).toNyquistBand(),
+                    EqualizerBand(63, -3.0).toNyquistBand(),
+                    EqualizerBand(125, -3.0).toNyquistBand(),
+                    EqualizerBand(250, 2.0).toNyquistBand(),
+                    EqualizerBand(500, 5.0).toNyquistBand(),
+                    EqualizerBand(1000, 5.0).toNyquistBand(),
+                    EqualizerBand(2000, 4.0).toNyquistBand(),
+                    EqualizerBand(4000, 3.0).toNyquistBand(),
+                    EqualizerBand(8000, 0.0).toNyquistBand(),
+                    EqualizerBand(16000, -2.0).toNyquistBand()
                 )
             )
 
             object VocalReducer : Preset(
                 "Vocal Reduction", listOf(
-                    EqualizerBand(32, 2),
-                    EqualizerBand(63, 3),
-                    EqualizerBand(125, 3),
-                    EqualizerBand(250, -2),
-                    EqualizerBand(500, -5),
-                    EqualizerBand(1000, -5),
-                    EqualizerBand(2000, -4),
-                    EqualizerBand(4000, -3),
-                    EqualizerBand(8000, -0),
-                    EqualizerBand(16000, 2)
+                    EqualizerBand(32, 2.0).toNyquistBand(),
+                    EqualizerBand(63, 3.0).toNyquistBand(),
+                    EqualizerBand(125, 3.0).toNyquistBand(),
+                    EqualizerBand(250, -2.0).toNyquistBand(),
+                    EqualizerBand(500, -5.0).toNyquistBand(),
+                    EqualizerBand(1000, -5.0).toNyquistBand(),
+                    EqualizerBand(2000, -4.0).toNyquistBand(),
+                    EqualizerBand(4000, -3.0).toNyquistBand(),
+                    EqualizerBand(8000, -0.0).toNyquistBand(),
+                    EqualizerBand(16000, 2.0).toNyquistBand()
                 )
             )
+
 
             override fun equals(other: Any?): Boolean {
                 if (this === other) return true
