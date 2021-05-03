@@ -38,8 +38,8 @@ class TaglibMediaProvider(
         return documentNodes
             .asFlow()
             .concurrentMap((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)) {
-                fileScanner.getAudioFile(context, it.uri)!!
-            }
+                fileScanner.getAudioFile(context, it.uri)
+            }.mapNotNull { it }
     }
 
     override suspend fun findSongs(callback: ((song: Song, progress: Int, total: Int) -> Unit)?): List<Song>? {
