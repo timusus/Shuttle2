@@ -69,7 +69,7 @@ class SongListFragment :
     private val viewPreloadSizeProvider by lazy { ViewPreloadSizeProvider<Song>() }
     private val preloadModelProvider by lazy {
         GlidePreloadModelProvider<Song>(
-            imageLoader as GlideImageLoader, listOf(ArtworkImageLoader.Options.CacheDecodedResource)
+            imageLoader, listOf(ArtworkImageLoader.Options.CacheDecodedResource)
         )
     }
 

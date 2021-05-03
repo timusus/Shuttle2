@@ -77,7 +77,7 @@ class AlbumListFragment :
     private val viewPreloadSizeProvider by lazy { ViewPreloadSizeProvider<Album>() }
     private val preloadModelProvider by lazy {
         GlidePreloadModelProvider<Album>(
-            imageLoader as GlideImageLoader, listOf(ArtworkImageLoader.Options.CacheDecodedResource)
+            imageLoader, listOf(ArtworkImageLoader.Options.CacheDecodedResource)
         )
     }
 

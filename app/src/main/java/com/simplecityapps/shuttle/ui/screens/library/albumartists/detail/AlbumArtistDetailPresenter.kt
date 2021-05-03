@@ -91,7 +91,7 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
 
     override fun loadData() {
         launch {
-            albumRepository.getAlbums(AlbumQuery.ArtistGroupKey(albumArtist?.groupKey))
+            albumRepository.getAlbums(AlbumQuery.ArtistGroupKey(albumArtist.groupKey))
                 .combine(
                     songRepository
                         .getSongs(
@@ -180,7 +180,7 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
         launch {
             val songs = songRepository.getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = albumArtist.groupKey)))).firstOrNull().orEmpty()
             playbackManager.addToQueue(songs)
-            view?.onAddedToQueue(albumArtist.friendlyNameOrArtistName ?: "Unknown")
+            view?.onAddedToQueue(albumArtist.friendlyNameOrArtistName)
         }
     }
 
@@ -203,7 +203,7 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
         launch {
             val songs = songRepository.getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = albumArtist.groupKey)))).firstOrNull().orEmpty()
             playbackManager.playNext(songs)
-            view?.onAddedToQueue(albumArtist.friendlyNameOrArtistName ?: "Unknown")
+            view?.onAddedToQueue(albumArtist.friendlyNameOrArtistName)
         }
     }
 

@@ -74,7 +74,7 @@ class AlbumArtistListFragment :
     private val viewPreloadSizeProvider by lazy { ViewPreloadSizeProvider<AlbumArtist>() }
     private val preloadModelProvider by lazy {
         GlidePreloadModelProvider<AlbumArtist>(
-            imageLoader as GlideImageLoader, listOf(ArtworkImageLoader.Options.CacheDecodedResource)
+            imageLoader, listOf(ArtworkImageLoader.Options.CacheDecodedResource)
         )
     }
 
@@ -381,7 +381,7 @@ class AlbumArtistListFragment :
         }
 
         override fun onItemUpdated(item: AlbumArtist, isSelected: Boolean) {
-            adapter?.let { adapter ->
+            adapter.let { adapter ->
                 adapter.items
                     .filterIsInstance<AlbumArtistBinder>()
                     .firstOrNull { it.albumArtist == item }

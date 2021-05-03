@@ -47,7 +47,7 @@ class ImageLoaderGlideModule : AppGlideModule() {
                 response.request
                     .newBuilder()
                     .header("Authorization", Credentials.basic("s2", "aEqRKgkCbqALjEm9Eg7e7Qi5"))
-                    .build();
+                    .build()
             }
             .addNetworkInterceptor { chain ->
                 if (preferenceManager.artworkWifiOnly && connectivityManager?.isActiveNetworkMetered == true) {

@@ -86,7 +86,7 @@ class ArtworkDownloadService : Service(), CoroutineScope {
             .setSmallIcon(android.R.drawable.stat_sys_download)
             .setOngoing(true)
             .setProgress(100, 0, true)
-            .addAction(NotificationCompat.Action(R.drawable.ic_baseline_close_24, "Cancel", pendingIntent));
+            .addAction(NotificationCompat.Action(R.drawable.ic_baseline_close_24, "Cancel", pendingIntent))
 
         notificationManager?.notify(NOTIFICATION_ID, notificationBuilder.build())
 

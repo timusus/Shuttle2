@@ -24,7 +24,7 @@ class ProgressView @JvmOverloads constructor(
         setWillNotDraw(false)
 
         paint = Paint(Paint.ANTI_ALIAS_FLAG)
-        paint.color = context.getAttrColor(R.attr.colorAccent)!!
+        paint.color = context.getAttrColor(R.attr.colorAccent)
 
         if (isInEditMode) {
             progress = 0.66f

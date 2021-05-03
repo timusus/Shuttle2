@@ -247,7 +247,7 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
     }
 
     val bottomSheetTranslation: Float?
-        get() = bottomNavigationView?.translationY
+        get() = bottomNavigationView.translationY
 
     fun restoreBottomSheetTranslation(translationY: Float) {
         bottomNavigationView.translationY = translationY

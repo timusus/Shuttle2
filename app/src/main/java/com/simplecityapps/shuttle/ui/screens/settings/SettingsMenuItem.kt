@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.screens.settings;
+package com.simplecityapps.shuttle.ui.screens.settings
 
 import com.simplecityapps.shuttle.R
 

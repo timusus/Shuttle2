@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.common.view;
+package com.simplecityapps.shuttle.ui.common.view
 
 import android.animation.AnimatorSet
 import android.animation.ObjectAnimator
