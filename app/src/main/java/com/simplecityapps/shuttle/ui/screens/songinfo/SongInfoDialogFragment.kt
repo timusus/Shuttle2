@@ -20,6 +20,7 @@ import com.simplecityapps.shuttle.ui.common.utils.dp
 import com.simplecityapps.shuttle.ui.common.utils.toHms
 import com.simplecityapps.shuttle.ui.common.utils.withArgs
 import com.simplecityapps.shuttle.ui.common.view.setMargins
+import java.net.URLDecoder
 
 class SongInfoDialogFragment : DialogFragment(), Injectable {
 
@@ -48,10 +49,11 @@ class SongInfoDialogFragment : DialogFragment(), Injectable {
             "Album" to song.album.orEmpty(),
             "Year" to song.year?.toString().orEmpty(),
             "Disc" to song.disc?.toString().orEmpty(),
-            "Mime Type" to song.mimeType,
-            "Size" to "${"%.2f".format((song.size / 1024f / 1024f))}MB",
             "Play count" to song.playCount.toString(),
             "Genre(s)" to song.genres.joinToString(", "),
+            "Path" to URLDecoder.decode(song.path),
+            "Mime Type" to song.mimeType,
+            "Size" to "${"%.2f".format((song.size / 1024f / 1024f))}MB",
             "Lyrics" to song.lyrics,
         )
 
@@ -71,7 +73,7 @@ class SongInfoDialogFragment : DialogFragment(), Injectable {
                 addView(TextView(requireContext()).apply {
                     text = value
                     gravity = Gravity.START or Gravity.CENTER_VERTICAL
-                    layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)
+                    layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1.5f)
                 })
             })
         }
