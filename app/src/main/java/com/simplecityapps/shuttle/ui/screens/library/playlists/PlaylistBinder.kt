@@ -11,7 +11,7 @@ import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
-import com.simplecityapps.shuttle.ui.common.utils.toHms
+import com.squareup.phrase.Phrase
 
 class PlaylistBinder(val playlist: Playlist, private val listener: Listener) : ViewBinder {
 
@@ -66,10 +66,11 @@ class PlaylistBinder(val playlist: Playlist, private val listener: Listener) : V
 
             titleTextView.text = viewBinder.playlist.name
             if (viewBinder.playlist.songCount == 0) {
-                subtitleTextView.text = "Playlist empty"
+                subtitleTextView.text = itemView.resources.getString(R.string.song_list_empty)
             } else {
-                subtitleTextView.text =
-                    "${subtitleTextView.resources.getQuantityString(R.plurals.songsPlural, viewBinder.playlist.songCount, viewBinder.playlist.songCount)} • ${viewBinder.playlist.duration.toHms("--:--")}"
+                subtitleTextView.text = Phrase.fromPlural(itemView.context, R.plurals.songsPlural, viewBinder.playlist.songCount)
+                    .put("count", viewBinder.playlist.songCount)
+                    .format()
             }
 
             syncIcon.isVisible = viewBinder.playlist.mediaStoreId != null

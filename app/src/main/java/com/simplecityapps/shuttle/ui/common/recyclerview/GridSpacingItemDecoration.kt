@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.common.recyclerview;
+package com.simplecityapps.shuttle.ui.common.recyclerview
 
 import android.graphics.Rect
 import android.view.View

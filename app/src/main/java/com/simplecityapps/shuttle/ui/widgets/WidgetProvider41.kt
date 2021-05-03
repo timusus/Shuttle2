@@ -77,7 +77,7 @@ class WidgetProvider41 : ShuttleAppWidgetProvider() {
                 }
             }
         } ?: run {
-            setTextViewText(R.id.title, "Choose a song…")
+            setTextViewText(R.id.title, context.getString(R.string.widget_empty_text))
             setViewVisibility(R.id.subtitle, View.GONE)
         }
 

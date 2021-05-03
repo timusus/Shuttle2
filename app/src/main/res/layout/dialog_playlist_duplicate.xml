@@ -25,6 +25,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/title"
-        android:text="Always add duplicates" />
+        android:text="@string/playlist_menu_duplicates_switch_always_add" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -6,7 +6,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.Toolbar
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -36,6 +35,7 @@ import com.simplecityapps.shuttle.ui.screens.onboarding.emby.EmbyConfigurationFr
 import com.simplecityapps.shuttle.ui.screens.onboarding.jellyfin.JellyfinConfigurationFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.plex.PlexConfigurationFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.taglib.DirectorySelectionFragment
+import com.squareup.phrase.Phrase
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -56,7 +56,8 @@ class MediaProviderSelectionFragment :
 
     private lateinit var adapter: RecyclerAdapter
 
-    @Inject lateinit var presenter: MediaProviderSelectionPresenter
+    @Inject
+    lateinit var presenter: MediaProviderSelectionPresenter
 
     private val preAnimationConstraints = ConstraintSet()
     private val postAnimationConstraints = ConstraintSet()
@@ -87,9 +88,9 @@ class MediaProviderSelectionFragment :
 
         val subtitleLabel: TextView = view.findViewById(R.id.subtitleLabel)
         if (isOnboarding) {
-            subtitleLabel.text = "Add media provider(s). You can change this later"
+            subtitleLabel.text = getString(R.string.media_providers_add_onboarding)
         } else {
-            subtitleLabel.text = "Add media provider(s)"
+            subtitleLabel.text = getString(R.string.media_providers_add)
         }
 
         addProviderButton = view.findViewById(R.id.addProviderButton)
@@ -111,10 +112,10 @@ class MediaProviderSelectionFragment :
         super.onResume()
 
         if (isOnboarding) {
-            toolbar.title = "Discover your music"
+            toolbar.title = getString(R.string.media_provider_toolbar_title_onboarding)
             toolbar.navigationIcon = null
         } else {
-            toolbar.title = "Media provider"
+            toolbar.title = getString(R.string.media_provider_toolbar_title)
             toolbar.setNavigationOnClickListener {
                 findNavController().popBackStack()
             }
@@ -125,7 +126,7 @@ class MediaProviderSelectionFragment :
             getParent()?.let { parent ->
                 parent.hideBackButton()
                 parent.toggleNextButton(true)
-                parent.showNextButton("Scan")
+                parent.showNextButton(getString(R.string.onboarding_media_scan))
             } ?: Timber.e("Failed to update state - getParent() returned null")
         }, 50)
     }
@@ -146,14 +147,14 @@ class MediaProviderSelectionFragment :
         val viewBinders = mutableListOf<ViewBinder>()
         val localMediaTypes = mediaProviderTypes.filter { !it.isRemote }
         if (localMediaTypes.isNotEmpty()) {
-            viewBinders.add(HeaderBinder("Local"))
+            viewBinders.add(HeaderBinder(getString(R.string.media_provider_type_local)))
             viewBinders.addAll(
                 localMediaTypes.map { provider -> MediaProviderBinder(providerType = provider, listener = listener, showRemoveButton = true, showSubtitle = false) }
             )
         }
         val remoteMediaTypes = mediaProviderTypes.filter { it.isRemote }
         if (remoteMediaTypes.isNotEmpty()) {
-            viewBinders.add(HeaderBinder("Remote"))
+            viewBinders.add(HeaderBinder(getString(R.string.media_provider_type_remote)))
             viewBinders.addAll(
                 remoteMediaTypes.map { provider -> MediaProviderBinder(providerType = provider, listener = listener, showRemoveButton = true, showSubtitle = false) }
             )
@@ -223,10 +224,18 @@ class MediaProviderSelectionFragment :
                     }
                     R.id.remove -> {
                         MaterialAlertDialogBuilder(requireContext())
-                            .setTitle("Remove ${providerType.title()}")
-                            .setMessage("This will remove all songs, playlists & play counts associated with ${providerType.title()} media provder")
-                            .setPositiveButton("Remove") { _, _ -> presenter.removeMediaProviderType(providerType) }
-                            .setNegativeButton("Cancel", null)
+                            .setTitle(
+                                Phrase.from(requireContext(), R.string.media_provider_dialog_remove_title)
+                                    .put("provider_type", providerType.title())
+                                    .format()
+                            )
+                            .setMessage(
+                                Phrase.from(requireContext(), R.string.media_provider_dialog_remove_subtitle)
+                                    .put("provider_type", providerType.title())
+                                    .format()
+                            )
+                            .setPositiveButton(getString(R.string.media_provider_dialog_button_remove)) { _, _ -> presenter.removeMediaProviderType(providerType) }
+                            .setNegativeButton(getString(R.string.dialog_button_cancel), null)
                             .show()
                         return@setOnMenuItemClickListener true
                     }

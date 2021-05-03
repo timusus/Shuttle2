@@ -17,7 +17,6 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.adapter.ViewBinder
@@ -29,6 +28,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.dialog.ShowExcludeDialog
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.view.HomeButton
@@ -43,6 +43,7 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFr
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
+import com.squareup.phrase.Phrase
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.firstOrNull
 import java.util.*
@@ -176,16 +177,17 @@ class HomeFragment :
     // HomeContract.View Implementation
 
     override fun showLoadError(error: Error) {
-        Toast.makeText(context, error.userDescription(), Toast.LENGTH_LONG).show()
+        Toast.makeText(context, error.userDescription(resources), Toast.LENGTH_LONG).show()
     }
 
     override fun setData(data: HomeContract.HomeData) {
         val viewBinders = mutableListOf<ViewBinder>()
         if (data.recentlyPlayedAlbums.isNotEmpty()) {
-            viewBinders.add(HeaderBinder("Recent", "Recently played albums"))
+            viewBinders.add(HeaderBinder(getString(R.string.home_title_recent), getString(R.string.home_description_recently_played)))
             viewBinders.add(HorizontalAlbumListBinder(data.recentlyPlayedAlbums, imageLoader, scope = lifecycle.coroutineScope, listener = albumBinderListener))
         }
         if (data.mostPlayedAlbums.isNotEmpty()) {
+            viewBinders.add(HeaderBinder(getString(R.string.home_title_most_played), getString(R.string.home_description_most_played)))
             viewBinders.add(
                 HorizontalAlbumListBinder(
                     data.mostPlayedAlbums,
@@ -197,7 +199,12 @@ class HomeFragment :
             )
         }
         if (data.albumsFromThisYear.isNotEmpty()) {
-            viewBinders.add(HeaderBinder("This Year", "Albums released in ${Calendar.getInstance().get(Calendar.YEAR)}"))
+            viewBinders.add(
+                HeaderBinder(
+                    getString(R.string.home_title_this_year),
+                    Phrase.from(requireContext(), R.string.home_description_this_year).put("year", Calendar.getInstance().get(Calendar.YEAR)).format().toString()
+                )
+            )
             viewBinders.add(
                 HorizontalAlbumListBinder(
                     data.albumsFromThisYear,
@@ -208,7 +215,7 @@ class HomeFragment :
             )
         }
         if (data.unplayedAlbumArtists.isNotEmpty()) {
-            viewBinders.add(HeaderBinder("Something Different", "Artists you haven't listened to in a while"))
+            viewBinders.add(HeaderBinder(getString(R.string.home_title_something_different), getString(R.string.home_description_something_different)))
             viewBinders.add(
                 HorizontalAlbumArtistListBinder(
                     data.unplayedAlbumArtists,
@@ -227,7 +234,7 @@ class HomeFragment :
     }
 
     override fun showDeleteError(error: Error) {
-        Toast.makeText(requireContext(), error.userDescription(), Toast.LENGTH_LONG).show()
+        Toast.makeText(requireContext(), error.userDescription(resources), Toast.LENGTH_LONG).show()
     }
 
     override fun showTagEditor(songs: List<Song>) {
@@ -235,11 +242,11 @@ class HomeFragment :
     }
 
     override fun onAddedToQueue(albumArtist: AlbumArtist) {
-        Toast.makeText(context, "${albumArtist.friendlyNameOrArtistName} added to queue", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("itemName", albumArtist.friendlyNameOrArtistName).format(), Toast.LENGTH_SHORT).show()
     }
 
     override fun onAddedToQueue(album: Album) {
-        Toast.makeText(context, "${album.name} added to queue", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("itemName", album.name).format(), Toast.LENGTH_SHORT).show()
     }
 
 
@@ -287,14 +294,9 @@ class HomeFragment :
                             return@setOnMenuItemClickListener true
                         }
                         R.id.exclude -> {
-                            MaterialAlertDialogBuilder(requireContext())
-                                .setTitle("Exclude Artist")
-                                .setMessage("\"${albumArtist.friendlyNameOrArtistName}\" will be hidden from your library.\n\nYou can view excluded songs in settings.")
-                                .setPositiveButton("Exclude") { _, _ ->
-                                    presenter.exclude(albumArtist)
-                                }
-                                .setNegativeButton("Cancel", null)
-                                .show()
+                            ShowExcludeDialog(requireContext(), albumArtist.friendlyNameOrArtistName) {
+                                presenter.exclude(albumArtist)
+                            }
                             return@setOnMenuItemClickListener true
                         }
                         R.id.editTags -> {
@@ -371,7 +373,7 @@ class HomeFragment :
         coroutineScope.launch {
             val playlist = playlistRepository.getPlaylists(query).firstOrNull().orEmpty().firstOrNull()
             if (playlist == null || playlist.songCount == 0) {
-                Toast.makeText(context, "Playlist empty", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, getString(R.string.playlist_empty), Toast.LENGTH_SHORT).show()
             } else {
                 if (findNavController().currentDestination?.id != R.id.playlistDetailFragment) {
                     findNavController().navigate(R.id.action_homeFragment_to_playlistDetailFragment, PlaylistDetailFragmentArgs(playlist).toBundle())

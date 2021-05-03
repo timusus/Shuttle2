@@ -26,7 +26,8 @@ import javax.inject.Inject
 
 class PlexConfigurationFragment : DialogFragment(), Injectable {
 
-    @Inject lateinit var plexAuthenticationManager: PlexAuthenticationManager
+    @Inject
+    lateinit var plexAuthenticationManager: PlexAuthenticationManager
 
     var addressInputLayout: TextInputLayout by autoCleared()
     var loginInputLayout: TextInputLayout by autoCleared()
@@ -86,10 +87,10 @@ class PlexConfigurationFragment : DialogFragment(), Injectable {
         }
 
         val dialog = AlertDialog.Builder(requireContext())
-            .setTitle("Plex Media Server")
+            .setTitle(getString(R.string.media_provider_title_plex))
             .setView(view)
-            .setPositiveButton("Authenticate", null)
-            .setNegativeButton("Close", null)
+            .setPositiveButton(requireContext().getString(R.string.media_provider_button_authenticate), null)
+            .setNegativeButton(requireContext().getString(R.string.dialog_button_close), null)
             .create()
 
         dialog.setOnShowListener {
@@ -100,7 +101,7 @@ class PlexConfigurationFragment : DialogFragment(), Injectable {
                 }
 
                 inputGroup.isVisible = false
-                loadingView.setState(CircularLoadingView.State.Loading("Authenticating…"))
+                loadingView.setState(CircularLoadingView.State.Loading(requireContext().getString(R.string.media_provider_authenticating)))
                 loadingView.isVisible = true
 
                 plexAuthenticationManager.setAddress(addressInputLayout.editText!!.text.toString())
@@ -116,7 +117,7 @@ class PlexConfigurationFragment : DialogFragment(), Injectable {
                         if (rememberPasswordSwitch.isChecked) {
                             plexAuthenticationManager.setLoginCredentials(loginCredentials)
                         }
-                        loadingView.setState(CircularLoadingView.State.Empty("Authentication Successful"))
+                        loadingView.setState(CircularLoadingView.State.Empty(requireContext().getString(R.string.media_provider_authentication_success)))
                         delay(1000)
                         dialog.dismiss()
                     }
@@ -146,19 +147,19 @@ class PlexConfigurationFragment : DialogFragment(), Injectable {
 
         // Host
         if (addressInputLayout.editText!!.text.isEmpty()) {
-            addressInputLayout.error = "Required"
+            addressInputLayout.error = getString(R.string.validation_field_required)
             hasError = true
         }
 
         // Username
         if (loginInputLayout.editText!!.text.isEmpty()) {
-            loginInputLayout.error = "Required"
+            loginInputLayout.error = getString(R.string.validation_field_required)
             hasError = true
         }
 
         // Password
         if (passwordInputLayout.editText!!.text.isEmpty()) {
-            passwordInputLayout.error = "Required"
+            passwordInputLayout.error = getString(R.string.validation_field_required)
             hasError = true
         }
 

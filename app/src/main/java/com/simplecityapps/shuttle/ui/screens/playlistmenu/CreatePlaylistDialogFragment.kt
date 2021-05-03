@@ -30,9 +30,9 @@ class CreatePlaylistDialogFragment : EditTextAlertDialog() {
 
         const val ARG_DATA = "data"
 
-        fun newInstance(playlistData: PlaylistData) = CreatePlaylistDialogFragment().withArgs {
+        fun newInstance(playlistData: PlaylistData, hint: String?) = CreatePlaylistDialogFragment().withArgs {
             putParcelable(ARG_DATA, playlistData)
-            putString(ARG_HINT, "Playlist Name")
+            putString(ARG_HINT, hint)
         }
     }
 }

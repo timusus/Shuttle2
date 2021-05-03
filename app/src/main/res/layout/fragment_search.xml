@@ -65,7 +65,7 @@
                     android:layout_height="wrap_content"
                     android:checkable="true"
                     android:checked="true"
-                    android:text="Artists" />
+                    android:text="@string/artists" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/albumsChip"
@@ -74,7 +74,7 @@
                     android:layout_height="wrap_content"
                     android:checkable="true"
                     android:checked="true"
-                    android:text="Albums" />
+                    android:text="@string/albums" />
 
                 <com.google.android.material.chip.Chip
                     android:id="@+id/songsChip"
@@ -83,7 +83,7 @@
                     android:layout_height="wrap_content"
                     android:checkable="true"
                     android:checked="true"
-                    android:text="Songs" />
+                    android:text="@string/songs" />
 
             </com.google.android.material.chip.ChipGroup>
 

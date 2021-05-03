@@ -32,6 +32,8 @@ import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.closeKeyboard
+import com.simplecityapps.shuttle.ui.common.dialog.ShowDeleteDialog
+import com.simplecityapps.shuttle.ui.common.dialog.ShowExcludeDialog
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistBinder
@@ -46,6 +48,7 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
+import com.squareup.phrase.Phrase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BroadcastChannel
 import kotlinx.coroutines.channels.Channel
@@ -182,7 +185,7 @@ class SearchFragment : Fragment(),
         }
         val list = mutableListOf<ViewBinder>().apply {
             if (searchResult.first.isNotEmpty()) {
-                add(HeaderBinder("Artists"))
+                add(HeaderBinder(getString(R.string.artists)))
                 addAll(searchResult.first.map { artistResult ->
                     ListAlbumArtistBinder(
                         albumArtist = artistResult.albumArtist,
@@ -193,7 +196,7 @@ class SearchFragment : Fragment(),
                 })
             }
             if (searchResult.second.isNotEmpty()) {
-                add(HeaderBinder("Albums"))
+                add(HeaderBinder(getString(R.string.albums)))
                 addAll(searchResult.second.map { albumResult ->
                     ListAlbumBinder(
                         album = albumResult.album,
@@ -204,7 +207,7 @@ class SearchFragment : Fragment(),
                 })
             }
             if (searchResult.third.isNotEmpty()) {
-                add(HeaderBinder("Songs"))
+                add(HeaderBinder(getString(R.string.songs)))
                 addAll(searchResult.third.map { songResult ->
                     SongBinder(
                         song = songResult.song,
@@ -219,23 +222,23 @@ class SearchFragment : Fragment(),
     }
 
     override fun showLoadError(error: Error) {
-        Toast.makeText(context, error.userDescription(), Toast.LENGTH_LONG).show()
+        Toast.makeText(context, error.userDescription(resources), Toast.LENGTH_LONG).show()
     }
 
     override fun onAddedToQueue(albumArtist: AlbumArtist) {
-        Toast.makeText(context, "${albumArtist.friendlyNameOrArtistName} added to queue", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("itemName", albumArtist.friendlyNameOrArtistName).format(), Toast.LENGTH_SHORT).show()
     }
 
     override fun onAddedToQueue(album: Album) {
-        Toast.makeText(context, "${album.name} added to queue", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("itemName", album.name).format(), Toast.LENGTH_SHORT).show()
     }
 
     override fun onAddedToQueue(song: Song) {
-        Toast.makeText(context, "${song.name} added to queue", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("itemName", song.name).format(), Toast.LENGTH_SHORT).show()
     }
 
     override fun showDeleteError(error: Error) {
-        Toast.makeText(requireContext(), error.userDescription(), Toast.LENGTH_LONG).show()
+        Toast.makeText(requireContext(), error.userDescription(resources), Toast.LENGTH_LONG).show()
     }
 
     override fun showTagEditor(songs: List<Song>) {
@@ -296,25 +299,15 @@ class SearchFragment : Fragment(),
                             return@setOnMenuItemClickListener true
                         }
                         R.id.exclude -> {
-                            MaterialAlertDialogBuilder(requireContext())
-                                .setTitle("Exclude Song")
-                                .setMessage("\"${song.name}\" will be hidden from your library.\n\nYou can view excluded songs in settings.")
-                                .setPositiveButton("Exclude") { _, _ ->
-                                    presenter.exclude(song)
-                                }
-                                .setNegativeButton("Cancel", null)
-                                .show()
+                            ShowExcludeDialog(requireContext(), song.name) {
+                                presenter.exclude(song)
+                            }
                             return@setOnMenuItemClickListener true
                         }
                         R.id.delete -> {
-                            MaterialAlertDialogBuilder(requireContext())
-                                .setTitle("Delete Song")
-                                .setMessage("\"${song.name}\" will be permanently deleted")
-                                .setPositiveButton("Delete") { _, _ ->
-                                    presenter.delete(song)
-                                }
-                                .setNegativeButton("Cancel", null)
-                                .show()
+                            ShowDeleteDialog(requireContext(), song.name) {
+                                presenter.delete(song)
+                            }
                             return@setOnMenuItemClickListener true
                         }
                         R.id.editTags -> {

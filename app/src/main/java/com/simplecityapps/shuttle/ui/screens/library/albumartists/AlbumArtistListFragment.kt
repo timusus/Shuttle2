@@ -17,7 +17,6 @@ import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.bumptech.glide.integration.recyclerview.RecyclerViewPreloader
 import com.bumptech.glide.util.ViewPreloadSizeProvider
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.mediaprovider.model.AlbumArtist
@@ -28,10 +27,11 @@ import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.ContextualToolbarHelper
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.dialog.ShowExcludeDialog
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
-import com.simplecityapps.shuttle.ui.common.recyclerview.GridSpacingItemDecoration
 import com.simplecityapps.shuttle.ui.common.recyclerview.GlidePreloadModelProvider
+import com.simplecityapps.shuttle.ui.common.recyclerview.GridSpacingItemDecoration
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
@@ -42,6 +42,7 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFr
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
+import com.squareup.phrase.Phrase
 import javax.inject.Inject
 
 class AlbumArtistListFragment :
@@ -74,7 +75,7 @@ class AlbumArtistListFragment :
     private val viewPreloadSizeProvider by lazy { ViewPreloadSizeProvider<AlbumArtist>() }
     private val preloadModelProvider by lazy {
         GlidePreloadModelProvider<AlbumArtist>(
-            imageLoader as GlideImageLoader, listOf(ArtworkImageLoader.Options.CacheDecodedResource)
+            imageLoader, listOf(ArtworkImageLoader.Options.CacheDecodedResource)
         )
     }
 
@@ -236,22 +237,28 @@ class AlbumArtistListFragment :
     }
 
     override fun onAddedToQueue(albumArtists: List<AlbumArtist>) {
-        Toast.makeText(context, "${albumArtists.size} artist(s) added to queue", Toast.LENGTH_SHORT).show()
+        Toast.makeText(
+            context,
+            Phrase.fromPlural(resources, R.plurals.queue_artists_added, albumArtists.size)
+                .put("count", albumArtists.size)
+                .format(),
+            Toast.LENGTH_SHORT
+        ).show()
     }
 
     override fun setLoadingState(state: AlbumArtistListContract.LoadingState) {
         when (state) {
             is AlbumArtistListContract.LoadingState.Scanning -> {
-                horizontalLoadingView.setState(HorizontalLoadingView.State.Loading("Scanning your library"))
+                horizontalLoadingView.setState(HorizontalLoadingView.State.Loading(getString(R.string.library_scan_in_progress)))
                 circularLoadingView.setState(CircularLoadingView.State.None)
             }
             is AlbumArtistListContract.LoadingState.Loading -> {
                 horizontalLoadingView.setState(HorizontalLoadingView.State.None)
-                circularLoadingView.setState(CircularLoadingView.State.Loading())
+                circularLoadingView.setState(CircularLoadingView.State.Loading(getString(R.string.loading)))
             }
             is AlbumArtistListContract.LoadingState.Empty -> {
                 horizontalLoadingView.setState(HorizontalLoadingView.State.None)
-                circularLoadingView.setState(CircularLoadingView.State.Empty("No album artists"))
+                circularLoadingView.setState(CircularLoadingView.State.Empty(getString(R.string.artist_list_empty)))
             }
             is AlbumArtistListContract.LoadingState.None -> {
                 horizontalLoadingView.setState(HorizontalLoadingView.State.None)
@@ -265,7 +272,7 @@ class AlbumArtistListFragment :
     }
 
     override fun showLoadError(error: Error) {
-        Toast.makeText(context, error.userDescription(), Toast.LENGTH_LONG).show()
+        Toast.makeText(context, error.userDescription(resources), Toast.LENGTH_LONG).show()
     }
 
     override fun showTagEditor(songs: List<Song>) {
@@ -336,14 +343,9 @@ class AlbumArtistListFragment :
                         return@setOnMenuItemClickListener true
                     }
                     R.id.exclude -> {
-                        MaterialAlertDialogBuilder(requireContext())
-                            .setTitle("Exclude Artist")
-                            .setMessage("\"${albumArtist.friendlyNameOrArtistName}\" will be hidden from your library.\n\nYou can view excluded songs in settings.")
-                            .setPositiveButton("Exclude") { _, _ ->
-                                presenter.exclude(albumArtist)
-                            }
-                            .setNegativeButton("Cancel", null)
-                            .show()
+                        ShowExcludeDialog(requireContext(), albumArtist.friendlyNameOrArtistName) {
+                            presenter.exclude(albumArtist)
+                        }
                         return@setOnMenuItemClickListener true
                     }
                     R.id.editTags -> {
@@ -374,14 +376,14 @@ class AlbumArtistListFragment :
     private val contextualToolbarCallback = object : ContextualToolbarHelper.Callback<AlbumArtist> {
 
         override fun onCountChanged(count: Int) {
-            contextualToolbarHelper.contextualToolbar?.title = "$count selected"
+            contextualToolbarHelper.contextualToolbar?.title = Phrase.from(requireContext(), R.string.multi_select_items_selected).put("count", count).format()
             contextualToolbarHelper.contextualToolbar?.menu?.let { menu ->
                 TagEditorMenuSanitiser.sanitise(menu, contextualToolbarHelper.selectedItems.flatMap { albumArtist -> albumArtist.mediaProviders }.distinct())
             }
         }
 
         override fun onItemUpdated(item: AlbumArtist, isSelected: Boolean) {
-            adapter?.let { adapter ->
+            adapter.let { adapter ->
                 adapter.items
                     .filterIsInstance<AlbumArtistBinder>()
                     .firstOrNull { it.albumArtist == item }

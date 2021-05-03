@@ -38,10 +38,10 @@ class StoragePermissionFragment : Fragment(), OnboardingChild {
         } else {
             if (shouldShowRequestPermissionRationale(Manifest.permission.READ_EXTERNAL_STORAGE)) {
                 MaterialAlertDialogBuilder(requireContext())
-                    .setTitle("Storage Permission Required")
-                    .setMessage("Shuttle may not function correctly without permission to access your music")
-                    .setPositiveButton("Retry") { _, _ -> requestStoragePermission() }
-                    .setNegativeButton("Close", null)
+                    .setTitle(getString(R.string.onboarding_permission_dialog_title))
+                    .setMessage(getString(R.string.onboarding_permission_dialog_subtitle))
+                    .setPositiveButton(getString(R.string.dialog_button_retry)) { _, _ -> requestStoragePermission() }
+                    .setNegativeButton(getString(R.string.dialog_button_close), null)
                     .show()
             } else {
                 getParent().goToNext()

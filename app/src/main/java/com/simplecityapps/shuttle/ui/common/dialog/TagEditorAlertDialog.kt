@@ -22,6 +22,7 @@ import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.closeKeyboard
 import com.simplecityapps.shuttle.ui.common.utils.withArgs
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
+import com.squareup.phrase.Phrase
 import javax.inject.Inject
 
 class TagEditorAlertDialog : DialogFragment(), Injectable, TagEditorContract.View {
@@ -30,7 +31,8 @@ class TagEditorAlertDialog : DialogFragment(), Injectable, TagEditorContract.Vie
 
     private lateinit var _data: TagEditorContract.Data
 
-    @Inject lateinit var presenter: TagEditorPresenter
+    @Inject
+    lateinit var presenter: TagEditorPresenter
 
     private var uiGroup: Group by autoCleared()
     private var loadingView: CircularLoadingView by autoCleared()
@@ -88,7 +90,9 @@ class TagEditorAlertDialog : DialogFragment(), Injectable, TagEditorContract.Vie
         loadingView = view.findViewById(R.id.loadingView)
 
         subtitleText = view.findViewById(R.id.subtitleText)
-        subtitleText.text = "Editing ${songs.size} song${if (songs.size > 1) "s" else ""}"
+        subtitleText.text = Phrase.fromPlural(resources, R.plurals.edit_tags_editing_count_songs, songs.size)
+            .put("count", songs.size)
+            .format()
 
         titleInputLayout = view.findViewById(R.id.titleInputLayout)
         titleEditText = view.findViewById(R.id.titleEditText)
@@ -135,10 +139,10 @@ class TagEditorAlertDialog : DialogFragment(), Injectable, TagEditorContract.Vie
         lyricsInputLayout.isEndIconVisible = false
 
         val dialog = MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Edit Tags")
+            .setTitle(getString(R.string.edit_tags_action))
             .setView(view)
-            .setNegativeButton("Close", null)
-            .setPositiveButton("Save") { _, _ -> lyricsInputLayout.closeKeyboard() }
+            .setNegativeButton(getString(R.string.dialog_button_close), null)
+            .setPositiveButton(getString(R.string.dialog_button_save)) { _, _ -> lyricsInputLayout.closeKeyboard() }
             .create()
 
         dialog.setOnShowListener {
@@ -205,7 +209,7 @@ class TagEditorAlertDialog : DialogFragment(), Injectable, TagEditorContract.Vie
             titleEditText.setText(initialValue)
             titleInputLayout.isVisible = visible
             if (hasMultipleValues) {
-                titleInputLayout.helperText = "Multiple values"
+                titleInputLayout.helperText = getString(R.string.edit_tags_multiple_values)
             }
         }
         setupResetButton(titleInputLayout, titleEditText, _data.titleField, textChangeListener)
@@ -214,7 +218,7 @@ class TagEditorAlertDialog : DialogFragment(), Injectable, TagEditorContract.Vie
             albumArtistEditText.setText(initialValue)
             albumArtistInputLayout.isVisible = visible
             if (hasMultipleValues) {
-                albumArtistInputLayout.helperText = "Multiple values"
+                albumArtistInputLayout.helperText = getString(R.string.edit_tags_multiple_values)
             }
         }
         setupResetButton(albumArtistInputLayout, albumArtistEditText, _data.albumArtistField, textChangeListener)
@@ -223,7 +227,7 @@ class TagEditorAlertDialog : DialogFragment(), Injectable, TagEditorContract.Vie
             artistEditText.setText(initialValue)
             artistInputLayout.isVisible = visible
             if (hasMultipleValues) {
-                artistInputLayout.helperText = "Multiple values"
+                artistInputLayout.helperText = getString(R.string.edit_tags_multiple_values)
             }
         }
         setupResetButton(artistInputLayout, artistEditText, _data.artistField, textChangeListener)
@@ -231,7 +235,7 @@ class TagEditorAlertDialog : DialogFragment(), Injectable, TagEditorContract.Vie
         data.albumField.apply {
             albumInputLayout.isVisible = visible
             if (hasMultipleValues) {
-                albumInputLayout.helperText = "Multiple values"
+                albumInputLayout.helperText = getString(R.string.edit_tags_multiple_values)
             }
             albumEditText.setText(initialValue)
         }
@@ -241,7 +245,7 @@ class TagEditorAlertDialog : DialogFragment(), Injectable, TagEditorContract.Vie
             yearEditText.setText(initialValue)
             yearInputLayout.isVisible = visible
             if (hasMultipleValues) {
-                yearInputLayout.helperText = "Multiple values"
+                yearInputLayout.helperText = getString(R.string.edit_tags_multiple_values)
             }
         }
         setupResetButton(yearInputLayout, yearEditText, _data.dateField, textChangeListener)
@@ -250,7 +254,7 @@ class TagEditorAlertDialog : DialogFragment(), Injectable, TagEditorContract.Vie
             trackEditText.setText(initialValue)
             trackInputLayout.isVisible = visible
             if (hasMultipleValues) {
-                trackInputLayout.helperText = "Multiple values"
+                trackInputLayout.helperText = getString(R.string.edit_tags_multiple_values)
             }
         }
         setupResetButton(trackInputLayout, trackEditText, _data.trackField, textChangeListener)
@@ -259,7 +263,7 @@ class TagEditorAlertDialog : DialogFragment(), Injectable, TagEditorContract.Vie
             trackTotalEditText.setText(initialValue)
             trackTotalInputLayout.isVisible = visible
             if (hasMultipleValues) {
-                trackTotalInputLayout.helperText = "Multiple values"
+                trackTotalInputLayout.helperText = getString(R.string.edit_tags_multiple_values)
             }
         }
         setupResetButton(trackTotalInputLayout, trackTotalEditText, _data.trackTotalField, textChangeListener)
@@ -268,7 +272,7 @@ class TagEditorAlertDialog : DialogFragment(), Injectable, TagEditorContract.Vie
             discEditText.setText(initialValue)
             discInputLayout.isVisible = visible
             if (hasMultipleValues) {
-                discInputLayout.helperText = "Multiple values"
+                discInputLayout.helperText = getString(R.string.edit_tags_multiple_values)
             }
         }
         setupResetButton(discInputLayout, discEditText, _data.discField, textChangeListener)
@@ -277,7 +281,7 @@ class TagEditorAlertDialog : DialogFragment(), Injectable, TagEditorContract.Vie
             discTotalEditText.setText(initialValue)
             discTotalInputLayout.isVisible = visible
             if (hasMultipleValues) {
-                discTotalInputLayout.helperText = "Multiple values"
+                discTotalInputLayout.helperText = getString(R.string.edit_tags_multiple_values)
             }
         }
         setupResetButton(discTotalInputLayout, discTotalEditText, _data.discTotalField, textChangeListener)
@@ -286,7 +290,7 @@ class TagEditorAlertDialog : DialogFragment(), Injectable, TagEditorContract.Vie
             genreEditText.setText(initialValue)
             genreInputLayout.isVisible = visible
             if (hasMultipleValues) {
-                genreInputLayout.helperText = "Multiple values"
+                genreInputLayout.helperText = getString(R.string.edit_tags_multiple_values)
             }
         }
 
@@ -296,7 +300,7 @@ class TagEditorAlertDialog : DialogFragment(), Injectable, TagEditorContract.Vie
             lyricsEditText.setText(initialValue)
             lyricsInputLayout.isVisible = visible
             if (hasMultipleValues) {
-                lyricsInputLayout.helperText = "Multiple values"
+                lyricsInputLayout.helperText = getString(R.string.edit_tags_multiple_values)
             }
         }
 
@@ -320,10 +324,26 @@ class TagEditorAlertDialog : DialogFragment(), Injectable, TagEditorContract.Vie
                 loadingView.setState(CircularLoadingView.State.None)
             }
             is TagEditorContract.LoadingState.ReadingTags -> {
-                loadingView.setState(CircularLoadingView.State.Loading("Reading tags (${loadingState.progress + 1} / ${loadingState.total})"))
+                loadingView.setState(
+                    CircularLoadingView.State.Loading(
+                        Phrase.from(requireContext(), R.string.edit_tags_reading_tags)
+                            .put("progress", loadingState.progress.toString())
+                            .put("total", loadingState.total.toString())
+                            .format()
+                            .toString()
+                    )
+                )
             }
             is TagEditorContract.LoadingState.WritingTags -> {
-                loadingView.setState(CircularLoadingView.State.Loading("Saving tags (${loadingState.progress + 1} / ${loadingState.total})"))
+                loadingView.setState(
+                    CircularLoadingView.State.Loading(
+                        Phrase.from(requireContext(), R.string.edit_tags_writing_tags)
+                            .put("progress", loadingState.progress)
+                            .put("total", loadingState.total)
+                            .format()
+                            .toString()
+                    )
+                )
             }
         }
     }

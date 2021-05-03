@@ -9,8 +9,10 @@ import com.simplecityapps.localmediaprovider.local.provider.taglib.FileScanner
 import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongRepository
+import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
+import com.squareup.phrase.Phrase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -144,7 +146,7 @@ class TagEditorPresenter @Inject constructor(
             editables = songAudioFilePairs - uneditables
 
             if (editables.isEmpty()) {
-                view?.closeWithToast("The selected song(s) tags could not be read")
+                view?.closeWithToast(context.getString(R.string.edit_tags_read_failed))
                 return@launch
             }
 
@@ -268,9 +270,20 @@ class TagEditorPresenter @Inject constructor(
             val failureCount = result.filter { !it.second }.size // Songs that we tried to edit, but failed
             val successCount = result.size - failureCount // Songs we successfully edited
             if (successCount != total) { // If any failures occurred, or we couldn't edit all songs
-                view?.closeWithToast("Failed to update ${total - successCount} of $total song${if (total > 1) "s" else ""}")
+                view?.closeWithToast(
+                    Phrase.fromPlural(context, R.plurals.edit_tags_success, total)
+                        .put("count", total - successCount)
+                        .format()
+                        .toString()
+                )
             } else {
-                view?.closeWithToast("Successfully updated $successCount song${if (successCount > 1) "s" else ""}")
+                view?.closeWithToast(
+                    Phrase.fromPlural(context, R.plurals.edit_tags_failure, total)
+                        .putOptional("count", successCount)
+                        .putOptional("total", total)
+                        .format()
+                        .toString()
+                )
             }
         }
     }

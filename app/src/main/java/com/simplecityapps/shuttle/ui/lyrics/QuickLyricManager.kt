@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.screens.lyrics
+package com.simplecityapps.shuttle.ui.lyrics
 
 import android.content.Context
 import android.content.Intent

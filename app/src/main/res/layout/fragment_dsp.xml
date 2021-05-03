@@ -37,7 +37,7 @@
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="16dp"
                 android:layout_marginEnd="16dp"
-                android:text="Replay Gain"
+                android:text="@string/dsp_replay_gain_title"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -50,7 +50,7 @@
                 android:layout_marginStart="24dp"
                 android:layout_marginTop="16dp"
                 android:layout_marginEnd="24dp"
-                android:hint="Mode"
+                android:hint="@string/dsp_replay_gain_hint_mode"
                 app:layout_constraintTop_toBottomOf="@id/replayGainTitle">
 
                 <AutoCompleteTextView
@@ -69,7 +69,7 @@
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="40dp"
                 android:layout_marginEnd="16dp"
-                android:text="Preamp"
+                android:text="@string/dsp_preamp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintEnd_toStartOf="@id/frequencyResponseButton"
                 app:layout_constraintStart_toStartOf="parent"
@@ -134,7 +134,7 @@
                 android:layout_marginStart="16dp"
                 android:layout_marginTop="40dp"
                 android:layout_marginEnd="16dp"
-                android:text="Equalizer"
+                android:text="@string/dsp_equalizer_title"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintEnd_toStartOf="@id/frequencyResponseButton"
                 app:layout_constraintStart_toStartOf="parent"
@@ -155,7 +155,7 @@
                 android:layout_height="40dp"
                 android:layout_marginEnd="16dp"
                 android:background="?selectableItemBackgroundBorderless"
-                android:contentDescription="Frequency Response Curve"
+                android:contentDescription="@string/dsp_frequency_response_curve_title"
                 android:padding="4dp"
                 android:scaleType="fitCenter"
                 android:src="@drawable/ic_baseline_insert_chart_outlined_24"
@@ -171,7 +171,7 @@
                 android:layout_marginStart="24dp"
                 android:layout_marginTop="24dp"
                 android:layout_marginEnd="24dp"
-                android:hint="Preset"
+                android:hint="@string/dsp_equalizer_hint_preset"
                 app:layout_constraintTop_toBottomOf="@id/equalizerTitle">
 
                 <AutoCompleteTextView

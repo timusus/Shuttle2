@@ -19,6 +19,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.getAttrColor
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 import com.simplecityapps.shuttle.ui.screens.home.search.ArtistJaroSimilarity
+import com.squareup.phrase.Phrase
 
 class ListAlbumArtistBinder(
     albumArtist: AlbumArtist,
@@ -62,13 +63,20 @@ class ListAlbumArtistBinder(
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.albumArtist.friendlyNameOrArtistName
-            subtitle.text = "${
-                subtitle.resources.getQuantityString(
-                    R.plurals.albumsPlural,
-                    viewBinder.albumArtist.albumCount,
-                    viewBinder.albumArtist.albumCount
-                )
-            } • ${subtitle.resources.getQuantityString(R.plurals.songsPlural, viewBinder.albumArtist.songCount, viewBinder.albumArtist.songCount)}"
+
+            val albumQuantity = Phrase
+                .fromPlural(itemView.resources, R.plurals.albumsPlural, viewBinder.albumArtist.albumCount)
+                .put("count", viewBinder.albumArtist.albumCount)
+                .format()
+            val songQuantity = Phrase
+                .fromPlural(itemView.resources, R.plurals.songsPlural, viewBinder.albumArtist.songCount)
+                .put("count", viewBinder.albumArtist.songCount)
+                .format()
+            subtitle.text = Phrase.from(itemView.context, R.string.albums_songs)
+                .put("album_count", albumQuantity)
+                .put("song_count", songQuantity)
+                .format()
+
             viewBinder.imageLoader.loadArtwork(
                 imageView, viewBinder.albumArtist,
                 listOf(
@@ -111,5 +119,3 @@ class ListAlbumArtistBinder(
         }
     }
 }
-
-

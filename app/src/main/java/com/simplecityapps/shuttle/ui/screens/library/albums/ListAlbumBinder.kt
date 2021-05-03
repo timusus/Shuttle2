@@ -19,6 +19,7 @@ import com.simplecityapps.shuttle.ui.common.getAttrColor
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 import com.simplecityapps.shuttle.ui.screens.home.search.AlbumJaroSimilarity
+import com.squareup.phrase.Phrase
 
 class ListAlbumBinder(
     album: Album,
@@ -63,13 +64,13 @@ class ListAlbumBinder(
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.album.name
-            subtitle.text = "${viewBinder.album.albumArtist ?: viewBinder.album.artists.joinToString(", ")} • ${
-                subtitle.resources.getQuantityString(
-                    R.plurals.songsPlural,
-                    viewBinder.album.songCount,
-                    viewBinder.album.songCount
-                )
-            }"
+            val songQuantity = Phrase.fromPlural(itemView.context, R.plurals.songsPlural, viewBinder.album.songCount)
+                .put("count", viewBinder.album.songCount)
+                .format()
+            subtitle.text = Phrase.from(itemView.context, R.string.artists_songs)
+                .put("artists", viewBinder.album.albumArtist ?: viewBinder.album.artists.joinToString(", "))
+                .put("song_count", songQuantity)
+                .format()
 
             viewBinder.imageLoader.loadArtwork(
                 imageView, viewBinder.album,
@@ -122,7 +123,13 @@ class ListAlbumBinder(
                         }
                     }
                 }
-                artistNameStringBuilder.append(" • ${subtitle.resources.getQuantityString(R.plurals.songsPlural, viewBinder.album.songCount, viewBinder.album.songCount)}")
+                artistNameStringBuilder.append(
+                    " • ${
+                        Phrase.fromPlural(itemView.resources, R.plurals.songsPlural, viewBinder.album.songCount)
+                            .put("count", viewBinder.album.songCount)
+                            .format()
+                    }"
+                )
                 subtitle.text = artistNameStringBuilder
             }
         }

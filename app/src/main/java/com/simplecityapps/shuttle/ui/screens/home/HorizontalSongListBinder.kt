@@ -84,9 +84,5 @@ class HorizontalSongListBinder(
             })
         }
 
-        override fun recycle() {
-
-            super.recycle()
-        }
     }
 }

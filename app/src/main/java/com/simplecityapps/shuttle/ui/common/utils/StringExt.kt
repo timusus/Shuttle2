@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit
 fun Int.toHms(defaultValue: String? = null): String {
 
     if (this == 0 && defaultValue != null) {
-        return defaultValue;
+        return defaultValue
     }
 
     val hours = TimeUnit.MILLISECONDS.toHours(this.toLong())

@@ -18,7 +18,6 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.mediaprovider.model.Song
@@ -31,6 +30,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.dialog.ShowExcludeDialog
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
@@ -39,6 +39,7 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFr
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
+import com.squareup.phrase.Phrase
 import timber.log.Timber
 import javax.inject.Inject
 
@@ -191,11 +192,14 @@ class QueueFragment :
     }
 
     override fun setQueuePosition(position: Int, total: Int) {
-        toolbarSubtitleTextView.text = "${position + 1} of $total"
+        toolbarSubtitleTextView.text = Phrase.from(requireContext(), R.string.queue_position)
+            .put("position", (position + 1).toString())
+            .put("total", total.toString())
+            .format()
     }
 
     override fun showLoadError(error: Error) {
-        Toast.makeText(context, error.userDescription(), Toast.LENGTH_LONG).show()
+        Toast.makeText(context, error.userDescription(resources), Toast.LENGTH_LONG).show()
     }
 
     override fun scrollToPosition(position: Int, fromUser: Boolean) {
@@ -244,14 +248,9 @@ class QueueFragment :
                             return@setOnMenuItemClickListener true
                         }
                         R.id.exclude -> {
-                            MaterialAlertDialogBuilder(requireContext())
-                                .setTitle("Exclude Song")
-                                .setMessage("\"${queueItem.song.name}\" will be hidden from your library.\n\nYou can view excluded songs in settings.")
-                                .setPositiveButton("Exclude") { _, _ ->
-                                    presenter.exclude(queueItem)
-                                }
-                                .setNegativeButton("Cancel", null)
-                                .show()
+                            ShowExcludeDialog(requireContext(), queueItem.song.name) {
+                                presenter.exclude(queueItem)
+                            }
                             return@setOnMenuItemClickListener true
                         }
                         R.id.editTags -> {

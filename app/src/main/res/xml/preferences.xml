@@ -3,179 +3,179 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <PreferenceCategory
-        android:title="Display"
+        android:title="@string/pref_category_title_display"
         app:iconSpaceReserved="false">
 
         <ListPreference
             android:defaultValue="0"
-            android:dialogTitle="Theme"
+            android:dialogTitle="@string/pref_theme_title"
             android:entries="@array/pref_theme_entries"
             android:entryValues="@array/pref_theme_values"
             android:key="pref_theme"
-            android:summary="Choose between day/night (default), light and dark"
-            android:title="Theme"
+            android:summary="@string/pref_theme_summary"
+            android:title="@string/pref_theme_title"
             app:iconSpaceReserved="false" />
 
         <ListPreference
             android:defaultValue="0"
-            android:dialogTitle="Accent"
+            android:dialogTitle="@string/pref_theme_accent_title"
             android:entries="@array/pref_theme_accent_entries"
             android:entryValues="@array/pref_theme_accent_values"
             android:key="pref_theme_accent"
-            android:summary="Theme accent colour"
-            android:title="Accent"
+            android:summary="@string/pref_theme_accent_summary"
+            android:title="@string/pref_theme_accent_title"
             app:iconSpaceReserved="false" />
 
         <SwitchPreference
             android:defaultValue="false"
             android:key="pref_theme_extra_dark"
-            android:summary="Use darker colours for minor battery savings on AMOLED screens"
-            android:title="Extra Dark"
+            android:summary="@string/pref_theme_extra_dark_summary"
+            android:title="@string/pref_theme_extra_dark_title"
             app:iconSpaceReserved="false" />
 
     </PreferenceCategory>
 
     <PreferenceCategory
-        android:title="Media"
+        android:title="@string/pref_category_title_media"
         app:iconSpaceReserved="false">
         <Preference
             android:key="pref_media_provider"
-            android:summary="Choose between Shuttle's built in Media Scanner, and the Android MediaStore"
-            android:title="Media provider"
+            android:summary="@string/pref_media_provider_summary"
+            android:title="@string/pref_media_provider_title"
             app:iconSpaceReserved="false" />
         <Preference
             android:key="pref_media_rescan"
-            android:summary="Rescan the device for media"
-            android:title="Rescan"
+            android:summary="@string/pref_media_rescan_summary"
+            android:title="@string/pref_media_rescan_title"
             app:iconSpaceReserved="false" />
         <Preference
             android:key="pref_excluded"
-            android:summary="View/Edit excluded"
-            android:title="Excluded"
+            android:summary="@string/pref_exclude_summary"
+            android:title="@string/pref_exclude_title"
             app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
     <PreferenceCategory
-        android:title="Artwork"
+        android:title="@string/pref_category_title_artwork"
         app:iconSpaceReserved="false">
         <SwitchPreference
             android:defaultValue="true"
             android:key="artwork_wifi_only"
-            android:summary="Only download artwork from remote sources when Wi-Fi is available"
-            android:title="Wi-Fi only"
+            android:summary="@string/pref_artwork_wifi_subtitle"
+            android:title="@string/pref_artwork_wifi_title"
             app:iconSpaceReserved="false" />
 
         <SwitchPreference
             android:defaultValue="false"
             android:key="artwork_local_only"
-            android:summary="Don't download artwork from remote (internet) sources"
-            android:title="Local only"
+            android:summary="@string/pref_artwork_local_only_subtitle"
+            android:title="@string/pref_artwork_local_only_title"
             app:iconSpaceReserved="false" />
 
         <Preference
             android:key="pref_clear_artwork"
-            android:summary="Removes all cached artwork"
-            android:title="Clear artwork"
+            android:summary="@string/pref_clear_artwork_subtitle"
+            android:title="@string/pref_clear_artwork_title"
             app:iconSpaceReserved="false" />
 
         <Preference
             android:key="pref_download_artwork"
-            android:title="Download all artwork"
+            android:title="@string/pref_download_artwork_title"
             app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
     <PreferenceCategory
-        android:title="Widgets"
+        android:title="@string/pref_category_title_widgets"
         app:iconSpaceReserved="false">
         <SwitchPreference
             android:defaultValue="false"
             android:key="widget_dark_mode"
-            android:title="Dark mode"
+            android:title="@string/pref_widget_dark_mode_title"
             app:iconSpaceReserved="false" />
 
         <SeekBarPreference
             android:defaultValue="false"
             android:key="widget_background_opacity"
             android:max="100"
-            android:title="Background Opacity"
+            android:title="@string/pref_widget_opacity_title"
             app:defaultValue="100"
             app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
     <PreferenceCategory
-        android:title="Playlists"
+        android:title="@string/pref_category_title_playlists"
         app:iconSpaceReserved="false">
         <SwitchPreference
             android:defaultValue="false"
             android:key="playlist_ignore_duplicates"
-            android:summary="Don't prompt when attempting to add duplicate songs to a playlist"
-            android:title="Ignore duplicates"
+            android:summary="@string/pref_ignore_duplicates_subtitle"
+            android:title="@string/pref_ignore_duplicates_title"
             app:iconSpaceReserved="false" />
 
     </PreferenceCategory>
 
     <PreferenceCategory
-        android:title="Changelog"
+        android:title="@string/pref_category_title_changelog"
         app:iconSpaceReserved="false">
 
         <Preference
             android:key="changelog_show"
             app:iconSpaceReserved="false"
-            app:title="View changelog" />
+            app:title="@string/pref_view_changelog_title" />
 
         <SwitchPreference
             android:defaultValue="true"
             android:key="changelog_show_on_launch"
-            android:title="Show changelog on launch"
+            android:title="@string/pref_show_changelog_launch_title"
             app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
     <PreferenceCategory
-        android:title="Privacy"
+        android:title="@string/pref_category_title_privacy"
         app:iconSpaceReserved="false">
         <SwitchPreference
             android:defaultValue="true"
             android:key="pref_crash_reporting"
-            android:summary="Shuttle collects crash data via 'Bugsnag'. Turn off to opt-out"
-            android:title="Crash Reporting"
+            android:summary="@string/pref_crash_reporting_subtitle"
+            android:title="@string/pref_crash_reporting_title"
             app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
     <PreferenceCategory
-        android:title="Open Source"
+        android:title="@string/pref_category_title_open_source"
         app:iconSpaceReserved="false">
 
         <Preference
             android:key="licenses_show"
             app:iconSpaceReserved="false"
-            app:title="View licenses" />
+            app:title="@string/pref_view_licenses_title" />
 
     </PreferenceCategory>
 
     <PreferenceCategory
-        android:title="Debug"
+        android:title="@string/pref_category_title_debug"
         app:iconSpaceReserved="false">
         <SwitchPreference
             android:defaultValue="false"
             android:key="pref_file_logging"
-            android:summary="Writes Shuttle logs to a file on disk"
-            android:title="File logging"
+            android:summary="@string/pref_file_logging_subtitle"
+            android:title="@string/pref_file_logging_title"
             app:iconSpaceReserved="false" />
         <Preference
             android:dependency="pref_file_logging"
             android:key="pref_copy_debug_logs"
-            android:title="Copy debug logs"
+            android:title="@string/pref_copy_debug_logs_subtitle"
             app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
     <PreferenceCategory
-        android:title="Other"
+        android:title="@string/pref_category_title_other"
         app:iconSpaceReserved="false">
         <SwitchPreference
             android:defaultValue="true"
             android:key="media_session_artwork"
-            android:summary="Supply artwork to Android's Media Session. Disable to prevent lockscreen artwork"
-            android:title="Media session artwork"
+            android:summary="@string/pref_media_session_artwork_subtitle"
+            android:title="@string/pref_media_session_artwork_title"
             app:iconSpaceReserved="false" />
 
     </PreferenceCategory>

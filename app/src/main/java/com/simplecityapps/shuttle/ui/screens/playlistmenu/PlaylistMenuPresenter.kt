@@ -1,9 +1,11 @@
 package com.simplecityapps.shuttle.ui.screens.playlistmenu
 
+import android.content.Context
 import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
@@ -34,6 +36,7 @@ interface PlaylistMenuContract {
 }
 
 class PlaylistMenuPresenter @Inject constructor(
+    private val context: Context,
     private val playlistRepository: PlaylistRepository,
     private val songRepository: SongRepository,
     private val genreRepository: GenreRepository,
@@ -103,7 +106,7 @@ class PlaylistMenuPresenter @Inject constructor(
                     view?.onPlaylistAddFailed(Error(e))
                 }
             } else {
-                view?.onPlaylistAddFailed(UserFriendlyError("No songs to add"))
+                view?.onPlaylistAddFailed(UserFriendlyError(context.getString(R.string.playlist_menu_empty_data_message)))
             }
         }
     }
@@ -116,7 +119,7 @@ class PlaylistMenuPresenter @Inject constructor(
         return when (this) {
             is PlaylistData.Songs -> return data
             is PlaylistData.Albums -> songRepository.getSongs(SongQuery.AlbumGroupKeys(data.map { album -> SongQuery.AlbumGroupKey(key = album.groupKey) })).firstOrNull().orEmpty()
-            is PlaylistData.AlbumArtists -> songRepository.getSongs(SongQuery.ArtistGroupKeys(data.map { albumArtist -> SongQuery.ArtistGroupKey(key = albumArtist.groupKey ) })).firstOrNull().orEmpty()
+            is PlaylistData.AlbumArtists -> songRepository.getSongs(SongQuery.ArtistGroupKeys(data.map { albumArtist -> SongQuery.ArtistGroupKey(key = albumArtist.groupKey) })).firstOrNull().orEmpty()
             is PlaylistData.Genres -> genreRepository.getSongsForGenres(data.map { it.name }, SongQuery.All()).firstOrNull().orEmpty()
             is PlaylistData.Queue -> queueManager.getQueue().map { queueItem -> queueItem.song }
         }

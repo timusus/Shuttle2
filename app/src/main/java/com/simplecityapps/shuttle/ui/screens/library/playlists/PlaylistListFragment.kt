@@ -29,6 +29,7 @@ import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
 import com.simplecityapps.shuttle.ui.screens.home.search.HeaderBinder
 import com.simplecityapps.shuttle.ui.screens.library.playlists.detail.PlaylistDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylistDetailFragmentArgs
+import com.squareup.phrase.Phrase
 import javax.inject.Inject
 
 
@@ -85,10 +86,10 @@ class PlaylistListFragment :
                 when (menuItem.itemId) {
                     R.id.syncPlaylists -> {
                         MaterialAlertDialogBuilder(requireContext())
-                            .setTitle("Sync Media Store Playlists")
-                            .setMessage("Copies playlists from the Media Store. If the playlists already exists in Shuttle, the songs will be merged. \n\nNote: Songs are only added, and not removed.")
-                            .setPositiveButton("Sync") { _, _ -> presenter.importMediaStorePlaylists() }
-                            .setNegativeButton("Cancel", null)
+                            .setTitle(getString(R.string.playlist_dialog_title_sync))
+                            .setMessage(getString(R.string.playlist_dialog_subtitle_sync))
+                            .setPositiveButton(getString(R.string.playlist_dialog_button_sync)) { _, _ -> presenter.importMediaStorePlaylists() }
+                            .setNegativeButton(getString(R.string.dialog_button_cancel), null)
                             .show()
                         true
                     }
@@ -128,14 +129,14 @@ class PlaylistListFragment :
         val viewBinders = mutableListOf<ViewBinder>()
 
         if (smartPlaylists.isNotEmpty()) {
-            viewBinders.add(HeaderBinder("Smart Playlists"))
+            viewBinders.add(HeaderBinder(getString(R.string.playlists_title_smart_playlists)))
             viewBinders.addAll(smartPlaylists.map { smartPlaylist ->
                 SmartPlaylistBinder(smartPlaylist, smartPlaylistBinderListener)
             })
         }
 
-        if (smartPlaylists.isNotEmpty()) {
-            viewBinders.add(HeaderBinder("Playlists"))
+        if (playlists.isNotEmpty()) {
+            viewBinders.add(HeaderBinder(getString(R.string.playlists_title_playlists)))
         }
         viewBinders.addAll(playlists.map { playlist ->
             PlaylistBinder(playlist, playlistBinderListener)
@@ -151,22 +152,22 @@ class PlaylistListFragment :
     }
 
     override fun onAddedToQueue(playlist: Playlist) {
-        Toast.makeText(context, "${playlist.name} added to queue", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("itemName", playlist.name).format(), Toast.LENGTH_SHORT).show()
     }
 
     override fun setLoadingState(state: PlaylistListContract.LoadingState) {
         when (state) {
             is PlaylistListContract.LoadingState.Scanning -> {
-                horizontalLoadingView.setState(HorizontalLoadingView.State.Loading("Scanning your library"))
+                horizontalLoadingView.setState(HorizontalLoadingView.State.Loading(getString(R.string.library_scan_in_progress)))
                 circularLoadingView.setState(CircularLoadingView.State.None)
             }
             is PlaylistListContract.LoadingState.Loading -> {
                 horizontalLoadingView.setState(HorizontalLoadingView.State.None)
-                circularLoadingView.setState(CircularLoadingView.State.Loading())
+                circularLoadingView.setState(CircularLoadingView.State.Loading(getString(R.string.loading)))
             }
             is PlaylistListContract.LoadingState.Empty -> {
                 horizontalLoadingView.setState(HorizontalLoadingView.State.None)
-                circularLoadingView.setState(CircularLoadingView.State.Empty("No playlists"))
+                circularLoadingView.setState(CircularLoadingView.State.Empty(getString(R.string.playlist_list_empty)))
             }
             is PlaylistListContract.LoadingState.None -> {
                 horizontalLoadingView.setState(HorizontalLoadingView.State.None)
@@ -180,7 +181,7 @@ class PlaylistListFragment :
     }
 
     override fun onPlaylistsImported() {
-        Toast.makeText(requireContext(), "Playlists imported", Toast.LENGTH_SHORT).show()
+        Toast.makeText(requireContext(), getString(R.string.playlist_import_success), Toast.LENGTH_SHORT).show()
     }
 
 
@@ -214,10 +215,10 @@ class PlaylistListFragment :
                     }
                     R.id.delete -> {
                         MaterialAlertDialogBuilder(requireContext())
-                            .setTitle("Delete Playlist")
-                            .setMessage("${playlist.name} will be permanently deleted")
-                            .setPositiveButton("Delete") { _, _ -> presenter.delete(playlist) }
-                            .setNegativeButton("Cancel", null)
+                            .setTitle(getString(R.string.playlist_dialog_title_delete))
+                            .setMessage(getString(R.string.playlist_dialog_subtitle_delete))
+                            .setPositiveButton(getString(R.string.playlist_dialog_button_delete)) { _, _ -> presenter.delete(playlist) }
+                            .setNegativeButton(getString(R.string.dialog_button_cancel), null)
                             .show()
                         true
                     }
@@ -227,16 +228,21 @@ class PlaylistListFragment :
                     }
                     R.id.clear -> {
                         MaterialAlertDialogBuilder(requireContext())
-                            .setTitle("Clear Playlist")
-                            .setMessage("All songs will be removed from${playlist.name}")
-                            .setPositiveButton("Clear") { _, _ -> presenter.clear(playlist) }
-                            .setNegativeButton("Cancel", null)
+                            .setTitle(getString(R.string.playlist_dialog_title_clear))
+                            .setMessage(getString(R.string.playlist_dialog_subtitle_clear))
+                            .setPositiveButton(getString(R.string.playlist_dialog_button_clear)) { _, _ -> presenter.clear(playlist) }
+                            .setNegativeButton(getString(R.string.dialog_button_cancel), null)
                             .show()
                         true
                     }
                     R.id.rename -> {
                         EditTextAlertDialog
-                            .newInstance(title = "Playlist Name", hint = "Name", initialText = playlist.name, extra = playlist)
+                            .newInstance(
+                                title = getString(R.string.playlist_dialog_title_rename),
+                                hint = getString(R.string.playlist_dialog_hint_rename),
+                                initialText = playlist.name,
+                                extra = playlist
+                            )
                             .show(childFragmentManager)
                         true
                     }

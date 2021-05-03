@@ -8,6 +8,7 @@ import com.mikepenz.aboutlibraries.entity.Library
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
+import com.squareup.phrase.Phrase
 
 class LibraryBinder(val library: Library, val listener: Listener) : ViewBinder {
 
@@ -24,7 +25,7 @@ class LibraryBinder(val library: Library, val listener: Listener) : ViewBinder {
     }
 
 
-    class ViewHolder(itemView: View) : ViewBinder.ViewHolder<LibraryBinder>(itemView) {
+    class ViewHolder(val itemView: View) : ViewBinder.ViewHolder<LibraryBinder>(itemView) {
         val title: TextView = itemView.findViewById(R.id.title)
         val author: TextView = itemView.findViewById(R.id.author)
         val version: TextView = itemView.findViewById(R.id.version)
@@ -39,10 +40,19 @@ class LibraryBinder(val library: Library, val listener: Listener) : ViewBinder {
         override fun bind(viewBinder: LibraryBinder, isPartial: Boolean) {
             super.bind(viewBinder, isPartial)
 
-            title.text = viewBinder.library.libraryName.ifEmpty { "Unknown" }
-            author.text = "Author: ${viewBinder.library.author.ifEmpty { "Unknown" }}"
-            version.text = "Version: ${viewBinder.library.libraryVersion.ifEmpty { "Unknown" }}"
-            license.text = "License: ${viewBinder.library.licenses?.firstOrNull()?.licenseName?.ifEmpty { "Unknown" } ?: "Unknown"}"
+            title.text = viewBinder.library.libraryName.ifEmpty { itemView.context.getString(R.string.unknown) }
+
+            author.text = Phrase.from(itemView.context, R.string.open_source_library_author)
+                .put("author", viewBinder.library.author.ifEmpty { itemView.context.getString(R.string.unknown) })
+                .format()
+
+            version.text = Phrase.from(itemView.context, R.string.open_source_library_version)
+                .put("version", viewBinder.library.libraryVersion.ifEmpty { itemView.context.getString(R.string.unknown) })
+                .format()
+
+            license.text = Phrase.from(itemView.context, R.string.open_source_library_license)
+                .put("license", viewBinder.library.licenses?.firstOrNull()?.licenseName?.ifEmpty { itemView.context.getString(R.string.unknown) } ?: itemView.context.getString(R.string.unknown))
+                .format()
         }
     }
 }

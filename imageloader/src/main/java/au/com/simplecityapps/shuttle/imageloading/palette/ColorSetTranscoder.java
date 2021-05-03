@@ -12,7 +12,7 @@ import com.bumptech.glide.load.resource.transcode.ResourceTranscoder;
 
 public class ColorSetTranscoder implements ResourceTranscoder<Bitmap, ColorSet> {
 
-    private Context context;
+    private final Context context;
 
     public ColorSetTranscoder(Context context) {
         this.context = context;

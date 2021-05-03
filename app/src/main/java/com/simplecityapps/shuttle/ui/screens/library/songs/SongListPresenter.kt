@@ -11,6 +11,7 @@ import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.mediaprovider.repository.SongSortOrder
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
@@ -165,7 +166,7 @@ class SongListPresenter @Inject constructor(
                 queueManager.remove(queueManager.getQueue().filter { it.song == song })
             }
         } else {
-            view?.showDeleteError(UserFriendlyError("The song couldn't be deleted"))
+            view?.showDeleteError(UserFriendlyError(context.getString(R.string.delete_song_failed)))
         }
     }
 

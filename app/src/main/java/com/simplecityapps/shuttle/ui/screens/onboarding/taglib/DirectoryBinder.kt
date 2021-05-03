@@ -9,6 +9,7 @@ import androidx.core.view.isVisible
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
+import com.squareup.phrase.Phrase
 
 class DirectoryBinder(
     val directory: DirectorySelectionContract.Directory,
@@ -47,7 +48,7 @@ class DirectoryBinder(
     }
 
 
-    class ViewHolder(itemView: View) : ViewBinder.ViewHolder<DirectoryBinder>(itemView) {
+    class ViewHolder(val itemView: View) : ViewBinder.ViewHolder<DirectoryBinder>(itemView) {
 
         private val title: TextView = itemView.findViewById(R.id.titleLabel)
         private val subtitle: TextView = itemView.findViewById(R.id.subtitleLabel)
@@ -65,11 +66,16 @@ class DirectoryBinder(
             progressBar.isVisible = !viewBinder.directory.traversalComplete
             if (viewBinder.directory.traversalComplete) {
                 val leaves = viewBinder.directory.tree.getLeaves()
-                subtitle.text = "${leaves.size} audio file${if (leaves.size == 1) "" else "s"}"
+                val quantityString: String = Phrase.fromPlural(itemView.resources, R.plurals.onboarding_directories_scan_progress, leaves.size)
+                    .put("count", leaves.size)
+                    .format().toString()
+                subtitle.text = Phrase.from(quantityString)
+                    .put("count", leaves.size)
+                    .format()
                 progressBar.isVisible = false
             } else {
                 progressBar.isVisible = true
-                subtitle.text = "Scanning..."
+                subtitle.text = itemView.context.getString(R.string.onboarding_directories_scanning)
             }
         }
     }

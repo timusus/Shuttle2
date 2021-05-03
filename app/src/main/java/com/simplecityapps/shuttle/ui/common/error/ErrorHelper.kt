@@ -1,9 +1,12 @@
 package com.simplecityapps.shuttle.ui.common.error
 
-fun Error.userDescription(): String {
+import android.content.res.Resources
+import com.simplecityapps.shuttle.R
+
+fun Error.userDescription(resources: Resources): String {
     return when (this) {
         is UserFriendlyError -> message
-        is UnexpectedError -> "An unexpected error occurred."
-        else -> "An unknown error occurred."
+        is UnexpectedError -> resources.getString(R.string.error_unexpected)
+        else -> resources.getString(R.string.error_unknown)
     }
 }

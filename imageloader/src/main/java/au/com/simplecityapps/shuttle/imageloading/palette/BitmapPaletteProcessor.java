@@ -59,7 +59,7 @@ public class BitmapPaletteProcessor {
     private static final float WHITE_MIN_LIGHTNESS = 0.90f;
     private static final int RESIZE_BITMAP_AREA = 150 * 150;
     private float[] mFilteredBackgroundHsl = null;
-    private Palette.Filter mBlackWhiteFilter = (rgb, hsl) -> !isWhiteOrBlack(hsl);
+    private final Palette.Filter mBlackWhiteFilter = (rgb, hsl) -> !isWhiteOrBlack(hsl);
 
 
     /**

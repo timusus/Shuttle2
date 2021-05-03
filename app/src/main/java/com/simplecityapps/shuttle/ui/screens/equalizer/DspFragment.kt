@@ -104,9 +104,9 @@ class DspFragment : Fragment(), Injectable, EqualizerContract.View {
 
     private fun ReplayGainMode.displayName(): String {
         return when (this) {
-            ReplayGainMode.Track -> "Track Gain"
-            ReplayGainMode.Album -> "Album Gain"
-            ReplayGainMode.Off -> "Off"
+            ReplayGainMode.Track -> getString(R.string.dsp_replay_gain_track)
+            ReplayGainMode.Album -> getString(R.string.dsp_replay_gain_album)
+            ReplayGainMode.Off -> getString(R.string.dsp_replay_gain_off)
         }
     }
 

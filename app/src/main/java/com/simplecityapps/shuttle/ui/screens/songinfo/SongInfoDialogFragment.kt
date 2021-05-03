@@ -15,6 +15,7 @@ import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.utils.dp
 import com.simplecityapps.shuttle.ui.common.utils.toHms
@@ -41,20 +42,20 @@ class SongInfoDialogFragment : DialogFragment(), Injectable {
         }
 
         val map = mapOf(
-            "Title" to song.name.orEmpty(),
-            "Track #" to song.track?.toString().orEmpty(),
-            "Duration" to song.duration.toHms("Unknown"),
-            "Album Artist" to song.albumArtist.orEmpty(),
-            "Artist(s)" to song.artists.joinToString(", "),
-            "Album" to song.album.orEmpty(),
-            "Year" to song.year?.toString().orEmpty(),
-            "Disc" to song.disc?.toString().orEmpty(),
-            "Play count" to song.playCount.toString(),
-            "Genre(s)" to song.genres.joinToString(", "),
-            "Path" to URLDecoder.decode(song.path),
-            "Mime Type" to song.mimeType,
-            "Size" to "${"%.2f".format((song.size / 1024f / 1024f))}MB",
-            "Lyrics" to song.lyrics,
+            getString(R.string.song_info_track_title) to song.name.orEmpty(),
+            getString(R.string.song_info_track_number) to song.track?.toString().orEmpty(),
+            getString(R.string.song_info_duration) to song.duration.toHms(getString(R.string.song_info_unknown)),
+            getString(R.string.song_info_album_artist) to song.albumArtist.orEmpty(),
+            getString(R.string.song_info_artists) to song.artists.joinToString(", "),
+            getString(R.string.song_info_album) to song.album.orEmpty(),
+            getString(R.string.song_info_year) to song.year?.toString().orEmpty(),
+            getString(R.string.song_info_disc) to song.disc?.toString().orEmpty(),
+            getString(R.string.song_info_play_count) to song.playCount.toString(),
+            getString(R.string.song_info_genres) to song.genres.joinToString(", "),
+            getString(R.string.song_info_path) to URLDecoder.decode(song.path),
+            getString(R.string.song_info_mime_type) to song.mimeType,
+            getString(R.string.song_info_size) to "${"%.2f".format((song.size / 1024f / 1024f))}MB",
+            getString(R.string.song_info_lyrics) to song.lyrics,
         )
 
         for ((key, value) in map) {
@@ -81,9 +82,9 @@ class SongInfoDialogFragment : DialogFragment(), Injectable {
         scrollView.addView(linearLayout)
 
         return MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Song Info")
+            .setTitle(getString(R.string.song_info_dialog_title))
             .setView(scrollView)
-            .setNegativeButton("Close", null)
+            .setNegativeButton(getString(R.string.song_info_dialog_close_button_title), null)
             .show()
     }
 

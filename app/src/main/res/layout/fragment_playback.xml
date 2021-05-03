@@ -152,7 +152,7 @@
         android:layout_height="48dp"
         android:layout_marginStart="32dp"
         android:background="?selectableItemBackgroundBorderless"
-        android:contentDescription="Shuffle"
+        android:contentDescription="@string/button_content_description_shuffle"
         app:layout_constraintBottom_toBottomOf="@+id/skipPrevContainer"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@+id/skipPrevContainer" />
@@ -174,7 +174,7 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:background="?selectableItemBackgroundBorderless"
-            android:contentDescription="Skip Previous"
+            android:contentDescription="@string/button_skip_previous"
             app:srcCompat="@drawable/ic_skip_previous_black_24dp"
             tools:visibility="visible" />
 
@@ -182,7 +182,7 @@
             android:id="@+id/seekBackwardButton"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:contentDescription="Seek Backward"
+            android:contentDescription="@string/button_seek_backward"
             android:padding="8dp"
             android:visibility="gone"
             app:forward="false"
@@ -199,7 +199,7 @@
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="32dp"
         android:background="@drawable/circle_filled"
-        android:contentDescription="Toggle Playback"
+        android:contentDescription="@string/button_toggle_playback"
         android:tint="?colorPlayPauseTint"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/skipNextContainer"
@@ -223,7 +223,7 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:background="?selectableItemBackgroundBorderless"
-            android:contentDescription="Skip Next"
+            android:contentDescription="@string/button_skip_next"
             app:srcCompat="@drawable/ic_skip_next_black_24dp"
             tools:visibility="visible" />
 
@@ -231,7 +231,7 @@
             android:id="@+id/seekForwardButton"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:contentDescription="Seek Forward"
+            android:contentDescription="@string/button_seek_forward"
             android:padding="8dp"
             android:visibility="gone"
             app:forward="true"
@@ -247,7 +247,7 @@
         android:layout_height="48dp"
         android:layout_marginEnd="32dp"
         android:background="?selectableItemBackgroundBorderless"
-        android:contentDescription="Repeat"
+        android:contentDescription="@string/button_repeat"
         app:layout_constraintBottom_toBottomOf="@+id/skipNextContainer"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@+id/skipNextContainer" />

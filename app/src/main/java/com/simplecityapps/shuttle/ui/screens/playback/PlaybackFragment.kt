@@ -37,7 +37,7 @@ import com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
 import com.simplecityapps.shuttle.ui.common.view.multisheet.findParentMultiSheetView
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragmentArgs
-import com.simplecityapps.shuttle.ui.screens.lyrics.QuickLyricManager
+import com.simplecityapps.shuttle.ui.lyrics.QuickLyricManager
 import com.simplecityapps.shuttle.ui.screens.sleeptimer.SleepTimerDialogFragment
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
 import javax.inject.Inject
@@ -245,7 +245,7 @@ class PlaybackFragment :
             }
 
             toolbar.menu.findItem(R.id.lyrics)?.let { menuItem ->
-                menuItem.title = song.lyrics?.let { "Lyrics" } ?: "QuickLyric"
+                menuItem.title = song.lyrics?.let { getString(R.string.lyrics_title) } ?: getString(R.string.lyrics_quicklyric_title)
             }
         }
     }
@@ -327,7 +327,7 @@ class PlaybackFragment :
     }
 
     override fun showQuickLyricUnavailable() {
-        Toast.makeText(requireContext(), "Failed to download QuickLyric", Toast.LENGTH_LONG).show()
+        Toast.makeText(requireContext(), getString(R.string.lyrics_quicklyric_unavailable), Toast.LENGTH_LONG).show()
     }
 
     override fun showSongInfoDialog(song: Song) {

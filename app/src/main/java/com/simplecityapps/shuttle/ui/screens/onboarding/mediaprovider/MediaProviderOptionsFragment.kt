@@ -38,14 +38,14 @@ class MediaProviderOptionsFragment : DialogFragment() {
         val viewBinders = mutableListOf<ViewBinder>()
         val localMediaTypes = providerTypes.filter { !it.isRemote }
         if (localMediaTypes.isNotEmpty()) {
-            viewBinders.add(HeaderBinder("Local"))
+            viewBinders.add(HeaderBinder(getString(R.string.media_provider_type_local)))
             viewBinders.addAll(
                 localMediaTypes.map { provider -> MediaProviderBinder(providerType = provider, listener = listener, showRemoveButton = false, showSubtitle = true) }
             )
         }
         val remoteMediaTypes = providerTypes.filter { it.isRemote }
         if (remoteMediaTypes.isNotEmpty()) {
-            viewBinders.add(HeaderBinder("Remote"))
+            viewBinders.add(HeaderBinder(getString(R.string.media_provider_type_remote)))
             viewBinders.addAll(
                 remoteMediaTypes.map { provider -> MediaProviderBinder(providerType = provider, listener = listener, showRemoveButton = false, showSubtitle = true) }
             )
@@ -53,9 +53,9 @@ class MediaProviderOptionsFragment : DialogFragment() {
         adapter.update(viewBinders)
 
         return MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Add Media Provider")
+            .setTitle(getString(R.string.media_provider_add))
             .setView(view)
-            .setNegativeButton("Close", null)
+            .setNegativeButton(getString(R.string.media_provider_add), null)
             .create()
     }
 

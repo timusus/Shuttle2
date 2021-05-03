@@ -9,6 +9,7 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
@@ -266,7 +267,7 @@ class SearchPresenter @Inject constructor(
                 songRepository.remove(song)
             }
         } else {
-            view?.showDeleteError(UserFriendlyError("The song couldn't be deleted"))
+            view?.showDeleteError(UserFriendlyError(context.getString(R.string.delete_song_failed)))
         }
         queueManager.remove(queueManager.getQueue().filter { it.song == song })
     }

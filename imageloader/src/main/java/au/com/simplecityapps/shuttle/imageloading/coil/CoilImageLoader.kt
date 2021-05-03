@@ -56,7 +56,7 @@ class CoilImageLoader(
                     response.request
                         .newBuilder()
                         .header("Authorization", Credentials.basic("s2", "aEqRKgkCbqALjEm9Eg7e7Qi5"))
-                        .build();
+                        .build()
                 }
                 .addInterceptor { chain ->
                     // Don't make a network request if we're not allowed to

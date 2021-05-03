@@ -10,9 +10,11 @@ import androidx.cardview.widget.CardView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.mediaprovider.model.friendlyArtistName
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
+import com.squareup.phrase.Phrase
 
 class GridSongBinder(
     val song: Song,
@@ -73,7 +75,10 @@ class GridSongBinder(
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.song.name
-            subtitle.text = "${viewBinder.song.albumArtist} • ${viewBinder.song.album}"
+            subtitle.text = Phrase.from(itemView.context, R.string.artist_album)
+                .put("artist", viewBinder.song.friendlyArtistName)
+                .put("album", viewBinder.song.album)
+                .format()
 
             viewBinder.imageLoader.loadArtwork(
                 imageView,

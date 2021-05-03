@@ -1,5 +1,6 @@
-package com.simplecityapps.shuttle.ui.screens.settings;
+package com.simplecityapps.shuttle.ui.screens.settings
 
+import androidx.annotation.StringRes
 import com.simplecityapps.shuttle.R
 
 enum class SettingsMenuItem {
@@ -16,13 +17,14 @@ enum class SettingsMenuItem {
             }
         }
 
-    val title: String
+    val title: Int
+        @StringRes
         get() {
             return when (this) {
-                SleepTimer -> "Sleep Timer"
-                Shuffle -> "Shuffle All"
-                Dsp -> "DSP"
-                Settings -> "Settings"
+                SleepTimer -> R.string.settings_menu_sleep_timer
+                Shuffle -> R.string.settings_menu_sleep_timer
+                Dsp -> R.string.settings_menu_dsp
+                Settings -> R.string.settings_menu_settings
             }
         }
 }

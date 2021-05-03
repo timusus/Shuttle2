@@ -29,10 +29,11 @@ import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.ContextualToolbarHelper
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.dialog.ShowExcludeDialog
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
-import com.simplecityapps.shuttle.ui.common.recyclerview.GridSpacingItemDecoration
 import com.simplecityapps.shuttle.ui.common.recyclerview.GlidePreloadModelProvider
+import com.simplecityapps.shuttle.ui.common.recyclerview.GridSpacingItemDecoration
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
@@ -43,6 +44,7 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFr
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
+import com.squareup.phrase.Phrase
 import javax.inject.Inject
 
 class AlbumListFragment :
@@ -77,7 +79,7 @@ class AlbumListFragment :
     private val viewPreloadSizeProvider by lazy { ViewPreloadSizeProvider<Album>() }
     private val preloadModelProvider by lazy {
         GlidePreloadModelProvider<Album>(
-            imageLoader as GlideImageLoader, listOf(ArtworkImageLoader.Options.CacheDecodedResource)
+            imageLoader, listOf(ArtworkImageLoader.Options.CacheDecodedResource)
         )
     }
 
@@ -287,22 +289,28 @@ class AlbumListFragment :
     }
 
     override fun onAddedToQueue(albums: List<Album>) {
-        Toast.makeText(context, "${albums.size} album(s) added to queue", Toast.LENGTH_SHORT).show()
+        Toast.makeText(
+            context,
+            Phrase.fromPlural(resources, R.plurals.queue_albums_added, albums.size)
+                .put("count", albums.size)
+                .format(),
+            Toast.LENGTH_SHORT
+        ).show()
     }
 
     override fun setLoadingState(state: AlbumListContract.LoadingState) {
         when (state) {
             is AlbumListContract.LoadingState.Scanning -> {
-                horizontalLoadingView.setState(HorizontalLoadingView.State.Loading("Scanning your library"))
+                horizontalLoadingView.setState(HorizontalLoadingView.State.Loading(getString(R.string.library_scan_in_progress)))
                 circularLoadingView.setState(CircularLoadingView.State.None)
             }
             is AlbumListContract.LoadingState.Loading -> {
                 horizontalLoadingView.setState(HorizontalLoadingView.State.None)
-                circularLoadingView.setState(CircularLoadingView.State.Loading())
+                circularLoadingView.setState(CircularLoadingView.State.Loading(getString(R.string.loading)))
             }
             is AlbumListContract.LoadingState.Empty -> {
                 horizontalLoadingView.setState(HorizontalLoadingView.State.None)
-                circularLoadingView.setState(CircularLoadingView.State.Empty("No albums"))
+                circularLoadingView.setState(CircularLoadingView.State.Empty(getString(R.string.album_list_empty)))
             }
             is AlbumListContract.LoadingState.None -> {
                 horizontalLoadingView.setState(HorizontalLoadingView.State.None)
@@ -316,7 +324,7 @@ class AlbumListFragment :
     }
 
     override fun showLoadError(error: Error) {
-        Toast.makeText(context, error.userDescription(), Toast.LENGTH_LONG).show()
+        Toast.makeText(context, error.userDescription(resources), Toast.LENGTH_LONG).show()
     }
 
     override fun setViewMode(viewMode: ViewMode) {
@@ -389,14 +397,9 @@ class AlbumListFragment :
                         return@setOnMenuItemClickListener true
                     }
                     R.id.exclude -> {
-                        MaterialAlertDialogBuilder(requireContext())
-                            .setTitle("Exclude Album")
-                            .setMessage("\"${album.name}\" will be hidden from your library.\n\nYou can view excluded songs in settings.")
-                            .setPositiveButton("Exclude") { _, _ ->
-                                presenter.exclude(album)
-                            }
-                            .setNegativeButton("Cancel", null)
-                            .show()
+                        ShowExcludeDialog(requireContext(), album.name) {
+                            presenter.exclude(album)
+                        }
                         return@setOnMenuItemClickListener true
                     }
                     R.id.editTags -> {
@@ -427,7 +430,7 @@ class AlbumListFragment :
     private val contextualToolbarCallback = object : ContextualToolbarHelper.Callback<Album> {
 
         override fun onCountChanged(count: Int) {
-            contextualToolbarHelper.contextualToolbar?.title = "$count selected"
+            contextualToolbarHelper.contextualToolbar?.title = Phrase.from(requireContext(), R.string.multi_select_items_selected).put("count", count).format()
             contextualToolbarHelper.contextualToolbar?.menu?.let { menu ->
                 TagEditorMenuSanitiser.sanitise(menu, contextualToolbarHelper.selectedItems.flatMap { it.mediaProviders }.distinct())
             }

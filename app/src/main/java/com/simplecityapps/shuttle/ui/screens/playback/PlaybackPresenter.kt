@@ -9,8 +9,9 @@ import com.simplecityapps.playback.PlaybackWatcherCallback
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
+import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
-import com.simplecityapps.shuttle.ui.screens.lyrics.QuickLyricManager
+import com.simplecityapps.shuttle.ui.lyrics.QuickLyricManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
@@ -196,7 +197,7 @@ class PlaybackPresenter @Inject constructor(
     override fun launchQuickLyric() {
         queueManager.getCurrentItem()?.let { queueItem ->
             if (QuickLyricManager.isQuickLyricInstalled(context)) {
-                view?.launchQuickLyric(queueItem.song.albumArtist ?: "Unknown", queueItem.song.name ?: "Unknown")
+                view?.launchQuickLyric(queueItem.song.albumArtist ?: context.getString(R.string.unknown), queueItem.song.name ?: context.getString(R.string.unknown))
             } else {
                 if (QuickLyricManager.canDownloadQuickLyric(context)) {
                     view?.getQuickLyric()
