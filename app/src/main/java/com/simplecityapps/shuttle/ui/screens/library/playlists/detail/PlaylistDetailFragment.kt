@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.library.playlists.detail
 
 import android.os.Bundle
+import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.MenuInflater
 import android.view.View
@@ -33,7 +34,6 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
-import java.io.Serializable
 import javax.inject.Inject
 
 class PlaylistDetailFragment :
@@ -299,7 +299,7 @@ class PlaylistDetailFragment :
 
     // EditTextAlertDialog.Listener
 
-    override fun onSave(text: String?, extra: Serializable?) {
+    override fun onSave(text: String?, extra: Parcelable?) {
         presenter.rename(extra as Playlist, text!!) // default validation ensures text is not null
     }
 }

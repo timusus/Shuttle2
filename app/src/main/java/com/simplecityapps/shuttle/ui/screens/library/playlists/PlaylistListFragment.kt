@@ -29,7 +29,6 @@ import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
 import com.simplecityapps.shuttle.ui.screens.home.search.HeaderBinder
 import com.simplecityapps.shuttle.ui.screens.library.playlists.detail.PlaylistDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylistDetailFragmentArgs
-import java.io.Serializable
 import javax.inject.Inject
 
 
@@ -280,7 +279,7 @@ class PlaylistListFragment :
 
     // EditTextAlertDialog.Listener
 
-    override fun onSave(text: String?, extra: Serializable?) {
+    override fun onSave(text: String?, extra: Parcelable?) {
         presenter.rename(extra as Playlist, text!!) // default validation ensures text is not null
     }
 }

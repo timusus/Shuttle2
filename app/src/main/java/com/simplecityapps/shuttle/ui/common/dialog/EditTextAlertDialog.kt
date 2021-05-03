@@ -17,14 +17,13 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputLayout
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.utils.withArgs
-import java.io.Serializable
 
 
 open class EditTextAlertDialog : DialogFragment() {
 
     interface Listener {
-        fun onSave(text: String?, extra: Serializable? = null)
-        fun validate(string: String?, extra: Serializable? = null): Boolean {
+        fun onSave(text: String?, extra: Parcelable? = null)
+        fun validate(string: String?, extra: Parcelable? = null): Boolean {
             return !string.isNullOrEmpty()
         }
     }
@@ -34,7 +33,7 @@ open class EditTextAlertDialog : DialogFragment() {
     private var title: String? = null
     private var hint: String? = null
     private var initialText: String? = null
-    private var extra: Serializable? = null
+    private var extra: Parcelable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
