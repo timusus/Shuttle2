@@ -22,6 +22,7 @@ import okhttp3.OkHttpClient
         MainActivityModule::class,
         PlaybackModule::class,
         PlaybackServiceModule::class,
+        ArtworkServiceModule::class,
         WidgetModule::class,
         RepositoryModule::class,
         NetworkingModule::class,

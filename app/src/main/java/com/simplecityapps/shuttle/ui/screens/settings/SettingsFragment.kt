@@ -1,9 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.settings
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
-import android.content.SharedPreferences
+import android.content.*
 import android.os.Bundle
 import android.os.TransactionTooLargeException
 import android.view.LayoutInflater
@@ -20,6 +17,7 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SeekBarPreference
 import androidx.recyclerview.widget.RecyclerView
+import au.com.simplecityapps.shuttle.imageloading.ArtworkDownloadService
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.mediaprovider.MediaImporter
@@ -56,23 +54,36 @@ class SettingsFragment : PreferenceFragmentCompat(),
     Injectable,
     MediaImporter.Listener {
 
-    @Inject lateinit var preferenceManager: GeneralPreferenceManager
-    @Inject lateinit var playbackPreferenceManager: PlaybackPreferenceManager
+    @Inject
+    lateinit var preferenceManager: GeneralPreferenceManager
 
-    @Inject lateinit var mediaImporter: MediaImporter
+    @Inject
+    lateinit var playbackPreferenceManager: PlaybackPreferenceManager
 
-    @Inject lateinit var songRepository: SongRepository
+    @Inject
+    lateinit var mediaImporter: MediaImporter
 
-    @Inject lateinit var playbackManager: PlaybackManager
-    @Inject lateinit var equalizerAudioProcessor: EqualizerAudioProcessor
+    @Inject
+    lateinit var songRepository: SongRepository
 
-    @Inject lateinit var embyAuthenticationManager: EmbyAuthenticationManager
+    @Inject
+    lateinit var playbackManager: PlaybackManager
 
-    @Inject lateinit var imageLoader: ArtworkImageLoader
+    @Inject
+    lateinit var equalizerAudioProcessor: EqualizerAudioProcessor
 
-    @Inject lateinit var themeManager: ThemeManager
+    @Inject
+    lateinit var embyAuthenticationManager: EmbyAuthenticationManager
 
-    @Named("AppCoroutineScope") @Inject lateinit var appCoroutineScope: CoroutineScope
+    @Inject
+    lateinit var imageLoader: ArtworkImageLoader
+
+    @Inject
+    lateinit var themeManager: ThemeManager
+
+    @Named("AppCoroutineScope")
+    @Inject
+    lateinit var appCoroutineScope: CoroutineScope
 
     private var scanningProgressView: ProgressBar? = null
     private var scanningDialog: AlertDialog? = null
@@ -180,6 +191,23 @@ class SettingsFragment : PreferenceFragmentCompat(),
                     coroutineScope.launch {
                         context?.let { context ->
                             imageLoader.clearCache(context)
+                        }
+                    }
+                }
+                .setNegativeButton("Close", null)
+                .show()
+
+            true
+        }
+
+        preferenceScreen.findPreference<Preference>("pref_download_artwork")?.setOnPreferenceClickListener {
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Download All Artwork")
+                .setMessage("This will download all artwork, regardless of your network connection (WiFi/data/other)")
+                .setPositiveButton("Download") { _, _ ->
+                    coroutineScope.launch {
+                        context?.let { context ->
+                            context.startService(Intent(context, ArtworkDownloadService::class.java))
                         }
                     }
                 }

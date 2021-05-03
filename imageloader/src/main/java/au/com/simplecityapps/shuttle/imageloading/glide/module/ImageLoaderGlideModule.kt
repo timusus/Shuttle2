@@ -4,10 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.net.ConnectivityManager
 import android.util.Log
-import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.DiskSongLocalArtworkModelLoader
-import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.LocalArtworkModelLoader
-import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.LocalArtworkProvider
-import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.TagLibSongLocalArtworkModelLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.*
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.artwork.AlbumArtistArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.artwork.AlbumArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.artwork.SongArtworkModelLoader
@@ -74,7 +71,9 @@ class ImageLoaderGlideModule : AppGlideModule() {
 
         registry.append(Song::class.java, InputStream::class.java, DiskSongLocalArtworkModelLoader.Factory())
         registry.append(Song::class.java, InputStream::class.java, TagLibSongLocalArtworkModelLoader.Factory(context))
-//        registry.append(Album::class.java, InputStream::class.java, DelegatingAlbumLocalArtworkModelLoader.Factory(songRepository))
+
+        registry.append(Album::class.java, InputStream::class.java, DiskAlbumLocalArtworkModelLoader.Factory(songRepository))
+        registry.append(Album::class.java, InputStream::class.java, TagLibAlbumLocalArtworkModelLoader.Factory(context, songRepository))
 
 
         // Remote

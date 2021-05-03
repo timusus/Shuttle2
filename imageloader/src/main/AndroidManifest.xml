@@ -10,6 +10,12 @@
 
     <application
         android:networkSecurityConfig="@xml/network_security_config"
-        tools:targetApi="n" />
+        tools:targetApi="n">
+
+        <service
+            android:name=".shuttle.imageloading.ArtworkDownloadService"
+            android:label="Artwork service" />
+
+    </application>
 
 </manifest>

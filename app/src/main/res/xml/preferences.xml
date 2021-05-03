@@ -77,6 +77,11 @@
             android:summary="Removes all cached artwork"
             android:title="Clear artwork"
             app:iconSpaceReserved="false" />
+
+        <Preference
+            android:key="pref_download_artwork"
+            android:title="Download all artwork"
+            app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
     <PreferenceCategory

@@ -31,7 +31,7 @@ import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.GridSpacingItemDecoration
-import com.simplecityapps.shuttle.ui.common.recyclerview.MyPreloadModelProvider
+import com.simplecityapps.shuttle.ui.common.recyclerview.GlidePreloadModelProvider
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
@@ -73,7 +73,7 @@ class AlbumArtistListFragment :
 
     private val viewPreloadSizeProvider by lazy { ViewPreloadSizeProvider<AlbumArtist>() }
     private val preloadModelProvider by lazy {
-        MyPreloadModelProvider<AlbumArtist>(
+        GlidePreloadModelProvider<AlbumArtist>(
             imageLoader as GlideImageLoader, listOf(ArtworkImageLoader.Options.CacheDecodedResource)
         )
     }

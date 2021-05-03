@@ -5,7 +5,7 @@ import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.bumptech.glide.ListPreloader.PreloadModelProvider
 import com.bumptech.glide.RequestBuilder
 
-class MyPreloadModelProvider<T>(
+class GlidePreloadModelProvider<T>(
     val imageLoader: GlideImageLoader,
     val options: List<ArtworkImageLoader.Options>
 ) : PreloadModelProvider<T> {
