@@ -1,5 +1,26 @@
 [
   {
+    "versionName": "0.3.0",
+    "releaseDate": "03/05/2021",
+    "features": [
+      "S2 now loads artwork from a new, custom built dedicated artwork server. Artwork should load more quickly, at a much lower file size than previously",
+      "Added support for 'grouping' tag (Shuttle Media Provider only)"
+    ],
+    "fixes": [
+      "Fixed a menu display issue on album detail screen (showing 'shuffle' text)",
+      "Fixed an error preventing Shuttle Media Provider from completing scan after encountering problematic files",
+      "Fixed an issue where artwork disappeared from the cache after 2 weeks"
+    ],
+    "improvements": [
+      "Migrate from Coil image loader back to Glide. Faster image loading & better caching",
+      "Song artwork is now cached independently of album artwork. If artwork is found in the tags or on disk, it will be used anywhere that song is displayed",
+      "Added path information to song info dialog"
+    ],
+    "notes": [
+      "S2 is now using a new custom built server for artwork. Artwork will need to be downloaded again"
+    ]
+  },
+  {
     "versionName": "0.2.18",
     "releaseDate": "26/04/2021",
     "features": [

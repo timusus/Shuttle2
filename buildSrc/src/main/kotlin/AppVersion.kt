@@ -1,5 +1,5 @@
 object AppVersion {
     const val versionMajor = 0
-    const val versionMinor = 2
-    const val versionPatch = 18
+    const val versionMinor = 3
+    const val versionPatch = 0
 }
