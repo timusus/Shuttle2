@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.net.ConnectivityManager
 import android.util.Log
+import au.com.simplecityapps.BuildConfig
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.*
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.artwork.AlbumArtistArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.artwork.AlbumArtworkModelLoader
@@ -88,6 +89,8 @@ class ImageLoaderGlideModule : AppGlideModule() {
     }
 
     override fun applyOptions(context: Context, builder: GlideBuilder) {
-        builder.setLogLevel(Log.ERROR)
+        if (BuildConfig.DEBUG) {
+            builder.setLogLevel(Log.ERROR)
+        }
     }
 }
