@@ -29,7 +29,7 @@
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
         android:minHeight="48dp"
-        android:text="Exclude list is empty"
+        android:text="@string/dialog_exclude_list_empty"
         android:textSize="16sp"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"

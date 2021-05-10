@@ -56,7 +56,7 @@ class CircularLoadingView @JvmOverloads constructor(
             when (state) {
                 is State.Loading -> {
                     if (currentState is State.Loading) {
-                        textView.text = state.message
+                        textView.setText(state.message)
                         errorImageView.isVisible = false
                         retryButton.isVisible = false
                         progressBar.isVisible = true
@@ -65,7 +65,7 @@ class CircularLoadingView @JvmOverloads constructor(
                     } else {
                         animation?.cancel()
                         animation = fadeOut(completion = {
-                            textView.text = state.message
+                            textView.setText(state.message)
                             errorImageView.isVisible = false
                             retryButton.isVisible = false
                             progressBar.isVisible = true
@@ -76,7 +76,7 @@ class CircularLoadingView @JvmOverloads constructor(
                 is State.Error -> {
                     animation?.cancel()
                     animation = fadeOut(completion = {
-                        textView.text = state.message
+                        textView.setText(state.message)
                         errorImageView.isVisible = true
                         progressBar.isVisible = false
                         retryButton.isVisible = false
@@ -86,7 +86,7 @@ class CircularLoadingView @JvmOverloads constructor(
                 is State.Empty -> {
                     animation?.cancel()
                     animation = fadeOut(completion = {
-                        textView.text = state.message
+                        textView.setText(state.message)
                         errorImageView.isVisible = true
                         progressBar.isVisible = false
                         retryButton.isVisible = false
@@ -96,7 +96,7 @@ class CircularLoadingView @JvmOverloads constructor(
                 is State.Retry -> {
                     animation?.cancel()
                     animation = fadeOut(completion = {
-                        textView.text = state.message
+                        textView.setText(state.message)
                         retryButton.isVisible = true
                         errorImageView.isVisible = false
                         progressBar.isVisible = false
@@ -125,7 +125,7 @@ class CircularLoadingView @JvmOverloads constructor(
     }
 
     sealed class State {
-        data class Loading(val message: String = "Loading…") : State()
+        data class Loading(val message: String) : State()
         data class Empty(val message: String) : State()
         data class Error(val message: String) : State()
         data class Retry(val message: String) : State()

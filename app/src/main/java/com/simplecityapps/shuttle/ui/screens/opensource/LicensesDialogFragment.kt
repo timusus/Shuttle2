@@ -39,9 +39,9 @@ class LicensesDialogFragment : DialogFragment(), Injectable {
         )
 
         return MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Licenses")
+            .setTitle(getString(R.string.open_source_dialog_licenses_title))
             .setView(view)
-            .setNegativeButton("Close", null)
+            .setNegativeButton(requireContext().getString(R.string.dialog_button_close), null)
             .show()
     }
 

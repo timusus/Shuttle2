@@ -15,7 +15,6 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Album
@@ -25,6 +24,8 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.dialog.ShowDeleteDialog
+import com.simplecityapps.shuttle.ui.common.dialog.ShowExcludeDialog
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.screens.home.HorizontalAlbumListBinder
@@ -37,6 +38,7 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
+import com.squareup.phrase.Phrase
 import javax.inject.Inject
 
 class GenreDetailFragment :
@@ -145,32 +147,34 @@ class GenreDetailFragment :
 
     override fun setData(albums: List<Album>, songs: List<Song>) {
         val viewBinders = mutableListOf<ViewBinder>()
-        viewBinders.add(HeaderBinder("Albums"))
+        viewBinders.add(HeaderBinder(getString(R.string.albums)))
         viewBinders.add(HorizontalAlbumListBinder(albums, imageLoader, false, viewLifecycleOwner.lifecycleScope, albumBinderListener))
-        viewBinders.add(HeaderBinder("Songs"))
+        viewBinders.add(HeaderBinder(getString(R.string.songs)))
         viewBinders.addAll(songs.map { song -> SongBinder(song, imageLoader, songBinderListener) })
         adapter.update(viewBinders)
     }
 
     override fun showLoadError(error: Error) {
-        Toast.makeText(context, error.userDescription(), Toast.LENGTH_LONG).show()
+        Toast.makeText(context, error.userDescription(resources), Toast.LENGTH_LONG).show()
     }
 
     override fun onAddedToQueue(album: Album) {
-        Toast.makeText(context, "${album.name} added to queue", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("itemName", album.name).format(), Toast.LENGTH_SHORT).show()
     }
 
     override fun onAddedToQueue(name: String) {
-        Toast.makeText(context, "$name added to queue", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("itemName", name).format(), Toast.LENGTH_SHORT).show()
     }
 
     override fun setGenre(genre: Genre) {
         toolbar.title = genre.name
-        toolbar.subtitle = resources.getQuantityString(R.plurals.songsPlural, genre.songCount, genre.songCount)
+        toolbar.subtitle = Phrase.fromPlural(resources, R.plurals.songsPlural, genre.songCount)
+            .put("count", genre.songCount)
+            .format()
     }
 
     override fun showDeleteError(error: Error) {
-        Toast.makeText(requireContext(), error.userDescription(), Toast.LENGTH_LONG).show()
+        Toast.makeText(requireContext(), error.userDescription(resources), Toast.LENGTH_LONG).show()
     }
 
     override fun showTagEditor(songs: List<Song>) {
@@ -218,14 +222,9 @@ class GenreDetailFragment :
                             return@setOnMenuItemClickListener true
                         }
                         R.id.exclude -> {
-                            MaterialAlertDialogBuilder(requireContext())
-                                .setTitle("Exclude Song")
-                                .setMessage("\"${song.name}\" will be hidden from your library.\n\nYou can view excluded songs in settings.")
-                                .setPositiveButton("Exclude") { _, _ ->
-                                    presenter.exclude(song)
-                                }
-                                .setNegativeButton("Cancel", null)
-                                .show()
+                            ShowExcludeDialog(requireContext(), song.name) {
+                                presenter.exclude(song)
+                            }
                             return@setOnMenuItemClickListener true
                         }
                         R.id.editTags -> {
@@ -233,14 +232,9 @@ class GenreDetailFragment :
                             return@setOnMenuItemClickListener true
                         }
                         R.id.delete -> {
-                            MaterialAlertDialogBuilder(requireContext())
-                                .setTitle("Delete Song")
-                                .setMessage("\"${song.name}\" will be permanently deleted")
-                                .setPositiveButton("Delete") { _, _ ->
-                                    presenter.delete(song)
-                                }
-                                .setNegativeButton("Cancel", null)
-                                .show()
+                            ShowDeleteDialog(requireContext(), song.name) {
+                                presenter.delete(song)
+                            }
                             return@setOnMenuItemClickListener true
                         }
                     }

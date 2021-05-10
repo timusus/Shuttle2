@@ -66,7 +66,7 @@ class HorizontalLoadingView @JvmOverloads constructor(
     }
 
     sealed class State {
-        data class Loading(val message: String = "Loading…") : State()
+        data class Loading(val message: String) : State()
         object None : State()
     }
 }

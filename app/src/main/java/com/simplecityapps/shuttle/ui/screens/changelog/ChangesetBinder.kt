@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.changelog
 
+import android.content.res.Resources
 import android.graphics.Typeface.BOLD
 import android.text.Spannable
 import android.text.SpannableString
@@ -55,12 +56,12 @@ class ChangesetBinder(
         return (other as? ChangesetBinder)?.expanded == expanded
     }
 
-    fun getSpannableString(changeset: Changeset): Spannable {
+    fun getSpannableString(resources: Resources, changeset: Changeset): Spannable {
         val spannableBuilder = SpannableStringBuilder()
 
         if (changeset.features.isNotEmpty()) {
             spannableBuilder.append(
-                SpannableString("Features").apply {
+                SpannableString(resources.getString(R.string.changelog_features)).apply {
                     setSpan(
                         StyleSpan(BOLD),
                         0,
@@ -92,7 +93,7 @@ class ChangesetBinder(
 
         if (changeset.improvements.isNotEmpty()) {
             spannableBuilder.append(
-                SpannableString("Improvements").apply {
+                SpannableString(resources.getString(R.string.changelog_improvements)).apply {
                     setSpan(
                         StyleSpan(BOLD),
                         0,
@@ -123,7 +124,7 @@ class ChangesetBinder(
 
         if (changeset.fixes.isNotEmpty()) {
             spannableBuilder.append(
-                SpannableString("Bug Fixes").apply {
+                SpannableString(resources.getString(R.string.changelog_bug_fixes)).apply {
                     setSpan(
                         StyleSpan(BOLD),
                         0,
@@ -170,13 +171,14 @@ class ChangesetBinder(
 
             title.text = viewBinder.changeset.versionName
             subtitle.text = dateFormat.format(viewBinder.changeset.date)
-            textArea.text = viewBinder.getSpannableString(viewBinder.changeset)
+            textArea.text = viewBinder.getSpannableString(itemView.resources, viewBinder.changeset)
             textArea.isVisible = viewBinder.expanded
             expandedIcon.rotation = if (viewBinder.expanded) 180f else 0f
         }
     }
 
     companion object {
+
         val dateFormat: DateFormat = DateFormat.getDateInstance(DateFormat.MEDIUM)
     }
 }

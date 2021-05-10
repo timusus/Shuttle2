@@ -14,7 +14,6 @@ import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.bumptech.glide.integration.recyclerview.RecyclerViewPreloader
 import com.bumptech.glide.util.ViewPreloadSizeProvider
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.adapter.ViewBinder
@@ -25,6 +24,8 @@ import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.ContextualToolbarHelper
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.dialog.ShowDeleteDialog
+import com.simplecityapps.shuttle.ui.common.dialog.ShowExcludeDialog
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.GlidePreloadModelProvider
@@ -37,6 +38,7 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
+import com.squareup.phrase.Phrase
 import javax.inject.Inject
 
 class SongListFragment :
@@ -250,26 +252,32 @@ class SongListFragment :
     }
 
     override fun showLoadError(error: Error) {
-        Toast.makeText(context, error.userDescription(), Toast.LENGTH_LONG).show()
+        Toast.makeText(context, error.userDescription(resources), Toast.LENGTH_LONG).show()
     }
 
     override fun onAddedToQueue(songs: List<Song>) {
-        Toast.makeText(context, "${songs.size} song(s) added to queue", Toast.LENGTH_SHORT).show()
+        Toast.makeText(
+            context,
+            Phrase.fromPlural(resources, R.plurals.queue_songs_added, songs.size)
+                .put("count", songs.size)
+                .format(),
+            Toast.LENGTH_SHORT
+        ).show()
     }
 
     override fun setLoadingState(state: SongListContract.LoadingState) {
         when (state) {
             is SongListContract.LoadingState.Scanning -> {
-                horizontalLoadingView.setState(HorizontalLoadingView.State.Loading("Scanning your library"))
+                horizontalLoadingView.setState(HorizontalLoadingView.State.Loading(getString(R.string.library_scan_in_progress)))
                 circularLoadingView.setState(CircularLoadingView.State.None)
             }
             is SongListContract.LoadingState.Loading -> {
                 horizontalLoadingView.setState(HorizontalLoadingView.State.None)
-                circularLoadingView.setState(CircularLoadingView.State.Loading())
+                circularLoadingView.setState(CircularLoadingView.State.Loading(getString(R.string.loading)))
             }
             is SongListContract.LoadingState.Empty -> {
                 horizontalLoadingView.setState(HorizontalLoadingView.State.None)
-                circularLoadingView.setState(CircularLoadingView.State.Empty("No songs"))
+                circularLoadingView.setState(CircularLoadingView.State.Empty(getString(R.string.song_list_empty)))
             }
             is SongListContract.LoadingState.None -> {
                 horizontalLoadingView.setState(HorizontalLoadingView.State.None)
@@ -283,7 +291,7 @@ class SongListFragment :
     }
 
     override fun showDeleteError(error: Error) {
-        Toast.makeText(requireContext(), error.userDescription(), Toast.LENGTH_LONG).show()
+        Toast.makeText(requireContext(), error.userDescription(resources), Toast.LENGTH_LONG).show()
     }
 
     // Private
@@ -329,25 +337,15 @@ class SongListFragment :
                             return@setOnMenuItemClickListener true
                         }
                         R.id.exclude -> {
-                            MaterialAlertDialogBuilder(requireContext())
-                                .setTitle("Exclude Song")
-                                .setMessage("\"${song.name}\" will be hidden from your library.\n\nYou can view excluded songs in settings.")
-                                .setPositiveButton("Exclude") { _, _ ->
-                                    presenter.exclude(song)
-                                }
-                                .setNegativeButton("Cancel", null)
-                                .show()
+                            ShowExcludeDialog(requireContext(), song.name) {
+                                presenter.exclude(song)
+                            }
                             return@setOnMenuItemClickListener true
                         }
                         R.id.delete -> {
-                            MaterialAlertDialogBuilder(requireContext())
-                                .setTitle("Delete Song")
-                                .setMessage("\"${song.name}\" will be permanently deleted")
-                                .setPositiveButton("Delete") { _, _ ->
-                                    presenter.delete(song)
-                                }
-                                .setNegativeButton("Cancel", null)
-                                .show()
+                            ShowDeleteDialog(requireContext(), song.name) {
+                                presenter.delete(song)
+                            }
                             return@setOnMenuItemClickListener true
                         }
                         R.id.editTags -> {
@@ -378,7 +376,7 @@ class SongListFragment :
     private val contextualToolbarCallback = object : ContextualToolbarHelper.Callback<Song> {
 
         override fun onCountChanged(count: Int) {
-            contextualToolbarHelper.contextualToolbar?.title = "$count selected"
+            contextualToolbarHelper.contextualToolbar?.title = Phrase.from(requireContext(), R.string.multi_select_items_selected).put("count", count).format()
             contextualToolbarHelper.contextualToolbar?.menu?.let { menu ->
                 TagEditorMenuSanitiser.sanitise(menu, contextualToolbarHelper.selectedItems.map { it.mediaProvider }.distinct())
             }

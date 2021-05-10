@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <plurals name="edit_tags_editing_count_songs">
+        <item quantity="one">Editing <xliff:g example="1" id="count">{count}</xliff:g> song</item>
+        <item quantity="other">Editing <xliff:g example="5" id="count">{count}</xliff:g> songs</item>
+    </plurals>
+
+    <string name="edit_tags_action">Edit Tags</string>
+    <string name="edit_tags_multiple_values">Multiple values</string>
+
+    <string name="edit_tags_reading_tags">Reading tags <xliff:g example="1" id="progress">(progress}</xliff:g> / <xliff:g example="1" id="count">{total}</xliff:g></string>
+    <string name="edit_tags_writing_tags">Reading tags <xliff:g example="1" id="progress">(progress}</xliff:g> / <xliff:g example="1" id="count">{total}</xliff:g></string>
+    <string name="edit_tags_read_failed">The selected song tags could not be read</string>
+
+    <plurals name="edit_tags_success">
+        <item quantity="one">Successfully updated <xliff:g example="5" id="count">{count}</xliff:g> song</item>
+        <item quantity="other">Successfully updated <xliff:g example="5" id="count">{count}</xliff:g> songs</item>
+    </plurals>
+
+    <plurals name="edit_tags_failure">
+        <item quantity="one">Failed to update song</item>
+        <item quantity="other">Failed to update <xliff:g example="5" id="count">{count}</xliff:g> of <xliff:g example="5" id="total">{total}</xliff:g> songs</item>
+    </plurals>
+
+    <string name="edit_tags_hint_title">Title</string>
+    <string name="edit_tags_hint_artist">Artist</string>
+    <string name="edit_tags_hint_album">Album</string>
+    <string name="edit_tags_hint_album_artist">Album Artist</string>
+    <string name="edit_tags_hint_year">Year</string>
+    <string name="edit_tags_hint_track">Track</string>
+    <string name="edit_tags_hint_track_total">Track Total</string>
+    <string name="edit_tags_hint_disc">Disc</string>
+    <string name="edit_tags_hint_disc_total">Disc Total</string>
+    <string name="edit_tags_hint_genres">Genres</string>
+    <string name="edit_tags_hint_lyrics">Lyrics</string>
+</resources>

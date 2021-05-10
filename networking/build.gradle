@@ -36,16 +36,16 @@ android {
 dependencies {
 
     // Kotlin std lib
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.4.31"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.5.0"
 
     // OkHttp
-    implementation 'com.squareup.okhttp3:okhttp:4.9.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.9.1'
 
     // Moshi
-    implementation 'com.squareup.moshi:moshi:1.11.0'
-    api 'com.squareup.moshi:moshi-kotlin:1.11.0'
-    implementation 'com.squareup.moshi:moshi-adapters:1.11.0'
-    kapt("com.squareup.moshi:moshi-kotlin-codegen:1.11.0")
+    implementation 'com.squareup.moshi:moshi:1.12.0'
+    api 'com.squareup.moshi:moshi-kotlin:1.12.0'
+    implementation 'com.squareup.moshi:moshi-adapters:1.12.0'
+    kapt("com.squareup.moshi:moshi-kotlin-codegen:1.12.0")
 
     // Retrofit
     api 'com.squareup.retrofit2:retrofit:2.9.0'

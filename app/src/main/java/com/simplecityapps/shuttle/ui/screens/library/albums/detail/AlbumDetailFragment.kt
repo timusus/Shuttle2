@@ -30,6 +30,8 @@ import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.autoClearedNullable
+import com.simplecityapps.shuttle.ui.common.dialog.ShowDeleteDialog
+import com.simplecityapps.shuttle.ui.common.dialog.ShowExcludeDialog
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.utils.toHms
@@ -42,6 +44,7 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
+import com.squareup.phrase.Phrase
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -221,7 +224,7 @@ class AlbumDetailFragment :
         adapter.update(discGroupingSongsMap.flatMap { discEntry ->
             val viewBinders = mutableListOf<ViewBinder>()
             if (discGroupingSongsMap.size > 1) {
-                viewBinders.add(DiscNumberBinder("Disc ${discEntry.key}"))
+                viewBinders.add(DiscNumberBinder(Phrase.from(context, R.string.disc_number).put("disc_number", discEntry.key).format().toString()))
             }
 
             val groupingMap = discEntry.value
@@ -238,20 +241,27 @@ class AlbumDetailFragment :
     }
 
     override fun showLoadError(error: Error) {
-        Toast.makeText(context, error.userDescription(), Toast.LENGTH_LONG).show()
+        Toast.makeText(context, error.userDescription(resources), Toast.LENGTH_LONG).show()
     }
 
     override fun onAddedToQueue(name: String) {
-        Toast.makeText(context, "$name added to queue", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("itemName", name).format(), Toast.LENGTH_SHORT).show()
     }
 
     override fun setAlbum(album: Album) {
         toolbar.title = album.name
-        toolbar.subtitle = "${album.year.yearToString()} • ${resources.getQuantityString(R.plurals.songsPlural, album.songCount, album.songCount)} • ${album.duration.toHms()}"
+        val songsQuantity = Phrase.fromPlural(resources, R.plurals.songsPlural, album.songCount)
+            .put("count", album.songCount)
+            .format()
+        toolbar.subtitle = Phrase.from(context, R.string.album_year_songs_duration)
+            .put("year", album.year?.toString() ?: getString(R.string.year_unknown))
+            .put("song_count", songsQuantity)
+            .put("duration", album.duration.toHms())
+            .format()
     }
 
     override fun showDeleteError(error: Error) {
-        Toast.makeText(requireContext(), error.userDescription(), Toast.LENGTH_LONG).show()
+        Toast.makeText(requireContext(), error.userDescription(resources), Toast.LENGTH_LONG).show()
     }
 
     override fun showTagEditor(songs: List<Song>) {
@@ -296,14 +306,9 @@ class AlbumDetailFragment :
                             return@setOnMenuItemClickListener true
                         }
                         R.id.exclude -> {
-                            MaterialAlertDialogBuilder(requireContext())
-                                .setTitle("Exclude Song")
-                                .setMessage("\"${song.name}\" will be hidden from your library.\n\nYou can view excluded songs in settings.")
-                                .setPositiveButton("Exclude") { _, _ ->
-                                    presenter.exclude(song)
-                                }
-                                .setNegativeButton("Cancel", null)
-                                .show()
+                            ShowExcludeDialog(requireContext(), song.name) {
+                                presenter.exclude(song)
+                            }
                             return@setOnMenuItemClickListener true
                         }
                         R.id.editTags -> {
@@ -311,14 +316,9 @@ class AlbumDetailFragment :
                             return@setOnMenuItemClickListener true
                         }
                         R.id.delete -> {
-                            MaterialAlertDialogBuilder(requireContext())
-                                .setTitle("Delete Song")
-                                .setMessage("\"${song.name}\" will be permanently deleted")
-                                .setPositiveButton("Delete") { _, _ ->
-                                    presenter.delete(song)
-                                }
-                                .setNegativeButton("Cancel", null)
-                                .show()
+                            ShowDeleteDialog(requireContext(), song.name) {
+                                presenter.delete(song)
+                            }
                             return@setOnMenuItemClickListener true
                         }
                     }
@@ -333,13 +333,5 @@ class AlbumDetailFragment :
 
     override fun onSave(text: String, playlistData: PlaylistData) {
         playlistMenuPresenter.createPlaylist(text, playlistData)
-    }
-
-
-    // Extensions
-
-    private fun Int?.yearToString(): String {
-        if (this == null) return "Year Unknown"
-        return this.toString()
     }
 }

@@ -9,6 +9,7 @@ import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Genre
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
+import com.squareup.phrase.Phrase
 
 class GenreBinder(val genre: Genre, private val listener: Listener) : ViewBinder {
 
@@ -61,9 +62,12 @@ class GenreBinder(val genre: Genre, private val listener: Listener) : ViewBinder
 
             titleTextView.text = viewBinder.genre.name
             if (viewBinder.genre.songCount == 0) {
-                subtitleTextView.text = "Genre empty"
+                subtitleTextView.text = itemView.resources.getString(R.string.song_list_empty)
             } else {
-                subtitleTextView.text = "${subtitleTextView.resources.getQuantityString(R.plurals.songsPlural, viewBinder.genre.songCount, viewBinder.genre.songCount)} "
+                subtitleTextView.text = Phrase
+                    .fromPlural(itemView.context, R.plurals.songsPlural, viewBinder.genre.songCount)
+                    .put("count", viewBinder.genre.songCount)
+                    .format()
             }
         }
     }

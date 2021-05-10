@@ -70,8 +70,8 @@ open class EditTextAlertDialog : DialogFragment() {
         return MaterialAlertDialogBuilder(requireContext())
             .apply { title?.let { setTitle(title) } }
             .setView(view)
-            .setNegativeButton("Close", null)
-            .setPositiveButton("Save") { _, _ -> onSave(editText.text.toString()) }
+            .setNegativeButton(getString(R.string.dialog_button_close), null)
+            .setPositiveButton(getString(R.string.dialog_button_save)) { _, _ -> onSave(editText.text.toString()) }
             .create()
     }
 

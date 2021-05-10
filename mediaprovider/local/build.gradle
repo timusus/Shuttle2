@@ -52,9 +52,9 @@ dependencies {
     implementation project(path: ':saf')
 
     // Room
-    kapt 'androidx.room:room-compiler:2.2.5'
-    api 'androidx.room:room-runtime:2.2.5'
-    api 'androidx.room:room-ktx:2.2.5'
+    kapt 'androidx.room:room-compiler:2.3.0'
+    api 'androidx.room:room-runtime:2.3.0'
+    api 'androidx.room:room-ktx:2.3.0'
 
     // Testing
     testImplementation 'junit:junit:4.13'
@@ -62,5 +62,5 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 
     // Moshi
-    kapt("com.squareup.moshi:moshi-kotlin-codegen:1.9.3")
+    kapt("com.squareup.moshi:moshi-kotlin-codegen:1.12.0")
 }

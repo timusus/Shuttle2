@@ -63,9 +63,9 @@ class ChangelogDialogFragment : DialogFragment(), Injectable {
         preferenceManager.lastViewedChangelogVersion = BuildConfig.VERSION_NAME
 
         return MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Changelog")
+            .setTitle(getString(R.string.changelog_title))
             .setView(view)
-            .setNegativeButton("Close", null)
+            .setNegativeButton(getString(R.string.dialog_button_close), null)
             .show()
     }
 

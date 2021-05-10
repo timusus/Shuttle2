@@ -41,7 +41,8 @@ class LibraryFragment : Fragment(), Injectable, ToolbarHost {
 
     private var adapter: PagerAdapter? = null
 
-    @Inject lateinit var preferenceManager: GeneralPreferenceManager
+    @Inject
+    lateinit var preferenceManager: GeneralPreferenceManager
 
 
     // Lifecycle
@@ -79,11 +80,11 @@ class LibraryFragment : Fragment(), Injectable, ToolbarHost {
             },
             titleFactory = { position ->
                 when (position) {
-                    0 -> "Genres"
-                    1 -> "Playlists"
-                    2 -> "Artists"
-                    3 -> "Albums"
-                    4 -> "Songs"
+                    0 -> getString(R.string.genres)
+                    1 -> getString(R.string.library_playlists)
+                    2 -> getString(R.string.artists)
+                    3 -> getString(R.string.albums)
+                    4 -> getString(R.string.songs)
                     else -> throw IllegalArgumentException()
                 }
             })

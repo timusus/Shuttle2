@@ -51,7 +51,7 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
     override fun onConfigure(inputAudioFormat: AudioProcessor.AudioFormat): AudioProcessor.AudioFormat {
         super.onConfigure(inputAudioFormat)
 
-        if (inputAudioFormat.encoding != C.ENCODING_PCM_16BIT) {
+        if (inputAudioFormat.encoding != C.ENCODING_PCM_16BIT && inputAudioFormat.encoding != C.ENCODING_PCM_24BIT) {
             throw UnhandledAudioFormatException(inputAudioFormat)
         }
 

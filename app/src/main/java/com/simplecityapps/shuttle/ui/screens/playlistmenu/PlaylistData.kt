@@ -7,6 +7,7 @@ import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Genre
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
+import com.squareup.phrase.Phrase
 import kotlinx.parcelize.Parcelize
 
 sealed class PlaylistData : Parcelable {
@@ -19,7 +20,10 @@ sealed class PlaylistData : Parcelable {
         constructor(song: Song) : this(listOf(song))
 
         override fun getPlaylistSavedMessage(resources: Resources, playlistName: String): String {
-            return "${resources.getQuantityString(R.plurals.songsPlural, data.size, data.size)} added to $playlistName"
+            return Phrase.fromPlural(resources, R.plurals.playlist_songs_added, data.size)
+                .put("playlistName", playlistName)
+                .format()
+                .toString()
         }
     }
 
@@ -29,7 +33,10 @@ sealed class PlaylistData : Parcelable {
         constructor(album: Album) : this(listOf(album))
 
         override fun getPlaylistSavedMessage(resources: Resources, playlistName: String): String {
-            return "${resources.getQuantityString(R.plurals.albumsPlural, data.size, data.size)} added to $playlistName"
+            return Phrase.fromPlural(resources, R.plurals.playlist_albums_added, data.size)
+                .put("playlistName", playlistName)
+                .format()
+                .toString()
         }
     }
 
@@ -39,7 +46,10 @@ sealed class PlaylistData : Parcelable {
         constructor(albumArtist: AlbumArtist) : this(listOf(albumArtist))
 
         override fun getPlaylistSavedMessage(resources: Resources, playlistName: String): String {
-            return "${resources.getQuantityString(R.plurals.artistsPlural, data.size, data.size)} added to $playlistName"
+            return Phrase.fromPlural(resources, R.plurals.playlist_artists_added, data.size)
+                .put("playlistName", playlistName)
+                .format()
+                .toString()
         }
     }
 
@@ -49,7 +59,10 @@ sealed class PlaylistData : Parcelable {
         constructor(genre: Genre) : this(listOf(genre))
 
         override fun getPlaylistSavedMessage(resources: Resources, playlistName: String): String {
-            return "${resources.getQuantityString(R.plurals.genresPlural, data.size, data.size)} added to $playlistName"
+            return Phrase.fromPlural(resources, R.plurals.playlist_genres_added, data.size)
+                .put("playlistName", playlistName)
+                .format()
+                .toString()
         }
     }
 
@@ -57,7 +70,10 @@ sealed class PlaylistData : Parcelable {
     object Queue : PlaylistData() {
 
         override fun getPlaylistSavedMessage(resources: Resources, playlistName: String): String {
-            return "Queue added to $playlistName"
+            return Phrase.from(resources, R.string.playlist_queue_added)
+                .put("playlistName", playlistName)
+                .format()
+                .toString()
         }
     }
 }

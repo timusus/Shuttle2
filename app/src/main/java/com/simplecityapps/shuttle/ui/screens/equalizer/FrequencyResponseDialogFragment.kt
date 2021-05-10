@@ -70,7 +70,7 @@ class FrequencyResponseDialogFragment : DialogFragment(), Injectable {
         lineChart = view.findViewById(R.id.lineChart)
 
         loadingView = view.findViewById(R.id.loadingView)
-        loadingView.setState(CircularLoadingView.State.Loading())
+        loadingView.setState(CircularLoadingView.State.Loading(getString(R.string.loading)))
 
         coroutineScope.launch {
             val fft = calculateFft()
@@ -80,9 +80,9 @@ class FrequencyResponseDialogFragment : DialogFragment(), Injectable {
         }
 
         return MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Frequency Response")
+            .setTitle(getString(R.string.dsp_dialog_frequency_response_title))
             .setView(view)
-            .setNegativeButton("Close", null)
+            .setNegativeButton(getString(R.string.dialog_button_close), null)
             .show()
     }
 
@@ -95,7 +95,7 @@ class FrequencyResponseDialogFragment : DialogFragment(), Injectable {
 
         val entries = data.map { Entry(log10(it.key), it.value) }
 
-        val dataset = LineDataSet(entries, "Frequency Response")
+        val dataset = LineDataSet(entries, getString(R.string.dsp_dialog_frequency_response_title))
         dataset.mode = LineDataSet.Mode.HORIZONTAL_BEZIER
         dataset.lineWidth = 1f
         dataset.setDrawCircles(false)

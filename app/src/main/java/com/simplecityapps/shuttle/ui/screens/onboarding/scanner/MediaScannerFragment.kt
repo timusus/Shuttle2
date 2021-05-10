@@ -18,6 +18,7 @@ import com.simplecityapps.shuttle.ui.common.utils.withArgs
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingChild
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingPage
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParent
+import com.squareup.phrase.Phrase
 import javax.inject.Inject
 
 class MediaScannerFragment :
@@ -33,7 +34,8 @@ class MediaScannerFragment :
     private var songCountTextView: TextView by autoCleared()
     private var rescanButton: Button by autoCleared()
 
-    @Inject lateinit var presenterFactory: ScannerPresenter.Factory
+    @Inject
+    lateinit var presenterFactory: ScannerPresenter.Factory
     lateinit var presenter: ScannerPresenter
 
     private var shouldScanAutomatically: Boolean = false
@@ -73,7 +75,7 @@ class MediaScannerFragment :
             presenter.startScan()
         }
 
-        setTitle("No scan in progress")
+        setTitle(getString(R.string.onboarding_media_scanner_tile))
         subtitleTextView.text = null
         progressBar.isVisible = false
         songCountTextView.isVisible = false
@@ -87,7 +89,7 @@ class MediaScannerFragment :
     override fun onResume() {
         super.onResume()
 
-        getParent()?.showNextButton("Close")
+        getParent()?.showNextButton(getString(R.string.dialog_button_close))
 
         if (shouldScanAutomatically) {
             presenter.startScanOrExit()
@@ -111,8 +113,10 @@ class MediaScannerFragment :
     }
 
     override fun setScanStarted(providerType: MediaProvider.Type) {
-        setTitle("Scanning…")
-        subtitleTextView.text = "${providerType.title()} media provider"
+        setTitle(getString(R.string.onboarding_media_scanner_scanning))
+        subtitleTextView.text = Phrase.from(requireContext(), R.string.media_provider_title)
+            .put("provider_type", providerType.title())
+            .format()
         progressBar.isVisible = true
         progressBar.isIndeterminate = true
         rescanButton.isVisible = false
@@ -123,14 +127,26 @@ class MediaScannerFragment :
         subtitleTextView.text = message
         progressBar.isIndeterminate = false
         progressBar.isVisible = true
-        songCountTextView.text = "$progress/$total songs scanned"
+        songCountTextView.text = Phrase.from(requireContext(), R.string.media_provider_scan_progress)
+            .put("progress", progress)
+            .put("total", total)
+            .format()
         songCountTextView.isVisible = true
         rescanButton.isVisible = false
     }
 
     override fun setScanComplete(providerType: MediaProvider.Type, inserts: Int, updates: Int, deletes: Int) {
-        setTitle("${providerType.title()} scan complete")
-        subtitleTextView.text = "$inserts inserts, $updates updates, $deletes deletes"
+        setTitle(
+            Phrase.from(requireContext(), R.string.media_provider_scan_success_title)
+                .put("provider_type", providerType.name)
+                .format()
+                .toString()
+        )
+        subtitleTextView.text = Phrase.from(requireContext(), R.string.media_provider_scan_success_subtitle)
+            .put("inserts", inserts)
+            .put("updates", updates)
+            .put("deletes", deletes)
+            .format()
         progressBar.isVisible = false
         songCountTextView.isVisible = false
     }
@@ -142,8 +158,8 @@ class MediaScannerFragment :
     }
 
     override fun setScanFailed() {
-        setTitle("Scan failed")
-        subtitleTextView.text = "No songs imported"
+        setTitle(requireContext().getString(R.string.media_provider_scan_failure_title))
+        subtitleTextView.text = requireContext().getString(R.string.media_provider_scan_failure_subtitle)
         progressBar.isVisible = false
         songCountTextView.isVisible = false
         rescanButton.isVisible = true

@@ -121,9 +121,9 @@ class SettingsFragment : PreferenceFragmentCompat(),
         preferenceScreen.findPreference<Preference>("pref_crash_reporting")?.setOnPreferenceClickListener {
             if (!preferenceManager.crashReportingEnabled) {
                 MaterialAlertDialogBuilder(requireContext())
-                    .setTitle("Requires Restart")
-                    .setMessage("In order to completely opt-out of crash reporting, please restart Shuttle. Make sure to pause, swipe away the notification, and clear the app from recents.")
-                    .setNegativeButton("Close", null)
+                    .setTitle(getString(R.string.settings_crash_reporting_dialog_requires_restart))
+                    .setMessage(getString(R.string.settings_crash_reporting_dialog_message))
+                    .setNegativeButton(getString(R.string.dialog_button_close), null)
                     .show()
             }
             true
@@ -138,7 +138,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
             scanningProgressView = customView.findViewById(R.id.progressBar)
             scanningDialog = MaterialAlertDialogBuilder(requireContext())
                 .setView(customView)
-                .setNegativeButton("Close", null)
+                .setNegativeButton(getString(R.string.dialog_button_close), null)
                 .show()
 
             true
@@ -170,10 +170,10 @@ class SettingsFragment : PreferenceFragmentCompat(),
                     }
             }
 
-            MaterialAlertDialogBuilder(requireContext()).setTitle("Excluded")
+            MaterialAlertDialogBuilder(requireContext()).setTitle(getString(R.string.settings_dialog_title_excluded))
                 .setView(dialogView)
-                .setPositiveButton("Close", null)
-                .setNegativeButton("Clear") { _, _ ->
+                .setPositiveButton(getString(R.string.dialog_button_close), null)
+                .setNegativeButton(getString(R.string.settings_dialog_button_clear_artwork)) { _, _ ->
                     coroutineScope.launch {
                         songRepository.clearExcludeList()
                     }
@@ -185,16 +185,16 @@ class SettingsFragment : PreferenceFragmentCompat(),
 
         preferenceScreen.findPreference<Preference>("pref_clear_artwork")?.setOnPreferenceClickListener {
             MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Clear Artwork")
-                .setMessage("This will permanently remove all cached artwork")
-                .setPositiveButton("Clear") { _, _ ->
+                .setTitle(getString(R.string.settings_dialog_title_clear_artwork))
+                .setMessage(getString(R.string.settings_dialog_message_clear_artwork))
+                .setPositiveButton(getString(R.string.settings_dialog_button_clear_artwork)) { _, _ ->
                     coroutineScope.launch {
                         context?.let { context ->
                             imageLoader.clearCache(context)
                         }
                     }
                 }
-                .setNegativeButton("Close", null)
+                .setNegativeButton(getString(R.string.dialog_button_close), null)
                 .show()
 
             true
@@ -202,16 +202,16 @@ class SettingsFragment : PreferenceFragmentCompat(),
 
         preferenceScreen.findPreference<Preference>("pref_download_artwork")?.setOnPreferenceClickListener {
             MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Download All Artwork")
-                .setMessage("This will download all artwork, regardless of your network connection (WiFi/data/other)")
-                .setPositiveButton("Download") { _, _ ->
+                .setTitle(getString(R.string.settings_dialog_title_download_artwork))
+                .setMessage(getString(R.string.settings_dialog_message_download_artwork))
+                .setPositiveButton(getString(R.string.settings_dialog_button_download_artwork)) { _, _ ->
                     coroutineScope.launch {
                         context?.let { context ->
                             context.startService(Intent(context, ArtworkDownloadService::class.java))
                         }
                     }
                 }
-                .setNegativeButton("Close", null)
+                .setNegativeButton(getString(R.string.dialog_button_close), null)
                 .show()
 
             true
@@ -229,9 +229,9 @@ class SettingsFragment : PreferenceFragmentCompat(),
 
         preferenceScreen.findPreference<Preference>("pref_amoled_mode")?.setOnPreferenceChangeListener { _, _ ->
             MaterialAlertDialogBuilder(requireContext())
-                .setTitle("Requires Restart")
-                .setMessage("S2 must be restarted for theme changes to take effect")
-                .setNegativeButton("Close", null)
+                .setTitle(getString(R.string.settings_dialog_title_amoled_required_restart))
+                .setMessage(getString(R.string.settingS_dialog_message_amoled_requires_restart))
+                .setNegativeButton(getString(R.string.dialog_button_close), null)
                 .show()
             true
         }
@@ -240,15 +240,15 @@ class SettingsFragment : PreferenceFragmentCompat(),
             val clipboardManager: ClipboardManager = requireContext().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
             val file = requireContext().getFileStreamPath(DebugLoggingTree.FILE_NAME)
             if (file.exists()) {
-                val clip = ClipData.newPlainText("Shuttle Logs", requireContext().getFileStreamPath(DebugLoggingTree.FILE_NAME).readText(Charsets.UTF_8))
+                val clip = ClipData.newPlainText(getString(R.string.settings_logging_clipboard_name), requireContext().getFileStreamPath(DebugLoggingTree.FILE_NAME).readText(Charsets.UTF_8))
                 try {
                     clipboardManager.setPrimaryClip(clip)
-                    Toast.makeText(requireContext(), "Logs copied to clipboard", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), getString(R.string.settings_logging_clipboard_logs_copied), Toast.LENGTH_SHORT).show()
                 } catch (e: TransactionTooLargeException) {
-                    Toast.makeText(requireContext(), "Log file is too large for clipboard", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(requireContext(), getString(R.string.settings_logging_clipboard_logs_too_large), Toast.LENGTH_SHORT).show()
                 }
             } else {
-                Toast.makeText(requireContext(), "Log file empty", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), getString(R.string.settings_logging_clipboard_logs_empty), Toast.LENGTH_SHORT).show()
             }
 
             true

@@ -19,6 +19,7 @@ import com.simplecityapps.shuttle.ui.common.view.increaseTouchableArea
 import com.simplecityapps.shuttle.ui.common.viewbinders.DetailSongBinder
 import com.simplecityapps.shuttle.ui.common.viewbinders.DiscNumberBinder
 import com.simplecityapps.shuttle.ui.common.viewbinders.GroupingBinder
+import com.squareup.phrase.Phrase
 import kotlinx.coroutines.CoroutineScope
 import java.util.*
 
@@ -102,7 +103,13 @@ class ExpandableAlbumBinder(
             itemView.isActivated = viewBinder.expanded
 
             title.text = viewBinder.album.name
-            subtitle.text = "${viewBinder.album.year.yearToString()} • ${viewBinder.album.songCount} Songs"
+            val songsQuantity = Phrase.fromPlural(itemView.context, R.plurals.songsPlural, viewBinder.album.songCount)
+                .put("count", viewBinder.album.songCount)
+                .format()
+            subtitle.text = Phrase.from(itemView.context, R.string.album_year_songs)
+                .put("year", viewBinder.album.year?.toString() ?: itemView.context.getString(R.string.year_unknown))
+                .put("song_count", songsQuantity)
+                .format()
 
             viewBinder.imageLoader.loadArtwork(
                 imageView, viewBinder.album,
@@ -127,7 +134,13 @@ class ExpandableAlbumBinder(
             adapter.update(discGroupingSongsMap.flatMap { discEntry ->
                 val viewBinders = mutableListOf<ViewBinder>()
                 if (discGroupingSongsMap.size > 1) {
-                    viewBinders.add(DiscNumberBinder("Disc ${discEntry.key}"))
+                    viewBinders.add(
+                        DiscNumberBinder(
+                            Phrase.from(itemView.context, R.string.disc_number)
+                                .put("disc_number", discEntry.key)
+                                .format().toString()
+                        )
+                    )
                 }
 
                 val groupingMap = discEntry.value
@@ -157,14 +170,6 @@ class ExpandableAlbumBinder(
             override fun onOverflowClicked(view: View, song: Song) {
                 viewBinder?.listener?.onOverflowClicked(view, song)
             }
-        }
-
-
-        // Extensions
-
-        private fun Int?.yearToString(): String {
-            if (this == null) return "Year Unknown"
-            return this.toString()
         }
     }
 }

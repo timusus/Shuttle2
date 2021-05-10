@@ -25,7 +25,8 @@ class DirectorySelectionFragment : DialogFragment(),
     Injectable,
     DirectorySelectionContract.View {
 
-    @Inject lateinit var presenter: DirectorySelectionPresenter
+    @Inject
+    lateinit var presenter: DirectorySelectionPresenter
 
     private var adapter: RecyclerAdapter by autoCleared()
 
@@ -61,10 +62,10 @@ class DirectorySelectionFragment : DialogFragment(),
         presenter.loadData(requireContext().contentResolver)
 
         val dialog = MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Media Directories")
+            .setTitle(getString(R.string.onboarding_directories_dialog_add_title))
             .setView(view)
-            .setNeutralButton("Add Directory", null)
-            .setPositiveButton("Done", null)
+            .setNeutralButton(getString(R.string.onboarding_directories_dialog_add_button), null)
+            .setPositiveButton(getString(R.string.dialog_button_done), null)
             .create()
 
         dialog.setOnShowListener {
@@ -98,9 +99,9 @@ class DirectorySelectionFragment : DialogFragment(),
 
     override fun showDocumentProviderNotAvailable() {
         MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Missing Document Provider")
-            .setMessage("A 'Document Provider' (file manager) app can't be found on your device. You may have to install one, or revert to using the 'basic' media scanner.")
-            .setNeutralButton("Close", null)
+            .setTitle(getString(R.string.onboarding_directories_dialog_missing_title))
+            .setMessage(getString(R.string.onboarding_directories_dialog_missing_subtitle))
+            .setNeutralButton(getString(R.string.dialog_button_close), null)
             .show()
     }
 

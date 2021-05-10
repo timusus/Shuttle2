@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Menu Items -->
+    <string name="settings_menu_sleep_timer">Sleep Timer</string>
+    <string name="settings_menu_shuffle_all">Shuffle All</string>
+    <string name="settings_menu_dsp">DSP</string>
+    <string name="settings_menu_settings">Settings</string>
+
+    <string name="settings_crash_reporting_dialog_requires_restart">Requires Restart</string>
+    <string name="settings_crash_reporting_dialog_message">In order to completely opt-out of crash reporting, please restart Shuttle. Make sure to pause, swipe away the notification, and clear the app from recents.</string>
+
+    <string name="settings_dialog_title_excluded">Excluded</string>
+    <string name="settings_dialog_button_clear_excludes">Clear</string>
+
+    <string name="settings_dialog_title_clear_artwork">Clear Artwork</string>
+    <string name="settings_dialog_button_clear_artwork">Clear</string>
+    <string name="settings_dialog_message_clear_artwork">This will permanently remove all cached artwork</string>
+
+    <string name="settings_dialog_title_download_artwork">Download All Artwork</string>
+    <string name="settings_dialog_message_download_artwork">This will download all artwork, regardless of your network connection (WiFi/data/other)</string>
+    <string name="settings_dialog_button_download_artwork">Download</string>
+
+    <string name="settings_dialog_title_amoled_required_restart">Requires Restart</string>
+    <string name="settingS_dialog_message_amoled_requires_restart">S2 must be restarted for theme changes to take effect</string>
+
+    <string name="settings_logging_clipboard_name">Shuttle Logs</string>
+    <string name="settings_logging_clipboard_logs_copied">Logs copied to clipboard</string>
+    <string name="settings_logging_clipboard_logs_too_large">Log file is too large for clipboard</string>
+    <string name="settings_logging_clipboard_logs_empty">Log file empty</string>
+
+</resources>

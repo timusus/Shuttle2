@@ -25,6 +25,8 @@ import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.EditTextAlertDialog
+import com.simplecityapps.shuttle.ui.common.dialog.ShowDeleteDialog
+import com.simplecityapps.shuttle.ui.common.dialog.ShowExcludeDialog
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.utils.toHms
@@ -34,6 +36,7 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
+import com.squareup.phrase.Phrase
 import javax.inject.Inject
 
 class PlaylistDetailFragment :
@@ -107,25 +110,30 @@ class PlaylistDetailFragment :
                     }
                     R.id.rename -> {
                         EditTextAlertDialog
-                            .newInstance(title = "Playlist Name", hint = "Name", initialText = playlist.name, extra = playlist)
+                            .newInstance(
+                                title = getString(R.string.playlist_dialog_title_rename),
+                                hint = getString(R.string.playlist_dialog_hint_rename),
+                                initialText = playlist.name,
+                                extra = playlist
+                            )
                             .show(childFragmentManager)
                         true
                     }
                     R.id.clear -> {
                         MaterialAlertDialogBuilder(requireContext())
-                            .setTitle("Clear Playlist")
-                            .setMessage("All songs will be removed from${playlist.name}")
-                            .setPositiveButton("Clear") { _, _ -> presenter.clear(playlist) }
-                            .setNegativeButton("Cancel", null)
+                            .setTitle(getString(R.string.playlist_dialog_title_clear))
+                            .setMessage(getString(R.string.playlist_dialog_subtitle_clear))
+                            .setPositiveButton(getString(R.string.playlist_dialog_button_clear)) { _, _ -> presenter.clear(playlist) }
+                            .setNegativeButton(getString(R.string.dialog_button_cancel), null)
                             .show()
                         true
                     }
                     R.id.delete -> {
                         MaterialAlertDialogBuilder(requireContext())
-                            .setTitle("Delete Playlist")
-                            .setMessage("${playlist.name} will be permanently deleted")
-                            .setPositiveButton("Delete") { _, _ -> presenter.delete(playlist) }
-                            .setNegativeButton("Cancel", null)
+                            .setTitle(getString(R.string.playlist_dialog_title_delete))
+                            .setMessage(getString(R.string.playlist_dialog_subtitle_delete))
+                            .setPositiveButton(getString(R.string.playlist_dialog_button_delete)) { _, _ -> presenter.delete(playlist) }
+                            .setNegativeButton(getString(R.string.dialog_button_cancel), null)
                             .show()
                         true
                     }
@@ -162,7 +170,13 @@ class PlaylistDetailFragment :
 
     override fun setPlaylist(playlist: Playlist) {
         toolbar?.title = playlist.name
-        toolbar?.subtitle = "${playlist.songCount} Songs • ${playlist.duration.toHms()}"
+        val quantityString = Phrase.fromPlural(requireContext(), R.plurals.songsPlural, playlist.songCount)
+            .put("count", playlist.songCount)
+            .format()
+        toolbar?.subtitle = Phrase.from(requireContext(), R.string.songs_duration)
+            .put("songCount", quantityString)
+            .put("duration", playlist.duration.toHms())
+            .format()
     }
 
     override fun setData(songs: List<Song>) {
@@ -187,19 +201,19 @@ class PlaylistDetailFragment :
     }
 
     override fun onAddedToQueue(song: Song) {
-        Toast.makeText(context, "${song.name} added to queue", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("itemName", song.name).format(), Toast.LENGTH_SHORT).show()
     }
 
     override fun onAddedToQueue(playlist: Playlist) {
-        Toast.makeText(context, "${playlist.name} added to queue", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("itemName", playlist.name).format(), Toast.LENGTH_SHORT).show()
     }
 
     override fun showLoadError(error: Error) {
-        Toast.makeText(context, error.userDescription(), Toast.LENGTH_LONG).show()
+        Toast.makeText(context, error.userDescription(resources), Toast.LENGTH_LONG).show()
     }
 
     override fun showDeleteError(error: Error) {
-        Toast.makeText(requireContext(), error.userDescription(), Toast.LENGTH_LONG).show()
+        Toast.makeText(requireContext(), error.userDescription(resources), Toast.LENGTH_LONG).show()
     }
 
     override fun showTagEditor(songs: List<Song>) {
@@ -252,14 +266,9 @@ class PlaylistDetailFragment :
                             return@setOnMenuItemClickListener true
                         }
                         R.id.exclude -> {
-                            MaterialAlertDialogBuilder(requireContext())
-                                .setTitle("Exclude Song")
-                                .setMessage("\"${song.name}\" will be hidden from your library.\n\nYou can view excluded songs in settings.")
-                                .setPositiveButton("Exclude") { _, _ ->
-                                    presenter.exclude(song)
-                                }
-                                .setNegativeButton("Cancel", null)
-                                .show()
+                            ShowExcludeDialog(requireContext(), song.name) {
+                                presenter.exclude(song)
+                            }
                             return@setOnMenuItemClickListener true
                         }
                         R.id.editTags -> {
@@ -271,14 +280,9 @@ class PlaylistDetailFragment :
                             return@setOnMenuItemClickListener true
                         }
                         R.id.delete -> {
-                            MaterialAlertDialogBuilder(requireContext())
-                                .setTitle("Delete Song")
-                                .setMessage("\"${song.name}\" will be permanently deleted")
-                                .setPositiveButton("Delete") { _, _ ->
-                                    presenter.delete(song)
-                                }
-                                .setNegativeButton("Cancel", null)
-                                .show()
+                            ShowDeleteDialog(requireContext(), song.name) {
+                                presenter.delete(song)
+                            }
                             return@setOnMenuItemClickListener true
                         }
                     }

@@ -88,10 +88,10 @@ class JellyfinConfigurationFragment : DialogFragment(), Injectable {
         }
 
         val dialog = MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Jellyfin Media Server")
+            .setTitle(requireContext().getString(R.string.media_provider_title_jellyfin))
             .setView(view)
-            .setPositiveButton("Authenticate", null)
-            .setNegativeButton("Close", null)
+            .setPositiveButton(requireContext().getString(R.string.media_provider_button_authenticate), null)
+            .setNegativeButton(requireContext().getString(R.string.dialog_button_close), null)
             .create()
 
         dialog.setOnShowListener {
@@ -102,7 +102,7 @@ class JellyfinConfigurationFragment : DialogFragment(), Injectable {
                 }
 
                 inputGroup.isVisible = false
-                loadingView.setState(CircularLoadingView.State.Loading("Authenticating…"))
+                loadingView.setState(CircularLoadingView.State.Loading(requireContext().getString(R.string.media_provider_authenticating)))
                 loadingView.isVisible = true
 
                 jellyfinAuthenticationManager.setAddress(addressInputLayout.editText!!.text.toString())
@@ -118,7 +118,7 @@ class JellyfinConfigurationFragment : DialogFragment(), Injectable {
                         if (rememberPasswordSwitch.isChecked) {
                             jellyfinAuthenticationManager.setLoginCredentials(loginCredentials)
                         }
-                        loadingView.setState(CircularLoadingView.State.Empty("Authentication Successful"))
+                        loadingView.setState(CircularLoadingView.State.Empty(requireContext().getString(R.string.media_provider_authentication_success)))
                         delay(1000)
                         dialog.dismiss()
                     }
@@ -148,19 +148,19 @@ class JellyfinConfigurationFragment : DialogFragment(), Injectable {
 
         // address
         if (addressInputLayout.editText!!.text.isEmpty()) {
-            addressInputLayout.error = "Required"
+            addressInputLayout.error = requireContext().getString(R.string.validation_field_required)
             hasError = true
         }
 
         // Username
         if (loginInputLayout.editText!!.text.isEmpty()) {
-            loginInputLayout.error = "Required"
+            loginInputLayout.error = requireContext().getString(R.string.validation_field_required)
             hasError = true
         }
 
         // Password
         if (passwordInputLayout.editText!!.text.isEmpty()) {
-            passwordInputLayout.error = "Required"
+            passwordInputLayout.error = requireContext().getString(R.string.validation_field_required)
             hasError = true
         }
 

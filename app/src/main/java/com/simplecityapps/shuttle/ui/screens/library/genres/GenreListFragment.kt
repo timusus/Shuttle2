@@ -21,6 +21,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.dialog.ShowExcludeDialog
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
@@ -32,6 +33,7 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFr
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
+import com.squareup.phrase.Phrase
 import javax.inject.Inject
 
 class GenreListFragment :
@@ -47,9 +49,11 @@ class GenreListFragment :
     private var circularLoadingView: CircularLoadingView by autoCleared()
     private var horizontalLoadingView: HorizontalLoadingView by autoCleared()
 
-    @Inject lateinit var presenter: GenreListPresenter
+    @Inject
+    lateinit var presenter: GenreListPresenter
 
-    @Inject lateinit var playlistMenuPresenter: PlaylistMenuPresenter
+    @Inject
+    lateinit var playlistMenuPresenter: PlaylistMenuPresenter
 
     private lateinit var playlistMenuView: PlaylistMenuView
 
@@ -137,22 +141,22 @@ class GenreListFragment :
     }
 
     override fun onAddedToQueue(genre: Genre) {
-        Toast.makeText(context, "${genre.name} added to queue", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("itemName", genre.name).format(), Toast.LENGTH_SHORT).show()
     }
 
     override fun setLoadingState(state: GenreListContract.LoadingState) {
         when (state) {
             is GenreListContract.LoadingState.Scanning -> {
-                horizontalLoadingView.setState(HorizontalLoadingView.State.Loading("Scanning your library"))
+                horizontalLoadingView.setState(HorizontalLoadingView.State.Loading(getString(R.string.library_scan_in_progress)))
                 circularLoadingView.setState(CircularLoadingView.State.None)
             }
             is GenreListContract.LoadingState.Loading -> {
                 horizontalLoadingView.setState(HorizontalLoadingView.State.None)
-                circularLoadingView.setState(CircularLoadingView.State.Loading())
+                circularLoadingView.setState(CircularLoadingView.State.Loading(getString(R.string.loading)))
             }
             is GenreListContract.LoadingState.Empty -> {
                 horizontalLoadingView.setState(HorizontalLoadingView.State.None)
-                circularLoadingView.setState(CircularLoadingView.State.Empty("No genres"))
+                circularLoadingView.setState(CircularLoadingView.State.Empty(getString(R.string.genre_list_empty)))
             }
             is GenreListContract.LoadingState.None -> {
                 horizontalLoadingView.setState(HorizontalLoadingView.State.None)
@@ -166,7 +170,7 @@ class GenreListFragment :
     }
 
     override fun showLoadError(error: Error) {
-        Toast.makeText(context, error.userDescription(), Toast.LENGTH_LONG).show()
+        Toast.makeText(context, error.userDescription(resources), Toast.LENGTH_LONG).show()
     }
 
     override fun showTagEditor(songs: List<Song>) {
@@ -210,14 +214,9 @@ class GenreListFragment :
                         return@setOnMenuItemClickListener true
                     }
                     R.id.exclude -> {
-                        MaterialAlertDialogBuilder(requireContext())
-                            .setTitle("Exclude Genre")
-                            .setMessage("\"${genre.name}\" will be hidden from your library.\n\nYou can view excluded songs in settings.")
-                            .setPositiveButton("Exclude") { _, _ ->
-                                presenter.exclude(genre)
-                            }
-                            .setNegativeButton("Cancel", null)
-                            .show()
+                        ShowExcludeDialog(requireContext(), genre.name) {
+                            presenter.exclude(genre)
+                        }
                         return@setOnMenuItemClickListener true
                     }
                     R.id.editTags -> {

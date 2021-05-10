@@ -1,6 +1,6 @@
 plugins {
     id("com.android.application")
-    id("com.github.triplet.play") version "3.3.0"
+    id("com.github.triplet.play") version "3.4.0-agp4.2"
     id("kotlin-android")
     id("androidx.navigation.safeargs.kotlin")
     id("kotlin-kapt")
@@ -107,11 +107,11 @@ android {
         implementation("androidx.navigation:navigation-ui-ktx:2.3.5")
 
         // Dagger core
-        kapt("com.google.dagger:dagger-compiler:2.33")
+        kapt("com.google.dagger:dagger-compiler:2.35.1")
 
         // Dagger Android
-        implementation("com.google.dagger:dagger-android-support:2.30.1")
-        kapt("com.google.dagger:dagger-android-processor:2.30.1")
+        implementation("com.google.dagger:dagger-android-support:2.35.1")
+        kapt("com.google.dagger:dagger-android-processor:2.35.1")
 
         // AssistedInject
         compileOnly("com.squareup.inject:assisted-inject-annotations-dagger2:0.6.0")
@@ -139,7 +139,7 @@ android {
         implementation("org.nanohttpd:nanohttpd-webserver:2.3.1")
 
         // Moshi
-        kapt("com.squareup.moshi:moshi-kotlin-codegen:1.11.0")
+        kapt("com.squareup.moshi:moshi-kotlin-codegen:1.12.0")
 
         // AndroidX Lifecycle
         implementation("androidx.lifecycle:lifecycle-common-java8:2.3.1")

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="onboarding_directories_dialog_add_title">Media Directories</string>
+    <string name="onboarding_directories_dialog_add_button">Add Directory</string>
+    <string name="onboarding_directories_dialog_missing_title">Missing Document Provider</string>
+    <string name="onboarding_directories_dialog_missing_subtitle">A \'Document Provider\' (file manager) app can\'t be found on your device. You may have to install one, or revert to using the \'basic\' media scanner.</string>
+    <string name="onboarding_directories_add_directories_help_text">In order to scan for music, Shuttle requires access to your media directories.\n\nWhen you press \'add directory\', you\'ll be taken to your default \'file provider\' app. Navigate to the folder(s) containing your music. You can add multiple directories. \n\nNote: You may need to enable \'show internal storage\' in order to see your music folder(s).</string>
+    <string name="onboarding_directories_scanning">Scanning…</string>
+    <plurals name="onboarding_directories_scan_progress">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> audio file</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> audio files</item>
+    </plurals>
+
+    <string name="onboarding_permission_dialog_title">Storage Permission Required</string>
+    <string name="onboarding_permission_dialog_subtitle">Shuttle may not function correctly without permission to access your music</string>
+    <string name="onboarding_permission_button_grant">Grant Permission</string>
+    <string name="onboarding_permission_help_text">To find your music, Shuttle needs permission to read your media storage</string>
+
+    <string name="onboarding_media_scanner_tile">No scan in progress</string>
+    <string name="onboarding_media_scanner_scanning">Scanning…</string>
+    <string name="onboarding_media_scan">Scan</string>
+
+    <string name="onboarding_button_back">Back</string>
+    <string name="onboarding_button_next">Next</string>
+
+    <string name="onboarding_media_scanner_rescan">Rescan</string>
+    <string name="onboarding_scanner_reading_song_tags">Reading song tags…</string>
+
+</resources>
