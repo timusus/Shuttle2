@@ -36,7 +36,7 @@ android {
             applicationIdSuffix = ".dev"
         }
         getByName("release") {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfig = signingConfigs.getByName("release")
         }
@@ -133,7 +133,7 @@ android {
         implementation("androidx.preference:preference-ktx:1.1.1")
 
         // ChromeCast
-        implementation("com.google.android.gms:play-services-cast-framework:19.0.0")
+        implementation("com.google.android.gms:play-services-cast-framework:20.0.0")
 
         // NanoHttp
         implementation("org.nanohttpd:nanohttpd-webserver:2.3.1")
@@ -163,7 +163,7 @@ android {
         implementation("androidx.drawerlayout:drawerlayout:1.1.1")
 
         // New fragment manager
-        implementation("androidx.fragment:fragment:1.3.2")
+        implementation("androidx.fragment:fragment:1.3.3")
 
         // Coil
         implementation("io.coil-kt:coil-base:1.2.0")
