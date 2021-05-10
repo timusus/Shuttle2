@@ -22,7 +22,7 @@ enum class SettingsMenuItem {
         get() {
             return when (this) {
                 SleepTimer -> R.string.settings_menu_sleep_timer
-                Shuffle -> R.string.settings_menu_sleep_timer
+                Shuffle -> R.string.settings_menu_shuffle_all
                 Dsp -> R.string.settings_menu_dsp
                 Settings -> R.string.settings_menu_settings
             }
