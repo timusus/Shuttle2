@@ -2,6 +2,7 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="sleep_timer_dialog_title">Sleep Timer</string>
     <string name="sleep_timer_waiting_track_end">Waiting for track to end…</string>
+    <string name="sleep_timer_play_to_track_end">Play last song to end</string>
     <string name="sleep_timer_dialog_button_close">Close</string>
     <string name="sleep_timer_dialog_button_stop_timer">Stop Timer</string>
     <string name="sleep_timer_dialog_button_set_time">Set Time</string>

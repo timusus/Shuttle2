@@ -3,13 +3,20 @@ package com.simplecityapps.shuttle.ui.screens.sleeptimer
 import android.app.Dialog
 import android.os.Bundle
 import android.os.Handler
+import android.view.LayoutInflater
+import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.widget.SwitchCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.dagger.Injectable
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.utils.toHms
 import com.squareup.phrase.Phrase
 import java.util.concurrent.TimeUnit
@@ -19,6 +26,9 @@ class SleepTimerDialogFragment : DialogFragment(), Injectable {
 
     @Inject
     lateinit var sleepTimer: SleepTimer
+
+    @Inject
+    lateinit var preferenceManager: GeneralPreferenceManager
 
     private var handler: Handler? = null
 
@@ -52,23 +62,26 @@ class SleepTimerDialogFragment : DialogFragment(), Injectable {
 
             // Sleep timer is not currently active
 
+            val view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_sleep_timer, null)
+            val recyclerView: RecyclerView = view.findViewById(R.id.recyclerView)
+            val playToEndSwitch: SwitchCompat = view.findViewById(R.id.playToEndSwitch)
+            playToEndSwitch.isChecked = preferenceManager.sleepTimerPlayToEnd
+            playToEndSwitch.setOnCheckedChangeListener { _, isChecked ->
+                preferenceManager.sleepTimerPlayToEnd = isChecked
+            }
+            val adapter = RecyclerAdapter(lifecycleScope)
+            recyclerView.adapter = adapter
+            adapter.update(SleepTimerDuration.values().map {
+                SleepTimerBinder(it, object : SleepTimerBinder.Listener {
+                    override fun onClick(duration: SleepTimerDuration) {
+                        sleepTimer.startTimer(duration.duration, playToEndSwitch.isChecked)
+                        dialog?.dismiss()
+                    }
+                })
+            })
             builder
                 .setTitle(R.string.sleep_timer_dialog_title)
-                .setItems(
-                    arrayOf(
-                        getString(R.string.sleep_timer_5_minutes),
-                        getString(R.string.sleep_timer_15_minutes),
-                        getString(R.string.sleep_timer_30_minutes),
-                        getString(R.string.sleep_timer_1_hour)
-                    )
-                ) { _, index ->
-                    when (index) {
-                        0 -> sleepTimer.startTimer(TimeUnit.MINUTES.toMillis(5), false)
-                        1 -> sleepTimer.startTimer(TimeUnit.MINUTES.toMillis(15), false)
-                        2 -> sleepTimer.startTimer(TimeUnit.MINUTES.toMillis(30), false)
-                        3 -> sleepTimer.startTimer(TimeUnit.MINUTES.toMillis(60), false)
-                    }
-                }
+                .setView(view)
                 .setNegativeButton(getString(R.string.sleep_timer_dialog_button_close), null)
         }
 
@@ -107,4 +120,11 @@ class SleepTimerDialogFragment : DialogFragment(), Injectable {
 
         const val TAG = "SleepTimerDialog"
     }
+}
+
+enum class SleepTimerDuration(@StringRes val nameResId: Int, val duration: Long) {
+    FiveMins(R.string.sleep_timer_5_minutes, TimeUnit.MINUTES.toMillis(1)),
+    FifteenMins(R.string.sleep_timer_15_minutes, TimeUnit.MINUTES.toMillis(15)),
+    ThirtyMins(R.string.sleep_timer_30_minutes, TimeUnit.MINUTES.toMillis(30)),
+    OneHour(R.string.sleep_timer_1_hour, TimeUnit.MINUTES.toMillis(60))
 }

@@ -181,6 +181,7 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
             return sharedPreferences.getBoolean("search_filter_songs", true)
         }
 
+
     // Playlists
 
     var ignorePlaylistDuplicates: Boolean
@@ -189,5 +190,16 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
         }
         get() {
             return sharedPreferences.getBoolean("playlist_ignore_duplicates", false)
+        }
+
+
+    // Sleep Timer
+
+    var sleepTimerPlayToEnd: Boolean
+        set(value) {
+            sharedPreferences.put("sleep_timer_play_to_end", value)
+        }
+        get() {
+            return sharedPreferences.getBoolean("sleep_timer_play_to_end", false)
         }
 }
