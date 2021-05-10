@@ -66,12 +66,9 @@ class DirectoryBinder(
             progressBar.isVisible = !viewBinder.directory.traversalComplete
             if (viewBinder.directory.traversalComplete) {
                 val leaves = viewBinder.directory.tree.getLeaves()
-                val quantityString: String = Phrase.fromPlural(itemView.resources, R.plurals.onboarding_directories_scan_progress, leaves.size)
+                subtitle.text = Phrase.fromPlural(itemView.resources, R.plurals.onboarding_directories_scan_progress, leaves.size)
                     .put("count", leaves.size)
                     .format().toString()
-                subtitle.text = Phrase.from(quantityString)
-                    .put("count", leaves.size)
-                    .format()
                 progressBar.isVisible = false
             } else {
                 progressBar.isVisible = true
