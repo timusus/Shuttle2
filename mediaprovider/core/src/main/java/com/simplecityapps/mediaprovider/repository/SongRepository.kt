@@ -118,12 +118,12 @@ enum class SongSortOrder : Serializable {
 
     companion object {
         private val collator: Collator by lazy { Collator.getInstance().apply { strength = Collator.TERTIARY } }
-        val defaultComparator: Comparator<Song> by lazy { compareBy({ song -> song.album }, { song -> song.disc }, { song -> song.track }) }
+        val defaultComparator: Comparator<Song> by lazy { compareBy({ song -> song.album ?: "" }, { song -> song.disc }, { song -> song.track }) }
         val songNameComparator: Comparator<Song> by lazy { Comparator<Song> { a, b -> collator.compare(a.name, b.name) }.then(defaultComparator) }
         val artistGroupKeyComparator: Comparator<Song> by lazy {
             Comparator<Song> { a, b -> collator.compare(a.artistGroupKey.key ?: "", b.artistGroupKey.key ?: "") }.then(compareBy { song -> song.album }).then(defaultComparator)
         }
-        val albumNameComparator: Comparator<Song> by lazy { Comparator<Song> { a, b -> collator.compare(a.album?.removeArticles(), b.album?.removeArticles()) }.then(defaultComparator) }
+        val albumNameComparator: Comparator<Song> by lazy { Comparator<Song> { a, b -> collator.compare(a.album?.removeArticles() ?: "", b.album?.removeArticles() ?: "") }.then(defaultComparator) }
         val yearComparator: Comparator<Song> by lazy {
             Comparator<Song> { a, b -> zeroLastComparator.compare(a.year, b.year) }.then(compareBy({ song -> song.year }, { song -> song.album })).then(defaultComparator)
         }
