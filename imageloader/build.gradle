@@ -1,6 +1,7 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
+apply plugin: 'dagger.hilt.android.plugin'
 
 android {
     compileSdkVersion 30
@@ -44,13 +45,15 @@ dependencies {
     // TagLib
     implementation(project(":ktaglib:lib"))
 
-    // Dagger
-    kapt 'com.google.dagger:dagger-compiler:2.35.1'
+    // Hilt
+    implementation 'com.google.dagger:hilt-android:2.35.1'
+    kapt 'com.google.dagger:hilt-compiler:2.35.1'
 
     // Palette
     implementation 'androidx.palette:palette-ktx:1.0.0'
 
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2'
+    // Coroutines
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3'
 
     // Coil
     implementation("io.coil-kt:coil-base:1.2.0")

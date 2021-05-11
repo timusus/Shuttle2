@@ -24,7 +24,6 @@ import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.utils.withArgs
 import com.simplecityapps.shuttle.ui.screens.home.search.HeaderBinder
@@ -36,12 +35,13 @@ import com.simplecityapps.shuttle.ui.screens.onboarding.jellyfin.JellyfinConfigu
 import com.simplecityapps.shuttle.ui.screens.onboarding.plex.PlexConfigurationFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.taglib.DirectorySelectionFragment
 import com.squareup.phrase.Phrase
+import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class MediaProviderSelectionFragment :
     Fragment(),
-    Injectable,
     OnboardingChild,
     MediaProviderSelectionContract.View,
     MediaProviderOptionsFragment.Listener {

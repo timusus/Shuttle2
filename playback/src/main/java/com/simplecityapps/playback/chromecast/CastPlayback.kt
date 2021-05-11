@@ -222,7 +222,7 @@ class CastPlayback(
 
     private inner class CastMediaClientCallback : RemoteMediaClient.Callback() {
         override fun onMetadataUpdated() {
-            Timber.v("RemoteMediaClient.onMetadataUpdated ${castSession.remoteMediaClient?.mediaInfo?.toJson()}")
+            Timber.v("RemoteMediaClient.onMetadataUpdated ${castSession.remoteMediaClient?.mediaInfo}")
         }
 
         override fun onStatusUpdated() {

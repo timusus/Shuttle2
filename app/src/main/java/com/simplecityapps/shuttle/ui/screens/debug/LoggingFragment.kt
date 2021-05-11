@@ -10,16 +10,16 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.debug.DebugLoggingTree
 import com.simplecityapps.shuttle.debug.LogMessage
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.utils.withArgs
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.parcelize.Parcelize
 import javax.inject.Inject
 
-
-class LoggingFragment : Fragment(), Injectable, DebugLoggingTree.Callback {
+@AndroidEntryPoint
+class LoggingFragment : Fragment(), DebugLoggingTree.Callback {
 
     @Inject lateinit var debugLoggingTree: DebugLoggingTree
 

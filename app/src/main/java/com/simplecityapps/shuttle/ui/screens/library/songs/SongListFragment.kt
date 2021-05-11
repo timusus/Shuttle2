@@ -20,7 +20,6 @@ import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongSortOrder
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.ContextualToolbarHelper
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
@@ -39,11 +38,12 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
 import com.squareup.phrase.Phrase
+import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class SongListFragment :
     Fragment(),
-    Injectable,
     SongListContract.View,
     CreatePlaylistDialogFragment.Listener {
 

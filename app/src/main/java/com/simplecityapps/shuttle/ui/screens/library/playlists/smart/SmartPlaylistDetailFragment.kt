@@ -14,13 +14,11 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.mediaprovider.model.SmartPlaylist
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.ShowDeleteDialog
 import com.simplecityapps.shuttle.ui.common.dialog.ShowExcludeDialog
@@ -33,11 +31,12 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
 import com.squareup.phrase.Phrase
+import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class SmartPlaylistDetailFragment :
     Fragment(),
-    Injectable,
     SmartPlaylistDetailContract.View,
     CreatePlaylistDialogFragment.Listener {
 

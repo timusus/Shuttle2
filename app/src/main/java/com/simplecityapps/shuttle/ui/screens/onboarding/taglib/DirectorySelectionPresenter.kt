@@ -8,6 +8,7 @@ import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibMediaPr
 import com.simplecityapps.saf.SafDirectoryHelper
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -53,7 +54,7 @@ interface DirectorySelectionContract {
 }
 
 class DirectorySelectionPresenter @Inject constructor(
-    private val context: Context,
+    @ApplicationContext private val context: Context,
     private val taglibMediaProvider: TaglibMediaProvider,
     @Named("AppCoroutineScope") private val appCoroutineScope: CoroutineScope,
     ) : DirectorySelectionContract.Presenter, BasePresenter<DirectorySelectionContract.View>() {

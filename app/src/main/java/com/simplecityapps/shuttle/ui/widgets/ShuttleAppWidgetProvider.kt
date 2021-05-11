@@ -11,26 +11,31 @@ import android.util.LruCache
 import android.widget.RemoteViews
 import androidx.annotation.LayoutRes
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import com.simplecityapps.playback.ActivityIntentProvider
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackService
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.playback.widgets.WidgetManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
-import dagger.android.AndroidInjection
+import com.simplecityapps.shuttle.ui.MainActivity
+import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
+@AndroidEntryPoint
 abstract class ShuttleAppWidgetProvider : AppWidgetProvider() {
+
     @Inject
     lateinit var playbackManager: PlaybackManager
+
     @Inject
     lateinit var queueManager: QueueManager
+
     @Inject
     lateinit var artworkCache: LruCache<String, Bitmap?>
+
     @Inject
     lateinit var preferenceManager: GeneralPreferenceManager
+
     @Inject
     lateinit var imageLoader: ArtworkImageLoader
 
@@ -50,9 +55,6 @@ abstract class ShuttleAppWidgetProvider : AppWidgetProvider() {
     }
 
     override fun onReceive(context: Context?, intent: Intent?) {
-
-        AndroidInjection.inject(this, context)
-
         updateReason = WidgetManager.UpdateReason.values()[intent?.extras?.getInt(WidgetManager.ARG_UPDATE_REASON) ?: WidgetManager.UpdateReason.Unknown.ordinal]
 
         super.onReceive(context, intent)
@@ -62,9 +64,7 @@ abstract class ShuttleAppWidgetProvider : AppWidgetProvider() {
         super.onUpdate(context, appWidgetManager, appWidgetIds)
 
         appWidgetIds.forEach { appWidgetId ->
-
-            val contentIntent: PendingIntent = (context.applicationContext as ActivityIntentProvider).provideMainActivityIntent()
-                .let { intent -> PendingIntent.getActivity(context, 0, intent, 0) }
+            val contentIntent: PendingIntent = PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java), 0)
 
             val views = RemoteViews(context.packageName, getLayoutResId()).apply {
                 bind(context, appWidgetId, contentIntent, imageLoader, appWidgetManager, preferenceManager.widgetBackgroundTransparency / 100f)

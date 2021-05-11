@@ -11,14 +11,12 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Genre
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.ShowExcludeDialog
@@ -34,11 +32,12 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.squareup.phrase.Phrase
+import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class GenreListFragment :
     Fragment(),
-    Injectable,
     GenreBinder.Listener,
     GenreListContract.View,
     CreatePlaylistDialogFragment.Listener {

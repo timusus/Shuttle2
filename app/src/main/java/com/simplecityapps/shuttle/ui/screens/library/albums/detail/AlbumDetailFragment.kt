@@ -20,13 +20,11 @@ import androidx.transition.Transition
 import androidx.transition.TransitionInflater
 import androidx.transition.TransitionListenerAdapter
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.autoClearedNullable
@@ -45,13 +43,14 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
 import com.squareup.phrase.Phrase
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class AlbumDetailFragment :
     Fragment(),
-    Injectable,
     AlbumDetailContract.View,
     CreatePlaylistDialogFragment.Listener {
 

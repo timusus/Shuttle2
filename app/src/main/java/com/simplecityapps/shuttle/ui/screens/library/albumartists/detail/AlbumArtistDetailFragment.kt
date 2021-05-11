@@ -31,7 +31,6 @@ import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.model.friendlyNameOrArtistName
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.autoClearedNullable
@@ -49,13 +48,14 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
 import com.squareup.phrase.Phrase
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class AlbumArtistDetailFragment :
     Fragment(),
-    Injectable,
     AlbumArtistDetailContract.View,
     ExpandableAlbumBinder.Listener,
     CreatePlaylistDialogFragment.Listener {

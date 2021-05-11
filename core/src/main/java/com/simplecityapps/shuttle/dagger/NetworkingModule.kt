@@ -5,16 +5,20 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
 import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import timber.log.Timber
 import java.net.InetSocketAddress
 import java.net.Proxy
+import javax.inject.Singleton
 
+@InstallIn(SingletonComponent::class)
 @Module
 open class NetworkingModule {
 
-    @AppScope
+    @Singleton
     @Provides
     fun provideLoggingInterceptor(): HttpLoggingInterceptor {
         return HttpLoggingInterceptor { message ->
@@ -24,7 +28,7 @@ open class NetworkingModule {
         }
     }
 
-    @AppScope
+    @Singleton
     @Provides
     fun provideOkHttpClient(loggingInterceptor: HttpLoggingInterceptor): OkHttpClient {
         return OkHttpClient.Builder()
@@ -37,7 +41,7 @@ open class NetworkingModule {
             .build()
     }
 
-    @AppScope
+    @Singleton
     @Provides
     fun provideMoshi(): Moshi {
         return Moshi.Builder()

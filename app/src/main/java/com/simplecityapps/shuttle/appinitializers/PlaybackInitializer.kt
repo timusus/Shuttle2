@@ -15,6 +15,7 @@ import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filterNotNull
@@ -29,7 +30,7 @@ import javax.inject.Named
  * Restores the queue when the app is launched. Saves the queue and queue position when they change.
  */
 class PlaybackInitializer @Inject constructor(
-    private val context: Context,
+    @ApplicationContext private val context: Context,
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackManager,
     private val playbackWatcher: PlaybackWatcher,

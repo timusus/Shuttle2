@@ -1,16 +1,18 @@
-package com.simplecityapps.playback.widgets
+package com.simplecityapps.shuttle.ui.widgets
 
+import android.appwidget.AppWidgetManager
 import android.content.Context
-import com.simplecityapps.playback.ActivityIntentProvider
+import android.content.Intent
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.PlaybackWatcherCallback
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueWatcher
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
 class WidgetManager @Inject constructor(
-    private val context: Context,
+    @ApplicationContext private val context: Context,
     private val playbackWatcher: PlaybackWatcher,
     private val queueWatcher: QueueWatcher
 ) : PlaybackWatcherCallback, QueueChangeCallback {
@@ -23,7 +25,7 @@ class WidgetManager @Inject constructor(
         playbackWatcher.addCallback(this)
         queueWatcher.addCallback(this)
 
-        updateWidget(UpdateReason.Unknown)
+        updateAppWidgets(UpdateReason.Unknown)
     }
 
     fun removeCallbacks() {
@@ -31,8 +33,18 @@ class WidgetManager @Inject constructor(
         queueWatcher.removeCallback(this)
     }
 
-    private fun updateWidget(updateReason: UpdateReason) {
-        (context.applicationContext as ActivityIntentProvider).updateAppWidgets(updateReason)
+    fun updateAppWidgets(updateReason: WidgetManager.UpdateReason) {
+        listOf(
+            Intent(context, WidgetProvider41::class.java),
+            Intent(context, WidgetProvider42::class.java)
+        ).forEach { intent ->
+            context.sendBroadcast(intent.apply {
+                action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                val ids = AppWidgetManager.getInstance(context).getAppWidgetIds(component)
+                putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
+                putExtra(WidgetManager.ARG_UPDATE_REASON, updateReason.ordinal)
+            })
+        }
     }
 
     // PlaybackWatcherCallback Implementation
@@ -40,7 +52,7 @@ class WidgetManager @Inject constructor(
     override fun onPlaybackStateChanged(playbackState: PlaybackState) {
         super.onPlaybackStateChanged(playbackState)
 
-        updateWidget(UpdateReason.PlaystateChanged)
+        updateAppWidgets(UpdateReason.PlaystateChanged)
     }
 
     // QueueChangeCallback Implementation
@@ -48,13 +60,13 @@ class WidgetManager @Inject constructor(
     override fun onQueueChanged() {
         super.onQueueChanged()
 
-        updateWidget(UpdateReason.QueueChanged)
+        updateAppWidgets(UpdateReason.QueueChanged)
     }
 
     override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
         super.onQueuePositionChanged(oldPosition, newPosition)
 
-        updateWidget(UpdateReason.QueuePositionChanged)
+        updateAppWidgets(UpdateReason.QueuePositionChanged)
     }
 
     companion object {

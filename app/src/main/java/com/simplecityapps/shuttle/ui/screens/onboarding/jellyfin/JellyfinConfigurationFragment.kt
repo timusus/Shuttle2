@@ -17,15 +17,16 @@ import com.simplecityapps.networking.userDescription
 import com.simplecityapps.provider.jellyfin.JellyfinAuthenticationManager
 import com.simplecityapps.provider.jellyfin.http.LoginCredentials
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
-class JellyfinConfigurationFragment : DialogFragment(), Injectable {
+@AndroidEntryPoint
+class JellyfinConfigurationFragment : DialogFragment() {
 
     @Inject
     lateinit var jellyfinAuthenticationManager: JellyfinAuthenticationManager

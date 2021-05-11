@@ -6,25 +6,30 @@ import com.simplecityapps.localmediaprovider.local.provider.taglib.FileScanner
 import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibMediaProvider
 import dagger.Module
 import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
 
+@InstallIn(SingletonComponent::class)
 @Module
 class MediaProviderModule {
 
     @Provides
-    @AppScope
+    @Singleton
     fun provideFileScanner(): FileScanner {
         return FileScanner()
     }
 
     @Provides
-    @AppScope
-    fun provideTagLibSongProvider(context: Context, fileScanner: FileScanner): TaglibMediaProvider {
+    @Singleton
+    fun provideTagLibSongProvider(@ApplicationContext context: Context, fileScanner: FileScanner): TaglibMediaProvider {
         return TaglibMediaProvider(context, fileScanner)
     }
 
     @Provides
-    @AppScope
-    fun provideMediaStoreSongProvider(context: Context): MediaStoreMediaProvider {
+    @Singleton
+    fun provideMediaStoreSongProvider(@ApplicationContext context: Context): MediaStoreMediaProvider {
         return MediaStoreMediaProvider(context)
     }
 }

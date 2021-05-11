@@ -19,7 +19,6 @@ import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.mediaprovider.model.SmartPlaylist
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.EditTextAlertDialog
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
@@ -30,12 +29,12 @@ import com.simplecityapps.shuttle.ui.screens.home.search.HeaderBinder
 import com.simplecityapps.shuttle.ui.screens.library.playlists.detail.PlaylistDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylistDetailFragmentArgs
 import com.squareup.phrase.Phrase
+import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
-
+@AndroidEntryPoint
 class PlaylistListFragment :
     Fragment(),
-    Injectable,
     PlaylistListContract.View,
     EditTextAlertDialog.Listener {
 

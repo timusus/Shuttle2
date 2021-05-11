@@ -24,7 +24,6 @@ import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
@@ -35,17 +34,18 @@ import com.simplecityapps.shuttle.ui.common.utils.toHms
 import com.simplecityapps.shuttle.ui.common.view.*
 import com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
 import com.simplecityapps.shuttle.ui.common.view.multisheet.findParentMultiSheetView
+import com.simplecityapps.shuttle.ui.lyrics.QuickLyricManager
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragmentArgs
-import com.simplecityapps.shuttle.ui.lyrics.QuickLyricManager
 import com.simplecityapps.shuttle.ui.screens.sleeptimer.SleepTimerDialogFragment
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
+import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlin.math.abs
 
+@AndroidEntryPoint
 class PlaybackFragment :
     Fragment(),
-    Injectable,
     PlaybackContract.View,
     SeekBar.OnSeekBarChangeListener {
 

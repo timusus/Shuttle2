@@ -13,13 +13,14 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.model.friendlyArtistName
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.view.PlayStateView
 import com.simplecityapps.shuttle.ui.common.view.ProgressView
+import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
-class MiniPlaybackFragment : Fragment(), Injectable, MiniPlayerContract.View {
+@AndroidEntryPoint
+class MiniPlaybackFragment : Fragment(), MiniPlayerContract.View {
 
     @Inject
     lateinit var presenter: MiniPlayerPresenter

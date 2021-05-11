@@ -3,22 +3,21 @@ package com.simplecityapps.shuttle.dagger
 import android.content.Context
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
-import com.simplecityapps.mediaprovider.repository.SongRepository
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import dagger.Module
 import dagger.Provides
-import okhttp3.OkHttpClient
+import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
+import javax.inject.Singleton
 
+@InstallIn(SingletonComponent::class)
 @Module
 class ImageLoaderModule {
 
-    @AppScope
+    @Singleton
     @Provides
     fun provideImageLoader(
-        context: Context,
-        songRepository: SongRepository,
-        okHttpClient: OkHttpClient,
-        preferenceManager: GeneralPreferenceManager
+        @ApplicationContext context: Context
     ): ArtworkImageLoader {
         return GlideImageLoader(context)
     }

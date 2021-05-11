@@ -16,7 +16,7 @@ import com.simplecityapps.mediaprovider.repository.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.AlbumQuery
 import com.simplecityapps.mediaprovider.repository.AlbumRepository
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
-import dagger.android.AndroidInjection
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import timber.log.Timber
@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 
+@AndroidEntryPoint
 class ArtworkDownloadService : Service(), CoroutineScope {
 
     private val notificationManager: NotificationManager? by lazy {
@@ -60,7 +61,6 @@ class ArtworkDownloadService : Service(), CoroutineScope {
     }
 
     override fun onCreate() {
-        AndroidInjection.inject(this)
         super.onCreate()
 
         if (preferenceManager.artworkWifiOnly && connectivityManager?.isActiveNetworkMetered == true) {

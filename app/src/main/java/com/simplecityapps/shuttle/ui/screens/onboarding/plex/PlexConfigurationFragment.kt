@@ -16,15 +16,16 @@ import com.simplecityapps.networking.userDescription
 import com.simplecityapps.provider.plex.PlexAuthenticationManager
 import com.simplecityapps.provider.plex.http.LoginCredentials
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
-class PlexConfigurationFragment : DialogFragment(), Injectable {
+@AndroidEntryPoint
+class PlexConfigurationFragment : DialogFragment() {
 
     @Inject
     lateinit var plexAuthenticationManager: PlexAuthenticationManager

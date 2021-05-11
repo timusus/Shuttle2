@@ -12,6 +12,7 @@ import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.simplecityapps.shuttle.ui.lyrics.QuickLyricManager
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
@@ -27,7 +28,7 @@ class PlaybackPresenter @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val albumRepository: AlbumRepository,
     private val albumArtistRepository: AlbumArtistRepository,
-    private val context: Context
+    @ApplicationContext private val context: Context
 ) : BasePresenter<PlaybackContract.View>(),
     PlaybackContract.Presenter,
     QueueChangeCallback,

@@ -14,11 +14,12 @@ import com.mikepenz.aboutlibraries.Libs
 import com.mikepenz.aboutlibraries.entity.Library
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.recyclerview.SpacesItemDecoration
+import dagger.hilt.android.AndroidEntryPoint
 
-class LicensesDialogFragment : DialogFragment(), Injectable {
+@AndroidEntryPoint
+class LicensesDialogFragment : DialogFragment() {
 
     private var adapter: RecyclerAdapter by autoCleared()
 

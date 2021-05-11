@@ -23,7 +23,6 @@ import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.model.friendlyNameOrArtistName
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.ContextualToolbarHelper
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
@@ -43,11 +42,12 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.squareup.phrase.Phrase
+import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class AlbumArtistListFragment :
     Fragment(),
-    Injectable,
     AlbumArtistBinder.Listener,
     AlbumArtistListContract.View,
     CreatePlaylistDialogFragment.Listener {

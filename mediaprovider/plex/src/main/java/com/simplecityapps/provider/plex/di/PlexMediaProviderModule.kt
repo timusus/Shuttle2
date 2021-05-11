@@ -10,25 +10,29 @@ import com.simplecityapps.provider.plex.PlexMediaProvider
 import com.simplecityapps.provider.plex.http.ItemsService
 import com.simplecityapps.provider.plex.http.PlexTranscodeService
 import com.simplecityapps.provider.plex.http.UserService
-import com.simplecityapps.shuttle.dagger.AppScope
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import com.squareup.moshi.Moshi
 import dagger.Module
 import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.create
 import java.util.concurrent.TimeUnit
 import javax.inject.Named
+import javax.inject.Singleton
 
+@InstallIn(SingletonComponent::class)
 @Module
 open class PlexMediaProviderModule {
 
     @Provides
-    @AppScope
+    @Singleton
     @Named("PlexRetrofit")
-    fun provideRetrofit(context: Context, okHttpClient: OkHttpClient, moshi: Moshi): Retrofit {
+    fun provideRetrofit(@ApplicationContext context: Context, okHttpClient: OkHttpClient, moshi: Moshi): Retrofit {
         return Retrofit.Builder()
             .baseUrl("http://localhost/") // unused
             .addCallAdapterFactory(NetworkResultAdapterFactory(context.getSystemService()))
@@ -43,43 +47,43 @@ open class PlexMediaProviderModule {
     }
 
     @Provides
-    @AppScope
+    @Singleton
     fun provideUserService(@Named("PlexRetrofit") retrofit: Retrofit): UserService {
         return retrofit.create()
     }
 
     @Provides
-    @AppScope
+    @Singleton
     fun provideItemsService(@Named("PlexRetrofit") retrofit: Retrofit): ItemsService {
         return retrofit.create()
     }
 
     @Provides
-    @AppScope
+    @Singleton
     fun provideTranscodeService(@Named("PlexRetrofit") retrofit: Retrofit): PlexTranscodeService {
         return retrofit.create()
     }
 
     @Provides
-    @AppScope
+    @Singleton
     fun provideCredentialStore(securePreferenceManager: SecurePreferenceManager): CredentialStore {
         return CredentialStore(securePreferenceManager)
     }
 
     @Provides
-    @AppScope
+    @Singleton
     fun providePlexAuthenticationManager(userService: UserService, credentialStore: CredentialStore): PlexAuthenticationManager {
         return PlexAuthenticationManager(userService, credentialStore)
     }
 
     @Provides
-    @AppScope
+    @Singleton
     fun providePlexMediaProvider(authenticationManager: PlexAuthenticationManager, itemsService: ItemsService): PlexMediaProvider {
         return PlexMediaProvider(authenticationManager, itemsService)
     }
 
     @Provides
-    @AppScope
+    @Singleton
     fun providePlexMediaPathProvider(authenticationManager: PlexAuthenticationManager, plexTranscodeService: PlexTranscodeService): PlexMediaInfoProvider {
         return PlexMediaInfoProvider(authenticationManager, plexTranscodeService)
     }

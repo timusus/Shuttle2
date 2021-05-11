@@ -48,9 +48,9 @@ dependencies {
     // AndroidX Annotations
     api "androidx.annotation:annotation:1.2.0"
 
-    // Dagger core
-    api 'com.google.dagger:dagger-android:2.35.1'
-    kapt 'com.google.dagger:dagger-compiler:2.35.1'
+    // Hilt core
+    implementation 'com.google.dagger:hilt-android:2.35.1'
+    kapt 'com.google.dagger:hilt-compiler:2.35.1'
 
     // Timber
     api 'com.jakewharton.timber:timber:4.7.1'

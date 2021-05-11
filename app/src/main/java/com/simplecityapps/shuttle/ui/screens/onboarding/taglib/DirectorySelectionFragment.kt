@@ -15,14 +15,13 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 import javax.inject.Inject
 
-
+@AndroidEntryPoint
 class DirectorySelectionFragment : DialogFragment(),
-    Injectable,
     DirectorySelectionContract.View {
 
     @Inject

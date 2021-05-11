@@ -63,4 +63,8 @@ dependencies {
 
     // Moshi
     kapt("com.squareup.moshi:moshi-kotlin-codegen:1.12.0")
+
+    // Hilt
+    implementation 'com.google.dagger:hilt-android:2.35.1'
+    kapt 'com.google.dagger:hilt-compiler:2.35.1'
 }

@@ -24,16 +24,17 @@ import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import javax.inject.Inject
 import kotlin.math.log10
 import kotlin.math.pow
 import kotlin.math.sqrt
 
-class FrequencyResponseDialogFragment : DialogFragment(), Injectable {
+@AndroidEntryPoint
+class FrequencyResponseDialogFragment : DialogFragment() {
 
     private var lineChart: LineChart by autoCleared()
     private var loadingView: CircularLoadingView by autoCleared()

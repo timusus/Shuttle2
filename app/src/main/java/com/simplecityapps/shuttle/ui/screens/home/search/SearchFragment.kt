@@ -20,7 +20,6 @@ import androidx.transition.Transition
 import androidx.transition.TransitionInflater
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.google.android.material.chip.Chip
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Album
@@ -28,7 +27,6 @@ import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.model.friendlyNameOrArtistName
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.closeKeyboard
@@ -49,6 +47,7 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
 import com.squareup.phrase.Phrase
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BroadcastChannel
 import kotlinx.coroutines.channels.Channel
@@ -59,8 +58,8 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class SearchFragment : Fragment(),
-    Injectable,
     SearchContract.View,
     CreatePlaylistDialogFragment.Listener {
 

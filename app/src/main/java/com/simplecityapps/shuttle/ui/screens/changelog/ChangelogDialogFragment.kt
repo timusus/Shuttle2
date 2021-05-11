@@ -12,18 +12,19 @@ import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.recyclerview.SpacesItemDecoration
 import com.simplecityapps.shuttle.ui.common.utils.dp
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
+import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 import java.lang.reflect.Type
 import javax.inject.Inject
 
-class ChangelogDialogFragment : DialogFragment(), Injectable {
+@AndroidEntryPoint
+class ChangelogDialogFragment : DialogFragment() {
 
     @Inject
     lateinit var moshi: Moshi

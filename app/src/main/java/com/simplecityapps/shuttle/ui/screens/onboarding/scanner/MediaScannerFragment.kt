@@ -12,18 +12,18 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.utils.withArgs
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingChild
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingPage
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParent
 import com.squareup.phrase.Phrase
+import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class MediaScannerFragment :
     Fragment(),
-    Injectable,
     ScannerContract.View,
     OnboardingChild {
 

@@ -7,6 +7,7 @@ plugins {
     id("com.bugsnag.android.gradle")
     id("com.mikepenz.aboutlibraries.plugin")
     id("kotlin-parcelize")
+    id("dagger.hilt.android.plugin")
 }
 
 android {
@@ -59,6 +60,10 @@ android {
         freeCompilerArgs = freeCompilerArgs + "-Xopt-in=kotlin.RequiresOptIn"
     }
 
+    lintOptions {
+        isCheckReleaseBuilds = false
+    }
+
     dependencies {
         implementation(fileTree("dir" to "libs", "include" to listOf("*.jar")))
 
@@ -106,12 +111,9 @@ android {
         implementation("androidx.navigation:navigation-fragment-ktx:2.3.5")
         implementation("androidx.navigation:navigation-ui-ktx:2.3.5")
 
-        // Dagger core
-        kapt("com.google.dagger:dagger-compiler:2.35.1")
-
-        // Dagger Android
-        implementation("com.google.dagger:dagger-android-support:2.35.1")
-        kapt("com.google.dagger:dagger-android-processor:2.35.1")
+        // Hilt
+        implementation("com.google.dagger:hilt-android:2.35.1")
+        kapt("com.google.dagger:hilt-compiler:2.35.1")
 
         // AssistedInject
         compileOnly("com.squareup.inject:assisted-inject-annotations-dagger2:0.6.0")
@@ -180,6 +182,14 @@ android {
         // About Libraries
         implementation("com.mikepenz:aboutlibraries-core:8.8.4")
     }
+}
+
+kapt {
+    correctErrorTypes = true
+}
+
+hilt {
+    enableExperimentalClasspathAggregation = true
 }
 
 play {

@@ -10,7 +10,6 @@ import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.ContextualToolbarHelper
 import com.simplecityapps.shuttle.ui.common.PagerAdapter
@@ -24,9 +23,11 @@ import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListFragment
 import com.simplecityapps.shuttle.ui.screens.library.genres.GenreListFragment
 import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListFragment
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListFragment
+import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
-class LibraryFragment : Fragment(), Injectable, ToolbarHost {
+@AndroidEntryPoint
+class LibraryFragment : Fragment(), ToolbarHost {
 
     private var viewPager: ViewPager2? = null
 

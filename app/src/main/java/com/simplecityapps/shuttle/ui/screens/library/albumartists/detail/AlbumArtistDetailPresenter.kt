@@ -16,6 +16,7 @@ import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.squareup.inject.assisted.Assisted
 import com.squareup.inject.assisted.AssistedInject
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
@@ -57,7 +58,7 @@ class AlbumArtistDetailContract {
 }
 
 class AlbumArtistDetailPresenter @AssistedInject constructor(
-    private val context: Context,
+    @ApplicationContext private val context: Context,
     private val albumArtistRepository: AlbumArtistRepository,
     private val albumRepository: AlbumRepository,
     private val songRepository: SongRepository,

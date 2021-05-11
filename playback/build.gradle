@@ -1,6 +1,7 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
+apply plugin: 'dagger.hilt.android.plugin'
 
 android {
     compileSdkVersion 30
@@ -42,15 +43,15 @@ dependencies {
     // AndroidX Media
     implementation 'androidx.media:media:1.3.0'
 
-    // Dagger
-    kapt 'com.google.dagger:dagger-compiler:2.35.1'
+    // AndroidX DocumentFile
+    implementation 'androidx.documentfile:documentfile:1.0.1'
 
-    // Dagger Android
-    implementation 'com.google.dagger:dagger-android-support:2.35.1'
-    kapt "com.google.dagger:dagger-android-processor:2.35.1"
+    // Hilt
+    implementation 'com.google.dagger:hilt-android:2.35.1'
+    kapt 'com.google.dagger:hilt-compiler:2.35.1'
 
     // Chromecast
-    implementation 'com.google.android.gms:play-services-cast-framework:19.0.0'
+    implementation 'com.google.android.gms:play-services-cast-framework:20.0.0'
 
     // NanoHttp
     implementation 'org.nanohttpd:nanohttpd-webserver:2.3.1'

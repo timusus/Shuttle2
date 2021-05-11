@@ -17,15 +17,17 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputLayout
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.closeKeyboard
 import com.simplecityapps.shuttle.ui.common.utils.withArgs
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.squareup.phrase.Phrase
+import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
-class TagEditorAlertDialog : DialogFragment(), Injectable, TagEditorContract.View {
+@AndroidEntryPoint
+class TagEditorAlertDialog : DialogFragment(),
+    TagEditorContract.View {
 
     private var songs: List<Song> = listOf()
 

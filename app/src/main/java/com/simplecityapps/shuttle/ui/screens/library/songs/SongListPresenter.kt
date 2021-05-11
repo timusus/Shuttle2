@@ -16,6 +16,7 @@ import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -59,7 +60,7 @@ interface SongListContract {
 }
 
 class SongListPresenter @Inject constructor(
-    private val context: Context,
+    @ApplicationContext private val context: Context,
     private val playbackManager: PlaybackManager,
     private val songRepository: SongRepository,
     private val mediaImporter: MediaImporter,

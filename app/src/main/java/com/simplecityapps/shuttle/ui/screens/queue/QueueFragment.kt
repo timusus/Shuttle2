@@ -27,7 +27,6 @@ import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.ShowExcludeDialog
@@ -40,12 +39,13 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.squareup.phrase.Phrase
+import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class QueueFragment :
     Fragment(),
-    Injectable,
     QueueContract.View,
     CreatePlaylistDialogFragment.Listener {
 

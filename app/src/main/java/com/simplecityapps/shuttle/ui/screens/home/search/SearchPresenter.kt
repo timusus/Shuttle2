@@ -14,6 +14,7 @@ import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
@@ -57,7 +58,7 @@ interface SearchContract : BaseContract.Presenter<SearchContract.View> {
 }
 
 class SearchPresenter @Inject constructor(
-    private val context: Context,
+    @ApplicationContext private val context: Context,
     private val songRepository: SongRepository,
     private val artistRepository: AlbumArtistRepository,
     private val albumRepository: AlbumRepository,

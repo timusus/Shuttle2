@@ -17,7 +17,6 @@ import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.bumptech.glide.integration.recyclerview.RecyclerViewPreloader
 import com.bumptech.glide.util.ViewPreloadSizeProvider
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.SpanSizeLookup
 import com.simplecityapps.adapter.ViewBinder
@@ -25,7 +24,6 @@ import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.AlbumSortOrder
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.ContextualToolbarHelper
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
@@ -45,11 +43,12 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.squareup.phrase.Phrase
+import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class AlbumListFragment :
     Fragment(),
-    Injectable,
     AlbumBinder.Listener,
     AlbumListContract.View,
     CreatePlaylistDialogFragment.Listener {

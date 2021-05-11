@@ -16,13 +16,13 @@ import com.simplecityapps.playback.dsp.equalizer.EqualizerBand
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.view.HorizontalSeekbar
+import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
-
-class DspFragment : Fragment(), Injectable, EqualizerContract.View {
+@AndroidEntryPoint
+class DspFragment : Fragment(), EqualizerContract.View {
 
     @Inject
     lateinit var presenter: DspPresenter

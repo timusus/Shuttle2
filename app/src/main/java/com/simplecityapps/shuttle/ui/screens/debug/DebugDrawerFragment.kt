@@ -9,11 +9,12 @@ import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.dagger.NetworkingModule
 import com.simplecityapps.shuttle.ui.common.PagerAdapter
+import dagger.hilt.android.AndroidEntryPoint
 
-class DebugDrawerFragment : Fragment(), Injectable {
+@AndroidEntryPoint
+class DebugDrawerFragment : Fragment() {
 
     // Lifecycle
 

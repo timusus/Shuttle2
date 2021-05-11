@@ -14,17 +14,16 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 
 import com.simplecityapps.shuttle.ui.screens.sleeptimer.SleepTimerDialogFragment
+import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
-
+@AndroidEntryPoint
 class BottomDrawerSettingsFragment :
     BottomSheetDialogFragment(),
-    Injectable,
     BottomDrawerSettingsContract.View {
 
     // Lifecycle

@@ -30,30 +30,34 @@ import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.provider.emby.EmbyMediaInfoProvider
 import com.simplecityapps.provider.jellyfin.JellyfinMediaInfoProvider
 import com.simplecityapps.provider.plex.PlexMediaInfoProvider
-import com.simplecityapps.shuttle.dagger.AppScope
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.squareup.moshi.Moshi
 import dagger.Module
 import dagger.Provides
+import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
+import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
 import javax.inject.Named
+import javax.inject.Singleton
 
+@InstallIn(SingletonComponent::class)
 @Module
 class PlaybackModule {
 
-    @AppScope
+    @Singleton
     @Provides
     fun provideQueueWatcher(): QueueWatcher {
         return QueueWatcher()
     }
 
-    @AppScope
+    @Singleton
     @Provides
     fun provideQueueManager(queueWatcher: QueueWatcher): QueueManager {
         return QueueManager(queueWatcher)
     }
 
-    @AppScope
+    @Singleton
     @Provides
     fun provideEqualizer(playbackPreferenceManager: PlaybackPreferenceManager): EqualizerAudioProcessor {
         return EqualizerAudioProcessor(playbackPreferenceManager.equalizerEnabled).apply {
@@ -71,19 +75,19 @@ class PlaybackModule {
         }
     }
 
-    @AppScope
+    @Singleton
     @Provides
     fun provideReplayGainAudioProcessor(playbackPreferenceManager: PlaybackPreferenceManager): ReplayGainAudioProcessor {
         return ReplayGainAudioProcessor(playbackPreferenceManager.replayGainMode, playbackPreferenceManager.preAmpGain)
     }
 
-    @AppScope
+    @Singleton
     @Provides
     fun providePlaybackPreferenceManager(sharedPreferences: SharedPreferences, moshi: Moshi): PlaybackPreferenceManager {
         return PlaybackPreferenceManager(sharedPreferences, moshi)
     }
 
-    @AppScope
+    @Singleton
     @Provides
     fun provideAggregateMediaPathProvider(
         embyMediaPathProvider: EmbyMediaInfoProvider,
@@ -101,7 +105,7 @@ class PlaybackModule {
 
     @Provides
     fun provideExoPlayerPlayback(
-        context: Context,
+        @ApplicationContext context: Context,
         equalizerAudioProcessor: EqualizerAudioProcessor,
         replayGainAudioProcessor: ReplayGainAudioProcessor,
         mediaPathProvider: AggregateMediaInfoProvider
@@ -109,15 +113,15 @@ class PlaybackModule {
         return ExoPlayerPlayback(context, equalizerAudioProcessor, replayGainAudioProcessor, mediaPathProvider)
     }
 
-    @AppScope
+    @Singleton
     @Provides
     fun providePlaybackWatcher(): PlaybackWatcher {
         return PlaybackWatcher()
     }
 
-    @AppScope
+    @Singleton
     @Provides
-    fun provideAudioFocusHelper(context: Context, playbackWatcher: PlaybackWatcher): AudioFocusHelper {
+    fun provideAudioFocusHelper(@ApplicationContext context: Context, playbackWatcher: PlaybackWatcher): AudioFocusHelper {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             return AudioFocusHelperApi26(context, playbackWatcher)
         } else {
@@ -131,16 +135,16 @@ class PlaybackModule {
     }
 
     @Provides
-    fun provideAudioManager(context: Context): AudioManager? {
+    fun provideAudioManager(@ApplicationContext context: Context): AudioManager? {
         return context.getSystemService()
     }
 
     @Provides
-    fun provideAudioEffectSessionManager(context: Context): AudioEffectSessionManager {
+    fun provideAudioEffectSessionManager(@ApplicationContext context: Context): AudioEffectSessionManager {
         return AudioEffectSessionManager(context)
     }
 
-    @AppScope
+    @Singleton
     @Provides
     fun providePlaybackManager(
         queueManager: QueueManager,
@@ -156,22 +160,22 @@ class PlaybackModule {
         return PlaybackManager(queueManager, playbackWatcher, audioFocusHelper, playbackPreferenceManager, audioEffectSessionManager, coroutineScope, playback, queueWatcher, audioManager)
     }
 
-    @AppScope
+    @Singleton
     @Provides
-    fun provideCastService(context: Context, songRepository: SongRepository, artworkImageLoader: ArtworkImageLoader): CastService {
+    fun provideCastService(@ApplicationContext context: Context, songRepository: SongRepository, artworkImageLoader: ArtworkImageLoader): CastService {
         return CastService(context, songRepository, artworkImageLoader)
     }
 
-    @AppScope
+    @Singleton
     @Provides
     fun provideHttpServer(castService: CastService): HttpServer {
         return HttpServer(castService)
     }
 
-    @AppScope
+    @Singleton
     @Provides
     fun provideCastSessionManager(
-        context: Context,
+        @ApplicationContext context: Context,
         playbackManager: PlaybackManager,
         httpServer: HttpServer,
         exoPlayerPlayback: ExoPlayerPlayback,
@@ -180,10 +184,10 @@ class PlaybackModule {
         return CastSessionManager(playbackManager, context, httpServer, exoPlayerPlayback, mediaPathProvider)
     }
 
-    @AppScope
+    @Singleton
     @Provides
     fun provideMediaSessionManager(
-        context: Context,
+        @ApplicationContext context: Context,
         @Named("AppCoroutineScope") appCoroutineScope: CoroutineScope,
         playbackManager: PlaybackManager,
         queueManager: QueueManager,
@@ -216,16 +220,16 @@ class PlaybackModule {
         )
     }
 
-    @AppScope
+    @Singleton
     @Provides
-    fun provideNoiseManager(context: Context, playbackManager: PlaybackManager, playbackWatcher: PlaybackWatcher): NoiseManager {
+    fun provideNoiseManager(@ApplicationContext context: Context, playbackManager: PlaybackManager, playbackWatcher: PlaybackWatcher): NoiseManager {
         return NoiseManager(context, playbackManager, playbackWatcher)
     }
 
-    @AppScope
+    @Singleton
     @Provides
     fun providePlaybackNotificationManager(
-        context: Context,
+        @ApplicationContext context: Context,
         playbackManager: PlaybackManager,
         queueManager: QueueManager,
         mediaSessionManager: MediaSessionManager,
@@ -247,7 +251,7 @@ class PlaybackModule {
         )
     }
 
-    @AppScope
+    @Singleton
     @Provides
     fun provideSleepTimer(playbackManager: PlaybackManager, playbackWatcher: PlaybackWatcher): SleepTimer {
         return SleepTimer(playbackManager, playbackWatcher)

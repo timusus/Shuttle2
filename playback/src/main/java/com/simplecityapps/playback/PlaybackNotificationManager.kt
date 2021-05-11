@@ -20,10 +20,12 @@ import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
+import dagger.hilt.android.qualifiers.ApplicationContext
 import timber.log.Timber
+import javax.inject.Inject
 
-class PlaybackNotificationManager(
-    private val context: Context,
+class PlaybackNotificationManager @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val notificationManager: NotificationManager,
     private val playbackManager: PlaybackManager,
     private val queueManager: QueueManager,
@@ -52,7 +54,6 @@ class PlaybackNotificationManager(
     }
 
     fun displayNotification(): Notification {
-
         Timber.i("Display Notification")
 
         createNotificationChannel()

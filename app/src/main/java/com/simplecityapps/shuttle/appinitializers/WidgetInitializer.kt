@@ -2,7 +2,7 @@ package com.simplecityapps.shuttle.appinitializers
 
 import android.annotation.SuppressLint
 import android.app.Application
-import com.simplecityapps.playback.widgets.WidgetManager
+import com.simplecityapps.shuttle.ui.widgets.WidgetManager
 import javax.inject.Inject
 
 class WidgetInitializer @Inject constructor(

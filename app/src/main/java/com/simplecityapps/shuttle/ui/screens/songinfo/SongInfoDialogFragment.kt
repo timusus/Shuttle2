@@ -16,14 +16,15 @@ import androidx.fragment.app.FragmentManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.utils.dp
 import com.simplecityapps.shuttle.ui.common.utils.toHms
 import com.simplecityapps.shuttle.ui.common.utils.withArgs
 import com.simplecityapps.shuttle.ui.common.view.setMargins
+import dagger.hilt.android.AndroidEntryPoint
 import java.net.URLDecoder
 
-class SongInfoDialogFragment : DialogFragment(), Injectable {
+@AndroidEntryPoint
+class SongInfoDialogFragment : DialogFragment() {
 
     private lateinit var song: Song
 

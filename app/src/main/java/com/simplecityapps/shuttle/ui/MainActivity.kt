@@ -11,21 +11,18 @@ import androidx.navigation.fragment.NavHostFragment
 import com.simplecityapps.playback.PlaybackService
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
-import dagger.android.AndroidInjector
-import dagger.android.DispatchingAndroidInjector
-import dagger.android.HasAndroidInjector
+import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
-
+@AndroidEntryPoint
 class MainActivity :
-    AppCompatActivity(),
-    HasAndroidInjector {
+    AppCompatActivity() {
 
-    @Inject lateinit var dispatchingAndroidInjector: DispatchingAndroidInjector<Any>
+    @Inject
+    lateinit var preferenceManager: GeneralPreferenceManager
 
-    @Inject lateinit var preferenceManager: GeneralPreferenceManager
-
-    @Inject lateinit var themeManager: ThemeManager
+    @Inject
+    lateinit var themeManager: ThemeManager
 
     // Lifecycle
 
@@ -74,11 +71,5 @@ class MainActivity :
                 }
             }))
         }
-    }
-
-    // HasAndroidInjector Implementation
-
-    override fun androidInjector(): AndroidInjector<Any> {
-        return dispatchingAndroidInjector
     }
 }

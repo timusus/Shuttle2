@@ -15,14 +15,15 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.utils.toHms
 import com.squareup.phrase.Phrase
+import dagger.hilt.android.AndroidEntryPoint
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
-class SleepTimerDialogFragment : DialogFragment(), Injectable {
+@AndroidEntryPoint
+class SleepTimerDialogFragment : DialogFragment() {
 
     @Inject
     lateinit var sleepTimer: SleepTimer

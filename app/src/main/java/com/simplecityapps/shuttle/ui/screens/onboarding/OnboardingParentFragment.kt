@@ -16,7 +16,6 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.autoCleared
 
@@ -24,6 +23,7 @@ import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.MediaProvi
 import com.simplecityapps.shuttle.ui.screens.onboarding.scanner.MediaScannerFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.storage.StoragePermissionFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.taglib.DirectorySelectionFragment
+import dagger.hilt.android.AndroidEntryPoint
 import me.relex.circleindicator.CircleIndicator3
 import javax.inject.Inject
 
@@ -54,9 +54,9 @@ interface OnboardingChild {
     fun handleBackButtonClick() {}
 }
 
+@AndroidEntryPoint
 class OnboardingParentFragment : Fragment(),
-    OnboardingParent,
-    Injectable {
+    OnboardingParent {
 
     private var viewPager: ViewPager2 by autoCleared()
 
@@ -69,9 +69,11 @@ class OnboardingParentFragment : Fragment(),
 
     private val args: OnboardingParentFragmentArgs by navArgs()
 
-    @Inject lateinit var playbackPreferenceManager: PlaybackPreferenceManager
+    @Inject
+    lateinit var playbackPreferenceManager: PlaybackPreferenceManager
 
-    @Inject lateinit var generalPreferenceManager: GeneralPreferenceManager
+    @Inject
+    lateinit var generalPreferenceManager: GeneralPreferenceManager
 
 
     // Lifecycle

@@ -8,7 +8,6 @@ import android.widget.RemoteViews
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.model.friendlyArtistName
 import com.simplecityapps.playback.getArtworkCacheKey
-import com.simplecityapps.playback.widgets.WidgetManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.utils.dp
 
@@ -20,12 +19,19 @@ class WidgetProvider41 : ShuttleAppWidgetProvider() {
     override val layoutResIdDark: Int
         get() = R.layout.appwidget_41_dark
 
-    override fun RemoteViews.bind(context: Context, appWidgetId: Int, contentIntent: PendingIntent, imageLoader: ArtworkImageLoader, appWidgetManager: AppWidgetManager, transparency: Float) {
+    override fun RemoteViews.bind(
+        context: Context,
+        appWidgetId: Int,
+        contentIntent: PendingIntent,
+        imageLoader: ArtworkImageLoader,
+        appWidgetManager: AppWidgetManager,
+        backgroundTransparency: Float
+    ) {
         setOnClickPendingIntent(R.id.container, contentIntent)
         setOnClickPendingIntent(R.id.playPauseButton, playbackPendingIntent(context))
         setOnClickPendingIntent(R.id.nextButton, nextPendingIntent(context))
 
-        setInt(R.id.background, "setImageAlpha", (transparency * 255f).toInt())
+        setInt(R.id.background, "setImageAlpha", (backgroundTransparency * 255f).toInt())
 
         queueManager.getCurrentItem()?.let { currentItem ->
             setViewVisibility(R.id.subtitle, View.VISIBLE)

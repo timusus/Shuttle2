@@ -14,7 +14,7 @@ import androidx.media.session.MediaButtonReceiver
 import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.androidauto.PackageValidator
 import com.simplecityapps.playback.mediasession.MediaSessionManager
-import dagger.android.AndroidInjection
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class PlaybackService :
     MediaBrowserServiceCompat(),
     PlaybackWatcherCallback {
@@ -50,9 +51,6 @@ class PlaybackService :
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
 
     override fun onCreate() {
-        Timber.v("onCreate()")
-
-        AndroidInjection.inject(this)
         super.onCreate()
 
         playbackWatcher.addCallback(this)
@@ -196,13 +194,10 @@ class PlaybackService :
     // Static
 
     companion object {
-
         const val ACTION_TOGGLE_PLAYBACK: String = "com.simplecityapps.playback.toggle"
         const val ACTION_SKIP_PREV: String = "com.simplecityapps.playback.prev"
         const val ACTION_SKIP_NEXT: String = "com.simplecityapps.playback.next"
         const val ACTION_SEARCH: String = "com.simplecityapps.playback.search"
-        const val ARG_SEARECH_QUERY: String = "com.simplecityapps.playback.search"
         const val ACTION_NOTIFICATION_DISMISS: String = "com.simplecityapps.playback.notification.dismiss"
     }
-
 }

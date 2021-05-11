@@ -1,40 +1,24 @@
 package com.simplecityapps.shuttle
 
 import android.app.Application
-import android.appwidget.AppWidgetManager
 import android.content.Intent
 import coil.util.CoilUtils
-import com.simplecityapps.mediaprovider.repository.SongRepository
-import com.simplecityapps.mediaprovider.repository.SongRepositoryProvider
 import com.simplecityapps.playback.ActivityIntentProvider
-import com.simplecityapps.playback.widgets.WidgetManager
 import com.simplecityapps.shuttle.appinitializers.AppInitializers
 import com.simplecityapps.shuttle.dagger.*
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.MainActivity
 import com.simplecityapps.shuttle.ui.ThemeManager
-import com.simplecityapps.shuttle.ui.widgets.WidgetProvider41
-import com.simplecityapps.shuttle.ui.widgets.WidgetProvider42
-import dagger.android.AndroidInjector
-import dagger.android.DispatchingAndroidInjector
-import dagger.android.HasAndroidInjector
+import com.simplecityapps.shuttle.ui.widgets.WidgetManager
+import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.*
-import okhttp3.OkHttpClient
 import timber.log.Timber
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Named
 
-
-class ShuttleApplication : Application(),
-    HasAndroidInjector,
-    ActivityIntentProvider,
-    OkHttpClientProvider,
-    GeneralPreferenceManagerProvider,
-    SongRepositoryProvider {
-
-    @Inject
-    lateinit var dispatchingAndroidInjector: DispatchingAndroidInjector<Any>
+@HiltAndroidApp
+class ShuttleApplication : Application(), ActivityIntentProvider {
 
     @Inject
     lateinit var initializers: AppInitializers
@@ -49,19 +33,13 @@ class ShuttleApplication : Application(),
     @Inject
     lateinit var appCoroutineScope: CoroutineScope
 
+    @Inject
+    lateinit var widgetManager: WidgetManager
+
     lateinit var appComponent: AppComponent
 
     override fun onCreate() {
         super.onCreate()
-
-        appComponent = DaggerAppComponent
-            .builder()
-            .application(this)
-            .build()
-
-        appComponent.inject(this)
-
-        AppInjector.init(this)
 
         themeManager.setDayNightMode()
 
@@ -90,7 +68,7 @@ class ShuttleApplication : Application(),
             Timber.e(e, "Failed to enable coroutine debugging")
         }
 
-        updateAppWidgets(WidgetManager.UpdateReason.Unknown)
+        widgetManager.updateAppWidgets(WidgetManager.UpdateReason.Unknown)
     }
 
     override fun onLowMemory() {
@@ -99,54 +77,9 @@ class ShuttleApplication : Application(),
     }
 
 
-    // HasAndroidInjector Implementation
-
-    override fun androidInjector(): AndroidInjector<Any> {
-        return dispatchingAndroidInjector
-    }
-
-
     // ActivityIntentProvider Implementation
 
     override fun provideMainActivityIntent(): Intent {
         return Intent(this, MainActivity::class.java)
-    }
-
-    override fun provideAppWidgetIntents(): List<Intent> {
-        return listOf(
-            Intent(this, WidgetProvider41::class.java),
-            Intent(this, WidgetProvider42::class.java)
-        )
-    }
-
-    override fun updateAppWidgets(updateReason: WidgetManager.UpdateReason) {
-        provideAppWidgetIntents().forEach { intent ->
-            sendBroadcast(intent.apply {
-                action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-                val ids = AppWidgetManager.getInstance(this@ShuttleApplication).getAppWidgetIds(component)
-                putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
-                putExtra(WidgetManager.ARG_UPDATE_REASON, updateReason.ordinal)
-            })
-        }
-    }
-
-    // OkHttpClientProvider Implementation
-
-    override fun provideOkHttpClient(): OkHttpClient {
-        return appComponent.okHttpClient()
-    }
-
-
-    // GeneralPreferenceManagerProvider Implementation
-
-    override fun provideGeneralPreferenceManager(): GeneralPreferenceManager {
-        return appComponent.generalPreferenceManager()
-    }
-
-
-    // SongRepositoryProvider Implementation
-
-    override fun provideSongRepository(): SongRepository {
-        return appComponent.songRepository()
     }
 }

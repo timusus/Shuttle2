@@ -16,26 +16,27 @@ import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoClearedNullable
 import com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
 import com.simplecityapps.shuttle.ui.screens.changelog.ChangelogDialogFragment
 import com.simplecityapps.shuttle.ui.screens.playback.PlaybackFragment
 import com.simplecityapps.shuttle.ui.screens.playback.mini.MiniPlaybackFragment
 import com.simplecityapps.shuttle.ui.screens.queue.QueueFragment
+import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 import java.lang.ref.WeakReference
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class MainFragment : Fragment(),
-    Injectable,
     MainContract.View {
 
     private var multiSheetView: MultiSheetView? by autoClearedNullable()
 
     private var onBackPressCallback: OnBackPressedCallback? = null
 
-    @Inject lateinit var presenter: MainPresenter
+    @Inject
+    lateinit var presenter: MainPresenter
 
 
     // Lifecycle
@@ -127,11 +128,11 @@ class MainFragment : Fragment(),
 
         if (multiSheetView?.currentSheet != MultiSheetView.Sheet.NONE) {
             // Todo: Remove activity dependency.
-                activity?.let {activity->
-                    onBackPressCallback = activity.onBackPressedDispatcher.addCallback {
-                        multiSheetView?.consumeBackPress()
-                    }
+            activity?.let { activity ->
+                onBackPressCallback = activity.onBackPressedDispatcher.addCallback {
+                    multiSheetView?.consumeBackPress()
                 }
+            }
         }
     }
 

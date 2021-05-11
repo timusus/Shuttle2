@@ -25,7 +25,6 @@ import com.simplecityapps.mediaprovider.repository.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.ShowExcludeDialog
@@ -44,14 +43,15 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.squareup.phrase.Phrase
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.firstOrNull
 import java.util.*
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class HomeFragment :
     Fragment(),
-    Injectable,
     HomeContract.View,
     CreatePlaylistDialogFragment.Listener {
 

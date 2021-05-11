@@ -25,14 +25,11 @@ import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
-import com.simplecityapps.playback.ActivityIntentProvider
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
-import com.simplecityapps.playback.widgets.WidgetManager
 import com.simplecityapps.provider.emby.EmbyAuthenticationManager
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.debug.DebugLoggingTree
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.ThemeManager
@@ -40,6 +37,8 @@ import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.screens.changelog.ChangelogDialogFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParentFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.opensource.LicensesDialogFragment
+import com.simplecityapps.shuttle.ui.widgets.WidgetManager
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filterNotNull
@@ -49,9 +48,9 @@ import javax.inject.Inject
 import javax.inject.Named
 
 @Suppress("NAME_SHADOWING")
+@AndroidEntryPoint
 class SettingsFragment : PreferenceFragmentCompat(),
     SharedPreferences.OnSharedPreferenceChangeListener,
-    Injectable,
     MediaImporter.Listener {
 
     @Inject
@@ -80,6 +79,9 @@ class SettingsFragment : PreferenceFragmentCompat(),
 
     @Inject
     lateinit var themeManager: ThemeManager
+
+    @Inject
+    lateinit var widgetManager: WidgetManager
 
     @Named("AppCoroutineScope")
     @Inject
@@ -218,12 +220,12 @@ class SettingsFragment : PreferenceFragmentCompat(),
         }
 
         preferenceScreen.findPreference<Preference>("widget_dark_mode")?.setOnPreferenceClickListener {
-            (requireContext().applicationContext as ActivityIntentProvider).updateAppWidgets(WidgetManager.UpdateReason.Unknown)
+            widgetManager.updateAppWidgets(WidgetManager.UpdateReason.Unknown)
             true
         }
 
         preferenceScreen.findPreference<SeekBarPreference>("widget_background_opacity")?.setOnPreferenceChangeListener { _, _ ->
-            (requireContext().applicationContext as ActivityIntentProvider).updateAppWidgets(WidgetManager.UpdateReason.Unknown)
+            widgetManager.updateAppWidgets(WidgetManager.UpdateReason.Unknown)
             true
         }
 

@@ -17,15 +17,16 @@ import com.simplecityapps.networking.userDescription
 import com.simplecityapps.provider.emby.EmbyAuthenticationManager
 import com.simplecityapps.provider.emby.http.LoginCredentials
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.dagger.Injectable
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
+import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
 
-class EmbyConfigurationFragment : DialogFragment(), Injectable {
+@AndroidEntryPoint
+class EmbyConfigurationFragment : DialogFragment() {
 
     @Inject
     lateinit var embyAuthenticationManager: EmbyAuthenticationManager

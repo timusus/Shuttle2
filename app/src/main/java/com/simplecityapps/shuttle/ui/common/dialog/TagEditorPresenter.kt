@@ -13,6 +13,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.squareup.phrase.Phrase
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -116,7 +117,7 @@ interface TagEditorContract {
 }
 
 class TagEditorPresenter @Inject constructor(
-    private val context: Context,
+    @ApplicationContext private val context: Context,
     private val fileScanner: FileScanner,
     private val songRepository: SongRepository
 ) : BasePresenter<TagEditorContract.View>(), TagEditorContract.Presenter {
