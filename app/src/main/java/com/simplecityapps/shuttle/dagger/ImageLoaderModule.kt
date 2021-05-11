@@ -3,6 +3,9 @@ package com.simplecityapps.shuttle.dagger
 import android.content.Context
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
+import com.simplecityapps.mediaprovider.AggregateRemoteArtworkProvider
+import com.simplecityapps.provider.emby.EmbyRemoteArtworkProvider
+import com.simplecityapps.provider.jellyfin.JellyfinRemoteArtworkProvider
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -20,5 +23,19 @@ class ImageLoaderModule {
         @ApplicationContext context: Context
     ): ArtworkImageLoader {
         return GlideImageLoader(context)
+    }
+
+    @Singleton
+    @Provides
+    fun provideAggregateRemoteArtworkProvider(
+        embyRemoteArtworkProvider: EmbyRemoteArtworkProvider,
+        jellyfinRemoteArtworkProvider: JellyfinRemoteArtworkProvider
+    ): AggregateRemoteArtworkProvider {
+        return AggregateRemoteArtworkProvider(
+            mutableSetOf(
+                embyRemoteArtworkProvider,
+                jellyfinRemoteArtworkProvider
+            )
+        )
     }
 }

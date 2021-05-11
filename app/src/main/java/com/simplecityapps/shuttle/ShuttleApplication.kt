@@ -2,7 +2,6 @@ package com.simplecityapps.shuttle
 
 import android.app.Application
 import android.content.Intent
-import coil.util.CoilUtils
 import com.simplecityapps.playback.ActivityIntentProvider
 import com.simplecityapps.shuttle.appinitializers.AppInitializers
 import com.simplecityapps.shuttle.dagger.*
@@ -13,6 +12,7 @@ import com.simplecityapps.shuttle.ui.widgets.WidgetManager
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.*
 import timber.log.Timber
+import java.io.File
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Named
@@ -49,7 +49,7 @@ class ShuttleApplication : Application(), ActivityIntentProvider {
                 appCoroutineScope.launch {
                     withContext(Dispatchers.IO) {
                         try {
-                            CoilUtils.createDefaultCache(this@ShuttleApplication).delete()
+                            File(cacheDir, "image_cache").delete()
                         } catch (e: IOException) {
                             Timber.e(e, "Failed to delete disk cache")
                         }

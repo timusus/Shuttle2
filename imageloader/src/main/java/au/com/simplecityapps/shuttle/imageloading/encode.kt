@@ -1,7 +1,7 @@
-package au.com.simplecityapps.shuttle.imageloading.coil
+package au.com.simplecityapps.shuttle.imageloading
 
 import java.net.URLEncoder
 
-fun String.encode(): String {
+fun String.urlEncode(): String {
     return URLEncoder.encode(this, Charsets.UTF_8.name())
 }

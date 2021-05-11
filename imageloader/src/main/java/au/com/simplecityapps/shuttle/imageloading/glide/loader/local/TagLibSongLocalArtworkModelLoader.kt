@@ -44,7 +44,7 @@ class TagLibSongLocalArtworkModelLoader(
 
     class TagLibSongLocalArtworkProvider(
         private val context: Context,
-        private val song: Song
+        song: Song
     ) : SongArtworkProvider(song),
         LocalArtworkProvider {
 

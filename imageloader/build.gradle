@@ -42,6 +42,10 @@ dependencies {
     // Shuttle MediaProvider Core
     implementation project(':mediaprovider:core')
 
+    // Remote media providers
+    implementation project(':mediaprovider:emby')
+    implementation project(':mediaprovider:jellyfin')
+
     // TagLib
     implementation(project(":ktaglib:lib"))
 
@@ -54,9 +58,6 @@ dependencies {
 
     // Coroutines
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3'
-
-    // Coil
-    implementation("io.coil-kt:coil-base:1.2.0")
 
     // Glide
     implementation 'com.github.bumptech.glide:glide:4.12.0'

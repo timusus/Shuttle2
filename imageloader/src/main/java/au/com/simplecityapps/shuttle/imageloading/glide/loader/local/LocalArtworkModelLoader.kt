@@ -13,13 +13,12 @@ import com.bumptech.glide.signature.ObjectKey
 import java.io.InputStream
 
 interface LocalArtworkProvider : ArtworkProvider {
-
     fun getInputStream(): InputStream?
 }
 
 class LocalArtworkModelLoader : ModelLoader<LocalArtworkProvider, InputStream> {
 
-    override fun buildLoadData(model: LocalArtworkProvider, width: Int, height: Int, options: Options): ModelLoader.LoadData<InputStream>? {
+    override fun buildLoadData(model: LocalArtworkProvider, width: Int, height: Int, options: Options): ModelLoader.LoadData<InputStream> {
         return ModelLoader.LoadData(ObjectKey(model.getCacheKey()), LocalArtworkDataFetcher(model))
     }
 

@@ -7,9 +7,12 @@ import android.util.Log
 import androidx.annotation.Keep
 import au.com.simplecityapps.BuildConfig
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.*
-import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.artwork.AlbumArtistArtworkModelLoader
-import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.artwork.AlbumArtworkModelLoader
-import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.artwork.SongArtworkModelLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.provider.RemoteArtworkAlbumArtistModelLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.provider.RemoteArtworkAlbumModelLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.provider.RemoteArtworkSongModelLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.s2.S2AlbumArtistArtworkModelLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.s2.S2AlbumArtworkModelLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.s2.S2SongArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.palette.ColorSet
 import au.com.simplecityapps.shuttle.imageloading.palette.ColorSetTranscoder
 import com.bumptech.glide.Glide
@@ -21,6 +24,7 @@ import com.bumptech.glide.integration.okhttp3.OkHttpLibraryGlideModule
 import com.bumptech.glide.integration.okhttp3.OkHttpUrlLoader
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.module.AppGlideModule
+import com.simplecityapps.mediaprovider.AggregateRemoteArtworkProvider
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
@@ -30,10 +34,12 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineScope
 import okhttp3.Credentials
 import okhttp3.OkHttpClient
 import java.io.IOException
 import java.io.InputStream
+import javax.inject.Named
 
 object NoConnectivityException : IOException("No connectivity")
 
@@ -48,6 +54,10 @@ class ImageLoaderGlideModule : AppGlideModule() {
         fun provideHttpClient(): OkHttpClient
         fun providePreferenceManager(): GeneralPreferenceManager
         fun provideSongRepository(): SongRepository
+        fun provideAggregateRemoteArtworkProvider(): AggregateRemoteArtworkProvider
+
+        @Named("AppCoroutineScope")
+        fun provideCoroutineScope(): CoroutineScope
     }
 
     override fun registerComponents(context: Context, glide: Glide, registry: Registry) {
@@ -77,15 +87,90 @@ class ImageLoaderGlideModule : AppGlideModule() {
         registry.register(Bitmap::class.java, ColorSet::class.java, ColorSetTranscoder(context))
 
         // Local
-        registry.append(Song::class.java, InputStream::class.java, DiskSongLocalArtworkModelLoader.Factory())
-        registry.append(Song::class.java, InputStream::class.java, TagLibSongLocalArtworkModelLoader.Factory(context))
-        registry.append(Album::class.java, InputStream::class.java, DiskAlbumLocalArtworkModelLoader.Factory(entryPoint.provideSongRepository()))
-        registry.append(Album::class.java, InputStream::class.java, TagLibAlbumLocalArtworkModelLoader.Factory(context, entryPoint.provideSongRepository()))
+        registry.append(
+            Song::class.java,
+            InputStream::class.java,
+            DirectorySongLocalArtworkModelLoader.Factory(
+                context = context
+            )
+        )
+        registry.append(
+            Song::class.java,
+            InputStream::class.java,
+            TagLibSongLocalArtworkModelLoader.Factory(
+                context = context
+            )
+        )
+        registry.append(
+            Album::class.java,
+            InputStream::class.java,
+            DirectoryAlbumLocalArtworkModelLoader.Factory(
+                context = context,
+                songRepository = entryPoint.provideSongRepository()
+            )
+        )
+        registry.append(
+            Album::class.java,
+            InputStream::class.java,
+            TagLibAlbumLocalArtworkModelLoader.Factory(
+                context = context,
+                songRepository = entryPoint.provideSongRepository()
+            )
+        )
 
         // Remote
-        registry.append(Song::class.java, InputStream::class.java, SongArtworkModelLoader.Factory(entryPoint.providePreferenceManager()))
-        registry.append(Album::class.java, InputStream::class.java, AlbumArtworkModelLoader.Factory(entryPoint.providePreferenceManager()))
-        registry.append(AlbumArtist::class.java, InputStream::class.java, AlbumArtistArtworkModelLoader.Factory(entryPoint.providePreferenceManager()))
+        registry.append(
+            Song::class.java,
+            InputStream::class.java,
+            RemoteArtworkSongModelLoader.Factory(
+                preferenceManager = entryPoint.providePreferenceManager(),
+                remoteArtworkProvider = entryPoint.provideAggregateRemoteArtworkProvider(),
+                coroutineScope = entryPoint.provideCoroutineScope()
+            )
+        )
+        registry.append(
+            Album::class.java,
+            InputStream::class.java,
+            RemoteArtworkAlbumModelLoader.Factory(
+                preferenceManager = entryPoint.providePreferenceManager(),
+                songRepository = entryPoint.provideSongRepository(),
+                remoteArtworkProvider = entryPoint.provideAggregateRemoteArtworkProvider(),
+                coroutineScope = entryPoint.provideCoroutineScope()
+            )
+        )
+        registry.append(
+            AlbumArtist::class.java,
+            InputStream::class.java,
+            RemoteArtworkAlbumArtistModelLoader.Factory(
+                preferenceManager = entryPoint.providePreferenceManager(),
+                songRepository = entryPoint.provideSongRepository(),
+                remoteArtworkProvider = entryPoint.provideAggregateRemoteArtworkProvider(),
+                coroutineScope = entryPoint.provideCoroutineScope()
+            )
+        )
+
+        // S2
+        registry.append(
+            Song::class.java,
+            InputStream::class.java,
+            S2SongArtworkModelLoader.Factory(
+                preferenceManager = entryPoint.providePreferenceManager()
+            )
+        )
+        registry.append(
+            Album::class.java,
+            InputStream::class.java,
+            S2AlbumArtworkModelLoader.Factory(
+                preferenceManager = entryPoint.providePreferenceManager()
+            )
+        )
+        registry.append(
+            AlbumArtist::class.java,
+            InputStream::class.java,
+            S2AlbumArtistArtworkModelLoader.Factory(
+                preferenceManager = entryPoint.providePreferenceManager()
+            )
+        )
     }
 
     override fun isManifestParsingEnabled(): Boolean {
