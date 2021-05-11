@@ -41,6 +41,9 @@
 
         <item name="materialAlertDialogTheme">@style/ThemeOverlay.Shuttle.MaterialAlertDialog</item>
         <item name="alertDialogTheme">@style/ThemeOverlay.Shuttle.MaterialAlertDialog</item>
+
+        <item name="android:textColorPrimary">@color/text_primary_light</item>
+        <item name="android:textColorSecondary">@color/text_secondary_light</item>
     </style>
 
     <style name="AppTheme.Dark" parent="Theme.MaterialComponents.NoActionBar">
@@ -84,6 +87,9 @@
 
         <item name="materialAlertDialogTheme">@style/ThemeOverlay.Shuttle.MaterialAlertDialog.Dark</item>
         <item name="alertDialogTheme">@style/ThemeOverlay.Shuttle.MaterialAlertDialog.Dark</item>
+
+        <item name="android:textColorPrimary">@color/text_primary_dark</item>
+        <item name="android:textColorSecondary">@color/text_secondary_dark</item>
     </style>
 
     <style name="AppTheme.DayNight" parent="AppTheme.Light" />

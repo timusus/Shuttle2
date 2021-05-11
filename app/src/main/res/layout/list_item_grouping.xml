@@ -4,10 +4,13 @@
     android:id="@+id/textView"
     style="@style/TextSubtitle"
     android:layout_width="match_parent"
-    android:layout_height="48dp"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="16dp"
+    android:layout_marginBottom="4dp"
     android:gravity="center_vertical"
-    android:maxLines="2"
+    android:maxLines="3"
     android:paddingStart="72dp"
     android:paddingEnd="16dp"
+    android:textColor="?android:attr/textColorSecondary"
     android:textSize="13sp"
-    tools:text="Subheader" />
+    tools:text="Concierto de Aranjuez for Guitar and Orchestra" />

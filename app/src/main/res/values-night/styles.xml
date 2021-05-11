@@ -5,6 +5,7 @@
     <style name="AppTheme.DayNight.ExtraDark" parent="AppTheme.DayNight">
         <item name="android:windowBackground">@color/bg_window_black</item>
         <item name="cardBackgroundColor">@color/bg_window_black</item>
+        <item name="android:textColorSecondary">@color/text_secondary_light</item>
     </style>
 
 </resources>
