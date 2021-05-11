@@ -67,11 +67,15 @@ class ImageLoaderGlideModule : AppGlideModule() {
 
         val okHttpClient = entryPoint.provideHttpClient()
             .newBuilder()
-            .authenticator { _, response ->
-                response.request
-                    .newBuilder()
-                    .header("Authorization", Credentials.basic("s2", "aEqRKgkCbqALjEm9Eg7e7Qi5"))
-                    .build()
+            .authenticator { route, response ->
+                if (route?.address?.url?.host == "api.shuttlemusicplayer.app") {
+                    response.request
+                        .newBuilder()
+                        .header("Authorization", Credentials.basic("s2", "aEqRKgkCbqALjEm9Eg7e7Qi5"))
+                        .build()
+                } else {
+                    response.request
+                }
             }
             .addNetworkInterceptor { chain ->
                 if (entryPoint.providePreferenceManager().artworkWifiOnly && connectivityManager?.isActiveNetworkMetered == true) {
