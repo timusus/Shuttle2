@@ -1,5 +1,22 @@
 [
   {
+    "versionName": "0.3.1",
+    "releaseDate": "11/05/2021",
+    "features": [
+      "Added 'play to end of song' option to sleep timer",
+      "Added Jellyfin/Emby image loading"
+    ],
+    "fixes": [
+      "Fixed an issue preventing EQ from working with 24-bit audio",
+      "Fixed an error preventing songs from loading on song list screen"
+    ],
+    "improvements": [
+    ],
+    "notes": [
+      "S2 is preparing for an official release! If you have any feedback on how it could be improved, please join the discussion on Discord: https://discord.gg/YkhSuHJ"
+    ]
+  },
+  {
     "versionName": "0.3.0",
     "releaseDate": "03/05/2021",
     "features": [
