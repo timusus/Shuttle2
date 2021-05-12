@@ -57,13 +57,13 @@ open class SongBinder(
         if (this === other) return true
         if (other !is SongBinder) return false
 
-        if (song != other.song) return false
+        if (song.id != other.song.id) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        return song.hashCode()
+        return song.id.hashCode()
     }
 
     override fun areContentsTheSame(other: Any): Boolean {
