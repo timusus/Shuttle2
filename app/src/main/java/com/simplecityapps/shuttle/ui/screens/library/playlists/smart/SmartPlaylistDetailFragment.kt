@@ -159,11 +159,11 @@ class SmartPlaylistDetailFragment :
     }
 
     override fun onAddedToQueue(song: Song) {
-        Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("itemName", song.name).format(), Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("item_name", song.name).format(), Toast.LENGTH_SHORT).show()
     }
 
     override fun onAddedToQueue(playlist: SmartPlaylist) {
-        Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("itemName", getString(playlist.nameResId)).format(), Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("item_name", getString(playlist.nameResId)).format(), Toast.LENGTH_SHORT).show()
     }
 
     override fun showLoadError(error: Error) {

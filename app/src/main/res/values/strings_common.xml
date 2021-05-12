@@ -19,7 +19,7 @@
     <string name="error_unknown">An unknown error occurred</string>
 
     <!-- Queue -->
-    <string name="queue_item_added"><xliff:g example="Lateralus" id="itemName">{itemName}</xliff:g> added to queue</string>
+    <string name="queue_item_added"><xliff:g example="Lateralus" id="item_name">{item_name}</xliff:g> added to queue</string>
     <plurals name="queue_songs_added">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> song added to queue</item>
         <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> songs added to queue</item>
