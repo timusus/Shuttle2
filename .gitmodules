@@ -1,6 +1,7 @@
 [submodule "ktaglib"]
 	path = ktaglib
 	url = https://github.com/timusus/KTagLib.git
+	branch = release
 [submodule "exoplayer"]
 	path = exoplayer
 	url = https://github.com/google/ExoPlayer.git
