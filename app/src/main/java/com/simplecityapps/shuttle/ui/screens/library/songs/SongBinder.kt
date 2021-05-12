@@ -113,7 +113,7 @@ open class SongBinder(
             title.text = viewBinder.song.name
             subtitle.text = Phrase.from(itemView.context, R.string.artist_album)
                 .put("artist", viewBinder.song.friendlyArtistName)
-                .put("album", viewBinder.song.album)
+                .put("album", viewBinder.song.album ?: itemView.context.getString(R.string.unknown))
                 .format()
 
             val options = mutableListOf(
