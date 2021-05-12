@@ -129,7 +129,7 @@ android {
         implementation("me.relex:circleindicator:2.1.4")
 
         // AndroidX Media
-        implementation("androidx.media:media:1.3.0")
+        implementation("androidx.media:media:1.3.1")
 
         // AndroidX Preference
         implementation("androidx.preference:preference-ktx:1.1.1")

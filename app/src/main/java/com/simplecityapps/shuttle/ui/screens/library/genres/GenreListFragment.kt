@@ -140,7 +140,7 @@ class GenreListFragment :
     }
 
     override fun onAddedToQueue(genre: Genre) {
-        Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("item_name", genre.name).format(), Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("itemName", genre.name).format(), Toast.LENGTH_SHORT).show()
     }
 
     override fun setLoadingState(state: GenreListContract.LoadingState) {

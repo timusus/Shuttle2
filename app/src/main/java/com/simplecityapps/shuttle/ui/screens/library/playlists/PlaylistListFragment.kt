@@ -151,7 +151,7 @@ class PlaylistListFragment :
     }
 
     override fun onAddedToQueue(playlist: Playlist) {
-        Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("item_name", playlist.name).format(), Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("itemName", playlist.name).format(), Toast.LENGTH_SHORT).show()
     }
 
     override fun setLoadingState(state: PlaylistListContract.LoadingState) {

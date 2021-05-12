@@ -244,7 +244,7 @@ class AlbumDetailFragment :
     }
 
     override fun onAddedToQueue(name: String) {
-        Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("item_name", name).format(), Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("itemName", name).format(), Toast.LENGTH_SHORT).show()
     }
 
     override fun setAlbum(album: Album) {
