@@ -24,6 +24,7 @@ import com.bumptech.glide.integration.okhttp3.OkHttpLibraryGlideModule
 import com.bumptech.glide.integration.okhttp3.OkHttpUrlLoader
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.module.AppGlideModule
+import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.mediaprovider.AggregateRemoteArtworkProvider
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.AlbumArtist
@@ -55,6 +56,7 @@ class ImageLoaderGlideModule : AppGlideModule() {
         fun providePreferenceManager(): GeneralPreferenceManager
         fun provideSongRepository(): SongRepository
         fun provideAggregateRemoteArtworkProvider(): AggregateRemoteArtworkProvider
+        fun provideKTagLib(): KTagLib
 
         @Named("AppCoroutineScope")
         fun provideCoroutineScope(): CoroutineScope
@@ -102,7 +104,7 @@ class ImageLoaderGlideModule : AppGlideModule() {
             Song::class.java,
             InputStream::class.java,
             TagLibSongLocalArtworkModelLoader.Factory(
-                context = context
+                context = context, kTagLib = entryPoint.provideKTagLib()
             )
         )
         registry.append(
@@ -118,6 +120,7 @@ class ImageLoaderGlideModule : AppGlideModule() {
             InputStream::class.java,
             TagLibAlbumLocalArtworkModelLoader.Factory(
                 context = context,
+                kTagLib = entryPoint.provideKTagLib(),
                 songRepository = entryPoint.provideSongRepository()
             )
         )

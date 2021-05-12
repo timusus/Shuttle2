@@ -1,6 +1,7 @@
 package com.simplecityapps.localmediaprovider.local.provider.taglib
 
 import android.content.Context
+import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.localmediaprovider.local.provider.toSong
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.AudioFile
@@ -13,6 +14,7 @@ import kotlinx.coroutines.withContext
 
 class TaglibMediaProvider(
     private val context: Context,
+    private val kTagLib: KTagLib,
     private val fileScanner: FileScanner,
 ) : MediaProvider {
 
@@ -38,7 +40,7 @@ class TaglibMediaProvider(
         return documentNodes
             .asFlow()
             .concurrentMap((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)) {
-                fileScanner.getAudioFile(context, it.uri)
+                fileScanner.getAudioFile(context, kTagLib, it.uri)
             }.mapNotNull { it }
     }
 

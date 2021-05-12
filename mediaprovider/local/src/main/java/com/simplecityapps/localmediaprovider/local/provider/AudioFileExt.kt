@@ -51,8 +51,8 @@ enum class TagLibProperty(val key: String) {
     Grouping("GROUPING")
 }
 
-fun getAudioFile(fileDescriptor: Int, filePath: String, fileName: String, lastModified: Long, size: Long, mimeType: String): AudioFile {
-    val metadata = KTagLib.getMetadata(fileDescriptor)
+fun KTagLib.getAudioFile(fileDescriptor: Int, filePath: String, fileName: String, lastModified: Long, size: Long, mimeType: String): AudioFile {
+    val metadata = getMetadata(fileDescriptor)
     return AudioFile(
         filePath,
         size,

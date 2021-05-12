@@ -20,12 +20,13 @@ import java.io.InputStream
 
 class TagLibAlbumLocalArtworkModelLoader(
     private val context: Context,
+    private val kTagLib: KTagLib,
     private val localArtworkModelLoader: LocalArtworkModelLoader,
     private val songRepository: SongRepository
 ) : ModelLoader<Album, InputStream> {
 
     override fun buildLoadData(model: Album, width: Int, height: Int, options: Options): ModelLoader.LoadData<InputStream>? {
-        return localArtworkModelLoader.buildLoadData(TagLibAlbumLocalArtworkProvider(context, model, songRepository), width, height, options)
+        return localArtworkModelLoader.buildLoadData(TagLibAlbumLocalArtworkProvider(context, kTagLib, model, songRepository), width, height, options)
     }
 
     override fun handles(model: Album): Boolean {
@@ -35,11 +36,12 @@ class TagLibAlbumLocalArtworkModelLoader(
 
     class Factory(
         private val context: Context,
+        private val kTagLib: KTagLib,
         private val songRepository: SongRepository
     ) : ModelLoaderFactory<Album, InputStream> {
 
         override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Album, InputStream> {
-            return TagLibAlbumLocalArtworkModelLoader(context, multiFactory.build(LocalArtworkProvider::class.java, InputStream::class.java) as LocalArtworkModelLoader, songRepository)
+            return TagLibAlbumLocalArtworkModelLoader(context, kTagLib, multiFactory.build(LocalArtworkProvider::class.java, InputStream::class.java) as LocalArtworkModelLoader, songRepository)
         }
 
         override fun teardown() {
@@ -50,6 +52,7 @@ class TagLibAlbumLocalArtworkModelLoader(
 
     class TagLibAlbumLocalArtworkProvider(
         private val context: Context,
+        private val kTagLib: KTagLib,
         private val album: Album,
         private val songRepository: SongRepository
     ) : AlbumArtworkProvider(album),
@@ -68,7 +71,7 @@ class TagLibAlbumLocalArtworkModelLoader(
                         }
                         try {
                             context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
-                                KTagLib.getArtwork(pfd.detachFd())?.inputStream()
+                                kTagLib.getArtwork(pfd.detachFd())?.inputStream()
                             }
                         } catch (e: SecurityException) {
                             Timber.v("Failed to retrieve artwork (permission denial)")

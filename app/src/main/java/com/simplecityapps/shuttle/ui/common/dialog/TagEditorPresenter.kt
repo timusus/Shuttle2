@@ -118,6 +118,7 @@ interface TagEditorContract {
 
 class TagEditorPresenter @Inject constructor(
     @ApplicationContext private val context: Context,
+    private val kTagLib: KTagLib,
     private val fileScanner: FileScanner,
     private val songRepository: SongRepository
 ) : BasePresenter<TagEditorContract.View>(), TagEditorContract.Presenter {
@@ -136,7 +137,7 @@ class TagEditorPresenter @Inject constructor(
                 if (song.path.startsWith("content://")) {
                     if (DocumentsContract.isDocumentUri(context, uri)) {
                         view?.setLoading(TagEditorContract.LoadingState.ReadingTags(index, songs.size))
-                        return@mapIndexed song to fileScanner.getAudioFile(context, uri)
+                        return@mapIndexed song to fileScanner.getAudioFile(context, kTagLib, uri)
                     }
                 }
                 view?.setLoading(TagEditorContract.LoadingState.ReadingTags(index, songs.size))
@@ -246,7 +247,7 @@ class TagEditorPresenter @Inject constructor(
                                         withContext(Dispatchers.Main) {
                                             view?.setLoading(TagEditorContract.LoadingState.WritingTags(index, editables.size))
                                         }
-                                        return@mapIndexed song to KTagLib.writeMetadata(pfd.detachFd(), metadata)
+                                        return@mapIndexed song to kTagLib.writeMetadata(pfd.detachFd(), metadata)
                                     }
                                 } catch (e: IllegalStateException) {
                                     Timber.e(e, "Failed to update tags")
