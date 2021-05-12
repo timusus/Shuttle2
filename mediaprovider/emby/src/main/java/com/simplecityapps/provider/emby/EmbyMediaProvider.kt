@@ -32,7 +32,7 @@ class EmbyMediaProvider(
                                 albumArtist = item.albumArtist,
                                 artists = item.artists,
                                 album = item.album,
-                                track = item.indexNumber ?: 0,
+                                track = item.indexNumber,
                                 disc = 0,
                                 duration = ((item.runTime ?: 0) / (10 * 1000)).toInt(),
                                 year = item.productionYear,
