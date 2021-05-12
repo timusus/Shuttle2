@@ -1,5 +1,22 @@
 [
   {
+    "versionName": "0.3.2",
+    "releaseDate": "12/05/2021",
+    "features": [    ],
+    "fixes": [
+      "Fixed an issue capping Jellyfin audio bitrate to 64kb",
+      "Fixed a crash when attempting to add items to queue",
+      "Fixed a crash when rendering song list, where a song has no album",
+      "Fixed an issue where songs with unknown year from Jellyfin media provider would display '0' instead of 'unknown'"
+    ],
+    "improvements": [
+      "Improved layout of album grouping heading"
+    ],
+    "notes": [
+      "S2 is preparing for an official release! If you have any feedback on how it could be improved, please join the discussion on Discord: https://discord.gg/YkhSuHJ"
+    ]
+  },
+  {
     "versionName": "0.3.1",
     "releaseDate": "11/05/2021",
     "features": [
@@ -8,9 +25,11 @@
     ],
     "fixes": [
       "Fixed an issue preventing EQ from working with 24-bit audio",
-      "Fixed an error preventing songs from loading on song list screen"
+      "Fixed an error preventing songs from loading on song list screen",
+      "Fixed issue preventing local artwork from loading"
     ],
     "improvements": [
+      "Added support for local 'artwork.[jpg/jpeg/jpg] (must be in same folder as songs)"
     ],
     "notes": [
       "S2 is preparing for an official release! If you have any feedback on how it could be improved, please join the discussion on Discord: https://discord.gg/YkhSuHJ"
