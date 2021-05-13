@@ -242,11 +242,11 @@ class HomeFragment :
     }
 
     override fun onAddedToQueue(albumArtist: AlbumArtist) {
-        Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("itemName", albumArtist.friendlyNameOrArtistName).format(), Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("item_name", albumArtist.friendlyNameOrArtistName).format(), Toast.LENGTH_SHORT).show()
     }
 
     override fun onAddedToQueue(album: Album) {
-        Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("itemName", album.name).format(), Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("item_name", album.name).format(), Toast.LENGTH_SHORT).show()
     }
 
 
