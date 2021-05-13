@@ -45,6 +45,7 @@ enum class TagLibProperty(val key: String) {
     Disc("DISCNUMBER"),
     Genre("GENRE"),
     OriginalDate("ORIGINALDATE"),
+    Year("YEAR"),
     ReplayGainTrack("REPLAYGAIN_TRACK_GAIN"),
     ReplayGainAlbum("REPLAYGAIN_ALBUM_GAIN"),
     Lyrics("LYRICS"),
@@ -71,7 +72,9 @@ fun KTagLib.getAudioFile(fileDescriptor: Int, filePath: String, fileName: String
         disc = metadata?.propertyMap?.get(TagLibProperty.Disc.key)?.firstOrNull()?.substringBefore('/')?.toIntOrNull(),
         discTotal = metadata?.propertyMap?.get(TagLibProperty.Disc.key)?.firstOrNull()?.substringAfter('/', "")?.toIntOrNull(),
         duration = metadata?.audioProperties?.duration,
-        year = (metadata?.propertyMap?.get(TagLibProperty.Date.key)?.firstOrNull() ?: metadata?.propertyMap?.get(TagLibProperty.OriginalDate.key)?.firstOrNull())?.parseDate(),
+        year = (metadata?.propertyMap?.get(TagLibProperty.Date.key)?.firstOrNull()
+            ?: metadata?.propertyMap?.get(TagLibProperty.OriginalDate.key)?.firstOrNull())?.parseDate()
+            ?: metadata?.propertyMap?.get(TagLibProperty.Year.key)?.firstOrNull()?.parseDate(),
         genres = metadata?.propertyMap?.get(TagLibProperty.Genre.key).orEmpty().flatMap { genre ->
             genre.split(",", ";", "/")
                 .map { genre -> genre.trim() }
