@@ -1,8 +1,23 @@
 [
   {
+    "versionName": "0.3.4",
+    "releaseDate": "13/05/2021",
+    "features": [],
+    "fixes": [
+      "Fixed a theming issue (wrong secondary text colour in day/night - night mode"
+    ],
+    "improvements": [
+      "Added support for Jellyfin/Emby disc number",
+      "Added support for Vorbis 'YEAR' comment field"
+    ],
+    "notes": [
+      "S2 is preparing for an official release! If you have any feedback on how it could be improved, please join the discussion on Discord: https://discord.gg/YkhSuHJ"
+    ]
+  },
+  {
     "versionName": "0.3.3",
     "releaseDate": "13/05/2021",
-    "features": [    ],
+    "features": [],
     "fixes": [
       "Fixed crash when opening playlist",
       "Fixed crash when adding items to queue",
@@ -10,7 +25,6 @@
       "Fixed display issue for theme options"
     ],
     "improvements": [
-
     ],
     "notes": [
       "S2 is preparing for an official release! If you have any feedback on how it could be improved, please join the discussion on Discord: https://discord.gg/YkhSuHJ"
@@ -19,7 +33,7 @@
   {
     "versionName": "0.3.2",
     "releaseDate": "12/05/2021",
-    "features": [    ],
+    "features": [],
     "fixes": [
       "Fixed an issue capping Jellyfin audio bitrate to 64kb",
       "Fixed a crash when attempting to add items to queue",
