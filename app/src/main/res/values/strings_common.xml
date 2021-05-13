@@ -77,7 +77,7 @@
         <xliff:g example="2004" id="year">{year}</xliff:g> • <xliff:g example="12 songs" id="song_count">{song_count}</xliff:g> • <xliff:g example="05:06" id="duration">{duration}</xliff:g>
     </string>
     <string name="songs_duration">
-         <xliff:g example="1 song" id="songCount">{songCount}</xliff:g> •  <xliff:g example="2:04" id="duration">{duration}</xliff:g>
+         <xliff:g example="1 song" id="song_count">{song_count}</xliff:g> •  <xliff:g example="2:04" id="duration">{duration}</xliff:g>
     </string>
 
     <!-- Empty -->

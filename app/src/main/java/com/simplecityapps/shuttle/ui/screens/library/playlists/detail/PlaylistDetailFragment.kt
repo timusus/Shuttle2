@@ -174,7 +174,7 @@ class PlaylistDetailFragment :
             .put("count", playlist.songCount)
             .format()
         toolbar?.subtitle = Phrase.from(requireContext(), R.string.songs_duration)
-            .put("songCount", quantityString)
+            .put("song_count", quantityString)
             .put("duration", playlist.duration.toHms())
             .format()
     }
