@@ -229,9 +229,9 @@ class PlaylistDetailFragment :
         if (playlistSongs.isNotEmpty()) {
             if (heroImage.drawable == null) {
                 imageLoader.loadArtwork(
-                    heroImage,
-                    playlistSongs.random().song,
-                    listOf(
+                    imageView = heroImage,
+                    data = playlistSongs.random().song,
+                    options = listOf(
                         ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_playlist),
                         ArtworkImageLoader.Options.Priority.Max
                     ),

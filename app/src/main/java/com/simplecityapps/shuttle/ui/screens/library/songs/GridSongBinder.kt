@@ -6,7 +6,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.cardview.widget.CardView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Song
@@ -85,16 +84,12 @@ class GridSongBinder(
                 )
 
             viewBinder.imageLoader.loadArtwork(
-                imageView,
-                viewBinder.song,
-                listOf(
+                imageView = imageView,
+                data = viewBinder.song,
+                options = listOf(
                     ArtworkImageLoader.Options.Crossfade(200)
                 )
-            ) { colorSet ->
-                (itemView as CardView).setCardBackgroundColor(colorSet.primaryColor)
-                title.setTextColor(colorSet.primaryTextColor)
-                subtitle.setTextColor(colorSet.primaryTextColor)
-            }
+            )
         }
 
         override fun recycle() {

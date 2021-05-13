@@ -123,13 +123,13 @@ open class SongBinder(
             }
 
             viewBinder.imageLoader.loadArtwork(
-                imageView,
-                viewBinder.song,
-                options
-            ) { colorSet ->
-                badgeView.setCircleBackgroundColor(colorSet.primaryColor)
-                badgeView.setTextColor(colorSet.primaryTextColor)
-            }
+                imageView = imageView,
+                data = viewBinder.song,
+                options = options,
+                onColorSetGenerated = { colorSet ->
+                    badgeView.setCircleBackgroundColor(colorSet.primaryColor)
+                    badgeView.setTextColor(colorSet.primaryTextColor)
+                })
 
             checkImageView.isVisible = viewBinder.selected
         }

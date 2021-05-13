@@ -65,8 +65,8 @@ class HorizontalAlbumListBinder(
             recyclerView.adapter = adapter
             adapter.update(viewBinder.albums.map { album ->
                 GridAlbumBinder(
-                    album,
-                    viewBinder.imageLoader,
+                    album = album,
+                    imageLoader = viewBinder.imageLoader,
                     listener = viewBinder.listener,
                     showPlayCountBadge = viewBinder.showPlayCountBadge,
                     fixedWidthDp = 108

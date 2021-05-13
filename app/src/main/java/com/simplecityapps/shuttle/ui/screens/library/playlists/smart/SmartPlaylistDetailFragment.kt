@@ -137,9 +137,9 @@ class SmartPlaylistDetailFragment :
         if (songs.isNotEmpty()) {
             if (heroImageView.drawable == null) {
                 imageLoader.loadArtwork(
-                    heroImageView,
-                    songs.random(),
-                    listOf(
+                    imageView = heroImageView,
+                    data = songs.random(),
+                    options = listOf(
                         ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_playlist),
                         ArtworkImageLoader.Options.Priority.Max
                     )

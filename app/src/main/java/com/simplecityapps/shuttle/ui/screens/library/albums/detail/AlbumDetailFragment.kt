@@ -127,9 +127,9 @@ class AlbumDetailFragment :
         dummyImage.transitionName = "album_${album.name}"
 
         imageLoader.loadArtwork(
-            dummyImage,
-            album,
-            listOf(
+            imageView = dummyImage,
+            data = album,
+            options = listOf(
                 ArtworkImageLoader.Options.CircleCrop,
                 ArtworkImageLoader.Options.Priority.Max
             )
@@ -139,9 +139,9 @@ class AlbumDetailFragment :
 
         heroImage = view.findViewById(R.id.heroImage)
         imageLoader.loadArtwork(
-            heroImage,
-            album,
-            listOf(
+            imageView = heroImage,
+            data = album,
+            options = listOf(
                 ArtworkImageLoader.Options.Priority.Max,
                 ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_album)
             )

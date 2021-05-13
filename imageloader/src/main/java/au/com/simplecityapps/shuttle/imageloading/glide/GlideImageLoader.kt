@@ -44,7 +44,7 @@ class GlideImageLoader : ArtworkImageLoader {
         this.requestManager = GlideApp.with(context)
     }
 
-    override fun loadArtwork(imageView: ImageView, data: Any, options: List<ArtworkImageLoader.Options>, onCompletion: ((Result<Unit>) -> Unit)?, onColorSetGenerated: ((ColorSet) -> Unit)?) {
+    override fun loadArtwork(imageView: ImageView, data: Any, options: List<ArtworkImageLoader.Options>, onColorSetGenerated: ((ColorSet) -> Unit)?, onCompletion: ((Result<Unit>) -> Unit)?) {
         val glideRequest = getRequestBuilder(options)
 
         onCompletion?.let {
@@ -129,14 +129,10 @@ class GlideImageLoader : ArtworkImageLoader {
                 is ArtworkImageLoader.Options.RoundedCorners -> {
                     glideRequest.apply(RequestOptions.bitmapTransform(MultiTransformation(mutableListOf(CenterCrop(), RoundedCorners(option.radius)))))
                 }
-                is ArtworkImageLoader.Options.Priority -> {
-                    when (option) {
-                        ArtworkImageLoader.Options.Priority.Low -> glideRequest.priority(Priority.LOW)
-                        ArtworkImageLoader.Options.Priority.Default -> glideRequest.priority(Priority.NORMAL)
-                        ArtworkImageLoader.Options.Priority.High -> glideRequest.priority(Priority.HIGH)
-                        ArtworkImageLoader.Options.Priority.Max -> glideRequest.priority(Priority.IMMEDIATE)
-                    }
-                }
+                ArtworkImageLoader.Options.Priority.Low -> glideRequest.priority(Priority.LOW)
+                ArtworkImageLoader.Options.Priority.Default -> glideRequest.priority(Priority.NORMAL)
+                ArtworkImageLoader.Options.Priority.High -> glideRequest.priority(Priority.HIGH)
+                ArtworkImageLoader.Options.Priority.Max -> glideRequest.priority(Priority.IMMEDIATE)
                 is ArtworkImageLoader.Options.Crossfade -> {
                     throw NotImplementedError()
                 }
@@ -146,14 +142,15 @@ class GlideImageLoader : ArtworkImageLoader {
                 ArtworkImageLoader.Options.CacheDecodedResource -> {
                     glideRequest.diskCacheStrategy(DiskCacheStrategy.ALL)
                 }
-                ArtworkImageLoader.Options.LoadColorSet -> {
-
-                }
                 is ArtworkImageLoader.Options.Placeholder -> {
                     glideRequest.error(option.placeholderResId)
                 }
                 is ArtworkImageLoader.Options.Error -> {
                     glideRequest.error(option.errorResId)
+                }
+                ArtworkImageLoader.Options.SkipCache -> {
+                    glideRequest.diskCacheStrategy(DiskCacheStrategy.NONE)
+                    glideRequest.skipMemoryCache(true)
                 }
             }
         }
@@ -173,14 +170,10 @@ class GlideImageLoader : ArtworkImageLoader {
                 is ArtworkImageLoader.Options.RoundedCorners -> {
                     glideRequest.apply(RequestOptions.bitmapTransform(MultiTransformation(mutableListOf(CenterCrop(), RoundedCorners(option.radius)))))
                 }
-                is ArtworkImageLoader.Options.Priority -> {
-                    when (option) {
-                        ArtworkImageLoader.Options.Priority.Low -> glideRequest.priority(Priority.LOW)
-                        ArtworkImageLoader.Options.Priority.Default -> glideRequest.priority(Priority.NORMAL)
-                        ArtworkImageLoader.Options.Priority.High -> glideRequest.priority(Priority.HIGH)
-                        ArtworkImageLoader.Options.Priority.Max -> glideRequest.priority(Priority.IMMEDIATE)
-                    }
-                }
+                ArtworkImageLoader.Options.Priority.Low -> glideRequest.priority(Priority.LOW)
+                ArtworkImageLoader.Options.Priority.Default -> glideRequest.priority(Priority.NORMAL)
+                ArtworkImageLoader.Options.Priority.High -> glideRequest.priority(Priority.HIGH)
+                ArtworkImageLoader.Options.Priority.Max -> glideRequest.priority(Priority.IMMEDIATE)
                 is ArtworkImageLoader.Options.Crossfade -> {
                     glideRequest.transition(DrawableTransitionOptions.withCrossFade(option.duration))
                 }
@@ -193,8 +186,9 @@ class GlideImageLoader : ArtworkImageLoader {
                 is ArtworkImageLoader.Options.CacheDecodedResource -> {
                     glideRequest.diskCacheStrategy(DiskCacheStrategy.ALL)
                 }
-                ArtworkImageLoader.Options.LoadColorSet -> {
-
+                ArtworkImageLoader.Options.SkipCache -> {
+                    glideRequest.skipMemoryCache(true)
+                    glideRequest.diskCacheStrategy(DiskCacheStrategy.NONE)
                 }
             }
         }

@@ -6,7 +6,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.cardview.widget.CardView
 import androidx.core.view.isVisible
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.model.Album
@@ -21,7 +20,6 @@ class GridAlbumBinder(
     imageLoader: ArtworkImageLoader,
     listener: Listener,
     val showPlayCountBadge: Boolean = false,
-    val coloredBackground: Boolean = false,
     val fixedWidthDp: Int? = null
 ) : AlbumBinder(album, imageLoader, listener),
     SectionViewBinder {
@@ -72,23 +70,12 @@ class GridAlbumBinder(
                 ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_album),
                 ArtworkImageLoader.Options.CacheDecodedResource
             )
-            if (viewBinder.coloredBackground) {
-                options.add(ArtworkImageLoader.Options.LoadColorSet)
-            }
 
             viewBinder.imageLoader.loadArtwork(
-                imageView,
-                viewBinder.album,
-                options
-            ) { colorSet ->
-                if (viewBinder.coloredBackground) {
-                    (itemView as CardView).setCardBackgroundColor(colorSet.primaryColor)
-                    title.setTextColor(colorSet.primaryTextColor)
-                    subtitle.setTextColor(colorSet.primaryTextColor)
-                    badgeView.setCircleBackgroundColor(colorSet.primaryColor)
-                    badgeView.setTextColor(colorSet.primaryTextColor)
-                }
-            }
+                imageView = imageView,
+                data = viewBinder.album,
+                options = options
+            )
 
             if (viewBinder.showPlayCountBadge) {
                 badgeView.badgeCount = viewBinder.album.playCount

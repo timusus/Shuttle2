@@ -27,6 +27,12 @@ android {
         }
     }
 
+    productFlavors {
+        create("dev") {
+            resConfigs("en", "xxhdpi")
+        }
+    }
+
     signingConfigs {
         create("release") {
             storeFile = file("../keystore.ks")

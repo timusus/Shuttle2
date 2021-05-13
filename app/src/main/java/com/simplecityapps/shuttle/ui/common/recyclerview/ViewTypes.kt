@@ -31,4 +31,5 @@ object ViewTypes {
     const val SleepTimer = 27
     const val ScanProgress = 28
     const val Sku = 29
+    const val EditArtwork = 30
 }

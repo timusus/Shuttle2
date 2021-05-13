@@ -197,6 +197,19 @@ class ImageLoaderGlideModule : AppGlideModule() {
                 preferenceManager = entryPoint.providePreferenceManager()
             )
         )
+
+        // Delegating model loader
+        registry.append(
+            WrappedArtworkModel::class.java,
+            InputStream::class.java,
+            DelegatingModelLoader.Factory(
+                directoryAlbumArtistLocalArtworkModelLoaderFactory,
+                directoryAlbumLocalArtworkModelLoaderFactory,
+                directorySongLocalArtworkModelLoaderFactory,
+                tagLibAlbumLocalArtworkModelLoaderFactory,
+                tagLibSongLocalArtworkModelLoaderFactory
+            )
+        )
     }
 
     override fun isManifestParsingEnabled(): Boolean {

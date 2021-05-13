@@ -25,6 +25,7 @@ import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.ShowExcludeDialog
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
+import com.simplecityapps.shuttle.ui.common.dialog.artwork.ArtworkEditorDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.GlidePreloadModelProvider
 import com.simplecityapps.shuttle.ui.common.recyclerview.GridSpacingItemDecoration
@@ -205,6 +206,11 @@ class AlbumArtistListFragment :
                             contextualToolbarHelper.hide()
                             true
                         }
+                        R.id.editArtwork -> {
+                            presenter.editArtwork(contextualToolbarHelper.selectedItems.toList().first())
+                            contextualToolbarHelper.hide()
+                            true
+                        }
                         else -> false
                     }
                 }
@@ -287,6 +293,10 @@ class AlbumArtistListFragment :
 
     override fun showTagEditor(songs: List<Song>) {
         TagEditorAlertDialog.newInstance(songs).show(childFragmentManager)
+    }
+
+    override fun showArtworkEditor(albumArtist: AlbumArtist) {
+        ArtworkEditorDialog.newInstance(albumArtist).show(childFragmentManager)
     }
 
     override fun setViewMode(viewMode: ViewMode) {
@@ -399,6 +409,7 @@ class AlbumArtistListFragment :
             contextualToolbarHelper.contextualToolbar?.menu?.let { menu ->
                 TagEditorMenuSanitiser.sanitise(menu, contextualToolbarHelper.selectedItems.flatMap { albumArtist -> albumArtist.mediaProviders }.distinct())
             }
+            contextualToolbarHelper.contextualToolbar?.menu?.findItem(R.id.editArtwork)?.isVisible = count == 1
         }
 
         override fun onItemUpdated(item: AlbumArtist, isSelected: Boolean) {

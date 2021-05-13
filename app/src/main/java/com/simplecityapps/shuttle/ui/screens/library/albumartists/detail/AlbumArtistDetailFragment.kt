@@ -179,9 +179,9 @@ class AlbumArtistDetailFragment :
         dummyImage.transitionName = "album_artist_${albumArtist.name ?: albumArtist.friendlyArtistName}"
 
         imageLoader.loadArtwork(
-            dummyImage,
-            albumArtist,
-            listOf(
+            imageView = dummyImage,
+            data = albumArtist,
+            options = listOf(
                 ArtworkImageLoader.Options.CircleCrop,
                 ArtworkImageLoader.Options.Priority.Max
             )
@@ -191,8 +191,8 @@ class AlbumArtistDetailFragment :
 
         heroImage = view.findViewById(R.id.heroImage)
         imageLoader.loadArtwork(
-            heroImage, albumArtist,
-            listOf(
+            imageView = heroImage, data = albumArtist,
+            options = listOf(
                 ArtworkImageLoader.Options.Priority.Max,
                 ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_artist)
             )

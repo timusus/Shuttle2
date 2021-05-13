@@ -12,8 +12,8 @@ interface ArtworkImageLoader {
         imageView: ImageView,
         data: Any,
         options: List<Options> = emptyList(),
-        onCompletion: ((Result<Unit>) -> Unit)? = null,
-        onColorSetGenerated: ((ColorSet) -> Unit)? = null
+        onColorSetGenerated: ((ColorSet) -> Unit)? = null,
+        onCompletion: ((Result<Unit>) -> Unit)? = null
     )
 
     fun loadBitmap(
@@ -61,5 +61,7 @@ interface ArtworkImageLoader {
         object LoadColorSet : Options()
 
         object CacheDecodedResource : Options()
+
+        object SkipCache: Options()
     }
 }

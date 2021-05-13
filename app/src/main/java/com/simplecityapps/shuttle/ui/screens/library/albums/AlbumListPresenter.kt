@@ -41,6 +41,7 @@ class AlbumListContract {
         fun setLoadingProgress(progress: Float)
         fun showLoadError(error: Error)
         fun showTagEditor(songs: List<Song>)
+        fun showArtworkEditor(album: Album)
         fun setViewMode(viewMode: ViewMode)
     }
 
@@ -50,6 +51,7 @@ class AlbumListContract {
         fun playNext(album: Album)
         fun exclude(album: Album)
         fun editTags(albums: List<Album>)
+        fun editArtwork(album: Album)
         fun play(album: Album)
         fun setViewMode(viewMode: ViewMode)
         fun albumShuffle()
@@ -171,6 +173,10 @@ class AlbumListPresenter @Inject constructor(
                 .orEmpty()
             view?.showTagEditor(songs)
         }
+    }
+
+    override fun editArtwork(album: Album) {
+        view?.showArtworkEditor(album)
     }
 
     override fun play(album: Album) {

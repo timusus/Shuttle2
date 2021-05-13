@@ -35,6 +35,7 @@ interface AlbumArtistListContract {
         fun setLoadingProgress(progress: Float)
         fun showLoadError(error: Error)
         fun showTagEditor(songs: List<Song>)
+        fun showArtworkEditor(albumArtist: AlbumArtist)
         fun setViewMode(viewMode: ViewMode)
         fun updateToolbarMenuViewMode(viewMode: ViewMode)
     }
@@ -45,6 +46,7 @@ interface AlbumArtistListContract {
         fun playNext(albumArtist: AlbumArtist)
         fun exclude(albumArtist: AlbumArtist)
         fun editTags(albumArtists: List<AlbumArtist>)
+        fun editArtwork(albumArtist: AlbumArtist)
         fun play(albumArtist: AlbumArtist)
         fun setViewMode(viewMode: ViewMode)
         fun updateToolbarMenu()
@@ -156,6 +158,10 @@ class AlbumArtistListPresenter @Inject constructor(
             val songs = songRepository.getSongs(SongQuery.ArtistGroupKeys(albumArtists.map { albumArtist -> SongQuery.ArtistGroupKey(key = albumArtist.groupKey) })).firstOrNull().orEmpty()
             view?.showTagEditor(songs)
         }
+    }
+
+    override fun editArtwork(albumArtist: AlbumArtist) {
+        view?.showArtworkEditor(albumArtist)
     }
 
     override fun play(albumArtist: AlbumArtist) {

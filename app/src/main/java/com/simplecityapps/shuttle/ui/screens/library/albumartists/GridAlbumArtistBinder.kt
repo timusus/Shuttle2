@@ -5,7 +5,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.cardview.widget.CardView
 import androidx.core.view.isVisible
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.model.AlbumArtist
@@ -17,7 +16,6 @@ class GridAlbumArtistBinder(
     albumArtist: AlbumArtist,
     imageLoader: ArtworkImageLoader,
     listener: Listener,
-    val coloredBackground: Boolean = false,
     val fixedWidthDp: Int? = null
 ) : AlbumArtistBinder(albumArtist, imageLoader, listener) {
 
@@ -66,18 +64,11 @@ class GridAlbumArtistBinder(
                 ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_artist),
                 ArtworkImageLoader.Options.CacheDecodedResource
             )
-            if (viewBinder.coloredBackground) {
-                options.add(ArtworkImageLoader.Options.LoadColorSet)
-            }
             viewBinder.imageLoader.loadArtwork(
-                imageView,
-                viewBinder.albumArtist,
-                options
-            ) { colorSet ->
-                (itemView as CardView).setCardBackgroundColor(colorSet.primaryColor)
-                title.setTextColor(colorSet.primaryTextColor)
-                subtitle.setTextColor(colorSet.primaryTextColor)
-            }
+                imageView = imageView,
+                data = viewBinder.albumArtist,
+                options = options
+            )
 
             imageView.transitionName = "album_artist_${viewBinder.albumArtist.name ?: viewBinder.albumArtist.friendlyArtistName}"
 
