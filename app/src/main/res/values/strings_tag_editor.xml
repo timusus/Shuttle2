@@ -9,8 +9,8 @@
     <string name="edit_tags_action">Edit Tags</string>
     <string name="edit_tags_multiple_values">Multiple values</string>
 
-    <string name="edit_tags_reading_tags">Reading tags <xliff:g example="1" id="progress">(progress}</xliff:g> / <xliff:g example="1" id="count">{total}</xliff:g></string>
-    <string name="edit_tags_writing_tags">Reading tags <xliff:g example="1" id="progress">(progress}</xliff:g> / <xliff:g example="1" id="count">{total}</xliff:g></string>
+    <string name="edit_tags_reading_tags">Reading tags <xliff:g example="1" id="progress">{progress}</xliff:g> / <xliff:g example="1" id="count">{total}</xliff:g></string>
+    <string name="edit_tags_writing_tags">Reading tags <xliff:g example="1" id="progress">{progress}</xliff:g> / <xliff:g example="1" id="count">{total}</xliff:g></string>
     <string name="edit_tags_read_failed">The selected song tags could not be read</string>
 
     <plurals name="edit_tags_success">
