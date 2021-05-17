@@ -42,6 +42,7 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
+import com.squareup.phrase.ListPhrase
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
@@ -252,11 +253,15 @@ class AlbumDetailFragment :
         val songsQuantity = Phrase.fromPlural(resources, R.plurals.songsPlural, album.songCount)
             .put("count", album.songCount)
             .format()
-        toolbar.subtitle = Phrase.from(context, R.string.album_year_songs_duration)
-            .put("year", album.year?.toString() ?: getString(R.string.year_unknown))
-            .put("song_count", songsQuantity)
-            .put("duration", album.duration.toHms())
-            .format()
+        toolbar.subtitle = ListPhrase
+            .from(" • ")
+            .join(
+                listOfNotNull(
+                    album.year?.toString(),
+                    songsQuantity,
+                    album.duration.toHms()
+                )
+            )
     }
 
     override fun showDeleteError(error: Error) {

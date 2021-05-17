@@ -12,6 +12,7 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
+import com.squareup.phrase.ListPhrase
 
 class ExcludeBinder(
     val song: Song,
@@ -67,7 +68,7 @@ class ExcludeBinder(
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.song.name
-            subtitle.text = "${viewBinder.song.albumArtist} • ${viewBinder.song.album}"
+            subtitle.text = ListPhrase.from(" • ").join(listOf(viewBinder.song.albumArtist, viewBinder.song.album))
             viewBinder.imageLoader.loadArtwork(
                 imageView,
                 viewBinder.song,

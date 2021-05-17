@@ -19,6 +19,7 @@ import com.simplecityapps.shuttle.ui.common.view.increaseTouchableArea
 import com.simplecityapps.shuttle.ui.common.viewbinders.DetailSongBinder
 import com.simplecityapps.shuttle.ui.common.viewbinders.DiscNumberBinder
 import com.simplecityapps.shuttle.ui.common.viewbinders.GroupingBinder
+import com.squareup.phrase.ListPhrase
 import com.squareup.phrase.Phrase
 import kotlinx.coroutines.CoroutineScope
 import java.util.*
@@ -106,10 +107,14 @@ class ExpandableAlbumBinder(
             val songsQuantity = Phrase.fromPlural(itemView.context, R.plurals.songsPlural, viewBinder.album.songCount)
                 .put("count", viewBinder.album.songCount)
                 .format()
-            subtitle.text = Phrase.from(itemView.context, R.string.album_year_songs)
-                .put("year", viewBinder.album.year?.toString() ?: itemView.context.getString(R.string.year_unknown))
-                .put("song_count", songsQuantity)
-                .format()
+            subtitle.text = ListPhrase
+                .from(" • ")
+                .join(
+                    listOfNotNull(
+                        viewBinder.album.year?.toString(),
+                        songsQuantity
+                    )
+                )
 
             viewBinder.imageLoader.loadArtwork(
                 imageView, viewBinder.album,

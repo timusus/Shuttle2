@@ -16,6 +16,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.view.PlayStateView
 import com.simplecityapps.shuttle.ui.common.view.ProgressView
+import com.squareup.phrase.ListPhrase
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -71,7 +72,7 @@ class MiniPlaybackFragment : Fragment(), MiniPlayerContract.View {
     override fun setCurrentSong(song: Song?) {
         song?.let {
             titleTextView.text = song.name
-            subtitleTextView.text = "${song.friendlyArtistName} • ${song.album}"
+            subtitleTextView.text = ListPhrase.from(" • ").join(listOf(song.friendlyArtistName, song.album))
             imageLoader.loadArtwork(
                 imageView,
                 song,

@@ -21,7 +21,7 @@ import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 import com.simplecityapps.shuttle.ui.common.view.BadgeView
 import com.simplecityapps.shuttle.ui.screens.home.search.SongJaroSimilarity
-import com.squareup.phrase.Phrase
+import com.squareup.phrase.ListPhrase
 
 open class SongBinder(
     val song: Song,
@@ -111,10 +111,14 @@ open class SongBinder(
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.song.name
-            subtitle.text = Phrase.from(itemView.context, R.string.artist_album)
-                .put("artist", viewBinder.song.friendlyArtistName)
-                .put("album", viewBinder.song.album ?: itemView.context.getString(R.string.unknown))
-                .format()
+            subtitle.text = ListPhrase
+                .from(" • ")
+                .join(
+                    listOfNotNull(
+                        viewBinder.song.friendlyArtistName,
+                        viewBinder.song.album,
+                    )
+                )
 
             val options = mutableListOf(
                 ArtworkImageLoader.Options.RoundedCorners(16),

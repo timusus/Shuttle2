@@ -19,6 +19,7 @@ import com.simplecityapps.shuttle.ui.common.getAttrColor
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 import com.simplecityapps.shuttle.ui.screens.home.search.AlbumJaroSimilarity
+import com.squareup.phrase.ListPhrase
 import com.squareup.phrase.Phrase
 
 class ListAlbumBinder(
@@ -67,10 +68,14 @@ class ListAlbumBinder(
             val songQuantity = Phrase.fromPlural(itemView.context, R.plurals.songsPlural, viewBinder.album.songCount)
                 .put("count", viewBinder.album.songCount)
                 .format()
-            subtitle.text = Phrase.from(itemView.context, R.string.artists_songs)
-                .put("artists", viewBinder.album.albumArtist ?: viewBinder.album.artists.joinToString(", "))
-                .put("song_count", songQuantity)
-                .format()
+            subtitle.text = ListPhrase
+                .from(" • ")
+                .join(
+                    listOfNotNull(
+                        viewBinder.album.albumArtist,
+                        songQuantity
+                    )
+                )
 
             viewBinder.imageLoader.loadArtwork(
                 imageView, viewBinder.album,

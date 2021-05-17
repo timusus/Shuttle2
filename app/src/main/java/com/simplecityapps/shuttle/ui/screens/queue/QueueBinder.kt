@@ -23,6 +23,7 @@ import com.simplecityapps.shuttle.ui.common.utils.toHms
 import com.simplecityapps.shuttle.ui.common.view.PlayStateImageButton
 import com.simplecityapps.shuttle.ui.common.view.ProgressView
 import com.simplecityapps.shuttle.ui.common.view.increaseTouchableArea
+import com.squareup.phrase.ListPhrase
 
 class QueueBinder(
     val queueItem: QueueItem,
@@ -115,7 +116,7 @@ class QueueBinder(
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.queueItem.song.name
-            subtitle.text = "${viewBinder.queueItem.song.friendlyArtistName} • ${viewBinder.queueItem.song.album}"
+            subtitle.text = ListPhrase.from(" • ").join(listOf(viewBinder.queueItem.song.friendlyArtistName, viewBinder.queueItem.song.album))
             tertiary.text = viewBinder.queueItem.song.duration.toHms("--:--")
 
             viewBinder.imageLoader.loadArtwork(

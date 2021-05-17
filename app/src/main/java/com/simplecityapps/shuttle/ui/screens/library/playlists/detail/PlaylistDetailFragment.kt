@@ -35,6 +35,7 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
+import com.squareup.phrase.ListPhrase
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -173,10 +174,14 @@ class PlaylistDetailFragment :
         val quantityString = Phrase.fromPlural(requireContext(), R.plurals.songsPlural, playlist.songCount)
             .put("count", playlist.songCount)
             .format()
-        toolbar?.subtitle = Phrase.from(requireContext(), R.string.songs_duration)
-            .put("song_count", quantityString)
-            .put("duration", playlist.duration.toHms())
-            .format()
+        toolbar?.subtitle = ListPhrase
+            .from(" • ")
+            .join(
+                listOfNotNull(
+                    quantityString,
+                    playlist.duration.toHms(),
+                )
+            )
     }
 
     override fun setData(songs: List<Song>) {

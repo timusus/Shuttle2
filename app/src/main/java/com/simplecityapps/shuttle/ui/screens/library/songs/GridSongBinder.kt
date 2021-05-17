@@ -14,7 +14,7 @@ import com.simplecityapps.mediaprovider.model.friendlyArtistName
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
-import com.squareup.phrase.Phrase
+import com.squareup.phrase.ListPhrase
 
 class GridSongBinder(
     val song: Song,
@@ -75,10 +75,14 @@ class GridSongBinder(
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.song.name
-            subtitle.text = Phrase.from(itemView.context, R.string.artist_album)
-                .put("artist", viewBinder.song.friendlyArtistName)
-                .put("album", viewBinder.song.album)
-                .format()
+            subtitle.text = ListPhrase
+                .from(" • ")
+                .join(
+                    listOfNotNull(
+                        viewBinder.song.friendlyArtistName,
+                        viewBinder.song.album,
+                    )
+                )
 
             viewBinder.imageLoader.loadArtwork(
                 imageView,

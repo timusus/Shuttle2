@@ -58,27 +58,6 @@
 
     <string name="disc_number">Disc <xliff:g example="1" id="disc_number">{disc_number}</xliff:g></string>
 
-    <string name="artist_album">
-        <xliff:g example="Tool" id="artist">{artist}</xliff:g> • <xliff:g example="10,000 Days" id="album">{album}</xliff:g>
-    </string>
-    <string name="album_song">
-        <xliff:g example="Lateralus" id="album">{album}</xliff:g> • <xliff:g example="Schism" id="song">{song}</xliff:g>
-    </string>
-    <string name="artists_songs">
-        <xliff:g example="Korn, Skrillex" id="artists">{artists}</xliff:g> • <xliff:g example="12 songs" id="song_count">{song_count}</xliff:g>
-    </string>
-    <string name="albums_songs">
-        <xliff:g example="1 album" id="album_count">{album_count}</xliff:g> • <xliff:g example="12 songs" id="song_count">{song_count}</xliff:g>
-    </string>
-    <string name="album_year_songs">
-        <xliff:g example="2004" id="year">{year}</xliff:g> • <xliff:g example="12 songs" id="song_count">{song_count}</xliff:g>
-    </string>
-    <string name="album_year_songs_duration">
-        <xliff:g example="2004" id="year">{year}</xliff:g> • <xliff:g example="12 songs" id="song_count">{song_count}</xliff:g> • <xliff:g example="05:06" id="duration">{duration}</xliff:g>
-    </string>
-    <string name="songs_duration">
-         <xliff:g example="1 song" id="song_count">{song_count}</xliff:g> •  <xliff:g example="2:04" id="duration">{duration}</xliff:g>
-    </string>
 
     <!-- Empty -->
 
