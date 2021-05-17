@@ -5,13 +5,13 @@
     <item
         android:id="@+id/viewMode"
         android:icon="@drawable/ic_grid_outline_24"
-        android:title="View mode"
+        android:title="@string/menu_title_view_mode"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/albumSortOrder"
         android:icon="@drawable/ic_baseline_sort_24"
-        android:title="Sort by"
+        android:title="@string/menu_title_sort_by"
         app:showAsAction="ifRoom">
 
         <menu>
@@ -19,13 +19,13 @@
                 <item
                     android:id="@+id/sortAlbumName"
                     android:checked="true"
-                    android:title="Album Name" />
+                    android:title="@string/menu_title_sort_album_name" />
                 <item
                     android:id="@+id/sortArtistName"
-                    android:title="Artist Name" />
+                    android:title="@string/menu_title_sort_artist_name" />
                 <item
                     android:id="@+id/sortAlbumYear"
-                    android:title="Album Year" />
+                    android:title="@string/menu_title_sort_album_year" />
             </group>
         </menu>
     </item>

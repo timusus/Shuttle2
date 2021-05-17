@@ -2,27 +2,27 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/play"
-        android:title="Play" />
+        android:title="@string/menu_title_play" />
     <item
         android:id="@+id/shuffle"
-        android:title="Shuffle" />
+        android:title="@string/menu_title_shuffle" />
     <item
         android:id="@+id/albumShuffle"
-        android:title="Album Shuffle" />
+        android:title="@string/menu_title_album_shuffle" />
     <item
         android:id="@+id/queue"
-        android:title="Add to Queue" />
+        android:title="@string/menu_title_add_to_queue" />
     <item
         android:id="@+id/playlist"
-        android:title="Add to Playlist">
+        android:title="@string/menu_title_add_to_playlist">
 
         <menu />
 
     </item>
     <item
         android:id="@+id/playNext"
-        android:title="Play Next" />
+        android:title="@string/menu_title_play_next" />
     <item
         android:id="@+id/editTags"
-        android:title="Edit Tags" />
+        android:title="@string/menu_title_edit_tags" />
 </menu>

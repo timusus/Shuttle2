@@ -5,13 +5,13 @@
     <item
         android:id="@+id/scrollToCurrent"
         android:icon="@drawable/ic_baseline_vertical_align_center_24"
-        android:title="Scroll to Current"
+        android:title="@string/menu_title_scroll_to_current"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/playlist"
         android:icon="@drawable/ic_playlist_add_black_24dp"
-        android:title="Save Queue to Playlist"
+        android:title="@string/menu_title_save_queue_to_playlist"
         app:showAsAction="never">
 
         <menu />
@@ -20,7 +20,7 @@
 
     <item
         android:id="@+id/clearQueue"
-        android:title="Clear Queue"
+        android:title="@string/menu_title_sort_clear_queue"
         app:showAsAction="never" />
 
 </menu>

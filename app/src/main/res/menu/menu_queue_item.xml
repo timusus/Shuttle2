@@ -3,15 +3,15 @@
 
     <item
         android:id="@+id/playNext"
-        android:title="Play Next" />
+        android:title="@string/menu_title_play_next" />
     <item
         android:id="@+id/removeFromQueue"
-        android:title="Remove from Queue" />
+        android:title="@string/menu_title_remove_from_queue" />
     <item
         android:id="@+id/exclude"
-        android:title="Exclude" />
+        android:title="@string/menu_title_exclude" />
     <item
         android:id="@+id/editTags"
-        android:title="Edit Tags" />
+        android:title="@string/menu_title_edit_tags" />
 
 </menu>

@@ -5,7 +5,7 @@
     <item
         android:id="@+id/songSortOrder"
         android:icon="@drawable/ic_baseline_sort_24"
-        android:title="Sort by"
+        android:title="@string/menu_title_sort_by"
         app:showAsAction="ifRoom">
 
         <menu>
@@ -13,19 +13,19 @@
                 <item
                     android:id="@+id/sortSongName"
                     android:checked="true"
-                    android:title="Song Name" />
+                    android:title="@string/menu_title_sort_song_name" />
                 <item
                     android:id="@+id/sortArtistName"
-                    android:title="Artist Name" />
+                    android:title="@string/menu_title_sort_artist_name" />
                 <item
                     android:id="@+id/sortAlbumName"
-                    android:title="Album Name" />
+                    android:title="@string/menu_title_sort_album_name" />
                 <item
                     android:id="@+id/sortSongYear"
-                    android:title="Year" />
+                    android:title="@string/menu_title_sort_year" />
                 <item
                     android:id="@+id/sortSongDuration"
-                    android:title="Duration" />
+                    android:title="@string/menu_title_sort_duration" />
             </group>
         </menu>
     </item>

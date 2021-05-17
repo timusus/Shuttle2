@@ -3,10 +3,10 @@
 
     <item
         android:id="@+id/configure"
-        android:title="Configure" />
+        android:title="@string/menu_title_media_provider_configure" />
 
     <item
         android:id="@+id/remove"
-        android:title="Remove" />
+        android:title="@string/menu_title_media_provider_remove" />
 
 </menu>

@@ -12,28 +12,28 @@
     <item
         android:id="@+id/sleepTimer"
         android:icon="@drawable/ic_sleep_black_24dp"
-        android:title="Sleep Timer"
+        android:title="@string/menu_title_sleep_timer"
         app:iconTint="?colorControlNormal"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/favorite"
-        android:title="Favourite"
+        android:title="@string/menu_title_favorite"
         app:actionLayout="@layout/button_favorite"
         app:showAsAction="always" />
 
     <item
         android:id="@+id/lyrics"
-        android:title="Lyrics"
+        android:title="@string/menu_title_lyrics"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/songInfo"
-        android:title="Song Info"
+        android:title="@string/menu_title_song_info"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/editTags"
-        android:title="Edit Tags" />
+        android:title="@string/menu_title_edit_tags" />
 
 </menu>

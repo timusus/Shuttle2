@@ -3,21 +3,21 @@
 
     <item
         android:id="@+id/queue"
-        android:title="Add to Queue" />
+        android:title="@string/menu_title_add_to_queue" />
 
     <item
         android:id="@+id/rename"
-        android:title="Rename">
+        android:title="@string/menu_title_rename">
     </item>
 
     <item
         android:id="@+id/clear"
-        android:title="Clear">
+        android:title="@string/menu_title_clear">
     </item>
 
     <item
         android:id="@+id/delete"
-        android:title="Delete">
+        android:title="@string/menu_title_delete">
     </item>
 
 </menu>
