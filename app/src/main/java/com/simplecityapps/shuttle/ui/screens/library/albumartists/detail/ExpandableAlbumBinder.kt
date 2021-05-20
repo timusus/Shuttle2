@@ -15,6 +15,7 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
+import com.simplecityapps.shuttle.ui.common.utils.dp
 import com.simplecityapps.shuttle.ui.common.view.increaseTouchableArea
 import com.simplecityapps.shuttle.ui.common.viewbinders.DetailSongBinder
 import com.simplecityapps.shuttle.ui.common.viewbinders.DiscNumberBinder
@@ -117,9 +118,10 @@ class ExpandableAlbumBinder(
                 )
 
             viewBinder.imageLoader.loadArtwork(
-                imageView, viewBinder.album,
-                listOf(
-                    ArtworkImageLoader.Options.RoundedCorners(16),
+                imageView = imageView,
+                data = viewBinder.album,
+                options = listOf(
+                    ArtworkImageLoader.Options.RoundedCorners(8.dp),
                     ArtworkImageLoader.Options.Crossfade(200),
                     ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_album_rounded)
                 )

@@ -9,6 +9,7 @@ import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
+import com.simplecityapps.shuttle.ui.common.utils.dp
 
 class ArtworkBinder(
     val queueItem: QueueItem,
@@ -47,9 +48,10 @@ class ArtworkBinder(
             super.bind(viewBinder, isPartial)
 
             viewBinder.imageLoader.loadArtwork(
-                imageView, viewBinder.queueItem.song,
-                listOf(
-                    ArtworkImageLoader.Options.RoundedCorners(32),
+                imageView = imageView,
+                data = viewBinder.queueItem.song,
+                options = listOf(
+                    ArtworkImageLoader.Options.RoundedCorners(16.dp),
                     ArtworkImageLoader.Options.Crossfade(200),
                     ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_song)
                 )

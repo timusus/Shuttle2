@@ -14,6 +14,7 @@ import com.simplecityapps.mediaprovider.model.friendlyArtistName
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.utils.dp
 import com.simplecityapps.shuttle.ui.common.view.PlayStateView
 import com.simplecityapps.shuttle.ui.common.view.ProgressView
 import com.squareup.phrase.ListPhrase
@@ -74,9 +75,9 @@ class MiniPlaybackFragment : Fragment(), MiniPlayerContract.View {
             titleTextView.text = song.name
             subtitleTextView.text = ListPhrase.from(" • ").join(listOfNotNull(song.friendlyArtistName, song.album))
             imageLoader.loadArtwork(
-                imageView,
-                song,
-                listOf(ArtworkImageLoader.Options.RoundedCorners(16)),
+                imageView = imageView,
+                data = song,
+                options = listOf(ArtworkImageLoader.Options.RoundedCorners(8.dp)),
             )
         }
     }

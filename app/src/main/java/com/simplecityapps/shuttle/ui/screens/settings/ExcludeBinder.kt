@@ -12,6 +12,7 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
+import com.simplecityapps.shuttle.ui.common.utils.dp
 import com.squareup.phrase.ListPhrase
 
 class ExcludeBinder(
@@ -70,10 +71,10 @@ class ExcludeBinder(
             title.text = viewBinder.song.name
             subtitle.text = ListPhrase.from(" • ").join(listOfNotNull(viewBinder.song.albumArtist, viewBinder.song.album))
             viewBinder.imageLoader.loadArtwork(
-                imageView,
-                viewBinder.song,
-                listOf(
-                    ArtworkImageLoader.Options.RoundedCorners(16),
+                imageView = imageView,
+                data = viewBinder.song,
+                options = listOf(
+                    ArtworkImageLoader.Options.RoundedCorners(8.dp),
                     ArtworkImageLoader.Options.Crossfade(200)
                 )
             )

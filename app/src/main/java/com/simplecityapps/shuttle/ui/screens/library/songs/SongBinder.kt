@@ -19,6 +19,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.getAttrColor
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
+import com.simplecityapps.shuttle.ui.common.utils.dp
 import com.simplecityapps.shuttle.ui.common.view.BadgeView
 import com.simplecityapps.shuttle.ui.screens.home.search.SongJaroSimilarity
 import com.squareup.phrase.ListPhrase
@@ -121,7 +122,7 @@ open class SongBinder(
                 )
 
             val options = mutableListOf(
-                ArtworkImageLoader.Options.RoundedCorners(16),
+                ArtworkImageLoader.Options.RoundedCorners(8.dp),
                 ArtworkImageLoader.Options.Crossfade(200),
                 ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_song_rounded)
             )

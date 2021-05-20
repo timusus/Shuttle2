@@ -19,6 +19,7 @@ import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
+import com.simplecityapps.shuttle.ui.common.utils.dp
 import com.simplecityapps.shuttle.ui.common.utils.toHms
 import com.simplecityapps.shuttle.ui.common.view.PlayStateImageButton
 import com.simplecityapps.shuttle.ui.common.view.ProgressView
@@ -120,10 +121,10 @@ class QueueBinder(
             tertiary.text = viewBinder.queueItem.song.duration.toHms("--:--")
 
             viewBinder.imageLoader.loadArtwork(
-                artworkImageView,
-                viewBinder.queueItem.song,
-                listOf(
-                    ArtworkImageLoader.Options.RoundedCorners(16),
+                imageView = artworkImageView,
+                data = viewBinder.queueItem.song,
+                options = listOf(
+                    ArtworkImageLoader.Options.RoundedCorners(8.dp),
                     ArtworkImageLoader.Options.Crossfade(200),
                     ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_song_rounded)
                 )

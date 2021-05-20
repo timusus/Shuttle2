@@ -18,6 +18,7 @@ import com.simplecityapps.mediaprovider.model.friendlyNameOrArtistName
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.getAttrColor
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
+import com.simplecityapps.shuttle.ui.common.utils.dp
 import com.simplecityapps.shuttle.ui.screens.home.search.ArtistJaroSimilarity
 import com.squareup.phrase.ListPhrase
 import com.squareup.phrase.Phrase
@@ -78,9 +79,10 @@ class ListAlbumArtistBinder(
                 .join(albumQuantity, songQuantity)
 
             viewBinder.imageLoader.loadArtwork(
-                imageView, viewBinder.albumArtist,
-                listOf(
-                    ArtworkImageLoader.Options.RoundedCorners(16),
+                imageView = imageView,
+                data = viewBinder.albumArtist,
+                options = listOf(
+                    ArtworkImageLoader.Options.RoundedCorners(8.dp),
                     ArtworkImageLoader.Options.Crossfade(200),
                     ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_artist_rounded),
                     ArtworkImageLoader.Options.CacheDecodedResource
