@@ -1,5 +1,26 @@
 [
   {
+    "versionName": "0.3.5",
+    "releaseDate": "31/05/2021",
+    "features": [],
+    "fixes": [
+      "Possible fix for notification hiding in notification shade, for some devices",
+      "Fixed a crash when attempting to view song info for songs with special characters in file path",
+      "Fixed an issue where rescanning didn't detect file changes unless the directory selection screen was shown",
+      "Fixed an issue preventing songs from being added to playlists",
+      "Fixed an issue preventing duplicates from being detected when adding songs to playlists"
+    ],
+    "improvements": [
+      "Various fuzzy search improvements. Results should be much more accurate now",
+      "Settings - Rescan now shows more detailed scan progress",
+      "Media scanner can now process multiple media providers in parallel",
+      "Added option to add queue items to playlists"
+    ],
+    "notes": [
+      "S2 is preparing for an official release! If you have any feedback on how it could be improved, please join the discussion on Discord: https://discord.gg/YkhSuHJ"
+    ]
+  },
+  {
     "versionName": "0.3.4",
     "releaseDate": "13/05/2021",
     "features": [],
