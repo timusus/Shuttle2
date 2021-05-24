@@ -45,7 +45,7 @@ interface AlbumArtistListContract {
         fun exclude(albumArtist: AlbumArtist)
         fun editTags(albumArtists: List<AlbumArtist>)
         fun play(albumArtist: AlbumArtist)
-        fun toggleViewMode()
+        fun setViewMode(viewMode: ViewMode)
     }
 }
 
@@ -133,11 +133,7 @@ class AlbumArtistListPresenter @Inject constructor(
         }
     }
 
-    override fun toggleViewMode() {
-        val viewMode = when (preferenceManager.artistListViewMode.toViewMode()) {
-            ViewMode.List -> ViewMode.Grid
-            ViewMode.Grid -> ViewMode.List
-        }
+    override fun setViewMode(viewMode: ViewMode) {
         preferenceManager.artistListViewMode = viewMode.name
         loadAlbumArtists() // Intrinsically calls `view?.setViewMode()`
     }

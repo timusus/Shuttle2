@@ -4,7 +4,7 @@ import android.app.Application
 import android.content.Intent
 import com.simplecityapps.playback.ActivityIntentProvider
 import com.simplecityapps.shuttle.appinitializers.AppInitializers
-import com.simplecityapps.shuttle.dagger.*
+import com.simplecityapps.shuttle.dagger.AppComponent
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.MainActivity
 import com.simplecityapps.shuttle.ui.ThemeManager

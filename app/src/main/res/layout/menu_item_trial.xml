@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="?attr/actionBarSize"
+    android:layout_height="?attr/actionBarSize">
+
+    <com.simplecityapps.shuttle.ui.common.view.CircularProgressView
+        android:id="@+id/progress"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:background="?attr/actionBarItemBackground"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/daysRemaining"
+        style="@style/TextSubtitle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:gravity="center"
+        android:textColor="?android:attr/textColorPrimary"
+        android:textSize="10sp"
+        app:layout_constraintBottom_toBottomOf="@id/progress"
+        app:layout_constraintEnd_toEndOf="@id/progress"
+        app:layout_constraintStart_toStartOf="@id/progress"
+        app:layout_constraintTop_toTopOf="@id/progress"
+        tools:text="1.4x" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

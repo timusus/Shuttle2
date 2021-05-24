@@ -277,6 +277,13 @@
     </style>
 
 
+    <!-- Shapeable Image View-->
+
+    <style name="ShapeAppearanceOverlay.App.CornerSize10Percent" parent="">
+        <item name="cornerSize">8dp</item>
+        <item name="cornerFamily">rounded</item>
+    </style>
+
     <!-- Orange theme-->
 
     <style name="AppTheme.Light.Orange">

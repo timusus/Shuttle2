@@ -2,9 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.library.songs
 
 import android.os.Bundle
 import android.os.Parcelable
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
@@ -75,7 +73,14 @@ class SongListFragment :
         )
     }
 
+
     // Lifecycle
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        setHasOptionsMenu(true)
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_songs, container, false)
@@ -121,6 +126,12 @@ class SongListFragment :
         playlistMenuPresenter.bindView(playlistMenuView)
     }
 
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        super.onCreateOptionsMenu(menu, inflater)
+
+        inflater.inflate(R.menu.menu_song_list, menu)
+    }
+
     override fun onResume() {
         super.onResume()
 
@@ -135,11 +146,6 @@ class SongListFragment :
         super.onPause()
 
         findToolbarHost()?.apply {
-            toolbar?.let { toolbar ->
-                toolbar.menu?.removeItem(R.id.songSortOrder)
-                toolbar.setOnMenuItemClickListener(null)
-            }
-
             contextualToolbar?.setOnMenuItemClickListener(null)
         }
 
@@ -159,25 +165,39 @@ class SongListFragment :
     }
 
 
+    // Toolbar item selection
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.sortSongName -> {
+                presenter.setSortOrder(SongSortOrder.SongName)
+                true
+            }
+            R.id.sortArtistName -> {
+                presenter.setSortOrder(SongSortOrder.ArtistGroupKeyComparator)
+                true
+            }
+            R.id.sortAlbumName -> {
+                presenter.setSortOrder(SongSortOrder.AlbumName)
+                true
+            }
+            R.id.sortSongYear -> {
+                presenter.setSortOrder(SongSortOrder.Year)
+                true
+            }
+            R.id.sortSongDuration -> {
+                presenter.setSortOrder(SongSortOrder.Duration)
+                true
+            }
+            else -> false
+        }
+    }
+
+
     // Private
 
     private fun updateToolbar() {
         findToolbarHost()?.apply {
-            toolbar?.let { toolbar ->
-                toolbar.menu.clear()
-                toolbar.inflateMenu(R.menu.menu_song_list)
-                toolbar.setOnMenuItemClickListener { menuItem ->
-                    when (menuItem.itemId) {
-                        R.id.sortSongName -> presenter.setSortOrder(SongSortOrder.SongName)
-                        R.id.sortArtistName -> presenter.setSortOrder(SongSortOrder.ArtistGroupKeyComparator)
-                        R.id.sortAlbumName -> presenter.setSortOrder(SongSortOrder.AlbumName)
-                        R.id.sortSongYear -> presenter.setSortOrder(SongSortOrder.Year)
-                        R.id.sortSongDuration -> presenter.setSortOrder(SongSortOrder.Duration)
-                    }
-                    false
-                }
-            }
-
             contextualToolbar?.let { contextualToolbar ->
                 contextualToolbar.menu.clear()
                 contextualToolbar.inflateMenu(R.menu.menu_multi_select)

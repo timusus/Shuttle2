@@ -170,6 +170,14 @@ class CastPlayback(
 
     }
 
+    override fun setPlaybackSpeed(multiplier: Float) {
+        castSession.remoteMediaClient?.setPlaybackRate(multiplier.toDouble())
+    }
+
+    override fun getPlaybackSpeed(): Float {
+        return castSession.remoteMediaClient?.mediaStatus?.playbackRate?.toFloat() ?: 1f
+    }
+
     override fun updateLastKnownStreamPosition() {
         super.updateLastKnownStreamPosition()
 

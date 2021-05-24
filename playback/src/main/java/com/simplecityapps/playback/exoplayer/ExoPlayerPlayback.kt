@@ -168,7 +168,7 @@ class ExoPlayerPlayback(
         val currentMediaItem = player.currentMediaItem
         val count = player.mediaItemCount
         var currentIndex = 0
-        for (i in player.mediaItemCount -1 downTo 0) {
+        for (i in player.mediaItemCount - 1 downTo 0) {
             if (player.getMediaItemAt(i) == currentMediaItem) {
                 currentIndex = i
                 break
@@ -254,6 +254,14 @@ class ExoPlayerPlayback(
         Timber.v("setReplayGain(trackGain: $trackGain, albumGain: $albumGain)")
         replayGainAudioProcessor.trackGain = trackGain
         replayGainAudioProcessor.albumGain = albumGain
+    }
+
+    override fun setPlaybackSpeed(multiplier: Float) {
+        player.setPlaybackParameters(PlaybackParameters(multiplier, multiplier))
+    }
+
+    override fun getPlaybackSpeed(): Float {
+        return player.playbackParameters.speed
     }
 
     enum class ExoPlaybackState {

@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.dagger
 
 import com.simplecityapps.core.BuildConfig
 import com.squareup.moshi.Moshi
+import com.squareup.moshi.adapters.Rfc3339DateJsonAdapter
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import dagger.Module
 import dagger.Provides
@@ -12,6 +13,7 @@ import okhttp3.logging.HttpLoggingInterceptor
 import timber.log.Timber
 import java.net.InetSocketAddress
 import java.net.Proxy
+import java.util.*
 import javax.inject.Singleton
 
 @InstallIn(SingletonComponent::class)
@@ -46,6 +48,7 @@ open class NetworkingModule {
     fun provideMoshi(): Moshi {
         return Moshi.Builder()
             .add(KotlinJsonAdapterFactory())
+            .add(Date::class.java, Rfc3339DateJsonAdapter())
             .build()
     }
 

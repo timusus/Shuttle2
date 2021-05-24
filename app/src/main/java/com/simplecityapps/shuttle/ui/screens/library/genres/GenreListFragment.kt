@@ -25,7 +25,6 @@ import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
-import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
 import com.simplecityapps.shuttle.ui.screens.library.genres.detail.GenreDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
@@ -94,17 +93,10 @@ class GenreListFragment :
         super.onResume()
 
         presenter.loadGenres(false)
-
-        findToolbarHost()?.toolbar?.menu?.clear()
     }
 
     override fun onPause() {
         super.onPause()
-
-        findToolbarHost()?.toolbar?.let { toolbar ->
-            toolbar.menu.removeItem(R.id.viewMode)
-            toolbar.setOnMenuItemClickListener(null)
-        }
 
         recyclerViewState = recyclerView.layoutManager?.onSaveInstanceState()
     }

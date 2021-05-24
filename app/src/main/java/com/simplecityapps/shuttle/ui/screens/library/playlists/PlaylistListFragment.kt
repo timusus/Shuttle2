@@ -3,9 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.library.playlists
 import android.annotation.SuppressLint
 import android.os.Bundle
 import android.os.Parcelable
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
@@ -24,7 +22,6 @@ import com.simplecityapps.shuttle.ui.common.dialog.EditTextAlertDialog
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
-import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
 import com.simplecityapps.shuttle.ui.screens.home.search.HeaderBinder
 import com.simplecityapps.shuttle.ui.screens.library.playlists.detail.PlaylistDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylistDetailFragmentArgs
@@ -53,6 +50,12 @@ class PlaylistListFragment :
 
     // Lifecycle
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        setHasOptionsMenu(true)
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_playlists, container, false)
     }
@@ -73,38 +76,20 @@ class PlaylistListFragment :
         presenter.bindView(this)
     }
 
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        super.onCreateOptionsMenu(menu, inflater)
+
+        inflater.inflate(R.menu.menu_playlists, menu)
+    }
+
     override fun onResume() {
         super.onResume()
 
         presenter.loadPlaylists()
-
-        findToolbarHost()?.toolbar?.let { toolbar ->
-            toolbar.menu.clear()
-            toolbar.inflateMenu(R.menu.menu_playlists)
-            toolbar.setOnMenuItemClickListener { menuItem ->
-                when (menuItem.itemId) {
-                    R.id.syncPlaylists -> {
-                        MaterialAlertDialogBuilder(requireContext())
-                            .setTitle(getString(R.string.playlist_dialog_title_sync))
-                            .setMessage(getString(R.string.playlist_dialog_subtitle_sync))
-                            .setPositiveButton(getString(R.string.playlist_dialog_button_sync)) { _, _ -> presenter.importMediaStorePlaylists() }
-                            .setNegativeButton(getString(R.string.dialog_button_cancel), null)
-                            .show()
-                        true
-                    }
-                    else -> false
-                }
-            }
-        }
     }
 
     override fun onPause() {
         super.onPause()
-
-        findToolbarHost()?.toolbar?.let { toolbar ->
-            toolbar.menu.removeItem(R.id.syncPlaylists)
-            toolbar.setOnMenuItemClickListener(null)
-        }
 
         recyclerViewState = recyclerView.layoutManager?.onSaveInstanceState()
     }
@@ -118,6 +103,24 @@ class PlaylistListFragment :
         presenter.unbindView()
 
         super.onDestroyView()
+    }
+
+
+    // Toolbar item selection
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.syncPlaylists -> {
+                MaterialAlertDialogBuilder(requireContext())
+                    .setTitle(getString(R.string.playlist_dialog_title_sync))
+                    .setMessage(getString(R.string.playlist_dialog_subtitle_sync))
+                    .setPositiveButton(getString(R.string.playlist_dialog_button_sync)) { _, _ -> presenter.importMediaStorePlaylists() }
+                    .setNegativeButton(getString(R.string.dialog_button_cancel), null)
+                    .show()
+                true
+            }
+            else -> false
+        }
     }
 
 

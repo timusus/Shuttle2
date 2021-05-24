@@ -17,7 +17,9 @@
     <string name="menu_title_exclude">Exclude</string>
     <string name="menu_title_remove">Remove</string>
 
-    <string name="menu_title_view_mode">View mode</string>
+    <string name="menu_title_view_mode">View as</string>
+    <string name="menu_title_view_mode_list">List</string>
+    <string name="menu_title_view_mode_grid">Grid</string>
 
     <string name="menu_title_sort_by">Sort by</string>
     <string name="menu_title_sort_album_name">Album Name</string>

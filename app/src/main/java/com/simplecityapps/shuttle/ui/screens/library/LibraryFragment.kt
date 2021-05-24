@@ -1,11 +1,12 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
@@ -17,13 +18,20 @@ import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.autoClearedNullable
 import com.simplecityapps.shuttle.ui.common.recyclerview.enforceSingleScrollDirection
 import com.simplecityapps.shuttle.ui.common.recyclerview.recyclerView
+import com.simplecityapps.shuttle.ui.common.view.CircularProgressView
 import com.simplecityapps.shuttle.ui.common.view.ToolbarHost
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistListFragment
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListFragment
 import com.simplecityapps.shuttle.ui.screens.library.genres.GenreListFragment
 import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListFragment
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListFragment
+import com.simplecityapps.shuttle.ui.screens.trial.TrialDialogFragment
+import com.simplecityapps.trial.TrialManager
+import com.simplecityapps.trial.TrialState
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -45,8 +53,17 @@ class LibraryFragment : Fragment(), ToolbarHost {
     @Inject
     lateinit var preferenceManager: GeneralPreferenceManager
 
+    @Inject
+    lateinit var trialManager: TrialManager
+
 
     // Lifecycle
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        setHasOptionsMenu(true)
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_library, container, false)
@@ -60,6 +77,8 @@ class LibraryFragment : Fragment(), ToolbarHost {
 
         _toolbar = view.findViewById(R.id.toolbar)
         _contextualToolbar = view.findViewById(R.id.contextualToolbar)
+
+        (requireActivity() as AppCompatActivity).setSupportActionBar(_toolbar!!)
 
         contextualToolbarHelper = ContextualToolbarHelper<Any>()
         contextualToolbarHelper.toolbar = toolbar
@@ -108,6 +127,47 @@ class LibraryFragment : Fragment(), ToolbarHost {
             }
         }
         tabLayoutMediator?.attach()
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            trialManager.trialState.collect { trialState ->
+                this@LibraryFragment.requireActivity().invalidateOptionsMenu()
+            }
+        }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        super.onCreateOptionsMenu(menu, inflater)
+
+        inflater.inflate(R.menu.menu_library, menu)
+
+        val trialMenuItem = menu.findItem(R.id.trial)
+        trialMenuItem.actionView.setOnClickListener {
+            TrialDialogFragment.newInstance().show(childFragmentManager)
+        }
+    }
+
+    override fun onPrepareOptionsMenu(menu: Menu) {
+        super.onPrepareOptionsMenu(menu)
+
+        val trialMenuItem = menu.findItem(R.id.trial)
+        if (trialManager.hasPaidVersion()) {
+            trialMenuItem.isVisible = false
+        }
+
+        when (val trialState = trialManager.trialState.value) {
+            is TrialState.Trial -> {
+                val daysRemainingText: TextView = trialMenuItem.actionView.findViewById(R.id.daysRemaining)
+                daysRemainingText.text = TimeUnit.MILLISECONDS.toDays(trialState.timeRemaining).toString()
+                val progress: CircularProgressView = trialMenuItem.actionView.findViewById(R.id.progress)
+                progress.setProgress((trialState.timeRemaining / trialManager.trialLength.toDouble()).toFloat())
+            }
+            is TrialState.Expired -> {
+                val daysRemainingText: TextView = trialMenuItem.actionView.findViewById(R.id.daysRemaining)
+                daysRemainingText.text = String.format("%.1fx", trialState.multiplier())
+                val progress: CircularProgressView = trialMenuItem.actionView.findViewById(R.id.progress)
+                progress.setProgress(0f)
+            }
+        }
     }
 
     override fun onDestroyView() {

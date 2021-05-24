@@ -54,6 +54,10 @@ interface Playback {
 
     }
 
+    fun setPlaybackSpeed(multiplier: Float)
+
+    fun getPlaybackSpeed(): Float
+
     interface Callback {
         fun onPlaybackStateChanged(playbackState: PlaybackState)
 

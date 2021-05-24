@@ -296,6 +296,8 @@ class PlaybackManager(
 
         val seekPosition = oldPlayback.getProgress()
 
+        val playbackSpeed = oldPlayback.getPlaybackSpeed()
+
         oldPlayback.pause()
         oldPlayback.release()
 
@@ -303,6 +305,7 @@ class PlaybackManager(
         playback.setRepeatMode(queueManager.getRepeatMode())
         playback.callback = this
         playback.setAudioSessionId(audioSessionId)
+        playback.setPlaybackSpeed(playbackSpeed)
 
         load(seekPosition ?: 0) { result ->
             result.onSuccess {
@@ -314,6 +317,10 @@ class PlaybackManager(
                 }
             }
         }
+    }
+
+    fun setPlaybackSpeed(multiplier: Float) {
+        playback.setPlaybackSpeed(multiplier)
     }
 
 

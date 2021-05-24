@@ -95,11 +95,14 @@ android {
         // Storage Access Framework Helper
         implementation(project(":saf"))
 
+        // Trial
+        implementation(project(":trial"))
+
         // RecyclerView FastScroll
         implementation("com.github.timusus:RecyclerView-FastScroll:dev-SNAPSHOT")
 
         // AppCompat
-        implementation("androidx.appcompat:appcompat:1.2.0")
+        implementation("androidx.appcompat:appcompat:1.3.0")
 
         // Constraint Layout
         implementation("androidx.constraintlayout:constraintlayout:2.0.4")
@@ -123,7 +126,7 @@ android {
         debugImplementation("com.squareup.leakcanary:leakcanary-android:2.6")
 
         // ViewPager 2
-        implementation("androidx.viewpager2:viewpager2:1.0.0")
+        implementation("androidx.viewpager2:viewpager2:1.1.0-alpha01")
 
         // ViewPager Circle Indicator
         implementation("me.relex:circleindicator:2.1.4")
@@ -165,7 +168,7 @@ android {
         implementation("androidx.drawerlayout:drawerlayout:1.1.1")
 
         // New fragment manager
-        implementation("androidx.fragment:fragment-ktx:1.3.3")
+        implementation("androidx.fragment:fragment-ktx:1.3.4")
 
         // Glide
         implementation("com.github.bumptech.glide:glide:4.12.0")

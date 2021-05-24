@@ -3,6 +3,12 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/trial"
+        android:title="@string/menu_trial"
+        app:actionLayout="@layout/menu_item_trial"
+        app:showAsAction="always" />
+
+    <item
         android:id="@+id/scrollToCurrent"
         android:icon="@drawable/ic_baseline_vertical_align_center_24"
         android:title="@string/menu_title_scroll_to_current"

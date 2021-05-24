@@ -4,15 +4,25 @@
 
     <item
         android:id="@+id/viewMode"
-        android:icon="@drawable/ic_grid_outline_24"
         android:title="@string/menu_title_view_mode"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="never">
+        <menu>
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/listViewMode"
+                    android:title="@string/menu_title_view_mode_list" />
+                <item
+                    android:id="@+id/gridViewMode"
+                    android:title="@string/menu_title_view_mode_grid" />
+            </group>
+        </menu>
+    </item>
 
     <item
         android:id="@+id/albumSortOrder"
         android:icon="@drawable/ic_baseline_sort_24"
         android:title="@string/menu_title_sort_by"
-        app:showAsAction="ifRoom">
+        app:showAsAction="never">
 
         <menu>
             <group android:checkableBehavior="single">

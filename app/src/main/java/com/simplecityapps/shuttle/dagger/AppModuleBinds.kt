@@ -30,4 +30,8 @@ abstract class AppModuleBinds {
     @Binds
     @IntoSet
     abstract fun provideMediaProviderInitializer(bind: MediaProviderInitializer): AppInitializer
+
+    @Binds
+    @IntoSet
+    abstract fun provideTrialInitializer(bind: TrialInitializer): AppInitializer
 }

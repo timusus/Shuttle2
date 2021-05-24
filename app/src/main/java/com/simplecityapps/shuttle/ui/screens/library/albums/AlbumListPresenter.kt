@@ -49,7 +49,7 @@ class AlbumListContract {
         fun exclude(album: Album)
         fun editTags(albums: List<Album>)
         fun play(album: Album)
-        fun toggleViewMode()
+        fun setViewMode(viewMode: ViewMode)
         fun albumShuffle()
         fun setSortOrder(albumSortOrder: AlbumSortOrder)
         fun updateSortOrder()
@@ -143,11 +143,7 @@ class AlbumListPresenter @Inject constructor(
         }
     }
 
-    override fun toggleViewMode() {
-        val viewMode = when (preferenceManager.albumListViewMode.toViewMode()) {
-            ViewMode.List -> ViewMode.Grid
-            ViewMode.Grid -> ViewMode.List
-        }
+    override fun setViewMode(viewMode: ViewMode) {
         preferenceManager.albumListViewMode = viewMode.name
         view?.setViewMode(viewMode)
         view?.setAlbums(albums, viewMode, false)

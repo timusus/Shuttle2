@@ -38,9 +38,15 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFr
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
+import com.simplecityapps.shuttle.ui.screens.trial.TrialDialogFragment
+import com.simplecityapps.trial.TrialManager
+import com.simplecityapps.trial.TrialState
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -72,6 +78,9 @@ class QueueFragment :
 
     @Inject
     lateinit var playbackManager: PlaybackManager
+
+    @Inject
+    lateinit var trialManager: TrialManager
 
     private var recyclerViewState: Parcelable? = null
 
@@ -125,12 +134,42 @@ class QueueFragment :
             }
         }
 
+        toolbar.setOnClickListener {
+            view.findParentMultiSheetView()?.let { multiSheetView ->
+                if (multiSheetView.currentSheet != MultiSheetView.Sheet.SECOND) {
+                    multiSheetView.expandSheet(MultiSheetView.Sheet.SECOND)
+                }
+            }
+        }
+
         savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
 
         presenter.bindView(this)
         playlistMenuPresenter.bindView(playlistMenuView)
 
         playlistMenuView.createPlaylistMenu(toolbar.menu)
+
+        val trialMenuItem = toolbar.menu.findItem(R.id.trial)
+        trialMenuItem.actionView.setOnClickListener {
+            TrialDialogFragment.newInstance().show(childFragmentManager)
+        }
+        if (trialManager.hasPaidVersion()) {
+            trialMenuItem.isVisible = false
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            trialManager.trialState.collect { trialState ->
+                when (trialState) {
+                    is TrialState.Trial -> {
+                        val daysRemainingText: TextView = trialMenuItem.actionView.findViewById(R.id.daysRemaining)
+                        daysRemainingText.text = TimeUnit.MILLISECONDS.toDays(trialState.timeRemaining).toString()
+                    }
+                    is TrialState.Expired -> {
+                        val daysRemainingText: TextView = trialMenuItem.actionView.findViewById(R.id.daysRemaining)
+                        daysRemainingText.text = String.format("%.1fx", trialState.multiplier())
+                    }
+                }
+            }
+        }
     }
 
     override fun onPause() {
@@ -281,6 +320,15 @@ class QueueFragment :
             toolbar.menu.findItem(R.id.scrollToCurrent)?.isVisible = sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_EXPANDED
             toolbar.menu.findItem(R.id.playlist)?.isVisible = sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_EXPANDED
             toolbar.menu.findItem(R.id.clearQueue)?.isVisible = sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_EXPANDED
+
+            if (sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_EXPANDED) {
+                toolbar.menu.findItem(R.id.trial).isVisible = false
+            }
+            if (sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_COLLAPSED) {
+                if (!trialManager.hasPaidVersion()) {
+                    toolbar.menu.findItem(R.id.trial).isVisible = true
+                }
+            }
         }
 
         override fun onSlide(sheet: Int, slideOffset: Float) {

@@ -9,9 +9,7 @@ import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.provider.emby.EmbyMediaProvider
 import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
 import com.simplecityapps.provider.plex.PlexMediaProvider
-import kotlinx.coroutines.CoroutineScope
 import javax.inject.Inject
-import javax.inject.Named
 
 class MediaProviderInitializer @Inject constructor(
     private val mediaImporter: MediaImporter,
@@ -20,8 +18,7 @@ class MediaProviderInitializer @Inject constructor(
     private val mediaStoreMediaProvider: MediaStoreMediaProvider,
     private val embyMediaProvider: EmbyMediaProvider,
     private val jellyfinMediaProvider: JellyfinMediaProvider,
-    private val plexMediaProvider: PlexMediaProvider,
-    @Named("AppCoroutineScope") private val appCoroutineScope: CoroutineScope
+    private val plexMediaProvider: PlexMediaProvider
 ) : AppInitializer {
 
     override fun init(application: Application) {

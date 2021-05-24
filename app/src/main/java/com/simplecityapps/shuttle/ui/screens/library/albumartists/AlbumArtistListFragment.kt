@@ -2,9 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.library.albumartists
 
 import android.os.Bundle
 import android.os.Parcelable
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
@@ -82,6 +80,12 @@ class AlbumArtistListFragment :
 
     // Lifecycle
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        setHasOptionsMenu(true)
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_album_artists, container, false)
     }
@@ -119,6 +123,12 @@ class AlbumArtistListFragment :
         playlistMenuPresenter.bindView(playlistMenuView)
     }
 
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        super.onCreateOptionsMenu(menu, inflater)
+
+        inflater.inflate(R.menu.menu_artist_list, menu)
+    }
+
     override fun onResume() {
         super.onResume()
 
@@ -131,11 +141,6 @@ class AlbumArtistListFragment :
         super.onPause()
 
         findToolbarHost()?.apply {
-            toolbar?.let { toolbar ->
-                toolbar.menu.removeItem(R.id.viewMode)
-                toolbar.setOnMenuItemClickListener(null)
-            }
-
             contextualToolbar?.setOnMenuItemClickListener(null)
         }
 
@@ -155,25 +160,29 @@ class AlbumArtistListFragment :
     }
 
 
+    // Toolbar item selection
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        return when (item.itemId) {
+            R.id.gridViewMode -> {
+                adapter.clear()
+                presenter.setViewMode(ViewMode.Grid)
+                true
+            }
+            R.id.listViewMode -> {
+                adapter.clear()
+                presenter.setViewMode(ViewMode.List)
+                true
+            }
+            else -> false
+        }
+    }
+
+
     // Private
 
     private fun updateToolbar() {
         findToolbarHost()?.apply {
-            toolbar?.let { toolbar ->
-                toolbar.menu.clear()
-                toolbar.inflateMenu(R.menu.menu_artist_list)
-                toolbar.setOnMenuItemClickListener { menuItem ->
-                    when (menuItem.itemId) {
-                        R.id.viewMode -> {
-                            adapter.clear()
-                            presenter.toggleViewMode()
-                            true
-                        }
-                        else -> false
-                    }
-                }
-            }
-
             contextualToolbar?.let { contextualToolbar ->
                 contextualToolbar.menu.clear()
                 contextualToolbar.inflateMenu(R.menu.menu_multi_select)
@@ -282,18 +291,18 @@ class AlbumArtistListFragment :
     override fun setViewMode(viewMode: ViewMode) {
         when (viewMode) {
             ViewMode.List -> {
+                findToolbarHost()?.toolbar?.menu?.findItem(R.id.listViewMode)?.isChecked = true
                 (recyclerView.layoutManager as GridLayoutManager).spanCount = 1
                 if (recyclerView.itemDecorationCount != 0) {
                     recyclerView.removeItemDecorationAt(0)
                 }
-                findToolbarHost()?.toolbar?.menu?.findItem(R.id.viewMode)?.setIcon(R.drawable.ic_grid_outline_24)
             }
             ViewMode.Grid -> {
+                findToolbarHost()?.toolbar?.menu?.findItem(R.id.gridViewMode)?.isChecked = true
                 (recyclerView.layoutManager as GridLayoutManager).spanCount = 3
                 if (recyclerView.itemDecorationCount == 0) {
                     recyclerView.addItemDecoration(GridSpacingItemDecoration(8, true))
                 }
-                findToolbarHost()?.toolbar?.menu?.findItem(R.id.viewMode)?.setIcon(R.drawable.ic_list_outline_24)
             }
         }
     }

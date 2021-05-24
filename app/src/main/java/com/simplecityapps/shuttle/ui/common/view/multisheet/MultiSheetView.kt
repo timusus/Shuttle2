@@ -22,7 +22,7 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
     }
 
     private lateinit var bottomSheetBehavior1: CustomBottomSheetBehavior<*>
-    private lateinit var bottomSheetBehavior2: CustomBottomSheetBehavior<*>
+    private lateinit var bottomSheetBehavior2: BottomSheetBehavior<*>
 
     private lateinit var navHostFragment: View
 
@@ -69,23 +69,16 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
         })
 
         val sheet2 = findViewById<View>(R.id.sheet2)
-        bottomSheetBehavior2 = BottomSheetBehavior.from(sheet2) as CustomBottomSheetBehavior<*>
+        bottomSheetBehavior2 = BottomSheetBehavior.from(sheet2) as BottomSheetBehavior<*>
         bottomSheetBehavior2.isGestureInsetBottomIgnored = true
         bottomSheetBehavior2.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
             override fun onStateChanged(bottomSheet: View, newState: Int) {
-                if (newState == BottomSheetBehavior.STATE_EXPANDED || newState == BottomSheetBehavior.STATE_DRAGGING) {
-                    bottomSheetBehavior1.setAllowDragging(false)
-                } else {
-                    bottomSheetBehavior1.setAllowDragging(true)
-                }
-
                 fadeView(Sheet.SECOND, newState)
 
                 sheetStateChangeListeners.forEach { listener -> listener.onSheetStateChanged(Sheet.SECOND, newState) }
             }
 
             override fun onSlide(bottomSheet: View, slideOffset: Float) {
-                bottomSheetBehavior1.setAllowDragging(false)
                 fadeView(findViewById(getSheetPeekViewResId(Sheet.SECOND)), slideOffset)
 
                 sheetStateChangeListeners.forEach { listener -> listener.onSlide(Sheet.SECOND, slideOffset) }
@@ -94,15 +87,6 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
 
         //First sheet view click listener
         findViewById<View>(getSheetPeekViewResId(Sheet.FIRST)).setOnClickListener { expandSheet(Sheet.FIRST) }
-
-        //Second sheet view click listener
-        findViewById<View>(getSheetPeekViewResId(Sheet.SECOND)).setOnClickListener { expandSheet(Sheet.SECOND) }
-
-        findViewById<View>(getSheetPeekViewResId(Sheet.SECOND)).setOnTouchListener { _, _ ->
-            bottomSheetBehavior1.setAllowDragging(false)
-            bottomSheetBehavior2.setAllowDragging(true)
-            false
-        }
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
@@ -168,7 +152,8 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
      */
     fun hide(collapse: Boolean, animate: Boolean) {
 
-        bottomSheetBehavior1.setAllowDragging(false)
+        bottomSheetBehavior1.isDraggable = false
+        bottomSheetBehavior2.isDraggable = false
 
         if (!isHidden) {
             val peekHeight = context.resources.getDimensionPixelSize(R.dimen.bottom_sheet_peek_1_height)
@@ -198,7 +183,8 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
      */
     fun unhide(animate: Boolean) {
 
-        bottomSheetBehavior1.setAllowDragging(true)
+        bottomSheetBehavior1.isDraggable = true
+        bottomSheetBehavior2.isDraggable = true
 
         if (isHidden) {
             val peekHeight = context.resources.getDimensionPixelSize(R.dimen.bottom_sheet_peek_1_height)
