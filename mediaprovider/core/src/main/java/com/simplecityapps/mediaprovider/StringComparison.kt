@@ -6,6 +6,8 @@ import kotlin.math.min
 
 object StringComparison {
 
+    const val threshold = 0.90
+
     /**
      * @param score A decimal representing the similarity of two strings. A value of 1.0 indicates an exact match
      * @param aMatchedIndices the indices of String A which were found to match
@@ -121,22 +123,19 @@ object StringComparison {
     }
 
     fun jaroWinklerMultiDistance(a: String, b: String): JaroSimilarity {
-        val aSplit = a.split(" ")
+        val jaroSimilarity = jaroWinklerDistance(a, b)
+        if (jaroSimilarity.score >= threshold) {
+            return jaroSimilarity
+        }
+
         val bSplit = b.split(" ")
 
-        return aSplit.flatMapIndexed { aIndex, a ->
-            bSplit.mapIndexed { bIndex, b ->
-                val jaroSimilarity = jaroWinklerDistance(a, b)
-                jaroSimilarity.copy(
-                    aMatchedIndices = jaroSimilarity.aMatchedIndices.mapKeys { it.key + aIndex + aSplit.take(aIndex).sumBy { it.length } },
-                    bMatchedIndices = jaroSimilarity.bMatchedIndices.mapKeys { it.key + bIndex + bSplit.take(bIndex).sumBy { it.length } })
-            }
-        }.reduce { acc, jaroSimilarity ->
-            JaroSimilarity(
-                score = maxOf(acc.score, jaroSimilarity.score),
-                aMatchedIndices = (acc.aMatchedIndices.asSequence() + jaroSimilarity.aMatchedIndices.asSequence()).groupBy({ it.key }, { it.value }).mapValues { it.value.maxOf { it } },
-                bMatchedIndices = (acc.bMatchedIndices.asSequence() + jaroSimilarity.bMatchedIndices.asSequence()).groupBy({ it.key }, { it.value }).mapValues { it.value.maxOf { it } }
+        return bSplit.mapIndexed { bIndex, b ->
+            val splitSimilarity = jaroWinklerDistance(a, b)
+            splitSimilarity.copy(
+                aMatchedIndices = splitSimilarity.aMatchedIndices,
+                bMatchedIndices = splitSimilarity.bMatchedIndices.mapKeys { it.key + bIndex + bSplit.take(bIndex).sumBy { it.length } }
             )
-        }
+        }.maxByOrNull { it.score }!!
     }
 }
