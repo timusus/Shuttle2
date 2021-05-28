@@ -13,7 +13,6 @@ import android.graphics.drawable.Drawable
 import android.os.Build
 import android.util.LruCache
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationCompat.VISIBILITY_PUBLIC
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.model.friendlyArtistName
 import com.simplecityapps.playback.mediasession.MediaSessionManager
@@ -68,7 +67,7 @@ class PlaybackNotificationManager @Inject constructor(
                 }
             }
             .setShowWhen(false)
-            .setVisibility(VISIBILITY_PUBLIC)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setSmallIcon(R.drawable.ic_stat_name)
             .setStyle(
                 androidx.media.app.NotificationCompat.MediaStyle()
@@ -79,6 +78,9 @@ class PlaybackNotificationManager @Inject constructor(
             .setDeleteIntent(PendingIntent.getService(context, 1, Intent(context, PlaybackService::class.java).apply { action = PlaybackService.ACTION_NOTIFICATION_DISMISS }, 0))
             .addAction(prevAction)
             .addAction(playbackAction)
+            .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setNotificationSilent()
             .addAction(nextAction)
             .setLargeIcon(placeholder)
 
@@ -169,12 +171,20 @@ class PlaybackNotificationManager @Inject constructor(
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             notificationManager.getNotificationChannel(NOTIFICATION_CHANNEL_ID) ?: run {
-                val notificationChannel = NotificationChannel(NOTIFICATION_CHANNEL_ID, "Shuttle", NotificationManager.IMPORTANCE_LOW)
+                val notificationChannel = NotificationChannel(NOTIFICATION_CHANNEL_ID, "S2", NotificationManager.IMPORTANCE_DEFAULT)
                 notificationChannel.enableLights(false)
                 notificationChannel.enableVibration(false)
                 notificationChannel.setShowBadge(false)
                 notificationChannel.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
                 notificationManager.createNotificationChannel(notificationChannel)
+            }
+
+            // Attempt to delete old notification channel.
+            // Todo: This can be removed at any point in the future, it's barely necessary as is.
+            try {
+                notificationManager.deleteNotificationChannel("1")
+            } catch (e: Exception){
+
             }
         }
     }
@@ -215,7 +225,7 @@ class PlaybackNotificationManager @Inject constructor(
 
 
     companion object {
-        const val NOTIFICATION_CHANNEL_ID = "1"
+        const val NOTIFICATION_CHANNEL_ID = "2"
         const val NOTIFICATION_ID = 1
 
         fun drawableToBitmap(drawable: Drawable): Bitmap {
