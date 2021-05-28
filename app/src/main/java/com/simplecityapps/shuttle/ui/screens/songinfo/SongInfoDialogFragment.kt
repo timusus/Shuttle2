@@ -53,7 +53,11 @@ class SongInfoDialogFragment : DialogFragment() {
             getString(R.string.song_info_disc) to song.disc?.toString().orEmpty(),
             getString(R.string.song_info_play_count) to song.playCount.toString(),
             getString(R.string.song_info_genres) to song.genres.joinToString(", "),
-            getString(R.string.song_info_path) to URLDecoder.decode(song.path),
+            getString(R.string.song_info_path) to try {
+                URLDecoder.decode(song.path, Charsets.UTF_8.name())
+            } catch (e: Exception) {
+                song.path
+            },
             getString(R.string.song_info_mime_type) to song.mimeType,
             getString(R.string.song_info_size) to "${"%.2f".format((song.size / 1024f / 1024f))}MB",
             getString(R.string.song_info_lyrics) to song.lyrics,
