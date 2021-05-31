@@ -1,5 +1,6 @@
 package com.simplecityapps.mediaprovider
 
+import android.content.Context
 import android.os.Parcelable
 import androidx.annotation.DrawableRes
 import com.simplecityapps.mediaprovider.model.Song
@@ -28,30 +29,30 @@ interface MediaProvider {
             }
         }
 
-        fun title(): String {
+        fun title(context: Context): String {
             return when (this) {
-                Shuttle -> "Shuttle"
-                MediaStore -> "Android Media Store"
-                Jellyfin -> "Jellyfin"
-                Emby -> "Emby"
-                Plex -> "Plex"
+                Shuttle -> context.getString(R.string.media_provider_title_s2)
+                MediaStore -> context.getString(R.string.media_provider_title_media_store)
+                Jellyfin -> context.getString(R.string.media_provider_title_jellyfin)
+                Emby -> context.getString(R.string.media_provider_title_emby)
+                Plex -> context.getString(R.string.media_provider_title_plex)
             }
         }
 
-        fun description(): String {
+        fun description(context: Context): String {
             return when (this) {
-                Shuttle -> "Scans selected folders & files"
-                MediaStore -> "Android-managed database"
-                Jellyfin -> "Personal media server"
-                Emby -> "Personal media server"
-                Plex -> "Personal media server"
+                Shuttle -> context.getString(R.string.media_provider_description_s2)
+                MediaStore -> context.getString(R.string.media_provider_description_media_store)
+                Jellyfin -> context.getString(R.string.media_provider_description_jellyfin)
+                Emby -> context.getString(R.string.media_provider_description_emby)
+                Plex -> context.getString(R.string.media_provider_description_plex)
             }
         }
 
         @DrawableRes
         fun iconResId(): Int {
             return when (this) {
-                Shuttle -> R.drawable.ic_launcher_foreground_blue
+                Shuttle -> R.drawable.ic_s2
                 MediaStore -> R.drawable.ic_baseline_android_24
                 Jellyfin -> R.drawable.ic_jellyfin
                 Emby -> R.drawable.ic_emby

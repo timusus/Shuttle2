@@ -15,10 +15,14 @@ import com.simplecityapps.mediaprovider.repository.AlbumArtistQuery
 import com.simplecityapps.mediaprovider.repository.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.AlbumQuery
 import com.simplecityapps.mediaprovider.repository.AlbumRepository
+import com.simplecityapps.shuttle.coroutines.concurrentMap
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.collectIndexed
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -108,7 +112,8 @@ class ArtworkDownloadService : Service(), CoroutineScope {
 
             val futures = albumFutures + artistFutures
 
-            futures.asFlow()
+            futures
+                .asFlow()
                 .concurrentMap((Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)) { future ->
                     ensureActive()
                     try {
@@ -170,12 +175,6 @@ class ArtworkDownloadService : Service(), CoroutineScope {
         }
     }
 
-    @OptIn(FlowPreview::class)
-    private fun <T, R> Flow<T>.concurrentMap(concurrencyLevel: Int, transform: suspend (T) -> R): Flow<R> {
-        return flatMapMerge(concurrencyLevel) { value ->
-            flow { emit(transform(value)) }
-        }
-    }
 
     // Static
 

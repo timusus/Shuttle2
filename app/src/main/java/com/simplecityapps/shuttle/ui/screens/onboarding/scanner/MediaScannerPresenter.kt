@@ -8,6 +8,7 @@ import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.squareup.inject.assisted.Assisted
 import com.squareup.inject.assisted.AssistedInject
+import com.squareup.phrase.ListPhrase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -16,13 +17,12 @@ import javax.inject.Named
 interface ScannerContract {
 
     interface View {
-        fun setProgress(progress: Int, total: Int, message: String)
-        fun dismiss()
-        fun setTitle(title: String)
+        fun setProgress(providerType: MediaProvider.Type, progress: Int, total: Int, message: String)
         fun setScanStarted(providerType: MediaProvider.Type)
         fun setScanComplete(providerType: MediaProvider.Type, inserts: Int, updates: Int, deletes: Int)
-        fun setScanFailed()
+        fun setScanFailed(providerType: MediaProvider.Type)
         fun setAllScansComplete()
+        fun dismiss()
     }
 
     interface Presenter : BaseContract.Presenter<View> {
@@ -100,7 +100,7 @@ class ScannerPresenter @AssistedInject constructor(
         }
 
         override fun onProgress(providerType: MediaProvider.Type, progress: Int, total: Int, song: Song) {
-            view?.setProgress(progress, total, "${song.friendlyArtistName} - ${song.name}")
+            view?.setProgress(providerType, progress, total, ListPhrase.from(" • ").join(listOf(song.friendlyArtistName, song.name)).toString())
         }
 
         override fun onComplete(providerType: MediaProvider.Type, inserts: Int, updates: Int, deletes: Int) {
@@ -114,8 +114,8 @@ class ScannerPresenter @AssistedInject constructor(
             }
         }
 
-        override fun onFail() {
-            view?.setScanFailed()
+        override fun onFail(providerType: MediaProvider.Type) {
+            view?.setScanFailed(providerType)
         }
     }
 }

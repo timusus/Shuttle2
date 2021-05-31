@@ -21,8 +21,8 @@
     <string name="pref_theme_extra_dark_title">Extra Dark</string>
     <string name="pref_theme_extra_dark_summary">Use darker colours for minor battery savings on AMOLED screens</string>
 
-    <string name="pref_media_provider_summary">Choose between Shuttle\'s built in Media Scanner, and the Android MediaStore</string>
-    <string name="pref_media_provider_title">Media provider</string>
+    <string name="pref_media_provider_summary">Choose between the built-in media scanner, Android MediaStore, Jellyfin &amp; Emby</string>
+    <string name="pref_media_provider_title">Media providers</string>
 
     <string name="pref_media_rescan_title">Rescan</string>
     <string name="pref_media_rescan_summary">Rescan the device for media</string>
@@ -51,12 +51,12 @@
     <string name="pref_show_changelog_launch_title">Show changelog on launch</string>
 
     <string name="pref_crash_reporting_title">Crash Reporting</string>
-    <string name="pref_crash_reporting_subtitle">Shuttle collects crash data via \'Bugsnag\'. Turn off to opt-out</string>
+    <string name="pref_crash_reporting_subtitle">S2 collects crash data via \'Bugsnag\'. Turn off to opt-out</string>
 
     <string name="pref_view_licenses_title">View licenses</string>
 
     <string name="pref_file_logging_title">File logging</string>
-    <string name="pref_file_logging_subtitle">Writes Shuttle logs to a file on disk</string>
+    <string name="pref_file_logging_subtitle">Writes logs to a file on disk</string>
 
     <string name="pref_copy_debug_logs_subtitle">Copy debug logs</string>
 
@@ -68,9 +68,9 @@
     <string name="theme_entry_dark">Dark</string>
 
     <string name="theme_accent_entry_blue">Shuttle Blue</string>
-    <string name="theme_accent_entry_orange">New black</string>
-    <string name="theme_accent_entry_cyan">Cyanogen</string>
-    <string name="theme_accent_entry_purple">Furple</string>
-    <string name="theme_accent_entry_green">Hulk</string>
+    <string name="theme_accent_entry_orange">Orange</string>
+    <string name="theme_accent_entry_cyan">Cyan</string>
+    <string name="theme_accent_entry_purple">Purple</string>
+    <string name="theme_accent_entry_green">Green</string>
 
 </resources>

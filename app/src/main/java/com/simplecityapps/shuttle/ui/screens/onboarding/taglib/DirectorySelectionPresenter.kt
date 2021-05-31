@@ -57,17 +57,19 @@ class DirectorySelectionPresenter @Inject constructor(
     @ApplicationContext private val context: Context,
     private val taglibMediaProvider: TaglibMediaProvider,
     @Named("AppCoroutineScope") private val appCoroutineScope: CoroutineScope,
-    ) : DirectorySelectionContract.Presenter, BasePresenter<DirectorySelectionContract.View>() {
+) : DirectorySelectionContract.Presenter, BasePresenter<DirectorySelectionContract.View>() {
 
     private var data: MutableList<DirectorySelectionContract.Directory> = mutableListOf()
 
     override fun loadData(contentResolver: ContentResolver) {
-        contentResolver.persistedUriPermissions
-            .filter { uriPermission -> uriPermission.isWritePermission || uriPermission.isReadPermission }
-            .forEach { uriPermission ->
+        val uris = contentResolver.persistedUriPermissions.filter { uriPermission -> uriPermission.isWritePermission || uriPermission.isReadPermission }
+        if (uris.isEmpty()) {
+            setData(data)
+        } else {
+            uris.forEach { uriPermission ->
                 parseUri(contentResolver, uriPermission.uri, uriPermission.isWritePermission)
             }
-        setData(data)
+        }
     }
 
     override fun removeItem(directory: DirectorySelectionContract.Directory) {
@@ -89,6 +91,7 @@ class DirectorySelectionPresenter @Inject constructor(
 
     override fun presentDocumentProvider() {
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+        intent.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
         if (intent.resolveActivity(context.packageManager) != null) {
             view?.startActivity(intent, DirectorySelectionFragment.REQUEST_CODE_OPEN_DOCUMENT)
         } else {
@@ -114,7 +117,6 @@ class DirectorySelectionPresenter @Inject constructor(
     }
 
     fun setData(directories: List<DirectorySelectionContract.Directory>) {
-        taglibMediaProvider.directories = directories.map { directory -> directory.tree }
         view?.setData(directories)
     }
 }

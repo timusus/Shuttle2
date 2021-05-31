@@ -10,7 +10,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
 import timber.log.Timber
 
-open class RecyclerAdapter(scope: CoroutineScope) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+open class RecyclerAdapter(scope: CoroutineScope, val skipIntermediateUpdates: Boolean = true) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     var items = mutableListOf<ViewBinder>()
         private set
@@ -35,7 +35,9 @@ open class RecyclerAdapter(scope: CoroutineScope) : RecyclerView.Adapter<Recycle
         for (operation in channel) {
             when (operation) {
                 is AdapterOperation.Update -> {
-                    updateJob?.cancel()
+                    if (skipIntermediateUpdates) {
+                        updateJob?.cancel()
+                    }
                     updateJob = launch {
                         updateInternal(operation.newItems, operation.callback)
                     }

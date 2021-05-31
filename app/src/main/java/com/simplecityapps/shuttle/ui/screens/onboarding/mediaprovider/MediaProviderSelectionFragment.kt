@@ -5,7 +5,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.TextView
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.Toolbar
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -85,13 +84,6 @@ class MediaProviderSelectionFragment :
         recyclerView.adapter = adapter
 
         toolbar = view.findViewById(R.id.toolbar)
-
-        val subtitleLabel: TextView = view.findViewById(R.id.subtitleLabel)
-        if (isOnboarding) {
-            subtitleLabel.text = getString(R.string.media_providers_add_onboarding)
-        } else {
-            subtitleLabel.text = getString(R.string.media_providers_add)
-        }
 
         addProviderButton = view.findViewById(R.id.addProviderButton)
         addProviderButton.setOnClickListener {
@@ -226,12 +218,12 @@ class MediaProviderSelectionFragment :
                         MaterialAlertDialogBuilder(requireContext())
                             .setTitle(
                                 Phrase.from(requireContext(), R.string.media_provider_dialog_remove_title)
-                                    .put("provider_type", providerType.title())
+                                    .put("provider_type", providerType.title(requireContext()))
                                     .format()
                             )
                             .setMessage(
                                 Phrase.from(requireContext(), R.string.media_provider_dialog_remove_subtitle)
-                                    .put("provider_type", providerType.title())
+                                    .put("provider_type", providerType.title(requireContext()))
                                     .format()
                             )
                             .setPositiveButton(getString(R.string.media_provider_dialog_button_remove)) { _, _ -> presenter.removeMediaProviderType(providerType) }

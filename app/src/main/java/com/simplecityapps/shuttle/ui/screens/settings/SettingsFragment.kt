@@ -5,10 +5,8 @@ import android.os.Bundle
 import android.os.TransactionTooLargeException
 import android.view.LayoutInflater
 import android.view.View
-import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
@@ -21,7 +19,6 @@ import au.com.simplecityapps.shuttle.imageloading.ArtworkDownloadService
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.mediaprovider.MediaImporter
-import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
@@ -36,6 +33,7 @@ import com.simplecityapps.shuttle.ui.ThemeManager
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.screens.changelog.ChangelogDialogFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParentFragmentArgs
+import com.simplecityapps.shuttle.ui.screens.onboarding.scanner.MediaScannerDialogFragment
 import com.simplecityapps.shuttle.ui.screens.opensource.LicensesDialogFragment
 import com.simplecityapps.shuttle.ui.widgets.WidgetManager
 import dagger.hilt.android.AndroidEntryPoint
@@ -50,8 +48,7 @@ import javax.inject.Named
 @Suppress("NAME_SHADOWING")
 @AndroidEntryPoint
 class SettingsFragment : PreferenceFragmentCompat(),
-    SharedPreferences.OnSharedPreferenceChangeListener,
-    MediaImporter.Listener {
+    SharedPreferences.OnSharedPreferenceChangeListener {
 
     @Inject
     lateinit var preferenceManager: GeneralPreferenceManager
@@ -86,10 +83,6 @@ class SettingsFragment : PreferenceFragmentCompat(),
     @Named("AppCoroutineScope")
     @Inject
     lateinit var appCoroutineScope: CoroutineScope
-
-    private var scanningProgressView: ProgressBar? = null
-    private var scanningDialog: AlertDialog? = null
-
 
     private val coroutineScope = CoroutineScope(Dispatchers.Main + CoroutineExceptionHandler { _, throwable -> Timber.e(throwable) })
 
@@ -132,17 +125,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
         }
 
         preferenceScreen.findPreference<Preference>("pref_media_rescan")?.setOnPreferenceClickListener {
-            appCoroutineScope.launch {
-                mediaImporter.import()
-            }
-
-            val customView = View.inflate(requireContext(), R.layout.progress_dialog_loading_horizontal, null)
-            scanningProgressView = customView.findViewById(R.id.progressBar)
-            scanningDialog = MaterialAlertDialogBuilder(requireContext())
-                .setView(customView)
-                .setNegativeButton(getString(R.string.dialog_button_close), null)
-                .show()
-
+            MediaScannerDialogFragment.newInstance().show(childFragmentManager)
             true
         }
 
@@ -255,13 +238,10 @@ class SettingsFragment : PreferenceFragmentCompat(),
 
             true
         }
-
-        mediaImporter.listeners.add(this)
     }
 
     override fun onDestroyView() {
         preferenceScreen.sharedPreferences.unregisterOnSharedPreferenceChangeListener(this)
-        mediaImporter.listeners.remove(this)
 
         coroutineScope.cancel()
 
@@ -286,17 +266,6 @@ class SettingsFragment : PreferenceFragmentCompat(),
     private fun setTheme() {
         themeManager.setDayNightMode()
         activity?.recreate()
-    }
-
-
-    // MediaImporter.Listener Implementation
-
-    override fun onProgress(providerType: MediaProvider.Type, progress: Int, total: Int, song: Song) {
-        scanningProgressView?.progress = ((progress / total.toFloat()) * 100).toInt()
-    }
-
-    override fun onAllComplete() {
-        scanningDialog?.dismiss()
     }
 
 

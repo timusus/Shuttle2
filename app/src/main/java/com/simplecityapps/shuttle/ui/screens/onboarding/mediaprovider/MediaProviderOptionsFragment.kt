@@ -55,7 +55,7 @@ class MediaProviderOptionsFragment : DialogFragment() {
         return MaterialAlertDialogBuilder(requireContext())
             .setTitle(getString(R.string.media_provider_add))
             .setView(view)
-            .setNegativeButton(getString(R.string.media_provider_add), null)
+            .setNegativeButton(getString(R.string.dialog_button_close), null)
             .create()
     }
 

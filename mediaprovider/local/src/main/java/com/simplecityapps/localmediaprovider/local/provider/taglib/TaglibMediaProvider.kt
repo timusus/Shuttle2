@@ -7,8 +7,8 @@ import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.saf.SafDirectoryHelper
+import com.simplecityapps.shuttle.coroutines.concurrentMap
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withContext
 
@@ -21,18 +21,16 @@ class TaglibMediaProvider(
     override val type: MediaProvider.Type
         get() = MediaProvider.Type.Shuttle
 
-    var directories: List<SafDirectoryHelper.DocumentNodeTree>? = null
-
     private suspend fun getDocumentNodes(): List<SafDirectoryHelper.DocumentNode>? {
         return withContext(Dispatchers.IO) {
-            directories?.flatMap { directory -> directory.getLeaves() }
-        }
-    }
-
-    @OptIn(FlowPreview::class)
-    private fun <T, R> Flow<T>.concurrentMap(concurrencyLevel: Int, transform: suspend (T) -> R): Flow<R> {
-        return flatMapMerge(concurrencyLevel) { value ->
-            flow { emit(transform(value)) }
+            context.contentResolver?.persistedUriPermissions
+                ?.filter { uriPermission -> uriPermission.isReadPermission || uriPermission.isWritePermission }
+                ?.map { uriPermission -> SafDirectoryHelper.buildFolderNodeTree(context.contentResolver, uriPermission.uri).distinctUntilChanged() }
+                ?.merge()
+                ?.toList()
+                ?.let { directories ->
+                    directories.flatMap { it.getLeaves() }
+                }
         }
     }
 
@@ -51,7 +49,7 @@ class TaglibMediaProvider(
                 .collectIndexed { index, audioFile ->
                     val song = audioFile.toSong(type)
                     withContext(Dispatchers.Main) {
-                        callback?.invoke(song, index, nodes.size)
+                        callback?.invoke(song, index + 1, nodes.size)
                     }
                     songs.add(song)
                 }

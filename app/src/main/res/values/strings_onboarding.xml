@@ -16,7 +16,7 @@
     <string name="onboarding_permission_button_grant">Grant Permission</string>
     <string name="onboarding_permission_help_text">To find your music, Shuttle needs permission to read your media storage</string>
 
-    <string name="onboarding_media_scanner_tile">No scan in progress</string>
+    <string name="onboarding_media_scanner_title">Media scanner</string>
     <string name="onboarding_media_scanner_scanning">Scanning…</string>
     <string name="onboarding_media_scan">Scan</string>
 

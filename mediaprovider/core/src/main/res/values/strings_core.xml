@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="media_provider_title_s2">S2 Media Provider</string>
+    <string name="media_provider_title_media_store">Android Media Store</string>
+    <string name="media_provider_title_emby">Emby</string>
+    <string name="media_provider_title_jellyfin">Jellyfin</string>
+    <string name="media_provider_title_plex">Plex</string>
+    <string name="media_provider_description_s2">Scans selected folders &amp; files (recommended)</string>
+    <string name="media_provider_description_media_store">Android-managed database</string>
+    <string name="media_provider_description_jellyfin">Personal media server</string>
+    <string name="media_provider_description_emby">Personal media server</string>
+    <string name="media_provider_description_plex">Personal media server</string>
+</resources>

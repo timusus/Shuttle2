@@ -68,8 +68,8 @@ class MediaProviderBinder(
         override fun bind(viewBinder: MediaProviderBinder, isPartial: Boolean) {
             super.bind(viewBinder, isPartial)
 
-            title.text = viewBinder.providerType.title()
-            subtitle.text = viewBinder.providerType.description()
+            title.text = viewBinder.providerType.title(itemView.context)
+            subtitle.text = viewBinder.providerType.description(itemView.context)
             icon.setImageDrawable(AppCompatResources.getDrawable(itemView.context, viewBinder.providerType.iconResId()))
 
             overflowButton.isVisible = viewBinder.showRemoveButton

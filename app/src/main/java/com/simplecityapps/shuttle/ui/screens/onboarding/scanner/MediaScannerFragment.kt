@@ -5,21 +5,29 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
-import android.widget.ProgressBar
-import android.widget.TextView
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.RecyclerView
+import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.recyclerview.SpacesItemDecoration
 import com.simplecityapps.shuttle.ui.common.utils.withArgs
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingChild
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingPage
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParent
-import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+
+sealed class ProgressState {
+    object Unknown : ProgressState()
+    data class InProgress(val progress: Int, val total: Int, val message: String) : ProgressState()
+    data class Complete(val inserts: Int, val updates: Int, val deletes: Int) : ProgressState()
+    object Failed : ProgressState()
+}
 
 @AndroidEntryPoint
 class MediaScannerFragment :
@@ -28,11 +36,9 @@ class MediaScannerFragment :
     OnboardingChild {
 
     private var toolbar: Toolbar by autoCleared()
-    private var progressBar: ProgressBar by autoCleared()
-    private var titleTextView: TextView by autoCleared()
-    private lateinit var subtitleTextView: TextView
-    private var songCountTextView: TextView by autoCleared()
     private var rescanButton: Button by autoCleared()
+    private var recyclerView: RecyclerView by autoCleared()
+    private var adapter: RecyclerAdapter by autoCleared()
 
     @Inject
     lateinit var presenterFactory: ScannerPresenter.Factory
@@ -42,6 +48,10 @@ class MediaScannerFragment :
     private var canShowRescanButton: Boolean = false
     private var shouldDismissOnScanComplete: Boolean = false
     private var shouldShowToolbar: Boolean = false
+
+    private var scanProgress = mutableMapOf<MediaProvider.Type, ProgressState>()
+
+    private var scanCompleted = false
 
 
     // Lifecycle
@@ -65,21 +75,16 @@ class MediaScannerFragment :
         presenter = presenterFactory.create(shouldDismissOnScanComplete)
 
         toolbar = view.findViewById(R.id.toolbar)
-        progressBar = view.findViewById(R.id.progressBar)
-        titleTextView = view.findViewById(R.id.title)
-        subtitleTextView = view.findViewById(R.id.subtitle)
-        songCountTextView = view.findViewById(R.id.songCount)
         rescanButton = view.findViewById(R.id.rescan)
+        recyclerView = view.findViewById(R.id.recyclerView)
+        recyclerView.addItemDecoration(SpacesItemDecoration(8))
+        adapter = RecyclerAdapter(scope = viewLifecycleOwner.lifecycleScope, skipIntermediateUpdates = false)
+        recyclerView.adapter = adapter
 
+        rescanButton.isVisible = canShowRescanButton
         rescanButton.setOnClickListener {
             presenter.startScan()
         }
-
-        setTitle(getString(R.string.onboarding_media_scanner_tile))
-        subtitleTextView.text = null
-        progressBar.isVisible = false
-        songCountTextView.isVisible = false
-        rescanButton.isVisible = true
 
         toolbar.isVisible = shouldShowToolbar
 
@@ -91,7 +96,7 @@ class MediaScannerFragment :
 
         getParent()?.showNextButton(getString(R.string.dialog_button_close))
 
-        if (shouldScanAutomatically) {
+        if (shouldScanAutomatically && !scanCompleted) {
             presenter.startScanOrExit()
         }
     }
@@ -101,69 +106,46 @@ class MediaScannerFragment :
         super.onDestroyView()
     }
 
+    // Private
+
+    private fun updateScanProgress(providerType: MediaProvider.Type, progressState: ProgressState) {
+        scanProgress[providerType] = progressState
+        adapter.update(scanProgress.map { ScanProgressBinder(it.key, it.value) })
+    }
+
 
     // ScannerContract.View Implementation
-
-    override fun setTitle(title: String) {
-        titleTextView.text = title
-    }
 
     override fun dismiss() {
         getParent()?.exit()
     }
 
     override fun setScanStarted(providerType: MediaProvider.Type) {
-        setTitle(getString(R.string.onboarding_media_scanner_scanning))
-        subtitleTextView.text = Phrase.from(requireContext(), R.string.media_provider_title)
-            .put("provider_type", providerType.title())
-            .format()
-        progressBar.isVisible = true
-        progressBar.isIndeterminate = true
+        updateScanProgress(providerType, ProgressState.Unknown)
         rescanButton.isVisible = false
     }
 
-    override fun setProgress(progress: Int, total: Int, message: String) {
-        progressBar.progress = ((progress / total.toFloat()) * 100).toInt()
-        subtitleTextView.text = message
-        progressBar.isIndeterminate = false
-        progressBar.isVisible = true
-        songCountTextView.text = Phrase.from(requireContext(), R.string.media_provider_scan_progress)
-            .put("progress", progress)
-            .put("total", total)
-            .format()
-        songCountTextView.isVisible = true
+    override fun setProgress(providerType: MediaProvider.Type, progress: Int, total: Int, message: String) {
+        updateScanProgress(providerType, ProgressState.InProgress(progress, total, message))
         rescanButton.isVisible = false
     }
 
     override fun setScanComplete(providerType: MediaProvider.Type, inserts: Int, updates: Int, deletes: Int) {
-        setTitle(
-            Phrase.from(requireContext(), R.string.media_provider_scan_success_title)
-                .put("provider_type", providerType.name)
-                .format()
-                .toString()
-        )
-        subtitleTextView.text = Phrase.from(requireContext(), R.string.media_provider_scan_success_subtitle)
-            .put("inserts", inserts)
-            .put("updates", updates)
-            .put("deletes", deletes)
-            .format()
-        progressBar.isVisible = false
-        songCountTextView.isVisible = false
+        updateScanProgress(providerType, ProgressState.Complete(inserts, updates, deletes))
+    }
+
+    override fun setScanFailed(providerType: MediaProvider.Type) {
+        updateScanProgress(providerType, ProgressState.Failed)
+        rescanButton.isVisible = true
     }
 
     override fun setAllScansComplete() {
         if (canShowRescanButton) {
             rescanButton.isVisible = true
         }
+        scanCompleted = true
     }
 
-    override fun setScanFailed() {
-        setTitle(requireContext().getString(R.string.media_provider_scan_failure_title))
-        subtitleTextView.text = requireContext().getString(R.string.media_provider_scan_failure_subtitle)
-        progressBar.isVisible = false
-        songCountTextView.isVisible = false
-        rescanButton.isVisible = true
-    }
 
     // OnboardingChild Implementation
 

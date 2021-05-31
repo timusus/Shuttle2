@@ -29,4 +29,5 @@ object ViewTypes {
     const val Notes = 25
     const val Grouping = 26
     const val SleepTimer = 27
+    const val ScanProgress = 28
 }

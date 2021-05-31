@@ -9,14 +9,7 @@ import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.provider.emby.EmbyMediaProvider
 import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
 import com.simplecityapps.provider.plex.PlexMediaProvider
-import com.simplecityapps.saf.SafDirectoryHelper
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.merge
-import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import javax.inject.Named
 
@@ -34,25 +27,11 @@ class MediaProviderInitializer @Inject constructor(
     override fun init(application: Application) {
         playbackPreferenceManager.mediaProviderTypes.forEach { type ->
             when (type) {
-                MediaProvider.Type.Shuttle -> {
-                    mediaImporter.mediaProviders += taglibMediaProvider
-                    appCoroutineScope.launch {
-                        withContext(Dispatchers.IO) {
-                            application.contentResolver?.persistedUriPermissions
-                                ?.filter { uriPermission -> uriPermission.isReadPermission || uriPermission.isWritePermission }
-                                ?.map { uriPermission -> SafDirectoryHelper.buildFolderNodeTree(application.contentResolver, uriPermission.uri).distinctUntilChanged() }
-                                ?.merge()
-                                ?.toList()
-                                ?.let { directories ->
-                                    taglibMediaProvider.directories = directories
-                                }
-                        }
-                    }
-                }
+                MediaProvider.Type.Shuttle -> mediaImporter.mediaProviders += taglibMediaProvider
                 MediaProvider.Type.MediaStore -> mediaImporter.mediaProviders += mediaStoreMediaProvider
                 MediaProvider.Type.Emby -> mediaImporter.mediaProviders += embyMediaProvider
-                MediaProvider.Type.Jellyfin-> mediaImporter.mediaProviders += jellyfinMediaProvider
-                MediaProvider.Type.Plex-> mediaImporter.mediaProviders +=  plexMediaProvider
+                MediaProvider.Type.Jellyfin -> mediaImporter.mediaProviders += jellyfinMediaProvider
+                MediaProvider.Type.Plex -> mediaImporter.mediaProviders += plexMediaProvider
             }
         }
     }

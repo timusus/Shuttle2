@@ -4,7 +4,8 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -18,7 +19,7 @@ class MediaImporter(
         fun onProgress(providerType: MediaProvider.Type, progress: Int, total: Int, song: Song)
         fun onComplete(providerType: MediaProvider.Type, inserts: Int, updates: Int, deletes: Int) {}
         fun onAllComplete() {}
-        fun onFail() {}
+        fun onFail(providerType: MediaProvider.Type) {}
     }
 
     var isImporting = false
@@ -49,37 +50,37 @@ class MediaImporter(
 
         mediaProviders.forEach { mediaProvider ->
             listeners.forEach { it.onStart(mediaProvider.type) }
-            withContext(Dispatchers.IO) {
-                val existingSongs = songRepository.getSongs(SongQuery.All(includeExcluded = true, providerType = mediaProvider.type)).first().orEmpty()
-                val newSongs = mediaProvider.findSongs { song, progress, total ->
-                    listeners.forEach { it.onProgress(mediaProvider.type, progress, total, song) }
-                }
+        }
 
-                newSongs?.let {
-                    val songDiff = SongDiff(existingSongs, newSongs).apply()
-                    Timber.i("Diff completed: $songDiff")
-                    try {
-                        val result = songRepository.insertUpdateAndDelete(songDiff.inserts, songDiff.updates, songDiff.deletes, mediaProvider.type)
-                        withContext(Dispatchers.Main) {
-                            listeners.forEach { listener -> listener.onComplete(mediaProvider.type, result.first, result.second, result.third) }
+        withContext(Dispatchers.IO) {
+            mediaProviders.map { mediaProvider ->
+                async {
+                    val existingSongs = songRepository.getSongs(SongQuery.All(includeExcluded = true, providerType = mediaProvider.type)).first().orEmpty()
+                    val newSongs = mediaProvider.findSongs { song, progress, total ->
+                        listeners.forEach { it.onProgress(mediaProvider.type, progress, total, song) }
+                    }
+                    newSongs?.let {
+                        val songDiff = SongDiff(existingSongs, newSongs).apply()
+                        Timber.i("Diff completed: $songDiff")
+                        try {
+                            val result = songRepository.insertUpdateAndDelete(songDiff.inserts, songDiff.updates, songDiff.deletes, mediaProvider.type)
+                            withContext(Dispatchers.Main) {
+                                listeners.forEach { listener -> listener.onComplete(mediaProvider.type, result.first, result.second, result.third) }
+                            }
+                        } catch (e: Exception) {
+                            Timber.e(e, "Failed to update song repository")
+                            withContext(Dispatchers.Main) {
+                                listeners.forEach { listener -> listener.onFail(mediaProvider.type) }
+                            }
                         }
-                    } catch (e: Exception) {
-                        Timber.e(e, "Failed to update song repository")
+                    } ?: run {
+                        Timber.e("Failed to import songs.. new song list null")
                         withContext(Dispatchers.Main) {
-                            listeners.forEach { listener -> listener.onFail() }
+                            listeners.forEach { listener -> listener.onFail(mediaProvider.type) }
                         }
                     }
-                } ?: run {
-                    Timber.e("Failed to import songs.. new song list null")
-                    withContext(Dispatchers.Main) {
-                        listeners.forEach { listener -> listener.onFail() }
-                    }
                 }
-                // Small delay between providers scanning, to allow user to view results of each scan
-                if (mediaProviders.size > 1) {
-                    delay(2500)
-                }
-            }
+            }.awaitAll()
         }
 
         listeners.forEach { listener -> listener.onAllComplete() }
