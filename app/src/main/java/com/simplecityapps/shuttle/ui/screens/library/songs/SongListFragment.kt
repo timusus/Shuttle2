@@ -226,7 +226,7 @@ class SongListFragment :
 
         adapter.update(songs.map { song ->
             SongBinder(song, imageLoader, songBinderListener).apply {
-                selected = contextualToolbarHelper.selectedItems.contains(song)
+                selected = contextualToolbarHelper.selectedItems.any { it.id == song.id }
             }
         }, completion = {
             recyclerViewState?.let {

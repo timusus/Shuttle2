@@ -52,9 +52,9 @@ class PlaylistMenuView(
         val subtitle: TextView = view.findViewById(R.id.title)
         val alwaysAddSwitch: SwitchCompat = view.findViewById(R.id.alwaysAddSwitch)
 
-        subtitle.text = Phrase.from(context, R.string.playlist_menu_duplicates_dialog_subtitle)
-            .put("duplicateCount", duplicates.size)
-            .put("playlistName", playlist.name)
+        subtitle.text = Phrase.fromPlural(context, R.plurals.playlist_menu_duplicates_dialog_subtitle, duplicates.size)
+            .putOptional("count", duplicates.size)
+            .put("playlist_name", playlist.name)
             .format()
 
         alwaysAddSwitch.setOnCheckedChangeListener { _, isChecked ->
@@ -135,7 +135,7 @@ class PlaylistMenuView(
         Toast.makeText(
             context,
             Phrase.from(context, R.string.playlist_menu_create_playlist_success)
-                .put("playlistName", playlist.name)
+                .put("playlist_name", playlist.name)
                 .format(),
             Toast.LENGTH_LONG
         ).show()
@@ -149,7 +149,7 @@ class PlaylistMenuView(
         Toast.makeText(
             context,
             Phrase.from(context, R.string.playlist_menu_create_playlist_failure)
-                .put("errorMessage", error.userDescription(context.resources))
+                .put("error_message", error.userDescription(context.resources))
                 .format(),
             Toast.LENGTH_LONG
         ).show()

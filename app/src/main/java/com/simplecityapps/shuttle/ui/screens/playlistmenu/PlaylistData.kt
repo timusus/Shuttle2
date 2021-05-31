@@ -21,7 +21,8 @@ sealed class PlaylistData : Parcelable {
 
         override fun getPlaylistSavedMessage(resources: Resources, playlistName: String): String {
             return Phrase.fromPlural(resources, R.plurals.playlist_songs_added, data.size)
-                .put("playlistName", playlistName)
+                .put("count", data.size)
+                .put("playlist_name", playlistName)
                 .format()
                 .toString()
         }
@@ -34,7 +35,8 @@ sealed class PlaylistData : Parcelable {
 
         override fun getPlaylistSavedMessage(resources: Resources, playlistName: String): String {
             return Phrase.fromPlural(resources, R.plurals.playlist_albums_added, data.size)
-                .put("playlistName", playlistName)
+                .put("count", data.size)
+                .put("playlist_name", playlistName)
                 .format()
                 .toString()
         }
@@ -47,7 +49,8 @@ sealed class PlaylistData : Parcelable {
 
         override fun getPlaylistSavedMessage(resources: Resources, playlistName: String): String {
             return Phrase.fromPlural(resources, R.plurals.playlist_artists_added, data.size)
-                .put("playlistName", playlistName)
+                .put("count", data.size)
+                .put("playlist_name", playlistName)
                 .format()
                 .toString()
         }
@@ -60,7 +63,8 @@ sealed class PlaylistData : Parcelable {
 
         override fun getPlaylistSavedMessage(resources: Resources, playlistName: String): String {
             return Phrase.fromPlural(resources, R.plurals.playlist_genres_added, data.size)
-                .put("playlistName", playlistName)
+                .put("count", data.size)
+                .put("playlist_name", playlistName)
                 .format()
                 .toString()
         }
@@ -71,7 +75,7 @@ sealed class PlaylistData : Parcelable {
 
         override fun getPlaylistSavedMessage(resources: Resources, playlistName: String): String {
             return Phrase.from(resources, R.string.playlist_queue_added)
-                .put("playlistName", playlistName)
+                .put("playlist_name", playlistName)
                 .format()
                 .toString()
         }

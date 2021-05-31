@@ -109,18 +109,18 @@ class QueueFragment :
             when (menuItem.itemId) {
                 R.id.scrollToCurrent -> {
                     presenter.scrollToCurrent()
-                    return@setOnMenuItemClickListener true
+                    true
                 }
                 R.id.playlist -> {
                     playlistMenuView.createPlaylistMenu(toolbar.menu)
-                    return@setOnMenuItemClickListener true
+                    true
                 }
                 R.id.clearQueue -> {
                     presenter.clearQueue()
                     true
                 }
                 else -> {
-                    return@setOnMenuItemClickListener playlistMenuView.handleMenuItem(menuItem, PlaylistData.Queue)
+                    playlistMenuView.handleMenuItem(menuItem, PlaylistData.Queue)
                 }
             }
         }
@@ -237,8 +237,9 @@ class QueueFragment :
                 popupMenu.inflate(R.menu.menu_queue_item)
                 TagEditorMenuSanitiser.sanitise(popupMenu.menu, listOf(queueItem.song.mediaProvider))
                 popupMenu.menu.findItem(R.id.playNext).isVisible = queueItem.isCurrent == false
-                popupMenu.setOnMenuItemClickListener {
-                    when (it.itemId) {
+                playlistMenuView.createPlaylistMenu(popupMenu.menu)
+                popupMenu.setOnMenuItemClickListener { menuItem ->
+                    when (menuItem.itemId) {
                         R.id.removeFromQueue -> {
                             presenter.removeFromQueue(queueItem)
                             return@setOnMenuItemClickListener true
@@ -257,8 +258,10 @@ class QueueFragment :
                             presenter.editTags(queueItem)
                             return@setOnMenuItemClickListener true
                         }
+                        else -> {
+                            playlistMenuView.handleMenuItem(menuItem, PlaylistData.Songs(queueItem.song))
+                        }
                     }
-                    false
                 }
                 popupMenu.show()
             } ?: Timber.e("Failed to show popup menu, queue item null")

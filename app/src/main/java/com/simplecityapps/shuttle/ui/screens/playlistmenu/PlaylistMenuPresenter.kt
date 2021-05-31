@@ -84,7 +84,7 @@ class PlaylistMenuPresenter @Inject constructor(
             } else {
                 val existingSongs = playlistRepository.getSongsForPlaylist(playlist.id).firstOrNull().orEmpty()
                 val songsToAdd = playlistData.getSongs()
-                val duplicates = songsToAdd.filter { song -> existingSongs.contains(song) }
+                val duplicates = songsToAdd.filter { song -> existingSongs.any { it.id == song.id }}
                 if (duplicates.isNotEmpty()) {
                     val deduplicatedPlaylistData = PlaylistData.Songs(songsToAdd - duplicates)
                     view?.onAddToPlaylistWithDuplicates(playlist, playlistData, deduplicatedPlaylistData, duplicates)

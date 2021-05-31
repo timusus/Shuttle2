@@ -34,22 +34,22 @@
     </plurals>
 
     <!-- Playlists -->
-    <string name="playlist_queue_added">Queue added to <xliff:g example="Favourites" id="playlistName">{playlistName}</xliff:g></string>
+    <string name="playlist_queue_added">Queue added to <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></string>
     <plurals name="playlist_songs_added">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> song added to <xliff:g example="Favourites" id="playlistName">{playlistName}</xliff:g></item>
-        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> songs added to <xliff:g example="Favourites" id="playlistName">{playlistName}</xliff:g></item>
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> song added to <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> songs added to <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
     </plurals>
     <plurals name="playlist_albums_added">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> album added to <xliff:g example="Favourites" id="playlistName">{playlistName}</xliff:g></item>
-        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> albums added to <xliff:g example="Favourites" id="playlistName">{playlistName}</xliff:g></item>
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> album added to <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> albums added to <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
     </plurals>
     <plurals name="playlist_artists_added">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> artist added to <xliff:g example="Favourites" id="playlistName">{playlistName}</xliff:g></item>
-        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> artists added to <xliff:g example="Favourites" id="playlistName">{playlistName}</xliff:g></item>
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> artist added to <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> artists added to <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
     </plurals>
     <plurals name="playlist_genres_added">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> genre added to <xliff:g example="Favourites" id="playlistName">{playlistName}</xliff:g></item>
-        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> genre added to <xliff:g example="Favourites" id="playlistName">{playlistName}</xliff:g></item>
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> genre added to <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> genre added to <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
     </plurals>
 
     <string name="delete_song_failed">The song couldn\'t be deleted</string>

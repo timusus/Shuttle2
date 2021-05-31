@@ -8,6 +8,13 @@
         android:id="@+id/removeFromQueue"
         android:title="@string/menu_title_remove_from_queue" />
     <item
+        android:id="@+id/playlist"
+        android:title="@string/menu_title_add_to_playlist">
+
+        <menu />
+
+    </item>
+    <item
         android:id="@+id/exclude"
         android:title="@string/menu_title_exclude" />
     <item

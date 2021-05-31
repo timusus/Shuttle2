@@ -171,11 +171,11 @@ class AlbumDetailFragment :
                     }
                     R.id.playNext -> {
                         presenter.playNext(album)
-                        return@setOnMenuItemClickListener true
+                        true
                     }
                     R.id.editTags -> {
                         presenter.editTags(album)
-                        return@setOnMenuItemClickListener true
+                        true
                     }
                     else -> {
                         playlistMenuView.handleMenuItem(menuItem, PlaylistData.Albums(album))

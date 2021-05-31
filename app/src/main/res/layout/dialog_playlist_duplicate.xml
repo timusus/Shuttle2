@@ -9,13 +9,13 @@
     <TextView
         android:id="@+id/title"
         style="@style/TextSubtitle"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:maxLines="50"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        tools:text="Alice in Chains - Pretty Done already exists in this playlist. Add it anyway?" />
+        tools:text="1 Song already exists in Favorites. Add it anyway?" />
 
     <androidx.appcompat.widget.SwitchCompat
         android:id="@+id/alwaysAddSwitch"
@@ -23,6 +23,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         app:layout_constraintEnd_toEndOf="parent"
+        android:fontFamily="@font/opensans_regular"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/title"
         android:text="@string/playlist_menu_duplicates_switch_always_add" />

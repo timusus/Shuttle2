@@ -123,7 +123,11 @@ class PlaylistDetailFragment :
                     R.id.clear -> {
                         MaterialAlertDialogBuilder(requireContext())
                             .setTitle(getString(R.string.playlist_dialog_title_clear))
-                            .setMessage(getString(R.string.playlist_dialog_subtitle_clear))
+                            .setMessage(
+                                Phrase.from(requireContext(), R.string.playlist_dialog_subtitle_clear)
+                                    .put("playlist_name", playlist.name)
+                                    .format()
+                            )
                             .setPositiveButton(getString(R.string.playlist_dialog_button_clear)) { _, _ -> presenter.clear(playlist) }
                             .setNegativeButton(getString(R.string.dialog_button_cancel), null)
                             .show()
@@ -132,7 +136,11 @@ class PlaylistDetailFragment :
                     R.id.delete -> {
                         MaterialAlertDialogBuilder(requireContext())
                             .setTitle(getString(R.string.playlist_dialog_title_delete))
-                            .setMessage(getString(R.string.playlist_dialog_subtitle_delete))
+                            .setMessage(
+                                Phrase.from(requireContext(), R.string.playlist_dialog_subtitle_delete)
+                                    .put("playlist_name", playlist.name)
+                                    .format()
+                            )
                             .setPositiveButton(getString(R.string.playlist_dialog_button_delete)) { _, _ -> presenter.delete(playlist) }
                             .setNegativeButton(getString(R.string.dialog_button_cancel), null)
                             .show()
