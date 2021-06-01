@@ -72,7 +72,7 @@ class MiniPlaybackFragment : Fragment(), MiniPlayerContract.View {
     override fun setCurrentSong(song: Song?) {
         song?.let {
             titleTextView.text = song.name
-            subtitleTextView.text = ListPhrase.from(" • ").join(listOf(song.friendlyArtistName, song.album))
+            subtitleTextView.text = ListPhrase.from(" • ").join(listOfNotNull(song.friendlyArtistName, song.album))
             imageLoader.loadArtwork(
                 imageView,
                 song,

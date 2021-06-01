@@ -68,7 +68,7 @@ class ExcludeBinder(
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.song.name
-            subtitle.text = ListPhrase.from(" • ").join(listOf(viewBinder.song.albumArtist, viewBinder.song.album))
+            subtitle.text = ListPhrase.from(" • ").join(listOfNotNull(viewBinder.song.albumArtist, viewBinder.song.album))
             viewBinder.imageLoader.loadArtwork(
                 imageView,
                 viewBinder.song,

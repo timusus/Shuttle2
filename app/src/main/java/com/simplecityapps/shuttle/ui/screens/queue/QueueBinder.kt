@@ -116,7 +116,7 @@ class QueueBinder(
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.queueItem.song.name
-            subtitle.text = ListPhrase.from(" • ").join(listOf(viewBinder.queueItem.song.friendlyArtistName, viewBinder.queueItem.song.album))
+            subtitle.text = ListPhrase.from(" • ").join(listOfNotNull(viewBinder.queueItem.song.friendlyArtistName, viewBinder.queueItem.song.album))
             tertiary.text = viewBinder.queueItem.song.duration.toHms("--:--")
 
             viewBinder.imageLoader.loadArtwork(

@@ -100,7 +100,7 @@ class ScannerPresenter @AssistedInject constructor(
         }
 
         override fun onProgress(providerType: MediaProvider.Type, progress: Int, total: Int, song: Song) {
-            view?.setProgress(providerType, progress, total, ListPhrase.from(" • ").join(listOf(song.friendlyArtistName, song.name)).toString())
+            view?.setProgress(providerType, progress, total, ListPhrase.from(" • ").join(listOfNotNull(song.friendlyArtistName, song.name)).toString())
         }
 
         override fun onComplete(providerType: MediaProvider.Type, inserts: Int, updates: Int, deletes: Int) {
