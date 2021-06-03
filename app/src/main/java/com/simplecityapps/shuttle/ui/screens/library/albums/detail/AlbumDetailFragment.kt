@@ -32,6 +32,7 @@ import com.simplecityapps.shuttle.ui.common.dialog.ShowDeleteDialog
 import com.simplecityapps.shuttle.ui.common.dialog.ShowExcludeDialog
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
+import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
 import com.simplecityapps.shuttle.ui.common.utils.toHms
 import com.simplecityapps.shuttle.ui.common.view.DetailImageAnimationHelper
 import com.simplecityapps.shuttle.ui.common.viewbinders.DetailSongBinder
@@ -255,8 +256,8 @@ class AlbumDetailFragment :
             .format()
         toolbar.subtitle = ListPhrase
             .from(" • ")
-            .join(
-                listOfNotNull(
+            .joinSafely(
+                listOf(
                     album.year?.toString(),
                     songsQuantity,
                     album.duration.toHms()

@@ -16,6 +16,7 @@ import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.friendlyAlbumArtistOrArtistName
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.getAttrColor
+import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 import com.simplecityapps.shuttle.ui.common.utils.dp
@@ -71,8 +72,8 @@ class ListAlbumBinder(
                 .format()
             subtitle.text = ListPhrase
                 .from(" • ")
-                .join(
-                    listOfNotNull(
+                .joinSafely(
+                    listOf(
                         viewBinder.album.albumArtist,
                         songQuantity
                     )

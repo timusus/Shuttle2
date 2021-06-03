@@ -17,6 +17,7 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.model.friendlyArtistName
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.getAttrColor
+import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 import com.simplecityapps.shuttle.ui.common.utils.dp
@@ -114,8 +115,8 @@ open class SongBinder(
             title.text = viewBinder.song.name
             subtitle.text = ListPhrase
                 .from(" • ")
-                .join(
-                    listOfNotNull(
+                .joinSafely(
+                    listOf(
                         viewBinder.song.friendlyArtistName,
                         viewBinder.song.album,
                     )

@@ -6,6 +6,7 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.model.friendlyArtistName
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
+import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
 import com.squareup.inject.assisted.Assisted
 import com.squareup.inject.assisted.AssistedInject
 import com.squareup.phrase.ListPhrase
@@ -100,7 +101,14 @@ class ScannerPresenter @AssistedInject constructor(
         }
 
         override fun onProgress(providerType: MediaProvider.Type, progress: Int, total: Int, song: Song) {
-            view?.setProgress(providerType, progress, total, ListPhrase.from(" • ").join(listOfNotNull(song.friendlyArtistName, song.name)).toString())
+            view?.setProgress(
+                providerType = providerType,
+                progress = progress,
+                total = total,
+                message = ListPhrase.from(" • ")
+                    .joinSafely(listOf(song.friendlyArtistName, song.name))
+                    .toString()
+            )
         }
 
         override fun onComplete(providerType: MediaProvider.Type, inserts: Int, updates: Int, deletes: Int) {

@@ -17,6 +17,7 @@ import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.PlaybackWatcherCallback
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 import com.simplecityapps.shuttle.ui.common.utils.dp
@@ -117,7 +118,8 @@ class QueueBinder(
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.queueItem.song.name
-            subtitle.text = ListPhrase.from(" • ").join(listOfNotNull(viewBinder.queueItem.song.friendlyArtistName, viewBinder.queueItem.song.album))
+            subtitle.text = ListPhrase.from(" • ")
+                .joinSafely(listOf(viewBinder.queueItem.song.friendlyArtistName, viewBinder.queueItem.song.album))
             tertiary.text = viewBinder.queueItem.song.duration.toHms("--:--")
 
             viewBinder.imageLoader.loadArtwork(

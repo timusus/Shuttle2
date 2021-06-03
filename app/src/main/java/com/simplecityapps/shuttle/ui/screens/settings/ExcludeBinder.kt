@@ -10,6 +10,7 @@ import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 import com.simplecityapps.shuttle.ui.common.utils.dp
@@ -69,7 +70,8 @@ class ExcludeBinder(
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.song.name
-            subtitle.text = ListPhrase.from(" • ").join(listOfNotNull(viewBinder.song.albumArtist, viewBinder.song.album))
+            subtitle.text = ListPhrase.from(" • ")
+                .joinSafely(listOf(viewBinder.song.albumArtist, viewBinder.song.album))
             viewBinder.imageLoader.loadArtwork(
                 imageView = imageView,
                 data = viewBinder.song,

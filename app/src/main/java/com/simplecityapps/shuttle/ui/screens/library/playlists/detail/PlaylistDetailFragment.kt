@@ -28,6 +28,7 @@ import com.simplecityapps.shuttle.ui.common.dialog.ShowDeleteDialog
 import com.simplecityapps.shuttle.ui.common.dialog.ShowExcludeDialog
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
+import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
 import com.simplecityapps.shuttle.ui.common.utils.toHms
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongBinder
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
@@ -184,8 +185,8 @@ class PlaylistDetailFragment :
             .format()
         toolbar?.subtitle = ListPhrase
             .from(" • ")
-            .join(
-                listOfNotNull(
+            .joinSafely(
+                listOf(
                     quantityString,
                     playlist.duration.toHms(),
                 )

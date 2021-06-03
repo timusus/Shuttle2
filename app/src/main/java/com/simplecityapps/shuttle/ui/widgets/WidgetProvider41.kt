@@ -9,6 +9,7 @@ import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.model.friendlyArtistName
 import com.simplecityapps.playback.getArtworkCacheKey
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
 import com.simplecityapps.shuttle.ui.common.utils.dp
 import com.squareup.phrase.ListPhrase
 
@@ -40,7 +41,10 @@ class WidgetProvider41 : ShuttleAppWidgetProvider() {
             val song = currentItem.song
 
             setTextViewText(R.id.title, song.name)
-            setTextViewText(R.id.subtitle, ListPhrase.from(" • ").join(listOfNotNull(song.friendlyArtistName, song.album)))
+            setTextViewText(
+                R.id.subtitle, ListPhrase.from(" • ")
+                    .joinSafely(listOf(song.friendlyArtistName, song.album))
+            )
 
             val artworkSize = 40.dp
 

@@ -12,6 +12,7 @@ import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.model.friendlyArtistName
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 import com.squareup.phrase.ListPhrase
@@ -77,8 +78,8 @@ class GridSongBinder(
             title.text = viewBinder.song.name
             subtitle.text = ListPhrase
                 .from(" • ")
-                .join(
-                    listOfNotNull(
+                .joinSafely(
+                    listOf(
                         viewBinder.song.friendlyArtistName,
                         viewBinder.song.album,
                     )
