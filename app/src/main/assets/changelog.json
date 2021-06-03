@@ -1,15 +1,20 @@
 [
   {
-    "versionName": "0.3.6",
-    "releaseDate": "01/06/2021",
+    "versionName": "0.3.7",
+    "releaseDate": "04/06/2021",
     "features": [],
     "fixes": [
-      "Crash fix"
+      "Fixed an issue where the queue could not be scrolled after rearranging a queue item, and other conditions",
+      "Fixed a crash when attempting to display a song with no artist or album artist",
+      "Fixed potential crashes when displaying bullet-separated items, where the text is blank",
+      "Use DP instead of PX when rounding corners of artwork"
     ],
     "improvements": [
+      "Improved lyrics contrast (background is darker)",
+      "Don't log the currently playing song's path, as this may include sensitive information (host/path/api key) for Jellyfin/Emby. Note: these were only visible when copying debug logs or connecting to the phone via adb"
     ],
     "notes": [
-      "S2 is preparing for an official release! If you have any feedback on how it could be improved, please join the discussion on Discord: https://discord.gg/YkhSuHJ"
+      "S2 will soon be free to try for 2 weeks. As always, feel free to get in touch via Discord: https://discord.gg/YkhSuHJ"
     ]
   },
   {
