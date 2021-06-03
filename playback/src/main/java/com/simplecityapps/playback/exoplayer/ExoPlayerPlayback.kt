@@ -142,7 +142,6 @@ class ExoPlayerPlayback(
         callback?.onPlaybackStateChanged(PlaybackState.Loading)
 
         val mediaInfo = mediaInfoProvider.getMediaInfo(current)
-        Timber.i("Path: ${mediaInfo.path}")
         player.addListener(eventListener)
         player.seekTo(seekPosition.toLong())
         player.setMediaItem(getMediaItem(mediaInfo))
