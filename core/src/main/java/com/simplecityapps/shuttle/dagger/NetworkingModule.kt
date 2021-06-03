@@ -47,7 +47,7 @@ open class NetworkingModule {
     @Provides
     fun provideMoshi(): Moshi {
         return Moshi.Builder()
-            .add(KotlinJsonAdapterFactory())
+            .addLast(KotlinJsonAdapterFactory())
             .add(Date::class.java, Rfc3339DateJsonAdapter())
             .build()
     }
