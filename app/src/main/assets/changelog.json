@@ -7,7 +7,7 @@
       "Fixed a crash when scanning media"
     ],
     "improvements": [
-      "Show blank instead of 'null' for tracks with unknown track number",
+      "Show blank instead of 'null' for tracks with unknown track number"
     ],
     "notes": [
       "S2 will soon be free to try for 2 weeks. As always, feel free to get in touch via Discord: https://discord.gg/YkhSuHJ"
