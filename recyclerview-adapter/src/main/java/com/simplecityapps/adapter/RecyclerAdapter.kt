@@ -35,9 +35,7 @@ open class RecyclerAdapter(scope: CoroutineScope, val skipIntermediateUpdates: B
         for (operation in channel) {
             when (operation) {
                 is AdapterOperation.Update -> {
-                    if (skipIntermediateUpdates) {
-                        updateJob?.cancel()
-                    }
+                    updateJob?.cancel()
                     updateJob = launch {
                         updateInternal(operation.newItems, operation.callback)
                     }
@@ -84,7 +82,9 @@ open class RecyclerAdapter(scope: CoroutineScope, val skipIntermediateUpdates: B
 
     private suspend fun updateInternal(newItems: MutableList<ViewBinder>, callback: (() -> Unit)? = null) {
         val diffResult = withContext(Dispatchers.IO) {
-            delay(50) // Acts as a debounce, there's a 50ms window for a new job to come in and cancel this one
+            if (skipIntermediateUpdates) {
+                delay(50) // Acts as a debounce, there's a 50ms window for a new job to come in and cancel this one
+            }
             DiffUtil.calculateDiff(DiffCallbacks(items, newItems))
         }
 
