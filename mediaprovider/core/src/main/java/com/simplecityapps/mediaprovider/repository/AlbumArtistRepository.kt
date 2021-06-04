@@ -48,8 +48,16 @@ enum class AlbumArtistSortOrder : Serializable {
         }
 
     companion object {
-        private val collator by lazy { Collator.getInstance().apply { strength = Collator.TERTIARY } }
-        val defaultComparator: Comparator<AlbumArtist> by lazy { Comparator { a, b -> collator.compare(a.groupKey.key ?: "", b.groupKey.key ?: "") } }
-        val playCountComparator: Comparator<AlbumArtist> by lazy { compareByDescending<AlbumArtist> { albumArtist -> albumArtist.playCount }.then(Default.comparator) }
+        private val collator by lazy {
+            Collator.getInstance().apply { strength = Collator.TERTIARY }
+        }
+
+        val defaultComparator: Comparator<AlbumArtist> by lazy {
+            Comparator { a, b -> collator.compare(a.groupKey.key ?: "", b.groupKey.key ?: "") }
+        }
+
+        val playCountComparator: Comparator<AlbumArtist> by lazy {
+            defaultComparator.then(compareByDescending { albumArtist -> albumArtist.playCount })
+        }
     }
 }

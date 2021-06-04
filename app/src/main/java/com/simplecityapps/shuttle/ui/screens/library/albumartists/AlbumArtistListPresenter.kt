@@ -36,6 +36,7 @@ interface AlbumArtistListContract {
         fun showLoadError(error: Error)
         fun showTagEditor(songs: List<Song>)
         fun setViewMode(viewMode: ViewMode)
+        fun updateToolbarMenuViewMode(viewMode: ViewMode)
     }
 
     interface Presenter {
@@ -46,6 +47,7 @@ interface AlbumArtistListContract {
         fun editTags(albumArtists: List<AlbumArtist>)
         fun play(albumArtist: AlbumArtist)
         fun setViewMode(viewMode: ViewMode)
+        fun updateToolbarMenu()
     }
 }
 
@@ -136,6 +138,7 @@ class AlbumArtistListPresenter @Inject constructor(
     override fun setViewMode(viewMode: ViewMode) {
         preferenceManager.artistListViewMode = viewMode.name
         loadAlbumArtists() // Intrinsically calls `view?.setViewMode()`
+        view?.updateToolbarMenuViewMode(viewMode)
     }
 
     override fun exclude(albumArtist: AlbumArtist) {
@@ -168,5 +171,10 @@ class AlbumArtistListPresenter @Inject constructor(
                 }
             }
         }
+    }
+
+    override fun updateToolbarMenu() {
+        view?.updateToolbarMenuViewMode(preferenceManager.artistListViewMode.toViewMode())
+
     }
 }

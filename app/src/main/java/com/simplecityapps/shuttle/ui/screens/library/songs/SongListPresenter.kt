@@ -38,7 +38,7 @@ interface SongListContract {
 
     interface View {
         fun setData(songs: List<Song>, resetPosition: Boolean)
-        fun updateSortOrder(sortOrder: SongSortOrder)
+        fun updateToolbarMenuSortOrder(sortOrder: SongSortOrder)
         fun showLoadError(error: Error)
         fun onAddedToQueue(songs: List<Song>)
         fun setLoadingState(state: LoadingState)
@@ -54,8 +54,8 @@ interface SongListContract {
         fun exclude(song: Song)
         fun delete(song: Song)
         fun setSortOrder(songSortOrder: SongSortOrder)
-        fun updateSortOrder()
         fun getFastscrollPrefix(song: Song): String?
+        fun updateToolbarMenu()
     }
 }
 
@@ -80,7 +80,7 @@ class SongListPresenter @Inject constructor(
     override fun bindView(view: SongListContract.View) {
         super.bindView(view)
 
-        view.updateSortOrder(sortPreferenceManager.sortOrderSongList)
+        view.updateToolbarMenuSortOrder(sortPreferenceManager.sortOrderSongList)
     }
 
     override fun unbindView() {
@@ -179,22 +179,22 @@ class SongListPresenter @Inject constructor(
                     this@SongListPresenter.songs = songs.sortedWith(songSortOrder.comparator)
                 }
                 view?.setData(songs, true)
-                view?.updateSortOrder(songSortOrder)
+                view?.updateToolbarMenuSortOrder(songSortOrder)
             }
         }
-    }
-
-    override fun updateSortOrder() {
-        view?.updateSortOrder(sortPreferenceManager.sortOrderSongList)
     }
 
     override fun getFastscrollPrefix(song: Song): String? {
         return when (sortPreferenceManager.sortOrderSongList) {
             SongSortOrder.SongName -> song.name?.firstOrNull()?.toString()
             SongSortOrder.ArtistGroupKeyComparator -> song.artistGroupKey.key?.firstOrNull()?.toString()?.toUpperCase(Locale.getDefault())
-            SongSortOrder.AlbumName -> song.albumGroupKey.album?.firstOrNull()?.toString()?.toUpperCase(Locale.getDefault())
+            SongSortOrder.AlbumName -> song.albumGroupKey.key?.firstOrNull()?.toString()?.toUpperCase(Locale.getDefault())
             SongSortOrder.Year -> song.year.toString()
             else -> null
         }
+    }
+
+    override fun updateToolbarMenu() {
+        view?.updateToolbarMenuSortOrder(sortPreferenceManager.sortOrderSongList)
     }
 }

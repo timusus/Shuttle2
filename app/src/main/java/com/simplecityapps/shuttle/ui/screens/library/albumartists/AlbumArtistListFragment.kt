@@ -117,7 +117,7 @@ class AlbumArtistListFragment :
         contextualToolbarHelper = ContextualToolbarHelper()
         contextualToolbarHelper.callback = contextualToolbarCallback
 
-        updateToolbar()
+        updateContextualToolbar()
 
         presenter.bindView(this)
         playlistMenuPresenter.bindView(playlistMenuView)
@@ -127,6 +127,8 @@ class AlbumArtistListFragment :
         super.onCreateOptionsMenu(menu, inflater)
 
         inflater.inflate(R.menu.menu_artist_list, menu)
+
+        presenter.updateToolbarMenu()
     }
 
     override fun onResume() {
@@ -134,7 +136,7 @@ class AlbumArtistListFragment :
 
         presenter.loadAlbumArtists()
 
-        updateToolbar()
+        updateContextualToolbar()
     }
 
     override fun onPause() {
@@ -181,7 +183,7 @@ class AlbumArtistListFragment :
 
     // Private
 
-    private fun updateToolbar() {
+    private fun updateContextualToolbar() {
         findToolbarHost()?.apply {
             contextualToolbar?.let { contextualToolbar ->
                 contextualToolbar.menu.clear()
@@ -304,6 +306,13 @@ class AlbumArtistListFragment :
                     recyclerView.addItemDecoration(GridSpacingItemDecoration(8, true))
                 }
             }
+        }
+    }
+
+    override fun updateToolbarMenuViewMode(viewMode: ViewMode) {
+        when (viewMode) {
+            ViewMode.List -> findToolbarHost()?.toolbar?.menu?.findItem(R.id.listViewMode)?.isChecked = true
+            ViewMode.Grid -> findToolbarHost()?.toolbar?.menu?.findItem(R.id.gridViewMode)?.isChecked = true
         }
     }
 

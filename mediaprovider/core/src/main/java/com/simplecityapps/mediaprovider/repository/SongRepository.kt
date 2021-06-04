@@ -2,7 +2,6 @@ package com.simplecityapps.mediaprovider.repository
 
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.Song
-import com.simplecityapps.mediaprovider.model.removeArticles
 import kotlinx.coroutines.flow.Flow
 import java.io.Serializable
 import java.text.Collator
@@ -106,7 +105,7 @@ enum class SongSortOrder : Serializable {
                 Default -> defaultComparator
                 SongName -> songNameComparator
                 ArtistGroupKeyComparator -> artistGroupKeyComparator
-                AlbumName -> albumNameComparator
+                AlbumName -> albumGroupKeyComparator
                 Year -> yearComparator
                 Duration -> durationComparator
                 Track -> trackComparator
@@ -117,20 +116,63 @@ enum class SongSortOrder : Serializable {
         }
 
     companion object {
-        private val collator: Collator by lazy { Collator.getInstance().apply { strength = Collator.TERTIARY } }
-        val defaultComparator: Comparator<Song> by lazy { compareBy({ song -> song.album ?: "" }, { song -> song.disc }, { song -> song.track }) }
-        val songNameComparator: Comparator<Song> by lazy { Comparator<Song> { a, b -> collator.compare(a.name, b.name) }.then(defaultComparator) }
+        private val collator: Collator by lazy {
+            Collator.getInstance().apply { strength = Collator.TERTIARY }
+        }
+
+        val defaultComparator: Comparator<Song> by lazy {
+            compareByDescending<Song, Int?>(nullsFirst(), { song -> song.year })
+                .then { a, b -> collator.compare(a.albumGroupKey.key ?: "", b.albumGroupKey.key ?: "") }
+                .then { a, b -> collator.compare(a.albumGroupKey.artistGroupKey.key ?: "", b.albumGroupKey.artistGroupKey.key ?: "") }
+                .then(compareBy { song -> song.disc })
+                .then(compareBy { song -> song.track })
+        }
+
+        val songNameComparator: Comparator<Song> by lazy {
+            Comparator<Song> { a, b -> collator.compare(a.name, b.name) }
+                .then(defaultComparator)
+        }
+
         val artistGroupKeyComparator: Comparator<Song> by lazy {
-            Comparator<Song> { a, b -> collator.compare(a.artistGroupKey.key ?: "", b.artistGroupKey.key ?: "") }.then(compareBy { song -> song.album }).then(defaultComparator)
+            Comparator<Song> { a, b -> collator.compare(a.artistGroupKey.key ?: "", b.artistGroupKey.key ?: "") }
+                .then(defaultComparator)
         }
-        val albumNameComparator: Comparator<Song> by lazy { Comparator<Song> { a, b -> collator.compare(a.album?.removeArticles() ?: "", b.album?.removeArticles() ?: "") }.then(defaultComparator) }
+
+        val albumGroupKeyComparator: Comparator<Song> by lazy {
+            Comparator<Song> { a, b -> collator.compare(a.albumGroupKey.key ?: "", b.albumGroupKey.key ?: "") }
+                .then(defaultComparator)
+        }
+
         val yearComparator: Comparator<Song> by lazy {
-            Comparator<Song> { a, b -> zeroLastComparator.compare(a.year, b.year) }.then(compareBy({ song -> song.year }, { song -> song.album })).then(defaultComparator)
+            defaultComparator
         }
-        val durationComparator: Comparator<Song> by lazy { compareBy<Song> { song -> song.duration }.then(defaultComparator) }
-        val trackComparator: Comparator<Song> by lazy { compareBy<Song>({ song -> song.disc }, { song -> song.track }).then(defaultComparator) }
-        val playCountComparator: Comparator<Song> by lazy { compareByDescending<Song> { song -> song.playCount }.then(defaultComparator) }
-        val recentlyAddedComparator: Comparator<Song> by lazy { compareByDescending<Song> { song -> song.lastModified.time / 1000 / 60 }.then(defaultComparator) } // Round to the nearest minute
-        val recentlyPlayedComparator: Comparator<Song> by lazy { compareByDescending<Song> { song -> song.lastCompleted }.then(defaultComparator) }
+
+        val durationComparator: Comparator<Song> by lazy {
+            compareBy<Song> { song -> song.duration }
+                .then(defaultComparator)
+        }
+
+        val trackComparator: Comparator<Song> by lazy {
+            compareBy<Song>(
+                { song -> song.disc },
+                { song -> song.track }
+            )
+                .then(defaultComparator)
+        }
+
+        val playCountComparator: Comparator<Song> by lazy {
+            compareByDescending<Song> { song -> song.playCount }
+                .then(defaultComparator)
+        }
+
+        val recentlyAddedComparator: Comparator<Song> by lazy {
+            compareByDescending<Song> { song -> song.lastModified.time / 1000 / 60 } // Round to the nearest minute
+                .then(defaultComparator)
+        }
+
+        val recentlyPlayedComparator: Comparator<Song> by lazy {
+            compareByDescending<Song> { song -> song.lastCompleted }
+                .then(defaultComparator)
+        }
     }
 }

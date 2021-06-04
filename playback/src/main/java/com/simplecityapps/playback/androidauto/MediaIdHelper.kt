@@ -73,7 +73,7 @@ class MediaIdHelper @Inject constructor(
                                 listOf(
                                     SongQuery.AlbumGroupKey(
                                         key = AlbumGroupKey(
-                                            album = mediaIdWrapper.albumName.toLowerCase(Locale.getDefault()).removeArticles(),
+                                            key = mediaIdWrapper.albumName.toLowerCase(Locale.getDefault()).removeArticles(),
                                             artistGroupKey = ArtistGroupKey(mediaIdWrapper.albumArtistName.toLowerCase(Locale.getDefault()).removeArticles())
                                         )
                                     )
@@ -220,7 +220,7 @@ class MediaIdHelper @Inject constructor(
                                         listOf(
                                             SongQuery.AlbumGroupKey(
                                                 AlbumGroupKey(
-                                                    album = mediaIdWrapper.directory.albumName.toLowerCase(Locale.getDefault()).removeArticles(),
+                                                    key = mediaIdWrapper.directory.albumName.toLowerCase(Locale.getDefault()).removeArticles(),
                                                     artistGroupKey = ArtistGroupKey(mediaIdWrapper.directory.albumArtistName.toLowerCase(Locale.getDefault()).removeArticles())
                                                 )
                                             )

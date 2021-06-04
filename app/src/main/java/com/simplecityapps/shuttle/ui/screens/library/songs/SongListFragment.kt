@@ -120,7 +120,7 @@ class SongListFragment :
 
         contextualToolbarHelper = ContextualToolbarHelper()
 
-        updateToolbar()
+        updateContextualToolbar()
 
         presenter.bindView(this)
         playlistMenuPresenter.bindView(playlistMenuView)
@@ -130,6 +130,8 @@ class SongListFragment :
         super.onCreateOptionsMenu(menu, inflater)
 
         inflater.inflate(R.menu.menu_song_list, menu)
+
+        presenter.updateToolbarMenu()
     }
 
     override fun onResume() {
@@ -137,9 +139,7 @@ class SongListFragment :
 
         presenter.loadSongs(false)
 
-        updateToolbar()
-
-        presenter.updateSortOrder()
+        updateContextualToolbar()
     }
 
     override fun onPause() {
@@ -196,7 +196,7 @@ class SongListFragment :
 
     // Private
 
-    private fun updateToolbar() {
+    private fun updateContextualToolbar() {
         findToolbarHost()?.apply {
             contextualToolbar?.let { contextualToolbar ->
                 contextualToolbar.menu.clear()
@@ -256,7 +256,7 @@ class SongListFragment :
         })
     }
 
-    override fun updateSortOrder(sortOrder: SongSortOrder) {
+    override fun updateToolbarMenuSortOrder(sortOrder: SongSortOrder) {
         findToolbarHost()?.toolbar?.menu?.let { menu ->
             when (sortOrder) {
                 SongSortOrder.SongName -> menu.findItem(R.id.sortSongName)?.isChecked = true

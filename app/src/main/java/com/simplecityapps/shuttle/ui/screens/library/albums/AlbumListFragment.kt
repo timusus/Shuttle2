@@ -131,7 +131,7 @@ class AlbumListFragment :
 
         contextualToolbarHelper = ContextualToolbarHelper()
 
-        updateToolbar()
+        updateContextualToolbar()
 
         presenter.bindView(this)
         playlistMenuPresenter.bindView(playlistMenuView)
@@ -141,6 +141,8 @@ class AlbumListFragment :
         super.onCreateOptionsMenu(menu, inflater)
 
         inflater.inflate(R.menu.menu_album_list, menu)
+
+        presenter.updateToolbarMenu()
     }
 
     override fun onResume() {
@@ -148,9 +150,9 @@ class AlbumListFragment :
 
         presenter.loadAlbums(false)
 
-        updateToolbar()
+        updateContextualToolbar()
 
-        presenter.updateSortOrder()
+        presenter.updateToolbarMenu()
     }
 
     override fun onPause() {
@@ -209,7 +211,7 @@ class AlbumListFragment :
 
     // Private
 
-    private fun updateToolbar() {
+    private fun updateContextualToolbar() {
         findToolbarHost()?.apply {
             contextualToolbar?.let { contextualToolbar ->
                 contextualToolbar.menu.clear()
@@ -282,7 +284,7 @@ class AlbumListFragment :
         })
     }
 
-    override fun updateSortOrder(sortOrder: AlbumSortOrder) {
+    override fun updateToolbarMenuSortOrder(sortOrder: AlbumSortOrder) {
         findToolbarHost()?.toolbar?.menu?.let { menu ->
             when (sortOrder) {
                 AlbumSortOrder.AlbumName -> menu.findItem(R.id.sortAlbumName)?.isChecked = true
@@ -292,6 +294,13 @@ class AlbumListFragment :
                     // Nothing to do
                 }
             }
+        }
+    }
+
+    override fun updateToolbarMenuViewMode(viewMode: ViewMode) {
+        when (viewMode) {
+            ViewMode.List -> findToolbarHost()?.toolbar?.menu?.findItem(R.id.listViewMode)?.isChecked = true
+            ViewMode.Grid -> findToolbarHost()?.toolbar?.menu?.findItem(R.id.gridViewMode)?.isChecked = true
         }
     }
 
@@ -337,7 +346,6 @@ class AlbumListFragment :
     override fun setViewMode(viewMode: ViewMode) {
         when (viewMode) {
             ViewMode.List -> {
-                findToolbarHost()?.toolbar?.menu?.findItem(R.id.listViewMode)?.isChecked = true
                 (recyclerView.layoutManager as GridLayoutManager).spanSizeLookup = SpanSizeLookup(adapter, 1)
                 (recyclerView.layoutManager as GridLayoutManager).spanCount = 1
                 if (recyclerView.itemDecorationCount != 0) {
@@ -345,7 +353,6 @@ class AlbumListFragment :
                 }
             }
             ViewMode.Grid -> {
-                findToolbarHost()?.toolbar?.menu?.findItem(R.id.gridViewMode)?.isChecked = true
                 (recyclerView.layoutManager as GridLayoutManager).spanCount = 3
                 (recyclerView.layoutManager as GridLayoutManager).spanSizeLookup = SpanSizeLookup(adapter, 3)
                 if (recyclerView.itemDecorationCount == 0) {

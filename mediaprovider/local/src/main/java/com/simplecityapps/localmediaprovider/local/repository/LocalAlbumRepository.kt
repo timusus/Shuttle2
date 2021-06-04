@@ -43,7 +43,6 @@ class LocalAlbumRepository(
             .map { albums ->
                 albums
                     .filter(query.predicate)
-                    .toMutableList()
                     .sortedWith(query.sortOrder.comparator)
             }
     }

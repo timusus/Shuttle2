@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import java.util.*
 import javax.inject.Inject
 
@@ -33,7 +34,8 @@ class AlbumListContract {
 
     interface View {
         fun setAlbums(albums: List<Album>, viewMode: ViewMode, resetPosition: Boolean)
-        fun updateSortOrder(sortOrder: AlbumSortOrder)
+        fun updateToolbarMenuSortOrder(sortOrder: AlbumSortOrder)
+        fun updateToolbarMenuViewMode(viewMode: ViewMode)
         fun onAddedToQueue(albums: List<Album>)
         fun setLoadingState(state: LoadingState)
         fun setLoadingProgress(progress: Float)
@@ -52,8 +54,8 @@ class AlbumListContract {
         fun setViewMode(viewMode: ViewMode)
         fun albumShuffle()
         fun setSortOrder(albumSortOrder: AlbumSortOrder)
-        fun updateSortOrder()
         fun getFastscrollPrefix(album: Album): String?
+        fun updateToolbarMenu()
     }
 }
 
@@ -79,7 +81,6 @@ class AlbumListPresenter @Inject constructor(
     override fun bindView(view: AlbumListContract.View) {
         super.bindView(view)
 
-        view.updateSortOrder(sortPreferenceManager.sortOrderAlbumList)
         view.setViewMode(preferenceManager.albumListViewMode.toViewMode())
     }
 
@@ -98,6 +99,7 @@ class AlbumListPresenter @Inject constructor(
             }
         }
         launch {
+            Timber.i("Loading with sort order: ${sortPreferenceManager.sortOrderAlbumList}")
             albumRepository.getAlbums(AlbumQuery.All(sortOrder = sortPreferenceManager.sortOrderAlbumList))
                 .flowOn(Dispatchers.IO)
                 .distinctUntilChanged()
@@ -147,6 +149,7 @@ class AlbumListPresenter @Inject constructor(
         preferenceManager.albumListViewMode = viewMode.name
         view?.setViewMode(viewMode)
         view?.setAlbums(albums, viewMode, false)
+        view?.updateToolbarMenuViewMode(viewMode)
     }
 
     override fun exclude(album: Album) {
@@ -208,24 +211,26 @@ class AlbumListPresenter @Inject constructor(
 
     override fun setSortOrder(albumSortOrder: AlbumSortOrder) {
         if (sortPreferenceManager.sortOrderAlbumList != albumSortOrder) {
+            Timber.i("Updating sort order: $albumSortOrder")
             launch {
                 withContext(Dispatchers.IO) {
                     sortPreferenceManager.sortOrderAlbumList = albumSortOrder
-                    this@AlbumListPresenter.albums = albums.sortedWith(albumSortOrder.comparator)
+                    albums = albums.sortedWith(albumSortOrder.comparator)
                 }
                 view?.setAlbums(albums, preferenceManager.albumListViewMode.toViewMode(), true)
-                view?.updateSortOrder(albumSortOrder)
+                view?.updateToolbarMenuSortOrder(albumSortOrder)
             }
         }
     }
 
-    override fun updateSortOrder() {
-        view?.updateSortOrder(sortPreferenceManager.sortOrderAlbumList)
+    override fun updateToolbarMenu() {
+        view?.updateToolbarMenuSortOrder(sortPreferenceManager.sortOrderAlbumList)
+        view?.updateToolbarMenuViewMode(preferenceManager.albumListViewMode.toViewMode())
     }
 
     override fun getFastscrollPrefix(album: Album): String? {
         return when (sortPreferenceManager.sortOrderAlbumList) {
-            AlbumSortOrder.AlbumName -> album.groupKey?.album?.firstOrNull()?.toString()?.toUpperCase(Locale.getDefault())
+            AlbumSortOrder.AlbumName -> album.groupKey?.key?.firstOrNull()?.toString()?.toUpperCase(Locale.getDefault())
             AlbumSortOrder.ArtistGroupKey -> album.groupKey?.artistGroupKey?.key?.firstOrNull()?.toString()?.toUpperCase(Locale.getDefault())
             AlbumSortOrder.Year -> album.year.toString()
             else -> null

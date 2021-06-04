@@ -27,7 +27,7 @@ abstract class AlbumBinder(
     }
 
     override fun getSectionName(): String? {
-        return album.groupKey?.album?.firstOrNull()?.toString()?.toUpperCase(Locale.getDefault())
+        return album.groupKey?.key?.firstOrNull()?.toString()?.toUpperCase(Locale.getDefault())
     }
 
     override fun equals(other: Any?): Boolean {

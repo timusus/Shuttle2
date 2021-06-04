@@ -11,7 +11,7 @@ data class ArtistGroupKey(val key: String?) : Parcelable
 
 @Parcelize
 data class AlbumGroupKey(
-    val album: String?,
+    val key: String?,
     val artistGroupKey: ArtistGroupKey
 ) : Parcelable
 

@@ -5,6 +5,7 @@ import com.simplecityapps.mediaprovider.repository.AlbumSortOrder
 import com.simplecityapps.mediaprovider.repository.SongSortOrder
 import com.simplecityapps.shuttle.persistence.get
 import com.simplecityapps.shuttle.persistence.put
+import timber.log.Timber
 
 class SortPreferenceManager(private val sharedPreferences: SharedPreferences) {
 
@@ -28,6 +29,7 @@ class SortPreferenceManager(private val sharedPreferences: SharedPreferences) {
             return try {
                 AlbumSortOrder.valueOf(sharedPreferences.get("sort_order_album_list", AlbumSortOrder.AlbumName.name))
             } catch (e: IllegalArgumentException) {
+                Timber.e(e, "Failed to retrieve sort order")
                 AlbumSortOrder.AlbumName
             }
         }

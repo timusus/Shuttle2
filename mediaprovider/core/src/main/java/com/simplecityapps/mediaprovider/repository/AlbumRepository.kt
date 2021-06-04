@@ -67,11 +67,33 @@ enum class AlbumSortOrder : Serializable {
         }
 
     companion object {
-        private val collator by lazy { Collator.getInstance().apply { strength = Collator.TERTIARY } }
-        val defaultComparator: Comparator<Album> by lazy { Comparator<Album> { a, b -> zeroLastComparator.compare(a.year, b.year) }.then(compareByDescending { album -> album.year }) }
-        val albumNameComparator: Comparator<Album> by lazy { Comparator<Album> { a, b -> collator.compare(a.groupKey?.album ?: "", b.groupKey?.album ?: "") }.then(defaultComparator) }
-        val artistGroupKeyComparator: Comparator<Album> by lazy { Comparator<Album> { a, b -> collator.compare(a.groupKey?.artistGroupKey?.key ?: "", b.groupKey?.artistGroupKey?.key ?: "") }.then(defaultComparator) }
-        val playCountComparator: Comparator<Album> by lazy { compareByDescending<Album> { album -> album.playCount }.then(defaultComparator) }
-        val yearComparator: Comparator<Album> by lazy { defaultComparator }
+        private val collator by lazy {
+            Collator.getInstance().apply { strength = Collator.TERTIARY }
+        }
+
+        private val defaultComparator: Comparator<Album> by lazy {
+            compareByDescending<Album, Int?>(nullsFirst(), { album -> album.year })
+                .then { a, b -> collator.compare(a.groupKey?.key ?: "", b.groupKey?.key ?: "") }
+                .then { a, b -> collator.compare(a.groupKey?.artistGroupKey?.key ?: "", b.groupKey?.artistGroupKey?.key ?: "") }
+        }
+
+        val albumNameComparator: Comparator<Album> by lazy {
+            Comparator<Album> { a, b -> collator.compare(a.groupKey?.key ?: "", b.groupKey?.key ?: "") }
+                .then(defaultComparator)
+        }
+
+        val artistGroupKeyComparator: Comparator<Album> by lazy {
+            Comparator<Album> { a, b -> collator.compare(a.groupKey?.artistGroupKey?.key ?: "", b.groupKey?.artistGroupKey?.key ?: "") }
+                .then(defaultComparator)
+        }
+
+        val yearComparator: Comparator<Album> by lazy {
+            defaultComparator
+        }
+
+        val playCountComparator: Comparator<Album> by lazy {
+            compareByDescending<Album> { album -> album.playCount }
+                .then(defaultComparator)
+        }
     }
 }
