@@ -1,5 +1,19 @@
 [
   {
+    "versionName": "0.3.8",
+    "releaseDate": "04/06/2021",
+    "features": [],
+    "fixes": [
+      "Fixed a crash when scanning media"
+    ],
+    "improvements": [
+      "Show blank instead of 'null' for tracks with unknown track number",
+    ],
+    "notes": [
+      "S2 will soon be free to try for 2 weeks. As always, feel free to get in touch via Discord: https://discord.gg/YkhSuHJ"
+    ]
+  },
+  {
     "versionName": "0.3.7",
     "releaseDate": "04/06/2021",
     "features": [],
@@ -11,7 +25,8 @@
     ],
     "improvements": [
       "Improved lyrics contrast (background is darker)",
-      "Don't log the currently playing song's path, as this may include sensitive information (host/path/api key) for Jellyfin/Emby. Note: these were only visible when copying debug logs or connecting to the phone via adb"
+      "Don't log the currently playing song's path, as this may include sensitive information (host/path/api key) for Jellyfin/Emby. Note: these were only visible when copying debug logs or connecting to the phone via adb",
+      "Increase priority of playback notification - may fix issue where notification hides in notification tray on some devices"
     ],
     "notes": [
       "S2 will soon be free to try for 2 weeks. As always, feel free to get in touch via Discord: https://discord.gg/YkhSuHJ"
