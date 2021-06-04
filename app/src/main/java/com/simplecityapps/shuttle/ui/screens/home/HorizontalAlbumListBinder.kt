@@ -41,8 +41,6 @@ class HorizontalAlbumListBinder(
 
         other as HorizontalAlbumListBinder
 
-        if (albums != other.albums) return false
-
         return true
     }
 

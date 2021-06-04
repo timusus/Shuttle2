@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
+import javax.inject.Named
 
 interface HomeContract {
 
@@ -55,7 +56,8 @@ class HomePresenter @Inject constructor(
     private val albumRepository: AlbumRepository,
     private val albumArtistRepository: AlbumArtistRepository,
     private val playbackManager: PlaybackManager,
-    private val queueManager: QueueManager
+    private val queueManager: QueueManager,
+    @Named("randomSeed") private val seed: Long
 ) : HomeContract.Presenter, BasePresenter<HomeContract.View>() {
 
     override fun shuffleAll() {
@@ -77,20 +79,17 @@ class HomePresenter @Inject constructor(
     override fun loadData() {
         launch {
             val mostPlayedAlbums = albumRepository
-                .getAlbums(AlbumQuery.PlayCount(2, AlbumSortOrder.PlayCount))
+                .getAlbums(
+                    AlbumQuery.PlayCount(
+                        count = 2,
+                        sortOrder = AlbumSortOrder.PlayCount
+                    )
+                )
                 .map { it.take(20) }
 
-            val recentlyPlayedAlbums =
-                albumRepository
-                    .getAlbums(AlbumQuery.AlbumGroupKeys(
-                        songRepository
-                            .getSongs(SongQuery.All(sortOrder = SongSortOrder.RecentlyPlayed))
-                            .firstOrNull()
-                            .orEmpty()
-                            .distinctBy { song -> song.album }
-                            .map { album -> AlbumQuery.AlbumGroupKey(album.albumGroupKey) })
-                    )
-                    .map { it.take(20) }
+            val recentlyPlayedAlbums = albumRepository
+                .getAlbums(AlbumQuery.All(sortOrder = AlbumSortOrder.RecentlyPlayed))
+                .map { it.take(20) }
 
             val albumsFromThisYear = albumRepository
                 .getAlbums(AlbumQuery.Year(Calendar.getInstance().get(Calendar.YEAR)))
@@ -98,15 +97,15 @@ class HomePresenter @Inject constructor(
 
             val unplayedAlbumArtists = albumArtistRepository
                 .getAlbumArtists(AlbumArtistQuery.PlayCount(0))
-                .map { it.shuffled() }
+                .map { it.shuffled(Random(seed)) }
                 .map { it.take(20) }
 
             combine(mostPlayedAlbums, recentlyPlayedAlbums, albumsFromThisYear, unplayedAlbumArtists) { mostPlayedAlbums, recentlyPlayedAlbums, albumsFromThisYear, unplayedAlbumArtists ->
                 HomeContract.HomeData(
-                    mostPlayedAlbums,
-                    recentlyPlayedAlbums,
-                    albumsFromThisYear,
-                    unplayedAlbumArtists
+                    mostPlayedAlbums = mostPlayedAlbums,
+                    recentlyPlayedAlbums = recentlyPlayedAlbums,
+                    albumsFromThisYear = albumsFromThisYear,
+                    unplayedAlbumArtists = unplayedAlbumArtists
                 )
             }.collect { homeData ->
                 view?.setData(homeData)

@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.dagger
+package com.simplecityapps.shuttle.di
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -15,6 +15,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.*
 import timber.log.Timber
+import java.util.*
 import javax.inject.Named
 import javax.inject.Singleton
 
@@ -70,5 +71,12 @@ class AppModule {
     @Provides
     fun provideThemeManager(preferenceManager: GeneralPreferenceManager): ThemeManager {
         return ThemeManager(preferenceManager)
+    }
+
+    @Singleton
+    @Provides
+    @Named("randomSeed")
+    fun provideRandomSeed(): Long {
+        return Random().nextLong()
     }
 }

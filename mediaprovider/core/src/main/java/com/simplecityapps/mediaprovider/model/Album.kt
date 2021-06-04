@@ -25,6 +25,8 @@ data class Album(
     val duration: Int,
     val year: Int?,
     val playCount: Int,
+    val lastSongPlayed: Date?,
+    val lastSongCompleted: Date?,
     val groupKey: AlbumGroupKey?,
     val mediaProviders: List<MediaProvider.Type>
 ) : Parcelable

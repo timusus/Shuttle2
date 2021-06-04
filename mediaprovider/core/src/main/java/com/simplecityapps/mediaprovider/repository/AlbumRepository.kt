@@ -25,14 +25,16 @@ sealed class AlbumQuery(
             predicate = { album -> album.groupKey?.artistGroupKey == key }
         )
 
-    class AlbumGroupKey(private val albumGroupKey: com.simplecityapps.mediaprovider.model.AlbumGroupKey?) :
+    class AlbumGroupKey(private val albumGroupKey: com.simplecityapps.mediaprovider.model.AlbumGroupKey?, sortOrder: AlbumSortOrder = AlbumSortOrder.Default) :
         AlbumQuery(
-            predicate = { album -> album.groupKey == albumGroupKey }
+            predicate = { album -> album.groupKey == albumGroupKey },
+            sortOrder = sortOrder
         )
 
-    class AlbumGroupKeys(val albums: List<AlbumGroupKey>) :
+    class AlbumGroupKeys(val albums: List<AlbumGroupKey>, sortOrder: AlbumSortOrder = AlbumSortOrder.Default) :
         AlbumQuery(
-            predicate = { album -> albums.any { it.predicate(album) } }
+            predicate = { album -> albums.any { it.predicate(album) } },
+            sortOrder = sortOrder
         )
 
     class Search(val query: String) :
@@ -53,7 +55,7 @@ sealed class AlbumQuery(
 }
 
 enum class AlbumSortOrder : Serializable {
-    Default, AlbumName, ArtistGroupKey, Year, PlayCount;
+    Default, AlbumName, ArtistGroupKey, Year, PlayCount, RecentlyPlayed;
 
     val comparator: Comparator<Album>
         get() {
@@ -63,6 +65,7 @@ enum class AlbumSortOrder : Serializable {
                 ArtistGroupKey -> artistGroupKeyComparator
                 PlayCount -> playCountComparator
                 Year -> yearComparator
+                RecentlyPlayed -> recentlyPlayedComparator
             }
         }
 
@@ -93,6 +96,11 @@ enum class AlbumSortOrder : Serializable {
 
         val playCountComparator: Comparator<Album> by lazy {
             compareByDescending<Album> { album -> album.playCount }
+                .then(defaultComparator)
+        }
+
+        val recentlyPlayedComparator: Comparator<Album> by lazy {
+            compareByDescending<Album> { album -> album.lastSongCompleted }
                 .then(defaultComparator)
         }
     }

@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.dagger
+package com.simplecityapps.shuttle.di
 
 import com.simplecityapps.core.BuildConfig
 import com.squareup.moshi.Moshi

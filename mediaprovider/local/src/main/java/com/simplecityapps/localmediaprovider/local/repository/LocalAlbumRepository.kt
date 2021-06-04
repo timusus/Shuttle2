@@ -28,6 +28,8 @@ class LocalAlbumRepository(
                             duration = songs.sumOf { it.duration },
                             year = songs.mapNotNull { it.year }.minOrNull(),
                             playCount = songs.minOfOrNull { it.playCount } ?: 0,
+                            lastSongPlayed = songs.mapNotNull { it.lastPlayed }.maxOrNull(),
+                            lastSongCompleted = songs.mapNotNull { it.lastCompleted }.maxOrNull(),
                             groupKey = key,
                             mediaProviders = songs.map { it.mediaProvider }.distinct()
                         )

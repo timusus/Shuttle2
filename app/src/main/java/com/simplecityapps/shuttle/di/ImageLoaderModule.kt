@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.dagger
+package com.simplecityapps.shuttle.di
 
 import android.content.Context
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
