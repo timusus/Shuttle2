@@ -4,10 +4,8 @@ import android.content.Context
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.simplecityapps.mediaprovider.model.Playlist
-import com.simplecityapps.mediaprovider.model.Song
-import com.simplecityapps.mediaprovider.repository.PlaylistQuery
-import com.simplecityapps.mediaprovider.repository.PlaylistRepository
-import com.simplecityapps.mediaprovider.repository.SongRepository
+import com.simplecityapps.mediaprovider.model.PlaylistSong
+import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.R
@@ -17,37 +15,42 @@ import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.squareup.inject.assisted.Assisted
 import com.squareup.inject.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 interface PlaylistDetailContract {
 
     interface View {
-        fun setData(songs: List<Song>)
+        fun setData(playlistSongs: List<PlaylistSong>, showDragHandle: Boolean)
+        fun updateToolbarMenuSortOrder(sortOrder: PlaylistSongSortOrder)
         fun showLoadError(error: Error)
-        fun onAddedToQueue(song: Song)
+        fun onAddedToQueue(playlistSong: PlaylistSong)
         fun onAddedToQueue(playlist: Playlist)
         fun setPlaylist(playlist: Playlist)
         fun showDeleteError(error: Error)
-        fun showTagEditor(songs: List<Song>)
+        fun showTagEditor(playlistSongs: List<PlaylistSong>)
         fun dismiss()
     }
 
     interface Presenter : BaseContract.Presenter<View> {
-        fun loadData()
-        fun onSongClicked(song: Song)
+        fun onSongClicked(playlistSong: PlaylistSong, index: Int)
         fun shuffle()
-        fun addToQueue(song: Song)
-        fun playNext(song: Song)
-        fun exclude(song: Song)
-        fun editTags(song: Song)
-        fun remove(song: Song)
-        fun delete(song: Song)
+        fun addToQueue(playlistSong: PlaylistSong)
+        fun playNext(playlistSong: PlaylistSong)
+        fun exclude(playlistSong: PlaylistSong)
+        fun editTags(playlistSong: PlaylistSong)
+        fun remove(playlistSong: PlaylistSong)
+        fun delete(playlistSong: PlaylistSong)
         fun addToQueue(playlist: Playlist)
         fun delete(playlist: Playlist)
         fun clear(playlist: Playlist)
         fun rename(playlist: Playlist, name: String)
+        fun setSortOrder(sortOrder: PlaylistSongSortOrder)
+        fun updateToolbarMenu()
+        fun movePlaylistItem(from: Int, to: Int)
     }
 }
 
@@ -57,7 +60,7 @@ class PlaylistDetailPresenter @AssistedInject constructor(
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackManager,
     private val queueManager: QueueManager,
-    @Assisted private val playlist: Playlist
+    @Assisted playlist: Playlist
 ) : BasePresenter<PlaylistDetailContract.View>(),
     PlaylistDetailContract.Presenter {
 
@@ -66,36 +69,51 @@ class PlaylistDetailPresenter @AssistedInject constructor(
         fun create(playlist: Playlist): PlaylistDetailPresenter
     }
 
-    private var songs: List<Song> = emptyList()
+    private val playlist = playlistRepository.getPlaylists(PlaylistQuery.PlaylistId(playlist.id))
+        .map { playlists ->
+            playlists.firstOrNull()
+        }
+        .filterNotNull()
+        .stateIn(
+            scope = this,
+            started = SharingStarted.WhileSubscribed(),
+            initialValue = playlist
+        )
+
+    private val playlistSongs: StateFlow<List<PlaylistSong>?> = this.playlist
+        .flatMapLatest { playlist ->
+            playlistRepository.getSongsForPlaylist(playlist)
+        }
+        .stateIn(
+            scope = this,
+            started = SharingStarted.WhileSubscribed(),
+            initialValue = null
+        )
 
     override fun bindView(view: PlaylistDetailContract.View) {
         super.bindView(view)
 
-        view.setPlaylist(playlist)
+        playlist.onEach { playlist ->
+            this@PlaylistDetailPresenter.view?.setPlaylist(playlist)
+            updateToolbarMenu()
+        }.launchIn(this)
 
-        launch {
-            playlistRepository.getPlaylists(PlaylistQuery.PlaylistId(playlist.id))
-                .collect { playlists ->
-                    playlists.firstOrNull()?.let { playlist ->
-                        view.setPlaylist(playlist)
-                    }
-                }
-        }
+        playlistSongs
+            .onStart {
+                Timber.i("playlistSongs.onStart()")
+            }
+            .filterNotNull()
+            .onEach { playlistSongs ->
+                this@PlaylistDetailPresenter.view?.setData(
+                    playlistSongs = playlistSongs,
+                    showDragHandle = playlist.value.sortOrder == PlaylistSongSortOrder.Position
+                )
+            }.launchIn(this)
     }
 
-    override fun loadData() {
+    override fun onSongClicked(playlistSong: PlaylistSong, index: Int) {
         launch {
-            playlistRepository.getSongsForPlaylist(playlist.id)
-                .collect { songs ->
-                    this@PlaylistDetailPresenter.songs = songs
-                    view?.setData(songs)
-                }
-        }
-    }
-
-    override fun onSongClicked(song: Song) {
-        launch {
-            if (queueManager.setQueue(songs = songs, position = songs.indexOf(song))) {
+            if (queueManager.setQueue(songs = playlistSongs.value.orEmpty().map { it.song }, position = index)) {
                 playbackManager.load { result ->
                     result.onSuccess { playbackManager.play() }
                     result.onFailure { error -> view?.showLoadError(error as Error) }
@@ -105,9 +123,9 @@ class PlaylistDetailPresenter @AssistedInject constructor(
     }
 
     override fun shuffle() {
-        if (songs.isNotEmpty()) {
+        if (playlistSongs.value.orEmpty().isNotEmpty()) {
             launch {
-                playbackManager.shuffle(songs) { result ->
+                playbackManager.shuffle(playlistSongs.value.orEmpty().map { it.song }) { result ->
                     result.onSuccess { playbackManager.play() }
                     result.onFailure { error -> view?.showLoadError(error as Error) }
                 }
@@ -117,55 +135,55 @@ class PlaylistDetailPresenter @AssistedInject constructor(
         }
     }
 
-    override fun addToQueue(song: Song) {
+    override fun addToQueue(playlistSong: PlaylistSong) {
         launch {
-            playbackManager.addToQueue(listOf(song))
-            view?.onAddedToQueue(song)
+            playbackManager.addToQueue(listOf(playlistSong.song))
+            view?.onAddedToQueue(playlistSong)
         }
     }
 
     override fun addToQueue(playlist: Playlist) {
         launch {
-            playbackManager.addToQueue(songs)
+            playbackManager.addToQueue(playlistSongs.value.orEmpty().map { it.song })
             view?.onAddedToQueue(playlist)
         }
     }
 
-    override fun playNext(song: Song) {
+    override fun playNext(playlistSong: PlaylistSong) {
         launch {
-            playbackManager.playNext(listOf(song))
-            view?.onAddedToQueue(song)
+            playbackManager.playNext(listOf(playlistSong.song))
+            view?.onAddedToQueue(playlistSong)
         }
     }
 
-    override fun exclude(song: Song) {
+    override fun exclude(playlistSong: PlaylistSong) {
         launch {
-            songRepository.setExcluded(listOf(song), true)
-            queueManager.remove(queueManager.getQueue().filter { it.song == song })
+            songRepository.setExcluded(listOf(playlistSong.song), true)
+            queueManager.remove(queueManager.getQueue().filter { it.song == playlistSong.song })
         }
     }
 
-    override fun editTags(song: Song) {
-        view?.showTagEditor(listOf(song))
+    override fun editTags(playlistSong: PlaylistSong) {
+        view?.showTagEditor(listOf(playlistSong))
     }
 
-    override fun remove(song: Song) {
+    override fun remove(playlistSong: PlaylistSong) {
         launch {
-            playlistRepository.removeFromPlaylist(playlist, listOf(song))
+            playlistRepository.removeFromPlaylist(playlist.value, listOf(playlistSong))
         }
     }
 
-    override fun delete(song: Song) {
-        val uri = song.path.toUri()
+    override fun delete(playlistSong: PlaylistSong) {
+        val uri = playlistSong.song.path.toUri()
         val documentFile = DocumentFile.fromSingleUri(context, uri)
         if (documentFile?.delete() == true) {
             launch {
-                songRepository.remove(song)
+                songRepository.remove(playlistSong.song)
             }
         } else {
             view?.showDeleteError(UserFriendlyError(context.getString(R.string.delete_song_failed)))
         }
-        queueManager.remove(queueManager.getQueue().filter { it.song == song })
+        queueManager.remove(queueManager.getQueue().filter { it.song == playlistSong.song })
     }
 
     override fun delete(playlist: Playlist) {
@@ -184,6 +202,30 @@ class PlaylistDetailPresenter @AssistedInject constructor(
     override fun rename(playlist: Playlist, name: String) {
         launch {
             playlistRepository.renamePlaylist(playlist, name)
+        }
+    }
+
+    override fun setSortOrder(sortOrder: PlaylistSongSortOrder) {
+        if (playlist.value.sortOrder != sortOrder) {
+            launch {
+                withContext(Dispatchers.IO) {
+                    playlistRepository.updatePlaylistSortOder(playlist.value, sortOrder)
+                }
+                view?.updateToolbarMenuSortOrder(sortOrder)
+            }
+        }
+    }
+
+    override fun updateToolbarMenu() {
+        view?.updateToolbarMenuSortOrder(playlist.value.sortOrder)
+    }
+
+    override fun movePlaylistItem(from: Int, to: Int) {
+        launch {
+            var newSongs = playlistSongs.value.orEmpty().toMutableList()
+            newSongs.add(to, newSongs.removeAt(from))
+            newSongs = newSongs.mapIndexed { index, playlistSong -> PlaylistSong(playlistSong.id, index.toLong(), playlistSong.song) }.toMutableList()
+            playlistRepository.updatePlaylistSongsSortOder(playlist.value, newSongs)
         }
     }
 }

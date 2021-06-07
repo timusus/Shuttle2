@@ -2,6 +2,7 @@ package com.simplecityapps.localmediaprovider.local.data.room
 
 import androidx.room.TypeConverter
 import com.simplecityapps.mediaprovider.MediaProvider
+import com.simplecityapps.mediaprovider.repository.SongSortOrder
 import java.util.*
 
 class Converters {
@@ -34,5 +35,15 @@ class Converters {
     @TypeConverter
     fun toMediaProvider(string: String): MediaProvider.Type {
         return MediaProvider.Type.valueOf(string)
+    }
+
+    @TypeConverter
+    fun fromSortOrder(songSortOrder: SongSortOrder): String {
+        return songSortOrder.name
+    }
+
+    @TypeConverter
+    fun toSortOrder(string: String): SongSortOrder {
+        return SongSortOrder.valueOf(string)
     }
 }

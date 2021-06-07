@@ -15,7 +15,6 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.ItemTouchHelper
-import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.simplecityapps.adapter.RecyclerAdapter
@@ -32,6 +31,7 @@ import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.ShowExcludeDialog
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
+import com.simplecityapps.shuttle.ui.common.recyclerview.ItemTouchHelperCallback
 import com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
 import com.simplecityapps.shuttle.ui.common.view.multisheet.findParentMultiSheetView
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
@@ -355,49 +355,5 @@ class QueueFragment :
         const val ARG_RECYCLER_STATE = "recycler_state"
 
         fun newInstance() = QueueFragment()
-    }
-}
-
-
-open class ItemTouchHelperCallback(
-    private val onItemMoveListener: OnItemMoveListener
-) : ItemTouchHelper.Callback() {
-
-    interface OnItemMoveListener {
-        fun onItemMoved(from: Int, to: Int)
-    }
-
-    private var startPosition = -1
-    private var endPosition = -1
-
-    override fun isLongPressDragEnabled(): Boolean {
-        // Long presses are handled separately
-        return false
-    }
-
-    override fun getMovementFlags(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder): Int {
-        return makeMovementFlags(ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0)
-    }
-
-    override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
-        if (startPosition == -1) {
-            startPosition = viewHolder.adapterPosition
-        }
-        endPosition = target.adapterPosition
-
-        (recyclerView.adapter as RecyclerAdapter).move(viewHolder.adapterPosition, target.adapterPosition)
-        return true
-    }
-
-    override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-    }
-
-    override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
-        if (startPosition != -1 && endPosition != -1) {
-            onItemMoveListener.onItemMoved(startPosition, endPosition)
-        }
-
-        startPosition = -1
-        endPosition = -1
     }
 }

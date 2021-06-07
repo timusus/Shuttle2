@@ -1,19 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
+        android:id="@+id/playlistSortOrder"
+        android:icon="@drawable/ic_baseline_sort_24"
+        android:title="@string/menu_title_sort_by"
+        app:showAsAction="never">
+
+        <menu>
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/sortCustom"
+                    android:title="@string/menu_title_sort_custom" />
+                <item
+                    android:id="@+id/sortSongName"
+                    android:title="@string/menu_title_sort_song_name" />
+                <item
+                    android:id="@+id/sortArtistName"
+                    android:title="@string/menu_title_sort_artist_name" />
+                <item
+                    android:id="@+id/sortAlbumName"
+                    android:title="@string/menu_title_sort_album_name" />
+                <item
+                    android:id="@+id/sortSongYear"
+                    android:title="@string/menu_title_sort_year" />
+                <item
+                    android:id="@+id/sortSongDuration"
+                    android:title="@string/menu_title_sort_duration" />
+            </group>
+        </menu>
+    </item>
+    <item
         android:id="@+id/shuffle"
-        android:title="@string/menu_title_shuffle" />
+        android:title="@string/menu_title_shuffle"
+        app:showAsAction="never" />
     <item
         android:id="@+id/queue"
-        android:title="@string/menu_title_add_to_queue" />
+        android:title="@string/menu_title_add_to_queue"
+        app:showAsAction="never" />
     <item
         android:id="@+id/rename"
-        android:title="@string/menu_title_rename" />
+        android:title="@string/menu_title_rename"
+        app:showAsAction="never" />
     <item
         android:id="@+id/clear"
-        android:title="@string/menu_title_clear" />
+        android:title="@string/menu_title_clear"
+        app:showAsAction="never" />
     <item
         android:id="@+id/delete"
-        android:title="@string/menu_title_delete" />
+        android:title="@string/menu_title_delete"
+        app:showAsAction="never" />
 </menu>

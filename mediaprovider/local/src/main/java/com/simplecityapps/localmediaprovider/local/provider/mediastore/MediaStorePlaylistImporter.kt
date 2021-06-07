@@ -4,10 +4,7 @@ import android.content.Context
 import android.provider.MediaStore
 import androidx.core.database.getIntOrNull
 import androidx.core.database.getStringOrNull
-import com.simplecityapps.mediaprovider.repository.PlaylistQuery
-import com.simplecityapps.mediaprovider.repository.PlaylistRepository
-import com.simplecityapps.mediaprovider.repository.SongQuery
-import com.simplecityapps.mediaprovider.repository.SongRepository
+import com.simplecityapps.mediaprovider.repository.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.*
@@ -45,7 +42,7 @@ class MediaStorePlaylistImporter(
                 if (matchingSongs.isNotEmpty()) {
                     // We have a list of songs to import
                     allPlaylists.find { playlist -> playlist.mediaStoreId == mediaStorePlaylist.id || playlist.name == mediaStorePlaylist.name }?.let { existingPlaylist ->
-                        val existingSongs = playlistRepository.getSongsForPlaylist(existingPlaylist.id)
+                        val existingSongs = playlistRepository.getSongsForPlaylist(existingPlaylist)
                             .firstOrNull()
                             .orEmpty()
 

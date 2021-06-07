@@ -85,7 +85,12 @@ class MediaIdHelper @Inject constructor(
                         .map { it.toMediaItem(mediaId) }
                 }
                 is MediaIdWrapper.Directory.Songs.Playlist -> {
-                    playlistRepository.getSongsForPlaylist(mediaIdWrapper.playlistId).firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
+                    playlistRepository.getPlaylists(PlaylistQuery.PlaylistId(mediaIdWrapper.playlistId)).firstOrNull()?.firstOrNull()?.let { playlist ->
+                        playlistRepository.getSongsForPlaylist(playlist)
+                            .firstOrNull()
+                            .orEmpty()
+                            .map { it.song.toMediaItem(mediaId) }
+                    }.orEmpty()
                 }
                 else -> mutableListOf()
             }
@@ -232,8 +237,10 @@ class MediaIdHelper @Inject constructor(
                             PlayQueue(songs, songs.indexOfFirst { it.id == mediaIdWrapper.songId })
                         }
                         is MediaIdWrapper.Directory.Songs.Playlist -> {
-                            val songs = playlistRepository.getSongsForPlaylist(mediaIdWrapper.directory.playlistId).firstOrNull().orEmpty()
-                            PlayQueue(songs, songs.indexOfFirst { it.id == mediaIdWrapper.songId })
+                            val playlistSongs = playlistRepository.getPlaylists(PlaylistQuery.PlaylistId(mediaIdWrapper.directory.playlistId)).firstOrNull()?.firstOrNull()?.let { playlist ->
+                                playlistRepository.getSongsForPlaylist(playlist).firstOrNull().orEmpty()
+                            }.orEmpty()
+                            PlayQueue(playlistSongs.map { it.song }, playlistSongs.indexOfFirst { it.song.id == mediaIdWrapper.songId })
                         }
                         else -> throw IllegalStateException("Cannot retrieve play queue for songId: ${mediaIdWrapper.songId}, directory: ${mediaIdWrapper.directory}")
                     }

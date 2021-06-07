@@ -19,6 +19,7 @@ import com.simplecityapps.mediaprovider.model.SmartPlaylist
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.EditTextAlertDialog
+import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
@@ -157,6 +158,10 @@ class PlaylistListFragment :
         Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("item_name", playlist.name).format(), Toast.LENGTH_SHORT).show()
     }
 
+    override fun showLoadError(error: Error) {
+        Toast.makeText(context, error.userDescription(resources), Toast.LENGTH_LONG).show()
+    }
+
     override fun setLoadingState(state: PlaylistListContract.LoadingState) {
         when (state) {
             is PlaylistListContract.LoadingState.Scanning -> {
@@ -211,6 +216,10 @@ class PlaylistListFragment :
 
             popupMenu.setOnMenuItemClickListener { item ->
                 when (item.itemId) {
+                    R.id.play -> {
+                        presenter.play(playlist)
+                        true
+                    }
                     R.id.queue -> {
                         presenter.addToQueue(playlist)
                         true

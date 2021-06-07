@@ -6,12 +6,10 @@ import com.simplecityapps.localmediaprovider.local.data.room.dao.PlaylistSongJoi
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistSongJoin
 import com.simplecityapps.mediaprovider.model.Playlist
+import com.simplecityapps.mediaprovider.model.PlaylistSong
 import com.simplecityapps.mediaprovider.model.SmartPlaylist
 import com.simplecityapps.mediaprovider.model.Song
-import com.simplecityapps.mediaprovider.repository.PlaylistQuery
-import com.simplecityapps.mediaprovider.repository.PlaylistRepository
-import com.simplecityapps.mediaprovider.repository.SongQuery
-import com.simplecityapps.mediaprovider.repository.SongSortOrder
+import com.simplecityapps.mediaprovider.repository.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
@@ -63,7 +61,13 @@ class LocalPlaylistRepository(
     }
 
     override suspend fun createPlaylist(name: String, mediaStoreId: Long?, songs: List<Song>?): Playlist {
-        val playlistId = playlistDataDao.insert(PlaylistData(name = name, mediaStoreId = mediaStoreId))
+        val playlistId = playlistDataDao.insert(
+            PlaylistData(
+                name = name,
+                mediaStoreId = mediaStoreId,
+                sortOrder = PlaylistSongSortOrder.Position
+            )
+        )
         playlistSongJoinDao.insert(songs.orEmpty().map { song -> PlaylistSongJoin(playlistId, song.id) })
         val playlist = playlistDataDao.getPlaylist(playlistId)
         Timber.v("Created playlist: ${playlist.name} with ${playlist.songCount} songs}")
@@ -71,32 +75,82 @@ class LocalPlaylistRepository(
     }
 
     override suspend fun addToPlaylist(playlist: Playlist, songs: List<Song>) {
-        return playlistSongJoinDao.insert(songs.map { song -> PlaylistSongJoin(playlist.id, song.id) })
+        return playlistSongJoinDao.insert(songs.map { song ->
+            PlaylistSongJoin(
+                playlistId = playlist.id,
+                songId = song.id
+            )
+        })
     }
 
-    override suspend fun removeFromPlaylist(playlist: Playlist, songs: List<Song>) {
-        return playlistSongJoinDao.delete(playlist.id, songs.map { song -> song.id }.toTypedArray())
-    }
-
-    override fun getSongsForPlaylist(playlistId: Long): Flow<List<Song>> {
-        return playlistSongJoinDao.getSongsForPlaylist(playlistId)
-    }
-
-    override suspend fun deletePlaylist(playlist: Playlist) {
-        return playlistDataDao.delete(
-            PlaylistData(playlist.id, playlist.name)
+    override suspend fun removeFromPlaylist(playlist: Playlist, playlistSongs: List<PlaylistSong>) {
+        return playlistSongJoinDao.delete(
+            playlistId = playlist.id,
+            playlistSongIds = playlistSongs.map { playlistSong -> playlistSong.id }.toTypedArray()
         )
     }
 
-    override suspend fun updatePlaylistMediaStoreId(playlist: Playlist, mediaStoreId: Long?) {
-        return playlistDataDao.update(PlaylistData(playlist.id, playlist.name, mediaStoreId))
+    override suspend fun removeSongsFromPlaylist(playlist: Playlist, songs: List<Song>) {
+        return playlistSongJoinDao.deleteSongs(
+            playlistId = playlist.id,
+            songIds = songs.map { it.id }.toTypedArray()
+        )
     }
 
-    override suspend fun clearPlaylist(playlist: Playlist) {
+    override fun getSongsForPlaylist(playlist: Playlist): Flow<List<PlaylistSong>> {
+        return playlistSongJoinDao.getSongsForPlaylist(playlist.id)
+            .map { playlistSong ->
+                playlistSong.sortedWith(playlist.sortOrder.comparator)
+            }
+    }
+
+    override suspend fun deletePlaylist(playlist: Playlist) {
         return playlistDataDao.delete(playlist.id)
     }
 
+    override suspend fun updatePlaylistMediaStoreId(playlist: Playlist, mediaStoreId: Long?) {
+        return playlistDataDao.update(
+            PlaylistData(
+                id = playlist.id,
+                name = playlist.name,
+                mediaStoreId = mediaStoreId,
+                sortOrder = playlist.sortOrder
+            )
+        )
+    }
+
+    override suspend fun clearPlaylist(playlist: Playlist) {
+        return playlistDataDao.clear(playlist.id)
+    }
+
     override suspend fun renamePlaylist(playlist: Playlist, name: String) {
-        return playlistDataDao.update(PlaylistData(playlist.id, name, playlist.mediaStoreId))
+        return playlistDataDao.update(
+            PlaylistData(
+                id = playlist.id,
+                name = name,
+                mediaStoreId = playlist.mediaStoreId,
+                sortOrder = playlist.sortOrder
+            )
+        )
+    }
+
+    override suspend fun updatePlaylistSortOder(playlist: Playlist, sortOrder: PlaylistSongSortOrder) {
+        playlistDataDao.update(
+            PlaylistData(
+                id = playlist.id,
+                name = playlist.name,
+                mediaStoreId = playlist.mediaStoreId,
+                sortOrder = sortOrder
+            )
+        )
+    }
+
+    override suspend fun updatePlaylistSongsSortOder(playlist: Playlist, playlistSongs: List<PlaylistSong>) {
+        playlistSongJoinDao.updateSortOrder(playlistSongs.map { playlistSong ->
+            PlaylistSongJoin(playlist.id, playlistSong.song.id).apply {
+                id = playlistSong.id
+                sortOrder = playlistSong.sortOrder
+            }
+        })
     }
 }

@@ -97,15 +97,24 @@ open class SongQuery(
 }
 
 enum class SongSortOrder : Serializable {
-    Default, SongName, ArtistGroupKeyComparator, AlbumName, Year, Duration, Track, PlayCount, RecentlyAdded, RecentlyPlayed;
+    Default,
+    SongName,
+    ArtistGroupKey,
+    AlbumGroupKey,
+    Year,
+    Duration,
+    Track,
+    PlayCount,
+    RecentlyAdded,
+    RecentlyPlayed;
 
     val comparator: Comparator<Song>
         get() {
             return when (this) {
                 Default -> defaultComparator
                 SongName -> songNameComparator
-                ArtistGroupKeyComparator -> artistGroupKeyComparator
-                AlbumName -> albumGroupKeyComparator
+                ArtistGroupKey -> artistGroupKeyComparator
+                AlbumGroupKey -> albumGroupKeyComparator
                 Year -> yearComparator
                 Duration -> durationComparator
                 Track -> trackComparator

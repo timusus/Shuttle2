@@ -75,7 +75,6 @@ class ListAlbumBinder(
                 .joinSafely(
                     listOf(
                         viewBinder.album.albumArtist,
-                        viewBinder.album.year,
                         songQuantity
                     )
                 )

@@ -1,6 +1,9 @@
 package com.simplecityapps.localmediaprovider.local.data.room.dao
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.Query
+import androidx.room.Update
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistData
 import com.simplecityapps.mediaprovider.model.Playlist
 import kotlinx.coroutines.flow.Flow
@@ -11,15 +14,12 @@ abstract class PlaylistDataDao {
     @Insert
     abstract suspend fun insert(playlistData: PlaylistData): Long
 
-    @Delete
-    abstract suspend fun delete(playlistData: PlaylistData)
-
     @Update
     abstract suspend fun update(playlistData: PlaylistData)
 
     @Query(
         """
-            SELECT playlists.*, count(songs.id) as songCount, sum(songs.duration) as duration, media_store_id as mediaStoreId 
+            SELECT playlists.*, count(songs.id) as songCount, sum(songs.duration) as duration, playlists.sortOrder as sortOrder, media_store_id as mediaStoreId
             FROM playlists 
             LEFT JOIN playlist_song_join ON playlists.id = playlist_song_join.playlistId 
             LEFT JOIN songs ON songs.id = playlist_song_join.songId AND songs.blacklisted == 0 
@@ -31,7 +31,7 @@ abstract class PlaylistDataDao {
 
     @Query(
         """
-            SELECT playlists.*, count(songs.id) as songCount, sum(songs.duration) as duration, media_store_id as mediaStoreId 
+            SELECT playlists.*, count(songs.id) as songCount, sum(songs.duration) as duration, playlists.sortOrder as sortOrder, media_store_id as mediaStoreId
             FROM playlists 
             LEFT JOIN playlist_song_join ON playlists.id = playlist_song_join.playlistId 
             LEFT JOIN songs ON songs.id = playlist_song_join.songId AND songs.blacklisted == 0 
@@ -43,5 +43,8 @@ abstract class PlaylistDataDao {
     abstract suspend fun getPlaylist(playlistId: Long): Playlist
 
     @Query("DELETE FROM playlist_song_join WHERE playlistId = :playlistId")
+    abstract suspend fun clear(playlistId: Long)
+
+    @Query("DELETE FROM playlists WHERE id = :playlistId")
     abstract suspend fun delete(playlistId: Long)
 }

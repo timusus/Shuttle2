@@ -77,9 +77,10 @@ class PlaybackPresenter @Inject constructor(
         favoriteUpdater?.cancel()
         val job = launch {
             val isFavorite = playlistRepository
-                .getSongsForPlaylist(playlistRepository.getFavoritesPlaylist().id)
+                .getSongsForPlaylist(playlistRepository.getFavoritesPlaylist())
                 .firstOrNull()
                 .orEmpty()
+                .map { it.song }
                 .contains(queueManager.getCurrentItem()?.song)
             this@PlaybackPresenter.view?.setIsFavorite(isFavorite)
         }
@@ -153,7 +154,7 @@ class PlaybackPresenter @Inject constructor(
                 if (isFavorite) {
                     playlistRepository.addToPlaylist(favoritesPlaylist, listOf(song))
                 } else {
-                    playlistRepository.removeFromPlaylist(favoritesPlaylist, listOf(song))
+                    playlistRepository.removeSongsFromPlaylist(favoritesPlaylist, listOf(song))
                 }
             }
         }

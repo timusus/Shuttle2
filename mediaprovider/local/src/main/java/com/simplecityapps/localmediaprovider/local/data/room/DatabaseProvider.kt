@@ -8,6 +8,7 @@ import com.simplecityapps.localmediaprovider.BuildConfig
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistData
 import com.simplecityapps.localmediaprovider.local.data.room.migrations.*
+import com.simplecityapps.mediaprovider.repository.PlaylistSongSortOrder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import timber.log.Timber
@@ -33,7 +34,8 @@ class DatabaseProvider constructor(
                 MIGRATION_32_33,
                 MIGRATION_33_34,
                 MIGRATION_34_35,
-                MIGRATION_35_36
+                MIGRATION_35_36,
+                MIGRATION_36_37
             )
             .addCallback(callback)
             .apply {
@@ -55,7 +57,12 @@ class DatabaseProvider constructor(
             super.onCreate(db)
 
             appCoroutineScope.launch {
-                database.playlistDataDao().insert(PlaylistData(name = favoritesName))
+                database.playlistDataDao().insert(
+                    PlaylistData(
+                        name = favoritesName,
+                        sortOrder = PlaylistSongSortOrder.Position
+                    )
+                )
             }
         }
     }

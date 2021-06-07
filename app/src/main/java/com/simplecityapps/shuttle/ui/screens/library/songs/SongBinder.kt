@@ -38,7 +38,7 @@ open class SongBinder(
 
     interface Listener {
         fun onSongClicked(song: Song)
-        fun onSongLongClicked(song: Song)
+        fun onSongLongClicked(song: Song) {}
         fun onOverflowClicked(view: View, song: Song) {}
         fun onViewHolderCreated(holder: ViewHolder) {}
     }

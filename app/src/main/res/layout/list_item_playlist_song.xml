@@ -44,7 +44,7 @@
         android:layout_marginStart="16dp"
         android:layout_marginEnd="8dp"
         app:layout_constraintBottom_toTopOf="@+id/subtitle"
-        app:layout_constraintEnd_toStartOf="@+id/overflowButton"
+        app:layout_constraintEnd_toStartOf="@+id/dragHandle"
         app:layout_constraintStart_toEndOf="@+id/imageView"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_chainStyle="packed"
@@ -58,7 +58,7 @@
         android:layout_marginStart="16dp"
         android:layout_marginEnd="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/overflowButton"
+        app:layout_constraintEnd_toStartOf="@+id/dragHandle"
         app:layout_constraintStart_toEndOf="@+id/imageView"
         app:layout_constraintTop_toBottomOf="@+id/title"
         tools:text="Tool" />
@@ -79,11 +79,18 @@
         app:layout_constraintEnd_toEndOf="parent"
         tools:visibility="visible" />
 
-    <ImageButton
-        android:id="@+id/overflowButton"
-        style="@style/Widget.Shuttle.OverflowButton"
+    <ImageView
+        android:id="@+id/dragHandle"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:visibility="invisible"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_drag_handle_black_24dp"
+        app:tint="?attr/colorControlNormal"
+        tools:visibility="visible" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

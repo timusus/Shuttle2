@@ -82,9 +82,9 @@ class PlaylistMenuPresenter @Inject constructor(
                 addToPlaylist(playlist, playlistData)
                 return@launch
             } else {
-                val existingSongs = playlistRepository.getSongsForPlaylist(playlist.id).firstOrNull().orEmpty()
+                val existingSongs = playlistRepository.getSongsForPlaylist(playlist).firstOrNull().orEmpty()
                 val songsToAdd = playlistData.getSongs()
-                val duplicates = songsToAdd.filter { song -> existingSongs.any { it.id == song.id }}
+                val duplicates = songsToAdd.filter { song -> existingSongs.any { it.song.id == song.id } }
                 if (duplicates.isNotEmpty()) {
                     val deduplicatedPlaylistData = PlaylistData.Songs(songsToAdd - duplicates)
                     view?.onAddToPlaylistWithDuplicates(playlist, playlistData, deduplicatedPlaylistData, duplicates)
@@ -119,9 +119,26 @@ class PlaylistMenuPresenter @Inject constructor(
     private suspend fun PlaylistData.getSongs(): List<Song> {
         return when (this) {
             is PlaylistData.Songs -> return data
-            is PlaylistData.Albums -> songRepository.getSongs(SongQuery.AlbumGroupKeys(data.map { album -> SongQuery.AlbumGroupKey(key = album.groupKey) })).firstOrNull().orEmpty()
-            is PlaylistData.AlbumArtists -> songRepository.getSongs(SongQuery.ArtistGroupKeys(data.map { albumArtist -> SongQuery.ArtistGroupKey(key = albumArtist.groupKey) })).firstOrNull().orEmpty()
-            is PlaylistData.Genres -> genreRepository.getSongsForGenres(data.map { it.name }, SongQuery.All()).firstOrNull().orEmpty()
+            is PlaylistData.Albums -> {
+                songRepository.getSongs(SongQuery.AlbumGroupKeys(data.map { album -> SongQuery.AlbumGroupKey(key = album.groupKey) }))
+                    .firstOrNull()
+                    .orEmpty()
+                    .sortedWith(SongSortOrder.Default.comparator)
+            }
+            is PlaylistData.AlbumArtists -> {
+                songRepository.getSongs(SongQuery.ArtistGroupKeys(data.map { albumArtist -> SongQuery.ArtistGroupKey(key = albumArtist.groupKey) }))
+                    .firstOrNull()
+                    .orEmpty()
+                    .sortedWith(SongSortOrder.Default.comparator)
+            }
+            is PlaylistData.Genres -> {
+                genreRepository.getSongsForGenres(
+                    genres = data.map { it.name },
+                    songQuery = SongQuery.All()
+                ).firstOrNull()
+                    .orEmpty()
+                    .sortedWith(SongSortOrder.Default.comparator)
+            }
             is PlaylistData.Queue -> queueManager.getQueue().map { queueItem -> queueItem.song }
         }
     }

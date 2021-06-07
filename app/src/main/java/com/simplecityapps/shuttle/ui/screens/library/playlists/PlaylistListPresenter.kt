@@ -6,6 +6,7 @@ import com.simplecityapps.mediaprovider.model.SmartPlaylist
 import com.simplecityapps.mediaprovider.repository.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.PlaylistRepository
 import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import kotlinx.coroutines.Dispatchers
@@ -29,12 +30,14 @@ interface PlaylistListContract {
         fun setPlaylists(playlists: List<Playlist>, smartPlaylists: List<SmartPlaylist>)
         fun onAddedToQueue(playlist: Playlist)
         fun setLoadingState(state: LoadingState)
+        fun showLoadError(error: Error)
         fun setLoadingProgress(progress: Float)
         fun onPlaylistsImported()
     }
 
     interface Presenter : BaseContract.Presenter<View> {
         fun loadPlaylists()
+        fun play(playlist: Playlist)
         fun addToQueue(playlist: Playlist)
         fun playNext(playlist: Playlist)
         fun delete(playlist: Playlist)
@@ -47,7 +50,8 @@ interface PlaylistListContract {
 class PlaylistListPresenter @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val playbackManager: PlaybackManager,
-    private val playlistImporter: MediaStorePlaylistImporter
+    private val playlistImporter: MediaStorePlaylistImporter,
+    private val queueManager: QueueManager
 ) : PlaylistListContract.Presenter,
     BasePresenter<PlaylistListContract.View>() {
 
@@ -79,18 +83,30 @@ class PlaylistListPresenter @Inject constructor(
         }
     }
 
+    override fun play(playlist: Playlist) {
+        launch {
+            val songs = playlistRepository.getSongsForPlaylist(playlist).firstOrNull().orEmpty()
+            if (queueManager.setQueue(songs.map { it.song })) {
+                playbackManager.load { result ->
+                    result.onSuccess { playbackManager.play() }
+                    result.onFailure { error -> view?.showLoadError(error as Error) }
+                }
+            }
+        }
+    }
+
     override fun addToQueue(playlist: Playlist) {
         launch {
-            val songs = playlistRepository.getSongsForPlaylist(playlist.id).firstOrNull().orEmpty()
-            playbackManager.addToQueue(songs)
+            val songs = playlistRepository.getSongsForPlaylist(playlist).firstOrNull().orEmpty()
+            playbackManager.addToQueue(songs.map { it.song })
             view?.onAddedToQueue(playlist)
         }
     }
 
     override fun playNext(playlist: Playlist) {
         launch {
-            val songs = playlistRepository.getSongsForPlaylist(playlist.id).firstOrNull().orEmpty()
-            playbackManager.playNext(songs)
+            val songs = playlistRepository.getSongsForPlaylist(playlist).firstOrNull().orEmpty()
+            playbackManager.playNext(songs.map { it.song })
             view?.onAddedToQueue(playlist)
         }
     }

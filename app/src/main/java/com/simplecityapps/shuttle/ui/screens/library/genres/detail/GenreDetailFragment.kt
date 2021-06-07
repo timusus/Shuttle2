@@ -2,7 +2,6 @@ package com.simplecityapps.shuttle.ui.screens.library.genres.detail
 
 import android.os.Bundle
 import android.view.LayoutInflater
-import android.view.MenuInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
@@ -94,7 +93,7 @@ class GenreDetailFragment :
             toolbar.setNavigationOnClickListener {
                 NavHostFragment.findNavController(this).popBackStack()
             }
-            MenuInflater(context).inflate(R.menu.menu_album_detail, toolbar.menu)
+            toolbar.inflateMenu(R.menu.menu_album_detail)
             TagEditorMenuSanitiser.sanitise(toolbar.menu, genre.mediaProviders)
             playlistMenuView.createPlaylistMenu(toolbar.menu)
             toolbar.setOnMenuItemClickListener { menuItem ->
@@ -188,10 +187,6 @@ class GenreDetailFragment :
 
         override fun onSongClicked(song: Song) {
             presenter.onSongClicked(song)
-        }
-
-        override fun onSongLongClicked(song: Song) {
-
         }
 
         override fun onOverflowClicked(view: View, song: Song) {

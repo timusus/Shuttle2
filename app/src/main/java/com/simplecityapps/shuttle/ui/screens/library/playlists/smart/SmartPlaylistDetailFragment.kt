@@ -2,7 +2,6 @@ package com.simplecityapps.shuttle.ui.screens.library.playlists.smart
 
 import android.os.Bundle
 import android.view.LayoutInflater
-import android.view.MenuInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -89,10 +88,7 @@ class SmartPlaylistDetailFragment :
             toolbar.setNavigationOnClickListener {
                 NavHostFragment.findNavController(this).popBackStack()
             }
-            MenuInflater(context).inflate(R.menu.menu_playlist_detail, toolbar.menu)
-            toolbar.menu.findItem(R.id.clear).isVisible = false
-            toolbar.menu.findItem(R.id.delete).isVisible = false
-            toolbar.menu.findItem(R.id.rename).isVisible = false
+            toolbar.inflateMenu(R.menu.menu_playlist_detail)
             toolbar.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
                     R.id.shuffle -> {
@@ -181,10 +177,6 @@ class SmartPlaylistDetailFragment :
 
         override fun onSongClicked(song: Song) {
             presenter.onSongClicked(song)
-        }
-
-        override fun onSongLongClicked(song: Song) {
-
         }
 
         override fun onOverflowClicked(view: View, song: Song) {

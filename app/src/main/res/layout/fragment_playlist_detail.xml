@@ -13,7 +13,6 @@
         android:layout_height="match_parent"
         android:clipToPadding="false"
         android:orientation="vertical"
-        android:paddingTop="8dp"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
         tools:listitem="@layout/list_item_album" />
@@ -49,6 +48,7 @@
                 android:background="@drawable/rounded_background"
                 android:minHeight="?attr/actionBarSize"
                 android:paddingTop="8dp"
+                android:paddingBottom="8dp"
                 app:layout_collapseMode="pin"
                 app:navigationIcon="?attr/homeAsUpIndicator"
                 tools:subtitle="32 songs | 2:08:15"

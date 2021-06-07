@@ -28,7 +28,6 @@
             <group android:checkableBehavior="single">
                 <item
                     android:id="@+id/sortAlbumName"
-                    android:checked="true"
                     android:title="@string/menu_title_sort_album_name" />
                 <item
                     android:id="@+id/sortArtistName"

@@ -3,7 +3,6 @@ package com.simplecityapps.shuttle.ui.screens.library.playlists.detail
 import android.os.Bundle
 import android.os.Parcelable
 import android.view.LayoutInflater
-import android.view.MenuInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
@@ -14,12 +13,14 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.mediaprovider.model.Playlist
-import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.mediaprovider.model.PlaylistSong
+import com.simplecityapps.mediaprovider.repository.PlaylistSongSortOrder
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
@@ -29,8 +30,8 @@ import com.simplecityapps.shuttle.ui.common.dialog.ShowExcludeDialog
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
+import com.simplecityapps.shuttle.ui.common.recyclerview.ItemTouchHelperCallback
 import com.simplecityapps.shuttle.ui.common.utils.toHms
-import com.simplecityapps.shuttle.ui.screens.library.songs.SongBinder
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
@@ -99,7 +100,7 @@ class PlaylistDetailFragment :
             toolbar.setNavigationOnClickListener {
                 NavHostFragment.findNavController(this).popBackStack()
             }
-            MenuInflater(context).inflate(R.menu.menu_playlist_detail, toolbar.menu)
+            toolbar.inflateMenu(R.menu.menu_playlist_detail)
             toolbar.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
                     R.id.shuffle -> {
@@ -147,6 +148,30 @@ class PlaylistDetailFragment :
                             .show()
                         true
                     }
+                    R.id.sortCustom -> {
+                        presenter.setSortOrder(PlaylistSongSortOrder.Position)
+                        true
+                    }
+                    R.id.sortSongName -> {
+                        presenter.setSortOrder(PlaylistSongSortOrder.SongName)
+                        true
+                    }
+                    R.id.sortArtistName -> {
+                        presenter.setSortOrder(PlaylistSongSortOrder.ArtistGroupKey)
+                        true
+                    }
+                    R.id.sortAlbumName -> {
+                        presenter.setSortOrder(PlaylistSongSortOrder.AlbumGroupKey)
+                        true
+                    }
+                    R.id.sortSongYear -> {
+                        presenter.setSortOrder(PlaylistSongSortOrder.Year)
+                        true
+                    }
+                    R.id.sortSongDuration -> {
+                        presenter.setSortOrder(PlaylistSongSortOrder.Duration)
+                        true
+                    }
                     else -> {
                         false
                     }
@@ -155,25 +180,32 @@ class PlaylistDetailFragment :
         }
 
         recyclerView.adapter = adapter
+        itemTouchHelper.attachToRecyclerView(recyclerView)
 
         heroImage = view.findViewById(R.id.heroImage)
 
         presenter.bindView(this)
         playlistMenuPresenter.bindView(playlistMenuView)
-    }
 
-    override fun onResume() {
-        super.onResume()
-
-        presenter.loadData()
+        presenter.updateToolbarMenu()
     }
 
     override fun onDestroyView() {
         presenter.unbindView()
         playlistMenuPresenter.unbindView()
+        itemTouchHelper.attachToRecyclerView(null)
 
         super.onDestroyView()
     }
+
+
+    // Private
+
+    private val itemTouchHelper = object : ItemTouchHelper(object : ItemTouchHelperCallback(object : OnItemMoveListener {
+        override fun onItemMoved(from: Int, to: Int) {
+            presenter.movePlaylistItem(from, to)
+        }
+    }) {}) {}
 
 
     // PlaylistDetailContract.View Implementation
@@ -193,12 +225,12 @@ class PlaylistDetailFragment :
             )
     }
 
-    override fun setData(songs: List<Song>) {
-        if (songs.isNotEmpty()) {
+    override fun setData(playlistSongs: List<PlaylistSong>, showDragHandle: Boolean) {
+        if (playlistSongs.isNotEmpty()) {
             if (heroImage.drawable == null) {
                 imageLoader.loadArtwork(
                     heroImage,
-                    songs.random(),
+                    playlistSongs.random().song,
                     listOf(
                         ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_playlist),
                         ArtworkImageLoader.Options.Priority.Max
@@ -209,13 +241,34 @@ class PlaylistDetailFragment :
             heroImage.setImageResource(R.drawable.ic_placeholder_playlist)
         }
 
-        adapter.update(songs.map { song ->
-            SongBinder(song, imageLoader, songBinderListener)
+        adapter.update(playlistSongs.map { playlistSong ->
+            PlaylistSongBinder(
+                playlistSong = playlistSong,
+                imageLoader = imageLoader,
+                listener = songBinderListener,
+                showDragHandle = showDragHandle
+            )
         })
     }
 
-    override fun onAddedToQueue(song: Song) {
-        Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("item_name", song.name).format(), Toast.LENGTH_SHORT).show()
+    override fun updateToolbarMenuSortOrder(sortOrder: PlaylistSongSortOrder) {
+        toolbar?.menu?.let { menu ->
+            when (sortOrder) {
+                PlaylistSongSortOrder.Position -> menu.findItem(R.id.sortCustom)?.isChecked = true
+                PlaylistSongSortOrder.SongName -> menu.findItem(R.id.sortSongName)?.isChecked = true
+                PlaylistSongSortOrder.ArtistGroupKey -> menu.findItem(R.id.sortArtistName)?.isChecked = true
+                PlaylistSongSortOrder.AlbumGroupKey -> menu.findItem(R.id.sortAlbumName)?.isChecked = true
+                PlaylistSongSortOrder.Year -> menu.findItem(R.id.sortSongYear)?.isChecked = true
+                PlaylistSongSortOrder.Duration -> menu.findItem(R.id.sortSongDuration)?.isChecked = true
+                else -> {
+                    // Nothing to do
+                }
+            }
+        }
+    }
+
+    override fun onAddedToQueue(playlistSong: PlaylistSong) {
+        Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("item_name", playlistSong.song.name).format(), Toast.LENGTH_SHORT).show()
     }
 
     override fun onAddedToQueue(playlist: Playlist) {
@@ -230,8 +283,8 @@ class PlaylistDetailFragment :
         Toast.makeText(requireContext(), error.userDescription(resources), Toast.LENGTH_LONG).show()
     }
 
-    override fun showTagEditor(songs: List<Song>) {
-        TagEditorAlertDialog.newInstance(songs).show(childFragmentManager)
+    override fun showTagEditor(playlistSongs: List<PlaylistSong>) {
+        TagEditorAlertDialog.newInstance(playlistSongs.map { it.song }.distinct()).show(childFragmentManager)
     }
 
     override fun dismiss() {
@@ -241,61 +294,57 @@ class PlaylistDetailFragment :
 
     // SongBinder.Listener Implementation
 
-    private val songBinderListener = object : SongBinder.Listener {
+    private val songBinderListener = object : PlaylistSongBinder.Listener {
 
-        override fun onSongClicked(song: Song) {
-            presenter.onSongClicked(song)
+        override fun onPlaylistSongClicked(index: Int, playlistSong: PlaylistSong) {
+            presenter.onSongClicked(playlistSong, index)
         }
 
-        override fun onSongLongClicked(song: Song) {
-
-        }
-
-        override fun onOverflowClicked(view: View, song: Song) {
-            val popupMenu = PopupMenu(requireContext(), view)
+        override fun onPlaylistSongLongClicked(holder: PlaylistSongBinder.ViewHolder, playlistSong: PlaylistSong) {
+            val popupMenu = PopupMenu(requireContext(), holder.itemView)
             popupMenu.inflate(R.menu.menu_popup_playlist_song)
-            TagEditorMenuSanitiser.sanitise(popupMenu.menu, listOf(song.mediaProvider))
+            TagEditorMenuSanitiser.sanitise(popupMenu.menu, listOf(playlistSong.song.mediaProvider))
 
             playlistMenuView.createPlaylistMenu(popupMenu.menu)
 
-            if (song.mediaStoreId != null) {
+            if (playlistSong.song.mediaStoreId != null) {
                 popupMenu.menu.findItem(R.id.delete)?.isVisible = false
             }
 
             popupMenu.setOnMenuItemClickListener { menuItem ->
-                if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Songs(song))) {
+                if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Songs(playlistSong.song))) {
                     return@setOnMenuItemClickListener true
                 } else {
                     when (menuItem.itemId) {
                         R.id.queue -> {
-                            presenter.addToQueue(song)
+                            presenter.addToQueue(playlistSong)
                             return@setOnMenuItemClickListener true
                         }
                         R.id.playNext -> {
-                            presenter.playNext(song)
+                            presenter.playNext(playlistSong)
                             return@setOnMenuItemClickListener true
                         }
                         R.id.songInfo -> {
-                            SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
+                            SongInfoDialogFragment.newInstance(playlistSong.song).show(childFragmentManager)
                             return@setOnMenuItemClickListener true
                         }
                         R.id.exclude -> {
-                            ShowExcludeDialog(requireContext(), song.name) {
-                                presenter.exclude(song)
+                            ShowExcludeDialog(requireContext(), playlistSong.song.name) {
+                                presenter.exclude(playlistSong)
                             }
                             return@setOnMenuItemClickListener true
                         }
                         R.id.editTags -> {
-                            presenter.editTags(song)
+                            presenter.editTags(playlistSong)
                             return@setOnMenuItemClickListener true
                         }
                         R.id.remove -> {
-                            presenter.remove(song)
+                            presenter.remove(playlistSong)
                             return@setOnMenuItemClickListener true
                         }
                         R.id.delete -> {
-                            ShowDeleteDialog(requireContext(), song.name) {
-                                presenter.delete(song)
+                            ShowDeleteDialog(requireContext(), playlistSong.song.name) {
+                                presenter.delete(playlistSong)
                             }
                             return@setOnMenuItemClickListener true
                         }
@@ -304,6 +353,10 @@ class PlaylistDetailFragment :
                 false
             }
             popupMenu.show()
+        }
+
+        override fun onStartDrag(viewHolder: PlaylistSongBinder.ViewHolder) {
+            itemTouchHelper.startDrag(viewHolder)
         }
     }
 

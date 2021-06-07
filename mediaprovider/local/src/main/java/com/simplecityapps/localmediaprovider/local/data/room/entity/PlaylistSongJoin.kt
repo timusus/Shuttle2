@@ -9,7 +9,8 @@ import androidx.room.PrimaryKey
     tableName = "playlist_song_join",
     indices = [
         Index("playlistId"),
-        Index("songId")
+        Index("songId"),
+        Index("sortOrder")
     ],
     foreignKeys = [
         ForeignKey(
@@ -28,7 +29,10 @@ import androidx.room.PrimaryKey
 )
 data class PlaylistSongJoin(
     val playlistId: Long,
-    val songId: Long
+    val songId: Long,
 ) {
-    @PrimaryKey(autoGenerate = true) var id: Long = 0
+    @PrimaryKey(autoGenerate = true)
+    var id: Long = 0
+
+    var sortOrder: Long = id
 }

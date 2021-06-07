@@ -33,6 +33,19 @@
     ]
   },
   {
+    "versionName": "0.3.6",
+    "releaseDate": "01/06/2021",
+    "features": [],
+    "fixes": [
+      "Crash fix"
+    ],
+    "improvements": [
+    ],
+    "notes": [
+      "S2 is preparing for an official release! If you have any feedback on how it could be improved, please join the discussion on Discord: https://discord.gg/YkhSuHJ"
+    ]
+  },
+  {
     "versionName": "0.3.5",
     "releaseDate": "31/05/2021",
     "features": [],

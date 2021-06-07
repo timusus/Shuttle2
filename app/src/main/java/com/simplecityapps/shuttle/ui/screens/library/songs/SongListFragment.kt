@@ -174,11 +174,11 @@ class SongListFragment :
                 true
             }
             R.id.sortArtistName -> {
-                presenter.setSortOrder(SongSortOrder.ArtistGroupKeyComparator)
+                presenter.setSortOrder(SongSortOrder.ArtistGroupKey)
                 true
             }
             R.id.sortAlbumName -> {
-                presenter.setSortOrder(SongSortOrder.AlbumName)
+                presenter.setSortOrder(SongSortOrder.AlbumGroupKey)
                 true
             }
             R.id.sortSongYear -> {
@@ -260,8 +260,8 @@ class SongListFragment :
         findToolbarHost()?.toolbar?.menu?.let { menu ->
             when (sortOrder) {
                 SongSortOrder.SongName -> menu.findItem(R.id.sortSongName)?.isChecked = true
-                SongSortOrder.ArtistGroupKeyComparator -> menu.findItem(R.id.sortArtistName)?.isChecked = true
-                SongSortOrder.AlbumName -> menu.findItem(R.id.sortAlbumName)?.isChecked = true
+                SongSortOrder.ArtistGroupKey -> menu.findItem(R.id.sortArtistName)?.isChecked = true
+                SongSortOrder.AlbumGroupKey -> menu.findItem(R.id.sortAlbumName)?.isChecked = true
                 SongSortOrder.Year -> menu.findItem(R.id.sortSongYear)?.isChecked = true
                 SongSortOrder.Duration -> menu.findItem(R.id.sortSongDuration)?.isChecked = true
                 else -> {
