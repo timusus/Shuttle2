@@ -1,6 +1,26 @@
 [
   {
-    "versionName": "0.3.8",
+    "versionName": "0.3.81",
+    "releaseDate": "09/06/2021",
+    "features": [
+      "Added ability to sort playlist contents"
+    ],
+    "fixes": [
+      "Fixed a formatting issue causing various text fields to show blank text, instead of artist, album-artist, album or 'unknown'",
+      "Fixed an issue where the sort order could vary depending on the previously selected sort order",
+      "Fixed an issue where incorrect selected sort order was displayed",
+      "Fixed an issue where 'recently played' was sorted by album year",
+      "When removing a media provider, the associated songs are removed from the queue"
+    ],
+    "improvements": [
+      "'Something Different' list no longer changes every time the screen is refreshed"
+    ],
+    "notes": [
+      "S2 will soon be free to try for 2 weeks. As always, feel free to get in touch via Discord: https://discord.gg/YkhSuHJ"
+    ]
+  },
+  {
+    "versionName": "0.3.80",
     "releaseDate": "04/06/2021",
     "features": [],
     "fixes": [
