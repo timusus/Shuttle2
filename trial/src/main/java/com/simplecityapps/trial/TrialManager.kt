@@ -5,43 +5,46 @@ import android.content.Context
 import android.provider.Settings
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.squareup.moshi.Moshi
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.io.File
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-
 class TrialManager(
     private val context: Context,
     private val moshi: Moshi,
-    private val deviceService: DeviceService
+    private val deviceService: DeviceService,
+    billingManager: BillingManager,
+    coroutineScope: CoroutineScope
 ) {
 
     val trialLength = TimeUnit.DAYS.toMillis(14)
 
     private val deviceAdapter = moshi.adapter(Device::class.java)
 
-    val trialState: MutableStateFlow<TrialState> = MutableStateFlow(TrialState.Unknown)
-
-    suspend fun updateTrialState() {
-        trialState.value = retrieveTrialState()
-    }
-
-    private suspend fun retrieveTrialState(): TrialState {
-        if (hasPaidVersion()) {
-            Timber.i("TrialState: Paid")
-            return TrialState.Paid // User has paid version (1)
+    val trialState: StateFlow<TrialState> = billingManager.billingState.map { billingState ->
+        when (billingState) {
+            BillingState.Unknown -> TrialState.Unknown
+            BillingState.Paid -> TrialState.Paid
+            BillingState.Unpaid -> {
+                getTrialState()
+            }
         }
+    }
+        .onEach { Timber.i("trialState changed to $it") }
+        .stateIn(coroutineScope, SharingStarted.WhileSubscribed(), TrialState.Unknown)
 
+    private suspend fun getTrialState(): TrialState {
         val now = Date()
 
         var localDevice = getLocalDevice()
         localDevice?.let { localDevice ->
             if (now.time - localDevice.lastUpdate.time >= trialLength) {
-                val trialState = TrialState.Expired(now.time - localDevice.lastUpdate.time) // User's trial has expired (2)
+                val trialState = TrialState.Expired(now.time - localDevice.lastUpdate.time) // User's trial has expired
                 Timber.i("TrialState: Expired (Local). Multiplier: ${trialState.multiplier()}")
                 return trialState
             }
@@ -50,13 +53,13 @@ class TrialManager(
         }
 
         // If we get to this point, it looks like the user's trial hasn't expired, based on their local device last update date.
-        // This could occur if the user has managed to delete the local device info, via app uninstall ora clearing cache/date
+        // This could occur if the user has managed to delete the local device info, via app uninstall or clearing cache/date
         // So, we need to consult the backend
         val deviceId = localDevice?.deviceId ?: getDeviceId() // We use our the local device id if it exists, or retrieve a (possibly) new one
         val remoteDevice = getRemoteDevice(deviceId)
         remoteDevice?.let {
             if (now.time - remoteDevice.lastUpdate.time >= trialLength) {
-                // User's trial has expired (3)
+                // User's trial has expired
                 writeLocalDevice(remoteDevice)
                 val trialState = TrialState.Expired(now.time - remoteDevice.lastUpdate.time)
                 Timber.i("TrialState: Expired (Remote). Multiplier: ${trialState.multiplier()}")
@@ -75,10 +78,6 @@ class TrialManager(
         return TrialState.Trial(trialLength - (now.time - localDevice.lastUpdate.time))
     }
 
-    fun hasPaidVersion(): Boolean {
-        return true
-    }
-
     private suspend fun getRemoteDevice(deviceId: String): Device? {
         return when (val result = deviceService.getDevice(deviceId)) {
             is NetworkResult.Success -> {
@@ -92,7 +91,6 @@ class TrialManager(
     }
 
     private suspend fun getLocalDevice(): Device? {
-        return null
         return withContext(Dispatchers.IO) {
             val adapter = moshi.adapter(Device::class.java)
             val file = File(context.filesDir, "device")

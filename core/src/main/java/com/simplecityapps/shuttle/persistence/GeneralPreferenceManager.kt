@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.persistence
 
 import android.content.SharedPreferences
+import java.util.*
 
 class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences) {
 
@@ -26,6 +27,22 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
         }
         get() {
             return sharedPreferences.getString("last_viewed_changelog_version", null)
+        }
+
+    var lastViewedTrialDialog: Date
+        set(value) {
+            sharedPreferences.put("last_viewed_trial_dialog", value.time)
+        }
+        get() {
+            return Date(sharedPreferences.getLong("last_viewed_trial_dialog", Date().time))
+        }
+
+    var hasSeenThankYouDialog: Boolean
+        set(value) {
+            sharedPreferences.put("thank_you_dialog_viewed", value)
+        }
+        get() {
+            return sharedPreferences.get("thank_you_dialog_viewed", false)
         }
 
     enum class Theme {

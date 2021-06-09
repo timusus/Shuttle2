@@ -32,6 +32,7 @@ import com.simplecityapps.shuttle.ui.common.dialog.ShowExcludeDialog
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.ItemTouchHelperCallback
+import com.simplecityapps.shuttle.ui.common.view.CircularProgressView
 import com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
 import com.simplecityapps.shuttle.ui.common.view.multisheet.findParentMultiSheetView
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
@@ -153,19 +154,25 @@ class QueueFragment :
         trialMenuItem.actionView.setOnClickListener {
             TrialDialogFragment.newInstance().show(childFragmentManager)
         }
-        if (trialManager.hasPaidVersion()) {
-            trialMenuItem.isVisible = false
-        }
         viewLifecycleOwner.lifecycleScope.launch {
             trialManager.trialState.collect { trialState ->
                 when (trialState) {
+                    is TrialState.Paid, TrialState.Unknown -> {
+                        trialMenuItem.isVisible = false
+                    }
                     is TrialState.Trial -> {
+                        trialMenuItem.isVisible = true
                         val daysRemainingText: TextView = trialMenuItem.actionView.findViewById(R.id.daysRemaining)
                         daysRemainingText.text = TimeUnit.MILLISECONDS.toDays(trialState.timeRemaining).toString()
+                        val progress: CircularProgressView = trialMenuItem.actionView.findViewById(R.id.progress)
+                        progress.setProgress((trialState.timeRemaining / trialManager.trialLength.toDouble()).toFloat())
                     }
                     is TrialState.Expired -> {
+                        trialMenuItem.isVisible = true
                         val daysRemainingText: TextView = trialMenuItem.actionView.findViewById(R.id.daysRemaining)
                         daysRemainingText.text = String.format("%.1fx", trialState.multiplier())
+                        val progress: CircularProgressView = trialMenuItem.actionView.findViewById(R.id.progress)
+                        progress.setProgress(0f)
                     }
                 }
             }
@@ -325,7 +332,7 @@ class QueueFragment :
                 toolbar.menu.findItem(R.id.trial).isVisible = false
             }
             if (sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_COLLAPSED) {
-                if (!trialManager.hasPaidVersion()) {
+                if (trialManager.trialState.value is TrialState.Trial || trialManager.trialState.value is TrialState.Expired) {
                     toolbar.menu.findItem(R.id.trial).isVisible = true
                 }
             }

@@ -32,7 +32,7 @@ class CircularProgressView @JvmOverloads constructor(
         progressPaint.strokeCap = Paint.Cap.ROUND
 
         trackPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-        trackPaint.color = resources.getColor(R.color.colorPrimaryTransparent)
+        trackPaint.color = resources.getColor(R.color.colorPrimarySemiTransparent)
         trackPaint.strokeWidth = strokeWidth
         trackPaint.style = Paint.Style.STROKE
 
@@ -51,6 +51,6 @@ class CircularProgressView @JvmOverloads constructor(
 
         rect.set(0f + strokeWidth / 2, 0f + strokeWidth / 2, width.toFloat() - strokeWidth / 2, height.toFloat() - strokeWidth / 2)
         canvas.drawArc(rect, 0f, 360f, false, trackPaint)
-        canvas.drawArc(rect, 270f, -(360f - (360f * progress)), false, progressPaint)
+        canvas.drawArc(rect, 270f + (360f - (360f * progress)), 360f * progress, false, progressPaint)
     }
 }

@@ -3,6 +3,7 @@ package com.simplecityapps.trial.di
 import android.content.Context
 import androidx.core.content.getSystemService
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
+import com.simplecityapps.trial.BillingManager
 import com.simplecityapps.trial.DeviceService
 import com.simplecityapps.trial.TrialManager
 import com.squareup.moshi.Moshi
@@ -11,6 +12,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineScope
 import okhttp3.Credentials
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -27,19 +29,18 @@ class TrialModule {
     @Named("TrialRetrofit")
     fun provideRetrofit(@ApplicationContext context: Context, okHttpClient: OkHttpClient, moshi: Moshi): Retrofit {
         return Retrofit.Builder()
-//            .baseUrl("https://api.shuttlemusicplayer.app/")
-            .baseUrl("http://192.168.1.107:8080/")
+            .baseUrl("https://api.shuttlemusicplayer.app/")
             .addCallAdapterFactory(NetworkResultAdapterFactory(context.getSystemService()))
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .client(okHttpClient.newBuilder().authenticator { route, response ->
-//                if (route?.address?.url?.host == "api.shuttlemusicplayer.app") {
+                if (route?.address?.url?.host == "api.shuttlemusicplayer.app") {
                     response.request
                         .newBuilder()
-                        .header("Authorization", Credentials.basic("s2", "my_auth_password"))
+                        .header("Authorization", Credentials.basic("s2", "aEqRKgkCbqALjEm9Eg7e7Qi5"))
                         .build()
-//                } else {
-//                    response.request
-//                }
+                } else {
+                    response.request
+                }
             }.build())
             .build()
     }
@@ -50,9 +51,23 @@ class TrialModule {
         return retrofit.create(DeviceService::class.java)
     }
 
+
     @Provides
     @Singleton
-    fun provideTrialManager(@ApplicationContext context: Context, moshi: Moshi, deviceService: DeviceService): TrialManager {
-        return TrialManager(context, moshi, deviceService)
+    fun provideBillingManager(@ApplicationContext context: Context, @Named("AppCoroutineScope") coroutineScope: CoroutineScope): BillingManager {
+        return BillingManager(context, coroutineScope)
     }
+
+    @Provides
+    @Singleton
+    fun provideTrialManager(
+        @ApplicationContext context: Context,
+        moshi: Moshi,
+        deviceService: DeviceService,
+        billingManager: BillingManager,
+        @Named("AppCoroutineScope") coroutineScope: CoroutineScope
+    ): TrialManager {
+        return TrialManager(context, moshi, deviceService, billingManager, coroutineScope)
+    }
+
 }

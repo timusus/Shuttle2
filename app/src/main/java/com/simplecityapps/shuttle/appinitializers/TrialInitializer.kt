@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.appinitializers
 
 import android.app.Application
 import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.trial.BillingManager
 import com.simplecityapps.trial.TrialManager
 import com.simplecityapps.trial.TrialState
 import kotlinx.coroutines.CoroutineScope
@@ -13,10 +14,20 @@ import javax.inject.Named
 class TrialInitializer @Inject constructor(
     private val trialManager: TrialManager,
     private val playbackManager: PlaybackManager,
+    private val billingManager: BillingManager,
     @Named("AppCoroutineScope") private val coroutineScope: CoroutineScope
 ) : AppInitializer {
 
     override fun init(application: Application) {
+        billingManager.addListener(object : BillingManager.Listener {
+            override fun onBillingClientAvailable() {
+                coroutineScope.launch {
+                    billingManager.querySkuDetails()
+                }
+            }
+        })
+        billingManager.start()
+
         coroutineScope.launch {
             trialManager.trialState.collect { trialState ->
                 when (trialState) {
@@ -34,10 +45,6 @@ class TrialInitializer @Inject constructor(
                     }
                 }
             }
-        }
-
-        coroutineScope.launch {
-            trialManager.updateTrialState()
         }
     }
 }

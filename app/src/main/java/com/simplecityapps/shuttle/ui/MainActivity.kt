@@ -11,6 +11,7 @@ import androidx.navigation.fragment.NavHostFragment
 import com.simplecityapps.playback.PlaybackService
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.trial.BillingManager
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -23,6 +24,9 @@ class MainActivity :
 
     @Inject
     lateinit var themeManager: ThemeManager
+
+    @Inject
+    lateinit var billingManager: BillingManager
 
     // Lifecycle
 
@@ -48,6 +52,14 @@ class MainActivity :
         navController.graph = graph
 
         handleSearchQuery(intent)
+
+        billingManager.queryPurchases()
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        billingManager.queryPurchases()
     }
 
     override fun onNewIntent(intent: Intent?) {

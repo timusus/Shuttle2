@@ -181,6 +181,9 @@ android {
 
         // About Libraries
         implementation("com.mikepenz:aboutlibraries-core:8.8.4")
+
+        // Billing
+        implementation("com.android.billingclient:billing-ktx:4.0.0")
     }
 }
 

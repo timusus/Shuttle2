@@ -10,12 +10,14 @@ import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.trial.TrialManager
 import com.simplecityapps.trial.TrialState
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -25,12 +27,20 @@ class TrialDialogFragment : DialogFragment() {
     @Inject
     lateinit var trialManager: TrialManager
 
+    @Inject
+    lateinit var preferenceManager: GeneralPreferenceManager
+
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+
+        preferenceManager.lastViewedTrialDialog = Date()
 
         val view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_trial, null)
 
         val upgradeButton: Button = view.findViewById(R.id.upgradeButton)
-        upgradeButton.setOnClickListener { }
+        upgradeButton.setOnClickListener {
+            dismiss()
+            PurchaseDialogFragment.newInstance().show(parentFragmentManager)
+        }
 
         val heading: TextView = view.findViewById(R.id.heading)
         val subheading: TextView = view.findViewById(R.id.subheading)

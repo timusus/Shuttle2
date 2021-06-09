@@ -5,6 +5,7 @@
     <item
         android:id="@+id/trial"
         android:title="Trial"
+        android:visible="false"
         app:actionLayout="@layout/menu_item_trial"
         app:showAsAction="always" />
 

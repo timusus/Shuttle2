@@ -19,4 +19,8 @@
     <string name="trial_playback_speed">Playback speed: <xliff:g example="1.4x" id="speed">{speed}</xliff:g></string>
     <!-- Button to upgrade from the trial version to a paid version -->
     <string name="trial_button_upgrade">Upgrade</string>
+    <!-- Title of dialog shown after user has completed a purchase-->
+    <string name="dialog_title_purchase_complete">Thank You</string>
+    <!-- Message shown in dialog after user has completed a purchase. Note: This is informal, but should reflect sincere appreciation (not just a generic 'thank you')-->
+    <string name="dialog_message_purchase_complete">You have successfully upgraded to the full version of S2. Thank you so much for supporting the app.</string>
 </resources>

@@ -62,5 +62,8 @@ dependencies {
     implementation 'com.google.dagger:hilt-android:2.35.1'
     kapt 'com.google.dagger:hilt-compiler:2.35.1'
 
+    // Coroutines
+    api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3")
+
     implementation project(':networking')
 }
