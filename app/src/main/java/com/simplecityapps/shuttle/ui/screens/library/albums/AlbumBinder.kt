@@ -6,14 +6,12 @@ import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
-import com.simplecityapps.shuttle.ui.screens.home.search.AlbumJaroSimilarity
 import java.util.*
 
 abstract class AlbumBinder(
     val album: Album,
     val imageLoader: ArtworkImageLoader,
-    val listener: Listener? = null,
-    val jaroSimilarity: AlbumJaroSimilarity? = null
+    val listener: Listener? = null
 ) : ViewBinder,
     SectionViewBinder {
 
@@ -52,7 +50,6 @@ abstract class AlbumBinder(
                 && album.songCount == other.album.songCount
                 && album.year == other.album.year
                 && selected == other.selected
-                && jaroSimilarity == other.jaroSimilarity
     }
 
 

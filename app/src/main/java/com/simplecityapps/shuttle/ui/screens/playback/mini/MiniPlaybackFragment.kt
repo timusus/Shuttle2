@@ -10,7 +10,7 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.model.Song
-import com.simplecityapps.mediaprovider.model.friendlyArtistName
+import com.simplecityapps.mediaprovider.model.friendlyArtistOrAlbumArtistName
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.autoCleared
@@ -73,9 +73,12 @@ class MiniPlaybackFragment : Fragment(), MiniPlayerContract.View {
 
     override fun setCurrentSong(song: Song?) {
         song?.let {
-            titleTextView.text = song.name
+            titleTextView.text = song.name ?: getString(R.string.unknown)
             subtitleTextView.text = ListPhrase.from(" • ")
-                .joinSafely(listOf(song.friendlyArtistName, song.album))
+                .joinSafely(
+                    items = listOf(song.friendlyArtistOrAlbumArtistName, song.album),
+                    defaultValue = getString(R.string.unknown)
+                )
             imageLoader.loadArtwork(
                 imageView = imageView,
                 data = song,

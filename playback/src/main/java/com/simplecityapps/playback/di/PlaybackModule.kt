@@ -1,4 +1,4 @@
-package com.simplecityapps.playback.dagger
+package com.simplecityapps.playback.di
 
 import android.content.Context
 import android.content.SharedPreferences

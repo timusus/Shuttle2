@@ -18,11 +18,11 @@ class S2AlbumArtistArtworkModelLoader(
 ) : BaseGlideUrlLoader<AlbumArtist>(urlLoader) {
 
     override fun getUrl(model: AlbumArtist, width: Int, height: Int, options: Options?): String {
-        return "https://api.shuttlemusicplayer.app/v1/artwork?artist=${model.friendlyNameOrArtistName.urlEncode()}"
+        return "https://api.shuttlemusicplayer.app/v1/artwork?artist=${model.friendlyNameOrArtistName!!.urlEncode()}"
     }
 
     override fun handles(model: AlbumArtist): Boolean {
-        return true
+        return model.friendlyNameOrArtistName != null
     }
 
     override fun buildLoadData(model: AlbumArtist, width: Int, height: Int, options: Options): ModelLoader.LoadData<InputStream>? {

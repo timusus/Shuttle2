@@ -19,7 +19,7 @@ import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
-import com.simplecityapps.mediaprovider.model.friendlyArtistName
+import com.simplecityapps.mediaprovider.model.friendlyArtistOrAlbumArtistName
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
@@ -218,9 +218,9 @@ class PlaybackFragment :
 
     override fun setCurrentSong(song: Song?) {
         song?.let { song ->
-            titleTextView.text = song.name
-            artistTextView.text = song.friendlyArtistName
-            albumTextView.text = song.album
+            titleTextView.text = song.name ?: getString(R.string.unknown)
+            artistTextView.text = song.friendlyArtistOrAlbumArtistName ?: getString(R.string.unknown)
+            albumTextView.text = song.album ?: getString(R.string.unknown)
 
             when (song.type) {
                 Song.Type.Audiobook, Song.Type.Podcast -> {

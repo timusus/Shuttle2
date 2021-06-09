@@ -10,7 +10,7 @@ import androidx.core.view.isVisible
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.PlaylistSong
-import com.simplecityapps.mediaprovider.model.friendlyArtistName
+import com.simplecityapps.mediaprovider.model.friendlyArtistOrAlbumArtistName
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
@@ -109,7 +109,7 @@ open class PlaylistSongBinder(
                 .from(" • ")
                 .joinSafely(
                     listOf(
-                        viewBinder.playlistSong.song.friendlyArtistName,
+                        viewBinder.playlistSong.song.friendlyArtistOrAlbumArtistName,
                         viewBinder.playlistSong.song.album,
                         viewBinder.playlistSong.song.year
                     )

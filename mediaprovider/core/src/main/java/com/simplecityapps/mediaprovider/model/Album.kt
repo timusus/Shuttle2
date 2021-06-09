@@ -12,7 +12,7 @@ data class ArtistGroupKey(val key: String?) : Parcelable
 @Parcelize
 data class AlbumGroupKey(
     val key: String?,
-    val artistGroupKey: ArtistGroupKey
+    val artistGroupKey: ArtistGroupKey?
 ) : Parcelable
 
 @Keep
@@ -31,7 +31,7 @@ data class Album(
     val mediaProviders: List<MediaProvider.Type>
 ) : Parcelable
 
-val Album.friendlyAlbumArtistOrArtistName: String
+val Album.friendlyAlbumArtistOrArtistName: String?
     get() {
         return albumArtist
             ?: if (artists.size == 1) {
@@ -40,6 +40,6 @@ val Album.friendlyAlbumArtistOrArtistName: String
                 artists.groupBy { it.toLowerCase(Locale.getDefault()).removeArticles() }
                     .map { map -> map.value.maxByOrNull { it.length } }
                     .joinToString(", ")
-                    .ifEmpty { "Unknown" }
+                    .ifEmpty { null }
             }
     }

@@ -1,6 +1,6 @@
 package com.simplecityapps.shuttle.di
 
-import com.simplecityapps.playback.dagger.PlaybackModule
+import com.simplecityapps.playback.di.PlaybackModule
 import com.simplecityapps.provider.emby.di.EmbyMediaProviderModule
 import com.simplecityapps.provider.jellyfin.di.JellyfinMediaProviderModule
 import com.simplecityapps.provider.plex.di.PlexMediaProviderModule

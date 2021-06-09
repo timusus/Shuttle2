@@ -35,12 +35,9 @@ import com.simplecityapps.shuttle.ui.common.dialog.ShowExcludeDialog
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistBinder
-import com.simplecityapps.shuttle.ui.screens.library.albumartists.ListAlbumArtistBinder
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumBinder
-import com.simplecityapps.shuttle.ui.screens.library.albums.ListAlbumBinder
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragmentArgs
-import com.simplecityapps.shuttle.ui.screens.library.songs.SongBinder
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
@@ -186,7 +183,7 @@ class SearchFragment : Fragment(),
             if (searchResult.first.isNotEmpty()) {
                 add(HeaderBinder(getString(R.string.artists)))
                 addAll(searchResult.first.map { artistResult ->
-                    ListAlbumArtistBinder(
+                    SearchAlbumArtistBinder(
                         albumArtist = artistResult.albumArtist,
                         imageLoader = imageLoader,
                         listener = albumArtistBinderListener,
@@ -197,7 +194,7 @@ class SearchFragment : Fragment(),
             if (searchResult.second.isNotEmpty()) {
                 add(HeaderBinder(getString(R.string.albums)))
                 addAll(searchResult.second.map { albumResult ->
-                    ListAlbumBinder(
+                    SearchAlbumBinder(
                         album = albumResult.album,
                         imageLoader = imageLoader,
                         listener = albumBinderListener,
@@ -208,7 +205,7 @@ class SearchFragment : Fragment(),
             if (searchResult.third.isNotEmpty()) {
                 add(HeaderBinder(getString(R.string.songs)))
                 addAll(searchResult.third.map { songResult ->
-                    SongBinder(
+                    SearchSongBinder(
                         song = songResult.song,
                         imageLoader = imageLoader,
                         listener = songBinderListener,
@@ -258,7 +255,7 @@ class SearchFragment : Fragment(),
 
     // Private
 
-    private val songBinderListener = object : SongBinder.Listener {
+    private val songBinderListener = object : SearchSongBinder.Listener {
 
         override fun onSongClicked(song: Song) {
             view?.closeKeyboard()

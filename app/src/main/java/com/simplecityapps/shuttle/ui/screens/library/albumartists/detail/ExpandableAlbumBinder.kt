@@ -105,7 +105,7 @@ class ExpandableAlbumBinder(
             recyclerView.visibility = if (viewBinder.expanded) View.VISIBLE else View.GONE
             itemView.isActivated = viewBinder.expanded
 
-            title.text = viewBinder.album.name
+            title.text = viewBinder.album.name ?: itemView.resources.getString(R.string.unknown)
             val songsQuantity = Phrase.fromPlural(itemView.context, R.plurals.songsPlural, viewBinder.album.songCount)
                 .put("count", viewBinder.album.songCount)
                 .format()

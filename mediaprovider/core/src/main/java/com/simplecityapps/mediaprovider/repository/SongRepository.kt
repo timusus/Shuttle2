@@ -132,7 +132,7 @@ enum class SongSortOrder : Serializable {
         val defaultComparator: Comparator<Song> by lazy {
             compareByDescending<Song, Int?>(nullsFirst(), { song -> song.year })
                 .then { a, b -> collator.compare(a.albumGroupKey.key ?: "", b.albumGroupKey.key ?: "") }
-                .then { a, b -> collator.compare(a.albumGroupKey.artistGroupKey.key ?: "", b.albumGroupKey.artistGroupKey.key ?: "") }
+                .then { a, b -> collator.compare(a.albumGroupKey.artistGroupKey?.key ?: "", b.albumGroupKey.artistGroupKey?.key ?: "") }
                 .then(compareBy { song -> song.disc })
                 .then(compareBy { song -> song.track })
         }

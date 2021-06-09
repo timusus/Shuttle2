@@ -6,6 +6,6 @@ import com.simplecityapps.mediaprovider.model.friendlyNameOrArtistName
 open class AlbumArtistArtworkProvider(private val albumArtist: AlbumArtist) : ArtworkProvider {
 
     override fun getCacheKey(): String {
-        return albumArtist.friendlyNameOrArtistName
+        return albumArtist.friendlyNameOrArtistName ?: "Unknown"
     }
 }

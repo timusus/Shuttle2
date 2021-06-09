@@ -10,7 +10,7 @@ import androidx.cardview.widget.CardView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.Song
-import com.simplecityapps.mediaprovider.model.friendlyArtistName
+import com.simplecityapps.mediaprovider.model.friendlyArtistOrAlbumArtistName
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
@@ -80,7 +80,7 @@ class GridSongBinder(
                 .from(" • ")
                 .joinSafely(
                     listOf(
-                        viewBinder.song.friendlyArtistName,
+                        viewBinder.song.friendlyArtistOrAlbumArtistName,
                         viewBinder.song.album,
                     )
                 )

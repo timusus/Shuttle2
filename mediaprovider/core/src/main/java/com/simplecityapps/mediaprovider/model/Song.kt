@@ -46,10 +46,10 @@ data class Song(
         }
 
     val artistGroupKey: ArtistGroupKey
-        get() = ArtistGroupKey(albumArtist?.toLowerCase(Locale.getDefault())?.removeArticles() ?: when (artists.size) {
-            0 -> "Unknown"
-            else -> artists.joinToString(", ") { it.toLowerCase(Locale.getDefault()).removeArticles() }.ifEmpty { "Unknown" }
-        })
+        get() = ArtistGroupKey(
+            albumArtist?.toLowerCase(Locale.getDefault())?.removeArticles()
+                ?: artists.joinToString(", ") { it.toLowerCase(Locale.getDefault()).removeArticles() }.ifEmpty { null }
+        )
 
     val albumGroupKey: AlbumGroupKey
         get() = AlbumGroupKey(album?.toLowerCase(Locale.getDefault())?.removeArticles(), artistGroupKey)
@@ -59,7 +59,7 @@ data class Song(
     }
 }
 
-val Song.friendlyArtistName: String?
+val Song.friendlyArtistOrAlbumArtistName: String?
     get() {
         return if (artists.isEmpty()) {
             albumArtist
@@ -67,12 +67,11 @@ val Song.friendlyArtistName: String?
             artists.groupBy { it.toLowerCase(Locale.getDefault()).removeArticles() }
                 .map { map -> map.value.maxByOrNull { it.length } }
                 .joinToString(", ")
-                .ifEmpty { "Unknown" }
+                .ifEmpty { null }
         }
     }
 
-
-val Song.friendlyAlbumArtistOrArtistName: String
+val Song.friendlyAlbumArtistOrArtistName: String?
     get() {
         return albumArtist
             ?: if (artists.size == 1) {
@@ -81,6 +80,6 @@ val Song.friendlyAlbumArtistOrArtistName: String
                 artists.groupBy { it.toLowerCase(Locale.getDefault()).removeArticles() }
                     .map { map -> map.value.maxByOrNull { it.length } }
                     .joinToString(", ")
-                    .ifEmpty { "Unknown" }
+                    .ifEmpty { null }
             }
     }

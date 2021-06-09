@@ -14,7 +14,7 @@ import android.os.Build
 import android.util.LruCache
 import androidx.core.app.NotificationCompat
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import com.simplecityapps.mediaprovider.model.friendlyArtistName
+import com.simplecityapps.mediaprovider.model.friendlyArtistOrAlbumArtistName
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
@@ -62,8 +62,8 @@ class PlaybackNotificationManager @Inject constructor(
         val notificationBuilder = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
             .apply {
                 song?.let { song ->
-                    setContentText(song.albumArtist)
-                        .setContentTitle(song.name)
+                    setContentTitle(song.name ?: context.getString(R.string.unknown))
+                    setContentText(song.friendlyArtistOrAlbumArtistName ?: context.getString(R.string.unknown))
                 }
             }
             .setShowWhen(false)
@@ -99,8 +99,8 @@ class PlaybackNotificationManager @Inject constructor(
                 ) { image ->
                     if (song == queueManager.getCurrentItem()?.song) {
                         notificationBuilder
-                            .setContentText(song.friendlyArtistName)
-                            .setContentTitle(song.name)
+                            .setContentTitle(song.name ?: context.getString(R.string.unknown))
+                            .setContentText(song.friendlyArtistOrAlbumArtistName ?: context.getString(R.string.unknown))
                             .setLargeIcon(image)
                         val notification = notificationBuilder.build()
                         notificationManager.notify(NOTIFICATION_ID, notification)
@@ -183,7 +183,7 @@ class PlaybackNotificationManager @Inject constructor(
             // Todo: This can be removed at any point in the future, it's barely necessary as is.
             try {
                 notificationManager.deleteNotificationChannel("1")
-            } catch (e: Exception){
+            } catch (e: Exception) {
 
             }
         }

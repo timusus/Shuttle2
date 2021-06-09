@@ -11,6 +11,7 @@ import android.util.LruCache
 import androidx.core.content.res.ResourcesCompat
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.mediaprovider.model.friendlyArtistOrAlbumArtistName
 import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.playback.*
 import com.simplecityapps.playback.androidauto.MediaIdHelper
@@ -100,9 +101,9 @@ class MediaSessionManager @Inject constructor(
             val mediaMetadataCompat = MediaMetadataCompat.Builder()
                 .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, currentItem.song.id.toString())
                 .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ARTIST, currentItem.song.albumArtist)
-                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, currentItem.song.artists.joinToString(", "))
-                .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, currentItem.song.album)
-                .putString(MediaMetadataCompat.METADATA_KEY_TITLE, currentItem.song.name)
+                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, currentItem.song.friendlyArtistOrAlbumArtistName ?: context.getString(R.string.unknown))
+                .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, currentItem.song.album ?: context.getString(R.string.unknown))
+                .putString(MediaMetadataCompat.METADATA_KEY_TITLE, currentItem.song.name ?: context.getString(R.string.unknown))
                 .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, currentItem.song.duration.toLong())
                 .putLong(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, currentItem.song.track?.toLong() ?: 1)
                 .putLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS, queueManager.getSize().toLong())

@@ -6,7 +6,7 @@ import android.content.Context
 import android.view.View
 import android.widget.RemoteViews
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import com.simplecityapps.mediaprovider.model.friendlyArtistName
+import com.simplecityapps.mediaprovider.model.friendlyArtistOrAlbumArtistName
 import com.simplecityapps.playback.getArtworkCacheKey
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.utils.dp
@@ -40,7 +40,7 @@ class WidgetProvider42 : ShuttleAppWidgetProvider() {
             val song = currentItem.song
 
             setTextViewText(R.id.title, song.name)
-            setTextViewText(R.id.subtitle, song.friendlyArtistName)
+            setTextViewText(R.id.subtitle, song.friendlyArtistOrAlbumArtistName)
             setTextViewText(R.id.subtitle2, song.album)
 
             val artworkSize = 80.dp

@@ -10,6 +10,7 @@ import androidx.cardview.widget.CardView
 import androidx.core.view.isVisible
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.model.Album
+import com.simplecityapps.mediaprovider.model.friendlyAlbumArtistOrArtistName
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
@@ -63,8 +64,8 @@ class GridAlbumBinder(
         override fun bind(viewBinder: AlbumBinder, isPartial: Boolean) {
             super.bind(viewBinder, isPartial)
 
-            title.text = viewBinder.album.name
-            subtitle.text = viewBinder.album.albumArtist ?: viewBinder.album.artists.joinToString(", ")
+            title.text = viewBinder.album.name ?: itemView.resources.getString(R.string.unknown)
+            subtitle.text = viewBinder.album.friendlyAlbumArtistOrArtistName
 
             viewBinder as GridAlbumBinder
 

@@ -18,7 +18,7 @@ data class AlbumArtist(
     val mediaProviders: List<MediaProvider.Type>
 ) : Parcelable
 
-val AlbumArtist.friendlyNameOrArtistName: String
+val AlbumArtist.friendlyNameOrArtistName: String?
     get() {
         return name
             ?: if (artists.size == 1) {
@@ -27,6 +27,6 @@ val AlbumArtist.friendlyNameOrArtistName: String
                 artists.groupBy { it.toLowerCase(Locale.getDefault()).removeArticles() }
                     .map { map -> map.value.maxByOrNull { it.length } }
                     .joinToString(", ")
-                    .ifEmpty { "Unknown" }
+                    .ifEmpty { null}
             }
     }

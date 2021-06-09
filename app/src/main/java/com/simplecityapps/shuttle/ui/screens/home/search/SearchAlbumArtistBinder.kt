@@ -1,5 +1,9 @@
-package com.simplecityapps.shuttle.ui.screens.library.albumartists
+package com.simplecityapps.shuttle.ui.screens.home.search
 
+import android.animation.ArgbEvaluator
+import android.text.Spannable
+import android.text.SpannableStringBuilder
+import android.text.style.ForegroundColorSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,18 +13,22 @@ import android.widget.TextView
 import androidx.core.view.isVisible
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
+import com.simplecityapps.mediaprovider.StringComparison
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.friendlyNameOrArtistName
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.ui.common.getAttrColor
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 import com.simplecityapps.shuttle.ui.common.utils.dp
+import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistBinder
 import com.squareup.phrase.ListPhrase
 import com.squareup.phrase.Phrase
 
-class ListAlbumArtistBinder(
+class SearchAlbumArtistBinder(
     albumArtist: AlbumArtist,
     imageLoader: ArtworkImageLoader,
-    listener: Listener
+    listener: Listener,
+    private val jaroSimilarity: ArtistJaroSimilarity
 ) : AlbumArtistBinder(albumArtist, imageLoader, listener) {
 
     override fun createViewHolder(parent: ViewGroup): ViewBinder.ViewHolder<out ViewBinder> {
@@ -31,12 +39,23 @@ class ListAlbumArtistBinder(
         return ViewTypes.AlbumArtistList
     }
 
+    override fun areContentsTheSame(other: Any): Boolean {
+        if (other !is SearchAlbumArtistBinder) return false
+
+        return super.areContentsTheSame(other) && other.jaroSimilarity == jaroSimilarity
+    }
+
+
     class ViewHolder(itemView: View) : AlbumArtistBinder.ViewHolder(itemView) {
+
         private val title = itemView.findViewById<TextView>(R.id.title)
         private val subtitle = itemView.findViewById<TextView>(R.id.subtitle)
         override val imageView: ImageView = itemView.findViewById(R.id.imageView)
         private val overflowButton: ImageButton = itemView.findViewById(R.id.overflowButton)
         private val checkImageView: ImageView = itemView.findViewById(R.id.checkImageView)
+
+        private val textColor = itemView.context.getAttrColor(android.R.attr.textColorPrimary)
+        private val accentColor = itemView.context.getAttrColor(R.attr.colorAccent)
 
         init {
             itemView.setOnClickListener { viewBinder?.listener?.onAlbumArtistClicked(viewBinder!!.albumArtist, this) }
@@ -80,6 +99,29 @@ class ListAlbumArtistBinder(
             imageView.transitionName = "album_artist_${viewBinder.albumArtist.friendlyNameOrArtistName}"
 
             checkImageView.isVisible = viewBinder.selected
+
+            highlightMatchedStrings(viewBinder as SearchAlbumArtistBinder)
+        }
+
+        private fun highlightMatchedStrings(viewBinder: SearchAlbumArtistBinder) {
+            viewBinder.albumArtist.friendlyNameOrArtistName?.let {
+                val nameStringBuilder = SpannableStringBuilder(viewBinder.albumArtist.friendlyNameOrArtistName)
+                if (viewBinder.jaroSimilarity.albumArtistNameJaroSimilarity.score >= StringComparison.threshold) {
+                    viewBinder.jaroSimilarity.albumArtistNameJaroSimilarity.bMatchedIndices.forEach { (index, score) ->
+                        try {
+                            nameStringBuilder.setSpan(
+                                ForegroundColorSpan(ArgbEvaluator().evaluate(score.toFloat() - 0.25f, textColor, accentColor) as Int),
+                                index,
+                                index + 1,
+                                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                            )
+                        } catch (e: IndexOutOfBoundsException) {
+                            // This is possible because the jaro similarity function does string normalisation, so we're not necessarily using the exact same string
+                        }
+                    }
+                }
+                title.text = nameStringBuilder
+            }
         }
 
         override fun recycle() {
