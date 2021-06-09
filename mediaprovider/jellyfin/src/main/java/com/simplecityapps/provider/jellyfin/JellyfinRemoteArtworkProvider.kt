@@ -13,7 +13,7 @@ class JellyfinRemoteArtworkProvider @Inject constructor(
     private val jellyfinAuthenticationManager: JellyfinAuthenticationManager,
     private val itemsService: ItemsService,
     private val credentialStore: CredentialStore
-): RemoteArtworkProvider {
+) : RemoteArtworkProvider {
 
     override fun handles(uri: Uri): Boolean {
         return uri.scheme == "jellyfin"
@@ -32,7 +32,7 @@ class JellyfinRemoteArtworkProvider @Inject constructor(
             authenticatedCredentials.userId,
             itemId
         )
-        if (result is NetworkResult.Success) {
+        if (result is NetworkResult.Success && result.body.albumId != null) {
             return "$address/Items/${result.body.albumId}/Images/Primary?maxWidth=1000&maxHeight=1000"
         }
 
@@ -52,7 +52,7 @@ class JellyfinRemoteArtworkProvider @Inject constructor(
             authenticatedCredentials.userId,
             itemId
         )
-        if (result is NetworkResult.Success) {
+        if (result is NetworkResult.Success && result.body.artistItems.isNotEmpty()) {
             return "$address/Items/${result.body.artistItems.firstOrNull()?.id}/Images/Primary?maxWidth=1000&maxHeight=1000"
         }
 

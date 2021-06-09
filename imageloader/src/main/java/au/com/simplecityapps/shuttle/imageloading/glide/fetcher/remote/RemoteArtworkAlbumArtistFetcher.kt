@@ -3,6 +3,8 @@ package au.com.simplecityapps.shuttle.imageloading.glide.fetcher.remote
 import com.bumptech.glide.Priority
 import com.bumptech.glide.load.DataSource
 import com.bumptech.glide.load.data.DataFetcher
+import com.bumptech.glide.load.data.HttpUrlFetcher
+import com.bumptech.glide.load.model.GlideUrl
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.repository.SongQuery
@@ -20,7 +22,7 @@ class RemoteArtworkAlbumArtistFetcher(
 
     private var job: Job? = null
 
-    private var remoteArtworkSongFetcher: RemoteArtworkSongFetcher? = null
+    private var httpUrlFetcher: HttpUrlFetcher? = null
 
     override fun loadData(priority: Priority, callback: DataFetcher.DataCallback<in InputStream>) {
         job = scope.launch {
@@ -29,8 +31,13 @@ class RemoteArtworkAlbumArtistFetcher(
                     .firstOrNull()
                     ?.firstOrNull()
                     ?.let { song ->
-                        remoteArtworkSongFetcher = RemoteArtworkSongFetcher(song, remoteArtworkProvider, scope)
-                        remoteArtworkSongFetcher!!.loadData(priority, callback)
+                        val url = remoteArtworkProvider.getArtistArtworkUrl(song)
+                        if (url == null) {
+                            callback.onLoadFailed(Exception("Url null"))
+                            return@withContext
+                        }
+                        httpUrlFetcher = HttpUrlFetcher(GlideUrl(url), 10000)
+                        httpUrlFetcher!!.loadData(priority, callback)
                     } ?: run {
                     callback.onLoadFailed(Exception("Failed to retrieve song"))
                 }
@@ -39,12 +46,12 @@ class RemoteArtworkAlbumArtistFetcher(
     }
 
     override fun cleanup() {
-        remoteArtworkSongFetcher?.cleanup()
+        httpUrlFetcher?.cleanup()
     }
 
     override fun cancel() {
-        remoteArtworkSongFetcher?.cancel()
         job?.cancel()
+        httpUrlFetcher?.cancel()
     }
 
     override fun getDataClass(): Class<InputStream> {
