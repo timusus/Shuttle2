@@ -89,7 +89,7 @@ class JellyfinConfigurationFragment : DialogFragment() {
         }
 
         val dialog = MaterialAlertDialogBuilder(requireContext())
-            .setTitle(requireContext().getString(R.string.media_provider_title_jellyfin))
+            .setTitle(requireContext().getString(R.string.media_provider_title_long_jellyfin))
             .setView(view)
             .setPositiveButton(requireContext().getString(R.string.media_provider_button_authenticate), null)
             .setNegativeButton(requireContext().getString(R.string.dialog_button_close), null)

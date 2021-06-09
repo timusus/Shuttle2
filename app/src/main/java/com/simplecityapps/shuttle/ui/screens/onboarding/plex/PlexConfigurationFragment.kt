@@ -88,7 +88,7 @@ class PlexConfigurationFragment : DialogFragment() {
         }
 
         val dialog = AlertDialog.Builder(requireContext())
-            .setTitle(getString(R.string.media_provider_title_plex))
+            .setTitle(getString(R.string.media_provider_title_long_plex))
             .setView(view)
             .setPositiveButton(requireContext().getString(R.string.media_provider_button_authenticate), null)
             .setNegativeButton(requireContext().getString(R.string.dialog_button_close), null)
