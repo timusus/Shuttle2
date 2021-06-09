@@ -22,7 +22,7 @@ class S2SongArtworkModelLoader(
     }
 
     override fun handles(model: Song): Boolean {
-        return true
+        return model.album != null
     }
 
     override fun buildLoadData(model: Song, width: Int, height: Int, options: Options): ModelLoader.LoadData<InputStream>? {
