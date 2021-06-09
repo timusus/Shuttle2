@@ -45,6 +45,7 @@ class MediaStorePlaylistImporter(
                         val existingSongs = playlistRepository.getSongsForPlaylist(existingPlaylist)
                             .firstOrNull()
                             .orEmpty()
+                            .map { it.song }
 
                         val duplicates = existingSongs.intersect(matchingSongs)
                         val songsToInsert = matchingSongs.toMutableList()
