@@ -5,7 +5,9 @@ import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibMediaPr
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.repository.SongRepository
+import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
+import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.provider.emby.EmbyMediaProvider
 import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
 import com.simplecityapps.provider.plex.PlexMediaProvider
@@ -38,6 +40,8 @@ class MediaProviderSelectionPresenter @Inject constructor(
     private val jellyfinMediaProvider: JellyfinMediaProvider,
     private val plexMediaProvider: PlexMediaProvider,
     private val songRepository: SongRepository,
+    private val queueManager: QueueManager,
+    private val playbackManager: PlaybackManager,
     @Named("AppCoroutineScope") private val appCoroutineScope: CoroutineScope,
 ) : BasePresenter<MediaProviderSelectionContract.View>(),
     MediaProviderSelectionContract.Presenter {
@@ -73,11 +77,17 @@ class MediaProviderSelectionPresenter @Inject constructor(
 
         view?.setMediaProviders(playbackPreferenceManager.mediaProviderTypes)
 
+        queueManager.getCurrentItem()?.let {
+            if (it.song.mediaProvider == mediaProviderType) {
+                playbackManager.pause()
+            }
+        }
+        queueManager.remove(queueManager.getQueue().filter { it.song.mediaProvider == mediaProviderType })
+
         appCoroutineScope.launch {
             songRepository.removeAll(mediaProviderType)
         }
     }
-
 
     private fun MediaProvider.Type.toMediaProvider(): MediaProvider {
         return when (this) {
