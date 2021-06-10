@@ -19,7 +19,7 @@ class Converters {
 
     @TypeConverter
     fun fromString(string: String): List<String> {
-        return string.split(";").map { it }
+        return string.split(";").filter { it.isNotEmpty() }.map { it }
     }
 
     @TypeConverter
