@@ -96,15 +96,15 @@ class PlaybackNotificationManager @Inject constructor(
                     width = artworkSize,
                     height = artworkSize,
                 ) { image ->
-                    if (song == queueManager.getCurrentItem()?.song) {
-                        notificationBuilder
-                            .setContentTitle(song.name ?: context.getString(R.string.unknown))
-                            .setContentText(song.friendlyArtistOrAlbumArtistName ?: context.getString(R.string.unknown))
-                            .setLargeIcon(image)
-                        val notification = notificationBuilder.build()
-                        notificationManager.notify(NOTIFICATION_ID, notification)
-                    }
                     if (image != null) {
+                        if (song == queueManager.getCurrentItem()?.song) {
+                            notificationBuilder
+                                .setContentTitle(song.name ?: context.getString(R.string.unknown))
+                                .setContentText(song.friendlyArtistOrAlbumArtistName ?: context.getString(R.string.unknown))
+                                .setLargeIcon(image)
+                            val notification = notificationBuilder.build()
+                            notificationManager.notify(NOTIFICATION_ID, notification)
+                        }
                         synchronized(artworkCache) {
                             artworkCache.put(song.getArtworkCacheKey(artworkSize, artworkSize), image)
                         }
