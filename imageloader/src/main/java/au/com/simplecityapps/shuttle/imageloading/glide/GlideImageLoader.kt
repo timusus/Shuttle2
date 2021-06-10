@@ -5,9 +5,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.widget.ImageView
-import androidx.annotation.DrawableRes
 import androidx.fragment.app.Fragment
-import au.com.simplecityapps.R
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.module.GlideApp
 import au.com.simplecityapps.shuttle.imageloading.palette.ColorSet
@@ -160,13 +158,9 @@ class GlideImageLoader : ArtworkImageLoader {
         return glideRequest
     }
 
-    @DrawableRes
-    var placeHolderResId: Int = R.drawable.ic_placeholder_album_rounded
-
     fun getRequestBuilder(options: List<ArtworkImageLoader.Options>): RequestBuilder<Drawable> {
         val glideRequest = requestManager
             .asDrawable()
-            .placeholder(placeHolderResId)
 
         options.forEach { option ->
             when (option) {
