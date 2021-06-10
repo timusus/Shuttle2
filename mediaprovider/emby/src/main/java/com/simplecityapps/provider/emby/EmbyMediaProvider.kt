@@ -30,7 +30,7 @@ class EmbyMediaProvider(
                                 id = item.id.toLongOrNull() ?: 0,
                                 name = item.name,
                                 albumArtist = item.albumArtist,
-                                artists = item.artists,
+                                artists = item.artists.filter { it.isNotEmpty() },
                                 album = item.album,
                                 track = item.indexNumber,
                                 disc = item.parentIndexNumber,
