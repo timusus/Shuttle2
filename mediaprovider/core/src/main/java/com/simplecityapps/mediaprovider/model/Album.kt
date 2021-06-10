@@ -31,16 +31,18 @@ data class Album(
     val mediaProviders: List<MediaProvider.Type>
 ) : Parcelable {
 
-    val friendlyAlbumArtistOrArtistName: String?
-        get() {
-            return albumArtist
-                ?: if (artists.size == 1) {
-                    artists.first()
-                } else {
-                    artists.groupBy { it.lowercase(Locale.getDefault()).removeArticles() }
-                        .map { map -> map.value.maxByOrNull { it.length } }
-                        .joinToString(", ")
-                        .ifEmpty { null }
-                }
+    val friendlyArtistName: String? = if (artists.isNotEmpty()) {
+        if (artists.size == 1) {
+            artists.first()
+        } else {
+            artists.groupBy { it.lowercase(Locale.getDefault()).removeArticles() }
+                .map { map -> map.value.maxByOrNull { it.length } }
+                .joinToString(", ")
+                .ifEmpty { null }
         }
+    } else {
+        null
+    }
+
+    val friendlyAlbumArtistOrArtistName: String? = albumArtist ?: friendlyArtistName
 }

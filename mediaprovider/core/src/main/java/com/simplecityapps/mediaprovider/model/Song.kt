@@ -50,28 +50,26 @@ data class Song(
             ?: artists.joinToString(", ") { it.lowercase(Locale.getDefault()).removeArticles() }.ifEmpty { null }
     )
 
-    val albumGroupKey = AlbumGroupKey(album?.toLowerCase(Locale.getDefault())?.removeArticles(), artistGroupKey)
+    val albumGroupKey = AlbumGroupKey(album?.lowercase(Locale.getDefault())?.removeArticles(), artistGroupKey)
 
     enum class Type {
         Audio, Audiobook, Podcast
     }
 
-    val friendlyArtistOrAlbumArtistName: String? = if (artists.isEmpty()) {
-        albumArtist
-    } else {
-        artists.groupBy { it.toLowerCase(Locale.getDefault()).removeArticles() }
-            .map { map -> map.value.maxByOrNull { it.length } }
-            .joinToString(", ")
-            .ifEmpty { null }
-    }
-
-    val friendlyAlbumArtistOrArtistName: String? = albumArtist
-        ?: if (artists.size == 1) {
+    val friendlyArtistName: String? = if (artists.isNotEmpty()) {
+        if (artists.size == 1) {
             artists.first()
         } else {
-            artists.groupBy { it.toLowerCase(Locale.getDefault()).removeArticles() }
+            artists.groupBy { it.lowercase(Locale.getDefault()).removeArticles() }
                 .map { map -> map.value.maxByOrNull { it.length } }
                 .joinToString(", ")
                 .ifEmpty { null }
         }
+    } else {
+        null
+    }
+
+    val friendlyArtistOrAlbumArtistName: String? = friendlyArtistName ?: albumArtist
+
+    val friendlyAlbumArtistOrArtistName: String? = albumArtist ?: friendlyArtistName
 }
