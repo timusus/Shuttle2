@@ -7,6 +7,7 @@ import com.simplecityapps.localmediaprovider.local.data.room.entity.SongDataUpda
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.Song
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import java.util.*
 
 @Dao
@@ -18,7 +19,15 @@ abstract class SongDataDao {
 
     @Transaction
     @Query("SELECT * FROM songs ORDER BY albumArtist, album, track")
-    abstract fun getAll(): Flow<List<Song>>
+    abstract fun getAllSongData(): Flow<List<SongData>>
+
+    fun getAll(): Flow<List<Song>> {
+        return getAllSongData().map { list ->
+            list.map { songData ->
+                songData.toSong()
+            }
+        }
+    }
 
     @Insert(onConflict = IGNORE)
     abstract suspend fun insert(songData: List<SongData>): List<Long>
@@ -61,4 +70,34 @@ abstract class SongDataDao {
 
     @Query("DELETE FROM songs WHERE id = :id")
     abstract suspend fun delete(id: Long)
+}
+
+fun SongData.toSong(): Song {
+    return Song(
+        id = id,
+        name = name,
+        albumArtist = albumArtist,
+        artists = artists,
+        album = album,
+        track = track,
+        disc = disc,
+        duration = duration,
+        year = year,
+        genres = genres,
+        path = path,
+        size = size,
+        mimeType = mimeType,
+        lastModified = lastModified,
+        lastPlayed = lastPlayed,
+        lastCompleted = lastCompleted,
+        playCount = playCount,
+        playbackPosition = playbackPosition,
+        blacklisted = excluded,
+        mediaStoreId = mediaStoreId,
+        mediaProvider = mediaProvider,
+        replayGainTrack = replayGainTrack,
+        replayGainAlbum = replayGainAlbum,
+        lyrics = lyrics,
+        grouping = grouping
+    )
 }

@@ -10,7 +10,6 @@ import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
-import com.simplecityapps.mediaprovider.model.friendlyArtistOrAlbumArtistName
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.PlaybackWatcher

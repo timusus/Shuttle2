@@ -6,7 +6,6 @@ import androidx.documentfile.provider.DocumentFile
 import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
-import com.simplecityapps.mediaprovider.model.friendlyNameOrArtistName
 import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.queue.QueueManager

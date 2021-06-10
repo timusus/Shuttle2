@@ -8,7 +8,6 @@ import com.bumptech.glide.load.model.ModelLoaderFactory
 import com.bumptech.glide.load.model.MultiModelLoaderFactory
 import com.bumptech.glide.load.model.stream.BaseGlideUrlLoader
 import com.simplecityapps.mediaprovider.model.Album
-import com.simplecityapps.mediaprovider.model.friendlyAlbumArtistOrArtistName
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import java.io.InputStream
 

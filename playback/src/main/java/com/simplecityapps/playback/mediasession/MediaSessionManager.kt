@@ -11,7 +11,6 @@ import android.util.LruCache
 import androidx.core.content.res.ResourcesCompat
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.model.Song
-import com.simplecityapps.mediaprovider.model.friendlyArtistOrAlbumArtistName
 import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.playback.*
 import com.simplecityapps.playback.androidauto.MediaIdHelper

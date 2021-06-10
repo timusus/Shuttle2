@@ -29,17 +29,18 @@ data class Album(
     val lastSongCompleted: Date?,
     val groupKey: AlbumGroupKey?,
     val mediaProviders: List<MediaProvider.Type>
-) : Parcelable
+) : Parcelable {
 
-val Album.friendlyAlbumArtistOrArtistName: String?
-    get() {
-        return albumArtist
-            ?: if (artists.size == 1) {
-                artists.first()
-            } else {
-                artists.groupBy { it.toLowerCase(Locale.getDefault()).removeArticles() }
-                    .map { map -> map.value.maxByOrNull { it.length } }
-                    .joinToString(", ")
-                    .ifEmpty { null }
-            }
-    }
+    val friendlyAlbumArtistOrArtistName: String?
+        get() {
+            return albumArtist
+                ?: if (artists.size == 1) {
+                    artists.first()
+                } else {
+                    artists.groupBy { it.lowercase(Locale.getDefault()).removeArticles() }
+                        .map { map -> map.value.maxByOrNull { it.length } }
+                        .joinToString(", ")
+                        .ifEmpty { null }
+                }
+        }
+}

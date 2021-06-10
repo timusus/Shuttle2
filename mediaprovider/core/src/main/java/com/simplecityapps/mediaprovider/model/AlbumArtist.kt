@@ -16,17 +16,18 @@ data class AlbumArtist(
     val playCount: Int,
     val groupKey: ArtistGroupKey,
     val mediaProviders: List<MediaProvider.Type>
-) : Parcelable
+) : Parcelable {
 
-val AlbumArtist.friendlyNameOrArtistName: String?
-    get() {
-        return name
-            ?: if (artists.size == 1) {
-                artists.first()
-            } else {
-                artists.groupBy { it.toLowerCase(Locale.getDefault()).removeArticles() }
-                    .map { map -> map.value.maxByOrNull { it.length } }
-                    .joinToString(", ")
-                    .ifEmpty { null}
-            }
-    }
+    val friendlyNameOrArtistName: String?
+        get() {
+            return name
+                ?: if (artists.size == 1) {
+                    artists.first()
+                } else {
+                    artists.groupBy { it.lowercase(Locale.getDefault()).removeArticles() }
+                        .map { map -> map.value.maxByOrNull { it.length } }
+                        .joinToString(", ")
+                        .ifEmpty { null }
+                }
+        }
+}

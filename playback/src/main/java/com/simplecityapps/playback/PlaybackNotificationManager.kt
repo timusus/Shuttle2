@@ -14,7 +14,6 @@ import android.os.Build
 import android.util.LruCache
 import androidx.core.app.NotificationCompat
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import com.simplecityapps.mediaprovider.model.friendlyArtistOrAlbumArtistName
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager

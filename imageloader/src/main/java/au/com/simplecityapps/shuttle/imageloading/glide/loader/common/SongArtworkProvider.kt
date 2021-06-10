@@ -1,7 +1,6 @@
 package au.com.simplecityapps.shuttle.imageloading.glide.loader.common
 
 import com.simplecityapps.mediaprovider.model.Song
-import com.simplecityapps.mediaprovider.model.friendlyAlbumArtistOrArtistName
 
 open class SongArtworkProvider(val song: Song) : ArtworkProvider {
 

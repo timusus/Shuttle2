@@ -6,7 +6,6 @@ import android.content.Context
 import android.view.View
 import android.widget.RemoteViews
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import com.simplecityapps.mediaprovider.model.friendlyArtistOrAlbumArtistName
 import com.simplecityapps.playback.getArtworkCacheKey
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.phrase.joinSafely

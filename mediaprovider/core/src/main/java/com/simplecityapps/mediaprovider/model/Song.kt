@@ -45,41 +45,33 @@ data class Song(
             }
         }
 
-    val artistGroupKey: ArtistGroupKey
-        get() = ArtistGroupKey(
-            albumArtist?.toLowerCase(Locale.getDefault())?.removeArticles()
-                ?: artists.joinToString(", ") { it.toLowerCase(Locale.getDefault()).removeArticles() }.ifEmpty { null }
-        )
+    val artistGroupKey: ArtistGroupKey = ArtistGroupKey(
+        albumArtist?.lowercase(Locale.getDefault())?.removeArticles()
+            ?: artists.joinToString(", ") { it.lowercase(Locale.getDefault()).removeArticles() }.ifEmpty { null }
+    )
 
-    val albumGroupKey: AlbumGroupKey
-        get() = AlbumGroupKey(album?.toLowerCase(Locale.getDefault())?.removeArticles(), artistGroupKey)
+    val albumGroupKey = AlbumGroupKey(album?.toLowerCase(Locale.getDefault())?.removeArticles(), artistGroupKey)
 
     enum class Type {
         Audio, Audiobook, Podcast
     }
-}
 
-val Song.friendlyArtistOrAlbumArtistName: String?
-    get() {
-        return if (artists.isEmpty()) {
-            albumArtist
+    val friendlyArtistOrAlbumArtistName: String? = if (artists.isEmpty()) {
+        albumArtist
+    } else {
+        artists.groupBy { it.toLowerCase(Locale.getDefault()).removeArticles() }
+            .map { map -> map.value.maxByOrNull { it.length } }
+            .joinToString(", ")
+            .ifEmpty { null }
+    }
+
+    val friendlyAlbumArtistOrArtistName: String? = albumArtist
+        ?: if (artists.size == 1) {
+            artists.first()
         } else {
             artists.groupBy { it.toLowerCase(Locale.getDefault()).removeArticles() }
                 .map { map -> map.value.maxByOrNull { it.length } }
                 .joinToString(", ")
                 .ifEmpty { null }
         }
-    }
-
-val Song.friendlyAlbumArtistOrArtistName: String?
-    get() {
-        return albumArtist
-            ?: if (artists.size == 1) {
-                artists.first()
-            } else {
-                artists.groupBy { it.toLowerCase(Locale.getDefault()).removeArticles() }
-                    .map { map -> map.value.maxByOrNull { it.length } }
-                    .joinToString(", ")
-                    .ifEmpty { null }
-            }
-    }
+}
