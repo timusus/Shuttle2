@@ -1,5 +1,28 @@
 [
   {
+    "versionName": "0.4.0",
+    "releaseDate": "11/06/2021",
+    "features": [
+      "Translations! French, Spanish (Spain, Latin America), Japanese, Portuguese (Portugal, Brazil), Italian, Russian, Polish, Dutch, German, Hindi. Please get in touch if you find any errors in the translations!"
+    ],
+    "fixes": [
+      "Fixed an issue with Jellyfin/Emby artist artwork loading",
+      "Fixed an issue where MediaStore playlist import re-added existing songs",
+      "Fixed an issue where artist/album detail screens incorrectly displayed the small placeholder image",
+      "Fixed an issue where playlists were missing from 'add to playlist' menu on some screens",
+      "Fixed an issue where the notification didn't show placeholder artwork, which meant the seekbar was not visible on some devices"
+    ],
+    "improvements": [
+      "Fixed a major performance issue, introduced in 0.3.0",
+      "Use 'unknown' instead of displaying blank text in more places",
+      "Unknown (blank) artists/albums/songs are now moved to the bottom of the list when sorting",
+      "Search: Show artist name or album-artist name, depending on whichever"
+    ],
+    "notes": [
+      "If you'd like to help translate S2 into another language, or you notice an error in the translations, please let me know, or visit https://shuttle.oneskyapp.com/collaboration/project?id=382482"
+    ]
+  },
+  {
     "versionName": "0.3.81",
     "releaseDate": "09/06/2021",
     "features": [
