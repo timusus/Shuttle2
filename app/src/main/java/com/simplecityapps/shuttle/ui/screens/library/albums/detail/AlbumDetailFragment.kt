@@ -159,7 +159,6 @@ class AlbumDetailFragment :
             toolbar.inflateMenu(R.menu.menu_album_detail)
             TagEditorMenuSanitiser.sanitise(toolbar.menu, album.mediaProviders)
 
-            playlistMenuView.createPlaylistMenu(toolbar.menu)
             toolbar.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
                     R.id.shuffle -> {
@@ -176,6 +175,10 @@ class AlbumDetailFragment :
                     }
                     R.id.editTags -> {
                         presenter.editTags(album)
+                        true
+                    }
+                    R.id.playlist -> {
+                        playlistMenuView.createPlaylistMenu(toolbar.menu)
                         true
                     }
                     else -> {

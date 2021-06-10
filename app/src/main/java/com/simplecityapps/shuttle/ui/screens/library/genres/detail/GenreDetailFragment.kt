@@ -95,7 +95,6 @@ class GenreDetailFragment :
             }
             toolbar.inflateMenu(R.menu.menu_album_detail)
             TagEditorMenuSanitiser.sanitise(toolbar.menu, genre.mediaProviders)
-            playlistMenuView.createPlaylistMenu(toolbar.menu)
             toolbar.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
                     R.id.shuffle -> {
@@ -108,11 +107,15 @@ class GenreDetailFragment :
                     }
                     R.id.playNext -> {
                         presenter.playNext(genre)
-                        return@setOnMenuItemClickListener true
+                        true
                     }
                     R.id.editTags -> {
                         presenter.editTags(genre)
-                        return@setOnMenuItemClickListener true
+                        true
+                    }
+                    R.id.playlist -> {
+                        playlistMenuView.createPlaylistMenu(toolbar.menu)
+                        true
                     }
                     else -> {
                         playlistMenuView.handleMenuItem(menuItem, PlaylistData.Genres(genre))

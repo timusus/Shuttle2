@@ -138,7 +138,6 @@ class AlbumArtistDetailFragment :
             toolbar.inflateMenu(R.menu.menu_album_artist_detail)
             TagEditorMenuSanitiser.sanitise(toolbar.menu, albumArtist.mediaProviders)
 
-            playlistMenuView.createPlaylistMenu(toolbar.menu)
             toolbar.setOnMenuItemClickListener { menuItem ->
                 when (menuItem.itemId) {
                     R.id.play -> {
@@ -163,7 +162,11 @@ class AlbumArtistDetailFragment :
                     }
                     R.id.editTags -> {
                         presenter.editTags(albumArtist)
-                        return@setOnMenuItemClickListener true
+                        true
+                    }
+                    R.id.playlist -> {
+                        playlistMenuView.createPlaylistMenu(toolbar.menu)
+                        true
                     }
                     else -> {
                         playlistMenuView.handleMenuItem(menuItem, PlaylistData.AlbumArtists(albumArtist))

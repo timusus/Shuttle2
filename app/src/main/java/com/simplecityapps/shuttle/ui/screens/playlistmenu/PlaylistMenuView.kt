@@ -85,7 +85,6 @@ class PlaylistMenuView(
             CreatePlaylistDialogFragment.newInstance(playlistData, context.getString(R.string.playlist_create_dialog_playlist_name_hint)).show(fragmentManager)
             return true
         }
-
         return false
     }
 
@@ -98,11 +97,14 @@ class PlaylistMenuView(
      * The 'create playlist' menu item is assigned  an id of [playlistCreateId]
      */
     fun createPlaylistMenu(menu: Menu) {
+        Timber.i("createPlaylistMenu")
         val subMenu = menu.findItem(R.id.playlist)?.subMenu
         subMenu?.let {
             subMenu.clear()
             subMenu.add(Menu.NONE, playlistCreateId, 0, context.getString(R.string.playlist_menu_create_playlist))
             for ((index, playlist) in presenter.playlists.withIndex()) {
+                Timber.i("adding playlist $index")
+
                 subMenu.add(playlistGroupId, index, index, playlist.name)
             }
         } ?: Timber.e("Failed to create playlist menu. 'R.id.playlist' not found in menu")
