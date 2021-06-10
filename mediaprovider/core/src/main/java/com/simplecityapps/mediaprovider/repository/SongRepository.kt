@@ -131,8 +131,8 @@ enum class SongSortOrder : Serializable {
 
         val defaultComparator: Comparator<Song> by lazy {
             compareByDescending<Song, Int?>(nullsFirst(), { song -> song.year })
-                .then { a, b -> collator.compare(a.albumGroupKey.key ?: "", b.albumGroupKey.key ?: "") }
-                .then { a, b -> collator.compare(a.albumGroupKey.artistGroupKey?.key ?: "", b.albumGroupKey.artistGroupKey?.key ?: "") }
+                .then { a, b -> collator.compare(a.albumGroupKey.key ?: "zzz", b.albumGroupKey.key ?: "zzz") }
+                .then { a, b -> collator.compare(a.albumGroupKey.artistGroupKey?.key ?: "zzz", b.albumGroupKey.artistGroupKey?.key ?: "zzz") }
                 .then(compareBy { song -> song.disc })
                 .then(compareBy { song -> song.track })
         }
@@ -143,12 +143,12 @@ enum class SongSortOrder : Serializable {
         }
 
         val artistGroupKeyComparator: Comparator<Song> by lazy {
-            Comparator<Song> { a, b -> collator.compare(a.artistGroupKey.key ?: "", b.artistGroupKey.key ?: "") }
+            Comparator<Song> { a, b -> collator.compare(a.artistGroupKey.key ?: "zzz", b.artistGroupKey.key ?: "zzz") }
                 .then(defaultComparator)
         }
 
         val albumGroupKeyComparator: Comparator<Song> by lazy {
-            Comparator<Song> { a, b -> collator.compare(a.albumGroupKey.key ?: "", b.albumGroupKey.key ?: "") }
+            Comparator<Song> { a, b -> collator.compare(a.albumGroupKey.key ?: "zzz", b.albumGroupKey.key ?: "zzz") }
                 .then(defaultComparator)
         }
 

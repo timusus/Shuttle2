@@ -53,7 +53,7 @@ enum class AlbumArtistSortOrder : Serializable {
         }
 
         val defaultComparator: Comparator<AlbumArtist> by lazy {
-            Comparator { a, b -> collator.compare(a.groupKey.key ?: "", b.groupKey.key ?: "") }
+            Comparator { a, b -> collator.compare(a.groupKey.key ?: "zzz", b.groupKey.key ?: "zzz") }
         }
 
         val playCountComparator: Comparator<AlbumArtist> by lazy {
