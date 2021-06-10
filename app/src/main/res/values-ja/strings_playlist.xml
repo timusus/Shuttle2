@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="playlist_menu_empty_data_message">追加する曲はありません</string>
+    <string name="playlist_menu_duplicates_dialog_title">重複が見つかりました</string>
+    <plurals name="playlist_menu_duplicates_dialog_subtitle">
+        <item quantity="other">「 <xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g> 」にはすでに <xliff:g example="5" id="count">{count}</xliff:g> 曲が存在します。追加しますか？</item>
+    </plurals>
+    <string name="playlist_menu_duplicates_dialog_button_skip">スキップ</string>
+    <string name="playlist_menu_duplicates_dialog_button_add">追加</string>
+    <string name="playlist_menu_duplicates_switch_always_add">常に重複を追加</string>
+    <string name="playlist_menu_create_playlist">新規プレイリスト</string>
+    <string name="playlist_menu_create_playlist_success">「 <xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g> 」が正常に作成されました</string>
+    <string name="playlist_menu_create_playlist_failure">プレイリストに曲を追加できませんでした: <xliff:g example="Playlist already exists" id="error_message">{error_message}</xliff:g></string>
+    <string name="playlist_create_dialog_playlist_name_hint">プレイリスト名</string>
+    <string name="playlist_dialog_title_delete">プレイリストを削除</string>
+    <string name="playlist_dialog_subtitle_delete"><xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>は完全に削除されます</string>
+    <string name="playlist_dialog_button_delete">削除</string>
+    <string name="playlist_dialog_title_clear">プレイリストをクリア</string>
+    <string name="playlist_dialog_subtitle_clear">すべての曲が<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>から削除されます</string>
+    <string name="playlist_dialog_button_clear">クリア</string>
+    <string name="playlist_dialog_title_sync">Media Storeのプレイリストを同期</string>
+    <string name="playlist_dialog_subtitle_sync">Media Storeからプレイリストをコピーします。プレイリストがすでにShuttleにある場合、曲はマージされます。&#13;\n&#13;\n注: 曲は追加されるだけで、削除されることはありません。</string>
+    <string name="playlist_dialog_button_sync">同期</string>
+    <string name="playlists_title_playlists">プレイリスト</string>
+    <string name="playlists_title_smart_playlists">スマートプレイリスト</string>
+    <string name="playlist_import_success">インポートされたプレイリスト</string>
+    <string name="playlist_dialog_title_rename">プレイリスト名</string>
+    <string name="playlist_dialog_hint_rename">名前</string>
+</resources>

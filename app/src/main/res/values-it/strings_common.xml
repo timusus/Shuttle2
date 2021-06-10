@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="loading">Caricamento in corso…</string>
+    <!-- Dialogs-->
+    <string name="dialog_button_close">Chiudi</string>
+    <string name="dialog_button_done">Fatto</string>
+    <string name="dialog_button_retry">Riprova</string>
+    <string name="dialog_button_save">Salva</string>
+    <!-- Validation -->
+    <string name="validation_field_required">RIchiesto</string>
+    <!-- Errors -->
+    <string name="error_unexpected">Si è verificato un errore imprevisto</string>
+    <string name="error_unknown">Si è verificato un errore sconosciuto</string>
+    <!-- Queue -->
+    <string name="queue_item_added"><xliff:g example="Lateralus" id="item_name">{item_name}</xliff:g>
+     aggiunto alla coda</string>
+    <plurals name="queue_songs_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       brano aggiunto alla coda</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       brani aggiunti alla coda</item>
+    </plurals>
+    <plurals name="queue_albums_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       album aggiunto alla coda</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       album aggiunti alla coda</item>
+    </plurals>
+    <plurals name="queue_artists_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       artista aggiunto alla coda</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       artisti aggiunti alla coda</item>
+    </plurals>
+    <!-- Playlists -->
+    <string name="playlist_queue_added">Coda aggiunta a <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></string>
+    <plurals name="playlist_songs_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       brano aggiunto a 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       brani aggiunti a 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+    </plurals>
+    <plurals name="playlist_albums_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       album aggiunto a 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       album aggiunti a 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+    </plurals>
+    <plurals name="playlist_artists_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       artista aggiunto a 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       artisti aggiunti a 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+    </plurals>
+    <plurals name="playlist_genres_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       genere aggiunto a 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       generi aggiunti a 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+    </plurals>
+    <string name="delete_song_failed">Impossibile eliminare il brano</string>
+    <string name="year_unknown">Anno sconosciuto</string>
+    <string name="disc_number">Disco 
+    <xliff:g example="1" id="disc_number">{disc_number}</xliff:g></string>
+    <!-- Empty -->
+    <string name="song_list_empty">Niente canzoni</string>
+    <string name="album_list_empty">Nessun album</string>
+    <string name="artist_list_empty">Nessun artista</string>
+    <string name="genre_list_empty">Nessun genere</string>
+    <string name="playlist_list_empty">Nessuna playlist</string>
+    <string name="queue_empty">Coda vuota</string>
+    <string name="playlist_empty">Playlist vuota</string>
+    <string name="button_repeat">Ripetere</string>
+    <string name="button_seek_forward">Cerca in avanti</string>
+    <string name="button_skip_next">Salta successivo</string>
+    <string name="button_toggle_playback">Attiva / disattiva la riproduzione</string>
+    <string name="button_seek_backward">Cerca all\'indietro</string>
+    <string name="button_skip_previous">Salta precedente</string>
+    <string name="button_content_description_shuffle">Casuale</string>
+    <string name="button_album_shuffle">Album casuale</string>
+    <string name="unknown">Sconosciuto</string>
+</resources>

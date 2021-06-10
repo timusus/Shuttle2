@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="dialog_button_cancel">キャンセル</string>
+    <string name="dialog_exclude_title">除外</string>
+    <string name="dialog_exclude_message">「<xliff:g example="Lateralus" id="item">{item}</xliff:g>」はライブラリから非表示になります。&#13;\n&#13;\n除外した曲は設定で確認できます。</string>
+    <string name="dialog_exclude_button">除外</string>
+    <string name="dialog_exclude_list_empty">除外リストが空です</string>
+    <string name="dialog_delete_title">削除</string>
+    <string name="dialog_delete_message">「 <xliff:g example="Lateralus" id="item">{item}</xliff:g> 」は完全に削除されます</string>
+    <string name="dialog_delete_button">削除</string>
+</resources>

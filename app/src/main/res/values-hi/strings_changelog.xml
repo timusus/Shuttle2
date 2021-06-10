@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="changelog_title">चेंजलॉग</string>
+    <string name="changelog_features">विशेषताएं</string>
+    <string name="changelog_improvements">सुधार</string>
+    <string name="changelog_bug_fixes">कंप्यूटर प्रोग्राम या प्रणाली में बग को दूर करना</string>
+</resources>

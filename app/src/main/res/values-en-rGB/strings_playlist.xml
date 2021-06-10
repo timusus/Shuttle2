@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="playlist_menu_empty_data_message">No songs to add</string>
+
+    <string name="playlist_menu_duplicates_dialog_title">Duplicates Found</string>
+    <plurals name="playlist_menu_duplicates_dialog_subtitle">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> Song already exists in \'<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\'. Add anyway?</item>
+        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g> songs already exist in \'<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\'. Add anyway?</item>
+    </plurals>
+    <string name="playlist_menu_duplicates_dialog_button_skip">Skip</string>
+    <string name="playlist_menu_duplicates_dialog_button_add">Add</string>
+    <string name="playlist_menu_duplicates_switch_always_add">Always add duplicates</string>
+
+    <string name="playlist_menu_create_playlist">New Playlist</string>
+    <string name="playlist_menu_create_playlist_success">\'<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\' successfully created</string>
+    <string name="playlist_menu_create_playlist_failure">Failed to add songs to playlist: <xliff:g example="Playlist already exists" id="error_message">{error_message}</xliff:g></string>
+
+    <string name="playlist_create_dialog_playlist_name_hint">Playlist Name</string>
+
+    <string name="playlist_dialog_title_delete">Delete Playlist</string>
+    <string name="playlist_dialog_subtitle_delete"><xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g> will be permanently deleted</string>
+    <string name="playlist_dialog_button_delete">Delete</string>
+
+    <string name="playlist_dialog_title_clear">Clear Playlist</string>
+    <string name="playlist_dialog_subtitle_clear">All songs will be removed from <xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g></string>
+    <string name="playlist_dialog_button_clear">Clear</string>
+
+    <string name="playlist_dialog_title_sync">Sync Media Store Playlists</string>
+    <string name="playlist_dialog_subtitle_sync">Copies playlists from the Media Store. If the playlists already exists in Shuttle, the songs will be merged.\n\nNote: Songs are only added, and not removed.</string>
+    <string name="playlist_dialog_button_sync">Sync</string>
+
+    <string name="playlists_title_playlists">Playlists</string>
+    <string name="playlists_title_smart_playlists">Smart Playlists</string>
+
+    <string name="playlist_import_success">Playlists imported</string>
+    <string name="playlist_dialog_title_rename">Playlist Name</string>
+    <string name="playlist_dialog_hint_rename">Name</string>
+</resources>

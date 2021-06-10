@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <plurals name="edit_tags_editing_count_songs">
+        <item quantity="one">Modification de <xliff:g example="1" id="count">{count}</xliff:g> chanson</item>
+        <item quantity="other">Modification de <xliff:g example="5" id="count">{count}</xliff:g> chansons</item>
+    </plurals>
+    <string name="edit_tags_action">Modifier les étiquettes</string>
+    <string name="edit_tags_multiple_values">Valeurs multiples</string>
+    <string name="edit_tags_reading_tags">Lecture des étiquettes <xliff:g example="1" id="progress">{progress}</xliff:g> / <xliff:g example="1" id="count">{total}</xliff:g></string>
+    <string name="edit_tags_writing_tags">Lecture des étiquettes <xliff:g example="1" id="progress">{progress}</xliff:g> / <xliff:g example="1" id="count">{total}</xliff:g></string>
+    <string name="edit_tags_read_failed">Les étiquettes des chansons sélectionnées n\'ont pas pu être lues</string>
+    <plurals name="edit_tags_success">
+        <item quantity="one"><xliff:g example="5" id="count">{count}</xliff:g> chanson mise à jour avec succès</item>
+        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g> chansons mises à jour avec succès</item>
+    </plurals>
+    <plurals name="edit_tags_failure">
+        <item quantity="one">Échec de la mise à jour de la chanson</item>
+        <item quantity="other">Échec de la mise à jour de <xliff:g example="5" id="count">{count}</xliff:g> chansons sur <xliff:g example="5" id="total">{total}</xliff:g></item>
+    </plurals>
+    <string name="edit_tags_hint_title">Titre</string>
+    <string name="edit_tags_hint_artist">Artiste</string>
+    <string name="edit_tags_hint_album">Album</string>
+    <string name="edit_tags_hint_album_artist">Artiste de l\'album</string>
+    <string name="edit_tags_hint_year">Année</string>
+    <string name="edit_tags_hint_track">Piste</string>
+    <string name="edit_tags_hint_track_total">Total des pistes</string>
+    <string name="edit_tags_hint_disc">Disque</string>
+    <string name="edit_tags_hint_disc_total">Total du disque</string>
+    <string name="edit_tags_hint_genres">Genres</string>
+    <string name="edit_tags_hint_lyrics">Paroles de chanson</string>
+</resources>

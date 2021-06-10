@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <plurals name="edit_tags_editing_count_songs">
+        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g>
+      曲の編集中</item>
+    </plurals>
+    <string name="edit_tags_action">タグを編集</string>
+    <string name="edit_tags_multiple_values">複数の値</string>
+    <string name="edit_tags_reading_tags">タグ読取中: 
+    <xliff:g example="1" id="progress">{progress}</xliff:g>
+     / 
+    <xliff:g example="1" id="count">{total}</xliff:g></string>
+    <string name="edit_tags_writing_tags">タグ読取中: 
+    <xliff:g example="1" id="progress">{progress}</xliff:g>
+     / 
+    <xliff:g example="1" id="count">{total}</xliff:g></string>
+    <string name="edit_tags_read_failed">選択した曲のタグを読み取れませんでした</string>
+    <plurals name="edit_tags_success">
+        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g>
+      曲を正常に更新しました</item>
+    </plurals>
+    <plurals name="edit_tags_failure">
+        <item quantity="other"><xliff:g example="5" id="total">{total}</xliff:g>
+      曲中
+      <xliff:g example="5" id="count">{count}</xliff:g>
+      曲の更新に失敗しました</item>
+    </plurals>
+    <string name="edit_tags_hint_title">タイトル</string>
+    <string name="edit_tags_hint_artist">アーティスト</string>
+    <string name="edit_tags_hint_album">アルバム</string>
+    <string name="edit_tags_hint_album_artist">アルバムアーティスト</string>
+    <string name="edit_tags_hint_year">年</string>
+    <string name="edit_tags_hint_track">トラック</string>
+    <string name="edit_tags_hint_track_total">トラック合計</string>
+    <string name="edit_tags_hint_disc">ディスク</string>
+    <string name="edit_tags_hint_disc_total">ディスク合計</string>
+    <string name="edit_tags_hint_genres">ジャンル</string>
+    <string name="edit_tags_hint_lyrics">歌詞</string>
+</resources>

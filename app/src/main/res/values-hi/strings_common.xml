@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="loading">लोड हो रहा है…</string>
+    <!-- Dialogs-->
+    <string name="dialog_button_close">बंद करें</string>
+    <string name="dialog_button_done">किया हुआ</string>
+    <string name="dialog_button_retry">पुन: प्रयास करें</string>
+    <string name="dialog_button_save">सहेजें</string>
+    <!-- Validation -->
+    <string name="validation_field_required">अपेक्षित</string>
+    <!-- Errors -->
+    <string name="error_unexpected">एक अप्रत्याशित त्रुटि हुई</string>
+    <string name="error_unknown">एक अज्ञात ग़लती हुई</string>
+    <!-- Queue -->
+    <string name="queue_item_added"><xliff:g example="Lateralus" id="item_name">{item_name}</xliff:g>
+     कतार में जोड़ा गया</string>
+    <plurals name="queue_songs_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       गीत कतार में जोड़ा गया</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       गाने कतार में जोड़े गए</item>
+    </plurals>
+    <plurals name="queue_albums_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       एल्बम कतार में जोड़ा गया</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       एल्बम कतार में जोड़े गए</item>
+    </plurals>
+    <plurals name="queue_artists_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       कलाकार कतार में जोड़ा गया</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       कलाकारों ने कतार में जोड़ा</item>
+    </plurals>
+    <!-- Playlists -->
+    <string name="playlist_queue_added">कतार में जोड़ा गया <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></string>
+    <plurals name="playlist_songs_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       गीत को 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g>
+       में जोड़ा गया</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       गाने 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g>
+       में जोड़े गए</item>
+    </plurals>
+    <plurals name="playlist_albums_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       एल्बम को 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g>
+       में जोड़ा गया</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       एल्बम 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g>
+       में जोड़े गए</item>
+    </plurals>
+    <plurals name="playlist_artists_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       कलाकार को 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g>
+       में जोड़ा गया</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       कलाकारों को जोड़ा गया 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+    </plurals>
+    <plurals name="playlist_genres_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       शैली 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g>
+       में जोड़ी गई</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       शैली 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g>
+       में जोड़ी गई</item>
+    </plurals>
+    <string name="delete_song_failed">गीत हटाया नहीं जा सका</string>
+    <string name="year_unknown">वर्ष अज्ञात है</string>
+    <string name="disc_number">डिस्क 
+    <xliff:g example="1" id="disc_number">{disc_number}</xliff:g></string>
+    <!-- Empty -->
+    <string name="song_list_empty">कोई गीत नहीं</string>
+    <string name="album_list_empty">कोई एल्बम नहीं</string>
+    <string name="artist_list_empty">कोई कलाकार नहीं</string>
+    <string name="genre_list_empty">कोई विधा नहीं</string>
+    <string name="playlist_list_empty">कोई प्लेलिस्ट नहीं</string>
+    <string name="queue_empty">कतार खाली</string>
+    <string name="playlist_empty">प्लेलिस्ट खाली</string>
+    <string name="button_repeat">दोहराना</string>
+    <string name="button_seek_forward">आगे की तलाश करें</string>
+    <string name="button_skip_next">अगला छोड़ें</string>
+    <string name="button_toggle_playback">प्लेबैक को टॉगल करें</string>
+    <string name="button_seek_backward">पिछड़ों की तलाश करो</string>
+    <string name="button_skip_previous">पिछला छोड़ें</string>
+    <string name="button_content_description_shuffle">मिश्रण</string>
+    <string name="button_album_shuffle">एल्बम शफ़ल</string>
+    <string name="unknown">अनजान</string>
+</resources>

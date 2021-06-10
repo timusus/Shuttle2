@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="changelog_title">変更ログ</string>
+    <string name="changelog_features">特徴</string>
+    <string name="changelog_improvements">改善点</string>
+    <string name="changelog_bug_fixes">バグ修正</string>
+</resources>

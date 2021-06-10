@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="media_provider_title_s2">S2メディアプロバイダー</string>
+    <string name="media_provider_title_media_store">Androidメディアストア</string>
+    <string name="media_provider_title_emby">Embyメディアサーバー</string>
+    <string name="media_provider_title_jellyfin">Jellyfinメディアサーバー</string>
+    <string name="media_provider_title_plex">Plex Media Server</string>
+    <string name="media_provider_description_s2">選択したフォルダーとファイルをスキャン (推奨)</string>
+    <string name="media_provider_description_media_store">Android管理のデータベース</string>
+    <string name="media_provider_description_jellyfin">パーソナルメディアサーバー</string>
+    <string name="media_provider_description_emby">パーソナルメディアサーバー</string>
+    <string name="media_provider_description_plex">パーソナルメディアサーバー</string>
+    <string name="media_provider_scan_progress"><xliff:g example="5" id="progress">{progress}</xliff:g> / <xliff:g example="25" id="total">{total}</xliff:g> 曲をスキャン済</string>
+    <string name="media_provider_scan_success_subtitle"><xliff:g example="5" id="inserts">{inserts}</xliff:g> 挿入、<xliff:g example="15" id="updates">{updates}</xliff:g> 更新、<xliff:g example="25" id="deletes">{deletes}</xliff:g> 削除</string>
+    <string name="media_provider_scan_failure_title">スキャンに失敗しました</string>
+    <string name="media_provider_button_authenticate">認証する</string>
+    <string name="media_provider_authenticating">認証中…</string>
+    <string name="media_provider_authentication_success">認証成功</string>
+    <string name="media_provider_type_local">ローカル</string>
+    <string name="media_provider_type_remote">リモート</string>
+    <string name="media_provider_add">メディアプロバイダーを追加</string>
+    <string name="media_providers_add_onboarding">メディアプロバイダーを追加します。これは後で変更できます</string>
+    <string name="media_provider_toolbar_title_onboarding">あなたの音楽を見つける</string>
+    <string name="media_provider_toolbar_title">メディアプロバイダー</string>
+    <string name="media_provider_dialog_remove_title"><xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g> を削除</string>
+    <string name="media_provider_dialog_remove_subtitle">これにより、<xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g> メディアプロバイダーに関連付けられているすべての曲、プレイリスト、再生回数が削除されます</string>
+    <string name="media_provider_dialog_button_remove">削除</string>
+    <string name="media_provider_config_hint_address">アドレス</string>
+    <string name="media_provider_config_hint_username">ユーザー名</string>
+    <string name="media_provider_config_hint_password">パスワード</string>
+    <string name="media_provider_config_switch_remember_password">パスワードを記憶</string>
+</resources>

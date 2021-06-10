@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="media_provider_title_s2">S2 मीडिया प्रदाता</string>
+    <string name="media_provider_title_media_store">एंड्रॉइड मीडिया स्टोर</string>
+    <string name="media_provider_title_emby">एम्बी मीडिया सर्वर</string>
+    <string name="media_provider_title_jellyfin">जेलिफ़िन मीडिया सर्वर</string>
+    <string name="media_provider_title_plex">प्लेकस मीडिया सर्वर</string>
+    <string name="media_provider_description_s2">चयनित फ़ोल्डर और फ़ाइलें स्कैन करें (अनुशंसित)</string>
+    <string name="media_provider_description_media_store">Android-प्रबंधित डेटाबेस</string>
+    <string name="media_provider_description_jellyfin">व्यक्तिगत मीडिया सर्वर</string>
+    <string name="media_provider_description_emby">व्यक्तिगत मीडिया सर्वर</string>
+    <string name="media_provider_description_plex">व्यक्तिगत मीडिया सर्वर</string>
+    <string name="media_provider_scan_progress"><xliff:g example="5" id="progress">{progress}</xliff:g> / <xliff:g example="25" id="total">{total}</xliff:g> स्कैन किए गए गाने</string>
+    <string name="media_provider_scan_success_subtitle"><xliff:g example="5" id="inserts">{inserts}</xliff:g> आवेषण, <xliff:g example="15" id="updates">{updates}</xliff:g> अपडेट, <xliff:g example="25" id="deletes">{deletes}</xliff:g> हटाता है</string>
+    <string name="media_provider_scan_failure_title">स्कैन विफल रहा</string>
+    <string name="media_provider_button_authenticate">प्रमाणित</string>
+    <string name="media_provider_authenticating">प्रमाणीकरण हो रहा है …</string>
+    <string name="media_provider_authentication_success">प्रमाणीकरण सफल</string>
+    <string name="media_provider_type_local">स्थानीय</string>
+    <string name="media_provider_type_remote">दूरस्थ</string>
+    <string name="media_provider_add">मीडिया प्रदाता जोड़ें</string>
+    <string name="media_providers_add_onboarding">मीडिया प्रदाता जोड़ें आप इसे बाद में बदल सकते हैं</string>
+    <string name="media_provider_toolbar_title_onboarding">अपने संगीत की खोज करें</string>
+    <string name="media_provider_toolbar_title">मीडिया प्रदाता</string>
+    <string name="media_provider_dialog_remove_title"><xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g> निकालें</string>
+    <string name="media_provider_dialog_remove_subtitle">यह <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g> मीडिया प्रदाता से जुड़े सभी गाने, प्लेलिस्ट और प्ले काउंट को हटा देगा</string>
+    <string name="media_provider_dialog_button_remove">हटाएँ</string>
+    <string name="media_provider_config_hint_address">पता</string>
+    <string name="media_provider_config_hint_username">उपयोगकर्ता नाम</string>
+    <string name="media_provider_config_hint_password">कुंजिका</string>
+    <string name="media_provider_config_switch_remember_password">पासवर्ड याद रखें</string>
+</resources>

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <plurals name="edit_tags_editing_count_songs">
+        <item quantity="one">Editando 
+      <xliff:g example="1" id="count">{count}</xliff:g>
+       música</item>
+        <item quantity="other">Editando 
+      <xliff:g example="5" id="count">{count}</xliff:g>
+       músicas</item>
+    </plurals>
+    <string name="edit_tags_action">Editar etiquetas</string>
+    <string name="edit_tags_multiple_values">Valores múltiplos</string>
+    <string name="edit_tags_reading_tags">Lendo etiquetas 
+    <xliff:g example="1" id="progress">{progress}</xliff:g>
+     / 
+    <xliff:g example="1" id="count">{total}</xliff:g></string>
+    <string name="edit_tags_writing_tags">Lendo etiquetas 
+    <xliff:g example="1" id="progress">{progress}</xliff:g>
+     / 
+    <xliff:g example="1" id="count">{total}</xliff:g></string>
+    <string name="edit_tags_read_failed">As etiquetas de música selecionadas não puderam ser lidas</string>
+    <plurals name="edit_tags_success">
+        <item quantity="one"><xliff:g example="5" id="count">{count}</xliff:g>
+       música atualizada com sucesso</item>
+        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g>
+       músicas atualizadas com sucesso</item>
+    </plurals>
+    <plurals name="edit_tags_failure">
+        <item quantity="one">Falha ao atualizar a música</item>
+        <item quantity="other">Falha ao atualizar 
+      <xliff:g example="5" id="count">{count}</xliff:g>
+       de 
+      <xliff:g example="5" id="total">{total}</xliff:g>
+       músicas</item>
+    </plurals>
+    <string name="edit_tags_hint_title">Título</string>
+    <string name="edit_tags_hint_artist">Artista</string>
+    <string name="edit_tags_hint_album">Álbum</string>
+    <string name="edit_tags_hint_album_artist">Álbum do Artista</string>
+    <string name="edit_tags_hint_year">Ano</string>
+    <string name="edit_tags_hint_track">Faixa</string>
+    <string name="edit_tags_hint_track_total">Total de Faixas</string>
+    <string name="edit_tags_hint_disc">Disco</string>
+    <string name="edit_tags_hint_disc_total">Total do Disco</string>
+    <string name="edit_tags_hint_genres">Gêneros</string>
+    <string name="edit_tags_hint_lyrics">Letra da Música</string>
+</resources>

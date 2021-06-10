@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="menu_title_play">Jouer</string>
+    <string name="menu_title_shuffle">Mélanger</string>
+    <string name="menu_title_album_shuffle">Lecture aléatoire des albums</string>
+    <string name="menu_title_play_next">Lire ensuite</string>
+    <string name="menu_title_edit_tags">Modifier les étiquettes</string>
+    <string name="menu_title_media_provider_configure">Configurer</string>
+    <string name="menu_title_media_provider_remove">Supprimer</string>
+    <string name="menu_title_sleep_timer">Minuterie de veille</string>
+    <string name="menu_title_favorite">Préféré</string>
+    <string name="menu_title_lyrics">Paroles de chanson</string>
+    <string name="menu_title_song_info">Informations sur la chanson</string>
+    <string name="menu_title_delete">Supprimer</string>
+    <string name="menu_title_import">Importer</string>
+    <string name="menu_title_exclude">Exclure</string>
+    <string name="menu_title_remove">Supprimer</string>
+    <string name="menu_title_view_mode">Voir comme</string>
+    <string name="menu_title_view_mode_list">Liste</string>
+    <string name="menu_title_view_mode_grid">Grille</string>
+    <string name="menu_title_sort_by">Trier par</string>
+    <string name="menu_title_sort_album_name">Nom de l\'album</string>
+    <string name="menu_title_sort_artist_name">Nom d\'artiste</string>
+    <string name="menu_title_sort_album_year">Année de l\'album</string>
+    <string name="menu_title_sort_song_name">Titre de chanson</string>
+    <string name="menu_title_sort_year">Année</string>
+    <string name="menu_title_sort_duration">Durée</string>
+    <string name="menu_title_scroll_to_current">Faire défiler jusqu\'à Actuel</string>
+    <string name="menu_title_rename">Renommer</string>
+    <string name="menu_title_clear">Supprimer</string>
+    <string name="menu_title_add_to_playlist">Ajouter à la playlist</string>
+    <string name="menu_title_save_queue_to_playlist">Sauvegarder la file d\'attente dans la liste de lecture</string>
+    <string name="menu_title_add_to_queue">Ajouter à la file d\'attente</string>
+    <string name="menu_title_remove_from_queue">Supprimer de la file d\'attente</string>
+    <string name="menu_title_sort_clear_queue">Effacer la file d\'attente</string>
+</resources>

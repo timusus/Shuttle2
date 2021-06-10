@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="menu_title_play">Play</string>
+    <string name="menu_title_shuffle">Shuffle</string>
+    <string name="menu_title_album_shuffle">Album Shuffle</string>
+    <string name="menu_title_play_next">Play Next</string>
+    <string name="menu_title_edit_tags">Edit Tags</string>
+
+    <string name="menu_title_media_provider_configure">Configure</string>
+    <string name="menu_title_media_provider_remove">Remove</string>
+    <string name="menu_title_sleep_timer">Sleep Timer</string>
+    <string name="menu_title_favorite">Favourite</string>
+    <string name="menu_title_lyrics">Lyrics</string>
+    <string name="menu_title_song_info">Song Info</string>
+    <string name="menu_title_delete">Delete</string>
+    <string name="menu_title_import">Import</string>
+    <string name="menu_title_exclude">Exclude</string>
+    <string name="menu_title_remove">Remove</string>
+
+    <string name="menu_title_view_mode">View as</string>
+    <string name="menu_title_view_mode_list">List</string>
+    <string name="menu_title_view_mode_grid">Grid</string>
+
+    <string name="menu_title_sort_by">Sort by</string>
+    <string name="menu_title_sort_album_name">Album Name</string>
+    <string name="menu_title_sort_artist_name">Artist Name</string>
+    <string name="menu_title_sort_album_year">Album Year</string>
+    <string name="menu_title_sort_song_name">Song Name</string>
+    <string name="menu_title_sort_year">Year</string>
+    <string name="menu_title_sort_duration">Duration</string>
+    <string name="menu_title_sort_custom">Custom</string>
+
+    <string name="menu_title_scroll_to_current">Scroll to Current</string>
+
+    <string name="menu_title_rename">Rename</string>
+    <string name="menu_title_clear">Clear</string>
+
+    <string name="menu_title_add_to_playlist">Add to Playlist</string>
+    <string name="menu_title_save_queue_to_playlist">Save Queue to Playlist</string>
+
+    <string name="menu_title_add_to_queue">Add to Queue</string>
+    <string name="menu_title_remove_from_queue">Remove from Queue</string>
+    <string name="menu_title_sort_clear_queue">Clear Queue</string>
+
+</resources>

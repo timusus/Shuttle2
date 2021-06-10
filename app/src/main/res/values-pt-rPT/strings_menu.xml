@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="menu_title_play">Reproduzir</string>
+    <string name="menu_title_shuffle">Aleatório</string>
+    <string name="menu_title_album_shuffle">Álbum aleatório</string>
+    <string name="menu_title_play_next">Reproduzir seguinte</string>
+    <string name="menu_title_edit_tags">Editar etiquetas</string>
+    <string name="menu_title_media_provider_configure">Configurar</string>
+    <string name="menu_title_media_provider_remove">Remover</string>
+    <string name="menu_title_sleep_timer">Despertador</string>
+    <string name="menu_title_favorite">Favorito</string>
+    <string name="menu_title_lyrics">Letra da música</string>
+    <string name="menu_title_song_info">Informações da música</string>
+    <string name="menu_title_delete">Eliminar</string>
+    <string name="menu_title_import">Importar</string>
+    <string name="menu_title_exclude">Excluir</string>
+    <string name="menu_title_remove">Remover</string>
+    <string name="menu_title_view_mode">Ver como</string>
+    <string name="menu_title_view_mode_list">Lista</string>
+    <string name="menu_title_view_mode_grid">Grelha</string>
+    <string name="menu_title_sort_by">Ordenar por</string>
+    <string name="menu_title_sort_album_name">Nome do álbum</string>
+    <string name="menu_title_sort_artist_name">Nome do artista</string>
+    <string name="menu_title_sort_album_year">Ano do álbum</string>
+    <string name="menu_title_sort_song_name">Nome da música</string>
+    <string name="menu_title_sort_year">Ano</string>
+    <string name="menu_title_sort_duration">Duração</string>
+    <string name="menu_title_scroll_to_current">Deslizar para a atual</string>
+    <string name="menu_title_rename">Renomear</string>
+    <string name="menu_title_clear">Limpar</string>
+    <string name="menu_title_add_to_playlist">Adicionar à Playlist</string>
+    <string name="menu_title_save_queue_to_playlist">Guardar fila na Playlist</string>
+    <string name="menu_title_add_to_queue">Adicionar à fila</string>
+    <string name="menu_title_remove_from_queue">Remover da fila</string>
+    <string name="menu_title_sort_clear_queue">Limpar fila</string>
+</resources>

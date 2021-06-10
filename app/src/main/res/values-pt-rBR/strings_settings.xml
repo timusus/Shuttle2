@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Menu Items -->
+    <string name="settings_menu_sleep_timer">Despertador</string>
+    <string name="settings_menu_shuffle_all">Tudo Aleatório</string>
+    <string name="settings_menu_dsp">DSP</string>
+    <string name="settings_menu_settings">Configurações</string>
+    <string name="settings_crash_reporting_dialog_requires_restart">É necessário Reiniciar</string>
+    <string name="settings_crash_reporting_dialog_message">Para cancelar completamente o relatório de falha, reinicie o Aleatório. Certifique-se de pausar, deslizar a notificação e limpar o aplicativo de recentes.</string>
+    <string name="settings_dialog_title_excluded">Excluído</string>
+    <string name="settings_dialog_button_clear_excludes">Limpar</string>
+    <string name="settings_dialog_title_clear_artwork">Limpar Arte</string>
+    <string name="settings_dialog_button_clear_artwork">Limpar</string>
+    <string name="settings_dialog_message_clear_artwork">Isso removerá permanentemente todas as artes armazenadas em cache</string>
+    <string name="settings_dialog_title_download_artwork">Baixar todas as artes</string>
+    <string name="settings_dialog_message_download_artwork">Isso fará o download de toda as artes, independentemente da sua conexão de rede (WiFi/dados/outros)</string>
+    <string name="settings_dialog_button_download_artwork">Download</string>
+    <string name="settings_dialog_title_amoled_required_restart">É necessário Reiniciar</string>
+    <string name="settingS_dialog_message_amoled_requires_restart">S2 deve ser reiniciado para que as alterações do tema sejam aplicadas</string>
+    <string name="settings_logging_clipboard_name">Logs do Shuttle</string>
+    <string name="settings_logging_clipboard_logs_copied">Logs copiados para a área de transferência</string>
+    <string name="settings_logging_clipboard_logs_too_large">O arquivo de log é muito grande para a área de transferência</string>
+    <string name="settings_logging_clipboard_logs_empty">O arquivo de log está vazio</string>
+</resources>

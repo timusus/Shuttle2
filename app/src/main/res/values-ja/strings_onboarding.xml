@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="onboarding_directories_dialog_add_title">メディアディレクトリ</string>
+    <string name="onboarding_directories_dialog_add_button">ディレクトリを追加</string>
+    <string name="onboarding_directories_dialog_missing_title">失われたドキュメントプロバイダー</string>
+    <string name="onboarding_directories_dialog_missing_subtitle">「ドキュメントプロバイダー」(ファイルマネージャー) アプリがデバイスで見つかりません。そのアプリをインストールするか、「ベーシックな」メディアスキャナーの利用に戻さなければならないかもしれません。</string>
+    <string name="onboarding_directories_add_directories_help_text">音楽をスキャンするため、Shuttleはメディアディレクトリにアクセスする必要があります。&#13;\n&#13;\n「ディレクトリの追加」をタップすると、デフォルトの「ファイルプロバイダー」アプリに移動します。音楽が格納されているフォルダに移動します。複数のディレクトリを追加できます。&#13;\n&#13;\n注: 音楽フォルダを表示するには、「内部ストレージの表示」を有効にする必要があるかもしれません。</string>
+    <string name="onboarding_directories_scanning">スキャン中…</string>
+    <plurals name="onboarding_directories_scan_progress">
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+      オーディオファイル</item>
+    </plurals>
+    <string name="onboarding_permission_dialog_title">ストレージの許可が必要です</string>
+    <string name="onboarding_permission_dialog_subtitle">音楽へのアクセス許可がなければ、Shuttleが正しく機能しない可能性があります</string>
+    <string name="onboarding_permission_button_grant">許可する</string>
+    <string name="onboarding_permission_help_text">音楽を見つけるため、Shuttleはあなたのメディアストレージの読み込み許可が必要です</string>
+    <string name="onboarding_media_scanner_title">メディアスキャナー</string>
+    <string name="onboarding_media_scanner_scanning">スキャン中…</string>
+    <string name="onboarding_media_scan">スキャン</string>
+    <string name="onboarding_button_back">戻る</string>
+    <string name="onboarding_button_next">次へ</string>
+    <string name="onboarding_media_scanner_rescan">再スキャン</string>
+    <string name="onboarding_scanner_reading_song_tags">曲のタグを読み込み中…</string>
+    <string name="onboarding_media_scanner_tile">進行中のスキャンはありません</string>
+</resources>

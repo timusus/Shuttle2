@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="playlist_menu_empty_data_message">Keine Songs zum Hinzufügen</string>
+    <string name="playlist_menu_duplicates_dialog_title">Es wurden Duplikate gefunden</string>
+    <plurals name="playlist_menu_duplicates_dialog_subtitle">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> Titel existiert bereits in \"<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\". Trotzdem hinzufügen?</item>
+        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g> Titel sind bereits in \"<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\" vorhanden. Trotzdem hinzufügen?</item>
+    </plurals>
+    <string name="playlist_menu_duplicates_dialog_button_skip">Überspringen</string>
+    <string name="playlist_menu_duplicates_dialog_button_add">Hinzufügen</string>
+    <string name="playlist_menu_duplicates_switch_always_add">Duplikate immer hinzufügen</string>
+    <string name="playlist_menu_create_playlist">Neue Wiedergabeliste</string>
+    <string name="playlist_menu_create_playlist_success">„<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\“ wurde erfolgreich erstellt</string>
+    <string name="playlist_menu_create_playlist_failure">Fehler beim Hinzufügen von Songs zur Wiedergabeliste: 
+    <xliff:g example="Playlist already exists" id="error_message">{error_message}</xliff:g></string>
+    <string name="playlist_create_dialog_playlist_name_hint">Name der Wiedergabeliste</string>
+    <string name="playlist_dialog_title_delete">Wiedergabeliste löschen</string>
+    <string name="playlist_dialog_subtitle_delete"><xliff:g example="Favorites" id="playlist_name">{playlistName}</xliff:g> wird dauerhaft gelöscht</string>
+    <string name="playlist_dialog_button_delete">Löschen</string>
+    <string name="playlist_dialog_title_clear">Wiedergabeliste leeren</string>
+    <string name="playlist_dialog_subtitle_clear">Alle Songs werden aus <xliff:g example="Favorites" id="playlist_name">{playlistName}</xliff:g> entfernt</string>
+    <string name="playlist_dialog_button_clear">Leeren</string>
+    <string name="playlist_dialog_title_sync">Media-Store-Wiedergabelisten synchronisieren</string>
+    <string name="playlist_dialog_subtitle_sync">Kopiert Wiedergabelisten aus dem Media Store. Falls die Wiedergabelisten bereits im Shuttle vorhanden sind, werden die Songs vereint.\n\nHinweis: Songs werden nur hinzugefügt, aber nicht entfernt.</string>
+    <string name="playlist_dialog_button_sync">Synchronisieren</string>
+    <string name="playlists_title_playlists">Wiedergabelisten</string>
+    <string name="playlists_title_smart_playlists">Smarte Wiedergabelisten</string>
+    <string name="playlist_import_success">Wiedergabelisten importiert</string>
+    <string name="playlist_dialog_title_rename">Name der Wiedergabeliste</string>
+    <string name="playlist_dialog_hint_rename">Name</string>
+</resources>

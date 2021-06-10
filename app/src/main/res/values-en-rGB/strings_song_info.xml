@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="song_info_track_title">Title</string>
+    <string name="song_info_track_number">Track #</string>
+    <string name="song_info_duration">Duration</string>
+    <string name="song_info_unknown">Unknown</string>
+    <string name="song_info_album_artist">Album Artist</string>
+    <string name="song_info_artists">Artists</string>
+    <string name="song_info_album">Album</string>
+    <string name="song_info_year">Year</string>
+    <string name="song_info_disc">Disc</string>
+    <string name="song_info_play_count">Play count</string>
+    <string name="song_info_genres">Genres</string>
+    <string name="song_info_path">Path</string>
+    <string name="song_info_mime_type">Mime Type</string>
+    <string name="song_info_size">Size</string>
+    <string name="song_info_lyrics">Lyrics</string>
+    <string name="song_info_dialog_title">Song Info</string>
+    <string name="song_info_dialog_close_button_title">Close</string>
+</resources>

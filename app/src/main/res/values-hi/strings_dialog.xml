@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="dialog_button_cancel">रद्द करें</string>
+    <string name="dialog_exclude_title">निकालें</string>
+    <string name="dialog_exclude_message">\'<xliff:g example="Lateralus" id="item">{item}</xliff:g>\' आपकी लाइब्रेरी से छिपाया जाएगा.\n\nआप सेटिंग में बहिष्कृत गाने देख सकते हैं.</string>
+    <string name="dialog_exclude_button">निकालें</string>
+    <string name="dialog_exclude_list_empty">बहिष्कृत सूची खाली है</string>
+    <string name="dialog_delete_title">हटाएं</string>
+    <string name="dialog_delete_message">\'<xliff:g example="Lateralus" id="item">{item}</xliff:g>\' स्थायी रूप से हटा दिया जाएगा</string>
+    <string name="dialog_delete_button">हटाएं</string>
+</resources>

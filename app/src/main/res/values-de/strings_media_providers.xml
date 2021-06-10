@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="media_provider_title">Der Medienanbieter 
+    <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
+    <string name="media_provider_scan_progress"><xliff:g example="5" id="progress">{progress}</xliff:g>
+    /
+    <xliff:g example="25" id="total">{total}</xliff:g>
+     gescannte Songs</string>
+    <string name="media_provider_scan_success_title"><xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g>
+    -Scan ist abgeschlossen</string>
+    <string name="media_provider_scan_success_subtitle"><xliff:g example="5" id="inserts">{inserts}</xliff:g>
+     Einfügungen,
+    <xliff:g example="15" id="updates">{updates}</xliff:g>
+     Aktualisierungen,
+    <xliff:g example="25" id="deletes">{deletes}</xliff:g>
+     Löschungen</string>
+    <string name="media_provider_scan_failure_title">Scan ist fehlgeschlagen</string>
+    <string name="media_provider_scan_failure_subtitle">Keine Songs wurden importiert</string>
+    <string name="media_provider_button_authenticate">Authentifizieren</string>
+    <string name="media_provider_authenticating">Authentifizierung…</string>
+    <string name="media_provider_authentication_success">Authentifizierung war erfolgreich</string>
+    <string name="media_provider_title_plex">Plex</string>
+    <string name="media_provider_title_jellyfin">Jellyfin</string>
+    <string name="media_provider_title_emby">Emby</string>
+    <string name="media_provider_type_local">Lokal</string>
+    <string name="media_provider_type_remote">Entfernt</string>
+    <string name="media_provider_add">Medienanbieter hinzufügen</string>
+    <string name="media_providers_add_onboarding">Medienanbieter hinzufügen. Sie können das später ändern</string>
+    <string name="media_providers_add">Alle Medienanbieter hinzufügen</string>
+    <string name="media_provider_toolbar_title_onboarding">Entdecken Sie Ihre Musik</string>
+    <string name="media_provider_toolbar_title">Medienanbieter</string>
+    <string name="media_provider_dialog_remove_title"><xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g>
+     entfernen</string>
+    <string name="media_provider_dialog_remove_subtitle">Dadurch werden alle mit dem Medienanbieter 
+    <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g>
+     verknüpften Songs, Wiedergabelisten und Spielstände entfernt</string>
+    <string name="media_provider_dialog_button_remove">Entfernen</string>
+    <string name="media_provider_config_hint_address">Adresse</string>
+    <string name="media_provider_config_hint_username">Benutzername</string>
+    <string name="media_provider_config_hint_password">Kennwort</string>
+    <string name="media_provider_config_switch_remember_password">Kennwort merken</string>
+</resources>

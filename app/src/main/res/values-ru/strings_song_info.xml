@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="song_info_track_title">Заголовок</string>
+    <string name="song_info_track_number">Трек #</string>
+    <string name="song_info_duration">Продолжительность</string>
+    <string name="song_info_unknown">Неизвестно</string>
+    <string name="song_info_album_artist">Исполнитель альбома</string>
+    <string name="song_info_artists">Исполнители</string>
+    <string name="song_info_album">Альбом</string>
+    <string name="song_info_year">Год</string>
+    <string name="song_info_disc">Диск</string>
+    <string name="song_info_play_count">Счетчик воспроизведений</string>
+    <string name="song_info_genres">Жанры</string>
+    <string name="song_info_path">Дорожка</string>
+    <string name="song_info_mime_type">MIME-типы</string>
+    <string name="song_info_size">Размер</string>
+    <string name="song_info_lyrics">Текст песни</string>
+    <string name="song_info_dialog_title">Информация о песне</string>
+    <string name="song_info_dialog_close_button_title">Закрыть</string>
+</resources>

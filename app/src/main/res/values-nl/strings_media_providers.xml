@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="media_provider_title"><xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g>
+     mediaprovider</string>
+    <string name="media_provider_scan_progress"><xliff:g example="5" id="progress">{progress}</xliff:g>
+     / 
+    <xliff:g example="25" id="total">{total}</xliff:g>
+     nummers gescand</string>
+    <string name="media_provider_scan_success_title"><xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g>
+     scan voltooid</string>
+    <string name="media_provider_scan_success_subtitle"><xliff:g example="5" id="inserts">{inserts}</xliff:g>
+     ingevoegd,
+    <xliff:g example="15" id="updates">{updates}</xliff:g>
+     updates,
+    <xliff:g example="25" id="deletes">{deletes}</xliff:g>
+     verwijderd</string>
+    <string name="media_provider_scan_failure_title">Scan mislukt</string>
+    <string name="media_provider_scan_failure_subtitle">Geen nummers geïmporteerd</string>
+    <string name="media_provider_button_authenticate">Authenticeren</string>
+    <string name="media_provider_authenticating">Aan het authenticeren ...</string>
+    <string name="media_provider_authentication_success">Authenticatie geslaagd</string>
+    <string name="media_provider_title_plex">Plex</string>
+    <string name="media_provider_title_jellyfin">Jellyfin</string>
+    <string name="media_provider_title_emby">Emby</string>
+    <string name="media_provider_type_local">Lokaal</string>
+    <string name="media_provider_type_remote">Op afstand</string>
+    <string name="media_provider_add">Mediaprovider toevoegen</string>
+    <string name="media_providers_add_onboarding">Mediaprovider(s) toevoegen. U kunt dit later wijzigen</string>
+    <string name="media_providers_add">Mediaprovider(s) toevoegen</string>
+    <string name="media_provider_toolbar_title_onboarding">Ontdek je muziek</string>
+    <string name="media_provider_toolbar_title">Mediaproviders</string>
+    <string name="media_provider_dialog_remove_title"><xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g>
+     verwijderen</string>
+    <string name="media_provider_dialog_remove_subtitle">Hiermee worden alle nummers, afspeellijsten en afspeelaantallen die zijn gekoppeld aan de mediaprovider 
+    <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g>
+     verwijderd</string>
+    <string name="media_provider_dialog_button_remove">Verwijderen</string>
+    <string name="media_provider_config_hint_address">Adres</string>
+    <string name="media_provider_config_hint_username">Gebruikersnaam</string>
+    <string name="media_provider_config_hint_password">Wachtwoord</string>
+    <string name="media_provider_config_switch_remember_password">Onthoud wachtwoord</string>
+</resources>

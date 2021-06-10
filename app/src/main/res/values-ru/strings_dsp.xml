@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dsp_replay_gain_title">Replay Gain</string>
+    <string name="dsp_replay_gain_track">Track Gain</string>
+    <string name="dsp_replay_gain_album">Album Gain</string>
+    <string name="dsp_replay_gain_off">Выкл.</string>
+    <string name="dsp_dialog_frequency_response_title">Амплитудно-частотная характеристика</string>
+    <string name="dsp_replay_gain_hint_mode">Режим</string>
+    <string name="dsp_preamp">Предусилитель</string>
+    <string name="dsp_equalizer_title">Эквалайзер</string>
+    <string name="dsp_equalizer_hint_preset">Предустановка</string>
+    <string name="dsp_frequency_response_curve_title">Кривая амплитудно-частотной характеристики</string>
+</resources>

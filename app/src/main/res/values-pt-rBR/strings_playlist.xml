@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="playlist_menu_empty_data_message">Nenhuma música para adicionar</string>
+    <string name="playlist_menu_duplicates_dialog_title">Duplicações encontradas</string>
+    <plurals name="playlist_menu_duplicates_dialog_subtitle">
+        <item quantity="one">Já existe <xliff:g example="1" id="count">{count}</xliff:g>música na playlist \'<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\'. Adicionar mesmo assim?</item>
+        <item quantity="other">Já existem <xliff:g example="5" id="count">{count}</xliff:g>músicas na playlist \'<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\'. Adicionar mesmo assim?</item>
+    </plurals>
+    <string name="playlist_menu_duplicates_dialog_button_skip">Pular</string>
+    <string name="playlist_menu_duplicates_dialog_button_add">Adicionar</string>
+    <string name="playlist_menu_duplicates_switch_always_add">Sempre adicionar as duplicações</string>
+    <string name="playlist_menu_create_playlist">Nova playlist</string>
+    <string name="playlist_menu_create_playlist_success">\'<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\' criado com sucesso</string>
+    <string name="playlist_menu_create_playlist_failure">Falha ao adicionar músicas à playlist: <xliff:g example="Playlist already exists" id="error_message">{error_message}</xliff:g></string>
+    <string name="playlist_create_dialog_playlist_name_hint">Nome da playlist</string>
+    <string name="playlist_dialog_title_delete">Excluir playlist</string>
+    <string name="playlist_dialog_subtitle_delete"><xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g> será excluída permanentemente</string>
+    <string name="playlist_dialog_button_delete">Excluir</string>
+    <string name="playlist_dialog_title_clear">Limpar playlist</string>
+    <string name="playlist_dialog_subtitle_clear">Todas as músicas serão removidas de <xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g></string>
+    <string name="playlist_dialog_button_clear">Limpar</string>
+    <string name="playlist_dialog_title_sync">Sincronizar as playlists da Loja de Mídias</string>
+    <string name="playlist_dialog_subtitle_sync">Copiar as playlists da Loja de Mídias. Se as playlists já existirem no Aleatório, as músicas serão mescladas.\n\nNota: as músicas são apenas adicionadas, não removidas.</string>
+    <string name="playlist_dialog_button_sync">Sincronizar</string>
+    <string name="playlists_title_playlists">Playlists</string>
+    <string name="playlists_title_smart_playlists">Playlists inteligentes</string>
+    <string name="playlist_import_success">Playlists importadas</string>
+    <string name="playlist_dialog_title_rename">Nome da playlist</string>
+    <string name="playlist_dialog_hint_rename">Nome</string>
+</resources>

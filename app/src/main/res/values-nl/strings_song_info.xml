@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="song_info_track_title">Titel</string>
+    <string name="song_info_track_number">Track #</string>
+    <string name="song_info_duration">Looptijd</string>
+    <string name="song_info_unknown">Onbekend</string>
+    <string name="song_info_album_artist">Album artiest</string>
+    <string name="song_info_artists">Artiesten</string>
+    <string name="song_info_album">Album</string>
+    <string name="song_info_year">Jaar</string>
+    <string name="song_info_disc">Schijf</string>
+    <string name="song_info_play_count">Aantal keer afgespeeld</string>
+    <string name="song_info_genres">Genres</string>
+    <string name="song_info_path">Pad</string>
+    <string name="song_info_mime_type">Mime type</string>
+    <string name="song_info_size">Grootte</string>
+    <string name="song_info_lyrics">Songtekst</string>
+    <string name="song_info_dialog_title">Nummerinformatie</string>
+    <string name="song_info_dialog_close_button_title">Sluiten</string>
+</resources>

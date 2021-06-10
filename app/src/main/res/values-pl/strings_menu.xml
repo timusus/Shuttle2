@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="menu_title_play">Grać</string>
+    <string name="menu_title_shuffle">Tasować</string>
+    <string name="menu_title_album_shuffle">Tasować Album</string>
+    <string name="menu_title_play_next">Graj dalej</string>
+    <string name="menu_title_edit_tags">Edytuj tagi</string>
+    <string name="menu_title_media_provider_configure">Konfiguruj</string>
+    <string name="menu_title_media_provider_remove">Usunąć</string>
+    <string name="menu_title_sleep_timer">Wyłącznik czasowy</string>
+    <string name="menu_title_favorite">Ulubiony</string>
+    <string name="menu_title_lyrics">Tekst o utrworze</string>
+    <string name="menu_title_song_info">Informacje o utworze</string>
+    <string name="menu_title_delete">Kasować</string>
+    <string name="menu_title_import">Import</string>
+    <string name="menu_title_exclude">Wykluczać</string>
+    <string name="menu_title_remove">Usunąć</string>
+    <string name="menu_title_view_mode">Zobacz jako</string>
+    <string name="menu_title_view_mode_list">Lista</string>
+    <string name="menu_title_view_mode_grid">Krata</string>
+    <string name="menu_title_sort_by">Sortuj według</string>
+    <string name="menu_title_sort_album_name">Nazwa albumu</string>
+    <string name="menu_title_sort_artist_name">Imię artysty</string>
+    <string name="menu_title_sort_album_year">Rok albumu</string>
+    <string name="menu_title_sort_song_name">Nazwa piosenki</string>
+    <string name="menu_title_sort_year">Rok</string>
+    <string name="menu_title_sort_duration">Trwanie</string>
+    <string name="menu_title_scroll_to_current">Przewiń do bieżącego</string>
+    <string name="menu_title_rename">Przemianować</string>
+    <string name="menu_title_clear">Wyczyść</string>
+    <string name="menu_title_add_to_playlist">Dodaj do listy odtwarzania</string>
+    <string name="menu_title_save_queue_to_playlist">Zapisz kolejkę do listy odtwarzania</string>
+    <string name="menu_title_add_to_queue">Dodać do kolejki</string>
+    <string name="menu_title_remove_from_queue">Usuń z kolejki</string>
+    <string name="menu_title_sort_clear_queue">Wyczyść kolejkę</string>
+</resources>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dsp_replay_gain_title">पुनःप्रदर्शन करें</string>
+    <string name="dsp_replay_gain_track">ट्रैक हासिल करें</string>
+    <string name="dsp_replay_gain_album">एल्बम लाभ</string>
+    <string name="dsp_replay_gain_off">बंद</string>
+    <string name="dsp_dialog_frequency_response_title">आवृत्ति प्रतिक्रिया</string>
+    <string name="dsp_replay_gain_hint_mode">मोड</string>
+    <string name="dsp_preamp">प्रस्तावना</string>
+    <string name="dsp_equalizer_title">तुल्यकारक</string>
+    <string name="dsp_equalizer_hint_preset">प्रीसेट</string>
+    <string name="dsp_frequency_response_curve_title">आवृत्ति प्रतिक्रिया वक्र</string>
+</resources>

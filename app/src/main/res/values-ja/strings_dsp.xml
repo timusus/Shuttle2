@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dsp_replay_gain_title">リプレイゲイン</string>
+    <string name="dsp_replay_gain_track">トラックゲイン</string>
+    <string name="dsp_replay_gain_album">アルバムゲイン</string>
+    <string name="dsp_replay_gain_off">オフ</string>
+    <string name="dsp_dialog_frequency_response_title">周波数応答</string>
+    <string name="dsp_replay_gain_hint_mode">モード</string>
+    <string name="dsp_preamp">プリアンプ</string>
+    <string name="dsp_equalizer_title">イコライザ</string>
+    <string name="dsp_equalizer_hint_preset">プリセット</string>
+    <string name="dsp_frequency_response_curve_title">周波数応答曲線</string>
+</resources>

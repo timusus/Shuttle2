@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dsp_replay_gain_title">Replay gain</string>
+    <string name="dsp_replay_gain_track">Track Gain</string>
+    <string name="dsp_replay_gain_album">Album Gain</string>
+    <string name="dsp_replay_gain_off">Uit</string>
+    <string name="dsp_dialog_frequency_response_title">Frequentierespons</string>
+    <string name="dsp_replay_gain_hint_mode">Modus</string>
+    <string name="dsp_preamp">Voorversterker</string>
+    <string name="dsp_equalizer_title">Equalizer</string>
+    <string name="dsp_equalizer_hint_preset">Preset</string>
+    <string name="dsp_frequency_response_curve_title">Frequentiebereikcurve</string>
+</resources>

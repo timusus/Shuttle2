@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="playlist_menu_empty_data_message">जोड़ने के लिए कोई गीत नहीं</string>
+    <string name="playlist_menu_duplicates_dialog_title">डुप्लिकेट मिला</string>
+    <plurals name="playlist_menu_duplicates_dialog_subtitle">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>गाना \'<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\' में पहले से मौजूद है. फिर भी जोड़ें?</item>
+        <item quantity="other">\'<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\' में <xliff:g example="5" id="count">{count}</xliff:g>गाने पहले से मौजूद हैं. फिर भी जोड़ें?</item>
+    </plurals>
+    <string name="playlist_menu_duplicates_dialog_button_skip">छोड़ें</string>
+    <string name="playlist_menu_duplicates_dialog_button_add">जोड़ें</string>
+    <string name="playlist_menu_duplicates_switch_always_add">हमेशा डुप्लिकेट जोड़ें</string>
+    <string name="playlist_menu_create_playlist">नई प्लेलिस्ट</string>
+    <string name="playlist_menu_create_playlist_success">\'<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\' सफलतापूर्वक बनाया गया</string>
+    <string name="playlist_menu_create_playlist_failure">प्लेलिस्ट में गाने जोड़ने में विफल: <xliff:g example="Playlist already exists" id="error_message">{error_message}</xliff:g></string>
+    <string name="playlist_create_dialog_playlist_name_hint">प्लेलिस्ट का नाम</string>
+    <string name="playlist_dialog_title_delete">प्लेलिस्ट हटाएं</string>
+    <string name="playlist_dialog_button_delete">हटाएं</string>
+    <string name="playlist_dialog_title_clear">प्लेलिस्ट साफ़ करें</string>
+    <string name="playlist_dialog_button_clear">हटाएँ</string>
+    <string name="playlist_dialog_title_sync">सिंक मीडिया स्टोर प्लेलिस्ट</string>
+    <string name="playlist_dialog_subtitle_sync">मीडिया स्टोर से प्लेलिस्ट को कॉपी करता है. यदि शटल पहले से मौजूद हैं, तो गाने विलीन हो जाएंगे.\n\nनोट: गाने केवल जोड़े गए हैं, और नहीं हटाए गए हैं.</string>
+    <string name="playlist_dialog_button_sync">सिंक</string>
+    <string name="playlists_title_playlists">प्लेलिस्ट</string>
+    <string name="playlists_title_smart_playlists">स्मार्ट प्लेलिस्ट</string>
+    <string name="playlist_import_success">प्लेलिस्ट आयात की गई</string>
+    <string name="playlist_dialog_title_rename">प्लेलिस्ट का नाम</string>
+    <string name="playlist_dialog_hint_rename">नाम</string>
+</resources>

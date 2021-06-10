@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="song_info_track_title">Tytuł</string>
+    <string name="song_info_track_number">Tor #</string>
+    <string name="song_info_duration">Trwanie</string>
+    <string name="song_info_unknown">Nieznany</string>
+    <string name="song_info_album_artist">Album artysty</string>
+    <string name="song_info_artists">Artyści</string>
+    <string name="song_info_album">Album</string>
+    <string name="song_info_year">Rok</string>
+    <string name="song_info_disc">Dysk</string>
+    <string name="song_info_play_count">Liczbę odtworzeń</string>
+    <string name="song_info_genres">Gatunki</string>
+    <string name="song_info_path">Ścieżka</string>
+    <string name="song_info_mime_type">Typ Mime</string>
+    <string name="song_info_size">Rozmiar</string>
+    <string name="song_info_lyrics">Tekst piosenki</string>
+    <string name="song_info_dialog_title">Informacje o utworze</string>
+    <string name="song_info_dialog_close_button_title">Zamknij</string>
+</resources>

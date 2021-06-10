@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="playlist_menu_empty_data_message">Geen nummers toe te voegen</string>
+    <string name="playlist_menu_duplicates_dialog_title">Duplicaten gevonden</string>
+    <plurals name="playlist_menu_duplicates_dialog_subtitle">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>nummer bestaat al in \'<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\'. Toch toevoegen?</item>
+        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g>nummers bestaan al in \'<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\'. Toch toevoegen?</item>
+    </plurals>
+    <string name="playlist_menu_duplicates_dialog_button_skip">Overslaan</string>
+    <string name="playlist_menu_duplicates_dialog_button_add">Toevoegen</string>
+    <string name="playlist_menu_duplicates_switch_always_add">Voeg duplicaten altijd toe</string>
+    <string name="playlist_menu_create_playlist">Nieuwe afspeellijst</string>
+    <string name="playlist_menu_create_playlist_success">\'<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\' is met succes aangemaakt</string>
+    <string name="playlist_menu_create_playlist_failure">Kan nummers niet toevoegen aan afspeellijst: <xliff:g example="Playlist already exists" id="error_message">{error_message}</xliff:g></string>
+    <string name="playlist_create_dialog_playlist_name_hint">Naam afspeellijst</string>
+    <string name="playlist_dialog_title_delete">Afspeellijst verwijderen</string>
+    <string name="playlist_dialog_subtitle_delete"><xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g> wordt definitief verwijderd</string>
+    <string name="playlist_dialog_button_delete">Verwijderen</string>
+    <string name="playlist_dialog_title_clear">Afspeellijst wissen</string>
+    <string name="playlist_dialog_subtitle_clear">Alle nummers worden verwijderd uit <xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g></string>
+    <string name="playlist_dialog_button_clear">Wissen</string>
+    <string name="playlist_dialog_title_sync">Synchroniseer Media Store-afspeellijsten</string>
+    <string name="playlist_dialog_subtitle_sync">Kopieert afspeellijsten uit de Media Store. Als de afspeellijsten al in Shuttle bestaan, worden de nummers samengevoegd.\n\nOpmerking: nummers worden alleen toegevoegd en niet verwijderd.</string>
+    <string name="playlist_dialog_button_sync">Synchroniseren</string>
+    <string name="playlists_title_playlists">Afspeellijsten</string>
+    <string name="playlists_title_smart_playlists">Slimme afspeellijsten</string>
+    <string name="playlist_import_success">Afspeellijsten geïmporteerd</string>
+    <string name="playlist_dialog_title_rename">Naam afspeellijst</string>
+    <string name="playlist_dialog_hint_rename">Naam</string>
+</resources>

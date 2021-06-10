@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Menu Items -->
+    <string name="settings_menu_sleep_timer">Minuterie de veille</string>
+    <string name="settings_menu_shuffle_all">Tout mélanger</string>
+    <string name="settings_menu_dsp">DSP</string>
+    <string name="settings_menu_settings">Paramètres</string>
+    <string name="settings_crash_reporting_dialog_requires_restart">Requiert un redémarrage</string>
+    <string name="settings_crash_reporting_dialog_message">Pour désactiver complètement les rapports de plantage, veuillez redémarrer Shuttle. Assurez-vous de mettre en pause, faites glisser la notification et supprimez l\'application des récents.</string>
+    <string name="settings_dialog_title_excluded">Exclu</string>
+    <string name="settings_dialog_button_clear_excludes">Supprimer</string>
+    <string name="settings_dialog_title_clear_artwork">Effacer l\'illustration</string>
+    <string name="settings_dialog_button_clear_artwork">Supprimer</string>
+    <string name="settings_dialog_message_clear_artwork">Cela supprimera définitivement toutes les illustrations mises en cache</string>
+    <string name="settings_dialog_title_download_artwork">Télécharger toutes les illustrations</string>
+    <string name="settings_dialog_message_download_artwork">Ceci téléchargera toutes les illustrations, quelle que soit votre connexion réseau (WiFi/données/autre)</string>
+    <string name="settings_dialog_button_download_artwork">Télécharger</string>
+    <string name="settings_dialog_title_amoled_required_restart">Requiert un redémarrage</string>
+    <string name="settingS_dialog_message_amoled_requires_restart">S2 doit être redémarré pour que les changements de thème prennent effet</string>
+    <string name="settings_logging_clipboard_name">Journaux de la navette (Shuttle)</string>
+    <string name="settings_logging_clipboard_logs_copied">Journaux copiés dans le presse-papiers</string>
+    <string name="settings_logging_clipboard_logs_too_large">Le fichier journal est trop volumineux pour le presse-papiers</string>
+    <string name="settings_logging_clipboard_logs_empty">Fichier journal vide</string>
+</resources>

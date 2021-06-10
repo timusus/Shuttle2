@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="dialog_button_cancel">Abbrechen</string>
+    <string name="dialog_exclude_title">Ausschließen</string>
+    <string name="dialog_exclude_message">„<xliff:g example="Lateralus" id="item">{item}</xliff:g>\“ wird von Ihrer Bibliothek versteckt.\n\nSie können ausgeschlossene Songs in den Einstellungen sehen.</string>
+    <string name="dialog_exclude_button">Ausschließen</string>
+    <string name="dialog_exclude_list_empty">Die Ausschlussliste ist leer</string>
+    <string name="dialog_delete_title">Löschen</string>
+    <string name="dialog_delete_message">„<xliff:g example="Lateralus" id="item">{item}</xliff:g>\“ wird dauerhaft gelöscht</string>
+    <string name="dialog_delete_button">Löschen</string>
+</resources>

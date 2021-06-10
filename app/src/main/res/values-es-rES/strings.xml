@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<resources>
+    <string name="app_name">S2</string>
+    <!-- Bottom Nav -->
+    <string name="title_home">Inicio</string>
+    <string name="title_library">Biblioteca</string>
+    <string name="title_search">Buscar</string>
+    <string name="playback_up_next">Hasta</string>
+    <string name="dev_notes">Notas de los desarrolladores:</string>
+</resources>

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="menu_title_play">Wiedergabe</string>
+    <string name="menu_title_shuffle">Zufallswiedergabe</string>
+    <string name="menu_title_album_shuffle">Album-Zufallswiedergabe</string>
+    <string name="menu_title_play_next">Nächste Wiedergabe</string>
+    <string name="menu_title_edit_tags">Tags bearbeiten</string>
+    <string name="menu_title_media_provider_configure">Konfigurieren</string>
+    <string name="menu_title_media_provider_remove">Entfernen</string>
+    <string name="menu_title_sleep_timer">Sleep-Timer</string>
+    <string name="menu_title_favorite">Favorit</string>
+    <string name="menu_title_lyrics">Songtext</string>
+    <string name="menu_title_song_info">Song-Info</string>
+    <string name="menu_title_delete">Löschen</string>
+    <string name="menu_title_import">Importieren</string>
+    <string name="menu_title_exclude">Ausschließen</string>
+    <string name="menu_title_remove">Entfernen</string>
+    <string name="menu_title_view_mode">Anzeigen als</string>
+    <string name="menu_title_view_mode_list">Auflisten</string>
+    <string name="menu_title_view_mode_grid">Gitter</string>
+    <string name="menu_title_sort_by">Sortieren nach</string>
+    <string name="menu_title_sort_album_name">Albumname</string>
+    <string name="menu_title_sort_artist_name">Künstlername</string>
+    <string name="menu_title_sort_album_year">Albumjahr</string>
+    <string name="menu_title_sort_song_name">Song-Name</string>
+    <string name="menu_title_sort_year">Jahr</string>
+    <string name="menu_title_sort_duration">Dauer</string>
+    <string name="menu_title_scroll_to_current">Zum aktuellen blättern</string>
+    <string name="menu_title_rename">Umbenennen</string>
+    <string name="menu_title_clear">Leeren</string>
+    <string name="menu_title_add_to_playlist">Zur Wiedergabeliste hinzufügen</string>
+    <string name="menu_title_save_queue_to_playlist">Queue in Wiedergabeliste speichern</string>
+    <string name="menu_title_add_to_queue">Zur Queue hinzufügen</string>
+    <string name="menu_title_remove_from_queue">Aus Queue entfernen</string>
+    <string name="menu_title_sort_clear_queue">Queue löschen</string>
+</resources>

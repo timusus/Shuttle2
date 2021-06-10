@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="song_info_track_title">Titolo</string>
+    <string name="song_info_track_number">Traccia #</string>
+    <string name="song_info_duration">Durata</string>
+    <string name="song_info_unknown">Sconosciuto</string>
+    <string name="song_info_album_artist">Artista dell\'album</string>
+    <string name="song_info_artists">Artisti</string>
+    <string name="song_info_album">Album</string>
+    <string name="song_info_year">Anno</string>
+    <string name="song_info_disc">Disco</string>
+    <string name="song_info_play_count">Conteggio Riproduzioni</string>
+    <string name="song_info_genres">Generi</string>
+    <string name="song_info_path">Sentiero</string>
+    <string name="song_info_mime_type">Tipo Mimo</string>
+    <string name="song_info_size">Dimensione</string>
+    <string name="song_info_lyrics">Testi</string>
+    <string name="song_info_dialog_title">Informazioni sul brano</string>
+    <string name="song_info_dialog_close_button_title">Chiudi</string>
+</resources>

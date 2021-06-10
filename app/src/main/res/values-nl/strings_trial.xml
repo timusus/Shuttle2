@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="menu_trial">Proefperiode</string>
+    <string name="trial_heading_trial">Gratis proefperiode</string>
+    <!-- Message shown when user is starting a trial. Note: This is meant to be friendly/fun! It doesn't have to say 'until you lose your mind' -->
+    <string name="trial_description_trial">Na de proefperiode zal de afspeelsnelheid elke dag een klein beetje toenemen, totdat je er gek van wordt.</string>
+    <plurals name="trial_days_remaining">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       dag resterend</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       dagen resterend</item>
+    </plurals>
+    <string name="trial_heading_expired">Proefperiode verlopen</string>
+    <!-- Message shown when trial has expired. Note: This is meant to be friendly/fun! It doesn't have to say 'until you lose your mind' -->
+    <string name="trial_description_expired">De afspeelsnelheid neemt elke dag een klein beetje toe, totdat je er gek van wordt.</string>
+    <string name="trial_playback_speed">Afspeelsnelheid: 
+    <xliff:g example="1.4x" id="speed">{speed}</xliff:g></string>
+    <!-- Button to upgrade from the trial version to a paid version -->
+    <string name="trial_button_upgrade">Upgraden</string>
+</resources>

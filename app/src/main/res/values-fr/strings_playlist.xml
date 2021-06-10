@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="playlist_menu_empty_data_message">Aucune chanson à ajouter</string>
+    <string name="playlist_menu_duplicates_dialog_title">Doublons trouvés</string>
+    <plurals name="playlist_menu_duplicates_dialog_subtitle">
+        <item quantity="one">Le morceau <xliff:g example="1" id="count">{count}</xliff:g> existe déjà dans \" <xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g> \". Ajouter quand même ?</item>
+        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g> titres existent déjà dans \" <xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\". Ajouter quand même ?</item>
+    </plurals>
+    <string name="playlist_menu_duplicates_dialog_button_skip">Sauter</string>
+    <string name="playlist_menu_duplicates_dialog_button_add">Ajouter</string>
+    <string name="playlist_menu_duplicates_switch_always_add">Toujours ajouter les doublons</string>
+    <string name="playlist_menu_create_playlist">Nouvelle playlist</string>
+    <string name="playlist_menu_create_playlist_success">\"<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\" a bien été créé</string>
+    <string name="playlist_menu_create_playlist_failure">Échec de l\'ajout de chansons à la playlist: <xliff:g example="Playlist already exists" id="error_message">{error_message}</xliff:g></string>
+    <string name="playlist_create_dialog_playlist_name_hint">Nom de la playlist</string>
+    <string name="playlist_dialog_title_delete">Supprimer la playlist</string>
+    <string name="playlist_dialog_subtitle_delete"><xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g> sera supprimé définitivement</string>
+    <string name="playlist_dialog_button_delete">Supprimer</string>
+    <string name="playlist_dialog_title_clear">Supprimer la playlist</string>
+    <string name="playlist_dialog_subtitle_clear">Toutes les chansons seront supprimées de <xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g></string>
+    <string name="playlist_dialog_button_clear">Supprimer</string>
+    <string name="playlist_dialog_title_sync">Synchroniser les listes de lecture Media Store</string>
+    <string name="playlist_dialog_subtitle_sync">Copie les listes de lecture du Media Store. Si les listes de lecture existent déjà dans Shuttle, les chansons seront fusionnées.\n\nRemarque: les chansons sont uniquement ajoutées et non supprimées.</string>
+    <string name="playlist_dialog_button_sync">Synchroniser</string>
+    <string name="playlists_title_playlists">Listes de lecture</string>
+    <string name="playlists_title_smart_playlists">Listes de lecture intelligentes</string>
+    <string name="playlist_import_success">Listes de lecture importées</string>
+    <string name="playlist_dialog_title_rename">Nom de la playlist</string>
+    <string name="playlist_dialog_hint_rename">Nom</string>
+</resources>

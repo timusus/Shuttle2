@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Menu Items -->
+    <string name="settings_menu_sleep_timer">Despertador</string>
+    <string name="settings_menu_shuffle_all">Misturar tudo</string>
+    <string name="settings_menu_dsp">DSP</string>
+    <string name="settings_menu_settings">Definições</string>
+    <string name="settings_crash_reporting_dialog_requires_restart">Requer reiniciar</string>
+    <string name="settings_crash_reporting_dialog_message">Para cancelar completamente o relatório de falha, reinicie o Shuttle. Certifique-se que pára, desliza a notificação e limpa os recentes da aplicação.</string>
+    <string name="settings_dialog_title_excluded">Excluído</string>
+    <string name="settings_dialog_button_clear_excludes">Limpar</string>
+    <string name="settings_dialog_title_clear_artwork">Limpar arte</string>
+    <string name="settings_dialog_button_clear_artwork">Limpar</string>
+    <string name="settings_dialog_message_clear_artwork">Isto vai remover permanentemente todas as artes em cache</string>
+    <string name="settings_dialog_title_download_artwork">Transferir todas as artes</string>
+    <string name="settings_dialog_message_download_artwork">Isto vai transferir todas as artes, independentemente da sua ligação à rede (WiFi/dados/outras)</string>
+    <string name="settings_dialog_button_download_artwork">Transferir</string>
+    <string name="settings_dialog_title_amoled_required_restart">Requer reiniciar</string>
+    <string name="settingS_dialog_message_amoled_requires_restart">O S2 deve ser reiniciado para que as alterações ao tema tenham efeito</string>
+    <string name="settings_logging_clipboard_name">Shuttle Logs</string>
+    <string name="settings_logging_clipboard_logs_copied">Logs copiados para a área de transferência</string>
+    <string name="settings_logging_clipboard_logs_too_large">O ficheiro de log é muito grande para a área de transferência</string>
+    <string name="settings_logging_clipboard_logs_empty">Ficheiro de log vazio</string>
+</resources>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Menu Items -->
+    <string name="settings_menu_sleep_timer">Sleep-Timer</string>
+    <string name="settings_menu_shuffle_all">Alle per Zufallswiedergabe abspielen</string>
+    <string name="settings_menu_dsp">DSP</string>
+    <string name="settings_menu_settings">Einstellungen</string>
+    <string name="settings_crash_reporting_dialog_requires_restart">Erfordert einen Neustart</string>
+    <string name="settings_crash_reporting_dialog_message">Um das Absturzprotokoll vollständig abzumelden, starten Sie bitte den Shuttle neu. Achten Sie darauf, zu pausieren, die Benachrichtigung wegzuwischen und die App aus den Wiedervorlagen zu löschen.</string>
+    <string name="settings_dialog_title_excluded">Ausgeschlossen</string>
+    <string name="settings_dialog_button_clear_excludes">Leeren</string>
+    <string name="settings_dialog_title_clear_artwork">Bildmaterial leeren</string>
+    <string name="settings_dialog_button_clear_artwork">Leeren</string>
+    <string name="settings_dialog_message_clear_artwork">Dadurch werden alle zwischengespeicherten Bildmaterialien dauerhaft entfernt</string>
+    <string name="settings_dialog_title_download_artwork">Alle Bildmaterialien herunterladen</string>
+    <string name="settings_dialog_message_download_artwork">Dadurch werden alle Bildmaterialien heruntergeladen, unabhängig von Ihrer Netzwerkverbindung (WiFi/Mobilfunknetz/andere)</string>
+    <string name="settings_dialog_button_download_artwork">Herunterladen</string>
+    <string name="settings_dialog_title_amoled_required_restart">Erfordert einen Neustart</string>
+    <string name="settingS_dialog_message_amoled_requires_restart">S2 muss neu gestartet werden, damit die Themenänderungen übernommen werden können</string>
+    <string name="settings_logging_clipboard_name">Shuttle-Protokolle</string>
+    <string name="settings_logging_clipboard_logs_copied">Protokolle wurden in die Zwischenablage kopiert</string>
+    <string name="settings_logging_clipboard_logs_too_large">Die Protokolldatei ist zu groß für die Zwischenablage</string>
+    <string name="settings_logging_clipboard_logs_empty">Protokolldatei ist leer</string>
+</resources>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="lyrics_title">Текст песни</string>
+    <string name="lyrics_quicklyric_title">QuickLyric</string>
+    <string name="lyrics_quicklyric_unavailable">QuickLyric недоступен</string>
+</resources>

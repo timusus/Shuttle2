@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_title_recent">最近</string>
+    <string name="home_description_recently_played">最近再生されたアルバム</string>
+    <string name="home_title_most_played">一番再生されたもの</string>
+    <string name="home_description_most_played">お気に入りのアルバム</string>
+    <string name="home_title_this_year">今年</string>
+    <string name="home_description_this_year">{year}にリリースされたアルバム</string>
+    <string name="home_title_something_different">何かが違います</string>
+    <string name="home_description_something_different">しばらく聞いていないアーティスト</string>
+    <string name="btn_history">履歴</string>
+    <string name="btn_recently_added">最近追加</string>
+    <string name="btn_favorite">お気に入り</string>
+    <string name="btn_shuffle">シャッフル</string>
+</resources>

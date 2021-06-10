@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="dialog_button_cancel">Отмена</string>
+    <string name="dialog_exclude_title">Исключить</string>
+    <string name="dialog_exclude_message">Элемент \'<xliff:g example="Lateralus" id="item">{item}</xliff:g>\' будет скрыт из вашей библиотеки.\n\nВы можете просмотреть исключенные песни в настройках.</string>
+    <string name="dialog_exclude_button">Исключить</string>
+    <string name="dialog_exclude_list_empty">Список исключений пуст</string>
+    <string name="dialog_delete_title">Удалить</string>
+    <string name="dialog_delete_message">Элемент \'<xliff:g example="Lateralus" id="item">{item}</xliff:g>\' будет удален без возможности восстановления.</string>
+    <string name="dialog_delete_button">Удалить</string>
+</resources>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="onboarding_directories_dialog_add_title">Medienverzeichnisse</string>
+    <string name="onboarding_directories_dialog_add_button">Verzeichnis hinzufügen</string>
+    <string name="onboarding_directories_dialog_missing_title">Fehlender Dokumentanbieter</string>
+    <string name="onboarding_directories_dialog_missing_subtitle">Eine „Dateianbieter\“-App (Dateimanager) kann auf Ihrem Gerät nicht gefunden werden. Möglicherweise müssen Sie einen installieren oder auf den „einfachen\“ Medien-Scanner zurückgreifen.</string>
+    <string name="onboarding_directories_add_directories_help_text">Damit Shuttle nach Musik suchen kann, benötigt es Zugriff auf Ihre Medienverzeichnisse.\n\nWenn Sie auf \"Verzeichnis hinzufügen\" drücken, werden Sie zu Ihrer standard „Dateianbieter\“-App weitergeleitet. Navigieren Sie zu dem/den Ordner(n), in denen sich Ihre Musik befindet. Sie können mehrere Verzeichnisse hinzufügen. \n\nHinweis: Möglicherweise müssen Sie „Internen Speicher anzeigen\“ aktivieren, um Ihre(n) Musikordner zu sehen.</string>
+    <string name="onboarding_directories_scanning">Wird gescannt…</string>
+    <plurals name="onboarding_directories_scan_progress">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       Audiodatei</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       Audiodateien</item>
+    </plurals>
+    <string name="onboarding_permission_dialog_title">Speichererlaubnis ist erforderlich</string>
+    <string name="onboarding_permission_dialog_subtitle">Der Shuttle funktioniert möglicherweise nicht richtig, wenn Sie keine Zugriffserlaubnis für Ihre Musik haben</string>
+    <string name="onboarding_permission_button_grant">Erlaubnis erteilen</string>
+    <string name="onboarding_permission_help_text">Um Ihre Musik zu finden, benötigt Shuttle die Erlaubnis, Ihren Medienspeicher zu lesen</string>
+    <string name="onboarding_media_scanner_title">Medien-Scanner</string>
+    <string name="onboarding_media_scanner_scanning">Wird gescannt…</string>
+    <string name="onboarding_media_scan">Scan</string>
+    <string name="onboarding_button_back">Zurück</string>
+    <string name="onboarding_button_next">Nächster</string>
+    <string name="onboarding_media_scanner_rescan">Neu scannen</string>
+    <string name="onboarding_scanner_reading_song_tags">Song-Tags lesen…</string>
+    <string name="onboarding_media_scanner_tile">Es wird nicht gescannt</string>
+</resources>

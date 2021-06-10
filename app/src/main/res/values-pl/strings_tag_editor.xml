@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <plurals name="edit_tags_editing_count_songs">
+        <item quantity="one">Edytujesz 
+      <xliff:g example="1" id="count">{count}</xliff:g>
+       utwór</item>
+        <item quantity="other">Edycja 
+      <xliff:g example="5" id="count">{count}</xliff:g>
+       utworów</item>
+        <item quantity="few">Edycja 
+      <xliff:g example="5" id="count">{count}</xliff:g>
+       utworów</item>
+        <item quantity="many">Edycja 
+      <xliff:g example="5" id="count">{count}</xliff:g>
+       utworów</item>
+    </plurals>
+    <string name="edit_tags_action">Edytuj tagi</string>
+    <string name="edit_tags_multiple_values">Wiele wartości</string>
+    <string name="edit_tags_reading_tags">Odczytywanie tagów 
+    <xliff:g example="1" id="progress">{progress}</xliff:g>
+     / 
+    <xliff:g example="1" id="count">{total}</xliff:g></string>
+    <string name="edit_tags_writing_tags">Odczytywanie tagów 
+    <xliff:g example="1" id="progress">{progress}</xliff:g>
+     / 
+    <xliff:g example="1" id="count">{total}</xliff:g></string>
+    <string name="edit_tags_read_failed">Nie można odczytać wybranych tagów utworów</string>
+    <plurals name="edit_tags_success">
+        <item quantity="one">Zaktualizowano 
+      <xliff:g example="5" id="count">{count}</xliff:g>
+       utwór</item>
+        <item quantity="other">Zaktualizowano 
+      <xliff:g example="5" id="count">{count}</xliff:g>
+       utwory</item>
+        <item quantity="few">Zaktualizowano 
+      <xliff:g example="5" id="count">{count}</xliff:g>
+       utwory</item>
+        <item quantity="many">Zaktualizowano 
+      <xliff:g example="5" id="count">{count}</xliff:g>
+       utwory</item>
+    </plurals>
+    <plurals name="edit_tags_failure">
+        <item quantity="one">Nie udało się zaktualizować utworu</item>
+        <item quantity="other">Nie udało się zaktualizować 
+      <xliff:g example="5" id="count">{count}</xliff:g>
+       z 
+      <xliff:g example="5" id="total">{total}</xliff:g>
+       utworów</item>
+        <item quantity="few">Nie udało się zaktualizować 
+      <xliff:g example="5" id="count">{count}</xliff:g>
+       z 
+      <xliff:g example="5" id="total">{total}</xliff:g>
+       utworów</item>
+        <item quantity="many">Nie udało się zaktualizować 
+      <xliff:g example="5" id="count">{count}</xliff:g>
+       z 
+      <xliff:g example="5" id="total">{total}</xliff:g>
+       utworów</item>
+    </plurals>
+    <string name="edit_tags_hint_title">Tytuł</string>
+    <string name="edit_tags_hint_artist">Artysta</string>
+    <string name="edit_tags_hint_album">Album</string>
+    <string name="edit_tags_hint_album_artist">Album artysty</string>
+    <string name="edit_tags_hint_year">Rok</string>
+    <string name="edit_tags_hint_track">Tor</string>
+    <string name="edit_tags_hint_track_total">Śledź sumę</string>
+    <string name="edit_tags_hint_disc">Dysk</string>
+    <string name="edit_tags_hint_disc_total">Dysk łącznie</string>
+    <string name="edit_tags_hint_genres">Gatunki</string>
+    <string name="edit_tags_hint_lyrics">Tekst piosenki</string>
+</resources>

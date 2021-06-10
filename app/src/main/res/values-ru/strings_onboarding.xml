@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="onboarding_directories_dialog_add_title">Каталоги медиа</string>
+    <string name="onboarding_directories_dialog_add_button">Добавить каталог</string>
+    <string name="onboarding_directories_dialog_missing_title">Отсутствует поставщик документов</string>
+    <string name="onboarding_directories_dialog_missing_subtitle">Приложение «поставщик документов» (файловый менеджер) не может быть найдено на вашем устройстве. Возможно, вам придется установить его или вернуться к использованию «базового» медиа-сканера.</string>
+    <string name="onboarding_directories_add_directories_help_text">Для поиска музыки Shuttle требуется доступ к вашим каталогам мультимедиа.\n\nКогда вы нажмете «добавить каталог», вы попадете в приложение «поставщик файлов» по умолчанию. Перейдите к папкам, содержащим вашу музыку. Вы можете добавить несколько каталогов. \n\nПримечание. Возможно, вам потребуется включить параметр «Показывать внутреннее хранилище», чтобы просматривать папки с музыкой.</string>
+    <string name="onboarding_directories_scanning">Сканирование…</string>
+    <plurals name="onboarding_directories_scan_progress">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       аудиофайл</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       аудиофайлы</item>
+        <item quantity="few"><xliff:g example="30" id="count">{count}</xliff:g>
+       аудиофайла</item>
+        <item quantity="many"><xliff:g example="30" id="count">{count}</xliff:g>
+       аудиофайлов</item>
+    </plurals>
+    <string name="onboarding_permission_dialog_title">Требуется разрешение на хранение</string>
+    <string name="onboarding_permission_dialog_subtitle">Без разрешения на доступ к вашей музыке Shuttle может работать некорректно</string>
+    <string name="onboarding_permission_button_grant">Предоставить разрешение</string>
+    <string name="onboarding_permission_help_text">Чтобы найти вашу музыку, Shuttle необходимо разрешение на чтение вашего хранилища мультимедиа.</string>
+    <string name="onboarding_media_scanner_title">Сканер медиа</string>
+    <string name="onboarding_media_scanner_scanning">Сканирование…</string>
+    <string name="onboarding_media_scan">Сканировать</string>
+    <string name="onboarding_button_back">Назад</string>
+    <string name="onboarding_button_next">Вперед</string>
+    <string name="onboarding_media_scanner_rescan">Повторное сканирование</string>
+    <string name="onboarding_scanner_reading_song_tags">Чтение тегов песен…</string>
+    <string name="onboarding_media_scanner_tile">Сканирование не выполняется</string>
+</resources>

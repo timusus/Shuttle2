@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="queue_position"><xliff:g example="3" id="position">{position}</xliff:g>
+     di 
+    <xliff:g example="12" id="total">{total}</xliff:g></string>
+</resources>

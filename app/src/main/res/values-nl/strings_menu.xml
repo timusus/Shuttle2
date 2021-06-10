@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="menu_title_play">Speel</string>
+    <string name="menu_title_shuffle">Shuffle</string>
+    <string name="menu_title_album_shuffle">Album shuffle</string>
+    <string name="menu_title_play_next">Volgende afspelen</string>
+    <string name="menu_title_edit_tags">Bewerk-tags</string>
+    <string name="menu_title_media_provider_configure">Configureren</string>
+    <string name="menu_title_media_provider_remove">Verwijderen</string>
+    <string name="menu_title_sleep_timer">Slaaptimer</string>
+    <string name="menu_title_favorite">Favoriete</string>
+    <string name="menu_title_lyrics">Songtekst</string>
+    <string name="menu_title_song_info">Nummerinformatie</string>
+    <string name="menu_title_delete">Verwijderen</string>
+    <string name="menu_title_import">Importeren</string>
+    <string name="menu_title_exclude">Uitsluiten</string>
+    <string name="menu_title_remove">Verwijderen</string>
+    <string name="menu_title_view_mode">Zien als</string>
+    <string name="menu_title_view_mode_list">Lijst</string>
+    <string name="menu_title_view_mode_grid">Raster</string>
+    <string name="menu_title_sort_by">Sorteer op</string>
+    <string name="menu_title_sort_album_name">Albumnaam</string>
+    <string name="menu_title_sort_artist_name">Artiestennaam</string>
+    <string name="menu_title_sort_album_year">Album jaar</string>
+    <string name="menu_title_sort_song_name">Titel van een liedje</string>
+    <string name="menu_title_sort_year">Jaar</string>
+    <string name="menu_title_sort_duration">Looptijd</string>
+    <string name="menu_title_scroll_to_current">Scroll naar Huidig</string>
+    <string name="menu_title_rename">Hernoemen</string>
+    <string name="menu_title_clear">Wissen</string>
+    <string name="menu_title_add_to_playlist">Toevoegen aan afspeellijst</string>
+    <string name="menu_title_save_queue_to_playlist">Wachtrij opslaan in afspeellijst</string>
+    <string name="menu_title_add_to_queue">Toevoegen aan wachtrij</string>
+    <string name="menu_title_remove_from_queue">Verwijderen uit wachtrij</string>
+    <string name="menu_title_sort_clear_queue">Wachtrij wissen</string>
+</resources>

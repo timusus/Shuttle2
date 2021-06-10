@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="artists">कलाकार</string>
+    <plurals name="artistsPlural">
+        <item quantity="one"><xliff:g example="Tool" id="count">%d</xliff:g>
+       कलाकार</item>
+        <item quantity="other"><xliff:g example="Tool" id="count">{count}</xliff:g>
+       कलाकार</item>
+    </plurals>
+    <string name="albums">एलबम</string>
+    <plurals name="albumsPlural">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       एल्बम</item>
+        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g>
+       एल्बम</item>
+    </plurals>
+    <string name="songs">गीत</string>
+    <plurals name="songsPlural">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       गीत</item>
+        <item quantity="other"><xliff:g example="12" id="count">{count}</xliff:g>
+       गाने</item>
+    </plurals>
+    <string name="genres">शैलियां</string>
+    <plurals name="genresPlural">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       शैली</item>
+        <item quantity="other">\n
+      <xliff:g example="3" id="count">{count}</xliff:g>
+       शैलियां</item>
+    </plurals>
+    <string name="library_playlists">प्लेलिस्ट</string>
+    <string name="library_scan_in_progress">अपनी लाइब्रेरी को स्कैन करना</string>
+    <string name="multi_select_items_selected"><xliff:g example="3" id="count">{count}</xliff:g>
+     चयनित</string>
+</resources>

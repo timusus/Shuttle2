@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <plurals name="edit_tags_editing_count_songs">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       गीत का संपादन</item>
+        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g>
+       गाने का संपादन</item>
+    </plurals>
+    <string name="edit_tags_action">जोड़ संपादित करें</string>
+    <string name="edit_tags_multiple_values">एकाधिक मूल्य</string>
+    <string name="edit_tags_reading_tags">टैग पढ़ना 
+    <xliff:g example="1" id="progress">{progress}</xliff:g>
+     / 
+    <xliff:g example="1" id="count">{total}</xliff:g></string>
+    <string name="edit_tags_writing_tags">टैग पढ़ना 
+    <xliff:g example="1" id="progress">{progress}</xliff:g>
+     / 
+    <xliff:g example="1" id="count">{total}</xliff:g></string>
+    <string name="edit_tags_read_failed">चयनित गीत टैग नहीं पढ़े जा सके</string>
+    <plurals name="edit_tags_success">
+        <item quantity="one">सफलतापूर्वक 
+      <xliff:g example="5" id="count">{count}</xliff:g>
+       गीत अपडेट किया गया</item>
+        <item quantity="other">सफलतापूर्वक 
+      <xliff:g example="5" id="count">{count}</xliff:g>
+       गाने अपडेट किए गए</item>
+    </plurals>
+    <plurals name="edit_tags_failure">
+        <item quantity="one">गाना अपडेट करने में विफल</item>
+        <item quantity="other"><xliff:g example="5" id="total">{total}</xliff:g>
+       गाने के 
+      <xliff:g example="5" id="count">{count}</xliff:g>
+       को अपडेट करने में विफल</item>
+    </plurals>
+    <string name="edit_tags_hint_title">शीर्षक</string>
+    <string name="edit_tags_hint_artist">कलाकार</string>
+    <string name="edit_tags_hint_album">एल्बम</string>
+    <string name="edit_tags_hint_album_artist">चित्राधार कलाकार</string>
+    <string name="edit_tags_hint_year">साल</string>
+    <string name="edit_tags_hint_track">धावन पथ</string>
+    <string name="edit_tags_hint_track_total">ट्रैक कुल</string>
+    <string name="edit_tags_hint_disc">डिस्क</string>
+    <string name="edit_tags_hint_disc_total">डिस्क कुल</string>
+    <string name="edit_tags_hint_genres">शैलियां</string>
+    <string name="edit_tags_hint_lyrics">बोल</string>
+</resources>

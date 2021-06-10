@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Menu Items -->
+    <string name="settings_menu_sleep_timer">सोने का टाइमर</string>
+    <string name="settings_menu_shuffle_all">सब फेरबदल करें</string>
+    <string name="settings_menu_dsp">डीएसपी</string>
+    <string name="settings_menu_settings">समायोजन</string>
+    <string name="settings_crash_reporting_dialog_requires_restart">पुनरारंभ की आवश्यकता है</string>
+    <string name="settings_crash_reporting_dialog_message">क्रैश रिपोर्टिंग से पूरी तरह से बाहर निकलने के लिए, कृपया शटल पुनः आरंभ करें. विराम दें, अधिसूचना को स्वाइप करें, और एप्लिकेशन को पुनरावृत्ति से साफ़ करें.</string>
+    <string name="settings_dialog_title_excluded">निकाले गए</string>
+    <string name="settings_dialog_button_clear_excludes">स्पष्ट</string>
+    <string name="settings_dialog_title_clear_artwork">कलाकृति हटाएँ</string>
+    <string name="settings_dialog_button_clear_artwork">हटाएँ</string>
+    <string name="settings_dialog_message_clear_artwork">यह स्थायी रूप से सभी कैश्ड कलाकृति को हटा देगा</string>
+    <string name="settings_dialog_title_download_artwork">सभी कलाकृति डाउनलोड करें</string>
+    <string name="settings_dialog_message_download_artwork">यह आपके नेटवर्क कनेक्शन (वाईफाई/डेटा/अन्य) की परवाह किए बिना सभी कलाकृति डाउनलोड करेगा</string>
+    <string name="settings_dialog_button_download_artwork">डाउनलोड</string>
+    <string name="settings_dialog_title_amoled_required_restart">पुनरारंभ की आवश्यकता है</string>
+    <string name="settingS_dialog_message_amoled_requires_restart">प्रभावी होने के लिए विषय परिवर्तनों के लिए S2 को फिर से शुरू करना चाहिए</string>
+    <string name="settings_logging_clipboard_name">शटल लॉग्स</string>
+    <string name="settings_logging_clipboard_logs_copied">क्लिपबोर्ड पर लॉग किए गए लॉग</string>
+    <string name="settings_logging_clipboard_logs_too_large">क्लिपबोर्ड के लिए लॉग फ़ाइल बहुत बड़ी है</string>
+    <string name="settings_logging_clipboard_logs_empty">लॉग फ़ाइल खाली</string>
+</resources>

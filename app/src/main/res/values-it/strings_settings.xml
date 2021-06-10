@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Menu Items -->
+    <string name="settings_menu_sleep_timer">Sveglia</string>
+    <string name="settings_menu_shuffle_all">Mischia tutto</string>
+    <string name="settings_menu_dsp">DSP</string>
+    <string name="settings_menu_settings">impostazioni</string>
+    <string name="settings_crash_reporting_dialog_requires_restart">Richiede il riavvio</string>
+    <string name="settings_crash_reporting_dialog_message">Per disattivare completamente la segnalazione degli arresti anomali, riavvia Shuttle. Assicurati di mettere in pausa, far scorrere la notifica e cancellare l\'app dai recenti.</string>
+    <string name="settings_dialog_title_excluded">Escluso</string>
+    <string name="settings_dialog_button_clear_excludes">Cancella</string>
+    <string name="settings_dialog_title_clear_artwork">Opere d\'arte chiare</string>
+    <string name="settings_dialog_button_clear_artwork">Cancella</string>
+    <string name="settings_dialog_message_clear_artwork">Ciò rimuoverà definitivamente tutte le immagini memorizzate nella cache</string>
+    <string name="settings_dialog_title_download_artwork">Scarica tutta la grafica</string>
+    <string name="settings_dialog_message_download_artwork">Questo scaricherà tutta la grafica, indipendentemente dalla tua connessione di rete (WiFi/dati/altro)</string>
+    <string name="settings_dialog_button_download_artwork">Scarica</string>
+    <string name="settings_dialog_title_amoled_required_restart">Richiede il riavvio</string>
+    <string name="settingS_dialog_message_amoled_requires_restart">S2 deve essere riavviato affinché le modifiche al tema abbiano effetto</string>
+    <string name="settings_logging_clipboard_name">Registri navetta</string>
+    <string name="settings_logging_clipboard_logs_copied">Registri copiati negli appunti</string>
+    <string name="settings_logging_clipboard_logs_too_large">Il file di registro è troppo grande per gli appunti</string>
+    <string name="settings_logging_clipboard_logs_empty">File di registro vuoto</string>
+</resources>

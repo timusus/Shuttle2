@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="onboarding_directories_dialog_add_title">Mediamappen</string>
+    <string name="onboarding_directories_dialog_add_button">Map toevoegen</string>
+    <string name="onboarding_directories_dialog_missing_title">Ontbrekende documentprovider</string>
+    <string name="onboarding_directories_dialog_missing_subtitle">Er kan geen \'Documentprovider\'-app (bestandsbeheerder) op uw apparaat worden gevonden. Mogelijk moet u er een installeren of terugkeren naar het gebruik van de standaard-mediascanner.</string>
+    <string name="onboarding_directories_add_directories_help_text">Om naar muziek te kunnen scannen, heeft Shuttle toegang tot uw mediamappen nodig.\n\nWanneer u op \'map toevoegen\' drukt, wordt u naar uw standaard \'bestandsprovider\'-app geleid. Navigeer naar de map(pen) met uw muziek. U kunt meerdere mappen toevoegen. \n\nOpmerking: mogelijk moet u \'interne opslag weergeven\' inschakelen om uw muziekmap(pen) te zien.</string>
+    <string name="onboarding_directories_scanning">Aan het scannen…</string>
+    <plurals name="onboarding_directories_scan_progress">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       audiobestand</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       audiobestanden</item>
+    </plurals>
+    <string name="onboarding_permission_dialog_title">Opslagtoestemming vereist</string>
+    <string name="onboarding_permission_dialog_subtitle">De shuttle functioneert mogelijk niet correct zonder toestemming om toegang te krijgen tot uw muziek</string>
+    <string name="onboarding_permission_button_grant">Toestemming geven</string>
+    <string name="onboarding_permission_help_text">Om uw muziek te vinden, heeft Shuttle toestemming nodig voor het lezen van uw mediaopslag</string>
+    <string name="onboarding_media_scanner_title">Mediascanner</string>
+    <string name="onboarding_media_scanner_scanning">Aan het scannen…</string>
+    <string name="onboarding_media_scan">Scannen</string>
+    <string name="onboarding_button_back">Terug</string>
+    <string name="onboarding_button_next">Volgende</string>
+    <string name="onboarding_media_scanner_rescan">Opnieuw scannen</string>
+    <string name="onboarding_scanner_reading_song_tags">Nummerlabels lezen…</string>
+    <string name="onboarding_media_scanner_tile">Er wordt geen scan uitgevoerd</string>
+</resources>

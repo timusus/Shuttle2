@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="menu_title_play">再生</string>
+    <string name="menu_title_shuffle">シャッフル</string>
+    <string name="menu_title_album_shuffle">アルバムシャッフル</string>
+    <string name="menu_title_play_next">次に再生</string>
+    <string name="menu_title_edit_tags">タグを編集</string>
+    <string name="menu_title_media_provider_configure">設定</string>
+    <string name="menu_title_media_provider_remove">削除</string>
+    <string name="menu_title_sleep_timer">スリープタイマー</string>
+    <string name="menu_title_favorite">お気に入り</string>
+    <string name="menu_title_lyrics">歌詞</string>
+    <string name="menu_title_song_info">曲情報</string>
+    <string name="menu_title_delete">削除</string>
+    <string name="menu_title_import">インポート</string>
+    <string name="menu_title_exclude">除外</string>
+    <string name="menu_title_remove">削除</string>
+    <string name="menu_title_view_mode">として表示</string>
+    <string name="menu_title_view_mode_list">リスト</string>
+    <string name="menu_title_view_mode_grid">グリッド</string>
+    <string name="menu_title_sort_by">並べ替え</string>
+    <string name="menu_title_sort_album_name">アルバム名</string>
+    <string name="menu_title_sort_artist_name">アーティスト名</string>
+    <string name="menu_title_sort_album_year">アルバム年</string>
+    <string name="menu_title_sort_song_name">曲名</string>
+    <string name="menu_title_sort_year">年</string>
+    <string name="menu_title_sort_duration">再生時間</string>
+    <string name="menu_title_scroll_to_current">現在までスクロール</string>
+    <string name="menu_title_rename">名前を変更</string>
+    <string name="menu_title_clear">クリア</string>
+    <string name="menu_title_add_to_playlist">プレイリストに追加</string>
+    <string name="menu_title_save_queue_to_playlist">キューをプレイリストに保存</string>
+    <string name="menu_title_add_to_queue">キューに追加</string>
+    <string name="menu_title_remove_from_queue">キューから削除</string>
+    <string name="menu_title_sort_clear_queue">キューをクリア</string>
+</resources>

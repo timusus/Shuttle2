@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="lyrics_title">歌詞</string>
+    <string name="lyrics_quicklyric_title">QuickLyric</string>
+    <string name="lyrics_quicklyric_unavailable">QuickLyricは利用できません</string>
+</resources>

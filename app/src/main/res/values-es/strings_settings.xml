@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Menu Items -->
+    <string name="settings_menu_sleep_timer">Temporizador de apagado</string>
+    <string name="settings_menu_shuffle_all">Aplicar shuffle a todos</string>
+    <string name="settings_menu_dsp">DSP</string>
+    <string name="settings_menu_settings">Configuración</string>
+    <string name="settings_crash_reporting_dialog_requires_restart">Requiere reiniciar</string>
+    <string name="settings_crash_reporting_dialog_message">Para excluirte completamente de los informes de fallos, por favor reinicia Shuttle. Asegúrate de pausar, deslizar la notificación y borrar la aplicación de los recientes.</string>
+    <string name="settings_dialog_title_excluded">Excluidas</string>
+    <string name="settings_dialog_button_clear_excludes">Borrar</string>
+    <string name="settings_dialog_title_clear_artwork">Borrar portadas</string>
+    <string name="settings_dialog_button_clear_artwork">Borrar</string>
+    <string name="settings_dialog_message_clear_artwork">Esto eliminará permanentemente todas las portadas almacenadas en caché.</string>
+    <string name="settings_dialog_title_download_artwork">Descargar todas las portadas</string>
+    <string name="settings_dialog_message_download_artwork">Esto descargará todas las portadas, independientemente de tu conexión de red (WiFi/datos/otra)</string>
+    <string name="settings_dialog_button_download_artwork">Descargar</string>
+    <string name="settings_dialog_title_amoled_required_restart">Requiere reiniciar</string>
+    <string name="settingS_dialog_message_amoled_requires_restart">S2 debe reiniciarse para que los cambios de tema surtan efecto</string>
+    <string name="settings_logging_clipboard_name">Registros de Shuttle</string>
+    <string name="settings_logging_clipboard_logs_copied">Registros copiados en el portapapeles</string>
+    <string name="settings_logging_clipboard_logs_too_large">El archivo de registro es demasiado grande para el portapapeles</string>
+    <string name="settings_logging_clipboard_logs_empty">Archivo de registro vacío</string>
+</resources>

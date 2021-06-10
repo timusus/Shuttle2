@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="media_provider_title_s2">Медиа-провайдер S2</string>
+    <string name="media_provider_title_media_store">Магазин Android Media</string>
+    <string name="media_provider_title_emby">Медиа-сервер Emby</string>
+    <string name="media_provider_title_jellyfin">Медиа-сервер Jellyfin</string>
+    <string name="media_provider_title_plex">Медиа-сервер Plex</string>
+    <string name="media_provider_description_s2">Сканирует выбранные папки и файлы (рекомендуется)</string>
+    <string name="media_provider_description_media_store">База данных под управлением Android</string>
+    <string name="media_provider_description_jellyfin">Персональный медиа-сервер</string>
+    <string name="media_provider_description_emby">Персональный медиа-сервер</string>
+    <string name="media_provider_description_plex">Персональный медиа-сервер</string>
+    <string name="media_provider_scan_progress">Отсканировано песен: <xliff:g example="5" id="progress">{progress}</xliff:g> из <xliff:g example="25" id="total">{total}</xliff:g></string>
+    <string name="media_provider_scan_success_subtitle">Вставок: <xliff:g example="5" id="inserts">{inserts}</xliff:g>, обновлений: <xliff:g example="15" id="updates">{updates}</xliff:g>, удалений: <xliff:g example="25" id="deletes">{deletes}</xliff:g>.</string>
+    <string name="media_provider_scan_failure_title">Ошибка сканирования</string>
+    <string name="media_provider_button_authenticate">Аутентифицировать</string>
+    <string name="media_provider_authenticating">Аутентификация…</string>
+    <string name="media_provider_authentication_success">Аутентификация прошла успешно</string>
+    <string name="media_provider_type_local">Локальный</string>
+    <string name="media_provider_type_remote">Удаленный</string>
+    <string name="media_provider_add">Добавить медиа-провайдера</string>
+    <string name="media_providers_add_onboarding">Добавьте медиа-провайдера(ов). Вы можете изменить это позже</string>
+    <string name="media_provider_toolbar_title_onboarding">Откройте для себя свою музыку</string>
+    <string name="media_provider_toolbar_title">Медиа-провайдеры</string>
+    <string name="media_provider_dialog_remove_title">Удалить <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
+    <string name="media_provider_dialog_remove_subtitle">Это приведет к удалению всех песен, плейлистов и счетчиков воспроизведения, связанных с медиа-провайдером <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g>.</string>
+    <string name="media_provider_dialog_button_remove">Удалить</string>
+    <string name="media_provider_config_hint_address">Адрес</string>
+    <string name="media_provider_config_hint_username">Имя пользователя</string>
+    <string name="media_provider_config_hint_password">Пароль</string>
+    <string name="media_provider_config_switch_remember_password">Напомнить пароль</string>
+</resources>

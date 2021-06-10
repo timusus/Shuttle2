@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <plurals name="edit_tags_editing_count_songs">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       nummer bewerken</item>
+        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g>
+       nummers bewerken</item>
+    </plurals>
+    <string name="edit_tags_action">Bewerk-tags</string>
+    <string name="edit_tags_multiple_values">Meerdere waarden</string>
+    <string name="edit_tags_reading_tags">Tags 
+    <xliff:g example="1" id="progress">{progress}</xliff:g>
+     / 
+    <xliff:g example="1" id="count">{total}</xliff:g>
+     lezen</string>
+    <string name="edit_tags_writing_tags">Tags 
+    <xliff:g example="1" id="progress">{progress}</xliff:g>
+     / 
+    <xliff:g example="1" id="count">{total}</xliff:g>
+     lezen</string>
+    <string name="edit_tags_read_failed">De geselecteerde songtags konden niet worden gelezen</string>
+    <plurals name="edit_tags_success">
+        <item quantity="one"><xliff:g example="5" id="count">{count}</xliff:g>
+       nummer geüpdatet</item>
+        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g>
+       nummers geüpdatet</item>
+    </plurals>
+    <plurals name="edit_tags_failure">
+        <item quantity="one">Kan nummer niet updaten</item>
+        <item quantity="other">Kan 
+      <xliff:g example="5" id="count">{count}</xliff:g>
+       van 
+      <xliff:g example="5" id="total">{total}</xliff:g>
+       nummers niet updaten</item>
+    </plurals>
+    <string name="edit_tags_hint_title">Titel</string>
+    <string name="edit_tags_hint_artist">Artiest</string>
+    <string name="edit_tags_hint_album">Album</string>
+    <string name="edit_tags_hint_album_artist">Album artiest</string>
+    <string name="edit_tags_hint_year">Jaar</string>
+    <string name="edit_tags_hint_track">Track</string>
+    <string name="edit_tags_hint_track_total">Totaal tracks</string>
+    <string name="edit_tags_hint_disc">Schijf</string>
+    <string name="edit_tags_hint_disc_total">Schijftotaal</string>
+    <string name="edit_tags_hint_genres">Genres</string>
+    <string name="edit_tags_hint_lyrics">Songtekst</string>
+</resources>

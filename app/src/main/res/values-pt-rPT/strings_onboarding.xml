@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="onboarding_directories_dialog_add_title">Diretórios multimédia</string>
+    <string name="onboarding_directories_dialog_add_button">Adicionar diretório</string>
+    <string name="onboarding_directories_dialog_missing_title">Fornecedor de documentos ausente</string>
+    <string name="onboarding_directories_dialog_missing_subtitle">Uma app \'Fornecedor de Documentos\' (gestor de ficheiros) não foi encontrada no seu dispositivo. Pode ter que instalar um, ou voltar a usar o scanner multimédia \'básico\'.</string>
+    <string name="onboarding_directories_add_directories_help_text">Para procurar músicas, o Shuttle requer acesso aos seus diretórios multimédia.\n\nAo pressionar \'adicionar diretório\', irá para a aplicação predefinida \'fornecedor de ficheiro\'. Navegue até as pastas que contêm as músicas. Pode adicionar vários diretórios. \n\nNota: pode ser necessário ativar \'mostrar armazenamento interno\' para ver as pastas de música.</string>
+    <string name="onboarding_directories_scanning">A verificar...</string>
+    <plurals name="onboarding_directories_scan_progress">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       ficheiro de áudio</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       ficheiros de áudio</item>
+    </plurals>
+    <string name="onboarding_permission_dialog_title">Permissão de armazenamento necessária</string>
+    <string name="onboarding_permission_dialog_subtitle">O Shuttle pode não funcionar corretamente sem permissão para aceder às músicas</string>
+    <string name="onboarding_permission_button_grant">Conceder permissão</string>
+    <string name="onboarding_permission_help_text">Para encontrar as músicas, o Shuttle precisa de permissão para ler o armazenamento multimédia</string>
+    <string name="onboarding_media_scanner_title">Verificador de multimédia</string>
+    <string name="onboarding_media_scanner_scanning">A verificar...</string>
+    <string name="onboarding_media_scan">Verificar</string>
+    <string name="onboarding_button_back">Voltar</string>
+    <string name="onboarding_button_next">Seguinte</string>
+    <string name="onboarding_media_scanner_rescan">Reverificar</string>
+    <string name="onboarding_scanner_reading_song_tags">A ler etiquetas de música...</string>
+    <string name="onboarding_media_scanner_tile">Nenhuma verificação em curso</string>
+</resources>

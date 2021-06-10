@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="home_title_recent">Récent</string>
+    <string name="home_description_recently_played">Albums récemment lus</string>
+    <string name="home_title_most_played">Le plus joué</string>
+    <string name="home_description_most_played">Vos albums préférés</string>
+    <string name="home_title_this_year">Cette année</string>
+    <string name="home_description_this_year">Albums sortis en <xliff:g example="2005" id="year">{year}</xliff:g></string>
+    <string name="home_title_something_different">Quelque chose de différent</string>
+    <string name="home_description_something_different">Artistes que vous n\'avez pas écoutés depuis un moment</string>
+    <string name="btn_history">Historique</string>
+    <string name="btn_recently_added">Récemment ajouté</string>
+    <string name="btn_favorite">Favoris</string>
+    <string name="btn_shuffle">Mélanger</string>
+</resources>

@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="loading">Загрузка…</string>
+    <!-- Dialogs-->
+    <string name="dialog_button_close">Закрыть</string>
+    <string name="dialog_button_done">Готово</string>
+    <string name="dialog_button_retry">Повторить</string>
+    <string name="dialog_button_save">Сохранить</string>
+    <!-- Validation -->
+    <string name="validation_field_required">Обязательно</string>
+    <!-- Errors -->
+    <string name="error_unexpected">Произошла непредвиденная ошибка</string>
+    <string name="error_unknown">Произошла неизвестная ошибка</string>
+    <!-- Queue -->
+    <string name="queue_item_added"><xliff:g example="Lateralus" id="item_name">{item_name}</xliff:g>
+     добавлен в очередь</string>
+    <plurals name="queue_songs_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       песня добавлена в очередь</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       песни добавлены в очередь</item>
+        <item quantity="few"><xliff:g example="30" id="count">{count}</xliff:g>
+       песни добавлены в очередь</item>
+        <item quantity="many"><xliff:g example="30" id="count">{count}</xliff:g>
+       песен добавлено в очередь</item>
+    </plurals>
+    <plurals name="queue_albums_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       альбом добавлен в очередь</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       альбомы добавлены в очередь</item>
+        <item quantity="few"><xliff:g example="30" id="count">{count}</xliff:g>
+       альбома добавлены в очередь</item>
+        <item quantity="many"><xliff:g example="30" id="count">{count}</xliff:g>
+       альбомов добавлено в очередь</item>
+    </plurals>
+    <plurals name="queue_artists_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       исполнитель добавлен в очередь</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       исполнители добавлены в очередь</item>
+        <item quantity="few"><xliff:g example="30" id="count">{count}</xliff:g>
+       исполнителя добавлены в очередь</item>
+        <item quantity="many"><xliff:g example="30" id="count">{count}</xliff:g>
+       исполнителей добавлено в очередь</item>
+    </plurals>
+    <!-- Playlists -->
+    <string name="playlist_queue_added">Очередь добавлена в <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></string>
+    <plurals name="playlist_songs_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       песня добавлена в плейлист 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       песни добавлены в плейлист 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="few"><xliff:g example="30" id="count">{count}</xliff:g>
+       песни добавлены в плейлист 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="many"><xliff:g example="30" id="count">{count}</xliff:g>
+       песен добавлено в плейлист 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+    </plurals>
+    <plurals name="playlist_albums_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       альбом добавлен в плейлист 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       альбомы добавлены в плейлист 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="few"><xliff:g example="30" id="count">{count}</xliff:g>
+       альбома добавлено в плейлист 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="many"><xliff:g example="30" id="count">{count}</xliff:g>
+       альбомов добавлено в плейлист 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+    </plurals>
+    <plurals name="playlist_artists_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       исполнитель добавлен в плейлист 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       исполнители добавлены в альбом 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="few"><xliff:g example="30" id="count">{count}</xliff:g>
+       исполнителя добавлены в плейлист 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="many"><xliff:g example="30" id="count">{count}</xliff:g>
+       исполнителей добавлены в плейлист 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+    </plurals>
+    <plurals name="playlist_genres_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       жанр добавлен в плейлист 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       жанры добавлены в плейлист 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="few"><xliff:g example="30" id="count">{count}</xliff:g>
+       жанра добавлено в плейлист 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="many"><xliff:g example="30" id="count">{count}</xliff:g>
+       жанров добавлено в плейлист 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+    </plurals>
+    <string name="delete_song_failed">Песня не может быть удалена</string>
+    <string name="year_unknown">Год неизвестен</string>
+    <string name="disc_number">Диск 
+    <xliff:g example="1" id="disc_number">{disc_number}</xliff:g></string>
+    <!-- Empty -->
+    <string name="song_list_empty">Нет песен</string>
+    <string name="album_list_empty">Нет альбомов</string>
+    <string name="artist_list_empty">Нет исполнителей</string>
+    <string name="genre_list_empty">Нет жанров</string>
+    <string name="playlist_list_empty">Нет плейлистов</string>
+    <string name="queue_empty">Очередь пуста</string>
+    <string name="playlist_empty">Плейлист пуст</string>
+    <string name="button_repeat">Повторить</string>
+    <string name="button_seek_forward">Искать вперед</string>
+    <string name="button_skip_next">Пропустить следующее</string>
+    <string name="button_toggle_playback">Переключить воспроизведение</string>
+    <string name="button_seek_backward">Искать назад</string>
+    <string name="button_skip_previous">Пропустить предыдущее</string>
+    <string name="button_content_description_shuffle">Перемешать</string>
+    <string name="button_album_shuffle">Альбом в случайном порядке</string>
+    <string name="unknown">Неизвестно</string>
+</resources>

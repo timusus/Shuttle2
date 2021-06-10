@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="song_info_track_title">タイトル</string>
+    <string name="song_info_track_number">トラック＃</string>
+    <string name="song_info_duration">継続時間</string>
+    <string name="song_info_unknown">不明</string>
+    <string name="song_info_album_artist">アルバムアーティスト</string>
+    <string name="song_info_artists">アーティスト</string>
+    <string name="song_info_album">アルバム</string>
+    <string name="song_info_year">年</string>
+    <string name="song_info_disc">ディスク</string>
+    <string name="song_info_play_count">再生回数</string>
+    <string name="song_info_genres">ジャンル</string>
+    <string name="song_info_path">パス</string>
+    <string name="song_info_mime_type">MIMEタイプ</string>
+    <string name="song_info_size">サイズ</string>
+    <string name="song_info_lyrics">歌詞</string>
+    <string name="song_info_dialog_title">曲情報</string>
+    <string name="song_info_dialog_close_button_title">閉じる</string>
+</resources>

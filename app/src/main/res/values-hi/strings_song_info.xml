@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="song_info_track_title">शीर्षक</string>
+    <string name="song_info_track_number">ट्रैक #</string>
+    <string name="song_info_duration">समयांतराल</string>
+    <string name="song_info_unknown">अनजान</string>
+    <string name="song_info_album_artist">चित्राधार कलाकार</string>
+    <string name="song_info_artists">कलाकार</string>
+    <string name="song_info_album">एल्बम</string>
+    <string name="song_info_year">साल</string>
+    <string name="song_info_disc">डिस्क</string>
+    <string name="song_info_play_count">प्ले काउंट</string>
+    <string name="song_info_genres">शैलियां</string>
+    <string name="song_info_path">पथ</string>
+    <string name="song_info_mime_type">माइम प्रकार</string>
+    <string name="song_info_size">आकार</string>
+    <string name="song_info_lyrics">संगीत</string>
+    <string name="song_info_dialog_title">गाने की जानकारी</string>
+    <string name="song_info_dialog_close_button_title">बंद करें</string>
+</resources>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="sleep_timer_dialog_title">Slaaptimer</string>
+    <string name="sleep_timer_waiting_track_end">Wachten tot track eindigt...</string>
+    <string name="sleep_timer_play_to_track_end">Speel het laatste nummer om te eindigen</string>
+    <string name="sleep_timer_dialog_button_close">Sluiten</string>
+    <string name="sleep_timer_dialog_button_stop_timer">Stop de timer</string>
+    <string name="sleep_timer_dialog_button_set_time">Tijd instellen</string>
+    <string name="sleep_timer_5_minutes">5 minuten</string>
+    <string name="sleep_timer_15_minutes">15 minuten</string>
+    <string name="sleep_timer_30_minutes">30 minuten</string>
+    <string name="sleep_timer_1_hour">1 uur</string>
+</resources>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="loading">読込中…</string>
+    <!-- Dialogs-->
+    <string name="dialog_button_close">閉じる</string>
+    <string name="dialog_button_done">完了</string>
+    <string name="dialog_button_retry">再試行</string>
+    <string name="dialog_button_save">保存</string>
+    <!-- Validation -->
+    <string name="validation_field_required">必須</string>
+    <!-- Errors -->
+    <string name="error_unexpected">予期しないエラーが発生しました</string>
+    <string name="error_unknown">不明なエラーが発生しました</string>
+    <!-- Queue -->
+    <string name="queue_item_added"><xliff:g example="Lateralus" id="item_name">{item_name}</xliff:g> がキューに追加されました</string>
+    <plurals name="queue_songs_added">
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> 曲がキューに追加されました</item>
+    </plurals>
+    <plurals name="queue_albums_added">
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> アルバムがキューに追加されました</item>
+    </plurals>
+    <plurals name="queue_artists_added">
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> アーティストがキューに追加されました</item>
+    </plurals>
+    <!-- Playlists -->
+    <string name="playlist_queue_added">キューが <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g> に追加されました</string>
+    <plurals name="playlist_songs_added">
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> 曲が <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g> に追加されました</item>
+    </plurals>
+    <plurals name="playlist_albums_added">
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> アルバムが <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g> に追加されました</item>
+    </plurals>
+    <plurals name="playlist_artists_added">
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+      アーティストが
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g>
+      に追加されました</item>
+    </plurals>
+    <plurals name="playlist_genres_added">
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+      ジャンルが
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g>
+      に追加されました</item>
+    </plurals>
+    <string name="delete_song_failed">曲を削除できませんでした</string>
+    <string name="year_unknown">年は不明</string>
+    <string name="disc_number">ディスク
+    <xliff:g example="1" id="disc_number">{disc_number}</xliff:g></string>
+    <!-- Empty -->
+    <string name="song_list_empty">曲はありません</string>
+    <string name="album_list_empty">アルバムはありません</string>
+    <string name="artist_list_empty">アーティストはありません</string>
+    <string name="genre_list_empty">ジャンルなし</string>
+    <string name="playlist_list_empty">プレイリストはありません</string>
+    <string name="queue_empty">キューが空です</string>
+    <string name="playlist_empty">プレイリストが空です</string>
+    <string name="button_repeat">繰り返す</string>
+    <string name="button_seek_forward">前を探す</string>
+    <string name="button_skip_next">次をスキップ</string>
+    <string name="button_toggle_playback">プレイバックを切り替え</string>
+    <string name="button_seek_backward">後ろを探す</string>
+    <string name="button_skip_previous">前をスキップ</string>
+    <string name="button_content_description_shuffle">シャッフル</string>
+    <string name="button_album_shuffle">アルバムシャッフル</string>
+    <string name="unknown">不明</string>
+</resources>

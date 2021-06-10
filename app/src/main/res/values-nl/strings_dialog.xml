@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="dialog_button_cancel">Annuleren</string>
+    <string name="dialog_exclude_title">Uitsluiten</string>
+    <string name="dialog_exclude_message">\'<xliff:g example="Lateralus" id="item">{item}</xliff:g>\' wordt verborgen in je bibliotheek.\n\nJe kunt uitgesloten nummers bekijken in de instellingen.</string>
+    <string name="dialog_exclude_button">Uitsluiten</string>
+    <string name="dialog_exclude_list_empty">Uitsluitingslijst is leeg</string>
+    <string name="dialog_delete_title">Verwijderen</string>
+    <string name="dialog_delete_message">\'<xliff:g example="Lateralus" id="item">{item}</xliff:g>\' wordt definitief verwijderd</string>
+    <string name="dialog_delete_button">Verwijderen</string>
+</resources>

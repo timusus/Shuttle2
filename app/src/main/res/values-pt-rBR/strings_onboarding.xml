@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="onboarding_directories_dialog_add_title">Diretórios de mídia</string>
+    <string name="onboarding_directories_dialog_add_button">Adicionar Diretório</string>
+    <string name="onboarding_directories_dialog_missing_title">Provedor de Documento Ausente</string>
+    <string name="onboarding_directories_dialog_missing_subtitle">Um aplicativo de \'Provedor de Documentos\' (gerenciador de arquivos) não pode ser encontrado no seu dispositivo. Talvez você tenha que instalar um, ou voltar a usar o verificador de mídia \'básico\'.</string>
+    <string name="onboarding_directories_add_directories_help_text">Para procurar músicas, o Shuttle requer acesso aos seus diretórios de mídia.\n\nAo pressionar \'adicionar diretório\', você será levado ao aplicativo padrão de \'provedor de arquivos\'. Navegue até as pastas que contêm suas músicas. É possível adicionar vários diretórios. \n\nNota: pode ser necessário habilitar a opção \'mostrar armazenamento interno\' para ver suas pastas de música.</string>
+    <string name="onboarding_directories_scanning">Verificando...</string>
+    <plurals name="onboarding_directories_scan_progress">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       arquivo de áudio</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       arquivos de áudio</item>
+    </plurals>
+    <string name="onboarding_permission_dialog_title">Permissão de armazenamento necessária</string>
+    <string name="onboarding_permission_dialog_subtitle">O Shuttle pode não funcionar corretamente sem permissão para acessar sua música</string>
+    <string name="onboarding_permission_button_grant">Conceder permissão</string>
+    <string name="onboarding_permission_help_text">Para encontrar sua música, o Shuttle precisa de permissão para ler seu armazenamento de mídia</string>
+    <string name="onboarding_media_scanner_title">Scanner de mídia</string>
+    <string name="onboarding_media_scanner_scanning">Verificando...</string>
+    <string name="onboarding_media_scan">Verificar</string>
+    <string name="onboarding_button_back">Voltar</string>
+    <string name="onboarding_button_next">Próximo</string>
+    <string name="onboarding_media_scanner_rescan">Verificar novamente</string>
+    <string name="onboarding_scanner_reading_song_tags">Lendo etiquetas de música...</string>
+    <string name="onboarding_media_scanner_tile">Nenhuma verificação em andamento</string>
+</resources>

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <plurals name="edit_tags_editing_count_songs">
+        <item quantity="one">Редактирование 
+      <xliff:g example="1" id="count">{count}</xliff:g>
+       песни</item>
+        <item quantity="other">Редактирование 
+      <xliff:g example="5" id="count">{count}</xliff:g>
+       песен</item>
+        <item quantity="few">Редактирование 
+      <xliff:g example="5" id="count">{count}</xliff:g>
+       песен</item>
+        <item quantity="many">Редактирование 
+      <xliff:g example="5" id="count">{count}</xliff:g>
+       песен</item>
+    </plurals>
+    <string name="edit_tags_action">Редактировать тэги</string>
+    <string name="edit_tags_multiple_values">Несколько значений</string>
+    <string name="edit_tags_reading_tags">Чтение тегов 
+    <xliff:g example="1" id="progress">{progress}</xliff:g>
+     / 
+    <xliff:g example="1" id="count">{total}</xliff:g></string>
+    <string name="edit_tags_writing_tags">Чтение тегов 
+    <xliff:g example="1" id="progress">{progress}</xliff:g>
+     / 
+    <xliff:g example="1" id="count">{total}</xliff:g></string>
+    <string name="edit_tags_read_failed">Невозможно прочитать выбранные теги песен</string>
+    <plurals name="edit_tags_success">
+        <item quantity="one">Успешно обновлена 
+      <xliff:g example="5" id="count">{count}</xliff:g>
+       песня</item>
+        <item quantity="other">Успешно обновлены 
+      <xliff:g example="5" id="count">{count}</xliff:g>
+       песни</item>
+        <item quantity="few">Успешно обновлены 
+      <xliff:g example="5" id="count">{count}</xliff:g>
+       песни</item>
+        <item quantity="many">Успешно обновлено 
+      <xliff:g example="5" id="count">{count}</xliff:g>
+       песен</item>
+    </plurals>
+    <plurals name="edit_tags_failure">
+        <item quantity="one">Не удалось обновить песню</item>
+        <item quantity="other">Не удалось обновить 
+      <xliff:g example="5" id="count">{count}</xliff:g>
+       песен из 
+      <xliff:g example="5" id="total">{total}</xliff:g>
+      .</item>
+        <item quantity="few">Не удалось обновить 
+      <xliff:g example="5" id="count">{count}</xliff:g>
+       песни из 
+      <xliff:g example="5" id="total">{total}</xliff:g>
+      .</item>
+        <item quantity="many">Не удалось обновить 
+      <xliff:g example="5" id="count">{count}</xliff:g>
+       песен из 
+      <xliff:g example="5" id="total">{total}</xliff:g>
+      .</item>
+    </plurals>
+    <string name="edit_tags_hint_title">Заголовок</string>
+    <string name="edit_tags_hint_artist">Исполнитель</string>
+    <string name="edit_tags_hint_album">Альбом</string>
+    <string name="edit_tags_hint_album_artist">Исполнитель альбома</string>
+    <string name="edit_tags_hint_year">Год</string>
+    <string name="edit_tags_hint_track">Трек</string>
+    <string name="edit_tags_hint_track_total">Итого по треку</string>
+    <string name="edit_tags_hint_disc">Диск</string>
+    <string name="edit_tags_hint_disc_total">Итого по диску</string>
+    <string name="edit_tags_hint_genres">Жанры</string>
+    <string name="edit_tags_hint_lyrics">Текст песни</string>
+</resources>

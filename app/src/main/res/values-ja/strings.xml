@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<resources>
+    <string name="app_name">S2</string>
+    <!-- Bottom Nav -->
+    <string name="title_home">ホーム</string>
+    <string name="title_library">ライブラリ</string>
+    <string name="title_search">検索</string>
+    <string name="playback_up_next">次にスタート</string>
+    <string name="dev_notes">開発ノート:</string>
+</resources>

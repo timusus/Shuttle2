@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="menu_title_play">खेल</string>
+    <string name="menu_title_shuffle">शफ़ल</string>
+    <string name="menu_title_album_shuffle">एल्बम शफ़ल</string>
+    <string name="menu_title_play_next">अगला खेलें</string>
+    <string name="menu_title_edit_tags">जोड़ संपादित करें</string>
+    <string name="menu_title_media_provider_configure">कॉन्फ़िगर करें</string>
+    <string name="menu_title_media_provider_remove">हटाएँ</string>
+    <string name="menu_title_sleep_timer">सोने का टाइमर</string>
+    <string name="menu_title_favorite">पसंदीदा</string>
+    <string name="menu_title_lyrics">बोल</string>
+    <string name="menu_title_song_info">गाने की जानकारी</string>
+    <string name="menu_title_delete">हटाएं</string>
+    <string name="menu_title_import">आयात करें</string>
+    <string name="menu_title_exclude">निकालें</string>
+    <string name="menu_title_remove">हटाएँ</string>
+    <string name="menu_title_view_mode">के रूप में देखें</string>
+    <string name="menu_title_view_mode_list">सूची</string>
+    <string name="menu_title_view_mode_grid">ग्रिड</string>
+    <string name="menu_title_sort_by">इसके अनुसार क्रमबद्ध करें</string>
+    <string name="menu_title_sort_album_name">एल्बम का नाम</string>
+    <string name="menu_title_sort_artist_name">कलाकार का नाम</string>
+    <string name="menu_title_sort_album_year">एल्बम वर्ष</string>
+    <string name="menu_title_sort_song_name">गीत का नाम</string>
+    <string name="menu_title_sort_year">साल</string>
+    <string name="menu_title_sort_duration">समयांतराल</string>
+    <string name="menu_title_scroll_to_current">वर्तमान तक स्क्रॉल करें</string>
+    <string name="menu_title_rename">नाम बदलें</string>
+    <string name="menu_title_clear">हटाएँ</string>
+    <string name="menu_title_add_to_playlist">प्लेलिस्ट में जोड़ें</string>
+    <string name="menu_title_save_queue_to_playlist">प्लेलिस्ट में कतार सहेजें</string>
+    <string name="menu_title_add_to_queue">क़तार में जोड़ें</string>
+    <string name="menu_title_remove_from_queue">कतार से हटाएं</string>
+    <string name="menu_title_sort_clear_queue">कतार साफ़ करें</string>
+</resources>

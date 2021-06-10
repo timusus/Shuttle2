@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="onboarding_directories_dialog_add_title">Katalogi mediów</string>
+    <string name="onboarding_directories_dialog_add_button">Dodaj katalog</string>
+    <string name="onboarding_directories_dialog_missing_title">Brak dostawcy dokumentów</string>
+    <string name="onboarding_directories_dialog_missing_subtitle">Na urządzeniu nie można znaleźć aplikacji „Document Provider\” (menedżer plików). Konieczne może być zainstalowanie jednego lub powrót do korzystania z „podstawowego\” skanera multimediów.</string>
+    <string name="onboarding_directories_add_directories_help_text">Aby skanować w poszukiwaniu muzyki, Shuttle wymaga dostępu do katalogów multimediów.\n\nPo naciśnięciu „dodaj katalog\” zostaniesz przeniesiony do domyślnej aplikacji „dostawcy plików\”. Przejdź do folderów zawierających Twoją muzykę. Możesz dodać wiele katalogów. \n\nUwaga: aby zobaczyć swoje foldery muzyczne, może być konieczne włączenie opcji „pokaż pamięć wewnętrzną\”.</string>
+    <string name="onboarding_directories_scanning">Skanowanie…</string>
+    <plurals name="onboarding_directories_scan_progress">
+        <item quantity="one">Plik audio 
+      <xliff:g example="1" id="count">{count}</xliff:g></item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       plików audio</item>
+        <item quantity="few"><xliff:g example="30" id="count">{count}</xliff:g>
+       plików audio</item>
+        <item quantity="many"><xliff:g example="30" id="count">{count}</xliff:g>
+       plików audio</item>
+    </plurals>
+    <string name="onboarding_permission_dialog_title">Wymagane pozwolenie na przechowywanie</string>
+    <string name="onboarding_permission_dialog_subtitle">Shuttle może nie działać poprawnie bez pozwolenia na dostęp do Twojej muzyki</string>
+    <string name="onboarding_permission_button_grant">Dać pozwolenie</string>
+    <string name="onboarding_permission_help_text">Aby znaleźć Twoją muzykę, Shuttle potrzebuje uprawnień do odczytu pamięci masowej</string>
+    <string name="onboarding_media_scanner_title">Skaner mediów</string>
+    <string name="onboarding_media_scanner_scanning">Skanowanie…</string>
+    <string name="onboarding_media_scan">Skanowanie</string>
+    <string name="onboarding_button_back">Z powrotem</string>
+    <string name="onboarding_button_next">Kolejny</string>
+    <string name="onboarding_media_scanner_rescan">Skanuj ponownie</string>
+    <string name="onboarding_scanner_reading_song_tags">Czytanie tagów utworów…</string>
+    <string name="onboarding_media_scanner_tile">Żadne skanowanie w toku</string>
+</resources>

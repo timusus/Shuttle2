@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Menu Items -->
+    <string name="settings_menu_sleep_timer">Таймер сна</string>
+    <string name="settings_menu_shuffle_all">Перемешать все</string>
+    <string name="settings_menu_dsp">DSP</string>
+    <string name="settings_menu_settings">Настройки</string>
+    <string name="settings_crash_reporting_dialog_requires_restart">Требуется перезагрузка</string>
+    <string name="settings_crash_reporting_dialog_message">Чтобы полностью отказаться от отправки отчетов о сбоях, перезапустите Shuttle. Не забудьте приостановить, смахнуть уведомление и очистить приложение от последних.</string>
+    <string name="settings_dialog_title_excluded">Исключенные</string>
+    <string name="settings_dialog_button_clear_excludes">Очистить</string>
+    <string name="settings_dialog_title_clear_artwork">Очистить обложку</string>
+    <string name="settings_dialog_button_clear_artwork">Очистить</string>
+    <string name="settings_dialog_message_clear_artwork">Это приведет к безвозвратному удалению всех кешированных обложек</string>
+    <string name="settings_dialog_title_download_artwork">Скачать все обложки</string>
+    <string name="settings_dialog_message_download_artwork">Это загрузит все обложки, независимо от вашего сетевого подключения (Wi-Fi/данные/другое).</string>
+    <string name="settings_dialog_button_download_artwork">Скачать</string>
+    <string name="settings_dialog_title_amoled_required_restart">Требуется перезагрузка</string>
+    <string name="settingS_dialog_message_amoled_requires_restart">S2 необходимо перезапустить, чтобы изменения темы вступили в силу</string>
+    <string name="settings_logging_clipboard_name">Журналы Shuttle</string>
+    <string name="settings_logging_clipboard_logs_copied">Журналы скопированы в буфер обмена</string>
+    <string name="settings_logging_clipboard_logs_too_large">Файл журнала слишком велик для буфера обмена</string>
+    <string name="settings_logging_clipboard_logs_empty">Файл журнала пуст</string>
+</resources>

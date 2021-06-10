@@ -25,7 +25,6 @@
         <item quantity="other"><xliff:g example="3" id="count">{count}</xliff:g> genres</item>
     </plurals>
 
-
     <string name="library_playlists">Playlists</string>
 
     <string name="library_scan_in_progress">Scanning your library</string>

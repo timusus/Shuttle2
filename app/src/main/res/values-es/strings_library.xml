@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="artists">Artistas</string>
+    <plurals name="artistsPlural">
+        <item quantity="one"><xliff:g example="Tool" id="count">%d</xliff:g>
+       artista</item>
+        <item quantity="other"><xliff:g example="Tool" id="count">{count}</xliff:g>
+       artistas</item>
+    </plurals>
+    <string name="albums">Álbumes</string>
+    <plurals name="albumsPlural">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       álbum</item>
+        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g>
+       álbumes</item>
+    </plurals>
+    <string name="songs">Canciones</string>
+    <plurals name="songsPlural">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       canción</item>
+        <item quantity="other"><xliff:g example="12" id="count">{count}</xliff:g>
+       canciones</item>
+    </plurals>
+    <string name="genres">Géneros</string>
+    <plurals name="genresPlural">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       género</item>
+        <item quantity="other"><xliff:g example="3" id="count">{count}</xliff:g>
+       géneros</item>
+    </plurals>
+    <string name="library_playlists">Listas de reproducción</string>
+    <string name="library_scan_in_progress">Buscando en tu biblioteca</string>
+    <string name="multi_select_items_selected"><xliff:g example="3" id="count">{count}</xliff:g>
+     seleccionado(s)</string>
+</resources>

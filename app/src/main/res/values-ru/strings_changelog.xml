@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="changelog_title">Журнал изменений</string>
+    <string name="changelog_features">Функции</string>
+    <string name="changelog_improvements">Улучшения</string>
+    <string name="changelog_bug_fixes">Исправление ошибок</string>
+</resources>

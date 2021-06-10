@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="open_source_dialog_licenses_title">Licencje</string>
+    <string name="open_source_library_author">Autor: 
+    <xliff:g example="Square" id="author">{author}</xliff:g></string>
+    <string name="open_source_library_version">Wersja: 
+    <xliff:g example="1.3.2" id="version">{version}</xliff:g></string>
+    <string name="open_source_library_license">Licencja: 
+    <xliff:g example="Apache 2.0" id="license">{license}</xliff:g></string>
+</resources>

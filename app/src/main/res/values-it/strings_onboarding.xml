@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="onboarding_directories_dialog_add_title">Directory multimediali</string>
+    <string name="onboarding_directories_dialog_add_button">Aggiungi directory</string>
+    <string name="onboarding_directories_dialog_missing_title">Provider di documenti mancante</string>
+    <string name="onboarding_directories_dialog_missing_subtitle">Impossibile trovare un \'app \"Document Provider\" (file manager) sul dispositivo. Potrebbe essere necessario installarne uno o tornare a utilizzare il media scanner \"di base\".</string>
+    <string name="onboarding_directories_add_directories_help_text">Per cercare la musica, Shuttle richiede l\'accesso alle directory dei media.\n\nQuando premi \"aggiungi directory\", verrai indirizzato alla tua app predefinita \"provider di file\". Passa alla cartella o alle cartelle contenenti la tua musica. Puoi aggiungere più directory. \n\nNota: potrebbe essere necessario abilitare \"mostra memoria interna\" per visualizzare le cartelle della musica.</string>
+    <string name="onboarding_directories_scanning">Scansione ...</string>
+    <plurals name="onboarding_directories_scan_progress">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       file audio</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       file audio</item>
+    </plurals>
+    <string name="onboarding_permission_dialog_title">Autorizzazione di archiviazione richiesta</string>
+    <string name="onboarding_permission_dialog_subtitle">Shuttle potrebbe non funzionare correttamente senza il permesso di accedere alla tua musica</string>
+    <string name="onboarding_permission_button_grant">Concedere l\'autorizzazione</string>
+    <string name="onboarding_permission_help_text">Per trovare la tua musica, Shuttle necessita dell\'autorizzazione per leggere il tuo archivio multimediale</string>
+    <string name="onboarding_media_scanner_title">Scanner multimediale</string>
+    <string name="onboarding_media_scanner_scanning">Scansione...</string>
+    <string name="onboarding_media_scan">Scansione</string>
+    <string name="onboarding_button_back">Indietro</string>
+    <string name="onboarding_button_next">Il prossimo</string>
+    <string name="onboarding_media_scanner_rescan">Riesegui la scansione</string>
+    <string name="onboarding_scanner_reading_song_tags">Lettura dei tag dei brani...</string>
+    <string name="onboarding_media_scanner_tile">Nessuna scansione in corso</string>
+</resources>

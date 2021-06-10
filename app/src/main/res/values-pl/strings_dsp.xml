@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dsp_replay_gain_title">Wzmocnienie powtórki</string>
+    <string name="dsp_replay_gain_track">Śledzenie wzmocnienia</string>
+    <string name="dsp_replay_gain_album">Wzmocnienie albumu</string>
+    <string name="dsp_replay_gain_off">Wyłączone</string>
+    <string name="dsp_dialog_frequency_response_title">Pasmo przenoszenia</string>
+    <string name="dsp_replay_gain_hint_mode">Tryb</string>
+    <string name="dsp_preamp">Przedwzmacniacz</string>
+    <string name="dsp_equalizer_title">Wyrównywacz</string>
+    <string name="dsp_equalizer_hint_preset">Ustawienie wstępne</string>
+    <string name="dsp_frequency_response_curve_title">Krzywa odpowiedzi częstotliwościowej</string>
+</resources>

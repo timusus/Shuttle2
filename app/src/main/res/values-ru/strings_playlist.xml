@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="playlist_menu_empty_data_message">Нет песен для добавления</string>
+    <string name="playlist_menu_duplicates_dialog_title">Найдены дубликаты</string>
+    <plurals name="playlist_menu_duplicates_dialog_subtitle">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>песня уже существует в \"<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\". Все равно добавить?</item>
+        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g>песни уже существуют в \"<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\". Все равно добавить?</item>
+        <item quantity="few"><xliff:g example="5" id="count">{count}</xliff:g>песни уже существуют в \"<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\". Все равно добавить?</item>
+        <item quantity="many"><xliff:g example="5" id="count">{count}</xliff:g>песен уже существуют в \"<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\". Все равно добавить?</item>
+    </plurals>
+    <string name="playlist_menu_duplicates_dialog_button_skip">Пропустить</string>
+    <string name="playlist_menu_duplicates_dialog_button_add">Добавить</string>
+    <string name="playlist_menu_duplicates_switch_always_add">Всегда добавлять дубликаты</string>
+    <string name="playlist_menu_create_playlist">Новый плейлист</string>
+    <string name="playlist_menu_create_playlist_success">\"<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\" успешно создан</string>
+    <string name="playlist_menu_create_playlist_failure">Не удалось добавить песни в плейлист: <xliff:g example="Playlist already exists" id="error_message">{error_message}</xliff:g></string>
+    <string name="playlist_create_dialog_playlist_name_hint">Название плейлиста</string>
+    <string name="playlist_dialog_title_delete">Удалить плейлист</string>
+    <string name="playlist_dialog_subtitle_delete"><xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g> будет удален без возможности восстановления</string>
+    <string name="playlist_dialog_button_delete">Удалить</string>
+    <string name="playlist_dialog_title_clear">Очистить плейлист</string>
+    <string name="playlist_dialog_subtitle_clear">Все песни будут удалены из <xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g></string>
+    <string name="playlist_dialog_button_clear">Очистить</string>
+    <string name="playlist_dialog_title_sync">Синхронизация плейлистов из магазина мультимедиа</string>
+    <string name="playlist_dialog_subtitle_sync">Копирует плейлисты из магазина мультимедиа. Если плейлисты уже существуют в Shuttle, песни будут объединены.\n\nПримечание: песни только добавляются, а не удаляются.</string>
+    <string name="playlist_dialog_button_sync">Синхронизировать</string>
+    <string name="playlists_title_playlists">Плейлисты</string>
+    <string name="playlists_title_smart_playlists">Умные плейлисты</string>
+    <string name="playlist_import_success">Плейлисты импортированы</string>
+    <string name="playlist_dialog_title_rename">Название плейлиста</string>
+    <string name="playlist_dialog_hint_rename">Имя</string>
+</resources>

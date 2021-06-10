@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_title_recent">हाल का</string>
+    <string name="home_description_recently_played">हाल ही में चलाए एल्बम</string>
+    <string name="home_title_most_played">सबसे ज्यादा चलाया</string>
+    <string name="home_description_most_played">आपके पसंदीदा एल्बम</string>
+    <string name="home_title_this_year">इस साल</string>
+    <string name="home_title_something_different">कुछ अलग</string>
+    <string name="home_description_something_different">कलाकारों ने कुछ देर में आपकी बात नहीं सुनी</string>
+    <string name="btn_history">इतिहास</string>
+    <string name="btn_recently_added">हाल ही में जोड़ा</string>
+    <string name="btn_favorite">पसंदीदा</string>
+    <string name="btn_shuffle">मिश्रण</string>
+</resources>

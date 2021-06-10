@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="artists">Artisti</string>
+    <plurals name="artistsPlural">
+        <item quantity="one"><xliff:g example="Tool" id="count">%d</xliff:g>
+       artista</item>
+        <item quantity="other"><xliff:g example="Tool" id="count">{count}</xliff:g>
+       artisti</item>
+    </plurals>
+    <string name="albums">Album</string>
+    <plurals name="albumsPlural">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       album</item>
+        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g>
+       album</item>
+    </plurals>
+    <string name="songs">Brani</string>
+    <plurals name="songsPlural">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       brano</item>
+        <item quantity="other"><xliff:g example="12" id="count">{count}</xliff:g>
+       brani</item>
+    </plurals>
+    <string name="genres">Generi</string>
+    <plurals name="genresPlural">
+        <item quantity="one">Genere 
+      <xliff:g example="1" id="count">{count}</xliff:g></item>
+        <item quantity="other"><xliff:g example="3" id="count">{count}</xliff:g>
+       generi</item>
+    </plurals>
+    <string name="library_playlists">Playlist</string>
+    <string name="library_scan_in_progress">Scansione della tua libreria</string>
+    <string name="multi_select_items_selected"><xliff:g example="3" id="count">{count}</xliff:g>
+     selezionato</string>
+</resources>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="lyrics_title">Songtexte</string>
+    <string name="lyrics_quicklyric_title">Schneller Songtext</string>
+    <string name="lyrics_quicklyric_unavailable">Schneller Songtext nicht verfügbar</string>
+</resources>

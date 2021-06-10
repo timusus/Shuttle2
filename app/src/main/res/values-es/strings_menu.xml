@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="menu_title_play">Reproducir</string>
+    <string name="menu_title_shuffle">Aleatorio</string>
+    <string name="menu_title_album_shuffle">Álbum aleatorio</string>
+    <string name="menu_title_play_next">Reproducir siguiente</string>
+    <string name="menu_title_edit_tags">Editar etiquetas</string>
+    <string name="menu_title_media_provider_configure">Configurar</string>
+    <string name="menu_title_media_provider_remove">Eliminar</string>
+    <string name="menu_title_sleep_timer">Temporizador de apagado</string>
+    <string name="menu_title_favorite">Favorito</string>
+    <string name="menu_title_lyrics">Letra</string>
+    <string name="menu_title_song_info">Información de la canción</string>
+    <string name="menu_title_delete">Eliminar</string>
+    <string name="menu_title_import">Importar</string>
+    <string name="menu_title_exclude">Excluir</string>
+    <string name="menu_title_remove">Eliminar</string>
+    <string name="menu_title_view_mode">Ver como</string>
+    <string name="menu_title_view_mode_list">Lista</string>
+    <string name="menu_title_view_mode_grid">Cuadrícula</string>
+    <string name="menu_title_sort_by">Ordenar por</string>
+    <string name="menu_title_sort_album_name">Nombre de álbum</string>
+    <string name="menu_title_sort_artist_name">Nombre de artista</string>
+    <string name="menu_title_sort_album_year">Año del álbum</string>
+    <string name="menu_title_sort_song_name">Nombre de canción</string>
+    <string name="menu_title_sort_year">Año</string>
+    <string name="menu_title_sort_duration">Duración</string>
+    <string name="menu_title_scroll_to_current">Desplázate hasta Actuales</string>
+    <string name="menu_title_rename">Renombrar</string>
+    <string name="menu_title_clear">Borrar</string>
+    <string name="menu_title_add_to_playlist">Agregar a la lista de reproducción</string>
+    <string name="menu_title_save_queue_to_playlist">Guardar cola en la lista de reproducción</string>
+    <string name="menu_title_add_to_queue">Agregar a la cola</string>
+    <string name="menu_title_remove_from_queue">Eliminar de la cola</string>
+    <string name="menu_title_sort_clear_queue">Borrar cola</string>
+</resources>

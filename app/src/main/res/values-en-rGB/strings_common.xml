@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <string name="loading">Loading…</string>
+
+    <!-- Dialogs-->
+    <string name="dialog_button_close">Close</string>
+    <string name="dialog_button_done">Done</string>
+    <string name="dialog_button_retry">Retry</string>
+    <string name="dialog_button_save">Save</string>
+
+    <!-- Validation -->
+    <string name="validation_field_required">Required</string>
+
+    <!-- Errors -->
+    <string name="error_unexpected">An unexpected error occurred</string>
+    <string name="error_unknown">An unknown error occurred</string>
+
+    <!-- Queue -->
+    <string name="queue_item_added"><xliff:g example="Lateralus" id="item_name">{item_name}</xliff:g> added to queue</string>
+    <plurals name="queue_songs_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> song added to queue</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> songs added to queue</item>
+    </plurals>
+    <plurals name="queue_albums_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> album added to queue</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> albums added to queue</item>
+    </plurals>
+    <plurals name="queue_artists_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> artist added to queue</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> artists added to queue</item>
+    </plurals>
+
+    <!-- Playlists -->
+    <string name="playlist_queue_added">Queue added to <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></string>
+    <plurals name="playlist_songs_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> song added to <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> songs added to <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+    </plurals>
+    <plurals name="playlist_albums_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> album added to <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> albums added to <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+    </plurals>
+    <plurals name="playlist_artists_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> artist added to <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> artists added to <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+    </plurals>
+    <plurals name="playlist_genres_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> genre added to <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> genre added to <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+    </plurals>
+
+    <string name="delete_song_failed">The song couldn\'t be deleted</string>
+
+    <string name="year_unknown">Year unknown</string>
+
+    <string name="disc_number">Disc <xliff:g example="1" id="disc_number">{disc_number}</xliff:g></string>
+
+
+    <!-- Empty -->
+
+    <string name="song_list_empty">No songs</string>
+    <string name="album_list_empty">No albums</string>
+    <string name="artist_list_empty">No artists</string>
+    <string name="genre_list_empty">No genres</string>
+    <string name="playlist_list_empty">No playlists</string>
+
+    <string name="queue_empty">Queue empty</string>
+    <string name="playlist_empty">Playlist empty</string>
+
+    <string name="button_repeat">Repeat</string>
+    <string name="button_seek_forward">Seek Forward</string>
+    <string name="button_skip_next">Skip Next</string>
+    <string name="button_toggle_playback">Toggle Playback</string>
+    <string name="button_seek_backward">Seek Backward</string>
+    <string name="button_skip_previous">Skip Previous</string>
+    <string name="button_content_description_shuffle">Shuffle</string>
+    <string name="button_album_shuffle">Album Shuffle</string>
+
+</resources>

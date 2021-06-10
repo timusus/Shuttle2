@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="home_title_recent">Zuletzt Gespieltes</string>
+    <string name="home_description_recently_played">Zuletzt gespielte Alben</string>
+    <string name="home_title_most_played">Meist Gespieltes</string>
+    <string name="home_description_most_played">Deine Lieblingsalben</string>
+    <string name="home_title_this_year">Dieses Jahr</string>
+    <string name="home_title_something_different">Etwas anderes</string>
+    <string name="home_description_something_different">Künstler, die Sie seit einiger Zeit nicht mehr angehört haben</string>
+    <string name="btn_history">Verlauf</string>
+    <string name="btn_recently_added">Zuletzt hinzugefügt</string>
+    <string name="btn_favorite">Favoriten</string>
+    <string name="btn_shuffle">Zufallswiedergabe</string>
+</resources>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="changelog_title">Alterarlog</string>
+    <string name="changelog_features">Recursos</string>
+    <string name="changelog_improvements">Melhorias</string>
+    <string name="changelog_bug_fixes">Correções de erros</string>
+</resources>

@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="loading">Ładowanie…</string>
+    <!-- Dialogs-->
+    <string name="dialog_button_close">Zamknij</string>
+    <string name="dialog_button_done">Gotowy</string>
+    <string name="dialog_button_retry">Spróbować ponownie</string>
+    <string name="dialog_button_save">Zapisać</string>
+    <!-- Validation -->
+    <string name="validation_field_required">Wymagany</string>
+    <!-- Errors -->
+    <string name="error_unexpected">Wystąpił nieoczekiwany błąd</string>
+    <string name="error_unknown">Wystąpił nieznany błąd</string>
+    <!-- Queue -->
+    <string name="queue_item_added"><xliff:g example="Lateralus" id="item_name">{item_name}</xliff:g>
+     dodano do kolejki</string>
+    <plurals name="queue_songs_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       utwór został dodany do kolejki</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       utwory dodane do kolejki</item>
+        <item quantity="few"><xliff:g example="30" id="count">{count}</xliff:g>
+       utwory dodane do kolejki</item>
+        <item quantity="many"><xliff:g example="30" id="count">{count}</xliff:g>
+       utwory dodane do kolejki</item>
+    </plurals>
+    <plurals name="queue_albums_added">
+        <item quantity="one">Album 
+      <xliff:g example="1" id="count">{count}</xliff:g>
+       został dodany do kolejki</item>
+        <item quantity="other">Albumy dodane do kolejki: 
+      <xliff:g example="30" id="count">{count}</xliff:g></item>
+        <item quantity="few">Albumy dodane do kolejki: 
+      <xliff:g example="30" id="count">{count}</xliff:g></item>
+        <item quantity="many">Albumy dodane do kolejki: 
+      <xliff:g example="30" id="count">{count}</xliff:g></item>
+    </plurals>
+    <plurals name="queue_artists_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       wykonawca został dodany do kolejki</item>
+        <item quantity="other">Do kolejki dodano 
+      <xliff:g example="30" id="count">{count}</xliff:g>
+       wykonawców</item>
+        <item quantity="few">Do kolejki dodano 
+      <xliff:g example="30" id="count">{count}</xliff:g>
+       wykonawców</item>
+        <item quantity="many">Do kolejki dodano 
+      <xliff:g example="30" id="count">{count}</xliff:g>
+       wykonawców</item>
+    </plurals>
+    <!-- Playlists -->
+    <string name="playlist_queue_added">Dodano kolejkę do: <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></string>
+    <plurals name="playlist_songs_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       utwór dodany do 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="other">Utwory dodane do 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g>
+      : 
+      <xliff:g example="30" id="count">{count}</xliff:g></item>
+        <item quantity="few">Utwory dodane do 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g>
+      : 
+      <xliff:g example="30" id="count">{count}</xliff:g></item>
+        <item quantity="many">Utwory dodane do 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g>
+      : 
+      <xliff:g example="30" id="count">{count}</xliff:g></item>
+    </plurals>
+    <plurals name="playlist_albums_added">
+        <item quantity="one">Album 
+      <xliff:g example="1" id="count">{count}</xliff:g>
+       został dodany do 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="other">Albumy dodane do albumu 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g>
+      : 
+      <xliff:g example="30" id="count">{count}</xliff:g></item>
+        <item quantity="few">Albumy dodane do albumu 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g>
+      : 
+      <xliff:g example="30" id="count">{count}</xliff:g></item>
+        <item quantity="many">Albumy dodane do albumu 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g>
+      : 
+      <xliff:g example="30" id="count">{count}</xliff:g></item>
+    </plurals>
+    <plurals name="playlist_artists_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       wykonawca został dodany do 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       wykonawcy dodani do 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="few"><xliff:g example="30" id="count">{count}</xliff:g>
+       wykonawcy dodani do 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="many"><xliff:g example="30" id="count">{count}</xliff:g>
+       wykonawcy dodani do 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+    </plurals>
+    <plurals name="playlist_genres_added">
+        <item quantity="one">Gatunek 
+      <xliff:g example="1" id="count">{count}</xliff:g>
+       został dodany do 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="other">Gatunek 
+      <xliff:g example="30" id="count">{count}</xliff:g>
+       został dodany do 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="few">Gatunek 
+      <xliff:g example="30" id="count">{count}</xliff:g>
+       został dodany do 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="many">Gatunek 
+      <xliff:g example="30" id="count">{count}</xliff:g>
+       został dodany do 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+    </plurals>
+    <string name="delete_song_failed">Nie udało się usunąć utworu</string>
+    <string name="year_unknown">Rok nieznany</string>
+    <string name="disc_number">Dysk 
+    <xliff:g example="1" id="disc_number">{disc_number}</xliff:g></string>
+    <!-- Empty -->
+    <string name="song_list_empty">Żadnych piosenek</string>
+    <string name="album_list_empty">Brak albumów</string>
+    <string name="artist_list_empty">Żadnych artystów</string>
+    <string name="genre_list_empty">Brak gatunków</string>
+    <string name="playlist_list_empty">Brak list odtwarzania</string>
+    <string name="queue_empty">Kolejka pusta</string>
+    <string name="playlist_empty">Lista odtwarzania jest pusta</string>
+    <string name="button_repeat">Powtarzać</string>
+    <string name="button_seek_forward">Szukaj do przodu</string>
+    <string name="button_skip_next">Pomiń następne</string>
+    <string name="button_toggle_playback">Przełącz odtwarzanie</string>
+    <string name="button_seek_backward">Szukaj wstecz</string>
+    <string name="button_skip_previous">Pomiń poprzedni</string>
+    <string name="button_content_description_shuffle">Tasować</string>
+    <string name="button_album_shuffle">Tasować Album</string>
+    <string name="unknown">Nieznany</string>
+</resources>

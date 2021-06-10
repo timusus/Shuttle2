@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="dialog_button_cancel">Anuluj</string>
+    <string name="dialog_exclude_title">Wykluczać</string>
+    <string name="dialog_exclude_message">„<xliff:g example="Lateralus" id="item">{item}</xliff:g>\” zostanie ukryty w Twojej bibliotece.\n\nMożesz wyświetlić wykluczone utwory w ustawieniach.</string>
+    <string name="dialog_exclude_button">Wykluczać</string>
+    <string name="dialog_exclude_list_empty">Lista wykluczeń jest pusta</string>
+    <string name="dialog_delete_title">Kasować</string>
+    <string name="dialog_delete_message">„<xliff:g example="Lateralus" id="item">{item}</xliff:g>\” zostanie trwale usunięty</string>
+    <string name="dialog_delete_button">Kasować</string>
+</resources>

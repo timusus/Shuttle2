@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="menu_trial">トライアル</string>
+    <string name="trial_heading_trial">無料トライアル</string>
+    <!-- Message shown when user is starting a trial. Note: This is meant to be friendly/fun! It doesn't have to say 'until you lose your mind' -->
+    <string name="trial_description_trial">トライアル後は、正気を失うまで毎日少しずつ再生速度が上がります。</string>
+    <plurals name="trial_days_remaining">
+        <item quantity="other">残り
+      <xliff:g example="30" id="count">{count}</xliff:g>
+      日</item>
+    </plurals>
+    <string name="trial_heading_expired">試用期限終了</string>
+    <!-- Message shown when trial has expired. Note: This is meant to be friendly/fun! It doesn't have to say 'until you lose your mind' -->
+    <string name="trial_description_expired">正気を失うまで、再生速度は毎日少しずつ増加します。</string>
+    <string name="trial_playback_speed">再生速度: 
+    <xliff:g example="1.4x" id="speed">{speed}</xliff:g></string>
+    <!-- Button to upgrade from the trial version to a paid version -->
+    <string name="trial_button_upgrade">アップグレード</string>
+</resources>

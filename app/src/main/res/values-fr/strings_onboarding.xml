@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="onboarding_directories_dialog_add_title">Répertoires multimédias</string>
+    <string name="onboarding_directories_dialog_add_button">Ajouter un répertoire</string>
+    <string name="onboarding_directories_dialog_missing_title">Fournisseur de documents manquant</string>
+    <string name="onboarding_directories_dialog_missing_subtitle">Une application \"Fournisseur de documents\" (gestionnaire de fichiers) est introuvable sur votre dispositif. Vous devrez peut-être en installer un ou recommencer à utiliser le scanner multimédia \"de base\".</string>
+    <string name="onboarding_directories_add_directories_help_text">Pour rechercher de la musique, Shuttle doit pouvoir accéder à vos répertoires de médias.\n\nLorsque vous appuyez sur \"Ajouter un répertoire\", vous serez redirigé vers votre application \"fournisseur de fichiers\" par défaut. Accédez au(x) dossier(s) contenant votre musique. Vous pouvez ajouter plusieurs répertoires. \n\nRemarque : vous devrez peut-être activer \"Afficher le stockage interne\" pour voir vos dossiers de musique.</string>
+    <string name="onboarding_directories_scanning">Balayage…</string>
+    <plurals name="onboarding_directories_scan_progress">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> fichier audio</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> fichiers audio</item>
+    </plurals>
+    <string name="onboarding_permission_dialog_title">Autorisation de stockage requise</string>
+    <string name="onboarding_permission_dialog_subtitle">Shuttle peut ne pas fonctionner correctement sans l\'autorisation d\'accéder à votre musique</string>
+    <string name="onboarding_permission_button_grant">Accorder l\'autorisation</string>
+    <string name="onboarding_permission_help_text">Pour trouver votre musique, Shuttle a besoin d\'une autorisation pour lire votre stockage multimédia</string>
+    <string name="onboarding_media_scanner_title">Scanner multimédia</string>
+    <string name="onboarding_media_scanner_scanning">Balayage…</string>
+    <string name="onboarding_media_scan">Analyse</string>
+    <string name="onboarding_button_back">Retour</string>
+    <string name="onboarding_button_next">Suivant</string>
+    <string name="onboarding_media_scanner_rescan">Réanalyser</string>
+    <string name="onboarding_scanner_reading_song_tags">Lecture des étiquettes de chansons…</string>
+    <string name="onboarding_media_scanner_tile">Aucune analyse en cours</string>
+</resources>

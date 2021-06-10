@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="media_provider_title_s2">Dostawca mediów S2</string>
+    <string name="media_provider_title_media_store">Sklep multimedialny z Androidem</string>
+    <string name="media_provider_title_emby">Emby</string>
+    <string name="media_provider_title_jellyfin">Jellyfin</string>
+    <string name="media_provider_title_plex">Plex</string>
+    <string name="media_provider_description_s2">Skanuje wybrane foldery i pliki (zalecane)</string>
+    <string name="media_provider_description_media_store">Baza danych zarządzana przez system Android</string>
+    <string name="media_provider_description_jellyfin">Osobisty serwer multimediów</string>
+    <string name="media_provider_description_emby">Osobisty serwer multimediów</string>
+    <string name="media_provider_description_plex">Osobisty serwer multimediów</string>
+    <string name="media_provider_scan_progress">Przeskanowano <xliff:g example="5" id="progress">{progress}</xliff:g> / <xliff:g example="25" id="total">{total}</xliff:g> utworów</string>
+    <string name="media_provider_scan_success_subtitle"><xliff:g example="5" id="inserts">{inserts}</xliff:g> wstawia, <xliff:g example="15" id="updates">{updates}</xliff:g> aktualizacje, <xliff:g example="25" id="deletes">{deletes}</xliff:g> usuwa</string>
+    <string name="media_provider_scan_failure_title">Skanowanie nie powiodło się</string>
+    <string name="media_provider_button_authenticate">Uwierzytelniać</string>
+    <string name="media_provider_authenticating">Uwierzytelniam…</string>
+    <string name="media_provider_authentication_success">Uwierzytelnianie powiodło się</string>
+    <string name="media_provider_type_local">Lokalny</string>
+    <string name="media_provider_type_remote">Zdalny</string>
+    <string name="media_provider_add">Dodaj dostawcę mediów</string>
+    <string name="media_providers_add_onboarding">Dodaj dostawców mediów. Możesz to zmienić później</string>
+    <string name="media_provider_toolbar_title_onboarding">Odkryj swoją muzykę</string>
+    <string name="media_provider_toolbar_title">Dostawcy mediów</string>
+    <string name="media_provider_dialog_remove_title">Usuń <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
+    <string name="media_provider_dialog_remove_subtitle">Spowoduje to usunięcie wszystkich utworów, playlist i liczby odtworzeń powiązanych z dostawcą mediów <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
+    <string name="media_provider_dialog_button_remove">Usunąć</string>
+    <string name="media_provider_config_hint_address">Adres</string>
+    <string name="media_provider_config_hint_username">Nazwa Użytkownika</string>
+    <string name="media_provider_config_hint_password">Hasło</string>
+    <string name="media_provider_config_switch_remember_password">Zapamiętaj hasło</string>
+</resources>
