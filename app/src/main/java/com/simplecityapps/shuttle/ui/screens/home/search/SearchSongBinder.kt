@@ -161,19 +161,41 @@ open class SearchSongBinder(
                 title.text = nameStringBuilder
             }
 
-            val albumArtistNameStringBuilder = viewBinder.song.albumArtist?.let { SpannableStringBuilder(viewBinder.song.albumArtist) }
-            albumArtistNameStringBuilder?.let {
-                if (viewBinder.jaroSimilarity.albumArtistNameJaroSimilarity.score >= StringComparison.threshold) {
-                    viewBinder.jaroSimilarity.albumArtistNameJaroSimilarity.bMatchedIndices.forEach { (index, score) ->
-                        try {
-                            albumArtistNameStringBuilder.setSpan(
-                                ForegroundColorSpan(ArgbEvaluator().evaluate(score.toFloat() - 0.25f, textColor, accentColor) as Int),
-                                index,
-                                index + 1,
-                                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                            )
-                        } catch (e: IndexOutOfBoundsException) {
-                            // This is possible because the jaro similarity function does string normalisation, so we're not necessarily using the exact same string
+            // We display either the artist, or album-artist - whichever gave us a better jaro score
+            var artistOrAlbumArtistStringBuilder: SpannableStringBuilder?
+            if (viewBinder.jaroSimilarity.artistNameJaroSimilarity.score > viewBinder.jaroSimilarity.albumArtistNameJaroSimilarity.score) {
+                artistOrAlbumArtistStringBuilder = viewBinder.song.friendlyArtistName?.let { SpannableStringBuilder(viewBinder.song.friendlyArtistName) }
+                artistOrAlbumArtistStringBuilder?.let {
+                    if (viewBinder.jaroSimilarity.artistNameJaroSimilarity.score >= StringComparison.threshold) {
+                        viewBinder.jaroSimilarity.artistNameJaroSimilarity.bMatchedIndices.forEach { (index, score) ->
+                            try {
+                                artistOrAlbumArtistStringBuilder?.setSpan(
+                                    ForegroundColorSpan(ArgbEvaluator().evaluate(score.toFloat() - 0.25f, textColor, accentColor) as Int),
+                                    index,
+                                    index + 1,
+                                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                                )
+                            } catch (e: IndexOutOfBoundsException) {
+                                // This is possible because the jaro similarity function does string normalisation, so we're not necessarily using the exact same string
+                            }
+                        }
+                    }
+                }
+            } else {
+                artistOrAlbumArtistStringBuilder = viewBinder.song.albumArtist?.let { SpannableStringBuilder(viewBinder.song.albumArtist) }
+                artistOrAlbumArtistStringBuilder?.let {
+                    if (viewBinder.jaroSimilarity.albumArtistNameJaroSimilarity.score >= StringComparison.threshold) {
+                        viewBinder.jaroSimilarity.albumArtistNameJaroSimilarity.bMatchedIndices.forEach { (index, score) ->
+                            try {
+                                artistOrAlbumArtistStringBuilder?.setSpan(
+                                    ForegroundColorSpan(ArgbEvaluator().evaluate(score.toFloat() - 0.25f, textColor, accentColor) as Int),
+                                    index,
+                                    index + 1,
+                                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                                )
+                            } catch (e: IndexOutOfBoundsException) {
+                                // This is possible because the jaro similarity function does string normalisation, so we're not necessarily using the exact same string
+                            }
                         }
                     }
                 }
@@ -198,7 +220,7 @@ open class SearchSongBinder(
             }
 
             subtitle.text = listOfNotNull(
-                albumArtistNameStringBuilder,
+                artistOrAlbumArtistStringBuilder,
                 albumNameStringBuilder,
             )
                 .joinToSpannedString(" • ")
