@@ -163,7 +163,10 @@ open class SearchSongBinder(
 
             // We display either the artist, or album-artist - whichever gave us a better jaro score
             var artistOrAlbumArtistStringBuilder: SpannableStringBuilder?
-            if (viewBinder.jaroSimilarity.artistNameJaroSimilarity.score > viewBinder.jaroSimilarity.albumArtistNameJaroSimilarity.score) {
+            if (viewBinder.jaroSimilarity.artistNameJaroSimilarity.score >= viewBinder.jaroSimilarity.albumArtistNameJaroSimilarity.score
+                || (viewBinder.jaroSimilarity.artistNameJaroSimilarity.score < StringComparison.threshold
+                        && viewBinder.jaroSimilarity.albumArtistNameJaroSimilarity.score < StringComparison.threshold)
+            ) {
                 artistOrAlbumArtistStringBuilder = viewBinder.song.friendlyArtistName?.let { SpannableStringBuilder(viewBinder.song.friendlyArtistName) }
                 artistOrAlbumArtistStringBuilder?.let {
                     if (viewBinder.jaroSimilarity.artistNameJaroSimilarity.score >= StringComparison.threshold) {
