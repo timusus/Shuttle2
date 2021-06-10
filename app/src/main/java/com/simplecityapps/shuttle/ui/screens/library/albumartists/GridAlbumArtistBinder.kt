@@ -54,7 +54,7 @@ class GridAlbumArtistBinder(
         override fun bind(viewBinder: AlbumArtistBinder, isPartial: Boolean) {
             super.bind(viewBinder, isPartial)
 
-            title.text = viewBinder.albumArtist.friendlyNameOrArtistName
+            title.text = viewBinder.albumArtist.friendlyNameOrArtistName ?: itemView.resources.getString(R.string.unknown)
 
             viewBinder as GridAlbumArtistBinder
 

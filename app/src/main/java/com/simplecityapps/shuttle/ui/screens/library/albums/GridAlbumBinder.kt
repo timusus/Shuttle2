@@ -64,7 +64,7 @@ class GridAlbumBinder(
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.album.name ?: itemView.resources.getString(R.string.unknown)
-            subtitle.text = viewBinder.album.friendlyAlbumArtistOrArtistName
+            subtitle.text = viewBinder.album.friendlyAlbumArtistOrArtistName ?: itemView.resources.getString(R.string.unknown)
 
             viewBinder as GridAlbumBinder
 
