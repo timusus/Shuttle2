@@ -16,7 +16,7 @@
       "Fixed a major performance issue, introduced in 0.3.0",
       "Use 'unknown' instead of displaying blank text in more places",
       "Unknown (blank) artists/albums/songs are now moved to the bottom of the list when sorting",
-      "Search: Show artist name or album-artist name, depending on whichever"
+      "Search: Show artist name or album-artist name"
     ],
     "notes": [
       "If you'd like to help translate S2 into another language, or you notice an error in the translations, please let me know, or visit https://shuttle.oneskyapp.com/collaboration/project?id=382482"
