@@ -62,7 +62,7 @@ class PlaybackNotificationManager @Inject constructor(
             .apply {
                 song?.let { song ->
                     setContentTitle(song.name ?: context.getString(R.string.unknown))
-                    setContentText(song.friendlyArtistOrAlbumArtistName ?: context.getString(R.string.unknown))
+                    setContentText(song.friendlyArtistName ?: song.albumArtist ?: context.getString(R.string.unknown))
                 }
             }
             .setShowWhen(false)
@@ -100,7 +100,7 @@ class PlaybackNotificationManager @Inject constructor(
                         if (song == queueManager.getCurrentItem()?.song) {
                             notificationBuilder
                                 .setContentTitle(song.name ?: context.getString(R.string.unknown))
-                                .setContentText(song.friendlyArtistOrAlbumArtistName ?: context.getString(R.string.unknown))
+                                .setContentText(song.friendlyArtistName ?: song.albumArtist ?: context.getString(R.string.unknown))
                                 .setLargeIcon(image)
                             val notification = notificationBuilder.build()
                             notificationManager.notify(NOTIFICATION_ID, notification)

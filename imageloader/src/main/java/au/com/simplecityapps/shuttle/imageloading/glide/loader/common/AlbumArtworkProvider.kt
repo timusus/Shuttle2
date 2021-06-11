@@ -5,6 +5,6 @@ import com.simplecityapps.mediaprovider.model.Album
 open class AlbumArtworkProvider(private val album: Album) : ArtworkProvider {
 
     override fun getCacheKey(): String {
-        return "${album.friendlyAlbumArtistOrArtistName}_${album.name}"
+        return "${album.albumArtist ?: album.friendlyArtistName}_${album.name}"
     }
 }

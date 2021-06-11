@@ -82,7 +82,7 @@ class SearchAlbumBinder(
                 .from(" • ")
                 .joinSafely(
                     items = listOf(
-                        viewBinder.album.friendlyAlbumArtistOrArtistName,
+                        viewBinder.album.albumArtist ?: viewBinder.album.friendlyArtistName,
                         songQuantity
                     ),
                     defaultValue = itemView.resources.getString(R.string.unknown)
@@ -126,9 +126,9 @@ class SearchAlbumBinder(
                 }
             }
 
-            viewBinder.album.friendlyAlbumArtistOrArtistName?.let {
+            viewBinder.album.albumArtist ?: viewBinder.album.friendlyArtistName?.let {
                 if (viewBinder.jaroSimilarity.albumArtistNameJaroSimilarity.score >= StringComparison.threshold) {
-                    val artistNameStringBuilder = SpannableStringBuilder(viewBinder.album.friendlyAlbumArtistOrArtistName)
+                    val artistNameStringBuilder = SpannableStringBuilder(viewBinder.album.albumArtist ?: viewBinder.album.friendlyArtistName)
                     viewBinder.jaroSimilarity.albumArtistNameJaroSimilarity.bMatchedIndices.forEach { (index, score) ->
                         try {
                             artistNameStringBuilder.setSpan(

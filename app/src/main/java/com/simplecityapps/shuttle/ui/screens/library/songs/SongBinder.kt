@@ -105,7 +105,7 @@ open class SongBinder(
                 .from(" • ")
                 .joinSafely(
                     listOf(
-                        viewBinder.song.friendlyArtistOrAlbumArtistName,
+                        viewBinder.song.friendlyArtistName ?: viewBinder.song.albumArtist,
                         viewBinder.song.album,
                     )
                 ) ?: itemView.resources.getString(R.string.unknown)

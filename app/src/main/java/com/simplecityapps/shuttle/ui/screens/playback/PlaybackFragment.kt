@@ -218,7 +218,7 @@ class PlaybackFragment :
     override fun setCurrentSong(song: Song?) {
         song?.let { song ->
             titleTextView.text = song.name ?: getString(R.string.unknown)
-            artistTextView.text = song.friendlyArtistOrAlbumArtistName ?: getString(R.string.unknown)
+            artistTextView.text = song.friendlyArtistName ?: song.albumArtist ?: getString(R.string.unknown)
             albumTextView.text = song.album ?: getString(R.string.unknown)
 
             when (song.type) {

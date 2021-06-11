@@ -19,7 +19,7 @@ sealed class AlbumArtistQuery(
             sortOrder = sortOrder
         )
 
-    class ArtistGroupKey(val key: com.simplecityapps.mediaprovider.model.ArtistGroupKey?) :
+    class AlbumArtistGroupKey(val key: com.simplecityapps.mediaprovider.model.AlbumArtistGroupKey?) :
         AlbumArtistQuery(
             predicate = { albumArtist -> albumArtist.groupKey == key }
         )

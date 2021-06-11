@@ -75,7 +75,7 @@ class MiniPlaybackFragment : Fragment(), MiniPlayerContract.View {
             titleTextView.text = song.name ?: getString(R.string.unknown)
             subtitleTextView.text = ListPhrase.from(" • ")
                 .joinSafely(
-                    items = listOf(song.friendlyArtistOrAlbumArtistName, song.album),
+                    items = listOf(song.friendlyArtistName ?: song.albumArtist, song.album),
                     defaultValue = getString(R.string.unknown)
                 )
             imageLoader.loadArtwork(

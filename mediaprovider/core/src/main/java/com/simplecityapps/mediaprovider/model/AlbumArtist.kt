@@ -6,6 +6,9 @@ import com.simplecityapps.mediaprovider.MediaProvider
 import kotlinx.parcelize.Parcelize
 import java.util.*
 
+@Parcelize
+data class AlbumArtistGroupKey(val key: String?) : Parcelable
+
 @Keep
 @Parcelize
 data class AlbumArtist(
@@ -14,7 +17,7 @@ data class AlbumArtist(
     val albumCount: Int,
     val songCount: Int,
     val playCount: Int,
-    val groupKey: ArtistGroupKey,
+    val groupKey: AlbumArtistGroupKey,
     val mediaProviders: List<MediaProvider.Type>
 ) : Parcelable {
 
@@ -30,6 +33,4 @@ data class AlbumArtist(
     } else {
         null
     }
-
-    val friendlyNameOrArtistName: String? = name ?: friendlyArtistName
 }

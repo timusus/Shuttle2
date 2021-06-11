@@ -6,13 +6,11 @@ import com.simplecityapps.mediaprovider.MediaProvider
 import kotlinx.parcelize.Parcelize
 import java.util.*
 
-@Parcelize
-data class ArtistGroupKey(val key: String?) : Parcelable
 
 @Parcelize
 data class AlbumGroupKey(
     val key: String?,
-    val artistGroupKey: ArtistGroupKey?
+    val albumArtistGroupKey: AlbumArtistGroupKey?
 ) : Parcelable
 
 @Keep
@@ -43,6 +41,4 @@ data class Album(
     } else {
         null
     }
-
-    val friendlyAlbumArtistOrArtistName: String? = albumArtist ?: friendlyArtistName
 }

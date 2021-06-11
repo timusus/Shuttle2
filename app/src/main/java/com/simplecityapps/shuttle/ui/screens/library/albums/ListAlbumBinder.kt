@@ -62,7 +62,7 @@ class ListAlbumBinder(
                 .from(" • ")
                 .joinSafely(
                     listOf(
-                        viewBinder.album.friendlyAlbumArtistOrArtistName,
+                        viewBinder.album.albumArtist ?: viewBinder.album.friendlyArtistName,
                         songQuantity
                     )
                 )

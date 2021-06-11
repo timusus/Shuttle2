@@ -105,7 +105,7 @@ class ScannerPresenter @AssistedInject constructor(
                 progress = progress,
                 total = total,
                 message = ListPhrase.from(" • ")
-                    .joinSafely(listOf(song.friendlyArtistOrAlbumArtistName, song.name))
+                    .joinSafely(listOf(song.friendlyArtistName ?: song.albumArtist, song.name))
                     .toString()
             )
         }

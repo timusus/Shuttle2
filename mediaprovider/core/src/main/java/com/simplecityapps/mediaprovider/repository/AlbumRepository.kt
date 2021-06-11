@@ -20,9 +20,9 @@ sealed class AlbumQuery(
             sortOrder = sortOrder
         )
 
-    class ArtistGroupKey(val key: com.simplecityapps.mediaprovider.model.ArtistGroupKey?) :
+    class ArtistGroupKey(val key: com.simplecityapps.mediaprovider.model.AlbumArtistGroupKey?) :
         AlbumQuery(
-            predicate = { album -> album.groupKey?.artistGroupKey == key }
+            predicate = { album -> album.groupKey?.albumArtistGroupKey == key }
         )
 
     class AlbumGroupKey(private val albumGroupKey: com.simplecityapps.mediaprovider.model.AlbumGroupKey?, sortOrder: AlbumSortOrder = AlbumSortOrder.Default) :
@@ -77,7 +77,7 @@ enum class AlbumSortOrder : Serializable {
         private val defaultComparator: Comparator<Album> by lazy {
             compareByDescending<Album, Int?>(nullsFirst(), { album -> album.year })
                 .then { a, b -> collator.compare(a.groupKey?.key ?: "zzz", b.groupKey?.key ?: "zzz") }
-                .then { a, b -> collator.compare(a.groupKey?.artistGroupKey?.key ?: "zzz", b.groupKey?.artistGroupKey?.key ?: "zzz") }
+                .then { a, b -> collator.compare(a.groupKey?.albumArtistGroupKey?.key ?: "zzz", b.groupKey?.albumArtistGroupKey?.key ?: "zzz") }
         }
 
         val albumNameComparator: Comparator<Album> by lazy {
@@ -86,7 +86,7 @@ enum class AlbumSortOrder : Serializable {
         }
 
         val artistGroupKeyComparator: Comparator<Album> by lazy {
-            Comparator<Album> { a, b -> collator.compare(a.groupKey?.artistGroupKey?.key ?: "zzz", b.groupKey?.artistGroupKey?.key ?: "zzz") }
+            Comparator<Album> { a, b -> collator.compare(a.groupKey?.albumArtistGroupKey?.key ?: "zzz", b.groupKey?.albumArtistGroupKey?.key ?: "zzz") }
                 .then(defaultComparator)
         }
 

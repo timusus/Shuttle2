@@ -360,7 +360,7 @@ class AlbumArtistListFragment :
                         return@setOnMenuItemClickListener true
                     }
                     R.id.exclude -> {
-                        ShowExcludeDialog(requireContext(), albumArtist.friendlyNameOrArtistName) {
+                        ShowExcludeDialog(requireContext(), albumArtist.name ?: albumArtist.friendlyArtistName) {
                             presenter.exclude(albumArtist)
                         }
                         return@setOnMenuItemClickListener true

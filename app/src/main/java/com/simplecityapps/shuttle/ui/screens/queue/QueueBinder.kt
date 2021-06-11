@@ -119,7 +119,7 @@ class QueueBinder(
             title.text = viewBinder.queueItem.song.name
             subtitle.text = ListPhrase.from(" • ")
                 .joinSafely(
-                    items = listOf(viewBinder.queueItem.song.friendlyArtistOrAlbumArtistName, viewBinder.queueItem.song.album),
+                    items = listOf(viewBinder.queueItem.song.friendlyArtistName ?: viewBinder.queueItem.song.albumArtist, viewBinder.queueItem.song.album),
                     defaultValue = itemView.resources.getString(R.string.unknown)
                 )
             tertiary.text = viewBinder.queueItem.song.duration.toHms("--:--")

@@ -115,7 +115,7 @@ open class SearchSongBinder(
                 .from(" • ")
                 .joinSafely(
                     items = listOf(
-                        viewBinder.song.friendlyArtistOrAlbumArtistName,
+                        viewBinder.song.friendlyArtistName ?: viewBinder.song.albumArtist,
                         viewBinder.song.album,
                     ),
                     defaultValue = itemView.resources.getString(R.string.unknown)

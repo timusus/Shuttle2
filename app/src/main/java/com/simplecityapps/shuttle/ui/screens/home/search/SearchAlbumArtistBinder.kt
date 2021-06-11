@@ -71,7 +71,7 @@ class SearchAlbumArtistBinder(
         override fun bind(viewBinder: AlbumArtistBinder, isPartial: Boolean) {
             super.bind(viewBinder, isPartial)
 
-            title.text = viewBinder.albumArtist.friendlyNameOrArtistName
+            title.text = viewBinder.albumArtist.name ?: viewBinder.albumArtist.friendlyArtistName
 
             val albumQuantity = Phrase
                 .fromPlural(itemView.resources, R.plurals.albumsPlural, viewBinder.albumArtist.albumCount)
@@ -95,7 +95,7 @@ class SearchAlbumArtistBinder(
                     ArtworkImageLoader.Options.CacheDecodedResource
                 )
             )
-            imageView.transitionName = "album_artist_${viewBinder.albumArtist.friendlyNameOrArtistName}"
+            imageView.transitionName = "album_artist_${viewBinder.albumArtist.name ?: viewBinder.albumArtist.friendlyArtistName}"
 
             checkImageView.isVisible = viewBinder.selected
 
@@ -103,8 +103,8 @@ class SearchAlbumArtistBinder(
         }
 
         private fun highlightMatchedStrings(viewBinder: SearchAlbumArtistBinder) {
-            viewBinder.albumArtist.friendlyNameOrArtistName?.let {
-                val nameStringBuilder = SpannableStringBuilder(viewBinder.albumArtist.friendlyNameOrArtistName)
+            viewBinder.albumArtist.name ?: viewBinder.albumArtist.friendlyArtistName?.let {
+                val nameStringBuilder = SpannableStringBuilder(viewBinder.albumArtist.name ?: viewBinder.albumArtist.friendlyArtistName)
                 if (viewBinder.jaroSimilarity.albumArtistNameJaroSimilarity.score >= StringComparison.threshold) {
                     viewBinder.jaroSimilarity.albumArtistNameJaroSimilarity.bMatchedIndices.forEach { (index, score) ->
                         try {

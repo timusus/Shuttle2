@@ -52,7 +52,7 @@ class ListAlbumArtistBinder(
         override fun bind(viewBinder: AlbumArtistBinder, isPartial: Boolean) {
             super.bind(viewBinder, isPartial)
 
-            title.text = viewBinder.albumArtist.friendlyNameOrArtistName
+            title.text = viewBinder.albumArtist.name ?: viewBinder.albumArtist.friendlyArtistName
 
             val albumQuantity = Phrase
                 .fromPlural(itemView.resources, R.plurals.albumsPlural, viewBinder.albumArtist.albumCount)
@@ -76,7 +76,7 @@ class ListAlbumArtistBinder(
                     ArtworkImageLoader.Options.CacheDecodedResource
                 )
             )
-            imageView.transitionName = "album_artist_${viewBinder.albumArtist.friendlyNameOrArtistName}"
+            imageView.transitionName = "album_artist_${viewBinder.albumArtist.name ?: viewBinder.albumArtist.friendlyArtistName}"
 
             checkImageView.isVisible = viewBinder.selected
         }

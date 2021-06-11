@@ -100,7 +100,7 @@ class MediaSessionManager @Inject constructor(
             val mediaMetadataCompat = MediaMetadataCompat.Builder()
                 .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, currentItem.song.id.toString())
                 .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ARTIST, currentItem.song.albumArtist)
-                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, currentItem.song.friendlyArtistOrAlbumArtistName ?: context.getString(R.string.unknown))
+                .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, currentItem.song.friendlyArtistName ?: currentItem.song.albumArtist ?: context.getString(R.string.unknown))
                 .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, currentItem.song.album ?: context.getString(R.string.unknown))
                 .putString(MediaMetadataCompat.METADATA_KEY_TITLE, currentItem.song.name ?: context.getString(R.string.unknown))
                 .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, currentItem.song.duration.toLong())
@@ -254,7 +254,7 @@ class MediaSessionManager @Inject constructor(
             appCoroutineScope.launch {
                 mediaId?.let {
                     mediaIdHelper.getPlayQueue(mediaId)?.let { playQueue ->
-                        if (queueManager.setQueue(songs = playQueue.songs)) {
+                        if (queueManager.setQueue(songs = playQueue.songs, position = playQueue.position)) {
                             playbackManager.load { result ->
                                 result.onSuccess {
                                     if (playWhenReady) {

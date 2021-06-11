@@ -174,7 +174,7 @@ class PlaybackPresenter @Inject constructor(
     override fun goToArtist() {
         launch {
             queueManager.getCurrentItem()?.song?.let { song ->
-                val artists = albumArtistRepository.getAlbumArtists(AlbumArtistQuery.ArtistGroupKey(key = song.artistGroupKey)).firstOrNull().orEmpty()
+                val artists = albumArtistRepository.getAlbumArtists(AlbumArtistQuery.AlbumArtistGroupKey(key = song.albumArtistGroupKey)).firstOrNull().orEmpty()
                 artists.firstOrNull()?.let { artist ->
                     view?.goToArtist(artist)
                 } ?: Timber.e("Failed to retrieve album artist for song: ${song.name}")

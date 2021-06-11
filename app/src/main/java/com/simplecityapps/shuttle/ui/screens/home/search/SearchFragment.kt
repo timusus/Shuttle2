@@ -221,7 +221,7 @@ class SearchFragment : Fragment(),
     }
 
     override fun onAddedToQueue(albumArtist: AlbumArtist) {
-        Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("item_name", albumArtist.friendlyNameOrArtistName).format(), Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("item_name", albumArtist.name ?: albumArtist.friendlyArtistName).format(), Toast.LENGTH_SHORT).show()
     }
 
     override fun onAddedToQueue(album: Album) {

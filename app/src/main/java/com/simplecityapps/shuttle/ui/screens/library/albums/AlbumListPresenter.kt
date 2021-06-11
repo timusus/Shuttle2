@@ -231,7 +231,7 @@ class AlbumListPresenter @Inject constructor(
     override fun getFastscrollPrefix(album: Album): String? {
         return when (sortPreferenceManager.sortOrderAlbumList) {
             AlbumSortOrder.AlbumName -> album.groupKey?.key?.firstOrNull()?.toString()?.toUpperCase(Locale.getDefault())
-            AlbumSortOrder.ArtistGroupKey -> album.groupKey?.artistGroupKey?.key?.firstOrNull()?.toString()?.toUpperCase(Locale.getDefault())
+            AlbumSortOrder.ArtistGroupKey -> album.groupKey?.albumArtistGroupKey?.key?.firstOrNull()?.toString()?.toUpperCase(Locale.getDefault())
             AlbumSortOrder.Year -> album.year.toString()
             else -> null
         }

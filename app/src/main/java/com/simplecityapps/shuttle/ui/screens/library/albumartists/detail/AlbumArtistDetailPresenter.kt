@@ -81,7 +81,7 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
 
         launch {
             albumArtistRepository
-                .getAlbumArtists(AlbumArtistQuery.ArtistGroupKey(key = albumArtist.groupKey))
+                .getAlbumArtists(AlbumArtistQuery.AlbumArtistGroupKey(key = albumArtist.groupKey))
                 .collect { albumArtists ->
                     albumArtists.firstOrNull()?.let { albumArtist ->
                         this@AlbumArtistDetailPresenter.view?.setAlbumArtist(albumArtist)
@@ -181,7 +181,7 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
         launch {
             val songs = songRepository.getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = albumArtist.groupKey)))).firstOrNull().orEmpty()
             playbackManager.addToQueue(songs)
-            view?.onAddedToQueue(albumArtist.friendlyNameOrArtistName ?: context.getString(R.string.unknown))
+            view?.onAddedToQueue(albumArtist.name ?: albumArtist.friendlyArtistName ?: context.getString(R.string.unknown))
         }
     }
 
@@ -204,7 +204,7 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
         launch {
             val songs = songRepository.getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = albumArtist.groupKey)))).firstOrNull().orEmpty()
             playbackManager.playNext(songs)
-            view?.onAddedToQueue(albumArtist.friendlyNameOrArtistName ?: context.getString(R.string.unknown))
+            view?.onAddedToQueue(albumArtist.name ?: albumArtist.friendlyArtistName ?: context.getString(R.string.unknown))
         }
     }
 

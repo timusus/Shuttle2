@@ -42,7 +42,7 @@ class WidgetProvider41 : ShuttleAppWidgetProvider() {
             setTextViewText(R.id.title, song.name ?: context.getString(R.string.unknown))
             setTextViewText(
                 R.id.subtitle, ListPhrase.from(" • ")
-                    .joinSafely(listOf(song.friendlyArtistOrAlbumArtistName, song.album), context.getString(R.string.unknown))
+                    .joinSafely(listOf(song.friendlyArtistName ?: song.albumArtist, song.album), context.getString(R.string.unknown))
             )
 
             val artworkSize = 40.dp

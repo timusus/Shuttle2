@@ -39,7 +39,7 @@ class WidgetProvider42 : ShuttleAppWidgetProvider() {
             val song = currentItem.song
 
             setTextViewText(R.id.title, song.name)
-            setTextViewText(R.id.subtitle, song.friendlyArtistOrAlbumArtistName)
+            setTextViewText(R.id.subtitle, song.friendlyArtistName ?: song.albumArtist)
             setTextViewText(R.id.subtitle2, song.album)
 
             val artworkSize = 80.dp

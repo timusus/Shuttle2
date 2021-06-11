@@ -45,12 +45,12 @@ data class Song(
             }
         }
 
-    val artistGroupKey: ArtistGroupKey = ArtistGroupKey(
+    val albumArtistGroupKey: AlbumArtistGroupKey = AlbumArtistGroupKey(
         albumArtist?.lowercase(Locale.getDefault())?.removeArticles()
             ?: artists.joinToString(", ") { it.lowercase(Locale.getDefault()).removeArticles() }.ifEmpty { null }
     )
 
-    val albumGroupKey = AlbumGroupKey(album?.lowercase(Locale.getDefault())?.removeArticles(), artistGroupKey)
+    val albumGroupKey = AlbumGroupKey(album?.lowercase(Locale.getDefault())?.removeArticles(), albumArtistGroupKey)
 
     enum class Type {
         Audio, Audiobook, Podcast
@@ -68,8 +68,4 @@ data class Song(
     } else {
         null
     }
-
-    val friendlyArtistOrAlbumArtistName: String? = friendlyArtistName ?: albumArtist
-
-    val friendlyAlbumArtistOrArtistName: String? = albumArtist ?: friendlyArtistName
 }

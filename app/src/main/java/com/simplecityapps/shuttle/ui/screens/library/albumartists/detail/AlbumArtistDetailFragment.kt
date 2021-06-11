@@ -176,7 +176,7 @@ class AlbumArtistDetailFragment :
         }
 
         dummyImage = view.findViewById(R.id.dummyImage)
-        dummyImage.transitionName = "album_artist_${albumArtist.friendlyNameOrArtistName}"
+        dummyImage.transitionName = "album_artist_${albumArtist.name ?: albumArtist.friendlyArtistName}"
 
         imageLoader.loadArtwork(
             dummyImage,
@@ -273,7 +273,7 @@ class AlbumArtistDetailFragment :
     }
 
     override fun setAlbumArtist(albumArtist: AlbumArtist) {
-        toolbar.title = albumArtist.friendlyNameOrArtistName
+        toolbar.title = albumArtist.name ?: albumArtist.friendlyArtistName
         val albumQuantity = Phrase.fromPlural(resources, R.plurals.albumsPlural, albumArtist.albumCount)
             .put("count", albumArtist.albumCount)
             .format()

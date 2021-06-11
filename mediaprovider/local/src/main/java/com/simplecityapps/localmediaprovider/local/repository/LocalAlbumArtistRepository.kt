@@ -15,7 +15,7 @@ class LocalAlbumArtistRepository(val scope: CoroutineScope, private val songData
             .getAll()
             .map { songs ->
                 songs
-                    .groupBy { song -> song.artistGroupKey }
+                    .groupBy { song -> song.albumArtistGroupKey }
                     .map { (key, songs) ->
                         AlbumArtist(
                             name = songs.firstOrNull { it.albumArtist != null }?.albumArtist,

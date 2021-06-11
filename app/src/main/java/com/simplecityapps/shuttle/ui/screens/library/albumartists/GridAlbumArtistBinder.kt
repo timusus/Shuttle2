@@ -54,7 +54,7 @@ class GridAlbumArtistBinder(
         override fun bind(viewBinder: AlbumArtistBinder, isPartial: Boolean) {
             super.bind(viewBinder, isPartial)
 
-            title.text = viewBinder.albumArtist.friendlyNameOrArtistName ?: itemView.resources.getString(R.string.unknown)
+            title.text = viewBinder.albumArtist.name ?: viewBinder.albumArtist.friendlyArtistName ?: itemView.resources.getString(R.string.unknown)
 
             viewBinder as GridAlbumArtistBinder
 
@@ -79,7 +79,7 @@ class GridAlbumArtistBinder(
                 subtitle.setTextColor(colorSet.primaryTextColor)
             }
 
-            imageView.transitionName = "album_artist_${viewBinder.albumArtist.friendlyNameOrArtistName}"
+            imageView.transitionName = "album_artist_${viewBinder.albumArtist.name ?: viewBinder.albumArtist.friendlyArtistName}"
 
             checkImageView.isVisible = viewBinder.selected
         }

@@ -108,7 +108,7 @@ open class PlaylistSongBinder(
                 .from(" • ")
                 .joinSafely(
                     listOf(
-                        viewBinder.playlistSong.song.friendlyArtistOrAlbumArtistName,
+                        viewBinder.playlistSong.song.friendlyArtistName ?: viewBinder.playlistSong.song.albumArtist,
                         viewBinder.playlistSong.song.album,
                         viewBinder.playlistSong.song.year
                     )

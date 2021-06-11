@@ -9,7 +9,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 import timber.log.Timber
-import java.util.*
 import javax.inject.Inject
 
 class MediaIdHelper @Inject constructor(
@@ -56,8 +55,8 @@ class MediaIdHelper @Inject constructor(
                 is MediaIdWrapper.Directory.Albums.Artist -> {
                     albumRepository.getAlbums(
                         AlbumQuery.ArtistGroupKey(
-                            ArtistGroupKey(
-                                mediaIdWrapper.artistName.toLowerCase(Locale.getDefault()).removeArticles()
+                            AlbumArtistGroupKey(
+                                mediaIdWrapper.albumArtistGroupKey
                             )
                         )
                     ).firstOrNull().orEmpty()
@@ -73,8 +72,8 @@ class MediaIdHelper @Inject constructor(
                                 listOf(
                                     SongQuery.AlbumGroupKey(
                                         key = AlbumGroupKey(
-                                            key = mediaIdWrapper.albumName.toLowerCase(Locale.getDefault()).removeArticles(),
-                                            artistGroupKey = ArtistGroupKey(mediaIdWrapper.albumArtistName.toLowerCase(Locale.getDefault()).removeArticles())
+                                            key = mediaIdWrapper.albumGroupKey,
+                                            albumArtistGroupKey = AlbumArtistGroupKey(mediaIdWrapper.albumArtistGroupKey)
                                         )
                                     )
                                 )
@@ -100,8 +99,8 @@ class MediaIdHelper @Inject constructor(
     private fun AlbumArtist.toMediaItem(parentMediaId: String): MediaBrowserCompat.MediaItem {
         return MediaBrowserCompat.MediaItem(
             MediaDescriptionCompat.Builder()
-                .setTitle(name)
-                .setMediaId("${parentMediaId}artist/$name/albums/")
+                .setTitle(name ?: friendlyArtistName)
+                .setMediaId("${parentMediaId}artist/${groupKey.key}/albums/")
                 .build(),
             MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
         )
@@ -121,7 +120,7 @@ class MediaIdHelper @Inject constructor(
         return MediaBrowserCompat.MediaItem(
             MediaDescriptionCompat.Builder()
                 .setTitle(name)
-                .setMediaId("${parentMediaId}artist/$albumArtist/album/$name/songs/")
+                .setMediaId("${parentMediaId}artist/${groupKey?.albumArtistGroupKey?.key}/album/${groupKey?.key}/songs/")
                 .build(),
             MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
         )
@@ -147,13 +146,13 @@ class MediaIdHelper @Inject constructor(
 
             sealed class Albums : Directory() {
                 object All : Albums()
-                class Artist(val artistName: String) : Albums()
+                class Artist(val albumArtistGroupKey: String) : Albums()
             }
 
             object Playlists : Directory()
 
             sealed class Songs : Directory() {
-                class Album(val albumName: String, val albumArtistName: String) : Songs()
+                class Album(val albumGroupKey: String, val albumArtistGroupKey: String) : Songs()
                 class Playlist(val playlistId: Long) : Songs()
             }
         }
@@ -185,7 +184,10 @@ class MediaIdHelper @Inject constructor(
             "songs" -> {
                 when {
                     pathSegments.contains("album") -> {
-                        MediaIdWrapper.Directory.Songs.Album(albumName = pathSegments.getNextSegment("album")!!, albumArtistName = pathSegments.getNextSegment("artist")!!)
+                        MediaIdWrapper.Directory.Songs.Album(
+                            albumGroupKey = pathSegments.getNextSegment("album")!!,
+                            albumArtistGroupKey = pathSegments.getNextSegment("artist")!!
+                        )
                     }
                     pathSegments.contains("playlist") -> MediaIdWrapper.Directory.Songs.Playlist(pathSegments.getNextSegment("playlist")!!.toLong())
                     else -> throw IllegalStateException()
@@ -225,8 +227,8 @@ class MediaIdHelper @Inject constructor(
                                         listOf(
                                             SongQuery.AlbumGroupKey(
                                                 AlbumGroupKey(
-                                                    key = mediaIdWrapper.directory.albumName.toLowerCase(Locale.getDefault()).removeArticles(),
-                                                    artistGroupKey = ArtistGroupKey(mediaIdWrapper.directory.albumArtistName.toLowerCase(Locale.getDefault()).removeArticles())
+                                                    key = mediaIdWrapper.directory.albumGroupKey,
+                                                    albumArtistGroupKey = AlbumArtistGroupKey(mediaIdWrapper.directory.albumArtistGroupKey)
                                                 )
                                             )
                                         )
@@ -260,4 +262,4 @@ class MediaIdHelper @Inject constructor(
     }
 }
 
-class PlayQueue(val songs: List<Song>, val playbackPosition: Int)
+class PlayQueue(val songs: List<Song>, val position: Int)
