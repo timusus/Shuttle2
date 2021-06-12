@@ -3,7 +3,7 @@
 
     <string name="artists">Artists</string>
     <plurals name="artistsPlural">
-        <item quantity="one"><xliff:g example="Tool" id="count">%d</xliff:g> artist</item>
+        <item quantity="one"><xliff:g example="Tool" id="count">{count}</xliff:g> artist</item>
         <item quantity="other"><xliff:g example="Tool" id="count">{count}</xliff:g> artists</item>
     </plurals>
 
@@ -30,5 +30,8 @@
 
     <string name="library_scan_in_progress">Scanning your library</string>
 
-    <string name="multi_select_items_selected"><xliff:g example="3" id="count">{count}</xliff:g> selected</string>
+    <plurals name="multi_select_items_selected">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> selected</item>
+        <item quantity="other"><xliff:g example="3" id="count">{count}</xliff:g> selected</item>
+    </plurals>
 </resources>

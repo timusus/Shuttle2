@@ -2,7 +2,7 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="artists">Artistes</string>
     <plurals name="artistsPlural">
-        <item quantity="one"><xliff:g example="Tool" id="count">%d</xliff:g> artiste</item>
+        <item quantity="one"><xliff:g example="Tool" id="count">{count}</xliff:g> artiste</item>
         <item quantity="other"><xliff:g example="Tool" id="count">{count}</xliff:g> artistes</item>
     </plurals>
     <string name="albums">Albums</string>

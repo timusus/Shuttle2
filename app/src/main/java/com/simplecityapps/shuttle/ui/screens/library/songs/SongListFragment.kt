@@ -396,7 +396,9 @@ class SongListFragment :
     private val contextualToolbarCallback = object : ContextualToolbarHelper.Callback<Song> {
 
         override fun onCountChanged(count: Int) {
-            contextualToolbarHelper.contextualToolbar?.title = Phrase.from(requireContext(), R.string.multi_select_items_selected).put("count", count).format()
+            contextualToolbarHelper.contextualToolbar?.title = Phrase.fromPlural(requireContext(), R.plurals.multi_select_items_selected, count)
+                .put("count", count)
+                .format()
             contextualToolbarHelper.contextualToolbar?.menu?.let { menu ->
                 TagEditorMenuSanitiser.sanitise(menu, contextualToolbarHelper.selectedItems.map { it.mediaProvider }.distinct())
             }
