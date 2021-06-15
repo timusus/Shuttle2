@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Indicates the current queue position (e.g. 5 of 12). Could use (5/12) instead. -->
     <string name="queue_position"><xliff:g example="3" id="position">{position}</xliff:g>
      из 
     <xliff:g example="12" id="total">{total}</xliff:g></string>

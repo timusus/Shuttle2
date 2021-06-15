@@ -1,13 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Replay Gain is a particular concept which involves adjusting the volumes of tracks on an album, according to an algorithm -->
     <string name="dsp_replay_gain_title">Replay Gain</string>
+    <!-- Track Gain relates to Replay Gain - a concept which involves adjusting the volumes of tracks on an album, according to an algorithm -->
     <string name="dsp_replay_gain_track">Gain de piste</string>
+    <!-- Album Gain relates to Replay Gain - a concept which involves adjusting the volumes of tracks on an album, according to an algorithm -->
     <string name="dsp_replay_gain_album">Gain d\'album</string>
+    <!-- An option to disable the 'Replay Gain' feature -->
     <string name="dsp_replay_gain_off">Désactivé</string>
+    <!-- Frequency Response - a graph showing volume vs frequency-->
     <string name="dsp_dialog_frequency_response_title">Réponse en fréquence</string>
+    <!-- The Replay Gain 'mode' (Album Gain or Track Gain)-->
     <string name="dsp_replay_gain_hint_mode">Mode</string>
+    <!-- Pre-amp, or preamplification - the 'gain' in volume, applied to the sound output, before the Equalizer is used-->
     <string name="dsp_preamp">Préampli</string>
+    <!-- Title of the 'Equalizer'-->
     <string name="dsp_equalizer_title">Égaliseur</string>
+    <!-- Title of the Equalizer Preset selector-->
     <string name="dsp_equalizer_hint_preset">Préréglage</string>
+    <!-- Frequency Response Curve - a graph showing volume vs frequency-->
     <string name="dsp_frequency_response_curve_title">Courbe de réponse en fréquence</string>
 </resources>

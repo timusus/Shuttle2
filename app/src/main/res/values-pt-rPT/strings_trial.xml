@@ -1,18 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- The title of the menu button. When clicked, will show the 'free trial' dialog, with an option for the user to upgrade-->
     <string name="menu_trial">Teste</string>
+    <!-- The heading of the 'free trial' dialog -->
     <string name="trial_heading_trial">Teste grátis</string>
     <!-- Message shown when user is starting a trial. Note: This is meant to be friendly/fun! It doesn't have to say 'until you lose your mind' -->
     <string name="trial_description_trial">Após o teste, a velocidade de reprodução aumentará um pouco todos os dias, até perder a cabeça.</string>
+    <!-- Shows how many days are left in the free trial-->
     <plurals name="trial_days_remaining">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
        dia restante</item>
         <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
        dias restantes</item>
     </plurals>
+    <!-- Shown when the user's trial has expired -->
     <string name="trial_heading_expired">Teste expirado</string>
     <!-- Message shown when trial has expired. Note: This is meant to be friendly/fun! It doesn't have to say 'until you lose your mind' -->
     <string name="trial_description_expired">A velocidade de reprodução aumentará um pouco todos os dias, até perder a cabeça.</string>
+    <!-- When a trial ends, the playback speed is increased by a small amount each day. This text shows the current playback speed -->
     <string name="trial_playback_speed">Velocidade de reprodução: 
     <xliff:g example="1.4x" id="speed">{speed}</xliff:g></string>
     <!-- Button to upgrade from the trial version to a paid version -->

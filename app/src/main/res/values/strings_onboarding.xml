@@ -17,7 +17,6 @@
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> audio file</item>
         <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> audio files</item>
     </plurals>
-
     <!-- Dialog title shown to user to indicate that S2 requires permission to access their storage -->
     <string name="onboarding_permission_dialog_title">Storage Permission Required</string>
     <!-- Dialog message shown to explain that S2 requires permission to access their storage-->
@@ -26,22 +25,18 @@
     <string name="onboarding_permission_button_grant">Grant Permission</string>
     <!-- Shown after user initially denies access to storage -->
     <string name="onboarding_permission_help_text">To find your music, S2 needs permission to read your media storage</string>
-
     <!-- Title of S2's Media Scanner, the thing that scans files on the device to read audio files/tags -->
     <string name="onboarding_media_scanner_title">Media scanner</string>
     <!-- Shown when the media scanner is scanning -->
     <string name="onboarding_media_scanner_scanning">Scanning…</string>
     <!-- Button to initiate a media scanner scan-->
     <string name="onboarding_media_scan">Scan</string>
-
     <!-- Button to go back to the previous page, when onboarding -->
     <string name="onboarding_button_back">Back</string>
     <!-- Button to go to the next page, when onboarding -->
     <string name="onboarding_button_next">Next</string>
-
     <!-- Button to trigger the MediaScanner to perform a rescan of audio files on the device-->
     <string name="onboarding_media_scanner_rescan">Rescan</string>
     <!-- Shown when the S2 Media Provider is scanning song tags (metadata)-->
     <string name="onboarding_scanner_reading_song_tags">Reading song tags…</string>
-
 </resources>

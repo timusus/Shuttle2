@@ -1,15 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- The title shown for list of recently played albums-->
     <string name="home_title_recent">最近</string>
+    <!-- Description for list of recently played albums -->
     <string name="home_description_recently_played">最近再生されたアルバム</string>
-    <string name="home_title_most_played">一番再生されたもの</string>
+    <!-- Title for list of most played albums -->
+    <string name="home_title_most_played">一番再生された曲</string>
+    <!-- Description for list of most played albums -->=
+    
     <string name="home_description_most_played">お気に入りのアルバム</string>
+    <!-- Title for list of albums released this year -->
     <string name="home_title_this_year">今年</string>
+    <!-- Description for list of albums released this year -->
     <string name="home_description_this_year">{year}にリリースされたアルバム</string>
-    <string name="home_title_something_different">何かが違います</string>
+    <!-- Title for list of artists which haven't been played for a while-->
+    <string name="home_title_something_different">少し違う曲もどうぞ</string>
+    <!-- Description for list of artists which haven't been played for a while-->
     <string name="home_description_something_different">しばらく聞いていないアーティスト</string>
+    <!-- Button to show list of recently played songs (history)-->
     <string name="btn_history">履歴</string>
-    <string name="btn_recently_added">最近追加</string>
+    <!-- Button to show list of songs recently added to the library-->
+    <string name="btn_recently_added">最近の追加</string>
+    <!-- Button to show list of favourite songs-->
     <string name="btn_favorite">お気に入り</string>
+    <!-- Button to shuffle all songs -->
     <string name="btn_shuffle">シャッフル</string>
 </resources>

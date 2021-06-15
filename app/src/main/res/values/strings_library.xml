@@ -1,16 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-
     <!-- Title for the list of artists -->
     <string name="artists">Artists</string>
-
     <!-- Title for the list of albums -->
     <string name="albums">Albums</string>
     <plurals name="albumsPlural">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> album</item>
         <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g> albums</item>
     </plurals>
-
     <!-- Title for the list of songs -->
     <string name="songs">Songs</string>
     <!-- The number of songs for an album/playlist/genre -->
@@ -18,16 +15,12 @@
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> song</item>
         <item quantity="other"><xliff:g example="12" id="count">{count}</xliff:g> songs</item>
     </plurals>
-
     <!-- Title for the list of genres -->
     <string name="genres">Genres</string>
-
     <!-- Title for the list of playlists -->
     <string name="library_playlists">Playlists</string>
-
     <!-- Shown when the app is scanning for songs in the library -->
     <string name="library_scan_in_progress">Scanning your library</string>
-
     <!-- Shown to indicate the number of tracks/albums/artists which have been selected, in multi-selection mode-->
     <plurals name="multi_select_items_selected">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> selected</item>

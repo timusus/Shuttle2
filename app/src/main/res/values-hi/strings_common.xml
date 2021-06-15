@@ -1,39 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- 'Loading' text. Shown on various screens as their content is loading-->
     <string name="loading">लोड हो रहा है…</string>
-    <!-- Dialogs-->
-    <string name="dialog_button_close">बंद करें</string>
-    <string name="dialog_button_done">किया हुआ</string>
-    <string name="dialog_button_retry">पुन: प्रयास करें</string>
-    <string name="dialog_button_save">सहेजें</string>
-    <!-- Validation -->
+    <!-- Shown when text is required in a text field -->
     <string name="validation_field_required">अपेक्षित</string>
-    <!-- Errors -->
+    <!-- Shown when an unexpected error occurs -->
     <string name="error_unexpected">एक अप्रत्याशित त्रुटि हुई</string>
+    <!-- Shown when an unknown error occurs -->
     <string name="error_unknown">एक अज्ञात ग़लती हुई</string>
-    <!-- Queue -->
+    <!-- Shown when items (an album, artist or song) are added to the queue -->
     <string name="queue_item_added"><xliff:g example="Lateralus" id="item_name">{item_name}</xliff:g>
      कतार में जोड़ा गया</string>
+    <!-- Shown when songs are added to the queue -->
     <plurals name="queue_songs_added">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
        गीत कतार में जोड़ा गया</item>
         <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
        गाने कतार में जोड़े गए</item>
     </plurals>
+    <!-- Shown when albums are added to the queue -->
     <plurals name="queue_albums_added">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
        एल्बम कतार में जोड़ा गया</item>
         <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
        एल्बम कतार में जोड़े गए</item>
     </plurals>
+    <!-- Shown when artists are added to the queue -->
     <plurals name="queue_artists_added">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
        कलाकार कतार में जोड़ा गया</item>
         <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
        कलाकारों ने कतार में जोड़ा</item>
     </plurals>
-    <!-- Playlists -->
+    <!-- Shown when current playback queue is added to a playlist -->
     <string name="playlist_queue_added">कतार में जोड़ा गया <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></string>
+    <!-- Shown when songs are added to a playlist -->
     <plurals name="playlist_songs_added">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
        गीत को 
@@ -44,6 +45,7 @@
       <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g>
        में जोड़े गए</item>
     </plurals>
+    <!-- Shown when albums are added to a playlist -->
     <plurals name="playlist_albums_added">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
        एल्बम को 
@@ -54,6 +56,7 @@
       <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g>
        में जोड़े गए</item>
     </plurals>
+    <!-- Shown when artists are added to a playlist -->
     <plurals name="playlist_artists_added">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
        कलाकार को 
@@ -63,6 +66,7 @@
        कलाकारों को जोड़ा गया 
       <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
     </plurals>
+    <!-- Shown when genres are added to a playlist -->
     <plurals name="playlist_genres_added">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
        शैली 
@@ -73,25 +77,39 @@
       <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g>
        में जोड़ी गई</item>
     </plurals>
+    <!-- Shown when a song fails to be deleted -->
     <string name="delete_song_failed">गीत हटाया नहीं जा सका</string>
-    <string name="year_unknown">वर्ष अज्ञात है</string>
+    <!-- The disc number for this album-->
     <string name="disc_number">डिस्क 
     <xliff:g example="1" id="disc_number">{disc_number}</xliff:g></string>
-    <!-- Empty -->
+    <!-- Shown when the songs list finishes loading, and there are no songs-->
     <string name="song_list_empty">कोई गीत नहीं</string>
+    <!-- Shown when the albums list finishes loading, and there are no songs-->
     <string name="album_list_empty">कोई एल्बम नहीं</string>
+    <!-- Shown when the artists list finishes loading, and there are no songs-->
     <string name="artist_list_empty">कोई कलाकार नहीं</string>
+    <!-- Shown when the genres list finishes loading, and there are no songs-->
     <string name="genre_list_empty">कोई विधा नहीं</string>
+    <!-- Shown when the playlists list finishes loading, and there are no songs-->
     <string name="playlist_list_empty">कोई प्लेलिस्ट नहीं</string>
+    <!-- Shown when the playback queue is empty -->
     <string name="queue_empty">कतार खाली</string>
+    <!-- Shown when a playlist is empty -->
     <string name="playlist_empty">प्लेलिस्ट खाली</string>
+    <!-- Button to toggle the 'repeat' mode-->
     <string name="button_repeat">दोहराना</string>
+    <!-- Button to indicate 'seek forward' (skipping forward by, say, 10 seconds)-->
     <string name="button_seek_forward">आगे की तलाश करें</string>
+    <!-- Button to skip to the next track -->
     <string name="button_skip_next">अगला छोड़ें</string>
+    <!-- Button to play/pause the current song-->
     <string name="button_toggle_playback">प्लेबैक को टॉगल करें</string>
+    <!-- Button to indicate 'seek backward' (skipping backwards by, say, 10 seconds)-->
     <string name="button_seek_backward">पिछड़ों की तलाश करो</string>
+    <!-- Button to skip to the previous track-->
     <string name="button_skip_previous">पिछला छोड़ें</string>
+    <!-- Button to shuffle songs-->
     <string name="button_content_description_shuffle">मिश्रण</string>
+    <!-- Button to shuffle songs using 'album shuffle' mode (shuffles albums, but plays songs in track order)-->
     <string name="button_album_shuffle">एल्बम शफ़ल</string>
-    <string name="unknown">अनजान</string>
 </resources>

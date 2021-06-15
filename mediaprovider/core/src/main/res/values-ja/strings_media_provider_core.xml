@@ -1,32 +1,78 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- The name of the S2 Media Provider - the media provider which scans the device for songs and reads their tags (metadata)-->
     <string name="media_provider_title_s2">S2メディアプロバイダー</string>
-    <string name="media_provider_title_media_store">Androidメディアストア</string>
-    <string name="media_provider_title_emby">Embyメディアサーバー</string>
-    <string name="media_provider_title_jellyfin">Jellyfinメディアサーバー</string>
-    <string name="media_provider_title_plex">Plex Media Server</string>
+    <!-- The description of the S2 Media Provider - scans user selected folders and files for metadata-->
     <string name="media_provider_description_s2">選択したフォルダーとファイルをスキャン (推奨)</string>
+    <!-- The name of the 'Android Media Store' media provider. The 'Media Store' is an Android concept. Not sure if it would be translated.-->
+    <string name="media_provider_title_media_store">Androidメディアストア</string>
+    <!-- The description of the Android MediaStore media provider. The MediaStore is an Android concept. A database on the device which keeps track of song info-->
     <string name="media_provider_description_media_store">Android管理のデータベース</string>
-    <string name="media_provider_description_jellyfin">パーソナルメディアサーバー</string>
+    <!-- The name of the 'Emby' media provider. Emby is a personal media server - probably doesn't need to be translated-->
+    <string name="media_provider_title_emby">Embyメディアサーバー</string>
+    <!-- The description of the 'Emby' media provider. Emby is a personal media server - probably doesn't need to be translated-->
     <string name="media_provider_description_emby">パーソナルメディアサーバー</string>
+    <!-- The name of the 'Jellyfin' media provider. Jellyfin is a personal media server - probably doesn't need to be translated-->
+    <string name="media_provider_title_jellyfin">Jellyfinメディアサーバー</string>
+    <!-- The description of the 'Jellyfin' media provider. Jellyfin is a personal media server - probably doesn't need to be translated-->
+    <string name="media_provider_description_jellyfin">パーソナルメディアサーバー</string>
+    <!-- The name of the 'Plex' media provider. Plex is a personal media server - probably doesn't need to be translated-->
+    <string name="media_provider_title_plex">Plexメディアサーバー</string>
+    <!-- The description of the 'Plex' media provider. Plex is a personal media server - probably doesn't need to be translated-->
     <string name="media_provider_description_plex">パーソナルメディアサーバー</string>
-    <string name="media_provider_scan_progress"><xliff:g example="5" id="progress">{progress}</xliff:g> / <xliff:g example="25" id="total">{total}</xliff:g> 曲をスキャン済</string>
-    <string name="media_provider_scan_success_subtitle"><xliff:g example="5" id="inserts">{inserts}</xliff:g> 挿入、<xliff:g example="15" id="updates">{updates}</xliff:g> 更新、<xliff:g example="25" id="deletes">{deletes}</xliff:g> 削除</string>
+    <!-- Shown when a media provider is being scanned. Indicates the current progress of that scan -->
+    <string name="media_provider_scan_progress">曲のスキャン状況:
+<xliff:g example="5" id="progress">{progress}</xliff:g>
+    /
+    <xliff:g example="25" id="total">{total}</xliff:g></string>
+    <!-- Shown when a media provider scan has completed -->
+    <string name="media_provider_scan_success_subtitle"><xliff:g example="5" id="inserts">{inserts}</xliff:g>
+    曲挿入、
+    <xliff:g example="15" id="updates">{updates}</xliff:g>
+    曲更新、
+    <xliff:g example="25" id="deletes">{deletes}</xliff:g>
+    曲削除</string>
+    <!-- Shown when a media provider scan has failed -->
     <string name="media_provider_scan_failure_title">スキャンに失敗しました</string>
+    <!-- Dialog button shown to authenticate with Jellyfin/Emby/Plex (submits the user's credentials for authentication)-->
     <string name="media_provider_button_authenticate">認証する</string>
+    <!-- Shown when Jellyfin/Emby/Plex is authenticating the user's credentials-->
     <string name="media_provider_authenticating">認証中…</string>
-    <string name="media_provider_authentication_success">認証成功</string>
+    <!-- Shown when Jellyfin/Emby/Plex has successfully authenticated the user's credentials-->
+    <string name="media_provider_authentication_success">認証に成功しました</string>
+    <!-- The longer title of Plex Media Server. 'Plex' probably doesn't need translation -->
+    <string name="media_provider_title_long_plex">Plexメディアサーバー</string>
+    <!-- The longer title of Jellyfin Media Server. 'Jellyfin' probably doesn't need translation -->
+    <string name="media_provider_title_long_jellyfin">Jellyfinメディアサーバー</string>
+    <!-- The longer title of Emby Media Server. 'Emby' probably doesn't need translation -->
+    <string name="media_provider_title_long_emby">Embyメディアサーバー</string>
+    <!-- Shown when user is selecting which media provider to use. Groups media providers into local (device based) and remote (network based) media providers. -->
     <string name="media_provider_type_local">ローカル</string>
+    <!-- Shown when user is selecting which media provider to use. Groups media providers into local (device based) and remote (network based) media providers. -->
     <string name="media_provider_type_remote">リモート</string>
+    <!-- Button to add a media provider. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
     <string name="media_provider_add">メディアプロバイダーを追加</string>
-    <string name="media_providers_add_onboarding">メディアプロバイダーを追加します。これは後で変更できます</string>
-    <string name="media_provider_toolbar_title_onboarding">あなたの音楽を見つける</string>
+    <!-- Button to add a media provider, shown during onboarding. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
+    <string name="media_providers_add_onboarding">メディアプロバイダーを追加します。これは後でも変更できます</string>
+    <!-- Shown during onboarding, as the user is about to select their media providers, to discover/find their music-->
+    <string name="media_provider_toolbar_title_onboarding">音楽ファイルを読み込めるようにしましょう</string>
+    <!-- Title of the screen where users can select their media providers. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
     <string name="media_provider_toolbar_title">メディアプロバイダー</string>
-    <string name="media_provider_dialog_remove_title"><xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g> を削除</string>
-    <string name="media_provider_dialog_remove_subtitle">これにより、<xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g> メディアプロバイダーに関連付けられているすべての曲、プレイリスト、再生回数が削除されます</string>
+    <!-- Option to remove a media provider from the list of media providers to be scanned. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
+    <string name="media_provider_dialog_remove_title"><xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g>
+    を削除</string>
+    <!-- Warning when user attempts to remove a media provider, that their media associated with that provider will be deleted. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc.-->
+    <string name="media_provider_dialog_remove_subtitle">これにより、
+    <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g>
+    メディアプロバイダーに関連付けられているすべての曲、プレイリスト、再生回数が削除されます</string>
+    <!-- Button to remove a media provider from the list of media providers to be scanned. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
     <string name="media_provider_dialog_button_remove">削除</string>
+    <!-- The address (url) of the user's Emby/Jellyfin/Plex media provider. -->
     <string name="media_provider_config_hint_address">アドレス</string>
+    <!-- The username of the user's Emby/Jellyfin/Plex media provider. -->
     <string name="media_provider_config_hint_username">ユーザー名</string>
+    <!-- The password for the user's Emby/Jellyfin/Plex media provider. -->
     <string name="media_provider_config_hint_password">パスワード</string>
+    <!-- The option to remember the user's password for their Emby/Jellyfin/Plex media provider-->
     <string name="media_provider_config_switch_remember_password">パスワードを記憶</string>
 </resources>

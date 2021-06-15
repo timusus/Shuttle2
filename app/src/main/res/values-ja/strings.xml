@@ -1,10 +1,17 @@
 <?xml version="1.0"?>
 <resources>
+    <!-- App name. Don't translate-->
     <string name="app_name">S2</string>
-    <!-- Bottom Nav -->
+    <!-- App name. Translate only it seems more appropriate in your language. (Maybe just translate 'Music Player', and leave 'S2')-->
+    <string name="app_name_long">S2 Music Player</string>
+    <!-- Bottom Navigation menu item (home) -->
     <string name="title_home">ホーム</string>
+    <!-- Bottom Navigation menu item (library) - the music library/colelction -->
     <string name="title_library">ライブラリ</string>
+    <!-- Bottom Navigation menu item (search) - button to open the 'search' screen -->
     <string name="title_search">検索</string>
-    <string name="playback_up_next">次にスタート</string>
+    <!-- Shown in the queue, to indicate the queue of songs which will play after the current song-->
+    <string name="playback_up_next">リスト表示</string>
+    <!-- Shown on the changelog screen, notes from the developer. Since the changelog is not translated, this could be left in English-->
     <string name="dev_notes">開発ノート:</string>
 </resources>

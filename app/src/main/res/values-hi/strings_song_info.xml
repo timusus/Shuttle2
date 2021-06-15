@@ -1,20 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Shown in the song info dialog. The song 'title'-->
     <string name="song_info_track_title">शीर्षक</string>
+    <!-- Shown in the song info dialog. The song 'track number'-->
     <string name="song_info_track_number">ट्रैक #</string>
+    <!-- Shown in the song info dialog. The song 'duration'-->
     <string name="song_info_duration">समयांतराल</string>
+    <!-- Shown in the song info dialog. When a field can't be read-->
     <string name="song_info_unknown">अनजान</string>
+    <!-- Shown in the song info dialog. The song 'album artist'-->
     <string name="song_info_album_artist">चित्राधार कलाकार</string>
+    <!-- Shown in the song info dialog. The song 'artists'-->
     <string name="song_info_artists">कलाकार</string>
+    <!-- Shown in the song info dialog. The song 'album'-->
     <string name="song_info_album">एल्बम</string>
+    <!-- Shown in the song info dialog. The song 'year'-->
     <string name="song_info_year">साल</string>
+    <!-- Shown in the song info dialog. The song 'disc'-->
     <string name="song_info_disc">डिस्क</string>
+    <!-- Shown in the song info dialog. The song 'play count'-->
     <string name="song_info_play_count">प्ले काउंट</string>
+    <!-- Shown in the song info dialog. The song 'genres'-->
     <string name="song_info_genres">शैलियां</string>
+    <!-- Shown in the song info dialog. The song 'path'-->
     <string name="song_info_path">पथ</string>
+    <!-- Shown in the song info dialog. The song 'MIME type'-->
     <string name="song_info_mime_type">माइम प्रकार</string>
+    <!-- Shown in the song info dialog. The song 'file size'-->
     <string name="song_info_size">आकार</string>
+    <!-- Shown in the song info dialog. The song 'Lyrics'-->
     <string name="song_info_lyrics">संगीत</string>
+    <!-- The song info dialog heading -->
     <string name="song_info_dialog_title">गाने की जानकारी</string>
+    <!-- Button to close the song info dialog -->
     <string name="song_info_dialog_close_button_title">बंद करें</string>
 </resources>

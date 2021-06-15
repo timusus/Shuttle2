@@ -1,16 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- The title of the menu button. When clicked, will show the 'free trial' dialog, with an option for the user to upgrade-->
     <string name="menu_trial">Essai</string>
+    <!-- The heading of the 'free trial' dialog -->
     <string name="trial_heading_trial">Essai gratuit</string>
     <!-- Message shown when user is starting a trial. Note: This is meant to be friendly/fun! It doesn't have to say 'until you lose your mind' -->
     <string name="trial_description_trial">Après l\'essai, la vitesse de lecture augmentera légèrement chaque jour, jusqu\'à ce que vous perdiez la tête.</string>
+    <!-- Shows how many days are left in the free trial-->
     <plurals name="trial_days_remaining">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> jour restant</item>
         <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> jours restants</item>
     </plurals>
+    <!-- Shown when the user's trial has expired -->
     <string name="trial_heading_expired">Essai expiré</string>
     <!-- Message shown when trial has expired. Note: This is meant to be friendly/fun! It doesn't have to say 'until you lose your mind' -->
     <string name="trial_description_expired">La vitesse de lecture augmentera légèrement chaque jour, jusqu\'à ce que vous perdiez la tête.</string>
+    <!-- When a trial ends, the playback speed is increased by a small amount each day. This text shows the current playback speed -->
     <string name="trial_playback_speed">Vitesse de lecture: <xliff:g example="1.4x" id="speed">{speed}</xliff:g></string>
     <!-- Button to upgrade from the trial version to a paid version -->
     <string name="trial_button_upgrade">Améliorer</string>

@@ -1,11 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Dialog button 'close' -->
+    <string name="dialog_button_close">Chiudi</string>
+    <!-- Dialog button 'done' -->
+    <string name="dialog_button_done">Fatto</string>
+    <!-- Dialog button 'retry' -->
+    <string name="dialog_button_retry">Riprova</string>
+    <!-- Dialog button 'save' (save whatever changes were made in the dialog) -->
+    <string name="dialog_button_save">Salva</string>
+    <!-- Dialog button 'cancel'-->
     <string name="dialog_button_cancel">Annulla</string>
+    <!-- Shown in the 'exclude' dialog (move the selected songs to the list of 'excluded' songs) (another word for 'blacklist') -->
     <string name="dialog_exclude_title">Escludi</string>
+    <!-- Shown when songs are about to be added to the list of songs to be excluded (blacklisted) -->
     <string name="dialog_exclude_message">\"<xliff:g example="Lateralus" id="item">{item}</xliff:g>\" verrà nascosto dalla tua raccolta.\n\nPuoi visualizzare i brani esclusi nelle impostazioni.</string>
+    <!-- Button to add the selected songs to the list of 'excluded' (blacklisted) songs  -->
     <string name="dialog_exclude_button">Escludi</string>
-    <string name="dialog_exclude_list_empty">L\'elenco di esclusione è vuoto</string>
+    <!-- Shown when viewing the list of 'excluded' (blacklisted) songs, and it's empty-->
+    <string name="dialog_exclude_list_empty">La lista delle esclusioni è vuota</string>
+    <!-- Dialog title shown when attempting to delete a song -->
     <string name="dialog_delete_title">Elimina</string>
+    <!-- Dialog warning message to indicate the song will be permanently deleted -->
     <string name="dialog_delete_message">\"<xliff:g example="Lateralus" id="item">{item}</xliff:g>\" verrà eliminato definitivamente</string>
+    <!-- Dialog button to confirm deletion of the selected song(s)-->
     <string name="dialog_delete_button">Elimina</string>
 </resources>

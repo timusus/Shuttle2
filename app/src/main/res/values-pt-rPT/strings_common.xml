@@ -1,39 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- 'Loading' text. Shown on various screens as their content is loading-->
     <string name="loading">A carregar…</string>
-    <!-- Dialogs-->
-    <string name="dialog_button_close">Fechar</string>
-    <string name="dialog_button_done">Concluído</string>
-    <string name="dialog_button_retry">Tentar novamente</string>
-    <string name="dialog_button_save">Guardar</string>
-    <!-- Validation -->
+    <!-- Shown when text is required in a text field -->
     <string name="validation_field_required">Obrigatório</string>
-    <!-- Errors -->
+    <!-- Shown when an unexpected error occurs -->
     <string name="error_unexpected">Ocorreu um erro inesperado</string>
+    <!-- Shown when an unknown error occurs -->
     <string name="error_unknown">Ocorreu um erro desconhecido</string>
-    <!-- Queue -->
+    <!-- Shown when items (an album, artist or song) are added to the queue -->
     <string name="queue_item_added"><xliff:g example="Lateralus" id="item_name">{item_name}</xliff:g>
      adicionado à fila</string>
+    <!-- Shown when songs are added to the queue -->
     <plurals name="queue_songs_added">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
        música adicionada à fila</item>
         <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
        músicas adicionadas à fila</item>
     </plurals>
+    <!-- Shown when albums are added to the queue -->
     <plurals name="queue_albums_added">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
        álbum adicionado à fila</item>
         <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
        álbuns adicionados à fila</item>
     </plurals>
+    <!-- Shown when artists are added to the queue -->
     <plurals name="queue_artists_added">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
        artista adicionado à fila</item>
         <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
        artistas adicionados à fila</item>
     </plurals>
-    <!-- Playlists -->
+    <!-- Shown when current playback queue is added to a playlist -->
     <string name="playlist_queue_added">Fila adicionada a <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></string>
+    <!-- Shown when songs are added to a playlist -->
     <plurals name="playlist_songs_added">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
        música adicionada a 
@@ -42,6 +43,7 @@
        músicas adicionadas a 
       <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
     </plurals>
+    <!-- Shown when albums are added to a playlist -->
     <plurals name="playlist_albums_added">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
        álbum adicionado a 
@@ -50,6 +52,7 @@
        álbuns adicionados a 
       <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
     </plurals>
+    <!-- Shown when artists are added to a playlist -->
     <plurals name="playlist_artists_added">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
        artista adicionado a 
@@ -58,6 +61,7 @@
        artistas adicionados a 
       <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
     </plurals>
+    <!-- Shown when genres are added to a playlist -->
     <plurals name="playlist_genres_added">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
        género adicionado a 
@@ -66,25 +70,39 @@
        géneros adicionados a 
       <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
     </plurals>
+    <!-- Shown when a song fails to be deleted -->
     <string name="delete_song_failed">A música não pôde ser eliminada</string>
-    <string name="year_unknown">Ano desconhecido</string>
+    <!-- The disc number for this album-->
     <string name="disc_number">Disco 
     <xliff:g example="1" id="disc_number">{disc_number}</xliff:g></string>
-    <!-- Empty -->
+    <!-- Shown when the songs list finishes loading, and there are no songs-->
     <string name="song_list_empty">Sem músicas</string>
+    <!-- Shown when the albums list finishes loading, and there are no songs-->
     <string name="album_list_empty">Sem álbuns</string>
+    <!-- Shown when the artists list finishes loading, and there are no songs-->
     <string name="artist_list_empty">Sem artistas</string>
+    <!-- Shown when the genres list finishes loading, and there are no songs-->
     <string name="genre_list_empty">Sem géneros</string>
+    <!-- Shown when the playlists list finishes loading, and there are no songs-->
     <string name="playlist_list_empty">Sem playlists</string>
+    <!-- Shown when the playback queue is empty -->
     <string name="queue_empty">Fila vazia</string>
+    <!-- Shown when a playlist is empty -->
     <string name="playlist_empty">Playlist vazia</string>
+    <!-- Button to toggle the 'repeat' mode-->
     <string name="button_repeat">Repetir</string>
+    <!-- Button to indicate 'seek forward' (skipping forward by, say, 10 seconds)-->
     <string name="button_seek_forward">Procurar à frente</string>
+    <!-- Button to skip to the next track -->
     <string name="button_skip_next">Ignorar seguinte</string>
+    <!-- Button to play/pause the current song-->
     <string name="button_toggle_playback">Alternar reprodução</string>
+    <!-- Button to indicate 'seek backward' (skipping backwards by, say, 10 seconds)-->
     <string name="button_seek_backward">Procurar atrás</string>
+    <!-- Button to skip to the previous track-->
     <string name="button_skip_previous">Ignorar anterior</string>
+    <!-- Button to shuffle songs-->
     <string name="button_content_description_shuffle">Aleatório</string>
+    <!-- Button to shuffle songs using 'album shuffle' mode (shuffles albums, but plays songs in track order)-->
     <string name="button_album_shuffle">Álbum aleatório</string>
-    <string name="unknown">Desconhecido</string>
 </resources>

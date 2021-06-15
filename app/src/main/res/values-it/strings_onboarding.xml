@@ -1,27 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="onboarding_directories_dialog_add_title">Directory multimediali</string>
-    <string name="onboarding_directories_dialog_add_button">Aggiungi directory</string>
-    <string name="onboarding_directories_dialog_missing_title">Provider di documenti mancante</string>
-    <string name="onboarding_directories_dialog_missing_subtitle">Impossibile trovare un \'app \"Document Provider\" (file manager) sul dispositivo. Potrebbe essere necessario installarne uno o tornare a utilizzare il media scanner \"di base\".</string>
-    <string name="onboarding_directories_add_directories_help_text">Per cercare la musica, Shuttle richiede l\'accesso alle directory dei media.\n\nQuando premi \"aggiungi directory\", verrai indirizzato alla tua app predefinita \"provider di file\". Passa alla cartella o alle cartelle contenenti la tua musica. Puoi aggiungere più directory. \n\nNota: potrebbe essere necessario abilitare \"mostra memoria interna\" per visualizzare le cartelle della musica.</string>
-    <string name="onboarding_directories_scanning">Scansione ...</string>
+    <!-- Title of 'media directory selection' screen. User can choose to add directories to be scanned -->
+    <string name="onboarding_directories_dialog_add_title">Cartelle</string>
+    <!-- Button to allow the user to add a directory, when using the 'S2 Media Scanner' -->
+    <string name="onboarding_directories_dialog_add_button">Aggiungi cartella</string>
+    <!-- Error message title shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
+    <string name="onboarding_directories_dialog_missing_title">Sistema di gestione documenti assente</string>
+    <!-- Error message description shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
+    <string name="onboarding_directories_dialog_missing_subtitle">Impossibile trovare un\'app di gestione documenti (manager di file) sul dispositivo. Potrebbe essere necessario installarne una o tornare a utilizzare il media scanner di base.</string>
+    <!-- Explanation shown to user when they're about to choose which directories wil lbe scanned bv the S2 media scanner-->
+    <string name="onboarding_directories_add_directories_help_text">Per cercare la musica, S2 richiede l\'accesso alle cartelle multimediali.\n\nUna volta selezionato \"Aggiungi cartella\" verrai indirizzato sulla tua app predefinita di navigazione delle cartelle. Passa alla cartella o alle cartelle contenenti la tua musica. Puoi aggiungere più cartelle. \n\nNota: potrebbe essere necessario abilitare \"mostra memoria interna\".</string>
+    <!-- Shown when the app is scanning the user's directories for media -->
+    <string name="onboarding_directories_scanning">Scansione...</string>
+    <!-- Shown when the media scanner is scanning the user's directories for media-->
     <plurals name="onboarding_directories_scan_progress">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+        <item quantity="one"><xliff:g example="1" id="count">Un</xliff:g>
        file audio</item>
         <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
        file audio</item>
     </plurals>
-    <string name="onboarding_permission_dialog_title">Autorizzazione di archiviazione richiesta</string>
-    <string name="onboarding_permission_dialog_subtitle">Shuttle potrebbe non funzionare correttamente senza il permesso di accedere alla tua musica</string>
-    <string name="onboarding_permission_button_grant">Concedere l\'autorizzazione</string>
-    <string name="onboarding_permission_help_text">Per trovare la tua musica, Shuttle necessita dell\'autorizzazione per leggere il tuo archivio multimediale</string>
+    <!-- Dialog title shown to user to indicate that S2 requires permission to access their storage -->
+    <string name="onboarding_permission_dialog_title">Autorizzazione di accesso all\'archiviazione richiesta</string>
+    <!-- Dialog message shown to explain that S2 requires permission to access their storage-->
+    <string name="onboarding_permission_dialog_subtitle">S2 potrebbe non funzionare correttamente senza il permesso di accedere alla tua musica</string>
+    <!-- Dialog button to grant permission to the app to access users storage-->
+    <string name="onboarding_permission_button_grant">Autorizza</string>
+    <!-- Shown after user initially denies access to storage -->
+    <string name="onboarding_permission_help_text">Per trovare la tua musica, S2 necessita dell\'autorizzazione per leggere il tuo archivio multimediale</string>
+    <!-- Title of S2's Media Scanner, the thing that scans files on the device to read audio files/tags -->
     <string name="onboarding_media_scanner_title">Scanner multimediale</string>
+    <!-- Shown when the media scanner is scanning -->
     <string name="onboarding_media_scanner_scanning">Scansione...</string>
+    <!-- Button to initiate a media scanner scan-->
     <string name="onboarding_media_scan">Scansione</string>
+    <!-- Button to go back to the previous page, when onboarding -->
     <string name="onboarding_button_back">Indietro</string>
-    <string name="onboarding_button_next">Il prossimo</string>
-    <string name="onboarding_media_scanner_rescan">Riesegui la scansione</string>
+    <!-- Button to go to the next page, when onboarding -->
+    <string name="onboarding_button_next">Avanti</string>
+    <!-- Button to trigger the MediaScanner to perform a rescan of audio files on the device-->
+    <string name="onboarding_media_scanner_rescan">Nuova scansione</string>
+    <!-- Shown when the S2 Media Provider is scanning song tags (metadata)-->
     <string name="onboarding_scanner_reading_song_tags">Lettura dei tag dei brani...</string>
-    <string name="onboarding_media_scanner_tile">Nessuna scansione in corso</string>
 </resources>

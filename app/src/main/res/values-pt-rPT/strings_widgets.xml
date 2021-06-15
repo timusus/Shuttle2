@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Shown on the widget, when the current playback queue is empty. Pressing the widget will just open the app. -->
     <string name="widget_empty_text">Escolha uma música...</string>
 </resources>

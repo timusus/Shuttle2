@@ -1,15 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- The title shown for list of recently played albums-->
     <string name="home_title_recent">Récent</string>
+    <!-- Description for list of recently played albums -->
     <string name="home_description_recently_played">Albums récemment lus</string>
-    <string name="home_title_most_played">Le plus joué</string>
+    <!-- Title for list of most played albums -->
+    <string name="home_title_most_played">Les plus joués</string>
+    <!-- Description for list of most played albums -->=
+    
     <string name="home_description_most_played">Vos albums préférés</string>
+    <!-- Title for list of albums released this year -->
     <string name="home_title_this_year">Cette année</string>
+    <!-- Description for list of albums released this year -->
     <string name="home_description_this_year">Albums sortis en <xliff:g example="2005" id="year">{year}</xliff:g></string>
+    <!-- Title for list of artists which haven't been played for a while-->
     <string name="home_title_something_different">Quelque chose de différent</string>
+    <!-- Description for list of artists which haven't been played for a while-->
     <string name="home_description_something_different">Artistes que vous n\'avez pas écoutés depuis un moment</string>
+    <!-- Button to show list of recently played songs (history)-->
     <string name="btn_history">Historique</string>
+    <!-- Button to show list of songs recently added to the library-->
     <string name="btn_recently_added">Récemment ajouté</string>
+    <!-- Button to show list of favourite songs-->
     <string name="btn_favorite">Favoris</string>
-    <string name="btn_shuffle">Mélanger</string>
+    <!-- Button to shuffle all songs -->
+    <string name="btn_shuffle">Lecture aléatoire</string>
 </resources>

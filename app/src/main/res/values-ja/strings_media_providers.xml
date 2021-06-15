@@ -2,32 +2,32 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="media_provider_title"><xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g>
     メディアプロバイダー</string>
-    <string name="media_provider_scan_progress"><xliff:g example="5" id="progress">{progress}</xliff:g>
+    <string name="media_provider_scan_progress">曲のスキャン状況:
+<xliff:g example="5" id="progress">{progress}</xliff:g>
     /
-    <xliff:g example="25" id="total">{total}</xliff:g>
-    曲をスキャン済</string>
+    <xliff:g example="25" id="total">{total}</xliff:g></string>
     <string name="media_provider_scan_success_title"><xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g>
     のスキャンが完了しました</string>
     <string name="media_provider_scan_success_subtitle"><xliff:g example="5" id="inserts">{inserts}</xliff:g>
-    挿入、
+    曲挿入、
     <xliff:g example="15" id="updates">{updates}</xliff:g>
-    更新、
+    曲更新、
     <xliff:g example="25" id="deletes">{deletes}</xliff:g>
-    削除</string>
+    曲削除</string>
     <string name="media_provider_scan_failure_title">スキャンに失敗しました</string>
     <string name="media_provider_scan_failure_subtitle">曲はインポートされませんでした</string>
     <string name="media_provider_button_authenticate">認証する</string>
     <string name="media_provider_authenticating">認証中…</string>
-    <string name="media_provider_authentication_success">認証成功</string>
-    <string name="media_provider_title_plex">Plex Media Server</string>
+    <string name="media_provider_authentication_success">認証に成功しました</string>
+    <string name="media_provider_title_plex">Plexメディアサーバー</string>
     <string name="media_provider_title_jellyfin">Jellyfinメディアサーバー</string>
     <string name="media_provider_title_emby">Embyメディアサーバー</string>
     <string name="media_provider_type_local">ローカル</string>
     <string name="media_provider_type_remote">リモート</string>
     <string name="media_provider_add">メディアプロバイダーを追加</string>
-    <string name="media_providers_add_onboarding">メディアプロバイダーを追加します。これは後で変更できます</string>
+    <string name="media_providers_add_onboarding">メディアプロバイダーを追加します。これは後でも変更できます</string>
     <string name="media_providers_add">メディアプロバイダーを追加</string>
-    <string name="media_provider_toolbar_title_onboarding">あなたの音楽を見つける</string>
+    <string name="media_provider_toolbar_title_onboarding">音楽ファイルを読み込めるようにしましょう</string>
     <string name="media_provider_toolbar_title">メディアプロバイダー</string>
     <string name="media_provider_dialog_remove_title"><xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g>
     を削除</string>

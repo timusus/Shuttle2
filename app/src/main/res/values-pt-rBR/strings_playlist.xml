@@ -1,30 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Shown when an artist/album or songs fail to be added to a playlist, because no songs were found-->
     <string name="playlist_menu_empty_data_message">Nenhuma música para adicionar</string>
+    <!-- Shown when duplicate songs were found, when trying to add songs to a playlist -->
     <string name="playlist_menu_duplicates_dialog_title">Duplicações encontradas</string>
+    <!-- Shown when duplicate songs were found, when trying to add songs to a playlist. Asking the user whether they want to add the duplicates anyway, or skip them-->
     <plurals name="playlist_menu_duplicates_dialog_subtitle">
         <item quantity="one">Já existe <xliff:g example="1" id="count">{count}</xliff:g>música na playlist \'<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\'. Adicionar mesmo assim?</item>
         <item quantity="other">Já existem <xliff:g example="5" id="count">{count}</xliff:g>músicas na playlist \'<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\'. Adicionar mesmo assim?</item>
     </plurals>
+    <!-- Button shown to allow the user to 'skip' adding duplicate songs to a playlist-->
     <string name="playlist_menu_duplicates_dialog_button_skip">Pular</string>
+    <!-- Button shown to allow the user to 'add' duplicate songs to a playlist (ignoring the fact that there are duplicates) -->
     <string name="playlist_menu_duplicates_dialog_button_add">Adicionar</string>
+    <!-- Checkbox shown when adding songs to a playlist. If checked, the app won't look for duplicates when songs are added to playlists -->
     <string name="playlist_menu_duplicates_switch_always_add">Sempre adicionar as duplicações</string>
+    <!-- Menu option to create a new playlist -->
     <string name="playlist_menu_create_playlist">Nova playlist</string>
+    <!-- Shown when a playlist is successfully created -->
     <string name="playlist_menu_create_playlist_success">\'<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\' criado com sucesso</string>
+    <!-- Shown when songs can't be added to a playlist, due to an error -->
     <string name="playlist_menu_create_playlist_failure">Falha ao adicionar músicas à playlist: <xliff:g example="Playlist already exists" id="error_message">{error_message}</xliff:g></string>
+    <!-- The 'hint' text shown when creating a playlist. This indicates the text field is for 'Playlist Name'-->
     <string name="playlist_create_dialog_playlist_name_hint">Nome da playlist</string>
+    <!-- Button to show the 'delete playlist' dialog, which will ask the user to confirm this action -->
     <string name="playlist_dialog_title_delete">Excluir playlist</string>
+    <!-- Shown when the user attempts to delete a playlist. Asking the user to confirm that this playlist will be permanently deleted -->
     <string name="playlist_dialog_subtitle_delete"><xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g> será excluída permanentemente</string>
+    <!-- Button to confirm deletion of the selected playlist -->
     <string name="playlist_dialog_button_delete">Excluir</string>
+    <!-- Button to show the 'clear playlist' dialog, which will ask the user to confirm this action. Clearing the playlist will render it empty, but not delete it. -->
     <string name="playlist_dialog_title_clear">Limpar playlist</string>
+    <!-- Shown whent he user attempts to clear a playlist. Asking the user to confirm that this playlist will become empty -->
     <string name="playlist_dialog_subtitle_clear">Todas as músicas serão removidas de <xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g></string>
+    <!-- Button to confirm clearing of the selected playlist -->
     <string name="playlist_dialog_button_clear">Limpar</string>
+    <!-- Shown when the user presses playlist 'import' button. This shows the dialog to 'sync' playlists with the Android MediaStore -->
     <string name="playlist_dialog_title_sync">Sincronizar as playlists da Loja de Mídias</string>
+    <!-- Shown in the playlist import dialog. Explains to the user what 'sync' does-->
     <string name="playlist_dialog_subtitle_sync">Copiar as playlists da Loja de Mídias. Se as playlists já existirem no Aleatório, as músicas serão mescladas.\n\nNota: as músicas são apenas adicionadas, não removidas.</string>
+    <!-- Button to confirm 'syncing' a playlist with the Android MediaStore -->
     <string name="playlist_dialog_button_sync">Sincronizar</string>
+    <!-- Title of the list of Playlists -->
     <string name="playlists_title_playlists">Playlists</string>
+    <!-- Title of the list of Smart Playlists. Smart Playlists are like regular playlists, but automatically populated under certain conditions (like, most-played) -->
     <string name="playlists_title_smart_playlists">Playlists inteligentes</string>
+    <!-- Shown when playlists are successfully imported (synced) from the Android MediaStore -->
     <string name="playlist_import_success">Playlists importadas</string>
+    <!-- Dialog title, shown when user selects 'rename playlist'-->
     <string name="playlist_dialog_title_rename">Nome da playlist</string>
+    <!-- The 'hint' shown when renaming a playlist. This indicates the text field is for 'name' (playlist name)-->
     <string name="playlist_dialog_hint_rename">Nome</string>
 </resources>

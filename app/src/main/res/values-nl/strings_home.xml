@@ -1,15 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- The title shown for list of recently played albums-->
     <string name="home_title_recent">Recent</string>
+    <!-- Description for list of recently played albums -->
     <string name="home_description_recently_played">Recent afgespeelde albums</string>
+    <!-- Title for list of most played albums -->
     <string name="home_title_most_played">Meest gespeeld</string>
+    <!-- Description for list of most played albums -->=
+    
     <string name="home_description_most_played">Je favoriete albums</string>
+    <!-- Title for list of albums released this year -->
     <string name="home_title_this_year">Dit jaar</string>
+    <!-- Description for list of albums released this year -->
     <string name="home_description_this_year">Albums uitgebracht in <xliff:g example="2005" id="year">{year}</xliff:g></string>
+    <!-- Title for list of artists which haven't been played for a while-->
     <string name="home_title_something_different">Iets anders</string>
+    <!-- Description for list of artists which haven't been played for a while-->
     <string name="home_description_something_different">Artiesten waar je al een tijdje niet naar hebt geluisterd</string>
+    <!-- Button to show list of recently played songs (history)-->
     <string name="btn_history">Geschiedenis</string>
+    <!-- Button to show list of songs recently added to the library-->
     <string name="btn_recently_added">Recent toegevoegd</string>
+    <!-- Button to show list of favourite songs-->
     <string name="btn_favorite">Favorieten</string>
+    <!-- Button to shuffle all songs -->
     <string name="btn_shuffle">Shuffle</string>
 </resources>

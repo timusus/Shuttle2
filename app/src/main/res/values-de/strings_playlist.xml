@@ -1,31 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Shown when an artist/album or songs fail to be added to a playlist, because no songs were found-->
     <string name="playlist_menu_empty_data_message">Keine Songs zum Hinzufügen</string>
+    <!-- Shown when duplicate songs were found, when trying to add songs to a playlist -->
     <string name="playlist_menu_duplicates_dialog_title">Es wurden Duplikate gefunden</string>
+    <!-- Shown when duplicate songs were found, when trying to add songs to a playlist. Asking the user whether they want to add the duplicates anyway, or skip them-->
     <plurals name="playlist_menu_duplicates_dialog_subtitle">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> Titel existiert bereits in \"<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\". Trotzdem hinzufügen?</item>
         <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g> Titel sind bereits in \"<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\" vorhanden. Trotzdem hinzufügen?</item>
     </plurals>
+    <!-- Button shown to allow the user to 'skip' adding duplicate songs to a playlist-->
     <string name="playlist_menu_duplicates_dialog_button_skip">Überspringen</string>
+    <!-- Button shown to allow the user to 'add' duplicate songs to a playlist (ignoring the fact that there are duplicates) -->
     <string name="playlist_menu_duplicates_dialog_button_add">Hinzufügen</string>
+    <!-- Checkbox shown when adding songs to a playlist. If checked, the app won't look for duplicates when songs are added to playlists -->
     <string name="playlist_menu_duplicates_switch_always_add">Duplikate immer hinzufügen</string>
+    <!-- Menu option to create a new playlist -->
     <string name="playlist_menu_create_playlist">Neue Wiedergabeliste</string>
+    <!-- Shown when a playlist is successfully created -->
     <string name="playlist_menu_create_playlist_success">„<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\“ wurde erfolgreich erstellt</string>
+    <!-- Shown when songs can't be added to a playlist, due to an error -->
     <string name="playlist_menu_create_playlist_failure">Fehler beim Hinzufügen von Songs zur Wiedergabeliste: 
     <xliff:g example="Playlist already exists" id="error_message">{error_message}</xliff:g></string>
+    <!-- The 'hint' text shown when creating a playlist. This indicates the text field is for 'Playlist Name'-->
     <string name="playlist_create_dialog_playlist_name_hint">Name der Wiedergabeliste</string>
+    <!-- Button to show the 'delete playlist' dialog, which will ask the user to confirm this action -->
     <string name="playlist_dialog_title_delete">Wiedergabeliste löschen</string>
-    <string name="playlist_dialog_subtitle_delete"><xliff:g example="Favorites" id="playlist_name">{playlistName}</xliff:g> wird dauerhaft gelöscht</string>
+    <!-- Shown when the user attempts to delete a playlist. Asking the user to confirm that this playlist will be permanently deleted -->
+    <string name="playlist_dialog_subtitle_delete"><xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g> wird dauerhaft gelöscht</string>
+    <!-- Button to confirm deletion of the selected playlist -->
     <string name="playlist_dialog_button_delete">Löschen</string>
+    <!-- Button to show the 'clear playlist' dialog, which will ask the user to confirm this action. Clearing the playlist will render it empty, but not delete it. -->
     <string name="playlist_dialog_title_clear">Wiedergabeliste leeren</string>
-    <string name="playlist_dialog_subtitle_clear">Alle Songs werden aus <xliff:g example="Favorites" id="playlist_name">{playlistName}</xliff:g> entfernt</string>
+    <!-- Shown whent he user attempts to clear a playlist. Asking the user to confirm that this playlist will become empty -->
+    <string name="playlist_dialog_subtitle_clear">Alle Songs werden aus <xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g> entfernt</string>
+    <!-- Button to confirm clearing of the selected playlist -->
     <string name="playlist_dialog_button_clear">Leeren</string>
+    <!-- Shown when the user presses playlist 'import' button. This shows the dialog to 'sync' playlists with the Android MediaStore -->
     <string name="playlist_dialog_title_sync">Media-Store-Wiedergabelisten synchronisieren</string>
-    <string name="playlist_dialog_subtitle_sync">Kopiert Wiedergabelisten aus dem Media Store. Falls die Wiedergabelisten bereits im Shuttle vorhanden sind, werden die Songs vereint.\n\nHinweis: Songs werden nur hinzugefügt, aber nicht entfernt.</string>
+    <!-- Shown in the playlist import dialog. Explains to the user what 'sync' does-->
+    <string name="playlist_dialog_subtitle_sync">Kopiert Wiedergabelisten aus dem Media Store. Falls die Wiedergabelisten bereits in Shuttle vorhanden sind, werden die Songs vereint.\n\nHinweis: Songs werden nur hinzugefügt, aber nicht entfernt.</string>
+    <!-- Button to confirm 'syncing' a playlist with the Android MediaStore -->
     <string name="playlist_dialog_button_sync">Synchronisieren</string>
+    <!-- Title of the list of Playlists -->
     <string name="playlists_title_playlists">Wiedergabelisten</string>
-    <string name="playlists_title_smart_playlists">Smarte Wiedergabelisten</string>
+    <!-- Title of the list of Smart Playlists. Smart Playlists are like regular playlists, but automatically populated under certain conditions (like, most-played) -->
+    <string name="playlists_title_smart_playlists">Schlaue Wiedergabelisten</string>
+    <!-- Shown when playlists are successfully imported (synced) from the Android MediaStore -->
     <string name="playlist_import_success">Wiedergabelisten importiert</string>
+    <!-- Dialog title, shown when user selects 'rename playlist'-->
     <string name="playlist_dialog_title_rename">Name der Wiedergabeliste</string>
+    <!-- The 'hint' shown when renaming a playlist. This indicates the text field is for 'name' (playlist name)-->
     <string name="playlist_dialog_hint_rename">Name</string>
 </resources>

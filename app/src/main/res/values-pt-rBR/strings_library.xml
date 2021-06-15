@@ -1,12 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Title for the list of artists -->
     <string name="artists">Artistas</string>
-    <plurals name="artistsPlural">
-        <item quantity="one"><xliff:g example="Tool" id="count">%d</xliff:g>
-       artista</item>
-        <item quantity="other"><xliff:g example="Tool" id="count">{count}</xliff:g>
-       artistas</item>
-    </plurals>
+    <!-- Title for the list of albums -->
     <string name="albums">Álbuns</string>
     <plurals name="albumsPlural">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
@@ -14,22 +10,20 @@
         <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g>
        álbuns</item>
     </plurals>
+    <!-- Title for the list of songs -->
     <string name="songs">Músicas</string>
+    <!-- The number of songs for an album/playlist/genre -->
     <plurals name="songsPlural">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
        música</item>
         <item quantity="other"><xliff:g example="12" id="count">{count}</xliff:g>
        músicas</item>
     </plurals>
+    <!-- Title for the list of genres -->
     <string name="genres">Gêneros</string>
-    <plurals name="genresPlural">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
-       gênero</item>
-        <item quantity="other"><xliff:g example="3" id="count">{count}</xliff:g>
-       gêneros</item>
-    </plurals>
+    <!-- Title for the list of playlists -->
     <string name="library_playlists">Lista de Reprodução</string>
+    <!-- Shown when the app is scanning for songs in the library -->
     <string name="library_scan_in_progress">Digitalizando sua biblioteca</string>
-    <string name="multi_select_items_selected"><xliff:g example="3" id="count">{count}</xliff:g>
-     selecionado</string>
+    <!-- Shown to indicate the number of tracks/albums/artists which have been selected, in multi-selection mode-->
 </resources>

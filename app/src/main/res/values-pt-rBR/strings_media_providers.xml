@@ -2,23 +2,15 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="media_provider_title">Provedor de mídia de 
     <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
-    <string name="media_provider_scan_progress"><xliff:g example="5" id="progress">{progress}</xliff:g>
-    /
-    <xliff:g example="25" id="total">{total}</xliff:g>
-     músicas verificadas</string>
+    <string name="media_provider_scan_progress"><xliff:g example="5" id="progress">{progress}</xliff:g> / <xliff:g example="25" id="total">{total}</xliff:g> músicas verificadas</string>
     <string name="media_provider_scan_success_title">A verificação de 
     <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g>
      foi concluída</string>
-    <string name="media_provider_scan_success_subtitle"><xliff:g example="5" id="inserts">{inserts}</xliff:g>
-     inserções, 
-    <xliff:g example="15" id="updates">{updates}</xliff:g>
-     atualizações, 
-    <xliff:g example="25" id="deletes">{deletes}</xliff:g>
-     exclusões</string>
+    <string name="media_provider_scan_success_subtitle"><xliff:g example="5" id="inserts">{inserts}</xliff:g> inserções, <xliff:g example="15" id="updates">{updates}</xliff:g> atualizações, <xliff:g example="25" id="deletes">{deletes}</xliff:g> exclusões</string>
     <string name="media_provider_scan_failure_title">A verificação falhou</string>
     <string name="media_provider_scan_failure_subtitle">Nenhuma música importada</string>
     <string name="media_provider_button_authenticate">Autenticar</string>
-    <string name="media_provider_authenticating">Autenticando...</string>
+    <string name="media_provider_authenticating">Autenticando…</string>
     <string name="media_provider_authentication_success">Autenticação bem sucedida</string>
     <string name="media_provider_title_plex">Plex</string>
     <string name="media_provider_title_jellyfin">Jellyfin</string>
@@ -30,10 +22,8 @@
     <string name="media_providers_add">Adicionar provedor(es) de mídia</string>
     <string name="media_provider_toolbar_title_onboarding">Descubra sua música</string>
     <string name="media_provider_toolbar_title">Provedores de mídia</string>
-    <string name="media_provider_dialog_remove_title">Remover 
-    <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
-    <string name="media_provider_dialog_remove_subtitle">Isso removerá todas as músicas, playlists e contagens de reprodução associadas ao provedor de mídia 
-    <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
+    <string name="media_provider_dialog_remove_title">Remover <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
+    <string name="media_provider_dialog_remove_subtitle">Isso removerá todas as músicas, playlists e contagens de reprodução associadas ao provedor de mídia <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
     <string name="media_provider_dialog_button_remove">Remover</string>
     <string name="media_provider_config_hint_address">Local</string>
     <string name="media_provider_config_hint_username">Nome do usuário</string>

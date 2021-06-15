@@ -1,35 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- The name of the S2 Media Provider - the media provider which scans the device for songs and reads their tags (metadata)-->
     <string name="media_provider_title_s2">Fournisseur multimédia S2</string>
-    <string name="media_provider_title_media_store">Magasin multimédia Android</string>
-    <string name="media_provider_title_emby">Emby</string>
-    <string name="media_provider_title_jellyfin">Jellyfin</string>
-    <string name="media_provider_title_plex">Plex</string>
+    <!-- The description of the S2 Media Provider - scans user selected folders and files for metadata-->
     <string name="media_provider_description_s2">Analyse les dossiers et fichiers sélectionnés (recommandé)</string>
+    <!-- The name of the 'Android Media Store' media provider. The 'Media Store' is an Android concept. Not sure if it would be translated.-->
+    <string name="media_provider_title_media_store">Magasin multimédia Android</string>
+    <!-- The description of the Android MediaStore media provider. The MediaStore is an Android concept. A database on the device which keeps track of song info-->
     <string name="media_provider_description_media_store">Base de données gérée par Android</string>
-    <string name="media_provider_description_jellyfin">Serveur multimédia personnel</string>
+    <!-- The name of the 'Emby' media provider. Emby is a personal media server - probably doesn't need to be translated-->
+    <string name="media_provider_title_emby">Emby</string>
+    <!-- The description of the 'Emby' media provider. Emby is a personal media server - probably doesn't need to be translated-->
     <string name="media_provider_description_emby">Serveur multimédia personnel</string>
+    <!-- The name of the 'Jellyfin' media provider. Jellyfin is a personal media server - probably doesn't need to be translated-->
+    <string name="media_provider_title_jellyfin">Jellyfin</string>
+    <!-- The description of the 'Jellyfin' media provider. Jellyfin is a personal media server - probably doesn't need to be translated-->
+    <string name="media_provider_description_jellyfin">Serveur multimédia personnel</string>
+    <!-- The name of the 'Plex' media provider. Plex is a personal media server - probably doesn't need to be translated-->
+    <string name="media_provider_title_plex">Plex</string>
+    <!-- The description of the 'Plex' media provider. Plex is a personal media server - probably doesn't need to be translated-->
     <string name="media_provider_description_plex">Serveur multimédia personnel</string>
+    <!-- Shown when a media provider is being scanned. Indicates the current progress of that scan -->
     <string name="media_provider_scan_progress"><xliff:g example="5" id="progress">{progress}</xliff:g> / <xliff:g example="25" id="total">{total}</xliff:g> chansons analysées</string>
-    <string name="media_provider_scan_success_subtitle"><xliff:g example="5" id="inserts">{inserts}</xliff:g> insertions, <xliff:g example="15" id="updates">{updates}</xliff:g> mises à jour, <xliff:g example="25" id="deletes">{deletes}</xliff:g> suppressions</string>
+    <!-- Shown when a media provider scan has completed -->
+    <string name="media_provider_scan_success_subtitle"><xliff:g example="5" id="inserts">{inserts}</xliff:g> insertions, 
+<xliff:g example="15" id="updates">{updates}</xliff:g> mises à jour, 
+<xliff:g example="25" id="deletes">{deletes}</xliff:g> suppressions</string>
+    <!-- Shown when a media provider scan has failed -->
     <string name="media_provider_scan_failure_title">L\'analyse a échoué</string>
+    <!-- Dialog button shown to authenticate with Jellyfin/Emby/Plex (submits the user's credentials for authentication)-->
     <string name="media_provider_button_authenticate">Authentifier</string>
+    <!-- Shown when Jellyfin/Emby/Plex is authenticating the user's credentials-->
     <string name="media_provider_authenticating">Authentification…</string>
+    <!-- Shown when Jellyfin/Emby/Plex has successfully authenticated the user's credentials-->
     <string name="media_provider_authentication_success">Authentification réussie</string>
+    <!-- The longer title of Plex Media Server. 'Plex' probably doesn't need translation -->
     <string name="media_provider_title_long_plex">Serveur multimédia Plex</string>
+    <!-- The longer title of Jellyfin Media Server. 'Jellyfin' probably doesn't need translation -->
     <string name="media_provider_title_long_jellyfin">Serveur multimédia Jellyfin</string>
+    <!-- The longer title of Emby Media Server. 'Emby' probably doesn't need translation -->
     <string name="media_provider_title_long_emby">Serveur multimédia Emby</string>
+    <!-- Shown when user is selecting which media provider to use. Groups media providers into local (device based) and remote (network based) media providers. -->
     <string name="media_provider_type_local">Local</string>
+    <!-- Shown when user is selecting which media provider to use. Groups media providers into local (device based) and remote (network based) media providers. -->
     <string name="media_provider_type_remote">À distance</string>
+    <!-- Button to add a media provider. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
     <string name="media_provider_add">Ajouter un fournisseur multimédia</string>
+    <!-- Button to add a media provider, shown during onboarding. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
     <string name="media_providers_add_onboarding">Ajoutez des fournisseurs multimédias. Vous pouvez modifier cela plus tard</string>
+    <!-- Shown during onboarding, as the user is about to select their media providers, to discover/find their music-->
     <string name="media_provider_toolbar_title_onboarding">Découvrez votre musique</string>
+    <!-- Title of the screen where users can select their media providers. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
     <string name="media_provider_toolbar_title">Fournisseurs multimédia</string>
-    <string name="media_provider_dialog_remove_title">Supprimer <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
+    <!-- Option to remove a media provider from the list of media providers to be scanned. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
+    <string name="media_provider_dialog_remove_title">Supprimer  <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
+    <!-- Warning when user attempts to remove a media provider, that their media associated with that provider will be deleted. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc.-->
     <string name="media_provider_dialog_remove_subtitle">Cette action supprimera toutes les chansons, toutes les listes de lecture et le nombre de lectures associées au fournisseur multimédia <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
+    <!-- Button to remove a media provider from the list of media providers to be scanned. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
     <string name="media_provider_dialog_button_remove">Supprimer</string>
+    <!-- The address (url) of the user's Emby/Jellyfin/Plex media provider. -->
     <string name="media_provider_config_hint_address">Adresse</string>
+    <!-- The username of the user's Emby/Jellyfin/Plex media provider. -->
     <string name="media_provider_config_hint_username">Nom d\'utilisateur</string>
+    <!-- The password for the user's Emby/Jellyfin/Plex media provider. -->
     <string name="media_provider_config_hint_password">Mot de passe</string>
+    <!-- The option to remember the user's password for their Emby/Jellyfin/Plex media provider-->
     <string name="media_provider_config_switch_remember_password">Rappeler le mot de passe</string>
 </resources>

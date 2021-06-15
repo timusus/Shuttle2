@@ -1,47 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- The number of songs being edited with the tag (metadata) editor-->
     <plurals name="edit_tags_editing_count_songs">
-        <item quantity="one">Modifica del brano 
-      <xliff:g example="1" id="count">{count}</xliff:g></item>
-        <item quantity="other">Modifica dei brani 
-      <xliff:g example="5" id="count">{count}</xliff:g></item>
+        <item quantity="one">Modificando <xliff:g example="1" id="count">un</xliff:g> brano</item>
+        <item quantity="other">Modificando <xliff:g example="5" id="count">{count}</xliff:g> brani</item>
     </plurals>
+    <!-- The title of the 'edit tags' dialog. If 'tags' doesn't apply in your language, you could use 'metadata' or 'info' instead. -->
     <string name="edit_tags_action">Modifica i tag</string>
+    <!-- When editing tags, if multiple songs are being edited at the same time, this indicates that a field has multiple values.
+    For example, editing two songs, which have two different artists. Editing the artist field will overwrite the artist for both songs. There are 'multiple values' for artist. -->
     <string name="edit_tags_multiple_values">Valori multipli</string>
-    <string name="edit_tags_reading_tags">Lettura dei tag 
+    <!-- Shown when the tag editor is in progress, reading tags (metadata) from the selected songs -->
+    <string name="edit_tags_reading_tags">Leggendo i tag 
     <xliff:g example="1" id="progress">{progress}</xliff:g>
      / 
     <xliff:g example="1" id="count">{total}</xliff:g></string>
-    <string name="edit_tags_writing_tags">Lettura dei tag 
+    <!-- Shown when the tag editor is in progress, writing tags (metadata) to the selected songs -->
+    <string name="edit_tags_writing_tags">Leggendo i tag
     <xliff:g example="1" id="progress">{progress}</xliff:g>
      / 
     <xliff:g example="1" id="count">{total}</xliff:g></string>
-    <string name="edit_tags_read_failed">Impossibile leggere i tag del brano selezionato</string>
+    <!-- Shown when the tag editor fails to read the tags (metadata) of a song -->
+    <string name="edit_tags_read_failed">Impossibile leggere i tag delle canzoni selezionate</string>
+    <!-- Shown when the tag editor successfully writes the tags (metadata) of the songs -->
     <plurals name="edit_tags_success">
-        <item quantity="one">Brano 
-      <xliff:g example="5" id="count">{count}</xliff:g>
-       aggiornato correttamente</item>
-        <item quantity="other">Brani 
-      <xliff:g example="5" id="count">{count}</xliff:g>
-       aggiornati correttamente</item>
+        <item quantity="one">Aggiornato correttamente <xliff:g example="5" id="count">un</xliff:g> brano</item>
+        <item quantity="other">Aggiornati correttamente <xliff:g example="5" id="count">{count}</xliff:g> brani</item>
     </plurals>
+    <!-- Shown when the tag editor fails to write the tags (metadata) to the songs-->
     <plurals name="edit_tags_failure">
         <item quantity="one">Impossibile aggiornare il brano</item>
-        <item quantity="other">Impossibile aggiornare 
-      <xliff:g example="5" id="count">{count}</xliff:g>
-       di 
-      <xliff:g example="5" id="total">{total}</xliff:g>
-       brani</item>
+        <item quantity="other">Impossibile aggiornare <xliff:g example="5" id="count">{count}</xliff:g> brani su <xliff:g example="5" id="total">{total}</xliff:g></item>
     </plurals>
+    <!-- The hint (placeholder) text shown in the 'title' text field, when editing the tags (metadata) -->
     <string name="edit_tags_hint_title">Titolo</string>
+    <!-- The hint (placeholder) text shown in the 'artist' text field, when editing the tags (metadata) -->
     <string name="edit_tags_hint_artist">Artista</string>
+    <!-- The hint (placeholder) text shown in the 'album' text field, when editing the tags (metadata) -->
     <string name="edit_tags_hint_album">Album</string>
-    <string name="edit_tags_hint_album_artist">Artista dell\'album</string>
+    <!-- The hint (placeholder) text shown in the 'album artist' text field, when editing the tags (metadata) -->
+    <string name="edit_tags_hint_album_artist">Artista album</string>
+    <!-- The hint (placeholder) text shown in the 'year' text field, when editing the tags (metadata) -->
     <string name="edit_tags_hint_year">Anno</string>
+    <!-- The hint (placeholder) text shown in the 'track' text field, when editing the tags (metadata) -->
     <string name="edit_tags_hint_track">Traccia</string>
-    <string name="edit_tags_hint_track_total">Tracce in totale</string>
+    <!-- The hint (placeholder) text shown in the 'track total' text field, when editing the tags (metadata) -->
+    <string name="edit_tags_hint_track_total">Totale tracce</string>
+    <!-- The hint (placeholder) text shown in the 'disc' text field, when editing the tags (metadata) -->
     <string name="edit_tags_hint_disc">Disco</string>
-    <string name="edit_tags_hint_disc_total">Totale disco</string>
+    <!-- The hint (placeholder) text shown in the 'disc total' text field, when editing the tags (metadata) -->
+    <string name="edit_tags_hint_disc_total">Totale dischi</string>
+    <!-- The hint (placeholder) text shown in the 'genres' text field, when editing the tags (metadata) -->
     <string name="edit_tags_hint_genres">Generi</string>
-    <string name="edit_tags_hint_lyrics">Testi</string>
+    <!-- The hint (placeholder) text shown in the 'lyrics' text field, when editing the tags (metadata) -->
+    <string name="edit_tags_hint_lyrics">Testo</string>
 </resources>

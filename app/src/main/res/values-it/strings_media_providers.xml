@@ -1,32 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <string name="media_provider_title"><xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g>
-     fornitore di contenuti multimediali</string>
-    <string name="media_provider_scan_progress"><xliff:g example="5" id="progress">{progress}</xliff:g>
-    /
-    <xliff:g example="25" id="total">{total}</xliff:g>
-     brani scansionati</string>
-    <string name="media_provider_scan_success_title"><xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g>
-     scansione completata</string>
+    <string name="media_provider_title">Metodo <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
+    <string name="media_provider_scan_progress">"<xliff:g example="5" id="progress">{progress}</xliff:g> brani scansionati su <xliff:g example="25" id="total">{total}</xliff:g>
+"</string>
+    <string name="media_provider_scan_success_title">Scansione di <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g> completata</string>
     <string name="media_provider_scan_success_subtitle"><xliff:g example="5" id="inserts">{inserts}</xliff:g>
-     inserimenti,
-    <xliff:g example="15" id="updates">{updates}</xliff:g>
-     aggiornamenti,
-    <xliff:g example="25" id="deletes">{deletes}</xliff:g>
-     eliminazioni</string>
+aggiunti,
+<xliff:g example="15" id="updates">{updates}</xliff:g>
+aggiornati,
+<xliff:g example="25" id="deletes">{deletes}</xliff:g>
+eliminati</string>
     <string name="media_provider_scan_failure_title">Scansione fallita</string>
     <string name="media_provider_scan_failure_subtitle">Nessun brano importato</string>
-    <string name="media_provider_button_authenticate">Autenticare</string>
+    <string name="media_provider_button_authenticate">Autenticazione</string>
     <string name="media_provider_authenticating">Autenticazione in corso...</string>
     <string name="media_provider_authentication_success">Autenticazione riuscita</string>
     <string name="media_provider_title_plex">Plex</string>
     <string name="media_provider_title_jellyfin">Jellyfin</string>
     <string name="media_provider_title_emby">Emby</string>
     <string name="media_provider_type_local">Locale</string>
-    <string name="media_provider_type_remote">A distanza</string>
+    <string name="media_provider_type_remote">Remoto</string>
     <string name="media_provider_add">Aggiungi fornitore di contenuti multimediali</string>
-    <string name="media_providers_add_onboarding">Aggiungi provider di contenuti multimediali. Puoi modificarlo in seguito</string>
-    <string name="media_providers_add">Aggiungi provider di contenuti multimediali</string>
+    <string name="media_providers_add_onboarding">Aggiungi un fornitore di contenuti multimediali. Puoi modificarlo in seguito</string>
+    <string name="media_providers_add">Aggiungi metodo</string>
     <string name="media_provider_toolbar_title_onboarding">Scopri la tua musica</string>
     <string name="media_provider_toolbar_title">Fornitori di media</string>
     <string name="media_provider_dialog_remove_title">Rimuovi 
@@ -34,7 +30,7 @@
     <string name="media_provider_dialog_remove_subtitle">Verranno rimossi tutti i brani, le playlist e i conteggi di riproduzione associati al fornitore di contenuti multimediali 
     <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
     <string name="media_provider_dialog_button_remove">Rimuovi</string>
-    <string name="media_provider_config_hint_address">Indirizzo</string>
+    <string name="media_provider_config_hint_address">E-mail</string>
     <string name="media_provider_config_hint_username">Nome utente</string>
     <string name="media_provider_config_hint_password">Password</string>
     <string name="media_provider_config_switch_remember_password">Ricorda la password</string>

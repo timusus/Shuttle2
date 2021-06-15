@@ -1,20 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Shown in the song info dialog. The song 'title'-->
     <string name="song_info_track_title">タイトル</string>
+    <!-- Shown in the song info dialog. The song 'track number'-->
     <string name="song_info_track_number">トラック＃</string>
-    <string name="song_info_duration">継続時間</string>
+    <!-- Shown in the song info dialog. The song 'duration'-->
+    <string name="song_info_duration">再生時間</string>
+    <!-- Shown in the song info dialog. When a field can't be read-->
     <string name="song_info_unknown">不明</string>
+    <!-- Shown in the song info dialog. The song 'album artist'-->
     <string name="song_info_album_artist">アルバムアーティスト</string>
+    <!-- Shown in the song info dialog. The song 'artists'-->
     <string name="song_info_artists">アーティスト</string>
+    <!-- Shown in the song info dialog. The song 'album'-->
     <string name="song_info_album">アルバム</string>
+    <!-- Shown in the song info dialog. The song 'year'-->
     <string name="song_info_year">年</string>
+    <!-- Shown in the song info dialog. The song 'disc'-->
     <string name="song_info_disc">ディスク</string>
+    <!-- Shown in the song info dialog. The song 'play count'-->
     <string name="song_info_play_count">再生回数</string>
+    <!-- Shown in the song info dialog. The song 'genres'-->
     <string name="song_info_genres">ジャンル</string>
+    <!-- Shown in the song info dialog. The song 'path'-->
     <string name="song_info_path">パス</string>
+    <!-- Shown in the song info dialog. The song 'MIME type'-->
     <string name="song_info_mime_type">MIMEタイプ</string>
+    <!-- Shown in the song info dialog. The song 'file size'-->
     <string name="song_info_size">サイズ</string>
+    <!-- Shown in the song info dialog. The song 'Lyrics'-->
     <string name="song_info_lyrics">歌詞</string>
+    <!-- The song info dialog heading -->
     <string name="song_info_dialog_title">曲情報</string>
+    <!-- Button to close the song info dialog -->
     <string name="song_info_dialog_close_button_title">閉じる</string>
 </resources>

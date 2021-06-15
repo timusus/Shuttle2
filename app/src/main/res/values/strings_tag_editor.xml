@@ -1,37 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-
     <!-- The number of songs being edited with the tag (metadata) editor-->
     <plurals name="edit_tags_editing_count_songs">
         <item quantity="one">Editing <xliff:g example="1" id="count">{count}</xliff:g> song</item>
         <item quantity="other">Editing <xliff:g example="5" id="count">{count}</xliff:g> songs</item>
     </plurals>
-
     <!-- The title of the 'edit tags' dialog. If 'tags' doesn't apply in your language, you could use 'metadata' or 'info' instead. -->
     <string name="edit_tags_action">Edit Tags</string>
     <!-- When editing tags, if multiple songs are being edited at the same time, this indicates that a field has multiple values.
     For example, editing two songs, which have two different artists. Editing the artist field will overwrite the artist for both songs. There are 'multiple values' for artist. -->
     <string name="edit_tags_multiple_values">Multiple values</string>
-
     <!-- Shown when the tag editor is in progress, reading tags (metadata) from the selected songs -->
     <string name="edit_tags_reading_tags">Reading tags <xliff:g example="1" id="progress">{progress}</xliff:g> / <xliff:g example="1" id="count">{total}</xliff:g></string>
     <!-- Shown when the tag editor is in progress, writing tags (metadata) to the selected songs -->
     <string name="edit_tags_writing_tags">Reading tags <xliff:g example="1" id="progress">{progress}</xliff:g> / <xliff:g example="1" id="count">{total}</xliff:g></string>
     <!-- Shown when the tag editor fails to read the tags (metadata) of a song -->
     <string name="edit_tags_read_failed">The selected song tags could not be read</string>
-
     <!-- Shown when the tag editor successfully writes the tags (metadata) of the songs -->
     <plurals name="edit_tags_success">
         <item quantity="one">Successfully updated <xliff:g example="5" id="count">{count}</xliff:g> song</item>
         <item quantity="other">Successfully updated <xliff:g example="5" id="count">{count}</xliff:g> songs</item>
     </plurals>
-
     <!-- Shown when the tag editor fails to write the tags (metadata) to the songs-->
     <plurals name="edit_tags_failure">
         <item quantity="one">Failed to update song</item>
         <item quantity="other">Failed to update <xliff:g example="5" id="count">{count}</xliff:g> of <xliff:g example="5" id="total">{total}</xliff:g> songs</item>
     </plurals>
-
     <!-- The hint (placeholder) text shown in the 'title' text field, when editing the tags (metadata) -->
     <string name="edit_tags_hint_title">Title</string>
     <!-- The hint (placeholder) text shown in the 'artist' text field, when editing the tags (metadata) -->

@@ -1,11 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Dialog button 'close' -->
+    <string name="dialog_button_close">閉じる</string>
+    <!-- Dialog button 'done' -->
+    <string name="dialog_button_done">完了</string>
+    <!-- Dialog button 'retry' -->
+    <string name="dialog_button_retry">再試行</string>
+    <!-- Dialog button 'save' (save whatever changes were made in the dialog) -->
+    <string name="dialog_button_save">保存</string>
+    <!-- Dialog button 'cancel'-->
     <string name="dialog_button_cancel">キャンセル</string>
-    <string name="dialog_exclude_title">除外</string>
-    <string name="dialog_exclude_message">「<xliff:g example="Lateralus" id="item">{item}</xliff:g>」はライブラリから非表示になります。&#13;\n&#13;\n除外した曲は設定で確認できます。</string>
-    <string name="dialog_exclude_button">除外</string>
-    <string name="dialog_exclude_list_empty">除外リストが空です</string>
+    <!-- Shown in the 'exclude' dialog (move the selected songs to the list of 'excluded' songs) (another word for 'blacklist') -->
+    <string name="dialog_exclude_title">非表示</string>
+    <!-- Shown when songs are about to be added to the list of songs to be excluded (blacklisted) -->
+    <string name="dialog_exclude_message">「<xliff:g example="Lateralus" id="item">{item}</xliff:g>」はライブラリから非表示になります。&#13;\n&#13;\n非表示にした曲は設定で確認できます。</string>
+    <!-- Button to add the selected songs to the list of 'excluded' (blacklisted) songs  -->
+    <string name="dialog_exclude_button">非表示</string>
+    <!-- Shown when viewing the list of 'excluded' (blacklisted) songs, and it's empty-->
+    <string name="dialog_exclude_list_empty">非表示リストが空です</string>
+    <!-- Dialog title shown when attempting to delete a song -->
     <string name="dialog_delete_title">削除</string>
+    <!-- Dialog warning message to indicate the song will be permanently deleted -->
     <string name="dialog_delete_message">「 <xliff:g example="Lateralus" id="item">{item}</xliff:g> 」は完全に削除されます</string>
+    <!-- Dialog button to confirm deletion of the selected song(s)-->
     <string name="dialog_delete_button">削除</string>
 </resources>

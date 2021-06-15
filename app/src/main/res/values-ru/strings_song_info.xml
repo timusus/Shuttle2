@@ -1,20 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Shown in the song info dialog. The song 'title'-->
     <string name="song_info_track_title">Заголовок</string>
+    <!-- Shown in the song info dialog. The song 'track number'-->
     <string name="song_info_track_number">Трек #</string>
+    <!-- Shown in the song info dialog. The song 'duration'-->
     <string name="song_info_duration">Продолжительность</string>
+    <!-- Shown in the song info dialog. When a field can't be read-->
     <string name="song_info_unknown">Неизвестно</string>
+    <!-- Shown in the song info dialog. The song 'album artist'-->
     <string name="song_info_album_artist">Исполнитель альбома</string>
+    <!-- Shown in the song info dialog. The song 'artists'-->
     <string name="song_info_artists">Исполнители</string>
+    <!-- Shown in the song info dialog. The song 'album'-->
     <string name="song_info_album">Альбом</string>
+    <!-- Shown in the song info dialog. The song 'year'-->
     <string name="song_info_year">Год</string>
+    <!-- Shown in the song info dialog. The song 'disc'-->
     <string name="song_info_disc">Диск</string>
+    <!-- Shown in the song info dialog. The song 'play count'-->
     <string name="song_info_play_count">Счетчик воспроизведений</string>
+    <!-- Shown in the song info dialog. The song 'genres'-->
     <string name="song_info_genres">Жанры</string>
+    <!-- Shown in the song info dialog. The song 'path'-->
     <string name="song_info_path">Дорожка</string>
+    <!-- Shown in the song info dialog. The song 'MIME type'-->
     <string name="song_info_mime_type">MIME-типы</string>
+    <!-- Shown in the song info dialog. The song 'file size'-->
     <string name="song_info_size">Размер</string>
+    <!-- Shown in the song info dialog. The song 'Lyrics'-->
     <string name="song_info_lyrics">Текст песни</string>
+    <!-- The song info dialog heading -->
     <string name="song_info_dialog_title">Информация о песне</string>
+    <!-- Button to close the song info dialog -->
     <string name="song_info_dialog_close_button_title">Закрыть</string>
 </resources>

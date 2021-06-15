@@ -1,15 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- The title shown for list of recently played albums-->
     <string name="home_title_recent">Недавние</string>
+    <!-- Description for list of recently played albums -->
     <string name="home_description_recently_played">Недавно прослушанные альбомы</string>
+    <!-- Title for list of most played albums -->
     <string name="home_title_most_played">Самые популярные</string>
+    <!-- Description for list of most played albums -->=
+    
     <string name="home_description_most_played">Ваши любимые альбомы</string>
+    <!-- Title for list of albums released this year -->
     <string name="home_title_this_year">В этом году</string>
+    <!-- Description for list of albums released this year -->
     <string name="home_description_this_year">Альбомы, выпущенные в <xliff:g example="2005" id="year">{year}</xliff:g> году</string>
+    <!-- Title for list of artists which haven't been played for a while-->
     <string name="home_title_something_different">Что-то другое</string>
+    <!-- Description for list of artists which haven't been played for a while-->
     <string name="home_description_something_different">Исполнители, которых вы давно не слушали</string>
+    <!-- Button to show list of recently played songs (history)-->
     <string name="btn_history">История</string>
+    <!-- Button to show list of songs recently added to the library-->
     <string name="btn_recently_added">Недавно добавленные</string>
+    <!-- Button to show list of favourite songs-->
     <string name="btn_favorite">Избранное</string>
+    <!-- Button to shuffle all songs -->
     <string name="btn_shuffle">Перемешать</string>
 </resources>

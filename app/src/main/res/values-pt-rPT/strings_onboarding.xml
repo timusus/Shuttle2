@@ -1,27 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Title of 'media directory selection' screen. User can choose to add directories to be scanned -->
     <string name="onboarding_directories_dialog_add_title">Diretórios multimédia</string>
+    <!-- Button to allow the user to add a directory, when using the 'S2 Media Scanner' -->
     <string name="onboarding_directories_dialog_add_button">Adicionar diretório</string>
+    <!-- Error message title shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
     <string name="onboarding_directories_dialog_missing_title">Fornecedor de documentos ausente</string>
+    <!-- Error message description shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
     <string name="onboarding_directories_dialog_missing_subtitle">Uma app \'Fornecedor de Documentos\' (gestor de ficheiros) não foi encontrada no seu dispositivo. Pode ter que instalar um, ou voltar a usar o scanner multimédia \'básico\'.</string>
-    <string name="onboarding_directories_add_directories_help_text">Para procurar músicas, o Shuttle requer acesso aos seus diretórios multimédia.\n\nAo pressionar \'adicionar diretório\', irá para a aplicação predefinida \'fornecedor de ficheiro\'. Navegue até as pastas que contêm as músicas. Pode adicionar vários diretórios. \n\nNota: pode ser necessário ativar \'mostrar armazenamento interno\' para ver as pastas de música.</string>
+    <!-- Explanation shown to user when they're about to choose which directories wil lbe scanned bv the S2 media scanner-->
+    <string name="onboarding_directories_add_directories_help_text">Para procurar músicas, o S2 requer acesso aos seus diretórios multimédia.\n\nAo pressionar \'adicionar diretório\', irá para a aplicação predefinida \'fornecedor de ficheiro\'. Navegue até as pastas que contêm as músicas. Pode adicionar vários diretórios. \n\nNota: pode ser necessário ativar \'mostrar armazenamento interno\' para ver as pastas de música.</string>
+    <!-- Shown when the app is scanning the user's directories for media -->
     <string name="onboarding_directories_scanning">A verificar...</string>
+    <!-- Shown when the media scanner is scanning the user's directories for media-->
     <plurals name="onboarding_directories_scan_progress">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
        ficheiro de áudio</item>
         <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
        ficheiros de áudio</item>
     </plurals>
+    <!-- Dialog title shown to user to indicate that S2 requires permission to access their storage -->
     <string name="onboarding_permission_dialog_title">Permissão de armazenamento necessária</string>
-    <string name="onboarding_permission_dialog_subtitle">O Shuttle pode não funcionar corretamente sem permissão para aceder às músicas</string>
+    <!-- Dialog message shown to explain that S2 requires permission to access their storage-->
+    <string name="onboarding_permission_dialog_subtitle">O S2 pode não funcionar corretamente sem permissão para aceder às músicas</string>
+    <!-- Dialog button to grant permission to the app to access users storage-->
     <string name="onboarding_permission_button_grant">Conceder permissão</string>
+    <!-- Shown after user initially denies access to storage -->
     <string name="onboarding_permission_help_text">Para encontrar as músicas, o Shuttle precisa de permissão para ler o armazenamento multimédia</string>
+    <!-- Title of S2's Media Scanner, the thing that scans files on the device to read audio files/tags -->
     <string name="onboarding_media_scanner_title">Verificador de multimédia</string>
+    <!-- Shown when the media scanner is scanning -->
     <string name="onboarding_media_scanner_scanning">A verificar...</string>
+    <!-- Button to initiate a media scanner scan-->
     <string name="onboarding_media_scan">Verificar</string>
+    <!-- Button to go back to the previous page, when onboarding -->
     <string name="onboarding_button_back">Voltar</string>
+    <!-- Button to go to the next page, when onboarding -->
     <string name="onboarding_button_next">Seguinte</string>
+    <!-- Button to trigger the MediaScanner to perform a rescan of audio files on the device-->
     <string name="onboarding_media_scanner_rescan">Reverificar</string>
+    <!-- Shown when the S2 Media Provider is scanning song tags (metadata)-->
     <string name="onboarding_scanner_reading_song_tags">A ler etiquetas de música...</string>
-    <string name="onboarding_media_scanner_tile">Nenhuma verificação em curso</string>
 </resources>

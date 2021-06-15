@@ -1,24 +1,144 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Menu Items -->
+    <!-- The title of the sleep timer in the bottom settings menu -->
     <string name="settings_menu_sleep_timer">Despertador</string>
+    <!-- The title of 'shuffle all' in the bottom settings menu -->
     <string name="settings_menu_shuffle_all">Misturar tudo</string>
+    <!-- The title of 'DSP' (dynamic sound processing) in the bottom settings menu. Could use 'sound effects', or something similar -->
     <string name="settings_menu_dsp">DSP</string>
+    <!-- The title of 'settings' in the bottom settings menu -->
     <string name="settings_menu_settings">Definições</string>
+    <!-- Title of the dialog shown when the user changes a setting which requires the app to be restarted.-->
     <string name="settings_crash_reporting_dialog_requires_restart">Requer reiniciar</string>
+    <!-- Description of dialog shown when user changes the crash reporting opt-in setting. Explaining that the user needs to restart the app. -->
     <string name="settings_crash_reporting_dialog_message">Para cancelar completamente o relatório de falha, reinicie o Shuttle. Certifique-se que pára, desliza a notificação e limpa os recentes da aplicação.</string>
+    <!-- Settings option to view the list of excluded (blacklisted) songs -->
     <string name="settings_dialog_title_excluded">Excluído</string>
+    <!-- Option to clear the list of excluded (blacklisted) songs -->
     <string name="settings_dialog_button_clear_excludes">Limpar</string>
+    <!-- Settings option to clear (delete) all existing artwork -->
     <string name="settings_dialog_title_clear_artwork">Limpar arte</string>
+    <!-- Button shown to confirm clearing (deleting) of existing artwork -->
     <string name="settings_dialog_button_clear_artwork">Limpar</string>
+    <!-- Dialog warning shown when user selects option to clear (delete) existing artwork -->
     <string name="settings_dialog_message_clear_artwork">Isto vai remover permanentemente todas as artes em cache</string>
+    <!-- Settings option to download all artwork (album/artist images)-->
     <string name="settings_dialog_title_download_artwork">Transferir todas as artes</string>
+    <!-- Shown when user selects option to download all artwork (album/artist images) -->
     <string name="settings_dialog_message_download_artwork">Isto vai transferir todas as artes, independentemente da sua ligação à rede (WiFi/dados/outras)</string>
+    <!-- Option to confirm downloading of artwork (album/artist images) -->
     <string name="settings_dialog_button_download_artwork">Transferir</string>
+    <!-- Title of the dialog shown when the user changes their theme preferences, and the app must be restarted -->
     <string name="settings_dialog_title_amoled_required_restart">Requer reiniciar</string>
-    <string name="settings_dialog_message_amoled_requires_restart">O S2 deve ser reiniciado para que as alterações ao tema tenham efeito</string>
-    <string name="settings_logging_clipboard_name">Shuttle Logs</string>
+    <!-- Shown in dialog when user changes their theme options, and the app must be restarted -->
+    <!-- Settings option to copy debug logs to clipboard -->
+    <string name="settings_logging_clipboard_name">S2 Logs</string>
+    <!-- Shown when the debug logs have been copied to the clipboard -->
     <string name="settings_logging_clipboard_logs_copied">Logs copiados para a área de transferência</string>
+    <!-- Error message shown when copying debug logs failed, because the log file is too large -->
     <string name="settings_logging_clipboard_logs_too_large">O ficheiro de log é muito grande para a área de transferência</string>
+    <!-- Error message shown when copying debug logs failed, because there are no logs -->
     <string name="settings_logging_clipboard_logs_empty">Ficheiro de log vazio</string>
+    <!-- Settings: Title for 'display' settings (settings related to themes, etc.) -->
+    <string name="pref_category_title_display">Ecrã</string>
+    <!-- Settings: Title for 'media' settings. Settings related to media providers, rescanning & exclude list (blacklist) -->
+    <string name="pref_category_title_media">Multimédia</string>
+    <!-- Settings: Title for artwork related settings (artist/album images) -->
+    <string name="pref_category_title_artwork">Arte</string>
+    <!-- Settings: Title for widget related settings  -->
+    <string name="pref_category_title_widgets">Widgets</string>
+    <!-- Settings: Title for playlist related settings  -->
+    <string name="pref_category_title_playlists">Playlists</string>
+    <!-- Settings: Title for shangelog related settings -->
+    <string name="pref_category_title_changelog">Changelog</string>
+    <!-- Settings: Title for privacy related settings -->
+    <string name="pref_category_title_privacy">Privacidade</string>
+    <!-- Settings: Title for open source related settings -->
+    <string name="pref_category_title_open_source">Código aberto</string>
+    <!-- Settings: Title for debug related settings -->
+    <string name="pref_category_title_debug">Debug</string>
+    <!-- Settings: Title for settings which otherwise don't have a group -->
+    <string name="pref_category_title_other">Outro</string>
+    <!-- Settings: Title for changing the theme -->
+    <string name="pref_theme_title">Tema</string>
+    <!-- Settings: Description for changing the theme -->
+    <string name="pref_theme_summary">Escolha entre dia/noite (padrão), claro e escuro</string>
+    <!-- Settings: Title for changing the accent colour -->
+    <string name="pref_theme_accent_title">Realce</string>
+    <!-- Settings: Description for changing the accent colour -->
+    <string name="pref_theme_accent_summary">Cor de realce do tema</string>
+    <!-- Settings: Title for the option to use the 'extra dark' theme -->
+    <string name="pref_theme_extra_dark_title">Extra escuro</string>
+    <!-- Settings: Description for the option to use the 'extra dark' theme -->
+    <string name="pref_theme_extra_dark_summary">Use cores mais escuras para poupar bateria em ecrãs AMOLED</string>
+    <!-- Settings: Title for the option to choose media providers -->
+    <string name="pref_media_provider_title">Fornecedores multimédia</string>
+    <!-- Settings: Description for the option to choose media providers-->
+    <string name="pref_media_provider_summary">Escolha entre o verificador multimédia integrado, o Android MediaStore, o Jellyfin e o Emby</string>
+    <!-- Settings: Title for the option to rescan the media library -->
+    <string name="pref_media_rescan_title">Reverificar</string>
+    <!-- Settings: Description for the option to rescan the media library -->
+    <string name="pref_media_rescan_summary">Reverificar novamente multimédia no dispositivo</string>
+    <!-- Settings: Title for the option to view the list of excluded (blacklisted) songs -->
+    <string name="pref_exclude_title">Excluído</string>
+    <!-- Settings: Description for the option to view the list of excluded (blacklisted) songs -->
+    <string name="pref_exclude_summary">Ver/Editar excluído</string>
+    <!-- Settings: Title for the option to restrict artwork downloading to only work on Wi-Fi -->
+    <string name="pref_artwork_wifi_title">Só Wi-Fi</string>
+    <!-- Settings: Description for the option to restrict artwork downloading to only work on Wi-Fi -->
+    <string name="pref_artwork_wifi_subtitle">Transferir arte de fontes remotas apenas quando o Wi-Fi estiver disponível</string>
+    <!-- Settings: Title for the option to restrict artwork to only load from local sources -->
+    <string name="pref_artwork_local_only_title">Só local</string>
+    <!-- Settings: Description for the option to restrict artwork to only load from local sources -->
+    <string name="pref_artwork_local_only_subtitle">Não transferir arte de fontes remotas (Internet)</string>
+    <!-- Settings: Title for the option to clear (delete) all artwork -->
+    <string name="pref_clear_artwork_title">Limpar arte</string>
+    <!-- Settings: Description for the option to clear (delete) all artwork -->
+    <string name="pref_clear_artwork_subtitle">Remove todas as artes em cache</string>
+    <!-- Settings: Title for the option to download all artwork (artist/album images) -->
+    <string name="pref_download_artwork_title">Transferir todas as artes</string>
+    <!-- Settings: Title for the option to use dark mode for widgets -->
+    <string name="pref_widget_dark_mode_title">Modo escuro</string>
+    <!-- Settings: Title for the option to change opacity of the widget background -->
+    <string name="pref_widget_opacity_title">Opacidade do fundo</string>
+    <!-- Settings: Title for the option to ignore duplicates when adding songs to a playlist -->
+    <string name="pref_ignore_duplicates_title">Ignorar duplicados</string>
+    <!-- Settings: Description for the option to ignore duplicates when adding songs to a playlist -->
+    <string name="pref_ignore_duplicates_subtitle">Não perguntar ao tentar adicionar músicas duplicadas a uma playlist</string>
+    <!-- Settings: Title for the option to view the changelog -->
+    <string name="pref_view_changelog_title">Ver changelog</string>
+    <!-- Settings: Title for the option to toggle whether the changelog is shown when the app is launched -->
+    <string name="pref_show_changelog_launch_title">Mostrar changelog ao abrir</string>
+    <!-- Settings: Title for the option to turn off crash reporting -->
+    <string name="pref_crash_reporting_title">Relatórios de crash</string>
+    <!-- Settings: Description for the option to turn off crash reporting -->
+    <string name="pref_crash_reporting_subtitle">O S2 recolhe dados de crash via Bugsnag. Desative para cancelar</string>
+    <!-- Settings: Title for the option to view open source licenses -->
+    <string name="pref_view_licenses_title">Ver licenças</string>
+    <!-- Settings: Title for the option to enable debug logging (log file will be stored on disk) -->
+    <string name="pref_file_logging_title">Ficheiro de logs</string>
+    <!-- Settings: Description for the option to enable debug logging (log file will be stored on disk) -->
+    <string name="pref_file_logging_subtitle">Grava os logs num ficheiro no disco</string>
+    <!-- Settings: Title for the option to copy the debug logs to the clipboard -->
+    <string name="pref_copy_debug_logs_subtitle">Copiar logs de debug</string>
+    <!-- Settings: Title for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->
+    <string name="pref_media_session_artwork_title">Arte da sessão multimédia</string>
+    <!-- Settings: Description for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->
+    <string name="pref_media_session_artwork_subtitle">Forneça a arte para a sessão multimédia do Android. Desative para impedir a arte no ecrã de bloqueio</string>
+    <!-- Settings title for the day/night theme option -->
+    <string name="theme_entry_day_night">Dia/Noite</string>
+    <!-- Settings title for the light theme option -->
+    <string name="theme_entry_light">Claro</string>
+    <!-- Settings title for the dark theme option -->
+    <string name="theme_entry_dark">Escuro</string>
+    <!-- Settings title for blue theme option (called Shuttle blue, because it uses the particular shade of blue from the original Shuttle) -->
+    <string name="theme_accent_entry_blue">Azul Shuttle</string>
+    <!-- Settings title for the orange theme option -->
+    <string name="theme_accent_entry_orange">Laranja</string>
+    <!-- Settings title for the cyan theme option -->
+    <string name="theme_accent_entry_cyan">Ciano</string>
+    <!-- Settings title for the purple theme option -->
+    <string name="theme_accent_entry_purple">Roxo</string>
+    <!-- Settings title for the green theme option -->
+    <string name="theme_accent_entry_green">Verde</string>
 </resources>

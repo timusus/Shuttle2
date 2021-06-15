@@ -1,16 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Title for the list of artists -->
     <string name="artists">Artyści</string>
-    <plurals name="artistsPlural">
-        <item quantity="one"><xliff:g example="Tool" id="count">%d</xliff:g>
-       wykonawca</item>
-        <item quantity="other"><xliff:g example="Tool" id="count">{count}</xliff:g>
-       artystów</item>
-        <item quantity="few"><xliff:g example="Tool" id="count">{count}</xliff:g>
-       artystów</item>
-        <item quantity="many"><xliff:g example="Tool" id="count">{count}</xliff:g>
-       artystów</item>
-    </plurals>
+    <!-- Title for the list of albums -->
     <string name="albums">Albumy</string>
     <plurals name="albumsPlural">
         <item quantity="one">Album 
@@ -22,7 +14,9 @@
         <item quantity="many">Albumy: 
       <xliff:g example="5" id="count">{count}</xliff:g></item>
     </plurals>
+    <!-- Title for the list of songs -->
     <string name="songs">Piosenki</string>
+    <!-- The number of songs for an album/playlist/genre -->
     <plurals name="songsPlural">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
        utwór</item>
@@ -33,19 +27,11 @@
         <item quantity="many"><xliff:g example="12" id="count">{count}</xliff:g>
        utwory</item>
     </plurals>
+    <!-- Title for the list of genres -->
     <string name="genres">Gatunki</string>
-    <plurals name="genresPlural">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
-       gatunek</item>
-        <item quantity="other"><xliff:g example="3" id="count">{count}</xliff:g>
-       gatunki</item>
-        <item quantity="few"><xliff:g example="3" id="count">{count}</xliff:g>
-       gatunki</item>
-        <item quantity="many"><xliff:g example="3" id="count">{count}</xliff:g>
-       gatunki</item>
-    </plurals>
+    <!-- Title for the list of playlists -->
     <string name="library_playlists">Playlisty</string>
+    <!-- Shown when the app is scanning for songs in the library -->
     <string name="library_scan_in_progress">Skanowanie Twojej biblioteki</string>
-    <string name="multi_select_items_selected">Wybrano 
-    <xliff:g example="3" id="count">{count}</xliff:g></string>
+    <!-- Shown to indicate the number of tracks/albums/artists which have been selected, in multi-selection mode-->
 </resources>

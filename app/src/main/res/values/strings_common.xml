@@ -1,21 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-
     <!-- 'Loading' text. Shown on various screens as their content is loading-->
     <string name="loading">Loading…</string>
-
     <!-- Shown when text is required in a text field -->
     <string name="validation_field_required">Required</string>
-
     <!-- Shown when an unexpected error occurs -->
     <string name="error_unexpected">An unexpected error occurred</string>
-
     <!-- Shown when an unknown error occurs -->
     <string name="error_unknown">An unknown error occurred</string>
-
     <!-- Shown when items (an album, artist or song) are added to the queue -->
     <string name="queue_item_added"><xliff:g example="Lateralus" id="item_name">{item_name}</xliff:g> added to queue</string>
-
     <!-- Shown when songs are added to the queue -->
     <plurals name="queue_songs_added">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> song added to queue</item>
@@ -31,7 +25,6 @@
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> artist added to queue</item>
         <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> artists added to queue</item>
     </plurals>
-
     <!-- Shown when current playback queue is added to a playlist -->
     <string name="playlist_queue_added">Queue added to <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></string>
     <!-- Shown when songs are added to a playlist -->
@@ -54,14 +47,10 @@
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> genre added to <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
         <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> genre added to <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
     </plurals>
-
     <!-- Shown when a song fails to be deleted -->
     <string name="delete_song_failed">The song couldn\'t be deleted</string>
-
     <!-- The disc number for this album-->
     <string name="disc_number">Disc <xliff:g example="1" id="disc_number">{disc_number}</xliff:g></string>
-
-
     <!-- Shown when the songs list finishes loading, and there are no songs-->
     <string name="song_list_empty">No songs</string>
     <!-- Shown when the albums list finishes loading, and there are no songs-->
@@ -72,13 +61,10 @@
     <string name="genre_list_empty">No genres</string>
     <!-- Shown when the playlists list finishes loading, and there are no songs-->
     <string name="playlist_list_empty">No playlists</string>
-
     <!-- Shown when the playback queue is empty -->
     <string name="queue_empty">Queue empty</string>
-
     <!-- Shown when a playlist is empty -->
     <string name="playlist_empty">Playlist empty</string>
-
     <!-- Button to toggle the 'repeat' mode-->
     <string name="button_repeat">Repeat</string>
     <!-- Button to indicate 'seek forward' (skipping forward by, say, 10 seconds)-->
@@ -95,5 +81,4 @@
     <string name="button_content_description_shuffle">Shuffle</string>
     <!-- Button to shuffle songs using 'album shuffle' mode (shuffles albums, but plays songs in track order)-->
     <string name="button_album_shuffle">Album Shuffle</string>
-
 </resources>

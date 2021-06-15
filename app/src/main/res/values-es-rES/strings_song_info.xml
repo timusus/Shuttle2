@@ -1,20 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Shown in the song info dialog. The song 'title'-->
     <string name="song_info_track_title">Título</string>
+    <!-- Shown in the song info dialog. The song 'track number'-->
     <string name="song_info_track_number">Pista #</string>
+    <!-- Shown in the song info dialog. The song 'duration'-->
     <string name="song_info_duration">Duración</string>
+    <!-- Shown in the song info dialog. When a field can't be read-->
     <string name="song_info_unknown">Desconocido</string>
+    <!-- Shown in the song info dialog. The song 'album artist'-->
     <string name="song_info_album_artist">Artista del álbum</string>
+    <!-- Shown in the song info dialog. The song 'artists'-->
     <string name="song_info_artists">Artistas</string>
+    <!-- Shown in the song info dialog. The song 'album'-->
     <string name="song_info_album">Álbum</string>
+    <!-- Shown in the song info dialog. The song 'year'-->
     <string name="song_info_year">Año</string>
+    <!-- Shown in the song info dialog. The song 'disc'-->
     <string name="song_info_disc">Disco</string>
+    <!-- Shown in the song info dialog. The song 'play count'-->
     <string name="song_info_play_count">Recuento de reproducciones</string>
+    <!-- Shown in the song info dialog. The song 'genres'-->
     <string name="song_info_genres">Géneros</string>
+    <!-- Shown in the song info dialog. The song 'path'-->
     <string name="song_info_path">Ruta</string>
-    <string name="song_info_mime_type">Tipo mimo</string>
+    <!-- Shown in the song info dialog. The song 'MIME type'-->
+    <string name="song_info_mime_type">Tipo MIME</string>
+    <!-- Shown in the song info dialog. The song 'file size'-->
     <string name="song_info_size">Tamaño</string>
+    <!-- Shown in the song info dialog. The song 'Lyrics'-->
     <string name="song_info_lyrics">Letra</string>
+    <!-- The song info dialog heading -->
     <string name="song_info_dialog_title">Información de la canción</string>
+    <!-- Button to close the song info dialog -->
     <string name="song_info_dialog_close_button_title">Cerrar</string>
 </resources>

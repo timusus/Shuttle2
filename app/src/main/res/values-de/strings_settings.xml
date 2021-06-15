@@ -1,24 +1,144 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Menu Items -->
+    <!-- The title of the sleep timer in the bottom settings menu -->
     <string name="settings_menu_sleep_timer">Sleep-Timer</string>
-    <string name="settings_menu_shuffle_all">Alle per Zufallswiedergabe abspielen</string>
+    <!-- The title of 'shuffle all' in the bottom settings menu -->
+    <string name="settings_menu_shuffle_all">Alle zufällig wiedergeben</string>
+    <!-- The title of 'DSP' (dynamic sound processing) in the bottom settings menu. Could use 'sound effects', or something similar -->
     <string name="settings_menu_dsp">DSP</string>
+    <!-- The title of 'settings' in the bottom settings menu -->
     <string name="settings_menu_settings">Einstellungen</string>
+    <!-- Title of the dialog shown when the user changes a setting which requires the app to be restarted.-->
     <string name="settings_crash_reporting_dialog_requires_restart">Erfordert einen Neustart</string>
-    <string name="settings_crash_reporting_dialog_message">Um das Absturzprotokoll vollständig abzumelden, starten Sie bitte den Shuttle neu. Achten Sie darauf, zu pausieren, die Benachrichtigung wegzuwischen und die App aus den Wiedervorlagen zu löschen.</string>
+    <!-- Description of dialog shown when user changes the crash reporting opt-in setting. Explaining that the user needs to restart the app. -->
+    <string name="settings_crash_reporting_dialog_message">Um das Absturzprotokoll vollständig abzumelden, starten Sie bitte Shuttle neu. Achten Sie darauf, zu pausieren, die Benachrichtigung wegzuwischen und die App im Hintergrund zu schließen.</string>
+    <!-- Settings option to view the list of excluded (blacklisted) songs -->
     <string name="settings_dialog_title_excluded">Ausgeschlossen</string>
+    <!-- Option to clear the list of excluded (blacklisted) songs -->
     <string name="settings_dialog_button_clear_excludes">Leeren</string>
-    <string name="settings_dialog_title_clear_artwork">Bildmaterial leeren</string>
+    <!-- Settings option to clear (delete) all existing artwork -->
+    <string name="settings_dialog_title_clear_artwork">Grafiken leeren</string>
+    <!-- Button shown to confirm clearing (deleting) of existing artwork -->
     <string name="settings_dialog_button_clear_artwork">Leeren</string>
-    <string name="settings_dialog_message_clear_artwork">Dadurch werden alle zwischengespeicherten Bildmaterialien dauerhaft entfernt</string>
-    <string name="settings_dialog_title_download_artwork">Alle Bildmaterialien herunterladen</string>
-    <string name="settings_dialog_message_download_artwork">Dadurch werden alle Bildmaterialien heruntergeladen, unabhängig von Ihrer Netzwerkverbindung (WiFi/Mobilfunknetz/andere)</string>
+    <!-- Dialog warning shown when user selects option to clear (delete) existing artwork -->
+    <string name="settings_dialog_message_clear_artwork">Dadurch werden alle zwischengespeicherten Grafiken dauerhaft entfernt</string>
+    <!-- Settings option to download all artwork (album/artist images)-->
+    <string name="settings_dialog_title_download_artwork">Alle Grafiken herunterladen</string>
+    <!-- Shown when user selects option to download all artwork (album/artist images) -->
+    <string name="settings_dialog_message_download_artwork">Dadurch werden alle Grafiken heruntergeladen, unabhängig von Ihrer Netzwerkverbindung (Wi-Fi/Mobilfunknetz/andere)</string>
+    <!-- Option to confirm downloading of artwork (album/artist images) -->
     <string name="settings_dialog_button_download_artwork">Herunterladen</string>
+    <!-- Title of the dialog shown when the user changes their theme preferences, and the app must be restarted -->
     <string name="settings_dialog_title_amoled_required_restart">Erfordert einen Neustart</string>
-    <string name="settings_dialog_message_amoled_requires_restart">S2 muss neu gestartet werden, damit die Themenänderungen übernommen werden können</string>
-    <string name="settings_logging_clipboard_name">Shuttle-Protokolle</string>
+    <!-- Shown in dialog when user changes their theme options, and the app must be restarted -->
+    <!-- Settings option to copy debug logs to clipboard -->
+    <string name="settings_logging_clipboard_name">S2-Protokolle</string>
+    <!-- Shown when the debug logs have been copied to the clipboard -->
     <string name="settings_logging_clipboard_logs_copied">Protokolle wurden in die Zwischenablage kopiert</string>
+    <!-- Error message shown when copying debug logs failed, because the log file is too large -->
     <string name="settings_logging_clipboard_logs_too_large">Die Protokolldatei ist zu groß für die Zwischenablage</string>
+    <!-- Error message shown when copying debug logs failed, because there are no logs -->
     <string name="settings_logging_clipboard_logs_empty">Protokolldatei ist leer</string>
+    <!-- Settings: Title for 'display' settings (settings related to themes, etc.) -->
+    <string name="pref_category_title_display">Anzeige</string>
+    <!-- Settings: Title for 'media' settings. Settings related to media providers, rescanning & exclude list (blacklist) -->
+    <string name="pref_category_title_media">Medien</string>
+    <!-- Settings: Title for artwork related settings (artist/album images) -->
+    <string name="pref_category_title_artwork">Grafik</string>
+    <!-- Settings: Title for widget related settings  -->
+    <string name="pref_category_title_widgets">Widgets</string>
+    <!-- Settings: Title for playlist related settings  -->
+    <string name="pref_category_title_playlists">Wiedergabelisten</string>
+    <!-- Settings: Title for shangelog related settings -->
+    <string name="pref_category_title_changelog">Änderungsprotokoll</string>
+    <!-- Settings: Title for privacy related settings -->
+    <string name="pref_category_title_privacy">Privatsphäre</string>
+    <!-- Settings: Title for open source related settings -->
+    <string name="pref_category_title_open_source">Open Source</string>
+    <!-- Settings: Title for debug related settings -->
+    <string name="pref_category_title_debug">Debug</string>
+    <!-- Settings: Title for settings which otherwise don't have a group -->
+    <string name="pref_category_title_other">Andere</string>
+    <!-- Settings: Title for changing the theme -->
+    <string name="pref_theme_title">Thema</string>
+    <!-- Settings: Description for changing the theme -->
+    <string name="pref_theme_summary">Wählen Sie zwischen Tag/Nacht (Standard), Hell und Dunkel aus</string>
+    <!-- Settings: Title for changing the accent colour -->
+    <string name="pref_theme_accent_title">Akzent</string>
+    <!-- Settings: Description for changing the accent colour -->
+    <string name="pref_theme_accent_summary">Akzentfarbe des Themas</string>
+    <!-- Settings: Title for the option to use the 'extra dark' theme -->
+    <string name="pref_theme_extra_dark_title">Extra dunkel</string>
+    <!-- Settings: Description for the option to use the 'extra dark' theme -->
+    <string name="pref_theme_extra_dark_summary">Verwenden Sie dunklere Farben, um bei AMOLED-Bildschirmen den Akku etwas zu schonen</string>
+    <!-- Settings: Title for the option to choose media providers -->
+    <string name="pref_media_provider_title">Medienanbieter</string>
+    <!-- Settings: Description for the option to choose media providers-->
+    <string name="pref_media_provider_summary">Wählen Sie zwischen dem integrierten Medien-Scanner, Android MediaStore, Jellyfin &amp; Emby</string>
+    <!-- Settings: Title for the option to rescan the media library -->
+    <string name="pref_media_rescan_title">Neu scannen</string>
+    <!-- Settings: Description for the option to rescan the media library -->
+    <string name="pref_media_rescan_summary">Das Gerät auf Medien scannen</string>
+    <!-- Settings: Title for the option to view the list of excluded (blacklisted) songs -->
+    <string name="pref_exclude_title">Ausgeschlossen</string>
+    <!-- Settings: Description for the option to view the list of excluded (blacklisted) songs -->
+    <string name="pref_exclude_summary">Anzeigen/Bearbeitung ausgeschlossen</string>
+    <!-- Settings: Title for the option to restrict artwork downloading to only work on Wi-Fi -->
+    <string name="pref_artwork_wifi_title">Nur Wi-Fi</string>
+    <!-- Settings: Description for the option to restrict artwork downloading to only work on Wi-Fi -->
+    <string name="pref_artwork_wifi_subtitle">Grafiken nur von externen Quellen herunterladen, wenn Wi-Fi verfügbar ist</string>
+    <!-- Settings: Title for the option to restrict artwork to only load from local sources -->
+    <string name="pref_artwork_local_only_title">Nur lokal</string>
+    <!-- Settings: Description for the option to restrict artwork to only load from local sources -->
+    <string name="pref_artwork_local_only_subtitle">Laden Sie keine Grafiken aus externen (Internet-)Quellen herunter</string>
+    <!-- Settings: Title for the option to clear (delete) all artwork -->
+    <string name="pref_clear_artwork_title">Grafiken leeren</string>
+    <!-- Settings: Description for the option to clear (delete) all artwork -->
+    <string name="pref_clear_artwork_subtitle">Entfernt alle zwischengespeicherten Grafiken</string>
+    <!-- Settings: Title for the option to download all artwork (artist/album images) -->
+    <string name="pref_download_artwork_title">Alle Grafiken herunterladen</string>
+    <!-- Settings: Title for the option to use dark mode for widgets -->
+    <string name="pref_widget_dark_mode_title">Dunkles Design</string>
+    <!-- Settings: Title for the option to change opacity of the widget background -->
+    <string name="pref_widget_opacity_title">Transparenz des Hintergrunds</string>
+    <!-- Settings: Title for the option to ignore duplicates when adding songs to a playlist -->
+    <string name="pref_ignore_duplicates_title">Duplikate ignorieren</string>
+    <!-- Settings: Description for the option to ignore duplicates when adding songs to a playlist -->
+    <string name="pref_ignore_duplicates_subtitle">Beim Versuch, doppelte Songs zu einer Wiedergabeliste hinzuzufügen, keine Aufforderung anzeigen</string>
+    <!-- Settings: Title for the option to view the changelog -->
+    <string name="pref_view_changelog_title">Änderungsprotokoll anzeigen</string>
+    <!-- Settings: Title for the option to toggle whether the changelog is shown when the app is launched -->
+    <string name="pref_show_changelog_launch_title">Änderungsprotokoll beim Start anzeigen</string>
+    <!-- Settings: Title for the option to turn off crash reporting -->
+    <string name="pref_crash_reporting_title">Absturzberichte</string>
+    <!-- Settings: Description for the option to turn off crash reporting -->
+    <string name="pref_crash_reporting_subtitle">S2 sammelt Absturzdaten über „Bugsnag\“. Ausschalten um sich abzumelden</string>
+    <!-- Settings: Title for the option to view open source licenses -->
+    <string name="pref_view_licenses_title">Lizenzen anzeigen</string>
+    <!-- Settings: Title for the option to enable debug logging (log file will be stored on disk) -->
+    <string name="pref_file_logging_title">Dateiprotokollierung</string>
+    <!-- Settings: Description for the option to enable debug logging (log file will be stored on disk) -->
+    <string name="pref_file_logging_subtitle">Schreibt Protokolle in eine Datei auf der Festplatte</string>
+    <!-- Settings: Title for the option to copy the debug logs to the clipboard -->
+    <string name="pref_copy_debug_logs_subtitle">Debug-Protokolle kopieren</string>
+    <!-- Settings: Title for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->
+    <string name="pref_media_session_artwork_title">Bildmaterial der Mediensitzung</string>
+    <!-- Settings: Description for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->
+    <string name="pref_media_session_artwork_subtitle">Grafiken für die Mediensitzung von Android bereitstellen. Deaktivieren, um die Cover-Anzeige im Sperrbildschirm zu verhindern.</string>
+    <!-- Settings title for the day/night theme option -->
+    <string name="theme_entry_day_night">Tag/Nacht</string>
+    <!-- Settings title for the light theme option -->
+    <string name="theme_entry_light">Hell</string>
+    <!-- Settings title for the dark theme option -->
+    <string name="theme_entry_dark">Dunkel</string>
+    <!-- Settings title for blue theme option (called Shuttle blue, because it uses the particular shade of blue from the original Shuttle) -->
+    <string name="theme_accent_entry_blue">Shuttle-Blau</string>
+    <!-- Settings title for the orange theme option -->
+    <string name="theme_accent_entry_orange">Orange</string>
+    <!-- Settings title for the cyan theme option -->
+    <string name="theme_accent_entry_cyan">Cyan</string>
+    <!-- Settings title for the purple theme option -->
+    <string name="theme_accent_entry_purple">Lila</string>
+    <!-- Settings title for the green theme option -->
+    <string name="theme_accent_entry_green">Grün</string>
 </resources>
