@@ -124,7 +124,7 @@ class SleepTimerDialogFragment : DialogFragment() {
 }
 
 enum class SleepTimerDuration(@StringRes val nameResId: Int, val duration: Long) {
-    FiveMins(R.string.sleep_timer_5_minutes, TimeUnit.MINUTES.toMillis(1)),
+    FiveMins(R.string.sleep_timer_5_minutes, TimeUnit.MINUTES.toMillis(5)),
     FifteenMins(R.string.sleep_timer_15_minutes, TimeUnit.MINUTES.toMillis(15)),
     ThirtyMins(R.string.sleep_timer_30_minutes, TimeUnit.MINUTES.toMillis(30)),
     OneHour(R.string.sleep_timer_1_hour, TimeUnit.MINUTES.toMillis(60))
