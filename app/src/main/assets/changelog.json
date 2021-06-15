@@ -1,5 +1,23 @@
 [
   {
+    "versionName": "0.4.1",
+    "releaseDate": "15/06/2021",
+    "features": [
+
+    ],
+    "fixes": [
+      "Fixed an issue where Sleep Timer '5 minutes' option actually timed out after 1 minute",
+      "Fixed an issue where artists didn't show up in Android Auto",
+      "Fixed an issue where Android Auto playback would start from track 1, instead of selected track"
+    ],
+    "improvements": [
+     "Translation updates"
+    ],
+    "notes": [
+      "If you'd like to help translate S2 into another language, or you notice an error in the translations, please visit https://shuttle.oneskyapp.com/collaboration/project?id=382482"
+    ]
+  },
+  {
     "versionName": "0.4.0",
     "releaseDate": "11/06/2021",
     "features": [
