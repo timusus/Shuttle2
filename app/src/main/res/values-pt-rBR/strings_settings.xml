@@ -16,7 +16,7 @@
     <string name="settings_dialog_message_download_artwork">Isso fará o download de toda as artes, independentemente da sua conexão de rede (WiFi/dados/outros)</string>
     <string name="settings_dialog_button_download_artwork">Download</string>
     <string name="settings_dialog_title_amoled_required_restart">É necessário Reiniciar</string>
-    <string name="settingS_dialog_message_amoled_requires_restart">S2 deve ser reiniciado para que as alterações do tema sejam aplicadas</string>
+    <string name="settings_dialog_message_amoled_requires_restart">S2 deve ser reiniciado para que as alterações do tema sejam aplicadas</string>
     <string name="settings_logging_clipboard_name">Logs do Shuttle</string>
     <string name="settings_logging_clipboard_logs_copied">Logs copiados para a área de transferência</string>
     <string name="settings_logging_clipboard_logs_too_large">O arquivo de log é muito grande para a área de transferência</string>

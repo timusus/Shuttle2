@@ -16,7 +16,7 @@
     <string name="settings_dialog_message_download_artwork">これにより、ネットワーク接続 (WiFi/データ通信/その他) に関係なく、すべてのアートワークがダウンロードされます</string>
     <string name="settings_dialog_button_download_artwork">ダウンロード</string>
     <string name="settings_dialog_title_amoled_required_restart">再起動が必要です</string>
-    <string name="settingS_dialog_message_amoled_requires_restart">テーマの変更を有効にするには、S2を再起動する必要があります</string>
+    <string name="settings_dialog_message_amoled_requires_restart">テーマの変更を有効にするには、S2を再起動する必要があります</string>
     <string name="settings_logging_clipboard_name">Shuttleログ</string>
     <string name="settings_logging_clipboard_logs_copied">ログがクリップボードにコピーされました</string>
     <string name="settings_logging_clipboard_logs_too_large">ログファイルがクリップボードには大きすぎます</string>

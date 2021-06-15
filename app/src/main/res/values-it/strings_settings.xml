@@ -16,7 +16,7 @@
     <string name="settings_dialog_message_download_artwork">Questo scaricherà tutta la grafica, indipendentemente dalla tua connessione di rete (WiFi/dati/altro)</string>
     <string name="settings_dialog_button_download_artwork">Scarica</string>
     <string name="settings_dialog_title_amoled_required_restart">Richiede il riavvio</string>
-    <string name="settingS_dialog_message_amoled_requires_restart">S2 deve essere riavviato affinché le modifiche al tema abbiano effetto</string>
+    <string name="settings_dialog_message_amoled_requires_restart">S2 deve essere riavviato affinché le modifiche al tema abbiano effetto</string>
     <string name="settings_logging_clipboard_name">Registri navetta</string>
     <string name="settings_logging_clipboard_logs_copied">Registri copiati negli appunti</string>
     <string name="settings_logging_clipboard_logs_too_large">Il file di registro è troppo grande per gli appunti</string>

@@ -16,7 +16,7 @@
     <string name="settings_dialog_message_download_artwork">Esto descargará todas las portadas, independientemente de tu conexión de red (WiFi/datos/otra)</string>
     <string name="settings_dialog_button_download_artwork">Descargar</string>
     <string name="settings_dialog_title_amoled_required_restart">Requiere reiniciar</string>
-    <string name="settingS_dialog_message_amoled_requires_restart">S2 debe reiniciarse para que los cambios de tema surtan efecto</string>
+    <string name="settings_dialog_message_amoled_requires_restart">S2 debe reiniciarse para que los cambios de tema surtan efecto</string>
     <string name="settings_logging_clipboard_name">Registros de Shuttle</string>
     <string name="settings_logging_clipboard_logs_copied">Registros copiados en el portapapeles</string>
     <string name="settings_logging_clipboard_logs_too_large">El archivo de registro es demasiado grande para el portapapeles</string>

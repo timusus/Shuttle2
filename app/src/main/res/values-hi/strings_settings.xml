@@ -16,7 +16,7 @@
     <string name="settings_dialog_message_download_artwork">यह आपके नेटवर्क कनेक्शन (वाईफाई/डेटा/अन्य) की परवाह किए बिना सभी कलाकृति डाउनलोड करेगा</string>
     <string name="settings_dialog_button_download_artwork">डाउनलोड</string>
     <string name="settings_dialog_title_amoled_required_restart">पुनरारंभ की आवश्यकता है</string>
-    <string name="settingS_dialog_message_amoled_requires_restart">प्रभावी होने के लिए विषय परिवर्तनों के लिए S2 को फिर से शुरू करना चाहिए</string>
+    <string name="settings_dialog_message_amoled_requires_restart">प्रभावी होने के लिए विषय परिवर्तनों के लिए S2 को फिर से शुरू करना चाहिए</string>
     <string name="settings_logging_clipboard_name">शटल लॉग्स</string>
     <string name="settings_logging_clipboard_logs_copied">क्लिपबोर्ड पर लॉग किए गए लॉग</string>
     <string name="settings_logging_clipboard_logs_too_large">क्लिपबोर्ड के लिए लॉग फ़ाइल बहुत बड़ी है</string>

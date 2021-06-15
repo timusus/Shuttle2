@@ -1,45 +1,82 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
+    <!-- Menu option to start playback of the artist/album/all songs -->
     <string name="menu_title_play">Play</string>
+
+    <!-- Menu option to shuffle artist/album/all songs -->
     <string name="menu_title_shuffle">Shuffle</string>
+
+    <!-- Menu option to start 'album shuffle' mode (plays a random album, where tracks are played in order)-->
     <string name="menu_title_album_shuffle">Album Shuffle</string>
+
+    <!-- Menu option to add this song to the queue, to play next -->
     <string name="menu_title_play_next">Play Next</string>
+
+    <!-- Menu option to open the tag editor for this song/album/artist -->
     <string name="menu_title_edit_tags">Edit Tags</string>
 
+    <!-- Menu option to configure the selected media provider -->
     <string name="menu_title_media_provider_configure">Configure</string>
+    <!-- Menu option to remove the selected media provider -->
     <string name="menu_title_media_provider_remove">Remove</string>
+    <!-- Menu option to show the Sleep Timer -->
     <string name="menu_title_sleep_timer">Sleep Timer</string>
+    <!-- Menu option to add the selected song to the 'favorites' playlist -->
     <string name="menu_title_favorite">Favorite</string>
+    <!-- Menu option to show the 'lyrics' view -->
     <string name="menu_title_lyrics">Lyrics</string>
+    <!-- Menu option to show the 'song info' dialog -->
     <string name="menu_title_song_info">Song Info</string>
+    <!-- Menu option to delete the selected artist/album/song -->
     <string name="menu_title_delete">Delete</string>
+    <!-- Menu option to import a playlist from the Android Media Store-->
     <string name="menu_title_import">Import</string>
+    <!-- Menu option to add an artist/album/song to the list of excluded (blacklisted) songs-->
     <string name="menu_title_exclude">Exclude</string>
+    <!-- Menu option to remove an artist/album/song from a playlist, or the exclude list (blacklist)-->
     <string name="menu_title_remove">Remove</string>
 
+    <!-- Menu option to open the submenu to change between 'list' and 'grid' view modes-->
     <string name="menu_title_view_mode">View as</string>
+    <!-- Menu option to view the artist/album list as a list rather than a grid-->
     <string name="menu_title_view_mode_list">List</string>
+    <!-- Menu option to view the artist/album list as a grid rather than a list-->
     <string name="menu_title_view_mode_grid">Grid</string>
 
+    <!-- Menu option to open the sorting submenu -->
     <string name="menu_title_sort_by">Sort by</string>
+    <!-- Menu option to sort by album name -->
     <string name="menu_title_sort_album_name">Album Name</string>
+    <!-- Menu option to sort by artist name -->
     <string name="menu_title_sort_artist_name">Artist Name</string>
-    <string name="menu_title_sort_album_year">Album Year</string>
+    <!-- Menu option to sort by song name -->
     <string name="menu_title_sort_song_name">Song Name</string>
+    <!-- Menu option to sort by year-->
     <string name="menu_title_sort_year">Year</string>
+    <!-- Menu option to sort by song duration -->
     <string name="menu_title_sort_duration">Duration</string>
+    <!-- Menu option to sort playlists by a custom sort order (user-defined sort order) -->
     <string name="menu_title_sort_custom">Custom</string>
 
+    <!-- Menu option to scroll to the current playing track in the queue -->
     <string name="menu_title_scroll_to_current">Scroll to Current</string>
 
+    <!-- Menu option to rename a playlist-->
     <string name="menu_title_rename">Rename</string>
+    <!-- Menu option to clear (remove) all tracks in a playlist-->
     <string name="menu_title_clear">Clear</string>
 
+    <!-- Menu option to add an artist/album/song to a playlist-->
     <string name="menu_title_add_to_playlist">Add to Playlist</string>
+    <!-- Menu option to save the current queue to a playlist -->
     <string name="menu_title_save_queue_to_playlist">Save Queue to Playlist</string>
 
+    <!-- Menu option to add the selected artist/album/song to the queue-->
     <string name="menu_title_add_to_queue">Add to Queue</string>
+    <!-- Menu option to remove the selected item from the queue -->
     <string name="menu_title_remove_from_queue">Remove from Queue</string>
+    <!-- Menu option to remove all items from the queue -->
     <string name="menu_title_sort_clear_queue">Clear Queue</string>
 
 </resources>

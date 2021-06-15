@@ -16,7 +16,7 @@
     <string name="settings_dialog_message_download_artwork">Dadurch werden alle Bildmaterialien heruntergeladen, unabhängig von Ihrer Netzwerkverbindung (WiFi/Mobilfunknetz/andere)</string>
     <string name="settings_dialog_button_download_artwork">Herunterladen</string>
     <string name="settings_dialog_title_amoled_required_restart">Erfordert einen Neustart</string>
-    <string name="settingS_dialog_message_amoled_requires_restart">S2 muss neu gestartet werden, damit die Themenänderungen übernommen werden können</string>
+    <string name="settings_dialog_message_amoled_requires_restart">S2 muss neu gestartet werden, damit die Themenänderungen übernommen werden können</string>
     <string name="settings_logging_clipboard_name">Shuttle-Protokolle</string>
     <string name="settings_logging_clipboard_logs_copied">Protokolle wurden in die Zwischenablage kopiert</string>
     <string name="settings_logging_clipboard_logs_too_large">Die Protokolldatei ist zu groß für die Zwischenablage</string>

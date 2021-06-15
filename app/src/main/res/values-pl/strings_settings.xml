@@ -16,7 +16,7 @@
     <string name="settings_dialog_message_download_artwork">Spowoduje to pobranie całej grafiki, niezależnie od połączenia sieciowego (WiFi/dane/inne)</string>
     <string name="settings_dialog_button_download_artwork">Ściągnij</string>
     <string name="settings_dialog_title_amoled_required_restart">Wymaga ponownego uruchomienia</string>
-    <string name="settingS_dialog_message_amoled_requires_restart">S2 musi zostać ponownie uruchomiony, aby zmiany motywu zaczęły obowiązywać</string>
+    <string name="settings_dialog_message_amoled_requires_restart">S2 musi zostać ponownie uruchomiony, aby zmiany motywu zaczęły obowiązywać</string>
     <string name="settings_logging_clipboard_name">Rejestry Shuttle</string>
     <string name="settings_logging_clipboard_logs_copied">Dzienniki skopiowane do schowka</string>
     <string name="settings_logging_clipboard_logs_too_large">Plik dziennika jest za duży dla schowka</string>

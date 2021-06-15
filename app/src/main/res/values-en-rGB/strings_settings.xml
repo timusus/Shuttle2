@@ -21,7 +21,7 @@
     <string name="settings_dialog_button_download_artwork">Download</string>
 
     <string name="settings_dialog_title_amoled_required_restart">Requires Restart</string>
-    <string name="settingS_dialog_message_amoled_requires_restart">S2 must be restarted for theme changes to take effect</string>
+    <string name="settings_dialog_message_amoled_requires_restart">S2 must be restarted for theme changes to take effect</string>
 
     <string name="settings_logging_clipboard_name">Shuttle Logs</string>
     <string name="settings_logging_clipboard_logs_copied">Logs copied to clipboard</string>

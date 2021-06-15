@@ -16,7 +16,7 @@
     <string name="settings_dialog_message_download_artwork">Hiermee download je alle illustraties, ongeacht je netwerkverbinding (wifi/data/overig)</string>
     <string name="settings_dialog_button_download_artwork">Downloaden</string>
     <string name="settings_dialog_title_amoled_required_restart">Opnieuw opstarten vereist</string>
-    <string name="settingS_dialog_message_amoled_requires_restart">S2 moet opnieuw worden gestart om themawijzigingen door te voeren</string>
+    <string name="settings_dialog_message_amoled_requires_restart">S2 moet opnieuw worden gestart om themawijzigingen door te voeren</string>
     <string name="settings_logging_clipboard_name">Shuttle-logboeken</string>
     <string name="settings_logging_clipboard_logs_copied">Logboeken gekopieerd naar klembord</string>
     <string name="settings_logging_clipboard_logs_too_large">Logbestand is te groot voor klembord</string>

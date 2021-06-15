@@ -34,7 +34,7 @@
                     android:title="@string/menu_title_sort_artist_name" />
                 <item
                     android:id="@+id/sortAlbumYear"
-                    android:title="@string/menu_title_sort_album_year" />
+                    android:title="@string/menu_title_sort_year" />
             </group>
         </menu>
     </item>

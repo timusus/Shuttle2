@@ -215,7 +215,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
         preferenceScreen.findPreference<Preference>("pref_amoled_mode")?.setOnPreferenceChangeListener { _, _ ->
             MaterialAlertDialogBuilder(requireContext())
                 .setTitle(getString(R.string.settings_dialog_title_amoled_required_restart))
-                .setMessage(getString(R.string.settingS_dialog_message_amoled_requires_restart))
+                .setMessage(getString(R.string.settings_dialog_message_amoled_requires_restart))
                 .setNegativeButton(getString(R.string.dialog_button_close), null)
                 .show()
             true
