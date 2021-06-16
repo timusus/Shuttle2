@@ -7,9 +7,9 @@
     <!-- Error message title shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
     <string name="onboarding_directories_dialog_missing_title">Ontbrekende documentprovider</string>
     <!-- Error message description shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
-    <string name="onboarding_directories_dialog_missing_subtitle">Er kan geen \'Documentprovider\'-app (bestandsbeheerder) op uw apparaat worden gevonden. Mogelijk moet u er een installeren of terugkeren naar het gebruik van de standaard-mediascanner.</string>
+    <string name="onboarding_directories_dialog_missing_subtitle">Er kan geen \'Documentprovider\'-app (bestandsbeheerder) op je apparaat worden gevonden. Mogelijk moet je er een installeren of terugkeren naar het gebruik van de standaard mediascanner.</string>
     <!-- Explanation shown to user when they're about to choose which directories wil lbe scanned bv the S2 media scanner-->
-    <string name="onboarding_directories_add_directories_help_text">Om naar muziek te kunnen scannen, heeft S2 toegang tot uw mediamappen nodig.\n\nWanneer u op \'map toevoegen\' drukt, wordt u naar uw standaard \'bestandsprovider\'-app geleid. Navigeer naar de map(pen) met uw muziek. U kunt meerdere mappen toevoegen. \n\nOpmerking: mogelijk moet u \'interne opslag weergeven\' inschakelen om uw muziekmap(pen) te zien.</string>
+    <string name="onboarding_directories_add_directories_help_text">Om naar muziek te kunnen scannen, heeft S2 toegang tot je mediamappen nodig.\n\nWanneer je op \'map toevoegen\' drukt, wordt je naar je standaard \'bestandsprovider\'-app geleid. Navigeer naar de map(pen) met je muziek. Je kunt meerdere mappen toevoegen. \n\nOpmerking: mogelijk moet je \'interne opslag weergeven\' inschakelen om uw muziekmap(pen) te zien.</string>
     <!-- Shown when the app is scanning the user's directories for media -->
     <string name="onboarding_directories_scanning">Aan het scannen…</string>
     <!-- Shown when the media scanner is scanning the user's directories for media-->
@@ -22,11 +22,11 @@
     <!-- Dialog title shown to user to indicate that S2 requires permission to access their storage -->
     <string name="onboarding_permission_dialog_title">Opslagtoestemming vereist</string>
     <!-- Dialog message shown to explain that S2 requires permission to access their storage-->
-    <string name="onboarding_permission_dialog_subtitle">De S2 functioneert mogelijk niet correct zonder toestemming om toegang te krijgen tot uw muziek</string>
+    <string name="onboarding_permission_dialog_subtitle">De S2 functioneert mogelijk niet naar behoren zonder toestemming om toegang te krijgen tot je muziek</string>
     <!-- Dialog button to grant permission to the app to access users storage-->
     <string name="onboarding_permission_button_grant">Toestemming geven</string>
     <!-- Shown after user initially denies access to storage -->
-    <string name="onboarding_permission_help_text">Om uw muziek te vinden, heeft S2 toestemming nodig voor het lezen van uw mediaopslag</string>
+    <string name="onboarding_permission_help_text">Om je muziek te vinden, heeft S2 toestemming nodig voor het lezen van je mediaopslag</string>
     <!-- Title of S2's Media Scanner, the thing that scans files on the device to read audio files/tags -->
     <string name="onboarding_media_scanner_title">Mediascanner</string>
     <!-- Shown when the media scanner is scanning -->

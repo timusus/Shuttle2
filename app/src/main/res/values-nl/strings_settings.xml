@@ -11,7 +11,7 @@
     <!-- Title of the dialog shown when the user changes a setting which requires the app to be restarted.-->
     <string name="settings_crash_reporting_dialog_requires_restart">Opnieuw opstarten vereist</string>
     <!-- Description of dialog shown when user changes the crash reporting opt-in setting. Explaining that the user needs to restart the app. -->
-    <string name="settings_crash_reporting_dialog_message">Start Shuttle opnieuw om je volledig af te melden voor crashrapportage. Zorg ervoor dat je pauzeert, de melding wegveegt en de app wist in recente apps.</string>
+    <string name="settings_crash_reporting_dialog_message">Start Shuttle opnieuw om je volledig af te melden voor crashrapportage. Zorg ervoor dat je de app pauzeert, de melding wegveegt en de app wist in recente apps.</string>
     <!-- Settings option to view the list of excluded (blacklisted) songs -->
     <string name="settings_dialog_title_excluded">Uitgesloten</string>
     <!-- Option to clear the list of excluded (blacklisted) songs -->
@@ -25,12 +25,13 @@
     <!-- Settings option to download all artwork (album/artist images)-->
     <string name="settings_dialog_title_download_artwork">Download alle illustraties</string>
     <!-- Shown when user selects option to download all artwork (album/artist images) -->
-    <string name="settings_dialog_message_download_artwork">Hiermee download je alle illustraties, ongeacht je netwerkverbinding (wifi/data/overig)</string>
+    <string name="settings_dialog_message_download_artwork">Hiermee download je alle illustraties, ongeacht je netwerkverbinding (Wi-Fi/mobiel netwerk/overig)</string>
     <!-- Option to confirm downloading of artwork (album/artist images) -->
     <string name="settings_dialog_button_download_artwork">Downloaden</string>
     <!-- Title of the dialog shown when the user changes their theme preferences, and the app must be restarted -->
     <string name="settings_dialog_title_amoled_required_restart">Opnieuw opstarten vereist</string>
     <!-- Shown in dialog when user changes their theme options, and the app must be restarted -->
+    <string name="settings_dialog_message_amoled_requires_restart">S2 moet opnieuw worden opgestart om de themawijzigingen door te voeren</string>
     <!-- Settings option to copy debug logs to clipboard -->
     <string name="settings_logging_clipboard_name">S2-logboeken</string>
     <!-- Shown when the debug logs have been copied to the clipboard -->
@@ -44,7 +45,7 @@
     <!-- Settings: Title for 'media' settings. Settings related to media providers, rescanning & exclude list (blacklist) -->
     <string name="pref_category_title_media">Media</string>
     <!-- Settings: Title for artwork related settings (artist/album images) -->
-    <string name="pref_category_title_artwork">Albumillustraties</string>
+    <string name="pref_category_title_artwork">Illustraties</string>
     <!-- Settings: Title for widget related settings  -->
     <string name="pref_category_title_widgets">Widgets</string>
     <!-- Settings: Title for playlist related settings  -->
@@ -78,19 +79,19 @@
     <!-- Settings: Title for the option to rescan the media library -->
     <string name="pref_media_rescan_title">Opnieuw scannen</string>
     <!-- Settings: Description for the option to rescan the media library -->
-    <string name="pref_media_rescan_summary">Scan het apparaat opnieuw op media</string>
+    <string name="pref_media_rescan_summary">Scan de geselecteerde mediaprovider(s) opnieuw</string>
     <!-- Settings: Title for the option to view the list of excluded (blacklisted) songs -->
     <string name="pref_exclude_title">Uitgesloten</string>
     <!-- Settings: Description for the option to view the list of excluded (blacklisted) songs -->
     <string name="pref_exclude_summary">Bekijk/bewerk uitgesloten</string>
     <!-- Settings: Title for the option to restrict artwork downloading to only work on Wi-Fi -->
-    <string name="pref_artwork_wifi_title">Alleen wifi</string>
+    <string name="pref_artwork_wifi_title">Alleen Wi-Fi</string>
     <!-- Settings: Description for the option to restrict artwork downloading to only work on Wi-Fi -->
     <string name="pref_artwork_wifi_subtitle">Download illustraties van externe bronnen alleen als wifi beschikbaar is</string>
     <!-- Settings: Title for the option to restrict artwork to only load from local sources -->
     <string name="pref_artwork_local_only_title">Alleen lokaal</string>
     <!-- Settings: Description for the option to restrict artwork to only load from local sources -->
-    <string name="pref_artwork_local_only_subtitle">Download geen illustraties van externe (internet) bronnen</string>
+    <string name="pref_artwork_local_only_subtitle">Download geen illustraties van externe (internet)bronnen</string>
     <!-- Settings: Title for the option to clear (delete) all artwork -->
     <string name="pref_clear_artwork_title">Wis illustraties</string>
     <!-- Settings: Description for the option to clear (delete) all artwork -->
@@ -104,7 +105,7 @@
     <!-- Settings: Title for the option to ignore duplicates when adding songs to a playlist -->
     <string name="pref_ignore_duplicates_title">Negeer duplicaten</string>
     <!-- Settings: Description for the option to ignore duplicates when adding songs to a playlist -->
-    <string name="pref_ignore_duplicates_subtitle">Vraag het niet wanneer u probeert dubbele nummers aan een afspeellijst toe te voegen</string>
+    <string name="pref_ignore_duplicates_subtitle">Vraag het niet wanneer geprobeerd wordt dubbele nummers aan een afspeellijst toe te voegen</string>
     <!-- Settings: Title for the option to view the changelog -->
     <string name="pref_view_changelog_title">Bekijk log met wijzigingen</string>
     <!-- Settings: Title for the option to toggle whether the changelog is shown when the app is launched -->
@@ -112,15 +113,15 @@
     <!-- Settings: Title for the option to turn off crash reporting -->
     <string name="pref_crash_reporting_title">Crashrapportage</string>
     <!-- Settings: Description for the option to turn off crash reporting -->
-    <string name="pref_crash_reporting_subtitle">S2 verzamelt crashgegevens via \'Bugsnag\'. Schakel uit om u af te melden</string>
+    <string name="pref_crash_reporting_subtitle">S2 verzamelt crashgegevens via Bugsnag. Schakel uit om u af te melden</string>
     <!-- Settings: Title for the option to view open source licenses -->
     <string name="pref_view_licenses_title">Bekijk licenties</string>
     <!-- Settings: Title for the option to enable debug logging (log file will be stored on disk) -->
-    <string name="pref_file_logging_title">Bestandsregistratie</string>
+    <string name="pref_file_logging_title">Registratie foutopsporing</string>
     <!-- Settings: Description for the option to enable debug logging (log file will be stored on disk) -->
-    <string name="pref_file_logging_subtitle">Schrijft logboeken naar een bestand op schijf</string>
+    <string name="pref_file_logging_subtitle">Schrijft logboeken foutopsporing naar een bestand op schijf</string>
     <!-- Settings: Title for the option to copy the debug logs to the clipboard -->
-    <string name="pref_copy_debug_logs_subtitle">Kopieer debug-logs</string>
+    <string name="pref_copy_debug_logs_subtitle">Kopieer logboeken foutopsporing</string>
     <!-- Settings: Title for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->
     <string name="pref_media_session_artwork_title">Mediasessie illustraties</string>
     <!-- Settings: Description for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->
@@ -132,7 +133,7 @@
     <!-- Settings title for the dark theme option -->
     <string name="theme_entry_dark">Donker</string>
     <!-- Settings title for blue theme option (called Shuttle blue, because it uses the particular shade of blue from the original Shuttle) -->
-    <string name="theme_accent_entry_blue">Shuttle blauw</string>
+    <string name="theme_accent_entry_blue">Shuttle-blauw</string>
     <!-- Settings title for the orange theme option -->
     <string name="theme_accent_entry_orange">Oranje</string>
     <!-- Settings title for the cyan theme option -->

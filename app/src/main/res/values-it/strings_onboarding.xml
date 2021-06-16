@@ -14,10 +14,8 @@
     <string name="onboarding_directories_scanning">Scansione...</string>
     <!-- Shown when the media scanner is scanning the user's directories for media-->
     <plurals name="onboarding_directories_scan_progress">
-        <item quantity="one"><xliff:g example="1" id="count">Un</xliff:g>
-       file audio</item>
-        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
-       file audio</item>
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> file audio</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> file audio</item>
     </plurals>
     <!-- Dialog title shown to user to indicate that S2 requires permission to access their storage -->
     <string name="onboarding_permission_dialog_title">Autorizzazione di accesso all\'archiviazione richiesta</string>

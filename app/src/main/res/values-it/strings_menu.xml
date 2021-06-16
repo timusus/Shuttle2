@@ -55,7 +55,7 @@
     <!-- Menu option to rename a playlist-->
     <string name="menu_title_rename">Rinomina</string>
     <!-- Menu option to clear (remove) all tracks in a playlist-->
-    <string name="menu_title_clear">Annulla</string>
+    <string name="menu_title_clear">Rimuovi</string>
     <!-- Menu option to add an artist/album/song to a playlist-->
     <string name="menu_title_add_to_playlist">Aggiungi a una playlist</string>
     <!-- Menu option to save the current queue to a playlist -->
@@ -65,5 +65,5 @@
     <!-- Menu option to remove the selected item from the queue -->
     <string name="menu_title_remove_from_queue">Rimuovi dalla coda</string>
     <!-- Menu option to remove all items from the queue -->
-    <string name="menu_title_sort_clear_queue">Cancella coda</string>
+    <string name="menu_title_sort_clear_queue">Svuota coda</string>
 </resources>

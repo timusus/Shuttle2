@@ -6,8 +6,8 @@
     <string name="playlist_menu_duplicates_dialog_title">Duplicati trovati</string>
     <!-- Shown when duplicate songs were found, when trying to add songs to a playlist. Asking the user whether they want to add the duplicates anyway, or skip them-->
     <plurals name="playlist_menu_duplicates_dialog_subtitle">
-        <item quantity="one"><xliff:g example="1" id="count">Un</xliff:g> brano esiste già in \"<xliff:g example="Favorites" id="playlist_name"> {playlist_name}</xliff:g>\". Aggiungere comunque?</item>
-        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g> brani esistono già in \"<xliff:g example="Favorites" id="playlist_name"> {playlist_name}</xliff:g>\". Aggiungere comunque?</item>
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> brano esiste già in \"<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\". Aggiungere comunque?</item>
+        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g> brani esistono già in \"<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\". Aggiungere comunque?</item>
     </plurals>
     <!-- Button shown to allow the user to 'skip' adding duplicate songs to a playlist-->
     <string name="playlist_menu_duplicates_dialog_button_skip">Salta</string>
@@ -30,11 +30,11 @@
     <!-- Button to confirm deletion of the selected playlist -->
     <string name="playlist_dialog_button_delete">Elimina</string>
     <!-- Button to show the 'clear playlist' dialog, which will ask the user to confirm this action. Clearing the playlist will render it empty, but not delete it. -->
-    <string name="playlist_dialog_title_clear">Cancella playlist</string>
+    <string name="playlist_dialog_title_clear">Svuota playlist</string>
     <!-- Shown whent he user attempts to clear a playlist. Asking the user to confirm that this playlist will become empty -->
     <string name="playlist_dialog_subtitle_clear">Tutti i brani verranno rimossi da <xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g></string>
     <!-- Button to confirm clearing of the selected playlist -->
-    <string name="playlist_dialog_button_clear">Annulla</string>
+    <string name="playlist_dialog_button_clear">Svuota</string>
     <!-- Shown when the user presses playlist 'import' button. This shows the dialog to 'sync' playlists with the Android MediaStore -->
     <string name="playlist_dialog_title_sync">Sincronizza le playlist di Media Store</string>
     <!-- Shown in the playlist import dialog. Explains to the user what 'sync' does-->

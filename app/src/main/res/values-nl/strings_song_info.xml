@@ -9,7 +9,7 @@
     <!-- Shown in the song info dialog. When a field can't be read-->
     <string name="song_info_unknown">Onbekend</string>
     <!-- Shown in the song info dialog. The song 'album artist'-->
-    <string name="song_info_album_artist">Album artiest</string>
+    <string name="song_info_album_artist">Albumartiest</string>
     <!-- Shown in the song info dialog. The song 'artists'-->
     <string name="song_info_artists">Artiesten</string>
     <!-- Shown in the song info dialog. The song 'album'-->
@@ -25,9 +25,9 @@
     <!-- Shown in the song info dialog. The song 'path'-->
     <string name="song_info_path">Pad</string>
     <!-- Shown in the song info dialog. The song 'MIME type'-->
-    <string name="song_info_mime_type">MIME type</string>
+    <string name="song_info_mime_type">MIME-type</string>
     <!-- Shown in the song info dialog. The song 'file size'-->
-    <string name="song_info_size">Grootte</string>
+    <string name="song_info_size">Bestandsgrootte</string>
     <!-- Shown in the song info dialog. The song 'Lyrics'-->
     <string name="song_info_lyrics">Songtekst</string>
     <!-- The song info dialog heading -->

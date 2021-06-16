@@ -21,17 +21,9 @@
     <!-- The description of the 'Plex' media provider. Plex is a personal media server - probably doesn't need to be translated-->
     <string name="media_provider_description_plex">Persoonlijke mediaserver</string>
     <!-- Shown when a media provider is being scanned. Indicates the current progress of that scan -->
-    <string name="media_provider_scan_progress"><xliff:g example="5" id="progress">{progress}</xliff:g>
-     / 
-    <xliff:g example="25" id="total">{total}</xliff:g>
-     nummers gescand</string>
+    <string name="media_provider_scan_progress"><xliff:g example="5" id="progress">{progress}</xliff:g> / <xliff:g example="25" id="total">{total}</xliff:g> nummers gescand</string>
     <!-- Shown when a media provider scan has completed -->
-    <string name="media_provider_scan_success_subtitle"><xliff:g example="5" id="inserts">{inserts}</xliff:g>
-     ingevoegd,
-    <xliff:g example="15" id="updates">{updates}</xliff:g>
-     updates,
-    <xliff:g example="25" id="deletes">{deletes}</xliff:g>
-     verwijderd</string>
+    <string name="media_provider_scan_success_subtitle"><xliff:g example="5" id="inserts">{inserts}</xliff:g> toegevoegd, <xliff:g example="15" id="updates">{updates}</xliff:g> updates, <xliff:g example="25" id="deletes">{deletes}</xliff:g> verwijderd</string>
     <!-- Shown when a media provider scan has failed -->
     <string name="media_provider_scan_failure_title">Scan mislukt</string>
     <!-- Dialog button shown to authenticate with Jellyfin/Emby/Plex (submits the user's credentials for authentication)-->
@@ -41,8 +33,11 @@
     <!-- Shown when Jellyfin/Emby/Plex has successfully authenticated the user's credentials-->
     <string name="media_provider_authentication_success">Authenticatie geslaagd</string>
     <!-- The longer title of Plex Media Server. 'Plex' probably doesn't need translation -->
+    <string name="media_provider_title_long_plex">Plex-mediaserver</string>
     <!-- The longer title of Jellyfin Media Server. 'Jellyfin' probably doesn't need translation -->
+    <string name="media_provider_title_long_jellyfin">Jellyfin-mediaserver</string>
     <!-- The longer title of Emby Media Server. 'Emby' probably doesn't need translation -->
+    <string name="media_provider_title_long_emby">Emby-mediaserver</string>
     <!-- Shown when user is selecting which media provider to use. Groups media providers into local (device based) and remote (network based) media providers. -->
     <string name="media_provider_type_local">Lokaal</string>
     <!-- Shown when user is selecting which media provider to use. Groups media providers into local (device based) and remote (network based) media providers. -->
@@ -50,14 +45,13 @@
     <!-- Button to add a media provider. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
     <string name="media_provider_add">Mediaprovider toevoegen</string>
     <!-- Button to add a media provider, shown during onboarding. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
-    <string name="media_providers_add_onboarding">Mediaprovider(s) toevoegen. U kunt dit later wijzigen</string>
+    <string name="media_providers_add_onboarding">Mediaprovider(s) toevoegen. Je kunt dit later wijzigen</string>
     <!-- Shown during onboarding, as the user is about to select their media providers, to discover/find their music-->
     <string name="media_provider_toolbar_title_onboarding">Ontdek je muziek</string>
     <!-- Title of the screen where users can select their media providers. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
     <string name="media_provider_toolbar_title">Mediaproviders</string>
     <!-- Option to remove a media provider from the list of media providers to be scanned. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
-    <string name="media_provider_dialog_remove_title"><xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g>
-     verwijderen</string>
+    <string name="media_provider_dialog_remove_title"><xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g> verwijderen</string>
     <!-- Warning when user attempts to remove a media provider, that their media associated with that provider will be deleted. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc.-->
     <string name="media_provider_dialog_remove_subtitle">Hiermee worden alle nummers, afspeellijsten en afspeelaantallen die zijn gekoppeld aan de mediaprovider 
     <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g>

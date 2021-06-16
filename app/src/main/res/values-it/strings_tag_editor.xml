@@ -2,7 +2,7 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- The number of songs being edited with the tag (metadata) editor-->
     <plurals name="edit_tags_editing_count_songs">
-        <item quantity="one">Modificando <xliff:g example="1" id="count">un</xliff:g> brano</item>
+        <item quantity="one">Modificando <xliff:g example="1" id="count">{count}</xliff:g> brano</item>
         <item quantity="other">Modificando <xliff:g example="5" id="count">{count}</xliff:g> brani</item>
     </plurals>
     <!-- The title of the 'edit tags' dialog. If 'tags' doesn't apply in your language, you could use 'metadata' or 'info' instead. -->
@@ -24,7 +24,7 @@
     <string name="edit_tags_read_failed">Impossibile leggere i tag delle canzoni selezionate</string>
     <!-- Shown when the tag editor successfully writes the tags (metadata) of the songs -->
     <plurals name="edit_tags_success">
-        <item quantity="one">Aggiornato correttamente <xliff:g example="5" id="count">un</xliff:g> brano</item>
+        <item quantity="one">Aggiornato correttamente <xliff:g example="5" id="count">{count}</xliff:g> brano</item>
         <item quantity="other">Aggiornati correttamente <xliff:g example="5" id="count">{count}</xliff:g> brani</item>
     </plurals>
     <!-- Shown when the tag editor fails to write the tags (metadata) to the songs-->

@@ -22,4 +22,7 @@
     <!-- Shown when the app is scanning for songs in the library -->
     <string name="library_scan_in_progress">ライブラリスキャン中</string>
     <!-- Shown to indicate the number of tracks/albums/artists which have been selected, in multi-selection mode-->
+    <plurals name="multi_select_items_selected">
+        <item quantity="other"><xliff:g example="3" id="count">{count}</xliff:g>個選択中</item>
+    </plurals>
 </resources>

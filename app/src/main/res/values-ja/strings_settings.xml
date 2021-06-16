@@ -31,8 +31,9 @@
     <!-- Title of the dialog shown when the user changes their theme preferences, and the app must be restarted -->
     <string name="settings_dialog_title_amoled_required_restart">再起動が必要です</string>
     <!-- Shown in dialog when user changes their theme options, and the app must be restarted -->
+    <string name="settings_dialog_message_amoled_requires_restart">テーマの変更を適用するには、S2を再起動する必要があります</string>
     <!-- Settings option to copy debug logs to clipboard -->
-    <string name="settings_logging_clipboard_name">Shuttleログ</string>
+    <string name="settings_logging_clipboard_name">デバッグログ</string>
     <!-- Shown when the debug logs have been copied to the clipboard -->
     <string name="settings_logging_clipboard_logs_copied">ログがクリップボードにコピーされました</string>
     <!-- Error message shown when copying debug logs failed, because the log file is too large -->
@@ -78,7 +79,7 @@
     <!-- Settings: Title for the option to rescan the media library -->
     <string name="pref_media_rescan_title">再スキャン</string>
     <!-- Settings: Description for the option to rescan the media library -->
-    <string name="pref_media_rescan_summary">デバイスのメディアを再スキャンします</string>
+    <string name="pref_media_rescan_summary">選択されているメディアプロバイダーを再スキャンします</string>
     <!-- Settings: Title for the option to view the list of excluded (blacklisted) songs -->
     <string name="pref_exclude_title">非表示</string>
     <!-- Settings: Description for the option to view the list of excluded (blacklisted) songs -->
@@ -112,13 +113,13 @@
     <!-- Settings: Title for the option to turn off crash reporting -->
     <string name="pref_crash_reporting_title">クラッシュレポート</string>
     <!-- Settings: Description for the option to turn off crash reporting -->
-    <string name="pref_crash_reporting_subtitle">S2は「Bugsnag」経由でクラッシュデータを収集します。オプトアウトするにはオフにします</string>
+    <string name="pref_crash_reporting_subtitle">S2はBugsnagを使用してクラッシュデータを収集します。オプトアウトするにはオフにします</string>
     <!-- Settings: Title for the option to view open source licenses -->
     <string name="pref_view_licenses_title">ライセンスを表示</string>
     <!-- Settings: Title for the option to enable debug logging (log file will be stored on disk) -->
-    <string name="pref_file_logging_title">動作ログをファイルに記録</string>
+    <string name="pref_file_logging_title">デバッグログをファイルに記録</string>
     <!-- Settings: Description for the option to enable debug logging (log file will be stored on disk) -->
-    <string name="pref_file_logging_subtitle">動作ログをデバイス内のファイルに書き込みます</string>
+    <string name="pref_file_logging_subtitle">デバッグログをデバイス内のファイルに書き込みます</string>
     <!-- Settings: Title for the option to copy the debug logs to the clipboard -->
     <string name="pref_copy_debug_logs_subtitle">デバッグログをコピー</string>
     <!-- Settings: Title for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->

@@ -8,7 +8,7 @@
     <string name="trial_description_trial">Dopo la prova, la velocità di riproduzione aumenterà leggermente ogni giorno, finché non impazzirai.</string>
     <!-- Shows how many days are left in the free trial-->
     <plurals name="trial_days_remaining">
-        <item quantity="one"><xliff:g example="1" id="count">Un</xliff:g> giorno rimanente</item>
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> giorno rimanente</item>
         <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> giorni rimanenti</item>
     </plurals>
     <!-- Shown when the user's trial has expired -->

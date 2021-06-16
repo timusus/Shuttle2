@@ -17,7 +17,7 @@
     <!-- Menu option to show the Sleep Timer -->
     <string name="menu_title_sleep_timer">Slaaptimer</string>
     <!-- Menu option to add the selected song to the 'favorites' playlist -->
-    <string name="menu_title_favorite">Favoriete</string>
+    <string name="menu_title_favorite">Favoriet</string>
     <!-- Menu option to show the 'lyrics' view -->
     <string name="menu_title_lyrics">Songtekst</string>
     <!-- Menu option to show the 'song info' dialog -->
@@ -49,6 +49,7 @@
     <!-- Menu option to sort by song duration -->
     <string name="menu_title_sort_duration">Duur</string>
     <!-- Menu option to sort playlists by a custom sort order (user-defined sort order) -->
+    <string name="menu_title_sort_custom">Aangepast</string>
     <!-- Menu option to scroll to the current playing track in the queue -->
     <string name="menu_title_scroll_to_current">Scroll naar huidig nummer</string>
     <!-- Menu option to rename a playlist-->

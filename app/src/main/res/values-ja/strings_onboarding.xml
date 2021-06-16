@@ -9,7 +9,7 @@
     <!-- Error message description shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
     <string name="onboarding_directories_dialog_missing_subtitle">「ドキュメントプロバイダー」(ファイルマネージャー) アプリがデバイス内に見つかりません。そのアプリをインストールするか、普通のメディアスキャナーの利用に戻す必要があります。</string>
     <!-- Explanation shown to user when they're about to choose which directories wil lbe scanned bv the S2 media scanner-->
-    <string name="onboarding_directories_add_directories_help_text">音楽をスキャンするため、Shuttleはメディアディレクトリにアクセスする必要があります。&#13;\n&#13;\n「ディレクトリを追加」をタップすると、デフォルトの「ファイルプロバイダー」アプリが表示されます。音楽が格納されているフォルダを追加してください。複数のディレクトリを追加できます。&#13;\n&#13;\n注: 音楽フォルダを表示するには、「内部ストレージの表示」を有効にする必要があるかもしれません。</string>
+    <string name="onboarding_directories_add_directories_help_text">音楽をスキャンするため、S2はメディアディレクトリにアクセスする必要があります。&#13;\n&#13;\n「ディレクトリを追加」をタップすると、デフォルトの「ファイルプロバイダー」アプリが表示されます。音楽が格納されているフォルダを追加してください。複数のディレクトリを追加できます。&#13;\n&#13;\n注: 音楽フォルダを表示するには、「内部ストレージの表示」を有効にする必要があるかもしれません。</string>
     <!-- Shown when the app is scanning the user's directories for media -->
     <string name="onboarding_directories_scanning">スキャン中…</string>
     <!-- Shown when the media scanner is scanning the user's directories for media-->

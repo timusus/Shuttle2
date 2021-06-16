@@ -5,19 +5,15 @@
     <!-- Title for the list of albums -->
     <string name="albums">Album</string>
     <plurals name="albumsPlural">
-        <item quantity="one"><xliff:g example="1" id="count">Un</xliff:g>
-       album</item>
-        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g>
-       album</item>
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> album</item>
+        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g> album</item>
     </plurals>
     <!-- Title for the list of songs -->
     <string name="songs">Brani</string>
     <!-- The number of songs for an album/playlist/genre -->
     <plurals name="songsPlural">
-        <item quantity="one"><xliff:g example="1" id="count">Un</xliff:g>
-       brano</item>
-        <item quantity="other"><xliff:g example="12" id="count">{count}</xliff:g>
-       brani</item>
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> brano</item>
+        <item quantity="other"><xliff:g example="12" id="count">{count}</xliff:g> brani</item>
     </plurals>
     <!-- Title for the list of genres -->
     <string name="genres">Generi</string>
@@ -26,4 +22,8 @@
     <!-- Shown when the app is scanning for songs in the library -->
     <string name="library_scan_in_progress">Scansionando la libreria</string>
     <!-- Shown to indicate the number of tracks/albums/artists which have been selected, in multi-selection mode-->
+    <plurals name="multi_select_items_selected">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> selezionato</item>
+        <item quantity="other"><xliff:g example="3" id="count">{count}</xliff:g> selezionati</item>
+    </plurals>
 </resources>
