@@ -407,7 +407,7 @@ class SongListFragment :
         override fun onItemUpdated(item: Song, isSelected: Boolean) {
             adapter.items
                 .filterIsInstance<SongBinder>()
-                .firstOrNull { it.song == item }
+                .firstOrNull { it.song.id == item.id }
                 ?.let { viewBinder ->
                     viewBinder.selected = isSelected
                     adapter.notifyItemChanged(adapter.items.indexOf(viewBinder))

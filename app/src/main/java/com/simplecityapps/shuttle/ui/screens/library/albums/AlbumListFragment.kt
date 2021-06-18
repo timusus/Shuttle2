@@ -454,7 +454,7 @@ class AlbumListFragment :
         override fun onItemUpdated(item: Album, isSelected: Boolean) {
             adapter.items
                 .filterIsInstance<AlbumBinder>()
-                .firstOrNull { it.album == item }
+                .firstOrNull { it.album.groupKey == item.groupKey }
                 ?.let { viewBinder ->
                     viewBinder.selected = isSelected
                     adapter.notifyItemChanged(adapter.items.indexOf(viewBinder))

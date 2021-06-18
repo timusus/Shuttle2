@@ -242,7 +242,7 @@ class SearchPresenter @Inject constructor(
         launch {
             songRepository.setExcluded(listOf(song), true)
         }
-        queueManager.remove(queueManager.getQueue().filter { it.song == song })
+        queueManager.remove(queueManager.getQueue().filter { it.song.id == song.id })
     }
 
     override fun editTags(albumArtist: AlbumArtist) {
@@ -273,7 +273,7 @@ class SearchPresenter @Inject constructor(
         } else {
             view?.showDeleteError(UserFriendlyError(context.getString(R.string.delete_song_failed)))
         }
-        queueManager.remove(queueManager.getQueue().filter { it.song == song })
+        queueManager.remove(queueManager.getQueue().filter { it.song.id == song.id })
     }
 
     override fun updateFilters(artists: Boolean, albums: Boolean, songs: Boolean) {

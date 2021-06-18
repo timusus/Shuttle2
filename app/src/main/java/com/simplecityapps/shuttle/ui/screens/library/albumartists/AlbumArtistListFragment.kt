@@ -405,7 +405,7 @@ class AlbumArtistListFragment :
             adapter.let { adapter ->
                 adapter.items
                     .filterIsInstance<AlbumArtistBinder>()
-                    .firstOrNull { it.albumArtist == item }
+                    .firstOrNull { it.albumArtist.groupKey == item.groupKey }
                     ?.let { viewBinder ->
                         viewBinder.selected = isSelected
                         adapter.notifyItemChanged(adapter.items.indexOf(viewBinder))

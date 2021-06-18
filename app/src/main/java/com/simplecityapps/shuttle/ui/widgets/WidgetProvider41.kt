@@ -62,7 +62,7 @@ class WidgetProvider41 : ShuttleAppWidgetProvider() {
                         artworkCache.put(song.getArtworkCacheKey(artworkSize, artworkSize), image)
                     }
 
-                    if (song == queueManager.getCurrentItem()?.song) {
+                    if (song.id == queueManager.getCurrentItem()?.song?.id) {
                         image?.let {
                             setImageViewBitmap(R.id.artwork, image)
                         } ?: run {

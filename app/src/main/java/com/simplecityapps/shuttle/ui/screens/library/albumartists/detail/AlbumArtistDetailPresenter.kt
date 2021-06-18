@@ -102,7 +102,7 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
                         )
                         .filterNotNull()
                 ) { albums, songs ->
-                    albums.map { album -> Pair(album, songs.filter { song -> song.album == album.name }) }
+                    albums.map { album -> Pair(album, songs.filter { song -> song.albumGroupKey == album.groupKey }) }
                         .sortedWith { a, b -> b.first.year?.compareTo(a.first.year ?: 0) ?: 0 }
                         .toMap()
                 }
@@ -265,7 +265,7 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
         } else {
             view?.showDeleteError(UserFriendlyError(context.getString(R.string.delete_song_failed)))
         }
-        queueManager.remove(queueManager.getQueue().filter { it.song == song })
+        queueManager.remove(queueManager.getQueue().filter { it.song.id == song.id })
     }
 
     override fun play(album: Album) {

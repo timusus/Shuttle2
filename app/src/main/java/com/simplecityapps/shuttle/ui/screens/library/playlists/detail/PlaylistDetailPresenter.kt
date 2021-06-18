@@ -159,7 +159,7 @@ class PlaylistDetailPresenter @AssistedInject constructor(
     override fun exclude(playlistSong: PlaylistSong) {
         launch {
             songRepository.setExcluded(listOf(playlistSong.song), true)
-            queueManager.remove(queueManager.getQueue().filter { it.song == playlistSong.song })
+            queueManager.remove(queueManager.getQueue().filter { it.song.id == playlistSong.song.id })
         }
     }
 
@@ -183,7 +183,7 @@ class PlaylistDetailPresenter @AssistedInject constructor(
         } else {
             view?.showDeleteError(UserFriendlyError(context.getString(R.string.delete_song_failed)))
         }
-        queueManager.remove(queueManager.getQueue().filter { it.song == playlistSong.song })
+        queueManager.remove(queueManager.getQueue().filter { it.song.id == playlistSong.song.id })
     }
 
     override fun delete(playlist: Playlist) {

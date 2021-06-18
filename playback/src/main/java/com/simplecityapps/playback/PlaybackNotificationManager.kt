@@ -97,7 +97,7 @@ class PlaybackNotificationManager @Inject constructor(
                     height = artworkSize,
                 ) { image ->
                     if (image != null) {
-                        if (song == queueManager.getCurrentItem()?.song) {
+                        if (song.id == queueManager.getCurrentItem()?.song?.id) {
                             notificationBuilder
                                 .setContentTitle(song.name ?: context.getString(R.string.unknown))
                                 .setContentText(song.friendlyArtistName ?: song.albumArtist ?: context.getString(R.string.unknown))
