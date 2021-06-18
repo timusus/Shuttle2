@@ -248,7 +248,11 @@ class AlbumArtistDetailFragment :
                     entry.key,
                     entry.value,
                     imageLoader,
-                    expanded = adapter.items.filterIsInstance<ExpandableAlbumBinder>().find { binder -> binder.album == entry.key }?.expanded ?: false,
+                    expanded = adapter.items
+                        .filterIsInstance<ExpandableAlbumBinder>()
+                        .find { binder -> binder.album.groupKey == entry.key.groupKey }
+                        ?.expanded
+                        ?: false,
                     scope = lifecycle.coroutineScope,
                     listener = this
                 )

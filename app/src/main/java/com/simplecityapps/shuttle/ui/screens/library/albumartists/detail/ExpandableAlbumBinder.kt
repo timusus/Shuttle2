@@ -60,13 +60,13 @@ class ExpandableAlbumBinder(
         if (this === other) return true
         if (other !is ExpandableAlbumBinder) return false
 
-        if (album != other.album) return false
+        if (album.groupKey != other.album.groupKey) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        return album.hashCode()
+        return album.groupKey.hashCode()
     }
 
     override fun areContentsTheSame(other: Any): Boolean {
@@ -76,7 +76,7 @@ class ExpandableAlbumBinder(
                     && expanded == other.expanded
                     && album.songCount == other.album.songCount
                     && album.year == other.album.year
-                    && songs == other.songs
+                    && songs.map { it.id } == other.songs.map { it.id }
         } ?: false
     }
 
@@ -118,15 +118,17 @@ class ExpandableAlbumBinder(
                     )
                 )
 
-            viewBinder.imageLoader.loadArtwork(
-                imageView = imageView,
-                data = viewBinder.album,
-                options = listOf(
-                    ArtworkImageLoader.Options.RoundedCorners(8.dp),
-                    ArtworkImageLoader.Options.Crossfade(200),
-                    ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_album_rounded)
+            if (!isPartial) {
+                viewBinder.imageLoader.loadArtwork(
+                    imageView = imageView,
+                    data = viewBinder.album,
+                    options = listOf(
+                        ArtworkImageLoader.Options.RoundedCorners(8.dp),
+                        ArtworkImageLoader.Options.Crossfade(200),
+                        ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_album_rounded)
+                    )
                 )
-            )
+            }
 
             imageView.transitionName = "album_${viewBinder.album.name}"
 
