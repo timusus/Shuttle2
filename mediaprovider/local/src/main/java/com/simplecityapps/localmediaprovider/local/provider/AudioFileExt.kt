@@ -62,7 +62,7 @@ fun KTagLib.getAudioFile(fileDescriptor: Int, filePath: String, fileName: String
         title = metadata?.propertyMap?.get(TagLibProperty.Title.key)?.firstOrNull() ?: fileName,
         albumArtist = metadata?.propertyMap?.get(TagLibProperty.AlbumArtist.key)?.firstOrNull(),
         artists = metadata?.propertyMap?.get(TagLibProperty.Artist.key).orEmpty().flatMap { artist ->
-            artist.split(",", ";", "/")
+            artist.split(",", ";")
                 .map { artist -> artist.trim() }
                 .filterNot { artist -> artist.isEmpty() }
         },
