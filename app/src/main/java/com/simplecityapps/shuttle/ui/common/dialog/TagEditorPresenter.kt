@@ -273,16 +273,16 @@ class TagEditorPresenter @Inject constructor(
             val successCount = result.size - failureCount // Songs we successfully edited
             if (successCount != total) { // If any failures occurred, or we couldn't edit all songs
                 view?.closeWithToast(
-                    Phrase.fromPlural(context, R.plurals.edit_tags_success, total)
-                        .put("count", total - successCount)
+                    Phrase.fromPlural(context, R.plurals.edit_tags_failure, total)
+                        .putOptional("count", total - successCount)
+                        .putOptional("total", total)
                         .format()
                         .toString()
                 )
             } else {
                 view?.closeWithToast(
-                    Phrase.fromPlural(context, R.plurals.edit_tags_failure, total)
-                        .putOptional("count", successCount)
-                        .putOptional("total", total)
+                    Phrase.fromPlural(context, R.plurals.edit_tags_success, successCount)
+                        .put("count", successCount)
                         .format()
                         .toString()
                 )
