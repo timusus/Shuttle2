@@ -20,6 +20,7 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.PlaybackWatcher
@@ -28,6 +29,7 @@ import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.dialog.EditTextAlertDialog
 import com.simplecityapps.shuttle.ui.common.dialog.ShowExcludeDialog
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
@@ -39,7 +41,9 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFr
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
+import com.simplecityapps.shuttle.ui.screens.trial.PromoCodeDialogFragment
 import com.simplecityapps.shuttle.ui.screens.trial.TrialDialogFragment
+import com.simplecityapps.trial.PromoCodeService
 import com.simplecityapps.trial.TrialManager
 import com.simplecityapps.trial.TrialState
 import com.squareup.phrase.Phrase
@@ -54,7 +58,8 @@ import javax.inject.Inject
 class QueueFragment :
     Fragment(),
     QueueContract.View,
-    CreatePlaylistDialogFragment.Listener {
+    CreatePlaylistDialogFragment.Listener,
+    EditTextAlertDialog.Listener {
 
     @Inject
     lateinit var imageLoader: ArtworkImageLoader
@@ -82,6 +87,9 @@ class QueueFragment :
 
     @Inject
     lateinit var trialManager: TrialManager
+
+    @Inject
+    lateinit var promoCodeService: PromoCodeService
 
     private var recyclerViewState: Parcelable? = null
 
@@ -352,6 +360,21 @@ class QueueFragment :
         playlistMenuPresenter.createPlaylist(text, playlistData)
     }
 
+    // EditTextAlertDialog.Listener Implementation
+
+    override fun onSave(text: String?, extra: Parcelable?) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            when (val result = promoCodeService.getPromoCode(text!!)) {
+                is NetworkResult.Success -> {
+                    PromoCodeDialogFragment.newInstance(result.body.promoCode).show(childFragmentManager)
+                }
+                is NetworkResult.Failure -> {
+                    Toast.makeText(requireContext(), "Failed to retrieve promo code", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
 
     // Static
 
@@ -363,4 +386,5 @@ class QueueFragment :
 
         fun newInstance() = QueueFragment()
     }
+
 }

@@ -6,6 +6,7 @@ import android.content.Context
 import android.os.Bundle
 import android.os.Parcelable
 import android.text.Editable
+import android.text.InputType
 import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.inputmethod.InputMethodManager
@@ -34,6 +35,7 @@ open class EditTextAlertDialog : DialogFragment() {
     private var hint: String? = null
     private var initialText: String? = null
     private var extra: Parcelable? = null
+    private var inputType: Int = InputType.TYPE_TEXT_FLAG_CAP_WORDS
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,6 +44,7 @@ open class EditTextAlertDialog : DialogFragment() {
         hint = arguments?.getString(ARG_HINT)
         initialText = arguments?.getString(ARG_INITIAL_TEXT)
         extra = arguments?.getParcelable(ARG_EXTRA)
+        inputType = arguments?.getInt(ARG_INPUT_TYPE) ?: InputType.TYPE_TEXT_FLAG_CAP_WORDS
     }
 
     @SuppressLint("InflateParams")
@@ -62,6 +65,7 @@ open class EditTextAlertDialog : DialogFragment() {
                 validate()
             }
         })
+        editText.inputType = inputType
         initialText?.let {
             editText.setText(initialText)
             editText.setSelection(editText.length())
@@ -111,17 +115,20 @@ open class EditTextAlertDialog : DialogFragment() {
         const val ARG_HINT = "hint"
         const val ARG_INITIAL_TEXT = "initial_text"
         const val ARG_EXTRA = "extra"
+        const val ARG_INPUT_TYPE = "input_type"
 
         fun newInstance(
             title: String? = null,
             hint: String? = null,
             initialText: String? = null,
-            extra: Parcelable? = null
+            extra: Parcelable? = null,
+            inputType: Int = InputType.TYPE_TEXT_FLAG_CAP_WORDS
         ): EditTextAlertDialog = EditTextAlertDialog().withArgs {
             putString(ARG_TITLE, title)
             putString(ARG_HINT, hint)
             putString(ARG_INITIAL_TEXT, initialText)
             putParcelable(ARG_EXTRA, extra)
+            putInt(ARG_INPUT_TYPE, inputType)
         }
     }
 }

@@ -7,7 +7,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Named
@@ -45,7 +44,6 @@ class BillingManager(
 
     init {
         billingState
-            .onEach { Timber.i("billingState changed to $it") }
             .launchIn(coroutineScope)
     }
 
@@ -154,7 +152,6 @@ class BillingManager(
     }
 
     private fun processPurchases(purchases: List<Purchase>) {
-        Timber.i("processPurchases (purchases: ${purchases.size})")
         if (paidVersionSkus.intersect(purchases
                 .flatMap { purchase -> purchase.skus })
                 .isNotEmpty()

@@ -24,12 +24,12 @@ class NetworkResultAdapterFactory(
 
         // Get the response type inside the `Call` type
         val responseType = getParameterUpperBound(0, returnType)
-        // If the response type is not ApiResponse then we can't handle this type, so we return null
+        // If the response type is not NetworkResponse then we can't handle this type, so we return null
         if (getRawType(responseType) != NetworkResult::class.java) {
             return null
         }
 
-        // The response type is ApiResponse and should be parameterized
+        // The response type is NetworkResponse and should be parameterized
         check(responseType is ParameterizedType) { "Response must be parameterized as NetworkResponse<Foo> or NetworkResponse<out Foo>" }
 
         val successBodyType = getParameterUpperBound(0, responseType)

@@ -1,9 +1,13 @@
 package com.simplecityapps.shuttle.ui.screens.trial
 
+import android.annotation.SuppressLint
 import android.app.Dialog
 import android.os.Bundle
+import android.text.InputType
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.widget.Button
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
@@ -11,6 +15,7 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.ui.common.dialog.EditTextAlertDialog
 import com.simplecityapps.trial.TrialManager
 import com.simplecityapps.trial.TrialState
 import com.squareup.phrase.Phrase
@@ -30,11 +35,36 @@ class TrialDialogFragment : DialogFragment() {
     @Inject
     lateinit var preferenceManager: GeneralPreferenceManager
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
 
         preferenceManager.lastViewedTrialDialog = Date()
 
         val view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_trial, null)
+
+        val icon: ImageView = view.findViewById(R.id.icon)
+
+        var touchCount = 0
+        var touchTime = 0L
+        icon.setOnTouchListener { v, event ->
+            if (event.action == MotionEvent.ACTION_UP) {
+                if (touchTime == 0L || System.currentTimeMillis() - touchTime > 2000) {
+                    touchTime = System.currentTimeMillis()
+                    touchCount = 1
+                } else {
+                    touchCount++
+                }
+                if (touchCount == 5) {
+                    EditTextAlertDialog.newInstance(
+                        title = "Promo code",
+                        hint = "Email Address",
+                        inputType = InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS
+                    ).show(parentFragmentManager)
+                    dismiss()
+                }
+            }
+            true
+        }
 
         val upgradeButton: Button = view.findViewById(R.id.upgradeButton)
         upgradeButton.setOnClickListener {

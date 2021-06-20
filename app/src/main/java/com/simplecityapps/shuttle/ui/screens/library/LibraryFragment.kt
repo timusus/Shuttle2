@@ -1,8 +1,10 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
 import android.os.Bundle
+import android.os.Parcelable
 import android.view.*
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
@@ -10,12 +12,14 @@ import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.widget.ViewPager2
 import com.google.android.material.tabs.TabLayout
 import com.google.android.material.tabs.TabLayoutMediator
+import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.ContextualToolbarHelper
 import com.simplecityapps.shuttle.ui.common.PagerAdapter
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.autoClearedNullable
+import com.simplecityapps.shuttle.ui.common.dialog.EditTextAlertDialog
 import com.simplecityapps.shuttle.ui.common.recyclerview.enforceSingleScrollDirection
 import com.simplecityapps.shuttle.ui.common.recyclerview.recyclerView
 import com.simplecityapps.shuttle.ui.common.view.CircularProgressView
@@ -25,7 +29,9 @@ import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListFragment
 import com.simplecityapps.shuttle.ui.screens.library.genres.GenreListFragment
 import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListFragment
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListFragment
+import com.simplecityapps.shuttle.ui.screens.trial.PromoCodeDialogFragment
 import com.simplecityapps.shuttle.ui.screens.trial.TrialDialogFragment
+import com.simplecityapps.trial.PromoCodeService
 import com.simplecityapps.trial.TrialManager
 import com.simplecityapps.trial.TrialState
 import dagger.hilt.android.AndroidEntryPoint
@@ -35,7 +41,9 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class LibraryFragment : Fragment(), ToolbarHost {
+class LibraryFragment : Fragment(),
+    ToolbarHost,
+    EditTextAlertDialog.Listener {
 
     private var viewPager: ViewPager2? = null
 
@@ -55,6 +63,9 @@ class LibraryFragment : Fragment(), ToolbarHost {
 
     @Inject
     lateinit var trialManager: TrialManager
+
+    @Inject
+    lateinit var promoCodeService: PromoCodeService
 
 
     // Lifecycle
@@ -191,6 +202,22 @@ class LibraryFragment : Fragment(), ToolbarHost {
     }
 
 
+    // EditTextAlertDialog.Listener Implementation
+
+    override fun onSave(text: String?, extra: Parcelable?) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            when (val result = promoCodeService.getPromoCode(text!!)) {
+                is NetworkResult.Success -> {
+                    PromoCodeDialogFragment.newInstance(result.body.promoCode).show(childFragmentManager)
+                }
+                is NetworkResult.Failure -> {
+                    Toast.makeText(requireContext(), "Failed to retrieve promo code", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
+
     // ToolbarHost Implementation
 
     override
@@ -201,3 +228,4 @@ class LibraryFragment : Fragment(), ToolbarHost {
     val contextualToolbar: Toolbar?
         get() = _contextualToolbar
 }
+
