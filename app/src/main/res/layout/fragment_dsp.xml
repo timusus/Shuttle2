@@ -16,7 +16,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:navigationIcon="@drawable/ic_arrow_back_black_24dp"
-        app:title="DSP" />
+        app:title="@string/settings_menu_dsp" />
 
     <ScrollView
         android:layout_width="match_parent"

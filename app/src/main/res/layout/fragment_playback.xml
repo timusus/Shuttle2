@@ -15,7 +15,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:title="Now Playing" />
+        app:title="@string/title_now_playing" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"

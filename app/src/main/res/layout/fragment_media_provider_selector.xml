@@ -15,7 +15,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:navigationIcon="@drawable/ic_close_black_24dp"
-        app:title="Discover your music">
+        app:title="@string/onboarding_discover_music">
 
     </androidx.appcompat.widget.Toolbar>
 

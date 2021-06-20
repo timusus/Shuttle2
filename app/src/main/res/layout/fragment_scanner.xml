@@ -14,7 +14,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:title="Media scanner"
+        app:title="@string/onboarding_media_scanner_title"
         tools:visibility="visible" />
 
     <androidx.recyclerview.widget.RecyclerView

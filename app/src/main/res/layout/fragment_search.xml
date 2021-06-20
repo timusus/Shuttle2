@@ -35,7 +35,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:transitionName="searchView"
-                    app:defaultQueryHint="Search Music"
+                    app:defaultQueryHint="@string/title_search_hint"
                     app:iconifiedByDefault="false"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
