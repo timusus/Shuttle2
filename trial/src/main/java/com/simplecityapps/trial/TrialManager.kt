@@ -49,7 +49,7 @@ class TrialManager(
                 return trialState
             }
         } ?: run {
-            Timber.e("Local device not found")
+            Timber.d("Local device not found")
         }
 
         // If we get to this point, it looks like the user's trial hasn't expired, based on their local device last update date.
@@ -81,6 +81,7 @@ class TrialManager(
     private suspend fun getRemoteDevice(deviceId: String): Device? {
         return when (val result = deviceService.getDevice(deviceId)) {
             is NetworkResult.Success -> {
+                Timber.i("Retrieved remote device")
                 result.body
             }
             is NetworkResult.Failure -> {
