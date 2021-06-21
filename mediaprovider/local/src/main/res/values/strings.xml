@@ -1,9 +1,0 @@
-<resources>
-    <string name="app_name">LocalMediaProvider</string>
-
-    <!-- Smart Playlists -->
-    <string name="playlist_title_most_played">Most Played</string>
-    <string name="playlist_title_recently_played">Recently Played</string>
-    <string name="playlist_title_recently_added">Recently Added</string>
-    <string name="playlist_title_history">History</string>
-</resources>

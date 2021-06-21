@@ -23,7 +23,7 @@ class RepositoryModule {
     @Provides
     @Singleton
     fun provideMediaDatabase(@ApplicationContext context: Context, @Named("AppCoroutineScope") appCoroutineScope: CoroutineScope): MediaDatabase {
-        return DatabaseProvider(context, appCoroutineScope).database
+        return DatabaseProvider(context).database
     }
 
     @Provides
@@ -52,8 +52,8 @@ class RepositoryModule {
 
     @Provides
     @Singleton
-    fun providePlaylistRepository(database: MediaDatabase, @Named("AppCoroutineScope") appCoroutineScope: CoroutineScope): PlaylistRepository {
-        return LocalPlaylistRepository(appCoroutineScope, database.playlistDataDao(), database.playlistSongJoinDataDao())
+    fun providePlaylistRepository(@ApplicationContext context: Context, database: MediaDatabase, @Named("AppCoroutineScope") appCoroutineScope: CoroutineScope): PlaylistRepository {
+        return LocalPlaylistRepository(context, appCoroutineScope, database.playlistDataDao(), database.playlistSongJoinDataDao())
     }
 
     @Provides

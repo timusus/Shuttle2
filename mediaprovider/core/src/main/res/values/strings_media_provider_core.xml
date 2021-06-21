@@ -64,4 +64,12 @@
     <string name="media_provider_config_hint_password">Password</string>
     <!-- The option to remember the user's password for their Emby/Jellyfin/Plex media provider-->
     <string name="media_provider_config_switch_remember_password">Remember password</string>
+    <!-- Favorites playlist name - user's favorite songs -->
+    <string name="playlist_title_favorites">Favorites</string>
+    <!-- 'Most Played' playlist name - playlist of songs with highest play count -->
+    <string name="playlist_title_most_played">Most Played</string>
+    <!-- 'Recently Added' playlist name - playlist of songs which have been recently added -->
+    <string name="playlist_title_recently_added">Recently Added</string>
+    <!-- 'History' playlist name - playlist of songs which have been recently played -->
+    <string name="playlist_title_history">History</string>
 </resources>

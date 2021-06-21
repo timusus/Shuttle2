@@ -1,5 +1,6 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
+import android.content.Context
 import com.simplecityapps.localmediaprovider.R
 import com.simplecityapps.localmediaprovider.local.data.room.dao.PlaylistDataDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.PlaylistSongJoinDao
@@ -17,6 +18,7 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 class LocalPlaylistRepository(
+    private val context: Context,
     private val scope: CoroutineScope,
     private val playlistDataDao: PlaylistDataDao,
     private val playlistSongJoinDao: PlaylistSongJoinDao
@@ -52,11 +54,12 @@ class LocalPlaylistRepository(
     }
 
     override suspend fun getFavoritesPlaylist(): Playlist {
+        val favoritesName = context.getString(R.string.playlist_title_favorites)
         return withContext(Dispatchers.IO) {
             playlistsRelay
                 .filterNotNull()
                 .firstOrNull()
-                ?.firstOrNull { it.name == "Favorites" } ?: createPlaylist("Favorites", null, null)
+                ?.firstOrNull { it.name == favoritesName } ?: createPlaylist(favoritesName, null, null)
         }
     }
 
