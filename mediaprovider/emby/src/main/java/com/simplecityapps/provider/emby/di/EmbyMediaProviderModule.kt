@@ -38,7 +38,7 @@ open class EmbyMediaProviderModule {
             .client(
                 okHttpClient
                     .newBuilder()
-                    .readTimeout(30, TimeUnit.SECONDS)
+                    .readTimeout(90, TimeUnit.SECONDS)
                     .build()
             )
             .build()
