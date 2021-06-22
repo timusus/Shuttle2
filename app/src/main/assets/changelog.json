@@ -1,5 +1,23 @@
 [
   {
+    "versionName": "0.4.3",
+    "releaseDate": "22/06/2021",
+    "features": [
+    ],
+    "fixes": [
+      "Don't split artists by '/' character (AC/DC no longer splits into AC, DC)",
+      "Fixed an issue where album didn't remain expanded in the artist detail view, after playing a song",
+      "Fixed an issue where tag editor success and failure messages were inverted (displayed 'failed to update tags', when it actually succeeded)"
+    ],
+    "improvements": [
+      "Increased the timeout for Jellyfin & Emby when requesting data ('scanning'), from 30 seconds to 90 seconds",
+      "Ensure more phrases are translated (work in progress)"
+    ],
+    "notes": [
+      "S2 is now free to use for 2 weeks. There are options to upgrade in the app. I'd like to tweak prices so they make sense in your country. Please come and discuss this on Discord: https://discord.gg/YkhSuHJ"
+    ]
+  },
+  {
     "versionName": "0.4.2",
     "releaseDate": "16/06/2021",
     "features": [
