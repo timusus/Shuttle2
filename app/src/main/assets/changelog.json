@@ -1,5 +1,20 @@
 [
   {
+    "versionName": "0.4.4",
+    "releaseDate": "23/06/2021",
+    "features": [
+    ],
+    "fixes": [
+      "Fixed an issue where upgrade was not recognised, under certain conditions"
+    ],
+    "improvements": [
+      "Translation updates (work in progress)"
+    ],
+    "notes": [
+      "S2 is now free to use for 2 weeks. There are options to upgrade in the app. I'd like to tweak prices so they make sense in your country. Please come and discuss this on Discord: https://discord.gg/YkhSuHJ"
+    ]
+  },
+  {
     "versionName": "0.4.3",
     "releaseDate": "22/06/2021",
     "features": [
