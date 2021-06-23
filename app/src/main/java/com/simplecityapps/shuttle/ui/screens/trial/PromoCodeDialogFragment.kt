@@ -33,7 +33,8 @@ class PromoCodeDialogFragment : DialogFragment() {
         }
 
         val descriptionTextView: TextView = view.findViewById(R.id.description)
-        descriptionTextView.text = "Visit https://play.google.com/store/redeem?code=${promoCode} to redeem"
+        descriptionTextView.text =
+            "Open the Play Store app, and navigate to 'notifications and offers', then choose the 'offers' tab, and enter your promo code.\n\nAlternatively, visit https://play.google.com/store/redeem?code=${promoCode} in a web browser."
 
         return MaterialAlertDialogBuilder(requireContext())
             .setView(view)

@@ -25,6 +25,7 @@
             android:editable="false"
             android:hint="Promo code"
             android:inputType="none"
+            android:textIsSelectable="true"
             tools:ignore="HardcodedText" />
 
     </com.google.android.material.textfield.TextInputLayout>
@@ -35,11 +36,12 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:autoLink="web"
-        android:linksClickable="true"
+        android:linksClickable="false"
+        android:textIsSelectable="true"
         android:textSize="12sp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/promoCodeInputLayout"
-        tools:text="Visit https://play.google.com/store/redeem?code= to redeem" />
+        tools:text="Visit https://play.google.com/store/redeem?code= to redeem." />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
