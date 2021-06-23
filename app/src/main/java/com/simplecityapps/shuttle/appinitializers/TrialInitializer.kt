@@ -8,6 +8,7 @@ import com.simplecityapps.trial.TrialState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Named
 
@@ -19,8 +20,11 @@ class TrialInitializer @Inject constructor(
 ) : AppInitializer {
 
     override fun init(application: Application) {
+        Timber.v("Initializing trial manager")
         billingManager.addListener(object : BillingManager.Listener {
             override fun onBillingClientAvailable() {
+                Timber.v("Billing client available")
+                billingManager.queryPurchases()
                 coroutineScope.launch {
                     billingManager.querySkuDetails()
                 }

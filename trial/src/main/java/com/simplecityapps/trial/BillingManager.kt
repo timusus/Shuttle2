@@ -69,13 +69,14 @@ class BillingManager(
         PurchasesUpdatedListener { billingResult, purchases ->
             when (billingResult.responseCode) {
                 BillingClient.BillingResponseCode.OK -> {
+                    Timber.v("onPurchasesUpdated: found ${purchases.orEmpty().size} purchases")
                     processPurchases(purchases.orEmpty())
                 }
                 BillingClient.BillingResponseCode.USER_CANCELED -> {
-                    Timber.i("onPurchasesUpdated: User canceled the purchase")
+                    Timber.v("onPurchasesUpdated: User canceled the purchase")
                 }
                 BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> {
-                    Timber.i("onPurchasesUpdated: The user already owns this item")
+                    Timber.v("onPurchasesUpdated: The user already owns this item")
                 }
                 BillingClient.BillingResponseCode.DEVELOPER_ERROR -> {
                     Timber.e("onPurchasesUpdated: Developer error means that Google Play does not recognize the configuration. If you are just getting started, make sure you have configured the application correctly in the Google Play Console. The SKU product ID must match and the APK you are using must be signed with release keys.")
@@ -93,6 +94,10 @@ class BillingManager(
     }
 
     fun launchPurchaseFlow(activity: FragmentActivity, skuDetails: SkuDetails) {
+        if (!billingClient.isReady) {
+            Timber.e("Failed to launch purchase flow: BillingClient not ready")
+            return
+        }
         billingClient.launchBillingFlow(activity, BillingFlowParams.newBuilder().setSkuDetails(skuDetails).build())
     }
 
@@ -144,15 +149,25 @@ class BillingManager(
     }
 
     fun queryPurchases() {
-        val purchaseResponseListener = PurchasesResponseListener { _, purchases ->
+        if (!billingClient.isReady) {
+            // If the billing client isn't ready, querying it potentially crashes the billing service.
+            // We've got an update listener for when billing is established anyway, so this function will be called again via that
+            return
+        }
+        val purchaseResponseListener = PurchasesResponseListener { a, purchases ->
+            Timber.v("Found ${purchases.size} inapp purchases")
+            processPurchases(purchases)
+        }
+        val purchaseResponseListenerB = PurchasesResponseListener { a, purchases ->
+            Timber.v("Found ${purchases.size} subs purchases")
             processPurchases(purchases)
         }
         billingClient.queryPurchasesAsync(BillingClient.SkuType.INAPP, purchaseResponseListener)
-        billingClient.queryPurchasesAsync(BillingClient.SkuType.SUBS, purchaseResponseListener)
+        billingClient.queryPurchasesAsync(BillingClient.SkuType.SUBS, purchaseResponseListenerB)
     }
 
     private fun processPurchases(purchases: List<Purchase>) {
-        if (paidVersionSkus.intersect(purchases
+        if (billingState.value == BillingState.Paid || paidVersionSkus.intersect(purchases
                 .flatMap { purchase -> purchase.skus })
                 .isNotEmpty()
         ) {
