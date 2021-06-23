@@ -8,7 +8,6 @@ import com.simplecityapps.provider.plex.PlexAuthenticationManager
 import com.simplecityapps.provider.plex.PlexMediaInfoProvider
 import com.simplecityapps.provider.plex.PlexMediaProvider
 import com.simplecityapps.provider.plex.http.ItemsService
-import com.simplecityapps.provider.plex.http.PlexTranscodeService
 import com.simplecityapps.provider.plex.http.UserService
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import com.squareup.moshi.Moshi
@@ -60,12 +59,6 @@ open class PlexMediaProviderModule {
 
     @Provides
     @Singleton
-    fun provideTranscodeService(@Named("PlexRetrofit") retrofit: Retrofit): PlexTranscodeService {
-        return retrofit.create()
-    }
-
-    @Provides
-    @Singleton
     fun provideCredentialStore(securePreferenceManager: SecurePreferenceManager): CredentialStore {
         return CredentialStore(securePreferenceManager)
     }
@@ -84,7 +77,7 @@ open class PlexMediaProviderModule {
 
     @Provides
     @Singleton
-    fun providePlexMediaPathProvider(authenticationManager: PlexAuthenticationManager, plexTranscodeService: PlexTranscodeService): PlexMediaInfoProvider {
-        return PlexMediaInfoProvider(authenticationManager, plexTranscodeService)
+    fun providePlexMediaPathProvider(authenticationManager: PlexAuthenticationManager): PlexMediaInfoProvider {
+        return PlexMediaInfoProvider(authenticationManager)
     }
 }

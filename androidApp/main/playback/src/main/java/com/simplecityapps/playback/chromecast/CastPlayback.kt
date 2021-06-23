@@ -55,7 +55,7 @@ class CastPlayback(
 
         var path = "http://$ipAddress:5000/songs/${current.id}/audio"
 
-        val mediaInfo = mediaInfoProvider.getMediaInfo(current)
+        val mediaInfo = mediaInfoProvider.getMediaInfo(song = current, castCompatibilityMode = true)
         if (mediaInfo.isRemote) {
             path = mediaInfo.path.toString()
         }

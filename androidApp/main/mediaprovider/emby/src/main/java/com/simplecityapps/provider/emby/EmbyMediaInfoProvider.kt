@@ -18,7 +18,7 @@ class EmbyMediaInfoProvider @Inject constructor(
     }
 
     @Throws(IllegalStateException::class)
-    override suspend fun getMediaInfo(song: Song): MediaInfo {
+    override suspend fun getMediaInfo(song: Song, castCompatibilityMode: Boolean): MediaInfo {
         val embyPath = embyAuthenticationManager.getAuthenticatedCredentials()?.let { authenticatedCredentials ->
             embyAuthenticationManager.buildEmbyPath(
                 Uri.parse(song.path).pathSegments.last(),
@@ -30,15 +30,17 @@ class EmbyMediaInfoProvider @Inject constructor(
             throw IllegalStateException("Failed to authenticate")
         }
 
-        val mimeType = getMimeType(embyPath, song.mimeType)
-
-        return MediaInfo(path = embyPath, mimeType = mimeType, isRemote = true)
+        return MediaInfo(
+            path = embyPath,
+            mimeType = if (castCompatibilityMode) getMimeType(embyPath, song.mimeType) else song.mimeType,
+            isRemote = true
+        )
     }
 
     private suspend fun getMimeType(path: Uri, defaultMimeType: String): String {
         val response = embyTranscodeService.transcode(path.toString())
         return if (response.isSuccessful) {
-            return response.headers().get("Content-Type") ?: defaultMimeType
+            return response.headers()["Content-Type"] ?: defaultMimeType
         } else {
             defaultMimeType
         }

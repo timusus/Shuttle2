@@ -1,6 +1,5 @@
 package com.simplecityapps.provider.plex
 
-import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
@@ -10,12 +9,14 @@ import com.simplecityapps.networking.userDescription
 import com.simplecityapps.provider.plex.http.ItemsService
 import com.simplecityapps.provider.plex.http.QueryResult
 import com.simplecityapps.provider.plex.http.items
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.datetime.Clock
+import kotlinx.datetime.LocalDate
 import timber.log.Timber
 
 class PlexMediaProvider(
@@ -38,20 +39,20 @@ class PlexMediaProvider(
                 ?.let { credentials ->
                     when (val queryResult = itemsService.items(url = address, token = credentials.accessToken)) {
                         is NetworkResult.Success<QueryResult> -> {
-                            emit(FlowEvent.Success(queryResult.body.metadata.items.map { item ->
+                            emit(FlowEvent.Success(queryResult.body.mediaContainer.metadata.map { metadata ->
                                 Song(
-                                    id = item.guid.hashCode().toLong(),
-                                    name = item.title,
-                                    albumArtist = item.grandparentTitle,
-                                    artists = listOf(item.grandparentTitle),
-                                    album = item.parentTitle,
-                                    track = item.index ?: 0,
-                                    disc = 0,
-                                    duration = item.duration.toInt(),
-                                    date = null,
+                                    id = metadata.guid.hashCode().toLong(),
+                                    name = metadata.title,
+                                    albumArtist = metadata.grandparentTitle,
+                                    artists = listOf(metadata.grandparentTitle),
+                                    album = metadata.parentTitle,
+                                    track = metadata.index ?: 0,
+                                    disc = metadata.parentIndex ?: 0,
+                                    duration = metadata.duration.toInt(),
+                                    date = metadata.year?.let { LocalDate(it, 1, 1) },
                                     genres = emptyList(),
-                                    path = "plex://${item.key}",
-                                    size = 0,
+                                    path = "plex://${metadata.key}",
+                                    size = metadata.media.firstOrNull()?.parts?.firstOrNull()?.size?.toLong() ?: 0L,
                                     mimeType = "Audio/*",
                                     lastModified = Clock.System.now(),
                                     lastPlayed = null,
@@ -59,14 +60,14 @@ class PlexMediaProvider(
                                     playCount = 0,
                                     playbackPosition = 0,
                                     blacklisted = false,
-                                    externalId = null,
+                                    externalId = metadata.media.firstOrNull()?.parts?.firstOrNull()?.key,
                                     mediaProvider = type,
                                     lyrics = null,
                                     grouping = null,
-                                    bitRate = null,
+                                    bitRate = metadata.media.firstOrNull()?.bitrate,
                                     bitDepth = null,
                                     sampleRate = null,
-                                    channelCount = null
+                                    channelCount = metadata.media.firstOrNull()?.audioChannels
                                 )
                             }))
                         }

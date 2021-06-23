@@ -8,7 +8,7 @@ data class MediaInfo(val path: Uri, val mimeType: String, val isRemote: Boolean)
 interface MediaInfoProvider {
     @Throws(IllegalStateException::class)
     fun handles(uri: Uri): Boolean
-    suspend fun getMediaInfo(song: Song): MediaInfo
+    suspend fun getMediaInfo(song: Song, castCompatibilityMode: Boolean = false): MediaInfo
 }
 
 class AggregateMediaInfoProvider(val providers: MutableSet<MediaInfoProvider> = mutableSetOf()) : MediaInfoProvider {
@@ -25,9 +25,9 @@ class AggregateMediaInfoProvider(val providers: MutableSet<MediaInfoProvider> = 
         return true
     }
 
-    override suspend fun getMediaInfo(song: Song): MediaInfo {
+    override suspend fun getMediaInfo(song: Song, castCompatibilityMode: Boolean): MediaInfo {
         val uri = Uri.parse(song.path)
-        return providers.firstOrNull { it.handles(uri) }?.getMediaInfo(song)
+        return providers.firstOrNull { it.handles(uri) }?.getMediaInfo(song, castCompatibilityMode)
             ?: MediaInfo(path = uri, mimeType = song.mimeType, isRemote = false)
     }
 }

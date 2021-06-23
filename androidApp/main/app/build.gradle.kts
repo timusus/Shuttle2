@@ -180,8 +180,8 @@ android {
         implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.3.1")
 
         // ExoPlayer
-        implementation("com.github.timusus.exoplayer:exoplayer-core:r2.14.2-shuttle")
-        implementation("com.github.timusus.exoplayer:exoplayer-hls:r2.14.2-shuttle")
+        implementation("com.github.timusus.exoplayer:exoplayer-core:2.14.2-shuttle")
+        implementation("com.github.timusus.exoplayer:exoplayer-hls:2.14.2-shuttle")
 
         implementation("androidx.drawerlayout:drawerlayout:1.1.1")
 

@@ -18,7 +18,7 @@ class JellyfinMediaInfoProvider @Inject constructor(
     }
 
     @Throws(IllegalStateException::class)
-    override suspend fun getMediaInfo(song: Song): MediaInfo {
+    override suspend fun getMediaInfo(song: Song, castCompatibilityMode: Boolean): MediaInfo {
         val jellyfinPath = jellyfinAuthenticationManager.getAuthenticatedCredentials()?.let { authenticatedCredentials ->
             jellyfinAuthenticationManager.buildJellyfinPath(
                 Uri.parse(song.path).pathSegments.last(),
@@ -30,15 +30,17 @@ class JellyfinMediaInfoProvider @Inject constructor(
             throw IllegalStateException("Failed to authenticate")
         }
 
-        val mimeType = getMimeType(jellyfinPath, song.mimeType)
-
-        return MediaInfo(path = jellyfinPath, mimeType = mimeType, isRemote = true)
+        return MediaInfo(
+            path = jellyfinPath,
+            mimeType = if (castCompatibilityMode) getMimeType(jellyfinPath, song.mimeType) else song.mimeType,
+            isRemote = true
+        )
     }
 
     private suspend fun getMimeType(path: Uri, defaultMimeType: String): String {
         val response = jellyfinTranscodeService.transcode(path.toString())
         return if (response.isSuccessful) {
-            return response.headers().get("Content-Type") ?: defaultMimeType
+            return response.headers()["Content-Type"] ?: defaultMimeType
         } else {
             defaultMimeType
         }

@@ -67,7 +67,7 @@ class MediaProviderSelectionPresenter @AssistedInject constructor(
 
     override fun addProviderClicked() {
         view?.showMediaProviderSelectionDialog(
-            (MediaProviderType.values().toList() - playbackPreferenceManager.mediaProviderTypes).filterNot { it == MediaProviderType.Plex }
+            (MediaProviderType.values().toList() - playbackPreferenceManager.mediaProviderTypes)
         )
     }
 

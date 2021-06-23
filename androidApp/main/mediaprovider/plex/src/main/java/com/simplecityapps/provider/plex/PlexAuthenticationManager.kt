@@ -1,12 +1,11 @@
 package com.simplecityapps.provider.plex
 
-import android.net.Uri
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.networking.retrofit.error.HttpStatusCode
 import com.simplecityapps.networking.retrofit.error.RemoteServiceHttpError
 import com.simplecityapps.provider.plex.http.*
+import com.simplecityapps.shuttle.model.Song
 import timber.log.Timber
-import java.net.URLEncoder
 
 class PlexAuthenticationManager(
     private val userService: UserService,
@@ -57,24 +56,15 @@ class PlexAuthenticationManager(
         }
     }
 
-    fun buildPlexPath(path: Uri, authenticatedCredentials: AuthenticatedCredentials): String? {
+    fun buildPlexPath(song: Song, authenticatedCredentials: AuthenticatedCredentials): String? {
         if (credentialStore.address == null) {
             Timber.w("Invalid plex address (${credentialStore.address})")
             return null
         }
 
-        return "${credentialStore.address}" +
-                "/music/:/transcode/universal/start.m3u8" +
-                "?path=${URLEncoder.encode(path.path, Charsets.UTF_8.name())}" +
-                "&directStreamAudio=1" +
-                "&protocol=hls" +
-                "&directPlay=1" +
-                "&hasMDE=1" +
-                "&download=1" +
-                "&X-Plex-Token=${authenticatedCredentials.accessToken}" +
+        return "${credentialStore.address}${song.externalId}" +
+                "?X-Plex-Token=${authenticatedCredentials.accessToken}" +
                 "&X-Plex-Client-Identifier=s2-music-payer" +
-                "&X-Plex-Device=Android" +
-                "&X-Plex-Session-Identifier=${path}" +
-                "&X-Plex-Client-Profile-Extra=${URLEncoder.encode("add-transcode-target(type=musicProfile&context=streaming&protocol=hls&container=mpegts&audioCodec=aac,mp3)", Charsets.UTF_8.name())}"
+                "&X-Plex-Device=Android"
     }
 }

@@ -56,10 +56,10 @@ dependencies {
 
     // ExoPlayer
 
-    implementation("com.github.timusus.exoplayer:exoplayer-core:r2.14.2-shuttle")
-    implementation("com.github.timusus.exoplayer:exoplayer-hls:r2.14.2-shuttle")
-    implementation("com.github.timusus.exoplayer:extension-flac:r2.14.2-shuttle")
-    implementation("com.github.timusus.exoplayer:extension-opus:r2.14.2-shuttle")
+    implementation("com.github.timusus.exoplayer:exoplayer-core:2.14.2-shuttle")
+    implementation("com.github.timusus.exoplayer:exoplayer-hls:2.14.2-shuttle")
+    implementation("com.github.timusus.exoplayer:extension-flac:2.14.2-shuttle")
+    implementation("com.github.timusus.exoplayer:extension-opus:2.14.2-shuttle")
 
     // Moshi
     implementation 'com.squareup.moshi:moshi-kotlin:1.12.0'
