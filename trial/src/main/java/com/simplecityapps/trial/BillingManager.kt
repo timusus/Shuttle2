@@ -45,6 +45,10 @@ class BillingManager(
     init {
         billingState
             .launchIn(coroutineScope)
+
+        if (BuildConfig.DEBUG) {
+            billingState.value = BillingState.Paid
+        }
     }
 
     private val billingClientStateListener = object : BillingClientStateListener {
