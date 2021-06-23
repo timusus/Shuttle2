@@ -57,7 +57,7 @@ dependencies {
     implementation 'androidx.palette:palette-ktx:1.0.0'
 
     // Coroutines
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.3'
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0'
 
     // Glide
     implementation 'com.github.bumptech.glide:glide:4.12.0'
