@@ -12,7 +12,6 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -32,7 +31,7 @@ class ThankYouDialogFragment : DialogFragment() {
             dismiss()
         }
 
-        lifecycleScope.launch {
+        lifecycleScope.launchWhenCreated {
             delay(8000)
             dismiss()
         }
