@@ -5,11 +5,11 @@
     <!-- Menu option to shuffle artist/album/all songs -->
     <string name="menu_title_shuffle">Casuale</string>
     <!-- Menu option to start 'album shuffle' mode (plays a random album, where tracks are played in order)-->
-    <string name="menu_title_album_shuffle">Album casuale</string>
+    <string name="menu_title_album_shuffle">Album casuali</string>
     <!-- Menu option to add this song to the queue, to play next -->
-    <string name="menu_title_play_next">Riproduci successivo</string>
+    <string name="menu_title_play_next">Traccia successiva</string>
     <!-- Menu option to open the tag editor for this song/album/artist -->
-    <string name="menu_title_edit_tags">Modifica i tag</string>
+    <string name="menu_title_edit_tags">Modifica tag</string>
     <!-- Menu option to configure the selected media provider -->
     <string name="menu_title_media_provider_configure">Configura</string>
     <!-- Menu option to remove the selected media provider -->
@@ -59,7 +59,7 @@
     <!-- Menu option to add an artist/album/song to a playlist-->
     <string name="menu_title_add_to_playlist">Aggiungi a una playlist</string>
     <!-- Menu option to save the current queue to a playlist -->
-    <string name="menu_title_save_queue_to_playlist">Salva coda in una playlist</string>
+    <string name="menu_title_save_queue_to_playlist">Salva coda come playlist</string>
     <!-- Menu option to add the selected artist/album/song to the queue-->
     <string name="menu_title_add_to_queue">Aggiungi alla coda</string>
     <!-- Menu option to remove the selected item from the queue -->

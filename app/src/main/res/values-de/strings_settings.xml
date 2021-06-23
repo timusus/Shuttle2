@@ -4,7 +4,7 @@
     <string name="settings_menu_sleep_timer">Sleep-Timer</string>
     <!-- The title of 'shuffle all' in the bottom settings menu -->
     <string name="settings_menu_shuffle_all">Alle zufällig wiedergeben</string>
-    <!-- The title of 'DSP' (dynamic sound processing) in the bottom settings menu. Could use 'sound effects', or something similar -->
+    <!-- The title of 'DSP' (dynamic sound processing) in the bottom settings menu. Could use 'sound effects', or something similar. Also shown as the title of the DSP screen. -->
     <string name="settings_menu_dsp">DSP</string>
     <!-- The title of 'settings' in the bottom settings menu -->
     <string name="settings_menu_settings">Einstellungen</string>
@@ -112,7 +112,7 @@
     <!-- Settings: Title for the option to turn off crash reporting -->
     <string name="pref_crash_reporting_title">Absturzberichte</string>
     <!-- Settings: Description for the option to turn off crash reporting -->
-    <string name="pref_crash_reporting_subtitle">S2 sammelt Absturzdaten über „Bugsnag\“. Ausschalten um sich abzumelden</string>
+    <string name="pref_crash_reporting_subtitle">S2 sammelt Absturzdaten über Bugsnag. Ausschalten um sich abzumelden</string>
     <!-- Settings: Title for the option to view open source licenses -->
     <string name="pref_view_licenses_title">Lizenzen anzeigen</string>
     <!-- Settings: Title for the option to enable debug logging (log file will be stored on disk) -->

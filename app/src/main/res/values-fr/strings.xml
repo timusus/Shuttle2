@@ -3,9 +3,10 @@
     <!-- App name. Don't translate-->
     <string name="app_name">S2</string>
     <!-- App name. Translate only it seems more appropriate in your language. (Maybe just translate 'Music Player', and leave 'S2')-->
+    <string name="app_name_long">S2 Music Player</string>
     <!-- Bottom Navigation menu item (home) -->
     <string name="title_home">Accueil</string>
-    <!-- Bottom Navigation menu item (library) - the music library/colelction -->
+    <!-- Bottom Navigation menu item (library) - the music library/collection -->
     <string name="title_library">Bibliothèque</string>
     <!-- Bottom Navigation menu item (search) - button to open the 'search' screen -->
     <string name="title_search">Rechercher</string>
@@ -13,4 +14,7 @@
     <string name="playback_up_next">Suivant</string>
     <!-- Shown on the changelog screen, notes from the developer. Since the changelog is not translated, this could be left in English-->
     <string name="dev_notes">Notes du développeur:</string>
+    <!-- Title of the 'settings' screen-->
+    <!-- Title of the 'Now Playing' screen (the main screen for controlling music playback)-->
+    <!-- Shown at the top of the 'search' screen-->
 </resources>

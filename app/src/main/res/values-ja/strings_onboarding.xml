@@ -20,7 +20,7 @@
     <!-- Dialog title shown to user to indicate that S2 requires permission to access their storage -->
     <string name="onboarding_permission_dialog_title">ストレージの許可が必要です</string>
     <!-- Dialog message shown to explain that S2 requires permission to access their storage-->
-    <string name="onboarding_permission_dialog_subtitle">曲ファイルへのアクセス許可がなければ、S2 は正しく機能しない可能性があります</string>
+    <string name="onboarding_permission_dialog_subtitle">曲ファイルへのアクセス許可がなければ、S2は正しく機能しない可能性があります</string>
     <!-- Dialog button to grant permission to the app to access users storage-->
     <string name="onboarding_permission_button_grant">許可する</string>
     <!-- Shown after user initially denies access to storage -->
@@ -39,4 +39,5 @@
     <string name="onboarding_media_scanner_rescan">再スキャン</string>
     <!-- Shown when the S2 Media Provider is scanning song tags (metadata)-->
     <string name="onboarding_scanner_reading_song_tags">曲のタグを読み込み中…</string>
+    <!-- Shown when user is onboarding. On this screen, user will choose their media provider, which will scan for their music-->
 </resources>

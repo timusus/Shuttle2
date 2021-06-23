@@ -6,8 +6,7 @@
     <string name="home_description_recently_played">Zuletzt gespielte Alben</string>
     <!-- Title for list of most played albums -->
     <string name="home_title_most_played">Meist gespielt</string>
-    <!-- Description for list of most played albums -->=
-    
+    <!-- Description for list of most played albums -->
     <string name="home_description_most_played">Deine Lieblingsalben</string>
     <!-- Title for list of albums released this year -->
     <string name="home_title_this_year">Dieses Jahr</string>

@@ -4,7 +4,7 @@
     <string name="settings_menu_sleep_timer">Sleep Timer</string>
     <!-- The title of 'shuffle all' in the bottom settings menu -->
     <string name="settings_menu_shuffle_all">Shuffle All</string>
-    <!-- The title of 'DSP' (dynamic sound processing) in the bottom settings menu. Could use 'sound effects', or something similar -->
+    <!-- The title of 'DSP' (dynamic sound processing) in the bottom settings menu. Could use 'sound effects', or something similar. Also shown as the title of the DSP screen. -->
     <string name="settings_menu_dsp">DSP</string>
     <!-- The title of 'settings' in the bottom settings menu -->
     <string name="settings_menu_settings">Settings</string>
@@ -31,6 +31,7 @@
     <!-- Title of the dialog shown when the user changes their theme preferences, and the app must be restarted -->
     <string name="settings_dialog_title_amoled_required_restart">Requires Restart</string>
     <!-- Shown in dialog when user changes their theme options, and the app must be restarted -->
+    <string name="settings_dialog_message_amoled_requires_restart">S2 must be restarted for theme changes to take effect</string>
     <!-- Settings option to copy debug logs to clipboard -->
     <string name="settings_logging_clipboard_name">Debug Logs</string>
     <!-- Shown when the debug logs have been copied to the clipboard -->

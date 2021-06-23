@@ -4,8 +4,8 @@
     <string name="settings_menu_sleep_timer">Timer</string>
     <!-- The title of 'shuffle all' in the bottom settings menu -->
     <string name="settings_menu_shuffle_all">Casuale</string>
-    <!-- The title of 'DSP' (dynamic sound processing) in the bottom settings menu. Could use 'sound effects', or something similar -->
-    <string name="settings_menu_dsp">Regolazioni</string>
+    <!-- The title of 'DSP' (dynamic sound processing) in the bottom settings menu. Could use 'sound effects', or something similar. Also shown as the title of the DSP screen. -->
+    <string name="settings_menu_dsp">Audio</string>
     <!-- The title of 'settings' in the bottom settings menu -->
     <string name="settings_menu_settings">Impostazioni</string>
     <!-- Title of the dialog shown when the user changes a setting which requires the app to be restarted.-->

@@ -6,7 +6,7 @@
     <string name="app_name_long">S2 Muziekspeler</string>
     <!-- Bottom Navigation menu item (home) -->
     <string name="title_home">Start</string>
-    <!-- Bottom Navigation menu item (library) - the music library/colelction -->
+    <!-- Bottom Navigation menu item (library) - the music library/collection -->
     <string name="title_library">Bibliotheek</string>
     <!-- Bottom Navigation menu item (search) - button to open the 'search' screen -->
     <string name="title_search">Zoeken</string>
@@ -14,4 +14,10 @@
     <string name="playback_up_next">Volgende</string>
     <!-- Shown on the changelog screen, notes from the developer. Since the changelog is not translated, this could be left in English-->
     <string name="dev_notes">Opmerkingen ontwikkelaar:</string>
+    <!-- Title of the 'settings' screen-->
+    <string name="title_settings">Instellingen</string>
+    <!-- Title of the 'Now Playing' screen (the main screen for controlling music playback)-->
+    <string name="title_now_playing">Speelt nu</string>
+    <!-- Shown at the top of the 'search' screen-->
+    <string name="title_search_hint">Zoek muziek</string>
 </resources>

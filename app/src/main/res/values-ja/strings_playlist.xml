@@ -37,7 +37,7 @@
     <!-- Shown when the user presses playlist 'import' button. This shows the dialog to 'sync' playlists with the Android MediaStore -->
     <string name="playlist_dialog_title_sync">Media Storeのプレイリストを同期</string>
     <!-- Shown in the playlist import dialog. Explains to the user what 'sync' does-->
-    <string name="playlist_dialog_subtitle_sync">Media Storeからプレイリストをコピーします。プレイリストがすでにShuttleにある場合、曲はマージされます。&#13;\n&#13;\n注: 曲は追加されるだけで、削除されることはありません。</string>
+    <string name="playlist_dialog_subtitle_sync">Media Storeからプレイリストをコピーします。プレイリストがすでにS2にある場合、曲はマージされます。&#13;\n&#13;\n注: 曲は追加されるだけで、削除されることはありません。</string>
     <!-- Button to confirm 'syncing' a playlist with the Android MediaStore -->
     <string name="playlist_dialog_button_sync">同期</string>
     <!-- Title of the list of Playlists -->

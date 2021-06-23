@@ -6,7 +6,7 @@
     <string name="app_name_long">S2 Music Player</string>
     <!-- Bottom Navigation menu item (home) -->
     <string name="title_home">ホーム</string>
-    <!-- Bottom Navigation menu item (library) - the music library/colelction -->
+    <!-- Bottom Navigation menu item (library) - the music library/collection -->
     <string name="title_library">ライブラリ</string>
     <!-- Bottom Navigation menu item (search) - button to open the 'search' screen -->
     <string name="title_search">検索</string>
@@ -14,4 +14,10 @@
     <string name="playback_up_next">リスト表示</string>
     <!-- Shown on the changelog screen, notes from the developer. Since the changelog is not translated, this could be left in English-->
     <string name="dev_notes">開発ノート:</string>
+    <!-- Title of the 'settings' screen-->
+    <string name="title_settings">設定</string>
+    <!-- Title of the 'Now Playing' screen (the main screen for controlling music playback)-->
+    <string name="title_now_playing">再生中</string>
+    <!-- Shown at the top of the 'search' screen-->
+    <string name="title_search_hint">曲を検索</string>
 </resources>

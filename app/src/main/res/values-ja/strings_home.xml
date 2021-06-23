@@ -6,8 +6,7 @@
     <string name="home_description_recently_played">最近再生されたアルバム</string>
     <!-- Title for list of most played albums -->
     <string name="home_title_most_played">一番再生された曲</string>
-    <!-- Description for list of most played albums -->=
-    
+    <!-- Description for list of most played albums -->
     <string name="home_description_most_played">お気に入りのアルバム</string>
     <!-- Title for list of albums released this year -->
     <string name="home_title_this_year">今年</string>

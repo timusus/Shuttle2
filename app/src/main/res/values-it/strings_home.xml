@@ -6,8 +6,7 @@
     <string name="home_description_recently_played">Album riprodotti di recente</string>
     <!-- Title for list of most played albums -->
     <string name="home_title_most_played">Più riprodotti</string>
-    <!-- Description for list of most played albums -->=
-    
+    <!-- Description for list of most played albums -->
     <string name="home_description_most_played">I tuoi album preferiti</string>
     <!-- Title for list of albums released this year -->
     <string name="home_title_this_year">Quest\'anno</string>
@@ -20,7 +19,7 @@
     <!-- Button to show list of recently played songs (history)-->
     <string name="btn_history">Cronologia</string>
     <!-- Button to show list of songs recently added to the library-->
-    <string name="btn_recently_added">Aggiunti di recente</string>
+    <string name="btn_recently_added">Ultimi aggiunti</string>
     <!-- Button to show list of favourite songs-->
     <string name="btn_favorite">Preferiti</string>
     <!-- Button to shuffle all songs -->

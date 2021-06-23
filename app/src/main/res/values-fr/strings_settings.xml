@@ -4,7 +4,7 @@
     <string name="settings_menu_sleep_timer">Minuterie de veille</string>
     <!-- The title of 'shuffle all' in the bottom settings menu -->
     <string name="settings_menu_shuffle_all">Tout mélanger</string>
-    <!-- The title of 'DSP' (dynamic sound processing) in the bottom settings menu. Could use 'sound effects', or something similar -->
+    <!-- The title of 'DSP' (dynamic sound processing) in the bottom settings menu. Could use 'sound effects', or something similar. Also shown as the title of the DSP screen. -->
     <string name="settings_menu_dsp">Égaliseur</string>
     <!-- The title of 'settings' in the bottom settings menu -->
     <string name="settings_menu_settings">Paramètres</string>

@@ -44,7 +44,7 @@
     <!-- Title of the list of Playlists -->
     <string name="playlists_title_playlists">Playlist</string>
     <!-- Title of the list of Smart Playlists. Smart Playlists are like regular playlists, but automatically populated under certain conditions (like, most-played) -->
-    <string name="playlists_title_smart_playlists">Playlist intelligenti</string>
+    <string name="playlists_title_smart_playlists">Playlist automatiche</string>
     <!-- Shown when playlists are successfully imported (synced) from the Android MediaStore -->
     <string name="playlist_import_success">Playlist importate</string>
     <!-- Dialog title, shown when user selects 'rename playlist'-->

@@ -6,8 +6,7 @@
     <string name="home_description_recently_played">Álbuns reproduzidos recentemente</string>
     <!-- Title for list of most played albums -->
     <string name="home_title_most_played">Mais Tocado</string>
-    <!-- Description for list of most played albums -->=
-    
+    <!-- Description for list of most played albums -->
     <string name="home_description_most_played">Seus álbuns favoritos</string>
     <!-- Title for list of albums released this year -->
     <string name="home_title_this_year">Este ano</string>

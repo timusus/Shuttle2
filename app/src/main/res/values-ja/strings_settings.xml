@@ -4,14 +4,14 @@
     <string name="settings_menu_sleep_timer">スリープタイマー</string>
     <!-- The title of 'shuffle all' in the bottom settings menu -->
     <string name="settings_menu_shuffle_all">すべてシャッフル</string>
-    <!-- The title of 'DSP' (dynamic sound processing) in the bottom settings menu. Could use 'sound effects', or something similar -->
+    <!-- The title of 'DSP' (dynamic sound processing) in the bottom settings menu. Could use 'sound effects', or something similar. Also shown as the title of the DSP screen. -->
     <string name="settings_menu_dsp">DSP</string>
     <!-- The title of 'settings' in the bottom settings menu -->
     <string name="settings_menu_settings">設定</string>
     <!-- Title of the dialog shown when the user changes a setting which requires the app to be restarted.-->
     <string name="settings_crash_reporting_dialog_requires_restart">再起動が必要です</string>
     <!-- Description of dialog shown when user changes the crash reporting opt-in setting. Explaining that the user needs to restart the app. -->
-    <string name="settings_crash_reporting_dialog_message">クラッシュレポートを完全にオプトアウトするには、Shuttleを再起動してください。また曲を一時停止し、通知をスワイプアウトして、アプリをタスクリストからクリアしてください。</string>
+    <string name="settings_crash_reporting_dialog_message">クラッシュレポートを完全にオプトアウトするには、S2を再起動してください。また曲を一時停止し、通知をスワイプアウトして、アプリをタスクリストからクリアしてください。</string>
     <!-- Settings option to view the list of excluded (blacklisted) songs -->
     <string name="settings_dialog_title_excluded">非表示</string>
     <!-- Option to clear the list of excluded (blacklisted) songs -->

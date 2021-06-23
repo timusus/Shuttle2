@@ -45,4 +45,5 @@
     <string name="onboarding_media_scanner_rescan">Повторное сканирование</string>
     <!-- Shown when the S2 Media Provider is scanning song tags (metadata)-->
     <string name="onboarding_scanner_reading_song_tags">Чтение тегов песен…</string>
+    <!-- Shown when user is onboarding. On this screen, user will choose their media provider, which will scan for their music-->
 </resources>
