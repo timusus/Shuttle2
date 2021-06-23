@@ -26,13 +26,13 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     // Kotlin Standard Library
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.5.0"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.5.10"
 
     // SAF
     api 'androidx.documentfile:documentfile:1.0.1'
 
     // Coroutines
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0"
 
     // Timber
     implementation 'com.jakewharton.timber:timber:4.7.1'
