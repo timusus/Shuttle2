@@ -336,8 +336,12 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
         }
 
         fun replace(old: QueueItem, new: QueueItem) {
-            baseList[baseList.indexOf(old)] = new
-            shuffleList[shuffleList.indexOf(old)] = new
+            if (baseList.isNotEmpty()) {
+                baseList[baseList.indexOf(old)] = new
+            }
+            if (shuffleList.isNotEmpty()) {
+                shuffleList[shuffleList.indexOf(old)] = new
+            }
         }
 
         fun move(from: Int, to: Int, shuffleMode: ShuffleMode) {
