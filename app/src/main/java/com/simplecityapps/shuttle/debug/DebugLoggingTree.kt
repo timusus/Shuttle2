@@ -30,9 +30,10 @@ class DebugLoggingTree(
     }
 
     override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
-        super.log(priority, tag, message, t)
-
-        if (BuildConfig.DEBUG || generalPreferenceManager.debugFileLogging) {
+        if (BuildConfig.DEBUG) {
+            super.log(priority, tag, message, t)
+        }
+        if (generalPreferenceManager.debugFileLogging) {
             synchronized(this) {
                 val logMessage = LogMessage(priority, tag, message, t)
 
