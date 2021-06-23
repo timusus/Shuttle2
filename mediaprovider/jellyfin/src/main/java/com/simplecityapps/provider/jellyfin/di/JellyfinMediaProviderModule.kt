@@ -3,12 +3,10 @@ package com.simplecityapps.provider.jellyfin.di
 import android.content.Context
 import androidx.core.content.getSystemService
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
-import com.simplecityapps.provider.jellyfin.CredentialStore
-import com.simplecityapps.provider.jellyfin.JellyfinAuthenticationManager
-import com.simplecityapps.provider.jellyfin.JellyfinMediaInfoProvider
-import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
+import com.simplecityapps.provider.jellyfin.*
 import com.simplecityapps.provider.jellyfin.http.ItemsService
 import com.simplecityapps.provider.jellyfin.http.JellyfinTranscodeService
+import com.simplecityapps.provider.jellyfin.http.LoginCredentials
 import com.simplecityapps.provider.jellyfin.http.UserService
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import com.squareup.moshi.Moshi
@@ -67,7 +65,14 @@ open class JellyfinMediaProviderModule {
     @Provides
     @Singleton
     fun provideCredentialStore(securePreferenceManager: SecurePreferenceManager): CredentialStore {
-        return CredentialStore(securePreferenceManager)
+        return CredentialStore(securePreferenceManager).apply {
+            if (BuildConfig.DEBUG) {
+                if (loginCredentials == null) {
+                    loginCredentials = LoginCredentials("tim", "")
+                    address = "https://jellyfin.mediaserver.timmalseed.dev"
+                }
+            }
+        }
     }
 
     @Provides
