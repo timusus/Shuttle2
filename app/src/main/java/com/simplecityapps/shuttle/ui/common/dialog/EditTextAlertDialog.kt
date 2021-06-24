@@ -29,7 +29,7 @@ open class EditTextAlertDialog : DialogFragment() {
         }
     }
 
-    private lateinit var editText: EditText
+    private var editText: EditText? = null
 
     private var title: String? = null
     private var hint: String? = null
@@ -56,7 +56,7 @@ open class EditTextAlertDialog : DialogFragment() {
         hint?.let { textInputLayout.hint = hint }
 
         editText = view.findViewById(R.id.editText)
-        editText.addTextChangedListener(object : TextWatcher {
+        editText?.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {}
 
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -65,17 +65,17 @@ open class EditTextAlertDialog : DialogFragment() {
                 validate()
             }
         })
-        editText.inputType = inputType
+        editText?.inputType = inputType
         initialText?.let {
-            editText.setText(initialText)
-            editText.setSelection(editText.length())
+            editText!!.setText(initialText)
+            editText!!.setSelection(editText!!.length())
         }
 
         return MaterialAlertDialogBuilder(requireContext())
             .apply { title?.let { setTitle(title) } }
             .setView(view)
             .setNegativeButton(getString(R.string.dialog_button_close), null)
-            .setPositiveButton(getString(R.string.dialog_button_save)) { _, _ -> onSave(editText.text.toString()) }
+            .setPositiveButton(getString(R.string.dialog_button_save)) { _, _ -> onSave(editText!!.text.toString()) }
             .create()
     }
 
@@ -84,11 +84,18 @@ open class EditTextAlertDialog : DialogFragment() {
 
         validate()
 
-        editText.post {
-            editText.requestFocus()
-            val inputMethodManager = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-            inputMethodManager.showSoftInput(editText, 0)
-        }
+        editText?.postDelayed({
+            editText?.let { editText ->
+                editText.requestFocus()
+                val inputMethodManager = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                inputMethodManager.showSoftInput(editText, InputMethodManager.SHOW_IMPLICIT)
+            }
+        }, 100)
+    }
+
+    override fun onDestroyView() {
+        editText = null
+        super.onDestroyView()
     }
 
     open fun onSave(string: String) {
@@ -96,7 +103,7 @@ open class EditTextAlertDialog : DialogFragment() {
     }
 
     private fun validate() {
-        (dialog as? AlertDialog)?.getButton(AlertDialog.BUTTON_POSITIVE)?.isEnabled = isValid(editText.text.toString())
+        (dialog as? AlertDialog)?.getButton(AlertDialog.BUTTON_POSITIVE)?.isEnabled = isValid(editText?.text?.toString())
     }
 
     open fun isValid(string: String?): Boolean {
