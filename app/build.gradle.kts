@@ -180,7 +180,7 @@ android {
         }
 
         // About Libraries
-        implementation("com.mikepenz:aboutlibraries-core:8.8.4")
+        implementation("com.mikepenz:aboutlibraries-core:8.9.0")
 
         // Billing
         implementation("com.android.billingclient:billing-ktx:4.0.0")
