@@ -199,7 +199,7 @@ kapt {
 }
 
 hilt {
-    enableExperimentalClasspathAggregation = true
+    enableExperimentalClasspathAggregation = false
 }
 
 play {
