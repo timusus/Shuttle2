@@ -44,7 +44,7 @@ open class EditTextAlertDialog : DialogFragment() {
         hint = arguments?.getString(ARG_HINT)
         initialText = arguments?.getString(ARG_INITIAL_TEXT)
         extra = arguments?.getParcelable(ARG_EXTRA)
-        inputType = arguments?.getInt(ARG_INPUT_TYPE) ?: InputType.TYPE_TEXT_FLAG_CAP_WORDS
+        inputType = arguments?.getInt(ARG_INPUT_TYPE, InputType.TYPE_TEXT_FLAG_CAP_WORDS) ?: InputType.TYPE_TEXT_FLAG_CAP_WORDS
     }
 
     @SuppressLint("InflateParams")
