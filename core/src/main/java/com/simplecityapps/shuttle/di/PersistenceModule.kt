@@ -36,12 +36,12 @@ class PersistenceModule {
     @Singleton
     @Provides
     fun provideSecurePreferenceManager(@ApplicationContext context: Context): SecurePreferenceManager {
-        var sharedPreferences = createEncryptedPreferences(context)
-        if (sharedPreferences == null) {
+        var encryptedSharedPreferences = createEncryptedPreferences(context)
+        if (encryptedSharedPreferences == null) {
             context.getSharedPreferences("encrypted_preferences", Context.MODE_PRIVATE).edit().clear().commit()
-            sharedPreferences = createEncryptedPreferences(context)
+            encryptedSharedPreferences = createEncryptedPreferences(context)
         }
-        return SecurePreferenceManager(sharedPreferences ?: PreferenceManager.getDefaultSharedPreferences(context))
+        return SecurePreferenceManager(encryptedSharedPreferences ?: PreferenceManager.getDefaultSharedPreferences(context))
     }
 
     @Synchronized

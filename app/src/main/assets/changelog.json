@@ -1,5 +1,19 @@
 [
   {
+    "versionName": "0.4.6",
+    "releaseDate": "24/06/2021",
+    "features": [
+    ],
+    "fixes": [
+      "Possible fix for a major crash related to encrypted shared preferences. Note: Emby/Jellyfin credentials may need to be re-entered after this update"
+    ],
+    "improvements": [
+    ],
+    "notes": [
+      "S2 is now free to use for 2 weeks. There are options to upgrade in the app. I'd like to tweak prices so they make sense in your country. Please come and discuss this on Discord: https://discord.gg/YkhSuHJ"
+    ]
+  },
+  {
     "versionName": "0.4.5",
     "releaseDate": "23/06/2021",
     "features": [
