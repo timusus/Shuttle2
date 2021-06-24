@@ -21,6 +21,7 @@ android {
         versionName = computeVersionName()
         versionCode = computeVersionCode()
         vectorDrawables.useSupportLibrary = true
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
@@ -184,6 +185,12 @@ android {
 
         // Billing
         implementation("com.android.billingclient:billing-ktx:4.0.0")
+
+        // Testing
+        androidTestImplementation("androidx.test:runner:1.3.0")
+        androidTestImplementation("androidx.test:rules:1.3.0")
+        androidTestImplementation("androidx.test:core-ktx:1.3.0")
+        androidTestImplementation("org.hamcrest:hamcrest-library:1.3")
     }
 }
 
