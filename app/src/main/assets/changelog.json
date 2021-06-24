@@ -1,5 +1,20 @@
 [
   {
+    "versionName": "0.4.7",
+    "releaseDate": "24/06/2021",
+    "features": [
+    ],
+    "fixes": [
+      "Fixed an issue preventing playlist name from being entered"
+    ],
+    "improvements": [
+      "Show keyboard when creating/editing playlist name"
+    ],
+    "notes": [
+      "S2 is now free to use for 2 weeks. There are options to upgrade in the app. I'd like to tweak prices so they make sense in your country. Please come and discuss this on Discord: https://discord.gg/YkhSuHJ"
+    ]
+  },
+  {
     "versionName": "0.4.6",
     "releaseDate": "24/06/2021",
     "features": [
