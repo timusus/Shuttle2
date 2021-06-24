@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.di
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
@@ -12,6 +13,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import timber.log.Timber
 import javax.inject.Singleton
 
 @InstallIn(SingletonComponent::class)
@@ -30,11 +32,22 @@ class PersistenceModule {
         return GeneralPreferenceManager(preference)
     }
 
+    @SuppressLint("ApplySharedPref")
     @Singleton
     @Provides
     fun provideSecurePreferenceManager(@ApplicationContext context: Context): SecurePreferenceManager {
+        var sharedPreferences = createEncryptedPreferences(context)
+        if (sharedPreferences == null) {
+            context.getSharedPreferences("encrypted_preferences", Context.MODE_PRIVATE).edit().clear().commit()
+            sharedPreferences = createEncryptedPreferences(context)
+        }
+        return SecurePreferenceManager(sharedPreferences ?: PreferenceManager.getDefaultSharedPreferences(context))
+    }
+
+    @Synchronized
+    private fun createEncryptedPreferences(context: Context): SharedPreferences? {
         val masterKey = MasterKey.Builder(context).setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build()
-        return SecurePreferenceManager(
+        return try {
             EncryptedSharedPreferences.create(
                 context,
                 "encrypted_preferences",
@@ -42,6 +55,9 @@ class PersistenceModule {
                 EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
                 EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
             )
-        )
+        } catch (e: Exception) {
+            Timber.e("Failed to create encrypted preferences")
+            null
+        }
     }
 }
