@@ -142,4 +142,6 @@
     <string name="theme_accent_entry_purple">Purple</string>
     <!-- Settings title for the green theme option -->
     <string name="theme_accent_entry_green">Green</string>
+    <!-- Settings title for the amber theme option -->
+    <string name="theme_accent_entry_amber">Amber</string>
 </resources>

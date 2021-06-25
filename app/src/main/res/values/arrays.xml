@@ -18,6 +18,7 @@
         <item>@string/theme_accent_entry_cyan</item>
         <item>@string/theme_accent_entry_purple</item>
         <item>@string/theme_accent_entry_green</item>
+        <item>@string/theme_accent_entry_amber</item>
     </string-array>
 
     <string-array name="pref_theme_accent_values">
@@ -26,5 +27,6 @@
         <item>2</item>
         <item>3</item>
         <item>4</item>
+        <item>5</item>
     </string-array>
 </resources>

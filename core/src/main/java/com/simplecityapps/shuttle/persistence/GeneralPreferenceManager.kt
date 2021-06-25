@@ -58,7 +58,7 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
         }
 
     enum class Accent {
-        Default, Orange, Cyan, Purple, Green
+        Default, Orange, Cyan, Purple, Green, Amber
     }
 
     var themeAccent: Accent

@@ -33,6 +33,12 @@
     <color name="colorPrimaryGreenSemiTransparent">#304CAF50</color>
     <color name="colorPrimaryGreenTransparent">#204CAF50</color>
 
+    <!-- Amber-->
+    <color name="colorPrimaryAmber">#FF9800</color>
+    <color name="colorPrimaryAmberDark">#BA6F00</color>
+    <color name="colorPrimaryAmberSemiTransparent">#30FF9800</color>
+    <color name="colorPrimaryAmberTransparent">#20FF9800</color>
+
 
     <!-- General -->
 

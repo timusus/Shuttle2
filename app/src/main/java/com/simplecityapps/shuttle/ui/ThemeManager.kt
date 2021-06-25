@@ -24,6 +24,7 @@ class ThemeManager(
                     GeneralPreferenceManager.Accent.Cyan -> if (extraDark) R.style.AppTheme_DayNight_ExtraDark_Cyan else R.style.AppTheme_DayNight_Cyan
                     GeneralPreferenceManager.Accent.Purple -> if (extraDark) R.style.AppTheme_DayNight_ExtraDark_Purple else R.style.AppTheme_DayNight_Purple
                     GeneralPreferenceManager.Accent.Green -> if (extraDark) R.style.AppTheme_DayNight_ExtraDark_Green else R.style.AppTheme_DayNight_Green
+                    GeneralPreferenceManager.Accent.Amber -> if (extraDark) R.style.AppTheme_DayNight_ExtraDark_Amber else R.style.AppTheme_DayNight_Amber
                 }
             }
             GeneralPreferenceManager.Theme.Light -> {
@@ -33,6 +34,7 @@ class ThemeManager(
                     GeneralPreferenceManager.Accent.Cyan -> R.style.AppTheme_Light_Cyan
                     GeneralPreferenceManager.Accent.Purple -> R.style.AppTheme_Light_Purple
                     GeneralPreferenceManager.Accent.Green -> R.style.AppTheme_Light_Green
+                    GeneralPreferenceManager.Accent.Amber -> R.style.AppTheme_Light_Amber
                 }
             }
             GeneralPreferenceManager.Theme.Dark -> {
@@ -42,6 +44,7 @@ class ThemeManager(
                     GeneralPreferenceManager.Accent.Cyan -> if (extraDark) R.style.AppTheme_Dark_ExtraDark_Cyan else R.style.AppTheme_Dark_Cyan
                     GeneralPreferenceManager.Accent.Purple -> if (extraDark) R.style.AppTheme_Dark_ExtraDark_Purple else R.style.AppTheme_Dark_Purple
                     GeneralPreferenceManager.Accent.Green -> if (extraDark) R.style.AppTheme_Dark_ExtraDark_Green else R.style.AppTheme_Dark_Green
+                    GeneralPreferenceManager.Accent.Amber -> if (extraDark) R.style.AppTheme_Dark_ExtraDark_Amber else R.style.AppTheme_Dark_Amber
                 }
             }
         }

@@ -473,4 +473,52 @@
         <item name="colorPlayPauseTint">#FFFFFFFF</item>
     </style>
 
+
+    <!-- Amber theme-->
+
+    <style name="AppTheme.Light.Amber">
+        <item name="colorPrimary">@color/colorPrimaryAmber</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryAmberDark</item>
+        <item name="colorAccent">@color/colorPrimaryAmber</item>
+        <item name="colorPrimaryTransparent">@color/colorPrimaryAmberTransparent</item>
+        <item name="colorPrimarySemiTransparent">@color/colorPrimaryAmberSemiTransparent</item>
+        <item name="colorPlayPauseTint">#FFFFFFFF</item>
+    </style>
+
+    <style name="AppTheme.Dark.Amber">
+        <item name="colorPrimary">@color/colorPrimaryAmber</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryAmberDark</item>
+        <item name="colorAccent">@color/colorPrimaryAmber</item>
+        <item name="colorPrimaryTransparent">@color/colorPrimaryAmberTransparent</item>
+        <item name="colorPrimarySemiTransparent">@color/colorPrimaryAmberSemiTransparent</item>
+        <item name="colorPlayPauseTint">#FFFFFFFF</item>
+    </style>
+
+    <style name="AppTheme.Dark.ExtraDark.Amber">
+        <item name="colorPrimary">@color/colorPrimaryAmber</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryAmberDark</item>
+        <item name="colorAccent">@color/colorPrimaryAmber</item>
+        <item name="colorPrimaryTransparent">@color/colorPrimaryAmberTransparent</item>
+        <item name="colorPrimarySemiTransparent">@color/colorPrimaryAmberSemiTransparent</item>
+        <item name="colorPlayPauseTint">#FFFFFFFF</item>
+    </style>
+
+    <style name="AppTheme.DayNight.Amber">
+        <item name="colorPrimary">@color/colorPrimaryAmber</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryAmberDark</item>
+        <item name="colorAccent">@color/colorPrimaryAmber</item>
+        <item name="colorPrimaryTransparent">@color/colorPrimaryAmberTransparent</item>
+        <item name="colorPrimarySemiTransparent">@color/colorPrimaryAmberSemiTransparent</item>
+        <item name="colorPlayPauseTint">#FFFFFFFF</item>
+    </style>
+
+    <style name="AppTheme.DayNight.ExtraDark.Amber">
+        <item name="colorPrimary">@color/colorPrimaryAmber</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryAmberDark</item>
+        <item name="colorAccent">@color/colorPrimaryAmber</item>
+        <item name="colorPrimaryTransparent">@color/colorPrimaryAmberTransparent</item>
+        <item name="colorPrimarySemiTransparent">@color/colorPrimaryAmberSemiTransparent</item>
+        <item name="colorPlayPauseTint">#FFFFFFFF</item>
+    </style>
+
 </resources>
