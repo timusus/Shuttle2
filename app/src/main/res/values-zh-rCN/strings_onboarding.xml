@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Title of 'media directory selection' screen. User can choose to add directories to be scanned -->
+    <string name="onboarding_directories_dialog_add_title">媒体目录</string>
+    <!-- Button to allow the user to add a directory, when using the 'S2 Media Scanner' -->
+    <string name="onboarding_directories_dialog_add_button">添加目录</string>
+    <!-- Error message title shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
+    <string name="onboarding_directories_dialog_missing_title">缺少文档提供程序</string>
+    <!-- Error message description shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
+    <string name="onboarding_directories_dialog_missing_subtitle">“文档提供者”(文件管理器)应用程序无法在您的设备上找到。您可能必须安装一个，或恢复使用’基本’媒体扫描仪</string>
+    <!-- Explanation shown to user when they're about to choose which directories wil lbe scanned bv the S2 media scanner-->
+    <string name="onboarding_directories_add_directories_help_text">为了扫描音乐，S2需要访问您的媒体目录。/n/n按“添加目录”时，您将被带到默认的“文件提供商”应用程序。 导航到包含音乐的文件夹。 您可以添加多个目录。/n/n注意: 您可能需要启用“显示内部存储”，以查看您的音乐文件夹(s)。</string>
+    <!-- Shown when the app is scanning the user's directories for media -->
+    <string name="onboarding_directories_scanning">扫描...</string>
+    <!-- Shown when the media scanner is scanning the user's directories for media-->
+    <plurals name="onboarding_directories_scan_progress">
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>个音频文件</item>
+    </plurals>
+    <!-- Dialog title shown to user to indicate that S2 requires permission to access their storage -->
+    <string name="onboarding_permission_dialog_title">所需储存许可</string>
+    <!-- Dialog message shown to explain that S2 requires permission to access their storage-->
+    <string name="onboarding_permission_dialog_subtitle">未经允许，S2可能无法正常运行</string>
+    <!-- Dialog button to grant permission to the app to access users storage-->
+    <string name="onboarding_permission_button_grant">给予许可</string>
+    <!-- Shown after user initially denies access to storage -->
+    <string name="onboarding_permission_help_text">要查找您的音乐，S2需要获得读取您的媒体存储的许可</string>
+    <!-- Title of S2's Media Scanner, the thing that scans files on the device to read audio files/tags -->
+    <string name="onboarding_media_scanner_title">媒体扫描器</string>
+    <!-- Shown when the media scanner is scanning -->
+    <string name="onboarding_media_scanner_scanning">扫描...</string>
+    <!-- Button to initiate a media scanner scan-->
+    <string name="onboarding_media_scan">扫描</string>
+    <!-- Button to go back to the previous page, when onboarding -->
+    <string name="onboarding_button_back">返回</string>
+    <!-- Button to go to the next page, when onboarding -->
+    <string name="onboarding_button_next">下一个</string>
+    <!-- Button to trigger the MediaScanner to perform a rescan of audio files on the device-->
+    <string name="onboarding_media_scanner_rescan">重新扫描</string>
+    <!-- Shown when the S2 Media Provider is scanning song tags (metadata)-->
+    <string name="onboarding_scanner_reading_song_tags">阅读歌曲标签...</string>
+    <!-- Shown when user is onboarding. On this screen, user will choose their media provider, which will scan for their music-->
+</resources>

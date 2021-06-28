@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- The title of the menu button. When clicked, will show the 'free trial' dialog, with an option for the user to upgrade-->
+    <string name="menu_trial">试用</string>
+    <!-- The heading of the 'free trial' dialog -->
+    <string name="trial_heading_trial">免费试用</string>
+    <!-- Message shown when user is starting a trial. Note: This is meant to be friendly/fun! It doesn't have to say 'until you lose your mind' -->
+    <string name="trial_description_trial">试用后，每天播放速度将增加，直到你失去理智。</string>
+    <!-- Shows how many days are left in the free trial-->
+    <plurals name="trial_days_remaining">
+        <item quantity="other">剩余<xliff:g example="30" id="count">{count}</xliff:g>天</item>
+    </plurals>
+    <!-- Shown when the user's trial has expired -->
+    <string name="trial_heading_expired">试用结束</string>
+    <!-- Message shown when trial has expired. Note: This is meant to be friendly/fun! It doesn't have to say 'until you lose your mind' -->
+    <string name="trial_description_expired">每天播放速度将增加，直到你失去理智。</string>
+    <!-- When a trial ends, the playback speed is increased by a small amount each day. This text shows the current playback speed -->
+    <string name="trial_playback_speed">播放速度: <xliff:g example="1.4x" id="speed">{speed}</xliff:g></string>
+    <!-- Button to upgrade from the trial version to a paid version -->
+    <string name="trial_button_upgrade">升级</string>
+    <!-- Title of dialog shown after user has completed a purchase-->
+    <string name="dialog_title_purchase_complete">谢谢</string>
+    <!-- Message shown in dialog after user has completed a purchase. Note: This is informal, but should reflect sincere appreciation (not just a generic 'thank you')-->
+    <string name="dialog_message_purchase_complete">您已经成功升级到 S2的完整版本。非常感谢您对该应用程序的支持</string>
+</resources>

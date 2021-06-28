@@ -25,11 +25,11 @@
     <!-- Shown in the song info dialog. The song 'path'-->
     <string name="song_info_path">पथ</string>
     <!-- Shown in the song info dialog. The song 'MIME type'-->
-    <string name="song_info_mime_type">माइम प्रकार</string>
+    <string name="song_info_mime_type">MIME प्रकार</string>
     <!-- Shown in the song info dialog. The song 'file size'-->
     <string name="song_info_size">आकार</string>
     <!-- Shown in the song info dialog. The song 'Lyrics'-->
-    <string name="song_info_lyrics">संगीत</string>
+    <string name="song_info_lyrics">बोल</string>
     <!-- The song info dialog heading -->
     <string name="song_info_dialog_title">गाने की जानकारी</string>
     <!-- Button to close the song info dialog -->

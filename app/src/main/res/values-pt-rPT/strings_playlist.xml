@@ -6,8 +6,16 @@
     <string name="playlist_menu_duplicates_dialog_title">Duplicados encontrados</string>
     <!-- Shown when duplicate songs were found, when trying to add songs to a playlist. Asking the user whether they want to add the duplicates anyway, or skip them-->
     <plurals name="playlist_menu_duplicates_dialog_subtitle">
-        <item quantity="one">Já existe <xliff:g example="1" id="count">{count}</xliff:g>música em \'<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\'. Adicionar mesmo assim?</item>
-        <item quantity="other">Já existem <xliff:g example="5" id="count">{count}</xliff:g>músicas em \'<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\'. Adicionar mesmo assim?</item>
+        <item quantity="one">Já existe 
+      <xliff:g example="1" id="count">{count}</xliff:g>
+       música em \'
+      <xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>
+      \'. Adicionar mesmo assim?</item>
+        <item quantity="other">Já existem 
+      <xliff:g example="5" id="count">{count}</xliff:g>
+       músicas em \'
+      <xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>
+      \'. Adicionar mesmo assim?</item>
     </plurals>
     <!-- Button shown to allow the user to 'skip' adding duplicate songs to a playlist-->
     <string name="playlist_menu_duplicates_dialog_button_skip">Ignorar</string>
@@ -18,21 +26,27 @@
     <!-- Menu option to create a new playlist -->
     <string name="playlist_menu_create_playlist">Nova playlist</string>
     <!-- Shown when a playlist is successfully created -->
-    <string name="playlist_menu_create_playlist_success">\'<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\' criada com sucesso</string>
+    <string name="playlist_menu_create_playlist_success">\'
+    <xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>
+    \' criada com sucesso</string>
     <!-- Shown when songs can't be added to a playlist, due to an error -->
-    <string name="playlist_menu_create_playlist_failure">Falha ao adicionar músicas à playlist: <xliff:g example="Playlist already exists" id="error_message">{error_message}</xliff:g></string>
+    <string name="playlist_menu_create_playlist_failure">Falha ao adicionar músicas à playlist: 
+    <xliff:g example="Playlist already exists" id="error_message">{error_message}</xliff:g></string>
     <!-- The 'hint' text shown when creating a playlist. This indicates the text field is for 'Playlist Name'-->
     <string name="playlist_create_dialog_playlist_name_hint">Nome da playlist</string>
     <!-- Button to show the 'delete playlist' dialog, which will ask the user to confirm this action -->
     <string name="playlist_dialog_title_delete">Eliminar playlist</string>
     <!-- Shown when the user attempts to delete a playlist. Asking the user to confirm that this playlist will be permanently deleted -->
-    <string name="playlist_dialog_subtitle_delete"><xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g> será eliminada permanentemente</string>
+    <string name="playlist_dialog_subtitle_delete">\'
+    <xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>
+    \' será eliminada permanentemente</string>
     <!-- Button to confirm deletion of the selected playlist -->
     <string name="playlist_dialog_button_delete">Eliminar</string>
     <!-- Button to show the 'clear playlist' dialog, which will ask the user to confirm this action. Clearing the playlist will render it empty, but not delete it. -->
     <string name="playlist_dialog_title_clear">Limpar playlist</string>
     <!-- Shown whent he user attempts to clear a playlist. Asking the user to confirm that this playlist will become empty -->
-    <string name="playlist_dialog_subtitle_clear">Todas as músicas serão removidas de <xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g></string>
+    <string name="playlist_dialog_subtitle_clear">Todas as músicas serão removidas de 
+    <xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g></string>
     <!-- Button to confirm clearing of the selected playlist -->
     <string name="playlist_dialog_button_clear">Limpar</string>
     <!-- Shown when the user presses playlist 'import' button. This shows the dialog to 'sync' playlists with the Android MediaStore -->

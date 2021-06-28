@@ -11,30 +11,42 @@
     <!-- The name of the 'Emby' media provider. Emby is a personal media server - probably doesn't need to be translated-->
     <string name="media_provider_title_emby">Emby</string>
     <!-- The description of the 'Emby' media provider. Emby is a personal media server - probably doesn't need to be translated-->
-    <string name="media_provider_description_emby">Osobisty serwer multimediów</string>
+    <string name="media_provider_description_emby">Personal media server</string>
     <!-- The name of the 'Jellyfin' media provider. Jellyfin is a personal media server - probably doesn't need to be translated-->
     <string name="media_provider_title_jellyfin">Jellyfin</string>
     <!-- The description of the 'Jellyfin' media provider. Jellyfin is a personal media server - probably doesn't need to be translated-->
-    <string name="media_provider_description_jellyfin">Osobisty serwer multimediów</string>
+    <string name="media_provider_description_jellyfin">Personal media server</string>
     <!-- The name of the 'Plex' media provider. Plex is a personal media server - probably doesn't need to be translated-->
-    <string name="media_provider_title_plex">Plex</string>
+    <string name="media_provider_title_plex">Pleks</string>
     <!-- The description of the 'Plex' media provider. Plex is a personal media server - probably doesn't need to be translated-->
-    <string name="media_provider_description_plex">Osobisty serwer multimediów</string>
+    <string name="media_provider_description_plex">Personal media server</string>
     <!-- Shown when a media provider is being scanned. Indicates the current progress of that scan -->
-    <string name="media_provider_scan_progress">Przeskanowano <xliff:g example="5" id="progress">{progress}</xliff:g> / <xliff:g example="25" id="total">{total}</xliff:g> utworów</string>
+    <string name="media_provider_scan_progress">Przeskanowano 
+    <xliff:g example="5" id="progress">{progress}</xliff:g>
+    /
+    <xliff:g example="25" id="total">{total}</xliff:g>
+     utworów</string>
     <!-- Shown when a media provider scan has completed -->
-    <string name="media_provider_scan_success_subtitle"><xliff:g example="5" id="inserts">{inserts}</xliff:g> wstawia, <xliff:g example="15" id="updates">{updates}</xliff:g> aktualizacje, <xliff:g example="25" id="deletes">{deletes}</xliff:g> usuwa</string>
+    <string name="media_provider_scan_success_subtitle"><xliff:g example="5" id="inserts">{inserts}</xliff:g>
+     wstawia,
+    <xliff:g example="15" id="updates">{updates}</xliff:g>
+     aktualizacje,
+    <xliff:g example="25" id="deletes">{deletes}</xliff:g>
+     usuwa</string>
     <!-- Shown when a media provider scan has failed -->
     <string name="media_provider_scan_failure_title">Skanowanie nie powiodło się</string>
     <!-- Dialog button shown to authenticate with Jellyfin/Emby/Plex (submits the user's credentials for authentication)-->
-    <string name="media_provider_button_authenticate">Uwierzytelniać</string>
+    <string name="media_provider_button_authenticate">Uwierzytelnij</string>
     <!-- Shown when Jellyfin/Emby/Plex is authenticating the user's credentials-->
     <string name="media_provider_authenticating">Uwierzytelniam…</string>
     <!-- Shown when Jellyfin/Emby/Plex has successfully authenticated the user's credentials-->
     <string name="media_provider_authentication_success">Uwierzytelnianie powiodło się</string>
     <!-- The longer title of Plex Media Server. 'Plex' probably doesn't need translation -->
+    <string name="media_provider_title_long_plex">Plex Media Server</string>
     <!-- The longer title of Jellyfin Media Server. 'Jellyfin' probably doesn't need translation -->
+    <string name="media_provider_title_long_jellyfin">Jellyfin Media Server</string>
     <!-- The longer title of Emby Media Server. 'Emby' probably doesn't need translation -->
+    <string name="media_provider_title_long_emby">Emby Media Server</string>
     <!-- Shown when user is selecting which media provider to use. Groups media providers into local (device based) and remote (network based) media providers. -->
     <string name="media_provider_type_local">Lokalny</string>
     <!-- Shown when user is selecting which media provider to use. Groups media providers into local (device based) and remote (network based) media providers. -->
@@ -48,11 +60,13 @@
     <!-- Title of the screen where users can select their media providers. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
     <string name="media_provider_toolbar_title">Dostawcy mediów</string>
     <!-- Option to remove a media provider from the list of media providers to be scanned. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
-    <string name="media_provider_dialog_remove_title">Usuń <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
+    <string name="media_provider_dialog_remove_title">Usuń 
+    <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
     <!-- Warning when user attempts to remove a media provider, that their media associated with that provider will be deleted. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc.-->
-    <string name="media_provider_dialog_remove_subtitle">Spowoduje to usunięcie wszystkich utworów, playlist i liczby odtworzeń powiązanych z dostawcą mediów <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
+    <string name="media_provider_dialog_remove_subtitle">Spowoduje to usunięcie wszystkich utworów, playlist i liczby odtworzeń powiązanych z dostawcą mediów 
+    <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
     <!-- Button to remove a media provider from the list of media providers to be scanned. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
-    <string name="media_provider_dialog_button_remove">Usunąć</string>
+    <string name="media_provider_dialog_button_remove">Usuń</string>
     <!-- The address (url) of the user's Emby/Jellyfin/Plex media provider. -->
     <string name="media_provider_config_hint_address">Adres</string>
     <!-- The username of the user's Emby/Jellyfin/Plex media provider. -->

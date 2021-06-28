@@ -5,69 +5,70 @@
     <!-- Shown when text is required in a text field -->
     <string name="validation_field_required">Obligatorio</string>
     <!-- Shown when an unexpected error occurs -->
-    <string name="error_unexpected">Ocurrió un error inesperado</string>
+    <string name="error_unexpected">Se produjo un error inesperado</string>
     <!-- Shown when an unknown error occurs -->
-    <string name="error_unknown">Ocurrió un error desconocido</string>
+    <string name="error_unknown">Se produjo un error desconocido</string>
     <!-- Shown when items (an album, artist or song) are added to the queue -->
     <string name="queue_item_added"><xliff:g example="Lateralus" id="item_name">{item_name}</xliff:g>
-     agregado a la cola</string>
+     añadido a la cola</string>
     <!-- Shown when songs are added to the queue -->
     <plurals name="queue_songs_added">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
-       agregada a la cola</item>
+       canción añadida a la cola</item>
         <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
-       canciones agregadas a la cola</item>
+       canciones añadidas a la cola</item>
     </plurals>
     <!-- Shown when albums are added to the queue -->
     <plurals name="queue_albums_added">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
-       álbum agregado a la cola</item>
+       álbum añadido a la cola</item>
         <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
-       álbumes agregados a la cola</item>
+       álbumes añadidos a la cola</item>
     </plurals>
     <!-- Shown when artists are added to the queue -->
     <plurals name="queue_artists_added">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
-       artista agregado a la cola.</item>
+       artista añadido a la cola.</item>
         <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
-        artistas agregados a la cola.</item>
+       artistas añadidos a la cola</item>
     </plurals>
     <!-- Shown when current playback queue is added to a playlist -->
-    <string name="playlist_queue_added">Cola agregada a <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></string>
+    <string name="playlist_queue_added">Cola añadida a 
+    <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></string>
     <!-- Shown when songs are added to a playlist -->
     <plurals name="playlist_songs_added">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
-       canción agregada a 
+       canción añadida a 
       <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
         <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
-       canciones agregadas a 
+       canciones añadidas a 
       <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
     </plurals>
     <!-- Shown when albums are added to a playlist -->
     <plurals name="playlist_albums_added">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
-       álbum agregado a 
+       álbum añadido a 
       <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
         <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
-       álbumes agregados a 
+       álbumes añadidos a 
       <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
     </plurals>
     <!-- Shown when artists are added to a playlist -->
     <plurals name="playlist_artists_added">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
-       artista agregado a 
+       artista añadido a 
       <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
         <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
-       artistas agregados a 
+       artistas añadidos a 
       <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
     </plurals>
     <!-- Shown when genres are added to a playlist -->
     <plurals name="playlist_genres_added">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
-       género agregado a 
+       género añadido a 
       <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
         <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
-       géneros agregados a 
+       géneros añadidos a 
       <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
     </plurals>
     <!-- Shown when a song fails to be deleted -->
@@ -104,5 +105,5 @@
     <!-- Button to shuffle songs-->
     <string name="button_content_description_shuffle">Shuffle</string>
     <!-- Button to shuffle songs using 'album shuffle' mode (shuffles albums, but plays songs in track order)-->
-    <string name="button_album_shuffle">Álbum aleatorio</string>
+    <string name="button_album_shuffle">Shuffle de álbum</string>
 </resources>

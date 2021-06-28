@@ -3,13 +3,13 @@
     <!-- Shown in the song info dialog. The song 'title'-->
     <string name="song_info_track_title">Título</string>
     <!-- Shown in the song info dialog. The song 'track number'-->
-    <string name="song_info_track_number">Faixa #</string>
+    <string name="song_info_track_number">Faixa nº</string>
     <!-- Shown in the song info dialog. The song 'duration'-->
     <string name="song_info_duration">Duração</string>
     <!-- Shown in the song info dialog. When a field can't be read-->
     <string name="song_info_unknown">Desconhecido</string>
     <!-- Shown in the song info dialog. The song 'album artist'-->
-    <string name="song_info_album_artist">Álbum do Artista</string>
+    <string name="song_info_album_artist">Álbum do artista</string>
     <!-- Shown in the song info dialog. The song 'artists'-->
     <string name="song_info_artists">Artistas</string>
     <!-- Shown in the song info dialog. The song 'album'-->
@@ -19,7 +19,7 @@
     <!-- Shown in the song info dialog. The song 'disc'-->
     <string name="song_info_disc">Disco</string>
     <!-- Shown in the song info dialog. The song 'play count'-->
-    <string name="song_info_play_count">Contagem de Representação</string>
+    <string name="song_info_play_count">Contagem de reprodução</string>
     <!-- Shown in the song info dialog. The song 'genres'-->
     <string name="song_info_genres">Gêneros</string>
     <!-- Shown in the song info dialog. The song 'path'-->
@@ -29,9 +29,9 @@
     <!-- Shown in the song info dialog. The song 'file size'-->
     <string name="song_info_size">Tamanho</string>
     <!-- Shown in the song info dialog. The song 'Lyrics'-->
-    <string name="song_info_lyrics">Letra da Música</string>
+    <string name="song_info_lyrics">Letra da música</string>
     <!-- The song info dialog heading -->
-    <string name="song_info_dialog_title">Informações da Música</string>
+    <string name="song_info_dialog_title">Informações da música</string>
     <!-- Button to close the song info dialog -->
     <string name="song_info_dialog_close_button_title">Fechar</string>
 </resources>

@@ -22,11 +22,11 @@
     <!-- Dialog title shown to user to indicate that S2 requires permission to access their storage -->
     <string name="onboarding_permission_dialog_title">Permissão de armazenamento necessária</string>
     <!-- Dialog message shown to explain that S2 requires permission to access their storage-->
-    <string name="onboarding_permission_dialog_subtitle">O S2 pode não funcionar corretamente sem permissão para aceder às músicas</string>
+    <string name="onboarding_permission_dialog_subtitle">O S2 pode não funcionar corretamente sem permissão para aceder às suas músicas</string>
     <!-- Dialog button to grant permission to the app to access users storage-->
     <string name="onboarding_permission_button_grant">Conceder permissão</string>
     <!-- Shown after user initially denies access to storage -->
-    <string name="onboarding_permission_help_text">Para encontrar as músicas, o S2 precisa de permissão para ler o armazenamento multimédia</string>
+    <string name="onboarding_permission_help_text">Para encontrar as suas músicas, o S2 precisa de permissão para ler o seu armazenamento multimédia</string>
     <!-- Title of S2's Media Scanner, the thing that scans files on the device to read audio files/tags -->
     <string name="onboarding_media_scanner_title">Verificador de multimédia</string>
     <!-- Shown when the media scanner is scanning -->

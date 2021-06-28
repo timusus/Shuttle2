@@ -36,7 +36,7 @@
     <!-- Shown when the tag editor fails to write the tags (metadata) to the songs-->
     <plurals name="edit_tags_failure">
         <item quantity="one">No se pudo actualizar la canción</item>
-        <item quantity="other">No se pudieron actualizar 
+        <item quantity="other">Error al actualizar 
       <xliff:g example="5" id="count">{count}</xliff:g>
        de 
       <xliff:g example="5" id="total">{total}</xliff:g>

@@ -25,7 +25,7 @@
     <!-- Shown in the song info dialog. The song 'path'-->
     <string name="song_info_path">Ruta</string>
     <!-- Shown in the song info dialog. The song 'MIME type'-->
-    <string name="song_info_mime_type">Tipo MIME</string>
+    <string name="song_info_mime_type">Tipo MIMO</string>
     <!-- Shown in the song info dialog. The song 'file size'-->
     <string name="song_info_size">Tamaño</string>
     <!-- Shown in the song info dialog. The song 'Lyrics'-->

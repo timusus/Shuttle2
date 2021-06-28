@@ -16,21 +16,21 @@
      Löschungen</string>
     <string name="media_provider_scan_failure_title">Scan ist fehlgeschlagen</string>
     <string name="media_provider_scan_failure_subtitle">Keine Songs wurden importiert</string>
-    <string name="media_provider_button_authenticate">Authentifizieren</string>
-    <string name="media_provider_authenticating">Authentifizierung…</string>
-    <string name="media_provider_authentication_success">Authentifizierung war erfolgreich</string>
+    <string name="media_provider_button_authenticate">Anmelden</string>
+    <string name="media_provider_authenticating">Anmeldung läuft…</string>
+    <string name="media_provider_authentication_success">Anmeldung war erfolgreich</string>
     <string name="media_provider_title_plex">Plex</string>
     <string name="media_provider_title_jellyfin">Jellyfin</string>
     <string name="media_provider_title_emby">Emby</string>
     <string name="media_provider_type_local">Lokal</string>
-    <string name="media_provider_type_remote">Entfernt</string>
+    <string name="media_provider_type_remote">Extern</string>
     <string name="media_provider_add">Medienanbieter hinzufügen</string>
     <string name="media_providers_add_onboarding">Medienanbieter hinzufügen. Sie können das später ändern</string>
     <string name="media_providers_add">Medienanbieter hinzufügen</string>
     <string name="media_provider_toolbar_title_onboarding">Entdecken Sie Ihre Musik</string>
     <string name="media_provider_toolbar_title">Medienanbieter</string>
     <string name="media_provider_dialog_remove_title"><xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g> entfernen</string>
-    <string name="media_provider_dialog_remove_subtitle">Dadurch werden alle mit dem Medienanbieter <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g> verknüpften Songs, Wiedergabelisten und Spielstände entfernt</string>
+    <string name="media_provider_dialog_remove_subtitle">Dadurch werden alle mit dem Medienanbieter <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g> verknüpften Titel, Wiedergabelisten und Anzahl der Wiedergaben entfernt</string>
     <string name="media_provider_dialog_button_remove">Entfernen</string>
     <string name="media_provider_config_hint_address">Adresse</string>
     <string name="media_provider_config_hint_username">Benutzername</string>

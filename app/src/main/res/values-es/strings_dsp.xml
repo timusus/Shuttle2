@@ -19,5 +19,5 @@
     <!-- Title of the Equalizer Preset selector-->
     <string name="dsp_equalizer_hint_preset">Preset</string>
     <!-- Frequency Response Curve - a graph showing volume vs frequency-->
-    <string name="dsp_frequency_response_curve_title">Curva de respuesta de frecuencia</string>
+    <string name="dsp_frequency_response_curve_title">Curva de respuesta en frecuencia</string>
 </resources>

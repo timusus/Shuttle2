@@ -19,9 +19,9 @@
     <string name="media_provider_button_authenticate">प्रमाणित</string>
     <string name="media_provider_authenticating">प्रमाणीकरण हो रहा है ...</string>
     <string name="media_provider_authentication_success">प्रमाणीकरण सफल</string>
-    <string name="media_provider_title_plex">प्लेकस मीडिया सर्वर</string>
-    <string name="media_provider_title_jellyfin">जेलिफ़िन मीडिया सर्वर</string>
-    <string name="media_provider_title_emby">एम्बी मीडिया सर्वर</string>
+    <string name="media_provider_title_plex">प्लेक्स</string>
+    <string name="media_provider_title_jellyfin">जेलीफिन</string>
+    <string name="media_provider_title_emby">एम्बी</string>
     <string name="media_provider_type_local">स्थानीय</string>
     <string name="media_provider_type_remote">दूरस्थ</string>
     <string name="media_provider_add">मीडिया प्रदाता जोड़ें</string>

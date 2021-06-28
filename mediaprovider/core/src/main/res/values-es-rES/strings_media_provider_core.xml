@@ -62,7 +62,7 @@
     <string name="media_provider_dialog_remove_title">Eliminar 
     <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
     <!-- Warning when user attempts to remove a media provider, that their media associated with that provider will be deleted. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc.-->
-    <string name="media_provider_dialog_remove_subtitle">Esto eliminará todas las canciones, listas de reproducción y recuentos de reproducción asociados con el proveedor multimedia
+    <string name="media_provider_dialog_remove_subtitle">Esto eliminará todas las canciones, listas de reproducción y recuentos de reproducción asociados con el proveedor multimedia 
     <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
     <!-- Button to remove a media provider from the list of media providers to be scanned. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
     <string name="media_provider_dialog_button_remove">Eliminar</string>

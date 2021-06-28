@@ -5,7 +5,7 @@
     <!-- The heading of the 'free trial' dialog -->
     <string name="trial_heading_trial">無料トライアル</string>
     <!-- Message shown when user is starting a trial. Note: This is meant to be friendly/fun! It doesn't have to say 'until you lose your mind' -->
-    <string name="trial_description_trial">トライアル後は、毎日少しずつ再生速度が上がっていきます。</string>
+    <string name="trial_description_trial">トライアル後は、正気を失うまで毎日少しずつ再生速度が上がります。</string>
     <!-- Shows how many days are left in the free trial-->
     <plurals name="trial_days_remaining">
         <item quantity="other">残り
@@ -13,7 +13,7 @@
       日</item>
     </plurals>
     <!-- Shown when the user's trial has expired -->
-    <string name="trial_heading_expired">トライアル終了</string>
+    <string name="trial_heading_expired">トライアル期間終了</string>
     <!-- Message shown when trial has expired. Note: This is meant to be friendly/fun! It doesn't have to say 'until you lose your mind' -->
     <string name="trial_description_expired">正気を失うまで、再生速度は毎日少しずつ増加します。</string>
     <!-- When a trial ends, the playback speed is increased by a small amount each day. This text shows the current playback speed -->
@@ -22,7 +22,7 @@
     <!-- Button to upgrade from the trial version to a paid version -->
     <string name="trial_button_upgrade">アップグレード</string>
     <!-- Title of dialog shown after user has completed a purchase-->
-    <string name="dialog_title_purchase_complete">ありがとうございます</string>
+    <string name="dialog_title_purchase_complete">ありがとうございました</string>
     <!-- Message shown in dialog after user has completed a purchase. Note: This is informal, but should reflect sincere appreciation (not just a generic 'thank you')-->
-    <string name="dialog_message_purchase_complete">S2をフルバージョンにアップグレードしました。アプリをご支援いただき誠にありがとうございます。</string>
+    <string name="dialog_message_purchase_complete">これで、S2のフルバージョンに正常にアップグレードできました。アプリをサポートしていただきありがとうございます。</string>
 </resources>

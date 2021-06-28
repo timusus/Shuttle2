@@ -19,13 +19,13 @@
     <!-- Shown in the song info dialog. The song 'disc'-->
     <string name="song_info_disc">Disco</string>
     <!-- Shown in the song info dialog. The song 'play count'-->
-    <string name="song_info_play_count">Recuento de reproducciones</string>
+    <string name="song_info_play_count">Conteo de reproducciones</string>
     <!-- Shown in the song info dialog. The song 'genres'-->
     <string name="song_info_genres">Géneros</string>
     <!-- Shown in the song info dialog. The song 'path'-->
     <string name="song_info_path">Ruta</string>
     <!-- Shown in the song info dialog. The song 'MIME type'-->
-    <string name="song_info_mime_type">Tipo MIME</string>
+    <string name="song_info_mime_type">Tipo MIMO</string>
     <!-- Shown in the song info dialog. The song 'file size'-->
     <string name="song_info_size">Tamaño</string>
     <!-- Shown in the song info dialog. The song 'Lyrics'-->

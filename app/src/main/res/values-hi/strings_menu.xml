@@ -49,6 +49,7 @@
     <!-- Menu option to sort by song duration -->
     <string name="menu_title_sort_duration">समयांतराल</string>
     <!-- Menu option to sort playlists by a custom sort order (user-defined sort order) -->
+    <string name="menu_title_sort_custom">रिवाज</string>
     <!-- Menu option to scroll to the current playing track in the queue -->
     <string name="menu_title_scroll_to_current">वर्तमान तक स्क्रॉल करें</string>
     <!-- Menu option to rename a playlist-->

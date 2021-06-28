@@ -3,7 +3,7 @@
     <!-- Title of sleep timer dialog -->
     <string name="sleep_timer_dialog_title">Temporizador de apagado</string>
     <!-- Shown when the sleep timer has ended, but playback won't be paused until the current track ends -->
-    <string name="sleep_timer_waiting_track_end">Esperando a que finalice la pista…</string>
+    <string name="sleep_timer_waiting_track_end">Esperando a que termine la pista…</string>
     <!-- Sleep timer option to wait for a song to end before pausing playback -->
     <string name="sleep_timer_play_to_track_end">Reproducir la última canción para terminar</string>
     <!-- Button to close the sleep timer dialog -->

@@ -49,6 +49,7 @@
     <!-- Menu option to sort by song duration -->
     <string name="menu_title_sort_duration">Durée</string>
     <!-- Menu option to sort playlists by a custom sort order (user-defined sort order) -->
+    <string name="menu_title_sort_custom">Personnalisé</string>
     <!-- Menu option to scroll to the current playing track in the queue -->
     <string name="menu_title_scroll_to_current">Faire défiler jusqu\'à Actuel</string>
     <!-- Menu option to rename a playlist-->

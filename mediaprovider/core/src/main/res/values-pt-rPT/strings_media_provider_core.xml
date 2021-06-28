@@ -41,8 +41,11 @@
     <!-- Shown when Jellyfin/Emby/Plex has successfully authenticated the user's credentials-->
     <string name="media_provider_authentication_success">Autenticação bem sucedida</string>
     <!-- The longer title of Plex Media Server. 'Plex' probably doesn't need translation -->
+    <string name="media_provider_title_long_plex">Plex Media Server</string>
     <!-- The longer title of Jellyfin Media Server. 'Jellyfin' probably doesn't need translation -->
+    <string name="media_provider_title_long_jellyfin">Jellyfin Media Server</string>
     <!-- The longer title of Emby Media Server. 'Emby' probably doesn't need translation -->
+    <string name="media_provider_title_long_emby">Emby Media Server</string>
     <!-- Shown when user is selecting which media provider to use. Groups media providers into local (device based) and remote (network based) media providers. -->
     <string name="media_provider_type_local">Local</string>
     <!-- Shown when user is selecting which media provider to use. Groups media providers into local (device based) and remote (network based) media providers. -->

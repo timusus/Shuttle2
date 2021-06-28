@@ -3,7 +3,7 @@
     <!-- Shown in the song info dialog. The song 'title'-->
     <string name="song_info_track_title">Tytuł</string>
     <!-- Shown in the song info dialog. The song 'track number'-->
-    <string name="song_info_track_number">Tor #</string>
+    <string name="song_info_track_number">Utwór #</string>
     <!-- Shown in the song info dialog. The song 'duration'-->
     <string name="song_info_duration">Trwanie</string>
     <!-- Shown in the song info dialog. When a field can't be read-->
@@ -17,7 +17,7 @@
     <!-- Shown in the song info dialog. The song 'year'-->
     <string name="song_info_year">Rok</string>
     <!-- Shown in the song info dialog. The song 'disc'-->
-    <string name="song_info_disc">Dysk</string>
+    <string name="song_info_disc">Płyta</string>
     <!-- Shown in the song info dialog. The song 'play count'-->
     <string name="song_info_play_count">Liczbę odtworzeń</string>
     <!-- Shown in the song info dialog. The song 'genres'-->

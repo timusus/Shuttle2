@@ -21,11 +21,19 @@
     <!-- The description of the 'Plex' media provider. Plex is a personal media server - probably doesn't need to be translated-->
     <string name="media_provider_description_plex">Servidor multimedia personal</string>
     <!-- Shown when a media provider is being scanned. Indicates the current progress of that scan -->
-    <string name="media_provider_scan_progress"><xliff:g example="5" id="progress">{progress}</xliff:g> / <xliff:g example="25" id="total">{total}</xliff:g> canciones buscadas</string>
+    <string name="media_provider_scan_progress"><xliff:g example="5" id="progress">{progress}</xliff:g>
+    /
+    <xliff:g example="25" id="total">{total}</xliff:g>
+     canciones escaneadas</string>
     <!-- Shown when a media provider scan has completed -->
-    <string name="media_provider_scan_success_subtitle"><xliff:g example="5" id="inserts">{inserts}</xliff:g> inserta, <xliff:g example="15" id="updates">{updates}</xliff:g> actualiza, <xliff:g example="25" id="deletes">{deletes}</xliff:g> elimina</string>
+    <string name="media_provider_scan_success_subtitle"><xliff:g example="5" id="inserts">{inserts}</xliff:g>
+     inserta,
+    <xliff:g example="15" id="updates">{updates}</xliff:g>
+     actualiza,
+    <xliff:g example="25" id="deletes">{deletes}</xliff:g>
+     elimina</string>
     <!-- Shown when a media provider scan has failed -->
-    <string name="media_provider_scan_failure_title">Búsqueda fallida</string>
+    <string name="media_provider_scan_failure_title">Escaneo fallido</string>
     <!-- Dialog button shown to authenticate with Jellyfin/Emby/Plex (submits the user's credentials for authentication)-->
     <string name="media_provider_button_authenticate">Autenticar</string>
     <!-- Shown when Jellyfin/Emby/Plex is authenticating the user's credentials-->
@@ -33,27 +41,29 @@
     <!-- Shown when Jellyfin/Emby/Plex has successfully authenticated the user's credentials-->
     <string name="media_provider_authentication_success">Autenticación correcta</string>
     <!-- The longer title of Plex Media Server. 'Plex' probably doesn't need translation -->
-    <string name="media_provider_title_long_plex">Servidor de multimedia Plex</string>
+    <string name="media_provider_title_long_plex">Servidor multimedia Plex</string>
     <!-- The longer title of Jellyfin Media Server. 'Jellyfin' probably doesn't need translation -->
-    <string name="media_provider_title_long_jellyfin">Servidor de multimedia Jellyfin</string>
+    <string name="media_provider_title_long_jellyfin">Servidor multimedia Jellyfin</string>
     <!-- The longer title of Emby Media Server. 'Emby' probably doesn't need translation -->
-    <string name="media_provider_title_long_emby">Servidor de multimedia Emby</string>
+    <string name="media_provider_title_long_emby">Servidor multimedia Emby</string>
     <!-- Shown when user is selecting which media provider to use. Groups media providers into local (device based) and remote (network based) media providers. -->
     <string name="media_provider_type_local">Local</string>
     <!-- Shown when user is selecting which media provider to use. Groups media providers into local (device based) and remote (network based) media providers. -->
     <string name="media_provider_type_remote">Remoto</string>
     <!-- Button to add a media provider. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
-    <string name="media_provider_add">Agregar proveedor multimedia</string>
+    <string name="media_provider_add">Añadir proveedor multimedia</string>
     <!-- Button to add a media provider, shown during onboarding. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
-    <string name="media_providers_add_onboarding">Agregar proveedor(es) multimedia. Puedes cambiar esto más tarde</string>
+    <string name="media_providers_add_onboarding">Añadir proveedor(es) multimedia. Puedes cambiar esto más tarde</string>
     <!-- Shown during onboarding, as the user is about to select their media providers, to discover/find their music-->
     <string name="media_provider_toolbar_title_onboarding">Descubre tu música</string>
     <!-- Title of the screen where users can select their media providers. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
-    <string name="media_provider_toolbar_title">Proveedores multimedia</string>
+    <string name="media_provider_toolbar_title">Proveedores de medios</string>
     <!-- Option to remove a media provider from the list of media providers to be scanned. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
-    <string name="media_provider_dialog_remove_title">Eliminar <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
+    <string name="media_provider_dialog_remove_title">Eliminar 
+    <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
     <!-- Warning when user attempts to remove a media provider, that their media associated with that provider will be deleted. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc.-->
-    <string name="media_provider_dialog_remove_subtitle">Esto eliminará todas las canciones, listas de reproducción y recuentos de reproducción asociados con el proveedor multimedia <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
+    <string name="media_provider_dialog_remove_subtitle">Esto eliminará todas las canciones, listas de reproducción y conteo de reproducciones asociados con el proveedor multimedia 
+    <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
     <!-- Button to remove a media provider from the list of media providers to be scanned. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
     <string name="media_provider_dialog_button_remove">Eliminar</string>
     <!-- The address (url) of the user's Emby/Jellyfin/Plex media provider. -->

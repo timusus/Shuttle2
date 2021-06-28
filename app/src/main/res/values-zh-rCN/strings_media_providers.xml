@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="media_provider_title"><xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g>媒体提供者</string>
+    <string name="media_provider_scan_progress">扫描完成<xliff:g example="5" id="progress">{progress}</xliff:g>、<xliff:g example="25" id="total">{total}</xliff:g>首歌曲</string>
+    <string name="media_provider_scan_success_title"><xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g>扫描完成</string>
+    <string name="media_provider_scan_success_subtitle">插入<xliff:g example="5" id="inserts">{inserts}</xliff:g>首歌曲，更新<xliff:g example="15" id="updates">{updates}</xliff:g>首歌曲，删除<xliff:g example="25" id="deletes">{deletes}</xliff:g>首歌曲</string>
+    <string name="media_provider_scan_failure_title">扫描失败</string>
+    <string name="media_provider_scan_failure_subtitle">无导入歌曲</string>
+    <string name="media_provider_button_authenticate">授权</string>
+    <string name="media_provider_authenticating">正在授权...</string>
+    <string name="media_provider_authentication_success">认证成功</string>
+    <string name="media_provider_title_plex">Plex</string>
+    <string name="media_provider_title_jellyfin">Jellyfin</string>
+    <string name="media_provider_title_emby">Emby</string>
+    <string name="media_provider_type_local">本地</string>
+    <string name="media_provider_type_remote">远程</string>
+    <string name="media_provider_add">添加媒体提供程序</string>
+    <string name="media_providers_add_onboarding">添加媒体提供程序。您可以稍后更改</string>
+    <string name="media_providers_add">添加媒体提供程序</string>
+    <string name="media_provider_toolbar_title_onboarding">发现你的音乐</string>
+    <string name="media_provider_toolbar_title">媒体提供商</string>
+    <string name="media_provider_dialog_remove_title">移除<xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
+    <string name="media_provider_dialog_remove_subtitle">从<xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g>中删除所有的歌曲，播放列表和播放计数</string>
+    <string name="media_provider_dialog_button_remove">移除</string>
+    <string name="media_provider_config_hint_address">地址</string>
+    <string name="media_provider_config_hint_username">用户名</string>
+    <string name="media_provider_config_hint_password">密码</string>
+    <string name="media_provider_config_switch_remember_password">记住密码</string>
+</resources>

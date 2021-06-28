@@ -3,7 +3,7 @@
     <!-- Menu option to start playback of the artist/album/all songs -->
     <string name="menu_title_play">Reproducir</string>
     <!-- Menu option to shuffle artist/album/all songs -->
-    <string name="menu_title_shuffle">Aleatorio</string>
+    <string name="menu_title_shuffle">Shuffle</string>
     <!-- Menu option to start 'album shuffle' mode (plays a random album, where tracks are played in order)-->
     <string name="menu_title_album_shuffle">Álbum aleatorio</string>
     <!-- Menu option to add this song to the queue, to play next -->
@@ -49,6 +49,7 @@
     <!-- Menu option to sort by song duration -->
     <string name="menu_title_sort_duration">Duración</string>
     <!-- Menu option to sort playlists by a custom sort order (user-defined sort order) -->
+    <string name="menu_title_sort_custom">Personalizado</string>
     <!-- Menu option to scroll to the current playing track in the queue -->
     <string name="menu_title_scroll_to_current">Desplázate hasta Actuales</string>
     <!-- Menu option to rename a playlist-->

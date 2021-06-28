@@ -31,8 +31,9 @@
     <!-- Title of the dialog shown when the user changes their theme preferences, and the app must be restarted -->
     <string name="settings_dialog_title_amoled_required_restart">Requer reiniciar</string>
     <!-- Shown in dialog when user changes their theme options, and the app must be restarted -->
+    <string name="settings_dialog_message_amoled_requires_restart">O S2 deve ser reiniciado para que as alterações ao tema tenham efeito</string>
     <!-- Settings option to copy debug logs to clipboard -->
-    <string name="settings_logging_clipboard_name">S2 Logs</string>
+    <string name="settings_logging_clipboard_name">Registos de depuração</string>
     <!-- Shown when the debug logs have been copied to the clipboard -->
     <string name="settings_logging_clipboard_logs_copied">Logs copiados para a área de transferência</string>
     <!-- Error message shown when copying debug logs failed, because the log file is too large -->
@@ -78,7 +79,7 @@
     <!-- Settings: Title for the option to rescan the media library -->
     <string name="pref_media_rescan_title">Reverificar</string>
     <!-- Settings: Description for the option to rescan the media library -->
-    <string name="pref_media_rescan_summary">Reverificar novamente multimédia no dispositivo</string>
+    <string name="pref_media_rescan_summary">Verifique novamente os fornecedores de mídia selecionados</string>
     <!-- Settings: Title for the option to view the list of excluded (blacklisted) songs -->
     <string name="pref_exclude_title">Excluído</string>
     <!-- Settings: Description for the option to view the list of excluded (blacklisted) songs -->
@@ -112,13 +113,13 @@
     <!-- Settings: Title for the option to turn off crash reporting -->
     <string name="pref_crash_reporting_title">Relatórios de crash</string>
     <!-- Settings: Description for the option to turn off crash reporting -->
-    <string name="pref_crash_reporting_subtitle">O S2 recolhe dados de crash via Bugsnag. Desative para cancelar</string>
+    <string name="pref_crash_reporting_subtitle">O S2 recolhe dados de crash através do \"Bugsnag\". Desative para cancelar</string>
     <!-- Settings: Title for the option to view open source licenses -->
     <string name="pref_view_licenses_title">Ver licenças</string>
     <!-- Settings: Title for the option to enable debug logging (log file will be stored on disk) -->
-    <string name="pref_file_logging_title">Ficheiro de logs</string>
+    <string name="pref_file_logging_title">Registo de depuração</string>
     <!-- Settings: Description for the option to enable debug logging (log file will be stored on disk) -->
-    <string name="pref_file_logging_subtitle">Grava os logs num ficheiro no disco</string>
+    <string name="pref_file_logging_subtitle">Grava os registos num ficheiro no disco</string>
     <!-- Settings: Title for the option to copy the debug logs to the clipboard -->
     <string name="pref_copy_debug_logs_subtitle">Copiar logs de debug</string>
     <!-- Settings: Title for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->

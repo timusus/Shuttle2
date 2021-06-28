@@ -13,7 +13,7 @@
     <!-- Description of dialog shown when user changes the crash reporting opt-in setting. Explaining that the user needs to restart the app. -->
     <string name="settings_crash_reporting_dialog_message">Чтобы полностью отказаться от отправки отчетов о сбоях, перезапустите Shuttle. Не забудьте приостановить, смахнуть уведомление и очистить приложение от последних.</string>
     <!-- Settings option to view the list of excluded (blacklisted) songs -->
-    <string name="settings_dialog_title_excluded">Исключенные</string>
+    <string name="settings_dialog_title_excluded">Исключено</string>
     <!-- Option to clear the list of excluded (blacklisted) songs -->
     <string name="settings_dialog_button_clear_excludes">Очистить</string>
     <!-- Settings option to clear (delete) all existing artwork -->
@@ -25,14 +25,15 @@
     <!-- Settings option to download all artwork (album/artist images)-->
     <string name="settings_dialog_title_download_artwork">Скачать все обложки</string>
     <!-- Shown when user selects option to download all artwork (album/artist images) -->
-    <string name="settings_dialog_message_download_artwork">Это загрузит все обложки, независимо от вашего сетевого подключения (Wi-Fi/данные/другое).</string>
+    <string name="settings_dialog_message_download_artwork">Это загрузит все обложки, независимо от вашего сетевого подключения (Wi-Fi/данные/другое)</string>
     <!-- Option to confirm downloading of artwork (album/artist images) -->
     <string name="settings_dialog_button_download_artwork">Скачать</string>
     <!-- Title of the dialog shown when the user changes their theme preferences, and the app must be restarted -->
     <string name="settings_dialog_title_amoled_required_restart">Требуется перезагрузка</string>
     <!-- Shown in dialog when user changes their theme options, and the app must be restarted -->
+    <string name="settings_dialog_message_amoled_requires_restart">S2 необходимо перезапустить, чтобы изменения темы вступили в силу</string>
     <!-- Settings option to copy debug logs to clipboard -->
-    <string name="settings_logging_clipboard_name">Журналы S2</string>
+    <string name="settings_logging_clipboard_name">Отчет об ошибках</string>
     <!-- Shown when the debug logs have been copied to the clipboard -->
     <string name="settings_logging_clipboard_logs_copied">Журналы скопированы в буфер обмена</string>
     <!-- Error message shown when copying debug logs failed, because the log file is too large -->
@@ -68,7 +69,7 @@
     <!-- Settings: Description for changing the accent colour -->
     <string name="pref_theme_accent_summary">Цветовой акцент темы</string>
     <!-- Settings: Title for the option to use the 'extra dark' theme -->
-    <string name="pref_theme_extra_dark_title">Экстра темный</string>
+    <string name="pref_theme_extra_dark_title">Экстра-темный</string>
     <!-- Settings: Description for the option to use the 'extra dark' theme -->
     <string name="pref_theme_extra_dark_summary">Используйте более темные цвета для незначительной экономии заряда батареи на экранах AMOLED</string>
     <!-- Settings: Title for the option to choose media providers -->
@@ -78,7 +79,7 @@
     <!-- Settings: Title for the option to rescan the media library -->
     <string name="pref_media_rescan_title">Повторное сканирование</string>
     <!-- Settings: Description for the option to rescan the media library -->
-    <string name="pref_media_rescan_summary">Повторно просканируйте устройство на наличие мультимедиа</string>
+    <string name="pref_media_rescan_summary">Повторно просканируйте выбранных медиа-провайдеров</string>
     <!-- Settings: Title for the option to view the list of excluded (blacklisted) songs -->
     <string name="pref_exclude_title">Исключено</string>
     <!-- Settings: Description for the option to view the list of excluded (blacklisted) songs -->
@@ -90,11 +91,11 @@
     <!-- Settings: Title for the option to restrict artwork to only load from local sources -->
     <string name="pref_artwork_local_only_title">Только локальные</string>
     <!-- Settings: Description for the option to restrict artwork to only load from local sources -->
-    <string name="pref_artwork_local_only_subtitle">Не загружать обложки из удаленных (интернет) источников</string>
+    <string name="pref_artwork_local_only_subtitle">Не загружать обложки из удаленных (интернет-) источников</string>
     <!-- Settings: Title for the option to clear (delete) all artwork -->
     <string name="pref_clear_artwork_title">Очистить обложки</string>
     <!-- Settings: Description for the option to clear (delete) all artwork -->
-    <string name="pref_clear_artwork_subtitle">Удаляет все кешированные обложки.</string>
+    <string name="pref_clear_artwork_subtitle">Удаляет все кешированные обложки</string>
     <!-- Settings: Title for the option to download all artwork (artist/album images) -->
     <string name="pref_download_artwork_title">Скачать все обложки</string>
     <!-- Settings: Title for the option to use dark mode for widgets -->
@@ -116,7 +117,7 @@
     <!-- Settings: Title for the option to view open source licenses -->
     <string name="pref_view_licenses_title">Просмотреть лицензии</string>
     <!-- Settings: Title for the option to enable debug logging (log file will be stored on disk) -->
-    <string name="pref_file_logging_title">Журнал файлов</string>
+    <string name="pref_file_logging_title">Журнал отладки</string>
     <!-- Settings: Description for the option to enable debug logging (log file will be stored on disk) -->
     <string name="pref_file_logging_subtitle">Записывает логи в файл на диске</string>
     <!-- Settings: Title for the option to copy the debug logs to the clipboard -->
@@ -126,7 +127,7 @@
     <!-- Settings: Description for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->
     <string name="pref_media_session_artwork_subtitle">Поставлять обложки для Media Session на Android. Отключить, чтобы предотвратить блокировку экрана.</string>
     <!-- Settings title for the day/night theme option -->
-    <string name="theme_entry_day_night">День/Ночь</string>
+    <string name="theme_entry_day_night">День/ночь</string>
     <!-- Settings title for the light theme option -->
     <string name="theme_entry_light">Светлая</string>
     <!-- Settings title for the dark theme option -->

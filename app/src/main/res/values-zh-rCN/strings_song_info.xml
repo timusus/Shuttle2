@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Shown in the song info dialog. The song 'title'-->
+    <string name="song_info_track_title">标题</string>
+    <!-- Shown in the song info dialog. The song 'track number'-->
+    <string name="song_info_track_number">音轨 #</string>
+    <!-- Shown in the song info dialog. The song 'duration'-->
+    <string name="song_info_duration">持续时间</string>
+    <!-- Shown in the song info dialog. When a field can't be read-->
+    <string name="song_info_unknown">未知</string>
+    <!-- Shown in the song info dialog. The song 'album artist'-->
+    <string name="song_info_album_artist">专辑艺术家</string>
+    <!-- Shown in the song info dialog. The song 'artists'-->
+    <string name="song_info_artists">艺术家</string>
+    <!-- Shown in the song info dialog. The song 'album'-->
+    <string name="song_info_album">专辑</string>
+    <!-- Shown in the song info dialog. The song 'year'-->
+    <string name="song_info_year">年份</string>
+    <!-- Shown in the song info dialog. The song 'disc'-->
+    <string name="song_info_disc">唱片</string>
+    <!-- Shown in the song info dialog. The song 'play count'-->
+    <string name="song_info_play_count">播放计数</string>
+    <!-- Shown in the song info dialog. The song 'genres'-->
+    <string name="song_info_genres">流派</string>
+    <!-- Shown in the song info dialog. The song 'path'-->
+    <string name="song_info_path">路径</string>
+    <!-- Shown in the song info dialog. The song 'MIME type'-->
+    <string name="song_info_mime_type">MIME 类型</string>
+    <!-- Shown in the song info dialog. The song 'file size'-->
+    <string name="song_info_size">大小</string>
+    <!-- Shown in the song info dialog. The song 'Lyrics'-->
+    <string name="song_info_lyrics">歌词</string>
+    <!-- The song info dialog heading -->
+    <string name="song_info_dialog_title">歌曲信息</string>
+    <!-- Button to close the song info dialog -->
+    <string name="song_info_dialog_close_button_title">关闭</string>
+</resources>

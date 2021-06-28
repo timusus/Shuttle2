@@ -31,7 +31,7 @@
     <string name="media_provider_toolbar_title">Proveedores multimedia</string>
     <string name="media_provider_dialog_remove_title">Eliminar 
     <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
-    <string name="media_provider_dialog_remove_subtitle">Esto eliminará todas las canciones, listas de reproducción y recuentos de reproducción asociados con el proveedor multimedia
+    <string name="media_provider_dialog_remove_subtitle">Esto eliminará todas las canciones, listas de reproducción y recuentos de reproducción asociados con el proveedor multimedia 
     <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
     <string name="media_provider_dialog_button_remove">Eliminar</string>
     <string name="media_provider_config_hint_address">Dirección</string>

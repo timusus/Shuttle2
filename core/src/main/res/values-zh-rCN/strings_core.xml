@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<resources>
+    <!-- Shown in various places to indicate this particular field is unknown. E.g. the album name is 'unknown', or the artist is 'unknown' -->
+    <string name="unknown">未知</string>
+</resources>

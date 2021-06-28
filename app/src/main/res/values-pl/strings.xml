@@ -3,6 +3,7 @@
     <!-- App name. Don't translate-->
     <string name="app_name">S2</string>
     <!-- App name. Translate only it seems more appropriate in your language. (Maybe just translate 'Music Player', and leave 'S2')-->
+    <string name="app_name_long">S2 Music Player</string>
     <!-- Bottom Navigation menu item (home) -->
     <string name="title_home">Strona główna</string>
     <!-- Bottom Navigation menu item (library) - the music library/collection -->
@@ -14,6 +15,9 @@
     <!-- Shown on the changelog screen, notes from the developer. Since the changelog is not translated, this could be left in English-->
     <string name="dev_notes">Uwagi twórców:</string>
     <!-- Title of the 'settings' screen-->
+    <string name="title_settings">Ustawienia</string>
     <!-- Title of the 'Now Playing' screen (the main screen for controlling music playback)-->
+    <string name="title_now_playing">Teraz odtwarzane</string>
     <!-- Shown at the top of the 'search' screen-->
+    <string name="title_search_hint">Szukaj muzyki</string>
 </resources>

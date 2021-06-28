@@ -26,4 +26,10 @@
     <!-- Shown when the app is scanning for songs in the library -->
     <string name="library_scan_in_progress">A ler a sua biblioteca</string>
     <!-- Shown to indicate the number of tracks/albums/artists which have been selected, in multi-selection mode-->
+    <plurals name="multi_select_items_selected">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       selecionada</item>
+        <item quantity="other"><xliff:g example="3" id="count">{count}</xliff:g>
+       selecionada</item>
+    </plurals>
 </resources>

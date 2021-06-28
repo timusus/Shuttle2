@@ -11,7 +11,7 @@
        Alben</item>
     </plurals>
     <!-- Title for the list of songs -->
-    <string name="songs">Songs</string>
+    <string name="songs">Titel</string>
     <!-- The number of songs for an album/playlist/genre -->
     <plurals name="songsPlural">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
@@ -24,6 +24,10 @@
     <!-- Title for the list of playlists -->
     <string name="library_playlists">Wiedergabelisten</string>
     <!-- Shown when the app is scanning for songs in the library -->
-    <string name="library_scan_in_progress">Ihre Bibliothek wird gescannt</string>
+    <string name="library_scan_in_progress">Bibliothek wird gescannt</string>
     <!-- Shown to indicate the number of tracks/albums/artists which have been selected, in multi-selection mode-->
+    <plurals name="multi_select_items_selected">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> ausgewählt</item>
+        <item quantity="other"><xliff:g example="3" id="count">{count}</xliff:g> ausgewählt</item>
+    </plurals>
 </resources>

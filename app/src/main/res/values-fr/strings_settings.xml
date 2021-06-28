@@ -31,6 +31,7 @@
     <!-- Title of the dialog shown when the user changes their theme preferences, and the app must be restarted -->
     <string name="settings_dialog_title_amoled_required_restart">Requiert un redémarrage</string>
     <!-- Shown in dialog when user changes their theme options, and the app must be restarted -->
+    <string name="settings_dialog_message_amoled_requires_restart">S2 doit être redémarré pour que les changements de thème prennent effet</string>
     <!-- Settings option to copy debug logs to clipboard -->
     <string name="settings_logging_clipboard_name">Journaux de la navette (S2)</string>
     <!-- Shown when the debug logs have been copied to the clipboard -->

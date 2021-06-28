@@ -22,8 +22,14 @@
     <!-- Title for the list of genres -->
     <string name="genres">Gêneros</string>
     <!-- Title for the list of playlists -->
-    <string name="library_playlists">Lista de Reprodução</string>
+    <string name="library_playlists">Playlists</string>
     <!-- Shown when the app is scanning for songs in the library -->
     <string name="library_scan_in_progress">Digitalizando sua biblioteca</string>
     <!-- Shown to indicate the number of tracks/albums/artists which have been selected, in multi-selection mode-->
+    <plurals name="multi_select_items_selected">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       selecionado</item>
+        <item quantity="other"><xliff:g example="3" id="count">{count}</xliff:g>
+       selecionado</item>
+    </plurals>
 </resources>

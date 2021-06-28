@@ -9,15 +9,15 @@
     <!-- The description of the Android MediaStore media provider. The MediaStore is an Android concept. A database on the device which keeps track of song info-->
     <string name="media_provider_description_media_store">Android-प्रबंधित डेटाबेस</string>
     <!-- The name of the 'Emby' media provider. Emby is a personal media server - probably doesn't need to be translated-->
-    <string name="media_provider_title_emby">एम्बी मीडिया सर्वर</string>
+    <string name="media_provider_title_emby">एम्बी</string>
     <!-- The description of the 'Emby' media provider. Emby is a personal media server - probably doesn't need to be translated-->
     <string name="media_provider_description_emby">व्यक्तिगत मीडिया सर्वर</string>
     <!-- The name of the 'Jellyfin' media provider. Jellyfin is a personal media server - probably doesn't need to be translated-->
-    <string name="media_provider_title_jellyfin">जेलिफ़िन मीडिया सर्वर</string>
+    <string name="media_provider_title_jellyfin">जेलीफिन</string>
     <!-- The description of the 'Jellyfin' media provider. Jellyfin is a personal media server - probably doesn't need to be translated-->
     <string name="media_provider_description_jellyfin">व्यक्तिगत मीडिया सर्वर</string>
     <!-- The name of the 'Plex' media provider. Plex is a personal media server - probably doesn't need to be translated-->
-    <string name="media_provider_title_plex">प्लेकस मीडिया सर्वर</string>
+    <string name="media_provider_title_plex">प्लेक्स</string>
     <!-- The description of the 'Plex' media provider. Plex is a personal media server - probably doesn't need to be translated-->
     <string name="media_provider_description_plex">व्यक्तिगत मीडिया सर्वर</string>
     <!-- Shown when a media provider is being scanned. Indicates the current progress of that scan -->
@@ -41,8 +41,11 @@
     <!-- Shown when Jellyfin/Emby/Plex has successfully authenticated the user's credentials-->
     <string name="media_provider_authentication_success">प्रमाणीकरण सफल</string>
     <!-- The longer title of Plex Media Server. 'Plex' probably doesn't need translation -->
+    <string name="media_provider_title_long_plex">प्लेकस मीडिया सर्वर</string>
     <!-- The longer title of Jellyfin Media Server. 'Jellyfin' probably doesn't need translation -->
+    <string name="media_provider_title_long_jellyfin">जेलिफ़िन मीडिया सर्वर</string>
     <!-- The longer title of Emby Media Server. 'Emby' probably doesn't need translation -->
+    <string name="media_provider_title_long_emby">एम्बी मीडिया सर्वर</string>
     <!-- Shown when user is selecting which media provider to use. Groups media providers into local (device based) and remote (network based) media providers. -->
     <string name="media_provider_type_local">स्थानीय</string>
     <!-- Shown when user is selecting which media provider to use. Groups media providers into local (device based) and remote (network based) media providers. -->

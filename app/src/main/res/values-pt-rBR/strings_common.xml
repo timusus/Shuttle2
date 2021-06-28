@@ -33,7 +33,8 @@
        artistas adicionados à fila</item>
     </plurals>
     <!-- Shown when current playback queue is added to a playlist -->
-    <string name="playlist_queue_added">Fila adicionada a <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></string>
+    <string name="playlist_queue_added">Fila adicionada a 
+    <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></string>
     <!-- Shown when songs are added to a playlist -->
     <plurals name="playlist_songs_added">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
@@ -104,5 +105,5 @@
     <!-- Button to shuffle songs-->
     <string name="button_content_description_shuffle">Aleatório</string>
     <!-- Button to shuffle songs using 'album shuffle' mode (shuffles albums, but plays songs in track order)-->
-    <string name="button_album_shuffle">Aleatório de álbum</string>
+    <string name="button_album_shuffle">Álbum aleatório</string>
 </resources>

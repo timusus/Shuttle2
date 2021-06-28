@@ -14,11 +14,11 @@
 
     <string-array name="pref_theme_accent_entries">
         <item>@string/theme_accent_entry_blue</item>
-        <item>@string/theme_accent_entry_orange</item>
+        <item>@string/theme_accent_entry_red</item>
         <item>@string/theme_accent_entry_cyan</item>
         <item>@string/theme_accent_entry_purple</item>
         <item>@string/theme_accent_entry_green</item>
-        <item>@string/theme_accent_entry_amber</item>
+        <item>@string/theme_accent_entry_orange</item>
     </string-array>
 
     <string-array name="pref_theme_accent_values">

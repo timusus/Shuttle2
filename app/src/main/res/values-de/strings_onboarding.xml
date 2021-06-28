@@ -7,9 +7,9 @@
     <!-- Error message title shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
     <string name="onboarding_directories_dialog_missing_title">Fehlender Dokumentanbieter</string>
     <!-- Error message description shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
-    <string name="onboarding_directories_dialog_missing_subtitle">Eine „Dokumentenanbieter\“ (Dateimanager) App kann auf Ihrem Gerät nicht gefunden werden. Möglicherweise müssen Sie einen installieren oder auf den „einfachen\“Medien-Scanner zurückgreifen.</string>
+    <string name="onboarding_directories_dialog_missing_subtitle">Eine „Dokumentenanbieter\“ (Dateimanager) App kann auf deinem Gerät nicht gefunden werden. Möglicherweise musst du einen installieren oder auf den „einfachen\“Medien-Scanner zurückgreifen.</string>
     <!-- Explanation shown to user when they're about to choose which directories wil lbe scanned bv the S2 media scanner-->
-    <string name="onboarding_directories_add_directories_help_text">Damit S2 nach Musik suchen kann, benötigt es Zugriff auf Ihre Medienverzeichnisse.\n\nWenn Sie auf „Verzeichnis hinzufügen\“ drücken, werden Sie zu Ihrer Standard „Dateianbieter\“-App weitergeleitet. Navigieren Sie zu dem/den Ordner(n), in denen sich Ihre Musik befindet. Sie können mehrere Verzeichnisse hinzufügen. \n\nHinweis: Möglicherweise müssen Sie „Internen Speicher anzeigen\“ aktivieren, um Ihre(n) Musikordner zu sehen.</string>
+    <string name="onboarding_directories_add_directories_help_text">Damit S2 nach Musik suchen kann, benötigt es Zugriff auf deine Medienverzeichnisse.\n\nWenn du auf „Verzeichnis hinzufügen\“ tippst, wirst du zu deiner Standard-„Dateianbieter\“-App weitergeleitet. Navigieren Sie zu dem/den Ordner(n), in denen sich Ihre Musik befindet. Sie können mehrere Verzeichnisse hinzufügen. \n\nHinweis: Möglicherweise müssen Sie „Internen Speicher anzeigen\“ aktivieren, um Ihre(n) Musikordner zu sehen.</string>
     <!-- Shown when the app is scanning the user's directories for media -->
     <string name="onboarding_directories_scanning">Wird gescannt…</string>
     <!-- Shown when the media scanner is scanning the user's directories for media-->
@@ -22,7 +22,7 @@
     <!-- Dialog title shown to user to indicate that S2 requires permission to access their storage -->
     <string name="onboarding_permission_dialog_title">Speichererlaubnis ist erforderlich</string>
     <!-- Dialog message shown to explain that S2 requires permission to access their storage-->
-    <string name="onboarding_permission_dialog_subtitle">S2 funktioniert möglicherweise nicht richtig, wenn Sie keine Zugriffserlaubnis für Ihre Musik haben</string>
+    <string name="onboarding_permission_dialog_subtitle">S2 funktioniert möglicherweise nicht richtig, wenn es keine Berechtigung zum Zugriff auf deine Musik hat</string>
     <!-- Dialog button to grant permission to the app to access users storage-->
     <string name="onboarding_permission_button_grant">Erlaubnis erteilen</string>
     <!-- Shown after user initially denies access to storage -->
@@ -32,7 +32,7 @@
     <!-- Shown when the media scanner is scanning -->
     <string name="onboarding_media_scanner_scanning">Wird gescannt…</string>
     <!-- Button to initiate a media scanner scan-->
-    <string name="onboarding_media_scan">Scan</string>
+    <string name="onboarding_media_scan">Scannen</string>
     <!-- Button to go back to the previous page, when onboarding -->
     <string name="onboarding_button_back">Zurück</string>
     <!-- Button to go to the next page, when onboarding -->
@@ -40,6 +40,6 @@
     <!-- Button to trigger the MediaScanner to perform a rescan of audio files on the device-->
     <string name="onboarding_media_scanner_rescan">Neu scannen</string>
     <!-- Shown when the S2 Media Provider is scanning song tags (metadata)-->
-    <string name="onboarding_scanner_reading_song_tags">Song-Tags lesen…</string>
+    <string name="onboarding_scanner_reading_song_tags">Songmetadaten lesen…</string>
     <!-- Shown when user is onboarding. On this screen, user will choose their media provider, which will scan for their music-->
 </resources>

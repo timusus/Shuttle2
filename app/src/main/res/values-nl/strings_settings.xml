@@ -87,7 +87,7 @@
     <!-- Settings: Title for the option to restrict artwork downloading to only work on Wi-Fi -->
     <string name="pref_artwork_wifi_title">Alleen Wi-Fi</string>
     <!-- Settings: Description for the option to restrict artwork downloading to only work on Wi-Fi -->
-    <string name="pref_artwork_wifi_subtitle">Download illustraties van externe bronnen alleen als wifi beschikbaar is</string>
+    <string name="pref_artwork_wifi_subtitle">Download illustraties van externe bronnen alleen als Wi-Fi beschikbaar is</string>
     <!-- Settings: Title for the option to restrict artwork to only load from local sources -->
     <string name="pref_artwork_local_only_title">Alleen lokaal</string>
     <!-- Settings: Description for the option to restrict artwork to only load from local sources -->
@@ -113,7 +113,7 @@
     <!-- Settings: Title for the option to turn off crash reporting -->
     <string name="pref_crash_reporting_title">Crashrapportage</string>
     <!-- Settings: Description for the option to turn off crash reporting -->
-    <string name="pref_crash_reporting_subtitle">S2 verzamelt crashgegevens via Bugsnag. Schakel uit om u af te melden</string>
+    <string name="pref_crash_reporting_subtitle">S2 verzamelt crashgegevens via Bugsnag. Schakel uit om je af te melden</string>
     <!-- Settings: Title for the option to view open source licenses -->
     <string name="pref_view_licenses_title">Bekijk licenties</string>
     <!-- Settings: Title for the option to enable debug logging (log file will be stored on disk) -->

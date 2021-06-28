@@ -7,9 +7,9 @@
     <!-- Error message title shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
     <string name="onboarding_directories_dialog_missing_title">Brak dostawcy dokumentów</string>
     <!-- Error message description shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
-    <string name="onboarding_directories_dialog_missing_subtitle">Na urządzeniu nie można znaleźć aplikacji „Document Provider\” (menedżer plików). Konieczne może być zainstalowanie jednego lub powrót do korzystania z „podstawowego\” skanera multimediów.</string>
+    <string name="onboarding_directories_dialog_missing_subtitle">Na urządzeniu nie można znaleźć aplikacji „Document Provider” (menedżer plików). Konieczne może być zainstalowanie jednego lub powrót do korzystania z „podstawowego” skanera multimediów.</string>
     <!-- Explanation shown to user when they're about to choose which directories wil lbe scanned bv the S2 media scanner-->
-    <string name="onboarding_directories_add_directories_help_text">Aby skanować w poszukiwaniu muzyki, S2 wymaga dostępu do katalogów multimediów.\n\nPo naciśnięciu „dodaj katalog\” zostaniesz przeniesiony do domyślnej aplikacji „dostawcy plików\”. Przejdź do folderów zawierających Twoją muzykę. Możesz dodać wiele katalogów. \n\nUwaga: aby zobaczyć swoje foldery muzyczne, może być konieczne włączenie opcji „pokaż pamięć wewnętrzną\”.</string>
+    <string name="onboarding_directories_add_directories_help_text">Aby skanować w poszukiwaniu muzyki, S2 wymaga dostępu do katalogów multimediów.\n\nPo naciśnięciu „dodaj katalog” zostaniesz przeniesiony do domyślnej aplikacji „dostawcy plików”. Przejdź do folderów zawierających Twoją muzykę. Możesz dodać wiele katalogów. \n\nUwaga: aby zobaczyć swoje foldery muzyczne, może być konieczne włączenie opcji „pokaż pamięć wewnętrzną”.</string>
     <!-- Shown when the app is scanning the user's directories for media -->
     <string name="onboarding_directories_scanning">Skanowanie…</string>
     <!-- Shown when the media scanner is scanning the user's directories for media-->
@@ -28,7 +28,7 @@
     <!-- Dialog message shown to explain that S2 requires permission to access their storage-->
     <string name="onboarding_permission_dialog_subtitle">S2 może nie działać poprawnie bez pozwolenia na dostęp do Twojej muzyki</string>
     <!-- Dialog button to grant permission to the app to access users storage-->
-    <string name="onboarding_permission_button_grant">Dać pozwolenie</string>
+    <string name="onboarding_permission_button_grant">Udziel pozwolenie</string>
     <!-- Shown after user initially denies access to storage -->
     <string name="onboarding_permission_help_text">Aby znaleźć Twoją muzykę, S2 potrzebuje uprawnień do odczytu pamięci masowej</string>
     <!-- Title of S2's Media Scanner, the thing that scans files on the device to read audio files/tags -->

@@ -100,13 +100,13 @@
     <!-- Button to toggle the 'repeat' mode-->
     <string name="button_repeat">Wiederholen</string>
     <!-- Button to indicate 'seek forward' (skipping forward by, say, 10 seconds)-->
-    <string name="button_seek_forward">Vorwärts suchen</string>
+    <string name="button_seek_forward">Vorspulen</string>
     <!-- Button to skip to the next track -->
     <string name="button_skip_next">Nächsten überspringen</string>
     <!-- Button to play/pause the current song-->
     <string name="button_toggle_playback">Wiedergabe umschalten</string>
     <!-- Button to indicate 'seek backward' (skipping backwards by, say, 10 seconds)-->
-    <string name="button_seek_backward">Rückwärts suchen</string>
+    <string name="button_seek_backward">Zurückspulen</string>
     <!-- Button to skip to the previous track-->
     <string name="button_skip_previous">Vorherigen überspringen</string>
     <!-- Button to shuffle songs-->

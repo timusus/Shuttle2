@@ -55,7 +55,7 @@
     <!-- Menu option to rename a playlist-->
     <string name="menu_title_rename">Rinomina</string>
     <!-- Menu option to clear (remove) all tracks in a playlist-->
-    <string name="menu_title_clear">Rimuovi</string>
+    <string name="menu_title_clear">Svuota</string>
     <!-- Menu option to add an artist/album/song to a playlist-->
     <string name="menu_title_add_to_playlist">Aggiungi a una playlist</string>
     <!-- Menu option to save the current queue to a playlist -->

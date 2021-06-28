@@ -18,7 +18,7 @@
     <!-- Button to show list of recently played songs (history)-->
     <string name="btn_history">Historial</string>
     <!-- Button to show list of songs recently added to the library-->
-    <string name="btn_recently_added">Recientemente añadidos</string>
+    <string name="btn_recently_added">Añadidos recientemente</string>
     <!-- Button to show list of favourite songs-->
     <string name="btn_favorite">Favoritos</string>
     <!-- Button to shuffle all songs -->

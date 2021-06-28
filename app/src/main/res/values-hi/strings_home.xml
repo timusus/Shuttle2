@@ -22,5 +22,5 @@
     <!-- Button to show list of favourite songs-->
     <string name="btn_favorite">पसंदीदा</string>
     <!-- Button to shuffle all songs -->
-    <string name="btn_shuffle">मिश्रण</string>
+    <string name="btn_shuffle">शफ़ल</string>
 </resources>

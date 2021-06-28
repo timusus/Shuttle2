@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Title of changelog screen. Since the actual changelogs are not translated, this could be left in English-->
+    <string name="changelog_title">更新日志</string>
+    <!-- Changelog 'features' sub-heading. Since the actual changelogs are not translated, this could be left in English-->
+    <string name="changelog_features">功能</string>
+    <!-- Changelog 'improvements' sub-heading. Since the actual changelogs are not translated, this could be left in English-->
+    <string name="changelog_improvements">改进</string>
+    <!-- Changelog 'bug fixes' sub-heading. Since the actual changelogs are not translated, this could be left in English-->
+    <string name="changelog_bug_fixes">修复错误</string>
+</resources>

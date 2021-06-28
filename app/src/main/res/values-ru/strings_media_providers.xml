@@ -2,19 +2,28 @@
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="media_provider_title"><xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g>
      медиа-провайдер</string>
-    <string name="media_provider_scan_progress">Отсканировано песен: <xliff:g example="5" id="progress">{progress}</xliff:g> из <xliff:g example="25" id="total">{total}</xliff:g></string>
+    <string name="media_provider_scan_progress">Отсканировано песен: 
+    <xliff:g example="5" id="progress">{progress}</xliff:g>
+     из 
+    <xliff:g example="25" id="total">{total}</xliff:g></string>
     <string name="media_provider_scan_success_title">Сканирование 
     <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g>
      завершено</string>
-    <string name="media_provider_scan_success_subtitle">Вставок: <xliff:g example="5" id="inserts">{inserts}</xliff:g>, обновлений: <xliff:g example="15" id="updates">{updates}</xliff:g>, удалений: <xliff:g example="25" id="deletes">{deletes}</xliff:g>.</string>
+    <string name="media_provider_scan_success_subtitle">Вставок: 
+    <xliff:g example="5" id="inserts">{inserts}</xliff:g>
+    , обновлений: 
+    <xliff:g example="15" id="updates">{updates}</xliff:g>
+    , удалений: 
+    <xliff:g example="25" id="deletes">{deletes}</xliff:g>
+    .</string>
     <string name="media_provider_scan_failure_title">Ошибка сканирования</string>
     <string name="media_provider_scan_failure_subtitle">Песни не импортированы</string>
     <string name="media_provider_button_authenticate">Аутентифицировать</string>
     <string name="media_provider_authenticating">Аутентификация…</string>
     <string name="media_provider_authentication_success">Аутентификация прошла успешно</string>
-    <string name="media_provider_title_plex">Медиа-сервер Plex</string>
-    <string name="media_provider_title_jellyfin">Медиа-сервер Jellyfin</string>
-    <string name="media_provider_title_emby">Медиа-сервер Emby</string>
+    <string name="media_provider_title_plex">Plex</string>
+    <string name="media_provider_title_jellyfin">Jellyfin</string>
+    <string name="media_provider_title_emby">Emby</string>
     <string name="media_provider_type_local">Локальный</string>
     <string name="media_provider_type_remote">Удаленный</string>
     <string name="media_provider_add">Добавить медиа-провайдера</string>
@@ -22,8 +31,11 @@
     <string name="media_providers_add">Добавить медиа-провайдера(ов)</string>
     <string name="media_provider_toolbar_title_onboarding">Откройте для себя свою музыку</string>
     <string name="media_provider_toolbar_title">Медиа-провайдеры</string>
-    <string name="media_provider_dialog_remove_title">Удалить <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
-    <string name="media_provider_dialog_remove_subtitle">Это приведет к удалению всех песен, плейлистов и счетчиков воспроизведения, связанных с медиа-провайдером <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g>.</string>
+    <string name="media_provider_dialog_remove_title">Удалить 
+    <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
+    <string name="media_provider_dialog_remove_subtitle">Это приведет к удалению всех песен, плейлистов и счетчиков воспроизведения, связанных с медиа-провайдером 
+    <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g>
+    .</string>
     <string name="media_provider_dialog_button_remove">Удалить</string>
     <string name="media_provider_config_hint_address">Адрес</string>
     <string name="media_provider_config_hint_username">Имя пользователя</string>

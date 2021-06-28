@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- The title shown for list of recently played albums-->
-    <string name="home_title_recent">Zuletzt gespielt</string>
+    <string name="home_title_recent">Zuletzt abgespielt</string>
     <!-- Description for list of recently played albums -->
-    <string name="home_description_recently_played">Zuletzt gespielte Alben</string>
+    <string name="home_description_recently_played">Zuletzt abgespielte Alben</string>
     <!-- Title for list of most played albums -->
     <string name="home_title_most_played">Meist gespielt</string>
     <!-- Description for list of most played albums -->

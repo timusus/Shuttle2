@@ -31,6 +31,7 @@
     <!-- Title of the dialog shown when the user changes their theme preferences, and the app must be restarted -->
     <string name="settings_dialog_title_amoled_required_restart">Erfordert einen Neustart</string>
     <!-- Shown in dialog when user changes their theme options, and the app must be restarted -->
+    <string name="settings_dialog_message_amoled_requires_restart">S2 muss neugestartet werden, um Thema Änderungen anzuwenden</string>
     <!-- Settings option to copy debug logs to clipboard -->
     <string name="settings_logging_clipboard_name">S2-Protokolle</string>
     <!-- Shown when the debug logs have been copied to the clipboard -->
@@ -78,7 +79,7 @@
     <!-- Settings: Title for the option to rescan the media library -->
     <string name="pref_media_rescan_title">Neu scannen</string>
     <!-- Settings: Description for the option to rescan the media library -->
-    <string name="pref_media_rescan_summary">Das Gerät auf Medien scannen</string>
+    <string name="pref_media_rescan_summary">Ausgewählte Medienanbieter erneut scannen</string>
     <!-- Settings: Title for the option to view the list of excluded (blacklisted) songs -->
     <string name="pref_exclude_title">Ausgeschlossen</string>
     <!-- Settings: Description for the option to view the list of excluded (blacklisted) songs -->
@@ -116,9 +117,9 @@
     <!-- Settings: Title for the option to view open source licenses -->
     <string name="pref_view_licenses_title">Lizenzen anzeigen</string>
     <!-- Settings: Title for the option to enable debug logging (log file will be stored on disk) -->
-    <string name="pref_file_logging_title">Dateiprotokollierung</string>
+    <string name="pref_file_logging_title">Debugprotokollierung</string>
     <!-- Settings: Description for the option to enable debug logging (log file will be stored on disk) -->
-    <string name="pref_file_logging_subtitle">Schreibt Protokolle in eine Datei auf der Festplatte</string>
+    <string name="pref_file_logging_subtitle">Schreibt Protokolle in eine Datei im lokalen Speicher</string>
     <!-- Settings: Title for the option to copy the debug logs to the clipboard -->
     <string name="pref_copy_debug_logs_subtitle">Debug-Protokolle kopieren</string>
     <!-- Settings: Title for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->

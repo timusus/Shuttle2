@@ -35,18 +35,21 @@
     <!-- Shown when a media provider scan has failed -->
     <string name="media_provider_scan_failure_title">Scan ist fehlgeschlagen</string>
     <!-- Dialog button shown to authenticate with Jellyfin/Emby/Plex (submits the user's credentials for authentication)-->
-    <string name="media_provider_button_authenticate">Authentifizieren</string>
+    <string name="media_provider_button_authenticate">Anmelden</string>
     <!-- Shown when Jellyfin/Emby/Plex is authenticating the user's credentials-->
-    <string name="media_provider_authenticating">Authentifizierung…</string>
+    <string name="media_provider_authenticating">Anmeldung läuft…</string>
     <!-- Shown when Jellyfin/Emby/Plex has successfully authenticated the user's credentials-->
-    <string name="media_provider_authentication_success">Authentifizierung war erfolgreich</string>
+    <string name="media_provider_authentication_success">Anmeldung war erfolgreich</string>
     <!-- The longer title of Plex Media Server. 'Plex' probably doesn't need translation -->
+    <string name="media_provider_title_long_plex">Plex Media Server</string>
     <!-- The longer title of Jellyfin Media Server. 'Jellyfin' probably doesn't need translation -->
+    <string name="media_provider_title_long_jellyfin">Jellyfin Media Server</string>
     <!-- The longer title of Emby Media Server. 'Emby' probably doesn't need translation -->
+    <string name="media_provider_title_long_emby">Emby Media Server</string>
     <!-- Shown when user is selecting which media provider to use. Groups media providers into local (device based) and remote (network based) media providers. -->
     <string name="media_provider_type_local">Lokal</string>
     <!-- Shown when user is selecting which media provider to use. Groups media providers into local (device based) and remote (network based) media providers. -->
-    <string name="media_provider_type_remote">Entfernt</string>
+    <string name="media_provider_type_remote">Extern</string>
     <!-- Button to add a media provider. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
     <string name="media_provider_add">Medienanbieter hinzufügen</string>
     <!-- Button to add a media provider, shown during onboarding. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
@@ -58,7 +61,7 @@
     <!-- Option to remove a media provider from the list of media providers to be scanned. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
     <string name="media_provider_dialog_remove_title"><xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g> entfernen</string>
     <!-- Warning when user attempts to remove a media provider, that their media associated with that provider will be deleted. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc.-->
-    <string name="media_provider_dialog_remove_subtitle">Dadurch werden alle mit dem Medienanbieter <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g> verknüpften Songs, Wiedergabelisten und Spielstände entfernt</string>
+    <string name="media_provider_dialog_remove_subtitle">Dadurch werden alle mit dem Medienanbieter <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g> verknüpften Titel, Wiedergabelisten und Anzahl der Wiedergaben entfernt</string>
     <!-- Button to remove a media provider from the list of media providers to be scanned. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
     <string name="media_provider_dialog_button_remove">Entfernen</string>
     <!-- The address (url) of the user's Emby/Jellyfin/Plex media provider. -->
@@ -70,7 +73,11 @@
     <!-- The option to remember the user's password for their Emby/Jellyfin/Plex media provider-->
     <string name="media_provider_config_switch_remember_password">Kennwort merken</string>
     <!-- Favorites playlist name - user's favorite songs -->
+    <string name="playlist_title_favorites">Favoriten</string>
     <!-- 'Most Played' playlist name - playlist of songs with highest play count -->
+    <string name="playlist_title_most_played">Meist abgespielt</string>
     <!-- 'Recently Added' playlist name - playlist of songs which have been recently added -->
+    <string name="playlist_title_recently_added">Zuletzt hinzugefügt</string>
     <!-- 'History' playlist name - playlist of songs which have been recently played -->
+    <string name="playlist_title_history">Verlauf</string>
 </resources>

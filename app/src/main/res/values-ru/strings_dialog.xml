@@ -13,7 +13,9 @@
     <!-- Shown in the 'exclude' dialog (move the selected songs to the list of 'excluded' songs) (another word for 'blacklist') -->
     <string name="dialog_exclude_title">Исключить</string>
     <!-- Shown when songs are about to be added to the list of songs to be excluded (blacklisted) -->
-    <string name="dialog_exclude_message">Элемент \'<xliff:g example="Lateralus" id="item">{item}</xliff:g>\' будет скрыт из вашей библиотеки.\n\nВы можете просмотреть исключенные песни в настройках.</string>
+    <string name="dialog_exclude_message">Элемент \'
+    <xliff:g example="Lateralus" id="item">{item}</xliff:g>
+    \' будет скрыт из вашей библиотеки.\n\nВы можете просмотреть исключенные песни в настройках.</string>
     <!-- Button to add the selected songs to the list of 'excluded' (blacklisted) songs  -->
     <string name="dialog_exclude_button">Исключить</string>
     <!-- Shown when viewing the list of 'excluded' (blacklisted) songs, and it's empty-->
@@ -21,7 +23,9 @@
     <!-- Dialog title shown when attempting to delete a song -->
     <string name="dialog_delete_title">Удалить</string>
     <!-- Dialog warning message to indicate the song will be permanently deleted -->
-    <string name="dialog_delete_message">Элемент \'<xliff:g example="Lateralus" id="item">{item}</xliff:g>\' будет удален без возможности восстановления.</string>
+    <string name="dialog_delete_message">Элемент \'
+    <xliff:g example="Lateralus" id="item">{item}</xliff:g>
+    \' будет удален без возможности восстановления.</string>
     <!-- Dialog button to confirm deletion of the selected song(s)-->
     <string name="dialog_delete_button">Удалить</string>
 </resources>

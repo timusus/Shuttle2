@@ -33,7 +33,8 @@
        artistas adicionados à fila</item>
     </plurals>
     <!-- Shown when current playback queue is added to a playlist -->
-    <string name="playlist_queue_added">Fila adicionada a <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></string>
+    <string name="playlist_queue_added">Fila adicionada a 
+    <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></string>
     <!-- Shown when songs are added to a playlist -->
     <plurals name="playlist_songs_added">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>

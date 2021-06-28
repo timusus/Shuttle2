@@ -3,15 +3,15 @@
     <!-- Title of 'media directory selection' screen. User can choose to add directories to be scanned -->
     <string name="onboarding_directories_dialog_add_title">Directorios multimedia</string>
     <!-- Button to allow the user to add a directory, when using the 'S2 Media Scanner' -->
-    <string name="onboarding_directories_dialog_add_button">Agregar directorio</string>
+    <string name="onboarding_directories_dialog_add_button">Añadir directorio</string>
     <!-- Error message title shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
     <string name="onboarding_directories_dialog_missing_title">Proveedor de documentos faltante</string>
     <!-- Error message description shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
-    <string name="onboarding_directories_dialog_missing_subtitle">No se ha podido encontrar una aplicación de \'Proveedor de documentos\' (administrador de archivos) en tu dispositivo. Puede que debas instalar uno o volver a utilizar el escáner multimedia \"básico\".</string>
+    <string name="onboarding_directories_dialog_missing_subtitle">No se ha podido encontrar ninguna aplicación \'Proveedor de documentos\' (administrador de archivos) en tu dispositivo. Es posible que debas instalar uno o volver a utilizar el escáner de multimedia \"básico\".</string>
     <!-- Explanation shown to user when they're about to choose which directories wil lbe scanned bv the S2 media scanner-->
-    <string name="onboarding_directories_add_directories_help_text">Para buscar música, S2 requiere acceso a tus directorios multimedia.\n\nCuando presiones \'agregar directorio\', serás llevado a tu aplicación predeterminada de \'proveedor de archivos\'. Navega hasta las carpetas que contienen tu música. Puedes agregar varios directorios. \n\nNota: puede que debas habilitar \"mostrar almacenamiento interno\" para ver tus carpetas de música.</string>
+    <string name="onboarding_directories_add_directories_help_text">Para buscar música, S2 necesita acceder a tus directorios multimedia.\n\nCuando presiones \'añadir directorio\', serás dirigido a tu aplicación de \'proveedor de archivos\' predeterminada. Navega hasta las carpetas que contengan tu música. Puedes añadir varios directorios. \n\nNota: es posible que debas habilitar \"mostrar almacenamiento interno\" para ver tus carpetas de música.</string>
     <!-- Shown when the app is scanning the user's directories for media -->
-    <string name="onboarding_directories_scanning">Buscando…</string>
+    <string name="onboarding_directories_scanning">Escaneando…</string>
     <!-- Shown when the media scanner is scanning the user's directories for media-->
     <plurals name="onboarding_directories_scan_progress">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
@@ -20,25 +20,25 @@
        archivos de audio</item>
     </plurals>
     <!-- Dialog title shown to user to indicate that S2 requires permission to access their storage -->
-    <string name="onboarding_permission_dialog_title">Se requiere permiso de almacenamiento</string>
+    <string name="onboarding_permission_dialog_title">Permiso de almacenamiento requerido</string>
     <!-- Dialog message shown to explain that S2 requires permission to access their storage-->
-    <string name="onboarding_permission_dialog_subtitle">Es posible que S2 no funcione correctamente sin permiso para acceder a tu música</string>
+    <string name="onboarding_permission_dialog_subtitle">Es posible que S2 no funcione correctamente sin el permiso para acceder a tu música</string>
     <!-- Dialog button to grant permission to the app to access users storage-->
-    <string name="onboarding_permission_button_grant">Otorgar permiso</string>
+    <string name="onboarding_permission_button_grant">Conceder permiso</string>
     <!-- Shown after user initially denies access to storage -->
-    <string name="onboarding_permission_help_text">Para encontrar tu música, S2 necesita permiso para leer tu almacenamiento multimedia</string>
+    <string name="onboarding_permission_help_text">Para buscar tu música, S2 necesita permiso para leer tu almacenamiento multimedia</string>
     <!-- Title of S2's Media Scanner, the thing that scans files on the device to read audio files/tags -->
     <string name="onboarding_media_scanner_title">Escáner multimedia</string>
     <!-- Shown when the media scanner is scanning -->
-    <string name="onboarding_media_scanner_scanning">Buscando…</string>
+    <string name="onboarding_media_scanner_scanning">Escaneando…</string>
     <!-- Button to initiate a media scanner scan-->
-    <string name="onboarding_media_scan">Buscar</string>
+    <string name="onboarding_media_scan">Escanear</string>
     <!-- Button to go back to the previous page, when onboarding -->
     <string name="onboarding_button_back">Atrás</string>
     <!-- Button to go to the next page, when onboarding -->
     <string name="onboarding_button_next">Siguiente</string>
     <!-- Button to trigger the MediaScanner to perform a rescan of audio files on the device-->
-    <string name="onboarding_media_scanner_rescan">Volver a buscar</string>
+    <string name="onboarding_media_scanner_rescan">Volver a escanear</string>
     <!-- Shown when the S2 Media Provider is scanning song tags (metadata)-->
     <string name="onboarding_scanner_reading_song_tags">Leyendo etiquetas de canciones…</string>
     <!-- Shown when user is onboarding. On this screen, user will choose their media provider, which will scan for their music-->

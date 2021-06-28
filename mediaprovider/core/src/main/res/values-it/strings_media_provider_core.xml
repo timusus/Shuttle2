@@ -77,7 +77,7 @@ eliminati</string>
     <!-- 'Most Played' playlist name - playlist of songs with highest play count -->
     <string name="playlist_title_most_played">Più riprodotti</string>
     <!-- 'Recently Added' playlist name - playlist of songs which have been recently added -->
-    <string name="playlist_title_recently_added">Recentemente aggiunti</string>
+    <string name="playlist_title_recently_added">Ultimi aggiunti</string>
     <!-- 'History' playlist name - playlist of songs which have been recently played -->
     <string name="playlist_title_history">Cronologia</string>
 </resources>
