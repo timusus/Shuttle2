@@ -8,6 +8,7 @@ import com.google.android.gms.cast.*
 import com.google.android.gms.cast.framework.CastSession
 import com.google.android.gms.cast.framework.media.RemoteMediaClient
 import com.google.android.gms.common.images.WebImage
+import com.simplecityapps.core.R
 import com.simplecityapps.mediaprovider.MediaInfoProvider
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.playback.Playback
@@ -37,7 +38,7 @@ class CastPlayback(
     private val remoteMediaClientCallback = CastMediaClientCallback()
 
     init {
-        castSession.remoteMediaClient.registerCallback(remoteMediaClientCallback)
+        castSession.remoteMediaClient?.registerCallback(remoteMediaClientCallback)
     }
 
     override suspend fun load(current: Song, next: Song?, seekPosition: Int, completion: (Result<Any?>) -> Unit) {
@@ -47,9 +48,9 @@ class CastPlayback(
         callback?.onPlaybackStateChanged(PlaybackState.Loading)
 
         val metadata = MediaMetadata(MediaMetadata.MEDIA_TYPE_MUSIC_TRACK)
-        metadata.putString(MediaMetadata.KEY_ALBUM_ARTIST, current.albumArtist)
-        metadata.putString(MediaMetadata.KEY_ALBUM_TITLE, current.album)
-        metadata.putString(MediaMetadata.KEY_TITLE, current.name)
+        metadata.putString(MediaMetadata.KEY_ARTIST, current.friendlyArtistName ?: context.getString(R.string.unknown))
+        metadata.putString(MediaMetadata.KEY_ALBUM_TITLE, current.album ?: context.getString(R.string.unknown))
+        metadata.putString(MediaMetadata.KEY_TITLE, current.name ?: context.getString(R.string.unknown))
         metadata.addImage(WebImage(Uri.parse("http://$ipAddress:5000/songs/${current.id}/artwork")))
 
         var path = "http://$ipAddress:5000/songs/${current.id}/audio"
@@ -87,9 +88,11 @@ class CastPlayback(
     override fun play() {
         isMeantToBePlaying = true
 
-        if (castSession.remoteMediaClient?.hasMediaSession() == true && !castSession.remoteMediaClient.isPlaying) {
-            currentPosition = castSession.remoteMediaClient.approximateStreamPosition.toInt()
-            castSession.remoteMediaClient.play()
+        if (castSession.remoteMediaClient?.hasMediaSession() == true && castSession.remoteMediaClient?.isPlaying == false) {
+            currentPosition = castSession.remoteMediaClient?.approximateStreamPosition?.toInt() ?: 0
+            castSession.remoteMediaClient?.play() ?: run {
+                Timber.e("Failed to play - remote media client null")
+            }
         } else {
             Timber.e("play() failed. HasMediaSession ${castSession.remoteMediaClient?.hasMediaSession()}")
         }
@@ -99,8 +102,10 @@ class CastPlayback(
         isMeantToBePlaying = false
         try {
             if (castSession.remoteMediaClient?.hasMediaSession() == true) {
-                currentPosition = castSession.remoteMediaClient.approximateStreamPosition.toInt()
-                castSession.remoteMediaClient.pause()
+                currentPosition = castSession.remoteMediaClient?.approximateStreamPosition?.toInt() ?: 0
+                castSession.remoteMediaClient?.pause() ?: run {
+                    Timber.e("Failed to pause - remote media client null")
+                }
             } else {
                 Timber.e("pause() failed. No remote media session")
             }
@@ -113,8 +118,10 @@ class CastPlayback(
         isMeantToBePlaying = false
 
         if (castSession.remoteMediaClient?.hasMediaSession() == true) {
-            currentPosition = castSession.remoteMediaClient.approximateStreamPosition.toInt()
-            castSession.remoteMediaClient.stop()
+            currentPosition = castSession.remoteMediaClient?.approximateStreamPosition?.toInt() ?: 0
+            castSession.remoteMediaClient?.stop() ?: run {
+                Timber.e("Failed to stop - remote media client null")
+            }
         }
 
         castSession.remoteMediaClient?.unregisterCallback(remoteMediaClientCallback)
@@ -134,7 +141,7 @@ class CastPlayback(
         currentPosition = position
         try {
             if (castSession.remoteMediaClient?.hasMediaSession() == true) {
-                castSession.remoteMediaClient.seek(
+                castSession.remoteMediaClient?.seek(
                     MediaSeekOptions.Builder()
                         .setPosition(position.toLong())
                         .build()
@@ -191,7 +198,7 @@ class CastPlayback(
         // Convert the remote playback states to media playback states.
         if (playerState != this.playerState) when (playerState) {
             MediaStatus.PLAYER_STATE_IDLE -> {
-                val idleReason = castSession.remoteMediaClient.idleReason
+                val idleReason = castSession.remoteMediaClient?.idleReason ?: MediaStatus.IDLE_REASON_NONE
                 Timber.v("onRemoteMediaPlayerStatusUpdated... IDLE, reason: $idleReason")
                 if (idleReason == MediaStatus.IDLE_REASON_FINISHED) {
                     currentPosition = 0
