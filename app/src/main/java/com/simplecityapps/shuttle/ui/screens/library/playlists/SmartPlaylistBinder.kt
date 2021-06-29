@@ -5,6 +5,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.TextView
+import androidx.core.view.isVisible
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.model.SmartPlaylist
 import com.simplecityapps.shuttle.R
@@ -59,6 +60,7 @@ class SmartPlaylistBinder(val playlist: SmartPlaylist, private val listener: Lis
             super.bind(viewBinder, isPartial)
 
             titleTextView.setText(viewBinder.playlist.nameResId)
+            subtitleTextView.isVisible = false
         }
     }
 }
