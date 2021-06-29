@@ -14,6 +14,9 @@ import androidx.media.session.MediaButtonReceiver
 import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.androidauto.PackageValidator
 import com.simplecityapps.playback.mediasession.MediaSessionManager
+import com.simplecityapps.playback.queue.QueueChangeCallback
+import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.QueueWatcher
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,13 +28,20 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class PlaybackService :
     MediaBrowserServiceCompat(),
-    PlaybackWatcherCallback {
+    PlaybackWatcherCallback,
+    QueueChangeCallback {
 
     @Inject
     lateinit var playbackManager: PlaybackManager
 
     @Inject
     lateinit var playbackWatcher: PlaybackWatcher
+
+    @Inject
+    lateinit var queueManager: QueueManager
+
+    @Inject
+    lateinit var queueWatcher: QueueWatcher
 
     @Inject
     lateinit var mediaSessionManager: MediaSessionManager
@@ -54,6 +64,7 @@ class PlaybackService :
         super.onCreate()
 
         playbackWatcher.addCallback(this)
+        queueWatcher.addCallback(this)
 
         foregroundNotificationHandler = Handler()
         delayedShutdownHandler = Handler()
@@ -162,7 +173,18 @@ class PlaybackService :
                     Timber.v("Stopping service due to 30 second shutdown timer")
                     stopSelf()
                 }
-            }, 30 * 1000)
+            }, 30 * 1000L)
+        }
+    }
+
+    override fun onQueueChanged() {
+        super.onQueueChanged()
+
+        if (queueManager.getQueue().isEmpty()) {
+            Timber.v("Queue empty - stopping service & removing notification")
+            stopForeground(true)
+            notificationManager.removeNotification()
+            stopSelf()
         }
     }
 

@@ -132,6 +132,10 @@ class PlaybackNotificationManager @Inject constructor(
         return notification
     }
 
+    fun removeNotification() {
+        notificationManager.cancel(NOTIFICATION_ID)
+    }
+
     private val playbackAction: NotificationCompat.Action
         get() {
             val intent = Intent(context, PlaybackService::class.java).apply {
@@ -200,7 +204,9 @@ class PlaybackNotificationManager @Inject constructor(
 
     override fun onQueueChanged() {
         if (queueWatcher.hasRestoredQueue) {
-            displayNotification()
+            if (queueManager.getQueue().isNotEmpty()) {
+                displayNotification()
+            }
         }
     }
 

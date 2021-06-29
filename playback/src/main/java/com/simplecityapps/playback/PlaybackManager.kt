@@ -266,8 +266,16 @@ class PlaybackManager(
     }
 
     fun clearQueue() {
-        playback.pause()
-        queueManager.clear()
+        if (playback.playBackState() == PlaybackState.Playing) {
+            queueManager.getCurrentItem()?.let { currentItem ->
+                queueManager.remove(queueManager.getQueue() - currentItem)
+            }
+        } else {
+            queueManager.clear()
+        }
+        appCoroutineScope.launch {
+            playback.loadNext(queueManager.getNext()?.song)
+        }
     }
 
     suspend fun playNext(songs: List<Song>) {
@@ -404,6 +412,7 @@ class PlaybackManager(
             playback.setReplayGain(trackGain = song.replayGainTrack, albumGain = song.replayGainAlbum)
         }
     }
+
 
     // AudioFocusHelper.Listener Implementation
 

@@ -180,6 +180,10 @@ class PlaybackFragment :
                     }
                     true
                 }
+                R.id.clearQueue -> {
+                    presenter.clearQueue()
+                    true
+                }
                 else -> false
             }
         }
