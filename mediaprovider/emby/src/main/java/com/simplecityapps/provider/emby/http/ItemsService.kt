@@ -15,7 +15,9 @@ interface ItemsService {
         @Header("X-Emby-Token") token: String,
         @Query("Recursive") recursive: Boolean = true,
         @Query("IncludeItemTypes") itemTypes: String = "Audio",
-        @Query("Fields") fields: String = "Genres,ProductionYear"
+        @Query("Fields") fields: String = "Genres,ProductionYear",
+        @Query("Limit") limit: Int = 2500,
+        @Query("Index") index: Int = 0
     ): NetworkResult<QueryResult>
 
     @GET
@@ -36,8 +38,10 @@ suspend fun ItemsService.items(
     recursive: Boolean = true,
     itemTypes: String = "Audio",
     fields: String = "Genres,ProductionYear",
+    limit: Int = 2500,
+    index: Int = 0
 ): NetworkResult<QueryResult> {
-    return itemsImpl("$url/Users/$userId/Items", token, recursive, itemTypes, fields)
+    return itemsImpl("$url/Users/$userId/Items", token, recursive, itemTypes, fields, limit, index)
 }
 
 suspend fun ItemsService.item(
