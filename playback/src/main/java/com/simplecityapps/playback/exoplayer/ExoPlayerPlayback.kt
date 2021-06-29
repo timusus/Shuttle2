@@ -161,20 +161,16 @@ class ExoPlayerPlayback(
     override suspend fun loadNext(song: Song?) {
         Timber.v("loadNext(song: ${song?.name}|${song?.mimeType})")
 
+        if (player.repeatMode == Player.REPEAT_MODE_ONE) {
+            return
+        }
+
         val nextMediaItem: MediaItem? = song?.let {
             getMediaItem(mediaInfoProvider.getMediaInfo(song))
         }
 
-        val currentMediaItem = player.currentMediaItem
         val count = player.mediaItemCount
-        var currentIndex = 0
-        for (i in player.mediaItemCount - 1 downTo 0) {
-            if (player.getMediaItemAt(i) == currentMediaItem) {
-                currentIndex = i
-                break
-            }
-        }
-
+        val currentIndex = player.currentWindowIndex
 
         // Shortcut if the track is already next in the queue
         val nextIndex = currentIndex + 1
@@ -242,9 +238,9 @@ class ExoPlayerPlayback(
         player.repeatMode = repeatMode.toRepeatMode()
     }
 
-    override fun setAudioSessionId(sessionId: Int) {
-        if (sessionId != -1) {
-            player.audioSessionId = sessionId
+    override fun setAudioSessionId(id: Int) {
+        if (id != -1) {
+            player.audioSessionId = id
         } else {
             Timber.e("Failed to set audio session id (sessionId: -1)")
         }
