@@ -1,5 +1,22 @@
 [
   {
+    "versionName": "0.4.9",
+    "releaseDate": "29/06/2021",
+    "features": [
+    ],
+    "fixes": [
+      "Fixed an issue where Jellyfin/Emby scans didn't correctly report when they fail to complete"
+    ],
+    "improvements": [
+      "Jellyfin/Emby now loads songs in batches, to help improve reliability & reduce timeouts",
+      "Vertically centered smart playlist text",
+      "Frequency response graph now takes preamp into account"
+    ],
+    "notes": [
+      "S2 is now free to use for 2 weeks. There are options to upgrade in the app. I'd like to tweak prices so they make sense in your country. Please come and discuss this on Discord: https://discord.gg/YkhSuHJ"
+    ]
+  },
+  {
     "versionName": "0.4.8",
     "releaseDate": "29/06/2021",
     "features": [
