@@ -1,5 +1,26 @@
 [
   {
+    "versionName": "0.4.8",
+    "releaseDate": "29/06/2021",
+    "features": [
+    ],
+    "fixes": [
+      "Fixed a bug where a track could incorrectly repeat, while the app showed the metadata for the next track",
+      "Fixed an issue where widget would display incorrect artwork when the queue is empty",
+      "Fixed an issue where notification was still visible when queue is empty - and tracks could still be played/skipped"
+    ],
+    "improvements": [
+      "The current song will remain in the queue after 'clear queue', unless you pause first",
+      "The clear queue option is now accessible from the playback screen (as well as the queue screen)",
+      "Translation updates",
+      "Added tests to help prevent crash-on-launch situations",
+      "Added orange colour accent option"
+    ],
+    "notes": [
+      "S2 is now free to use for 2 weeks. There are options to upgrade in the app. I'd like to tweak prices so they make sense in your country. Please come and discuss this on Discord: https://discord.gg/YkhSuHJ"
+    ]
+  },
+  {
     "versionName": "0.4.7",
     "releaseDate": "24/06/2021",
     "features": [
