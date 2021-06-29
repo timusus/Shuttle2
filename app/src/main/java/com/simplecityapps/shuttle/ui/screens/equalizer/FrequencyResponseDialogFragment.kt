@@ -7,9 +7,11 @@ import android.util.TypedValue
 import android.view.View
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.use
+import androidx.core.math.MathUtils
 import androidx.core.view.isVisible
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
+import androidx.lifecycle.lifecycleScope
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
@@ -21,13 +23,16 @@ import com.google.android.exoplayer2.audio.AudioProcessor
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.paramsen.noise.Noise
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
+import com.simplecityapps.playback.dsp.equalizer.fromDb
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.math.log10
 import kotlin.math.pow
@@ -43,8 +48,6 @@ class FrequencyResponseDialogFragment : DialogFragment() {
     lateinit var playbackPreferenceManager: PlaybackPreferenceManager
 
     private lateinit var preset: Equalizer.Presets.Preset
-
-    private val coroutineScope = CoroutineScope(Dispatchers.Main)
 
     private var textColor: Int = 0
     private var lineColor: Int = 0
@@ -73,7 +76,7 @@ class FrequencyResponseDialogFragment : DialogFragment() {
         loadingView = view.findViewById(R.id.loadingView)
         loadingView.setState(CircularLoadingView.State.Loading(getString(R.string.loading)))
 
-        coroutineScope.launch {
+        lifecycleScope.launch {
             val fft = calculateFft()
             setData(fft)
             loadingView.setState(CircularLoadingView.State.None)
@@ -85,11 +88,6 @@ class FrequencyResponseDialogFragment : DialogFragment() {
             .setView(view)
             .setNegativeButton(getString(R.string.dialog_button_close), null)
             .show()
-    }
-
-    override fun onDestroyView() {
-        coroutineScope.cancel()
-        super.onDestroyView()
     }
 
     fun setData(data: Map<Float, Float>) {
@@ -158,16 +156,24 @@ class FrequencyResponseDialogFragment : DialogFragment() {
 
             val noise = Noise.real(size)
 
-            val src = FloatArray(size)
+            var src = FloatArray(size)
             src[0] = 1f
 
-            src.forEachIndexed { index, value ->
+            val gain = playbackPreferenceManager.preAmpGain
+            val delta = gain.fromDb()
+
+            src = src.map { value ->
                 var newValue = value
+
+                if (gain != 0.0) {
+                    newValue = MathUtils.clamp((newValue * delta), Short.MIN_VALUE.toDouble(), Short.MAX_VALUE.toDouble()).toFloat()
+                }
+
                 for (band in audioProcessor.bandProcessors) {
                     newValue = band.processSample(newValue, 0)
                 }
-                src[index] = newValue
-            }
+                newValue
+            }.toFloatArray()
 
             val dst = FloatArray(size + 2)
 
@@ -175,7 +181,8 @@ class FrequencyResponseDialogFragment : DialogFragment() {
 
             (0 until size / 2).associateBy(
                 { index -> ((index / (size / 2f)) * (44100 / 2f)) },
-                { index -> (20f * log10(sqrt(((dst[index * 2]).pow(2)) + ((dst[index * 2 + 1]).pow(2))))) })
+                { index -> (20f * log10(sqrt(((dst[index * 2]).pow(2)) + ((dst[index * 2 + 1]).pow(2))))) }
+            )
         }
     }
 
