@@ -158,23 +158,18 @@ class BillingManager(
             // We've got an update listener for when billing is established anyway, so this function will be called again via that
             return
         }
-        val purchaseResponseListener = PurchasesResponseListener { a, purchases ->
-            Timber.v("Found ${purchases.size} inapp purchases")
-            processPurchases(purchases)
-        }
-        val purchaseResponseListenerB = PurchasesResponseListener { a, purchases ->
-            Timber.v("Found ${purchases.size} subs purchases")
-            processPurchases(purchases)
+        val purchaseResponseListener = PurchasesResponseListener { billingResult, purchases ->
+            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                processPurchases(purchases)
+            }
         }
         billingClient.queryPurchasesAsync(BillingClient.SkuType.INAPP, purchaseResponseListener)
-        billingClient.queryPurchasesAsync(BillingClient.SkuType.SUBS, purchaseResponseListenerB)
+        billingClient.queryPurchasesAsync(BillingClient.SkuType.SUBS, purchaseResponseListener)
     }
 
+    @Synchronized
     private fun processPurchases(purchases: List<Purchase>) {
-        if (billingState.value == BillingState.Paid || paidVersionSkus.intersect(purchases
-                .flatMap { purchase -> purchase.skus })
-                .isNotEmpty()
-        ) {
+        if (billingState.value == BillingState.Paid || paidVersionSkus.intersect(purchases.flatMap { purchase -> purchase.skus }).isNotEmpty()) {
             billingState.value = BillingState.Paid
         } else {
             billingState.value = BillingState.Unpaid
