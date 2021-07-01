@@ -17,7 +17,7 @@ interface ItemsService {
         @Query("includeItemTypes") itemTypes: String = "Audio",
         @Query("fields") fields: String = "Genres",
         @Query("limit") limit: Int = 2500,
-        @Query("index") index: Int = 0
+        @Query("startIndex") startIndex: Int = 0
     ): NetworkResult<QueryResult>
 
     @GET
@@ -39,9 +39,9 @@ suspend fun ItemsService.items(
     itemTypes: String = "Audio",
     fields: String = "Genres",
     limit: Int = 2500,
-    index: Int = 0
+    startIndex: Int = 0
 ): NetworkResult<QueryResult> {
-    return itemsImpl("$url/Users/$userId/Items", token, recursive, itemTypes, fields, limit, index)
+    return itemsImpl("$url/Users/$userId/Items", token, recursive, itemTypes, fields, limit, startIndex)
 }
 
 suspend fun ItemsService.item(

@@ -24,18 +24,18 @@ class EmbyMediaProvider(
             ?.let { credentials -> queryItems(address, credentials, 0, 2500) }
     }
 
-    suspend fun queryItems(address: String, credentials: AuthenticatedCredentials, index: Int, pageSize: Int): List<Song>? {
+    suspend fun queryItems(address: String, credentials: AuthenticatedCredentials, startIndex: Int, pageSize: Int): List<Song>? {
         return when (val queryResult = itemsService.items(
             url = address,
             token = credentials.accessToken,
             userId = credentials.userId,
             limit = pageSize,
-            index = index
+            startIndex = startIndex
         )) {
             is NetworkResult.Success<QueryResult> -> {
                 val songs = queryResult.body.items.map { it.toSong() }.toMutableList()
                 val totalRecordCount = queryResult.body.totalRecordCount
-                val lastIndex = index + pageSize
+                val lastIndex = startIndex + pageSize
                 if (lastIndex < totalRecordCount) {
                     queryItems(address, credentials, lastIndex, min(pageSize, totalRecordCount - lastIndex))?.let {
                         songs.addAll(it)
