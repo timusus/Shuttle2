@@ -1,5 +1,19 @@
 [
   {
+    "versionName": "0.4.10",
+    "releaseDate": "01/07/2021",
+    "features": [
+    ],
+    "fixes": [
+      "Fixed an issue where trial stuff would show for users who have already upgraded"
+    ],
+    "improvements": [
+    ],
+    "notes": [
+      "S2 is now free to use for 2 weeks. There are options to upgrade in the app. I'd like to tweak prices so they make sense in your country. Please come and discuss this on Discord: https://discord.gg/YkhSuHJ"
+    ]
+  },
+  {
     "versionName": "0.4.9",
     "releaseDate": "29/06/2021",
     "features": [
