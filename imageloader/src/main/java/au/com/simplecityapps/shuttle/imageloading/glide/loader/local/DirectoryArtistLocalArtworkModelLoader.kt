@@ -60,26 +60,35 @@ class DirectoryAlbumArtistLocalArtworkModelLoader(
                     .firstOrNull()
                     ?.firstOrNull()
                     ?.let { song ->
-                        val parentDocumentFile = if (DocumentsContract.isDocumentUri(context, song.path.toUri())) {
+
+                        val documentFiles = mutableListOf<DocumentFile>()
+
+                        if (DocumentsContract.isDocumentUri(context, song.path.toUri())) {
                             val parent = song.path.substringBeforeLast("%2F", "")
                             if (parent.isNotEmpty()) {
-                                DocumentFile.fromTreeUri(context, parent.toUri())
-                            } else {
-                                null
+                                DocumentFile.fromTreeUri(context, parent.toUri())?.let {
+                                    documentFiles.add(it)
+                                }
+                            }
+                            val grandParent = parent.substringBeforeLast("%2F", "")
+                            if (grandParent.isNotEmpty()) {
+                                DocumentFile.fromTreeUri(context, grandParent.toUri())?.let {
+                                    documentFiles.add(it)
+                                }
                             }
                         } else {
                             File(song.path).parentFile?.let { parent ->
-                                DocumentFile.fromFile(parent)
+                                documentFiles.add(DocumentFile.fromFile(parent))
+                            }
+                            File(song.path).parentFile?.parentFile?.let { grandParent ->
+                                documentFiles.add(DocumentFile.fromFile(grandParent))
                             }
                         }
-
-                        parentDocumentFile?.listFiles()
-                            ?.filter {
-                                it.type?.startsWith("image") == true
-                                        && it.length() > 1024
-                                        && pattern.matcher(it.name ?: "").matches()
-                            }
-                            ?.maxByOrNull { it.length() }
+                        documentFiles.flatMap { it.listFiles().toList() }.filter {
+                            it.type?.startsWith("image") == true
+                                    && it.length() > 1024
+                                    && pattern.matcher(it.name ?: "").matches()
+                        }.maxByOrNull { it.length() }
                             ?.let { documentFile ->
                                 context.contentResolver.openInputStream(documentFile.uri)
                             }
@@ -88,7 +97,7 @@ class DirectoryAlbumArtistLocalArtworkModelLoader(
         }
 
         companion object {
-            private val pattern by lazy { Pattern.compile("artist.*\\.(jpg|jpeg|png)", Pattern.CASE_INSENSITIVE) }
+            private val pattern by lazy { Pattern.compile("artist.*\\.(jpg|jpeg|png|webp)", Pattern.CASE_INSENSITIVE) }
         }
     }
 }

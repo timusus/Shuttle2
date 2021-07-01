@@ -5,7 +5,6 @@ import android.graphics.Bitmap
 import android.net.ConnectivityManager
 import android.util.Log
 import androidx.annotation.Keep
-import au.com.simplecityapps.BuildConfig
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.*
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.provider.RemoteArtworkAlbumArtistModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.provider.RemoteArtworkAlbumModelLoader
@@ -31,6 +30,7 @@ import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.squareup.phrase.BuildConfig
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
@@ -93,36 +93,55 @@ class ImageLoaderGlideModule : AppGlideModule() {
         registry.register(Bitmap::class.java, ColorSet::class.java, ColorSetTranscoder(context))
 
         // Local
-        registry.append(
-            Song::class.java,
-            InputStream::class.java,
-            DirectorySongLocalArtworkModelLoader.Factory(
-                context = context
-            )
+
+        val directorySongLocalArtworkModelLoaderFactory = DirectorySongLocalArtworkModelLoader.Factory(
+            context = context
         )
         registry.append(
             Song::class.java,
             InputStream::class.java,
-            TagLibSongLocalArtworkModelLoader.Factory(
-                context = context, kTagLib = entryPoint.provideKTagLib()
-            )
+            directorySongLocalArtworkModelLoaderFactory
+        )
+
+        val tagLibSongLocalArtworkModelLoaderFactory = TagLibSongLocalArtworkModelLoader.Factory(
+            context = context,
+            kTagLib = entryPoint.provideKTagLib()
+        )
+        registry.append(
+            Song::class.java,
+            InputStream::class.java,
+            tagLibSongLocalArtworkModelLoaderFactory
+        )
+
+        val directoryAlbumLocalArtworkModelLoaderFactory = DirectoryAlbumLocalArtworkModelLoader.Factory(
+            context = context,
+            songRepository = entryPoint.provideSongRepository()
         )
         registry.append(
             Album::class.java,
             InputStream::class.java,
-            DirectoryAlbumLocalArtworkModelLoader.Factory(
-                context = context,
-                songRepository = entryPoint.provideSongRepository()
-            )
+            directoryAlbumLocalArtworkModelLoaderFactory
+        )
+
+        val directoryAlbumArtistLocalArtworkModelLoaderFactory = DirectoryAlbumArtistLocalArtworkModelLoader.Factory(
+            context = context,
+            songRepository = entryPoint.provideSongRepository()
+        )
+        registry.append(
+            AlbumArtist::class.java,
+            InputStream::class.java,
+            directoryAlbumArtistLocalArtworkModelLoaderFactory
+        )
+
+        val tagLibAlbumLocalArtworkModelLoaderFactory = TagLibAlbumLocalArtworkModelLoader.Factory(
+            context = context,
+            kTagLib = entryPoint.provideKTagLib(),
+            songRepository = entryPoint.provideSongRepository()
         )
         registry.append(
             Album::class.java,
             InputStream::class.java,
-            TagLibAlbumLocalArtworkModelLoader.Factory(
-                context = context,
-                kTagLib = entryPoint.provideKTagLib(),
-                songRepository = entryPoint.provideSongRepository()
-            )
+            tagLibAlbumLocalArtworkModelLoaderFactory
         )
 
         // Remote
