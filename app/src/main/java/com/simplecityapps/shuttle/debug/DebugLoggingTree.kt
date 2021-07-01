@@ -1,7 +1,6 @@
 package com.simplecityapps.shuttle.debug
 
 import android.content.Context
-import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import timber.log.Timber
 import java.util.*
@@ -30,9 +29,9 @@ class DebugLoggingTree(
     }
 
     override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
-        if (BuildConfig.DEBUG) {
+//        if (BuildConfig.DEBUG) {
             super.log(priority, tag, message, t)
-        }
+//        }
         if (generalPreferenceManager.debugFileLogging) {
             synchronized(this) {
                 val logMessage = LogMessage(priority, tag, message, t)

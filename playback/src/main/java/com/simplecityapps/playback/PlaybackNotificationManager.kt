@@ -51,8 +51,8 @@ class PlaybackNotificationManager @Inject constructor(
         queueWatcher.removeCallback(this)
     }
 
-    fun displayNotification(): Notification {
-        Timber.i("Display Notification")
+    fun displayPlaybackNotification(): Notification {
+        Timber.v("displayPlaybackNotification")
 
         createNotificationChannel()
 
@@ -70,17 +70,17 @@ class PlaybackNotificationManager @Inject constructor(
             .setSmallIcon(R.drawable.ic_stat_name)
             .setStyle(
                 androidx.media.app.NotificationCompat.MediaStyle()
-                    .setMediaSession(mediaSessionManager.mediaSession.sessionToken)
+//                    .setMediaSession(mediaSessionManager.mediaSession.sessionToken)
                     .setShowActionsInCompactView(0, 1, 2)
             )
             .setContentIntent(PendingIntent.getActivity(context, 1, (context.applicationContext as ActivityIntentProvider).provideMainActivityIntent(), 0))
             .setDeleteIntent(PendingIntent.getService(context, 1, Intent(context, PlaybackService::class.java).apply { action = PlaybackService.ACTION_NOTIFICATION_DISMISS }, 0))
             .addAction(prevAction)
             .addAction(playbackAction)
+            .addAction(nextAction)
             .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setNotificationSilent()
-            .addAction(nextAction)
             .setLargeIcon(placeholder)
 
         val artworkSize = 512
@@ -129,6 +129,39 @@ class PlaybackNotificationManager @Inject constructor(
 
         hasDisplayedNotification = true
 
+        return notification
+    }
+
+    fun displayLoadingNotification(): Notification {
+        Timber.v("displayLoadingNotification")
+        val notification = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
+            .setContentTitle(context.getString(R.string.loading))
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setContentIntent(PendingIntent.getActivity(context, 1, (context.applicationContext as ActivityIntentProvider).provideMainActivityIntent(), 0))
+            .setSmallIcon(R.drawable.ic_stat_name)
+            .setNotificationSilent()
+            .setShowWhen(false)
+            .build()
+
+        notificationManager.notify(NOTIFICATION_ID, notification)
+        return notification
+    }
+
+    fun displayQueueEmptyNotification(): Notification {
+        Timber.v("displayQueueEmptyNotification")
+        val notification = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
+            .setContentTitle(context.getString(R.string.queue_empty))
+            .setContentText(context.getString(R.string.widget_empty_text))
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setContentIntent(PendingIntent.getActivity(context, 1, (context.applicationContext as ActivityIntentProvider).provideMainActivityIntent(), 0))
+            .setSmallIcon(R.drawable.ic_stat_name)
+            .setNotificationSilent()
+            .setShowWhen(false)
+            .build()
+
+        notificationManager.notify(NOTIFICATION_ID, notification)
         return notification
     }
 
@@ -181,14 +214,6 @@ class PlaybackNotificationManager @Inject constructor(
                 notificationChannel.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
                 notificationManager.createNotificationChannel(notificationChannel)
             }
-
-            // Attempt to delete old notification channel.
-            // Todo: This can be removed at any point in the future, it's barely necessary as is.
-            try {
-                notificationManager.deleteNotificationChannel("1")
-            } catch (e: Exception) {
-
-            }
         }
     }
 
@@ -196,35 +221,33 @@ class PlaybackNotificationManager @Inject constructor(
     // PlaybackWatcherCallback Implementation
 
     override fun onPlaybackStateChanged(playbackState: PlaybackState) {
-        displayNotification()
+        displayPlaybackNotification()
     }
 
 
     // QueueChangeCallback Implementation
 
     override fun onQueueChanged() {
-        if (queueWatcher.hasRestoredQueue) {
-            if (queueManager.getQueue().isNotEmpty()) {
-                displayNotification()
-            }
+        if (queueManager.hasRestoredQueue && queueManager.getQueue().isNotEmpty()) {
+            displayPlaybackNotification()
         }
     }
 
     override fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
-        if (queueWatcher.hasRestoredQueue) {
-            displayNotification()
+        if (queueManager.hasRestoredQueue && queueManager.getQueue().isNotEmpty()) {
+            displayPlaybackNotification()
         }
     }
 
     override fun onRepeatChanged(repeatMode: QueueManager.RepeatMode) {
-        if (queueWatcher.hasRestoredQueue) {
-            displayNotification()
+        if (queueManager.hasRestoredQueue && queueManager.getQueue().isNotEmpty()) {
+            displayPlaybackNotification()
         }
     }
 
     override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
-        if (queueWatcher.hasRestoredQueue) {
-            displayNotification()
+        if (queueManager.hasRestoredQueue && queueManager.getQueue().isNotEmpty()) {
+            displayPlaybackNotification()
         }
     }
 

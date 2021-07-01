@@ -47,92 +47,78 @@ class PlaybackInitializer @Inject constructor(
 
     private var progress = 0
 
+    private var initTime = 0L
+
     @SuppressLint("BinaryOperationInTimber")
     override fun init(application: Application) {
-
-        Timber.i("PlaybackInitializer.init()")
+        initTime = System.currentTimeMillis()
+        Timber.v("PlaybackInitializer.init()")
 
         queueWatcher.addCallback(this)
         playbackWatcher.addCallback(this)
 
-        appCoroutineScope.launch {
-            val seekPosition = playbackPreferenceManager.playbackPosition ?: 0
-            val queuePosition = playbackPreferenceManager.queuePosition
-            val shuffleMode = playbackPreferenceManager.shuffleMode
-            val repeatMode = playbackPreferenceManager.repeatMode
+        val shuffleMode = playbackPreferenceManager.shuffleMode
+        val repeatMode = playbackPreferenceManager.repeatMode
+        val seekPosition = playbackPreferenceManager.playbackPosition ?: 0
+        val queuePosition = playbackPreferenceManager.queuePosition
 
-            Timber.v(
-                "\nRestoring queue position: $queuePosition" +
-                        "\nseekPosition: $seekPosition" +
-                        "\nshuffleMode: $shuffleMode" +
-                        "\nrepeatMode: $repeatMode"
-            )
+        appCoroutineScope.launch {
 
             queueManager.setShuffleMode(shuffleMode, reshuffle = false)
             queueManager.setRepeatMode(repeatMode)
 
-            queuePosition?.let {
-                withContext(Dispatchers.IO) {
-                    val songIds = playbackPreferenceManager.queueIds?.split(',')?.map { id -> id.toLong() }
-                    if (songIds.isNullOrEmpty()) {
-                        Timber.i("Queue restoration failed: no queue to restore (songIds.size: ${songIds?.size})")
-                        withContext(Dispatchers.Main) {
-                            onRestoreComplete()
-                        }
-                    } else {
-                        val shuffleSongIds = playbackPreferenceManager.shuffleQueueIds?.split(',')?.map { id -> id.toLong() }
-                        val allSongIds = songIds.orEmpty().toMutableSet()
-                        allSongIds.addAll(shuffleSongIds.orEmpty())
-
-                        val allSongs = songRepository.getSongs(SongQuery.SongIds(allSongIds.toList()))
-                            .filterNotNull()
-                            .firstOrNull()
-                            .orEmpty()
-
-                        val songOrderMap = songIds.withIndex().associate { songId -> songId.value to songId.index }
-                        val songs = allSongs.sortedBy { song -> songOrderMap[song.id] }
-
-                        val shuffleSongs = shuffleSongIds?.let {
-                            val shuffleSongOrderMap = shuffleSongIds.withIndex().associate { songId -> songId.value to songId.index }
-                            allSongs.sortedBy { song -> shuffleSongOrderMap[song.id] }
-                        }
-
-                        withContext(Dispatchers.Main) {
-                            if (queueManager.setQueue(
-                                    songs = songs,
-                                    shuffleSongs = shuffleSongs,
-                                    position = queuePosition
-                                )
-                            ) {
-                                playbackManager.load { result ->
-                                    result.onFailure { error -> Timber.e("Failed to load playback after reloading queue. Error: $error") }
-                                    result.onSuccess { didLoadFirst ->
-                                        if (didLoadFirst) {
-                                            playbackManager.seekTo(seekPosition)
-                                        }
-                                    }
-                                }
-                            }
-                            onRestoreComplete()
-                        }
-                    }
-                }
-            } ?: run {
-                Timber.i("Queue restoration failed: queue position null")
-                onRestoreComplete()
-            }
+            restoreQueue(queuePosition = queuePosition, seekPosition = seekPosition)
         }
     }
 
-    private fun onRestoreComplete() {
-        Timber.i("Queue restoration complete")
-        queueWatcher.hasRestoredQueue = true
+    private suspend fun restoreQueue(queuePosition: Int?, seekPosition: Int) {
+        val queueRestoreStartTime = System.currentTimeMillis()
+        queuePosition?.let {
+            val songIds = playbackPreferenceManager.queueIds?.split(',')?.map { id -> id.toLong() }.orEmpty()
+            if (songIds.isNotEmpty()) {
+                withContext(Dispatchers.IO) {
+                    val shuffleSongIds = playbackPreferenceManager.shuffleQueueIds?.split(',')?.map { id -> id.toLong() }
+                    val allSongIds = songIds.toMutableSet()
+                    allSongIds.addAll(shuffleSongIds.orEmpty())
+
+                    val allSongs = songRepository.getSongs(SongQuery.SongIds(allSongIds.toList()))
+                        .filterNotNull()
+                        .firstOrNull()
+                        .orEmpty()
+
+                    val songOrderMap = songIds.withIndex().associate { songId -> songId.value to songId.index }
+                    val songs = allSongs.sortedBy { song -> songOrderMap[song.id] }
+
+                    val shuffleSongs = shuffleSongIds?.let {
+                        val shuffleSongOrderMap = shuffleSongIds.withIndex().associate { songId -> songId.value to songId.index }
+                        allSongs.sortedBy { song -> shuffleSongOrderMap[song.id] }
+                    }
+
+                    withContext(Dispatchers.Main) {
+                        queueManager.setQueue(
+                            songs = songs,
+                            shuffleSongs = shuffleSongs,
+                            position = queuePosition
+                        )
+                    }
+                }
+            }
+        } ?: run {
+            Timber.v("Queue restoration failed: queue position null")
+        }
+
+        Timber.v("Queue restored in ${System.currentTimeMillis() - queueRestoreStartTime}ms (Time since app init: ${System.currentTimeMillis() - initTime}ms)")
+
+        playbackManager.load(seekPosition) {}
+
+        queueManager.hasRestoredQueue = true
     }
+
 
     // QueueChangeCallback Implementation
 
     override fun onQueueChanged() {
-        if (queueWatcher.hasRestoredQueue) {
+        if (queueManager.hasRestoredQueue) {
             playbackPreferenceManager.queueIds = queueManager.getQueue(QueueManager.ShuffleMode.Off)
                 .map { queueItem -> queueItem.song.id }
                 .joinToString(",")
@@ -148,7 +134,7 @@ class PlaybackInitializer @Inject constructor(
     override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
         playbackPreferenceManager.queuePosition = newPosition
 
-        if (queueWatcher.hasRestoredQueue) {
+        if (queueManager.hasRestoredQueue) {
             playbackPreferenceManager.playbackPosition = null
         }
     }
@@ -169,7 +155,7 @@ class PlaybackInitializer @Inject constructor(
             is PlaybackState.Playing -> {
                 ContextCompat.startForegroundService(context, Intent(context, PlaybackService::class.java))
             }
-            else -> {
+            is PlaybackState.Paused -> {
                 playbackPreferenceManager.playbackPosition = playbackManager.getProgress()
 
                 queueManager.getCurrentItem()?.song?.let { song ->

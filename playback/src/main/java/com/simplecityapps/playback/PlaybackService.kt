@@ -4,10 +4,7 @@ import android.app.SearchManager
 import android.app.Service
 import android.content.Intent
 import android.content.ServiceConnection
-import android.os.Build
-import android.os.Bundle
-import android.os.Handler
-import android.os.IBinder
+import android.os.*
 import android.support.v4.media.MediaBrowserCompat
 import androidx.media.MediaBrowserServiceCompat
 import androidx.media.session.MediaButtonReceiver
@@ -60,14 +57,18 @@ class PlaybackService :
 
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
 
+    private var pendingStartCommands = mutableListOf<Intent>()
+
     override fun onCreate() {
         super.onCreate()
+
+        Timber.v("onCreate()")
 
         playbackWatcher.addCallback(this)
         queueWatcher.addCallback(this)
 
-        foregroundNotificationHandler = Handler()
-        delayedShutdownHandler = Handler()
+        foregroundNotificationHandler = Handler(Looper.getMainLooper())
+        delayedShutdownHandler = Handler(Looper.getMainLooper())
 
         notificationManager.registerCallbacks()
 
@@ -77,34 +78,52 @@ class PlaybackService :
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
-        Timber.v("onStartCommand() intent: ${intent?.toString()} action: ${intent?.action}")
+        Timber.v("onStartCommand() action: ${intent?.action}")
 
-        delayedShutdownHandler?.removeCallbacksAndMessages(null)
-
-        MediaButtonReceiver.handleIntent(mediaSessionManager.mediaSession, intent)
-
-        when (intent?.action) {
-            ACTION_TOGGLE_PLAYBACK -> {
-                val wasPlaying = playbackManager.playbackState() is PlaybackState.Loading || playbackManager.playbackState() is PlaybackState.Playing
-                playbackManager.togglePlayback()
-                if (wasPlaying) {
-                    // If playback was playing, we've now toggled it to pause. Return early, as we don't need to start the foreground service.
-                    return START_STICKY
-                }
-            }
-            ACTION_SKIP_PREV -> playbackManager.skipToPrev()
-            ACTION_SKIP_NEXT -> playbackManager.skipToNext(ignoreRepeat = true)
-            ACTION_SEARCH -> mediaSessionManager.mediaSession.controller?.transportControls?.playFromSearch(intent.extras?.getString(SearchManager.QUERY), Bundle())
-            ACTION_NOTIFICATION_DISMISS -> {
-                Timber.v("Stopping due to notification dismiss")
-                stopSelf()
-                return START_STICKY
-            }
+        if (intent == null && (playbackManager.playbackState() != PlaybackState.Loading || playbackManager.playbackState() != PlaybackState.Playing)) {
+            stopForeground(true)
+            return START_NOT_STICKY
         }
 
-        if (intent != null) {
-            startForeground(PlaybackNotificationManager.NOTIFICATION_ID, notificationManager.displayNotification())
-            Timber.v("startForeground() called")
+        // Cancel any pending shutdown
+        Timber.v("Cancelling delayed shutdown")
+        delayedShutdownHandler?.removeCallbacksAndMessages(null)
+
+        // Intent is only null if this service is being re-created due to process death
+        intent?.let {
+            when (intent.action) {
+                ACTION_NOTIFICATION_DISMISS -> {
+                    // The user has swiped away the notification. This is only possible when the service is no longer running in the foreground
+                    Timber.v("Stopping due to notification dismiss")
+                    stopSelf()
+                    return START_NOT_STICKY
+                }
+            }
+
+            if (queueManager.hasRestoredQueue) {
+                // The queue is restored, so we know if it's empty or not. Proceed to handle the command
+                if (queueManager.getQueue().isEmpty()) {
+                    Timber.v("startForeground() called. Showing notification: Queue Empty")
+                    /*
+                        a) We can't just stopSelf() here. If we were called via startForegroundService(), we must show a foreground notification.
+                        b) The user is now stuck with a non-dismissable 'empty queue' notification.
+
+                       We'll allow 10 seconds, so we're not calling stopSelf() before Google ANR's us.
+                       This also gives S2 time to respond to pending commands. For example, if the command is 'loadFromSearch', we don't want to stop the service
+                       and allow the process to be killed while that we're in the middle of executing that command.
+                    */
+                    startForeground(PlaybackNotificationManager.NOTIFICATION_ID, notificationManager.displayQueueEmptyNotification())
+                    postDelayedShutdown(10000)
+                } else {
+                    Timber.v("startForeground() called. Showing notification: Playback")
+                    startForeground(PlaybackNotificationManager.NOTIFICATION_ID, notificationManager.displayPlaybackNotification())
+                }
+                processCommand(intent)
+            } else {
+                Timber.v("startForeground() called. Showing notification: Loading")
+                startForeground(PlaybackNotificationManager.NOTIFICATION_ID, notificationManager.displayLoadingNotification())
+                pendingStartCommands.add(intent)
+            }
         }
 
         return START_STICKY
@@ -131,6 +150,7 @@ class PlaybackService :
         Timber.v("onDestroy()")
 
         playbackWatcher.removeCallback(this)
+        queueWatcher.removeCallback(this)
         playbackManager.pause()
 
         notificationManager.removeCallbacks()
@@ -144,6 +164,35 @@ class PlaybackService :
     }
 
 
+    // Private
+
+    private fun processCommand(intent: Intent) {
+        Timber.v("processCommand()")
+        MediaButtonReceiver.handleIntent(mediaSessionManager.mediaSession, intent)
+
+        when (intent.action) {
+            ACTION_TOGGLE_PLAYBACK -> playbackManager.togglePlayback()
+            ACTION_SKIP_PREV -> playbackManager.skipToPrev()
+            ACTION_SKIP_NEXT -> playbackManager.skipToNext(ignoreRepeat = true)
+            ACTION_SEARCH -> mediaSessionManager.mediaSession.controller?.transportControls?.playFromSearch(intent.extras?.getString(SearchManager.QUERY), Bundle())
+        }
+    }
+
+    private fun postDelayedShutdown(delay: Long = 15 * 1000L) {
+        Timber.v("postDelayedShutdown(delay: $delay)")
+        delayedShutdownHandler?.removeCallbacksAndMessages(null)
+        delayedShutdownHandler?.postDelayed({
+            if (playbackManager.playbackState() !is PlaybackState.Loading && playbackManager.playbackState() !is PlaybackState.Playing) {
+                Timber.v("Stopping service due to ${delay}ms shutdown timer")
+                if (queueManager.getQueue().isEmpty()) {
+                    notificationManager.removeNotification()
+                }
+                stopSelf()
+            }
+        }, delay)
+    }
+
+
     // PlaybackWatcherCallback Implementation
 
     override fun onPlaybackStateChanged(playbackState: PlaybackState) {
@@ -153,6 +202,7 @@ class PlaybackService :
 
         foregroundNotificationHandler?.removeCallbacksAndMessages(null)
 
+        Timber.v("Cancelling delayed shutdown")
         delayedShutdownHandler?.removeCallbacksAndMessages(null)
 
         if (playbackState is PlaybackState.Paused) {
@@ -163,25 +213,34 @@ class PlaybackService :
                 } else {
                     Timber.v("stopForeground()")
                     stopForeground(true)
-                    notificationManager.displayNotification()
+                    notificationManager.displayPlaybackNotification()
                 }
             }, 150)
 
-            // Shutdown this service after 30 seconds
-            delayedShutdownHandler?.postDelayed({
-                if (playbackManager.playbackState() !is PlaybackState.Loading && playbackManager.playbackState() !is PlaybackState.Playing) {
-                    Timber.v("Stopping service due to 30 second shutdown timer")
-                    stopSelf()
-                }
-            }, 30 * 1000L)
+            postDelayedShutdown()
         }
     }
 
-    override fun onQueueChanged() {
-        super.onQueueChanged()
+    override fun onQueueRestored() {
+        super.onQueueRestored()
 
         if (queueManager.getQueue().isEmpty()) {
-            Timber.v("Queue empty - stopping service & removing notification")
+            Timber.v("Queue empty")
+            stopForeground(true)
+            notificationManager.displayQueueEmptyNotification()
+            postDelayedShutdown()
+        }
+
+        pendingStartCommands.forEach { pendingStartCommand ->
+            processCommand(pendingStartCommand)
+        }
+        pendingStartCommands.clear()
+    }
+
+    override fun onQueueChanged() {
+        if (queueManager.hasRestoredQueue && queueManager.getQueue().isEmpty()) {
+            Timber.v("Queue cleared, stopForeground() called")
+            // This should only occur if the user manually clears their queue, while playback is paused
             stopForeground(true)
             notificationManager.removeNotification()
             stopSelf()
@@ -196,7 +255,7 @@ class PlaybackService :
             result.sendResult(mutableListOf())
         } else {
             result.detach()
-            Timber.i("MediaId: $parentId")
+            Timber.v("MediaId: $parentId")
             coroutineScope.launch {
                 result.sendResult(mediaIdHelper.getChildren(parentId).toMutableList())
             }
@@ -207,7 +266,7 @@ class PlaybackService :
         return if (packageValidator.isKnownCaller(clientPackageName, clientUid)) {
             BrowserRoot("media:/root/", null)
         } else {
-            Timber.i("OnGetRoot: Browsing NOT ALLOWED for unknown caller. Returning empty browser root so all apps can use MediaController. $clientPackageName")
+            Timber.v("OnGetRoot: Browsing NOT ALLOWED for unknown caller. Returning empty browser root so all apps can use MediaController. $clientPackageName")
             BrowserRoot("EMPTY_ROOT", null)
         }
     }

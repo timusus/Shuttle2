@@ -26,32 +26,27 @@ class ExoPlayerPlayback(
 
     override var callback: Playback.Callback? = null
 
-    override var isReleased: Boolean = false
+    override var isReleased: Boolean = true
 
     private val player: SimpleExoPlayer by lazy {
         initPlayer(context)
     }
 
-    private var playWhenReady = false
-
     private var isPlaybackReady = false
 
     private val eventListener by lazy {
-        object : Player.EventListener {
+        object : Player.Listener {
             override fun onPlayWhenReadyChanged(playWhenReady: Boolean, reason: Int) {
                 super.onPlayWhenReadyChanged(playWhenReady, reason)
-
-                if (playWhenReady != this@ExoPlayerPlayback.playWhenReady) {
-                    callback?.onPlaybackStateChanged(if (playWhenReady) PlaybackState.Playing else PlaybackState.Paused)
-                    this@ExoPlayerPlayback.playWhenReady = playWhenReady
-                }
+                Timber.v("onPlayWhenReadyChanged(playWhenReady: $playWhenReady)")
+                callback?.onPlaybackStateChanged(if (playWhenReady) PlaybackState.Playing else PlaybackState.Paused)
             }
 
             override fun onPlaybackStateChanged(state: Int) {
                 super.onPlaybackStateChanged(state)
 
                 val playbackState = state.toExoPlaybackState()
-                Timber.v("onPlayerStateChanged(playWhenReady: $playWhenReady, playbackState: ${playbackState})")
+                Timber.v("onPlaybackStateChanged(playbackState: ${playbackState})")
 
                 when (playbackState) {
                     ExoPlaybackState.Idle -> {
@@ -62,7 +57,7 @@ class ExoPlayerPlayback(
                     }
                     ExoPlaybackState.Ready -> {
                         isPlaybackReady = true
-                        if (playWhenReady) {
+                        if (player.playWhenReady) {
                             callback?.onPlaybackStateChanged(PlaybackState.Playing)
                         } else {
                             callback?.onPlaybackStateChanged(PlaybackState.Paused)
@@ -71,7 +66,6 @@ class ExoPlayerPlayback(
                     ExoPlaybackState.Ended -> {
                         if (isPlaybackReady) {
                             player.playWhenReady = false
-                            this@ExoPlayerPlayback.playWhenReady = false
                             callback?.onPlaybackStateChanged(PlaybackState.Paused)
                             callback?.onTrackEnded(false)
                             isPlaybackReady = false
@@ -131,7 +125,7 @@ class ExoPlayerPlayback(
     }
 
     override suspend fun load(current: Song, next: Song?, seekPosition: Int, completion: (Result<Any?>) -> Unit) {
-        Timber.v("load(current: ${current.name}|${current.mimeType})")
+        Timber.v("load(current: ${current.name}|${current.mimeType}, seekPosition: $seekPosition)")
 
         isReleased = false
 
@@ -143,8 +137,8 @@ class ExoPlayerPlayback(
 
         val mediaInfo = mediaInfoProvider.getMediaInfo(current)
         player.addListener(eventListener)
-        player.seekTo(seekPosition.toLong())
         player.setMediaItem(getMediaItem(mediaInfo))
+        player.seekTo(seekPosition.toLong())
         player.prepare()
 
         if (mediaInfo.isRemote) {

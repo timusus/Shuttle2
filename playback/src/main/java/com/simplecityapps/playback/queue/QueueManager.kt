@@ -44,6 +44,14 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
 
     private var currentItem: QueueItem? = null
 
+    var hasRestoredQueue = false
+        set(value) {
+            field = value
+            if (value) {
+                queueWatcher.onQueueRestored()
+            }
+        }
+
     /**
      * Replaces the current queue.
      *
@@ -75,11 +83,11 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
             } ?: queue.generateShuffleQueue()
         }
 
+        queueWatcher.onQueueChanged()
+
         queue.getItem(shuffleMode, position)?.let { currentItem ->
             setCurrentItem(currentItem)
         }
-
-        queueWatcher.onQueueChanged()
 
         return queue.size() != 0
     }
@@ -129,6 +137,7 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
     fun clear() {
         queue.clear()
         queueWatcher.onQueueChanged()
+        currentItem = null
     }
 
     /**
@@ -190,7 +199,9 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
 
             queueWatcher.onShuffleChanged(shuffleMode)
 
-            queueWatcher.onQueueChanged()
+            if (hasRestoredQueue) {
+                queueWatcher.onQueueChanged()
+            }
         }
     }
 

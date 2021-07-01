@@ -4,19 +4,23 @@ import timber.log.Timber
 
 interface QueueChangeCallback {
 
-    fun onQueueChanged(){
+    fun onQueueChanged() {
 
     }
 
-    fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?){
+    fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
 
     }
 
-    fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode){
+    fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
 
     }
 
-    fun onRepeatChanged(repeatMode: QueueManager.RepeatMode){
+    fun onRepeatChanged(repeatMode: QueueManager.RepeatMode) {
+
+    }
+
+    fun onQueueRestored() {
 
     }
 }
@@ -25,8 +29,6 @@ interface QueueChangeCallback {
 class QueueWatcher : QueueChangeCallback {
 
     private var callbacks: MutableList<QueueChangeCallback> = mutableListOf()
-
-    var hasRestoredQueue = false
 
     fun addCallback(callback: QueueChangeCallback) {
         callbacks.add(callback)
@@ -57,5 +59,10 @@ class QueueWatcher : QueueChangeCallback {
     override fun onRepeatChanged(repeatMode: QueueManager.RepeatMode) {
         Timber.v("onRepeatChanged(repeatMode: $repeatMode)")
         callbacks.forEach { callback -> callback.onRepeatChanged(repeatMode) }
+    }
+
+    override fun onQueueRestored() {
+        Timber.v("onQueueRestored()")
+        callbacks.forEach { callback -> callback.onQueueRestored() }
     }
 }

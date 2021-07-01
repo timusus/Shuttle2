@@ -66,16 +66,11 @@ class PlaybackManager(
      * Loads the current queue. The boolean in [Result] indicates whether the current queue item successfully loaded.
      * Note: If the current queue item fails to load, the next item in the queue is attempted
      */
-    fun load(seekPosition: Int = 0, completion: (Result<Boolean>) -> Unit) {
+    fun load(seekPosition: Int? = null, completion: (Result<Boolean>) -> Unit) {
         Timber.v("load(seekPosition: ${seekPosition})")
         // Some players (ExoPlayer/ChromeCast) like to be loaded on the main thread
         queueManager.getCurrentItem()?.let { currentQueueItem ->
-            attemptLoad(currentQueueItem.song, queueManager.getNext()?.song, seekPosition) { result ->
-                result.onSuccess { didLoadFirst ->
-                    if (didLoadFirst) {
-                        playback.seek(currentQueueItem.song.getStartPosition())
-                    }
-                }
+            attemptLoad(currentQueueItem.song, queueManager.getNext()?.song, seekPosition ?: currentQueueItem.song.getStartPosition() ?: 0) { result ->
                 result.onFailure {
                     queueManager.setCurrentItem(currentQueueItem)
                 }
@@ -85,7 +80,7 @@ class PlaybackManager(
     }
 
     private fun attemptLoad(current: Song, next: Song?, seekPosition: Int, attempt: Int = 1, completion: (Result<Boolean>) -> Unit) {
-        Timber.v("attemptLoad(current song: ${current.name}, attempt: $attempt)")
+        Timber.v("attemptLoad(current song: ${current.name}, seekPosition: $seekPosition, attempt: $attempt)")
 
         loadJob?.cancel()
         loadJob = appCoroutineScope.launch {
@@ -100,7 +95,7 @@ class PlaybackManager(
                         queueManager.getNext()?.let { nextQueueItem ->
                             if (nextQueueItem != queueManager.getCurrentItem()) {
                                 queueManager.skipToNext(true)
-                                attemptLoad(nextQueueItem.song, queueManager.getNext()?.song, seekPosition, attempt + 1, completion)
+                                attemptLoad(nextQueueItem.song, queueManager.getNext()?.song, 0, attempt + 1, completion)
                             } else {
                                 completion(Result.failure(error))
                             }
@@ -129,26 +124,22 @@ class PlaybackManager(
      */
     fun play(attempt: Int = 1) {
         Timber.v("play() called (attempt: $attempt)")
+        if (queueManager.getQueue().isEmpty()) {
+            Timber.w("Failed to play: Queue empty.")
+            return
+        }
         if (audioFocusHelper.requestAudioFocus()) {
             if (playback.isReleased) {
                 if (attempt <= 2) {
                     Timber.v("Playback released.. reloading.")
-                    load(getProgress() ?: 0) { result ->
-                        result.onSuccess {
-                            playbackPreferenceManager.playbackPosition?.let { playbackPosition ->
-                                seekTo(playbackPosition)
-                            }
-                            play(attempt + 1)
-                        }
+                    load(playbackPreferenceManager.playbackPosition ?: queueManager.getCurrentItem()?.song?.getStartPosition() ?: 0) { result ->
+                        result.onSuccess { play(attempt + 1) }
                         result.onFailure { exception -> Timber.e(exception, "play() failed") }
                     }
                 } else {
                     Timber.e("play() failed. Exceeded max number of attempts (2)")
                 }
             } else {
-                if (getProgress() ?: 0 > (getDuration() ?: Int.MAX_VALUE) - 200) {
-                    playback.seek(0)
-                }
                 playback.play()
             }
         } else {
@@ -351,8 +342,7 @@ class PlaybackManager(
     }
 
 
-    // Playback.Callback Implementation
-
+    // PlaybackWatcherCallback Implementation
 
     override fun onPlaybackStateChanged(playbackState: PlaybackState) {
         Timber.v("onPlaybackStateChanged(playbackState: $playbackState)")
@@ -392,24 +382,28 @@ class PlaybackManager(
 
     override fun onRepeatChanged(repeatMode: QueueManager.RepeatMode) {
         playback.setRepeatMode(repeatMode)
-        if (repeatMode != QueueManager.RepeatMode.One) {
+        if (queueManager.hasRestoredQueue) {
+            if (repeatMode != QueueManager.RepeatMode.One) {
+                appCoroutineScope.launch {
+                    playback.loadNext(queueManager.getNext()?.song)
+                }
+            }
+        }
+    }
+
+    override fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
+        if (queueManager.hasRestoredQueue) {
             appCoroutineScope.launch {
                 playback.loadNext(queueManager.getNext()?.song)
             }
         }
     }
 
-    override fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
-        appCoroutineScope.launch {
-            playback.loadNext(queueManager.getNext()?.song)
-        }
-    }
-
     override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
-        super.onQueuePositionChanged(oldPosition, newPosition)
-
-        queueManager.getCurrentItem()?.song?.let { song ->
-            playback.setReplayGain(trackGain = song.replayGainTrack, albumGain = song.replayGainAlbum)
+        if (queueManager.hasRestoredQueue) {
+            queueManager.getCurrentItem()?.song?.let { song ->
+                playback.setReplayGain(trackGain = song.replayGainTrack, albumGain = song.replayGainAlbum)
+            }
         }
     }
 
@@ -454,6 +448,6 @@ class PlaybackManager(
     }
 }
 
-private fun Song.getStartPosition(): Int {
-    return if (type == Song.Type.Podcast || type == Song.Type.Audiobook) max(0, playbackPosition - 5000) else 0
+private fun Song.getStartPosition(): Int? {
+    return if (type == Song.Type.Podcast || type == Song.Type.Audiobook) max(0, playbackPosition - 5000) else null
 }

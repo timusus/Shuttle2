@@ -124,7 +124,7 @@ android {
         kapt("com.squareup.inject:assisted-inject-processor-dagger2:0.6.0")
 
         // Leak Canary
-        debugImplementation("com.squareup.leakcanary:leakcanary-android:2.6")
+//        debugImplementation("com.squareup.leakcanary:leakcanary-android:2.6")
 
         // ViewPager 2
         implementation("androidx.viewpager2:viewpager2:1.1.0-alpha01")

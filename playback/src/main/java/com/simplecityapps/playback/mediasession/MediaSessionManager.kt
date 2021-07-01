@@ -1,6 +1,8 @@
 package com.simplecityapps.playback.mediasession
 
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.provider.MediaStore
@@ -9,6 +11,7 @@ import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import android.util.LruCache
 import androidx.core.content.res.ResourcesCompat
+import androidx.media.session.MediaButtonReceiver
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.*
@@ -54,6 +57,10 @@ class MediaSessionManager @Inject constructor(
     val mediaSession: MediaSessionCompat by lazy {
         val mediaSession = MediaSessionCompat(context, "ShuttleMediaSession")
         mediaSession.setCallback(mediaSessionCallback)
+        val mediaButtonReceiverIntent = PendingIntent.getBroadcast(context, 0, Intent(Intent.ACTION_MEDIA_BUTTON).apply {
+            setClass(context, MediaButtonReceiver::class.java)
+        }, 0)
+        mediaSession.setMediaButtonReceiver(mediaButtonReceiverIntent)
         mediaSession
     }
 
@@ -88,14 +95,14 @@ class MediaSessionManager @Inject constructor(
     }
 
     private fun updatePlaybackState() {
-        Timber.i("updatePlaybackState()")
+        Timber.v("updatePlaybackState()")
         val playbackState = playbackStateBuilder.build()
         activeQueueItemId = playbackState.activeQueueItemId
         mediaSession.setPlaybackState(playbackState)
     }
 
     private fun updateMetadata() {
-        Timber.i("updateMetadata()")
+        Timber.v("updateMetadata()")
         queueManager.getCurrentItem()?.let { currentItem ->
             val mediaMetadataCompat = MediaMetadataCompat.Builder()
                 .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, currentItem.song.id.toString())
@@ -137,17 +144,34 @@ class MediaSessionManager @Inject constructor(
     }
 
     private fun updateQueue() {
-        Timber.i("updateQueue()")
-        val queue = queueManager.getQueue()
-        if (queue.isNotEmpty()) {
-            mediaSession.setQueue(queueManager.getQueue()
-                .subList(((queueManager.getCurrentPosition() ?: 0) - 5).coerceAtLeast(0), queueManager.getSize() - 1)
-                .take(30)
-                .map { queueItem -> queueItem.toQueueItem() })
-        } else {
-            mediaSession.setQueue(emptyList())
+        Timber.v("updateQueue()")
+        if (queueManager.hasRestoredQueue) {
+            val queue = queueManager.getQueue()
+            if (queue.isNotEmpty()) {
+                mediaSession.setQueue(queueManager.getQueue()
+                    .subList(((queueManager.getCurrentPosition() ?: 0) - 5).coerceAtLeast(0), queueManager.getSize() - 1)
+                    .take(30)
+                    .map { queueItem -> queueItem.toQueueItem() })
+            } else {
+                mediaSession.setQueue(emptyList())
+            }
         }
     }
+
+    private fun updateCurrentQueueItem() {
+        Timber.v("updateCurrentQueueItem()")
+        queueManager.getCurrentItem()?.let { currentItem ->
+            val activeQueueItemId = currentItem.toQueueItem().queueId
+            if (activeQueueItemId != this.activeQueueItemId) {
+                updateQueue()
+                playbackStateBuilder.setActiveQueueItemId(activeQueueItemId)
+                playbackStateBuilder.setState(getPlaybackState(), 0L, 1.0f)
+                updatePlaybackState()
+                updateMetadata()
+            }
+        }
+    }
+
 
     // PlaybackWatcherCallback Implementation
 
@@ -155,7 +179,6 @@ class MediaSessionManager @Inject constructor(
         mediaSession.isActive = playbackState == PlaybackState.Loading || playbackState == PlaybackState.Playing
         playbackStateBuilder.setState(getPlaybackState(), playbackManager.getProgress()?.toLong() ?: PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, 1.0f)
         updatePlaybackState()
-
     }
 
     override fun onProgressChanged(position: Int, duration: Int, fromUser: Boolean) {
@@ -175,20 +198,20 @@ class MediaSessionManager @Inject constructor(
 
     // QueueChangeCallback Implementation
 
-    override fun onQueueChanged() {
+    override fun onQueueRestored() {
         updateQueue()
+        updateCurrentQueueItem()
+    }
+
+    override fun onQueueChanged() {
+        if (queueManager.hasRestoredQueue) {
+            updateQueue()
+        }
     }
 
     override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
-        queueManager.getCurrentItem()?.let { currentItem ->
-            val activeQueueItemId = currentItem.toQueueItem().queueId
-            if (activeQueueItemId != this.activeQueueItemId) {
-                updateQueue()
-                playbackStateBuilder.setActiveQueueItemId(activeQueueItemId)
-                playbackStateBuilder.setState(getPlaybackState(), 0L, 1.0f)
-                updatePlaybackState()
-                updateMetadata()
-            }
+        if (queueManager.hasRestoredQueue) {
+            updateCurrentQueueItem()
         }
     }
 
@@ -206,10 +229,12 @@ class MediaSessionManager @Inject constructor(
     private val mediaSessionCallback = object : MediaSessionCompat.Callback() {
 
         override fun onPlay() {
+            Timber.v("onPlay()")
             playbackManager.play()
         }
 
         override fun onPause() {
+            Timber.v("onPause()")
             playbackManager.pause()
         }
 
@@ -243,14 +268,17 @@ class MediaSessionManager @Inject constructor(
         }
 
         override fun onPlayFromMediaId(mediaId: String?, extras: Bundle?) {
+            Timber.v("onPlayFromMediaId()")
             playFromMediaId(playWhenReady = true, mediaId = mediaId, extras = extras)
         }
 
         override fun onPrepareFromMediaId(mediaId: String?, extras: Bundle?) {
+            Timber.v("onPrepareFromMediaId()")
             playFromMediaId(playWhenReady = false, mediaId = mediaId, extras = extras)
         }
 
         private fun playFromMediaId(playWhenReady: Boolean, mediaId: String?, extras: Bundle?) {
+            Timber.v("playFromMediaId()")
             appCoroutineScope.launch {
                 mediaId?.let {
                     mediaIdHelper.getPlayQueue(mediaId)?.let { playQueue ->
@@ -270,15 +298,17 @@ class MediaSessionManager @Inject constructor(
         }
 
         override fun onPlayFromSearch(query: String?, extras: Bundle?) {
+            Timber.v("onPlayFromSearch()")
             playFromSearch(playWhenReady = true, query = query, extras = extras)
         }
 
         override fun onPrepareFromSearch(query: String?, extras: Bundle?) {
+            Timber.v("onPrepareFromSearch()")
             playFromSearch(playWhenReady = false, query = query, extras = extras)
         }
 
         private fun playFromSearch(playWhenReady: Boolean, query: String?, extras: Bundle?) {
-            Timber.i("performSearch($query)")
+            Timber.v("performSearch($query)")
 
             val mediaFocus = extras?.get(MediaStore.EXTRA_MEDIA_FOCUS)
             val artist = extras?.getString(MediaStore.EXTRA_MEDIA_ARTIST)
@@ -334,9 +364,9 @@ class MediaSessionManager @Inject constructor(
                             }
                         }
                     } else {
-                        Timber.i("Search query $query with focus $mediaFocus yielded no results")
+                        Timber.v("Search query $query with focus $mediaFocus yielded no results")
                     }
-                } ?: Timber.i("Search query $query with focus $mediaFocus yielded no results")
+                } ?: Timber.v("Search query $query with focus $mediaFocus yielded no results")
             }
         }
     }

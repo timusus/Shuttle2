@@ -35,7 +35,8 @@ class WidgetProvider41 : ShuttleAppWidgetProvider() {
         setInt(R.id.background, "setImageAlpha", (backgroundTransparency * 255f).toInt())
 
         queueManager.getCurrentItem()?.let { currentItem ->
-            setViewVisibility(R.id.subtitle, View.VISIBLE)
+            setViewVisibility(R.id.playPauseButton, View.VISIBLE)
+            setViewVisibility(R.id.nextButton, View.VISIBLE)
 
             val song = currentItem.song
 
@@ -87,9 +88,13 @@ class WidgetProvider41 : ShuttleAppWidgetProvider() {
                 }
             }
         } ?: run {
-            setTextViewText(R.id.title, context.getString(R.string.widget_empty_text))
-            setViewVisibility(R.id.subtitle, View.GONE)
-            setImageViewResource(R.id.artwork, getPlaceholderDrawable())
+            if (queueManager.hasRestoredQueue) {
+                setTextViewText(R.id.title, context.getString(R.string.queue_empty))
+                setTextViewText(R.id.subtitle, context.getString(R.string.widget_empty_text))
+                setImageViewResource(R.id.artwork, R.drawable.ic_shuttle_logo)
+                setViewVisibility(R.id.playPauseButton, View.GONE)
+                setViewVisibility(R.id.nextButton, View.GONE)
+            }
         }
 
         if (updateReason == WidgetManager.UpdateReason.PlaystateChanged || updateReason == WidgetManager.UpdateReason.Unknown) {
