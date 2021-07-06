@@ -54,27 +54,27 @@ open class RecyclerAdapter(scope: CoroutineScope, val skipIntermediateUpdates: B
     // Public
 
     fun update(newList: List<ViewBinder>, completion: (() -> Unit)? = null) {
-        actor.offer(AdapterOperation.Update(newList.toMutableList(), completion))
+        actor.trySend(AdapterOperation.Update(newList.toMutableList(), completion))
     }
 
     fun add(index: Int = items.size, newItem: ViewBinder) {
-        actor.offer(AdapterOperation.Add(index, newItem))
+        actor.trySend(AdapterOperation.Add(index, newItem))
     }
 
     fun remove(index: Int) {
-        actor.offer(AdapterOperation.Remove(index))
+        actor.trySend(AdapterOperation.Remove(index))
     }
 
     fun remove(item: ViewBinder) {
-        actor.offer(AdapterOperation.Remove(items.indexOf(item)))
+        actor.trySend(AdapterOperation.Remove(items.indexOf(item)))
     }
 
     fun move(fromPosition: Int, toPosition: Int) {
-        actor.offer(AdapterOperation.Move(fromPosition, toPosition))
+        actor.trySend(AdapterOperation.Move(fromPosition, toPosition))
     }
 
     fun clear() {
-        actor.offer(AdapterOperation.Clear)
+        actor.trySend(AdapterOperation.Clear)
     }
 
 
