@@ -1,5 +1,35 @@
 [
   {
+    "versionName": "0.4.12",
+    "releaseDate": "06/07/2021",
+    "features": [
+    ],
+    "fixes": [
+      "Fixed an issue where songs couldn't be selected/re-selected from song list and queue list",
+      "Fixed an issue where now playing screen showed incorrect artwork, particularly when loading a large queue",
+      "Crash fixes related to external commands (like headset button press, bluetooth connection or android auto voice command) launching app in various states without showing the required 'foreground notification'.. see 'improvements'",
+      "Fixed an issue where playback would not start after pressing play from a headset, or the widget, if the app hasn't been running for a while",
+      "Fixed an issue where blank notification would display when queue is empty and app is launched via external command",
+      "Fixed an issue where tracks on an album were sorted by year rather than track number",
+      "Possible fix for duration related layout issue in detail song list items",
+      "Possible fix for DSP seekbar guidelines not visible on some devices",
+      "Possible fix when parsing changelog, on some OnePlus devices",
+      "Possible fix for crash when loading placeholder drawables on Galaxy J2"
+    ],
+    "improvements": [
+      "Show 'queue empty' notification when attempting to play a song via a headset button press / other external commands, with an empty queue. This notification disappears after 10 seconds if no queue is eventually loaded. Note: The notification can't be dismissed before 10 seconds have elapsed, in order to prevent Android from crashing the app.",
+      "Show a 'loading' notification if the app is started via an external command, and the queue has not yet loaded. This is then replaced with either the regular playback notification, or a 'queue empty' notification once the queue loads",
+      "Widget is no longer cleared when the app is loading the queue",
+      "Use Shuttle launcher icon in widget when queue is empty",
+      "Hide play/pause/next/prev buttons in widget when queue is empty",
+      "Optimisations for large queues. When toggling shuffle for a large queue, the queue update is now almost immediate",
+      "Translation updates"
+    ],
+    "notes": [
+      "After 3 years in development and 2 years of testing, S2 is preparing for an official release!"
+    ]
+  },
+  {
     "versionName": "0.4.11",
     "releaseDate": "01/07/2021",
     "features": [
