@@ -36,6 +36,7 @@ interface QueueContract {
         fun showLoadError(error: Error)
         fun scrollToPosition(position: Int, fromUser: Boolean)
         fun showTagEditor(songs: List<Song>)
+        fun clearData()
     }
 }
 
@@ -64,9 +65,9 @@ class QueuePresenter @Inject constructor(
     override fun loadQueue() {
         view?.toggleEmptyView(queueManager.getQueue().isEmpty())
         view?.setData(
-            queueManager.getQueue(),
-            (playbackManager.getProgress() ?: 0) / (queueManager.getCurrentItem()?.song?.duration?.toFloat() ?: Float.MAX_VALUE),
-            playbackManager.playbackState()
+            queue = queueManager.getQueue(),
+            progress = (playbackManager.getProgress() ?: 0) / (queueManager.getCurrentItem()?.song?.duration?.toFloat() ?: Float.MAX_VALUE),
+            playbackState = playbackManager.playbackState()
         )
         view?.setQueuePosition(queueManager.getCurrentPosition() ?: 0, queueManager.getSize())
     }
@@ -108,7 +109,6 @@ class QueuePresenter @Inject constructor(
     }
 
     override fun saveQueueToPlaylist() {
-
         queueManager.getQueue()
     }
 
@@ -130,18 +130,28 @@ class QueuePresenter @Inject constructor(
 
     // QueueChangeCallback Implementation
 
-    override fun onQueueChanged() {
+    override fun onQueueRestored() {
         loadQueue()
+    }
+
+    override fun onQueueChanged() {
+        if (queueManager.hasRestoredQueue) {
+            loadQueue()
+        }
     }
 
     override fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
-        loadQueue()
+        if (queueManager.hasRestoredQueue) {
+            view?.clearData()
+        }
     }
 
     override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
-        loadQueue()
-        newPosition?.let { position ->
-            view?.scrollToPosition(position, false)
+        if (queueManager.hasRestoredQueue) {
+            loadQueue()
+            newPosition?.let { position ->
+                view?.scrollToPosition(position, false)
+            }
         }
     }
 }

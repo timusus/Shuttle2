@@ -276,12 +276,12 @@ class AlbumListFragment :
             data.add(0, shuffleBinder)
         }
 
-        adapter.update(data, completion = {
+        adapter.update(data) {
             recyclerViewState?.let {
                 recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
                 recyclerViewState = null
             }
-        })
+        }
     }
 
     override fun updateToolbarMenuSortOrder(sortOrder: AlbumSortOrder) {

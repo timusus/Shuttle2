@@ -248,12 +248,12 @@ class SongListFragment :
             SongBinder(song, imageLoader, songBinderListener).apply {
                 selected = contextualToolbarHelper.selectedItems.any { it.id == song.id }
             }
-        }, completion = {
+        }) {
             recyclerViewState?.let {
                 recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
                 recyclerViewState = null
             }
-        })
+        }
     }
 
     override fun updateToolbarMenuSortOrder(sortOrder: SongSortOrder) {

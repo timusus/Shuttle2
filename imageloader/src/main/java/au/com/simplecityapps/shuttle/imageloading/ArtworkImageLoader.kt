@@ -45,6 +45,7 @@ interface ArtworkImageLoader {
         class Crossfade(val duration: Int) : Options()
 
         class Placeholder(val placeholderResId: Int) : Options()
+        class Error(val errorResId: Int) : Options()
 
         object CircleCrop : Options()
 

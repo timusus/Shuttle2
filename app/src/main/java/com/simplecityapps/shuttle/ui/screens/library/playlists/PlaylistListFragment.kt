@@ -146,12 +146,12 @@ class PlaylistListFragment :
         })
 
 
-        adapter.update(viewBinders, completion = {
+        adapter.update(viewBinders) {
             recyclerViewState?.let {
                 recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
                 recyclerViewState = null
             }
-        })
+        }
     }
 
     override fun onAddedToQueue(playlist: Playlist) {

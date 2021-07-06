@@ -213,7 +213,7 @@ class SearchFragment : Fragment(),
                 })
             }
         }
-        adapter.update(list, completion = { recyclerView.scrollToPosition(0) })
+        adapter.update(list) { recyclerView.scrollToPosition(0) }
     }
 
     override fun showLoadError(error: Error) {

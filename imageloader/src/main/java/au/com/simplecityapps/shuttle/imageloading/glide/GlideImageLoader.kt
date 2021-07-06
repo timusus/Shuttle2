@@ -150,7 +150,10 @@ class GlideImageLoader : ArtworkImageLoader {
 
                 }
                 is ArtworkImageLoader.Options.Placeholder -> {
-                    glideRequest.placeholder(option.placeholderResId)
+                    glideRequest.error(option.placeholderResId)
+                }
+                is ArtworkImageLoader.Options.Error -> {
+                    glideRequest.error(option.errorResId)
                 }
             }
         }

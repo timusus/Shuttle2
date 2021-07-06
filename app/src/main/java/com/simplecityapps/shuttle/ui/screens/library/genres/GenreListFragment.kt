@@ -123,12 +123,12 @@ class GenreListFragment :
 
         val data = genres.map { genre -> GenreBinder(genre, this) }.toMutableList<ViewBinder>()
 
-        adapter.update(data, completion = {
+        adapter.update(data) {
             recyclerViewState?.let {
                 recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
                 recyclerViewState = null
             }
-        })
+        }
     }
 
     override fun onAddedToQueue(genre: Genre) {

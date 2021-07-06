@@ -231,19 +231,30 @@ class PlaybackPresenter @Inject constructor(
 
     // QueueChangeCallback Implementation
 
-    override fun onQueueChanged() {
+    override fun onQueueRestored() {
         view?.setQueue(queueManager.getQueue(), queueManager.getCurrentPosition())
     }
 
-    override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
-        view?.setCurrentSong(queueManager.getCurrentItem()?.song)
-        view?.setQueuePosition(queueManager.getCurrentPosition(), queueManager.getSize(), abs((newPosition ?: Int.MAX_VALUE) - (oldPosition ?: 0)) <= 1)
+    override fun onQueueChanged() {
+        if (queueManager.hasRestoredQueue) {
+            view?.setQueue(queueManager.getQueue(), queueManager.getCurrentPosition())
+        }
+    }
 
-        updateFavorite()
+    override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
+        if (queueManager.hasRestoredQueue) {
+            view?.setCurrentSong(queueManager.getCurrentItem()?.song)
+            view?.setQueuePosition(queueManager.getCurrentPosition(), queueManager.getSize(), abs((newPosition ?: Int.MAX_VALUE) - (oldPosition ?: 0)) <= 1)
+
+            updateFavorite()
+        }
     }
 
     override fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
         view?.setShuffleMode(shuffleMode)
+        if (queueManager.hasRestoredQueue && queueManager.getQueue().size >= 200) {
+            view?.clearQueue()
+        }
     }
 
     override fun onRepeatChanged(repeatMode: QueueManager.RepeatMode) {

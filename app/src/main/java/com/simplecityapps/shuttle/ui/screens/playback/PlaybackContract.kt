@@ -15,6 +15,7 @@ interface PlaybackContract {
         fun setRepeatMode(repeatMode: QueueManager.RepeatMode)
         fun setCurrentSong(song: Song?)
         fun setQueue(queue: List<QueueItem>, position: Int?)
+        fun clearQueue()
         fun setQueuePosition(position: Int?, total: Int, smoothScroll: Boolean)
         fun setProgress(position: Int, duration: Int)
         fun setIsFavorite(isFavorite: Boolean)

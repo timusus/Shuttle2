@@ -267,13 +267,16 @@ class PlaybackFragment :
         adapter.update(
             queue.map { queueItem ->
                 ArtworkBinder(queueItem, imageLoader)
-            },
-            completion = {
-                position?.let { position ->
-                    recyclerView.scrollToPosition(position)
-                }
             }
-        )
+        ) {
+            position?.let { position ->
+                recyclerView.scrollToPosition(position)
+            }
+        }
+    }
+
+    override fun clearQueue() {
+        adapter.clear()
     }
 
     override fun setProgress(position: Int, duration: Int) {

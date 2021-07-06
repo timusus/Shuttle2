@@ -228,13 +228,19 @@ class QueueFragment :
     // QueueContract.View Implementation
 
     override fun setData(queue: List<QueueItem>, progress: Float, playbackState: PlaybackState) {
-        adapter?.update(queue.map { queueItem -> QueueBinder(queueItem, playbackState, progress, imageLoader, playbackManager, playbackWatcher, queueBinderListener) },
-            completion = {
-                recyclerViewState?.let {
-                    recyclerView?.layoutManager?.onRestoreInstanceState(recyclerViewState)
-                    recyclerViewState = null
-                }
-            })
+        val queueItems = queue.map { queueItem -> QueueBinder(queueItem, playbackState, progress, imageLoader, playbackManager, playbackWatcher, queueBinderListener) }
+        adapter?.update(
+            newList = queueItems
+        ) {
+            recyclerViewState?.let {
+                recyclerView?.layoutManager?.onRestoreInstanceState(recyclerViewState)
+                recyclerViewState = null
+            }
+        }
+    }
+
+    override fun clearData() {
+        adapter?.clear()
     }
 
     override fun toggleEmptyView(empty: Boolean) {
@@ -386,5 +392,4 @@ class QueueFragment :
 
         fun newInstance() = QueueFragment()
     }
-
 }

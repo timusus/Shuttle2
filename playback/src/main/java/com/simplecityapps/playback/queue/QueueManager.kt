@@ -72,22 +72,25 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
         }
 
         withContext(Dispatchers.IO) {
-            val queueItems = songs.map { song -> song.toQueueItem(false) }
-            queue.setQueue(queueItems)
+            var existingQueue = getQueue(ShuffleMode.Off)
+            if (existingQueue.size != songs.size || songs.map { it.id } != existingQueue.map { it.song.id }) {
+                existingQueue = songs.map { song -> song.toQueueItem(false) }
+                queue.setQueue(existingQueue)
+            }
 
             shuffleSongs?.let { shuffleSongs ->
                 val queueOrderMap = shuffleSongs.withIndex().associate { songId -> songId.value.id to songId.index }
-                queueItems.sortedBy { queueItem -> queueOrderMap[queueItem.song.id] }
+                existingQueue.sortedBy { queueItem -> queueOrderMap[queueItem.song.id] }
             }?.let { shuffleQueueItems ->
                 queue.setShuffleQueue(shuffleQueueItems)
             } ?: queue.generateShuffleQueue()
         }
 
-        queueWatcher.onQueueChanged()
-
         queue.getItem(shuffleMode, position)?.let { currentItem ->
             setCurrentItem(currentItem)
         }
+
+        queueWatcher.onQueueChanged()
 
         return queue.size() != 0
     }
@@ -135,6 +138,7 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
     }
 
     fun clear() {
+        Timber.v("clear()")
         queue.clear()
         queueWatcher.onQueueChanged()
         currentItem = null

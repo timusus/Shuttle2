@@ -238,12 +238,12 @@ class AlbumArtistListFragment :
                         .apply { selected = contextualToolbarHelper.selectedItems.contains(albumArtist) }
                 }
             }
-        }, completion = {
+        }) {
             recyclerViewState?.let {
                 recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
                 recyclerViewState = null
             }
-        })
+        }
     }
 
     override fun onAddedToQueue(albumArtists: List<AlbumArtist>) {

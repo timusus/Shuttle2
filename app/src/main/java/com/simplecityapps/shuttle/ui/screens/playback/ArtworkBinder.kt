@@ -47,15 +47,16 @@ class ArtworkBinder(
         override fun bind(viewBinder: ArtworkBinder, isPartial: Boolean) {
             super.bind(viewBinder, isPartial)
 
-            viewBinder.imageLoader.loadArtwork(
-                imageView = imageView,
-                data = viewBinder.queueItem.song,
-                options = listOf(
-                    ArtworkImageLoader.Options.RoundedCorners(16.dp),
-                    ArtworkImageLoader.Options.Crossfade(200),
-                    ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_song)
+            if (!isPartial) {
+                viewBinder.imageLoader.loadArtwork(
+                    imageView = imageView,
+                    data = viewBinder.queueItem.song,
+                    options = listOf(
+                        ArtworkImageLoader.Options.RoundedCorners(16.dp),
+                        ArtworkImageLoader.Options.Error(R.drawable.ic_placeholder_song)
+                    )
                 )
-            )
+            }
         }
 
         override fun recycle() {
