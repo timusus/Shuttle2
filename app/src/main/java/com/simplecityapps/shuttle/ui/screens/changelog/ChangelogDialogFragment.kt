@@ -38,7 +38,7 @@ class ChangelogDialogFragment : DialogFragment() {
 
         val changelog = try {
             val changeSetList: Type = Types.newParameterizedType(MutableList::class.java, Changeset::class.java)
-            moshi.adapter<List<Changeset>>(changeSetList).fromJson(requireContext().assets.open("changelog.json").bufferedReader().use { it.readText() })
+            moshi.adapter<List<Changeset>>(changeSetList).lenient().fromJson(requireContext().assets.open("changelog.json").bufferedReader().use { it.readText() })
         } catch (e: RuntimeException) {
             Timber.e(e, "Invalid changelog")
             null
