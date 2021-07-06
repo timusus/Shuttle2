@@ -70,7 +70,7 @@ class PlaybackNotificationManager @Inject constructor(
             .setSmallIcon(R.drawable.ic_stat_name)
             .setStyle(
                 androidx.media.app.NotificationCompat.MediaStyle()
-//                    .setMediaSession(mediaSessionManager.mediaSession.sessionToken)
+                    .setMediaSession(mediaSessionManager.mediaSession.sessionToken)
                     .setShowActionsInCompactView(0, 1, 2)
             )
             .setContentIntent(PendingIntent.getActivity(context, 1, (context.applicationContext as ActivityIntentProvider).provideMainActivityIntent(), 0))
