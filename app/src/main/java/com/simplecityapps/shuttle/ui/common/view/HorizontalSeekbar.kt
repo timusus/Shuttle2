@@ -8,7 +8,7 @@ import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.MotionEvent
 import android.view.View
-import androidx.core.content.ContextCompat
+import androidx.core.content.res.ResourcesCompat
 import androidx.core.content.res.use
 import androidx.core.math.MathUtils.clamp
 import com.simplecityapps.shuttle.R
@@ -54,7 +54,7 @@ class HorizontalSeekbar @JvmOverloads constructor(
     init {
         isActivated = true
 
-        trackColorDisabled = resources.getColor(R.color.vertical_seekbar_track_disabled)
+        trackColorDisabled = ResourcesCompat.getColor(resources, R.color.vertical_seekbar_track_disabled, context.theme)
 
         TypedValue().apply {
             context.obtainStyledAttributes(
@@ -65,9 +65,9 @@ class HorizontalSeekbar @JvmOverloads constructor(
                     R.attr.colorPrimarySemiTransparent
                 )
             ).use { typedArray ->
-                progressColorEnabled = typedArray.getColor(0, ContextCompat.getColor(context, R.color.colorPrimary))
-                progressColorDisabled = typedArray.getColor(1, ContextCompat.getColor(context, R.color.colorPrimaryTransparent))
-                trackColorEnabled = typedArray.getColor(2, ContextCompat.getColor(context, R.color.colorPrimarySemiTransparent))
+                progressColorEnabled = typedArray.getColor(0, ResourcesCompat.getColor(resources, R.color.colorPrimary, context.theme))
+                progressColorDisabled = typedArray.getColor(1, ResourcesCompat.getColor(resources, R.color.colorPrimaryTransparent, context.theme))
+                trackColorEnabled = typedArray.getColor(2, ResourcesCompat.getColor(resources, R.color.colorPrimarySemiTransparent, context.theme))
             }
         }
         trackPaint.color = if (isActivated) trackColorEnabled else trackColorDisabled
@@ -81,7 +81,7 @@ class HorizontalSeekbar @JvmOverloads constructor(
 
         TypedValue().apply {
             context.theme.resolveAttribute(R.attr.guidelineColor, this, true)
-            guideLinePaint.color = ContextCompat.getColor(context, resourceId)
+            guideLinePaint.color = ResourcesCompat.getColor(resources, resourceId, context.theme)
         }
 
         setOnTouchListener { v, event ->
