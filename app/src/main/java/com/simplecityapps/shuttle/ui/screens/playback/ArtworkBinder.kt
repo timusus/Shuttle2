@@ -53,7 +53,7 @@ class ArtworkBinder(
                     data = viewBinder.queueItem.song,
                     options = listOf(
                         ArtworkImageLoader.Options.RoundedCorners(16.dp),
-                        ArtworkImageLoader.Options.Error(R.drawable.ic_placeholder_song)
+                        ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_song)
                     )
                 )
             }
