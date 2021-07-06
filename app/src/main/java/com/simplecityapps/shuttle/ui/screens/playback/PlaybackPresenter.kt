@@ -233,6 +233,7 @@ class PlaybackPresenter @Inject constructor(
 
     override fun onQueueRestored() {
         view?.setQueue(queueManager.getQueue(), queueManager.getCurrentPosition())
+        view?.setCurrentSong(queueManager.getCurrentItem()?.song)
     }
 
     override fun onQueueChanged() {
