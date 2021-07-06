@@ -134,12 +134,13 @@
     <string name="theme_entry_dark">Ciemny</string>
     <!-- Settings title for blue theme option (called Shuttle blue, because it uses the particular shade of blue from the original Shuttle) -->
     <string name="theme_accent_entry_blue">Niebieski Shuttle</string>
-    <!-- Settings title for the orange theme option -->
-    <string name="theme_accent_entry_orange">Pomarańczowy</string>
     <!-- Settings title for the cyan theme option -->
     <string name="theme_accent_entry_cyan">Cyjan</string>
     <!-- Settings title for the purple theme option -->
     <string name="theme_accent_entry_purple">Purpurowy</string>
     <!-- Settings title for the green theme option -->
     <string name="theme_accent_entry_green">Zielony</string>
+    <!-- Settings title for the orange theme option -->
+    <string name="theme_accent_entry_orange">Pomarańczowy</string>
+    <!-- Settings title for the red theme option -->
 </resources>

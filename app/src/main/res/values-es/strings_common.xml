@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-    <!-- 'Loading' text. Shown on various screens as their content is loading-->
-    <string name="loading">Cargando…</string>
     <!-- Shown when text is required in a text field -->
     <string name="validation_field_required">Obligatorio</string>
     <!-- Shown when an unexpected error occurs -->
@@ -86,8 +84,6 @@
     <string name="genre_list_empty">Sin géneros</string>
     <!-- Shown when the playlists list finishes loading, and there are no songs-->
     <string name="playlist_list_empty">Sin listas de reproducción</string>
-    <!-- Shown when the playback queue is empty -->
-    <string name="queue_empty">Cola vacía</string>
     <!-- Shown when a playlist is empty -->
     <string name="playlist_empty">Lista de reproducción vacía</string>
     <!-- Button to toggle the 'repeat' mode-->
@@ -106,4 +102,8 @@
     <string name="button_content_description_shuffle">Shuffle</string>
     <!-- Button to shuffle songs using 'album shuffle' mode (shuffles albums, but plays songs in track order)-->
     <string name="button_album_shuffle">Shuffle de álbum</string>
+    <!-- 'Loading' text. Shown on various screens as their content is loading-->
+    <string name="loading">Cargando…</string>
+    <!-- Shown when the playback queue is empty -->
+    <string name="queue_empty">Cola vacía</string>
 </resources>

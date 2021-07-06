@@ -5,7 +5,7 @@
     <!-- Shown when the sleep timer has ended, but playback won't be paused until the current track ends -->
     <string name="sleep_timer_waiting_track_end">等待轨道结束...</string>
     <!-- Sleep timer option to wait for a song to end before pausing playback -->
-    <string name="sleep_timer_play_to_track_end">播放最后一首歌结束</string>
+    <string name="sleep_timer_play_to_track_end">播放至最后一首歌曲</string>
     <!-- Button to close the sleep timer dialog -->
     <string name="sleep_timer_dialog_button_close">关闭</string>
     <!-- Button to stop the sleep timer -->

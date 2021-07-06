@@ -1,5 +1,11 @@
 <?xml version="1.0"?>
 <resources>
+    <!-- 'Loading' text. Shown on various screens as their content is loading-->
+    <string name="loading">A carregar…</string>
     <!-- Shown in various places to indicate this particular field is unknown. E.g. the album name is 'unknown', or the artist is 'unknown' -->
     <string name="unknown">Desconhecido</string>
+    <!-- Shown when the playback queue is empty -->
+    <string name="queue_empty">Fila vazia</string>
+    <!-- Shown when the current playback queue is empty. Pressing the widget will just open the app. -->
+    <string name="widget_empty_text">Escolha uma música...</string>
 </resources>

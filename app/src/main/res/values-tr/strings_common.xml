@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Shown when text is required in a text field -->
+    <string name="validation_field_required">Gerekli</string>
+    <!-- Shown when an unexpected error occurs -->
+    <string name="error_unexpected">Beklenmedik bir hata gerçekleşti</string>
+    <!-- Shown when an unknown error occurs -->
+    <string name="error_unknown">Bilinmedik bir hata gerçekleşti</string>
+    <!-- Shown when items (an album, artist or song) are added to the queue -->
+    <string name="queue_item_added"><xliff:g example="Lateralus" id="item_name">{item_name}</xliff:g> çalma sırasına eklendi</string>
+    <!-- Shown when songs are added to the queue -->
+    <plurals name="queue_songs_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> şarkı çalma sırasına eklendi</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> şarkılar çalma sırasına eklendi</item>
+    </plurals>
+    <!-- Shown when albums are added to the queue -->
+    <plurals name="queue_albums_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> albümü çalma sırasına eklendi</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> albümler çalma sırasına eklendi</item>
+    </plurals>
+    <!-- Shown when artists are added to the queue -->
+    <plurals name="queue_artists_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> sanatçı çalma sırasına eklendi</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> sanatçılar çalma sırasına eklendi</item>
+    </plurals>
+    <!-- Shown when current playback queue is added to a playlist -->
+    <string name="playlist_queue_added">Çalma sırası eklendi<xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></string>
+    <!-- Shown when songs are added to a playlist -->
+    <plurals name="playlist_songs_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> şarkısı <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g> eklendi</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> şarkıları <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g> eklendi</item>
+    </plurals>
+    <!-- Shown when albums are added to a playlist -->
+    <plurals name="playlist_albums_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> albümü <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g> çalma listesine eklendi</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> albümleri <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g> çalma listesine eklendi</item>
+    </plurals>
+    <!-- Shown when artists are added to a playlist -->
+    <plurals name="playlist_artists_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>  sanatçısı <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g> çalma listesine eklendi</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> sanatçıları <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g> çalma listesine eklendi</item>
+    </plurals>
+    <!-- Shown when genres are added to a playlist -->
+    <plurals name="playlist_genres_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> türü <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g> eklendi</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> türü <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g> eklendi</item>
+    </plurals>
+    <!-- Shown when a song fails to be deleted -->
+    <string name="delete_song_failed">Bu şarkı silinemez</string>
+    <!-- The disc number for this album-->
+    <string name="disc_number">Disk <xliff:g example="1" id="disc_number">{disc_number}</xliff:g></string>
+    <!-- Shown when the songs list finishes loading, and there are no songs-->
+    <string name="song_list_empty">Şarkı yok</string>
+    <!-- Shown when the albums list finishes loading, and there are no songs-->
+    <string name="album_list_empty">Albüm yok</string>
+    <!-- Shown when the artists list finishes loading, and there are no songs-->
+    <string name="artist_list_empty">Sanatçı yok</string>
+    <!-- Shown when the genres list finishes loading, and there are no songs-->
+    <string name="genre_list_empty">Tür yok</string>
+    <!-- Shown when the playlists list finishes loading, and there are no songs-->
+    <string name="playlist_list_empty">Çalma listesi yok</string>
+    <!-- Shown when a playlist is empty -->
+    <string name="playlist_empty">Çalma listesi boş</string>
+    <!-- Button to toggle the 'repeat' mode-->
+    <string name="button_repeat">Tekrar et</string>
+    <!-- Button to indicate 'seek forward' (skipping forward by, say, 10 seconds)-->
+    <string name="button_seek_forward">İleri sar</string>
+    <!-- Button to skip to the next track -->
+    <string name="button_skip_next">Atla</string>
+    <!-- Button to play/pause the current song-->
+    <string name="button_toggle_playback">Çal</string>
+    <!-- Button to indicate 'seek backward' (skipping backwards by, say, 10 seconds)-->
+    <string name="button_seek_backward">Geriye sar</string>
+    <!-- Button to skip to the previous track-->
+    <string name="button_skip_previous">Önceki</string>
+    <!-- Button to shuffle songs-->
+    <string name="button_content_description_shuffle">Karıştır</string>
+    <!-- Button to shuffle songs using 'album shuffle' mode (shuffles albums, but plays songs in track order)-->
+    <string name="button_album_shuffle">Albüm karıştır</string>
+    <!-- 'Loading' text. Shown on various screens as their content is loading-->
+    <string name="loading">Yükleniyor</string>
+    <!-- Shown when the playback queue is empty -->
+    <string name="queue_empty">Çalma sırası boş</string>
+</resources>

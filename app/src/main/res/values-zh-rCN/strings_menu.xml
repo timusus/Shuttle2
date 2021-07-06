@@ -33,7 +33,7 @@
     <!-- Menu option to open the submenu to change between 'list' and 'grid' view modes-->
     <string name="menu_title_view_mode">查看</string>
     <!-- Menu option to view the artist/album list as a list rather than a grid-->
-    <string name="menu_title_view_mode_list">清单</string>
+    <string name="menu_title_view_mode_list">列表</string>
     <!-- Menu option to view the artist/album list as a grid rather than a list-->
     <string name="menu_title_view_mode_grid">网格</string>
     <!-- Menu option to open the sorting submenu -->

@@ -1,5 +1,11 @@
 <?xml version="1.0"?>
 <resources>
+    <!-- 'Loading' text. Shown on various screens as their content is loading-->
+    <string name="loading">読込中…</string>
     <!-- Shown in various places to indicate this particular field is unknown. E.g. the album name is 'unknown', or the artist is 'unknown' -->
     <string name="unknown">不明</string>
+    <!-- Shown when the playback queue is empty -->
+    <string name="queue_empty">キューが空です</string>
+    <!-- Shown when the current playback queue is empty. Pressing the widget will just open the app. -->
+    <string name="widget_empty_text">曲を選択してください…</string>
 </resources>

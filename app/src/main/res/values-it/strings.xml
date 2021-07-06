@@ -17,7 +17,7 @@
     <!-- Title of the 'settings' screen-->
     <string name="title_settings">Impostazioni</string>
     <!-- Title of the 'Now Playing' screen (the main screen for controlling music playback)-->
-    <string name="title_now_playing">Riproduzione</string>
+    <string name="title_now_playing">In riproduzione</string>
     <!-- Shown at the top of the 'search' screen-->
     <string name="title_search_hint">Cerca</string>
 </resources>

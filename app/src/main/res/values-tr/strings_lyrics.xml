@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The option to view lyrics for a song-->
+    <string name="lyrics_title">Şarkı sözleri</string>
+    <!-- QuickLyric - an app for viewing lyrics (probably don't translate-->
+    <string name="lyrics_quicklyric_title">QuickLyric</string>
+    <!-- Shown when the QuickLyric app is unavailable-->
+    <string name="lyrics_quicklyric_unavailable">QuickLyric kullanılamıyor</string>
+</resources>

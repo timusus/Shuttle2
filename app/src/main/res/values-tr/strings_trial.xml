@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- The title of the menu button. When clicked, will show the 'free trial' dialog, with an option for the user to upgrade-->
+    <string name="menu_trial">Deneme</string>
+    <!-- The heading of the 'free trial' dialog -->
+    <string name="trial_heading_trial">Ücretsiz Deneme</string>
+    <!-- Message shown when user is starting a trial. Note: This is meant to be friendly/fun! It doesn't have to say 'until you lose your mind' -->
+    <string name="trial_description_trial">Denemeden sonra, aklınızı kaybedene kadar oynatma hızı her gün küçük bir miktar artacaktır.</string>
+    <!-- Shows how many days are left in the free trial-->
+    <plurals name="trial_days_remaining">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> gün kaldı</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> gün kaldı</item>
+    </plurals>
+    <!-- Shown when the user's trial has expired -->
+    <string name="trial_heading_expired">Deneme süresi sona erdi</string>
+    <!-- Message shown when trial has expired. Note: This is meant to be friendly/fun! It doesn't have to say 'until you lose your mind' -->
+    <string name="trial_description_expired">Aklınızı kaybedene kadar oynatma hızı her gün küçük bir miktar artacaktır.</string>
+    <!-- When a trial ends, the playback speed is increased by a small amount each day. This text shows the current playback speed -->
+    <string name="trial_playback_speed"><xliff:g example="1.4x" id="speed">{speed}</xliff:g> çalma hızı</string>
+    <!-- Button to upgrade from the trial version to a paid version -->
+    <string name="trial_button_upgrade">Yükselt</string>
+    <!-- Title of dialog shown after user has completed a purchase-->
+    <string name="dialog_title_purchase_complete">Teşekkürler</string>
+    <!-- Message shown in dialog after user has completed a purchase. Note: This is informal, but should reflect sincere appreciation (not just a generic 'thank you')-->
+    <string name="dialog_message_purchase_complete">S2\'nin full sürümüne yükseldiniz. Uygulamayı desteklediğiniz için çok teşekkürler.</string>
+</resources>

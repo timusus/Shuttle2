@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Title of changelog screen. Since the actual changelogs are not translated, this could be left in English-->
+    <string name="changelog_title">Sıradaki</string>
+    <!-- Changelog 'features' sub-heading. Since the actual changelogs are not translated, this could be left in English-->
+    <string name="changelog_features">Özellikler</string>
+    <!-- Changelog 'improvements' sub-heading. Since the actual changelogs are not translated, this could be left in English-->
+    <string name="changelog_improvements">Yenilikler</string>
+    <!-- Changelog 'bug fixes' sub-heading. Since the actual changelogs are not translated, this could be left in English-->
+    <string name="changelog_bug_fixes">Bug düzeltmeleri</string>
+</resources>

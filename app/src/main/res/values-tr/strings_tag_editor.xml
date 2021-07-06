@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- The number of songs being edited with the tag (metadata) editor-->
+    <plurals name="edit_tags_editing_count_songs">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> şarkısı düzenleniyor</item>
+        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g> şarkıları düzenleniyor</item>
+    </plurals>
+    <!-- The title of the 'edit tags' dialog. If 'tags' doesn't apply in your language, you could use 'metadata' or 'info' instead. -->
+    <string name="edit_tags_action">Etiketleri düzenle</string>
+    <!-- When editing tags, if multiple songs are being edited at the same time, this indicates that a field has multiple values.
+    For example, editing two songs, which have two different artists. Editing the artist field will overwrite the artist for both songs. There are 'multiple values' for artist. -->
+    <string name="edit_tags_multiple_values">Birden çok değer</string>
+    <!-- Shown when the tag editor is in progress, reading tags (metadata) from the selected songs -->
+    <string name="edit_tags_reading_tags"><xliff:g example="1" id="progress">{progress}</xliff:g> /  <xliff:g example="1" id="count">{total}</xliff:g>  etiketleri okunuyor</string>
+    <!-- Shown when the tag editor is in progress, writing tags (metadata) to the selected songs -->
+    <string name="edit_tags_writing_tags"><xliff:g example="1" id="progress">{progress}</xliff:g> / <xliff:g example="1" id="count">{total}</xliff:g>  etiketleri okunuyor</string>
+    <!-- Shown when the tag editor fails to read the tags (metadata) of a song -->
+    <string name="edit_tags_read_failed">Seçilen şarkı etiketleri okunamadı</string>
+    <!-- Shown when the tag editor successfully writes the tags (metadata) of the songs -->
+    <plurals name="edit_tags_success">
+        <item quantity="one"><xliff:g example="5" id="count">{count}</xliff:g> başarıyla güncellendi</item>
+        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g> şarkılar başarıyla güncellendi</item>
+    </plurals>
+    <!-- Shown when the tag editor fails to write the tags (metadata) to the songs-->
+    <plurals name="edit_tags_failure">
+        <item quantity="one">Şarkı güncellenemedi</item>
+        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g> şarkıları <xliff:g example="5" id="total">{total}</xliff:g> güncellenemedi</item>
+    </plurals>
+    <!-- The hint (placeholder) text shown in the 'title' text field, when editing the tags (metadata) -->
+    <string name="edit_tags_hint_title">Başlık</string>
+    <!-- The hint (placeholder) text shown in the 'artist' text field, when editing the tags (metadata) -->
+    <string name="edit_tags_hint_artist">Şanatçılar</string>
+    <!-- The hint (placeholder) text shown in the 'album' text field, when editing the tags (metadata) -->
+    <string name="edit_tags_hint_album">Albüm</string>
+    <!-- The hint (placeholder) text shown in the 'album artist' text field, when editing the tags (metadata) -->
+    <string name="edit_tags_hint_album_artist">Albüm Sanatçısı</string>
+    <!-- The hint (placeholder) text shown in the 'year' text field, when editing the tags (metadata) -->
+    <string name="edit_tags_hint_year">Yıl</string>
+    <!-- The hint (placeholder) text shown in the 'track' text field, when editing the tags (metadata) -->
+    <string name="edit_tags_hint_track">Parça</string>
+    <!-- The hint (placeholder) text shown in the 'track total' text field, when editing the tags (metadata) -->
+    <string name="edit_tags_hint_track_total">Toplam Parça</string>
+    <!-- The hint (placeholder) text shown in the 'disc' text field, when editing the tags (metadata) -->
+    <string name="edit_tags_hint_disc">Disk</string>
+    <!-- The hint (placeholder) text shown in the 'disc total' text field, when editing the tags (metadata) -->
+    <string name="edit_tags_hint_disc_total">Toplam Disk</string>
+    <!-- The hint (placeholder) text shown in the 'genres' text field, when editing the tags (metadata) -->
+    <string name="edit_tags_hint_genres">Türler</string>
+    <!-- The hint (placeholder) text shown in the 'lyrics' text field, when editing the tags (metadata) -->
+    <string name="edit_tags_hint_lyrics">Şarkı sözleri</string>
+</resources>

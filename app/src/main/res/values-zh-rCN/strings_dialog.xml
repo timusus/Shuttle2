@@ -13,7 +13,7 @@
     <!-- Shown in the 'exclude' dialog (move the selected songs to the list of 'excluded' songs) (another word for 'blacklist') -->
     <string name="dialog_exclude_title">排除</string>
     <!-- Shown when songs are about to be added to the list of songs to be excluded (blacklisted) -->
-    <string name="dialog_exclude_message">\'<xliff:g example="Lateralus" id="item">{item}</xliff:g>\'将从媒体库中隐藏。\n\n您可以在设置中查看排除的歌曲。</string>
+    <string name="dialog_exclude_message">\'<xliff:g example="Lateralus" id="item">{item}</xliff:g>\'将从媒体库中隐藏。您可以在设置中查看排除的歌曲。</string>
     <!-- Button to add the selected songs to the list of 'excluded' (blacklisted) songs  -->
     <string name="dialog_exclude_button">排除</string>
     <!-- Shown when viewing the list of 'excluded' (blacklisted) songs, and it's empty-->

@@ -134,12 +134,14 @@
     <string name="theme_entry_dark">暗い</string>
     <!-- Settings title for blue theme option (called Shuttle blue, because it uses the particular shade of blue from the original Shuttle) -->
     <string name="theme_accent_entry_blue">Shuttleブルー</string>
-    <!-- Settings title for the orange theme option -->
-    <string name="theme_accent_entry_orange">オレンジ</string>
     <!-- Settings title for the cyan theme option -->
     <string name="theme_accent_entry_cyan">シアン</string>
     <!-- Settings title for the purple theme option -->
     <string name="theme_accent_entry_purple">紫</string>
     <!-- Settings title for the green theme option -->
     <string name="theme_accent_entry_green">緑</string>
+    <!-- Settings title for the orange theme option -->
+    <string name="theme_accent_entry_orange">オレンジ</string>
+    <!-- Settings title for the red theme option -->
+    <string name="theme_accent_entry_red">赤</string>
 </resources>

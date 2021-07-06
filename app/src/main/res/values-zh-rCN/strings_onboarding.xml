@@ -9,7 +9,7 @@
     <!-- Error message description shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
     <string name="onboarding_directories_dialog_missing_subtitle">“文档提供者”(文件管理器)应用程序无法在您的设备上找到。您可能必须安装一个，或恢复使用’基本’媒体扫描仪</string>
     <!-- Explanation shown to user when they're about to choose which directories wil lbe scanned bv the S2 media scanner-->
-    <string name="onboarding_directories_add_directories_help_text">为了扫描音乐，S2需要访问您的媒体目录。/n/n按“添加目录”时，您将被带到默认的“文件提供商”应用程序。 导航到包含音乐的文件夹。 您可以添加多个目录。/n/n注意: 您可能需要启用“显示内部存储”，以查看您的音乐文件夹(s)。</string>
+    <string name="onboarding_directories_add_directories_help_text">为了扫描音乐，S2需要访问您的媒体目录。\r\n按“添加目录”时，您将被带到默认的“文件提供商”应用程序。 导航到包含音乐的文件夹。 您可以添加多个目录。\r\n注意: 您可能需要启用“显示内部存储”，以查看您的音乐文件夹(s)。</string>
     <!-- Shown when the app is scanning the user's directories for media -->
     <string name="onboarding_directories_scanning">扫描...</string>
     <!-- Shown when the media scanner is scanning the user's directories for media-->
@@ -27,7 +27,7 @@
     <!-- Title of S2's Media Scanner, the thing that scans files on the device to read audio files/tags -->
     <string name="onboarding_media_scanner_title">媒体扫描器</string>
     <!-- Shown when the media scanner is scanning -->
-    <string name="onboarding_media_scanner_scanning">扫描...</string>
+    <string name="onboarding_media_scanner_scanning">正在扫描....</string>
     <!-- Button to initiate a media scanner scan-->
     <string name="onboarding_media_scan">扫描</string>
     <!-- Button to go back to the previous page, when onboarding -->

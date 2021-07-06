@@ -9,7 +9,7 @@
     <!-- An option to disable the 'Replay Gain' feature -->
     <string name="dsp_replay_gain_off">关</string>
     <!-- Frequency Response - a graph showing volume vs frequency-->
-    <string name="dsp_dialog_frequency_response_title">率响应</string>
+    <string name="dsp_dialog_frequency_response_title">频率响应</string>
     <!-- The Replay Gain 'mode' (Album Gain or Track Gain)-->
     <string name="dsp_replay_gain_hint_mode">模式</string>
     <!-- Pre-amp, or preamplification - the 'gain' in volume, applied to the sound output, before the Equalizer is used-->

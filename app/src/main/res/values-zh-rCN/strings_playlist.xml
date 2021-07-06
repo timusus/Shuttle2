@@ -35,9 +35,9 @@
     <!-- Button to confirm clearing of the selected playlist -->
     <string name="playlist_dialog_button_clear">清除</string>
     <!-- Shown when the user presses playlist 'import' button. This shows the dialog to 'sync' playlists with the Android MediaStore -->
-    <string name="playlist_dialog_title_sync">同步媒体商店播放列表</string>
+    <string name="playlist_dialog_title_sync">同步媒体提供商播放列表</string>
     <!-- Shown in the playlist import dialog. Explains to the user what 'sync' does-->
-    <string name="playlist_dialog_subtitle_sync">从媒体商店复制播放列表。如果Shuttle中已存在播放列表，则将合并歌曲。/n/n注意：仅添加歌曲，不能删除。</string>
+    <string name="playlist_dialog_subtitle_sync">从媒体提供商复制播放列表。如果已存在播放列表，则将合并歌曲。\r\n注意：仅添加歌曲，不能删除。</string>
     <!-- Button to confirm 'syncing' a playlist with the Android MediaStore -->
     <string name="playlist_dialog_button_sync">同步</string>
     <!-- Title of the list of Playlists -->

@@ -21,5 +21,5 @@
     <!-- Title of dialog shown after user has completed a purchase-->
     <string name="dialog_title_purchase_complete">谢谢</string>
     <!-- Message shown in dialog after user has completed a purchase. Note: This is informal, but should reflect sincere appreciation (not just a generic 'thank you')-->
-    <string name="dialog_message_purchase_complete">您已经成功升级到 S2的完整版本。非常感谢您对该应用程序的支持</string>
+    <string name="dialog_message_purchase_complete">您已经成功升级到S2的完整版本。非常感谢您对该应用程序的支持</string>
 </resources>
