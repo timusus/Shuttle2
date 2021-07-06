@@ -10,10 +10,10 @@ import com.simplecityapps.shuttle.ui.MainActivity
 import com.simplecityapps.shuttle.ui.ThemeManager
 import com.simplecityapps.shuttle.ui.widgets.WidgetManager
 import dagger.hilt.android.HiltAndroidApp
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DEBUG_PROPERTY_NAME
+import kotlinx.coroutines.DEBUG_PROPERTY_VALUE_ON
 import timber.log.Timber
-import java.io.File
-import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Named
 
@@ -44,19 +44,6 @@ class ShuttleApplication : Application(), ActivityIntentProvider {
         themeManager.setDayNightMode()
 
         if (preferenceManager.previousVersionCode != BuildConfig.VERSION_CODE) {
-            // Todo: Remove sometime in future
-            if (preferenceManager.previousVersionCode <= 2180018) {
-                appCoroutineScope.launch {
-                    withContext(Dispatchers.IO) {
-                        try {
-                            File(cacheDir, "image_cache").delete()
-                        } catch (e: IOException) {
-                            Timber.e(e, "Failed to delete disk cache")
-                        }
-                    }
-                }
-            }
-
             preferenceManager.previousVersionCode = BuildConfig.VERSION_CODE
         }
 
