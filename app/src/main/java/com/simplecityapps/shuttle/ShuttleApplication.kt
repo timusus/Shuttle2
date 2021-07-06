@@ -49,10 +49,12 @@ class ShuttleApplication : Application(), ActivityIntentProvider {
 
         initializers.init(this)
 
-        try {
-            System.setProperty(DEBUG_PROPERTY_NAME, DEBUG_PROPERTY_VALUE_ON)
-        } catch (e: SecurityException) {
-            Timber.e(e, "Failed to enable coroutine debugging")
+        if (BuildConfig.DEBUG) {
+            try {
+                System.setProperty(DEBUG_PROPERTY_NAME, DEBUG_PROPERTY_VALUE_ON)
+            } catch (e: SecurityException) {
+                Timber.e(e, "Failed to enable coroutine debugging")
+            }
         }
 
         widgetManager.updateAppWidgets(WidgetManager.UpdateReason.Unknown)
