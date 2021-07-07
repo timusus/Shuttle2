@@ -249,6 +249,24 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
         }
 
 
+    // Media Importer
+
+    var lastImportDate: Date
+        set(value) {
+            sharedPreferences.put("last_import_date", value.time)
+        }
+        get() {
+            return Date(sharedPreferences.getLong("last_import_date", Date().time))
+        }
+
+    var importStrategy: String?
+        set(value) {
+            sharedPreferences.put("media_import_strategy", value)
+        }
+        get() {
+            return sharedPreferences.getString("media_import_strategy", null)
+        }
+
     // Playback
 
     var retainShuffleOnNewQueue: Boolean

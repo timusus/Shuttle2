@@ -7,6 +7,7 @@ import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStor
 import com.simplecityapps.localmediaprovider.local.repository.*
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.repository.*
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -34,8 +35,8 @@ class RepositoryModule {
 
     @Provides
     @Singleton
-    fun provideMediaImporter(songRepository: SongRepository): MediaImporter {
-        return MediaImporter(songRepository)
+    fun provideMediaImporter(songRepository: SongRepository, preferenceManager: GeneralPreferenceManager, @Named("AppCoroutineScope") appCoroutineScope: CoroutineScope): MediaImporter {
+        return MediaImporter(songRepository, preferenceManager, appCoroutineScope)
     }
 
     @Provides

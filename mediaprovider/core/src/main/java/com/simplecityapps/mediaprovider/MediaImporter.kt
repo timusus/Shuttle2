@@ -3,16 +3,46 @@ package com.simplecityapps.mediaprovider
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withContext
 import timber.log.Timber
+import java.util.*
 
 class MediaImporter(
-    private val songRepository: SongRepository
+    private val songRepository: SongRepository,
+    private val preferenceManager: GeneralPreferenceManager,
+    appCoroutineScope: CoroutineScope
 ) {
+
+    /*
+         Todo:
+
+         Automatic scanning objectives:
+
+         - Keep S2's database up to date with the lates state of the various media providers
+         - Don't scan excessively
+         - Configurable, with sane defaults.
+
+         Configuration options:
+          - Every time S2 is launched
+          - Manual only
+
+          Future options (requires running service)
+          - When MediaStore changes (requires running service to be practical)
+          - Schedule
+
+          Media provider specific options:
+           - Whether an automated S2 Media Provider scan should only detect newly added files
+
+          Other options
+          - Whether an import is allowed to remove data. Default: No. Warning: This can cause song & playlist data to be lost
+
+         Notes:
+         - If an import would result in clearing all media provider data, that import is cancelled
+         - Importing remote media providers could result in a large data transfer
+         - Importing from the S2 Media Provider uses a lot of cpu
+     */
 
     interface Listener {
         fun onStart(providerType: MediaProvider.Type) {}
@@ -29,6 +59,20 @@ class MediaImporter(
     val mediaProviders: MutableSet<MediaProvider> = mutableSetOf()
 
     var importCount: Int = 0
+
+    enum class AutoImportStrategy {
+        OnLaunch, OnLaunchNewFilesOnly, Manual
+    }
+
+    private val importStrategy = AutoImportStrategy.values().firstOrNull { it.name == preferenceManager.importStrategy } ?: AutoImportStrategy.Manual
+
+    init {
+        if (importStrategy == AutoImportStrategy.OnLaunch) {
+            appCoroutineScope.launch {
+                import()
+            }
+        }
+    }
 
     suspend fun import() {
 
@@ -86,6 +130,9 @@ class MediaImporter(
         listeners.forEach { listener -> listener.onAllComplete() }
 
         importCount++
+
+        preferenceManager.lastImportDate = Date()
+
         isImporting = false
         Timber.i("Import complete in ${System.currentTimeMillis() - time}ms)")
     }
