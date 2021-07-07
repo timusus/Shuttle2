@@ -39,7 +39,7 @@ abstract class Diff<T>(private val existingData: List<T>, private val newData: L
             val inserts = newData.filterNot { newData -> existingData.any { oldData -> isEqual(oldData, newData) } }
 
             // Data which exist in the new dataset, as well as the old
-            var updates = (newData - inserts)
+            var updates = newData - inserts
             // Updates need their previous ID's restored
             if (updates.isNotEmpty()) {
                 updates = updates.map { newData -> update(existingData.first { oldData -> isEqual(oldData, newData) }, newData) }

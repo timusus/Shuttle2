@@ -121,7 +121,7 @@ class AlbumListFragment :
         circularLoadingView = view.findViewById(R.id.circularLoadingView)
         horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
 
-        shuffleBinder = ShuffleBinder(object : ShuffleBinder.Listener {
+        shuffleBinder = ShuffleBinder(R.string.button_album_shuffle, object : ShuffleBinder.Listener {
             override fun onClicked() {
                 presenter.albumShuffle()
             }

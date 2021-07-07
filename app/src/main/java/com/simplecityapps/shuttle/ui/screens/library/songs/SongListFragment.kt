@@ -30,6 +30,7 @@ import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
+import com.simplecityapps.shuttle.ui.screens.library.albums.ShuffleBinder
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
@@ -54,6 +55,8 @@ class SongListFragment :
     private var adapter: RecyclerAdapter by autoCleared()
 
     lateinit var imageLoader: GlideImageLoader
+
+    private lateinit var shuffleBinder: ShuffleBinder
 
     private lateinit var playlistMenuView: PlaylistMenuView
 
@@ -115,6 +118,12 @@ class SongListFragment :
 
         circularLoadingView = view.findViewById(R.id.circularLoadingView)
         horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
+
+        shuffleBinder = ShuffleBinder(R.string.btn_shuffle, object : ShuffleBinder.Listener {
+            override fun onClicked() {
+                presenter.shuffle()
+            }
+        })
 
         savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
 
@@ -244,11 +253,17 @@ class SongListFragment :
             adapter.clear()
         }
 
-        adapter.update(songs.map { song ->
+        val data = songs.map { song ->
             SongBinder(song, imageLoader, songBinderListener).apply {
                 selected = contextualToolbarHelper.selectedItems.any { it.id == song.id }
             }
-        }) {
+        }.toMutableList<ViewBinder>()
+
+        if (songs.isNotEmpty()) {
+            data.add(0, shuffleBinder)
+        }
+
+        adapter.update(data) {
             recyclerViewState?.let {
                 recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
                 recyclerViewState = null

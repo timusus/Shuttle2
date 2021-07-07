@@ -17,15 +17,14 @@ import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.*
 import javax.inject.Inject
+import javax.inject.Named
 
 interface SongListContract {
 
@@ -56,6 +55,7 @@ interface SongListContract {
         fun setSortOrder(songSortOrder: SongSortOrder)
         fun getFastscrollPrefix(song: Song): String?
         fun updateToolbarMenu()
+        fun shuffle()
     }
 }
 
@@ -65,7 +65,8 @@ class SongListPresenter @Inject constructor(
     private val songRepository: SongRepository,
     private val mediaImporter: MediaImporter,
     private val sortPreferenceManager: SortPreferenceManager,
-    private val queueManager: QueueManager
+    private val queueManager: QueueManager,
+    @Named("AppCoroutineScope") private val appCoroutineScope: CoroutineScope
 ) : BasePresenter<SongListContract.View>(),
     SongListContract.Presenter {
 
@@ -191,6 +192,20 @@ class SongListPresenter @Inject constructor(
             SongSortOrder.AlbumGroupKey -> song.albumGroupKey.key?.firstOrNull()?.toString()?.toUpperCase(Locale.getDefault())
             SongSortOrder.Year -> song.year.toString()
             else -> null
+        }
+    }
+
+    override fun shuffle() {
+        if (songs.isEmpty()) {
+            view?.showLoadError(UserFriendlyError("Your library is empty"))
+            return
+        }
+
+        appCoroutineScope.launch {
+            playbackManager.shuffle(songs) { result ->
+                result.onSuccess { playbackManager.play() }
+                result.onFailure { error -> view?.showLoadError(Error(error)) }
+            }
         }
     }
 
