@@ -1,5 +1,6 @@
 package com.simplecityapps.playback.dsp.equalizer
 
+import timber.log.Timber
 import kotlin.math.*
 
 class BandProcessor(val band: NyquistBand, val sampleRate: Int, val channelCount: Int, val referenceGain: Double) {
@@ -37,6 +38,11 @@ class BandProcessor(val band: NyquistBand, val sampleRate: Int, val channelCount
     fun processSample(sample: Float, channelIndex: Int): Float {
 
         if (band.bandwidthGain == 0.0 && band.gain == 0.0) {
+            return sample
+        }
+
+        if (channelIndex >= channelCount) {
+            Timber.v("Invalid channel index")
             return sample
         }
 

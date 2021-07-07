@@ -60,6 +60,13 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
         return inputAudioFormat
     }
 
+    override fun onFlush() {
+        super.onFlush()
+
+        Timber.v("onFlush() called")
+        updateBandProcessors()
+    }
+
     override fun queueInput(inputBuffer: ByteBuffer) {
         if (enabled) {
             val size = inputBuffer.remaining()
