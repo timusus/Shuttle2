@@ -75,7 +75,7 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
             var existingQueue = getQueue(ShuffleMode.Off)
             if (existingQueue.size != songs.size || songs.map { it.id } != existingQueue.map { it.song.id }) {
                 existingQueue = songs.map { song -> song.toQueueItem(false) }
-                queue.setQueue(existingQueue)
+                queue.setBaseQueue(existingQueue)
             }
 
             shuffleSongs?.let { shuffleSongs ->
@@ -191,7 +191,17 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
         return queue.get(shuffleMode)
     }
 
-    suspend fun setShuffleMode(shuffleMode: ShuffleMode, reshuffle: Boolean) {
+    /**
+     * Sets the shuffle mode
+     *
+     * @param shuffleMode [ShuffleMode]
+     * @param reshuffle if true, re-shuffle the shuffle-queue when the [shuffleMode] is [ShuffleMode.On].
+     * @param alwaysNotifyChange notify the [QueueWatcher] of [QueueWatcher.onShuffleChanged] regardless of whether the shuffle mode actually changed
+     *
+     * Todo: alwaysNotifyChange is a bit of a hack. If we want to notify that the queue is about to be replaced, we could do that via a separate callback
+     *
+     */
+    suspend fun setShuffleMode(shuffleMode: ShuffleMode, reshuffle: Boolean, alwaysNotifyChange: Boolean = false) {
         if (this.shuffleMode != shuffleMode) {
             this.shuffleMode = shuffleMode
 
@@ -205,6 +215,10 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
 
             if (hasRestoredQueue) {
                 queueWatcher.onQueueChanged()
+            }
+        } else {
+            if (alwaysNotifyChange) {
+                queueWatcher.onShuffleChanged(shuffleMode)
             }
         }
     }
@@ -306,7 +320,7 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
             return get(shuffleMode).getOrNull(position)
         }
 
-        fun setQueue(items: List<QueueItem>) {
+        fun setBaseQueue(items: List<QueueItem>) {
             baseList = items.toMutableList()
         }
 

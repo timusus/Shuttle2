@@ -111,7 +111,7 @@ class PlaybackManager(
     }
 
     suspend fun shuffle(songs: List<Song>, completion: (Result<Any?>) -> Unit) {
-        queueManager.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = false)
+        queueManager.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = false, alwaysNotifyChange = true)
         if (queueManager.setQueue(songs, songs.shuffled(), 0)) {
             load(0, completion)
         }
