@@ -132,7 +132,11 @@ class PlaybackManager(
             if (playback.isReleased) {
                 if (attempt <= 2) {
                     Timber.v("Playback released.. reloading.")
-                    load(playbackPreferenceManager.playbackPosition ?: queueManager.getCurrentItem()?.song?.getStartPosition() ?: 0) { result ->
+                    var startPosition = playbackPreferenceManager.playbackPosition ?: queueManager.getCurrentItem()?.song?.getStartPosition() ?: 0
+                    if (startPosition > (getDuration() ?: Int.MAX_VALUE) - 200) {
+                        startPosition = 0
+                    }
+                    load(startPosition) { result ->
                         result.onSuccess { play(attempt + 1) }
                         result.onFailure { exception -> Timber.e(exception, "play() failed") }
                     }
@@ -140,6 +144,9 @@ class PlaybackManager(
                     Timber.e("play() failed. Exceeded max number of attempts (2)")
                 }
             } else {
+                if (getProgress() ?: 0 > (getDuration() ?: Int.MAX_VALUE) - 200) {
+                    playback.seek(0)
+                }
                 playback.play()
             }
         } else {
