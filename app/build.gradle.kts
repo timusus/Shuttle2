@@ -124,7 +124,7 @@ android {
         kapt("com.squareup.inject:assisted-inject-processor-dagger2:0.6.0")
 
         // Leak Canary
-//        debugImplementation("com.squareup.leakcanary:leakcanary-android:2.6")
+        debugImplementation("com.squareup.leakcanary:leakcanary-android:2.6")
 
         // ViewPager 2
         implementation("androidx.viewpager2:viewpager2:1.1.0-alpha01")
@@ -169,7 +169,7 @@ android {
         implementation("androidx.drawerlayout:drawerlayout:1.1.1")
 
         // New fragment manager
-        implementation("androidx.fragment:fragment-ktx:1.3.4")
+        implementation("androidx.fragment:fragment-ktx:1.3.5")
 
         // Glide
         implementation("com.github.bumptech.glide:glide:4.12.0")
@@ -187,9 +187,9 @@ android {
         implementation("com.android.billingclient:billing-ktx:4.0.0")
 
         // Testing
-        androidTestImplementation("androidx.test:runner:1.3.0")
-        androidTestImplementation("androidx.test:rules:1.3.0")
-        androidTestImplementation("androidx.test:core-ktx:1.3.0")
+        androidTestImplementation("androidx.test:runner:1.4.0")
+        androidTestImplementation("androidx.test:rules:1.4.0")
+        androidTestImplementation("androidx.test:core-ktx:1.4.0")
         androidTestImplementation("org.hamcrest:hamcrest-library:1.3")
     }
 }
@@ -215,11 +215,10 @@ play {
 apply(plugin = "com.google.gms.google-services")
 
 fun computeVersionName(): String {
-    // Basic <major>.<minor> version name
     if (System.getenv("JENKINS_URL") != null) {
-        return String.format("%d.%d.%d", AppVersion.versionMajor, AppVersion.versionMinor, AppVersion.versionPatch)
+        return String.format("%d.%d.%d%s", AppVersion.versionMajor, AppVersion.versionMinor, AppVersion.versionPatch, AppVersion.versionSuffix)
     }
-    return String.format("%d.%d.%d", AppVersion.versionMajor, AppVersion.versionMinor, AppVersion.versionPatch)
+    return String.format("%d.%d.%d%s", AppVersion.versionMajor, AppVersion.versionMinor, AppVersion.versionPatch, AppVersion.versionSuffix)
 }
 
 fun computeVersionCode(): Int {
