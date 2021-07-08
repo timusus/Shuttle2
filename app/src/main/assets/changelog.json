@@ -1,5 +1,25 @@
 [
   {
+    "versionName": "1.0-RC1",
+    "releaseDate": "09/07/2021",
+    "features": [
+      "Added 'song shuffle' to top of song list"
+    ],
+    "fixes": [
+      "Fixed an issue where incorrect artwork would display, particularly when displaying a large queue",
+      "Fixed an issue where playback could fail when EQ is enabled",
+      "Fixed a rare crash when updating lists, noticeable when spamming shuffle with a large queue",
+      "Fixed an issue where queue wouldn't scroll to current item, under certain conditions"
+    ],
+    "improvements": [
+      "Optimised queue changes. Queue updates faster when toggling shuffle",
+      "Don't show changelog on launch by default. (Can be enabled in settings)"
+    ],
+    "notes": [
+      "Release Candidate #1!"
+    ]
+  },
+  {
     "versionName": "0.4.12",
     "releaseDate": "06/07/2021",
     "features": [
