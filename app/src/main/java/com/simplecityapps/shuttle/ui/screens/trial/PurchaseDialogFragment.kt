@@ -2,7 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.trial
 
 import android.app.Dialog
 import android.os.Bundle
-import android.view.LayoutInflater
+import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
@@ -42,10 +42,10 @@ class PurchaseDialogFragment : DialogFragment() {
             })
         }.launchIn(lifecycleScope)
 
-        val view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_purchase, null)
+        val view = layoutInflater.inflate(R.layout.dialog_purchase, null)
         val recyclerView: RecyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
-        recyclerView.addItemDecoration(DividerItemDecoration(resources.getDrawable(R.drawable.divider)))
+        recyclerView.addItemDecoration(DividerItemDecoration(ResourcesCompat.getDrawable(resources, R.drawable.divider, requireContext().theme)!!))
         return MaterialAlertDialogBuilder(requireContext())
             .setView(view)
             .show()

@@ -42,7 +42,7 @@ class JellyfinConfigurationFragment : DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
 
-        val view = LayoutInflater.from(requireContext()).inflate(R.layout.fragment_emby_configuration, null)
+        val view = layoutInflater.inflate(R.layout.fragment_emby_configuration, null)
 
         addressInputLayout = view.findViewById(R.id.addressInputLayout)
         loginInputLayout = view.findViewById(R.id.loginInputLayout)

@@ -3,7 +3,6 @@ package com.simplecityapps.shuttle.ui.screens.sleeptimer
 import android.app.Dialog
 import android.os.Bundle
 import android.os.Handler
-import android.view.LayoutInflater
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.SwitchCompat
@@ -63,7 +62,7 @@ class SleepTimerDialogFragment : DialogFragment() {
 
             // Sleep timer is not currently active
 
-            val view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_sleep_timer, null)
+            val view = layoutInflater.inflate(R.layout.dialog_sleep_timer, null)
             val recyclerView: RecyclerView = view.findViewById(R.id.recyclerView)
             val playToEndSwitch: SwitchCompat = view.findViewById(R.id.playToEndSwitch)
             playToEndSwitch.isChecked = preferenceManager.sleepTimerPlayToEnd

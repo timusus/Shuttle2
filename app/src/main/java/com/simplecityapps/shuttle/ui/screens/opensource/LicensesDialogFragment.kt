@@ -4,7 +4,6 @@ import android.app.Dialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.view.LayoutInflater
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
@@ -25,7 +24,7 @@ class LicensesDialogFragment : DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
 
-        val view = LayoutInflater.from(context).inflate(R.layout.fragment_dialog_changelog, null)
+        val view = layoutInflater.inflate(R.layout.fragment_dialog_changelog, null)
         val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerView)
         recyclerView.addItemDecoration(SpacesItemDecoration(4))
         adapter = RecyclerAdapter(lifecycleScope)

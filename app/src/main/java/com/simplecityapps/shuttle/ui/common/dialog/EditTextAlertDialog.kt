@@ -50,7 +50,7 @@ open class EditTextAlertDialog : DialogFragment() {
     @SuppressLint("InflateParams")
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
 
-        val view = LayoutInflater.from(requireContext()).inflate(R.layout.fragment_dialog_edit_text, null)
+        val view = layoutInflater.inflate(R.layout.fragment_dialog_edit_text, null)
 
         val textInputLayout: TextInputLayout = view.findViewById(R.id.inputLayout)
         hint?.let { textInputLayout.hint = hint }

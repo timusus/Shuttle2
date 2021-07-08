@@ -2,7 +2,6 @@ package com.simplecityapps.shuttle.ui.screens.changelog
 
 import android.app.Dialog
 import android.os.Bundle
-import android.view.LayoutInflater
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
@@ -44,7 +43,7 @@ class ChangelogDialogFragment : DialogFragment() {
             null
         }
 
-        val view = LayoutInflater.from(context).inflate(R.layout.fragment_dialog_changelog, null)
+        val view = layoutInflater.inflate(R.layout.fragment_dialog_changelog, null)
         val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerView)
         recyclerView.addItemDecoration(SpacesItemDecoration(4.dp))
         adapter = RecyclerAdapter(lifecycleScope)

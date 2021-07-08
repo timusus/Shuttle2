@@ -6,7 +6,6 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.DialogFragment
@@ -22,7 +21,7 @@ class PromoCodeDialogFragment : DialogFragment() {
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val promoCode = requireArguments().getString(ARG_PROMO_CODE)
 
-        val view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_promo_code, null)
+        val view = layoutInflater.inflate(R.layout.dialog_promo_code, null)
         val promoCodeInputLayout: TextInputLayout = view.findViewById(R.id.promoCodeInputLayout)
         promoCodeInputLayout.editText!!.setText(promoCode)
 

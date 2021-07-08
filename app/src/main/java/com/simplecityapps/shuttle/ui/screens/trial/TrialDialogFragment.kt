@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.app.Dialog
 import android.os.Bundle
 import android.text.InputType
-import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.widget.Button
 import android.widget.ImageView
@@ -40,7 +39,7 @@ class TrialDialogFragment : DialogFragment() {
 
         preferenceManager.lastViewedTrialDialog = Date()
 
-        val view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_trial, null)
+        val view = layoutInflater.inflate(R.layout.dialog_trial, null)
 
         val icon: ImageView = view.findViewById(R.id.icon)
 
