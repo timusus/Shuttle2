@@ -95,6 +95,8 @@ class QueueFragment :
 
     private lateinit var playlistMenuView: PlaylistMenuView
 
+    private var pendingScrollPosition: Int? = null
+
 
     // Lifecycle
 
@@ -236,6 +238,11 @@ class QueueFragment :
                 recyclerView?.layoutManager?.onRestoreInstanceState(recyclerViewState)
                 recyclerViewState = null
             }
+
+            pendingScrollPosition?.let {
+                recyclerView?.scrollToPosition(it)
+                pendingScrollPosition = null
+            }
         }
     }
 
@@ -251,24 +258,30 @@ class QueueFragment :
         progressBar.isVisible = loading
     }
 
-    override fun setQueuePosition(position: Int, total: Int) {
-        toolbarSubtitleTextView.text = Phrase.from(requireContext(), R.string.queue_position)
-            .put("position", (position + 1).toString())
-            .put("total", total.toString())
-            .format()
+    override fun setQueuePosition(position: Int?, total: Int) {
+        position?.let {
+            toolbarSubtitleTextView.text = Phrase.from(requireContext(), R.string.queue_position)
+                .put("position", (position + 1).toString())
+                .put("total", total.toString())
+                .format()
+        }
     }
 
     override fun showLoadError(error: Error) {
         Toast.makeText(context, error.userDescription(resources), Toast.LENGTH_LONG).show()
     }
 
-    override fun scrollToPosition(position: Int, fromUser: Boolean) {
-        if (fromUser) {
-            recyclerView?.scrollToPosition(position)
-        } else {
-            view?.findParentMultiSheetView()?.let { multiSheetView ->
-                if (multiSheetView.currentSheet != MultiSheetView.Sheet.SECOND) {
-                    recyclerView?.scrollToPosition(position)
+    override fun scrollToPosition(position: Int?, forceScrollUpdate: Boolean) {
+        position?.let {
+            if (forceScrollUpdate) {
+                recyclerView?.scrollToPosition(position)
+                pendingScrollPosition = position
+            } else {
+                view?.findParentMultiSheetView()?.let { multiSheetView ->
+                    if (multiSheetView.currentSheet != MultiSheetView.Sheet.SECOND) {
+                        recyclerView?.scrollToPosition(position)
+                        pendingScrollPosition = position
+                    }
                 }
             }
         }

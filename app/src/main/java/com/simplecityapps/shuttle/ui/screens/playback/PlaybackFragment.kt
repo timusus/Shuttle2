@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.playback
 
 import android.os.Bundle
+import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -36,6 +37,7 @@ import com.simplecityapps.shuttle.ui.common.view.multisheet.findParentMultiSheet
 import com.simplecityapps.shuttle.ui.lyrics.QuickLyricManager
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragmentArgs
+import com.simplecityapps.shuttle.ui.screens.queue.QueueFragment
 import com.simplecityapps.shuttle.ui.screens.sleeptimer.SleepTimerDialogFragment
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
@@ -81,8 +83,12 @@ class PlaybackFragment :
     private var closeLyricsButton: Button by autoCleared()
     private var quickLyricButton: Button by autoCleared()
 
-    var position: Int = 0
-    var duration: Int = 0
+    private var pendingScrollPosition: Int? = null
+
+    private var seekPosition: Int = 0
+    private var duration: Int = 0
+
+    private var recyclerViewState: Parcelable? = null
 
 
     // Lifecycle
@@ -195,7 +201,20 @@ class PlaybackFragment :
 
         CastButtonFactory.setUpMediaRouteButton(requireContext(), toolbar.menu, R.id.media_route_menu_item)
 
+        savedInstanceState?.getParcelable<Parcelable>(QueueFragment.ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
+
         presenter.bindView(this)
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        recyclerViewState = recyclerView.layoutManager?.onSaveInstanceState()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putParcelable(ARG_RECYCLER_STATE, recyclerViewState)
+        super.onSaveInstanceState(outState)
     }
 
     override fun onDestroyView() {
@@ -253,24 +272,24 @@ class PlaybackFragment :
         }
     }
 
-    override fun setQueuePosition(position: Int?, total: Int, smoothScroll: Boolean) {
-        position?.let {
-            if (smoothScroll) {
-                recyclerView.smoothScrollToPosition(position)
-            } else {
-                recyclerView.scrollToPosition(position)
-            }
-        }
+    override fun setQueuePosition(position: Int?, total: Int) {
+        position?.let { recyclerView.scrollToPosition(position) }
+        pendingScrollPosition = position
     }
 
-    override fun setQueue(queue: List<QueueItem>, position: Int?) {
+    override fun setQueue(queue: List<QueueItem>) {
         adapter.update(
             queue.map { queueItem ->
                 ArtworkBinder(queueItem, imageLoader)
             }
         ) {
-            position?.let { position ->
-                recyclerView.scrollToPosition(position)
+            recyclerViewState?.let {
+                recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
+                recyclerViewState = null
+            }
+            pendingScrollPosition?.let {
+                recyclerView.scrollToPosition(it)
+                pendingScrollPosition = null
             }
         }
     }
@@ -281,9 +300,9 @@ class PlaybackFragment :
 
     override fun setProgress(position: Int, duration: Int) {
         if (!isSeeking) {
-            if (position == 0 || abs(position - this.position) >= 1000) {
+            if (position == 0 || abs(position - this.seekPosition) >= 1000) {
                 currentTimeTextView.text = position.toHms()
-                this.position = position
+                this.seekPosition = position
             }
             if (abs(duration - this.duration) >= 1000) {
                 durationTextView.text = duration.toHms("--:--")
@@ -365,5 +384,12 @@ class PlaybackFragment :
     override fun onStopTrackingTouch(seekBar: SeekBar) {
         presenter.seek(seekBar.progress / 1000f)
         isSeeking = false
+    }
+
+
+    companion object {
+        const val ARG_RECYCLER_STATE = "recycler_state"
+
+        fun newInstance() = PlaybackFragment()
     }
 }

@@ -104,7 +104,7 @@ class PlaybackInitializer @Inject constructor(
                 }
             }
         } ?: run {
-            Timber.v("Queue restoration failed: queue position null")
+            Timber.w("Queue restoration failed: queue position null")
         }
 
         Timber.v("Queue restored in ${System.currentTimeMillis() - queueRestoreStartTime}ms (Time since app init: ${System.currentTimeMillis() - initTime}ms)")
@@ -118,25 +118,17 @@ class PlaybackInitializer @Inject constructor(
     // QueueChangeCallback Implementation
 
     override fun onQueueChanged() {
-        if (queueManager.hasRestoredQueue) {
-            playbackPreferenceManager.queueIds = queueManager.getQueue(QueueManager.ShuffleMode.Off)
-                .map { queueItem -> queueItem.song.id }
-                .joinToString(",")
+        playbackPreferenceManager.queueIds = queueManager.getQueue(QueueManager.ShuffleMode.Off)
+            .map { queueItem -> queueItem.song.id }
+            .joinToString(",")
 
-            playbackPreferenceManager.shuffleQueueIds = queueManager.getQueue(QueueManager.ShuffleMode.On)
-                .map { queueItem -> queueItem.song.id }
-                .joinToString(",")
-
-            playbackPreferenceManager.playbackPosition = null
-        }
+        playbackPreferenceManager.shuffleQueueIds = queueManager.getQueue(QueueManager.ShuffleMode.On)
+            .map { queueItem -> queueItem.song.id }
+            .joinToString(",")
     }
 
     override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
         playbackPreferenceManager.queuePosition = newPosition
-
-        if (queueManager.hasRestoredQueue) {
-            playbackPreferenceManager.playbackPosition = null
-        }
     }
 
     override fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
@@ -186,7 +178,6 @@ class PlaybackInitializer @Inject constructor(
     // ProgressCallback Implementation
 
     override fun onProgressChanged(position: Int, duration: Int, fromUser: Boolean) {
-
         if (progress == 0) {
             progress = position
         }

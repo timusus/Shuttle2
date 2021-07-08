@@ -16,7 +16,6 @@ import javax.inject.Inject
 interface QueueContract {
 
     interface Presenter : BaseContract.Presenter<View> {
-        fun loadQueue()
         fun onQueueItemClicked(queueItem: QueueItem)
         fun togglePlayback()
         fun scrollToCurrent()
@@ -32,9 +31,9 @@ interface QueueContract {
         fun setData(queue: List<QueueItem>, progress: Float, playbackState: PlaybackState)
         fun toggleEmptyView(empty: Boolean)
         fun toggleLoadingView(loading: Boolean)
-        fun setQueuePosition(position: Int, total: Int)
+        fun setQueuePosition(position: Int?, total: Int)
         fun showLoadError(error: Error)
-        fun scrollToPosition(position: Int, fromUser: Boolean)
+        fun scrollToPosition(position: Int?, forceScrollUpdate: Boolean)
         fun showTagEditor(songs: List<Song>)
         fun clearData()
     }
@@ -53,7 +52,8 @@ class QueuePresenter @Inject constructor(
         super.bindView(view)
 
         queueWatcher.addCallback(this)
-        loadQueue()
+        updateQueue(true)
+        updateQueuePosition(true)
     }
 
     override fun unbindView() {
@@ -62,14 +62,24 @@ class QueuePresenter @Inject constructor(
         super.unbindView()
     }
 
-    override fun loadQueue() {
-        view?.toggleEmptyView(queueManager.getQueue().isEmpty())
+    private fun updateQueue(forceClear: Boolean) {
+        if (forceClear) {
+            view?.clearData()
+        }
         view?.setData(
             queue = queueManager.getQueue(),
             progress = (playbackManager.getProgress() ?: 0) / (queueManager.getCurrentItem()?.song?.duration?.toFloat() ?: Float.MAX_VALUE),
             playbackState = playbackManager.playbackState()
         )
-        view?.setQueuePosition(queueManager.getCurrentPosition() ?: 0, queueManager.getSize())
+    }
+
+    private fun updateQueuePosition(forceScrollUpdate: Boolean) {
+        view?.setQueuePosition(queueManager.getCurrentPosition(), queueManager.getSize())
+        view?.scrollToPosition(queueManager.getCurrentPosition(), forceScrollUpdate)
+    }
+
+    private fun updateMiniPlayerVisibility(visible: Boolean) {
+        view?.toggleEmptyView(visible)
     }
 
     override fun togglePlayback() {
@@ -131,27 +141,18 @@ class QueuePresenter @Inject constructor(
     // QueueChangeCallback Implementation
 
     override fun onQueueRestored() {
-        loadQueue()
+        updateQueue(true)
+        updateQueuePosition(true)
+        updateMiniPlayerVisibility(queueManager.getQueue().isEmpty())
     }
 
     override fun onQueueChanged() {
-        if (queueManager.hasRestoredQueue) {
-            loadQueue()
-        }
-    }
-
-    override fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
-        if (queueManager.hasRestoredQueue) {
-            view?.clearData()
-        }
+        updateQueue(true)
+        updateMiniPlayerVisibility(queueManager.getQueue().isEmpty())
     }
 
     override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
-        if (queueManager.hasRestoredQueue) {
-            loadQueue()
-            newPosition?.let { position ->
-                view?.scrollToPosition(position, false)
-            }
-        }
+        updateQueue(false) // Currently required in order to update current item
+        updateQueuePosition(false)
     }
 }

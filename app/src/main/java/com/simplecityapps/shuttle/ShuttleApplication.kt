@@ -56,8 +56,6 @@ class ShuttleApplication : Application(), ActivityIntentProvider {
                 Timber.e(e, "Failed to enable coroutine debugging")
             }
         }
-
-        widgetManager.updateAppWidgets(WidgetManager.UpdateReason.Unknown)
     }
 
     override fun onLowMemory() {

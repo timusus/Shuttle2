@@ -11,7 +11,6 @@ class WidgetInitializer @Inject constructor(
 
     @SuppressLint("BinaryOperationInTimber")
     override fun init(application: Application) {
-
         widgetManager.registerCallbacks()
     }
 }

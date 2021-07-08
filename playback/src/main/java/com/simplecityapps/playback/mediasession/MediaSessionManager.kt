@@ -145,16 +145,14 @@ class MediaSessionManager @Inject constructor(
 
     private fun updateQueue() {
         Timber.v("updateQueue()")
-        if (queueManager.hasRestoredQueue) {
-            val queue = queueManager.getQueue()
-            if (queue.isNotEmpty()) {
-                mediaSession.setQueue(queueManager.getQueue()
-                    .subList(((queueManager.getCurrentPosition() ?: 0) - 5).coerceAtLeast(0), queueManager.getSize() - 1)
-                    .take(30)
-                    .map { queueItem -> queueItem.toQueueItem() })
-            } else {
-                mediaSession.setQueue(emptyList())
-            }
+        val queue = queueManager.getQueue()
+        if (queue.isNotEmpty()) {
+            mediaSession.setQueue(queueManager.getQueue()
+                .subList(((queueManager.getCurrentPosition() ?: 0) - 5).coerceAtLeast(0), queueManager.getSize() - 1)
+                .take(30)
+                .map { queueItem -> queueItem.toQueueItem() })
+        } else {
+            mediaSession.setQueue(emptyList())
         }
     }
 
@@ -204,15 +202,11 @@ class MediaSessionManager @Inject constructor(
     }
 
     override fun onQueueChanged() {
-        if (queueManager.hasRestoredQueue) {
-            updateQueue()
-        }
+        updateQueue()
     }
 
     override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
-        if (queueManager.hasRestoredQueue) {
-            updateCurrentQueueItem()
-        }
+        updateCurrentQueueItem()
     }
 
     override fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {

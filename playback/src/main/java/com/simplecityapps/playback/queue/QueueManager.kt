@@ -71,26 +71,42 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
             setShuffleMode(ShuffleMode.Off, reshuffle = false)
         }
 
+        var existingQueueChanged = false
+        var shuffleQueueChanged = false
+
         withContext(Dispatchers.IO) {
             var existingQueue = getQueue(ShuffleMode.Off)
             if (existingQueue.size != songs.size || songs.map { it.id } != existingQueue.map { it.song.id }) {
                 existingQueue = songs.map { song -> song.toQueueItem(false) }
                 queue.setBaseQueue(existingQueue)
+                existingQueueChanged = true
             }
 
-            shuffleSongs?.let { shuffleSongs ->
-                val queueOrderMap = shuffleSongs.withIndex().associate { songId -> songId.value.id to songId.index }
-                existingQueue.sortedBy { queueItem -> queueOrderMap[queueItem.song.id] }
-            }?.let { shuffleQueueItems ->
-                queue.setShuffleQueue(shuffleQueueItems)
-            } ?: queue.generateShuffleQueue()
+            if (shuffleSongs != null) {
+                val existingShuffleQueue = getQueue(ShuffleMode.On)
+                if (existingQueueChanged || (existingShuffleQueue.size != shuffleSongs.size || shuffleSongs.map { it.id } != existingShuffleQueue.map { it.song.id })) {
+                    val queueOrderMap = shuffleSongs.withIndex().associate { songId -> songId.value.id to songId.index }
+                    queue.setShuffleQueue(existingQueue.sortedBy { queueItem -> queueOrderMap[queueItem.song.id] })
+                    shuffleQueueChanged = true
+                }
+            } else {
+                queue.generateShuffleQueue()
+                shuffleQueueChanged = true
+            }
+        }
+
+        when (shuffleMode) {
+            ShuffleMode.Off -> if (existingQueueChanged) {
+                queueWatcher.onQueueChanged()
+            }
+            ShuffleMode.On -> if (shuffleQueueChanged) {
+                queueWatcher.onQueueChanged()
+            }
         }
 
         queue.getItem(shuffleMode, position)?.let { currentItem ->
             setCurrentItem(currentItem)
         }
-
-        queueWatcher.onQueueChanged()
 
         return queue.size() != 0
     }
@@ -196,29 +212,27 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
      *
      * @param shuffleMode [ShuffleMode]
      * @param reshuffle if true, re-shuffle the shuffle-queue when the [shuffleMode] is [ShuffleMode.On].
-     * @param alwaysNotifyChange notify the [QueueWatcher] of [QueueWatcher.onShuffleChanged] regardless of whether the shuffle mode actually changed
-     *
-     * Todo: alwaysNotifyChange is a bit of a hack. If we want to notify that the queue is about to be replaced, we could do that via a separate callback
-     *
      */
-    suspend fun setShuffleMode(shuffleMode: ShuffleMode, reshuffle: Boolean, alwaysNotifyChange: Boolean = false) {
+    suspend fun setShuffleMode(shuffleMode: ShuffleMode, reshuffle: Boolean) {
         if (this.shuffleMode != shuffleMode) {
+            val previousPosition = getCurrentPosition()
+
             this.shuffleMode = shuffleMode
 
-            withContext(Dispatchers.IO) {
-                if (shuffleMode == ShuffleMode.On && reshuffle) {
+            queueWatcher.onShuffleChanged(shuffleMode)
+
+            if (shuffleMode == ShuffleMode.On && reshuffle) {
+                withContext(Dispatchers.IO) {
                     queue.generateShuffleQueue()
                 }
             }
 
-            queueWatcher.onShuffleChanged(shuffleMode)
-
             if (hasRestoredQueue) {
-                queueWatcher.onQueueChanged()
-            }
-        } else {
-            if (alwaysNotifyChange) {
-                queueWatcher.onShuffleChanged(shuffleMode)
+                queueWatcher.onQueueChanged() // The queue has been reshuffled, and shuffle is on, so the queue has changed
+
+                if (previousPosition != getCurrentPosition()) {
+                    queueWatcher.onQueuePositionChanged(previousPosition, getCurrentPosition())
+                }
             }
         }
     }
@@ -330,7 +344,7 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
 
         fun generateShuffleQueue() {
             if (baseList.isEmpty()) {
-                Timber.i("Cannot generate shuffle queue; base queue is empty")
+                Timber.v("Cannot generate shuffle queue; base queue is empty")
                 shuffleList = mutableListOf()
                 return
             }

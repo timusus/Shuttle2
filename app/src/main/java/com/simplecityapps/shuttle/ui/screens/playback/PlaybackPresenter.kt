@@ -1,12 +1,14 @@
 package com.simplecityapps.shuttle.ui.screens.playback
 
 import android.content.Context
+import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.PlaybackWatcherCallback
 import com.simplecityapps.playback.queue.QueueChangeCallback
+import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.R
@@ -18,7 +20,6 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import javax.inject.Inject
-import kotlin.math.abs
 
 class PlaybackPresenter @Inject constructor(
     private val playbackManager: PlaybackManager,
@@ -44,11 +45,13 @@ class PlaybackPresenter @Inject constructor(
 
         // One time update of all UI components
         updateProgress()
-        onQueueChanged()
-        onQueuePositionChanged(null, queueManager.getCurrentPosition())
-        onPlaybackStateChanged(playbackManager.playbackState())
-        onShuffleChanged(queueManager.getShuffleMode())
-        onRepeatChanged(queueManager.getRepeatMode())
+        updateShuffleMode(queueManager.getShuffleMode())
+        updateRepeatMode(queueManager.getRepeatMode())
+        updateQueue(queueManager.getQueue())
+        updateQueuePosition(queueManager.getCurrentPosition())
+        updateCurrentSong(queueManager.getCurrentItem()?.song)
+        updatePlaybackState(playbackManager.playbackState())
+        updateFavorite()
     }
 
     override fun unbindView() {
@@ -86,6 +89,31 @@ class PlaybackPresenter @Inject constructor(
         }
 
         favoriteUpdater = job
+    }
+
+    private fun updateQueue(queue: List<QueueItem>) {
+        view?.clearQueue()
+        view?.setQueue(queue)
+    }
+
+    private fun updateQueuePosition(newPosition: Int?) {
+        view?.setQueuePosition(newPosition, queueManager.getSize())
+    }
+
+    private fun updateCurrentSong(song: Song?) {
+        view?.setCurrentSong(song)
+    }
+
+    private fun updateShuffleMode(shuffleMode: QueueManager.ShuffleMode) {
+        view?.setShuffleMode(shuffleMode)
+    }
+
+    private fun updateRepeatMode(repeatMode: QueueManager.RepeatMode) {
+        view?.setRepeatMode(repeatMode)
+    }
+
+    private fun updatePlaybackState(playbackState: PlaybackState) {
+        view?.setPlaybackState(playbackState)
     }
 
 
@@ -218,7 +246,7 @@ class PlaybackPresenter @Inject constructor(
     // PlaybackWatcherCallback Implementation
 
     override fun onPlaybackStateChanged(playbackState: PlaybackState) {
-        view?.setPlaybackState(playbackState)
+        updatePlaybackState(playbackState)
     }
 
 
@@ -232,33 +260,26 @@ class PlaybackPresenter @Inject constructor(
     // QueueChangeCallback Implementation
 
     override fun onQueueRestored() {
-        view?.setQueue(queueManager.getQueue(), queueManager.getCurrentPosition())
-        view?.setCurrentSong(queueManager.getCurrentItem()?.song)
+        updateQueue(queueManager.getQueue())
+        updateCurrentSong(queueManager.getCurrentItem()?.song)
+        updateQueuePosition(queueManager.getCurrentPosition())
     }
 
     override fun onQueueChanged() {
-        if (queueManager.hasRestoredQueue) {
-            view?.setQueue(queueManager.getQueue(), queueManager.getCurrentPosition())
-        }
+        updateQueue(queueManager.getQueue())
     }
 
     override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
-        if (queueManager.hasRestoredQueue) {
-            view?.setCurrentSong(queueManager.getCurrentItem()?.song)
-            view?.setQueuePosition(queueManager.getCurrentPosition(), queueManager.getSize(), abs((newPosition ?: Int.MAX_VALUE) - (oldPosition ?: 0)) <= 1)
-
-            updateFavorite()
-        }
+        updateCurrentSong(queueManager.getCurrentItem()?.song)
+        updateQueuePosition(newPosition)
+        updateFavorite()
     }
 
     override fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
-        view?.setShuffleMode(shuffleMode)
-        if (queueManager.hasRestoredQueue && queueManager.getQueue().size >= 200) {
-            view?.clearQueue()
-        }
+        updateShuffleMode(shuffleMode)
     }
 
     override fun onRepeatChanged(repeatMode: QueueManager.RepeatMode) {
-        view?.setRepeatMode(repeatMode)
+        updateRepeatMode(repeatMode)
     }
 }

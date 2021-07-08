@@ -238,7 +238,7 @@ class PlaybackService :
     }
 
     override fun onQueueChanged() {
-        if (queueManager.hasRestoredQueue && queueManager.getQueue().isEmpty()) {
+        if (queueManager.getQueue().isEmpty()) {
             Timber.v("Queue cleared, stopForeground() called")
             // This should only occur if the user manually clears their queue, while playback is paused
             stopForeground(true)

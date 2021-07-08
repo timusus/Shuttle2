@@ -111,7 +111,7 @@ class PlaybackManager(
     }
 
     suspend fun shuffle(songs: List<Song>, completion: (Result<Any?>) -> Unit) {
-        queueManager.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = false, alwaysNotifyChange = true)
+        queueManager.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = false)
         if (queueManager.setQueue(songs, songs.shuffled(), 0)) {
             load(0, completion)
         }
@@ -382,28 +382,22 @@ class PlaybackManager(
 
     override fun onRepeatChanged(repeatMode: QueueManager.RepeatMode) {
         playback.setRepeatMode(repeatMode)
-        if (queueManager.hasRestoredQueue) {
-            if (repeatMode != QueueManager.RepeatMode.One) {
-                appCoroutineScope.launch {
-                    playback.loadNext(queueManager.getNext()?.song)
-                }
-            }
-        }
-    }
-
-    override fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
-        if (queueManager.hasRestoredQueue) {
+        if (repeatMode != QueueManager.RepeatMode.One) {
             appCoroutineScope.launch {
                 playback.loadNext(queueManager.getNext()?.song)
             }
         }
     }
 
+    override fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
+        appCoroutineScope.launch {
+            playback.loadNext(queueManager.getNext()?.song)
+        }
+    }
+
     override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
-        if (queueManager.hasRestoredQueue) {
-            queueManager.getCurrentItem()?.song?.let { song ->
-                playback.setReplayGain(trackGain = song.replayGainTrack, albumGain = song.replayGainAlbum)
-            }
+        queueManager.getCurrentItem()?.song?.let { song ->
+            playback.setReplayGain(trackGain = song.replayGainTrack, albumGain = song.replayGainAlbum)
         }
     }
 

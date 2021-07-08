@@ -228,25 +228,25 @@ class PlaybackNotificationManager @Inject constructor(
     // QueueChangeCallback Implementation
 
     override fun onQueueChanged() {
-        if (queueManager.hasRestoredQueue && queueManager.getQueue().isNotEmpty()) {
+        if (queueManager.getQueue().isNotEmpty()) {
             displayPlaybackNotification()
         }
     }
 
     override fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
-        if (queueManager.hasRestoredQueue && queueManager.getQueue().isNotEmpty()) {
+        if (queueManager.getQueue().isNotEmpty()) {
             displayPlaybackNotification()
         }
     }
 
     override fun onRepeatChanged(repeatMode: QueueManager.RepeatMode) {
-        if (queueManager.hasRestoredQueue && queueManager.getQueue().isNotEmpty()) {
+        if (queueManager.getQueue().isNotEmpty()) {
             displayPlaybackNotification()
         }
     }
 
     override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
-        if (queueManager.hasRestoredQueue && queueManager.getQueue().isNotEmpty()) {
+        if (queueManager.getQueue().isNotEmpty()) {
             displayPlaybackNotification()
         }
     }

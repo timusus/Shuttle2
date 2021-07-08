@@ -86,14 +86,12 @@ class WidgetProvider42 : ShuttleAppWidgetProvider() {
                 }
             }
         } ?: run {
-            if (queueManager.hasRestoredQueue) {
-                setTextViewText(R.id.title, context.getString(R.string.queue_empty))
-                setTextViewText(R.id.subtitle, context.getString(R.string.widget_empty_text))
-                setImageViewResource(R.id.artwork, R.drawable.ic_shuttle_logo)
-                setViewVisibility(R.id.prevButton, View.GONE)
-                setViewVisibility(R.id.playPauseButton, View.GONE)
-                setViewVisibility(R.id.nextButton, View.GONE)
-            }
+            setTextViewText(R.id.title, context.getString(R.string.queue_empty))
+            setTextViewText(R.id.subtitle, context.getString(R.string.widget_empty_text))
+            setImageViewResource(R.id.artwork, R.drawable.ic_shuttle_logo)
+            setViewVisibility(R.id.prevButton, View.GONE)
+            setViewVisibility(R.id.playPauseButton, View.GONE)
+            setViewVisibility(R.id.nextButton, View.GONE)
         }
 
         if (updateReason == WidgetManager.UpdateReason.PlaystateChanged || updateReason == WidgetManager.UpdateReason.Unknown) {

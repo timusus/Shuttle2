@@ -24,8 +24,6 @@ class WidgetManager @Inject constructor(
     fun registerCallbacks() {
         playbackWatcher.addCallback(this)
         queueWatcher.addCallback(this)
-
-        updateAppWidgets(UpdateReason.Unknown)
     }
 
     fun removeCallbacks() {
@@ -33,7 +31,7 @@ class WidgetManager @Inject constructor(
         queueWatcher.removeCallback(this)
     }
 
-    fun updateAppWidgets(updateReason: WidgetManager.UpdateReason) {
+    fun updateAppWidgets(updateReason: UpdateReason) {
         listOf(
             Intent(context, WidgetProvider41::class.java),
             Intent(context, WidgetProvider42::class.java)
@@ -42,7 +40,7 @@ class WidgetManager @Inject constructor(
                 action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
                 val ids = AppWidgetManager.getInstance(context).getAppWidgetIds(component)
                 putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
-                putExtra(WidgetManager.ARG_UPDATE_REASON, updateReason.ordinal)
+                putExtra(ARG_UPDATE_REASON, updateReason.ordinal)
             })
         }
     }
@@ -58,8 +56,6 @@ class WidgetManager @Inject constructor(
     // QueueChangeCallback Implementation
 
     override fun onQueueChanged() {
-        super.onQueueChanged()
-
         updateAppWidgets(UpdateReason.QueueChanged)
     }
 
