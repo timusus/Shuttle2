@@ -85,7 +85,7 @@ open class RecyclerAdapter(scope: CoroutineScope, val skipIntermediateUpdates: B
             if (skipIntermediateUpdates) {
                 delay(50) // Acts as a debounce, there's a 50ms window for a new job to come in and cancel this one
             }
-            DiffUtil.calculateDiff(DiffCallbacks(items, newItems))
+            DiffUtil.calculateDiff(DiffCallbacks(items.toList(), newItems))
         }
 
         withContext(Dispatchers.Main) {
