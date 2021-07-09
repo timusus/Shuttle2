@@ -88,7 +88,7 @@ class DirectoryAlbumLocalArtworkModelLoader(
         }
 
         companion object {
-            private val pattern by lazy { Pattern.compile("(folder|cover|album).*\\.(jpg|jpeg|png)", Pattern.CASE_INSENSITIVE) }
+            private val pattern by lazy { Pattern.compile("(folder|cover|album).*\\.(jpg|jpeg|png|webp)", Pattern.CASE_INSENSITIVE) }
         }
     }
 }
