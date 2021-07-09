@@ -87,7 +87,7 @@ class DirectoryAlbumArtistLocalArtworkModelLoader(
                         documentFiles.flatMap { it.listFiles().toList() }.filter {
                             it.type?.startsWith("image") == true
                                     && it.length() > 1024
-                                    && pattern.matcher(it.name ?: "").matches()
+                                    && (pattern.matcher(it.name ?: "").matches() || (albumArtist.friendlyArtistName ?: albumArtist.name ?: "").contains(it.name ?: "", true))
                         }.maxByOrNull { it.length() }
                             ?.let { documentFile ->
                                 context.contentResolver.openInputStream(documentFile.uri)
