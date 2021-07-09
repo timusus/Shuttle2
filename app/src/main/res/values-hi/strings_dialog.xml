@@ -3,11 +3,11 @@
     <!-- Dialog button 'close' -->
     <string name="dialog_button_close">बंद करें</string>
     <!-- Dialog button 'done' -->
-    <string name="dialog_button_done">किया हुआ</string>
+    <string name="dialog_button_done">ठीक है</string>
     <!-- Dialog button 'retry' -->
-    <string name="dialog_button_retry">पुन: प्रयास करें</string>
+    <string name="dialog_button_retry">फिर से प्रयास करें</string>
     <!-- Dialog button 'save' (save whatever changes were made in the dialog) -->
-    <string name="dialog_button_save">सहेजें</string>
+    <string name="dialog_button_save">सेव करे</string>
     <!-- Dialog button 'cancel'-->
     <string name="dialog_button_cancel">रद्द करें</string>
     <!-- Shown in the 'exclude' dialog (move the selected songs to the list of 'excluded' songs) (another word for 'blacklist') -->

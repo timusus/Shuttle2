@@ -5,19 +5,19 @@
     <!-- App name. Translate only it seems more appropriate in your language. (Maybe just translate 'Music Player', and leave 'S2')-->
     <string name="app_name_long">S2 म्यूजिक प्लेयर</string>
     <!-- Bottom Navigation menu item (home) -->
-    <string name="title_home">घर</string>
+    <string name="title_home">होम</string>
     <!-- Bottom Navigation menu item (library) - the music library/collection -->
-    <string name="title_library">पुस्तकालय</string>
+    <string name="title_library">लाइब्रेरी</string>
     <!-- Bottom Navigation menu item (search) - button to open the 'search' screen -->
-    <string name="title_search">खोज</string>
+    <string name="title_search">खोजें</string>
     <!-- Shown in the queue, to indicate the queue of songs which will play after the current song-->
     <string name="playback_up_next">अगला</string>
     <!-- Shown on the changelog screen, notes from the developer. Since the changelog is not translated, this could be left in English-->
-    <string name="dev_notes">डेव नोट:</string>
+    <string name="dev_notes">डेवलपर की ओर से नोट:</string>
     <!-- Title of the 'settings' screen-->
-    <string name="title_settings">समायोजन</string>
+    <string name="title_settings">सेटिंग्स</string>
     <!-- Title of the 'Now Playing' screen (the main screen for controlling music playback)-->
-    <string name="title_now_playing">अब खेल रहे हैं</string>
+    <string name="title_now_playing">अभी चल रहा हैं</string>
     <!-- Shown at the top of the 'search' screen-->
-    <string name="title_search_hint">संगीत खोजें</string>
+    <string name="title_search_hint">गाना खोजें</string>
 </resources>

@@ -143,4 +143,5 @@
     <!-- Settings title for the orange theme option -->
     <string name="theme_accent_entry_orange">संतरा</string>
     <!-- Settings title for the red theme option -->
+    <string name="theme_accent_entry_red">लाल</string>
 </resources>
