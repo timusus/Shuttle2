@@ -22,6 +22,9 @@ android {
         versionCode = computeVersionCode()
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        ndk {
+            debugSymbolLevel = "FULL"
+        }
     }
 
     signingConfigs {
