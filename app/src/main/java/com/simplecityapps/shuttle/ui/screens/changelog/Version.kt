@@ -8,8 +8,8 @@ class Version(val version: String) : Comparable<Version?> {
 
     override fun compareTo(other: Version?): Int {
         if (other == null) return 1
-        val parts = version.split('.').toTypedArray()
-        val otherParts = other.version.split('.').toTypedArray()
+        val parts = version.split(".", "-RC").toTypedArray()
+        val otherParts = other.version.split(".", "-RC").toTypedArray()
         val length = parts.size.coerceAtLeast(otherParts.size)
         for (i in 0 until length) {
             val part = if (i < parts.size) parts[i].toInt() else 0
@@ -36,6 +36,6 @@ class Version(val version: String) : Comparable<Version?> {
     }
 
     companion object {
-        val pattern = Regex("[0-9]+(\\.[0-9]+)*")
+        val pattern = Regex("[0-9]+(\\.[0-9]+)*(-[A-Z]+[0-9])*", RegexOption.IGNORE_CASE)
     }
 }

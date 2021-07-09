@@ -56,7 +56,17 @@ class ChangelogDialogFragment : DialogFragment() {
             }
         }
         viewBinders.addAll(changelog?.mapIndexed { index, changeset ->
-            ChangesetBinder(index == 0 || changeset.version > preferenceManager.lastViewedChangelogVersion?.let { version -> Version(version) }, changeset, listener)
+            ChangesetBinder(
+                expanded = index == 0 || changeset.version > preferenceManager.lastViewedChangelogVersion?.let { version ->
+                    try {
+                        Version(version)
+                    } catch (e: Exception) {
+                        null
+                    }
+                },
+                changeset = changeset,
+                listener = listener
+            )
         }.orEmpty())
         adapter.update(viewBinders)
 

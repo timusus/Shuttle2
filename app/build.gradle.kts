@@ -191,6 +191,8 @@ android {
         androidTestImplementation("androidx.test:rules:1.4.0")
         androidTestImplementation("androidx.test:core-ktx:1.4.0")
         androidTestImplementation("org.hamcrest:hamcrest-library:1.3")
+
+        testImplementation("junit:junit:4.13.2")
     }
 }
 
