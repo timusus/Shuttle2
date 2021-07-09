@@ -1,0 +1,24 @@
+package com.simplecityapps.shuttle.ui.screens.settings.screens
+
+import android.os.Bundle
+import android.view.View
+import androidx.appcompat.widget.Toolbar
+import androidx.navigation.fragment.findNavController
+import androidx.preference.PreferenceFragmentCompat
+import com.simplecityapps.shuttle.R
+import dagger.hilt.android.AndroidEntryPoint
+
+@AndroidEntryPoint
+class PlaylistPreferenceFragment : PreferenceFragmentCompat() {
+
+    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        setPreferencesFromResource(R.xml.preferences_playlist, rootKey)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        val toolbar: Toolbar = view.findViewById(R.id.toolbar)
+        toolbar.setNavigationOnClickListener { findNavController().popBackStack() }
+    }
+}

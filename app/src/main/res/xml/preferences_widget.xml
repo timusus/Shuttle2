@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory
+        android:title="@string/pref_category_title_widgets"
+        app:iconSpaceReserved="false">
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="widget_dark_mode"
+            android:title="@string/pref_widget_dark_mode_title"
+            app:iconSpaceReserved="false" />
+
+        <SeekBarPreference
+            android:defaultValue="false"
+            android:key="widget_background_opacity"
+            android:max="100"
+            android:title="@string/pref_widget_opacity_title"
+            app:defaultValue="100"
+            app:iconSpaceReserved="false" />
+    </PreferenceCategory>
+
+
+</PreferenceScreen>

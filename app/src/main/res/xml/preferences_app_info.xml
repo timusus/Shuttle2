@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory
+        android:title="@string/pref_category_title_changelog"
+        app:iconSpaceReserved="false">
+        <Preference
+            android:key="changelog_show"
+            app:iconSpaceReserved="false"
+            app:title="@string/pref_view_changelog_title" />
+
+        <SwitchPreference
+            android:defaultValue="true"
+            android:key="changelog_show_on_launch"
+            android:title="@string/pref_show_changelog_launch_title"
+            app:iconSpaceReserved="false" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="@string/pref_category_title_open_source"
+        app:iconSpaceReserved="false">
+        <Preference
+            android:key="licenses_show"
+            app:iconSpaceReserved="false"
+            app:title="@string/pref_view_licenses_title" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

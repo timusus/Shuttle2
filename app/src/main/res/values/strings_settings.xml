@@ -52,6 +52,8 @@
     <string name="pref_category_title_playlists">Playlists</string>
     <!-- Settings: Title for shangelog related settings -->
     <string name="pref_category_title_changelog">Changelog</string>
+    <!-- Settings: Title for app info related settings -->
+    <string name="pref_category_title_app_info">App Info</string>
     <!-- Settings: Title for privacy related settings -->
     <string name="pref_category_title_privacy">Privacy</string>
     <!-- Settings: Title for open source related settings -->
