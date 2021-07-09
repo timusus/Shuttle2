@@ -2,184 +2,52 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <PreferenceCategory
+    <Preference
         android:title="@string/pref_category_title_display"
-        app:iconSpaceReserved="false">
+        app:icon="@drawable/ic_outline_image_aspect_ratio_24"
+        app:iconSpaceReserved="false"
+        app:key="pref_screen_display" />
 
-        <ListPreference
-            android:defaultValue="0"
-            android:dialogTitle="@string/pref_theme_title"
-            android:entries="@array/pref_theme_entries"
-            android:entryValues="@array/pref_theme_values"
-            android:key="pref_theme"
-            android:summary="@string/pref_theme_summary"
-            android:title="@string/pref_theme_title"
-            app:iconSpaceReserved="false"
-            app:negativeButtonText="@string/dialog_button_close" />
-
-        <ListPreference
-            android:defaultValue="0"
-            android:dialogTitle="@string/pref_theme_accent_title"
-            android:entries="@array/pref_theme_accent_entries"
-            android:entryValues="@array/pref_theme_accent_values"
-            android:key="pref_theme_accent"
-            android:summary="@string/pref_theme_accent_summary"
-            android:title="@string/pref_theme_accent_title"
-            app:iconSpaceReserved="false"
-            app:negativeButtonText="@string/dialog_button_close" />
-
-        <SwitchPreference
-            android:defaultValue="false"
-            android:key="pref_theme_extra_dark"
-            android:summary="@string/pref_theme_extra_dark_summary"
-            android:title="@string/pref_theme_extra_dark_title"
-            app:iconSpaceReserved="false" />
-
-    </PreferenceCategory>
-
-    <PreferenceCategory
+    <Preference
         android:title="@string/pref_category_title_media"
-        app:iconSpaceReserved="false">
-        <Preference
-            android:key="pref_media_provider"
-            android:summary="@string/pref_media_provider_summary"
-            android:title="@string/pref_media_provider_title"
-            app:iconSpaceReserved="false" />
-        <Preference
-            android:key="pref_media_rescan"
-            android:summary="@string/pref_media_rescan_summary"
-            android:title="@string/pref_media_rescan_title"
-            app:iconSpaceReserved="false" />
-        <Preference
-            android:key="pref_excluded"
-            android:summary="@string/pref_exclude_summary"
-            android:title="@string/pref_exclude_title"
-            app:iconSpaceReserved="false" />
-    </PreferenceCategory>
+        app:icon="@drawable/ic_library_music_24dp"
+        app:iconSpaceReserved="false"
+        app:key="pref_screen_media" />
 
-    <PreferenceCategory
+    <Preference
         android:title="@string/pref_category_title_artwork"
-        app:iconSpaceReserved="false">
-        <SwitchPreference
-            android:defaultValue="true"
-            android:key="artwork_wifi_only"
-            android:summary="@string/pref_artwork_wifi_subtitle"
-            android:title="@string/pref_artwork_wifi_title"
-            app:iconSpaceReserved="false" />
+        app:icon="@drawable/ic_outline_color_lens_24"
+        app:iconSpaceReserved="false"
+        app:key="pref_screen_artwork" />
 
-        <SwitchPreference
-            android:defaultValue="false"
-            android:key="artwork_local_only"
-            android:summary="@string/pref_artwork_local_only_subtitle"
-            android:title="@string/pref_artwork_local_only_title"
-            app:iconSpaceReserved="false" />
-
-        <Preference
-            android:key="pref_clear_artwork"
-            android:summary="@string/pref_clear_artwork_subtitle"
-            android:title="@string/pref_clear_artwork_title"
-            app:iconSpaceReserved="false" />
-
-        <Preference
-            android:key="pref_download_artwork"
-            android:title="@string/pref_download_artwork_title"
-            app:iconSpaceReserved="false" />
-    </PreferenceCategory>
-
-    <PreferenceCategory
+    <Preference
         android:title="@string/pref_category_title_widgets"
-        app:iconSpaceReserved="false">
-        <SwitchPreference
-            android:defaultValue="false"
-            android:key="widget_dark_mode"
-            android:title="@string/pref_widget_dark_mode_title"
-            app:iconSpaceReserved="false" />
+        app:icon="@drawable/ic_outline_widgets_24"
+        app:iconSpaceReserved="false"
+        app:key="pref_screen_widget" />
 
-        <SeekBarPreference
-            android:defaultValue="false"
-            android:key="widget_background_opacity"
-            android:max="100"
-            android:title="@string/pref_widget_opacity_title"
-            app:defaultValue="100"
-            app:iconSpaceReserved="false" />
-    </PreferenceCategory>
-
-    <PreferenceCategory
+    <Preference
         android:title="@string/pref_category_title_playlists"
-        app:iconSpaceReserved="false">
-        <SwitchPreference
-            android:defaultValue="false"
-            android:key="playlist_ignore_duplicates"
-            android:summary="@string/pref_ignore_duplicates_subtitle"
-            android:title="@string/pref_ignore_duplicates_title"
-            app:iconSpaceReserved="false" />
+        app:icon="@drawable/ic_outline_queue_music_24"
+        app:iconSpaceReserved="false"
+        app:key="pref_screen_playlist" />
 
-    </PreferenceCategory>
+    <Preference
+        android:title="@string/pref_category_title_app_info"
+        app:icon="@drawable/ic_outline_info_24"
+        app:iconSpaceReserved="false"
+        app:key="pref_screen_app_info" />
 
-    <PreferenceCategory
-        android:title="@string/pref_category_title_changelog"
-        app:iconSpaceReserved="false">
-
-        <Preference
-            android:key="changelog_show"
-            app:iconSpaceReserved="false"
-            app:title="@string/pref_view_changelog_title" />
-
-        <SwitchPreference
-            android:defaultValue="true"
-            android:key="changelog_show_on_launch"
-            android:title="@string/pref_show_changelog_launch_title"
-            app:iconSpaceReserved="false" />
-    </PreferenceCategory>
-
-    <PreferenceCategory
+    <Preference
         android:title="@string/pref_category_title_privacy"
-        app:iconSpaceReserved="false">
-        <SwitchPreference
-            android:defaultValue="true"
-            android:key="pref_crash_reporting"
-            android:summary="@string/pref_crash_reporting_subtitle"
-            android:title="@string/pref_crash_reporting_title"
-            app:iconSpaceReserved="false" />
-    </PreferenceCategory>
+        app:icon="@drawable/ic_outline_privacy_tip_24"
+        app:iconSpaceReserved="false"
+        app:key="pref_screen_privacy" />
 
-    <PreferenceCategory
-        android:title="@string/pref_category_title_open_source"
-        app:iconSpaceReserved="false">
-
-        <Preference
-            android:key="licenses_show"
-            app:iconSpaceReserved="false"
-            app:title="@string/pref_view_licenses_title" />
-
-    </PreferenceCategory>
-
-    <PreferenceCategory
+    <Preference
         android:title="@string/pref_category_title_debug"
-        app:iconSpaceReserved="false">
-        <SwitchPreference
-            android:defaultValue="false"
-            android:key="pref_file_logging"
-            android:summary="@string/pref_file_logging_subtitle"
-            android:title="@string/pref_file_logging_title"
-            app:iconSpaceReserved="false" />
-        <Preference
-            android:dependency="pref_file_logging"
-            android:key="pref_copy_debug_logs"
-            android:title="@string/pref_copy_debug_logs_subtitle"
-            app:iconSpaceReserved="false" />
-    </PreferenceCategory>
-
-    <PreferenceCategory
-        android:title="@string/pref_category_title_other"
-        app:iconSpaceReserved="false">
-        <SwitchPreference
-            android:defaultValue="true"
-            android:key="media_session_artwork"
-            android:summary="@string/pref_media_session_artwork_subtitle"
-            android:title="@string/pref_media_session_artwork_title"
-            app:iconSpaceReserved="false" />
-
-    </PreferenceCategory>
+        app:icon="@drawable/ic_outline_bug_report_24"
+        app:iconSpaceReserved="false"
+        app:key="pref_screen_debug" />
 
 </PreferenceScreen>

@@ -50,12 +50,60 @@
     </dialog>
     <fragment
         android:id="@+id/settingsFragment"
-        android:name="com.simplecityapps.shuttle.ui.screens.settings.SettingsFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.settings.screens.SettingsFragment"
         android:label="SettingsFragment"
-        tools:layout="@layout/fragment_settings" >
+        tools:layout="@layout/fragment_settings">
         <action
             android:id="@+id/action_settingsFragment_to_onboardingFragment"
             app:destination="@id/onboardingFragment" />
     </fragment>
+
+    <fragment
+        android:id="@+id/displayPreferenceFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.settings.screens.DisplayPreferenceFragment"
+        android:label="SettingsFragment"
+        tools:layout="@layout/fragment_settings" />
+
+    <fragment
+        android:id="@+id/mediaPreferenceFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.settings.screens.MediaPreferenceFragment"
+        android:label="SettingsFragment"
+        tools:layout="@layout/fragment_settings" />
+
+    <fragment
+        android:id="@+id/artworkPreferenceFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.settings.screens.ArtworkPreferenceFragment"
+        android:label="SettingsFragment"
+        tools:layout="@layout/fragment_settings" />
+
+    <fragment
+        android:id="@+id/widgetPreferenceManager"
+        android:name="com.simplecityapps.shuttle.ui.screens.settings.screens.WidgetPreferenceFragment"
+        android:label="SettingsFragment"
+        tools:layout="@layout/fragment_settings" />
+
+    <fragment
+        android:id="@+id/playlistPreferenceFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.settings.screens.PlaylistPreferenceFragment"
+        android:label="SettingsFragment"
+        tools:layout="@layout/fragment_settings" />
+
+    <fragment
+        android:id="@+id/appInfoPreferenceFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.settings.screens.AppInfoPreferenceFragment"
+        android:label="SettingsFragment"
+        tools:layout="@layout/fragment_settings" />
+
+    <fragment
+        android:id="@+id/privacyPreferenceFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.settings.screens.PrivacyPreferenceFragment"
+        android:label="SettingsFragment"
+        tools:layout="@layout/fragment_settings" />
+
+    <fragment
+        android:id="@+id/debugPreferenceFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.settings.screens.DebugPreferenceFragment"
+        android:label="SettingsFragment"
+        tools:layout="@layout/fragment_settings" />
 
 </navigation>
