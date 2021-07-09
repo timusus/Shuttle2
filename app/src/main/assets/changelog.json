@@ -1,6 +1,23 @@
 [
   {
-    "versionName": "1.0-RC1",
+    "versionName": "1.0.0-RC2",
+    "releaseDate": "09/07/2021",
+    "features": [
+    ],
+    "fixes": [
+      "Fixed changelog display issue"
+    ],
+    "improvements": [
+      "Local artist artwork can now be detected if the artwork filename matches the artist or album-artist name",
+      "Local album/song artwork now supports .webp images",
+      "Translation updates"
+    ],
+    "notes": [
+      "Last call for translation help before release! https://shuttle.oneskyapp.com/collaboration/project?id=382482. If the translations are bad, please help me fix them."
+    ]
+  },
+  {
+    "versionName": "1.0.0-RC1",
     "releaseDate": "09/07/2021",
     "features": [
       "Added 'song shuffle' to top of song list"
