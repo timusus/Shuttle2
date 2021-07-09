@@ -70,5 +70,13 @@ class VersionTest {
         a = Version("1.0.0-RC2")
         b = Version("1.0.1")
         assert(b > a)
+
+        a = Version("1.0.0-RC1")
+        b = Version("1.0.0")
+        assert(b > a)
+
+        a = Version("1.0.0")
+        b = Version("1.0.0-RC1")
+        assert(b < a)
     }
 }

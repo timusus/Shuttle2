@@ -11,9 +11,21 @@ class Version(val version: String) : Comparable<Version?> {
         val parts = version.split(".", "-RC").toTypedArray()
         val otherParts = other.version.split(".", "-RC").toTypedArray()
         val length = parts.size.coerceAtLeast(otherParts.size)
+
         for (i in 0 until length) {
             val part = if (i < parts.size) parts[i].toInt() else 0
             val otherPart = if (i < otherParts.size) otherParts[i].toInt() else 0
+
+            if (i == 3) {
+                // We're comparing suffix here.. if one has suffix and other doesn't, return other
+                if (otherParts.size > parts.size) {
+                    return 1
+                }
+                if (parts.size > otherParts.size) {
+                    return -1
+                }
+            }
+
             if (part < otherPart) return -1
             if (part > otherPart) return 1
         }
