@@ -247,4 +247,15 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
         get() {
             return sharedPreferences.getBoolean("sleep_timer_play_to_end", false)
         }
+
+
+    // Playback
+
+    var retainShuffleOnNewQueue: Boolean
+        set(value) {
+            sharedPreferences.put("pref_retain_shuffle_on_new_queue", value)
+        }
+        get() {
+            return sharedPreferences.get("pref_retain_shuffle_on_new_queue", false)
+        }
 }

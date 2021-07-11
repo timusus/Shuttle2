@@ -27,6 +27,10 @@ class SettingsFragment : PreferenceFragmentCompat() {
             findNavController().navigate(R.id.displayPreferenceFragment)
             true
         }
+        preferenceScreen.findPreference<Preference>("pref_screen_playback")?.setOnPreferenceClickListener {
+            findNavController().navigate(R.id.playbackPreferenceFragment)
+            true
+        }
         preferenceScreen.findPreference<Preference>("pref_screen_media")?.setOnPreferenceClickListener {
             findNavController().navigate(R.id.mediaPreferenceFragment)
             true

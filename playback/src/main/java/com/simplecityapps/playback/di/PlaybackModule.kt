@@ -53,8 +53,8 @@ class PlaybackModule {
 
     @Singleton
     @Provides
-    fun provideQueueManager(queueWatcher: QueueWatcher): QueueManager {
-        return QueueManager(queueWatcher)
+    fun provideQueueManager(queueWatcher: QueueWatcher, preferenceManager: GeneralPreferenceManager): QueueManager {
+        return QueueManager(queueWatcher, preferenceManager)
     }
 
     @Singleton
