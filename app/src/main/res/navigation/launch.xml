@@ -106,4 +106,10 @@
         android:label="SettingsFragment"
         tools:layout="@layout/fragment_settings" />
 
+    <fragment
+        android:id="@+id/playbackPreferenceFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.settings.screens.PlaybackPreferenceFragment"
+        android:label="SettingsFragment"
+        tools:layout="@layout/fragment_settings" />
+
 </navigation>

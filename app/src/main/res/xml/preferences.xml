@@ -9,6 +9,12 @@
         app:key="pref_screen_display" />
 
     <Preference
+        android:title="@string/pref_category_title_playback"
+        app:icon="@drawable/ic_outline_play_circle_outline_24"
+        app:iconSpaceReserved="false"
+        app:key="pref_screen_playback" />
+
+    <Preference
         android:title="@string/pref_category_title_media"
         app:icon="@drawable/ic_library_music_24dp"
         app:iconSpaceReserved="false"

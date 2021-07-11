@@ -44,6 +44,8 @@
     <string name="pref_category_title_display">Display</string>
     <!-- Settings: Title for 'media' settings. Settings related to media providers, rescanning & exclude list (blacklist) -->
     <string name="pref_category_title_media">Media</string>
+    <!-- Settings: Title for 'playback' settings -->
+    <string name="pref_category_title_playback">Playback</string>
     <!-- Settings: Title for artwork related settings (artist/album images) -->
     <string name="pref_category_title_artwork">Artwork</string>
     <!-- Settings: Title for widget related settings  -->
@@ -71,7 +73,7 @@
     <!-- Settings: Description for changing the accent colour -->
     <string name="pref_theme_accent_summary">Theme accent colour</string>
     <!-- Settings: Title for the option to use the 'extra dark' theme -->
-    <string name="pref_theme_extra_dark_title">Extra Dark</string>
+    <string name="pref_theme_extra_dark_title">Extra dark</string>
     <!-- Settings: Description for the option to use the 'extra dark' theme -->
     <string name="pref_theme_extra_dark_summary">Use darker colours for minor battery savings on AMOLED screens</string>
     <!-- Settings: Title for the option to choose media providers -->
@@ -103,7 +105,7 @@
     <!-- Settings: Title for the option to use dark mode for widgets -->
     <string name="pref_widget_dark_mode_title">Dark mode</string>
     <!-- Settings: Title for the option to change opacity of the widget background -->
-    <string name="pref_widget_opacity_title">Background Opacity</string>
+    <string name="pref_widget_opacity_title">Background opacity</string>
     <!-- Settings: Title for the option to ignore duplicates when adding songs to a playlist -->
     <string name="pref_ignore_duplicates_title">Ignore duplicates</string>
     <!-- Settings: Description for the option to ignore duplicates when adding songs to a playlist -->
@@ -113,7 +115,7 @@
     <!-- Settings: Title for the option to toggle whether the changelog is shown when the app is launched -->
     <string name="pref_show_changelog_launch_title">Show changelog on launch</string>
     <!-- Settings: Title for the option to turn off crash reporting -->
-    <string name="pref_crash_reporting_title">Crash Reporting</string>
+    <string name="pref_crash_reporting_title">Crash reporting</string>
     <!-- Settings: Description for the option to turn off crash reporting -->
     <string name="pref_crash_reporting_subtitle">S2 collects crash data via Bugsnag. Turn off to opt-out</string>
     <!-- Settings: Title for the option to view open source licenses -->
@@ -128,6 +130,10 @@
     <string name="pref_media_session_artwork_title">Media session artwork</string>
     <!-- Settings: Description for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->
     <string name="pref_media_session_artwork_subtitle">Supply artwork to Android\'s Media Session. Disable to prevent lockscreen artwork</string>
+    <!-- Settings: Title for the option to disable shuffle when starting a new queue -->
+    <string name="pref_disable_shuffle_on_queue_title">Keep shuffle mode</string>
+    <!-- Settings: Description for the option to disable shuffle when starting a new queue -->
+    <string name="pref_disable_shuffle_on_queue_subtitle">When a new queue is selected, shuffle mode won\'t be disabled</string>
     <!-- Settings title for the day/night theme option -->
     <string name="theme_entry_day_night">Day/Night</string>
     <!-- Settings title for the light theme option -->

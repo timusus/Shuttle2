@@ -1,11 +1,15 @@
 package com.simplecityapps.playback.queue
 
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
-class QueueManager(private val queueWatcher: QueueWatcher) {
+class QueueManager(
+    private val queueWatcher: QueueWatcher,
+    private val preferenceManager: GeneralPreferenceManager
+) {
 
     enum class ShuffleMode {
         Off, On;
@@ -56,8 +60,8 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
      * Replaces the current queue.
      *
      * @param songs the songs to replace the current non-shuffle queue.
-     * @param shuffleSongs the songs to replace the shuffle queue. If null, shuffle mode will be disabled. Defaults to null.
-     * @param position the neq queue position. Defaults to 0.
+     * @param shuffleSongs the songs to replace the shuffle queue. If null, shuffle mode may be disabled. Defaults to null.
+     * @param position the new queue position. Defaults to 0.
      *
      * @return true if the queue was successfully set, and is not empty.
      */
@@ -67,30 +71,36 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
             return false
         }
 
-        if (shuffleSongs == null) {
+        if (shuffleSongs == null && !preferenceManager.retainShuffleOnNewQueue) {
             setShuffleMode(ShuffleMode.Off, reshuffle = false)
         }
 
         var existingQueueChanged = false
         var shuffleQueueChanged = false
 
+        var currentItem = currentItem
+
         withContext(Dispatchers.IO) {
-            var existingQueue = getQueue(ShuffleMode.Off)
-            if (existingQueue.size != songs.size || songs.map { it.id } != existingQueue.map { it.song.id }) {
-                existingQueue = songs.map { song -> song.toQueueItem(false) }
-                queue.setBaseQueue(existingQueue)
+            var baseQueue = getQueue(ShuffleMode.Off)
+            if (baseQueue.size != songs.size || songs.map { it.id } != baseQueue.map { it.song.id }) {
+                baseQueue = songs.map { song -> song.toQueueItem(false) }
+                queue.setBaseQueue(baseQueue)
                 existingQueueChanged = true
             }
+
+            currentItem = baseQueue[position]
 
             if (shuffleSongs != null) {
                 val existingShuffleQueue = getQueue(ShuffleMode.On)
                 if (existingQueueChanged || (existingShuffleQueue.size != shuffleSongs.size || shuffleSongs.map { it.id } != existingShuffleQueue.map { it.song.id })) {
                     val queueOrderMap = shuffleSongs.withIndex().associate { songId -> songId.value.id to songId.index }
-                    queue.setShuffleQueue(existingQueue.sortedBy { queueItem -> queueOrderMap[queueItem.song.id] })
+                    val shuffleQueue = baseQueue.sortedBy { queueItem -> queueOrderMap[queueItem.song.id] }
+                    queue.setShuffleQueue(shuffleQueue)
+                    currentItem = shuffleQueue[position]
                     shuffleQueueChanged = true
                 }
             } else {
-                queue.generateShuffleQueue()
+                queue.generateShuffleQueue(currentItem)
                 shuffleQueueChanged = true
             }
         }
@@ -104,9 +114,10 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
             }
         }
 
-        queue.getItem(shuffleMode, position)?.let { currentItem ->
-            setCurrentItem(currentItem)
+        currentItem?.let {
+            setCurrentItem(it)
         }
+
 
         return queue.size() != 0
     }
@@ -227,7 +238,7 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
 
             if (shuffleMode == ShuffleMode.On && reshuffle) {
                 withContext(Dispatchers.IO) {
-                    queue.generateShuffleQueue()
+                    queue.generateShuffleQueue(currentItem)
                 }
             }
 
@@ -346,7 +357,7 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
             shuffleList = items.toMutableList()
         }
 
-        fun generateShuffleQueue() {
+        fun generateShuffleQueue(selectedQueueItem: QueueItem?) {
             if (baseList.isEmpty()) {
                 Timber.v("Cannot generate shuffle queue; base queue is empty")
                 shuffleList = mutableListOf()
@@ -356,7 +367,7 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
             shuffleList = baseList.shuffled().toMutableList()
 
             // Move the current item to the top of the shuffle list
-            val currentIndex = shuffleList.indexOfFirst { it.isCurrent }
+            val currentIndex = shuffleList.indexOfFirst { it.uid == selectedQueueItem?.uid }
             if (currentIndex != -1) {
                 shuffleList.add(0, shuffleList.removeAt(currentIndex))
             }
