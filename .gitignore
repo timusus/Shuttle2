@@ -78,3 +78,6 @@ cmake-compiler-settings/
 
 # Version control
 vcs.xml
+
+# Temp translation files
+/.translations/temp/
