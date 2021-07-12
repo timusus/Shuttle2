@@ -149,8 +149,12 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
     }
 
     fun remove(items: List<QueueItem>) {
+        val oldPosition = getCurrentPosition()
         queue.remove(items)
         queueWatcher.onQueueChanged()
+        if (getCurrentPosition() != oldPosition) {
+            queueWatcher.onQueuePositionChanged(oldPosition, getCurrentPosition())
+        }
     }
 
     fun clear() {
