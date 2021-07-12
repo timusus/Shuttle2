@@ -5,7 +5,7 @@
     <!-- Changelog 'features' sub-heading. Since the actual changelogs are not translated, this could be left in English-->
     <string name="changelog_features">功能</string>
     <!-- Changelog 'improvements' sub-heading. Since the actual changelogs are not translated, this could be left in English-->
-    <string name="changelog_improvements">改进</string>
+    <string name="changelog_improvements">优化</string>
     <!-- Changelog 'bug fixes' sub-heading. Since the actual changelogs are not translated, this could be left in English-->
-    <string name="changelog_bug_fixes">修复错误</string>
+    <string name="changelog_bug_fixes">问题修复</string>
 </resources>

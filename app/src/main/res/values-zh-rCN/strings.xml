@@ -3,21 +3,21 @@
     <!-- App name. Don't translate-->
     <string name="app_name">S2</string>
     <!-- App name. Translate only it seems more appropriate in your language. (Maybe just translate 'Music Player', and leave 'S2')-->
-    <string name="app_name_long">S2音乐播放器</string>
+    <string name="app_name_long">S2 音乐播放器</string>
     <!-- Bottom Navigation menu item (home) -->
     <string name="title_home">首页</string>
     <!-- Bottom Navigation menu item (library) - the music library/collection -->
     <string name="title_library">音乐库</string>
     <!-- Bottom Navigation menu item (search) - button to open the 'search' screen -->
-    <string name="title_search">搜寻</string>
+    <string name="title_search">搜索</string>
     <!-- Shown in the queue, to indicate the queue of songs which will play after the current song-->
-    <string name="playback_up_next">下一首</string>
+    <string name="playback_up_next">即将播放</string>
     <!-- Shown on the changelog screen, notes from the developer. Since the changelog is not translated, this could be left in English-->
-    <string name="dev_notes">开发日志</string>
+    <string name="dev_notes">开发日志：</string>
     <!-- Title of the 'settings' screen-->
     <string name="title_settings">设置</string>
     <!-- Title of the 'Now Playing' screen (the main screen for controlling music playback)-->
     <string name="title_now_playing">正在播放</string>
     <!-- Shown at the top of the 'search' screen-->
-    <string name="title_search_hint">搜寻歌曲</string>
+    <string name="title_search_hint">搜索音乐</string>
 </resources>

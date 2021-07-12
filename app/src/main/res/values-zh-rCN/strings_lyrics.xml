@@ -3,7 +3,7 @@
     <!-- The option to view lyrics for a song-->
     <string name="lyrics_title">歌词</string>
     <!-- QuickLyric - an app for viewing lyrics (probably don't translate-->
-    <string name="lyrics_quicklyric_title">快捷歌词</string>
+    <string name="lyrics_quicklyric_title">QuickLyric</string>
     <!-- Shown when the QuickLyric app is unavailable-->
-    <string name="lyrics_quicklyric_unavailable">无法使用快捷歌词</string>
+    <string name="lyrics_quicklyric_unavailable">QuickLyric 不可用</string>
 </resources>

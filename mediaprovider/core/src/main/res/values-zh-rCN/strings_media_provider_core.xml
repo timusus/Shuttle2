@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- The name of the S2 Media Provider - the media provider which scans the device for songs and reads their tags (metadata)-->
-    <string name="media_provider_title_s2">S2目录</string>
+    <string name="media_provider_title_s2">S2 媒体提供服务</string>
     <!-- The description of the S2 Media Provider - scans user selected folders and files for metadata-->
-    <string name="media_provider_description_s2">扫描选定的文件夹和文件(推荐)</string>
+    <string name="media_provider_description_s2">扫描选定的文件夹和文件（推荐）</string>
     <!-- The name of the 'Android Media Store' media provider. The 'Media Store' is an Android concept. Not sure if it would be translated.-->
-    <string name="media_provider_title_media_store">安卓媒体提供商</string>
+    <string name="media_provider_title_media_store">Android 媒体存储</string>
     <!-- The description of the Android MediaStore media provider. The MediaStore is an Android concept. A database on the device which keeps track of song info-->
-    <string name="media_provider_description_media_store">管理的数据库</string>
+    <string name="media_provider_description_media_store">Android 系统的数据库</string>
     <!-- The name of the 'Emby' media provider. Emby is a personal media server - probably doesn't need to be translated-->
     <string name="media_provider_title_emby">Emby</string>
     <!-- The description of the 'Emby' media provider. Emby is a personal media server - probably doesn't need to be translated-->
@@ -21,15 +21,15 @@
     <!-- The description of the 'Plex' media provider. Plex is a personal media server - probably doesn't need to be translated-->
     <string name="media_provider_description_plex">个人媒体服务器</string>
     <!-- Shown when a media provider is being scanned. Indicates the current progress of that scan -->
-    <string name="media_provider_scan_progress">扫描完成<xliff:g example="5" id="progress">{progress}</xliff:g>、<xliff:g example="25" id="total">{total}</xliff:g>首歌曲</string>
+    <string name="media_provider_scan_progress">已扫描 <xliff:g example="5" id="progress">{progress}</xliff:g>/<xliff:g example="25" id="total">{total}</xliff:g> 首歌曲</string>
     <!-- Shown when a media provider scan has completed -->
-    <string name="media_provider_scan_success_subtitle">插入<xliff:g example="5" id="inserts">{inserts}</xliff:g>首歌曲，更新<xliff:g example="15" id="updates">{updates}</xliff:g>首歌曲，删除<xliff:g example="25" id="deletes">{deletes}</xliff:g>首歌曲</string>
+    <string name="media_provider_scan_success_subtitle">新增 <xliff:g example="5" id="inserts">{inserts}</xliff:g> 首歌曲，更新 <xliff:g example="15" id="updates">{updates}</xliff:g> 首歌曲，删除 <xliff:g example="25" id="deletes">{deletes}</xliff:g> 首歌曲</string>
     <!-- Shown when a media provider scan has failed -->
     <string name="media_provider_scan_failure_title">扫描失败</string>
     <!-- Dialog button shown to authenticate with Jellyfin/Emby/Plex (submits the user's credentials for authentication)-->
     <string name="media_provider_button_authenticate">验证</string>
     <!-- Shown when Jellyfin/Emby/Plex is authenticating the user's credentials-->
-    <string name="media_provider_authenticating">正在验证....</string>
+    <string name="media_provider_authenticating">正在验证……</string>
     <!-- Shown when Jellyfin/Emby/Plex has successfully authenticated the user's credentials-->
     <string name="media_provider_authentication_success">验证成功</string>
     <!-- The longer title of Plex Media Server. 'Plex' probably doesn't need translation -->
@@ -37,23 +37,23 @@
     <!-- The longer title of Jellyfin Media Server. 'Jellyfin' probably doesn't need translation -->
     <string name="media_provider_title_long_jellyfin">Jellyfin媒体服务器</string>
     <!-- The longer title of Emby Media Server. 'Emby' probably doesn't need translation -->
-    <string name="media_provider_title_long_emby">Emby媒体服务器</string>
+    <string name="media_provider_title_long_emby">Emby 媒体服务器</string>
     <!-- Shown when user is selecting which media provider to use. Groups media providers into local (device based) and remote (network based) media providers. -->
     <string name="media_provider_type_local">本地</string>
     <!-- Shown when user is selecting which media provider to use. Groups media providers into local (device based) and remote (network based) media providers. -->
-    <string name="media_provider_type_remote">互联网</string>
+    <string name="media_provider_type_remote">远程</string>
     <!-- Button to add a media provider. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
-    <string name="media_provider_add">添加媒体提供商程序</string>
+    <string name="media_provider_add">添加媒体提供服务</string>
     <!-- Button to add a media provider, shown during onboarding. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
-    <string name="media_providers_add_onboarding">添加媒体提供商程序。您可以稍后更改</string>
+    <string name="media_providers_add_onboarding">添加媒体提供服务。您稍后也可进行更改</string>
     <!-- Shown during onboarding, as the user is about to select their media providers, to discover/find their music-->
-    <string name="media_provider_toolbar_title_onboarding">发现你的音乐</string>
+    <string name="media_provider_toolbar_title_onboarding">发现您的音乐</string>
     <!-- Title of the screen where users can select their media providers. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
-    <string name="media_provider_toolbar_title">媒体提供商</string>
+    <string name="media_provider_toolbar_title">媒体提供服务</string>
     <!-- Option to remove a media provider from the list of media providers to be scanned. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
-    <string name="media_provider_dialog_remove_title">移除<xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
+    <string name="media_provider_dialog_remove_title">移除 <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
     <!-- Warning when user attempts to remove a media provider, that their media associated with that provider will be deleted. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc.-->
-    <string name="media_provider_dialog_remove_subtitle">从<xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g>中删除所有的歌曲，播放列表和播放计数</string>
+    <string name="media_provider_dialog_remove_subtitle">将删除 <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g> 中的所有的歌曲、播放列表和播放记录</string>
     <!-- Button to remove a media provider from the list of media providers to be scanned. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
     <string name="media_provider_dialog_button_remove">移除</string>
     <!-- The address (url) of the user's Emby/Jellyfin/Plex media provider. -->
@@ -65,11 +65,11 @@
     <!-- The option to remember the user's password for their Emby/Jellyfin/Plex media provider-->
     <string name="media_provider_config_switch_remember_password">记住密码</string>
     <!-- Favorites playlist name - user's favorite songs -->
-    <string name="playlist_title_favorites">收藏播放列表名称</string>
+    <string name="playlist_title_favorites">收藏</string>
     <!-- 'Most Played' playlist name - playlist of songs with highest play count -->
-    <string name="playlist_title_most_played">最受欢迎</string>
+    <string name="playlist_title_most_played">最常播放</string>
     <!-- 'Recently Added' playlist name - playlist of songs which have been recently added -->
-    <string name="playlist_title_recently_added">最近添加的</string>
+    <string name="playlist_title_recently_added">最近添加</string>
     <!-- 'History' playlist name - playlist of songs which have been recently played -->
-    <string name="playlist_title_history">历史</string>
+    <string name="playlist_title_history">历史记录</string>
 </resources>

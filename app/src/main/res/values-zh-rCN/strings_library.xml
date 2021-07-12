@@ -5,22 +5,22 @@
     <!-- Title for the list of albums -->
     <string name="albums">专辑</string>
     <plurals name="albumsPlural">
-        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g>张专辑</item>
+        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g> 张专辑</item>
     </plurals>
     <!-- Title for the list of songs -->
     <string name="songs">歌曲</string>
     <!-- The number of songs for an album/playlist/genre -->
     <plurals name="songsPlural">
-        <item quantity="other"><xliff:g example="12" id="count">{count}</xliff:g>首歌曲</item>
+        <item quantity="other"><xliff:g example="12" id="count">{count}</xliff:g> 首歌曲</item>
     </plurals>
     <!-- Title for the list of genres -->
     <string name="genres">流派</string>
     <!-- Title for the list of playlists -->
     <string name="library_playlists">播放列表</string>
     <!-- Shown when the app is scanning for songs in the library -->
-    <string name="library_scan_in_progress">扫描音乐库</string>
+    <string name="library_scan_in_progress">正在扫描您的曲库</string>
     <!-- Shown to indicate the number of tracks/albums/artists which have been selected, in multi-selection mode-->
     <plurals name="multi_select_items_selected">
-        <item quantity="other">已选择<xliff:g example="3" id="count">{count}</xliff:g>首歌曲</item>
+        <item quantity="other">已选择 <xliff:g example="3" id="count">{count}</xliff:g> 项</item>
     </plurals>
 </resources>

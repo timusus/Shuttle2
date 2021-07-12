@@ -7,14 +7,15 @@
     <!-- Shown when an unknown error occurs -->
     <string name="error_unknown">Ein unbekannter Fehler ist aufgetreten</string>
     <!-- Shown when items (an album, artist or song) are added to the queue -->
-    <string name="queue_item_added"><xliff:g example="Lateralus" id="item_name">{item_name}</xliff:g>
-     wurde zur Warteschlange hinzugefügt</string>
+    <string name="queue_item_added">"
+<xliff:g example="Lateralus" id="item_name">{item_name}</xliff:g>
+zur Warteschlange hinzugefügt"</string>
     <!-- Shown when songs are added to the queue -->
     <plurals name="queue_songs_added">
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
        Song wurde zur Warteschlange hinzugefügt</item>
         <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
-       Songs wurden zur Warteschlange hinzugefügt</item>
+Songs zur Warteschlange hinzugefügt</item>
     </plurals>
     <!-- Shown when albums are added to the queue -->
     <plurals name="queue_albums_added">

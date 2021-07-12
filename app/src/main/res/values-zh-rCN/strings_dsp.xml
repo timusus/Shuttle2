@@ -3,7 +3,7 @@
     <!-- Replay Gain is a particular concept which involves adjusting the volumes of tracks on an album, according to an algorithm -->
     <string name="dsp_replay_gain_title">回放增益</string>
     <!-- Track Gain relates to Replay Gain - a concept which involves adjusting the volumes of tracks on an album, according to an algorithm -->
-    <string name="dsp_replay_gain_track">跟踪增益</string>
+    <string name="dsp_replay_gain_track">曲目增益</string>
     <!-- Album Gain relates to Replay Gain - a concept which involves adjusting the volumes of tracks on an album, according to an algorithm -->
     <string name="dsp_replay_gain_album">专辑增益</string>
     <!-- An option to disable the 'Replay Gain' feature -->
@@ -13,11 +13,11 @@
     <!-- The Replay Gain 'mode' (Album Gain or Track Gain)-->
     <string name="dsp_replay_gain_hint_mode">模式</string>
     <!-- Pre-amp, or preamplification - the 'gain' in volume, applied to the sound output, before the Equalizer is used-->
-    <string name="dsp_preamp">前置放大器</string>
+    <string name="dsp_preamp">Preamp</string>
     <!-- Title of the 'Equalizer'-->
     <string name="dsp_equalizer_title">均衡器</string>
     <!-- Title of the Equalizer Preset selector-->
-    <string name="dsp_equalizer_hint_preset">预置</string>
+    <string name="dsp_equalizer_hint_preset">预设</string>
     <!-- Frequency Response Curve - a graph showing volume vs frequency-->
-    <string name="dsp_frequency_response_curve_title">率响应曲线</string>
+    <string name="dsp_frequency_response_curve_title">频响曲线</string>
 </resources>

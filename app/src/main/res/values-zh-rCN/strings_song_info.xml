@@ -5,7 +5,7 @@
     <!-- Shown in the song info dialog. The song 'track number'-->
     <string name="song_info_track_number">音轨 #</string>
     <!-- Shown in the song info dialog. The song 'duration'-->
-    <string name="song_info_duration">持续时间</string>
+    <string name="song_info_duration">时长</string>
     <!-- Shown in the song info dialog. When a field can't be read-->
     <string name="song_info_unknown">未知</string>
     <!-- Shown in the song info dialog. The song 'album artist'-->
@@ -17,9 +17,9 @@
     <!-- Shown in the song info dialog. The song 'year'-->
     <string name="song_info_year">年份</string>
     <!-- Shown in the song info dialog. The song 'disc'-->
-    <string name="song_info_disc">唱片</string>
+    <string name="song_info_disc">CD</string>
     <!-- Shown in the song info dialog. The song 'play count'-->
-    <string name="song_info_play_count">播放计数</string>
+    <string name="song_info_play_count">播放次数</string>
     <!-- Shown in the song info dialog. The song 'genres'-->
     <string name="song_info_genres">流派</string>
     <!-- Shown in the song info dialog. The song 'path'-->

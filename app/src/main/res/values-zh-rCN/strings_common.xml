@@ -1,77 +1,77 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- Shown when text is required in a text field -->
-    <string name="validation_field_required">依赖</string>
+    <string name="validation_field_required">需要填写</string>
     <!-- Shown when an unexpected error occurs -->
     <string name="error_unexpected">发生预料之外的错误</string>
     <!-- Shown when an unknown error occurs -->
     <string name="error_unknown">发生了一个未知错误</string>
     <!-- Shown when items (an album, artist or song) are added to the queue -->
-    <string name="queue_item_added">已将<xliff:g example="Lateralus" id="item_name">{item_name}</xliff:g> 添加至播放队列</string>
+    <string name="queue_item_added">已将 <xliff:g example="Lateralus" id="item_name">{item_name}</xliff:g> 添加至播放队列</string>
     <!-- Shown when songs are added to the queue -->
     <plurals name="queue_songs_added">
-        <item quantity="other">已将<xliff:g example="30" id="count">{count}</xliff:g>首歌曲添加至播放队列</item>
+        <item quantity="other">已将 <xliff:g example="30" id="count">{count}</xliff:g> 首歌曲添加至播放队列</item>
     </plurals>
     <!-- Shown when albums are added to the queue -->
     <plurals name="queue_albums_added">
-        <item quantity="other">已将<xliff:g example="30" id="count">{count}</xliff:g>张专辑添加至播放队列</item>
+        <item quantity="other">已将 <xliff:g example="30" id="count">{count}</xliff:g> 张专辑添加至播放队列</item>
     </plurals>
     <!-- Shown when artists are added to the queue -->
     <plurals name="queue_artists_added">
-        <item quantity="other">已将<xliff:g example="30" id="count">{count}</xliff:g>名艺术家添加至播放队列</item>
+        <item quantity="other">已将 <xliff:g example="30" id="count">{count}</xliff:g> 名艺术家添加至播放队列</item>
     </plurals>
     <!-- Shown when current playback queue is added to a playlist -->
-    <string name="playlist_queue_added">添加<xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g>到队列</string>
+    <string name="playlist_queue_added">已将播放队列添加至 <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g> 播放列表</string>
     <!-- Shown when songs are added to a playlist -->
     <plurals name="playlist_songs_added">
-        <item quantity="other">添加<xliff:g example="30" id="count">{count}</xliff:g>首歌曲到<xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="other">已添加 <xliff:g example="30" id="count">{count}</xliff:g> 首歌曲至 <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
     </plurals>
     <!-- Shown when albums are added to a playlist -->
     <plurals name="playlist_albums_added">
-        <item quantity="other">添加<xliff:g example="30" id="count">{count}</xliff:g>张专辑到<xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="other">已添加 <xliff:g example="30" id="count">{count}</xliff:g> 张专辑至 <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
     </plurals>
     <!-- Shown when artists are added to a playlist -->
     <plurals name="playlist_artists_added">
-        <item quantity="other">添加<xliff:g example="30" id="count">{count}</xliff:g>个艺术家到<xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="other">已添加 <xliff:g example="30" id="count">{count}</xliff:g> 名艺术家至 <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
     </plurals>
     <!-- Shown when genres are added to a playlist -->
     <plurals name="playlist_genres_added">
-        <item quantity="other">添加<xliff:g example="30" id="count">{count}</xliff:g>个流派到<xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="other">已添加 <xliff:g example="30" id="count">{count}</xliff:g> 个流派至 <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
     </plurals>
     <!-- Shown when a song fails to be deleted -->
-    <string name="delete_song_failed">这首歌无法删除</string>
+    <string name="delete_song_failed">无法删除这首歌曲</string>
     <!-- The disc number for this album-->
-    <string name="disc_number">唱片 CD<xliff:g example="1" id="disc_number">{disc_number}</xliff:g></string>
+    <string name="disc_number">CD <xliff:g example="1" id="disc_number">{disc_number}</xliff:g></string>
     <!-- Shown when the songs list finishes loading, and there are no songs-->
-    <string name="song_list_empty">无歌曲</string>
+    <string name="song_list_empty">没有歌曲</string>
     <!-- Shown when the albums list finishes loading, and there are no songs-->
-    <string name="album_list_empty">无专辑</string>
+    <string name="album_list_empty">没有专辑</string>
     <!-- Shown when the artists list finishes loading, and there are no songs-->
-    <string name="artist_list_empty">无艺术家</string>
+    <string name="artist_list_empty">没有艺术家</string>
     <!-- Shown when the genres list finishes loading, and there are no songs-->
-    <string name="genre_list_empty">无流派</string>
+    <string name="genre_list_empty">没有流派</string>
     <!-- Shown when the playlists list finishes loading, and there are no songs-->
-    <string name="playlist_list_empty">无播放列表</string>
+    <string name="playlist_list_empty">没有播放列表</string>
     <!-- Shown when a playlist is empty -->
     <string name="playlist_empty">播放列表为空</string>
     <!-- Button to toggle the 'repeat' mode-->
     <string name="button_repeat">重复</string>
     <!-- Button to indicate 'seek forward' (skipping forward by, say, 10 seconds)-->
-    <string name="button_seek_forward">向前搜寻</string>
+    <string name="button_seek_forward">快进</string>
     <!-- Button to skip to the next track -->
-    <string name="button_skip_next">跳转 下一首</string>
+    <string name="button_skip_next">下一首</string>
     <!-- Button to play/pause the current song-->
     <string name="button_toggle_playback">切换播放</string>
     <!-- Button to indicate 'seek backward' (skipping backwards by, say, 10 seconds)-->
-    <string name="button_seek_backward">向后搜寻</string>
+    <string name="button_seek_backward">快退</string>
     <!-- Button to skip to the previous track-->
-    <string name="button_skip_previous">返回 上一首</string>
+    <string name="button_skip_previous">上一首</string>
     <!-- Button to shuffle songs-->
     <string name="button_content_description_shuffle">随机播放</string>
     <!-- Button to shuffle songs using 'album shuffle' mode (shuffles albums, but plays songs in track order)-->
-    <string name="button_album_shuffle">专辑随机播放</string>
+    <string name="button_album_shuffle">随机播放专辑</string>
     <!-- 'Loading' text. Shown on various screens as their content is loading-->
-    <string name="loading">正在加载…</string>
+    <string name="loading">正在加载……</string>
     <!-- Shown when the playback queue is empty -->
-    <string name="queue_empty">无队列</string>
+    <string name="queue_empty">队列空</string>
 </resources>
