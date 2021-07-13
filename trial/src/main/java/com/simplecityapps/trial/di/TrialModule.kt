@@ -3,6 +3,7 @@ package com.simplecityapps.trial.di
 import android.content.Context
 import androidx.core.content.getSystemService
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.trial.BillingManager
 import com.simplecityapps.trial.DeviceService
 import com.simplecityapps.trial.PromoCodeService
@@ -73,10 +74,11 @@ class TrialModule {
         @ApplicationContext context: Context,
         moshi: Moshi,
         deviceService: DeviceService,
+        preferenceManager: GeneralPreferenceManager,
         billingManager: BillingManager,
         @Named("AppCoroutineScope") coroutineScope: CoroutineScope
     ): TrialManager {
-        return TrialManager(context, moshi, deviceService, billingManager, coroutineScope)
+        return TrialManager(context, moshi, deviceService, preferenceManager, billingManager, coroutineScope)
     }
 
 }

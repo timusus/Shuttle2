@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.provider.Settings
 import com.simplecityapps.networking.retrofit.NetworkResult
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.squareup.moshi.Moshi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,6 +19,7 @@ class TrialManager(
     private val context: Context,
     private val moshi: Moshi,
     private val deviceService: DeviceService,
+    private val preferenceManager: GeneralPreferenceManager,
     billingManager: BillingManager,
     coroutineScope: CoroutineScope
 ) {
@@ -29,13 +31,24 @@ class TrialManager(
     val trialState: StateFlow<TrialState> = billingManager.billingState.map { billingState ->
         when (billingState) {
             BillingState.Unknown -> TrialState.Unknown
-            BillingState.Paid -> TrialState.Paid
+            BillingState.Paid -> {
+                TrialState.Paid
+            }
             BillingState.Unpaid -> {
                 getTrialState()
             }
         }
     }
-        .onEach { Timber.i("trialState changed to $it") }
+        .onEach {
+            Timber.i("trialState changed to $it")
+            when (it) {
+                TrialState.Paid -> {
+                    if (preferenceManager.appPurchasedDate == null) {
+                        preferenceManager.appPurchasedDate = Date()
+                    }
+                }
+            }
+        }
         .stateIn(coroutineScope, SharingStarted.WhileSubscribed(), TrialState.Unknown)
 
     private suspend fun getTrialState(): TrialState {

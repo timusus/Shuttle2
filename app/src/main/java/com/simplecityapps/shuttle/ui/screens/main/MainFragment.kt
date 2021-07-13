@@ -15,6 +15,8 @@ import androidx.navigation.Navigation
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.play.core.review.ReviewManager
+import com.google.android.play.core.review.ReviewManagerFactory
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.autoClearedNullable
 import com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
@@ -39,6 +41,8 @@ class MainFragment : Fragment(),
 
     @Inject
     lateinit var presenter: MainPresenter
+
+    private lateinit var reviewManager: ReviewManager
 
 
     // Lifecycle
@@ -88,6 +92,8 @@ class MainFragment : Fragment(),
             }
         })
 
+        reviewManager = ReviewManagerFactory.create(requireContext())
+
         presenter.bindView(this)
     }
 
@@ -129,6 +135,20 @@ class MainFragment : Fragment(),
 
     override fun showThankYouDialog() {
         ThankYouDialogFragment.newInstance().show(childFragmentManager)
+    }
+
+    override fun launchReviewFlow() {
+        val request = reviewManager.requestReviewFlow()
+        request.addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                // We got the ReviewInfo object
+                val reviewInfo = task.result
+                reviewManager.launchReviewFlow(requireActivity(), reviewInfo)
+            } else {
+                // There was some problem, log or handle the error code.
+                Timber.e(task.exception ?: Exception("Unknown"), "Failed to launch review flow")
+            }
+        }
     }
 
     // Private

@@ -29,12 +29,40 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
             return sharedPreferences.getString("last_viewed_changelog_version", null)
         }
 
-    var lastViewedTrialDialog: Date
+    var lastViewedTrialDialogDate: Date?
         set(value) {
-            sharedPreferences.put("last_viewed_trial_dialog", value.time)
+            sharedPreferences.put("last_viewed_trial_dialog", value?.time)
         }
         get() {
-            return Date(sharedPreferences.getLong("last_viewed_trial_dialog", Date().time))
+            val time = sharedPreferences.getLong("last_viewed_trial_dialog", -1)
+            if (time != -1L) {
+                return Date(time)
+            }
+            return null
+        }
+
+    var appPurchasedDate: Date?
+        set(value) {
+            sharedPreferences.put("app_purchased_date", value?.time)
+        }
+        get() {
+            val time = sharedPreferences.getLong("app_purchased_date", -1)
+            if (time != -1L) {
+                return Date(time)
+            }
+            return null
+        }
+
+    var lastViewedRatingFlow: Date?
+        set(value) {
+            sharedPreferences.put("last_viewed_rating_flow", value?.time)
+        }
+        get() {
+            val time = sharedPreferences.getLong("last_viewed_rating_flow", -1)
+            if (time != -1L) {
+                return Date(time)
+            }
+            return null
         }
 
     var hasSeenThankYouDialog: Boolean

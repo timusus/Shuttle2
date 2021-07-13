@@ -37,7 +37,7 @@ class TrialDialogFragment : DialogFragment() {
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
 
-        preferenceManager.lastViewedTrialDialog = Date()
+        preferenceManager.lastViewedTrialDialogDate = Date()
 
         val view = layoutInflater.inflate(R.layout.dialog_trial, null)
 
