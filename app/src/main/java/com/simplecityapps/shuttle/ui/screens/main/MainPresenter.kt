@@ -88,7 +88,7 @@ class MainPresenter @Inject constructor(
 
     // QueueChangeCallback Implementation
 
-    override fun onQueueChanged() {
+    override fun onQueueChanged(reason: QueueChangeCallback.QueueChangeReason) {
         view?.toggleSheet(visible = queueManager.getSize() != 0)
     }
 }

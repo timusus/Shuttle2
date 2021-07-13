@@ -307,7 +307,7 @@ class QueueManager(private val queueWatcher: QueueWatcher) {
         val oldPosition = getCurrentPosition()
         queue.move(from, to, shuffleMode)
         val currentPosition = getCurrentPosition()
-        queueWatcher.onQueueChanged()
+        queueWatcher.onQueueChanged(QueueChangeCallback.QueueChangeReason.Move)
         if (currentPosition != oldPosition) {
             queueWatcher.onQueuePositionChanged(oldPosition, currentPosition)
         }

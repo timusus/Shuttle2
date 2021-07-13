@@ -237,7 +237,7 @@ class PlaybackService :
         pendingStartCommands.clear()
     }
 
-    override fun onQueueChanged() {
+    override fun onQueueChanged(reason: QueueChangeCallback.QueueChangeReason) {
         if (queueManager.getQueue().isEmpty()) {
             Timber.v("Queue cleared, stopForeground() called")
             // This should only occur if the user manually clears their queue, while playback is paused

@@ -146,9 +146,9 @@ class QueuePresenter @Inject constructor(
         updateMiniPlayerVisibility(queueManager.getQueue().isEmpty())
     }
 
-    override fun onQueueChanged() {
-        updateQueue(true)
-        updateQueuePosition(false)
+    override fun onQueueChanged(reason: QueueChangeCallback.QueueChangeReason) {
+        updateQueue(reason != QueueChangeCallback.QueueChangeReason.Move)
+        updateQueuePosition(reason != QueueChangeCallback.QueueChangeReason.Move)
         updateMiniPlayerVisibility(queueManager.getQueue().isEmpty())
     }
 

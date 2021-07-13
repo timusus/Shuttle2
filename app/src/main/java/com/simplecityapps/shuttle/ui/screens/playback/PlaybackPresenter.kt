@@ -265,7 +265,7 @@ class PlaybackPresenter @Inject constructor(
         updateQueuePosition(queueManager.getCurrentPosition())
     }
 
-    override fun onQueueChanged() {
+    override fun onQueueChanged(reason: QueueChangeCallback.QueueChangeReason) {
         updateQueue(queueManager.getQueue())
     }
 

@@ -55,7 +55,7 @@ class WidgetManager @Inject constructor(
 
     // QueueChangeCallback Implementation
 
-    override fun onQueueChanged() {
+    override fun onQueueChanged(reason: QueueChangeCallback.QueueChangeReason) {
         updateAppWidgets(UpdateReason.QueueChanged)
     }
 

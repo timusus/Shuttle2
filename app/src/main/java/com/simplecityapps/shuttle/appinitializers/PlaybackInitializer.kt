@@ -117,7 +117,7 @@ class PlaybackInitializer @Inject constructor(
 
     // QueueChangeCallback Implementation
 
-    override fun onQueueChanged() {
+    override fun onQueueChanged(reason: QueueChangeCallback.QueueChangeReason) {
         playbackPreferenceManager.queueIds = queueManager.getQueue(QueueManager.ShuffleMode.Off)
             .map { queueItem -> queueItem.song.id }
             .joinToString(",")

@@ -4,7 +4,11 @@ import timber.log.Timber
 
 interface QueueChangeCallback {
 
-    fun onQueueChanged() {
+    enum class QueueChangeReason {
+        Unknown, Move
+    }
+
+    fun onQueueChanged(reason: QueueChangeReason = QueueChangeReason.Unknown) {
 
     }
 
@@ -41,9 +45,9 @@ class QueueWatcher : QueueChangeCallback {
 
     // QueueChangeCallback Implementation
 
-    override fun onQueueChanged() {
+    override fun onQueueChanged(reason: QueueChangeCallback.QueueChangeReason) {
         Timber.v("onQueueChanged()")
-        callbacks.forEach { callback -> callback.onQueueChanged() }
+        callbacks.forEach { callback -> callback.onQueueChanged(reason) }
     }
 
     override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {

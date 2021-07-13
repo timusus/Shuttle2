@@ -227,7 +227,7 @@ class PlaybackNotificationManager @Inject constructor(
 
     // QueueChangeCallback Implementation
 
-    override fun onQueueChanged() {
+    override fun onQueueChanged(reason: QueueChangeCallback.QueueChangeReason) {
         if (queueManager.getQueue().isNotEmpty()) {
             displayPlaybackNotification()
         }

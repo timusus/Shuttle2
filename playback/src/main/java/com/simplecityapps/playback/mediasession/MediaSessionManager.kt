@@ -201,7 +201,7 @@ class MediaSessionManager @Inject constructor(
         updateCurrentQueueItem()
     }
 
-    override fun onQueueChanged() {
+    override fun onQueueChanged(reason: QueueChangeCallback.QueueChangeReason) {
         updateQueue()
     }
 
