@@ -1,5 +1,20 @@
 [
   {
+    "versionName": "1.0.0-RC4",
+    "releaseDate": "14/07/2021",
+    "features": [
+    ],
+    "fixes": [
+      "Fixed an issue where queue would reload/scroll after moving a queue item"
+    ],
+    "improvements": [
+      "Implemented Google 'review' api. The app may prompt you to leave a review.. It only does this once, and only if you've been using the app for a while"
+    ],
+    "notes": [
+      "Join the Discord: https://discord.gg/YkhSuHJ"
+    ]
+  },
+  {
     "versionName": "1.0.0-RC3",
     "releaseDate": "12/07/2021",
     "features": [
