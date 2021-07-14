@@ -134,6 +134,7 @@ class PlaybackNotificationManager @Inject constructor(
 
     fun displayLoadingNotification(): Notification {
         Timber.v("displayLoadingNotification")
+        createNotificationChannel()
         val notification = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
             .setContentTitle(context.getString(R.string.loading))
             .setPriority(NotificationCompat.PRIORITY_LOW)
@@ -150,6 +151,7 @@ class PlaybackNotificationManager @Inject constructor(
 
     fun displayQueueEmptyNotification(): Notification {
         Timber.v("displayQueueEmptyNotification")
+        createNotificationChannel()
         val notification = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
             .setContentTitle(context.getString(R.string.queue_empty))
             .setContentText(context.getString(R.string.widget_empty_text))
