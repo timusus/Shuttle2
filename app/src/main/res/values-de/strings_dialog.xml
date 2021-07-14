@@ -13,7 +13,7 @@
     <!-- Shown in the 'exclude' dialog (move the selected songs to the list of 'excluded' songs) (another word for 'blacklist') -->
     <string name="dialog_exclude_title">Ausschließen</string>
     <!-- Shown when songs are about to be added to the list of songs to be excluded (blacklisted) -->
-    <string name="dialog_exclude_message">„<xliff:g example="Lateralus" id="item">{item}</xliff:g>\“ wird von Ihrer Bibliothek versteckt.\n\nSie können ausgeschlossene Songs in den Einstellungen sehen.</string>
+    <string name="dialog_exclude_message">„<xliff:g example="Lateralus" id="item">{item}</xliff:g>\“ wird von Deiner Bibliothek versteckt.\n\nDu kannst ausgeschlossene Songs in den Einstellungen sehen.</string>
     <!-- Button to add the selected songs to the list of 'excluded' (blacklisted) songs  -->
     <string name="dialog_exclude_button">Ausschließen</string>
     <!-- Shown when viewing the list of 'excluded' (blacklisted) songs, and it's empty-->

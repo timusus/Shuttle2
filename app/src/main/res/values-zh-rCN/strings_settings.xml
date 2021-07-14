@@ -123,9 +123,9 @@
     <!-- Settings: Title for the option to copy the debug logs to the clipboard -->
     <string name="pref_copy_debug_logs_subtitle">复制调试日志</string>
     <!-- Settings: Title for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->
-    <string name="pref_media_session_artwork_title">主屏幕封面</string>
+    <string name="pref_media_session_artwork_title">主屏幕</string>
     <!-- Settings: Description for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->
-    <string name="pref_media_session_artwork_subtitle">向 Android 的媒体会话提供专辑封面。关闭以禁用锁屏专辑封面</string>
+    <string name="pref_media_session_artwork_subtitle">设置专辑封面为主屏幕。</string>
     <!-- Settings title for the day/night theme option -->
     <string name="theme_entry_day_night">自动</string>
     <!-- Settings title for the light theme option -->
@@ -133,7 +133,7 @@
     <!-- Settings title for the dark theme option -->
     <string name="theme_entry_dark">深色</string>
     <!-- Settings title for blue theme option (called Shuttle blue, because it uses the particular shade of blue from the original Shuttle) -->
-    <string name="theme_accent_entry_blue">Shuttle 蓝</string>
+    <string name="theme_accent_entry_blue">蓝色</string>
     <!-- Settings title for the cyan theme option -->
     <string name="theme_accent_entry_cyan">青色</string>
     <!-- Settings title for the purple theme option -->
