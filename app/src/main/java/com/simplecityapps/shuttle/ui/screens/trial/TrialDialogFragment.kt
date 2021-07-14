@@ -89,6 +89,9 @@ class TrialDialogFragment : DialogFragment() {
                         subheading.text = Phrase.from(requireContext(), R.string.trial_playback_speed).put("speed", String.format("%.1fx", trialState.multiplier())).format()
                         description.text = getString(R.string.trial_description_expired)
                     }
+                    is TrialState.Unknown, TrialState.Paid -> {
+                        dismiss()
+                    }
                 }
             }
         }
