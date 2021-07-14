@@ -215,7 +215,7 @@ play {
     if (System.getenv("JENKINS_URL") != null) {
         serviceAccountCredentials.set(file(System.getenv("DEPLOYMENT_KEYS")))
         defaultToAppBundles.set(true)
-        track.set("alpha")
+        track.set("beta")
     } else {
         serviceAccountCredentials.set(file("../deployment_keys.json"))
     }
