@@ -25,10 +25,12 @@
 
         <activity
             android:name=".ui.MainActivity"
+            android:exported="true"
             android:label="@string/app_name"
             android:launchMode="singleInstance"
             android:screenOrientation="userPortrait"
             android:windowSoftInputMode="adjustNothing">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -38,8 +40,12 @@
                 <action android:name="android.media.action.MEDIA_PLAY_FROM_SEARCH" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+
         </activity>
 
+        <activity
+            android:name=".MaterialYouActivity"
+            android:exported="true" />
 
         <!-- Bugsnag -->
 
@@ -47,11 +53,11 @@
             android:name="com.bugsnag.android.API_KEY"
             android:value="3b26e2392a564498165a38914012ee41" />
 
-
         <!-- Widget -->
 
         <receiver
             android:name=".ui.widgets.WidgetProvider41"
+            android:exported="true"
             android:label="Shuttle 4x1">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -63,6 +69,7 @@
 
         <receiver
             android:name=".ui.widgets.WidgetProvider42"
+            android:exported="true"
             android:label="Shuttle 4x2">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />

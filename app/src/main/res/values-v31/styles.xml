@@ -1,0 +1,13 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Material You theme -->
+    <style name="AppTheme.Light.MaterialYou">
+        <item name="colorPrimary">@color/colorPrimaryOrange</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryOrangeDark</item>
+        <item name="colorAccent">@android:color/system_accent1_0</item>
+        <item name="colorPrimaryTransparent">@color/colorPrimaryOrangeTransparent</item>
+        <item name="colorPrimarySemiTransparent">@color/colorPrimaryOrangeSemiTransparent</item>
+        <item name="colorPlayPauseTint">#FFFFFFFF</item>
+    </style>
+
+</resources>
