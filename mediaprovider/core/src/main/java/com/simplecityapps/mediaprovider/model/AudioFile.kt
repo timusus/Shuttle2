@@ -19,5 +19,9 @@ data class AudioFile(
     val replayGainTrack: Double?,
     val replayGainAlbum: Double?,
     val lyrics: String?,
-    val grouping: String?
+    val grouping: String?,
+    val bitRate: Int?,
+    val bitDepth: Int?,
+    val sampleRate: Int?,
+    val channelCount: Int?
 )

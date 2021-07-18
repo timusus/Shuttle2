@@ -26,7 +26,8 @@ class DatabaseProvider(
                 MIGRATION_33_34,
                 MIGRATION_34_35,
                 MIGRATION_35_36,
-                MIGRATION_36_37
+                MIGRATION_36_37,
+                MIGRATION_37_38,
             )
             .apply {
                 if (!BuildConfig.DEBUG) {

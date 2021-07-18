@@ -49,7 +49,11 @@ class PlexMediaProvider(
                                 mediaStoreId = null,
                                 mediaProvider = type,
                                 lyrics = null,
-                                grouping = null
+                                grouping = null,
+                                bitRate = null,
+                                bitDepth = null,
+                                sampleRate = null,
+                                channelCount = null
                             )
                         }
                     }

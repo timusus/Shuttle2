@@ -77,6 +77,10 @@ class JellyfinMediaProvider(
             mediaProvider = MediaProvider.Type.Jellyfin,
             lyrics = null,
             grouping = null,
+            bitRate = null,
+            bitDepth = null,
+            sampleRate = null,
+            channelCount = null
         )
     }
 }

@@ -35,7 +35,11 @@ data class SongData(
     @ColumnInfo(name = "replayGainTrack") var replayGainTrack: Double? = null,
     @ColumnInfo(name = "replayGainAlbum") var replayGainAlbum: Double? = null,
     @ColumnInfo(name = "lyrics") var lyrics: String?,
-    @ColumnInfo(name = "grouping") var grouping: String?
+    @ColumnInfo(name = "grouping") var grouping: String?,
+    @ColumnInfo(name = "bitRate") var bitRate: Int?,
+    @ColumnInfo(name = "bitDepth") var bitDepth: Int?,
+    @ColumnInfo(name = "sampleRate") var sampleRate: Int?,
+    @ColumnInfo(name = "channelCount") var channelCount: Int?,
 ) {
     @PrimaryKey(autoGenerate = true)
     var id: Long = 0
@@ -66,7 +70,11 @@ fun Song.toSongData(mediaProviderType: MediaProvider.Type): SongData {
         replayGainTrack = replayGainTrack,
         replayGainAlbum = replayGainAlbum,
         lyrics = lyrics,
-        grouping = grouping
+        grouping = grouping,
+        bitRate = bitRate,
+        bitDepth = bitDepth,
+        sampleRate = sampleRate,
+        channelCount = channelCount
     ).apply {
         id = this@toSongData.id
     }

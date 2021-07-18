@@ -76,7 +76,11 @@ class EmbyMediaProvider(
             mediaStoreId = null,
             mediaProvider = MediaProvider.Type.Emby,
             lyrics = null,
-            grouping = null
+            grouping = null,
+            bitRate = null,
+            bitDepth = null,
+            sampleRate = null,
+            channelCount = null
         )
     }
 }

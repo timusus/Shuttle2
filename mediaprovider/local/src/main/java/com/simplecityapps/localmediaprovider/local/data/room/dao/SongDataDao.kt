@@ -98,6 +98,10 @@ fun SongData.toSong(): Song {
         replayGainTrack = replayGainTrack,
         replayGainAlbum = replayGainAlbum,
         lyrics = lyrics,
-        grouping = grouping
+        grouping = grouping,
+        bitRate = bitRate,
+        bitDepth = bitDepth,
+        sampleRate = sampleRate,
+        channelCount = channelCount
     )
 }

@@ -60,7 +60,10 @@ class SongInfoDialogFragment : DialogFragment() {
             },
             getString(R.string.song_info_mime_type) to song.mimeType,
             getString(R.string.song_info_size) to "${"%.2f".format((song.size / 1024f / 1024f))}MB",
-            getString(R.string.song_info_lyrics) to song.lyrics,
+            getString(R.string.song_info_bit_rate) to song.bitRate?.toString()?.let{"${it} kb/s"},
+            getString(R.string.song_info_sample_rate) to song.sampleRate?.toString()?.let { "${it} kHz" },
+            getString(R.string.song_info_channel_count) to song.channelCount?.toString(),
+            getString(R.string.song_info_lyrics) to song.lyrics
         )
 
         for ((key, value) in map) {
