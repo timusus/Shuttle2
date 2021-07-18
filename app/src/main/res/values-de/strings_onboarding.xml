@@ -7,9 +7,9 @@
     <!-- Error message title shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
     <string name="onboarding_directories_dialog_missing_title">Fehlender Dokumentanbieter</string>
     <!-- Error message description shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
-    <string name="onboarding_directories_dialog_missing_subtitle">Eine „Dokumentenanbieter\“ (Dateimanager) App kann auf deinem Gerät nicht gefunden werden. Möglicherweise musst du einen installieren oder auf den „einfachen\“Medien-Scanner zurückgreifen.</string>
+    <string name="onboarding_directories_dialog_missing_subtitle">Eine „Dokumentenanbieter\“ (Dateimanager) App kann auf Deinem Gerät nicht gefunden werden. Möglicherweise musst Du einen installieren oder auf den „einfachen\“Medien-Scanner zurückgreifen.</string>
     <!-- Explanation shown to user when they're about to choose which directories wil lbe scanned bv the S2 media scanner-->
-    <string name="onboarding_directories_add_directories_help_text">Damit S2 nach Musik suchen kann, benötigt es Zugriff auf deine Medienverzeichnisse.\n\nWenn du auf „Verzeichnis hinzufügen\“ tippst, wirst du zu deiner Standard-„Dateianbieter\“-App weitergeleitet. Navigieren Sie zu dem/den Ordner(n), in denen sich Ihre Musik befindet. Sie können mehrere Verzeichnisse hinzufügen. \n\nHinweis: Möglicherweise müssen Sie „Internen Speicher anzeigen\“ aktivieren, um Ihre(n) Musikordner zu sehen.</string>
+    <string name="onboarding_directories_add_directories_help_text">Damit S2 nach Musik suchen kann, benötigt es Zugriff auf deine Medienverzeichnisse.\n\nWenn Du auf „Verzeichnis hinzufügen\“ tippst, wirst Du zu Deiner Standard-„Dateianbieter\“-App weitergeleitet. Navigiere zu dem/den Ordner(n), in denen sich Deine Musik befindet. Du kannst mehrere Verzeichnisse hinzufügen. \n\nHinweis: Möglicherweise musst Du „Internen Speicher anzeigen\“ aktivieren, um Deine(n) Musikordner zu sehen.</string>
     <!-- Shown when the app is scanning the user's directories for media -->
     <string name="onboarding_directories_scanning">Wird gescannt…</string>
     <!-- Shown when the media scanner is scanning the user's directories for media-->
@@ -26,7 +26,7 @@
     <!-- Dialog button to grant permission to the app to access users storage-->
     <string name="onboarding_permission_button_grant">Erlaubnis erteilen</string>
     <!-- Shown after user initially denies access to storage -->
-    <string name="onboarding_permission_help_text">Um Ihre Musik zu finden, benötigt S2 die Erlaubnis, Ihren Medienspeicher zu lesen</string>
+    <string name="onboarding_permission_help_text">Um Deine Musik zu finden, benötigt S2 die Erlaubnis, Deinen Medienspeicher zu lesen</string>
     <!-- Title of S2's Media Scanner, the thing that scans files on the device to read audio files/tags -->
     <string name="onboarding_media_scanner_title">Medien-Scanner</string>
     <!-- Shown when the media scanner is scanning -->
@@ -40,6 +40,6 @@
     <!-- Button to trigger the MediaScanner to perform a rescan of audio files on the device-->
     <string name="onboarding_media_scanner_rescan">Neu scannen</string>
     <!-- Shown when the S2 Media Provider is scanning song tags (metadata)-->
-    <string name="onboarding_scanner_reading_song_tags">Songmetadaten lesen…</string>
+    <string name="onboarding_scanner_reading_song_tags">Song-Tags lesen…</string>
     <!-- Shown when user is onboarding. On this screen, user will choose their media provider, which will scan for their music-->
 </resources>

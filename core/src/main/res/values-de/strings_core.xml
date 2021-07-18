@@ -7,5 +7,5 @@
     <!-- Shown when the playback queue is empty -->
     <string name="queue_empty">Warteschlange ist leer</string>
     <!-- Shown when the current playback queue is empty. Pressing the widget will just open the app. -->
-    <string name="widget_empty_text">Wählen Sie ein Song aus…</string>
+    <string name="widget_empty_text">Wähle einen Song aus…</string>
 </resources>

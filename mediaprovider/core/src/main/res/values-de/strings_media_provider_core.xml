@@ -53,9 +53,9 @@
     <!-- Button to add a media provider. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
     <string name="media_provider_add">Medienanbieter hinzufügen</string>
     <!-- Button to add a media provider, shown during onboarding. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
-    <string name="media_providers_add_onboarding">Medienanbieter hinzufügen. Sie können das später ändern</string>
+    <string name="media_providers_add_onboarding">Medienanbieter hinzufügen. Du kannst das später ändern</string>
     <!-- Shown during onboarding, as the user is about to select their media providers, to discover/find their music-->
-    <string name="media_provider_toolbar_title_onboarding">Entdecken Sie Ihre Musik</string>
+    <string name="media_provider_toolbar_title_onboarding">Entdecke Deine Musik</string>
     <!-- Title of the screen where users can select their media providers. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
     <string name="media_provider_toolbar_title">Medienanbieter</string>
     <!-- Option to remove a media provider from the list of media providers to be scanned. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->

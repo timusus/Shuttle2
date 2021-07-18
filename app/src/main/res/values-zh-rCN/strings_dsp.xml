@@ -13,7 +13,7 @@
     <!-- The Replay Gain 'mode' (Album Gain or Track Gain)-->
     <string name="dsp_replay_gain_hint_mode">模式</string>
     <!-- Pre-amp, or preamplification - the 'gain' in volume, applied to the sound output, before the Equalizer is used-->
-    <string name="dsp_preamp">Preamp</string>
+    <string name="dsp_preamp">前级</string>
     <!-- Title of the 'Equalizer'-->
     <string name="dsp_equalizer_title">均衡器</string>
     <!-- Title of the Equalizer Preset selector-->

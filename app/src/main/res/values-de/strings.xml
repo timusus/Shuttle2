@@ -13,7 +13,7 @@
     <!-- Shown in the queue, to indicate the queue of songs which will play after the current song-->
     <string name="playback_up_next">Als nächstes</string>
     <!-- Shown on the changelog screen, notes from the developer. Since the changelog is not translated, this could be left in English-->
-    <string name="dev_notes">"Hinweise des Entwicklers "</string>
+    <string name="dev_notes">Hinweise des Entwicklers:</string>
     <!-- Title of the 'settings' screen-->
     <string name="title_settings">Einstellungen</string>
     <!-- Title of the 'Now Playing' screen (the main screen for controlling music playback)-->

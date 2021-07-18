@@ -5,7 +5,7 @@
     <!-- The heading of the 'free trial' dialog -->
     <string name="trial_heading_trial">Kostenlose Probezeit</string>
     <!-- Message shown when user is starting a trial. Note: This is meant to be friendly/fun! It doesn't have to say 'until you lose your mind' -->
-    <string name="trial_description_trial">Nach der Probezeit wird die Wiedergabegeschwindigkeit jeden Tag etwas erhöht, bis Sie den Verstand verlieren.</string>
+    <string name="trial_description_trial">Nach der Probezeit wird die Wiedergabegeschwindigkeit jeden Tag etwas erhöht, bis Du den Verstand verlierst.</string>
     <!-- Shows how many days are left in the free trial-->
     <plurals name="trial_days_remaining">
         <item quantity="one">Noch 
@@ -18,7 +18,7 @@
     <!-- Shown when the user's trial has expired -->
     <string name="trial_heading_expired">Probezeit abgelaufen</string>
     <!-- Message shown when trial has expired. Note: This is meant to be friendly/fun! It doesn't have to say 'until you lose your mind' -->
-    <string name="trial_description_expired">Die Wiedergabegeschwindigkeit wird jeden Tag etwas erhöht, bis Sie den Verstand verlieren.</string>
+    <string name="trial_description_expired">Die Wiedergabegeschwindigkeit wird jeden Tag etwas erhöht, bis Du den Verstand verlierst.</string>
     <!-- When a trial ends, the playback speed is increased by a small amount each day. This text shows the current playback speed -->
     <string name="trial_playback_speed">Wiedergabegeschwindigkeit: 
     <xliff:g example="1.4x" id="speed">{speed}</xliff:g></string>
@@ -27,5 +27,5 @@
     <!-- Title of dialog shown after user has completed a purchase-->
     <string name="dialog_title_purchase_complete">Danke</string>
     <!-- Message shown in dialog after user has completed a purchase. Note: This is informal, but should reflect sincere appreciation (not just a generic 'thank you')-->
-    <string name="dialog_message_purchase_complete">Du hast das Upgrade auf die Vollversion von S2 erfolgreich durchgeführt. Vielen Dank für deine Unterstützung.</string>
+    <string name="dialog_message_purchase_complete">Du hast das Upgrade auf die Vollversion von S2 erfolgreich durchgeführt. Vielen Dank für Deine Unterstützung.</string>
 </resources>

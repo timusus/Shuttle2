@@ -1,5 +1,36 @@
 [
   {
+    "versionName": "1.0.1",
+    "releaseDate": "14/07/2021",
+    "features": [
+      "Added a settings option to retain shuffle mode when starting a new queue"
+    ],
+    "fixes": [
+    ],
+    "improvements": [
+      "Split settings screen into sub-screens"
+    ],
+    "notes": [
+      "Join the Discord: https://discord.gg/YkhSuHJ"
+    ]
+  },
+  {
+    "versionName": "1.0.0",
+    "releaseDate": "14/07/2021",
+    "features": [
+    ],
+    "fixes": [
+      "Possible fix for issue where upgrade dialog was shown for users who have already upgraded",
+      "Possible crash fix when attempting to display notifications"
+    ],
+    "improvements": [
+      "Translation updates"
+    ],
+    "notes": [
+      "Join the Discord: https://discord.gg/YkhSuHJ"
+    ]
+  },
+  {
     "versionName": "1.0.0-RC4",
     "releaseDate": "14/07/2021",
     "features": [
