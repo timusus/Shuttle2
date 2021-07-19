@@ -2,6 +2,7 @@ package com.simplecityapps.mediaprovider.model
 
 import android.os.Parcelable
 import androidx.annotation.Keep
+import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.repository.PlaylistSongSortOrder
 import kotlinx.parcelize.Parcelize
 
@@ -13,5 +14,6 @@ data class Playlist(
     val songCount: Int,
     val duration: Int,
     val sortOrder: PlaylistSongSortOrder,
-    val mediaStoreId: Long?
+    val mediaProvider: MediaProvider.Type,
+    val externalId: String?
 ) : Parcelable

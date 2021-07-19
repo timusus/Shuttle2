@@ -83,8 +83,8 @@ open class JellyfinMediaProviderModule {
 
     @Provides
     @Singleton
-    fun provideJellyfinMediaProvider(authenticationManager: JellyfinAuthenticationManager, itemsService: ItemsService): JellyfinMediaProvider {
-        return JellyfinMediaProvider(authenticationManager, itemsService)
+    fun provideJellyfinMediaProvider(@ApplicationContext context: Context,  authenticationManager: JellyfinAuthenticationManager, itemsService: ItemsService): JellyfinMediaProvider {
+        return JellyfinMediaProvider(context, authenticationManager, itemsService)
     }
 
     @Provides

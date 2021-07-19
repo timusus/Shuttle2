@@ -15,9 +15,10 @@ interface ItemsService {
         @Header("X-Emby-Token") token: String,
         @Query("Recursive") recursive: Boolean = true,
         @Query("IncludeItemTypes") itemTypes: String = "Audio",
-        @Query("Fields") fields: String = "Genres,ProductionYear",
+        @Query("Fields") fields: String? = "Genres,ProductionYear",
         @Query("Limit") limit: Int = 2500,
-        @Query("StartIndex") startIndex: Int = 0
+        @Query("StartIndex") startIndex: Int = 0,
+        @Query("UserId") UserId: String? = null
     ): NetworkResult<QueryResult>
 
     @GET
@@ -31,17 +32,44 @@ interface ItemsService {
     ): NetworkResult<Item>
 }
 
-suspend fun ItemsService.items(
+suspend fun ItemsService.audioItems(
     url: String,
     token: String,
     userId: String,
     recursive: Boolean = true,
     itemTypes: String = "Audio",
-    fields: String = "Genres,ProductionYear",
+    fields: String? = "Genres,ProductionYear",
     limit: Int = 2500,
     startIndex: Int = 0
 ): NetworkResult<QueryResult> {
     return itemsImpl("$url/Users/$userId/Items", token, recursive, itemTypes, fields, limit, startIndex)
+}
+
+suspend fun ItemsService.playlists(
+    url: String,
+    token: String,
+    userId: String,
+    recursive: Boolean = true,
+    itemTypes: String = "Playlist",
+    fields: String? = null,
+    limit: Int = 2500,
+    startIndex: Int = 0
+): NetworkResult<QueryResult> {
+    return itemsImpl("$url/Users/$userId/Items", token, recursive, itemTypes, fields, limit, startIndex)
+}
+
+suspend fun ItemsService.playlistItems(
+    url: String,
+    token: String,
+    playlistId: String,
+    recursive: Boolean = true,
+    itemTypes: String = "Audio",
+    fields: String? = null,
+    limit: Int = 2500,
+    startIndex: Int = 0,
+    userId: String
+): NetworkResult<QueryResult> {
+    return itemsImpl("$url/Playlists/$playlistId/Items", token, recursive, itemTypes, fields, limit, startIndex, userId)
 }
 
 suspend fun ItemsService.item(

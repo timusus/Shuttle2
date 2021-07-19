@@ -29,7 +29,7 @@ class LocalAlbumArtistRepository(val scope: CoroutineScope, private val songData
                     }
             }
             .flowOn(Dispatchers.IO)
-            .stateIn(scope, SharingStarted.WhileSubscribed(), null)
+            .stateIn(scope, SharingStarted.Lazily, null)
     }
 
     override fun getAlbumArtists(query: AlbumArtistQuery): Flow<List<AlbumArtist>> {

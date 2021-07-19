@@ -22,7 +22,11 @@ suspend fun UserService.authenticate(
     username: String,
     password: String,
     deviceId: String,
-    deviceName: String = DeviceName.getDeviceName(),
+    deviceName: String = try {
+        DeviceName.getDeviceName()
+    } catch (e: Exception) {
+        "Unknown"
+    },
     version: String = "1.0"
 ): NetworkResult<AuthenticationResult> {
     return authenticateImpl(

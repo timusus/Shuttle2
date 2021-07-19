@@ -15,6 +15,7 @@ import com.bumptech.glide.util.ViewPreloadSizeProvider
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.adapter.ViewBinder
+import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongSortOrder
 import com.simplecityapps.shuttle.R
@@ -321,8 +322,10 @@ class SongListFragment :
         }
     }
 
-    override fun setLoadingProgress(progress: Float) {
-        horizontalLoadingView.setProgress(progress)
+    override fun setLoadingProgress(progress: Progress?) {
+        progress?.let {
+            horizontalLoadingView.setProgress(progress.asFloat())
+        }
     }
 
     override fun showDeleteError(error: Error) {
@@ -350,7 +353,7 @@ class SongListFragment :
 
             playlistMenuView.createPlaylistMenu(popupMenu.menu)
 
-            if (song.mediaStoreId != null) {
+            if (song.externalId != null) {
                 popupMenu.menu.findItem(R.id.delete)?.isVisible = false
             }
 

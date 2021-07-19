@@ -307,7 +307,7 @@ class PlaylistDetailFragment :
 
             playlistMenuView.createPlaylistMenu(popupMenu.menu)
 
-            if (playlistSong.song.mediaStoreId != null) {
+            if (playlistSong.song.externalId != null) {
                 popupMenu.menu.findItem(R.id.delete)?.isVisible = false
             }
 

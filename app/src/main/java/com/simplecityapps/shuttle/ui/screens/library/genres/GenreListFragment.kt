@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.adapter.ViewBinder
+import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.model.Genre
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
@@ -156,8 +157,10 @@ class GenreListFragment :
         }
     }
 
-    override fun setLoadingProgress(progress: Float) {
-        horizontalLoadingView.setProgress(progress)
+    override fun setLoadingProgress(progress: Progress?) {
+        progress?.let {
+            horizontalLoadingView.setProgress(progress.asFloat())
+        }
     }
 
     override fun showLoadError(error: Error) {

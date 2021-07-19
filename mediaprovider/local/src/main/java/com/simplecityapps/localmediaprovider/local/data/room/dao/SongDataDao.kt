@@ -8,6 +8,7 @@ import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.Song
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import timber.log.Timber
 import java.util.*
 
 @Dao
@@ -46,6 +47,8 @@ abstract class SongDataDao {
         val insertCount = insert(inserts)
         val updateCount = update(updates)
         val deleteCount = delete(deletes)
+
+        Timber.i("insertUpdateAndDelete(inserts: ${insertCount.size} inserted, $updateCount updated)")
 
         return Triple(insertCount.size, updateCount, deleteCount)
     }
@@ -93,7 +96,7 @@ fun SongData.toSong(): Song {
         playCount = playCount,
         playbackPosition = playbackPosition,
         blacklisted = excluded,
-        mediaStoreId = mediaStoreId,
+        externalId = externalId,
         mediaProvider = mediaProvider,
         replayGainTrack = replayGainTrack,
         replayGainAlbum = replayGainAlbum,

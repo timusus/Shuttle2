@@ -4,7 +4,7 @@ import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibMediaProvider
+import com.simplecityapps.saf.DocumentNodeTree
 import com.simplecityapps.saf.SafDirectoryHelper
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
@@ -18,26 +18,7 @@ import javax.inject.Named
 
 interface DirectorySelectionContract {
 
-    data class Directory(val tree: SafDirectoryHelper.DocumentNodeTree, val traversalComplete: Boolean, val hasWritePermission: Boolean) {
-
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (javaClass != other?.javaClass) return false
-
-            other as Directory
-
-            if (tree != other.tree) return false
-            if (hasWritePermission != other.hasWritePermission) return false
-
-            return true
-        }
-
-        override fun hashCode(): Int {
-            var result = tree.hashCode()
-            result = 31 * result + hasWritePermission.hashCode()
-            return result
-        }
-    }
+    data class Directory(val tree: DocumentNodeTree, val traversalComplete: Boolean, val hasWritePermission: Boolean)
 
     interface Presenter : BaseContract.Presenter<View> {
         fun loadData(contentResolver: ContentResolver)
@@ -55,7 +36,6 @@ interface DirectorySelectionContract {
 
 class DirectorySelectionPresenter @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val taglibMediaProvider: TaglibMediaProvider,
     @Named("AppCoroutineScope") private val appCoroutineScope: CoroutineScope,
 ) : DirectorySelectionContract.Presenter, BasePresenter<DirectorySelectionContract.View>() {
 
@@ -102,17 +82,20 @@ class DirectorySelectionPresenter @Inject constructor(
     private fun parseUri(contentResolver: ContentResolver, uri: Uri, hasWritePermission: Boolean) {
         appCoroutineScope.launch {
             SafDirectoryHelper.buildFolderNodeTree(contentResolver, uri)
-                .collect { tree ->
-                    val directory = DirectorySelectionContract.Directory(tree, false, hasWritePermission)
-                    val index = data.indexOf(directory)
-                    if (index != -1) {
-                        data[index] = directory
-                    } else {
+                .collect { treeStatus ->
+                    val directory = DirectorySelectionContract.Directory(
+                        tree = treeStatus.tree,
+                        traversalComplete = treeStatus is SafDirectoryHelper.TreeStatus.Complete,
+                        hasWritePermission = hasWritePermission
+                    )
+                    val index = data.indexOfFirst { it.tree == treeStatus.tree }
+                    if (index == -1) {
                         data.add(directory)
+                    } else {
+                        data[index] = directory
                     }
                     setData(data)
                 }
-            setData(data.map { DirectorySelectionContract.Directory(it.tree, true, hasWritePermission) })
         }
     }
 

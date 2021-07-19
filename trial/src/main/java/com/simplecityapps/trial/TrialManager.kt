@@ -49,7 +49,7 @@ class TrialManager(
                 }
             }
         }
-        .stateIn(coroutineScope, SharingStarted.WhileSubscribed(), TrialState.Unknown)
+        .stateIn(coroutineScope, SharingStarted.Lazily, TrialState.Unknown)
 
     private suspend fun getTrialState(): TrialState {
         val now = Date()

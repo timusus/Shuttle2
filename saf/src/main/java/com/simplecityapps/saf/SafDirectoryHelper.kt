@@ -9,80 +9,8 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import timber.log.Timber
-import java.io.Serializable
 
 object SafDirectoryHelper {
-
-    const val TAG = "SafDirectoryHelper"
-
-    interface FileNode : Node, Serializable {
-        val uri: Uri
-        val displayName: String
-    }
-
-    open class DocumentNode(
-        override val uri: Uri,
-        open val documentId: String,
-        override val displayName: String,
-        open val mimeType: String
-    ) : FileNode {
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (javaClass != other?.javaClass) return false
-
-            other as DocumentNode
-
-            if (uri != other.uri) return false
-            if (documentId != other.documentId) return false
-            if (displayName != other.displayName) return false
-            if (mimeType != other.mimeType) return false
-
-            return true
-        }
-
-        override fun hashCode(): Int {
-            var result = uri.hashCode()
-            result = 31 * result + documentId.hashCode()
-            result = 31 * result + displayName.hashCode()
-            result = 31 * result + mimeType.hashCode()
-            return result
-        }
-    }
-
-    class DocumentNodeTree(
-        override val uri: Uri,
-        val rootUri: Uri,
-        override val documentId: String,
-        override val displayName: String,
-        override val mimeType: String
-    ) : Trie<DocumentNodeTree, DocumentNode>,
-        DocumentNode(uri, documentId, displayName, mimeType) {
-
-        override val treeNodes: LinkedHashSet<DocumentNodeTree> = linkedSetOf()
-        override val leafNodes: LinkedHashSet<DocumentNode> = linkedSetOf()
-
-        override fun equals(other: Any?): Boolean {
-            if (this === other) return true
-            if (javaClass != other?.javaClass) return false
-            if (!super.equals(other)) return false
-
-            other as DocumentNodeTree
-
-            if (uri != other.uri) return false
-            if (rootUri != other.rootUri) return false
-            if (documentId != other.documentId) return false
-
-            return true
-        }
-
-        override fun hashCode(): Int {
-            var result = super.hashCode()
-            result = 31 * result + uri.hashCode()
-            result = 31 * result + rootUri.hashCode()
-            result = 31 * result + documentId.hashCode()
-            return result
-        }
-    }
 
     /**
      * Traverses the contents of [rootUri], building a [DocumentNodeTree] (Trie) representing the directory structure.
@@ -94,15 +22,15 @@ object SafDirectoryHelper {
     fun buildFolderNodeTree(
         contentResolver: ContentResolver,
         rootUri: Uri
-    ): Flow<DocumentNodeTree> {
+    ): Flow<TreeStatus> {
         return flow {
             try {
                 val docUri = DocumentsContract.buildDocumentUriUsingTree(rootUri, DocumentsContract.getTreeDocumentId(rootUri))
                 retrieveDocumentNodes(contentResolver, docUri, rootUri).firstOrNull()?.let { rootDocumentNode ->
                     val tree = DocumentNodeTree(docUri, rootUri, rootDocumentNode.documentId, rootDocumentNode.displayName, rootDocumentNode.mimeType)
-                    emit(tree)
+                    emit(TreeStatus.Progress(tree))
                     traverseDocumentNodes(tree, contentResolver, rootUri)
-                    emit(tree)
+                    emit(TreeStatus.Complete(tree))
                 }
             } catch (e: SecurityException) {
                 Timber.e(e, "Failed to build folder tree ($rootUri)")
@@ -116,20 +44,14 @@ object SafDirectoryHelper {
             when (documentNode) {
                 is DocumentNodeTree -> traverseDocumentNodes(parent.addTreeNode(documentNode), contentResolver, rootUri)
                 else -> {
-                    val ext = documentNode.displayName.substringAfterLast('.')
-                    if ("m3u".contains(ext)) {
-                        // Skip .m3u files
-                        continue
-                    }
-
                     if (documentNode.mimeType.startsWith("audio")) {
                         // Add files with mimetype "audio/*"
                         parent.addLeafNode(documentNode)
                         continue
                     }
 
-                    if (arrayOf("mp3", "3gp", "mp4", "m4a", "m4b", "aac", "ts", "flac", "mid", "xmf", "mxmf", "midi", "rtttl", "rtx", "ota", "imy", "ogg", "mkv", "wav", "opus")
-                            .contains(ext)
+                    if (arrayOf("mp3", "3gp", "mp4", "m4a", "m4b", "aac", "ts", "flac", "mid", "xmf", "mxmf", "midi", "rtttl", "rtx", "ota", "imy", "ogg", "mkv", "wav", "opus", "m3u", "m3u8")
+                            .contains(documentNode.ext)
                     ) {
                         // Add files with audio-related extensions
                         parent.addLeafNode(documentNode)
@@ -145,9 +67,9 @@ object SafDirectoryHelper {
      *
      * This involves a content resolver query, and should be called from a background thread.
      */
-    private suspend fun retrieveDocumentNodes(contentResolver: ContentResolver, uri: Uri, rootUri: Uri): List<SafDirectoryHelper.DocumentNode> {
+    private suspend fun retrieveDocumentNodes(contentResolver: ContentResolver, uri: Uri, rootUri: Uri): List<DocumentNode> {
         return withContext(Dispatchers.IO) {
-            val documentNodes = mutableListOf<SafDirectoryHelper.DocumentNode>()
+            val documentNodes = mutableListOf<DocumentNode>()
             try {
                 contentResolver.query(
                     uri,
@@ -166,7 +88,7 @@ object SafDirectoryHelper {
                             val documentId = cursor.getString(0)
                             if (mimeType == DocumentsContract.Document.MIME_TYPE_DIR) {
                                 documentNodes.add(
-                                    SafDirectoryHelper.DocumentNodeTree(
+                                    DocumentNodeTree(
                                         uri = DocumentsContract.buildDocumentUriUsingTree(uri, documentId),
                                         rootUri = rootUri,
                                         documentId = documentId,
@@ -176,7 +98,7 @@ object SafDirectoryHelper {
                                 )
                             } else {
                                 documentNodes.add(
-                                    SafDirectoryHelper.DocumentNode(
+                                    DocumentNode(
                                         uri = DocumentsContract.buildDocumentUriUsingTree(uri, documentId),
                                         documentId = documentId,
                                         displayName = cursor.getString(1),
@@ -191,6 +113,26 @@ object SafDirectoryHelper {
                 Timber.e("Failed to retrieve document node for uri: $uri")
             }
             documentNodes
+        }
+    }
+
+    sealed class TreeStatus(val tree: DocumentNodeTree) {
+        class Progress(tree: DocumentNodeTree) : TreeStatus(tree)
+        class Complete(tree: DocumentNodeTree) : TreeStatus(tree)
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as TreeStatus
+
+            if (tree != other.tree) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            return tree.hashCode()
         }
     }
 }

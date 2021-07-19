@@ -1,6 +1,7 @@
 package com.simplecityapps.mediaprovider.repository
 
 import android.os.Parcelable
+import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.mediaprovider.model.PlaylistSong
 import com.simplecityapps.mediaprovider.model.SmartPlaylist
@@ -12,13 +13,12 @@ import java.io.Serializable
 interface PlaylistRepository {
     fun getPlaylists(query: PlaylistQuery): Flow<List<Playlist>>
     suspend fun getFavoritesPlaylist(): Playlist
-    suspend fun createPlaylist(name: String, mediaStoreId: Long?, songs: List<Song>?): Playlist
+    suspend fun createPlaylist(name: String, mediaProviderType: MediaProvider.Type, songs: List<Song>?, externalId: String?): Playlist
     suspend fun addToPlaylist(playlist: Playlist, songs: List<Song>)
     suspend fun removeFromPlaylist(playlist: Playlist, playlistSongs: List<PlaylistSong>)
     suspend fun removeSongsFromPlaylist(playlist: Playlist, songs: List<Song>)
     fun getSongsForPlaylist(playlist: Playlist): Flow<List<PlaylistSong>>
     suspend fun deletePlaylist(playlist: Playlist)
-    suspend fun updatePlaylistMediaStoreId(playlist: Playlist, mediaStoreId: Long?)
     suspend fun clearPlaylist(playlist: Playlist)
     suspend fun renamePlaylist(playlist: Playlist, name: String)
     fun getSmartPlaylists(): Flow<List<SmartPlaylist>>
@@ -30,8 +30,8 @@ sealed class PlaylistQuery(
     val predicate: ((Playlist) -> Boolean),
     val sortOrder: PlaylistSortOrder = PlaylistSortOrder.Default
 ) {
-    class All(sortOrder: PlaylistSortOrder = PlaylistSortOrder.Default) : PlaylistQuery(
-        predicate = { true },
+    class All(mediaProviderType: MediaProvider.Type?, sortOrder: PlaylistSortOrder = PlaylistSortOrder.Default) : PlaylistQuery(
+        predicate = { mediaProviderType == null || it.mediaProvider == mediaProviderType },
         sortOrder = sortOrder
     )
 

@@ -76,7 +76,7 @@ class PlaylistDetailPresenter @AssistedInject constructor(
         .filterNotNull()
         .stateIn(
             scope = this,
-            started = SharingStarted.WhileSubscribed(),
+            started = SharingStarted.Lazily,
             initialValue = playlist
         )
 
@@ -86,7 +86,7 @@ class PlaylistDetailPresenter @AssistedInject constructor(
         }
         .stateIn(
             scope = this,
-            started = SharingStarted.WhileSubscribed(),
+            started = SharingStarted.Lazily,
             initialValue = null
         )
 

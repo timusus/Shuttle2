@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.library.genres
 
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
+import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.model.Genre
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.*
@@ -29,7 +30,7 @@ class GenreListContract {
         fun setGenres(genres: List<Genre>, resetPosition: Boolean)
         fun onAddedToQueue(genre: Genre)
         fun setLoadingState(state: LoadingState)
-        fun setLoadingProgress(progress: Float)
+        fun setLoadingProgress(progress: Progress?)
         fun showLoadError(error: Error)
         fun showTagEditor(songs: List<Song>)
     }
@@ -57,8 +58,8 @@ class GenreListPresenter @Inject constructor(
     private var genres: List<Genre>? = null
 
     private val mediaImporterListener = object : MediaImporter.Listener {
-        override fun onProgress(providerType: MediaProvider.Type, progress: Int, total: Int, song: Song) {
-            view?.setLoadingProgress(progress / total.toFloat())
+        override fun onSongImportProgress(providerType: MediaProvider.Type, message: String, progress: Progress?) {
+            view?.setLoadingProgress(progress)
         }
     }
 

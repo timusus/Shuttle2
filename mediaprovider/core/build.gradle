@@ -38,5 +38,8 @@ dependencies {
     api 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0'
 
     // AndroidX Annotations
-    api "androidx.annotation:annotation:1.1.0"
+    api "androidx.annotation:annotation:1.2.0"
+
+    // Phrase string formatting helper
+    api 'com.github.square:phrase:master-SNAPSHOT'
 }

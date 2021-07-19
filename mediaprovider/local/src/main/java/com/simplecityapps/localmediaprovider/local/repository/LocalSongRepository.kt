@@ -21,7 +21,7 @@ class LocalSongRepository(
         songDataDao
             .getAll()
             .flowOn(Dispatchers.IO)
-            .stateIn(scope, SharingStarted.WhileSubscribed(), null)
+            .stateIn(scope, SharingStarted.Lazily, null)
     }
 
     override fun getSongs(query: SongQuery): Flow<List<Song>?> {

@@ -28,7 +28,7 @@ data class Song(
     val playCount: Int,
     val playbackPosition: Int,
     val blacklisted: Boolean,
-    val mediaStoreId: Long? = null,
+    val externalId: String? = null,
     val mediaProvider: MediaProvider.Type,
     val replayGainTrack: Double? = null,
     val replayGainAlbum: Double? = null,

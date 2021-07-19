@@ -3,7 +3,9 @@ package com.simplecityapps.mediaprovider
 import android.content.Context
 import android.os.Parcelable
 import androidx.annotation.DrawableRes
+import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.mediaprovider.model.Song
+import kotlinx.coroutines.flow.Flow
 import kotlinx.parcelize.Parcelize
 
 interface MediaProvider {
@@ -63,5 +65,7 @@ interface MediaProvider {
 
     val type: Type
 
-    suspend fun findSongs(callback: ((song: Song, progress: Int, total: Int) -> (Unit))? = null): List<Song>?
+    fun findSongs(): Flow<FlowEvent<List<Song>, MessageProgress>>
+
+    fun findPlaylists(existingPlaylists: List<Playlist>, existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>>
 }

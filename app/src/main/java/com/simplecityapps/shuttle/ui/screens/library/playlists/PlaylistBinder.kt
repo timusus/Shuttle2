@@ -46,14 +46,15 @@ class PlaylistBinder(val playlist: Playlist, private val listener: Listener) : V
     override fun areContentsTheSame(other: Any): Boolean {
         return playlist.name == (other as? PlaylistBinder)?.playlist?.name
                 && playlist.songCount == (other as? PlaylistBinder)?.playlist?.songCount
-                && playlist.mediaStoreId == other.playlist.mediaStoreId
+                && playlist.externalId == other.playlist.externalId
+                && playlist.mediaProvider == other.playlist.mediaProvider
     }
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<PlaylistBinder>(itemView) {
 
+        private val imageView: ImageView = itemView.findViewById(R.id.imageView)
         private val titleTextView: TextView = itemView.findViewById(R.id.title)
         private val subtitleTextView: TextView = itemView.findViewById(R.id.subtitle)
-        private val syncIcon: ImageView = itemView.findViewById(R.id.syncIcon)
         private val overflowButton: ImageButton = itemView.findViewById(R.id.overflowButton)
 
         init {
@@ -73,7 +74,7 @@ class PlaylistBinder(val playlist: Playlist, private val listener: Listener) : V
                     .format()
             }
 
-            syncIcon.isVisible = viewBinder.playlist.mediaStoreId != null
+            imageView.setImageResource(viewBinder.playlist.mediaProvider.iconResId())
         }
     }
 }

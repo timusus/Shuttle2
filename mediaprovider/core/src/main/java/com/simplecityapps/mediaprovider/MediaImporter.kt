@@ -1,25 +1,45 @@
 package com.simplecityapps.mediaprovider
 
+import android.content.Context
+import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.mediaprovider.repository.PlaylistQuery
+import com.simplecityapps.mediaprovider.repository.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import timber.log.Timber
 
 class MediaImporter(
-    private val songRepository: SongRepository
+    private val context: Context,
+    private val songRepository: SongRepository,
+    private val playlistRepository: PlaylistRepository
 ) {
 
     interface Listener {
         fun onStart(providerType: MediaProvider.Type) {}
-        fun onProgress(providerType: MediaProvider.Type, progress: Int, total: Int, song: Song)
-        fun onComplete(providerType: MediaProvider.Type, inserts: Int, updates: Int, deletes: Int) {}
+
+        fun onSongImportProgress(
+            providerType: MediaProvider.Type,
+            message: String,
+            progress: Progress?
+        )
+
+        fun onSongImportComplete(providerType: MediaProvider.Type) {}
+        fun onSongImportFailed(providerType: MediaProvider.Type, message: String?) {}
+
+        fun onPlaylistImportProgress(
+            providerType: MediaProvider.Type,
+            message: String,
+            progress: Progress?
+        ) {
+        }
+
+        fun onPlaylistImportComplete(providerType: MediaProvider.Type) {}
+        fun onPlaylistImportFailed(providerType: MediaProvider.Type, message: String?) {}
+
         fun onAllComplete() {}
-        fun onFail(providerType: MediaProvider.Type) {}
     }
 
     var isImporting = false
@@ -33,17 +53,17 @@ class MediaImporter(
     suspend fun import() {
 
         if (mediaProviders.isEmpty()) {
-            Timber.i("Import failed, media providers empty")
+            Timber.v("Import failed, media providers empty")
             return
         }
 
         if (isImporting) {
-            Timber.i("Import already in progress")
+            Timber.v("Import already in progress")
             return
         }
 
 
-        Timber.i("Starting import..")
+        Timber.v("Starting import..")
         val time = System.currentTimeMillis()
 
         isImporting = true
@@ -55,28 +75,68 @@ class MediaImporter(
         withContext(Dispatchers.IO) {
             mediaProviders.map { mediaProvider ->
                 async {
-                    val existingSongs = songRepository.getSongs(SongQuery.All(includeExcluded = true, providerType = mediaProvider.type)).first().orEmpty()
-                    val newSongs = mediaProvider.findSongs { song, progress, total ->
-                        listeners.forEach { it.onProgress(mediaProvider.type, progress, total, song) }
-                    }
-                    newSongs?.let {
-                        val songDiff = SongDiff(existingSongs, newSongs).apply()
-                        Timber.i("Diff completed: $songDiff")
-                        try {
-                            val result = songRepository.insertUpdateAndDelete(songDiff.inserts, songDiff.updates, songDiff.deletes, mediaProvider.type)
-                            withContext(Dispatchers.Main) {
-                                listeners.forEach { listener -> listener.onComplete(mediaProvider.type, result.first, result.second, result.third) }
-                            }
-                        } catch (e: Exception) {
-                            Timber.e(e, "Failed to update song repository")
-                            withContext(Dispatchers.Main) {
-                                listeners.forEach { listener -> listener.onFail(mediaProvider.type) }
+                    importSongs(mediaProvider).collect { event ->
+                        withContext(Dispatchers.Main) {
+                            when (event) {
+                                is FlowEvent.Progress -> {
+                                    listeners.forEach { listener ->
+                                        listener.onSongImportProgress(
+                                            providerType = mediaProvider.type,
+                                            message = event.data.message,
+                                            progress = event.data.progress
+                                        )
+                                    }
+                                }
+                                is FlowEvent.Success -> {
+                                    listeners.forEach { listener ->
+                                        listener.onSongImportComplete(
+                                            providerType = mediaProvider.type
+                                        )
+                                    }
+                                }
+                                is FlowEvent.Failure -> {
+                                    listeners.forEach { listener ->
+                                        listener.onSongImportFailed(
+                                            mediaProvider.type,
+                                            event.message
+                                        )
+                                    }
+                                }
                             }
                         }
-                    } ?: run {
-                        Timber.e("Failed to import songs.. new song list null")
+                    }
+
+                    // Gives the song import a chance to complete.. Otherwise, we might not yet have any existing songs to match with our playlist songs
+                    delay(500)
+
+                    importPlaylists(mediaProvider).collect { event ->
                         withContext(Dispatchers.Main) {
-                            listeners.forEach { listener -> listener.onFail(mediaProvider.type) }
+                            when (event) {
+                                is FlowEvent.Progress -> {
+                                    listeners.forEach { listener ->
+                                        listener.onPlaylistImportProgress(
+                                            providerType = mediaProvider.type,
+                                            message = event.data.message,
+                                            progress = event.data.progress
+                                        )
+                                    }
+                                }
+                                is FlowEvent.Success -> {
+                                    listeners.forEach { listener ->
+                                        listener.onPlaylistImportComplete(
+                                            providerType = mediaProvider.type
+                                        )
+                                    }
+                                }
+                                is FlowEvent.Failure -> {
+                                    listeners.forEach { listener ->
+                                        listener.onPlaylistImportFailed(
+                                            mediaProvider.type,
+                                            event.message
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -87,6 +147,162 @@ class MediaImporter(
 
         importCount++
         isImporting = false
-        Timber.i("Import complete in ${System.currentTimeMillis() - time}ms)")
+        Timber.v("Import complete in ${System.currentTimeMillis() - time}ms)")
+    }
+
+
+    data class SongImportResult(
+        val mediaProviderType: MediaProvider.Type,
+        val inserts: Int,
+        val updates: Int,
+        val deletes: Int
+    )
+
+    private fun importSongs(mediaProvider: MediaProvider): Flow<FlowEvent<SongImportResult, MessageProgress>> {
+        return flow {
+
+            emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_import_retrieving_songs), null)))
+
+            val existingSongs = songRepository.getSongs(
+                SongQuery.All(
+                    includeExcluded = true,
+                    providerType = mediaProvider.type
+                )
+            )
+                .filterNotNull()
+                .firstOrNull()
+                .orEmpty()
+
+            mediaProvider.findSongs().collect { event ->
+                when (event) {
+                    is FlowEvent.Progress -> {
+                        emit(
+                            FlowEvent.Progress<SongImportResult, MessageProgress>(
+                                MessageProgress(
+                                    message = event.data.message,
+                                    progress = event.data.progress
+                                )
+                            )
+                        )
+                    }
+                    is FlowEvent.Success -> {
+                        try {
+                            emit(FlowEvent.Progress<SongImportResult, MessageProgress>(MessageProgress(context.getString(R.string.media_import_updating_database), null)))
+                            val songDiff = SongDiff(existingSongs, event.result).apply()
+                            val result = songRepository.insertUpdateAndDelete(
+                                inserts = songDiff.inserts,
+                                updates = songDiff.updates,
+                                deletes = songDiff.deletes,
+                                mediaProviderType = mediaProvider.type
+                            )
+                            emit(
+                                FlowEvent.Success(
+                                    SongImportResult(
+                                        inserts = result.first,
+                                        updates = result.second,
+                                        deletes = result.third,
+                                        mediaProviderType = mediaProvider.type
+                                    )
+                                )
+                            )
+                        } catch (e: Exception) {
+                            Timber.e(e, "Failed to update song repository")
+                            emit(FlowEvent.Failure(context.getString(R.string.media_import_error)))
+                        }
+                    }
+                    is FlowEvent.Failure -> {
+                        emit(event)
+                    }
+                }
+            }
+        }.flowOn(Dispatchers.IO)
+    }
+
+    data class PlaylistImportResult(
+        val mediaProviderType: MediaProvider.Type
+    )
+
+    private fun importPlaylists(mediaProvider: MediaProvider): Flow<FlowEvent<PlaylistImportResult, MessageProgress>> {
+        return flow {
+
+            emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_import_retrieving_playlists), null)))
+
+            val existingPlaylists = playlistRepository.getPlaylists(query = PlaylistQuery.All(mediaProviderType = mediaProvider.type))
+                .filterNotNull()
+                .firstOrNull()
+                .orEmpty()
+
+            val existingSongs = songRepository.getSongs(
+                SongQuery.All(
+                    includeExcluded = true,
+                    providerType = mediaProvider.type
+                )
+            )
+                .filterNotNull()
+                .firstOrNull()
+                .orEmpty()
+
+            mediaProvider.findPlaylists(existingPlaylists, existingSongs).collect { event ->
+                when (event) {
+                    is FlowEvent.Progress -> {
+                        emit(FlowEvent.Progress<PlaylistImportResult, MessageProgress>(event.data))
+                    }
+                    is FlowEvent.Success -> {
+                        event.result.forEachIndexed { i, playlistUpdateData ->
+                            emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_import_updating_database), Progress(i, event.result.size))))
+                            createOrUpdatePlaylist(playlistUpdateData, existingPlaylists)
+                        }
+                    }
+                    is FlowEvent.Failure -> {
+                        emit(event)
+                    }
+                }
+            }
+            emit(FlowEvent.Success(PlaylistImportResult(mediaProvider.type)))
+        }
+    }
+
+
+    data class PlaylistUpdateData(
+        val mediaProviderType: MediaProvider.Type,
+        val name: String,
+        val songs: List<Song>,
+        val externalId: String?
+    )
+
+    private suspend fun createOrUpdatePlaylist(
+        playlistUpdateData: PlaylistUpdateData,
+        existingPlaylists: List<Playlist>
+    ) {
+        val existingPlaylist = existingPlaylists.find { playlist ->
+            playlist.mediaProvider == playlistUpdateData.mediaProviderType && (playlist.name == playlistUpdateData.name || playlist.externalId == playlistUpdateData.externalId)
+        }
+
+        var songsToInsert = playlistUpdateData.songs
+        if (songsToInsert.isNotEmpty()) {
+            if (existingPlaylist == null) {
+                playlistRepository.createPlaylist(
+                    playlistUpdateData.name,
+                    playlistUpdateData.mediaProviderType,
+                    songsToInsert,
+                    playlistUpdateData.externalId
+                )
+            } else {
+                // Look for duplicates
+                val existingSongs = playlistRepository.getSongsForPlaylist(existingPlaylist)
+                    .firstOrNull()
+                    .orEmpty()
+                    .map { it.song }
+                songsToInsert = songsToInsert.filterNot { songToInsert -> existingSongs.any { existingSong -> existingSong.id == songToInsert.id } }
+                if (songsToInsert.isNotEmpty()) {
+                    Timber.v("Adding ${songsToInsert.size} songs to playlist")
+                    playlistRepository.addToPlaylist(existingPlaylist, songsToInsert)
+                } else {
+                    Timber.v("Failed to update playlist: songs empty")
+                }
+            }
+        } else {
+            Timber.v("No songs to insert")
+        }
     }
 }

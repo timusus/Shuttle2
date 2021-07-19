@@ -72,4 +72,18 @@
     <string name="playlist_title_recently_added">Recently Added</string>
     <!-- 'History' playlist name - playlist of songs which have been recently played -->
     <string name="playlist_title_history">History</string>
+    <!-- Shown when app is querying remote media provider API (jellyfin/emby/plex) -->
+    <string name="media_provider_querying_api">Querying API</string>
+    <!-- Error message shown when a remote media provider (jellyfin/emby/plex) fails to authenticate -->
+    <string name="media_provider_authentication_error">Failed to authenticate</string>
+    <!-- Error message shown when the server address is missing for a remote media provider (jellyfin/emby/plex) -->
+    <string name="media_provider_address_missing">Server address missing</string>
+    <!-- Shown when the media importer is searching for existing songs -->
+    <string name="media_import_retrieving_songs">Retrieving existing songs</string>
+    <!-- Shown when the media importer is searching for existing playlists -->
+    <string name="media_import_retrieving_playlists">Retrieving existing playlists</string>
+    <!-- Shown when the media importer is updating the app's database -->
+    <string name="media_import_updating_database">Updating database</string>
+    <!-- Shown when the media importer fails to import songs -->
+    <string name="media_import_error">An error occurred importing songs</string>
 </resources>

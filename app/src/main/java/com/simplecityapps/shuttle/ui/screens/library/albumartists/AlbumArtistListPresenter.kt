@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library.albumartists
 
+import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.AlbumArtist
@@ -32,7 +33,7 @@ interface AlbumArtistListContract {
         fun setAlbumArtists(albumArtists: List<AlbumArtist>, viewMode: ViewMode)
         fun onAddedToQueue(albumArtists: List<AlbumArtist>)
         fun setLoadingState(state: LoadingState)
-        fun setLoadingProgress(progress: Float)
+        fun setLoadingProgress(progress: Progress?)
         fun showLoadError(error: Error)
         fun showTagEditor(songs: List<Song>)
         fun setViewMode(viewMode: ViewMode)
@@ -64,8 +65,8 @@ class AlbumArtistListPresenter @Inject constructor(
     private var albumArtists: List<AlbumArtist> = emptyList()
 
     private val mediaImporterListener = object : MediaImporter.Listener {
-        override fun onProgress(providerType: MediaProvider.Type, progress: Int, total: Int, song: Song) {
-            view?.setLoadingProgress(progress / total.toFloat())
+        override fun onSongImportProgress(providerType: MediaProvider.Type, message: String, progress: Progress?) {
+            view?.setLoadingProgress(progress)
         }
     }
 

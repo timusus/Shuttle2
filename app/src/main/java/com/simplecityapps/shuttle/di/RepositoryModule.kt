@@ -3,7 +3,6 @@ package com.simplecityapps.shuttle.di
 import android.content.Context
 import com.simplecityapps.localmediaprovider.local.data.room.DatabaseProvider
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
-import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStorePlaylistImporter
 import com.simplecityapps.localmediaprovider.local.repository.*
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.repository.*
@@ -34,8 +33,8 @@ class RepositoryModule {
 
     @Provides
     @Singleton
-    fun provideMediaImporter(songRepository: SongRepository): MediaImporter {
-        return MediaImporter(songRepository)
+    fun provideMediaImporter(@ApplicationContext context: Context, songRepository: SongRepository, playlistRepository: PlaylistRepository): MediaImporter {
+        return MediaImporter(context, songRepository, playlistRepository)
     }
 
     @Provides
@@ -60,11 +59,5 @@ class RepositoryModule {
     @Singleton
     fun provideGenreRepository(songRepository: SongRepository, @Named("AppCoroutineScope") appCoroutineScope: CoroutineScope): GenreRepository {
         return LocalGenreRepository(appCoroutineScope, songRepository)
-    }
-
-    @Provides
-    @Singleton
-    fun providePlaylistImporter(@ApplicationContext context: Context, songRepository: SongRepository, playlistRepository: PlaylistRepository): MediaStorePlaylistImporter {
-        return MediaStorePlaylistImporter(context, songRepository, playlistRepository)
     }
 }

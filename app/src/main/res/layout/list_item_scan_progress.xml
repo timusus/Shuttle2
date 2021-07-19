@@ -13,9 +13,8 @@
         android:id="@+id/icon"
         android:layout_width="28dp"
         android:layout_height="28dp"
-        app:layout_constraintBottom_toBottomOf="@id/subtitle"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/title"
+        app:layout_constraintTop_toTopOf="parent"
         tools:src="@drawable/ic_s2" />
 
     <TextView
@@ -25,30 +24,31 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginEnd="4dp"
-        app:layout_constraintBottom_toTopOf="@+id/subtitle"
-        app:layout_constraintEnd_toStartOf="@id/check"
+        app:layout_constraintBottom_toBottomOf="@id/icon"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@id/icon"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toTopOf="@id/icon"
         tools:text="S2 Media Provider" />
 
     <TextView
-        android:id="@+id/subtitle"
+        android:id="@+id/songImportTitle"
         style="@style/TextSubtitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
         android:layout_marginEnd="4dp"
-        android:lines="1"
+        android:maxLines="10"
         android:textSize="12sp"
-        app:layout_constraintEnd_toStartOf="@id/check"
+        app:layout_constraintEnd_toStartOf="@id/songImportSuccessImage"
         app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@id/icon"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/title"
-        tools:text="/0/storage/music/..." />
+        tools:text="Song import" />
+
 
     <ProgressBar
-        android:id="@+id/progressBar"
+        android:id="@+id/songImportProgress"
         style="@style/Widget.AppCompat.ProgressBar.Horizontal"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -56,33 +56,85 @@
         android:layout_marginEnd="4dp"
         android:indeterminate="true"
         android:max="100"
-        app:layout_constraintEnd_toStartOf="@id/check"
+        app:layout_constraintEnd_toStartOf="@id/songImportSuccessImage"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/subtitle" />
+        app:layout_constraintTop_toBottomOf="@+id/songImportTitle" />
 
     <TextView
-        android:id="@+id/songCount"
+        android:id="@+id/songImportProgressMessage"
         style="@style/TextSubtitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginEnd="4dp"
         android:gravity="end"
-        android:text="@string/onboarding_directories_scanning"
         android:textSize="12sp"
-        app:layout_constraintEnd_toStartOf="@id/check"
+        app:layout_constraintEnd_toStartOf="@id/songImportSuccessImage"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/progressBar"
+        app:layout_constraintTop_toBottomOf="@id/songImportProgress"
         tools:text="1 / 64 songs scanned" />
 
     <ImageView
-        android:id="@+id/check"
-        android:layout_width="24dp"
-        android:layout_height="24dp"
+        android:id="@+id/songImportSuccessImage"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
         android:src="@drawable/ic_baseline_check_24"
         android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="@id/subtitle"
+        app:layout_constraintBottom_toBottomOf="@id/songImportTitle"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toTopOf="@id/songImportTitle"
+        app:tint="?attr/colorPrimary"
+        tools:visibility="visible" />
+
+    <TextView
+        android:id="@+id/playlistImportTitle"
+        style="@style/TextSubtitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="4dp"
+        android:maxLines="10"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toStartOf="@id/songImportSuccessImage"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/songImportProgressMessage"
+        tools:text="Playlist import" />
+
+    <ProgressBar
+        android:id="@+id/playlistImportProgress"
+        style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="4dp"
+        android:indeterminate="true"
+        android:max="100"
+        app:layout_constraintEnd_toStartOf="@id/playlistImportSuccessImage"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/playlistImportTitle" />
+
+    <TextView
+        android:id="@+id/playlistImportProgressMessage"
+        style="@style/TextSubtitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="4dp"
+        android:gravity="end"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toStartOf="@id/playlistImportSuccessImage"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/playlistImportProgress"
+        tools:text="1 / 3 playlists scanned" />
+
+    <ImageView
+        android:id="@+id/playlistImportSuccessImage"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:src="@drawable/ic_baseline_check_24"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@id/playlistImportTitle"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/playlistImportTitle"
         app:tint="?attr/colorPrimary"
         tools:visibility="visible" />
 

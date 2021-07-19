@@ -12,6 +12,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.mediaprovider.MediaProvider
+import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.recyclerview.SpacesItemDecoration
@@ -22,11 +23,11 @@ import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParent
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
-sealed class ProgressState {
-    object Unknown : ProgressState()
-    data class InProgress(val progress: Int, val total: Int, val message: String) : ProgressState()
-    data class Complete(val inserts: Int, val updates: Int, val deletes: Int) : ProgressState()
-    object Failed : ProgressState()
+sealed class ImportProgressState {
+    object Unknown : ImportProgressState()
+    data class InProgress(val progress: Progress?, val message: String) : ImportProgressState()
+    object Complete : ImportProgressState()
+    data class Failed(val message: String?) : ImportProgressState()
 }
 
 @AndroidEntryPoint
@@ -49,7 +50,8 @@ class MediaScannerFragment :
     private var shouldDismissOnScanComplete: Boolean = false
     private var shouldShowToolbar: Boolean = false
 
-    private var scanProgress = mutableMapOf<MediaProvider.Type, ProgressState>()
+    private var songImportProgress = mutableMapOf<MediaProvider.Type, ImportProgressState>()
+    private var playlistImportProgress = mutableMapOf<MediaProvider.Type, ImportProgressState>()
 
     private var scanCompleted = false
 
@@ -108,9 +110,16 @@ class MediaScannerFragment :
 
     // Private
 
-    private fun updateScanProgress(providerType: MediaProvider.Type, progressState: ProgressState) {
-        scanProgress[providerType] = progressState
-        adapter.update(scanProgress.map { ScanProgressBinder(it.key, it.value) })
+    private fun updateImportProgress() {
+        adapter.update(
+            (songImportProgress.keys + playlistImportProgress.keys).map { key ->
+                ScanProgressBinder(
+                    key,
+                    songImportProgress[key] ?: ImportProgressState.Unknown,
+                    playlistImportProgress[key] ?: ImportProgressState.Unknown
+                )
+            }
+        )
     }
 
 
@@ -120,23 +129,39 @@ class MediaScannerFragment :
         getParent()?.exit()
     }
 
-    override fun setScanStarted(providerType: MediaProvider.Type) {
-        updateScanProgress(providerType, ProgressState.Unknown)
+    override fun setImportStarted(providerType: MediaProvider.Type) {
+        updateImportProgress()
         rescanButton.isVisible = false
     }
 
-    override fun setProgress(providerType: MediaProvider.Type, progress: Int, total: Int, message: String) {
-        updateScanProgress(providerType, ProgressState.InProgress(progress, total, message))
-        rescanButton.isVisible = false
+    override fun setSongImportProgress(providerType: MediaProvider.Type, progress: Progress?, message: String) {
+        songImportProgress[providerType] = ImportProgressState.InProgress(progress, message)
+        updateImportProgress()
     }
 
-    override fun setScanComplete(providerType: MediaProvider.Type, inserts: Int, updates: Int, deletes: Int) {
-        updateScanProgress(providerType, ProgressState.Complete(inserts, updates, deletes))
+    override fun setSongImportComplete(providerType: MediaProvider.Type) {
+        songImportProgress[providerType] = ImportProgressState.Complete
+        updateImportProgress()
     }
 
-    override fun setScanFailed(providerType: MediaProvider.Type) {
-        updateScanProgress(providerType, ProgressState.Failed)
-        rescanButton.isVisible = true
+    override fun setSongImportFailed(providerType: MediaProvider.Type, message: String?) {
+        songImportProgress[providerType] = ImportProgressState.Failed(message)
+        updateImportProgress()
+    }
+
+    override fun setPlaylistImportProgress(providerType: MediaProvider.Type, progress: Progress?, message: String) {
+        playlistImportProgress[providerType] = ImportProgressState.InProgress(progress, message)
+        updateImportProgress()
+    }
+
+    override fun setPlaylistImportComplete(providerType: MediaProvider.Type) {
+        playlistImportProgress[providerType] = ImportProgressState.Complete
+        updateImportProgress()
+    }
+
+    override fun setPlaylistImportFailed(providerType: MediaProvider.Type, message: String?) {
+        playlistImportProgress[providerType] = ImportProgressState.Failed(message)
+        updateImportProgress()
     }
 
     override fun setAllScansComplete() {

@@ -2,13 +2,11 @@ package com.simplecityapps.shuttle.ui.screens.onboarding.scanner
 
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
-import com.simplecityapps.mediaprovider.model.Song
+import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
-import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
 import com.squareup.inject.assisted.Assisted
 import com.squareup.inject.assisted.AssistedInject
-import com.squareup.phrase.ListPhrase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -17,10 +15,13 @@ import javax.inject.Named
 interface ScannerContract {
 
     interface View {
-        fun setProgress(providerType: MediaProvider.Type, progress: Int, total: Int, message: String)
-        fun setScanStarted(providerType: MediaProvider.Type)
-        fun setScanComplete(providerType: MediaProvider.Type, inserts: Int, updates: Int, deletes: Int)
-        fun setScanFailed(providerType: MediaProvider.Type)
+        fun setImportStarted(providerType: MediaProvider.Type)
+        fun setSongImportProgress(providerType: MediaProvider.Type, progress: Progress?, message: String)
+        fun setSongImportComplete(providerType: MediaProvider.Type)
+        fun setSongImportFailed(providerType: MediaProvider.Type, message: String?)
+        fun setPlaylistImportProgress(providerType: MediaProvider.Type, progress: Progress?, message: String)
+        fun setPlaylistImportComplete(providerType: MediaProvider.Type)
+        fun setPlaylistImportFailed(providerType: MediaProvider.Type, message: String?)
         fun setAllScansComplete()
         fun dismiss()
     }
@@ -96,22 +97,39 @@ class ScannerPresenter @AssistedInject constructor(
     private val listener = object : MediaImporter.Listener {
 
         override fun onStart(providerType: MediaProvider.Type) {
-            view?.setScanStarted(providerType)
+            view?.setImportStarted(providerType)
         }
 
-        override fun onProgress(providerType: MediaProvider.Type, progress: Int, total: Int, song: Song) {
-            view?.setProgress(
+        override fun onSongImportProgress(providerType: MediaProvider.Type, message: String, progress: Progress?) {
+            view?.setSongImportProgress(
                 providerType = providerType,
                 progress = progress,
-                total = total,
-                message = ListPhrase.from(" • ")
-                    .joinSafely(listOf(song.friendlyArtistName ?: song.albumArtist, song.name))
-                    .toString()
+                message = message
             )
         }
 
-        override fun onComplete(providerType: MediaProvider.Type, inserts: Int, updates: Int, deletes: Int) {
-            view?.setScanComplete(providerType, inserts, updates, deletes)
+        override fun onPlaylistImportProgress(providerType: MediaProvider.Type, message: String, progress: Progress?) {
+            view?.setPlaylistImportProgress(
+                providerType = providerType,
+                progress = progress,
+                message = message
+            )
+        }
+
+        override fun onSongImportComplete(providerType: MediaProvider.Type) {
+            view?.setSongImportComplete(providerType)
+        }
+
+        override fun onPlaylistImportComplete(providerType: MediaProvider.Type) {
+            view?.setPlaylistImportComplete(providerType)
+        }
+
+        override fun onSongImportFailed(providerType: MediaProvider.Type, message: String?) {
+            view?.setSongImportFailed(providerType, message)
+        }
+
+        override fun onPlaylistImportFailed(providerType: MediaProvider.Type, message: String?) {
+            view?.setPlaylistImportFailed(providerType, message)
         }
 
         override fun onAllComplete() {
@@ -119,10 +137,6 @@ class ScannerPresenter @AssistedInject constructor(
             if (shouldDismissOnScanComplete) {
                 view?.dismiss()
             }
-        }
-
-        override fun onFail(providerType: MediaProvider.Type) {
-            view?.setScanFailed(providerType)
         }
     }
 }

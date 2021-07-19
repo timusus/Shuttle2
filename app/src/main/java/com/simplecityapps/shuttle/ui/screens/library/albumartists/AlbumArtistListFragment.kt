@@ -17,6 +17,7 @@ import com.bumptech.glide.integration.recyclerview.RecyclerViewPreloader
 import com.bumptech.glide.util.ViewPreloadSizeProvider
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
+import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
@@ -277,8 +278,10 @@ class AlbumArtistListFragment :
         }
     }
 
-    override fun setLoadingProgress(progress: Float) {
-        horizontalLoadingView.setProgress(progress)
+    override fun setLoadingProgress(progress: Progress?) {
+        progress?.let {
+            horizontalLoadingView.setProgress(progress.asFloat())
+        }
     }
 
     override fun showLoadError(error: Error) {

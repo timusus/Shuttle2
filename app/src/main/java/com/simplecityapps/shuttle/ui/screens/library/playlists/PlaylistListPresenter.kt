@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.ui.screens.library.playlists
 
-import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStorePlaylistImporter
 import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.mediaprovider.model.SmartPlaylist
 import com.simplecityapps.mediaprovider.repository.PlaylistQuery
@@ -32,7 +31,6 @@ interface PlaylistListContract {
         fun setLoadingState(state: LoadingState)
         fun showLoadError(error: Error)
         fun setLoadingProgress(progress: Float)
-        fun onPlaylistsImported()
     }
 
     interface Presenter : BaseContract.Presenter<View> {
@@ -41,7 +39,6 @@ interface PlaylistListContract {
         fun addToQueue(playlist: Playlist)
         fun playNext(playlist: Playlist)
         fun delete(playlist: Playlist)
-        fun importMediaStorePlaylists()
         fun clear(playlist: Playlist)
         fun rename(playlist: Playlist, name: String)
     }
@@ -50,7 +47,6 @@ interface PlaylistListContract {
 class PlaylistListPresenter @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val playbackManager: PlaybackManager,
-    private val playlistImporter: MediaStorePlaylistImporter,
     private val queueManager: QueueManager
 ) : PlaylistListContract.Presenter,
     BasePresenter<PlaylistListContract.View>() {
@@ -60,7 +56,7 @@ class PlaylistListPresenter @Inject constructor(
 
         launch {
             combine(
-                playlistRepository.getPlaylists(PlaylistQuery.All()),
+                playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)),
                 playlistRepository.getSmartPlaylists()
             ) { smartPlaylists, playlists ->
                 Pair(smartPlaylists, playlists)
@@ -108,13 +104,6 @@ class PlaylistListPresenter @Inject constructor(
             val songs = playlistRepository.getSongsForPlaylist(playlist).firstOrNull().orEmpty()
             playbackManager.playNext(songs.map { it.song })
             view?.onAddedToQueue(playlist)
-        }
-    }
-
-    override fun importMediaStorePlaylists() {
-        launch {
-            playlistImporter.importPlaylists()
-            view?.onPlaylistsImported()
         }
     }
 

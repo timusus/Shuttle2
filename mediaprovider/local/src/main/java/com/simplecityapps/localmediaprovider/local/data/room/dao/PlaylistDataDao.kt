@@ -19,7 +19,7 @@ abstract class PlaylistDataDao {
 
     @Query(
         """
-            SELECT playlists.*, count(songs.id) as songCount, sum(songs.duration) as duration, playlists.sortOrder as sortOrder, media_store_id as mediaStoreId
+            SELECT playlists.*, count(songs.id) as songCount, sum(songs.duration) as duration, playlists.sortOrder as sortOrder, playlists.mediaProvider, playlists.externalId
             FROM playlists 
             LEFT JOIN playlist_song_join ON playlists.id = playlist_song_join.playlistId 
             LEFT JOIN songs ON songs.id = playlist_song_join.songId AND songs.blacklisted == 0 
@@ -31,7 +31,7 @@ abstract class PlaylistDataDao {
 
     @Query(
         """
-            SELECT playlists.*, count(songs.id) as songCount, sum(songs.duration) as duration, playlists.sortOrder as sortOrder, media_store_id as mediaStoreId
+            SELECT playlists.*, count(songs.id) as songCount, sum(songs.duration) as duration, playlists.sortOrder as sortOrder, playlists.mediaProvider, playlists.externalId
             FROM playlists 
             LEFT JOIN playlist_song_join ON playlists.id = playlist_song_join.playlistId 
             LEFT JOIN songs ON songs.id = playlist_song_join.songId AND songs.blacklisted == 0 

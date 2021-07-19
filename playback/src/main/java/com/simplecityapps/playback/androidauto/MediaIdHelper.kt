@@ -63,7 +63,7 @@ class MediaIdHelper @Inject constructor(
                         .map { it.toMediaItem(mediaId) }
                 }
                 is MediaIdWrapper.Directory.Playlists -> {
-                    playlistRepository.getPlaylists(PlaylistQuery.All()).firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
+                    playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)).firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
                 }
                 is MediaIdWrapper.Directory.Songs.Album -> {
                     songRepository

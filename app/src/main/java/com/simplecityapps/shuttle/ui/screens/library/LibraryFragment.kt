@@ -188,6 +188,9 @@ class LibraryFragment : Fragment(),
         viewPager?.unregisterOnPageChangeCallback(pageChangeListener)
         viewPager?.adapter = null
         viewPager = null
+
+        (requireActivity() as AppCompatActivity).setSupportActionBar(null)
+
         super.onDestroyView()
     }
 

@@ -6,6 +6,7 @@ import com.simplecityapps.localmediaprovider.local.data.room.dao.PlaylistDataDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.PlaylistSongJoinDao
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistSongJoin
+import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.mediaprovider.model.PlaylistSong
 import com.simplecityapps.mediaprovider.model.SmartPlaylist
@@ -28,7 +29,7 @@ class LocalPlaylistRepository(
         playlistDataDao
             .getAll()
             .flowOn(Dispatchers.IO)
-            .stateIn(scope, SharingStarted.WhileSubscribed(), null)
+            .stateIn(scope, SharingStarted.Lazily, null)
     }
 
     override fun getPlaylists(query: PlaylistQuery): Flow<List<Playlist>> {
@@ -59,16 +60,23 @@ class LocalPlaylistRepository(
             playlistsRelay
                 .filterNotNull()
                 .firstOrNull()
-                ?.firstOrNull { it.name == favoritesName } ?: createPlaylist(favoritesName, null, null)
+                ?.firstOrNull { it.name == favoritesName }
+                ?: createPlaylist(
+                    name = favoritesName,
+                    mediaProviderType = MediaProvider.Type.Shuttle,
+                    songs = null,
+                    externalId = null
+                )
         }
     }
 
-    override suspend fun createPlaylist(name: String, mediaStoreId: Long?, songs: List<Song>?): Playlist {
+    override suspend fun createPlaylist(name: String, mediaProviderType: MediaProvider.Type, songs: List<Song>?, externalId: String?): Playlist {
         val playlistId = playlistDataDao.insert(
             PlaylistData(
                 name = name,
-                mediaStoreId = mediaStoreId,
-                sortOrder = PlaylistSongSortOrder.Position
+                sortOrder = PlaylistSongSortOrder.Position,
+                mediaProviderType = mediaProviderType,
+                externalId = externalId
             )
         )
         playlistSongJoinDao.insert(songs.orEmpty().map { song -> PlaylistSongJoin(playlistId, song.id) })
@@ -111,17 +119,6 @@ class LocalPlaylistRepository(
         return playlistDataDao.delete(playlist.id)
     }
 
-    override suspend fun updatePlaylistMediaStoreId(playlist: Playlist, mediaStoreId: Long?) {
-        return playlistDataDao.update(
-            PlaylistData(
-                id = playlist.id,
-                name = playlist.name,
-                mediaStoreId = mediaStoreId,
-                sortOrder = playlist.sortOrder
-            )
-        )
-    }
-
     override suspend fun clearPlaylist(playlist: Playlist) {
         return playlistDataDao.clear(playlist.id)
     }
@@ -131,7 +128,7 @@ class LocalPlaylistRepository(
             PlaylistData(
                 id = playlist.id,
                 name = name,
-                mediaStoreId = playlist.mediaStoreId,
+                externalId = playlist.externalId,
                 sortOrder = playlist.sortOrder
             )
         )
@@ -142,7 +139,7 @@ class LocalPlaylistRepository(
             PlaylistData(
                 id = playlist.id,
                 name = playlist.name,
-                mediaStoreId = playlist.mediaStoreId,
+                externalId = playlist.externalId,
                 sortOrder = sortOrder
             )
         )

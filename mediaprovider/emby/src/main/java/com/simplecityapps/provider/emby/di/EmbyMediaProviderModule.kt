@@ -83,8 +83,8 @@ open class EmbyMediaProviderModule {
 
     @Provides
     @Singleton
-    fun provideEmbyMediaProvider(authenticationManager: EmbyAuthenticationManager, itemsService: ItemsService): EmbyMediaProvider {
-        return EmbyMediaProvider(authenticationManager, itemsService)
+    fun provideEmbyMediaProvider(@ApplicationContext context: Context, authenticationManager: EmbyAuthenticationManager, itemsService: ItemsService): EmbyMediaProvider {
+        return EmbyMediaProvider(context, authenticationManager, itemsService)
     }
 
     @Provides

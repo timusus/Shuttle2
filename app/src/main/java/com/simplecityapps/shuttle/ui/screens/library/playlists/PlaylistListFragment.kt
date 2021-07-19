@@ -3,7 +3,9 @@ package com.simplecityapps.shuttle.ui.screens.library.playlists
 import android.annotation.SuppressLint
 import android.os.Bundle
 import android.os.Parcelable
-import android.view.*
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
@@ -51,12 +53,6 @@ class PlaylistListFragment :
 
     // Lifecycle
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        setHasOptionsMenu(true)
-    }
-
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_playlists, container, false)
     }
@@ -75,12 +71,6 @@ class PlaylistListFragment :
         savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
 
         presenter.bindView(this)
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        super.onCreateOptionsMenu(menu, inflater)
-
-        inflater.inflate(R.menu.menu_playlists, menu)
     }
 
     override fun onResume() {
@@ -104,24 +94,6 @@ class PlaylistListFragment :
         presenter.unbindView()
 
         super.onDestroyView()
-    }
-
-
-    // Toolbar item selection
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.syncPlaylists -> {
-                MaterialAlertDialogBuilder(requireContext())
-                    .setTitle(getString(R.string.playlist_dialog_title_sync))
-                    .setMessage(getString(R.string.playlist_dialog_subtitle_sync))
-                    .setPositiveButton(getString(R.string.playlist_dialog_button_sync)) { _, _ -> presenter.importMediaStorePlaylists() }
-                    .setNegativeButton(getString(R.string.dialog_button_cancel), null)
-                    .show()
-                true
-            }
-            else -> false
-        }
     }
 
 
@@ -185,10 +157,6 @@ class PlaylistListFragment :
 
     override fun setLoadingProgress(progress: Float) {
         horizontalLoadingView.setProgress(progress)
-    }
-
-    override fun onPlaylistsImported() {
-        Toast.makeText(requireContext(), getString(R.string.playlist_import_success), Toast.LENGTH_SHORT).show()
     }
 
 

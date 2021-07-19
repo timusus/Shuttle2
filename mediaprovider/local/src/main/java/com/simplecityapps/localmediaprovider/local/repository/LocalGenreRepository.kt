@@ -28,7 +28,7 @@ class LocalGenreRepository(
                     ?.associateWith { genre -> songs.filter { song -> song.genres.contains(genre) } }
             }
             .flowOn(Dispatchers.IO)
-            .stateIn(scope, SharingStarted.WhileSubscribed(), null)
+            .stateIn(scope, SharingStarted.Lazily, null)
 
     }
 

@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.playlistmenu
 
 import android.content.Context
+import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.*
@@ -56,7 +57,7 @@ class PlaylistMenuPresenter @Inject constructor(
 
     override fun loadPlaylists() {
         launch {
-            playlistRepository.getPlaylists(PlaylistQuery.All())
+            playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null))
                 .collect { playlists ->
                     this@PlaylistMenuPresenter.playlists = playlists
                 }
@@ -66,7 +67,12 @@ class PlaylistMenuPresenter @Inject constructor(
     override fun createPlaylist(name: String, playlistData: PlaylistData?) {
         launch {
             val songs = playlistData?.getSongs()
-            val playlist = playlistRepository.createPlaylist(name, null, songs)
+            val playlist = playlistRepository.createPlaylist(
+                name = name,
+                mediaProviderType = MediaProvider.Type.Shuttle,
+                songs = songs,
+                externalId = null
+            )
 
             if (playlistData != null) {
                 view?.onAddedToPlaylist(playlist, playlistData)

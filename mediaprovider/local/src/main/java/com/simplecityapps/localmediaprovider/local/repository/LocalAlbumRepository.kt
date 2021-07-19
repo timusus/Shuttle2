@@ -36,7 +36,7 @@ class LocalAlbumRepository(
                     }
             }
             .flowOn(Dispatchers.IO)
-            .stateIn(scope, SharingStarted.WhileSubscribed(), null)
+            .stateIn(scope, SharingStarted.Lazily, null)
     }
 
     override fun getAlbums(query: AlbumQuery): Flow<List<Album>> {

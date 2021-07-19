@@ -5,6 +5,7 @@ import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
+import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
@@ -41,7 +42,7 @@ interface SongListContract {
         fun showLoadError(error: Error)
         fun onAddedToQueue(songs: List<Song>)
         fun setLoadingState(state: LoadingState)
-        fun setLoadingProgress(progress: Float)
+        fun setLoadingProgress(progress: Progress?)
         fun showDeleteError(error: Error)
     }
 
@@ -73,8 +74,8 @@ class SongListPresenter @Inject constructor(
     var songs: List<Song> = emptyList()
 
     private val mediaImporterListener = object : MediaImporter.Listener {
-        override fun onProgress(providerType: MediaProvider.Type, progress: Int, total: Int, song: Song) {
-            view?.setLoadingProgress(progress / total.toFloat())
+        override fun onSongImportProgress(providerType: MediaProvider.Type, message: String, progress: Progress?) {
+            view?.setLoadingProgress(progress)
         }
     }
 
