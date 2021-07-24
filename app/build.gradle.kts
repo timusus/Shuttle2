@@ -50,8 +50,7 @@ android {
     flavorDimensions("all")
 
     packagingOptions {
-        exclude("META-INF/core_debug.kotlin_module")
-        exclude("META-INF/core_release.kotlin_module")
+        exclude("META-INF/*.kotlin_module")
     }
 
     compileOptions {
@@ -66,6 +65,7 @@ android {
 
     lintOptions {
         isCheckReleaseBuilds = false
+        isAbortOnError = false
     }
 
     dependencies {
@@ -78,7 +78,7 @@ android {
         implementation(project(":networking"))
 
         // TagLib
-        implementation(project(":ktaglib:lib"))
+        implementation("com.github.timusus:ktaglib:release-SNAPSHOT")
 
         // Shuttle MediaProvider Core
         implementation(project(":mediaprovider:core"))
@@ -166,8 +166,7 @@ android {
         implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.3.1")
 
         // ExoPlayer
-        implementation(project(":exoplayer-library-core"))
-        implementation(project(":exoplayer-library-hls"))
+        implementation("com.github.timusus:exoplayer:release-v2-flac-opus-SNAPSHOT")
 
         implementation("androidx.drawerlayout:drawerlayout:1.1.1")
 

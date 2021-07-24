@@ -47,7 +47,7 @@ dependencies {
     implementation project(':mediaprovider:jellyfin')
 
     // TagLib
-    implementation(project(":ktaglib:lib"))
+    implementation("com.github.timusus:ktaglib:release-SNAPSHOT")
 
     // Hilt
     implementation 'com.google.dagger:hilt-android:2.35.1'
