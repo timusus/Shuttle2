@@ -58,6 +58,10 @@ interface Playback {
 
     fun getPlaybackSpeed(): Float
 
+    fun respondsToAudioFocus(): Boolean {
+        return true
+    }
+
     interface Callback {
         fun onPlaybackStateChanged(playbackState: PlaybackState)
 

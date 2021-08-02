@@ -15,7 +15,7 @@ abstract class AudioFocusHelperBase(
     PlaybackWatcherCallback {
 
     internal val audioManager: AudioManager? by lazy {
-        context.getSystemService<AudioManager>()
+        context.getSystemService()
     }
 
     private var resumeOnFocusGain: Boolean = false
@@ -30,11 +30,15 @@ abstract class AudioFocusHelperBase(
 
     override var listener: AudioFocusHelper.Listener? = null
 
+    override var enabled: Boolean = true
+
     init {
         playbackWatcher.addCallback(this)
     }
 
     override fun onAudioFocusChange(focusChange: Int) {
+        if (!enabled) return
+
         when (focusChange) {
             AudioManager.AUDIOFOCUS_GAIN ->
                 if (playbackDelayed || resumeOnFocusGain) {
@@ -59,17 +63,27 @@ abstract class AudioFocusHelperBase(
                 pause()
             }
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
-                listener?.duck()
+                duck()
             }
         }
     }
 
+    fun duck() {
+        if (enabled) {
+            listener?.duck()
+        }
+    }
+
     fun restoreVolumeAndPlay() {
-        listener?.restoreVolumeAndPlay()
+        if (enabled) {
+            listener?.restoreVolumeAndPlay()
+        }
     }
 
     fun pause() {
-        listener?.pause()
+        if (enabled) {
+            listener?.pause()
+        }
     }
 
 
