@@ -2,7 +2,7 @@ buildscript {
     val kotlin_version by extra("1.5.10")
     repositories {
         google()
-        maven(url = "https://dl.bintray.com/kotlin/kotlin-eap")
+        mavenCentral()
     }
     dependencies {
         classpath("com.android.tools.build:gradle:4.2.2")
@@ -22,7 +22,7 @@ plugins {
 allprojects {
     repositories {
         google()
-        maven(url = "https://dl.bintray.com/kotlin/kotlin-eap")
+        mavenCentral()
         maven(url = "https://jitpack.io")
         maven(url = "https://plugins.gradle.org/m2/")
     }
