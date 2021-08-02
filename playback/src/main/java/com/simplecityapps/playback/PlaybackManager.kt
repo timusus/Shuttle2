@@ -329,6 +329,10 @@ class PlaybackManager(
         playback.setPlaybackSpeed(multiplier)
     }
 
+    fun getPlaybackSpeed(): Float {
+        return playback.getPlaybackSpeed()
+    }
+
 
     // Private
 

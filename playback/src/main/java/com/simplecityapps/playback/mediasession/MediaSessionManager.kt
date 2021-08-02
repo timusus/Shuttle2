@@ -163,7 +163,7 @@ class MediaSessionManager @Inject constructor(
             if (activeQueueItemId != this.activeQueueItemId) {
                 updateQueue()
                 playbackStateBuilder.setActiveQueueItemId(activeQueueItemId)
-                playbackStateBuilder.setState(getPlaybackState(), 0L, 1.0f)
+                playbackStateBuilder.setState(getPlaybackState(), 0L, playbackManager.getPlaybackSpeed())
                 updatePlaybackState()
                 updateMetadata()
             }
@@ -175,13 +175,13 @@ class MediaSessionManager @Inject constructor(
 
     override fun onPlaybackStateChanged(playbackState: PlaybackState) {
         mediaSession.isActive = playbackState == PlaybackState.Loading || playbackState == PlaybackState.Playing
-        playbackStateBuilder.setState(getPlaybackState(), playbackManager.getProgress()?.toLong() ?: PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, 1.0f)
+        playbackStateBuilder.setState(getPlaybackState(), playbackManager.getProgress()?.toLong() ?: PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, playbackManager.getPlaybackSpeed())
         updatePlaybackState()
     }
 
     override fun onProgressChanged(position: Int, duration: Int, fromUser: Boolean) {
         if (fromUser) {
-            playbackStateBuilder.setState(getPlaybackState(), position.toLong(), 1.0f)
+            playbackStateBuilder.setState(getPlaybackState(), position.toLong(), playbackManager.getPlaybackSpeed())
             updatePlaybackState()
         }
     }
@@ -189,7 +189,7 @@ class MediaSessionManager @Inject constructor(
     override fun onTrackEnded(song: Song) {
         super.onTrackEnded(song)
 
-        playbackStateBuilder.setState(getPlaybackState(), playbackManager.getProgress()?.toLong() ?: PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, 1.0f)
+        playbackStateBuilder.setState(getPlaybackState(), playbackManager.getProgress()?.toLong() ?: PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, playbackManager.getPlaybackSpeed())
         updatePlaybackState()
     }
 
