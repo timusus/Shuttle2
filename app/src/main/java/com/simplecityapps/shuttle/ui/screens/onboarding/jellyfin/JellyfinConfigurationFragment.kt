@@ -159,12 +159,6 @@ class JellyfinConfigurationFragment : DialogFragment() {
             hasError = true
         }
 
-        // Password
-        if (passwordInputLayout.editText!!.text.isEmpty()) {
-            passwordInputLayout.error = requireContext().getString(R.string.validation_field_required)
-            hasError = true
-        }
-
         return !hasError
     }
 

@@ -8,6 +8,7 @@ import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
+import timber.log.Timber
 import javax.inject.Inject
 
 class MiniPlayerPresenter @Inject constructor(
@@ -19,14 +20,6 @@ class MiniPlayerPresenter @Inject constructor(
     MiniPlayerContract.Presenter,
     PlaybackWatcherCallback,
     QueueChangeCallback {
-
-    override fun togglePlayback() {
-        playbackManager.togglePlayback()
-    }
-
-    override fun skipToNext() {
-        playbackManager.skipToNext(ignoreRepeat = true)
-    }
 
     override fun bindView(view: MiniPlayerContract.View) {
         super.bindView(view)
@@ -48,6 +41,21 @@ class MiniPlayerPresenter @Inject constructor(
         queueWatcher.removeCallback(this)
 
         super.unbindView()
+    }
+
+    override fun togglePlayback() {
+        playbackManager.togglePlayback()
+    }
+
+    override fun skipToNext() {
+        playbackManager.skipToNext(ignoreRepeat = true)
+    }
+
+    override fun seekForward(seconds: Int) {
+        Timber.v("seekForward() seconds: $seconds")
+        playbackManager.getProgress()?.let { position ->
+            playbackManager.seekTo(position + seconds * 1000)
+        }
     }
 
 

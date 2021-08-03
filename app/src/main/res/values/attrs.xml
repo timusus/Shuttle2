@@ -12,9 +12,21 @@
         </attr>
     </declare-styleable>
 
+    <attr name="seekDirection" format="enum">
+        <enum name="forward" value="0" />
+        <enum name="backward" value="1" />
+    </attr>
+
+    <attr name="seekAmount" format="integer" />
+
     <declare-styleable name="SeekButton">
-        <attr name="forward" format="boolean" />
-        <attr name="seconds" format="integer" />
+        <attr name="seekDirection" />
+        <attr name="seekAmount" />
+    </declare-styleable>
+
+    <declare-styleable name="SkipButton">
+        <attr name="seekDirection" />
+        <attr name="seekAmount" />
     </declare-styleable>
 
     <declare-styleable name="BadgeView">

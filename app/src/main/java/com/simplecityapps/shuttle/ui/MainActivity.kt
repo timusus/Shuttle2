@@ -44,9 +44,9 @@ class MainActivity :
         val graph = navInflater.inflate(R.navigation.launch)
 
         if (!preferenceManager.hasOnboarded || !hasStoragePermission()) {
-            graph.startDestination = R.id.onboardingFragment
+            graph.setStartDestination(R.id.onboardingFragment)
         } else {
-            graph.startDestination = R.id.mainFragment
+            graph.setStartDestination(R.id.mainFragment)
         }
 
         navController.graph = graph

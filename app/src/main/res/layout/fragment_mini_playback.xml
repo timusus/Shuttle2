@@ -66,14 +66,15 @@
         app:layout_constraintEnd_toStartOf="@id/skipNextButton"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <ImageButton
+    <com.simplecityapps.shuttle.ui.common.view.SkipButton
         android:id="@+id/skipNextButton"
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:background="?selectableItemBackgroundBorderless"
+        android:padding="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/ic_skip_next_black_24dp" />
+        app:seekAmount="15"
+        app:seekDirection="forward" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

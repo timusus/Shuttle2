@@ -35,14 +35,18 @@ class SeekButton @JvmOverloads constructor(
 
     private var seekDrawable: Drawable? = null
 
-    private var seekSeconds: Int = 15
+    private var seekAmount: Int = 15
 
-    private var forward: Boolean = true
+    private var direction: SeekDirection = SeekDirection.Forward
         set(value) {
             field = value
 
             seekDrawable = ContextCompat.getDrawable(
-                context, if (forward) R.drawable.ic_seek_forward_black_24dp else R.drawable.ic_seek_backward_black_24dp
+                context,
+                when (direction) {
+                    SeekDirection.Forward -> R.drawable.ic_seek_forward_black_24dp
+                    SeekDirection.Backward -> R.drawable.ic_seek_backward_black_24dp
+                }
             )!!.mutate()
         }
 
@@ -57,8 +61,8 @@ class SeekButton @JvmOverloads constructor(
         isFocusable = true
 
         context.theme.obtainStyledAttributes(attrs, R.styleable.SeekButton, 0, 0).use { typedArray ->
-            this.forward = typedArray.getBoolean(R.styleable.SeekButton_forward, true)
-            this.seekSeconds = typedArray.getInteger(R.styleable.SeekButton_seconds, 15)
+            this.direction = SeekDirection.fromInt(typedArray.getInt(R.styleable.SeekButton_seekDirection, 0))
+            this.seekAmount = typedArray.getInteger(R.styleable.SeekButton_seekAmount, 15)
         }
 
         TypedValue().apply {
@@ -87,13 +91,13 @@ class SeekButton @JvmOverloads constructor(
         animator!!.duration = 450
         animator!!.interpolator = FastOutSlowInInterpolator()
         animator!!.addUpdateListener { animator ->
-            seekRotation = (animator.animatedValue as Float) * (if (forward) 1f else -1f)
+            seekRotation = (animator.animatedValue as Float) * (if (direction == SeekDirection.Forward) 1f else -1f)
             invalidate()
         }
         animator!!.addListener(onEnd = { rotation = 0f })
 
         setOnClickListener {
-            listener?.onSeek(seekSeconds)
+            listener?.onSeek(seekAmount)
 
             animator?.start()
         }
@@ -102,7 +106,7 @@ class SeekButton @JvmOverloads constructor(
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
 
-        val text = seekSeconds.toString()
+        val text = seekAmount.toString()
         canvas.getClipBounds(textRect)
         val textHeight = textRect.height()
         val textWidth = textRect.width()

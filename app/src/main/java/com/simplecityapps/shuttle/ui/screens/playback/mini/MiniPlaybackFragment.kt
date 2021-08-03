@@ -17,6 +17,7 @@ import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
 import com.simplecityapps.shuttle.ui.common.utils.dp
 import com.simplecityapps.shuttle.ui.common.view.PlayStateView
 import com.simplecityapps.shuttle.ui.common.view.ProgressView
+import com.simplecityapps.shuttle.ui.common.view.SkipButton
 import com.squareup.phrase.ListPhrase
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -32,7 +33,7 @@ class MiniPlaybackFragment : Fragment(), MiniPlayerContract.View {
 
     private var imageView: ImageView by autoCleared()
     private var playStateView: PlayStateView by autoCleared()
-    private var skipNextButton: ImageButton by autoCleared()
+    private var skipNextButton: SkipButton by autoCleared()
     private var titleTextView: TextView by autoCleared()
     private var subtitleTextView: TextView by autoCleared()
     private var progressView: ProgressView by autoCleared()
@@ -55,6 +56,11 @@ class MiniPlaybackFragment : Fragment(), MiniPlayerContract.View {
 
         playStateView.setOnClickListener { presenter.togglePlayback() }
         skipNextButton.setOnClickListener { presenter.skipToNext() }
+        skipNextButton.listener = object : SkipButton.OnSeekListener {
+            override fun onSeek(seekAmount: Int) {
+                presenter.seekForward(seekAmount)
+            }
+        }
     }
 
     override fun onDestroyView() {

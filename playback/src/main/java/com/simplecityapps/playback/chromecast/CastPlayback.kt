@@ -193,6 +193,10 @@ class CastPlayback(
         }
     }
 
+    override fun respondsToAudioFocus(): Boolean {
+        return false
+    }
+
     private fun updatePlaybackState() {
         val playerState = castSession.remoteMediaClient?.playerState
         // Convert the remote playback states to media playback states.

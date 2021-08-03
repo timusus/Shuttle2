@@ -66,7 +66,7 @@ fun KTagLib.getAudioFile(fileDescriptor: Int, filePath: String, fileName: String
         title = metadata?.propertyMap?.get(TagLibProperty.Title.key)?.firstOrNull() ?: fileName,
         albumArtist = metadata?.propertyMap?.get(TagLibProperty.AlbumArtist.key)?.firstOrNull(),
         artists = metadata?.propertyMap?.get(TagLibProperty.Artist.key).orEmpty().flatMap { artist ->
-            artist.split(",", ";")
+            artist.split(';', '\u0000')
                 .map { artist -> artist.trim() }
                 .filterNot { artist -> artist.isEmpty() }
         },
@@ -80,12 +80,16 @@ fun KTagLib.getAudioFile(fileDescriptor: Int, filePath: String, fileName: String
             ?: metadata?.propertyMap?.get(TagLibProperty.OriginalDate.key)?.firstOrNull())?.parseDate()
             ?: metadata?.propertyMap?.get(TagLibProperty.Year.key)?.firstOrNull()?.parseDate(),
         genres = metadata?.propertyMap?.get(TagLibProperty.Genre.key).orEmpty().flatMap { genre ->
-            genre.split(",", ";", "/")
+            genre.split(',', ';', '/', '\u0000')
                 .map { genre -> genre.trim() }
                 .filterNot { genre -> genre.isEmpty() }
         },
-        replayGainTrack = metadata?.propertyMap?.get(TagLibProperty.ReplayGainTrack.key)?.firstOrNull()?.take(9)?.toDoubleOrNull(),
-        replayGainAlbum = metadata?.propertyMap?.get(TagLibProperty.ReplayGainAlbum.key)?.firstOrNull()?.take(9)?.toDoubleOrNull(),
+        replayGainTrack = metadata?.propertyMap?.getCaseInsensitive(TagLibProperty.ReplayGainTrack.key)
+            ?.firstOrNull()?.take(9)
+            ?.toDoubleOrNull(),
+        replayGainAlbum = metadata?.propertyMap?.getCaseInsensitive(TagLibProperty.ReplayGainAlbum.key)
+            ?.firstOrNull()?.take(9)
+            ?.toDoubleOrNull(),
         lyrics = metadata?.propertyMap?.get(TagLibProperty.Lyrics.key)?.firstOrNull(),
         grouping = metadata?.propertyMap?.get(TagLibProperty.Grouping.key)?.firstOrNull(),
         bitRate = metadata?.audioProperties?.bitrate,
@@ -103,4 +107,8 @@ fun String.parseDate(): String? {
         return substring(0, 4)
     }
     return this
+}
+
+fun <V> Map<String, V>.getCaseInsensitive(key: String): V? {
+    return get(key) ?: get(key.lowercase(Locale.US))
 }

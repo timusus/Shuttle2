@@ -169,13 +169,14 @@
         app:layout_constraintStart_toEndOf="@+id/shuffleButton"
         app:layout_constraintTop_toTopOf="@+id/playPauseButton">
 
-        <ImageButton
+        <com.simplecityapps.shuttle.ui.common.view.SkipButton
             android:id="@+id/skipPrevButton"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:background="?selectableItemBackgroundBorderless"
             android:contentDescription="@string/button_skip_previous"
-            app:srcCompat="@drawable/ic_skip_previous_black_24dp"
+            android:padding="10dp"
+            app:seekAmount="15"
+            app:seekDirection="backward"
             tools:visibility="visible" />
 
         <com.simplecityapps.shuttle.ui.common.view.SeekButton
@@ -185,8 +186,8 @@
             android:contentDescription="@string/button_seek_backward"
             android:padding="8dp"
             android:visibility="gone"
-            app:forward="false"
-            app:seconds="10"
+            app:seekAmount="10"
+            app:seekDirection="backward"
             tools:visibility="gone" />
 
     </FrameLayout>
@@ -218,13 +219,14 @@
         app:layout_constraintStart_toEndOf="@+id/playPauseButton"
         app:layout_constraintTop_toTopOf="@+id/playPauseButton">
 
-        <ImageButton
+        <com.simplecityapps.shuttle.ui.common.view.SkipButton
             android:id="@+id/skipNextButton"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:background="?selectableItemBackgroundBorderless"
             android:contentDescription="@string/button_skip_next"
-            app:srcCompat="@drawable/ic_skip_next_black_24dp"
+            android:padding="10dp"
+            app:seekAmount="15"
+            app:seekDirection="forward"
             tools:visibility="visible" />
 
         <com.simplecityapps.shuttle.ui.common.view.SeekButton
@@ -234,8 +236,8 @@
             android:contentDescription="@string/button_seek_forward"
             android:padding="8dp"
             android:visibility="gone"
-            app:forward="true"
-            app:seconds="30"
+            app:seekAmount="30"
+            app:seekDirection="forward"
             tools:visibility="gone" />
 
     </FrameLayout>

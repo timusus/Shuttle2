@@ -22,6 +22,8 @@ class AudioFocusHelperApi26(context: Context, playbackWatcher: PlaybackWatcher) 
         .build()
 
     override fun requestAudioFocus(): Boolean {
+        if (!enabled) return true
+
         val result = audioManager?.requestAudioFocus(focusRequest)
         synchronized(focusLock) {
             when (result) {
@@ -41,6 +43,8 @@ class AudioFocusHelperApi26(context: Context, playbackWatcher: PlaybackWatcher) 
     }
 
     override fun abandonAudioFocus() {
+        if (!enabled) return
+
         audioManager?.abandonAudioFocusRequest(focusRequest)
     }
 }

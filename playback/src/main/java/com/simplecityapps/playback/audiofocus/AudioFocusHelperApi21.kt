@@ -8,6 +8,8 @@ import com.simplecityapps.playback.PlaybackWatcher
 class AudioFocusHelperApi21(context: Context, playbackWatcher: PlaybackWatcher) : AudioFocusHelperBase(context, playbackWatcher) {
 
     override fun requestAudioFocus(): Boolean {
+        if (!enabled) return true
+
         val result = audioManager?.requestAudioFocus(this, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN)
         if (result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
             return true
@@ -16,6 +18,8 @@ class AudioFocusHelperApi21(context: Context, playbackWatcher: PlaybackWatcher) 
     }
 
     override fun abandonAudioFocus() {
+        if (!enabled) return
+
         audioManager?.abandonAudioFocus(this)
     }
 }

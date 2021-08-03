@@ -45,6 +45,7 @@ class PlaybackManager(
         playback.setAudioSessionId(audioSessionId)
         audioEffectSessionManager.sessionId = audioSessionId
         audioFocusHelper.listener = this
+        audioFocusHelper.enabled = playback.respondsToAudioFocus()
 
         queueWatcher.addCallback(this)
 
@@ -152,11 +153,6 @@ class PlaybackManager(
         } else {
             Timber.w("play() failed, audio focus request denied.")
         }
-    }
-
-    override fun pause() {
-        Timber.v("pause()")
-        playback.pause()
     }
 
     fun release() {
@@ -312,6 +308,7 @@ class PlaybackManager(
         playback.callback = this
         playback.setAudioSessionId(audioSessionId)
         playback.setPlaybackSpeed(playbackSpeed)
+        audioFocusHelper.enabled = playback.respondsToAudioFocus()
 
         load(seekPosition ?: 0) { result ->
             result.onSuccess {
@@ -327,6 +324,10 @@ class PlaybackManager(
 
     fun setPlaybackSpeed(multiplier: Float) {
         playback.setPlaybackSpeed(multiplier)
+    }
+
+    fun getPlaybackSpeed(): Float {
+        return playback.getPlaybackSpeed()
     }
 
 
@@ -410,6 +411,11 @@ class PlaybackManager(
 
 
     // AudioFocusHelper.Listener Implementation
+
+    override fun pause() {
+        Timber.v("pause()")
+        playback.pause()
+    }
 
     override fun restoreVolumeAndPlay() {
         playback.setVolume(1.0f)

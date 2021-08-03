@@ -12,5 +12,3 @@ Shuttle Music Player 2.0
 ### Build instructions:
 
 1. Ensure you have a valid 'google-services.json' in 'app/'
-2. Initialise/update submodules with `git submodule update --init --recursive`
-3. Install exoplayer FLAC/Opus extensions via `./update-exoplayer.sh` (Linux only, Optional)

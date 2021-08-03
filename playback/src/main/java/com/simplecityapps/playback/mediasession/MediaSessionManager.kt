@@ -86,6 +86,24 @@ class MediaSessionManager @Inject constructor(
                     or PlaybackStateCompat.ACTION_PREPARE_FROM_MEDIA_ID
                     or PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID
         )
+
+        updateShuffleAction()
+    }
+
+    private fun updateShuffleAction() {
+        playbackStateBuilder = playbackStateBuilder.copyWithoutCustomActions()
+        when (queueManager.getShuffleMode()) {
+            QueueManager.ShuffleMode.Off -> {
+                playbackStateBuilder.addCustomAction(
+                    PlaybackStateCompat.CustomAction.Builder(ACTION_SHUFFLE, context.getString(R.string.shuffle_on), R.drawable.ic_shuffle_off_black_24dp).build()
+                )
+            }
+            QueueManager.ShuffleMode.On -> {
+                playbackStateBuilder.addCustomAction(
+                    PlaybackStateCompat.CustomAction.Builder(ACTION_SHUFFLE, context.getString(R.string.shuffle_off), R.drawable.ic_shuffle_black_24dp).build()
+                )
+            }
+        }
     }
 
     private fun getPlaybackState() = when (playbackManager.playbackState()) {
@@ -163,7 +181,7 @@ class MediaSessionManager @Inject constructor(
             if (activeQueueItemId != this.activeQueueItemId) {
                 updateQueue()
                 playbackStateBuilder.setActiveQueueItemId(activeQueueItemId)
-                playbackStateBuilder.setState(getPlaybackState(), 0L, 1.0f)
+                playbackStateBuilder.setState(getPlaybackState(), 0L, playbackManager.getPlaybackSpeed())
                 updatePlaybackState()
                 updateMetadata()
             }
@@ -175,13 +193,13 @@ class MediaSessionManager @Inject constructor(
 
     override fun onPlaybackStateChanged(playbackState: PlaybackState) {
         mediaSession.isActive = playbackState == PlaybackState.Loading || playbackState == PlaybackState.Playing
-        playbackStateBuilder.setState(getPlaybackState(), playbackManager.getProgress()?.toLong() ?: PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, 1.0f)
+        playbackStateBuilder.setState(getPlaybackState(), playbackManager.getProgress()?.toLong() ?: PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, playbackManager.getPlaybackSpeed())
         updatePlaybackState()
     }
 
     override fun onProgressChanged(position: Int, duration: Int, fromUser: Boolean) {
         if (fromUser) {
-            playbackStateBuilder.setState(getPlaybackState(), position.toLong(), 1.0f)
+            playbackStateBuilder.setState(getPlaybackState(), position.toLong(), playbackManager.getPlaybackSpeed())
             updatePlaybackState()
         }
     }
@@ -189,7 +207,7 @@ class MediaSessionManager @Inject constructor(
     override fun onTrackEnded(song: Song) {
         super.onTrackEnded(song)
 
-        playbackStateBuilder.setState(getPlaybackState(), playbackManager.getProgress()?.toLong() ?: PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, 1.0f)
+        playbackStateBuilder.setState(getPlaybackState(), playbackManager.getProgress()?.toLong() ?: PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, playbackManager.getPlaybackSpeed())
         updatePlaybackState()
     }
 
@@ -211,6 +229,8 @@ class MediaSessionManager @Inject constructor(
 
     override fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
         mediaSession.setShuffleMode(shuffleMode.toShuffleMode())
+        updateShuffleAction()
+        updatePlaybackState()
     }
 
     override fun onRepeatChanged(repeatMode: QueueManager.RepeatMode) {
@@ -301,6 +321,14 @@ class MediaSessionManager @Inject constructor(
             playFromSearch(playWhenReady = false, query = query, extras = extras)
         }
 
+        override fun onCustomAction(action: String?, extras: Bundle?) {
+            if (action == ACTION_SHUFFLE) {
+                appCoroutineScope.launch {
+                    queueManager.toggleShuffleMode()
+                }
+            }
+        }
+
         private fun playFromSearch(playWhenReady: Boolean, query: String?, extras: Bundle?) {
             Timber.v("performSearch($query)")
 
@@ -363,5 +391,17 @@ class MediaSessionManager @Inject constructor(
                 } ?: Timber.v("Search query $query with focus $mediaFocus yielded no results")
             }
         }
+    }
+
+    fun PlaybackStateCompat.Builder.copyWithoutCustomActions(): PlaybackStateCompat.Builder {
+        val thing = this.build()
+        return PlaybackStateCompat.Builder()
+            .setState(thing.state, thing.position, thing.playbackSpeed)
+            .setActions(thing.actions)
+            .setActiveQueueItemId(thing.activeQueueItemId)
+    }
+
+    companion object {
+        const val ACTION_SHUFFLE = "com.simplecityapps.shuttle.shuffle"
     }
 }
