@@ -64,8 +64,8 @@ class PlaybackFragment :
     private var adapter: RecyclerAdapter by autoCleared()
 
     private var playStateView: PlayStateView by autoCleared()
-    private var skipNextButton: ImageButton by autoCleared()
-    private var skipPrevButton: ImageButton by autoCleared()
+    private var skipButton: SkipButton by autoCleared()
+    private var skipPrevButton: SkipButton by autoCleared()
     private var shuffleButton: ShuffleButton by autoCleared()
     private var repeatButton: RepeatButton by autoCleared()
     private var seekBackwardButton: SeekButton by autoCleared()
@@ -104,7 +104,7 @@ class PlaybackFragment :
 
         toolbar = view.findViewById(R.id.toolbar)
 
-        skipNextButton = view.findViewById(R.id.skipNextButton)
+        skipButton = view.findViewById(R.id.skipNextButton)
         skipPrevButton = view.findViewById(R.id.skipPrevButton)
         playStateView = view.findViewById(R.id.playPauseButton)
         shuffleButton = view.findViewById(R.id.shuffleButton)
@@ -125,8 +125,20 @@ class PlaybackFragment :
         }
         shuffleButton.setOnClickListener { presenter.toggleShuffle() }
         repeatButton.setOnClickListener { presenter.toggleRepeat() }
-        skipNextButton.setOnClickListener { presenter.skipNext() }
+        skipButton.setOnClickListener { presenter.skipNext() }
+        skipButton.listener = object : SkipButton.OnSeekListener {
+            override fun onSeek(seekAmount: Int) {
+                presenter.seekForward(seekAmount)
+            }
+
+        }
         skipPrevButton.setOnClickListener { presenter.skipPrev() }
+        skipPrevButton.listener = object : SkipButton.OnSeekListener {
+            override fun onSeek(seekAmount: Int) {
+                presenter.seekBackward(seekAmount)
+            }
+
+        }
         seekBackwardButton.listener = object : SeekButton.OnSeekListener {
             override fun onSeek(seekAmount: Int) {
                 presenter.seekBackward(seekAmount)
@@ -249,13 +261,13 @@ class PlaybackFragment :
                     seekBackwardButton.isVisible = true
                     seekForwardButton.isVisible = true
                     skipPrevButton.isVisible = false
-                    skipNextButton.isVisible = false
+                    skipButton.isVisible = false
                 }
                 else -> {
                     seekBackwardButton.isVisible = false
                     seekForwardButton.isVisible = false
                     skipPrevButton.isVisible = true
-                    skipNextButton.isVisible = true
+                    skipButton.isVisible = true
                 }
             }
 
