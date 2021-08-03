@@ -11,8 +11,6 @@ android {
     defaultConfig {
         minSdkVersion 21
         targetSdkVersion 30
-        versionCode 1
-        versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -59,8 +57,8 @@ dependencies {
     implementation 'com.jakewharton.timber:timber:4.7.1'
 
     // Hilt
-    implementation 'com.google.dagger:hilt-android:2.35.1'
-    kapt 'com.google.dagger:hilt-compiler:2.35.1'
+    implementation 'com.google.dagger:hilt-android:2.38.1'
+    kapt 'com.google.dagger:hilt-compiler:2.38.1'
 
     // Coroutines
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0")

@@ -1,6 +1,6 @@
 plugins {
     id("com.android.application")
-    id("com.github.triplet.play") version "3.4.0-agp4.2"
+    id("com.github.triplet.play") version "3.6.0"
     id("kotlin-android")
     id("androidx.navigation.safeargs.kotlin")
     id("kotlin-kapt")
@@ -48,9 +48,10 @@ android {
     }
 
     flavorDimensions("all")
-
     packagingOptions {
-        exclude("META-INF/*.kotlin_module")
+        resources {
+            excludes += setOf("META-INF/*.kotlin_module")
+        }
     }
 
     compileOptions {
@@ -62,10 +63,9 @@ android {
         jvmTarget = "1.8"
         freeCompilerArgs = freeCompilerArgs + "-Xopt-in=kotlin.RequiresOptIn"
     }
-
-    lintOptions {
-        isCheckReleaseBuilds = false
-        isAbortOnError = false
+    lint {
+        abortOnError = false
+        checkReleaseBuilds = false
     }
 
     dependencies {
@@ -115,12 +115,12 @@ android {
         implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
 
         // AndroidX Navigation
-        implementation("androidx.navigation:navigation-fragment-ktx:2.3.5")
-        implementation("androidx.navigation:navigation-ui-ktx:2.3.5")
+        implementation("androidx.navigation:navigation-fragment-ktx:2.4.0-alpha05")
+        implementation("androidx.navigation:navigation-ui-ktx:2.4.0-alpha05")
 
         // Hilt
-        implementation("com.google.dagger:hilt-android:2.35.1")
-        kapt("com.google.dagger:hilt-compiler:2.35.1")
+        implementation("com.google.dagger:hilt-android:2.38.1")
+        kapt("com.google.dagger:hilt-compiler:2.38.1")
 
         // AssistedInject
         compileOnly("com.squareup.inject:assisted-inject-annotations-dagger2:0.6.0")
