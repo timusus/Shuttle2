@@ -66,7 +66,7 @@ fun KTagLib.getAudioFile(fileDescriptor: Int, filePath: String, fileName: String
         title = metadata?.propertyMap?.get(TagLibProperty.Title.key)?.firstOrNull() ?: fileName,
         albumArtist = metadata?.propertyMap?.get(TagLibProperty.AlbumArtist.key)?.firstOrNull(),
         artists = metadata?.propertyMap?.get(TagLibProperty.Artist.key).orEmpty().flatMap { artist ->
-            artist.split(",", ";")
+            artist.split(';', '\u0000')
                 .map { artist -> artist.trim() }
                 .filterNot { artist -> artist.isEmpty() }
         },
@@ -80,7 +80,7 @@ fun KTagLib.getAudioFile(fileDescriptor: Int, filePath: String, fileName: String
             ?: metadata?.propertyMap?.get(TagLibProperty.OriginalDate.key)?.firstOrNull())?.parseDate()
             ?: metadata?.propertyMap?.get(TagLibProperty.Year.key)?.firstOrNull()?.parseDate(),
         genres = metadata?.propertyMap?.get(TagLibProperty.Genre.key).orEmpty().flatMap { genre ->
-            genre.split(",", ";", "/")
+            genre.split(',', ';', '/', '\u0000')
                 .map { genre -> genre.trim() }
                 .filterNot { genre -> genre.isEmpty() }
         },
