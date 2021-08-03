@@ -84,8 +84,12 @@ fun KTagLib.getAudioFile(fileDescriptor: Int, filePath: String, fileName: String
                 .map { genre -> genre.trim() }
                 .filterNot { genre -> genre.isEmpty() }
         },
-        replayGainTrack = metadata?.propertyMap?.get(TagLibProperty.ReplayGainTrack.key)?.firstOrNull()?.take(9)?.toDoubleOrNull(),
-        replayGainAlbum = metadata?.propertyMap?.get(TagLibProperty.ReplayGainAlbum.key)?.firstOrNull()?.take(9)?.toDoubleOrNull(),
+        replayGainTrack = metadata?.propertyMap?.getCaseInsensitive(TagLibProperty.ReplayGainTrack.key)
+            ?.firstOrNull()?.take(9)
+            ?.toDoubleOrNull(),
+        replayGainAlbum = metadata?.propertyMap?.getCaseInsensitive(TagLibProperty.ReplayGainAlbum.key)
+            ?.firstOrNull()?.take(9)
+            ?.toDoubleOrNull(),
         lyrics = metadata?.propertyMap?.get(TagLibProperty.Lyrics.key)?.firstOrNull(),
         grouping = metadata?.propertyMap?.get(TagLibProperty.Grouping.key)?.firstOrNull(),
         bitRate = metadata?.audioProperties?.bitrate,
@@ -103,4 +107,8 @@ fun String.parseDate(): String? {
         return substring(0, 4)
     }
     return this
+}
+
+fun <V> Map<String, V>.getCaseInsensitive(key: String): V? {
+    return get(key) ?: get(key.lowercase(Locale.US))
 }
