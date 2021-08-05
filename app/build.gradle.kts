@@ -21,7 +21,7 @@ android {
         versionName = computeVersionName()
         versionCode = computeVersionCode()
         vectorDrawables.useSupportLibrary = true
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.simplecityapps.shuttle.CustomTestRunner"
         ndk {
             debugSymbolLevel = "FULL"
         }
@@ -78,7 +78,7 @@ android {
         implementation(project(":networking"))
 
         // TagLib
-        implementation("com.github.timusus:ktaglib:release-SNAPSHOT")
+        implementation("com.github.timusus:ktaglib:1.4.1")
 
         // Shuttle MediaProvider Core
         implementation(project(":mediaprovider:core"))
@@ -121,6 +121,9 @@ android {
         // Hilt
         implementation("com.google.dagger:hilt-android:2.38.1")
         kapt("com.google.dagger:hilt-compiler:2.38.1")
+
+        androidTestImplementation("com.google.dagger:hilt-android-testing:2.37")
+        kaptAndroidTest("com.google.dagger:hilt-android-compiler:2.37")
 
         // AssistedInject
         compileOnly("com.squareup.inject:assisted-inject-annotations-dagger2:0.6.0")
@@ -166,7 +169,8 @@ android {
         implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.3.1")
 
         // ExoPlayer
-        implementation("com.github.timusus:exoplayer:release-v2-flac-opus-SNAPSHOT")
+        implementation("com.github.timusus.exoplayer:exoplayer-core:r2.14.2-shuttle")
+        implementation("com.github.timusus.exoplayer:exoplayer-hls:r2.14.2-shuttle")
 
         implementation("androidx.drawerlayout:drawerlayout:1.1.1")
 
@@ -197,8 +201,6 @@ android {
         androidTestImplementation("androidx.test:rules:1.4.0")
         androidTestImplementation("androidx.test:core-ktx:1.4.0")
         androidTestImplementation("org.hamcrest:hamcrest-library:1.3")
-
-        testImplementation("junit:junit:4.13.2")
     }
 }
 
@@ -224,12 +226,26 @@ apply(plugin = "com.google.gms.google-services")
 
 fun computeVersionName(): String {
     if (System.getenv("JENKINS_URL") != null) {
-        return String.format("%d.%d.%d%s", AppVersion.versionMajor, AppVersion.versionMinor, AppVersion.versionPatch, AppVersion.versionSuffix)
+        return String.format(
+            "%d.%d.%d%s",
+            AppVersion.versionMajor,
+            AppVersion.versionMinor,
+            AppVersion.versionPatch,
+            AppVersion.versionSuffix
+        )
     }
-    return String.format("%d.%d.%d%s", AppVersion.versionMajor, AppVersion.versionMinor, AppVersion.versionPatch, AppVersion.versionSuffix)
+    return String.format(
+        "%d.%d.%d%s",
+        AppVersion.versionMajor,
+        AppVersion.versionMinor,
+        AppVersion.versionPatch,
+        AppVersion.versionSuffix
+    )
 }
 
 fun computeVersionCode(): Int {
     // Major + minor + Jenkins build number (where available)
-    return (AppVersion.versionMajor * 10000000) + (AppVersion.versionMinor * 1000000) + (AppVersion.versionPatch * 10000) + Integer.valueOf(System.getenv("BUILD_NUMBER") ?: "0")
+    return (AppVersion.versionMajor * 10000000) + (AppVersion.versionMinor * 1000000) + (AppVersion.versionPatch * 10000) + Integer.valueOf(
+        System.getenv("BUILD_NUMBER") ?: "0"
+    )
 }

@@ -55,7 +55,11 @@ dependencies {
     implementation 'org.nanohttpd:nanohttpd-webserver:2.3.1'
 
     // ExoPlayer
-    implementation("com.github.timusus:exoplayer:release-v2-flac-opus-SNAPSHOT")
+
+    implementation("com.github.timusus.exoplayer:exoplayer-core:r2.14.2-shuttle")
+    implementation("com.github.timusus.exoplayer:exoplayer-hls:r2.14.2-shuttle")
+    implementation("com.github.timusus.exoplayer:extension-flac:r2.14.2-shuttle")
+    implementation("com.github.timusus.exoplayer:extension-opus:r2.14.2-shuttle")
 
     // Moshi
     implementation 'com.squareup.moshi:moshi-kotlin:1.12.0'
