@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
@@ -130,7 +131,7 @@ class QueueBinder(
                 options = listOf(
                     ArtworkImageLoader.Options.RoundedCorners(8.dp),
                     ArtworkImageLoader.Options.Crossfade(200),
-                    ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_song_rounded)
+                    ArtworkImageLoader.Options.Placeholder(ResourcesCompat.getDrawable(itemView.resources, R.drawable.ic_placeholder_song_rounded, itemView.context.theme)!!)
                 )
             )
 

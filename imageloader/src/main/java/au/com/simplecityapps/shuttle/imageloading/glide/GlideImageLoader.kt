@@ -106,7 +106,7 @@ class GlideImageLoader : ArtworkImageLoader {
     }
 
     private fun loadBitmapTarget(data: Any, options: List<ArtworkImageLoader.Options>, completionHandler: (Bitmap?) -> Unit): RequestBuilder<Bitmap> {
-        val glideRequest = requestManager
+        var glideRequest = requestManager
             .asBitmap()
             .load(data)
             .addListener(object : RequestListener<Bitmap> {
@@ -122,7 +122,7 @@ class GlideImageLoader : ArtworkImageLoader {
             })
 
         options.forEach { option ->
-            when (option) {
+            glideRequest = when (option) {
                 is ArtworkImageLoader.Options.CircleCrop -> {
                     glideRequest.apply(RequestOptions.circleCropTransform())
                 }
@@ -147,13 +147,13 @@ class GlideImageLoader : ArtworkImageLoader {
                     glideRequest.diskCacheStrategy(DiskCacheStrategy.ALL)
                 }
                 ArtworkImageLoader.Options.LoadColorSet -> {
-
+                    glideRequest
                 }
                 is ArtworkImageLoader.Options.Placeholder -> {
-                    glideRequest.error(option.placeholderResId)
+                    glideRequest.error(option.placeholderRes)
                 }
                 is ArtworkImageLoader.Options.Error -> {
-                    glideRequest.error(option.errorResId)
+                    glideRequest.error(option.errorRes)
                 }
             }
         }
@@ -162,11 +162,11 @@ class GlideImageLoader : ArtworkImageLoader {
     }
 
     fun getRequestBuilder(options: List<ArtworkImageLoader.Options>): RequestBuilder<Drawable> {
-        val glideRequest = requestManager
+        var glideRequest = requestManager
             .asDrawable()
 
         options.forEach { option ->
-            when (option) {
+            glideRequest = when (option) {
                 is ArtworkImageLoader.Options.CircleCrop -> {
                     glideRequest.apply(RequestOptions.circleCropTransform())
                 }
@@ -185,7 +185,10 @@ class GlideImageLoader : ArtworkImageLoader {
                     glideRequest.transition(DrawableTransitionOptions.withCrossFade(option.duration))
                 }
                 is ArtworkImageLoader.Options.Placeholder -> {
-                    glideRequest.placeholder(option.placeholderResId)
+                    glideRequest.placeholder(option.placeholderRes)
+                }
+                is ArtworkImageLoader.Options.Error -> {
+                    glideRequest.error(option.errorRes)
                 }
                 is ArtworkImageLoader.Options.CenterCrop -> {
                     glideRequest.apply(RequestOptions.centerCropTransform())
@@ -194,7 +197,7 @@ class GlideImageLoader : ArtworkImageLoader {
                     glideRequest.diskCacheStrategy(DiskCacheStrategy.ALL)
                 }
                 ArtworkImageLoader.Options.LoadColorSet -> {
-
+                    glideRequest
                 }
             }
         }

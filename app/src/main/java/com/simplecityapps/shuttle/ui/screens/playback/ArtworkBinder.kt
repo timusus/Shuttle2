@@ -4,6 +4,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import androidx.core.content.res.ResourcesCompat
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.playback.queue.QueueItem
@@ -53,7 +54,7 @@ class ArtworkBinder(
                     data = viewBinder.queueItem.song,
                     options = listOf(
                         ArtworkImageLoader.Options.RoundedCorners(16.dp),
-                        ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_song)
+                        ArtworkImageLoader.Options.Placeholder(ResourcesCompat.getDrawable(itemView.resources, R.drawable.ic_placeholder_song, itemView.context.theme)!!)
                     )
                 )
             }

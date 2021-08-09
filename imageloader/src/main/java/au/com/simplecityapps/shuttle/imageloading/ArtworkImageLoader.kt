@@ -2,6 +2,7 @@ package au.com.simplecityapps.shuttle.imageloading
 
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.drawable.Drawable
 import android.widget.ImageView
 import androidx.annotation.WorkerThread
 import au.com.simplecityapps.shuttle.imageloading.palette.ColorSet
@@ -44,8 +45,8 @@ interface ArtworkImageLoader {
 
         class Crossfade(val duration: Int) : Options()
 
-        class Placeholder(val placeholderResId: Int) : Options()
-        class Error(val errorResId: Int) : Options()
+        class Placeholder(val placeholderRes: Drawable) : Options()
+        class Error(val errorRes: Drawable) : Options()
 
         object CircleCrop : Options()
 

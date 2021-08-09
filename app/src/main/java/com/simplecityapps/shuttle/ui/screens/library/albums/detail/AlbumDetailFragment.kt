@@ -10,6 +10,7 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.Toolbar
+import androidx.core.content.res.ResourcesCompat
 import androidx.core.os.postDelayed
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -143,7 +144,7 @@ class AlbumDetailFragment :
             album,
             listOf(
                 ArtworkImageLoader.Options.Priority.Max,
-                ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_album)
+                ArtworkImageLoader.Options.Placeholder(ResourcesCompat.getDrawable(resources, R.drawable.ic_placeholder_album, requireContext().theme)!!)
             )
         )
         if (showHeroView || !animateTransition) {

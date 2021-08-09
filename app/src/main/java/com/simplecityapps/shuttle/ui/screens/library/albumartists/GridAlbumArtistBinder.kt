@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.cardview.widget.CardView
+import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.isVisible
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.model.AlbumArtist
@@ -63,7 +64,7 @@ class GridAlbumArtistBinder(
             }
 
             val options = mutableListOf(
-                ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_artist),
+                ArtworkImageLoader.Options.Placeholder(ResourcesCompat.getDrawable(itemView.resources, R.drawable.ic_placeholder_artist, itemView.context.theme)!!),
                 ArtworkImageLoader.Options.CacheDecodedResource
             )
             if (viewBinder.coloredBackground) {

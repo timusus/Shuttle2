@@ -9,6 +9,7 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.Toolbar
+import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
@@ -232,7 +233,7 @@ class PlaylistDetailFragment :
                     heroImage,
                     playlistSongs.random().song,
                     listOf(
-                        ArtworkImageLoader.Options.Placeholder(R.drawable.ic_placeholder_playlist),
+                        ArtworkImageLoader.Options.Placeholder(ResourcesCompat.getDrawable(resources, R.drawable.ic_placeholder_playlist, requireContext().theme)!!),
                         ArtworkImageLoader.Options.Priority.Max
                     ),
                 )
