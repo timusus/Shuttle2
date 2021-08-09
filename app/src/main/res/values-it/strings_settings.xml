@@ -44,6 +44,8 @@
     <string name="pref_category_title_display">Schermo</string>
     <!-- Settings: Title for 'media' settings. Settings related to media providers, rescanning & exclude list (blacklist) -->
     <string name="pref_category_title_media">Media</string>
+    <!-- Settings: Title for 'playback' settings -->
+    <string name="pref_category_title_playback">Riproduzione</string>
     <!-- Settings: Title for artwork related settings (artist/album images) -->
     <string name="pref_category_title_artwork">Illustrazioni</string>
     <!-- Settings: Title for widget related settings  -->
@@ -52,6 +54,8 @@
     <string name="pref_category_title_playlists">Playlist</string>
     <!-- Settings: Title for shangelog related settings -->
     <string name="pref_category_title_changelog">Changelog</string>
+    <!-- Settings: Title for app info related settings -->
+    <string name="pref_category_title_app_info">Informazioni</string>
     <!-- Settings: Title for privacy related settings -->
     <string name="pref_category_title_privacy">Privacy</string>
     <!-- Settings: Title for open source related settings -->
@@ -126,6 +130,10 @@
     <string name="pref_media_session_artwork_title">Immagine sessione</string>
     <!-- Settings: Description for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->
     <string name="pref_media_session_artwork_subtitle">Fornisce la copertina dell\'album alla sessione multimediale di Android. Disabilita per nasconderla dalla schermata di blocco</string>
+    <!-- Settings: Title for the option to disable shuffle when starting a new queue -->
+    <string name="pref_disable_shuffle_on_queue_title">Rimani in modalità casuale</string>
+    <!-- Settings: Description for the option to disable shuffle when starting a new queue -->
+    <string name="pref_disable_shuffle_on_queue_subtitle">Quando cambi la coda, la modalità casuale non viene disabilitata</string>
     <!-- Settings title for the day/night theme option -->
     <string name="theme_entry_day_night">Giorno/notte</string>
     <!-- Settings title for the light theme option -->

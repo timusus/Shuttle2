@@ -34,4 +34,12 @@
     <string name="song_info_dialog_title">Şarkı bilgisi</string>
     <!-- Button to close the song info dialog -->
     <string name="song_info_dialog_close_button_title">Kapat</string>
+    <!-- Shown in the song infor dialog. The song bit rate. -->
+    <string name="song_info_bit_rate">Bit hızı</string>
+    <!-- Shown in the song infor dialog. The song bit depth. -->
+    <string name="song_info_bit_depth">Bit derinliği</string>
+    <!-- Shown in the song infor dialog. The song sample rate. -->
+    <string name="song_info_sample_rate">Örnekleme Hızı</string>
+    <!-- Shown in the song infor dialog. The song channel count. -->
+    <string name="song_info_channel_count">Kanal sayısı</string>
 </resources>

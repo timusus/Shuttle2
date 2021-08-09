@@ -34,4 +34,8 @@
     <string name="song_info_dialog_title">गाने की जानकारी</string>
     <!-- Button to close the song info dialog -->
     <string name="song_info_dialog_close_button_title">बंद करें</string>
+    <!-- Shown in the song infor dialog. The song bit rate. -->
+    <!-- Shown in the song infor dialog. The song bit depth. -->
+    <!-- Shown in the song infor dialog. The song sample rate. -->
+    <!-- Shown in the song infor dialog. The song channel count. -->
 </resources>

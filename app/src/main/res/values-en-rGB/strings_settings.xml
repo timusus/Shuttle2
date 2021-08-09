@@ -44,6 +44,8 @@
     <string name="pref_category_title_display">Display</string>
     <!-- Settings: Title for 'media' settings. Settings related to media providers, rescanning & exclude list (blacklist) -->
     <string name="pref_category_title_media">Media</string>
+    <!-- Settings: Title for 'playback' settings -->
+    <string name="pref_category_title_playback">Playback</string>
     <!-- Settings: Title for artwork related settings (artist/album images) -->
     <string name="pref_category_title_artwork">Artwork</string>
     <!-- Settings: Title for widget related settings  -->
@@ -52,6 +54,8 @@
     <string name="pref_category_title_playlists">Playlists</string>
     <!-- Settings: Title for shangelog related settings -->
     <string name="pref_category_title_changelog">Changelog</string>
+    <!-- Settings: Title for app info related settings -->
+    <string name="pref_category_title_app_info">App Info</string>
     <!-- Settings: Title for privacy related settings -->
     <string name="pref_category_title_privacy">Privacy</string>
     <!-- Settings: Title for open source related settings -->
@@ -126,6 +130,10 @@
     <string name="pref_media_session_artwork_title">Media session artwork</string>
     <!-- Settings: Description for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->
     <string name="pref_media_session_artwork_subtitle">Supply artwork to Android\'s Media Session. Disable to prevent lockscreen artwork</string>
+    <!-- Settings: Title for the option to disable shuffle when starting a new queue -->
+    <string name="pref_disable_shuffle_on_queue_title">Keep shuffle mode</string>
+    <!-- Settings: Description for the option to disable shuffle when starting a new queue -->
+    <string name="pref_disable_shuffle_on_queue_subtitle">When a new queue is selected, shuffle mode won\'t be disabled</string>
     <!-- Settings title for the day/night theme option -->
     <string name="theme_entry_day_night">Day/Night</string>
     <!-- Settings title for the light theme option -->

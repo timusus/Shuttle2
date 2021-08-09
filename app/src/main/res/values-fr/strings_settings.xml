@@ -44,6 +44,7 @@
     <string name="pref_category_title_display">Affichage</string>
     <!-- Settings: Title for 'media' settings. Settings related to media providers, rescanning & exclude list (blacklist) -->
     <string name="pref_category_title_media">Médias</string>
+    <!-- Settings: Title for 'playback' settings -->
     <!-- Settings: Title for artwork related settings (artist/album images) -->
     <string name="pref_category_title_artwork">Pochette</string>
     <!-- Settings: Title for widget related settings  -->
@@ -52,6 +53,7 @@
     <string name="pref_category_title_playlists">Listes de lecture</string>
     <!-- Settings: Title for shangelog related settings -->
     <string name="pref_category_title_changelog">Journal des modifications</string>
+    <!-- Settings: Title for app info related settings -->
     <!-- Settings: Title for privacy related settings -->
     <string name="pref_category_title_privacy">Confidentialité</string>
     <!-- Settings: Title for open source related settings -->
@@ -126,6 +128,8 @@
     <string name="pref_media_session_artwork_title">Pochette de la session médiatique</string>
     <!-- Settings: Description for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->
     <string name="pref_media_session_artwork_subtitle">Fournir des pochettes à la session multimédia d\'Android. Désactiver pour empêcher les illustrations de l\'écran de verrouillage</string>
+    <!-- Settings: Title for the option to disable shuffle when starting a new queue -->
+    <!-- Settings: Description for the option to disable shuffle when starting a new queue -->
     <!-- Settings title for the day/night theme option -->
     <string name="theme_entry_day_night">Jour/Nuit</string>
     <!-- Settings title for the light theme option -->

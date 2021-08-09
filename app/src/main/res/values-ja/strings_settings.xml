@@ -44,6 +44,8 @@
     <string name="pref_category_title_display">表示</string>
     <!-- Settings: Title for 'media' settings. Settings related to media providers, rescanning & exclude list (blacklist) -->
     <string name="pref_category_title_media">メディア</string>
+    <!-- Settings: Title for 'playback' settings -->
+    <string name="pref_category_title_playback">再生</string>
     <!-- Settings: Title for artwork related settings (artist/album images) -->
     <string name="pref_category_title_artwork">アートワーク</string>
     <!-- Settings: Title for widget related settings  -->
@@ -52,6 +54,8 @@
     <string name="pref_category_title_playlists">プレイリスト</string>
     <!-- Settings: Title for shangelog related settings -->
     <string name="pref_category_title_changelog">変更ログ</string>
+    <!-- Settings: Title for app info related settings -->
+    <string name="pref_category_title_app_info">アプリ情報</string>
     <!-- Settings: Title for privacy related settings -->
     <string name="pref_category_title_privacy">プライバシー</string>
     <!-- Settings: Title for open source related settings -->
@@ -126,6 +130,10 @@
     <string name="pref_media_session_artwork_title">メディアセッションのアートワーク</string>
     <!-- Settings: Description for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->
     <string name="pref_media_session_artwork_subtitle">Androidのメディアセッションにアートワークを提供します。ロック画面にアートワークを表示したくない場合はオフにします</string>
+    <!-- Settings: Title for the option to disable shuffle when starting a new queue -->
+    <string name="pref_disable_shuffle_on_queue_title">シャッフルモードを維持</string>
+    <!-- Settings: Description for the option to disable shuffle when starting a new queue -->
+    <string name="pref_disable_shuffle_on_queue_subtitle">新しいキューが選択されても、シャッフルモードを無効にしません</string>
     <!-- Settings title for the day/night theme option -->
     <string name="theme_entry_day_night">昼/夜</string>
     <!-- Settings title for the light theme option -->

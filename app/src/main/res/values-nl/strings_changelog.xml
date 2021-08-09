@@ -3,7 +3,7 @@
     <!-- Title of changelog screen. Since the actual changelogs are not translated, this could be left in English-->
     <string name="changelog_title">Log met wijzigingen</string>
     <!-- Changelog 'features' sub-heading. Since the actual changelogs are not translated, this could be left in English-->
-    <string name="changelog_features">Functies</string>
+    <string name="changelog_features">Kenmerken</string>
     <!-- Changelog 'improvements' sub-heading. Since the actual changelogs are not translated, this could be left in English-->
     <string name="changelog_improvements">Verbeteringen</string>
     <!-- Changelog 'bug fixes' sub-heading. Since the actual changelogs are not translated, this could be left in English-->

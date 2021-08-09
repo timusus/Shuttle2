@@ -34,4 +34,12 @@
     <string name="song_info_dialog_title">曲情報</string>
     <!-- Button to close the song info dialog -->
     <string name="song_info_dialog_close_button_title">閉じる</string>
+    <!-- Shown in the song infor dialog. The song bit rate. -->
+    <string name="song_info_bit_rate">ビットレート</string>
+    <!-- Shown in the song infor dialog. The song bit depth. -->
+    <string name="song_info_bit_depth">ビット深度</string>
+    <!-- Shown in the song infor dialog. The song sample rate. -->
+    <string name="song_info_sample_rate">サンプルレート</string>
+    <!-- Shown in the song infor dialog. The song channel count. -->
+    <string name="song_info_channel_count">チャネル数</string>
 </resources>

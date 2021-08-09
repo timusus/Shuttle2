@@ -1,13 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- Shown when an artist/album or songs fail to be added to a playlist, because no songs were found-->
-    <string name="playlist_menu_empty_data_message">Geen nummers om toe te voegen</string>
+    <string name="playlist_menu_empty_data_message">Geen nummers toe te voegen</string>
     <!-- Shown when duplicate songs were found, when trying to add songs to a playlist -->
     <string name="playlist_menu_duplicates_dialog_title">Duplicaten gevonden</string>
     <!-- Shown when duplicate songs were found, when trying to add songs to a playlist. Asking the user whether they want to add the duplicates anyway, or skip them-->
     <plurals name="playlist_menu_duplicates_dialog_subtitle">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>nummer bestaat al in \'<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\'. Toch toevoegen?</item>
-        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g>nummers bestaan al in \'<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\'. Toch toevoegen?</item>
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       nummer bestaat al in \'
+      <xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>
+      \'. Toch toevoegen?</item>
+        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g>
+       nummers bestaan al in \'
+      <xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>
+      \'. Toch toevoegen?</item>
     </plurals>
     <!-- Button shown to allow the user to 'skip' adding duplicate songs to a playlist-->
     <string name="playlist_menu_duplicates_dialog_button_skip">Overslaan</string>
@@ -18,21 +24,27 @@
     <!-- Menu option to create a new playlist -->
     <string name="playlist_menu_create_playlist">Nieuwe afspeellijst</string>
     <!-- Shown when a playlist is successfully created -->
-    <string name="playlist_menu_create_playlist_success">\'<xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>\' is met succes aangemaakt</string>
+    <string name="playlist_menu_create_playlist_success">\'
+    <xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>
+    \' is met succes aangemaakt</string>
     <!-- Shown when songs can't be added to a playlist, due to an error -->
-    <string name="playlist_menu_create_playlist_failure">Kan nummers niet toevoegen aan afspeellijst: <xliff:g example="Playlist already exists" id="error_message">{error_message}</xliff:g></string>
+    <string name="playlist_menu_create_playlist_failure">Kan nummers niet toevoegen aan afspeellijst: 
+    <xliff:g example="Playlist already exists" id="error_message">{error_message}</xliff:g></string>
     <!-- The 'hint' text shown when creating a playlist. This indicates the text field is for 'Playlist Name'-->
     <string name="playlist_create_dialog_playlist_name_hint">Naam afspeellijst</string>
     <!-- Button to show the 'delete playlist' dialog, which will ask the user to confirm this action -->
     <string name="playlist_dialog_title_delete">Afspeellijst verwijderen</string>
     <!-- Shown when the user attempts to delete a playlist. Asking the user to confirm that this playlist will be permanently deleted -->
-    <string name="playlist_dialog_subtitle_delete"><xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g> wordt definitief verwijderd</string>
+    <string name="playlist_dialog_subtitle_delete">\'
+    <xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g>
+    \' wordt definitief verwijderd</string>
     <!-- Button to confirm deletion of the selected playlist -->
     <string name="playlist_dialog_button_delete">Verwijderen</string>
     <!-- Button to show the 'clear playlist' dialog, which will ask the user to confirm this action. Clearing the playlist will render it empty, but not delete it. -->
     <string name="playlist_dialog_title_clear">Afspeellijst wissen</string>
     <!-- Shown whent he user attempts to clear a playlist. Asking the user to confirm that this playlist will become empty -->
-    <string name="playlist_dialog_subtitle_clear">Alle nummers worden verwijderd uit <xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g></string>
+    <string name="playlist_dialog_subtitle_clear">Alle nummers worden verwijderd uit 
+    <xliff:g example="Favorites" id="playlist_name">{playlist_name}</xliff:g></string>
     <!-- Button to confirm clearing of the selected playlist -->
     <string name="playlist_dialog_button_clear">Wissen</string>
     <!-- Shown when the user presses playlist 'import' button. This shows the dialog to 'sync' playlists with the Android MediaStore -->

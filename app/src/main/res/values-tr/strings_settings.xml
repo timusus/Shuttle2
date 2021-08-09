@@ -44,6 +44,8 @@
     <string name="pref_category_title_display">Göster</string>
     <!-- Settings: Title for 'media' settings. Settings related to media providers, rescanning & exclude list (blacklist) -->
     <string name="pref_category_title_media">Medya</string>
+    <!-- Settings: Title for 'playback' settings -->
+    <string name="pref_category_title_playback">Geri çalma</string>
     <!-- Settings: Title for artwork related settings (artist/album images) -->
     <string name="pref_category_title_artwork">Sanatçı/albüm görselleri</string>
     <!-- Settings: Title for widget related settings  -->
@@ -52,6 +54,8 @@
     <string name="pref_category_title_playlists">Çalma listeleri</string>
     <!-- Settings: Title for shangelog related settings -->
     <string name="pref_category_title_changelog">Değişim bilgisi</string>
+    <!-- Settings: Title for app info related settings -->
+    <string name="pref_category_title_app_info">Uygulama Bilgisi</string>
     <!-- Settings: Title for privacy related settings -->
     <string name="pref_category_title_privacy">Gizlilik</string>
     <!-- Settings: Title for open source related settings -->
@@ -127,6 +131,10 @@
     <string name="pref_media_session_artwork_title">Medya oturumu resmi</string>
     <!-- Settings: Description for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->
     <string name="pref_media_session_artwork_subtitle">Android\'in Medya Oturumuna sanat eseri sağlayın. Kilit ekranı resmini önlemek için devre dışı bırak</string>
+    <!-- Settings: Title for the option to disable shuffle when starting a new queue -->
+    <string name="pref_disable_shuffle_on_queue_title">Karıştırma modunu hayırlı</string>
+    <!-- Settings: Description for the option to disable shuffle when starting a new queue -->
+    <string name="pref_disable_shuffle_on_queue_subtitle">Yeni bir sıra seçildiğinde, karıştırma modu devre dışı bırakılmayacaktır</string>
     <!-- Settings title for the day/night theme option -->
     <string name="theme_entry_day_night">Koyu/Açık</string>
     <!-- Settings title for the light theme option -->

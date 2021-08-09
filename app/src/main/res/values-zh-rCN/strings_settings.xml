@@ -44,6 +44,8 @@
     <string name="pref_category_title_display">样式</string>
     <!-- Settings: Title for 'media' settings. Settings related to media providers, rescanning & exclude list (blacklist) -->
     <string name="pref_category_title_media">媒体播放</string>
+    <!-- Settings: Title for 'playback' settings -->
+    <string name="pref_category_title_playback">播放</string>
     <!-- Settings: Title for artwork related settings (artist/album images) -->
     <string name="pref_category_title_artwork">专辑封面</string>
     <!-- Settings: Title for widget related settings  -->
@@ -52,6 +54,8 @@
     <string name="pref_category_title_playlists">播放列表</string>
     <!-- Settings: Title for shangelog related settings -->
     <string name="pref_category_title_changelog">更新日志</string>
+    <!-- Settings: Title for app info related settings -->
+    <string name="pref_category_title_app_info">应用信息</string>
     <!-- Settings: Title for privacy related settings -->
     <string name="pref_category_title_privacy">隐私</string>
     <!-- Settings: Title for open source related settings -->
@@ -126,6 +130,10 @@
     <string name="pref_media_session_artwork_title">主屏幕</string>
     <!-- Settings: Description for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->
     <string name="pref_media_session_artwork_subtitle">设置专辑封面为主屏幕。</string>
+    <!-- Settings: Title for the option to disable shuffle when starting a new queue -->
+    <string name="pref_disable_shuffle_on_queue_title">保留随机模式</string>
+    <!-- Settings: Description for the option to disable shuffle when starting a new queue -->
+    <string name="pref_disable_shuffle_on_queue_subtitle">新的播放队列被选中时，依然启用随机播放模式</string>
     <!-- Settings title for the day/night theme option -->
     <string name="theme_entry_day_night">自动</string>
     <!-- Settings title for the light theme option -->

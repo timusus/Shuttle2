@@ -5,11 +5,11 @@
     <!-- Shown in the song info dialog. The song 'track number'-->
     <string name="song_info_track_number">Track #</string>
     <!-- Shown in the song info dialog. The song 'duration'-->
-    <string name="song_info_duration">Duur</string>
+    <string name="song_info_duration">Looptijd</string>
     <!-- Shown in the song info dialog. When a field can't be read-->
     <string name="song_info_unknown">Onbekend</string>
     <!-- Shown in the song info dialog. The song 'album artist'-->
-    <string name="song_info_album_artist">Albumartiest</string>
+    <string name="song_info_album_artist">Album artiest</string>
     <!-- Shown in the song info dialog. The song 'artists'-->
     <string name="song_info_artists">Artiesten</string>
     <!-- Shown in the song info dialog. The song 'album'-->
@@ -25,13 +25,21 @@
     <!-- Shown in the song info dialog. The song 'path'-->
     <string name="song_info_path">Pad</string>
     <!-- Shown in the song info dialog. The song 'MIME type'-->
-    <string name="song_info_mime_type">MIME-type</string>
+    <string name="song_info_mime_type">Mime type</string>
     <!-- Shown in the song info dialog. The song 'file size'-->
-    <string name="song_info_size">Bestandsgrootte</string>
+    <string name="song_info_size">Grootte</string>
     <!-- Shown in the song info dialog. The song 'Lyrics'-->
     <string name="song_info_lyrics">Songtekst</string>
     <!-- The song info dialog heading -->
     <string name="song_info_dialog_title">Nummerinformatie</string>
     <!-- Button to close the song info dialog -->
     <string name="song_info_dialog_close_button_title">Sluiten</string>
+    <!-- Shown in the song infor dialog. The song bit rate. -->
+    <string name="song_info_bit_rate">Bitsnelheid</string>
+    <!-- Shown in the song infor dialog. The song bit depth. -->
+    <string name="song_info_bit_depth">Bit-diepte</string>
+    <!-- Shown in the song infor dialog. The song sample rate. -->
+    <string name="song_info_sample_rate">Sample rate</string>
+    <!-- Shown in the song infor dialog. The song channel count. -->
+    <string name="song_info_channel_count">Aantal audiokanalen</string>
 </resources>

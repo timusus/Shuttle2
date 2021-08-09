@@ -7,5 +7,5 @@
     <!-- Changelog 'improvements' sub-heading. Since the actual changelogs are not translated, this could be left in English-->
     <string name="changelog_improvements">सुधार</string>
     <!-- Changelog 'bug fixes' sub-heading. Since the actual changelogs are not translated, this could be left in English-->
-    <string name="changelog_bug_fixes">दूर किये गए बग</string>
+    <string name="changelog_bug_fixes">कंप्यूटर प्रोग्राम या प्रणाली में बग को दूर करना</string>
 </resources>

@@ -3,7 +3,7 @@
     <!-- The title of the menu button. When clicked, will show the 'free trial' dialog, with an option for the user to upgrade-->
     <string name="menu_trial">ट्रायल</string>
     <!-- The heading of the 'free trial' dialog -->
-    <string name="trial_heading_trial">मुफ्त परीक्षण</string>
+    <string name="trial_heading_trial">निशुल्क ट्रायल</string>
     <!-- Message shown when user is starting a trial. Note: This is meant to be friendly/fun! It doesn't have to say 'until you lose your mind' -->
     <string name="trial_description_trial">परीक्षण के बाद, प्लेबैक गति प्रत्येक दिन थोड़ी मात्रा में बढ़ जाएगी, जब तक कि आप अपना दिमाग नहीं खो देते.</string>
     <!-- Shows how many days are left in the free trial-->

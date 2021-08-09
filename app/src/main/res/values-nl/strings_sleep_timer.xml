@@ -3,7 +3,7 @@
     <!-- Title of sleep timer dialog -->
     <string name="sleep_timer_dialog_title">Slaaptimer</string>
     <!-- Shown when the sleep timer has ended, but playback won't be paused until the current track ends -->
-    <string name="sleep_timer_waiting_track_end">Wachten tot track eindigt...</string>
+    <string name="sleep_timer_waiting_track_end">Wachten tot track eindigt ...</string>
     <!-- Sleep timer option to wait for a song to end before pausing playback -->
     <string name="sleep_timer_play_to_track_end">Speel het laatste nummer om te eindigen</string>
     <!-- Button to close the sleep timer dialog -->

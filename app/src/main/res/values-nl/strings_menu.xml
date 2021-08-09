@@ -9,7 +9,7 @@
     <!-- Menu option to add this song to the queue, to play next -->
     <string name="menu_title_play_next">Volgende afspelen</string>
     <!-- Menu option to open the tag editor for this song/album/artist -->
-    <string name="menu_title_edit_tags">Tags bewerken</string>
+    <string name="menu_title_edit_tags">Tags Bewerken</string>
     <!-- Menu option to configure the selected media provider -->
     <string name="menu_title_media_provider_configure">Configureren</string>
     <!-- Menu option to remove the selected media provider -->
@@ -31,7 +31,7 @@
     <!-- Menu option to remove an artist/album/song from a playlist, or the exclude list (blacklist)-->
     <string name="menu_title_remove">Verwijderen</string>
     <!-- Menu option to open the submenu to change between 'list' and 'grid' view modes-->
-    <string name="menu_title_view_mode">Weergeven als</string>
+    <string name="menu_title_view_mode">Bekijken als</string>
     <!-- Menu option to view the artist/album list as a list rather than a grid-->
     <string name="menu_title_view_mode_list">Lijst</string>
     <!-- Menu option to view the artist/album list as a grid rather than a list-->
@@ -39,7 +39,7 @@
     <!-- Menu option to open the sorting submenu -->
     <string name="menu_title_sort_by">Sorteer op</string>
     <!-- Menu option to sort by album name -->
-    <string name="menu_title_sort_album_name">Albumnaam</string>
+    <string name="menu_title_sort_album_name">Naam Album</string>
     <!-- Menu option to sort by artist name -->
     <string name="menu_title_sort_artist_name">Artiestennaam</string>
     <!-- Menu option to sort by song name -->
@@ -47,11 +47,11 @@
     <!-- Menu option to sort by year-->
     <string name="menu_title_sort_year">Jaar</string>
     <!-- Menu option to sort by song duration -->
-    <string name="menu_title_sort_duration">Duur</string>
+    <string name="menu_title_sort_duration">Looptijd</string>
     <!-- Menu option to sort playlists by a custom sort order (user-defined sort order) -->
-    <string name="menu_title_sort_custom">Aangepast</string>
+    <string name="menu_title_sort_custom">Op maat</string>
     <!-- Menu option to scroll to the current playing track in the queue -->
-    <string name="menu_title_scroll_to_current">Scroll naar huidig nummer</string>
+    <string name="menu_title_scroll_to_current">Scroll naar Huidig</string>
     <!-- Menu option to rename a playlist-->
     <string name="menu_title_rename">Hernoemen</string>
     <!-- Menu option to clear (remove) all tracks in a playlist-->
@@ -63,7 +63,7 @@
     <!-- Menu option to add the selected artist/album/song to the queue-->
     <string name="menu_title_add_to_queue">Toevoegen aan wachtrij</string>
     <!-- Menu option to remove the selected item from the queue -->
-    <string name="menu_title_remove_from_queue">Verwijderen uit wachtrij</string>
+    <string name="menu_title_remove_from_queue">Uit Wachtrij Verwijderen</string>
     <!-- Menu option to remove all items from the queue -->
     <string name="menu_title_sort_clear_queue">Wachtrij wissen</string>
 </resources>

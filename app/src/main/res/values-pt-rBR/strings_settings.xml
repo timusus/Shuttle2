@@ -44,6 +44,7 @@
     <string name="pref_category_title_display">Exibir</string>
     <!-- Settings: Title for 'media' settings. Settings related to media providers, rescanning & exclude list (blacklist) -->
     <string name="pref_category_title_media">Mídia</string>
+    <!-- Settings: Title for 'playback' settings -->
     <!-- Settings: Title for artwork related settings (artist/album images) -->
     <string name="pref_category_title_artwork">Arte</string>
     <!-- Settings: Title for widget related settings  -->
@@ -52,6 +53,7 @@
     <string name="pref_category_title_playlists">Playlists</string>
     <!-- Settings: Title for shangelog related settings -->
     <string name="pref_category_title_changelog">Alterarlog</string>
+    <!-- Settings: Title for app info related settings -->
     <!-- Settings: Title for privacy related settings -->
     <string name="pref_category_title_privacy">Privacidade</string>
     <!-- Settings: Title for open source related settings -->
@@ -126,6 +128,8 @@
     <string name="pref_media_session_artwork_title">Arte da sessão de mídia</string>
     <!-- Settings: Description for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->
     <string name="pref_media_session_artwork_subtitle">Forneça a arte para a sessão de mídia do Android. Desative para impedir a aparição da arte na tela de bloqueio</string>
+    <!-- Settings: Title for the option to disable shuffle when starting a new queue -->
+    <!-- Settings: Description for the option to disable shuffle when starting a new queue -->
     <!-- Settings title for the day/night theme option -->
     <string name="theme_entry_day_night">Dia/noite</string>
     <!-- Settings title for the light theme option -->
@@ -143,4 +147,5 @@
     <!-- Settings title for the orange theme option -->
     <string name="theme_accent_entry_orange">Laranja</string>
     <!-- Settings title for the red theme option -->
+    <string name="theme_accent_entry_red">Vermelho</string>
 </resources>

@@ -34,4 +34,12 @@
     <string name="song_info_dialog_title">Informazioni</string>
     <!-- Button to close the song info dialog -->
     <string name="song_info_dialog_close_button_title">Chiudi</string>
+    <!-- Shown in the song infor dialog. The song bit rate. -->
+    <string name="song_info_bit_rate">Bit rate</string>
+    <!-- Shown in the song infor dialog. The song bit depth. -->
+    <string name="song_info_bit_depth">Bit depth</string>
+    <!-- Shown in the song infor dialog. The song sample rate. -->
+    <string name="song_info_sample_rate">Sample rate</string>
+    <!-- Shown in the song infor dialog. The song channel count. -->
+    <string name="song_info_channel_count">Canali</string>
 </resources>

@@ -44,6 +44,7 @@
     <string name="pref_category_title_display">Anzeige</string>
     <!-- Settings: Title for 'media' settings. Settings related to media providers, rescanning & exclude list (blacklist) -->
     <string name="pref_category_title_media">Medien</string>
+    <!-- Settings: Title for 'playback' settings -->
     <!-- Settings: Title for artwork related settings (artist/album images) -->
     <string name="pref_category_title_artwork">Grafik</string>
     <!-- Settings: Title for widget related settings  -->
@@ -52,6 +53,7 @@
     <string name="pref_category_title_playlists">Wiedergabelisten</string>
     <!-- Settings: Title for shangelog related settings -->
     <string name="pref_category_title_changelog">Änderungsprotokoll</string>
+    <!-- Settings: Title for app info related settings -->
     <!-- Settings: Title for privacy related settings -->
     <string name="pref_category_title_privacy">Privatsphäre</string>
     <!-- Settings: Title for open source related settings -->
@@ -101,7 +103,7 @@
     <!-- Settings: Title for the option to use dark mode for widgets -->
     <string name="pref_widget_dark_mode_title">Dunkles Design</string>
     <!-- Settings: Title for the option to change opacity of the widget background -->
-    <string name="pref_widget_opacity_title">Transparenz des Hintergrunds</string>
+    <string name="pref_widget_opacity_title">Transparenz des hintergrunds</string>
     <!-- Settings: Title for the option to ignore duplicates when adding songs to a playlist -->
     <string name="pref_ignore_duplicates_title">Duplikate ignorieren</string>
     <!-- Settings: Description for the option to ignore duplicates when adding songs to a playlist -->
@@ -126,6 +128,8 @@
     <string name="pref_media_session_artwork_title">Grafiken der Mediensitzung</string>
     <!-- Settings: Description for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->
     <string name="pref_media_session_artwork_subtitle">Grafiken für die Mediensitzung von Android bereitstellen. Deaktivieren, um die Cover-Anzeige im Sperrbildschirm zu verhindern.</string>
+    <!-- Settings: Title for the option to disable shuffle when starting a new queue -->
+    <!-- Settings: Description for the option to disable shuffle when starting a new queue -->
     <!-- Settings title for the day/night theme option -->
     <string name="theme_entry_day_night">Tag/Nacht</string>
     <!-- Settings title for the light theme option -->

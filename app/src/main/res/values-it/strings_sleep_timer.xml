@@ -9,9 +9,9 @@
     <!-- Button to close the sleep timer dialog -->
     <string name="sleep_timer_dialog_button_close">Chiudi</string>
     <!-- Button to stop the sleep timer -->
-    <string name="sleep_timer_dialog_button_stop_timer">Interrompi</string>
+    <string name="sleep_timer_dialog_button_stop_timer">Ferma</string>
     <!-- Button to set the time for the sleep timer -->
-    <string name="sleep_timer_dialog_button_set_time">Scegli la durata</string>
+    <string name="sleep_timer_dialog_button_set_time">Modifica</string>
     <!-- The amount of time remaining before the sleep timer pauses playback -->
     <string name="sleep_timer_time_remaining"><xliff:g id="time" example="00:05:00">{time}</xliff:g> rimanenti</string>
     <!-- Sleep timer time option-->

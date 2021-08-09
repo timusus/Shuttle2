@@ -1,18 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <!-- Shown when text is required in a text field -->
-    <string name="validation_field_required">यह आवश्यक है</string>
+    <string name="validation_field_required">अपेक्षित</string>
     <!-- Shown when an unexpected error occurs -->
-    <string name="error_unexpected">प्रक्रिया के दौरान कुछ खराबी हुई है</string>
+    <string name="error_unexpected">एक अप्रत्याशित त्रुटि हुई</string>
     <!-- Shown when an unknown error occurs -->
-    <string name="error_unknown">एक अज्ञात खराबी हुई है</string>
+    <string name="error_unknown">एक अज्ञात ग़लती हुई</string>
     <!-- Shown when items (an album, artist or song) are added to the queue -->
     <string name="queue_item_added"><xliff:g example="Lateralus" id="item_name">{item_name}</xliff:g>
      कतार में जोड़ा गया</string>
     <!-- Shown when songs are added to the queue -->
     <plurals name="queue_songs_added">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> गाना कतार में जोड़ा गया</item>
-        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> गाने कतार में जोड़े गए</item>
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       गीत कतार में जोड़ा गया</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       गाने कतार में जोड़े गए</item>
     </plurals>
     <!-- Shown when albums are added to the queue -->
     <plurals name="queue_albums_added">
@@ -23,15 +25,24 @@
     </plurals>
     <!-- Shown when artists are added to the queue -->
     <plurals name="queue_artists_added">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> कलाकार कतार में जोड़ा गया</item>
-        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> कलाकारों को कतार में जोड़ा  गया</item>
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       कलाकार कतार में जोड़ा गया</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       कलाकारों ने कतार में जोड़ा</item>
     </plurals>
     <!-- Shown when current playback queue is added to a playlist -->
-    <string name="playlist_queue_added">कतार को <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g> में जोड़ा गया</string>
+    <string name="playlist_queue_added">कतार में जोड़ा गया 
+    <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></string>
     <!-- Shown when songs are added to a playlist -->
     <plurals name="playlist_songs_added">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> गाने को <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g> में जोड़ा गया</item>
-        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> गाने <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g> में जोड़े गए</item>
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       गीत को 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g>
+       में जोड़ा गया</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       गाने 
+      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g>
+       में जोड़े गए</item>
     </plurals>
     <!-- Shown when albums are added to a playlist -->
     <plurals name="playlist_albums_added">

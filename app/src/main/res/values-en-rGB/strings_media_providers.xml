@@ -3,7 +3,7 @@
     <string name="media_provider_title"><xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g> media provider</string>
     <string name="media_provider_scan_progress"><xliff:g example="5" id="progress">{progress}</xliff:g> / <xliff:g example="25" id="total">{total}</xliff:g> songs scanned</string>
     <string name="media_provider_scan_success_title"><xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g> scan complete</string>
-    <string name="media_provider_scan_success_subtitle"><xliff:g example="5" id="inserts">{inserts}</xliff:g> inserts <xliff:g example="15" id="updates">\n{updates}</xliff:g> updates <xliff:g example="25" id="deletes">\n{deletes}</xliff:g> deletes</string>
+    <string name="media_provider_scan_success_subtitle"><xliff:g example="5" id="inserts">{inserts}</xliff:g> inserts, <xliff:g example="15" id="updates">{updates}</xliff:g> updates, <xliff:g example="25" id="deletes">{deletes}</xliff:g> deletes</string>
     <string name="media_provider_scan_failure_title">Scan failed</string>
     <string name="media_provider_scan_failure_subtitle">No songs imported</string>
     <string name="media_provider_button_authenticate">Authenticate</string>

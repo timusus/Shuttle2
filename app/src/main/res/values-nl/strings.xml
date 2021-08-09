@@ -3,7 +3,7 @@
     <!-- App name. Don't translate-->
     <string name="app_name">S2</string>
     <!-- App name. Translate only it seems more appropriate in your language. (Maybe just translate 'Music Player', and leave 'S2')-->
-    <string name="app_name_long">S2 Muziekspeler</string>
+    <string name="app_name_long">S2 muziekspeler</string>
     <!-- Bottom Navigation menu item (home) -->
     <string name="title_home">Start</string>
     <!-- Bottom Navigation menu item (library) - the music library/collection -->
@@ -17,7 +17,7 @@
     <!-- Title of the 'settings' screen-->
     <string name="title_settings">Instellingen</string>
     <!-- Title of the 'Now Playing' screen (the main screen for controlling music playback)-->
-    <string name="title_now_playing">Speelt nu</string>
+    <string name="title_now_playing">Nu aan het spelen</string>
     <!-- Shown at the top of the 'search' screen-->
-    <string name="title_search_hint">Zoek muziek</string>
+    <string name="title_search_hint">Muziek zoeken</string>
 </resources>
