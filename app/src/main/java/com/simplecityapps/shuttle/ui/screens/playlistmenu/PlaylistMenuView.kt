@@ -97,7 +97,6 @@ class PlaylistMenuView(
      * The 'create playlist' menu item is assigned  an id of [playlistCreateId]
      */
     fun createPlaylistMenu(menu: Menu) {
-        Timber.i("createPlaylistMenu")
         val subMenu = menu.findItem(R.id.playlist)?.subMenu
         subMenu?.let {
             subMenu.clear()
