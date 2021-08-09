@@ -118,10 +118,6 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
             Sheet.NONE
         }
 
-    val mainContainerResId: Int
-        @IdRes
-        get() = R.id.navHostFragment
-
     fun addSheetStateChangeListener(sheetStateChangeListener: SheetStateChangeListener) {
         sheetStateChangeListeners.add(sheetStateChangeListener)
     }
@@ -169,7 +165,6 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
                 bottomSheetBehavior1.peekHeight = 0
                 navHostFragment.setMargins(bottomMargin = bottomNavigationView.height + bottomSheetBehavior1.peekHeight)
             }
-            (findViewById<View>(mainContainerResId).layoutParams as CoordinatorLayout.LayoutParams).bottomMargin = 0
             if (collapse) {
                 goToSheet(Sheet.NONE)
             }
@@ -202,7 +197,6 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
                 bottomSheetBehavior1.peekHeight = peekHeight
                 navHostFragment.setMargins(bottomMargin = bottomNavigationView.height + bottomSheetBehavior1.peekHeight)
             }
-            (findViewById<View>(mainContainerResId).layoutParams as CoordinatorLayout.LayoutParams).bottomMargin = peekHeight
         }
     }
 
