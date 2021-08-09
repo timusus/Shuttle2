@@ -96,7 +96,9 @@ class QueueManager(
                     val queueOrderMap = shuffleSongs.withIndex().associate { songId -> songId.value.id to songId.index }
                     val shuffleQueue = baseQueue.sortedBy { queueItem -> queueOrderMap[queueItem.song.id] }
                     queue.setShuffleQueue(shuffleQueue)
-                    currentItem = shuffleQueue[position]
+                    if (shuffleMode == ShuffleMode.On) {
+                        currentItem = shuffleQueue[position]
+                    }
                     shuffleQueueChanged = true
                 }
             } else {
@@ -115,6 +117,7 @@ class QueueManager(
         }
 
         currentItem?.let {
+            Timber.i("Current item is ${it.song.name}")
             setCurrentItem(it)
         }
 
