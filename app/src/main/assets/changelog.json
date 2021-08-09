@@ -1,15 +1,29 @@
 [
   {
     "versionName": "1.0.1-alpha02",
-    "releaseDate": "09/08/2021",
+    "releaseDate": "10/08/2021",
     "features": [
+      "Added support for importing m3u playlists (S2 Media Provider only)",
+      "Added support for importing Jellyfin/Emby playlists",
+      "Long press skip/prev to fast-forward/rewind (15s at a time)"
     ],
     "fixes": [
+      "Fixed an issue where incorrect song would be restored when returning to the app",
+      "Don't duck/pause audio in response to audio focus change events when casting audio",
+      "Fixed a layout issue after clearing queue",
+      "Various crash fixes"
     ],
     "improvements": [
+      "Added bitrate, sample rate & channel count to song info dialog",
+      "Don't require a password when authenticating with Jellyfin & Emby",
+      "Replay gain tags are no longer case-sensitive (lowercase tags will now be detected)",
+      "Fixed an issue where notification progress didn't match song progress when playback speed > 1.0",
+      "Artist names are no longer separated at the ',' character",
+      "Genres and artist names are now split at the null-terminator character",
+      "Translation updates. Thanks so much to everyone contributing translations"
     ],
     "notes": [
-      "Join the Discord: https://discord.gg/YkhSuHJ"
+      "The playlist import feature has been removed. Playlists are automatically imported when scanning your media providers."
     ]
   },
   {
