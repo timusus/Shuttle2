@@ -90,7 +90,7 @@ class TrialDialogFragment : DialogFragment() {
                         description.text = getString(R.string.trial_description_expired)
                     }
                     is TrialState.Unknown, TrialState.Paid -> {
-                        dismiss()
+                        dismissAllowingStateLoss()
                     }
                 }
             }
