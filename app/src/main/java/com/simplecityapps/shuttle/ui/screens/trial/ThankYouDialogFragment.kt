@@ -30,9 +30,11 @@ class ThankYouDialogFragment : DialogFragment() {
             dismiss()
         }
 
-        lifecycleScope.launchWhenCreated {
+        lifecycleScope.launchWhenResumed {
             delay(8000)
-            dismiss()
+            if (isResumed) {
+                dismiss()
+            }
         }
 
         return MaterialAlertDialogBuilder(requireContext())
