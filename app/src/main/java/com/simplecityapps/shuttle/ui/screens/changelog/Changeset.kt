@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.changelog
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
+import com.vdurmont.semver4j.Semver
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -14,7 +15,7 @@ data class Changeset(
     @Json(name = "improvements") val improvements: List<String>,
     @Json(name = "notes") val notes: List<String>
 ) {
-    val version: Version = Version(versionName)
+    val version: Semver = Semver(versionName)
     val date: Date = dateFormat.parse(dateString)!!
 
     companion object {

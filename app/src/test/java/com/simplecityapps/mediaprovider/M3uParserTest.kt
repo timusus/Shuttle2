@@ -8,7 +8,7 @@ class M3uParserTest {
 
     @Test
     fun testExample1() {
-        val m3uPlaylist = m3uParser.parse(javaClass.classLoader!!.getResourceAsStream("example1.m3u")!!)
+        val m3uPlaylist = m3uParser.parse("", "", javaClass.classLoader!!.getResourceAsStream("example1.m3u")!!)
         assert(m3uPlaylist.entries.size == 2)
 
         assert(m3uPlaylist.entries[0].location == "C:\\Documents and Settings\\I\\My Music\\Sample.mp3")
@@ -24,7 +24,7 @@ class M3uParserTest {
 
     @Test
     fun testExample2() {
-        val m3uPlaylist = m3uParser.parse(javaClass.classLoader!!.getResourceAsStream("example2.m3u")!!)
+        val m3uPlaylist = m3uParser.parse("", "", javaClass.classLoader!!.getResourceAsStream("example2.m3u")!!)
         assert(m3uPlaylist.entries.size == 1)
 
         assert(m3uPlaylist.entries[0].location == "C:\\Music")
@@ -35,7 +35,7 @@ class M3uParserTest {
 
     @Test
     fun testExample3() {
-        val m3uPlaylist = m3uParser.parse(javaClass.classLoader!!.getResourceAsStream("example3.m3u")!!)
+        val m3uPlaylist = m3uParser.parse("", "", javaClass.classLoader!!.getResourceAsStream("example3.m3u")!!)
         assert(m3uPlaylist.entries.size == 2)
 
         assert(m3uPlaylist.entries[0].location == "Sample.mp3")
@@ -51,14 +51,14 @@ class M3uParserTest {
 
     @Test
     fun testExample4() {
-        val m3uPlaylist = m3uParser.parse(javaClass.classLoader!!.getResourceAsStream("example4.m3u")!!)
+        val m3uPlaylist = m3uParser.parse("", "", javaClass.classLoader!!.getResourceAsStream("example4.m3u")!!)
         assert(m3uPlaylist.entries.size == 7)
         assert(m3uPlaylist.entries[0].location == "Alternative\\Band - Song.mp3")
     }
 
     @Test
     fun testExample5() {
-        val m3uPlaylist = m3uParser.parse(javaClass.classLoader!!.getResourceAsStream("example5.m3u")!!)
+        val m3uPlaylist = m3uParser.parse("", "", javaClass.classLoader!!.getResourceAsStream("example5.m3u")!!)
         assert(m3uPlaylist.entries.size == 7)
 
         assert(m3uPlaylist.entries[0].location == "Alice in Chains_Jar of Flies_01_Rotten Apple.mp3")

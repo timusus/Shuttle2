@@ -17,6 +17,7 @@ import com.simplecityapps.shuttle.ui.common.recyclerview.SpacesItemDecoration
 import com.simplecityapps.shuttle.ui.common.utils.dp
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
+import com.vdurmont.semver4j.Semver
 import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 import java.lang.reflect.Type
@@ -57,13 +58,14 @@ class ChangelogDialogFragment : DialogFragment() {
         }
         viewBinders.addAll(changelog?.mapIndexed { index, changeset ->
             ChangesetBinder(
-                expanded = index == 0 || changeset.version > preferenceManager.lastViewedChangelogVersion?.let { version ->
+                expanded = index == 0 || changeset.version > (preferenceManager.lastViewedChangelogVersion?.let { version ->
                     try {
-                        Version(version)
+                        Semver(version)
                     } catch (e: Exception) {
+                        Timber.e(e)
                         null
                     }
-                },
+                } ?: Semver("0.0.0")),
                 changeset = changeset,
                 listener = listener
             )

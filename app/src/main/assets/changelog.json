@@ -1,6 +1,19 @@
 [
   {
-    "versionName": "1.0.1",
+    "versionName": "1.0.1-alpha02",
+    "releaseDate": "09/08/2021",
+    "features": [
+    ],
+    "fixes": [
+    ],
+    "improvements": [
+    ],
+    "notes": [
+      "Join the Discord: https://discord.gg/YkhSuHJ"
+    ]
+  },
+  {
+    "versionName": "1.0.1-alpha01",
     "releaseDate": "14/07/2021",
     "features": [
       "Added a settings option to retain shuffle mode when starting a new queue"
