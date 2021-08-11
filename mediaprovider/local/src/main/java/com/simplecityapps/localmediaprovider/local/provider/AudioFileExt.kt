@@ -85,10 +85,10 @@ fun KTagLib.getAudioFile(fileDescriptor: Int, filePath: String, fileName: String
                 .filterNot { genre -> genre.isEmpty() }
         },
         replayGainTrack = metadata?.propertyMap?.getCaseInsensitive(TagLibProperty.ReplayGainTrack.key)
-            ?.firstOrNull()?.take(9)
+            ?.firstOrNull()?.replace(oldValue = "db", newValue = "", ignoreCase = true)
             ?.toDoubleOrNull(),
         replayGainAlbum = metadata?.propertyMap?.getCaseInsensitive(TagLibProperty.ReplayGainAlbum.key)
-            ?.firstOrNull()?.take(9)
+            ?.firstOrNull()?.replace(oldValue = "db", newValue = "", ignoreCase = true)
             ?.toDoubleOrNull(),
         lyrics = metadata?.propertyMap?.get(TagLibProperty.Lyrics.key)?.firstOrNull(),
         grouping = metadata?.propertyMap?.get(TagLibProperty.Grouping.key)?.firstOrNull(),
