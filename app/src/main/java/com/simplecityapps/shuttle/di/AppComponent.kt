@@ -4,6 +4,7 @@ import com.simplecityapps.playback.di.PlaybackModule
 import com.simplecityapps.provider.emby.di.EmbyMediaProviderModule
 import com.simplecityapps.provider.jellyfin.di.JellyfinMediaProviderModule
 import com.simplecityapps.provider.plex.di.PlexMediaProviderModule
+import com.simplecityapps.shuttle.remoteconfig.RemoteConfigModule
 import com.simplecityapps.trial.di.TrialModule
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -23,7 +24,8 @@ import dagger.hilt.components.SingletonComponent
         JellyfinMediaProviderModule::class,
         PlexMediaProviderModule::class,
         ImageLoaderModule::class,
-        TrialModule::class
+        TrialModule::class,
+        RemoteConfigModule::class
     ]
 )
 interface AppComponent {}

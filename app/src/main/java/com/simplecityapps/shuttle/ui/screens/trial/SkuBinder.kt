@@ -46,8 +46,8 @@ class SkuBinder(val skuDetails: SkuDetails, val litener: Listener) : ViewBinder 
             subtitle.text = viewBinder.skuDetails.description
             price.text = viewBinder.skuDetails.price
             priceOutlined.text = viewBinder.skuDetails.price
-            price.isInvisible = viewBinder.skuDetails.type == BillingClient.SkuType.INAPP
-            priceOutlined.isInvisible = viewBinder.skuDetails.type == BillingClient.SkuType.SUBS
+            price.isInvisible = viewBinder.skuDetails.type == BillingClient.SkuType.SUBS
+            priceOutlined.isInvisible = viewBinder.skuDetails.type == BillingClient.SkuType.INAPP
         }
     }
 }

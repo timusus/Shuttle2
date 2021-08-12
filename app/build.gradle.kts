@@ -16,8 +16,8 @@ android {
 
     defaultConfig {
         applicationId = "com.simplecityapps.shuttle"
-        minSdkVersion(21)
-        targetSdkVersion(30)
+        minSdk = 21
+        targetSdk =30
         versionName = computeVersionName()
         versionCode = computeVersionCode()
         vectorDrawables.useSupportLibrary = true
@@ -204,6 +204,11 @@ android {
 
         // Semantic versioning
         implementation("com.vdurmont:semver4j:3.1.0")
+
+        // Firebase
+        implementation(platform("com.google.firebase:firebase-bom:28.3.0"))
+        implementation("com.google.firebase:firebase-config-ktx")
+        implementation("com.google.firebase:firebase-analytics-ktx")
 
         // Testing
         androidTestImplementation("androidx.test:runner:1.4.0")

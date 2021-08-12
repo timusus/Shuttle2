@@ -35,7 +35,9 @@ class BillingManager(
     private val paidVersionSkus = listOf(
         "s2_subscription_full_version_monthly",
         "s2_subscription_full_version_yearly",
-        "s2_iap_full_version"
+        "s2_subscription_full_version_yearly_low",
+        "s2_iap_full_version",
+        "s2_iap_full_version_low"
     )
 
     val skuDetails: MutableStateFlow<Set<SkuDetails>> = MutableStateFlow(emptySet())
@@ -102,14 +104,18 @@ class BillingManager(
             Timber.e("Failed to launch purchase flow: BillingClient not ready")
             return
         }
-        billingClient.launchBillingFlow(activity, BillingFlowParams.newBuilder().setSkuDetails(skuDetails).build())
+        billingClient.launchBillingFlow(
+            activity,
+            BillingFlowParams.newBuilder().setSkuDetails(skuDetails).build()
+        )
     }
 
     suspend fun querySkuDetails() {
         val inAppPurchaseDetails = SkuDetailsParams.newBuilder()
             .setSkusList(
                 listOf(
-                    "s2_iap_full_version"
+                    "s2_iap_full_version",
+                    "s2_iap_full_version_low"
                 )
             )
             .setType(BillingClient.SkuType.INAPP)
@@ -119,7 +125,8 @@ class BillingManager(
             .setSkusList(
                 listOf(
                     "s2_subscription_full_version_monthly",
-                    "s2_subscription_full_version_yearly"
+                    "s2_subscription_full_version_yearly",
+                    "s2_subscription_full_version_yearly_low"
                 )
             )
             .setType(BillingClient.SkuType.SUBS)
@@ -129,9 +136,10 @@ class BillingManager(
             val skuDetailsResult = billingClient.querySkuDetails(skuDetailsParams)
             when (skuDetailsResult.billingResult.responseCode) {
                 BillingClient.BillingResponseCode.OK -> {
-                    skuDetails.value = (skuDetails.value + skuDetailsResult.skuDetailsList.orEmpty())
-                        .sortedByDescending { skuDetails -> skuDetails.type } // Show subs first
-                        .toSet()
+                    skuDetails.value =
+                        (skuDetails.value + skuDetailsResult.skuDetailsList.orEmpty())
+                            .sortedByDescending { skuDetails -> skuDetails.type } // Show subs first
+                            .toSet()
                 }
                 BillingClient.BillingResponseCode.SERVICE_DISCONNECTED,
                 BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE,
@@ -169,7 +177,9 @@ class BillingManager(
 
     @Synchronized
     private fun processPurchases(purchases: List<Purchase>) {
-        if (billingState.value == BillingState.Paid || paidVersionSkus.intersect(purchases.flatMap { purchase -> purchase.skus }).isNotEmpty()) {
+        if (billingState.value == BillingState.Paid || paidVersionSkus.intersect(purchases.flatMap { purchase -> purchase.skus })
+                .isNotEmpty()
+        ) {
             billingState.value = BillingState.Paid
         } else {
             billingState.value = BillingState.Unpaid
