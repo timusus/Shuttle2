@@ -9,10 +9,13 @@ import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.mediaprovider.model.Song
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import java.util.*
+import kotlin.math.abs
 
 class MediaStoreMediaProvider(
     private val context: Context
@@ -173,6 +176,7 @@ class MediaStoreMediaProvider(
     }
 
     data class MediaStoreSong(
+        val playOrder: Long,
         val title: String?,
         val album: String?,
         val artist: String?,
@@ -197,19 +201,17 @@ class MediaStoreMediaProvider(
                 val mediaStoreSongs = findSongsForMediaStorePlaylist(mediaStorePlaylist.id)
 
                 // Associate Media Store songs with Shuttle's songs
-                val matchingSongs = existingSongs.filter { song ->
-                    mediaStoreSongs.any { mediaStoreSong ->
+                val matchingSongs = mediaStoreSongs.mapNotNull { mediaStoreSong ->
+                    existingSongs.firstOrNull { existingSong ->
                         // We assume two songs are equal, if they have the same title, album, artist & duration. We can't be too specific, as the
                         // MediaStore scanner may have interpreted some fields differently to Shuttle's built in scanner.
-                        song.name.equals(mediaStoreSong.title, ignoreCase = true)
-                                && song.album.equals(mediaStoreSong.album, ignoreCase = true)
-                                && song.albumArtist.equals(
-                            mediaStoreSong.albumArtist,
-                            ignoreCase = true
-                        )
-                                && kotlin.math.abs(song.duration - mediaStoreSong.duration) <= 1000 // song duration is within 1 second
+                        existingSong.name.equals(mediaStoreSong.title, ignoreCase = true)
+                                && existingSong.album.equals(mediaStoreSong.album, ignoreCase = true)
+                                && (existingSong.artists.any { it.equals(mediaStoreSong.artist, true) } || existingSong.albumArtist.equals(mediaStoreSong.albumArtist, ignoreCase = true))
+                                && abs(existingSong.duration - mediaStoreSong.duration) <= 1000 // song duration is within 1 second
                     }
                 }
+
                 val updateData = MediaImporter.PlaylistUpdateData(
                     type,
                     mediaStorePlaylist.name,
@@ -239,11 +241,12 @@ class MediaStoreMediaProvider(
                     MediaStore.Audio.Media.TRACK,
                     MediaStore.Audio.Playlists.Members.MIME_TYPE,
                     MediaStore.Audio.Playlists.Members.DATA,
+                    MediaStore.Audio.Playlists.Members.PLAY_ORDER,
                     "album_artist"
                 ),
                 null,
                 null,
-                null
+                MediaStore.Audio.Playlists.Members.DEFAULT_SORT_ORDER
             )
 
             cursor?.use {
@@ -260,6 +263,7 @@ class MediaStoreMediaProvider(
 
                     songs.add(
                         MediaStoreSong(
+                            playOrder = cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Playlists.Members.PLAY_ORDER)),
                             title = cursor.getStringOrNull(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.TITLE)),
                             album = cursor.getStringOrNull(cursor.getColumnIndexOrThrow(MediaStore.Audio.Playlists.Members.ALBUM)),
                             artist = cursor.getStringOrNull(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)),
@@ -292,7 +296,7 @@ class MediaStoreMediaProvider(
                 ),
                 null,
                 null,
-                null
+                MediaStore.Audio.Playlists.DEFAULT_SORT_ORDER
             )
 
             cursor?.use {
