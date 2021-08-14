@@ -1,5 +1,23 @@
 [
   {
+    "versionName": "1.0.1-alpha03",
+    "releaseDate": "14/08/2021",
+    "features": [
+
+    ],
+    "fixes": [
+      "Crash reporting is no longer enabled by default for new users"
+    ],
+    "improvements": [
+      "Ensure playlist sort order is preserved when importing playlists",
+      "Enabled Firebase Remote Config. This allows me to A/B test certain things. This uses Firebase Analytics, which is disabled unless you opt-in.",
+      "Moved Changelog to bottom sheet for better readability"
+    ],
+    "notes": [
+      "The playlist import feature has been removed. Playlists are automatically imported when scanning your media providers."
+    ]
+  },
+  {
     "versionName": "1.0.1-alpha02",
     "releaseDate": "10/08/2021",
     "features": [
