@@ -1,12 +1,15 @@
 package com.simplecityapps.shuttle.ui.screens.changelog
 
-import android.app.Dialog
 import android.os.Bundle
-import androidx.fragment.app.DialogFragment
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.ImageButton
+import androidx.appcompat.view.ContextThemeWrapper
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.shuttle.BuildConfig
@@ -24,7 +27,7 @@ import java.lang.reflect.Type
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class ChangelogDialogFragment : DialogFragment() {
+class ChangelogDialogFragment : BottomSheetDialogFragment() {
 
     @Inject
     lateinit var moshi: Moshi
@@ -34,7 +37,13 @@ class ChangelogDialogFragment : DialogFragment() {
 
     private var adapter: RecyclerAdapter by autoCleared()
 
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        val contextThemeWrapper = ContextThemeWrapper(activity, requireContext().theme)
+        return inflater.cloneInContext(contextThemeWrapper).inflate(R.layout.fragment_dialog_changelog, container, false)
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
         val changelog = try {
             val changeSetList: Type = Types.newParameterizedType(MutableList::class.java, Changeset::class.java)
@@ -44,7 +53,6 @@ class ChangelogDialogFragment : DialogFragment() {
             null
         }
 
-        val view = layoutInflater.inflate(R.layout.fragment_dialog_changelog, null)
         val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerView)
         recyclerView.addItemDecoration(SpacesItemDecoration(4.dp))
         adapter = RecyclerAdapter(lifecycleScope)
@@ -72,14 +80,14 @@ class ChangelogDialogFragment : DialogFragment() {
         }.orEmpty())
         adapter.update(viewBinders)
 
-        preferenceManager.lastViewedChangelogVersion = BuildConfig.VERSION_NAME
+        val collapseButton: ImageButton = view.findViewById(R.id.collapseIcon)
+        collapseButton.setOnClickListener {
+            dismiss()
+        }
 
-        return MaterialAlertDialogBuilder(requireContext())
-            .setTitle(getString(R.string.changelog_title))
-            .setView(view)
-            .setNegativeButton(getString(R.string.dialog_button_close), null)
-            .show()
+        preferenceManager.lastViewedChangelogVersion = BuildConfig.VERSION_NAME
     }
+
 
     fun show(fragmentManager: FragmentManager) {
         show(fragmentManager, TAG)
