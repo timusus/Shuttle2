@@ -15,6 +15,7 @@ import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
+import com.simplecityapps.shuttle.di.AppCoroutineScope
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -40,7 +41,7 @@ class PlaybackInitializer @Inject constructor(
     @Suppress("unused") private val castSessionManager: CastSessionManager,
     @Suppress("unused") private val mediaSessionManager: MediaSessionManager,
     @Suppress("unused") private val noiseManager: NoiseManager,
-    @Named("AppCoroutineScope") private val appCoroutineScope: CoroutineScope
+    @AppCoroutineScope private val appCoroutineScope: CoroutineScope
 ) : AppInitializer,
     QueueChangeCallback,
     PlaybackWatcherCallback {

@@ -162,7 +162,7 @@ class LibraryFragment : Fragment(),
 
         val trialMenuItem = menu.findItem(R.id.trial)
         when (val trialState = trialManager.trialState.value) {
-            is TrialState.Unknown, TrialState.Paid -> {
+            is TrialState.Unknown, is TrialState.Paid -> {
                 trialMenuItem.isVisible = false
             }
             is TrialState.Trial -> {

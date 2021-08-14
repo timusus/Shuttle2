@@ -2,7 +2,9 @@ package com.simplecityapps.trial.di
 
 import android.content.Context
 import androidx.core.content.getSystemService
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.simplecityapps.networking.retrofit.NetworkResultAdapterFactory
+import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.trial.BillingManager
 import com.simplecityapps.trial.DeviceService
@@ -17,7 +19,6 @@ import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
 import okhttp3.Credentials
 import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import javax.inject.Named
@@ -30,7 +31,7 @@ class TrialModule {
     @Provides
     @Singleton
     @Named("S2ApiRetrofit")
-    fun provideRetrofit(@ApplicationContext context: Context, okHttpClient: OkHttpClient, moshi: Moshi, loggingInterceptor: HttpLoggingInterceptor): Retrofit {
+    fun provideRetrofit(@ApplicationContext context: Context, okHttpClient: OkHttpClient, moshi: Moshi): Retrofit {
         return Retrofit.Builder()
             .baseUrl("https://api.shuttlemusicplayer.app/")
             .addCallAdapterFactory(NetworkResultAdapterFactory(context.getSystemService()))
@@ -64,7 +65,7 @@ class TrialModule {
 
     @Provides
     @Singleton
-    fun provideBillingManager(@ApplicationContext context: Context, @Named("AppCoroutineScope") coroutineScope: CoroutineScope): BillingManager {
+    fun provideBillingManager(@ApplicationContext context: Context, @AppCoroutineScope coroutineScope: CoroutineScope): BillingManager {
         return BillingManager(context, coroutineScope)
     }
 
@@ -75,10 +76,10 @@ class TrialModule {
         moshi: Moshi,
         deviceService: DeviceService,
         preferenceManager: GeneralPreferenceManager,
+        remoteConfig: FirebaseRemoteConfig,
         billingManager: BillingManager,
-        @Named("AppCoroutineScope") coroutineScope: CoroutineScope
+        @AppCoroutineScope coroutineScope: CoroutineScope
     ): TrialManager {
-        return TrialManager(context, moshi, deviceService, preferenceManager, billingManager, coroutineScope)
+        return TrialManager(context, moshi, deviceService, preferenceManager, remoteConfig, billingManager, coroutineScope)
     }
-
 }

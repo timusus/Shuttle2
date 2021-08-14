@@ -41,28 +41,6 @@ class AppModule {
 
     @Singleton
     @Provides
-    fun coroutineExceptionHandler(): CoroutineExceptionHandler {
-        return CoroutineExceptionHandler { _, throwable ->
-            Timber.e(throwable)
-        }
-    }
-
-    @Singleton
-    @Provides
-    @Named("AppSupervisorJob")
-    fun appSupervisorJob(): Job {
-        return SupervisorJob()
-    }
-
-    @Singleton
-    @Provides
-    @Named("AppCoroutineScope")
-    fun provideAppCoroutineScope(@Named("AppSupervisorJob") job: Job, coroutineExceptionHandler: CoroutineExceptionHandler): CoroutineScope {
-        return CoroutineScope(Dispatchers.Main + job + coroutineExceptionHandler)
-    }
-
-    @Singleton
-    @Provides
     fun provideSortPreferenceManager(preference: SharedPreferences): SortPreferenceManager {
         return SortPreferenceManager(preference)
     }

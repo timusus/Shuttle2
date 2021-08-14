@@ -13,6 +13,7 @@ import com.simplecityapps.mediaprovider.repository.SongSortOrder
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
@@ -67,7 +68,7 @@ class SongListPresenter @Inject constructor(
     private val mediaImporter: MediaImporter,
     private val sortPreferenceManager: SortPreferenceManager,
     private val queueManager: QueueManager,
-    @Named("AppCoroutineScope") private val appCoroutineScope: CoroutineScope
+    @AppCoroutineScope private val appCoroutineScope: CoroutineScope
 ) : BasePresenter<SongListContract.View>(),
     SongListContract.Presenter {
 

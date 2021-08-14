@@ -4,7 +4,7 @@ import com.simplecityapps.playback.di.PlaybackModule
 import com.simplecityapps.provider.emby.di.EmbyMediaProviderModule
 import com.simplecityapps.provider.jellyfin.di.JellyfinMediaProviderModule
 import com.simplecityapps.provider.plex.di.PlexMediaProviderModule
-import com.simplecityapps.shuttle.remoteconfig.RemoteConfigModule
+import com.simplecityapps.shuttle.remote_config.RemoteConfigModule
 import com.simplecityapps.trial.di.TrialModule
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -18,6 +18,7 @@ import dagger.hilt.components.SingletonComponent
         PlaybackModule::class,
         RepositoryModule::class,
         NetworkingModule::class,
+        CoroutineModule::class,
         PersistenceModule::class,
         MediaProviderModule::class,
         EmbyMediaProviderModule::class,

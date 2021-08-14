@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.onboarding.scanner
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.Progress
+import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.squareup.inject.assisted.Assisted
@@ -34,7 +35,7 @@ interface ScannerContract {
 }
 
 class ScannerPresenter @AssistedInject constructor(
-    @Named("AppCoroutineScope") private val appCoroutineScope: CoroutineScope,
+    @AppCoroutineScope private val appCoroutineScope: CoroutineScope,
     private val mediaImporter: MediaImporter,
     @Assisted private val shouldDismissOnScanComplete: Boolean
 ) : ScannerContract.Presenter,

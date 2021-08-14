@@ -5,6 +5,7 @@ import androidx.annotation.NavigationRes
 import com.simplecityapps.mediaprovider.repository.SongQuery
 import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
@@ -30,7 +31,7 @@ interface BottomDrawerSettingsContract {
 class BottomDrawerSettingsPresenter @Inject constructor(
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackManager,
-    @Named("AppCoroutineScope") private val appCoroutineScope: CoroutineScope
+    @AppCoroutineScope private val appCoroutineScope: CoroutineScope
 ) :
     BasePresenter<BottomDrawerSettingsContract.View>(),
     BottomDrawerSettingsContract.Presenter {

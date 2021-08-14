@@ -205,16 +205,14 @@ android {
         // Semantic versioning
         implementation("com.vdurmont:semver4j:3.1.0")
 
-        // Firebase
-        implementation(platform("com.google.firebase:firebase-bom:28.3.0"))
-        implementation("com.google.firebase:firebase-config-ktx")
-        implementation("com.google.firebase:firebase-analytics-ktx")
-
         // Testing
         androidTestImplementation("androidx.test:runner:1.4.0")
         androidTestImplementation("androidx.test:rules:1.4.0")
         androidTestImplementation("androidx.test:core-ktx:1.4.0")
         androidTestImplementation("org.hamcrest:hamcrest-library:1.3")
+
+        // Remote config
+        implementation(project(":remote-config"))
 
         testImplementation("junit:junit:4.13.2")
     }

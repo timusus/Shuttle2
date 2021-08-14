@@ -167,7 +167,7 @@ class QueueFragment :
         viewLifecycleOwner.lifecycleScope.launch {
             trialManager.trialState.collect { trialState ->
                 when (trialState) {
-                    is TrialState.Paid, TrialState.Unknown -> {
+                    is TrialState.Pretrial, is TrialState.Paid, is TrialState.Unknown -> {
                         trialMenuItem.isVisible = false
                     }
                     is TrialState.Trial -> {

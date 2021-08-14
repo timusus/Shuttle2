@@ -126,7 +126,15 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
             sharedPreferences.put("pref_crash_reporting", value)
         }
         get() {
-            return sharedPreferences.get("pref_crash_reporting", true)
+            return sharedPreferences.get("pref_crash_reporting", false)
+        }
+
+    var firebaseAnalyticsEnabled: Boolean
+        set(value) {
+            sharedPreferences.put("pref_firebase_analytics", value)
+        }
+        get() {
+            return sharedPreferences.get("pref_firebase_analytics", false)
         }
 
     var artistListViewMode: String?

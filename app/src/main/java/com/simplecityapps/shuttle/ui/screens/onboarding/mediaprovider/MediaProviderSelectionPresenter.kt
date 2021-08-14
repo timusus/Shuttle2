@@ -11,6 +11,7 @@ import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.provider.emby.EmbyMediaProvider
 import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
 import com.simplecityapps.provider.plex.PlexMediaProvider
+import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -42,7 +43,7 @@ class MediaProviderSelectionPresenter @Inject constructor(
     private val songRepository: SongRepository,
     private val queueManager: QueueManager,
     private val playbackManager: PlaybackManager,
-    @Named("AppCoroutineScope") private val appCoroutineScope: CoroutineScope,
+    @AppCoroutineScope private val appCoroutineScope: CoroutineScope,
 ) : BasePresenter<MediaProviderSelectionContract.View>(),
     MediaProviderSelectionContract.Presenter {
 

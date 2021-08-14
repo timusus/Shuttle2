@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.appinitializers
 
 import android.app.Application
 import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.trial.BillingManager
 import com.simplecityapps.trial.TrialManager
 import com.simplecityapps.trial.TrialState
@@ -16,7 +17,7 @@ class TrialInitializer @Inject constructor(
     private val trialManager: TrialManager,
     private val playbackManager: PlaybackManager,
     private val billingManager: BillingManager,
-    @Named("AppCoroutineScope") private val coroutineScope: CoroutineScope
+    @AppCoroutineScope private val coroutineScope: CoroutineScope
 ) : AppInitializer {
 
     override fun init(application: Application) {
@@ -38,13 +39,7 @@ class TrialInitializer @Inject constructor(
                     is TrialState.Expired -> {
                         playbackManager.setPlaybackSpeed(trialState.multiplier())
                     }
-                    TrialState.Paid -> {
-                        playbackManager.setPlaybackSpeed(1.0f)
-                    }
-                    is TrialState.Trial -> {
-                        playbackManager.setPlaybackSpeed(1.0f)
-                    }
-                    TrialState.Unknown -> {
+                    TrialState.Paid, is TrialState.Pretrial, is TrialState.Trial, TrialState.Unknown -> {
                         playbackManager.setPlaybackSpeed(1.0f)
                     }
                 }

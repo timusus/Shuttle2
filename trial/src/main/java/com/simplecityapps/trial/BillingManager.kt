@@ -3,6 +3,7 @@ package com.simplecityapps.trial
 import android.content.Context
 import androidx.fragment.app.FragmentActivity
 import com.android.billingclient.api.*
+import com.simplecityapps.shuttle.di.AppCoroutineScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,7 +14,7 @@ import javax.inject.Named
 
 class BillingManager(
     context: Context,
-    @Named("AppCoroutineScope") private val coroutineScope: CoroutineScope
+    @AppCoroutineScope private val coroutineScope: CoroutineScope
 ) {
 
     interface Listener {
@@ -45,8 +46,7 @@ class BillingManager(
     val billingState: MutableStateFlow<BillingState> = MutableStateFlow(BillingState.Unknown)
 
     init {
-        billingState
-            .launchIn(coroutineScope)
+        billingState.launchIn(coroutineScope)
 
         if (BuildConfig.DEBUG) {
             billingState.value = BillingState.Paid

@@ -29,6 +29,7 @@ import com.simplecityapps.mediaprovider.model.Album
 import com.simplecityapps.mediaprovider.model.AlbumArtist
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.mediaprovider.repository.SongRepository
+import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.squareup.phrase.BuildConfig
 import dagger.hilt.EntryPoint
@@ -58,7 +59,7 @@ class ImageLoaderGlideModule : AppGlideModule() {
         fun provideAggregateRemoteArtworkProvider(): AggregateRemoteArtworkProvider
         fun provideKTagLib(): KTagLib
 
-        @Named("AppCoroutineScope")
+        @AppCoroutineScope
         fun provideCoroutineScope(): CoroutineScope
     }
 

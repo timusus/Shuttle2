@@ -3,13 +3,13 @@ package com.simplecityapps.trial
 import android.annotation.SuppressLint
 import android.content.Context
 import android.provider.Settings
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.squareup.moshi.Moshi
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.tasks.await
 import timber.log.Timber
 import java.io.File
 import java.util.*
@@ -20,13 +20,15 @@ class TrialManager(
     private val moshi: Moshi,
     private val deviceService: DeviceService,
     private val preferenceManager: GeneralPreferenceManager,
+    private val remoteConfig: FirebaseRemoteConfig,
     billingManager: BillingManager,
     coroutineScope: CoroutineScope
 ) {
 
-    val trialLength = TimeUnit.DAYS.toMillis(14)
-
     private val deviceAdapter = moshi.adapter(Device::class.java)
+
+    var preTrialLength = TimeUnit.DAYS.toMillis(remoteConfig.getLong("pre_trial_length"))
+    var trialLength = TimeUnit.DAYS.toMillis(remoteConfig.getLong("trial_length"))
 
     val trialState: StateFlow<TrialState> = billingManager.billingState.map { billingState ->
         when (billingState) {
@@ -52,9 +54,19 @@ class TrialManager(
         .stateIn(coroutineScope, SharingStarted.Lazily, TrialState.Unknown)
 
     private suspend fun getTrialState(): TrialState {
+        if (preferenceManager.firebaseAnalyticsEnabled) {
+            withTimeout(5000) {
+                remoteConfig.fetchAndActivate().await()
+            }
+
+            preTrialLength = TimeUnit.DAYS.toMillis(remoteConfig.getLong("pre_trial_length"))
+            trialLength = TimeUnit.DAYS.toMillis(remoteConfig.getLong("trial_length"))
+        }
+
         val now = Date()
 
         var localDevice = getLocalDevice()
+
         localDevice?.let { localDevice ->
             if (now.time - localDevice.lastUpdate.time >= trialLength) {
                 val trialState = TrialState.Expired(now.time - localDevice.lastUpdate.time) // User's trial has expired
@@ -87,8 +99,15 @@ class TrialManager(
             writeLocalDevice(localDevice)
         }
 
-        Timber.i("TrialState: Trial (${TimeUnit.MILLISECONDS.toHours(trialLength - (now.time - localDevice.lastUpdate.time))} hours)")
-        return TrialState.Trial(trialLength - (now.time - localDevice.lastUpdate.time))
+
+        val timeSinceInstall = now.time - localDevice.lastUpdate.time
+        return if (timeSinceInstall < preTrialLength) {
+            val remaining = preTrialLength - timeSinceInstall
+            TrialState.Pretrial(remaining)
+        } else {
+            val remaining = preTrialLength + trialLength - timeSinceInstall
+            TrialState.Trial(remaining)
+        }
     }
 
     private suspend fun getRemoteDevice(deviceId: String): Device? {

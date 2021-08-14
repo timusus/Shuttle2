@@ -20,6 +20,7 @@ import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
+import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,7 +35,7 @@ import javax.inject.Named
 
 class MediaSessionManager @Inject constructor(
     private val context: Context,
-    @Named("AppCoroutineScope") private val appCoroutineScope: CoroutineScope,
+    @AppCoroutineScope private val appCoroutineScope: CoroutineScope,
     private val playbackManager: PlaybackManager,
     private val queueManager: QueueManager,
     private val mediaIdHelper: MediaIdHelper,

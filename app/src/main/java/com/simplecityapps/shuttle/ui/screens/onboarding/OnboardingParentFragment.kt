@@ -21,7 +21,8 @@ import com.simplecityapps.shuttle.ui.common.autoCleared
 
 import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.MediaProviderSelectionFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.scanner.MediaScannerFragment
-import com.simplecityapps.shuttle.ui.screens.onboarding.storage.StoragePermissionFragment
+import com.simplecityapps.shuttle.ui.screens.onboarding.permissions.StoragePermissionFragment
+import com.simplecityapps.shuttle.ui.screens.onboarding.privacy.AnalyticsPermissionFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.taglib.DirectorySelectionFragment
 import dagger.hilt.android.AndroidEntryPoint
 import me.relex.circleindicator.CircleIndicator3
@@ -29,6 +30,7 @@ import javax.inject.Inject
 
 enum class OnboardingPage {
     StoragePermission,
+    AnalyticsPermission,
     MediaProviderSelector,
     MusicDirectories,
     Scanner
@@ -222,6 +224,7 @@ class OnboardingParentFragment : Fragment(),
         override fun createFragment(position: Int): Fragment {
             return when (data[position]) {
                 OnboardingPage.StoragePermission -> StoragePermissionFragment()
+                OnboardingPage.AnalyticsPermission -> AnalyticsPermissionFragment()
                 OnboardingPage.MediaProviderSelector -> MediaProviderSelectionFragment.newInstance(isOnboarding)
                 OnboardingPage.MusicDirectories -> DirectorySelectionFragment()
                 OnboardingPage.Scanner -> MediaScannerFragment.newInstance(scanAutomatically = true, showRescanButton = false, dismissOnScanComplete = isOnboarding, showToolbar = true)

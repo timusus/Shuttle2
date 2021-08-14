@@ -6,6 +6,7 @@ import android.content.Intent
 import android.net.Uri
 import com.simplecityapps.saf.DocumentNodeTree
 import com.simplecityapps.saf.SafDirectoryHelper
+import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -36,7 +37,7 @@ interface DirectorySelectionContract {
 
 class DirectorySelectionPresenter @Inject constructor(
     @ApplicationContext private val context: Context,
-    @Named("AppCoroutineScope") private val appCoroutineScope: CoroutineScope,
+    @AppCoroutineScope private val appCoroutineScope: CoroutineScope,
 ) : DirectorySelectionContract.Presenter, BasePresenter<DirectorySelectionContract.View>() {
 
     private var data: MutableList<DirectorySelectionContract.Directory> = mutableListOf()

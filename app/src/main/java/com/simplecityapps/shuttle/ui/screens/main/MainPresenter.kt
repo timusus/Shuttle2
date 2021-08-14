@@ -49,6 +49,9 @@ class MainPresenter @Inject constructor(
 
         trialManager.trialState.onEach { trialState ->
             when (trialState) {
+                is TrialState.Pretrial, is TrialState.Unknown -> {
+                    // Nothing to do
+                }
                 is TrialState.Trial -> {
                     // Show the trial dialog once every 3 days
                     if (preferenceManager.lastViewedTrialDialogDate == null || preferenceManager.lastViewedTrialDialogDate?.before(Date(Date().time - 4 * 24 * 60 * 60 * 1000)) == true) {

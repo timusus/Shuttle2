@@ -5,6 +5,7 @@ import android.content.Intent
 import com.simplecityapps.playback.ActivityIntentProvider
 import com.simplecityapps.shuttle.appinitializers.AppInitializers
 import com.simplecityapps.shuttle.di.AppComponent
+import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.MainActivity
 import com.simplecityapps.shuttle.ui.ThemeManager
@@ -29,7 +30,7 @@ class ShuttleApplication : Application(), ActivityIntentProvider {
     @Inject
     lateinit var themeManager: ThemeManager
 
-    @Named("AppCoroutineScope")
+    @AppCoroutineScope
     @Inject
     lateinit var appCoroutineScope: CoroutineScope
 

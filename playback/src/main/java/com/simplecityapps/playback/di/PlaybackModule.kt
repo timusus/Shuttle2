@@ -30,6 +30,7 @@ import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.provider.emby.EmbyMediaInfoProvider
 import com.simplecityapps.provider.jellyfin.JellyfinMediaInfoProvider
 import com.simplecityapps.provider.plex.PlexMediaInfoProvider
+import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.squareup.moshi.Moshi
 import dagger.Module
@@ -153,7 +154,7 @@ class PlaybackModule {
         audioFocusHelper: AudioFocusHelper,
         playbackPreferenceManager: PlaybackPreferenceManager,
         audioEffectSessionManager: AudioEffectSessionManager,
-        @Named("AppCoroutineScope") coroutineScope: CoroutineScope,
+        @AppCoroutineScope coroutineScope: CoroutineScope,
         queueWatcher: QueueWatcher,
         audioManager: AudioManager?
     ): PlaybackManager {
@@ -188,7 +189,7 @@ class PlaybackModule {
     @Provides
     fun provideMediaSessionManager(
         @ApplicationContext context: Context,
-        @Named("AppCoroutineScope") appCoroutineScope: CoroutineScope,
+        @AppCoroutineScope appCoroutineScope: CoroutineScope,
         playbackManager: PlaybackManager,
         queueManager: QueueManager,
         artistRepository: AlbumArtistRepository,

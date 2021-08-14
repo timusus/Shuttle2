@@ -5,13 +5,14 @@ import android.database.ContentObserver
 import android.net.Uri
 import android.provider.MediaStore
 import com.simplecityapps.mediaprovider.MediaImporter
+import com.simplecityapps.shuttle.di.AppCoroutineScope
 import kotlinx.coroutines.*
 import timber.log.Timber
 import javax.inject.Inject
 import javax.inject.Named
 
 class MediaStoreContentObserverInitializer @Inject constructor(
-    @Named("AppCoroutineScope") private val appCoroutineScope: CoroutineScope,
+    @AppCoroutineScope private val appCoroutineScope: CoroutineScope,
     private val mediaImporter: MediaImporter
 ) : ContentObserver(null), AppInitializer {
 

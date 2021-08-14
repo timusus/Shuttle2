@@ -10,6 +10,8 @@ sealed class TrialState {
         }
     }
 
+    data class Pretrial(val timeRemaining: Long) : TrialState()
+
     object Paid : TrialState() {
         override fun toString(): String {
             return "Paid"
