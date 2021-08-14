@@ -18,11 +18,10 @@ import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.autoCleared
-
 import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.MediaProviderSelectionFragment
-import com.simplecityapps.shuttle.ui.screens.onboarding.scanner.MediaScannerFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.permissions.StoragePermissionFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.privacy.AnalyticsPermissionFragment
+import com.simplecityapps.shuttle.ui.screens.onboarding.scanner.MediaScannerFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.taglib.DirectorySelectionFragment
 import dagger.hilt.android.AndroidEntryPoint
 import me.relex.circleindicator.CircleIndicator3
@@ -108,7 +107,7 @@ class OnboardingParentFragment : Fragment(),
         if (!hasStoragePermission()) {
             pages.add(OnboardingPage.StoragePermission)
         }
-        if (!preferenceManager.firebaseAnalyticsEnabled && !preferenceManager.crashReportingEnabled) {
+        if (args.isOnboarding && (!preferenceManager.firebaseAnalyticsEnabled && !preferenceManager.crashReportingEnabled)) {
             pages.add(OnboardingPage.AnalyticsPermission)
         }
         pages.add(OnboardingPage.MediaProviderSelector)
