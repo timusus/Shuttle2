@@ -90,7 +90,6 @@ class TaglibMediaProvider(
                 val m3uPlaylists = nodes
                     .filter { it.ext == "m3u" || it.ext == "m3u8" }
                     .mapNotNull { documentNode ->
-                        Timber.i("M3u: ${documentNode.uri}")
                         context.contentResolver.openInputStream(documentNode.uri)
                             .use { inputStream ->
                                 inputStream?.let {
@@ -104,7 +103,6 @@ class TaglibMediaProvider(
                     }
 
                 val updates = m3uPlaylists.mapIndexed { i, m3uPlaylist ->
-                    Timber.i("Found m3u playlist ${m3uPlaylist.name}")
                     val songs = m3uPlaylist.entries.mapNotNull { entry ->
                         existingSongs.firstOrNull { song -> song.path.contains(Uri.encode(entry.location)) }
                     }
