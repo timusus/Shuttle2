@@ -112,17 +112,21 @@ android {
         implementation("com.github.timusus:RecyclerView-FastScroll:dev-SNAPSHOT")
 
         // AppCompat
-        implementation("androidx.appcompat:appcompat:1.3.0")
+        implementation("androidx.appcompat:appcompat:1.3.1")
+
+        // Material
+        implementation("com.google.android.material:material:1.4.0")
+
 
         // Constraint Layout
-        implementation("androidx.constraintlayout:constraintlayout:2.0.4")
+        implementation("androidx.constraintlayout:constraintlayout:2.1.0")
 
         // Android Arch
         implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
 
         // AndroidX Navigation
-        implementation("androidx.navigation:navigation-fragment-ktx:2.4.0-alpha05")
-        implementation("androidx.navigation:navigation-ui-ktx:2.4.0-alpha05")
+        implementation("androidx.navigation:navigation-fragment-ktx:2.4.0-alpha06")
+        implementation("androidx.navigation:navigation-ui-ktx:2.4.0-alpha06")
 
         // Hilt
         implementation("com.google.dagger:hilt-android:2.38.1")
@@ -136,16 +140,16 @@ android {
         kapt("com.squareup.inject:assisted-inject-processor-dagger2:0.6.0")
 
         // Leak Canary
-        debugImplementation("com.squareup.leakcanary:leakcanary-android:2.6")
+        debugImplementation("com.squareup.leakcanary:leakcanary-android:2.7")
 
         // ViewPager 2
-        implementation("androidx.viewpager2:viewpager2:1.1.0-alpha01")
+        implementation("androidx.viewpager2:viewpager2:1.1.0-beta01")
 
         // ViewPager Circle Indicator
         implementation("me.relex:circleindicator:2.1.4")
 
         // AndroidX Media
-        implementation("androidx.media:media:1.3.1")
+        implementation("androidx.media:media:1.4.1")
 
         // AndroidX Preference
         implementation("androidx.preference:preference-ktx:1.1.1")
@@ -181,7 +185,7 @@ android {
         implementation("androidx.drawerlayout:drawerlayout:1.1.1")
 
         // New fragment manager
-        implementation("androidx.fragment:fragment-ktx:1.3.5")
+        implementation("androidx.fragment:fragment-ktx:1.3.6")
 
         // Glide
         implementation("com.github.bumptech.glide:glide:4.12.0")
