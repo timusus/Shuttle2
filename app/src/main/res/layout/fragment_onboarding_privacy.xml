@@ -24,7 +24,6 @@
         android:layout_marginStart="24dp"
         android:layout_marginEnd="24dp"
         android:layout_marginBottom="16dp"
-        android:gravity="center_horizontal"
         android:text="@string/onboarding_data_collection_title"
         android:textColor="?android:textColorPrimary"
         android:textSize="16sp"

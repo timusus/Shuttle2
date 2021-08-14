@@ -75,6 +75,9 @@ class OnboardingParentFragment : Fragment(),
     lateinit var playbackPreferenceManager: PlaybackPreferenceManager
 
     @Inject
+    lateinit var preferenceManager: GeneralPreferenceManager
+
+    @Inject
     lateinit var generalPreferenceManager: GeneralPreferenceManager
 
 
@@ -104,6 +107,9 @@ class OnboardingParentFragment : Fragment(),
         val pages = mutableListOf<OnboardingPage>()
         if (!hasStoragePermission()) {
             pages.add(OnboardingPage.StoragePermission)
+        }
+        if (!preferenceManager.firebaseAnalyticsEnabled && !preferenceManager.crashReportingEnabled) {
+            pages.add(OnboardingPage.AnalyticsPermission)
         }
         pages.add(OnboardingPage.MediaProviderSelector)
         pages.add(OnboardingPage.Scanner)

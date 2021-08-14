@@ -12,6 +12,7 @@ import com.simplecityapps.shuttle.remote_config.AnalyticsManager
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingChild
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingPage
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParent
+import timber.log.Timber
 import javax.inject.Inject
 
 class AnalyticsPermissionFragment : Fragment(), OnboardingChild {
@@ -43,14 +44,27 @@ class AnalyticsPermissionFragment : Fragment(), OnboardingChild {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+
+        // It seems we need some sort of arbitrary delay, to ensure the parent fragment has indeed finished its onViewCreated() and instantiated the next button.
+        view?.postDelayed({
+            getParent()?.let { parent ->
+                parent.hideBackButton()
+                parent.toggleNextButton(true)
+                parent.showNextButton(getString(R.string.onboarding_button_next))
+            } ?: Timber.e("Failed to update state - getParent() returned null")
+        }, 50)
+    }
+
 
     // OnboardingChild Implementation
 
-    override val page = OnboardingPage.StoragePermission
+    override val page = OnboardingPage.AnalyticsPermission
 
-    override fun getParent() = parentFragment as OnboardingParent
+    override fun getParent() = parentFragment as? OnboardingParent
 
     override fun handleNextButtonClick() {
-        getParent().goToNext()
+        getParent()?.goToNext()
     }
 }
