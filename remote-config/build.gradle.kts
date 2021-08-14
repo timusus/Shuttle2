@@ -37,7 +37,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.6.0")
 
     // Firebase
-    implementation(platform("com.google.firebase:firebase-bom:28.3.0"))
+    api(platform("com.google.firebase:firebase-bom:28.3.0"))
     api("com.google.firebase:firebase-config-ktx")
     implementation("com.google.firebase:firebase-analytics-ktx")
     api("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.1.1")
