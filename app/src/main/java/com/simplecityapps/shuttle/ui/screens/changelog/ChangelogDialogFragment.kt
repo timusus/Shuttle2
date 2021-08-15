@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
 import androidx.appcompat.view.ContextThemeWrapper
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
@@ -79,11 +78,6 @@ class ChangelogDialogFragment : BottomSheetDialogFragment() {
             )
         }.orEmpty())
         adapter.update(viewBinders)
-
-        val collapseButton: ImageButton = view.findViewById(R.id.collapseIcon)
-        collapseButton.setOnClickListener {
-            dismiss()
-        }
 
         preferenceManager.lastViewedChangelogVersion = BuildConfig.VERSION_NAME
     }
