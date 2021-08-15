@@ -12,9 +12,11 @@ import com.simplecityapps.shuttle.remote_config.AnalyticsManager
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingChild
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingPage
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParent
+import dagger.hilt.android.AndroidEntryPoint
 import timber.log.Timber
 import javax.inject.Inject
 
+@AndroidEntryPoint
 class AnalyticsPermissionFragment : Fragment(), OnboardingChild {
 
     @Inject
@@ -46,6 +48,8 @@ class AnalyticsPermissionFragment : Fragment(), OnboardingChild {
 
     override fun onResume() {
         super.onResume()
+
+        preferenceManager.hasSeenOnboardingAnalyticsDialog = true
 
         // It seems we need some sort of arbitrary delay, to ensure the parent fragment has indeed finished its onViewCreated() and instantiated the next button.
         view?.postDelayed({

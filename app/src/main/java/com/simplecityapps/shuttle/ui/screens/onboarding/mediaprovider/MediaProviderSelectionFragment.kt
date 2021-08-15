@@ -24,6 +24,7 @@ import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.recyclerview.SpacesItemDecoration
 import com.simplecityapps.shuttle.ui.common.utils.withArgs
 import com.simplecityapps.shuttle.ui.screens.home.search.HeaderBinder
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingChild
@@ -82,6 +83,7 @@ class MediaProviderSelectionFragment :
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
         recyclerView.adapter = adapter
+        recyclerView.addItemDecoration(SpacesItemDecoration(8))
 
         toolbar = view.findViewById(R.id.toolbar)
 
@@ -97,17 +99,20 @@ class MediaProviderSelectionFragment :
         transition.interpolator = FastOutSlowInInterpolator()
         transition.duration = 300
 
+        if (isOnboarding) {
+            toolbar.title = getString(R.string.media_provider_toolbar_title_onboarding)
+            toolbar.navigationIcon = null
+        } else {
+            toolbar.title = getString(R.string.media_provider_toolbar_title)
+        }
+
         presenter.bindView(this)
     }
 
     override fun onResume() {
         super.onResume()
 
-        if (isOnboarding) {
-            toolbar.title = getString(R.string.media_provider_toolbar_title_onboarding)
-            toolbar.navigationIcon = null
-        } else {
-            toolbar.title = getString(R.string.media_provider_toolbar_title)
+        if (!isOnboarding) {
             toolbar.setNavigationOnClickListener {
                 findNavController().popBackStack()
             }
@@ -118,7 +123,7 @@ class MediaProviderSelectionFragment :
             getParent()?.let { parent ->
                 parent.hideBackButton()
                 parent.toggleNextButton(true)
-                parent.showNextButton(getString(R.string.onboarding_media_scan))
+                parent.showNextButton(getString(R.string.onboarding_button_next))
             } ?: Timber.e("Failed to update state - getParent() returned null")
         }, 50)
     }
@@ -141,14 +146,14 @@ class MediaProviderSelectionFragment :
         if (localMediaTypes.isNotEmpty()) {
             viewBinders.add(HeaderBinder(getString(R.string.media_provider_type_local)))
             viewBinders.addAll(
-                localMediaTypes.map { provider -> MediaProviderBinder(providerType = provider, listener = listener, showRemoveButton = true, showSubtitle = false) }
+                localMediaTypes.map { provider -> MediaProviderBinder(providerType = provider, listener = listener, showRemoveButton = true, showSubtitle = true) }
             )
         }
         val remoteMediaTypes = mediaProviderTypes.filter { it.isRemote }
         if (remoteMediaTypes.isNotEmpty()) {
             viewBinders.add(HeaderBinder(getString(R.string.media_provider_type_remote)))
             viewBinders.addAll(
-                remoteMediaTypes.map { provider -> MediaProviderBinder(providerType = provider, listener = listener, showRemoveButton = true, showSubtitle = false) }
+                remoteMediaTypes.map { provider -> MediaProviderBinder(providerType = provider, listener = listener, showRemoveButton = true, showSubtitle = true) }
             )
         }
 
@@ -215,21 +220,25 @@ class MediaProviderSelectionFragment :
                         }
                     }
                     R.id.remove -> {
-                        MaterialAlertDialogBuilder(requireContext())
-                            .setTitle(
-                                Phrase.from(requireContext(), R.string.media_provider_dialog_remove_title)
-                                    .put("provider_type", providerType.title(requireContext()))
-                                    .format()
-                            )
-                            .setMessage(
-                                Phrase.from(requireContext(), R.string.media_provider_dialog_remove_subtitle)
-                                    .put("provider_type", providerType.title(requireContext()))
-                                    .format()
-                            )
-                            .setPositiveButton(getString(R.string.media_provider_dialog_button_remove)) { _, _ -> presenter.removeMediaProviderType(providerType) }
-                            .setNegativeButton(getString(R.string.dialog_button_cancel), null)
-                            .show()
-                        return@setOnMenuItemClickListener true
+                        if (isOnboarding) {
+                            presenter.removeMediaProviderType(providerType)
+                        } else {
+                            MaterialAlertDialogBuilder(requireContext())
+                                .setTitle(
+                                    Phrase.from(requireContext(), R.string.media_provider_dialog_remove_title)
+                                        .put("provider_type", providerType.title(requireContext()))
+                                        .format()
+                                )
+                                .setMessage(
+                                    Phrase.from(requireContext(), R.string.media_provider_dialog_remove_subtitle)
+                                        .put("provider_type", providerType.title(requireContext()))
+                                        .format()
+                                )
+                                .setPositiveButton(getString(R.string.media_provider_dialog_button_remove)) { _, _ -> presenter.removeMediaProviderType(providerType) }
+                                .setNegativeButton(getString(R.string.dialog_button_cancel), null)
+                                .show()
+                            return@setOnMenuItemClickListener true
+                        }
                     }
                 }
                 true

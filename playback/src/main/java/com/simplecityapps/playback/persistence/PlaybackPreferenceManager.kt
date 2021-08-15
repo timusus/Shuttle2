@@ -87,7 +87,7 @@ class PlaybackPreferenceManager(
                 .filter { it.isNotEmpty() }
                 .map {
                     MediaProvider.Type.init(it.toInt())
-                }
+                }.ifEmpty { listOf(MediaProvider.Type.MediaStore) }
         }
 
     var equalizerEnabled: Boolean

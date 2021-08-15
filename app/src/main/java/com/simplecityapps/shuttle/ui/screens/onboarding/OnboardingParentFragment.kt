@@ -107,7 +107,7 @@ class OnboardingParentFragment : Fragment(),
         if (!hasStoragePermission()) {
             pages.add(OnboardingPage.StoragePermission)
         }
-        if (args.isOnboarding && (!preferenceManager.firebaseAnalyticsEnabled && !preferenceManager.crashReportingEnabled)) {
+        if (args.isOnboarding && !preferenceManager.hasSeenOnboardingAnalyticsDialog) {
             pages.add(OnboardingPage.AnalyticsPermission)
         }
         pages.add(OnboardingPage.MediaProviderSelector)

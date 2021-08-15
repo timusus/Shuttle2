@@ -24,9 +24,11 @@
         android:layout_marginStart="24dp"
         android:layout_marginEnd="24dp"
         android:layout_marginBottom="16dp"
+        android:maxLines="5"
+        style="@style/TextTitle"
         android:text="@string/onboarding_data_collection_title"
         android:textColor="?android:textColorPrimary"
-        android:textSize="16sp"
+        android:textSize="14sp"
         app:layout_constraintBottom_toTopOf="@id/crashReportingSwitch"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -36,27 +38,56 @@
     <androidx.appcompat.widget.SwitchCompat
         android:id="@+id/crashReportingSwitch"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="36dp"
         android:layout_marginStart="24dp"
         android:layout_marginEnd="24dp"
         android:fontFamily="@font/opensans_regular"
         android:text="@string/onboarding_switch_bugsnag"
-        app:layout_constraintBottom_toTopOf="@id/analyticsSwitch"
+        app:layout_constraintBottom_toTopOf="@id/crashReportingDescription"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
 
+    <TextView
+        android:id="@+id/crashReportingDescription"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:text="@string/onboarding_switch_description_bugsnag"
+        android:textColor="?android:textColorPrimary"
+        app:layout_constraintBottom_toTopOf="@id/analyticsSwitch"
+        android:layout_marginBottom="16dp"
+        android:textSize="14sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_goneMarginEnd="24dp"
+        app:layout_goneMarginStart="24dp" />
+
     <androidx.appcompat.widget.SwitchCompat
         android:id="@+id/analyticsSwitch"
+        android:layout_width="0dp"
+        android:layout_height="36dp"
+        android:layout_marginStart="24dp"
+        android:layout_marginEnd="24dp"
+        android:fontFamily="@font/opensans_regular"
+        android:text="@string/onboarding_switch_firebase_analytics"
+        app:layout_constraintBottom_toTopOf="@id/analyticsDescription"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:layout_editor_absoluteY="592dp" />
+
+    <TextView
+        android:id="@+id/analyticsDescription"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
         android:layout_marginEnd="24dp"
         android:layout_marginBottom="24dp"
-        android:fontFamily="@font/opensans_regular"
-        android:text="@string/onboarding_switch_firebase_analytics"
+        android:text="@string/onboarding_switch_firebase_description_analytics"
+        android:textColor="?android:textColorPrimary"
+        android:textSize="14sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        tools:layout_editor_absoluteY="592dp" />
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

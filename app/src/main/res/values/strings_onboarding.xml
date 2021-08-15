@@ -7,9 +7,9 @@
     <!-- Error message title shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
     <string name="onboarding_directories_dialog_missing_title">Missing Document Provider</string>
     <!-- Error message description shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
-    <string name="onboarding_directories_dialog_missing_subtitle">A \'Document Provider\' (file manager) app can\'t be found on your device. You may have to install one, or revert to using the \'basic\' media scanner.</string>
+    <string name="onboarding_directories_dialog_missing_subtitle">Can\'t find a file provider to add directories. You may have to install one, or revert to using the Android Media Store provider.</string>
     <!-- Explanation shown to user when they're about to choose which directories wil lbe scanned bv the S2 media scanner-->
-    <string name="onboarding_directories_add_directories_help_text">In order to scan for music, S2 requires access to your media directories.\n\nWhen you press \'add directory\', you\'ll be taken to your default \'file provider\' app. Navigate to the folder(s) containing your music. You can add multiple directories. \n\nNote: You may need to enable \'show internal storage\' in order to see your music folder(s).</string>
+    <string name="onboarding_directories_add_directories_help_text">To scan for music, S2 requires access to your media directories. Add a directory via your Android File Provider app.</string>
     <!-- Shown when the app is scanning the user's directories for media -->
     <string name="onboarding_directories_scanning">Scanning…</string>
     <!-- Shown when the media scanner is scanning the user's directories for media-->
@@ -40,9 +40,15 @@
     <!-- Shown when the S2 Media Provider is scanning song tags (metadata)-->
     <string name="onboarding_scanner_reading_song_tags">Reading song tags…</string>
     <!-- Shown when onboarding. Describes why S2 would like to use Bugsnag and Firebase Analytics-->
-    <string name="onboarding_data_collection_title">Bugsnag and Firebase help keep S2 crash free and focused. Please consider enabling these</string>
+    <string name="onboarding_data_collection_title">S2 would like your permission to share anonymous crash data and analytics</string>
     <!-- Whown when onboarding. Switch to enable Bugsnag Crash Reporting -->
     <string name="onboarding_switch_bugsnag">Bugsnag Crash Reporting</string>
+    <!-- Shown when onboarding. Describes what Bugsnag  is used for-->
+    <string name="onboarding_switch_description_bugsnag">Anonymous crash statistics, which help to track down and resolve bugs</string>
     <!-- Whown when onboarding. Switch to enable Firebase Analytics -->
     <string name="onboarding_switch_firebase_analytics">Firebase Analytics</string>
+    <!-- Shown when onboarding. Describes what Firebase Analytics is used for-->
+    <string name="onboarding_switch_firebase_description_analytics">Enables A/B testing of features, and tracks how users interact with the app</string>
+    <!-- Shown during onboarding, or when choosing a media provider. -->
+    <string name="onboarding_media_selection_subtitle">Choose where your music comes from. Use the Android Media Store if you\'re not sure.</string>
 </resources>

@@ -115,9 +115,9 @@
     <!-- Settings: Title for the option to toggle whether the changelog is shown when the app is launched -->
     <string name="pref_show_changelog_launch_title">Show changelog on launch</string>
     <!-- Settings: Title for the option to turn off crash reporting -->
-    <string name="pref_crash_reporting_title">Crash reporting</string>
+    <string name="pref_crash_reporting_title">Bugsnag Crash reporting</string>
     <!-- Settings: Description for the option to turn off crash reporting -->
-    <string name="pref_crash_reporting_subtitle">Allow S2 to collect crash data via Bugsnag</string>
+    <string name="pref_crash_reporting_subtitle">Anonymous crash statistics, which help to track down and resolve bugs</string>
     <!-- Settings: Title for the option to view open source licenses -->
     <string name="pref_view_licenses_title">View licenses</string>
     <!-- Settings: Title for the option to enable debug logging (log file will be stored on disk) -->
@@ -155,5 +155,5 @@
     <!-- Settings: Title for the option to turn off crash reporting -->
     <string name="pref_firebase_analytics_title">Firebase analytics</string>
     <!-- Settings: Description for the option to turn off crash reporting -->
-    <string name="pref_firebase_analytics_subtitle">Allow S2 to uses Firebase Analytics to understand how users interact with the app</string>
+    <string name="pref_firebase_analytics_subtitle">Enables A/B testing of features, and tracks how users interact with the app</string>
 </resources>

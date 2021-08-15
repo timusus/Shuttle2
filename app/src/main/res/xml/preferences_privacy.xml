@@ -14,8 +14,8 @@
         <SwitchPreference
             android:defaultValue="false"
             android:key="pref_firebase_analytics"
-            android:summary="@string/pref_firebase_analytics_title"
-            android:title="@string/pref_firebase_analytics_subtitle"
+            android:summary="@string/pref_firebase_analytics_subtitle"
+            android:title="@string/pref_firebase_analytics_title"
             app:iconSpaceReserved="false" />
     </PreferenceCategory>
 
