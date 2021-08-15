@@ -1,9 +1,25 @@
 [
   {
+    "versionName": "1.0.1-alpha04",
+    "releaseDate": "16/08/2021",
+    "features": [
+    ],
+    "fixes": [
+      "Fixed an issue where changelog bottom sheet title was overlapped by scrolling content"
+    ],
+    "improvements": [
+      "Improved and clarified the purpose of Firebase Analytics for users onboarding, and also on the privacy setting screen",
+      "Automatically select MediaStore media provider for first-time users",
+      "Reworded descriptions of media providers, to help guide users through the onboarding process"
+    ],
+    "notes": [
+      "The playlist import feature has been removed. Playlists are automatically imported when scanning your media providers."
+    ]
+  },
+  {
     "versionName": "1.0.1-alpha03",
     "releaseDate": "14/08/2021",
     "features": [
-
     ],
     "fixes": [
       "Crash reporting is no longer enabled by default for new users"
