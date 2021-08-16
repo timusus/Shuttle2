@@ -26,6 +26,7 @@ class JellyfinMediaProvider(
         }
 
         return flow {
+            emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_provider_querying_api), null)))
             authenticate(address)?.let { credentials ->
                 emitAll(
                     queryItems(
@@ -66,7 +67,6 @@ class JellyfinMediaProvider(
                     userId = credentials.userId
                 )) {
                     is NetworkResult.Success<QueryResult> -> {
-                        emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_provider_querying_api), null)))
                         val updateData = mutableListOf<MediaImporter.PlaylistUpdateData>()
                         findSongsForPlaylists(address, credentials, queryResult.body.items, existingSongs).collectIndexed { index, playlistUpdateData ->
                             updateData.add(playlistUpdateData)

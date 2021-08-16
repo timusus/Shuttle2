@@ -26,6 +26,7 @@ class EmbyMediaProvider(
         }
 
         return flow {
+            emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_provider_querying_api), null)))
             authenticate(address)?.let { credentials ->
                 emitAll(
                     queryItems(
@@ -37,7 +38,6 @@ class EmbyMediaProvider(
                                 FlowEvent.Success(event.result.map { it.toSong() })
                             }
                             is FlowEvent.Progress -> {
-
                                 FlowEvent.Progress(event.data)
                             }
                             is FlowEvent.Failure -> {
@@ -67,7 +67,6 @@ class EmbyMediaProvider(
                     userId = credentials.userId
                 )) {
                     is NetworkResult.Success<QueryResult> -> {
-                        emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_provider_querying_api), null)))
                         val updateData = mutableListOf<MediaImporter.PlaylistUpdateData>()
                         findSongsForPlaylists(address, credentials, queryResult.body.items, existingSongs).collectIndexed { index, playlistUpdateData ->
                             updateData.add(playlistUpdateData)
