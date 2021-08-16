@@ -49,7 +49,7 @@ class TaglibMediaProvider(
                 emit(FlowEvent.Success(songs))
             } ?: run {
                 Timber.e("No document nodes to scan")
-                emit(FlowEvent.Failure("No directories/files to scan"))
+                emit(FlowEvent.Failure(context.getString(R.string.media_import_directories_empty)))
             }
         }
     }
