@@ -86,4 +86,8 @@
     <string name="media_import_updating_database">Updating database</string>
     <!-- Shown when the media importer fails to import songs -->
     <string name="media_import_error">An error occurred importing songs</string>
+    <!-- Shown when the S2 Media Provider fails to find any folders to scan -->
+    <string name="media_import_directories_empty">No directories/files to scan</string>
+    <!-- Shown when the S2 Media Provider is searching an m3u playlist for songs -->
+    <string name="media_import_m3u_scan">Finding songs for <xliff:g example="playlist1.m3u" id="playlist_name">{playlist_name}</xliff:g></string>
 </resources>

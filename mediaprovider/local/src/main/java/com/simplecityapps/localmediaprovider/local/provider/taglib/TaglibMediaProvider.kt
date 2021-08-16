@@ -3,6 +3,7 @@ package com.simplecityapps.localmediaprovider.local.provider.taglib
 import android.content.Context
 import android.net.Uri
 import com.simplecityapps.ktaglib.KTagLib
+import com.simplecityapps.localmediaprovider.R
 import com.simplecityapps.localmediaprovider.local.provider.toSong
 import com.simplecityapps.mediaprovider.*
 import com.simplecityapps.mediaprovider.model.AudioFile
@@ -11,6 +12,7 @@ import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.saf.DocumentNode
 import com.simplecityapps.saf.SafDirectoryHelper
 import com.simplecityapps.shuttle.coroutines.concurrentMap
+import com.squareup.phrase.Phrase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.withContext
@@ -102,23 +104,38 @@ class TaglibMediaProvider(
                             }
                     }
 
-                val updates = m3uPlaylists.mapIndexed { i, m3uPlaylist ->
-                    val songs = m3uPlaylist.entries.mapNotNull { entry ->
-                        existingSongs.firstOrNull { song -> song.path.contains(Uri.encode(entry.location)) }
+                val updates = m3uPlaylists.mapIndexedNotNull { i, m3uPlaylist ->
+                    val songs = m3uPlaylist.entries.mapIndexedNotNull { index, entry ->
+                        emit(
+                            FlowEvent.Progress(
+                                MessageProgress(
+                                    Phrase.from(context, R.string.media_import_m3u_scan).put("playlist_name", m3uPlaylist.name).format().toString(),
+                                    Progress(index, m3uPlaylist.entries.size)
+                                )
+                            )
+                        )
+                        existingSongs.firstOrNull { song ->
+                            val songUri = Uri.parse(song.path).lastPathSegment
+                            val songLastPathSegment = Uri.decode(songUri).substringAfterLast(':')
+                            entry.location.contains(songLastPathSegment) || songLastPathSegment.contains(entry.location)
+                        }
                     }
-                    val updateData = MediaImporter.PlaylistUpdateData(
-                        mediaProviderType = type,
-                        name = m3uPlaylist.name,
-                        songs = songs,
-                        externalId = m3uPlaylist.name
-                    )
-                    emit(FlowEvent.Progress(MessageProgress("Found m3u playlist", Progress(i, m3uPlaylists.size))))
-                    updateData
+                    if (songs.isNotEmpty()) {
+                        val updateData = MediaImporter.PlaylistUpdateData(
+                            mediaProviderType = type,
+                            name = m3uPlaylist.name,
+                            songs = songs,
+                            externalId = m3uPlaylist.name
+                        )
+                        updateData
+                    } else {
+                        null
+                    }
                 }
                 emit(FlowEvent.Success(updates.toList()))
             } ?: run {
                 Timber.e("No document nodes to scan")
-                emit(FlowEvent.Failure("No directories/files to scan"))
+                emit(FlowEvent.Failure(context.getString(R.string.media_import_directories_empty)))
             }
         }
     }
