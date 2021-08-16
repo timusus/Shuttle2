@@ -1,5 +1,19 @@
 [
   {
+    "versionName": "1.0.1-alpha05",
+    "releaseDate": "16/08/2021",
+    "features": [
+    ],
+    "fixes": [
+      "Fixed an issue preventing certain variations of replay gain tags from being read"
+    ],
+    "improvements": [
+      "M3U playlists are no longer required to use relative paths (improved M3U playlist importing)"
+    ],
+    "notes": [
+    ]
+  },
+  {
     "versionName": "1.0.1-alpha04",
     "releaseDate": "16/08/2021",
     "features": [
