@@ -1,5 +1,19 @@
 [
   {
+    "versionName": "1.0.1-alpha06",
+    "releaseDate": "18/08/2021",
+    "features": [
+    ],
+    "fixes": [
+      "Fixed an issue where local playback stopped working after casting",
+      "Fixed an issue where 'queue empty' notification is shown on device reboot"
+    ],
+    "improvements": [
+    ],
+    "notes": [
+    ]
+  },
+  {
     "versionName": "1.0.1-alpha05",
     "releaseDate": "16/08/2021",
     "features": [
