@@ -224,17 +224,19 @@ class PlaybackService :
     override fun onQueueRestored() {
         super.onQueueRestored()
 
-        if (queueManager.getQueue().isEmpty()) {
-            Timber.v("Queue empty")
-            stopForeground(true)
-            notificationManager.displayQueueEmptyNotification()
-            postDelayedShutdown()
-        }
+        if (pendingStartCommands.isNotEmpty()) {
+            if (queueManager.getQueue().isEmpty()) {
+                Timber.v("Queue empty")
+                stopForeground(true)
+                notificationManager.displayQueueEmptyNotification()
+                postDelayedShutdown()
+            }
 
-        pendingStartCommands.forEach { pendingStartCommand ->
-            processCommand(pendingStartCommand)
+            pendingStartCommands.forEach { pendingStartCommand ->
+                processCommand(pendingStartCommand)
+            }
+            pendingStartCommands.clear()
         }
-        pendingStartCommands.clear()
     }
 
     override fun onQueueChanged(reason: QueueChangeCallback.QueueChangeReason) {
