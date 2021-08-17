@@ -155,12 +155,6 @@ class PlaybackManager(
         }
     }
 
-    fun release() {
-        Timber.v("release()")
-        playback.release()
-        audioEffectSessionManager.closeAudioEffectSession()
-    }
-
     fun skipToNext(ignoreRepeat: Boolean = false, completion: ((Result<Any?>) -> Unit)? = null) {
         if (queueManager.skipToNext(ignoreRepeat)) {
             queueManager.getCurrentItem()?.let { currentQueueItem ->

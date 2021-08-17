@@ -18,7 +18,7 @@ import com.simplecityapps.playback.queue.QueueManager
 import timber.log.Timber
 
 class ExoPlayerPlayback(
-    context: Context,
+    private val context: Context,
     private val equalizerAudioProcessor: EqualizerAudioProcessor,
     private val replayGainAudioProcessor: ReplayGainAudioProcessor,
     private val mediaInfoProvider: MediaInfoProvider
@@ -27,10 +27,6 @@ class ExoPlayerPlayback(
     override var callback: Playback.Callback? = null
 
     override var isReleased: Boolean = true
-
-    private val player: SimpleExoPlayer by lazy {
-        initPlayer(context)
-    }
 
     private var isPlaybackReady = false
 
@@ -103,8 +99,8 @@ class ExoPlayerPlayback(
         }
     }
 
-    private fun initPlayer(context: Context): SimpleExoPlayer {
-        val renderersFactory = object : DefaultRenderersFactory(context) {
+    private val renderersFactory by lazy {
+        object : DefaultRenderersFactory(context) {
             override fun buildAudioSink(context: Context, enableFloatOutput: Boolean, enableAudioTrackPlaybackParams: Boolean, enableOffload: Boolean): AudioSink {
                 return DefaultAudioSink(
                     AudioCapabilities.DEFAULT_AUDIO_CAPABILITIES,
@@ -114,20 +110,21 @@ class ExoPlayerPlayback(
                     ).audioProcessors
                 )
             }
+        }.apply {
+            setExtensionRendererMode(EXTENSION_RENDERER_MODE_ON)
         }
-
-        renderersFactory.setExtensionRendererMode(EXTENSION_RENDERER_MODE_ON)
-
-        val simpleExoPlayer = SimpleExoPlayer.Builder(context, renderersFactory).build()
-        simpleExoPlayer.setWakeMode(C.WAKE_MODE_LOCAL)
-
-        return simpleExoPlayer
     }
+
+    private var player: SimpleExoPlayer = SimpleExoPlayer.Builder(context, renderersFactory).build()
+
 
     override suspend fun load(current: Song, next: Song?, seekPosition: Int, completion: (Result<Any?>) -> Unit) {
         Timber.v("load(current: ${current.name}|${current.mimeType}, seekPosition: $seekPosition)")
 
-        isReleased = false
+        if (isReleased) {
+            player = SimpleExoPlayer.Builder(context, renderersFactory).build()
+            isReleased = false
+        }
 
         player.removeListener(eventListener)
         player.pause()
