@@ -5,7 +5,10 @@ import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.simplecityapps.mediaprovider.model.Playlist
 import com.simplecityapps.mediaprovider.model.PlaylistSong
-import com.simplecityapps.mediaprovider.repository.*
+import com.simplecityapps.mediaprovider.repository.PlaylistQuery
+import com.simplecityapps.mediaprovider.repository.PlaylistRepository
+import com.simplecityapps.mediaprovider.repository.PlaylistSongSortOrder
+import com.simplecityapps.mediaprovider.repository.SongRepository
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.R
@@ -99,9 +102,6 @@ class PlaylistDetailPresenter @AssistedInject constructor(
         }.launchIn(this)
 
         playlistSongs
-            .onStart {
-                Timber.i("playlistSongs.onStart()")
-            }
             .filterNotNull()
             .onEach { playlistSongs ->
                 this@PlaylistDetailPresenter.view?.setData(
