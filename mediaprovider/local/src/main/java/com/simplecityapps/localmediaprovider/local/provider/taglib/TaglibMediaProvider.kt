@@ -117,7 +117,11 @@ class TaglibMediaProvider(
                         existingSongs.firstOrNull { song ->
                             val songUri = Uri.parse(song.path).lastPathSegment
                             val songLastPathSegment = Uri.decode(songUri).substringAfterLast(':')
-                            entry.location.contains(songLastPathSegment) || songLastPathSegment.contains(entry.location)
+                            if (songLastPathSegment.length > entry.location.length) {
+                                songLastPathSegment.contains(entry.location)
+                            } else {
+                                entry.location.contains(songLastPathSegment)
+                            }
                         }
                     }
                     if (songs.isNotEmpty()) {
