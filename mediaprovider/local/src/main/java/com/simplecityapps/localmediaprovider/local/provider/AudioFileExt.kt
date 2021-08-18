@@ -56,13 +56,13 @@ enum class TagLibProperty(val key: String) {
     Grouping("GROUPING")
 }
 
-fun KTagLib.getAudioFile(fileDescriptor: Int, filePath: String, fileName: String, lastModified: Long, size: Long, mimeType: String): AudioFile {
+fun KTagLib.getAudioFile(fileDescriptor: Int, filePath: String, fileName: String, lastModified: Long, size: Long, mimeType: String?): AudioFile {
     val metadata = getMetadata(fileDescriptor)
     return AudioFile(
-        filePath,
-        size,
-        lastModified,
-        mimeType,
+        path = filePath,
+        size = size,
+        lastModified = lastModified,
+        mimeType = mimeType ?: "audio/*",
         title = metadata?.propertyMap?.get(TagLibProperty.Title.key)?.firstOrNull() ?: fileName,
         albumArtist = metadata?.propertyMap?.get(TagLibProperty.AlbumArtist.key)?.firstOrNull(),
         artists = metadata?.propertyMap?.get(TagLibProperty.Artist.key).orEmpty().flatMap { artist ->

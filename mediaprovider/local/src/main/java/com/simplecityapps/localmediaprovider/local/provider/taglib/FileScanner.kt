@@ -25,7 +25,7 @@ class FileScanner {
                                 documentFile.name?.substringBeforeLast(".") ?: "Unknown",
                                 documentFile.lastModified(),
                                 documentFile.length(),
-                                documentFile.type!!
+                                documentFile.type
                             )
                         }
                     } catch (e: IllegalArgumentException) {
