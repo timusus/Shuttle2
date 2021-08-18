@@ -36,9 +36,9 @@
     <!-- Button to confirm clearing of the selected playlist -->
     <string name="playlist_dialog_button_clear">Svuota</string>
     <!-- Shown when the user presses playlist 'import' button. This shows the dialog to 'sync' playlists with the Android MediaStore -->
-    <string name="playlist_dialog_title_sync">Sincronizza le playlist di Media Store</string>
+    <string name="playlist_dialog_title_sync">Sincronizza le playlist nel dispositivo</string>
     <!-- Shown in the playlist import dialog. Explains to the user what 'sync' does-->
-    <string name="playlist_dialog_subtitle_sync">Copia le playlist da Media Store. Se le playlist sono già presenti in Shuttle, i brani verranno uniti.\n\nNota: i brani vengono solo aggiunti e non rimossi.</string>
+    <string name="playlist_dialog_subtitle_sync">Copia le playlist nel dispositivo. Se le playlist sono già presenti in Shuttle, i brani verranno uniti.\n\nNota: i brani vengono solo aggiunti e non rimossi.</string>
     <!-- Button to confirm 'syncing' a playlist with the Android MediaStore -->
     <string name="playlist_dialog_button_sync">Sincronizza</string>
     <!-- Title of the list of Playlists -->

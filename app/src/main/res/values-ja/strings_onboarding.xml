@@ -7,9 +7,9 @@
     <!-- Error message title shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
     <string name="onboarding_directories_dialog_missing_title">ドキュメントプロバイダーが見つかりません</string>
     <!-- Error message description shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
-    <string name="onboarding_directories_dialog_missing_subtitle">「ドキュメントプロバイダー」(ファイルマネージャー) アプリがデバイス内に見つかりません。そのアプリをインストールするか、普通のメディアスキャナーの利用に戻す必要があります。</string>
+    <string name="onboarding_directories_dialog_missing_subtitle">ディレクトリを追加するためのファイルプロバイダーアプリがデバイス内に見つかりません。ファイラーアプリをインストールするか、Android Media Storeを選択してください。</string>
     <!-- Explanation shown to user when they're about to choose which directories wil lbe scanned bv the S2 media scanner-->
-    <string name="onboarding_directories_add_directories_help_text">音楽をスキャンするため、S2はメディアディレクトリにアクセスする必要があります。&#13;\n&#13;\n「ディレクトリを追加」をタップすると、デフォルトの「ファイルプロバイダー」アプリが表示されます。音楽が格納されているフォルダを追加してください。複数のディレクトリを追加できます。&#13;\n&#13;\n注: 音楽フォルダを表示するには、「内部ストレージの表示」を有効にする必要があるかもしれません。</string>
+    <string name="onboarding_directories_add_directories_help_text">音楽ファイルをスキャンするため、S2はメディアディレクトリにアクセスする必要があります。ファイルプロバイダーアプリが表示されますので、ディレクトリを追加してください。</string>
     <!-- Shown when the app is scanning the user's directories for media -->
     <string name="onboarding_directories_scanning">スキャン中…</string>
     <!-- Shown when the media scanner is scanning the user's directories for media-->
@@ -39,5 +39,16 @@
     <string name="onboarding_media_scanner_rescan">再スキャン</string>
     <!-- Shown when the S2 Media Provider is scanning song tags (metadata)-->
     <string name="onboarding_scanner_reading_song_tags">曲のタグを読み込み中…</string>
-    <!-- Shown when user is onboarding. On this screen, user will choose their media provider, which will scan for their music-->
+    <!-- Shown when onboarding. Describes why S2 would like to use Bugsnag and Firebase Analytics-->
+    <string name="onboarding_data_collection_title">匿名のクラッシュデータと分析データをS2の開発者に共有するため、ユーザーの許可が必要です</string>
+    <!-- Whown when onboarding. Switch to enable Bugsnag Crash Reporting -->
+    <string name="onboarding_switch_bugsnag">Bugsnagクラッシュレポート</string>
+    <!-- Shown when onboarding. Describes what Bugsnag  is used for-->
+    <string name="onboarding_switch_description_bugsnag">匿名のクラッシュ統計データは、バグの追跡と解決に役立ちます</string>
+    <!-- Whown when onboarding. Switch to enable Firebase Analytics -->
+    <string name="onboarding_switch_firebase_analytics">Firebase分析</string>
+    <!-- Shown when onboarding. Describes what Firebase Analytics is used for-->
+    <string name="onboarding_switch_firebase_description_analytics">機能のA/Bテストを有効にし、ユーザーがどのようにアプリを操作するかを解析します（今後の使い勝手の向上に役立ちます）</string>
+    <!-- Shown during onboarding, or when choosing a media provider. -->
+    <string name="onboarding_media_selection_subtitle">音楽ファイルをどこから取得するかを選択します。不明な場合はAndroid Media Storeを選択してください。</string>
 </resources>

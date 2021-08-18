@@ -9,7 +9,11 @@
     <!-- Error message description shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
     <string name="onboarding_directories_dialog_missing_subtitle">在您的设备上找不到文件提供服务（文件管理器）。您或许需要安装一款或返回使用「基础」版媒体扫描器。</string>
     <!-- Explanation shown to user when they're about to choose which directories wil lbe scanned bv the S2 media scanner-->
-    <string name="onboarding_directories_add_directories_help_text">S2 需要读取您的媒体目录来扫描音乐。\n\n选择「添加目录」后，您将跳转至默认「文件提供服务」应用中。随后请选择您存放音乐的文件夹，您可以选择多个路径。\n\n注意：您可能需要启用「显示内部存储」来查看音乐文件夹。</string>
+    <string name="onboarding_directories_add_directories_help_text">S2 需要读取您的媒体目录来扫描音乐。
+
+选择「添加目录」后，您将跳转至默认「文件提供服务」应用中。随后请选择您存放音乐的文件夹，您可以选择多个路径。
+
+注意：您可能需要启用「显示内部存储」来查看音乐文件夹。</string>
     <!-- Shown when the app is scanning the user's directories for media -->
     <string name="onboarding_directories_scanning">正在扫描……</string>
     <!-- Shown when the media scanner is scanning the user's directories for media-->
@@ -38,5 +42,10 @@
     <string name="onboarding_media_scanner_rescan">重新扫描</string>
     <!-- Shown when the S2 Media Provider is scanning song tags (metadata)-->
     <string name="onboarding_scanner_reading_song_tags">正在读取歌曲标签……</string>
-    <!-- Shown when user is onboarding. On this screen, user will choose their media provider, which will scan for their music-->
+    <!-- Shown when onboarding. Describes why S2 would like to use Bugsnag and Firebase Analytics-->
+    <!-- Whown when onboarding. Switch to enable Bugsnag Crash Reporting -->
+    <!-- Shown when onboarding. Describes what Bugsnag  is used for-->
+    <!-- Whown when onboarding. Switch to enable Firebase Analytics -->
+    <!-- Shown when onboarding. Describes what Firebase Analytics is used for-->
+    <!-- Shown during onboarding, or when choosing a media provider. -->
 </resources>

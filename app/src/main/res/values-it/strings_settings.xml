@@ -73,13 +73,13 @@
     <!-- Settings: Description for changing the accent colour -->
     <string name="pref_theme_accent_summary">Colore principale del tema</string>
     <!-- Settings: Title for the option to use the 'extra dark' theme -->
-    <string name="pref_theme_extra_dark_title">Extra scuro</string>
+    <string name="pref_theme_extra_dark_title">Nero</string>
     <!-- Settings: Description for the option to use the 'extra dark' theme -->
     <string name="pref_theme_extra_dark_summary">Usa colori più scuri per un risparmio trascurabile della batteria sugli schermi AMOLED</string>
     <!-- Settings: Title for the option to choose media providers -->
     <string name="pref_media_provider_title">Fornitori di media</string>
     <!-- Settings: Description for the option to choose media providers-->
-    <string name="pref_media_provider_summary">Scegli tra scanner multimediale integrato, Android MediaStore, Jellyfin ed Emby</string>
+    <string name="pref_media_provider_summary">Scegli tra lo scanner multimediale di S2, lo scanner di base, Jellyfin ed Emby</string>
     <!-- Settings: Title for the option to rescan the media library -->
     <string name="pref_media_rescan_title">Nuova scansione</string>
     <!-- Settings: Description for the option to rescan the media library -->
@@ -105,7 +105,7 @@
     <!-- Settings: Title for the option to use dark mode for widgets -->
     <string name="pref_widget_dark_mode_title">Modalità scura</string>
     <!-- Settings: Title for the option to change opacity of the widget background -->
-    <string name="pref_widget_opacity_title">Opacità dello sfondo</string>
+    <string name="pref_widget_opacity_title">Opacità sfondo</string>
     <!-- Settings: Title for the option to ignore duplicates when adding songs to a playlist -->
     <string name="pref_ignore_duplicates_title">Ignora i duplicati</string>
     <!-- Settings: Description for the option to ignore duplicates when adding songs to a playlist -->
@@ -115,9 +115,9 @@
     <!-- Settings: Title for the option to toggle whether the changelog is shown when the app is launched -->
     <string name="pref_show_changelog_launch_title">Mostra il changelog all\'avvio</string>
     <!-- Settings: Title for the option to turn off crash reporting -->
-    <string name="pref_crash_reporting_title">Segnalazione di arresti anomali</string>
+    <string name="pref_crash_reporting_title">Bugsnag, segnalazione di arresti anomali</string>
     <!-- Settings: Description for the option to turn off crash reporting -->
-    <string name="pref_crash_reporting_subtitle">S2 raccoglie i dati sugli arresti anomali tramite \"Bugsnag\". Puoi disattivarlo qui</string>
+    <string name="pref_crash_reporting_subtitle">Segnalazioni anonime degli arresti anomali, che aiutano a trovare e risolvere i bug</string>
     <!-- Settings: Title for the option to view open source licenses -->
     <string name="pref_view_licenses_title">Visualizza le licenze</string>
     <!-- Settings: Title for the option to enable debug logging (log file will be stored on disk) -->
@@ -152,4 +152,8 @@
     <string name="theme_accent_entry_orange">Arancione</string>
     <!-- Settings title for the red theme option -->
     <string name="theme_accent_entry_red">Rosso</string>
+    <!-- Settings: Title for the option to turn off crash reporting -->
+    <string name="pref_firebase_analytics_title">Firebase, analitica</string>
+    <!-- Settings: Description for the option to turn off crash reporting -->
+    <string name="pref_firebase_analytics_subtitle">Permette i test d\'ipotesi a due campioni delle nuove funzionalità e registra il modo in cui gli utenti interagiscono con l\'app</string>
 </resources>

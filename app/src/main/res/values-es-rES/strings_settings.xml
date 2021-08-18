@@ -148,4 +148,6 @@
     <string name="theme_accent_entry_orange">Naranja</string>
     <!-- Settings title for the red theme option -->
     <string name="theme_accent_entry_red">Rojo</string>
+    <!-- Settings: Title for the option to turn off crash reporting -->
+    <!-- Settings: Description for the option to turn off crash reporting -->
 </resources>

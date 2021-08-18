@@ -79,7 +79,7 @@
     <!-- Settings: Title for the option to choose media providers -->
     <string name="pref_media_provider_title">Mediaproviders</string>
     <!-- Settings: Description for the option to choose media providers-->
-    <string name="pref_media_provider_summary">Kies tussen de ingebouwde mediascanner, Android MediaStore, Jellyfin &amp; Emby</string>
+    <string name="pref_media_provider_summary">Kies tussen de ingebouwde mediascanner, Android Media Store, Jellyfin &amp; Emby</string>
     <!-- Settings: Title for the option to rescan the media library -->
     <string name="pref_media_rescan_title">Opnieuw scannen</string>
     <!-- Settings: Description for the option to rescan the media library -->
@@ -115,9 +115,9 @@
     <!-- Settings: Title for the option to toggle whether the changelog is shown when the app is launched -->
     <string name="pref_show_changelog_launch_title">Toon log met wijzigingen bij lancering</string>
     <!-- Settings: Title for the option to turn off crash reporting -->
-    <string name="pref_crash_reporting_title">Crashrapportage</string>
+    <string name="pref_crash_reporting_title">Bugsnag crashrapportage</string>
     <!-- Settings: Description for the option to turn off crash reporting -->
-    <string name="pref_crash_reporting_subtitle">S2 verzamelt crashgegevens via \'Bugsnag\'. Schakel uit om u af te melden</string>
+    <string name="pref_crash_reporting_subtitle">Anonieme crashstatistieken die helpen bij het opsporen en oplossen van fouten</string>
     <!-- Settings: Title for the option to view open source licenses -->
     <string name="pref_view_licenses_title">Bekijk licenties</string>
     <!-- Settings: Title for the option to enable debug logging (log file will be stored on disk) -->
@@ -152,4 +152,8 @@
     <string name="theme_accent_entry_orange">Oranje</string>
     <!-- Settings title for the red theme option -->
     <string name="theme_accent_entry_red">Rood</string>
+    <!-- Settings: Title for the option to turn off crash reporting -->
+    <string name="pref_firebase_analytics_title">Firebase statistieken</string>
+    <!-- Settings: Description for the option to turn off crash reporting -->
+    <string name="pref_firebase_analytics_subtitle">Schakelt het A/B-testen van functies in en houdt bij hoe gebruikers omgaan met de app</string>
 </resources>

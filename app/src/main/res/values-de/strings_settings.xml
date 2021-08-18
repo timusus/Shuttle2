@@ -45,6 +45,7 @@
     <!-- Settings: Title for 'media' settings. Settings related to media providers, rescanning & exclude list (blacklist) -->
     <string name="pref_category_title_media">Medien</string>
     <!-- Settings: Title for 'playback' settings -->
+    <string name="pref_category_title_playback">Wiedergabe</string>
     <!-- Settings: Title for artwork related settings (artist/album images) -->
     <string name="pref_category_title_artwork">Grafik</string>
     <!-- Settings: Title for widget related settings  -->
@@ -54,6 +55,7 @@
     <!-- Settings: Title for shangelog related settings -->
     <string name="pref_category_title_changelog">Änderungsprotokoll</string>
     <!-- Settings: Title for app info related settings -->
+    <string name="pref_category_title_app_info">App Info</string>
     <!-- Settings: Title for privacy related settings -->
     <string name="pref_category_title_privacy">Privatsphäre</string>
     <!-- Settings: Title for open source related settings -->
@@ -129,7 +131,9 @@
     <!-- Settings: Description for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->
     <string name="pref_media_session_artwork_subtitle">Grafiken für die Mediensitzung von Android bereitstellen. Deaktivieren, um die Cover-Anzeige im Sperrbildschirm zu verhindern.</string>
     <!-- Settings: Title for the option to disable shuffle when starting a new queue -->
+    <string name="pref_disable_shuffle_on_queue_title">Shuffle Modus an lassen</string>
     <!-- Settings: Description for the option to disable shuffle when starting a new queue -->
+    <string name="pref_disable_shuffle_on_queue_subtitle">Wenn eine neue Warteschlange ausgewählt wird, wird Shuffle Modus nicht ausgeschaltet</string>
     <!-- Settings title for the day/night theme option -->
     <string name="theme_entry_day_night">Tag/Nacht</string>
     <!-- Settings title for the light theme option -->
@@ -148,4 +152,8 @@
     <string name="theme_accent_entry_orange">Orange</string>
     <!-- Settings title for the red theme option -->
     <string name="theme_accent_entry_red">Rot</string>
+    <!-- Settings: Title for the option to turn off crash reporting -->
+    <string name="pref_firebase_analytics_title">Firebase Analyse</string>
+    <!-- Settings: Description for the option to turn off crash reporting -->
+    <string name="pref_firebase_analytics_subtitle">Aktiviert A/B Testung von Funktionen, und verfolgt wie Benutzer mit der interagieren.</string>
 </resources>

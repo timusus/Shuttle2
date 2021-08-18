@@ -7,9 +7,9 @@
     <!-- Error message title shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
     <string name="onboarding_directories_dialog_missing_title">Sistema di gestione documenti assente</string>
     <!-- Error message description shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
-    <string name="onboarding_directories_dialog_missing_subtitle">Impossibile trovare un\'app di gestione documenti (manager di file) sul dispositivo. Potrebbe essere necessario installarne una o tornare a utilizzare il media scanner di base.</string>
+    <string name="onboarding_directories_dialog_missing_subtitle">Impossibile trovare un\'app di gestione documenti sul dispositivo. Dovresti installarne una o tornare a utilizzare lo scanner di base.</string>
     <!-- Explanation shown to user when they're about to choose which directories wil lbe scanned bv the S2 media scanner-->
-    <string name="onboarding_directories_add_directories_help_text">Per cercare la musica, S2 richiede l\'accesso alle cartelle multimediali.\n\nUna volta selezionato \"Aggiungi cartella\" verrai indirizzato sulla tua app predefinita di navigazione delle cartelle. Passa alla cartella o alle cartelle contenenti la tua musica. Puoi aggiungere più cartelle. \n\nNota: potrebbe essere necessario abilitare \"mostra memoria interna\".</string>
+    <string name="onboarding_directories_add_directories_help_text">Per scansionare la musica, S2 richiede l\'accesso alle tue cartelle. Aggiungi una cartella tramite il tuo gestore file predefinito.</string>
     <!-- Shown when the app is scanning the user's directories for media -->
     <string name="onboarding_directories_scanning">Scansione...</string>
     <!-- Shown when the media scanner is scanning the user's directories for media-->
@@ -39,5 +39,16 @@
     <string name="onboarding_media_scanner_rescan">Nuova scansione</string>
     <!-- Shown when the S2 Media Provider is scanning song tags (metadata)-->
     <string name="onboarding_scanner_reading_song_tags">Lettura dei tag dei brani...</string>
-    <!-- Shown when user is onboarding. On this screen, user will choose their media provider, which will scan for their music-->
+    <!-- Shown when onboarding. Describes why S2 would like to use Bugsnag and Firebase Analytics-->
+    <string name="onboarding_data_collection_title">S2 vorrebbe il tuo permesso per condividere anonimamente informazioni riguardo gli arresti anomali</string>
+    <!-- Whown when onboarding. Switch to enable Bugsnag Crash Reporting -->
+    <string name="onboarding_switch_bugsnag">Bugsnag: segnalazione degli arresti anomali</string>
+    <!-- Shown when onboarding. Describes what Bugsnag  is used for-->
+    <string name="onboarding_switch_description_bugsnag">Statistiche anonime che aiutano a risolvere gli arresti anomali</string>
+    <!-- Whown when onboarding. Switch to enable Firebase Analytics -->
+    <string name="onboarding_switch_firebase_analytics">Firebase: analitica</string>
+    <!-- Shown when onboarding. Describes what Firebase Analytics is used for-->
+    <string name="onboarding_switch_firebase_description_analytics">Permette i test d\'ipotesi a due campioni delle nuove funzionalità e registra il modo in cui gli utenti interagiscono con l\'app</string>
+    <!-- Shown during onboarding, or when choosing a media provider. -->
+    <string name="onboarding_media_selection_subtitle">Scegli la sorgente della musica. Se non sei sicuro scegli lo scanner di base</string>
 </resources>

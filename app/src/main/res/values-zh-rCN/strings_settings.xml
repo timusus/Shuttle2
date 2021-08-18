@@ -152,4 +152,6 @@
     <string name="theme_accent_entry_orange">橙色</string>
     <!-- Settings title for the red theme option -->
     <string name="theme_accent_entry_red">红色</string>
+    <!-- Settings: Title for the option to turn off crash reporting -->
+    <!-- Settings: Description for the option to turn off crash reporting -->
 </resources>

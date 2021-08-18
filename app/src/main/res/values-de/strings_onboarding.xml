@@ -9,7 +9,11 @@
     <!-- Error message description shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
     <string name="onboarding_directories_dialog_missing_subtitle">Eine „Dokumentenanbieter\“ (Dateimanager) App kann auf Deinem Gerät nicht gefunden werden. Möglicherweise musst Du einen installieren oder auf den „einfachen\“Medien-Scanner zurückgreifen.</string>
     <!-- Explanation shown to user when they're about to choose which directories wil lbe scanned bv the S2 media scanner-->
-    <string name="onboarding_directories_add_directories_help_text">Damit S2 nach Musik suchen kann, benötigt es Zugriff auf deine Medienverzeichnisse.\n\nWenn Du auf „Verzeichnis hinzufügen\“ tippst, wirst Du zu Deiner Standard-„Dateianbieter\“-App weitergeleitet. Navigiere zu dem/den Ordner(n), in denen sich Deine Musik befindet. Du kannst mehrere Verzeichnisse hinzufügen. \n\nHinweis: Möglicherweise musst Du „Internen Speicher anzeigen\“ aktivieren, um Deine(n) Musikordner zu sehen.</string>
+    <string name="onboarding_directories_add_directories_help_text">Damit S2 nach Musik suchen kann, benötigt es Zugriff auf deine Medienverzeichnisse.
+
+Wenn Du auf „Verzeichnis hinzufügen\“ tippst, wirst Du zu Deiner Standard-„Dateianbieter\“-App weitergeleitet. Navigiere zu dem/den Ordner(n), in denen sich Deine Musik befindet. Du kannst mehrere Verzeichnisse hinzufügen. 
+
+Hinweis: Möglicherweise musst Du „Internen Speicher anzeigen\“ aktivieren, um Deine(n) Musikordner zu sehen.</string>
     <!-- Shown when the app is scanning the user's directories for media -->
     <string name="onboarding_directories_scanning">Wird gescannt…</string>
     <!-- Shown when the media scanner is scanning the user's directories for media-->
@@ -41,5 +45,16 @@
     <string name="onboarding_media_scanner_rescan">Neu scannen</string>
     <!-- Shown when the S2 Media Provider is scanning song tags (metadata)-->
     <string name="onboarding_scanner_reading_song_tags">Song-Tags lesen…</string>
-    <!-- Shown when user is onboarding. On this screen, user will choose their media provider, which will scan for their music-->
+    <!-- Shown when onboarding. Describes why S2 would like to use Bugsnag and Firebase Analytics-->
+    <string name="onboarding_data_collection_title">S2 hätte gerne deine Erlaubnis anonyme Absturz Daten und Analysen zu sammeln</string>
+    <!-- Whown when onboarding. Switch to enable Bugsnag Crash Reporting -->
+    <string name="onboarding_switch_bugsnag">Bugsnag Absturz Meldung</string>
+    <!-- Shown when onboarding. Describes what Bugsnag  is used for-->
+    <string name="onboarding_switch_description_bugsnag">Anonyme Absturz Statistiken, welche dabei helfen Fehler zu finden und zu lösen</string>
+    <!-- Whown when onboarding. Switch to enable Firebase Analytics -->
+    <string name="onboarding_switch_firebase_analytics">Firebase Analysen</string>
+    <!-- Shown when onboarding. Describes what Firebase Analytics is used for-->
+    <string name="onboarding_switch_firebase_description_analytics">Aktiviert A/B Testung von Funktionen, und verfolgt wie Benutzer mit der interagieren.</string>
+    <!-- Shown during onboarding, or when choosing a media provider. -->
+    <string name="onboarding_media_selection_subtitle">Wähle aus woher Deine Musik kommt. Verwende den Android Media Store wenn Du dir nicht sicher bist.</string>
 </resources>

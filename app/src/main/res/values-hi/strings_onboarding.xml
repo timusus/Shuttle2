@@ -9,7 +9,11 @@
     <!-- Error message description shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
     <string name="onboarding_directories_dialog_missing_subtitle">एक \'दस्तावेज़ प्रदाता\' (फ़ाइल प्रबंधक) ऐप आपके डिवाइस पर नहीं पाया जा सकता है. आपको एक स्थापित करना पड़ सकता है, या \'बुनियादी\' मीडिया स्कैनर का उपयोग करने के लिए वापस लौटना पड़ सकता है.</string>
     <!-- Explanation shown to user when they're about to choose which directories wil lbe scanned bv the S2 media scanner-->
-    <string name="onboarding_directories_add_directories_help_text">संगीत के लिए स्कैन करने के लिए, शटल को आपके मीडिया निर्देशिकाओं तक पहुंच की आवश्यकता होती है.\n\nजब आप \'ऐड डायरेक्टरी\' को दबाते हैं, तो आपको अपने डिफॉल्ट \'फाइल प्रोवाइडर\' ऐप में ले जाया जाएगा. अपने संगीत से युक्त फ़ोल्डर पर नेविगेट करें. आप कई निर्देशिकाओं को जोड़ सकते हैं. \n\nनोट: आपको अपने म्यूज़िक फोल्डर(ओं) को देखने के लिए \'इंटरनल स्टोरेज शो\' इनेबल करना होगा.</string>
+    <string name="onboarding_directories_add_directories_help_text">संगीत के लिए स्कैन करने के लिए, शटल को आपके मीडिया निर्देशिकाओं तक पहुंच की आवश्यकता होती है.
+
+जब आप \'ऐड डायरेक्टरी\' को दबाते हैं, तो आपको अपने डिफॉल्ट \'फाइल प्रोवाइडर\' ऐप में ले जाया जाएगा. अपने संगीत से युक्त फ़ोल्डर पर नेविगेट करें. आप कई निर्देशिकाओं को जोड़ सकते हैं. 
+
+नोट: आपको अपने म्यूज़िक फोल्डर(ओं) को देखने के लिए \'इंटरनल स्टोरेज शो\' इनेबल करना होगा.</string>
     <!-- Shown when the app is scanning the user's directories for media -->
     <string name="onboarding_directories_scanning">स्कैन हो रहा है ...</string>
     <!-- Shown when the media scanner is scanning the user's directories for media-->
@@ -41,5 +45,10 @@
     <string name="onboarding_media_scanner_rescan">पुन: स्कैन</string>
     <!-- Shown when the S2 Media Provider is scanning song tags (metadata)-->
     <string name="onboarding_scanner_reading_song_tags">गीत टैग पढ़ रहा है ...</string>
-    <!-- Shown when user is onboarding. On this screen, user will choose their media provider, which will scan for their music-->
+    <!-- Shown when onboarding. Describes why S2 would like to use Bugsnag and Firebase Analytics-->
+    <!-- Whown when onboarding. Switch to enable Bugsnag Crash Reporting -->
+    <!-- Shown when onboarding. Describes what Bugsnag  is used for-->
+    <!-- Whown when onboarding. Switch to enable Firebase Analytics -->
+    <!-- Shown when onboarding. Describes what Firebase Analytics is used for-->
+    <!-- Shown during onboarding, or when choosing a media provider. -->
 </resources>

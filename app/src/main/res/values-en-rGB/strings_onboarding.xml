@@ -7,9 +7,13 @@
     <!-- Error message title shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
     <string name="onboarding_directories_dialog_missing_title">Missing Document Provider</string>
     <!-- Error message description shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
-    <string name="onboarding_directories_dialog_missing_subtitle">Can\'t find a file provider to add directories. You may have to install one, or revert to using the Android Media Store provider.</string>
+    <string name="onboarding_directories_dialog_missing_subtitle">A \'Document Provider\' (file manager) app can\'t be found on your device. You may have to install one, or revert to using the \'basic\' media scanner.</string>
     <!-- Explanation shown to user when they're about to choose which directories wil lbe scanned bv the S2 media scanner-->
-    <string name="onboarding_directories_add_directories_help_text">To scan for music, S2 requires access to your media directories. Add a directory via your Android File Provider app.</string>
+    <string name="onboarding_directories_add_directories_help_text">In order to scan for music, S2 requires access to your media directories.
+
+When you press \'add directory\', you\'ll be taken to your default \'file provider\' app. Navigate to the folder(s) containing your music. You can add multiple directories. 
+
+Note: You may need to enable \'show internal storage\' in order to see your music folder(s).</string>
     <!-- Shown when the app is scanning the user's directories for media -->
     <string name="onboarding_directories_scanning">Scanning…</string>
     <!-- Shown when the media scanner is scanning the user's directories for media-->

@@ -9,7 +9,11 @@
     <!-- Error message description shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
     <string name="onboarding_directories_dialog_missing_subtitle">Cihazınızda bir \'Belge Sağlayıcı\' (dosya yöneticisi) uygulaması bulunamıyor. Bir tane yüklemeniz veya temel medya tarayıcısını kullanmaya geri dönmeniz gerekebilir.</string>
     <!-- Explanation shown to user when they're about to choose which directories wil lbe scanned bv the S2 media scanner-->
-    <string name="onboarding_directories_add_directories_help_text">Müzik taraması için, S2\'nin medya klasörlerini erişimi gerekli\n\n\'Klasör ekle\'ye bastığınızda, varsayılan \'dosya sağlayıcısı\'na yönlendirileceksiniz. Müziğinizi içeren klasörlere gidin. Birden fazla klasör ekleyebilirsiniz.\n\nNot: Müzik klasörünüzü görmek için \'dahili depolamayı göster\'i etkinleştirmeniz gerekebilir.</string>
+    <string name="onboarding_directories_add_directories_help_text">Müzik taraması için, S2\'nin medya klasörlerini erişimi gerekli
+
+\'Klasör ekle\'ye bastığınızda, varsayılan \'dosya sağlayıcısı\'na yönlendirileceksiniz. Müziğinizi içeren klasörlere gidin. Birden fazla klasör ekleyebilirsiniz.
+
+Not: Müzik klasörünüzü görmek için \'dahili depolamayı göster\'i etkinleştirmeniz gerekebilir.</string>
     <!-- Shown when the app is scanning the user's directories for media -->
     <string name="onboarding_directories_scanning">Taranıyor...</string>
     <!-- Shown when the media scanner is scanning the user's directories for media-->
@@ -39,5 +43,10 @@
     <string name="onboarding_media_scanner_rescan">Yeniden tara</string>
     <!-- Shown when the S2 Media Provider is scanning song tags (metadata)-->
     <string name="onboarding_scanner_reading_song_tags">Şarkı etiketleri okunuyor</string>
-    <!-- Shown when user is onboarding. On this screen, user will choose their media provider, which will scan for their music-->
+    <!-- Shown when onboarding. Describes why S2 would like to use Bugsnag and Firebase Analytics-->
+    <!-- Whown when onboarding. Switch to enable Bugsnag Crash Reporting -->
+    <!-- Shown when onboarding. Describes what Bugsnag  is used for-->
+    <!-- Whown when onboarding. Switch to enable Firebase Analytics -->
+    <!-- Shown when onboarding. Describes what Firebase Analytics is used for-->
+    <!-- Shown during onboarding, or when choosing a media provider. -->
 </resources>

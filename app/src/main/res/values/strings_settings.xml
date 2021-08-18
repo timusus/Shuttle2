@@ -79,7 +79,7 @@
     <!-- Settings: Title for the option to choose media providers -->
     <string name="pref_media_provider_title">Media providers</string>
     <!-- Settings: Description for the option to choose media providers-->
-    <string name="pref_media_provider_summary">Choose between the built-in media scanner, Android MediaStore, Jellyfin &amp; Emby</string>
+    <string name="pref_media_provider_summary">Choose between the built-in media scanner, Android Media Store, Jellyfin &amp; Emby</string>
     <!-- Settings: Title for the option to rescan the media library -->
     <string name="pref_media_rescan_title">Rescan</string>
     <!-- Settings: Description for the option to rescan the media library -->
@@ -153,7 +153,7 @@
     <!-- Settings title for the red theme option -->
     <string name="theme_accent_entry_red">Red</string>
     <!-- Settings: Title for the option to turn off crash reporting -->
-    <string name="pref_firebase_analytics_title">Firebase analytics</string>
+    <string name="pref_firebase_analytics_title">Firebase Analytics</string>
     <!-- Settings: Description for the option to turn off crash reporting -->
     <string name="pref_firebase_analytics_subtitle">Enables A/B testing of features, and tracks how users interact with the app</string>
 </resources>
