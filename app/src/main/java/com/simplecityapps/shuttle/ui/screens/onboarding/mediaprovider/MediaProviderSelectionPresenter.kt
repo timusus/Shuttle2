@@ -13,10 +13,10 @@ import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
 import com.simplecityapps.provider.plex.PlexMediaProvider
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
+import com.squareup.inject.assisted.Assisted
+import com.squareup.inject.assisted.AssistedInject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import javax.inject.Inject
-import javax.inject.Named
 
 interface MediaProviderSelectionContract {
 
@@ -32,7 +32,7 @@ interface MediaProviderSelectionContract {
     }
 }
 
-class MediaProviderSelectionPresenter @Inject constructor(
+class MediaProviderSelectionPresenter @AssistedInject constructor(
     private val playbackPreferenceManager: PlaybackPreferenceManager,
     private val mediaImporter: MediaImporter,
     private val taglibMediaProvider: TaglibMediaProvider,
@@ -44,13 +44,24 @@ class MediaProviderSelectionPresenter @Inject constructor(
     private val queueManager: QueueManager,
     private val playbackManager: PlaybackManager,
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope,
+    @Assisted private val isOnboarding: Boolean
 ) : BasePresenter<MediaProviderSelectionContract.View>(),
     MediaProviderSelectionContract.Presenter {
+
+    @AssistedInject.Factory
+    interface Factory {
+        fun create(isOnboarding: Boolean): MediaProviderSelectionPresenter
+    }
 
     override fun bindView(view: MediaProviderSelectionContract.View) {
         super.bindView(view)
 
-        view.setMediaProviders(playbackPreferenceManager.mediaProviderTypes)
+        val mediaProviders = playbackPreferenceManager.mediaProviderTypes.toMutableList()
+
+        if (isOnboarding && mediaProviders.isEmpty()) {
+            mediaProviders += MediaProvider.Type.MediaStore
+        }
+        view.setMediaProviders(mediaProviders)
     }
 
     override fun addProviderClicked() {

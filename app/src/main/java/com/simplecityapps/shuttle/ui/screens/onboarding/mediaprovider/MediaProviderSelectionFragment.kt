@@ -57,6 +57,7 @@ class MediaProviderSelectionFragment :
     private lateinit var adapter: RecyclerAdapter
 
     @Inject
+    lateinit var presenterFactory: MediaProviderSelectionPresenter.Factory
     lateinit var presenter: MediaProviderSelectionPresenter
 
     private val preAnimationConstraints = ConstraintSet()
@@ -78,6 +79,8 @@ class MediaProviderSelectionFragment :
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        presenter = presenterFactory.create(isOnboarding)
 
         adapter = RecyclerAdapter(viewLifecycleOwner.lifecycleScope)
         recyclerView = view.findViewById(R.id.recyclerView)
