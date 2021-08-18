@@ -11,7 +11,7 @@ class M3uParser {
     fun parse(path: String, fileName: String, inputStream: InputStream): M3uPlaylist {
         val entries = mutableListOf<Entry>()
         BufferedReader(InputStreamReader(inputStream)).use { reader ->
-            var line: String? = reader.readLine()?.trim()
+            var line: String? = reader.readLine()?.trim()?.replace("\ufeff", "")
             var duration: Int? = null
             var artist: String? = null
             var track: String? = null
