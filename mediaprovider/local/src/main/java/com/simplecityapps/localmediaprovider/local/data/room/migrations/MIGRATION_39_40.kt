@@ -76,7 +76,7 @@ val MIGRATION_39_40 = object : Migration(39, 40) {
                     "year, " +
                     "path, " +
                     "albumArtist, " +
-                    "'', " +
+                    "artists, " +
                     "album, " +
                     "size, " +
                     "mimeType, " +
