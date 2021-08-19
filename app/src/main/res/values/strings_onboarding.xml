@@ -41,11 +41,11 @@
     <string name="onboarding_scanner_reading_song_tags">Reading song tags…</string>
     <!-- Shown when onboarding. Describes why S2 would like to use Bugsnag and Firebase Analytics-->
     <string name="onboarding_data_collection_title">S2 would like your permission to share anonymous crash data and analytics</string>
-    <!-- Whown when onboarding. Switch to enable Bugsnag Crash Reporting -->
+    <!-- Shown when onboarding. Switch to enable Bugsnag Crash Reporting -->
     <string name="onboarding_switch_bugsnag">Bugsnag Crash Reporting</string>
     <!-- Shown when onboarding. Describes what Bugsnag  is used for-->
     <string name="onboarding_switch_description_bugsnag">Anonymous crash statistics, which help to track down and resolve bugs</string>
-    <!-- Whown when onboarding. Switch to enable Firebase Analytics -->
+    <!-- Shown when onboarding. Switch to enable Firebase Analytics -->
     <string name="onboarding_switch_firebase_analytics">Firebase Analytics</string>
     <!-- Shown when onboarding. Describes what Firebase Analytics is used for-->
     <string name="onboarding_switch_firebase_description_analytics">Enables A/B testing of features, and tracks how users interact with the app</string>

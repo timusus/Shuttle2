@@ -46,9 +46,9 @@ Nota: pode ser necessário habilitar a opção \'mostrar armazenamento interno\'
     <!-- Shown when the S2 Media Provider is scanning song tags (metadata)-->
     <string name="onboarding_scanner_reading_song_tags">Lendo etiquetas de música...</string>
     <!-- Shown when onboarding. Describes why S2 would like to use Bugsnag and Firebase Analytics-->
-    <!-- Whown when onboarding. Switch to enable Bugsnag Crash Reporting -->
+    <!-- Shown when onboarding. Switch to enable Bugsnag Crash Reporting -->
     <!-- Shown when onboarding. Describes what Bugsnag  is used for-->
-    <!-- Whown when onboarding. Switch to enable Firebase Analytics -->
+    <!-- Shown when onboarding. Switch to enable Firebase Analytics -->
     <!-- Shown when onboarding. Describes what Firebase Analytics is used for-->
     <!-- Shown during onboarding, or when choosing a media provider. -->
 </resources>

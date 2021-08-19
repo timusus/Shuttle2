@@ -41,11 +41,11 @@
     <string name="onboarding_scanner_reading_song_tags">曲のタグを読み込み中…</string>
     <!-- Shown when onboarding. Describes why S2 would like to use Bugsnag and Firebase Analytics-->
     <string name="onboarding_data_collection_title">匿名のクラッシュデータと分析データをS2の開発者に共有するため、ユーザーの許可が必要です</string>
-    <!-- Whown when onboarding. Switch to enable Bugsnag Crash Reporting -->
+    <!-- Shown when onboarding. Switch to enable Bugsnag Crash Reporting -->
     <string name="onboarding_switch_bugsnag">Bugsnagクラッシュレポート</string>
     <!-- Shown when onboarding. Describes what Bugsnag  is used for-->
     <string name="onboarding_switch_description_bugsnag">匿名のクラッシュ統計データは、バグの追跡と解決に役立ちます</string>
-    <!-- Whown when onboarding. Switch to enable Firebase Analytics -->
+    <!-- Shown when onboarding. Switch to enable Firebase Analytics -->
     <string name="onboarding_switch_firebase_analytics">Firebase分析</string>
     <!-- Shown when onboarding. Describes what Firebase Analytics is used for-->
     <string name="onboarding_switch_firebase_description_analytics">機能のA/Bテストを有効にし、ユーザーがどのようにアプリを操作するかを解析します（今後の使い勝手の向上に役立ちます）</string>
