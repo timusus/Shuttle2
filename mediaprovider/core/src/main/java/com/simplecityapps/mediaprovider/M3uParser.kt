@@ -29,7 +29,7 @@ class M3uParser {
                         }
                     }
                     else -> {
-                        entries.add(Entry(line, duration, artist, track))
+                        entries.add(Entry(line.sanitise(), duration, artist, track))
                         duration = null
                         artist = null
                         track = null
@@ -40,5 +40,12 @@ class M3uParser {
         }
 
         return M3uPlaylist(path, fileName.substringBeforeLast("."), entries)
+    }
+
+    /**
+     * Sanitises paths, converting windows file separators to unix, and removing any leading windows directory qualifiers (e.g. c:\)
+     */
+    fun String.sanitise(): String {
+        return substringAfter(":\\").replace('\\', '/')
     }
 }

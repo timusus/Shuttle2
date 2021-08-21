@@ -88,6 +88,9 @@ class TaglibMediaProvider(
         existingSongs: List<Song>
     ): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> {
         return flow {
+
+            val sanitisedSongPaths = existingSongs.associateBy { Uri.decode(it.path.substringAfterLast('/')).substringAfterLast(':') }
+
             getDocumentNodes()?.let { nodes ->
                 val m3uPlaylists = nodes
                     .filter { it.ext == "m3u" || it.ext == "m3u8" }
@@ -104,7 +107,7 @@ class TaglibMediaProvider(
                             }
                     }
 
-                val updates = m3uPlaylists.mapIndexedNotNull { i, m3uPlaylist ->
+                val updates = m3uPlaylists.mapNotNull { m3uPlaylist ->
                     val songs = m3uPlaylist.entries.mapIndexedNotNull { index, entry ->
                         emit(
                             FlowEvent.Progress(
@@ -114,14 +117,21 @@ class TaglibMediaProvider(
                                 )
                             )
                         )
-                        existingSongs.firstOrNull { song ->
-                            val songUri = Uri.parse(song.path).lastPathSegment
-                            val songLastPathSegment = Uri.decode(songUri).substringAfterLast(':')
-                            if (songLastPathSegment.length > entry.location.length) {
-                                songLastPathSegment.contains(entry.location)
-                            } else {
-                                entry.location.contains(songLastPathSegment)
+
+                        sanitisedSongPaths.keys.firstOrNull { songPath ->
+                            when {
+                                songPath == entry.location -> {
+                                    true
+                                }
+                                songPath.length > entry.location.length -> {
+                                    songPath.contains(entry.location)
+                                }
+                                else -> {
+                                    entry.location.contains(songPath)
+                                }
                             }
+                        }?.let { matchingPath ->
+                            sanitisedSongPaths[matchingPath]
                         }
                     }
                     if (songs.isNotEmpty()) {
