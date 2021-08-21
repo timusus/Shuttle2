@@ -1,5 +1,21 @@
 [
   {
+    "versionName": "1.0.1-beta03",
+    "releaseDate": "22/08/2021",
+    "features": [
+    ],
+    "fixes": [
+    ],
+    "improvements": [
+      "M3U playlist import now supports windows file separators, ignores 'c:\\', 'd:\\', etc.",
+      "Improved performance of M3U playlist import",
+      "Translation updates"
+    ],
+    "notes": [
+      "If your artist information is missing, you may need to rescan your library"
+    ]
+  },
+  {
     "versionName": "1.0.1-beta02",
     "releaseDate": "19/08/2021",
     "features": [
