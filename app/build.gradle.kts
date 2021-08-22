@@ -17,7 +17,7 @@ android {
     defaultConfig {
         applicationId = "com.simplecityapps.shuttle"
         minSdk = 21
-        targetSdk =30
+        targetSdk = 30
         versionName = computeVersionName()
         versionCode = computeVersionCode()
         vectorDrawables.useSupportLibrary = true
@@ -234,7 +234,18 @@ play {
     if (System.getenv("JENKINS_URL") != null) {
         serviceAccountCredentials.set(file(System.getenv("DEPLOYMENT_KEYS")))
         defaultToAppBundles.set(true)
-        track.set("alpha")
+
+        when (System.getenv("BRANCH_NAME")) {
+            "alpha" -> {
+                track.set("alpha")
+            }
+            "beta" -> {
+                track.set("beta")
+            }
+            "prod" -> {
+                track.set("production")
+            }
+        }
     } else {
         serviceAccountCredentials.set(file("../deployment_keys.json"))
     }
