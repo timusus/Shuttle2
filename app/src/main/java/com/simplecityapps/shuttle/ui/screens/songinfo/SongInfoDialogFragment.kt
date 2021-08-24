@@ -1,19 +1,21 @@
 package com.simplecityapps.shuttle.ui.screens.songinfo
 
-import android.app.Dialog
 import android.content.Context
+import android.net.Uri
 import android.os.Bundle
+import android.provider.DocumentsContract
 import android.view.Gravity
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.LinearLayout
-import android.widget.ScrollView
 import android.widget.Space
 import android.widget.TextView
+import androidx.appcompat.view.ContextThemeWrapper
 import androidx.core.view.marginEnd
 import androidx.core.view.marginStart
-import androidx.core.view.setPadding
-import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
-import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import com.simplecityapps.mediaprovider.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.utils.dp
@@ -24,7 +26,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import java.net.URLDecoder
 
 @AndroidEntryPoint
-class SongInfoDialogFragment : DialogFragment() {
+class SongInfoDialogFragment : BottomSheetDialogFragment() {
 
     private lateinit var song: Song
 
@@ -34,13 +36,15 @@ class SongInfoDialogFragment : DialogFragment() {
         song = requireArguments().getParcelable<Song>(ARG_SONG) as Song
     }
 
-    override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        val contextThemeWrapper = ContextThemeWrapper(activity, requireContext().theme)
+        return inflater.cloneInContext(contextThemeWrapper).inflate(R.layout.fragment_dialog_song_info, container, false)
+    }
 
-        val scrollView = ScrollView(requireContext(), null)
-        val linearLayout = LinearLayout(requireContext(), null).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(24.dp)
-        }
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        val containerView: LinearLayout = view.findViewById(R.id.containerView)
 
         val map = mapOf(
             getString(R.string.song_info_track_title) to song.name.orEmpty(),
@@ -53,21 +57,17 @@ class SongInfoDialogFragment : DialogFragment() {
             getString(R.string.song_info_disc) to song.disc?.toString().orEmpty(),
             getString(R.string.song_info_play_count) to song.playCount.toString(),
             getString(R.string.song_info_genres) to song.genres.joinToString(", "),
-            getString(R.string.song_info_path) to try {
-                URLDecoder.decode(song.path, Charsets.UTF_8.name())
-            } catch (e: Exception) {
-                song.path
-            },
+            getString(R.string.song_info_path) to song.path.sanitise(),
             getString(R.string.song_info_mime_type) to song.mimeType,
             getString(R.string.song_info_size) to "${"%.2f".format((song.size / 1024f / 1024f))}MB",
-            getString(R.string.song_info_bit_rate) to song.bitRate?.toString()?.let{"${it} kb/s"},
-            getString(R.string.song_info_sample_rate) to song.sampleRate?.toString()?.let { "${it} kHz" },
+            getString(R.string.song_info_bit_rate) to song.bitRate?.toString()?.let { "$it kb/s" },
+            getString(R.string.song_info_sample_rate) to song.sampleRate?.toString()?.let { "$it kHz" },
             getString(R.string.song_info_channel_count) to song.channelCount?.toString(),
             getString(R.string.song_info_lyrics) to song.lyrics
         )
 
         for ((key, value) in map) {
-            linearLayout.addView(LinearLayout(requireContext(), null).apply {
+            containerView.addView(LinearLayout(requireContext(), null).apply {
 
                 orientation = LinearLayout.HORIZONTAL
                 layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
@@ -86,19 +86,23 @@ class SongInfoDialogFragment : DialogFragment() {
                 })
             })
         }
-
-        scrollView.addView(linearLayout)
-
-        return MaterialAlertDialogBuilder(requireContext())
-            .setTitle(getString(R.string.song_info_dialog_title))
-            .setView(scrollView)
-            .setNegativeButton(getString(R.string.song_info_dialog_close_button_title), null)
-            .show()
     }
 
     fun show(fragmentManager: FragmentManager) {
         show(fragmentManager, TAG)
     }
+
+    fun String.sanitise(): String {
+        if (DocumentsContract.isDocumentUri(requireContext(), Uri.parse(this))) {
+            return try {
+                URLDecoder.decode(song.path, Charsets.UTF_8.name()).substringAfterLast(':')
+            } catch (e: Exception) {
+                song.path
+            }
+        }
+        return this
+    }
+
 
     companion object {
 
