@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="?attr/colorControlHighlight" >
+
+    <item android:id="@android:id/mask">
+        <shape>
+            <corners android:radius="4dp" />
+            <solid android:color="@android:color/black" />
+        </shape>
+    </item>
+
+    <item>
+        <selector android:enterFadeDuration="@android:integer/config_shortAnimTime">
+            <item android:state_activated="true">
+                <shape>
+                    <corners android:radius="4dp" />
+                    <solid android:color="?colorControlHighlight" />
+                </shape>
+            </item>
+
+            <item>
+                <shape>
+                    <corners android:radius="4dp" />
+                    <solid android:color="@android:color/transparent" />
+                </shape>
+            </item>
+        </selector>
+    </item>
+</ripple>

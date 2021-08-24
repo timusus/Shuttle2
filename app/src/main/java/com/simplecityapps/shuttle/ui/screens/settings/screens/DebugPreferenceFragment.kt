@@ -33,6 +33,7 @@ class DebugPreferenceFragment : PreferenceFragmentCompat() {
 
         val toolbar: Toolbar = view.findViewById(R.id.toolbar)
         toolbar.setNavigationOnClickListener { findNavController().popBackStack() }
+        toolbar.setTitle(R.string.pref_category_title_debug)
 
         preferenceScreen.findPreference<Preference>("pref_crash_reporting")?.setOnPreferenceClickListener {
             if (!preferenceManager.crashReportingEnabled) {

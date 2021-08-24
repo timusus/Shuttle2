@@ -46,6 +46,7 @@ class MediaPreferenceFragment : PreferenceFragmentCompat() {
 
         val toolbar: Toolbar = view.findViewById(R.id.toolbar)
         toolbar.setNavigationOnClickListener { findNavController().popBackStack() }
+        toolbar.setTitle(R.string.pref_category_title_media)
 
         preferenceScreen.findPreference<Preference>("pref_media_provider")?.setOnPreferenceClickListener {
             findNavController().navigate(R.id.onboardingFragment, OnboardingParentFragmentArgs(false).toBundle())

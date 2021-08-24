@@ -209,6 +209,8 @@ android {
         // Semantic versioning
         implementation("com.vdurmont:semver4j:3.1.0")
 
+        implementation("com.microsoft.design:fluent-system-icons:1.1.137@aar")
+
         // Testing
         androidTestImplementation("androidx.test:runner:1.4.0")
         androidTestImplementation("androidx.test:rules:1.4.0")

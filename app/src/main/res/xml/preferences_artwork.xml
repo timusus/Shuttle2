@@ -2,40 +2,36 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <PreferenceCategory
-        android:title="@string/pref_category_title_artwork"
-        app:iconSpaceReserved="false">
-        <SwitchPreference
-            android:defaultValue="true"
-            android:key="artwork_wifi_only"
-            android:summary="@string/pref_artwork_wifi_subtitle"
-            android:title="@string/pref_artwork_wifi_title"
-            app:iconSpaceReserved="false" />
+    <SwitchPreference
+        android:defaultValue="true"
+        android:key="artwork_wifi_only"
+        android:summary="@string/pref_artwork_wifi_subtitle"
+        android:title="@string/pref_artwork_wifi_title"
+        app:iconSpaceReserved="false" />
 
-        <SwitchPreference
-            android:defaultValue="false"
-            android:key="artwork_local_only"
-            android:summary="@string/pref_artwork_local_only_subtitle"
-            android:title="@string/pref_artwork_local_only_title"
-            app:iconSpaceReserved="false" />
+    <SwitchPreference
+        android:defaultValue="false"
+        android:key="artwork_local_only"
+        android:summary="@string/pref_artwork_local_only_subtitle"
+        android:title="@string/pref_artwork_local_only_title"
+        app:iconSpaceReserved="false" />
 
-        <Preference
-            android:key="pref_clear_artwork"
-            android:summary="@string/pref_clear_artwork_subtitle"
-            android:title="@string/pref_clear_artwork_title"
-            app:iconSpaceReserved="false" />
+    <Preference
+        android:key="pref_clear_artwork"
+        android:summary="@string/pref_clear_artwork_subtitle"
+        android:title="@string/pref_clear_artwork_title"
+        app:iconSpaceReserved="false" />
 
-        <Preference
-            android:key="pref_download_artwork"
-            android:title="@string/pref_download_artwork_title"
-            app:iconSpaceReserved="false" />
+    <Preference
+        android:key="pref_download_artwork"
+        android:title="@string/pref_download_artwork_title"
+        app:iconSpaceReserved="false" />
 
-        <SwitchPreference
-            android:defaultValue="true"
-            android:key="media_session_artwork"
-            android:summary="@string/pref_media_session_artwork_subtitle"
-            android:title="@string/pref_media_session_artwork_title"
-            app:iconSpaceReserved="false" />
-    </PreferenceCategory>
+    <SwitchPreference
+        android:defaultValue="true"
+        android:key="media_session_artwork"
+        android:summary="@string/pref_media_session_artwork_subtitle"
+        android:title="@string/pref_media_session_artwork_title"
+        app:iconSpaceReserved="false" />
 
 </PreferenceScreen>

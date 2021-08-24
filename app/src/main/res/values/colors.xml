@@ -85,4 +85,9 @@
     <color name="helperTextColorDark">#E65100</color>
     <color name="helperTextColor">#E65100</color>
 
+
+    <!-- Theme Buttons -->
+    <color name="outline_light">#30000000</color>
+    <color name="outline_dark">#50FFFFFF</color>
+
 </resources>

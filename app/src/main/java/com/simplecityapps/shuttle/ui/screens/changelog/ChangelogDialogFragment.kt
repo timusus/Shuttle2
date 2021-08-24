@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.view.ContextThemeWrapper
+import androidx.appcompat.widget.SwitchCompat
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
@@ -36,6 +37,8 @@ class ChangelogDialogFragment : BottomSheetDialogFragment() {
 
     private var adapter: RecyclerAdapter by autoCleared()
 
+    private var showOnLaunchSwitch: SwitchCompat by autoCleared()
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val contextThemeWrapper = ContextThemeWrapper(activity, requireContext().theme)
         return inflater.cloneInContext(contextThemeWrapper).inflate(R.layout.fragment_dialog_changelog, container, false)
@@ -43,6 +46,12 @@ class ChangelogDialogFragment : BottomSheetDialogFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        showOnLaunchSwitch = view.findViewById(R.id.showOnLaunchSwitch)
+        showOnLaunchSwitch.isChecked = preferenceManager.showChangelogOnLaunch
+        showOnLaunchSwitch.setOnCheckedChangeListener { _, b ->
+            preferenceManager.showChangelogOnLaunch = b
+        }
 
         val changelog = try {
             val changeSetList: Type = Types.newParameterizedType(MutableList::class.java, Changeset::class.java)

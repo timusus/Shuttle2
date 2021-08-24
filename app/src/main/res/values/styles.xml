@@ -9,6 +9,7 @@
         <item name="colorAccent">@color/colorPrimary</item>
         <item name="colorPrimaryTransparent">@color/colorPrimaryTransparent</item>
         <item name="colorPrimarySemiTransparent">@color/colorPrimarySemiTransparent</item>
+        <item name="colorControlHighlight">@color/ripple_material_light</item>
         <item name="tabLayoutStyle">@style/TabLayout.AppTheme.Dark</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar" tools:targetApi="23">true</item>
@@ -31,6 +32,8 @@
 
         <item name="guidelineColor">@color/vertical_seekbar_guideline_light</item>
 
+        <item name="outlineColor">@color/outline_light</item>
+
         <item name="placeholderBackgroundColor">@color/bg_placeholder</item>
 
         <item name="helperTextTextColor">@color/helperTextColor</item>
@@ -47,6 +50,13 @@
 
         <item name="android:navigationBarColor">@android:color/white</item>
         <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
+
+        <item name="accentBlue">@color/colorPrimary</item>
+        <item name="accentOrange">@color/colorPrimaryOrange</item>
+        <item name="accentCyan">@color/colorPrimaryCyanDark</item>
+        <item name="accentPurple">@color/colorPrimaryPurpleDark</item>
+        <item name="accentGreen">@color/colorPrimaryGreen</item>
+        <item name="accentAmber">@color/colorPrimaryAmber</item>
     </style>
 
     <style name="AppTheme.Dark" parent="Theme.MaterialComponents.NoActionBar">
@@ -57,6 +67,7 @@
         <item name="colorAccent">@color/colorPrimary</item>
         <item name="colorPrimaryTransparent">@color/colorPrimaryTransparent</item>
         <item name="colorPrimarySemiTransparent">@color/colorPrimarySemiTransparent</item>
+        <item name="colorControlHighlight">@color/ripple_material_dark</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:textViewStyle">@style/Widget.Shuttle.TextView</item>
         <item name="toolbarStyle">@style/Widget.Shuttle.Toolbar</item>
@@ -81,6 +92,8 @@
 
         <item name="guidelineColor">@color/vertical_seekbar_guideline_dark</item>
 
+        <item name="outlineColor">@color/outline_dark</item>
+
         <item name="placeholderBackgroundColor">@color/bg_placeholder_dark</item>
 
         <item name="helperTextTextColor">@color/helperTextColor</item>
@@ -93,6 +106,13 @@
 
         <item name="android:textColorPrimary">@color/text_primary_dark</item>
         <item name="android:textColorSecondary">@color/text_secondary_dark</item>
+
+        <item name="accentBlue">@color/colorPrimaryDark</item>
+        <item name="accentOrange">@color/colorPrimaryOrange</item>
+        <item name="accentCyan">@color/colorPrimaryCyan</item>
+        <item name="accentPurple">@color/colorPrimaryPurple</item>
+        <item name="accentGreen">@color/colorPrimaryGreen</item>
+        <item name="accentAmber">@color/colorPrimaryAmber</item>
     </style>
 
     <style name="AppTheme.DayNight" parent="AppTheme.Light" />
@@ -286,6 +306,22 @@
         <item name="cornerSize">8dp</item>
         <item name="cornerFamily">rounded</item>
     </style>
+
+
+    <!-- Theme Buttons-->
+
+    <attr name="outlineColor" format="reference|color" />
+
+
+    <!-- Theme accents-->
+
+    <attr name="accentBlue" format="reference|color" />
+    <attr name="accentOrange" format="reference|color" />
+    <attr name="accentCyan" format="reference|color" />
+    <attr name="accentPurple" format="reference|color" />
+    <attr name="accentGreen" format="reference|color" />
+    <attr name="accentAmber" format="reference|color" />
+
 
     <!-- Orange theme-->
 

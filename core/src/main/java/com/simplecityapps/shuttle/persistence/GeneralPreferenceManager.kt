@@ -18,7 +18,7 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
             sharedPreferences.put("changelog_show_on_launch", value)
         }
         get() {
-            return sharedPreferences.get("changelog_show_on_launch", false)
+            return sharedPreferences.get("changelog_show_on_launch", true)
         }
 
     var lastViewedChangelogVersion: String?

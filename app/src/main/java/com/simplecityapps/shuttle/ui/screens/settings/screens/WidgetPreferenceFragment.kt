@@ -27,6 +27,7 @@ class WidgetPreferenceFragment : PreferenceFragmentCompat() {
 
         val toolbar: Toolbar = view.findViewById(R.id.toolbar)
         toolbar.setNavigationOnClickListener { findNavController().popBackStack() }
+        toolbar.setTitle(R.string.pref_category_title_widgets)
 
         preferenceScreen.findPreference<Preference>("widget_dark_mode")?.setOnPreferenceClickListener {
             widgetManager.updateAppWidgets(WidgetManager.UpdateReason.Unknown)

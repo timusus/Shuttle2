@@ -12,6 +12,17 @@
         </attr>
     </declare-styleable>
 
+    <attr name="icon" format="reference" />
+    <attr name="strokeColor" format="color|reference" />
+    <attr name="foregroundColor" format="color|reference" />
+
+    <declare-styleable name="ThemeButton">
+        <attr name="label" format="string|reference" />
+        <attr name="icon" />
+        <attr name="strokeColor" />
+        <attr name="foregroundColor" />
+    </declare-styleable>
+
     <attr name="seekDirection" format="enum">
         <enum name="forward" value="0" />
         <enum name="backward" value="1" />

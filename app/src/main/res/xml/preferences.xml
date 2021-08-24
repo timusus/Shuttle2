@@ -4,7 +4,7 @@
 
     <Preference
         android:title="@string/pref_category_title_display"
-        app:icon="@drawable/ic_outline_image_aspect_ratio_24"
+        app:icon="@drawable/ic_outline_color_lens_24"
         app:iconSpaceReserved="false"
         app:key="pref_screen_display" />
 
@@ -22,7 +22,7 @@
 
     <Preference
         android:title="@string/pref_category_title_artwork"
-        app:icon="@drawable/ic_outline_color_lens_24"
+        app:icon="@drawable/ic_outline_image_24"
         app:iconSpaceReserved="false"
         app:key="pref_screen_artwork" />
 

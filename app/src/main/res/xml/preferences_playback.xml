@@ -2,15 +2,11 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <PreferenceCategory
-        android:title="@string/pref_category_title_playback"
-        app:iconSpaceReserved="false">
-        <SwitchPreference
-            android:defaultValue="false"
-            android:key="pref_retain_shuffle_on_new_queue"
-            android:summary="@string/pref_disable_shuffle_on_queue_subtitle"
-            android:title="@string/pref_disable_shuffle_on_queue_title"
-            app:iconSpaceReserved="false" />
-    </PreferenceCategory>
+    <SwitchPreference
+        android:defaultValue="false"
+        android:key="pref_retain_shuffle_on_new_queue"
+        android:summary="@string/pref_disable_shuffle_on_queue_subtitle"
+        android:title="@string/pref_disable_shuffle_on_queue_title"
+        app:iconSpaceReserved="false" />
 
 </PreferenceScreen>
