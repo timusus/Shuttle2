@@ -52,7 +52,7 @@ class LocalArtworkModelLoader : ModelLoader<LocalArtworkProvider, InputStream> {
         }
 
         override fun getDataSource(): DataSource {
-            return DataSource.LOCAL
+            return DataSource.REMOTE
         }
 
         override fun cancel() {
