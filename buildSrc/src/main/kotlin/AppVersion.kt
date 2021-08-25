@@ -1,6 +1,6 @@
 object AppVersion {
     const val versionMajor = 1
     const val versionMinor = 0
-    const val versionPatch = 1
-    const val versionSuffix = ""
+    const val versionPatch = 2
+    const val versionSuffix = "-alpha01"
 }

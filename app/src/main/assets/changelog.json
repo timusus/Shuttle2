@@ -1,5 +1,25 @@
 [
   {
+    "versionName": "1.0.2-alpha01",
+    "releaseDate": "25/07/2021",
+    "features": [
+      "Ability to reorder & hide library tabs"
+    ],
+    "fixes": [
+    ],
+    "improvements": [
+      "Improvements to settings screens. Thanks Erik!",
+      "Song info now displayed in bottom sheet",
+      "Improved song info path display",
+      "Option to sort songs by date modified",
+      "Disk & embedded artwork now added to cache for faster loading",
+      "Translation updates"
+    ],
+    "notes": [
+      "Join the Discord: https://discord.gg/YkhSuHJ"
+    ]
+  },
+  {
     "versionName": "1.0.1",
     "releaseDate": "23/08/2021",
     "features": [
