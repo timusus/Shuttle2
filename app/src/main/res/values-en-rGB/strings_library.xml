@@ -22,4 +22,6 @@
     <!-- Shown when the app is scanning for songs in the library -->
     <string name="library_scan_in_progress">Scanning your library</string>
     <!-- Shown to indicate the number of tracks/albums/artists which have been selected, in multi-selection mode-->
+    <!-- Shown on the library screen, if the user has manually deselected all the library tabs in appearance settings-->
+    <string name="library_tabs_empty">No library tabs visible</string>
 </resources>

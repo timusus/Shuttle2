@@ -17,7 +17,7 @@
     <!-- Title of the 'settings' screen-->
     <string name="title_settings">Definições</string>
     <!-- Title of the 'Now Playing' screen (the main screen for controlling music playback)-->
-    <string name="title_now_playing">A jogar agora</string>
+    <string name="title_now_playing">A reproduzir</string>
     <!-- Shown at the top of the 'search' screen-->
     <string name="title_search_hint">Procurar música</string>
 </resources>

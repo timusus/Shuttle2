@@ -22,4 +22,5 @@
     <!-- Shown when the app is scanning for songs in the library -->
     <string name="library_scan_in_progress">Analyse de votre librairie</string>
     <!-- Shown to indicate the number of tracks/albums/artists which have been selected, in multi-selection mode-->
+    <!-- Shown on the library screen, if the user has manually deselected all the library tabs in appearance settings-->
 </resources>

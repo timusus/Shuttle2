@@ -30,8 +30,6 @@
     <string name="settings_dialog_button_download_artwork">Transferir</string>
     <!-- Title of the dialog shown when the user changes their theme preferences, and the app must be restarted -->
     <string name="settings_dialog_title_amoled_required_restart">Requer reiniciar</string>
-    <!-- Shown in dialog when user changes their theme options, and the app must be restarted -->
-    <string name="settings_dialog_message_amoled_requires_restart">O S2 deve ser reiniciado para que as alterações ao tema tenham efeito</string>
     <!-- Settings option to copy debug logs to clipboard -->
     <string name="settings_logging_clipboard_name">Registos de depuração</string>
     <!-- Shown when the debug logs have been copied to the clipboard -->
@@ -40,7 +38,7 @@
     <string name="settings_logging_clipboard_logs_too_large">O ficheiro de log é muito grande para a área de transferência</string>
     <!-- Error message shown when copying debug logs failed, because there are no logs -->
     <string name="settings_logging_clipboard_logs_empty">Ficheiro de log vazio</string>
-    <!-- Settings: Title for 'display' settings (settings related to themes, etc.) -->
+    <!-- Settings: Title for 'appearance' settings (settings related to themes, etc.) -->
     <string name="pref_category_title_display">Ecrã</string>
     <!-- Settings: Title for 'media' settings. Settings related to media providers, rescanning & exclude list (blacklist) -->
     <string name="pref_category_title_media">Multimédia</string>

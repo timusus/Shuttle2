@@ -30,4 +30,5 @@
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> ausgewählt</item>
         <item quantity="other"><xliff:g example="3" id="count">{count}</xliff:g> ausgewählt</item>
     </plurals>
+    <!-- Shown on the library screen, if the user has manually deselected all the library tabs in appearance settings-->
 </resources>

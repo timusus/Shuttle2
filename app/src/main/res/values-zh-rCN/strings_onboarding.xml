@@ -43,9 +43,15 @@
     <!-- Shown when the S2 Media Provider is scanning song tags (metadata)-->
     <string name="onboarding_scanner_reading_song_tags">正在读取歌曲标签……</string>
     <!-- Shown when onboarding. Describes why S2 would like to use Bugsnag and Firebase Analytics-->
+    <string name="onboarding_data_collection_title">S2 想要获得您的授权以分享匿名化崩溃与分析数据</string>
     <!-- Shown when onboarding. Switch to enable Bugsnag Crash Reporting -->
+    <string name="onboarding_switch_bugsnag">Bugsnag 崩溃报告服务</string>
     <!-- Shown when onboarding. Describes what Bugsnag  is used for-->
+    <string name="onboarding_switch_description_bugsnag">匿名化崩溃数据统计，用于追踪并解决问题</string>
     <!-- Shown when onboarding. Switch to enable Firebase Analytics -->
+    <string name="onboarding_switch_firebase_analytics">Firebase 分析服务</string>
     <!-- Shown when onboarding. Describes what Firebase Analytics is used for-->
+    <string name="onboarding_switch_firebase_description_analytics">启用应用功能的 A/B 测试，用以追踪用户与应用间的交互行为</string>
     <!-- Shown during onboarding, or when choosing a media provider. -->
+    <string name="onboarding_media_selection_subtitle">选择您的音乐来源。如果您不确定该选哪个，可以使用 Android 媒体存储。</string>
 </resources>

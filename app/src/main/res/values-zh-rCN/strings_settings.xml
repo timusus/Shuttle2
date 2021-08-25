@@ -30,8 +30,6 @@
     <string name="settings_dialog_button_download_artwork">下载</string>
     <!-- Title of the dialog shown when the user changes their theme preferences, and the app must be restarted -->
     <string name="settings_dialog_title_amoled_required_restart">需要重新启动</string>
-    <!-- Shown in dialog when user changes their theme options, and the app must be restarted -->
-    <string name="settings_dialog_message_amoled_requires_restart">S2 必须重启来使主题更改生效</string>
     <!-- Settings option to copy debug logs to clipboard -->
     <string name="settings_logging_clipboard_name">调试日志</string>
     <!-- Shown when the debug logs have been copied to the clipboard -->
@@ -40,7 +38,7 @@
     <string name="settings_logging_clipboard_logs_too_large">日志文件太大，无法复制到剪贴板</string>
     <!-- Error message shown when copying debug logs failed, because there are no logs -->
     <string name="settings_logging_clipboard_logs_empty">日志文件为空</string>
-    <!-- Settings: Title for 'display' settings (settings related to themes, etc.) -->
+    <!-- Settings: Title for 'appearance' settings (settings related to themes, etc.) -->
     <string name="pref_category_title_display">样式</string>
     <!-- Settings: Title for 'media' settings. Settings related to media providers, rescanning & exclude list (blacklist) -->
     <string name="pref_category_title_media">媒体播放</string>
@@ -153,5 +151,7 @@
     <!-- Settings title for the red theme option -->
     <string name="theme_accent_entry_red">红色</string>
     <!-- Settings: Title for the option to turn off crash reporting -->
+    <string name="pref_firebase_analytics_title">Firebase 分析服务</string>
     <!-- Settings: Description for the option to turn off crash reporting -->
+    <string name="pref_firebase_analytics_subtitle">启用应用功能的 A/B 测试，用以追踪用户与应用间的交互行为</string>
 </resources>

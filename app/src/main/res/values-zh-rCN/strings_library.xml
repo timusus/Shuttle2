@@ -23,4 +23,6 @@
     <plurals name="multi_select_items_selected">
         <item quantity="other">已选择 <xliff:g example="3" id="count">{count}</xliff:g> 项</item>
     </plurals>
+    <!-- Shown on the library screen, if the user has manually deselected all the library tabs in appearance settings-->
+    <string name="library_tabs_empty">没有可见的媒体库标签页面</string>
 </resources>

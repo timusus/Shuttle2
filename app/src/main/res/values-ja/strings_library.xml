@@ -25,4 +25,6 @@
     <plurals name="multi_select_items_selected">
         <item quantity="other"><xliff:g example="3" id="count">{count}</xliff:g>個選択中</item>
     </plurals>
+    <!-- Shown on the library screen, if the user has manually deselected all the library tabs in appearance settings-->
+    <string name="library_tabs_empty">ライブラリのタブは全て非表示に設定されています</string>
 </resources>

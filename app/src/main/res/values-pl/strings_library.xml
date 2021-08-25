@@ -44,4 +44,5 @@
         <item quantity="many">Wybrano 
       <xliff:g example="3" id="count">{count}</xliff:g></item>
     </plurals>
+    <!-- Shown on the library screen, if the user has manually deselected all the library tabs in appearance settings-->
 </resources>
