@@ -15,20 +15,16 @@ import com.google.android.material.tabs.TabLayoutMediator
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.LibraryTab
 import com.simplecityapps.shuttle.ui.common.ContextualToolbarHelper
-import com.simplecityapps.shuttle.ui.common.PagerAdapter
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.autoClearedNullable
 import com.simplecityapps.shuttle.ui.common.dialog.EditTextAlertDialog
 import com.simplecityapps.shuttle.ui.common.recyclerview.enforceSingleScrollDirection
 import com.simplecityapps.shuttle.ui.common.recyclerview.recyclerView
+import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.common.view.CircularProgressView
 import com.simplecityapps.shuttle.ui.common.view.ToolbarHost
-import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistListFragment
-import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListFragment
-import com.simplecityapps.shuttle.ui.screens.library.genres.GenreListFragment
-import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListFragment
-import com.simplecityapps.shuttle.ui.screens.library.songs.SongListFragment
 import com.simplecityapps.shuttle.ui.screens.trial.PromoCodeDialogFragment
 import com.simplecityapps.shuttle.ui.screens.trial.TrialDialogFragment
 import com.simplecityapps.trial.PromoCodeService
@@ -54,9 +50,11 @@ class LibraryFragment : Fragment(),
 
     private var contextualToolbarHelper: ContextualToolbarHelper<*> by autoCleared()
 
+    private var loadingView: CircularLoadingView by autoCleared()
+
     private var tabLayoutMediator: TabLayoutMediator? = null
 
-    private var adapter: PagerAdapter? = null
+    private var adapter: LibraryPagerAdapter? = null
 
     @Inject
     lateinit var preferenceManager: GeneralPreferenceManager
@@ -66,6 +64,8 @@ class LibraryFragment : Fragment(),
 
     @Inject
     lateinit var promoCodeService: PromoCodeService
+
+    private lateinit var libraryTabs: List<LibraryTab>
 
 
     // Lifecycle
@@ -83,6 +83,8 @@ class LibraryFragment : Fragment(),
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        libraryTabs = preferenceManager.allLibraryTabs.filter { preferenceManager.enabledLibraryTabs.contains(it) }
+
         tabLayout = view.findViewById(R.id.tabLayout)
         viewPager = view.findViewById(R.id.viewPager)
 
@@ -95,41 +97,23 @@ class LibraryFragment : Fragment(),
         contextualToolbarHelper.toolbar = toolbar
         contextualToolbarHelper.contextualToolbar = contextualToolbar
 
-        adapter = PagerAdapter(
-            fragmentManager = childFragmentManager,
-            lifecycle = lifecycle,
-            size = 5,
-            fragmentFactory = { position ->
-                when (position) {
-                    0 -> GenreListFragment.newInstance()
-                    1 -> PlaylistListFragment.newInstance()
-                    2 -> AlbumArtistListFragment.newInstance()
-                    3 -> AlbumListFragment.newInstance()
-                    4 -> SongListFragment.newInstance()
-                    else -> throw IllegalArgumentException()
-                }
-            },
-            titleFactory = { position ->
-                when (position) {
-                    0 -> getString(R.string.genres)
-                    1 -> getString(R.string.library_playlists)
-                    2 -> getString(R.string.artists)
-                    3 -> getString(R.string.albums)
-                    4 -> getString(R.string.songs)
-                    else -> throw IllegalArgumentException()
-                }
-            })
+        adapter = LibraryPagerAdapter(requireContext(), childFragmentManager, lifecycle)
+        adapter!!.items = libraryTabs
+
+        loadingView = view.findViewById(R.id.loadingView)
+        loadingView.setState(CircularLoadingView.State.None)
+        if (libraryTabs.isEmpty()) {
+            loadingView.setState(CircularLoadingView.State.Empty(getString(R.string.library_tabs_empty)))
+        }
 
         viewPager?.let { viewPager ->
             viewPager.recyclerView.enforceSingleScrollDirection()
             viewPager.adapter = adapter
             if (savedInstanceState == null) {
-                var tabIndex = preferenceManager.libraryTabIndex
-                if (tabIndex == -1) {
-                    tabIndex = 2
+                val currentLibraryTab = preferenceManager.currentLibraryTab ?: libraryTabs.getOrNull(libraryTabs.indexOf(LibraryTab.Artists)) ?: libraryTabs.firstOrNull()
+                currentLibraryTab?.let {
+                    viewPager.setCurrentItem(libraryTabs.indexOf(it), false)
                 }
-                tabIndex.coerceAtMost(adapter!!.size - 1)
-                viewPager.setCurrentItem(tabIndex, false)
             }
             viewPager.registerOnPageChangeCallback(pageChangeListener)
 
@@ -200,7 +184,7 @@ class LibraryFragment : Fragment(),
     private val pageChangeListener = object : ViewPager2.OnPageChangeCallback() {
         override fun onPageSelected(position: Int) {
             contextualToolbarHelper.hide()
-            preferenceManager.libraryTabIndex = position
+            preferenceManager.currentLibraryTab = libraryTabs[position]
         }
     }
 
@@ -231,4 +215,3 @@ class LibraryFragment : Fragment(),
     val contextualToolbar: Toolbar?
         get() = _contextualToolbar
 }
-

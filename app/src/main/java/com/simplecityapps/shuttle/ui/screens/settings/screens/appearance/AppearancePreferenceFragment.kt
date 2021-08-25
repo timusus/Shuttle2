@@ -8,12 +8,19 @@ import android.widget.ImageView
 import androidx.appcompat.widget.SwitchCompat
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.coroutineScope
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.ItemTouchHelper
+import androidx.recyclerview.widget.RecyclerView
+import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.persistence.LibraryTab
 import com.simplecityapps.shuttle.ui.ThemeManager
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.recyclerview.ItemTouchHelperCallback
 import com.simplecityapps.shuttle.ui.common.view.ThemeButton
+import com.simplecityapps.shuttle.ui.screens.settings.screens.appearance.LibraryTabBinder
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -40,12 +47,19 @@ class AppearancePreferenceFragment : Fragment() {
     var accentButtonGreen: ImageView by autoCleared()
     var accentButtonOrange: ImageView by autoCleared()
 
+    var tabsRecyclerView: RecyclerView by autoCleared()
+    var recyclerAdapter: RecyclerAdapter by autoCleared()
+
+    lateinit var libraryTabs: MutableList<LibraryTab>
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_preferences_appearance, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        libraryTabs = preferenceManager.allLibraryTabs.toMutableList()
 
         val toolbar: Toolbar = view.findViewById(R.id.toolbar)
         toolbar.setNavigationOnClickListener { findNavController().popBackStack() }
@@ -131,10 +145,46 @@ class AppearancePreferenceFragment : Fragment() {
                 }
             }
         }
+
+        tabsRecyclerView = view.findViewById(R.id.tabsRecyclerView)
+        itemTouchHelper.attachToRecyclerView(tabsRecyclerView)
+        recyclerAdapter = RecyclerAdapter(viewLifecycleOwner.lifecycle.coroutineScope)
+        tabsRecyclerView.adapter = recyclerAdapter
+        recyclerAdapter.update(libraryTabs.map { LibraryTabBinder(it, preferenceManager.enabledLibraryTabs.contains(it), listener) })
+    }
+
+    override fun onDestroyView() {
+        itemTouchHelper.attachToRecyclerView(null)
+        super.onDestroyView()
     }
 
 
     // Private
+
+    private val listener = object : LibraryTabBinder.Listener {
+        override fun onStartDrag(viewHolder: LibraryTabBinder.ViewHolder) {
+            itemTouchHelper.startDrag(viewHolder)
+        }
+
+        override fun onChecked(tab: LibraryTab, isChecked: Boolean) {
+            val tabs = preferenceManager.enabledLibraryTabs.toMutableSet()
+            if (isChecked) {
+                tabs.add(tab)
+            } else {
+                tabs.remove(tab)
+            }
+            preferenceManager.enabledLibraryTabs = tabs.toList()
+
+            recyclerAdapter.update(libraryTabs.map { LibraryTabBinder(it, preferenceManager.enabledLibraryTabs.contains(it), this) })
+        }
+    }
+
+    private val itemTouchHelper = object : ItemTouchHelper(object : ItemTouchHelperCallback(object : OnItemMoveListener {
+        override fun onItemMoved(from: Int, to: Int) {
+            libraryTabs.add(to, libraryTabs.removeAt(from))
+            preferenceManager.allLibraryTabs = libraryTabs
+        }
+    }) {}) {}
 
     private fun setTheme() {
         themeManager.setDayNightMode()

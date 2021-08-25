@@ -1,204 +1,239 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="wrap_content">
 
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:minHeight="?attr/actionBarSize"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:navigationIcon="@drawable/ic_arrow_back_black_24dp"
-        tools:title="Appearance">
-
-    </androidx.appcompat.widget.Toolbar>
-
-    <TextView
-        android:id="@+id/themeTitle"
-        style="@style/TextTitle"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginEnd="24dp"
-        android:text="@string/pref_theme_title"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/toolbar" />
-
-    <com.simplecityapps.shuttle.ui.common.view.ThemeButton
-        android:id="@+id/themeButtonSystem"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="16dp"
-        android:padding="8dp"
-        app:icon="@drawable/ic_fluent_phone_24_selector"
-        app:label="Follow System"
-        app:layout_constraintEnd_toStartOf="@id/themeButtonLight"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/themeTitle" />
-
-    <com.simplecityapps.shuttle.ui.common.view.ThemeButton
-        android:id="@+id/themeButtonLight"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:padding="8dp"
-        app:icon="@drawable/ic_fluent_weather_sunny_24_selector"
-        app:label="Light Theme"
-        app:layout_constraintEnd_toStartOf="@id/themeButtonDark"
-        app:layout_constraintStart_toEndOf="@id/themeButtonSystem"
-        app:layout_constraintTop_toTopOf="@id/themeButtonSystem" />
-
-    <com.simplecityapps.shuttle.ui.common.view.ThemeButton
-        android:id="@+id/themeButtonDark"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="24dp"
-        android:padding="8dp"
-        app:icon="@drawable/ic_fluent_weather_moon_24_selector"
-        app:label="Dark Theme"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@id/themeButtonLight"
-        app:layout_constraintTop_toTopOf="@id/themeButtonSystem" />
-
-
-    <TextView
-        android:id="@+id/switchExtraDarkTitle"
-        style="@style/TextTitle"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginEnd="8dp"
-        android:fontFamily="@font/opensans_regular"
-        android:paddingTop="24dp"
-        android:text="@string/pref_theme_extra_dark_title"
-        app:layout_constraintEnd_toStartOf="@id/switchExtraDark"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/themeButtonSystem" />
-
-    <TextView
-        android:id="@+id/switchExtraDarkSubtitle"
-        style="@style/TextSubtitle"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="2dp"
-        android:layout_marginEnd="8dp"
-        android:maxLines="3"
-        android:paddingBottom="16dp"
-        android:text="@string/pref_theme_extra_dark_summary"
-        app:layout_constraintEnd_toStartOf="@id/switchExtraDark"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/switchExtraDarkTitle" />
-
-    <androidx.appcompat.widget.SwitchCompat
-        android:id="@+id/switchExtraDark"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="24dp"
-        android:clickable="false"
-        android:focusable="false"
-        app:layout_constraintBottom_toBottomOf="@id/switchExtraDarkSubtitle"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/switchExtraDarkTitle" />
-
-    <View
-        android:id="@+id/switchExtraDarkBackground"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="?selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        app:layout_constraintBottom_toBottomOf="@id/switchExtraDarkSubtitle"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/switchExtraDarkTitle" />
-
-    <TextView
-        android:id="@+id/accentTitle"
-        style="@style/TextTitle"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="40dp"
-        android:layout_marginEnd="24dp"
-        android:text="@string/pref_theme_accent_title"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/switchExtraDark" />
-
-    <HorizontalScrollView
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="16dp"
-        android:clipToPadding="false"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/accentTitle">
+        android:layout_height="wrap_content">
 
-        <LinearLayout
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:minHeight="?attr/actionBarSize"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:navigationIcon="@drawable/ic_arrow_back_black_24dp"
+            tools:title="Appearance">
+
+        </androidx.appcompat.widget.Toolbar>
+
+        <TextView
+            android:id="@+id/themeTitle"
+            style="@style/TextTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginEnd="24dp"
+            android:text="@string/pref_theme_title"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/toolbar" />
+
+        <com.simplecityapps.shuttle.ui.common.view.ThemeButton
+            android:id="@+id/themeButtonSystem"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="16dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp"
+            app:icon="@drawable/ic_fluent_phone_24_selector"
+            app:label="Follow System"
+            app:layout_constraintEnd_toStartOf="@id/themeButtonLight"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/themeTitle" />
+
+        <com.simplecityapps.shuttle.ui.common.view.ThemeButton
+            android:id="@+id/themeButtonLight"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp"
+            app:icon="@drawable/ic_fluent_weather_sunny_24_selector"
+            app:label="Light Theme"
+            app:layout_constraintEnd_toStartOf="@id/themeButtonDark"
+            app:layout_constraintStart_toEndOf="@id/themeButtonSystem"
+            app:layout_constraintTop_toTopOf="@id/themeButtonSystem" />
+
+        <com.simplecityapps.shuttle.ui.common.view.ThemeButton
+            android:id="@+id/themeButtonDark"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="24dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp"
+            app:icon="@drawable/ic_fluent_weather_moon_24_selector"
+            app:label="Dark Theme"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/themeButtonLight"
+            app:layout_constraintTop_toTopOf="@id/themeButtonSystem" />
+
+        <TextView
+            android:id="@+id/switchExtraDarkTitle"
+            style="@style/TextTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginEnd="8dp"
+            android:fontFamily="@font/opensans_regular"
+            android:paddingTop="24dp"
+            android:text="@string/pref_theme_extra_dark_title"
+            app:layout_constraintEnd_toStartOf="@id/switchExtraDark"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/themeButtonSystem" />
+
+        <TextView
+            android:id="@+id/switchExtraDarkSubtitle"
+            style="@style/TextSubtitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="2dp"
+            android:layout_marginEnd="8dp"
+            android:maxLines="3"
+            android:paddingBottom="16dp"
+            android:text="@string/pref_theme_extra_dark_summary"
+            app:layout_constraintEnd_toStartOf="@id/switchExtraDark"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/switchExtraDarkTitle" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/switchExtraDark"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:paddingBottom="16dp">
+            android:layout_marginEnd="24dp"
+            android:clickable="false"
+            android:focusable="false"
+            app:layout_constraintBottom_toBottomOf="@id/switchExtraDarkSubtitle"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/switchExtraDarkTitle" />
 
-            <ImageView
-                android:id="@+id/accentButtonBlue"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:padding="8dp"
-                app:srcCompat="@drawable/selector_theme_accent"
-                app:tint="?attr/accentBlue" />
+        <View
+            android:id="@+id/switchExtraDarkBackground"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="?selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            app:layout_constraintBottom_toBottomOf="@id/switchExtraDarkSubtitle"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@id/switchExtraDarkTitle" />
 
-            <ImageView
-                android:id="@+id/accentButtonCyan"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:padding="8dp"
-                app:srcCompat="@drawable/selector_theme_accent"
-                app:tint="?attr/accentCyan" />
+        <TextView
+            android:id="@+id/accentTitle"
+            style="@style/TextTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="40dp"
+            android:layout_marginEnd="24dp"
+            android:text="@string/pref_theme_accent_title"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/switchExtraDark" />
 
-            <ImageView
-                android:id="@+id/accentButtonGreen"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:padding="8dp"
-                app:srcCompat="@drawable/selector_theme_accent"
-                app:tint="?attr/accentGreen" />
+        <HorizontalScrollView
+            android:id="@+id/scrollView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="16dp"
+            android:clipToPadding="false"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/accentTitle">
 
-            <ImageView
-                android:id="@+id/accentButtonOrange"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:padding="8dp"
-                app:srcCompat="@drawable/selector_theme_accent"
-                app:tint="?attr/accentAmber" />
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
 
-            <ImageView
-                android:id="@+id/accentButtonPurple"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:padding="8dp"
-                app:srcCompat="@drawable/selector_theme_accent"
-                app:tint="?attr/accentPurple" />
+                <ImageView
+                    android:id="@+id/accentButtonBlue"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:padding="8dp"
+                    app:srcCompat="@drawable/selector_theme_accent"
+                    app:tint="?attr/accentBlue" />
 
-            <ImageView
-                android:id="@+id/accentButtonRed"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:padding="8dp"
-                app:srcCompat="@drawable/selector_theme_accent"
-                app:tint="?attr/accentOrange" />
-        </LinearLayout>
+                <ImageView
+                    android:id="@+id/accentButtonCyan"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:padding="8dp"
+                    app:srcCompat="@drawable/selector_theme_accent"
+                    app:tint="?attr/accentCyan" />
 
-    </HorizontalScrollView>
+                <ImageView
+                    android:id="@+id/accentButtonGreen"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:padding="8dp"
+                    app:srcCompat="@drawable/selector_theme_accent"
+                    app:tint="?attr/accentGreen" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+                <ImageView
+                    android:id="@+id/accentButtonOrange"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:padding="8dp"
+                    app:srcCompat="@drawable/selector_theme_accent"
+                    app:tint="?attr/accentAmber" />
+
+                <ImageView
+                    android:id="@+id/accentButtonPurple"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:padding="8dp"
+                    app:srcCompat="@drawable/selector_theme_accent"
+                    app:tint="?attr/accentPurple" />
+
+                <ImageView
+                    android:id="@+id/accentButtonRed"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:padding="8dp"
+                    app:srcCompat="@drawable/selector_theme_accent"
+                    app:tint="?attr/accentOrange" />
+            </LinearLayout>
+
+        </HorizontalScrollView>
+
+        <TextView
+            android:id="@+id/tabsTitle"
+            style="@style/TextTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="32dp"
+            android:layout_marginEnd="24dp"
+            android:text="Library Tabs"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/scrollView" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/tabsRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            android:orientation="vertical"
+            android:paddingTop="16dp"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/tabsTitle"
+            tools:listitem="@layout/list_item_library_tab" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</androidx.core.widget.NestedScrollView>

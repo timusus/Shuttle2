@@ -26,4 +26,6 @@
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> selected</item>
         <item quantity="other"><xliff:g example="3" id="count">{count}</xliff:g> selected</item>
     </plurals>
+    <!-- Shown on the library screen, if the user has manually deselected all the library tabs in appearance settings-->
+    <string name="library_tabs_empty">No library tabs visible</string>
 </resources>

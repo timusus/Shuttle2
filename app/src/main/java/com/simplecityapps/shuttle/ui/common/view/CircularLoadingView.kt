@@ -36,6 +36,10 @@ class CircularLoadingView @JvmOverloads constructor(
         orientation = VERTICAL
         gravity = Gravity.CENTER
         setPadding(16.dp, 16.dp, 16.dp, 16.dp)
+
+        if (isInEditMode) {
+            setState(State.Empty("Help I'm an empty boy"))
+        }
     }
 
     override fun onFinishInflate() {

@@ -169,12 +169,12 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
             return sharedPreferences.getBoolean("has_onboarded", false)
         }
 
-    var libraryTabIndex: Int
+    var currentLibraryTab: LibraryTab?
         set(value) {
-            sharedPreferences.put("library_tab_index", value)
+            sharedPreferences.put("library_tab_current", value?.name)
         }
         get() {
-            return sharedPreferences.getInt("library_tab_index", -1)
+            return sharedPreferences.getString("library_tab_current", null)?.let { LibraryTab.valueOf(it) }
         }
 
     var mediaSessionArtwork: Boolean
@@ -274,4 +274,36 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
         get() {
             return sharedPreferences.get("pref_retain_shuffle_on_new_queue", false)
         }
+
+    var allLibraryTabs: List<LibraryTab>
+        set(value) {
+            sharedPreferences.put("pref_library_tabs_all", value.joinToString(","))
+        }
+        get() {
+            return sharedPreferences.getString("pref_library_tabs_all", null)
+                ?.split(",")
+                ?.map { LibraryTab.valueOf(it) }
+                ?: LibraryTab.values().toList()
+        }
+
+    var enabledLibraryTabs: List<LibraryTab>
+        set(value) {
+            sharedPreferences.put("pref_library_tabs_enabled", value.joinToString(","))
+        }
+        get() {
+            return sharedPreferences.getString("pref_library_tabs_enabled", null)
+                ?.split(",")
+                ?.mapNotNull {
+                    try {
+                        LibraryTab.valueOf(it)
+                    } catch (e: IllegalArgumentException) {
+                        null
+                    }
+                }
+                .orEmpty()
+        }
+}
+
+enum class LibraryTab {
+    Genres, Playlists, Artists, Albums, Songs
 }
