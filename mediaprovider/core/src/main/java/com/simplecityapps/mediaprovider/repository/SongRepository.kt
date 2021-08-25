@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.Flow
 import java.io.Serializable
 import java.text.Collator
 import java.util.*
-import kotlin.Comparator
 
 interface SongRepository {
     fun getSongs(query: SongQuery): Flow<List<Song>?>
@@ -67,13 +66,13 @@ open class SongQuery(
     class LastPlayed(val after: Date) :
         SongQuery(
             predicate = { song -> song.lastPlayed?.after(after) ?: false },
-            sortOrder = SongSortOrder.RecentlyPlayed
+            sortOrder = SongSortOrder.LastCompleted
         )
 
     class LastCompleted(val after: Date) :
         SongQuery(
             predicate = { song -> song.lastCompleted?.after(after) ?: false },
-            sortOrder = SongSortOrder.RecentlyPlayed
+            sortOrder = SongSortOrder.LastCompleted
         )
 
     class Search(val query: String) :
@@ -92,7 +91,7 @@ open class SongQuery(
     class RecentlyAdded :
         SongQuery(
             predicate = { song -> (Date().time - song.lastModified.time < (2 * 7 * 24 * 60 * 60 * 1000L)) },
-            sortOrder = SongSortOrder.RecentlyAdded
+            sortOrder = SongSortOrder.LastModified
         ) // 2 weeks
 }
 
@@ -105,8 +104,8 @@ enum class SongSortOrder : Serializable {
     Duration,
     Track,
     PlayCount,
-    RecentlyAdded,
-    RecentlyPlayed;
+    LastModified,
+    LastCompleted;
 
     val comparator: Comparator<Song>
         get() {
@@ -119,8 +118,8 @@ enum class SongSortOrder : Serializable {
                 Duration -> durationComparator
                 Track -> trackComparator
                 PlayCount -> playCountComparator
-                RecentlyAdded -> recentlyAddedComparator
-                RecentlyPlayed -> recentlyPlayedComparator
+                LastModified -> lastModifiedComparator
+                LastCompleted -> lastCompletedComparator
             }
         }
 
@@ -174,12 +173,12 @@ enum class SongSortOrder : Serializable {
                 .then(defaultComparator)
         }
 
-        val recentlyAddedComparator: Comparator<Song> by lazy {
+        val lastModifiedComparator: Comparator<Song> by lazy {
             compareByDescending<Song> { song -> song.lastModified.time / 1000 / 60 } // Round to the nearest minute
                 .then(defaultComparator)
         }
 
-        val recentlyPlayedComparator: Comparator<Song> by lazy {
+        val lastCompletedComparator: Comparator<Song> by lazy {
             compareByDescending<Song> { song -> song.lastCompleted }
                 .then(defaultComparator)
         }

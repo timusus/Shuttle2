@@ -173,6 +173,10 @@ class PlaylistDetailFragment :
                         presenter.setSortOrder(PlaylistSongSortOrder.Duration)
                         true
                     }
+                    R.id.sortSongDateModified -> {
+                        presenter.setSortOrder(PlaylistSongSortOrder.LastModified)
+                        true
+                    }
                     else -> {
                         false
                     }
@@ -261,6 +265,7 @@ class PlaylistDetailFragment :
                 PlaylistSongSortOrder.AlbumGroupKey -> menu.findItem(R.id.sortAlbumName)?.isChecked = true
                 PlaylistSongSortOrder.Year -> menu.findItem(R.id.sortSongYear)?.isChecked = true
                 PlaylistSongSortOrder.Duration -> menu.findItem(R.id.sortSongDuration)?.isChecked = true
+                PlaylistSongSortOrder.LastModified -> menu.findItem(R.id.sortSongDateModified)?.isChecked = true
                 else -> {
                     // Nothing to do
                 }

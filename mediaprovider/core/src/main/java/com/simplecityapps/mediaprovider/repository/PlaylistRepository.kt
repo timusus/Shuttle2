@@ -66,8 +66,8 @@ enum class PlaylistSongSortOrder : Parcelable {
     Duration,
     Track,
     PlayCount,
-    RecentlyAdded,
-    RecentlyPlayed;
+    LastModified,
+    LastCompleted;
 
     val comparator: Comparator<PlaylistSong>
         get() {
@@ -80,8 +80,8 @@ enum class PlaylistSongSortOrder : Parcelable {
                 Duration -> DelegatingComparator(SongSortOrder.durationComparator)
                 Track -> DelegatingComparator(SongSortOrder.trackComparator)
                 PlayCount -> DelegatingComparator(SongSortOrder.playCountComparator)
-                RecentlyAdded -> DelegatingComparator(SongSortOrder.recentlyAddedComparator)
-                RecentlyPlayed -> DelegatingComparator(SongSortOrder.recentlyPlayedComparator)
+                LastModified -> DelegatingComparator(SongSortOrder.lastModifiedComparator)
+                LastCompleted -> DelegatingComparator(SongSortOrder.lastCompletedComparator)
             }
         }
 
@@ -92,7 +92,7 @@ enum class PlaylistSongSortOrder : Parcelable {
     }
 }
 
-class DelegatingComparator(val songComparator: Comparator<Song>) : Comparator<PlaylistSong> {
+class DelegatingComparator(private val songComparator: Comparator<Song>) : Comparator<PlaylistSong> {
     override fun compare(o1: PlaylistSong, o2: PlaylistSong): Int {
         return songComparator.compare(o1.song, o2.song)
     }

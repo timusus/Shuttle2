@@ -28,6 +28,9 @@
                 <item
                     android:id="@+id/sortSongDuration"
                     android:title="@string/menu_title_sort_duration" />
+                <item
+                    android:id="@+id/sortSongDateModified"
+                    android:title="@string/menu_title_sort_date_modified" />
             </group>
         </menu>
     </item>

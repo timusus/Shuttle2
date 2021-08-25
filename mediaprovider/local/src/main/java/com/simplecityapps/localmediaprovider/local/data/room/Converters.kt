@@ -44,6 +44,10 @@ class Converters {
 
     @TypeConverter
     fun toSortOrder(string: String): SongSortOrder {
-        return SongSortOrder.valueOf(string)
+        return try {
+            SongSortOrder.valueOf(string)
+        } catch (e: IllegalArgumentException) {
+            SongSortOrder.Default
+        }
     }
 }
