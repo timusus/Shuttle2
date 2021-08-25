@@ -33,6 +33,7 @@ class DspFragment : Fragment(), EqualizerContract.View {
     private var equalizerSwitch: SwitchCompat by autoCleared()
     private var frequencyResponseButton: ImageButton by autoCleared()
     private var replayGainAutoComplete: AutoCompleteTextView by autoCleared()
+    private var balanceSeekBar: HorizontalSeekbar by autoCleared()
     private var preAmpSeekBar: HorizontalSeekbar by autoCleared()
 
 
@@ -87,6 +88,9 @@ class DspFragment : Fragment(), EqualizerContract.View {
             presenter.setReplayGainMode(modes[position])
         }
 
+        balanceSeekBar = view.findViewById(R.id.balanceSeekBar)
+        balanceSeekBar.listener = balanceListener
+
         preAmpSeekBar = view.findViewById(R.id.preAmpSeekBar)
         preAmpSeekBar.listener = preAmpListener
 
@@ -138,6 +142,10 @@ class DspFragment : Fragment(), EqualizerContract.View {
         replayGainAutoComplete.setText(mode.displayName(), false)
     }
 
+    override fun updateBalance(balance: Double) {
+        // Todo:
+    }
+
     override fun updatePreAmpGain(gain: Double) {
         val progress = ((gain + ReplayGainAudioProcessor.maxPreAmpGain) / (2 * ReplayGainAudioProcessor.maxPreAmpGain)).toFloat()
         preAmpSeekBar.progress = progress
@@ -149,6 +157,12 @@ class DspFragment : Fragment(), EqualizerContract.View {
     private val equalizerListener = object : EqualizerView.Listener {
         override fun onBandChanged(band: EqualizerBand) {
             presenter.updateBand(band)
+        }
+    }
+
+    private val balanceListener = object : HorizontalSeekbar.Listener {
+        override fun onStopTracking(progress: Float) {
+
         }
     }
 

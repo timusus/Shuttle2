@@ -1,5 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.equalizer
 
+import com.google.android.exoplayer2.audio.AudioProcessor
+import com.google.android.exoplayer2.audio.ChannelMappingAudioProcessor
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.dsp.equalizer.EqualizerBand
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
@@ -18,6 +20,7 @@ interface EqualizerContract {
         fun updateSelectedEqPreset(preset: Equalizer.Presets.Preset)
         fun showEqEnabled(enabled: Boolean)
         fun updateSelectedReplayGainMode(mode: ReplayGainMode)
+        fun updateBalance(balance: Double)
         fun updatePreAmpGain(gain: Double)
     }
 
@@ -26,6 +29,7 @@ interface EqualizerContract {
         fun updateBand(band: EqualizerBand)
         fun setEqPreset(preset: Equalizer.Presets.Preset)
         fun setReplayGainMode(mode: ReplayGainMode)
+        fun setBalance(balance: Double)
         fun setPreAmpGain(gain: Double)
     }
 }
@@ -33,7 +37,8 @@ interface EqualizerContract {
 class DspPresenter @Inject constructor(
     private val playbackPreferenceManager: PlaybackPreferenceManager,
     private val equalizerAudioProcessor: EqualizerAudioProcessor,
-    private val replayGainAudioProcessor: ReplayGainAudioProcessor
+    private val replayGainAudioProcessor: ReplayGainAudioProcessor,
+    private val channelMappingProcessor: ChannelMappingAudioProcessor
 ) : BasePresenter<EqualizerContract.View>(), EqualizerContract.Presenter {
 
     override fun bindView(view: EqualizerContract.View) {
@@ -78,6 +83,10 @@ class DspPresenter @Inject constructor(
     override fun setReplayGainMode(mode: ReplayGainMode) {
         replayGainAudioProcessor.mode = mode
         playbackPreferenceManager.replayGainMode = mode
+    }
+
+    override fun setBalance(balance: Double) {
+
     }
 
     override fun setPreAmpGain(gain: Double) {
