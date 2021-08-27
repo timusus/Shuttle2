@@ -1,7 +1,21 @@
 [
   {
-    "versionName": "1.0.2-alpha01",
-    "releaseDate": "25/07/2021",
+    "versionName": "1.0.2-alpha02",
+    "releaseDate": "27/08/2021",
+    "features": [
+    ],
+    "fixes": [
+      "Fixed an issue where all library tabs were hidden by default"
+    ],
+    "improvements": [
+    ],
+    "notes": [
+      "Join the Discord: https://discord.gg/YkhSuHJ"
+    ]
+  },
+  {
+    "versionName": "1.0.2-alpha02",
+    "releaseDate": "25/08/2021",
     "features": [
       "Ability to reorder & hide library tabs"
     ],
