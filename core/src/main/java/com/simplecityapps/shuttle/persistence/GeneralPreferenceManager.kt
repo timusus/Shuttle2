@@ -291,7 +291,7 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
             sharedPreferences.put("pref_library_tabs_enabled", value.joinToString(","))
         }
         get() {
-            return sharedPreferences.getString("pref_library_tabs_enabled", null)
+            return sharedPreferences.getString("pref_library_tabs_enabled", LibraryTab.values().joinToString(","))
                 ?.split(",")
                 ?.mapNotNull {
                     try {
