@@ -55,6 +55,7 @@ dependencies {
 
     // Coroutines
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.1")
+    api("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.5.1")
 
     // OKHttp
     implementation 'com.squareup.okhttp3:okhttp:4.9.1'
