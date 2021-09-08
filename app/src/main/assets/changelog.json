@@ -1,5 +1,20 @@
 [
   {
+    "versionName": "1.0.2-alpha03",
+    "releaseDate": "08/09/2021",
+    "features": [
+    ],
+    "fixes": [
+      "Crash fixes",
+      "Fixed color inconsistencies when using 'follow system' theme mode"
+    ],
+    "improvements": [
+    ],
+    "notes": [
+      "Join the Discord: https://discord.gg/YkhSuHJ"
+    ]
+  },
+  {
     "versionName": "1.0.2-alpha02",
     "releaseDate": "27/08/2021",
     "features": [
