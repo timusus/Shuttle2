@@ -1,5 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- General -->
+
+    <color name="ic_launcher_background">#FF03A9F4</color>
+
+    <color name="history_green_primary">#05000000</color>
+    <color name="history_green_primary_dark">#1F74BDB0</color>
+    <color name="history_green_tint">#74bdb0</color>
+
+    <color name="recently_added_yellow_primary">#05000000</color>
+    <color name="recently_added_yellow_primary_dark">#1FFBBC05</color>
+    <color name="recently_added_yellow_tint">#fbbc05</color>
+
+    <color name="favorite_red_primary">#05000000</color>
+    <color name="favorite_red_primary_dark">#1FEA4335</color>
+    <color name="favorite_red_tint">#ea4335</color>
+
+    <color name="shuffle_blue_primary">#05000000</color>
+    <color name="shuffle_blue_primary_dark">#1F0492EA</color>
+    <color name="shuffle_blue_tint">#0492ea</color>
+
+    <color name="bg_window_light">#FFFFFF</color>
+    <color name="bg_window_dark">#111111</color>
+    <color name="bg_window_black">#000000</color>
+
+    <color name="bg_card_light">#FFFFFF</color>
+    <color name="bg_card_dark">#1E1E1E</color>
+
+    <color name="text_primary_light">#DE000000</color>
+    <color name="text_secondary_light">#DE000000</color>
+    <color name="text_primary_dark">#DEFFFFFF</color>
+    <color name="text_secondary_dark">#DEFFFFFF</color>
+
+
+    <!-- Material ripple colors -->
+    <color name="foreground_material_dark" tools:override="true">@android:color/white</color>
+    <color name="foreground_material_light" tools:override="true">@android:color/black</color>
+
+
+    <!-- Vertical Seekbar-->
+    <color name="vertical_seekbar_progress_disabled">#A8272727</color>
+    <color name="vertical_seekbar_track_disabled">#30b2b2b2</color>
+    <color name="vertical_seekbar_thumb">#ececec</color>
+    <color name="vertical_seekbar_guideline_light">#10000000</color>
+    <color name="vertical_seekbar_guideline_dark">#20FFFFFF</color>
+
+
+    <!-- TextInputLayout -->
+    <color name="helperTextColorDark">#E65100</color>
+    <color name="helperTextColor">#E65100</color>
+
+
+    <!-- Theme Buttons -->
+    <color name="outline_light">#30000000</color>
+    <color name="outline_dark">#50FFFFFF</color>
+
 
     <!-- Theme specific -->
 
@@ -38,56 +94,5 @@
     <color name="colorPrimaryAmberDark">#BA6F00</color>
     <color name="colorPrimaryAmberSemiTransparent">#30FF9800</color>
     <color name="colorPrimaryAmberTransparent">#20FF9800</color>
-
-
-    <!-- General -->
-
-    <color name="ic_launcher_background">#FF03A9F4</color>
-
-    <color name="history_green_primary">#05000000</color>
-    <color name="history_green_primary_dark">#1F74BDB0</color>
-    <color name="history_green_tint">#74bdb0</color>
-    Ø
-    <color name="recently_added_yellow_primary">#05000000</color>
-    <color name="recently_added_yellow_primary_dark">#1FFBBC05</color>
-    <color name="recently_added_yellow_tint">#fbbc05</color>
-
-    <color name="favorite_red_primary">#05000000</color>
-    <color name="favorite_red_primary_dark">#1FEA4335</color>
-    <color name="favorite_red_tint">#ea4335</color>
-
-    <color name="shuffle_blue_primary">#05000000</color>
-    <color name="shuffle_blue_primary_dark">#1F0492EA</color>
-    <color name="shuffle_blue_tint">#0492ea</color>
-
-    <color name="bg_window_light">#FFFFFF</color>
-    <color name="bg_window_dark">#111111</color>
-    <color name="bg_window_black">#000000</color>
-
-    <color name="bg_card_light">#FFFFFF</color>
-    <color name="bg_card_dark">#1E1E1E</color>
-
-    <color name="text_primary_light">#DE000000</color>
-    <color name="text_secondary_light">#DE000000</color>
-    <color name="text_primary_dark">#DEFFFFFF</color>
-    <color name="text_secondary_dark">#DEFFFFFF</color>
-
-
-    <!-- Vertical Seekbar-->
-    <color name="vertical_seekbar_progress_disabled">#A8272727</color>
-    <color name="vertical_seekbar_track_disabled">#30b2b2b2</color>
-    <color name="vertical_seekbar_thumb">#ececec</color>
-    <color name="vertical_seekbar_guideline_light">#10000000</color>
-    <color name="vertical_seekbar_guideline_dark">#20FFFFFF</color>
-
-
-    <!-- TextInputLayout -->
-    <color name="helperTextColorDark">#E65100</color>
-    <color name="helperTextColor">#E65100</color>
-
-
-    <!-- Theme Buttons -->
-    <color name="outline_light">#30000000</color>
-    <color name="outline_dark">#50FFFFFF</color>
 
 </resources>
