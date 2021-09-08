@@ -74,9 +74,9 @@ class MainPresenter @Inject constructor(
 
         // If it's been a week since the app was purchased
         if (preferenceManager.appPurchasedDate?.before(Date(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(7))) == true) {
-            if (preferenceManager.lastViewedTrialDialogDate == null || preferenceManager.lastViewedTrialDialogDate?.before(Date(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(30))) == true) {
+            if (preferenceManager.lastViewedRatingFlow == null || preferenceManager.lastViewedRatingFlow?.before(Date(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(30))) == true) {
                 //If the rating dialog hasn't been shown before, or it's been 30 days since it was shown
-                preferenceManager.lastViewedTrialDialogDate = Date()
+                preferenceManager.lastViewedRatingFlow = Date()
                 this.view?.launchReviewFlow()
             }
         }
