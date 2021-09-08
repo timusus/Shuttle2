@@ -1,13 +1,17 @@
 package com.simplecityapps.playback.dsp.equalizer
 
+import androidx.annotation.StringRes
+import com.simplecityapps.playback.R
+
 object Equalizer {
 
     object Presets {
 
-        sealed class Preset(val name: String, val bands: List<NyquistBand>) {
+        sealed class Preset(val name: String, @StringRes val nameResId: Int, val bands: List<NyquistBand>) {
 
             object Flat : Preset(
-                "Flat", listOf(
+                "Flat",
+                R.string.eq_preset_flat, listOf(
                     EqualizerBand(32, 0.0).toNyquistBand(),
                     EqualizerBand(63, 0.0).toNyquistBand(),
                     EqualizerBand(125, 0.0).toNyquistBand(),
@@ -22,7 +26,8 @@ object Equalizer {
             )
 
             object Custom : Preset(
-                "Custom", listOf(
+                "Custom",
+                R.string.eq_preset_custom, listOf(
                     EqualizerBand(32, 0.0).toNyquistBand(),
                     EqualizerBand(63, 0.0).toNyquistBand(),
                     EqualizerBand(125, 0.0).toNyquistBand(),
@@ -37,7 +42,8 @@ object Equalizer {
             )
 
             object BassBoost : Preset(
-                "Bass Boost", listOf(
+                "Bass Boost",
+                R.string.eq_preset_bass_boost, listOf(
                     EqualizerBand(32, 6.0).toNyquistBand(),
                     EqualizerBand(63, 5.0).toNyquistBand(),
                     EqualizerBand(125, 4.0).toNyquistBand(),
@@ -52,7 +58,8 @@ object Equalizer {
             )
 
             object BassReducer : Preset(
-                "Bass Reduction", listOf(
+                "Bass Reduction",
+                R.string.eq_preset_bass_reduce, listOf(
                     EqualizerBand(32, -6.0).toNyquistBand(),
                     EqualizerBand(63, -5.0).toNyquistBand(),
                     EqualizerBand(125, -4.0).toNyquistBand(),
@@ -67,7 +74,8 @@ object Equalizer {
             )
 
             object VocalBoost : Preset(
-                "Vocal Boost", listOf(
+                "Vocal Boost",
+                R.string.eq_preset_vocal_boost, listOf(
                     EqualizerBand(32, -2.0).toNyquistBand(),
                     EqualizerBand(63, -3.0).toNyquistBand(),
                     EqualizerBand(125, -3.0).toNyquistBand(),
@@ -82,7 +90,8 @@ object Equalizer {
             )
 
             object VocalReducer : Preset(
-                "Vocal Reduction", listOf(
+                "Vocal Reduction",
+                R.string.eq_preset_vocal_Reduce, listOf(
                     EqualizerBand(32, 2.0).toNyquistBand(),
                     EqualizerBand(63, 3.0).toNyquistBand(),
                     EqualizerBand(125, 3.0).toNyquistBand(),

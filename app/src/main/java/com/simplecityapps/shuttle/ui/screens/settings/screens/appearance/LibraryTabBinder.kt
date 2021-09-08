@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.settings.screens.appearance
 
+import android.content.res.Resources
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
@@ -68,8 +69,18 @@ class LibraryTabBinder(val tab: LibraryTab, val selected: Boolean, val listener:
         override fun bind(viewBinder: LibraryTabBinder, isPartial: Boolean) {
             super.bind(viewBinder, isPartial)
 
-            title.text = viewBinder.tab.name
+            title.text = viewBinder.tab.name(itemView.resources)
             checkbox.isChecked = viewBinder.selected
         }
+    }
+}
+
+private fun LibraryTab.name(resources: Resources): String {
+    return when (this) {
+        LibraryTab.Genres -> resources.getString(R.string.genres)
+        LibraryTab.Playlists -> resources.getString(R.string.library_playlists)
+        LibraryTab.Artists -> resources.getString(R.string.artists)
+        LibraryTab.Albums -> resources.getString(R.string.albums)
+        LibraryTab.Songs -> resources.getString(R.string.songs)
     }
 }

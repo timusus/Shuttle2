@@ -64,6 +64,12 @@
     <string name="pref_category_title_other">Other</string>
     <!-- Settings: Title for changing the theme -->
     <string name="pref_theme_title">Theme</string>
+    <!-- Settings: Title for 'follow system' theme mode -->
+    <string name="pref_theme_title_follow_system">Follow System</string>
+    <!-- Settings: Title for 'light theme' theme mode -->
+    <string name="pref_theme_title_light">Light Theme</string>
+    <!-- Settings: Title for 'dark theme' theme mode-->
+    <string name="pref_theme_title_dark">Dark Theme</string>
     <!-- Settings: Description for changing the theme -->
     <string name="pref_theme_summary">Choose between day/night (default), light and dark</string>
     <!-- Settings: Title for changing the accent colour -->

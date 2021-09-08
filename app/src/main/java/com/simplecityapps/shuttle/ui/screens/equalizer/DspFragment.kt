@@ -67,7 +67,7 @@ class DspFragment : Fragment(), EqualizerContract.View {
             ArrayAdapter(
                 requireContext(),
                 R.layout.dropdown_menu_popup_item,
-                presets.map { preset -> preset.name }
+                presets.map { preset -> getString(preset.nameResId) }
             )
         )
         eqPresetAutoComplete.setOnItemClickListener { _, _, position, _ ->
@@ -119,7 +119,7 @@ class DspFragment : Fragment(), EqualizerContract.View {
         equalizerView.configure(maxBandGain, equalizer)
         equalizerView.isActivated = activated
 
-        eqPresetAutoComplete.setText(equalizer.name, false)
+        eqPresetAutoComplete.setText(getString(equalizer.nameResId), false)
     }
 
     override fun updateEqualizerView(preset: Equalizer.Presets.Preset) {
@@ -127,7 +127,7 @@ class DspFragment : Fragment(), EqualizerContract.View {
     }
 
     override fun updateSelectedEqPreset(preset: Equalizer.Presets.Preset) {
-        eqPresetAutoComplete.setText(preset.name, false)
+        eqPresetAutoComplete.setText(getString(preset.nameResId), false)
     }
 
     override fun showEqEnabled(enabled: Boolean) {
