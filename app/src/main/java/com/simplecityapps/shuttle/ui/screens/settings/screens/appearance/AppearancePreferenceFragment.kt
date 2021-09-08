@@ -1,6 +1,7 @@
-package com.simplecityapps.shuttle.ui.screens.settings.screens
+package com.simplecityapps.shuttle.ui.screens.settings.screens.appearance
 
 import android.os.Bundle
+import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -20,7 +21,6 @@ import com.simplecityapps.shuttle.ui.ThemeManager
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.recyclerview.ItemTouchHelperCallback
 import com.simplecityapps.shuttle.ui.common.view.ThemeButton
-import com.simplecityapps.shuttle.ui.screens.settings.screens.appearance.LibraryTabBinder
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -51,6 +51,8 @@ class AppearancePreferenceFragment : Fragment() {
     var recyclerAdapter: RecyclerAdapter by autoCleared()
 
     lateinit var libraryTabs: MutableList<LibraryTab>
+
+    private var recyclerViewState: Parcelable? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         return inflater.inflate(R.layout.fragment_preferences_appearance, container, false)
@@ -148,9 +150,29 @@ class AppearancePreferenceFragment : Fragment() {
 
         tabsRecyclerView = view.findViewById(R.id.tabsRecyclerView)
         itemTouchHelper.attachToRecyclerView(tabsRecyclerView)
-        recyclerAdapter = RecyclerAdapter(viewLifecycleOwner.lifecycle.coroutineScope)
+        recyclerAdapter = RecyclerAdapter(
+            scope = viewLifecycleOwner.lifecycle.coroutineScope,
+            skipIntermediateUpdates = false
+        )
         tabsRecyclerView.adapter = recyclerAdapter
-        recyclerAdapter.update(libraryTabs.map { LibraryTabBinder(it, preferenceManager.enabledLibraryTabs.contains(it), listener) })
+
+        savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
+        recyclerAdapter.update(libraryTabs.map { LibraryTabBinder(it, preferenceManager.enabledLibraryTabs.contains(it), listener) }) {
+            recyclerViewState?.let {
+                tabsRecyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
+                recyclerViewState = null
+            }
+        }
+    }
+
+    override fun onPause() {
+        recyclerViewState = tabsRecyclerView.layoutManager?.onSaveInstanceState()
+        super.onPause()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putParcelable(ARG_RECYCLER_STATE, recyclerViewState)
+        super.onSaveInstanceState(outState)
     }
 
     override fun onDestroyView() {
@@ -189,5 +211,10 @@ class AppearancePreferenceFragment : Fragment() {
     private fun setTheme() {
         themeManager.setDayNightMode()
         activity?.recreate()
+    }
+
+    // Static
+    companion object {
+        const val ARG_RECYCLER_STATE = "recycler_state"
     }
 }

@@ -60,7 +60,7 @@
 
     <fragment
         android:id="@+id/displayPreferenceFragment"
-        android:name="com.simplecityapps.shuttle.ui.screens.settings.screens.AppearancePreferenceFragment"
+        android:name="com.simplecityapps.shuttle.ui.screens.settings.screens.appearance.AppearancePreferenceFragment"
         android:label="SettingsFragment"
         tools:layout="@layout/fragment_settings" />
 
