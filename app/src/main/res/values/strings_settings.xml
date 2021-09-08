@@ -154,4 +154,6 @@
     <string name="pref_firebase_analytics_title">Firebase Analytics</string>
     <!-- Settings: Description for the option to turn off crash reporting -->
     <string name="pref_firebase_analytics_subtitle">Enables A/B testing of features, and tracks how users interact with the app</string>
+    <!-- Settings: Title for the library tabs options (list of tabs to be displayed on home screen)-->
+    <string name="pref_library_tabs_title">Library tabs</string>
 </resources>
