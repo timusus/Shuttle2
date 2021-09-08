@@ -317,12 +317,14 @@ class SearchFragment : Fragment(),
 
         override fun onAlbumArtistClicked(albumArtist: AlbumArtist, viewHolder: AlbumArtistBinder.ViewHolder) {
             view?.closeKeyboard()
-            findNavController().navigate(
-                R.id.action_searchFragment_to_albumArtistDetailFragment,
-                AlbumArtistDetailFragmentArgs(albumArtist, true).toBundle(),
-                null,
-                FragmentNavigatorExtras(viewHolder.imageView to viewHolder.imageView.transitionName)
-            )
+            if (findNavController().currentDestination?.id != R.id.albumArtistDetailFragment) {
+                findNavController().navigate(
+                    R.id.action_searchFragment_to_albumArtistDetailFragment,
+                    AlbumArtistDetailFragmentArgs(albumArtist, true).toBundle(),
+                    null,
+                    FragmentNavigatorExtras(viewHolder.imageView to viewHolder.imageView.transitionName)
+                )
+            }
         }
 
         override fun onAlbumArtistLongClicked(view: View, albumArtist: AlbumArtist) {
@@ -373,12 +375,14 @@ class SearchFragment : Fragment(),
 
         override fun onAlbumClicked(album: Album, viewHolder: AlbumBinder.ViewHolder) {
             view?.closeKeyboard()
-            findNavController().navigate(
-                R.id.action_searchFragment_to_albumDetailFragment,
-                AlbumDetailFragmentArgs(album, true).toBundle(),
-                null,
-                FragmentNavigatorExtras(viewHolder.imageView to viewHolder.imageView.transitionName)
-            )
+            if (findNavController().currentDestination?.id != R.id.albumDetailFragment) {
+                findNavController().navigate(
+                    R.id.action_searchFragment_to_albumDetailFragment,
+                    AlbumDetailFragmentArgs(album, true).toBundle(),
+                    null,
+                    FragmentNavigatorExtras(viewHolder.imageView to viewHolder.imageView.transitionName)
+                )
+            }
         }
 
         override fun onAlbumLongClicked(album: Album, viewHolder: AlbumBinder.ViewHolder) {
