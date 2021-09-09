@@ -64,6 +64,12 @@
     <string name="pref_category_title_other">その他</string>
     <!-- Settings: Title for changing the theme -->
     <string name="pref_theme_title">テーマ</string>
+    <!-- Settings: Title for 'follow system' theme mode -->
+    <string name="pref_theme_title_follow_system">システムに従う</string>
+    <!-- Settings: Title for 'light theme' theme mode -->
+    <string name="pref_theme_title_light">ライトテーマ</string>
+    <!-- Settings: Title for 'dark theme' theme mode-->
+    <string name="pref_theme_title_dark">ダークテーマ</string>
     <!-- Settings: Description for changing the theme -->
     <string name="pref_theme_summary">昼/夜 (デフォルト)、明るい、暗いから選択してください</string>
     <!-- Settings: Title for changing the accent colour -->
@@ -154,4 +160,6 @@
     <string name="pref_firebase_analytics_title">Firebase分析</string>
     <!-- Settings: Description for the option to turn off crash reporting -->
     <string name="pref_firebase_analytics_subtitle">機能のA/Bテストを有効にし、ユーザーがどのようにアプリを操作するかを解析します（今後の使い勝手の向上に役立ちます）</string>
+    <!-- Settings: Title for the library tabs options (list of tabs to be displayed on home screen)-->
+    <string name="pref_library_tabs_title">ライブラリのタブ表示</string>
 </resources>

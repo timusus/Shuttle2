@@ -8,4 +8,22 @@
     <string name="queue_empty">Wachtrij leeg</string>
     <!-- Shown when the current playback queue is empty. Pressing the widget will just open the app. -->
     <string name="widget_empty_text">Kies een nummer...</string>
+    <!-- Shown after user selects chromecast button (play on.. <which chromecast device>)-->
+    <string name="media_route_menu_title">Afspelen op...</string>
+    <!-- Text shown on shuffle button, Shuffle mode on-->
+    <string name="shuffle_on">Shuffle ingeschakeld</string>
+    <!-- Text shown on shuffle button, Shuffle mode off-->
+    <string name="shuffle_off">Shuffle uitgeschakeld</string>
+    <!-- Shown on equalizer screen. EQ Preset Flat-->
+    <string name="eq_preset_flat">Normaal</string>
+    <!-- Shown on equalizer screen. EQ Preset Custom-->
+    <string name="eq_preset_custom">Eigen</string>
+    <!-- Shown on equalizer screen. EQ Preset Bass boost-->
+    <string name="eq_preset_bass_boost">Bass boost</string>
+    <!-- Shown on equalizer screen. EQ Preset Bass reduction-->
+    <string name="eq_preset_bass_reduce">Bass reduction</string>
+    <!-- Shown on equalizer screen. EQ Preset Vocal boost-->
+    <string name="eq_preset_vocal_boost">Vocal boost</string>
+    <!-- Shown on equalizer screen. EQ Preset Vocal reduction-->
+    <string name="eq_preset_vocal_Reduce">Vocal reduction</string>
 </resources>

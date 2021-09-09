@@ -62,6 +62,9 @@
     <string name="pref_category_title_other">अन्य</string>
     <!-- Settings: Title for changing the theme -->
     <string name="pref_theme_title">विषय</string>
+    <!-- Settings: Title for 'follow system' theme mode -->
+    <!-- Settings: Title for 'light theme' theme mode -->
+    <!-- Settings: Title for 'dark theme' theme mode-->
     <!-- Settings: Description for changing the theme -->
     <string name="pref_theme_summary">दिन/रात (डिफ़ॉल्ट), प्रकाश और अंधेरे के बीच चुनें</string>
     <!-- Settings: Title for changing the accent colour -->
@@ -148,4 +151,5 @@
     <string name="theme_accent_entry_red">लाल</string>
     <!-- Settings: Title for the option to turn off crash reporting -->
     <!-- Settings: Description for the option to turn off crash reporting -->
+    <!-- Settings: Title for the library tabs options (list of tabs to be displayed on home screen)-->
 </resources>

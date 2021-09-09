@@ -3,11 +3,11 @@
     <!-- The name of the S2 Media Provider - the media provider which scans the device for songs and reads their tags (metadata)-->
     <string name="media_provider_title_s2">S2メディアプロバイダー</string>
     <!-- The description of the S2 Media Provider - scans user selected folders and files for metadata-->
-    <string name="media_provider_description_s2">選択したフォルダーとファイルをスキャン (推奨)</string>
+    <string name="media_provider_description_s2">上級者向けです。カスタムのタグ読み込みを使用し、タグ編集、リプレイゲイン等の追加機能が使用できるようになります</string>
     <!-- The name of the 'Android Media Store' media provider. The 'Media Store' is an Android concept. Not sure if it would be translated.-->
     <string name="media_provider_title_media_store">Androidメディアストア</string>
     <!-- The description of the Android MediaStore media provider. The MediaStore is an Android concept. A database on the device which keeps track of song info-->
-    <string name="media_provider_description_media_store">Android管理のデータベース</string>
+    <string name="media_provider_description_media_store">Android Media Storeデータベースを使用するため、シンプルで高速なファイルアクセスが可能です。</string>
     <!-- The name of the 'Emby' media provider. Emby is a personal media server - probably doesn't need to be translated-->
     <string name="media_provider_title_emby">Embyメディアサーバー</string>
     <!-- The description of the 'Emby' media provider. Emby is a personal media server - probably doesn't need to be translated-->
@@ -83,4 +83,22 @@
     <string name="playlist_title_recently_added">最近追加された曲</string>
     <!-- 'History' playlist name - playlist of songs which have been recently played -->
     <string name="playlist_title_history">最近聞いた曲</string>
+    <!-- Shown when app is querying remote media provider API (jellyfin/emby/plex) -->
+    <string name="media_provider_querying_api">クエリーAPI</string>
+    <!-- Error message shown when a remote media provider (jellyfin/emby/plex) fails to authenticate -->
+    <string name="media_provider_authentication_error">認証に失敗しました</string>
+    <!-- Error message shown when the server address is missing for a remote media provider (jellyfin/emby/plex) -->
+    <string name="media_provider_address_missing">サーバーのアドレスが見つかりません</string>
+    <!-- Shown when the media importer is searching for existing songs -->
+    <string name="media_import_retrieving_songs">既存の曲を取得中</string>
+    <!-- Shown when the media importer is searching for existing playlists -->
+    <string name="media_import_retrieving_playlists">既存のプレイリストを取得中</string>
+    <!-- Shown when the media importer is updating the app's database -->
+    <string name="media_import_updating_database">データベースを更新中</string>
+    <!-- Shown when the media importer fails to import songs -->
+    <string name="media_import_error">曲をインポートする際にエラーが発生しました</string>
+    <!-- Shown when the S2 Media Provider fails to find any folders to scan -->
+    <string name="media_import_directories_empty">スキャン対象のディレクトリ/ファイルがありません</string>
+    <!-- Shown when the S2 Media Provider is searching an m3u playlist for songs -->
+    <string name="media_import_m3u_scan"><xliff:g example="playlist1.m3u" id="playlist_name">{playlist_name}</xliff:g> 用の曲を探しています</string>
 </resources>

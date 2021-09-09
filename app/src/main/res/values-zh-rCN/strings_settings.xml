@@ -39,7 +39,7 @@
     <!-- Error message shown when copying debug logs failed, because there are no logs -->
     <string name="settings_logging_clipboard_logs_empty">日志文件为空</string>
     <!-- Settings: Title for 'appearance' settings (settings related to themes, etc.) -->
-    <string name="pref_category_title_display">样式</string>
+    <string name="pref_category_title_display">外观</string>
     <!-- Settings: Title for 'media' settings. Settings related to media providers, rescanning & exclude list (blacklist) -->
     <string name="pref_category_title_media">媒体播放</string>
     <!-- Settings: Title for 'playback' settings -->
@@ -64,6 +64,12 @@
     <string name="pref_category_title_other">其他</string>
     <!-- Settings: Title for changing the theme -->
     <string name="pref_theme_title">主题</string>
+    <!-- Settings: Title for 'follow system' theme mode -->
+    <string name="pref_theme_title_follow_system">跟随系统</string>
+    <!-- Settings: Title for 'light theme' theme mode -->
+    <string name="pref_theme_title_light">浅色主题</string>
+    <!-- Settings: Title for 'dark theme' theme mode-->
+    <string name="pref_theme_title_dark">深色主题</string>
     <!-- Settings: Description for changing the theme -->
     <string name="pref_theme_summary">在日/夜、明暗主题间切换</string>
     <!-- Settings: Title for changing the accent colour -->
@@ -111,11 +117,11 @@
     <!-- Settings: Title for the option to view the changelog -->
     <string name="pref_view_changelog_title">查看更新日志</string>
     <!-- Settings: Title for the option to toggle whether the changelog is shown when the app is launched -->
-    <string name="pref_show_changelog_launch_title">启动时显示更新日志</string>
+    <string name="pref_show_changelog_launch_title">启动时显示</string>
     <!-- Settings: Title for the option to turn off crash reporting -->
     <string name="pref_crash_reporting_title">崩溃报告</string>
     <!-- Settings: Description for the option to turn off crash reporting -->
-    <string name="pref_crash_reporting_subtitle">S2 通过 Bugsnag 收集崩溃数据。关闭以退出</string>
+    <string name="pref_crash_reporting_subtitle">可以帮助开发者追踪并解决问题的匿名崩溃统计数据</string>
     <!-- Settings: Title for the option to view open source licenses -->
     <string name="pref_view_licenses_title">查看许可证</string>
     <!-- Settings: Title for the option to enable debug logging (log file will be stored on disk) -->
@@ -154,4 +160,6 @@
     <string name="pref_firebase_analytics_title">Firebase 分析服务</string>
     <!-- Settings: Description for the option to turn off crash reporting -->
     <string name="pref_firebase_analytics_subtitle">启用应用功能的 A/B 测试，用以追踪用户与应用间的交互行为</string>
+    <!-- Settings: Title for the library tabs options (list of tabs to be displayed on home screen)-->
+    <string name="pref_library_tabs_title">曲库选项卡</string>
 </resources>

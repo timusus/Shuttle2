@@ -7,13 +7,10 @@
     <!-- Error message title shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
     <string name="onboarding_directories_dialog_missing_title">Klasör sağlayıcı bulunamıyor</string>
     <!-- Error message description shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
-    <string name="onboarding_directories_dialog_missing_subtitle">Cihazınızda bir \'Belge Sağlayıcı\' (dosya yöneticisi) uygulaması bulunamıyor. Bir tane yüklemeniz veya temel medya tarayıcısını kullanmaya geri dönmeniz gerekebilir.</string>
+    <string name="onboarding_directories_dialog_missing_subtitle">Klasör eklemek için bir dosya sağlayıcı bulamıyor. Bir tane yüklemeniz veya Android Media Store sağlayıcısını kullanmaya geri dönmeniz gerekebilir.</string>
     <!-- Explanation shown to user when they're about to choose which directories wil lbe scanned bv the S2 media scanner-->
-    <string name="onboarding_directories_add_directories_help_text">Müzik taraması için, S2\'nin medya klasörlerini erişimi gerekli
-
-\'Klasör ekle\'ye bastığınızda, varsayılan \'dosya sağlayıcısı\'na yönlendirileceksiniz. Müziğinizi içeren klasörlere gidin. Birden fazla klasör ekleyebilirsiniz.
-
-Not: Müzik klasörünüzü görmek için \'dahili depolamayı göster\'i etkinleştirmeniz gerekebilir.</string>
+    <string name="onboarding_directories_add_directories_help_text">Müzik taraması için, S2\'nin medya klasörlerini erişimi gerekli.
+Android Dosya Sağlayıcı uygulamanız aracılığıyla bir klasör ekleyin.</string>
     <!-- Shown when the app is scanning the user's directories for media -->
     <string name="onboarding_directories_scanning">Taranıyor...</string>
     <!-- Shown when the media scanner is scanning the user's directories for media-->
@@ -44,9 +41,16 @@ Not: Müzik klasörünüzü görmek için \'dahili depolamayı göster\'i etkinl
     <!-- Shown when the S2 Media Provider is scanning song tags (metadata)-->
     <string name="onboarding_scanner_reading_song_tags">Şarkı etiketleri okunuyor</string>
     <!-- Shown when onboarding. Describes why S2 would like to use Bugsnag and Firebase Analytics-->
+    <string name="onboarding_data_collection_title">S2, anonim hata verilerini ve analizlerini paylaşmak için izninizi istiyor</string>
     <!-- Shown when onboarding. Switch to enable Bugsnag Crash Reporting -->
+    <string name="onboarding_switch_bugsnag">"Bugsnag Hata Raporlaması
+"</string>
     <!-- Shown when onboarding. Describes what Bugsnag  is used for-->
+    <string name="onboarding_switch_description_bugsnag">Hataları izlemeye ve çözmeye yardımcı olan anonim hata istatistikleri</string>
     <!-- Shown when onboarding. Switch to enable Firebase Analytics -->
+    <string name="onboarding_switch_firebase_analytics">Firebase analitikleri</string>
     <!-- Shown when onboarding. Describes what Firebase Analytics is used for-->
+    <string name="onboarding_switch_firebase_description_analytics">Özelliklerin A/B testini etkinleştirir ve kullanıcıların uygulamayla nasıl etkileşimde bulunduğunu izler</string>
     <!-- Shown during onboarding, or when choosing a media provider. -->
+    <string name="onboarding_media_selection_subtitle">Müziğinizin nereden geleceğine karar verin. Emin değilseniz Android Medya Store\'u kullanın.</string>
 </resources>

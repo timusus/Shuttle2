@@ -8,4 +8,22 @@
     <string name="queue_empty">File d\'attente vide</string>
     <!-- Shown when the current playback queue is empty. Pressing the widget will just open the app. -->
     <string name="widget_empty_text">Choisissez une chanson…</string>
+    <!-- Shown after user selects chromecast button (play on.. <which chromecast device>)-->
+    <string name="media_route_menu_title">Jouer sur...</string>
+    <!-- Text shown on shuffle button, Shuffle mode on-->
+    <string name="shuffle_on">Lecture aléatoire activée</string>
+    <!-- Text shown on shuffle button, Shuffle mode off-->
+    <string name="shuffle_off">Lecture aléatoire désactivée</string>
+    <!-- Shown on equalizer screen. EQ Preset Flat-->
+    <string name="eq_preset_flat">Plat</string>
+    <!-- Shown on equalizer screen. EQ Preset Custom-->
+    <string name="eq_preset_custom">Personnalisé</string>
+    <!-- Shown on equalizer screen. EQ Preset Bass boost-->
+    <string name="eq_preset_bass_boost">Amplificateur de basses</string>
+    <!-- Shown on equalizer screen. EQ Preset Bass reduction-->
+    <string name="eq_preset_bass_reduce">Réduction des basses</string>
+    <!-- Shown on equalizer screen. EQ Preset Vocal boost-->
+    <string name="eq_preset_vocal_boost">Amplification des voix</string>
+    <!-- Shown on equalizer screen. EQ Preset Vocal reduction-->
+    <string name="eq_preset_vocal_Reduce">Réduction des voix</string>
 </resources>

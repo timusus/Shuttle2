@@ -64,6 +64,12 @@
     <string name="pref_category_title_other">Anders</string>
     <!-- Settings: Title for changing the theme -->
     <string name="pref_theme_title">Thema</string>
+    <!-- Settings: Title for 'follow system' theme mode -->
+    <string name="pref_theme_title_follow_system">Volg systeem</string>
+    <!-- Settings: Title for 'light theme' theme mode -->
+    <string name="pref_theme_title_light">Licht thema</string>
+    <!-- Settings: Title for 'dark theme' theme mode-->
+    <string name="pref_theme_title_dark">Donker thema</string>
     <!-- Settings: Description for changing the theme -->
     <string name="pref_theme_summary">Kies tussen dag/nacht (standaard), licht en donker</string>
     <!-- Settings: Title for changing the accent colour -->
@@ -154,4 +160,6 @@
     <string name="pref_firebase_analytics_title">Firebase statistieken</string>
     <!-- Settings: Description for the option to turn off crash reporting -->
     <string name="pref_firebase_analytics_subtitle">Schakelt het A/B-testen van functies in en houdt bij hoe gebruikers omgaan met de app</string>
+    <!-- Settings: Title for the library tabs options (list of tabs to be displayed on home screen)-->
+    <string name="pref_library_tabs_title">Tabbladen bibliotheek</string>
 </resources>

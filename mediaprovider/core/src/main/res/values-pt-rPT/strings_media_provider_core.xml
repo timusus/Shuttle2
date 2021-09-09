@@ -75,7 +75,27 @@
     <!-- The option to remember the user's password for their Emby/Jellyfin/Plex media provider-->
     <string name="media_provider_config_switch_remember_password">Recordar palavra-passe</string>
     <!-- Favorites playlist name - user's favorite songs -->
+    <string name="playlist_title_favorites">Favoritos</string>
     <!-- 'Most Played' playlist name - playlist of songs with highest play count -->
+    <string name="playlist_title_most_played">Mais reproduzido</string>
     <!-- 'Recently Added' playlist name - playlist of songs which have been recently added -->
+    <string name="playlist_title_recently_added">Adicionado recentemente</string>
     <!-- 'History' playlist name - playlist of songs which have been recently played -->
+    <string name="playlist_title_history">Histórico</string>
+    <!-- Shown when app is querying remote media provider API (jellyfin/emby/plex) -->
+    <string name="media_provider_querying_api">A consultar a API</string>
+    <!-- Error message shown when a remote media provider (jellyfin/emby/plex) fails to authenticate -->
+    <string name="media_provider_authentication_error">Falha na autenticação</string>
+    <!-- Error message shown when the server address is missing for a remote media provider (jellyfin/emby/plex) -->
+    <string name="media_provider_address_missing">Endereço do servidor em falta</string>
+    <!-- Shown when the media importer is searching for existing songs -->
+    <!-- Shown when the media importer is searching for existing playlists -->
+    <!-- Shown when the media importer is updating the app's database -->
+    <string name="media_import_updating_database">A atualizar a base de dados</string>
+    <!-- Shown when the media importer fails to import songs -->
+    <string name="media_import_error">Ocorreu um erro ao importar músicas</string>
+    <!-- Shown when the S2 Media Provider fails to find any folders to scan -->
+    <string name="media_import_directories_empty">Sem diretorias/ficheiros para analisar</string>
+    <!-- Shown when the S2 Media Provider is searching an m3u playlist for songs -->
+    <string name="media_import_m3u_scan">A procurar músicas para <xliff:g example="playlist1.m3u" id="playlist_name">{playlist_name}</xliff:g></string>
 </resources>

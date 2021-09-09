@@ -33,4 +33,5 @@
        geselecteerd</item>
     </plurals>
     <!-- Shown on the library screen, if the user has manually deselected all the library tabs in appearance settings-->
+    <string name="library_tabs_empty">Geen bibliotheektabbladen zichtbaar</string>
 </resources>

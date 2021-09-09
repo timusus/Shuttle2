@@ -3,9 +3,9 @@
     <!-- Title of changelog screen. Since the actual changelogs are not translated, this could be left in English-->
     <string name="changelog_title">Changelog</string>
     <!-- Changelog 'features' sub-heading. Since the actual changelogs are not translated, this could be left in English-->
-    <string name="changelog_features">Caratteristiche</string>
+    <string name="changelog_features">Features</string>
     <!-- Changelog 'improvements' sub-heading. Since the actual changelogs are not translated, this could be left in English-->
-    <string name="changelog_improvements">Miglioramenti</string>
+    <string name="changelog_improvements">Improvements</string>
     <!-- Changelog 'bug fixes' sub-heading. Since the actual changelogs are not translated, this could be left in English-->
-    <string name="changelog_bug_fixes">Correzioni di bug</string>
+    <string name="changelog_bug_fixes">Bug Fixes</string>
 </resources>

@@ -35,7 +35,11 @@
     <!-- Button to close the song info dialog -->
     <string name="song_info_dialog_close_button_title">Fechar</string>
     <!-- Shown in the song infor dialog. The song bit rate. -->
+    <string name="song_info_bit_rate">Taxa de bits</string>
     <!-- Shown in the song infor dialog. The song bit depth. -->
+    <string name="song_info_bit_depth">Profundidade de bits</string>
     <!-- Shown in the song infor dialog. The song sample rate. -->
+    <string name="song_info_sample_rate">Taxa de amostragem</string>
     <!-- Shown in the song infor dialog. The song channel count. -->
+    <string name="song_info_channel_count">Canais</string>
 </resources>

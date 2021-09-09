@@ -46,7 +46,7 @@
     <!-- Shown when onboarding. Describes what Bugsnag  is used for-->
     <string name="onboarding_switch_description_bugsnag">Statistiche anonime che aiutano a risolvere gli arresti anomali</string>
     <!-- Shown when onboarding. Switch to enable Firebase Analytics -->
-    <string name="onboarding_switch_firebase_analytics">Firebase: analitica</string>
+    <string name="onboarding_switch_firebase_analytics">Firebase, analitica</string>
     <!-- Shown when onboarding. Describes what Firebase Analytics is used for-->
     <string name="onboarding_switch_firebase_description_analytics">Permette i test d\'ipotesi a due campioni delle nuove funzionalità e registra il modo in cui gli utenti interagiscono con l\'app</string>
     <!-- Shown during onboarding, or when choosing a media provider. -->

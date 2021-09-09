@@ -76,7 +76,20 @@
     <!-- The option to remember the user's password for their Emby/Jellyfin/Plex media provider-->
     <string name="media_provider_config_switch_remember_password">Zapamiętaj hasło</string>
     <!-- Favorites playlist name - user's favorite songs -->
+    <string name="playlist_title_favorites">Ulubione</string>
     <!-- 'Most Played' playlist name - playlist of songs with highest play count -->
+    <string name="playlist_title_most_played">Najczęściej grane</string>
     <!-- 'Recently Added' playlist name - playlist of songs which have been recently added -->
+    <string name="playlist_title_recently_added">Niedawno dodany</string>
     <!-- 'History' playlist name - playlist of songs which have been recently played -->
+    <string name="playlist_title_history">Historia</string>
+    <!-- Shown when app is querying remote media provider API (jellyfin/emby/plex) -->
+    <!-- Error message shown when a remote media provider (jellyfin/emby/plex) fails to authenticate -->
+    <!-- Error message shown when the server address is missing for a remote media provider (jellyfin/emby/plex) -->
+    <!-- Shown when the media importer is searching for existing songs -->
+    <!-- Shown when the media importer is searching for existing playlists -->
+    <!-- Shown when the media importer is updating the app's database -->
+    <!-- Shown when the media importer fails to import songs -->
+    <!-- Shown when the S2 Media Provider fails to find any folders to scan -->
+    <!-- Shown when the S2 Media Provider is searching an m3u playlist for songs -->
 </resources>

@@ -8,4 +8,22 @@
     <string name="queue_empty">キューが空です</string>
     <!-- Shown when the current playback queue is empty. Pressing the widget will just open the app. -->
     <string name="widget_empty_text">曲を選択してください…</string>
+    <!-- Shown after user selects chromecast button (play on.. <which chromecast device>)-->
+    <string name="media_route_menu_title">このデバイスで再生...</string>
+    <!-- Text shown on shuffle button, Shuffle mode on-->
+    <string name="shuffle_on">シャッフル有効</string>
+    <!-- Text shown on shuffle button, Shuffle mode off-->
+    <string name="shuffle_off">シャッフル無効</string>
+    <!-- Shown on equalizer screen. EQ Preset Flat-->
+    <string name="eq_preset_flat">フラット</string>
+    <!-- Shown on equalizer screen. EQ Preset Custom-->
+    <string name="eq_preset_custom">カスタム</string>
+    <!-- Shown on equalizer screen. EQ Preset Bass boost-->
+    <string name="eq_preset_bass_boost">低音強調</string>
+    <!-- Shown on equalizer screen. EQ Preset Bass reduction-->
+    <string name="eq_preset_bass_reduce">低音控えめ</string>
+    <!-- Shown on equalizer screen. EQ Preset Vocal boost-->
+    <string name="eq_preset_vocal_boost">ボーカル強調</string>
+    <!-- Shown on equalizer screen. EQ Preset Vocal reduction-->
+    <string name="eq_preset_vocal_Reduce">ボーカル控えめ</string>
 </resources>

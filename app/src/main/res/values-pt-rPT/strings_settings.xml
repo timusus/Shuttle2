@@ -43,6 +43,7 @@
     <!-- Settings: Title for 'media' settings. Settings related to media providers, rescanning & exclude list (blacklist) -->
     <string name="pref_category_title_media">Multimédia</string>
     <!-- Settings: Title for 'playback' settings -->
+    <string name="pref_category_title_playback">Reprodução</string>
     <!-- Settings: Title for artwork related settings (artist/album images) -->
     <string name="pref_category_title_artwork">Arte</string>
     <!-- Settings: Title for widget related settings  -->
@@ -52,6 +53,7 @@
     <!-- Settings: Title for shangelog related settings -->
     <string name="pref_category_title_changelog">Changelog</string>
     <!-- Settings: Title for app info related settings -->
+    <string name="pref_category_title_app_info">Informações da aplicação</string>
     <!-- Settings: Title for privacy related settings -->
     <string name="pref_category_title_privacy">Privacidade</string>
     <!-- Settings: Title for open source related settings -->
@@ -62,6 +64,9 @@
     <string name="pref_category_title_other">Outro</string>
     <!-- Settings: Title for changing the theme -->
     <string name="pref_theme_title">Tema</string>
+    <!-- Settings: Title for 'follow system' theme mode -->
+    <!-- Settings: Title for 'light theme' theme mode -->
+    <!-- Settings: Title for 'dark theme' theme mode-->
     <!-- Settings: Description for changing the theme -->
     <string name="pref_theme_summary">Escolha entre dia/noite (padrão), claro e escuro</string>
     <!-- Settings: Title for changing the accent colour -->
@@ -128,6 +133,7 @@
     <string name="pref_media_session_artwork_subtitle">Forneça a arte para a sessão multimédia do Android. Desative para impedir a arte no ecrã de bloqueio</string>
     <!-- Settings: Title for the option to disable shuffle when starting a new queue -->
     <!-- Settings: Description for the option to disable shuffle when starting a new queue -->
+    <string name="pref_disable_shuffle_on_queue_subtitle">Quando uma nova fila é selecionada o modo aleatório não será desactivado</string>
     <!-- Settings title for the day/night theme option -->
     <string name="theme_entry_day_night">Dia/Noite</string>
     <!-- Settings title for the light theme option -->
@@ -147,5 +153,7 @@
     <!-- Settings title for the red theme option -->
     <string name="theme_accent_entry_red">Vermelho</string>
     <!-- Settings: Title for the option to turn off crash reporting -->
+    <string name="pref_firebase_analytics_title">Análise Firebase</string>
     <!-- Settings: Description for the option to turn off crash reporting -->
+    <!-- Settings: Title for the library tabs options (list of tabs to be displayed on home screen)-->
 </resources>

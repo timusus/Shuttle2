@@ -8,4 +8,22 @@
     <string name="queue_empty">队列空</string>
     <!-- Shown when the current playback queue is empty. Pressing the widget will just open the app. -->
     <string name="widget_empty_text">挑首歌来听听……</string>
+    <!-- Shown after user selects chromecast button (play on.. <which chromecast device>)-->
+    <string name="media_route_menu_title">投射至…</string>
+    <!-- Text shown on shuffle button, Shuffle mode on-->
+    <string name="shuffle_on">已启用随机播放</string>
+    <!-- Text shown on shuffle button, Shuffle mode off-->
+    <string name="shuffle_off">已关闭随机播放</string>
+    <!-- Shown on equalizer screen. EQ Preset Flat-->
+    <string name="eq_preset_flat">原始</string>
+    <!-- Shown on equalizer screen. EQ Preset Custom-->
+    <string name="eq_preset_custom">自定义</string>
+    <!-- Shown on equalizer screen. EQ Preset Bass boost-->
+    <string name="eq_preset_bass_boost">低音增强</string>
+    <!-- Shown on equalizer screen. EQ Preset Bass reduction-->
+    <string name="eq_preset_bass_reduce">低音减弱</string>
+    <!-- Shown on equalizer screen. EQ Preset Vocal boost-->
+    <string name="eq_preset_vocal_boost">人声增强</string>
+    <!-- Shown on equalizer screen. EQ Preset Vocal reduction-->
+    <string name="eq_preset_vocal_Reduce">人声减弱</string>
 </resources>

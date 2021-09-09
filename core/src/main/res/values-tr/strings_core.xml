@@ -8,4 +8,13 @@
     <string name="queue_empty">Çalma sırası boş</string>
     <!-- Shown when the current playback queue is empty. Pressing the widget will just open the app. -->
     <string name="widget_empty_text">Bir şarkı seçin...</string>
+    <!-- Shown after user selects chromecast button (play on.. <which chromecast device>)-->
+    <!-- Text shown on shuffle button, Shuffle mode on-->
+    <!-- Text shown on shuffle button, Shuffle mode off-->
+    <!-- Shown on equalizer screen. EQ Preset Flat-->
+    <!-- Shown on equalizer screen. EQ Preset Custom-->
+    <!-- Shown on equalizer screen. EQ Preset Bass boost-->
+    <!-- Shown on equalizer screen. EQ Preset Bass reduction-->
+    <!-- Shown on equalizer screen. EQ Preset Vocal boost-->
+    <!-- Shown on equalizer screen. EQ Preset Vocal reduction-->
 </resources>

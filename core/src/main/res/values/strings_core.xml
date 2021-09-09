@@ -8,14 +8,12 @@
     <string name="queue_empty">Queue empty</string>
     <!-- Shown when the current playback queue is empty. Pressing the widget will just open the app. -->
     <string name="widget_empty_text">Choose a song…</string>
-
     <!-- Shown after user selects chromecast button (play on.. <which chromecast device>)-->
     <string name="media_route_menu_title">Play on…</string>
-    <!-- Text shown on shuffle button. Shuffle is currently off - pressing this will turn shuffle on-->
+    <!-- Text shown on shuffle button, Shuffle mode on-->
     <string name="shuffle_on">Shuffle on</string>
-    <!-- Text shown on shuffle button. Shuffle is currently on - pressing this will turn shuffle off-->
+    <!-- Text shown on shuffle button, Shuffle mode off-->
     <string name="shuffle_off">Shuffle off</string>
-
     <!-- Shown on equalizer screen. EQ Preset Flat-->
     <string name="eq_preset_flat">Flat</string>
     <!-- Shown on equalizer screen. EQ Preset Custom-->

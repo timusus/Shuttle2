@@ -31,4 +31,5 @@
         <item quantity="other"><xliff:g example="3" id="count">{count}</xliff:g> ausgewählt</item>
     </plurals>
     <!-- Shown on the library screen, if the user has manually deselected all the library tabs in appearance settings-->
+    <string name="library_tabs_empty">Keine Bibliotheksreiter sichtbar</string>
 </resources>

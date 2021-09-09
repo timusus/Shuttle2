@@ -65,5 +65,5 @@
     <!-- Menu option to remove the selected item from the queue -->
     <string name="menu_title_remove_from_queue">Aus Warterschlange entfernen</string>
     <!-- Menu option to remove all items from the queue -->
-    <string name="menu_title_sort_clear_queue">Queue löschen</string>
+    <string name="menu_title_sort_clear_queue">Warteschlange löschen</string>
 </resources>

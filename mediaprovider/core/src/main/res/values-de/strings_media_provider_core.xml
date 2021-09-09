@@ -5,9 +5,9 @@
     <!-- The description of the S2 Media Provider - scans user selected folders and files for metadata-->
     <string name="media_provider_description_s2">Scannt ausgewählte Ordner &amp; Dateien (empfohlen)</string>
     <!-- The name of the 'Android Media Store' media provider. The 'Media Store' is an Android concept. Not sure if it would be translated.-->
-    <string name="media_provider_title_media_store">Android Mediastore</string>
+    <string name="media_provider_title_media_store">Android Media Store</string>
     <!-- The description of the Android MediaStore media provider. The MediaStore is an Android concept. A database on the device which keeps track of song info-->
-    <string name="media_provider_description_media_store">Von Android verwaltete Datenbank</string>
+    <string name="media_provider_description_media_store">Einfacher, schneller Zugriff auf die Dateien in der Android Media Store Datenbank</string>
     <!-- The name of the 'Emby' media provider. Emby is a personal media server - probably doesn't need to be translated-->
     <string name="media_provider_title_emby">Emby</string>
     <!-- The description of the 'Emby' media provider. Emby is a personal media server - probably doesn't need to be translated-->
@@ -80,4 +80,22 @@
     <string name="playlist_title_recently_added">Zuletzt hinzugefügt</string>
     <!-- 'History' playlist name - playlist of songs which have been recently played -->
     <string name="playlist_title_history">Verlauf</string>
+    <!-- Shown when app is querying remote media provider API (jellyfin/emby/plex) -->
+    <string name="media_provider_querying_api">Abfragen der API</string>
+    <!-- Error message shown when a remote media provider (jellyfin/emby/plex) fails to authenticate -->
+    <string name="media_provider_authentication_error">Anmeldung fehlgeschlagen</string>
+    <!-- Error message shown when the server address is missing for a remote media provider (jellyfin/emby/plex) -->
+    <string name="media_provider_address_missing">Server Adresse fehlt</string>
+    <!-- Shown when the media importer is searching for existing songs -->
+    <string name="media_import_retrieving_songs">Abrufen existierender Songs</string>
+    <!-- Shown when the media importer is searching for existing playlists -->
+    <string name="media_import_retrieving_playlists">Abrufen existierender Wiedergabelisten</string>
+    <!-- Shown when the media importer is updating the app's database -->
+    <string name="media_import_updating_database">Aktualisieren der Datenbank</string>
+    <!-- Shown when the media importer fails to import songs -->
+    <string name="media_import_error">Ein Fehler ist beim Importieren von Songs aufgetreten</string>
+    <!-- Shown when the S2 Media Provider fails to find any folders to scan -->
+    <string name="media_import_directories_empty">Keine Verzeichnisse/Dateien zum scannen</string>
+    <!-- Shown when the S2 Media Provider is searching an m3u playlist for songs -->
+    <string name="media_import_m3u_scan">Finden von Songs für <xliff:g example="playlist1.m3u" id="playlist_name">{playlist_name}</xliff:g></string>
 </resources>

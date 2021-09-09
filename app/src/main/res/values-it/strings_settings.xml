@@ -39,7 +39,7 @@
     <!-- Error message shown when copying debug logs failed, because there are no logs -->
     <string name="settings_logging_clipboard_logs_empty">File di log vuoto</string>
     <!-- Settings: Title for 'appearance' settings (settings related to themes, etc.) -->
-    <string name="pref_category_title_display">Schermo</string>
+    <string name="pref_category_title_display">Aspetto</string>
     <!-- Settings: Title for 'media' settings. Settings related to media providers, rescanning & exclude list (blacklist) -->
     <string name="pref_category_title_media">Media</string>
     <!-- Settings: Title for 'playback' settings -->
@@ -64,6 +64,12 @@
     <string name="pref_category_title_other">Altro</string>
     <!-- Settings: Title for changing the theme -->
     <string name="pref_theme_title">Tema</string>
+    <!-- Settings: Title for 'follow system' theme mode -->
+    <string name="pref_theme_title_follow_system">Lo stesso del sistema</string>
+    <!-- Settings: Title for 'light theme' theme mode -->
+    <string name="pref_theme_title_light">Tema chiaro</string>
+    <!-- Settings: Title for 'dark theme' theme mode-->
+    <string name="pref_theme_title_dark">Tema scuro</string>
     <!-- Settings: Description for changing the theme -->
     <string name="pref_theme_summary">Scegli tra giorno/notte (predefinito), chiaro e scuro</string>
     <!-- Settings: Title for changing the accent colour -->
@@ -111,11 +117,11 @@
     <!-- Settings: Title for the option to view the changelog -->
     <string name="pref_view_changelog_title">Visualizza il changelog</string>
     <!-- Settings: Title for the option to toggle whether the changelog is shown when the app is launched -->
-    <string name="pref_show_changelog_launch_title">Mostra il changelog all\'avvio</string>
+    <string name="pref_show_changelog_launch_title">Mostra all\'avvio</string>
     <!-- Settings: Title for the option to turn off crash reporting -->
     <string name="pref_crash_reporting_title">Bugsnag, segnalazione di arresti anomali</string>
     <!-- Settings: Description for the option to turn off crash reporting -->
-    <string name="pref_crash_reporting_subtitle">Segnalazioni anonime degli arresti anomali, che aiutano a trovare e risolvere i bug</string>
+    <string name="pref_crash_reporting_subtitle">Segnalazioni anonime degli arresti anomali per trovare e risolvere i bug</string>
     <!-- Settings: Title for the option to view open source licenses -->
     <string name="pref_view_licenses_title">Visualizza le licenze</string>
     <!-- Settings: Title for the option to enable debug logging (log file will be stored on disk) -->
@@ -154,4 +160,6 @@
     <string name="pref_firebase_analytics_title">Firebase, analitica</string>
     <!-- Settings: Description for the option to turn off crash reporting -->
     <string name="pref_firebase_analytics_subtitle">Permette i test d\'ipotesi a due campioni delle nuove funzionalità e registra il modo in cui gli utenti interagiscono con l\'app</string>
+    <!-- Settings: Title for the library tabs options (list of tabs to be displayed on home screen)-->
+    <string name="pref_library_tabs_title">Schede raccolta</string>
 </resources>
