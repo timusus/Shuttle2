@@ -21,3 +21,5 @@ for d in ./temp/**/ ; do
   echo --info=progress2 "copying files from $d"
   rsync -va "$d" "../app/src/main/res/"
 done
+
+rm -r "./temp"
