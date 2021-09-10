@@ -1,0 +1,53 @@
+plugins {
+    id 'com.android.library'
+    id 'kotlin-android'
+    id 'kotlin-kapt'
+}
+
+android {
+    compileSdkVersion 31
+
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 30
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}
+
+dependencies {
+
+    // Kotlin std lib
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.5.0"
+
+    // OkHttp
+    implementation 'com.squareup.okhttp3:okhttp:4.9.1'
+
+    // Moshi
+    implementation 'com.squareup.moshi:moshi:1.12.0'
+    api 'com.squareup.moshi:moshi-kotlin:1.12.0'
+    implementation 'com.squareup.moshi:moshi-adapters:1.12.0'
+    kapt("com.squareup.moshi:moshi-kotlin-codegen:1.12.0")
+
+    // Retrofit
+    api 'com.squareup.retrofit2:retrofit:2.9.0'
+    api 'com.squareup.retrofit2:converter-moshi:2.9.0'
+
+    // Timber
+    implementation 'com.jakewharton.timber:timber:4.7.1'
+}

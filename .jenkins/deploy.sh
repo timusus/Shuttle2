@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-cp "$GOOGLE_SERVICES" ./app/google-services.json
+cp "$GOOGLE_SERVICES" ./androidApp/main/app/google-services.json
 
 chmod +x ./gradlew
 
-./gradlew publishReleaseBundle --parallel -PkeyAlias=shuttle -PkeyPass="$KEYSTORE_PASS" -PstorePass="$KEYSTORE_PASS"
+./gradlew :androidApp:main:publishReleaseBundle --parallel -PkeyAlias=shuttle -PkeyPass="$KEYSTORE_PASS" -PstorePass="$KEYSTORE_PASS"

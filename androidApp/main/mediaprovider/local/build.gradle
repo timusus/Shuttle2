@@ -1,0 +1,73 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-kapt'
+
+android {
+    compileSdkVersion 31
+
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 30
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments += ["room.schemaLocation": "$projectDir/schemas".toString()]
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+    packagingOptions {
+        resources {
+            excludes += ['META-INF/core_debug.kotlin_module']
+        }
+    }
+
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    // Shuttle Core
+    implementation(project(":androidApp:main:core"))
+
+    // Shuttle MediaProvider Core
+    implementation project(path: ':androidApp:main:mediaprovider:core')
+
+    // TagLib
+    implementation("com.github.timusus:ktaglib:1.4.1")
+
+    // Storage Access Framework
+    implementation project(path: ':androidApp:main:saf')
+
+    // Room
+    kapt 'androidx.room:room-compiler:2.3.0'
+    api 'androidx.room:room-runtime:2.3.0'
+    api 'androidx.room:room-ktx:2.3.0'
+
+    // Testing
+    testImplementation 'junit:junit:4.13'
+    androidTestImplementation 'androidx.test:runner:1.2.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+
+    // Moshi
+    kapt("com.squareup.moshi:moshi-kotlin-codegen:1.12.0")
+
+    // Hilt
+    implementation 'com.google.dagger:hilt-android:2.38.1'
+    kapt 'com.google.dagger:hilt-compiler:2.38.1'
+
+    implementation project(':shared:data')
+    implementation 'org.jetbrains.kotlinx:kotlinx-datetime:0.2.1'
+}

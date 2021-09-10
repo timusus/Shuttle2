@@ -1,0 +1,57 @@
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- App name. Don't translate-->
+    <string name="app_name">S2 (Compose)</string>
+
+    <!-- Main -->
+
+    <!-- App name. Translate only it seems more appropriate in your language. (Maybe just translate 'Music Player', and leave 'S2')-->
+    <string name="app_name_long">S2 Music Player</string>
+    <!-- Bottom Navigation menu item (home) -->
+    <string name="title_home">Home</string>
+    <!-- Bottom Navigation menu item (library) - the music library/collection -->
+    <string name="title_library">Library</string>
+    <!-- Bottom Navigation menu item (search) - button to open the 'search' screen -->
+    <string name="title_search">Search</string>
+    <!-- Shown in the queue, to indicate the queue of songs which will play after the current song-->
+    <string name="playback_up_next">Up Next</string>
+    <!-- Shown on the changelog screen, notes from the developer. Since the changelog is not translated, this could be left in English-->
+    <string name="dev_notes">Dev notes:</string>
+    <!-- Title of the 'settings' screen-->
+    <string name="title_settings">Settings</string>
+    <!-- Title of the 'Now Playing' screen (the main screen for controlling music playback)-->
+    <string name="title_now_playing">Now Playing</string>
+    <!-- Shown at the top of the 'search' screen-->
+    <string name="title_search_hint">Search Music</string>
+
+
+    <!-- Library -->
+
+    <!-- Title for the list of artists -->
+    <string name="artists">Artists</string>
+    <!-- Title for the list of albums -->
+    <string name="albums">Albums</string>
+    <plurals name="albumsPlural">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> album</item>
+        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g> albums</item>
+    </plurals>
+    <!-- Title for the list of songs -->
+    <string name="songs">Songs</string>
+    <!-- The number of songs for an album/playlist/genre -->
+    <plurals name="songsPlural">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> song</item>
+        <item quantity="other"><xliff:g example="12" id="count">{count}</xliff:g> songs</item>
+    </plurals>
+    <!-- Title for the list of genres -->
+    <string name="genres">Genres</string>
+    <!-- Title for the list of playlists -->
+    <string name="library_playlists">Playlists</string>
+    <!-- Shown when the app is scanning for songs in the library -->
+    <string name="library_scan_in_progress">Scanning your library</string>
+    <!-- Shown to indicate the number of tracks/albums/artists which have been selected, in multi-selection mode-->
+    <plurals name="multi_select_items_selected">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> selected</item>
+        <item quantity="other"><xliff:g example="3" id="count">{count}</xliff:g> selected</item>
+    </plurals>
+    <!-- Shown on the library screen, if the user has manually deselected all the library tabs in appearance settings-->
+    <string name="library_tabs_empty">No library tabs visible</string>
+</resources>

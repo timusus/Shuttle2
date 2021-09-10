@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-cp "$GOOGLE_SERVICES" ./app/google-services.json
+cp "$GOOGLE_SERVICES" ./androidApp/main/app/google-services.json
 
 "$ANDROID_SDK_ROOT/emulator/emulator" -avd android-30 -no-window -no-audio &
 
@@ -10,8 +10,10 @@ until $WAIT_CMD | grep -m 1 stopped; do
   sleep 1
 done
 
+"$ANDROID_SDK_ROOT/platform-tools/adb" uninstall com.simplecityapps.shuttle.dev
+
 chmod +x ./gradlew
-./gradlew clean app:connectedAndroidTest -PkeyAlias=shuttle -PkeyPass="$KEYSTORE_PASS" -PstorePass="$KEYSTORE_PASS"
+./gradlew clean :androidApp:main:app:connectedAndroidTest -PkeyAlias=shuttle -PkeyPass="$KEYSTORE_PASS" -PstorePass="$KEYSTORE_PASS"
 GRADLE_RETURN_CODE=$?
 echo "gradle exit code $GRADLE_RETURN_CODE"
 

@@ -1,0 +1,66 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-kapt'
+apply plugin: 'dagger.hilt.android.plugin'
+
+android {
+    compileSdkVersion 31
+
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 30
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+
+    // Shuttle Core
+    implementation project(':androidApp:main:core')
+
+    // Shuttle Networking
+    implementation project(':androidApp:main:networking')
+
+    // Shuttle MediaProvider Core
+    implementation project(':androidApp:main:mediaprovider:core')
+
+    // Remote media providers
+    implementation project(':androidApp:main:mediaprovider:emby')
+    implementation project(':androidApp:main:mediaprovider:jellyfin')
+
+    // TagLib
+    implementation("com.github.timusus:ktaglib:1.4.1")
+
+    // Hilt
+    implementation 'com.google.dagger:hilt-android:2.38.1'
+    kapt 'com.google.dagger:hilt-compiler:2.38.1'
+
+    // Palette
+    implementation 'androidx.palette:palette-ktx:1.0.0'
+
+    // Coroutines
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.1'
+
+    // Glide
+    implementation 'com.github.bumptech.glide:glide:4.12.0'
+    kapt 'com.github.bumptech.glide:compiler:4.12.0'
+    implementation 'com.github.bumptech.glide:okhttp3-integration:4.12.0'
+
+    implementation project(':shared:data')
+}

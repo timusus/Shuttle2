@@ -1,0 +1,49 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-parcelize'
+
+android {
+    compileSdkVersion 31
+
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 30
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables.useSupportLibrary true
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    lint {
+        abortOnError false
+    }
+
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    // Kotlin Standard Library
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.5.30"
+
+    // Timber
+    implementation 'com.jakewharton.timber:timber:4.7.1'
+
+    implementation project(':shared:data')
+
+    implementation 'org.jetbrains.kotlinx:kotlinx-datetime:0.2.1'
+
+    // Kotlin Coroutines
+    api 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0'
+
+    // AndroidX Annotations
+    api "androidx.annotation:annotation:1.2.0"
+
+    // Phrase string formatting helper
+    api 'com.github.square:phrase:master-SNAPSHOT'
+}
