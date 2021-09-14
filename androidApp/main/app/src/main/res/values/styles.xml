@@ -9,7 +9,7 @@
         <item name="colorAccent">@color/colorPrimary</item>
         <item name="colorPrimaryTransparent">@color/colorPrimaryTransparent</item>
         <item name="colorPrimarySemiTransparent">@color/colorPrimarySemiTransparent</item>
-        <item name="colorControlHighlight" tools:ignore="PrivateResource">@color/ripple_material_light</item>
+        <item name="colorControlHighlight">@color/ripple_light</item>
         <item name="tabLayoutStyle">@style/TabLayout.AppTheme.Dark</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:windowLightStatusBar" tools:targetApi="23">true</item>
@@ -67,7 +67,7 @@
         <item name="colorAccent">@color/colorPrimary</item>
         <item name="colorPrimaryTransparent">@color/colorPrimaryTransparent</item>
         <item name="colorPrimarySemiTransparent">@color/colorPrimarySemiTransparent</item>
-        <item name="colorControlHighlight" tools:ignore="PrivateResource">@color/ripple_material_dark</item>
+        <item name="colorControlHighlight">@color/ripple_dark</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:textViewStyle">@style/Widget.Shuttle.TextView</item>
         <item name="toolbarStyle">@style/Widget.Shuttle.Toolbar</item>

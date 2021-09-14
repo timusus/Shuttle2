@@ -34,11 +34,6 @@
     <color name="text_secondary_dark">#DEFFFFFF</color>
 
 
-    <!-- Material ripple colors -->
-    <color name="foreground_material_dark" tools:override="true">@android:color/white</color>
-    <color name="foreground_material_light" tools:override="true">@android:color/black</color>
-
-
     <!-- Vertical Seekbar-->
     <color name="vertical_seekbar_progress_disabled">#A8272727</color>
     <color name="vertical_seekbar_track_disabled">#30b2b2b2</color>
