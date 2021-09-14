@@ -9,7 +9,7 @@
     <!-- Menu option to add this song to the queue, to play next -->
     <string name="menu_title_play_next">Volgende afspelen</string>
     <!-- Menu option to open the tag editor for this song/album/artist -->
-    <string name="menu_title_edit_tags">Tags Bewerken</string>
+    <string name="menu_title_edit_tags">Tags bewerken</string>
     <!-- Menu option to configure the selected media provider -->
     <string name="menu_title_media_provider_configure">Configureren</string>
     <!-- Menu option to remove the selected media provider -->
@@ -48,6 +48,8 @@
     <string name="menu_title_sort_year">Jaar</string>
     <!-- Menu option to sort by song duration -->
     <string name="menu_title_sort_duration">Looptijd</string>
+    <!-- Menu option to sort by last modified date -->
+    <string name="menu_title_sort_date_modified">Laatst aangepast</string>
     <!-- Menu option to sort playlists by a custom sort order (user-defined sort order) -->
     <string name="menu_title_sort_custom">Eigen</string>
     <!-- Menu option to scroll to the current playing track in the queue -->

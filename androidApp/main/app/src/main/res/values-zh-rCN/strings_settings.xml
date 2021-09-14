@@ -83,7 +83,7 @@
     <!-- Settings: Title for the option to choose media providers -->
     <string name="pref_media_provider_title">媒体提供服务</string>
     <!-- Settings: Description for the option to choose media providers-->
-    <string name="pref_media_provider_summary">选择内置媒体扫描器、Android 媒体存储、Jellyfin 或 Emby</string>
+    <string name="pref_media_provider_summary">从内置媒体扫描器、Android 媒体存储、Jellyfin 或 Emby 中选择一个</string>
     <!-- Settings: Title for the option to rescan the media library -->
     <string name="pref_media_rescan_title">重新扫描</string>
     <!-- Settings: Description for the option to rescan the media library -->

@@ -65,8 +65,11 @@
     <!-- Settings: Title for changing the theme -->
     <string name="pref_theme_title">Tema</string>
     <!-- Settings: Title for 'follow system' theme mode -->
+    <string name="pref_theme_title_follow_system">Sistemle aynı</string>
     <!-- Settings: Title for 'light theme' theme mode -->
+    <string name="pref_theme_title_light">Açık Tema</string>
     <!-- Settings: Title for 'dark theme' theme mode-->
+    <string name="pref_theme_title_dark">Koyu Tema</string>
     <!-- Settings: Description for changing the theme -->
     <string name="pref_theme_summary">Gece ya da gündüz modu seçiniz</string>
     <!-- Settings: Title for changing the accent colour -->
@@ -159,4 +162,5 @@
     <!-- Settings: Description for the option to turn off crash reporting -->
     <string name="pref_firebase_analytics_subtitle">Özelliklerin A/B testini etkinleştirir ve kullanıcıların uygulamayla nasıl etkileşimde bulunduğunu izler</string>
     <!-- Settings: Title for the library tabs options (list of tabs to be displayed on home screen)-->
+    <string name="pref_library_tabs_title">Kütüphane sekmesi</string>
 </resources>

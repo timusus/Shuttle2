@@ -75,7 +75,7 @@
     <!-- Button to skip to the previous track-->
     <string name="button_skip_previous">Precedente</string>
     <!-- Button to shuffle songs-->
-    <string name="button_content_description_shuffle">Casuale</string>
+    <string name="button_content_description_shuffle">Riproduzione casuale</string>
     <!-- Button to shuffle songs using 'album shuffle' mode (shuffles albums, but plays songs in track order)-->
     <string name="button_album_shuffle">Album casuali</string>
     <!-- 'Loading' text. Shown on various screens as their content is loading-->

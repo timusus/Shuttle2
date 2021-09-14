@@ -145,7 +145,7 @@
     <!-- Settings title for the dark theme option -->
     <string name="theme_entry_dark">Donker</string>
     <!-- Settings title for blue theme option (called Shuttle blue, because it uses the particular shade of blue from the original Shuttle) -->
-    <string name="theme_accent_entry_blue">Shuttle blauw</string>
+    <string name="theme_accent_entry_blue">Shuttle-blauw</string>
     <!-- Settings title for the cyan theme option -->
     <string name="theme_accent_entry_cyan">Cyaan</string>
     <!-- Settings title for the purple theme option -->

@@ -48,6 +48,8 @@
     <string name="menu_title_sort_year">年份</string>
     <!-- Menu option to sort by song duration -->
     <string name="menu_title_sort_duration">时长</string>
+    <!-- Menu option to sort by last modified date -->
+    <string name="menu_title_sort_date_modified">修改日期</string>
     <!-- Menu option to sort playlists by a custom sort order (user-defined sort order) -->
     <string name="menu_title_sort_custom">自定义</string>
     <!-- Menu option to scroll to the current playing track in the queue -->

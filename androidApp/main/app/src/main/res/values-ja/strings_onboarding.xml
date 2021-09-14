@@ -7,7 +7,7 @@
     <!-- Error message title shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
     <string name="onboarding_directories_dialog_missing_title">ドキュメントプロバイダーが見つかりません</string>
     <!-- Error message description shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
-    <string name="onboarding_directories_dialog_missing_subtitle">ディレクトリを追加するためのファイルプロバイダーアプリがデバイス内に見つかりません。ファイラーアプリをインストールするか、Android Media Storeを選択してください。</string>
+    <string name="onboarding_directories_dialog_missing_subtitle">ディレクトリを追加するためのファイルプロバイダーアプリがデバイス内に見つかりません。ファイラーアプリをインストールするか、Androidメディアストアを選択してください。</string>
     <!-- Explanation shown to user when they're about to choose which directories wil lbe scanned bv the S2 media scanner-->
     <string name="onboarding_directories_add_directories_help_text">音楽ファイルをスキャンするため、S2はメディアディレクトリにアクセスする必要があります。ファイルプロバイダーアプリが表示されますので、ディレクトリを追加してください。</string>
     <!-- Shown when the app is scanning the user's directories for media -->
@@ -50,5 +50,5 @@
     <!-- Shown when onboarding. Describes what Firebase Analytics is used for-->
     <string name="onboarding_switch_firebase_description_analytics">機能のA/Bテストを有効にし、ユーザーがどのようにアプリを操作するかを解析します（今後の使い勝手の向上に役立ちます）</string>
     <!-- Shown during onboarding, or when choosing a media provider. -->
-    <string name="onboarding_media_selection_subtitle">音楽ファイルをどこから取得するかを選択します。不明な場合はAndroid Media Storeを選択してください。</string>
+    <string name="onboarding_media_selection_subtitle">音楽ファイルをどこから取得するかを選択します。よくわからない場合はAndroidメディアストアを選択してください。</string>
 </resources>

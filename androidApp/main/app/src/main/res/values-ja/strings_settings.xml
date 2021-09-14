@@ -83,7 +83,7 @@
     <!-- Settings: Title for the option to choose media providers -->
     <string name="pref_media_provider_title">メディアプロバイダー</string>
     <!-- Settings: Description for the option to choose media providers-->
-    <string name="pref_media_provider_summary">ビルトインのメディアスキャナー、Android Media Store、Jellyfin、Embyから選択してください</string>
+    <string name="pref_media_provider_summary">ビルトインのメディアスキャナー、Androidメディアストア、Jellyfin、Embyから選択してください</string>
     <!-- Settings: Title for the option to rescan the media library -->
     <string name="pref_media_rescan_title">再スキャン</string>
     <!-- Settings: Description for the option to rescan the media library -->

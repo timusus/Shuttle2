@@ -7,7 +7,7 @@
     <!-- Error message title shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
     <string name="onboarding_directories_dialog_missing_title">Ontbrekende documentprovider</string>
     <!-- Error message description shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
-    <string name="onboarding_directories_dialog_missing_subtitle">Kan geen bestandsbeheerder vinden om mappen toe te voegen. Mogelijk moet u er een installeren of terugkeren naar het gebruik van de Android Media Store.</string>
+    <string name="onboarding_directories_dialog_missing_subtitle">Kan geen bestandsbeheerder vinden om mappen toe te voegen. Mogelijk moet je er een installeren of terugkeren naar het gebruik van de Android Media Store.</string>
     <!-- Explanation shown to user when they're about to choose which directories wil lbe scanned bv the S2 media scanner-->
     <string name="onboarding_directories_add_directories_help_text">Om naar muziek te kunnen scannen, heeft S2 toegang nodig tot je mediamappen. Voeg een map toe via de Android \'Documentprovider\' app.</string>
     <!-- Shown when the app is scanning the user's directories for media -->
@@ -22,11 +22,11 @@
     <!-- Dialog title shown to user to indicate that S2 requires permission to access their storage -->
     <string name="onboarding_permission_dialog_title">Opslagtoestemming vereist</string>
     <!-- Dialog message shown to explain that S2 requires permission to access their storage-->
-    <string name="onboarding_permission_dialog_subtitle">De shuttle functioneert mogelijk niet naar behoren zonder toestemming om toegang te krijgen tot uw muziek</string>
+    <string name="onboarding_permission_dialog_subtitle">De shuttle functioneert mogelijk niet naar behoren zonder toestemming om toegang te krijgen tot je muziek</string>
     <!-- Dialog button to grant permission to the app to access users storage-->
     <string name="onboarding_permission_button_grant">Toestemming geven</string>
     <!-- Shown after user initially denies access to storage -->
-    <string name="onboarding_permission_help_text">Om uw muziek te vinden, heeft Shuttle toestemming nodig voor het lezen van uw mediaopslag</string>
+    <string name="onboarding_permission_help_text">Om je muziek te vinden, heeft Shuttle toestemming nodig voor het lezen van je mediaopslag</string>
     <!-- Title of S2's Media Scanner, the thing that scans files on the device to read audio files/tags -->
     <string name="onboarding_media_scanner_title">Mediascanner</string>
     <!-- Shown when the media scanner is scanning -->
@@ -40,7 +40,7 @@
     <!-- Button to trigger the MediaScanner to perform a rescan of audio files on the device-->
     <string name="onboarding_media_scanner_rescan">Opnieuw scannen</string>
     <!-- Shown when the S2 Media Provider is scanning song tags (metadata)-->
-    <string name="onboarding_scanner_reading_song_tags">Nummerlabels lezen…</string>
+    <string name="onboarding_scanner_reading_song_tags">Tags lezen…</string>
     <!-- Shown when onboarding. Describes why S2 would like to use Bugsnag and Firebase Analytics-->
     <string name="onboarding_data_collection_title">S2 zou graag je toestemming willen hebben voor het delen van anonieme crashgegevens en statistieken</string>
     <!-- Shown when onboarding. Switch to enable Bugsnag Crash Reporting -->

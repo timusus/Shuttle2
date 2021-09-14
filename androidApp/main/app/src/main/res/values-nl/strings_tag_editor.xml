@@ -8,7 +8,7 @@
        nummers bewerken</item>
     </plurals>
     <!-- The title of the 'edit tags' dialog. If 'tags' doesn't apply in your language, you could use 'metadata' or 'info' instead. -->
-    <string name="edit_tags_action">Bewerk-tags</string>
+    <string name="edit_tags_action">Tags bewerken</string>
     <!-- When editing tags, if multiple songs are being edited at the same time, this indicates that a field has multiple values.
     For example, editing two songs, which have two different artists. Editing the artist field will overwrite the artist for both songs. There are 'multiple values' for artist. -->
     <string name="edit_tags_multiple_values">Meerdere waarden</string>
@@ -49,7 +49,7 @@
     <!-- The hint (placeholder) text shown in the 'album' text field, when editing the tags (metadata) -->
     <string name="edit_tags_hint_album">Album</string>
     <!-- The hint (placeholder) text shown in the 'album artist' text field, when editing the tags (metadata) -->
-    <string name="edit_tags_hint_album_artist">Album artiest</string>
+    <string name="edit_tags_hint_album_artist">Albumartiest</string>
     <!-- The hint (placeholder) text shown in the 'year' text field, when editing the tags (metadata) -->
     <string name="edit_tags_hint_year">Jaar</string>
     <!-- The hint (placeholder) text shown in the 'track' text field, when editing the tags (metadata) -->

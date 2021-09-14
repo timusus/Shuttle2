@@ -48,6 +48,8 @@
     <string name="menu_title_sort_year">Jahr</string>
     <!-- Menu option to sort by song duration -->
     <string name="menu_title_sort_duration">Dauer</string>
+    <!-- Menu option to sort by last modified date -->
+    <string name="menu_title_sort_date_modified">Zuletzt bearbeitet</string>
     <!-- Menu option to sort playlists by a custom sort order (user-defined sort order) -->
     <string name="menu_title_sort_custom">Benutzerdefiniert</string>
     <!-- Menu option to scroll to the current playing track in the queue -->

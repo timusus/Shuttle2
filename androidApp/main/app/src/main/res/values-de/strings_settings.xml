@@ -65,6 +65,7 @@
     <!-- Settings: Title for changing the theme -->
     <string name="pref_theme_title">Thema</string>
     <!-- Settings: Title for 'follow system' theme mode -->
+    <string name="pref_theme_title_follow_system">System folgen</string>
     <!-- Settings: Title for 'light theme' theme mode -->
     <!-- Settings: Title for 'dark theme' theme mode-->
     <!-- Settings: Description for changing the theme -->
@@ -158,4 +159,5 @@
     <!-- Settings: Description for the option to turn off crash reporting -->
     <string name="pref_firebase_analytics_subtitle">Aktiviert A/B Testung von Funktionen, und verfolgt wie Benutzer mit der interagieren.</string>
     <!-- Settings: Title for the library tabs options (list of tabs to be displayed on home screen)-->
+    <string name="pref_library_tabs_title">Bibliothek Reiter</string>
 </resources>

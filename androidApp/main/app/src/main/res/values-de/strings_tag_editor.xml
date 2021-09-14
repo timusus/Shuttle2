@@ -25,7 +25,7 @@
     <xliff:g example="1" id="count">{total}</xliff:g>
      lesen</string>
     <!-- Shown when the tag editor fails to read the tags (metadata) of a song -->
-    <string name="edit_tags_read_failed">Die ausgewählten Song-Tags konnten nicht erkannt werden</string>
+    <string name="edit_tags_read_failed">Die ausgewählten Song-Tags konnten nicht gelesen werden</string>
     <!-- Shown when the tag editor successfully writes the tags (metadata) of the songs -->
     <plurals name="edit_tags_success">
         <item quantity="one"><xliff:g example="5" id="count">{count}</xliff:g> Song wurde erfolgreich aktualisiert</item>
