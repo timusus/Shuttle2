@@ -58,11 +58,11 @@ class MediaProviderSelectionPresenter @AssistedInject constructor(
         super.bindView(view)
 
         val mediaProviders = playbackPreferenceManager.mediaProviderTypes.toMutableList()
+        view.setMediaProviders(mediaProviders)
 
         if (isOnboarding && mediaProviders.isEmpty()) {
-            mediaProviders += MediaProviderType.MediaStore
+            addMediaProviderType(MediaProviderType.MediaStore)
         }
-        view.setMediaProviders(mediaProviders)
     }
 
     override fun addProviderClicked() {
