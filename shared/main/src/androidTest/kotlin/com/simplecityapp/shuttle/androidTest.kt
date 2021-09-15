@@ -1,4 +1,4 @@
-package com.simplecityapp.shuttle
+package com.simplecityapps.shuttle
 
 import org.junit.Assert.assertTrue
 import org.junit.Test

@@ -1,4 +1,4 @@
-package com.simplecityapp.shuttle
+package com.simplecityapps.shuttle
 
 expect class Platform() {
     val platform: String
