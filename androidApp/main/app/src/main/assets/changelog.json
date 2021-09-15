@@ -1,5 +1,21 @@
 [
   {
+    "versionName": "1.0.2-alpha06",
+    "releaseDate": "15/09/2021",
+    "features": [
+
+    ],
+    "fixes": [
+      "Fixed crash on launch problem, improved tests to catch this in the future"
+    ],
+    "improvements": [
+
+    ],
+    "notes": [
+      "Join the Discord: https://discord.gg/YkhSuHJ"
+    ]
+  },
+  {
     "versionName": "1.0.2-alpha05",
     "releaseDate": "14/09/2021",
     "features": [
