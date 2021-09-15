@@ -42,6 +42,13 @@ android {
     buildTypes {
         getByName("debug") {
             applicationIdSuffix = ".dev"
+            if (System.getenv("JENKINS_URL") != null) {
+                isMinifyEnabled = true
+                proguardFiles(
+                    getDefaultProguardFile("proguard-android-optimize.txt"),
+                    "proguard-rules.pro"
+                )
+            }
         }
         getByName("release") {
             isMinifyEnabled = true

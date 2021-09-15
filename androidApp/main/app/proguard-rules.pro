@@ -81,3 +81,9 @@
     <init>(...);
     <fields>;
 }
+
+# Keep all Shuttle model classes
+-keep class com.simplecityapps.shuttle.model.** { *; }
+-keep class com.simplecityapps.shuttle.parcel.** { *; }
+-keep class com.simplecityapps.shuttle.query.** { *; }
+-keep class com.simplecityapps.shuttle.sorting.** { *; }

@@ -7,15 +7,15 @@ import android.widget.ImageButton
 import android.widget.TextView
 import androidx.core.view.isVisible
 import com.simplecityapps.adapter.ViewBinder
-import com.simplecityapps.shuttle.model.SmartPlaylist
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.model.SmartPlaylist
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 
-class SmartPlaylistBinder(val playlist: com.simplecityapps.shuttle.model.SmartPlaylist, private val listener: Listener) : ViewBinder {
+class SmartPlaylistBinder(val playlist: SmartPlaylist, private val listener: Listener) : ViewBinder {
 
     interface Listener {
-        fun onSmartPlaylistSelected(smartPlaylist: com.simplecityapps.shuttle.model.SmartPlaylist, viewHolder: ViewHolder)
-        fun onOverflowClicked(view: View, playlist: com.simplecityapps.shuttle.model.SmartPlaylist) {}
+        fun onSmartPlaylistSelected(smartPlaylist: SmartPlaylist, viewHolder: ViewHolder)
+        fun onOverflowClicked(view: View, playlist: SmartPlaylist) {}
     }
 
     override fun createViewHolder(parent: ViewGroup): ViewHolder {

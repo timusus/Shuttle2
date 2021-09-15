@@ -59,7 +59,7 @@ class SmartPlaylistDetailFragment :
 
     private lateinit var presenter: SmartPlaylistDetailPresenter
 
-    private lateinit var playlist: com.simplecityapps.shuttle.model.SmartPlaylist
+    private lateinit var playlist: SmartPlaylist
 
     private lateinit var playlistMenuView: PlaylistMenuView
 
@@ -159,7 +159,7 @@ class SmartPlaylistDetailFragment :
         Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("item_name", song.name).format(), Toast.LENGTH_SHORT).show()
     }
 
-    override fun onAddedToQueue(playlist: com.simplecityapps.shuttle.model.SmartPlaylist) {
+    override fun onAddedToQueue(playlist: SmartPlaylist) {
         Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("item_name", getString(playlist.nameResId)).format(), Toast.LENGTH_SHORT).show()
     }
 

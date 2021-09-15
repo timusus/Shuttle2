@@ -16,9 +16,9 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.adapter.ViewBinder
+import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.SmartPlaylist
-import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.EditTextAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
@@ -99,7 +99,7 @@ class PlaylistListFragment :
 
     // PlaylistListContract.View Implementation
 
-    override fun setPlaylists(playlists: List<com.simplecityapps.shuttle.model.Playlist>, smartPlaylists: List<com.simplecityapps.shuttle.model.SmartPlaylist>) {
+    override fun setPlaylists(playlists: List<Playlist>, smartPlaylists: List<SmartPlaylist>) {
 
         val viewBinders = mutableListOf<ViewBinder>()
 
@@ -126,7 +126,7 @@ class PlaylistListFragment :
         }
     }
 
-    override fun onAddedToQueue(playlist: com.simplecityapps.shuttle.model.Playlist) {
+    override fun onAddedToQueue(playlist: Playlist) {
         Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("item_name", playlist.name).format(), Toast.LENGTH_SHORT).show()
     }
 
@@ -164,7 +164,7 @@ class PlaylistListFragment :
 
     private val playlistBinderListener = object : PlaylistBinder.Listener {
 
-        override fun onPlaylistSelected(playlist: com.simplecityapps.shuttle.model.Playlist, viewHolder: PlaylistBinder.ViewHolder) {
+        override fun onPlaylistSelected(playlist: Playlist, viewHolder: PlaylistBinder.ViewHolder) {
             if (playlist.songCount != 0) {
                 if (findNavController().currentDestination?.id != R.id.playlistDetailFragment) {
                     findNavController().navigate(
@@ -178,7 +178,7 @@ class PlaylistListFragment :
         }
 
         @SuppressLint("RestrictedApi")
-        override fun onOverflowClicked(view: View, playlist: com.simplecityapps.shuttle.model.Playlist) {
+        override fun onOverflowClicked(view: View, playlist: Playlist) {
             val popupMenu = PopupMenu(requireContext(), view)
             popupMenu.inflate(R.menu.menu_playlist_overflow)
 
@@ -245,7 +245,7 @@ class PlaylistListFragment :
 
     private val smartPlaylistBinderListener = object : SmartPlaylistBinder.Listener {
 
-        override fun onSmartPlaylistSelected(smartPlaylist: com.simplecityapps.shuttle.model.SmartPlaylist, viewHolder: SmartPlaylistBinder.ViewHolder) {
+        override fun onSmartPlaylistSelected(smartPlaylist: SmartPlaylist, viewHolder: SmartPlaylistBinder.ViewHolder) {
             if (findNavController().currentDestination?.id != R.id.playlistDetailFragment) {
                 findNavController().navigate(
                     R.id.action_libraryFragment_to_smartPlaylistDetailFragment,
@@ -273,6 +273,6 @@ class PlaylistListFragment :
     // EditTextAlertDialog.Listener
 
     override fun onSave(text: String?, extra: Parcelable?) {
-        presenter.rename(extra as com.simplecityapps.shuttle.model.Playlist, text!!) // default validation ensures text is not null
+        presenter.rename(extra as Playlist, text!!) // default validation ensures text is not null
     }
 }
