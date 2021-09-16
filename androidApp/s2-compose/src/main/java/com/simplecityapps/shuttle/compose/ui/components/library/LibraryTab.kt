@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.compose.ui.main.library
+package com.simplecityapps.shuttle.compose.ui.components.library
 
 import androidx.annotation.StringRes
 import com.simplecityapps.shuttle.compose.R
