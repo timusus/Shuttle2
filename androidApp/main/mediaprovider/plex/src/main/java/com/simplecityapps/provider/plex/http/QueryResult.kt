@@ -10,7 +10,7 @@ data class QueryResult(
 
 @JsonClass(generateAdapter = true)
 data class MediaContainer(
-    @Json(name = "Metadata") val metadata: List<Metadata>
+    @Json(name = "Metadata") val metadata: List<Metadata>?
 )
 
 @JsonClass(generateAdapter = true)
