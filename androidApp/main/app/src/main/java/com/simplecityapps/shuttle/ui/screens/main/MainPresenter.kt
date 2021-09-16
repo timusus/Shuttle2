@@ -22,9 +22,12 @@ interface MainContract {
         fun showTrialDialog()
         fun showThankYouDialog()
         fun launchReviewFlow()
+        fun showCrashReportingDialog()
     }
 
-    interface Presenter
+    interface Presenter {
+        fun onCrashReportingToggled(enabled: Boolean)
+    }
 }
 
 class MainPresenter @Inject constructor(
@@ -45,6 +48,13 @@ class MainPresenter @Inject constructor(
 
         if (preferenceManager.lastViewedChangelogVersion != BuildConfig.VERSION_NAME && preferenceManager.showChangelogOnLaunch) {
             view.showChangelog()
+        }
+
+        if (!preferenceManager.crashReportingEnabled && !preferenceManager.hasSeenCrashReportingDialog) {
+            if (BuildConfig.VERSION_NAME.contains("alpha") || BuildConfig.VERSION_NAME.contains("beta")) {
+                this.view?.showCrashReportingDialog()
+                preferenceManager.hasSeenCrashReportingDialog = true
+            }
         }
 
         trialManager.trialState.onEach { trialState ->
@@ -93,5 +103,9 @@ class MainPresenter @Inject constructor(
 
     override fun onQueueChanged(reason: QueueChangeCallback.QueueChangeReason) {
         view?.toggleSheet(visible = queueManager.getSize() != 0)
+    }
+
+    override fun onCrashReportingToggled(enabled: Boolean) {
+        preferenceManager.crashReportingEnabled = enabled
     }
 }

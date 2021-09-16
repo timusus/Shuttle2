@@ -1,15 +1,28 @@
 [
   {
+    "versionName": "1.0.2-alpha07",
+    "releaseDate": "16/09/2021",
+    "features": [
+    ],
+    "fixes": [
+      "Fix crash when importing Plex library"
+    ],
+    "improvements": [
+      "Added a dialog requesting alpha & beta testers to opt-in to crash reporting"
+    ],
+    "notes": [
+      "Join the Discord: https://discord.gg/YkhSuHJ"
+    ]
+  },
+  {
     "versionName": "1.0.2-alpha06",
     "releaseDate": "15/09/2021",
     "features": [
-
     ],
     "fixes": [
       "Fixed crash on launch problem, improved tests to catch this in the future"
     ],
     "improvements": [
-
     ],
     "notes": [
       "Join the Discord: https://discord.gg/YkhSuHJ"

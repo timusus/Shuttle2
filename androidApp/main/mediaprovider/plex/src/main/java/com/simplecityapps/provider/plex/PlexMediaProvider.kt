@@ -39,7 +39,7 @@ class PlexMediaProvider(
                 ?.let { credentials ->
                     when (val queryResult = itemsService.items(url = address, token = credentials.accessToken)) {
                         is NetworkResult.Success<QueryResult> -> {
-                            emit(FlowEvent.Success(queryResult.body.mediaContainer.metadata.map { metadata ->
+                            emit(FlowEvent.Success(queryResult.body.mediaContainer.metadata.orEmpty().map { metadata ->
                                 Song(
                                     id = metadata.guid.hashCode().toLong(),
                                     name = metadata.title,

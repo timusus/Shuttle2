@@ -1,10 +1,12 @@
 package com.simplecityapps.shuttle.ui.screens.main
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.addCallback
 import androidx.annotation.IdRes
@@ -15,6 +17,7 @@ import androidx.navigation.Navigation
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.ui.NavigationUI
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.play.core.review.ReviewManager
 import com.google.android.play.core.review.ReviewManagerFactory
 import com.simplecityapps.shuttle.R
@@ -150,6 +153,20 @@ class MainFragment : Fragment(),
             }
         }
     }
+
+    @SuppressLint("UseSwitchCompatOrMaterialCode")
+    override fun showCrashReportingDialog() {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.pref_crash_reporting_title)
+            .setMessage(R.string.crash_reporting_nag_text)
+            .setPositiveButton(getString(R.string.dialog_button_enable)) { _, _ ->
+                presenter.onCrashReportingToggled(true)
+                Toast.makeText(requireContext(), getString(R.string.toast_crash_reporting_enabled), Toast.LENGTH_SHORT).show()
+            }
+            .setNegativeButton(R.string.dialog_button_close, null)
+            .show()
+    }
+
 
     // Private
 

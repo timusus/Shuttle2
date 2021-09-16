@@ -161,6 +161,14 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
             return sharedPreferences.get("onboarding_analytics_dialog_viewed", false)
         }
 
+    var hasSeenCrashReportingDialog: Boolean
+        set(value) {
+            sharedPreferences.put("crash_reporting_dialog_viewed", value)
+        }
+        get() {
+            return sharedPreferences.get("crash_reporting_dialog_viewed", false)
+        }
+
     var hasOnboarded: Boolean
         set(value) {
             sharedPreferences.put("has_onboarded", value)

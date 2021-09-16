@@ -20,4 +20,10 @@
     <string name="title_now_playing">Now Playing</string>
     <!-- Shown at the top of the 'search' screen-->
     <string name="title_search_hint">Search Music</string>
+    <!-- Shown for alpha/beta testers, in a dialog on the main screen -->
+    <string name="crash_reporting_nag_text">Please consider enabling crash reporting. This helps to diagnose and correct problems more efficiently</string>
+    <!-- Button shown in dialog to enable crash reporting-->
+    <string name="dialog_button_enable">Enable</string>
+    <!-- Shown once the user enables crash reporting via the 'please consider enabling crash reporting' dialog-->
+    <string name="toast_crash_reporting_enabled">Crash reporting enabled</string>
 </resources>
