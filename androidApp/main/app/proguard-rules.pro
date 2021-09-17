@@ -109,3 +109,5 @@
 -keepclasseswithmembers class com.simplecityapps.shuttle.** { # <-- change package name to your app's
     kotlinx.serialization.KSerializer serializer(...);
 }
+
+-keep @kotlinx.parcelize.Parcelize public class *
