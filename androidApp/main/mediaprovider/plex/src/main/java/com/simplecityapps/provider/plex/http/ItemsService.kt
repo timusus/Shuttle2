@@ -22,13 +22,24 @@ interface ItemsService {
 suspend fun ItemsService.items(
     url: String,
     token: String,
+    section: String
 ): NetworkResult<QueryResult> {
     return itemsImpl(
-        url = "$url/library/sections/1/all" +
+        url = "$url/library/sections/$section/all" +
                 "?type=10" +
                 "&includeCollections=1" +
                 "&includeAdvanced=1" +
                 "&includeMeta=1",
+        token = token
+    )
+}
+
+suspend fun ItemsService.sections(
+    url: String,
+    token: String,
+): NetworkResult<QueryResult> {
+    return itemsImpl(
+        url = "$url/library/sections",
         token = token
     )
 }

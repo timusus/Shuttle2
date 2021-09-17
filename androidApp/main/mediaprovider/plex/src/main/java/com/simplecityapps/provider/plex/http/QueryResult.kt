@@ -10,7 +10,15 @@ data class QueryResult(
 
 @JsonClass(generateAdapter = true)
 data class MediaContainer(
-    @Json(name = "Metadata") val metadata: List<Metadata>?
+    @Json(name = "Metadata") val metadata: List<Metadata>?,
+    @Json(name = "Directory") val directories: List<Directory>?,
+)
+
+@JsonClass(generateAdapter = true)
+data class Directory(
+    @Json(name = "key") val key: String,
+    @Json(name = "title") val title: String,
+    @Json(name = "type") val type: String
 )
 
 @JsonClass(generateAdapter = true)
