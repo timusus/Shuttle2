@@ -5,6 +5,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavDestination
+import androidx.navigation.NavDestination.Companion.hierarchy
 import com.simplecityapps.shuttle.compose.ui.components.root.Screen
 import com.simplecityapps.shuttle.compose.ui.theme.MaterialColors
 import com.simplecityapps.shuttle.compose.ui.theme.Theme
@@ -12,31 +14,32 @@ import com.simplecityapps.shuttle.compose.ui.theme.Theme
 @Composable
 fun AppBottomNavigation(
     modifier: Modifier = Modifier,
-    selected: Boolean,
-    onClick: () -> Unit = {}
+    currentDestination: NavDestination?,
+    onClick: (screen: Screen) -> Unit = {}
 ) {
     BottomNavigation(
         modifier = modifier,
         backgroundColor = MaterialColors.background
     ) {
-        Screen.all.map {
+        Screen.all.map { screen ->
+            val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true
             BottomNavigationItem(
-                selected = false,
+                selected = selected,
                 alwaysShowLabel = selected,
                 icon = {
                     Icon(
-                        imageVector = it.image,
-                        contentDescription = stringResource(id = it.titleResId)
+                        imageVector = screen.image,
+                        contentDescription = stringResource(id = screen.titleResId)
                     )
                 },
                 label = {
                     Text(
-                        text = stringResource(id = it.titleResId)
+                        text = stringResource(id = screen.titleResId)
                     )
                 },
                 selectedContentColor = MaterialColors.onBackground,
                 unselectedContentColor = MaterialColors.onBackground.copy(alpha = ContentAlpha.medium),
-                onClick = onClick
+                onClick = { onClick(screen) }
             )
         }
     }
@@ -47,6 +50,6 @@ fun AppBottomNavigation(
 @Composable
 fun AppBottomNavigationPreview() {
     Theme {
-        AppBottomNavigation(selected = true)
+        AppBottomNavigation(currentDestination = null)
     }
 }
