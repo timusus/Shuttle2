@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.library.albums.detail
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -87,6 +88,8 @@ class AlbumDetailFragment :
     private var showHeroView = false
     private var animateTransition: Boolean = true
 
+    private var recyclerViewState: Parcelable? = null
+
 
     // Lifecycle
 
@@ -109,7 +112,9 @@ class AlbumDetailFragment :
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        postponeEnterTransition()
+        if (savedInstanceState == null) {
+            postponeEnterTransition()
+        }
         return inflater.inflate(R.layout.fragment_album_detail, container, false)
     }
 
@@ -145,7 +150,7 @@ class AlbumDetailFragment :
                 ArtworkImageLoader.Options.Placeholder(ResourcesCompat.getDrawable(resources, R.drawable.ic_placeholder_album, requireContext().theme)!!)
             )
         )
-        if (showHeroView || !animateTransition) {
+        if (savedInstanceState != null || showHeroView || !animateTransition) {
             heroImage.isVisible = true
             dummyImage.isVisible = false
         }
@@ -191,6 +196,8 @@ class AlbumDetailFragment :
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
 
+        savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
+
         animationHelper = DetailImageAnimationHelper(heroImage, dummyImage)
 
         presenter.bindView(this)
@@ -204,6 +211,21 @@ class AlbumDetailFragment :
             delay(150)
             presenter.loadData()
         }
+
+        recyclerViewState?.let {
+            recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        recyclerViewState = recyclerView.layoutManager?.onSaveInstanceState()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putParcelable(ARG_RECYCLER_STATE, recyclerViewState)
+        super.onSaveInstanceState(outState)
     }
 
     override fun onDestroyView() {
@@ -240,7 +262,10 @@ class AlbumDetailFragment :
             }
 
             viewBinders
-        })
+        }){
+            recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
+            recyclerViewState = null
+        }
     }
 
     override fun showLoadError(error: Error) {
@@ -340,5 +365,12 @@ class AlbumDetailFragment :
 
     override fun onSave(text: String, playlistData: PlaylistData) {
         playlistMenuPresenter.createPlaylist(text, playlistData)
+    }
+
+
+    // Static
+
+    companion object {
+        const val ARG_RECYCLER_STATE = "recycler_state"
     }
 }

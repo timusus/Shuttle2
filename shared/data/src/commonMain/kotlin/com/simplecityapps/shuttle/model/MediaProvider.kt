@@ -1,10 +1,6 @@
 package com.simplecityapps.shuttle.model
 
-import com.simplecityapps.shuttle.parcel.Parcelable
-import com.simplecityapps.shuttle.parcel.Parcelize
-
-@Parcelize
-enum class MediaProviderType(val remote: Boolean, val supportsTagEditing: Boolean) : Parcelable {
+enum class MediaProviderType(val remote: Boolean, val supportsTagEditing: Boolean) {
     Shuttle(remote = false, supportsTagEditing = true),
     MediaStore(remote = false, supportsTagEditing = false),
     Emby(remote = true, supportsTagEditing = false),

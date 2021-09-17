@@ -18,9 +18,8 @@ import com.bumptech.glide.util.ViewPreloadSizeProvider
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.mediaprovider.Progress
-import com.simplecityapps.shuttle.model.AlbumArtist
-import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.ui.common.ContextualToolbarHelper
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
@@ -68,11 +67,11 @@ class AlbumArtistListFragment :
 
     private var recyclerViewState: Parcelable? = null
 
-    private var contextualToolbarHelper: ContextualToolbarHelper<com.simplecityapps.shuttle.model.AlbumArtist> by autoCleared()
+    private var contextualToolbarHelper: ContextualToolbarHelper<AlbumArtist> by autoCleared()
 
-    private val viewPreloadSizeProvider by lazy { ViewPreloadSizeProvider<com.simplecityapps.shuttle.model.AlbumArtist>() }
+    private val viewPreloadSizeProvider by lazy { ViewPreloadSizeProvider<AlbumArtist>() }
     private val preloadModelProvider by lazy {
-        GlidePreloadModelProvider<com.simplecityapps.shuttle.model.AlbumArtist>(
+        GlidePreloadModelProvider<AlbumArtist>(
             imageLoader, listOf(ArtworkImageLoader.Options.CacheDecodedResource)
         )
     }
@@ -101,7 +100,7 @@ class AlbumArtistListFragment :
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
         recyclerView.setRecyclerListener(RecyclerListener())
-        val preloader: RecyclerViewPreloader<com.simplecityapps.shuttle.model.AlbumArtist> = RecyclerViewPreloader(
+        val preloader: RecyclerViewPreloader<AlbumArtist> = RecyclerViewPreloader(
             imageLoader.requestManager,
             preloadModelProvider,
             viewPreloadSizeProvider,
@@ -224,7 +223,7 @@ class AlbumArtistListFragment :
 
     // AlbumArtistListContact.View Implementation
 
-    override fun setAlbumArtists(albumArtists: List<com.simplecityapps.shuttle.model.AlbumArtist>, viewMode: ViewMode) {
+    override fun setAlbumArtists(albumArtists: List<AlbumArtist>, viewMode: ViewMode) {
 
         preloadModelProvider.items = albumArtists
 
@@ -247,7 +246,7 @@ class AlbumArtistListFragment :
         }
     }
 
-    override fun onAddedToQueue(albumArtists: List<com.simplecityapps.shuttle.model.AlbumArtist>) {
+    override fun onAddedToQueue(albumArtists: List<AlbumArtist>) {
         Toast.makeText(
             context,
             Phrase.fromPlural(resources, R.plurals.queue_artists_added, albumArtists.size)
@@ -321,7 +320,7 @@ class AlbumArtistListFragment :
 
     // AlbumArtistBinder.Listener Implementation
 
-    override fun onAlbumArtistClicked(albumArtist: com.simplecityapps.shuttle.model.AlbumArtist, viewHolder: AlbumArtistBinder.ViewHolder) {
+    override fun onAlbumArtistClicked(albumArtist: AlbumArtist, viewHolder: AlbumArtistBinder.ViewHolder) {
         if (!contextualToolbarHelper.handleClick(albumArtist)) {
             if (findNavController().currentDestination?.id != R.id.albumArtistDetailFragment) {
                 findNavController().navigate(
@@ -334,11 +333,11 @@ class AlbumArtistListFragment :
         }
     }
 
-    override fun onAlbumArtistLongClicked(view: View, albumArtist: com.simplecityapps.shuttle.model.AlbumArtist) {
+    override fun onAlbumArtistLongClicked(view: View, albumArtist: AlbumArtist) {
         contextualToolbarHelper.handleLongClick(albumArtist)
     }
 
-    override fun onOverflowClicked(view: View, albumArtist: com.simplecityapps.shuttle.model.AlbumArtist) {
+    override fun onOverflowClicked(view: View, albumArtist: AlbumArtist) {
         val popupMenu = PopupMenu(requireContext(), view)
         popupMenu.inflate(R.menu.menu_popup)
         TagEditorMenuSanitiser.sanitise(popupMenu.menu, albumArtist.mediaProviders)
@@ -393,7 +392,7 @@ class AlbumArtistListFragment :
 
     // ContextualToolbarHelper.Callback Implementation
 
-    private val contextualToolbarCallback = object : ContextualToolbarHelper.Callback<com.simplecityapps.shuttle.model.AlbumArtist> {
+    private val contextualToolbarCallback = object : ContextualToolbarHelper.Callback<AlbumArtist> {
 
         override fun onCountChanged(count: Int) {
             contextualToolbarHelper.contextualToolbar?.title = Phrase.fromPlural(requireContext(), R.plurals.multi_select_items_selected, count)
@@ -404,7 +403,7 @@ class AlbumArtistListFragment :
             }
         }
 
-        override fun onItemUpdated(item: com.simplecityapps.shuttle.model.AlbumArtist, isSelected: Boolean) {
+        override fun onItemUpdated(item: AlbumArtist, isSelected: Boolean) {
             adapter.let { adapter ->
                 adapter.items
                     .filterIsInstance<AlbumArtistBinder>()

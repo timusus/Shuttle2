@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.library.albumartists.detail
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,7 +13,6 @@ import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.os.postDelayed
-import androidx.core.view.doOnPreDraw
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.coroutineScope
@@ -37,6 +37,7 @@ import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.view.DetailImageAnimationHelper
 import com.simplecityapps.shuttle.ui.screens.home.search.HeaderBinder
+import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragment
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongBinder
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
@@ -75,8 +76,6 @@ class AlbumArtistDetailFragment :
 
     private val handler = Handler(Looper.getMainLooper())
 
-    private var postponedTransitionCounter = 2
-
     private lateinit var albumArtist: com.simplecityapps.shuttle.model.AlbumArtist
 
     private lateinit var playlistMenuView: PlaylistMenuView
@@ -91,6 +90,9 @@ class AlbumArtistDetailFragment :
 
     private var showHeroView = false
     private var animateTransition: Boolean = true
+
+    private var recyclerViewState: Parcelable? = null
+
 
     // Lifecycle
 
@@ -116,8 +118,9 @@ class AlbumArtistDetailFragment :
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        postponedTransitionCounter = 2
-        postponeEnterTransition()
+        if (savedInstanceState == null) {
+            postponeEnterTransition()
+        }
         return inflater.inflate(R.layout.fragment_album_artist_detail, container, false)
     }
 
@@ -184,7 +187,7 @@ class AlbumArtistDetailFragment :
                 ArtworkImageLoader.Options.Priority.Max
             )
         ) {
-            maybeStartPostponedEnterTransition()
+            startPostponedEnterTransition()
         }
 
         heroImage = view.findViewById(R.id.heroImage)
@@ -195,7 +198,7 @@ class AlbumArtistDetailFragment :
                 ArtworkImageLoader.Options.Placeholder((ResourcesCompat.getDrawable(resources, R.drawable.ic_placeholder_artist, requireContext().theme)!!))
             )
         )
-        if (showHeroView || !animateTransition) {
+        if (savedInstanceState != null || showHeroView || !animateTransition) {
             heroImage.isVisible = true
             dummyImage.isVisible = false
         }
@@ -203,7 +206,8 @@ class AlbumArtistDetailFragment :
         adapter = RecyclerAdapter(viewLifecycleOwner.lifecycleScope)
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
-        recyclerView.doOnPreDraw { maybeStartPostponedEnterTransition() }
+
+        savedInstanceState?.getParcelable<Parcelable>(AlbumDetailFragment.ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
 
         animationHelper = DetailImageAnimationHelper(heroImage, dummyImage)
 
@@ -218,6 +222,21 @@ class AlbumArtistDetailFragment :
             delay(150)
             presenter.loadData()
         }
+
+        recyclerViewState?.let {
+            recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
+        }
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        recyclerViewState = recyclerView.layoutManager?.onSaveInstanceState()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putParcelable(AlbumDetailFragment.ARG_RECYCLER_STATE, recyclerViewState)
+        super.onSaveInstanceState(outState)
     }
 
     override fun onDestroyView() {
@@ -225,13 +244,6 @@ class AlbumArtistDetailFragment :
         playlistMenuPresenter.unbindView()
 
         super.onDestroyView()
-    }
-
-    private fun maybeStartPostponedEnterTransition() {
-        postponedTransitionCounter--
-        if (postponedTransitionCounter == 0) {
-            startPostponedEnterTransition()
-        }
     }
 
 
@@ -263,7 +275,10 @@ class AlbumArtistDetailFragment :
                 SongBinder(song, imageLoader, songBinderListener)
             })
         }
-        adapter.update(viewBinders)
+        adapter.update(viewBinders) {
+            recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
+            recyclerViewState = null
+        }
     }
 
     override fun showLoadError(error: Error) {
@@ -473,5 +488,12 @@ class AlbumArtistDetailFragment :
 
     override fun onSave(text: String, playlistData: PlaylistData) {
         playlistMenuPresenter.createPlaylist(text, playlistData)
+    }
+
+
+    // Static
+
+    companion object {
+        const val ARG_RECYCLER_STATE = "recycler_state"
     }
 }
