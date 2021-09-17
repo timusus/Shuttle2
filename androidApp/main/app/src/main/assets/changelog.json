@@ -1,5 +1,21 @@
 [
   {
+    "versionName": "1.0.2-alpha08",
+    "releaseDate": "17/09/2021",
+    "features": [
+    ],
+    "fixes": [
+      "Fixed an issue preventing Plex from importing music",
+      "Fixed a crash when resuming app from background",
+      "Fixed an issue where detail screen 'hero' images weren't shown under certain conditions"
+    ],
+    "improvements": [
+    ],
+    "notes": [
+      "Join the Discord: https://discord.gg/YkhSuHJ"
+    ]
+  },
+  {
     "versionName": "1.0.2-alpha07",
     "releaseDate": "16/09/2021",
     "features": [
