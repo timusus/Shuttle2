@@ -56,9 +56,10 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.4.1")
     implementation("androidx.activity:activity-compose:1.4.0")
 
-    // Accompanist Pager
+    // Accompanist
     implementation("com.google.accompanist:accompanist-pager:0.18.0")
     implementation("com.google.accompanist:accompanist-pager-indicators:0.18.0")
+    implementation("com.google.accompanist:accompanist-systemuicontroller:0.18.0")
 
     testImplementation("junit:junit:4.13.2")
 
