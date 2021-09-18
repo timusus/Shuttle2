@@ -82,7 +82,7 @@ open class SongQuery(
     @OptIn(ExperimentalTime::class)
     class RecentlyAdded :
         SongQuery(
-            predicate = { song -> song.lastModified?.let { it < Clock.System.now().minus(Duration.days(14)) } ?: false },
+            predicate = { song -> song.lastModified?.let { it > Clock.System.now().minus(Duration.days(14)) } ?: false },
             sortOrder = SongSortOrder.LastModified
         ) // 2 weeks
 }
