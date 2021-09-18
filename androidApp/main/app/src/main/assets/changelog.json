@@ -1,128 +1,26 @@
 [
   {
-    "versionName": "1.0.2-alpha08",
-    "releaseDate": "17/09/2021",
+    "versionName": "1.0.2-beta01",
+    "releaseDate": "18/09/2021",
     "features": [
-    ],
-    "fixes": [
-      "Fixed an issue preventing Plex from importing music",
-      "Fixed a crash when resuming app from background",
-      "Fixed an issue where detail screen 'hero' images weren't shown under certain conditions"
-    ],
-    "improvements": [
-    ],
-    "notes": [
-      "Join the Discord: https://discord.gg/YkhSuHJ"
-    ]
-  },
-  {
-    "versionName": "1.0.2-alpha07",
-    "releaseDate": "16/09/2021",
-    "features": [
-    ],
-    "fixes": [
-      "Fix crash when importing Plex library"
-    ],
-    "improvements": [
-      "Added a dialog requesting alpha & beta testers to opt-in to crash reporting"
-    ],
-    "notes": [
-      "Join the Discord: https://discord.gg/YkhSuHJ"
-    ]
-  },
-  {
-    "versionName": "1.0.2-alpha06",
-    "releaseDate": "15/09/2021",
-    "features": [
-    ],
-    "fixes": [
-      "Fixed crash on launch problem, improved tests to catch this in the future"
-    ],
-    "improvements": [
-    ],
-    "notes": [
-      "Join the Discord: https://discord.gg/YkhSuHJ"
-    ]
-  },
-  {
-    "versionName": "1.0.2-alpha05",
-    "releaseDate": "14/09/2021",
-    "features": [
-      "Plex support"
-    ],
-    "fixes": [
-      "Crash fixes"
-    ],
-    "improvements": [
-      "Translation updates"
-    ],
-    "notes": [
-      "Join the Discord: https://discord.gg/YkhSuHJ"
-    ]
-  },
-  {
-    "versionName": "1.0.2-alpha04",
-    "releaseDate": "14/09/2021",
-    "features": [
-      "Plex support"
-    ],
-    "fixes": [
-      "Crash fixes"
-    ],
-    "improvements": [
-      "Translation updates"
-    ],
-    "notes": [
-      "Join the Discord: https://discord.gg/YkhSuHJ"
-    ]
-  },
-  {
-    "versionName": "1.0.2-alpha03",
-    "releaseDate": "08/09/2021",
-    "features": [
-    ],
-    "fixes": [
-      "Crash fixes",
-      "Fixed color inconsistencies when using 'follow system' theme mode"
-    ],
-    "improvements": [
-    ],
-    "notes": [
-      "Join the Discord: https://discord.gg/YkhSuHJ"
-    ]
-  },
-  {
-    "versionName": "1.0.2-alpha02",
-    "releaseDate": "27/08/2021",
-    "features": [
-    ],
-    "fixes": [
-      "Fixed an issue where all library tabs were hidden by default"
-    ],
-    "improvements": [
-    ],
-    "notes": [
-      "Join the Discord: https://discord.gg/YkhSuHJ"
-    ]
-  },
-  {
-    "versionName": "1.0.2-alpha02",
-    "releaseDate": "25/08/2021",
-    "features": [
+      "Plex support",
       "Ability to reorder & hide library tabs"
     ],
     "fixes": [
+      "Various crash fixes",
+      "Fixed an issue where detail screen 'hero' images weren't shown under certain conditions"
     ],
     "improvements": [
-      "Improvements to settings screens. Thanks Erik!",
+      "Improvements to settings screens. Thanks Erik for your assistance with the design",
+      "Option to sort songs by date modified",
       "Song info now displayed in bottom sheet",
       "Improved song info path display",
-      "Option to sort songs by date modified",
       "Disk & embedded artwork now added to cache for faster loading",
+      "Reverted change to split artists/genres at 'null terminator', as it needs further testing",
       "Translation updates"
     ],
     "notes": [
-      "Join the Discord: https://discord.gg/YkhSuHJ"
+      "S2 needs your help! Please consider temporarily leaving the testing program to leave a review:\nhttps://play.google.com/store/apps/details?id=com.simplecityapps.shuttle"
     ]
   },
   {
