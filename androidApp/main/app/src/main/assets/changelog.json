@@ -1,11 +1,25 @@
 [
   {
+    "versionName": "1.0.2-beta03",
+    "releaseDate": "20/09/2021",
+    "features": [
+    ],
+    "fixes": [
+      "Fixed a crash on devices running Andorid N and lower"
+    ],
+    "improvements": [
+    ],
+    "notes": [
+      "S2 needs your help! Please consider temporarily leaving the testing program to leave a review:\nhttps://play.google.com/store/apps/details?id=com.simplecityapps.shuttle"
+    ]
+  },
+  {
     "versionName": "1.0.2-beta02",
     "releaseDate": "19/09/2021",
     "features": [
     ],
     "fixes": [
-      "Potential fix for 'missing color' related crash on some devices'"
+      "Potential fix for 'missing color' related crash on some devices"
     ],
     "improvements": [
     ],
