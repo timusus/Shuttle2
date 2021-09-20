@@ -70,6 +70,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -219,6 +220,12 @@ android {
 
         implementation("com.microsoft.design:fluent-system-icons:1.1.137@aar")
 
+        // KotlinX DateTime
+        implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.2.1")
+        // Core Library Desugaring - Required for KotlinX DateTime on API < 27
+        coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.1.5")
+
+
         // Testing
         androidTestImplementation("androidx.test:runner:1.4.0")
         androidTestImplementation("androidx.test:rules:1.4.0")
@@ -228,7 +235,6 @@ android {
         // Remote config
         implementation(project(":androidApp:main:remote-config"))
 
-        implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.2.1")
 
         testImplementation("junit:junit:4.13.2")
     }

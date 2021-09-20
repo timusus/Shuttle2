@@ -33,6 +33,9 @@
     <color name="text_primary_dark">#DEFFFFFF</color>
     <color name="text_secondary_dark">#DEFFFFFF</color>
 
+    <color name="ripple_dark">#12FFFFFF</color>
+    <color name="ripple_light">#1A000000</color>
+
 
     <!-- Vertical Seekbar-->
     <color name="vertical_seekbar_progress_disabled">#A8272727</color>
