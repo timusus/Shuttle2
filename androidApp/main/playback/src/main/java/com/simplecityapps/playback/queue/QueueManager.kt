@@ -237,13 +237,13 @@ class QueueManager(
 
             this.shuffleMode = shuffleMode
 
-            queueWatcher.onShuffleChanged(shuffleMode)
-
             if (shuffleMode == ShuffleMode.On && reshuffle) {
                 withContext(Dispatchers.IO) {
                     queue.generateShuffleQueue(currentItem)
                 }
             }
+
+            queueWatcher.onShuffleChanged(shuffleMode)
 
             if (hasRestoredQueue) {
                 queueWatcher.onQueueChanged() // The queue has been reshuffled, and shuffle is on, so the queue has changed
