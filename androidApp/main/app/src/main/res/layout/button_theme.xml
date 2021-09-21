@@ -16,6 +16,7 @@
         android:layout_width="56dp"
         android:layout_height="24dp"
         android:scaleType="center"
+        app:tint="?colorControlNormal"
         tools:src="@drawable/ic_fluent_weather_sunny_24_filled" />
 
     <TextView
