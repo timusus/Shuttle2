@@ -1,5 +1,19 @@
 [
   {
+    "versionName": "1.0.3",
+    "releaseDate": "02/10/2021",
+    "features": [
+    ],
+    "fixes": [
+      "Crash fixes"
+    ],
+    "improvements": [
+    ],
+    "notes": [
+      "S2 needs your help! If you like the app, please leave a review:\n<a href=\"https://play.google.com/store/apps/details?id=com.simplecityapps.shuttle\">Play Store</a>"
+    ]
+  },
+  {
     "versionName": "1.0.2",
     "releaseDate": "21/09/2021",
     "features": [
