@@ -21,7 +21,7 @@ fun AppBottomNavigation(
         modifier = modifier,
         backgroundColor = MaterialColors.background
     ) {
-        Screen.all.map { screen ->
+        Screen.Main.all.map { screen ->
             val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true
             BottomNavigationItem(
                 selected = selected,
