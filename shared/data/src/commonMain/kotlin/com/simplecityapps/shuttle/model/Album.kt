@@ -7,12 +7,6 @@ import com.simplecityapps.shuttle.parcel.TypeParceler
 import kotlinx.datetime.Instant
 
 @Parcelize
-data class AlbumGroupKey(
-    val key: String?,
-    val albumArtistGroupKey: AlbumArtistGroupKey?
-) : Parcelable
-
-@Parcelize
 @TypeParceler<Instant?, InstantParceler>
 data class Album(
     val name: String?,

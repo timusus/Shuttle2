@@ -1,42 +1,29 @@
 [
   {
-    "versionName": "1.0.2-beta03",
-    "releaseDate": "20/09/2021",
+    "versionName": "1.0.3",
+    "releaseDate": "02/10/2021",
     "features": [
     ],
     "fixes": [
-      "Fixed a crash on devices running Andorid N and lower"
+      "Crash fixes"
     ],
     "improvements": [
     ],
     "notes": [
-      "S2 needs your help! Please consider temporarily leaving the testing program to leave a review:\nhttps://play.google.com/store/apps/details?id=com.simplecityapps.shuttle"
+      "S2 needs your help! If you like the app, please leave a review:\n<a href=\"https://play.google.com/store/apps/details?id=com.simplecityapps.shuttle\">Play Store</a>"
     ]
   },
   {
-    "versionName": "1.0.2-beta02",
-    "releaseDate": "19/09/2021",
-    "features": [
-    ],
-    "fixes": [
-      "Potential fix for 'missing color' related crash on some devices"
-    ],
-    "improvements": [
-    ],
-    "notes": [
-      "S2 needs your help! Please consider temporarily leaving the testing program to leave a review:\nhttps://play.google.com/store/apps/details?id=com.simplecityapps.shuttle"
-    ]
-  },
-  {
-    "versionName": "1.0.2-beta01",
-    "releaseDate": "18/09/2021",
+    "versionName": "1.0.2",
+    "releaseDate": "21/09/2021",
     "features": [
       "Plex support",
       "Ability to reorder & hide library tabs"
     ],
     "fixes": [
       "Various crash fixes",
-      "Fixed an issue where detail screen 'hero' images weren't shown under certain conditions"
+      "Fixed an issue where detail screen 'hero' images weren't shown under certain conditions",
+      "Fixed an issue where incorrect song could play next after toggling shuffle"
     ],
     "improvements": [
       "Improvements to settings screens. Thanks Erik for your assistance with the design",
@@ -48,7 +35,7 @@
       "Translation updates"
     ],
     "notes": [
-      "S2 needs your help! Please consider temporarily leaving the testing program to leave a review:\nhttps://play.google.com/store/apps/details?id=com.simplecityapps.shuttle"
+      "S2 needs your help! If you like the app, please leave a review:\n<a href=\"https://play.google.com/store/apps/details?id=com.simplecityapps.shuttle\">Play Store</a>"
     ]
   },
   {

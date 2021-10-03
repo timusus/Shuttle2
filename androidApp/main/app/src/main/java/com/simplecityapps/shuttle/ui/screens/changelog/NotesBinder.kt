@@ -1,5 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.changelog
 
+import android.text.Html
+import android.text.method.LinkMovementMethod
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -25,7 +27,8 @@ class NotesBinder(val note: String) : ViewBinder {
         override fun bind(viewBinder: NotesBinder, isPartial: Boolean) {
             super.bind(viewBinder, isPartial)
 
-            subtitle.text = viewBinder.note
+            subtitle.text = Html.fromHtml(viewBinder.note)
+            subtitle.movementMethod = LinkMovementMethod.getInstance()
         }
     }
 }
