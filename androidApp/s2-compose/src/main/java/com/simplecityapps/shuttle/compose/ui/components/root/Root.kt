@@ -3,34 +3,35 @@ package com.simplecityapps.shuttle.compose.ui.components.root
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.simplecityapps.shuttle.compose.ui.components.AppBottomNavigation
+import com.simplecityapps.shuttle.compose.ui.BottomSettings
 import com.simplecityapps.shuttle.compose.ui.components.ThemedPreviewProvider
-import com.simplecityapps.shuttle.compose.ui.components.home.Home
-import com.simplecityapps.shuttle.compose.ui.components.library.Library
-import com.simplecityapps.shuttle.compose.ui.components.miniplayer.MiniPLayer
-import com.simplecityapps.shuttle.compose.ui.components.search.Search
+import com.simplecityapps.shuttle.compose.ui.components.onboarding.Onboarding
+import com.simplecityapps.shuttle.compose.ui.components.settings.bottomsheet.SettingsBottomSheet
 import com.simplecityapps.shuttle.compose.ui.theme.MaterialColors
 import com.simplecityapps.shuttle.compose.ui.theme.Theme
+import com.simplecityapps.shuttle.ui.root.RootViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun Root() {
+fun Root(viewModel: RootViewModel) {
+    val hasOnboarded by viewModel.hasOnboarded.collectAsState()
+    Root(hasOnboarded)
+}
 
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun Root(hasOnboarded: Boolean) {
     val systemUiController = rememberSystemUiController()
     val useDarkIcons = MaterialTheme.colors.isLight
     val backgroundColor = MaterialColors.background
@@ -44,93 +45,71 @@ fun Root() {
 
     val navController = rememberNavController()
 
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colors.background
-    ) {
-        val bottomSheetScaffoldState = rememberBottomSheetScaffoldState()
+    val scope = rememberCoroutineScope()
 
-        val bottomAppBarSize = 56.dp
-
-        Scaffold(
-            bottomBar = {
-                BottomAppBar(
-                    modifier = Modifier.offset(y = bottomAppBarSize * (1f - bottomSheetScaffoldState.offsetFraction())),
-                    backgroundColor = MaterialColors.background
-                ) {
-                    val navBackStackEntry by navController.currentBackStackEntryAsState()
-                    val currentDestination = navBackStackEntry?.destination
-                    AppBottomNavigation(
-                        modifier = Modifier,
-                        currentDestination = currentDestination
-                    ) { screen ->
-                        if (screen is Screen.Settings) {
-                            // Show settings bottom sheet
-                        } else {
-                            navController.navigate(screen.route)
-                        }
+    val settingsBottomSheetState = rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
+    ModalBottomSheetLayout(
+        sheetContent = {
+            SettingsBottomSheet(onItemSelected = { bottomSettings ->
+                scope.launch {
+                    settingsBottomSheetState.hide()
+                }
+                when (bottomSettings) {
+                    BottomSettings.Shuffle -> {
+                        // Todo:
+                    }
+                    BottomSettings.SleepTimer -> {
+                        // Todo:
+                    }
+                    BottomSettings.Dsp -> {
+                        navController.navigate(Screen.Root.Dsp.route)
+                    }
+                    BottomSettings.Settings -> {
+                        navController.navigate(Screen.Root.Settings.route)
                     }
                 }
-            }) {
-            BottomSheetScaffold(
-                modifier = Modifier.offset(y = -(bottomAppBarSize * (bottomSheetScaffoldState.offsetFraction()))),
-                sheetBackgroundColor = MaterialColors.background,
-                sheetContent = {
-                    Box(
-                        Modifier
-                            .fillMaxSize()
-                            .background(MaterialColors.background)
-                    ) {
-                        MiniPLayer()
+            })
+        },
+        sheetState = settingsBottomSheetState
+    ) {
+        NavHost(
+            navController = navController,
+            startDestination = if (hasOnboarded) Screen.Root.Main.route else Screen.Root.Onboarding.route
+        ) {
+            composable(Screen.Root.Onboarding.route) {
+                Onboarding()
+            }
+            composable(Screen.Root.Main.route) {
+                Main(
+                    onShowSettings = {
+                        scope.launch {
+                            settingsBottomSheetState.show()
+                        }
                     }
-                },
-                scaffoldState = bottomSheetScaffoldState
-            ) { padding ->
+                )
+            }
+            composable(Screen.Root.Dsp.route) {
                 Box(
                     Modifier
-                        .padding(padding)
-                        .offset(y = bottomAppBarSize * (bottomSheetScaffoldState.offsetFraction()))
-                ) {
-                    NavHost(
-                        navController = navController,
-                        startDestination = Screen.Library.route,
-                        modifier = Modifier
-                    ) {
-                        composable(Screen.Home.route) {
-                            Home()
-                        }
-                        composable(Screen.Library.route) {
-                            Library()
-                        }
-                        composable(Screen.Search.route) {
-                            Search()
-                        }
-                    }
-                }
+                        .fillMaxSize()
+                        .background(Color.Blue.copy(alpha = 0.2f))
+                )
+            }
+            composable(Screen.Root.Settings.route) {
+                Box(
+                    Modifier
+                        .fillMaxSize()
+                        .background(Color.Green.copy(alpha = 0.2f))
+                )
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
-fun BottomSheetScaffoldState.offsetFraction(): Float {
-    var offsetFraction = bottomSheetState.progress.fraction
-
-    if (bottomSheetState.direction == 0f) {
-        offsetFraction = if (bottomSheetState.isExpanded) 0f else 1f
-    }
-
-    if (bottomSheetState.direction < 0) {
-        offsetFraction = 1f - offsetFraction
-    }
-
-    return offsetFraction
-}
-
 @Preview(showBackground = true)
 @Composable
-fun DefaultPreview(@PreviewParameter(ThemedPreviewProvider::class) darkTheme: Boolean) {
+fun RootPreview(@PreviewParameter(ThemedPreviewProvider::class) darkTheme: Boolean) {
     Theme(isDark = darkTheme) {
-        Root()
+        Root(hasOnboarded = true)
     }
 }

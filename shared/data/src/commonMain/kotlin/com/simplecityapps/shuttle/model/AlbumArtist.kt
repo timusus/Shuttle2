@@ -4,9 +4,6 @@ import com.simplecityapps.shuttle.parcel.Parcelable
 import com.simplecityapps.shuttle.parcel.Parcelize
 
 @Parcelize
-data class AlbumArtistGroupKey(val key: String?) : Parcelable
-
-@Parcelize
 data class AlbumArtist(
     val name: String?,
     val artists: List<String>,

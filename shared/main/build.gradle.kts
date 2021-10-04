@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 plugins {
     kotlin("multiplatform")
     id("com.android.library")
+    kotlin("kapt")
 }
 
 kotlin {
@@ -22,13 +23,31 @@ kotlin {
         }
     }
     sourceSets {
+        val commonMain by getting {
+            dependencies {
+                implementation(project(":shared:preferences"))
+                implementation(project(":shared:inject"))
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
+            }
+        }
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test-common"))
                 implementation(kotlin("test-annotations-common"))
             }
         }
-        val androidMain by getting
+        val androidMain by getting {
+            dependencies {
+                implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.0-rc01")
+                implementation(project(":shared:preferences"))
+                implementation("com.google.dagger:hilt-android:2.38.1")
+                configurations.getByName("kapt").dependencies.add(
+                    org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency(
+                        "com.google.dagger", "hilt-compiler", "2.38.1"
+                    )
+                )
+            }
+        }
         val androidTest by getting {
             dependencies {
                 implementation(kotlin("test-junit"))
