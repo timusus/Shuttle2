@@ -4,9 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
@@ -17,15 +15,23 @@ import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.simplecityapps.shuttle.compose.ui.BottomSettings
 import com.simplecityapps.shuttle.compose.ui.components.ThemedPreviewProvider
+import com.simplecityapps.shuttle.compose.ui.components.onboarding.Onboarding
 import com.simplecityapps.shuttle.compose.ui.components.settings.bottomsheet.SettingsBottomSheet
 import com.simplecityapps.shuttle.compose.ui.theme.MaterialColors
 import com.simplecityapps.shuttle.compose.ui.theme.Theme
+import com.simplecityapps.shuttle.ui.root.RootViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun Root() {
+fun Root(viewModel: RootViewModel) {
+    val hasOnboarded by viewModel.hasOnboarded.collectAsState()
+    Root(hasOnboarded)
+}
 
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun Root(hasOnboarded: Boolean) {
     val systemUiController = rememberSystemUiController()
     val useDarkIcons = MaterialTheme.colors.isLight
     val backgroundColor = MaterialColors.background
@@ -66,7 +72,13 @@ fun Root() {
         },
         sheetState = settingsBottomSheetState
     ) {
-        NavHost(navController = navController, Screen.Root.Main.route) {
+        NavHost(
+            navController = navController,
+            startDestination = if (hasOnboarded) Screen.Root.Main.route else Screen.Root.Onboarding.route
+        ) {
+            composable(Screen.Root.Onboarding.route) {
+                Onboarding()
+            }
             composable(Screen.Root.Main.route) {
                 Main(
                     onShowSettings = {
@@ -98,6 +110,6 @@ fun Root() {
 @Composable
 fun RootPreview(@PreviewParameter(ThemedPreviewProvider::class) darkTheme: Boolean) {
     Theme(isDark = darkTheme) {
-        Root()
+        Root(hasOnboarded = true)
     }
 }

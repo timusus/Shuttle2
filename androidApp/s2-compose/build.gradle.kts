@@ -1,6 +1,8 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("kotlin-kapt")
+    id("dagger.hilt.android.plugin")
 }
 
 android {
@@ -68,4 +70,15 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:${rootProject.extra["compose_version"]}")
 
     debugImplementation("androidx.compose.ui:ui-tooling:${rootProject.extra["compose_version"]}")
+
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.5.0-beta01")
+    implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
+
+    implementation(project(":shared:main"))
+    implementation(project(":shared:preferences"))
+    implementation(project(":shared:data"))
+
+    // Hilt
+    implementation("com.google.dagger:hilt-android:2.40.4")
+    kapt("com.google.dagger:hilt-compiler:2.40.4")
 }

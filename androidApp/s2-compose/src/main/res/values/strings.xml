@@ -220,4 +220,89 @@
     <string name="pref_firebase_analytics_subtitle">Enables A/B testing of features, and tracks how users interact with the app</string>
     <!-- Settings: Title for the library tabs options (list of tabs to be displayed on home screen)-->
     <string name="pref_library_tabs_title">Library tabs</string>
+
+
+    <!-- Media Providers -->
+
+    <string name="media_provider_title"><xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g> media provider</string>
+    <string name="media_provider_scan_progress"><xliff:g example="5" id="progress">{progress}</xliff:g> / <xliff:g example="25" id="total">{total}</xliff:g> songs scanned</string>
+    <string name="media_provider_scan_success_title"><xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g> scan complete</string>
+    <string name="media_provider_scan_success_subtitle"><xliff:g example="5" id="inserts">{inserts}</xliff:g> inserts, <xliff:g example="15" id="updates">{updates}</xliff:g> updates, <xliff:g example="25" id="deletes">{deletes}</xliff:g> deletes</string>
+    <string name="media_provider_scan_failure_title">Scan failed</string>
+    <string name="media_provider_scan_failure_subtitle">No songs imported</string>
+    <string name="media_provider_button_authenticate">Authenticate</string>
+    <string name="media_provider_authenticating">Authenticating…</string>
+    <string name="media_provider_authentication_success">Authentication Successful</string>
+    <string name="media_provider_title_plex">Plex</string>
+    <string name="media_provider_title_jellyfin">Jellyfin</string>
+    <string name="media_provider_title_emby">Emby</string>
+    <string name="media_provider_type_local">Local</string>
+    <string name="media_provider_type_remote">Remote</string>
+    <string name="media_provider_add">Add Media Provider</string>
+    <string name="media_providers_add_onboarding">Add media provider(s). You can change this later</string>
+    <string name="media_providers_add">Add media provider(s)</string>
+    <string name="media_provider_toolbar_title_onboarding">Discover your music</string>
+    <string name="media_provider_toolbar_title">Media providers</string>
+    <string name="media_provider_dialog_remove_title">Remove <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
+    <string name="media_provider_dialog_remove_subtitle">This will remove all songs, playlists &amp; play counts associated with <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g> media provider</string>
+    <string name="media_provider_dialog_button_remove">Remove</string>
+    <string name="media_provider_config_hint_address">Address</string>
+    <string name="media_provider_config_hint_username">Username</string>
+    <string name="media_provider_config_hint_password">Password</string>
+    <string name="media_provider_config_switch_remember_password">Remember password</string>
+
+
+    <!-- Onboarding -->
+
+    <!-- Title of 'media directory selection' screen. User can choose to add directories to be scanned -->
+    <string name="onboarding_directories_dialog_add_title">Media Directories</string>
+    <!-- Button to allow the user to add a directory, when using the 'S2 Media Scanner' -->
+    <string name="onboarding_directories_dialog_add_button">Add Directory</string>
+    <!-- Error message title shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
+    <string name="onboarding_directories_dialog_missing_title">Missing Document Provider</string>
+    <!-- Error message description shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
+    <string name="onboarding_directories_dialog_missing_subtitle">Can\'t find a file provider to add directories. You may have to install one, or revert to using the Android Media Store provider.</string>
+    <!-- Explanation shown to user when they're about to choose which directories wil lbe scanned bv the S2 media scanner-->
+    <string name="onboarding_directories_add_directories_help_text">To scan for music, S2 requires access to your media directories. Add a directory via your Android File Provider app.</string>
+    <!-- Shown when the app is scanning the user's directories for media -->
+    <string name="onboarding_directories_scanning">Scanning…</string>
+    <!-- Shown when the media scanner is scanning the user's directories for media-->
+    <plurals name="onboarding_directories_scan_progress">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> audio file</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> audio files</item>
+    </plurals>
+    <!-- Dialog title shown to user to indicate that S2 requires permission to access their storage -->
+    <string name="onboarding_permission_dialog_title">Storage Permission Required</string>
+    <!-- Dialog message shown to explain that S2 requires permission to access their storage-->
+    <string name="onboarding_permission_dialog_subtitle">S2 may not function correctly without permission to access your music</string>
+    <!-- Dialog button to grant permission to the app to access users storage-->
+    <string name="onboarding_permission_button_grant">Grant Permission</string>
+    <!-- Shown after user initially denies access to storage -->
+    <string name="onboarding_permission_help_text">To find your music, S2 needs permission to read your media storage</string>
+    <!-- Title of S2's Media Scanner, the thing that scans files on the device to read audio files/tags -->
+    <string name="onboarding_media_scanner_title">Media scanner</string>
+    <!-- Shown when the media scanner is scanning -->
+    <string name="onboarding_media_scanner_scanning">Scanning…</string>
+    <!-- Button to initiate a media scanner scan-->
+    <string name="onboarding_media_scan">Scan</string>
+    <!-- Button to go back to the previous page, when onboarding -->
+    <string name="onboarding_button_back">Back</string>
+    <!-- Button to go to the next page, when onboarding -->
+    <string name="onboarding_button_next">Next</string>
+    <!-- Button to trigger the MediaScanner to perform a rescan of audio files on the device-->
+    <string name="onboarding_media_scanner_rescan">Rescan</string>
+    <!-- Shown when the S2 Media Provider is scanning song tags (metadata)-->
+    <string name="onboarding_scanner_reading_song_tags">Reading song tags…</string>
+    <!-- Shown when onboarding. Describes why S2 would like to use Bugsnag and Firebase Analytics-->
+    <string name="onboarding_data_collection_title">S2 would like your permission to share anonymous crash data and analytics</string>
+    <!-- Shown when onboarding. Switch to enable Bugsnag Crash Reporting -->
+    <string name="onboarding_switch_bugsnag">Bugsnag Crash Reporting</string>
+    <!-- Shown when onboarding. Describes what Bugsnag  is used for-->
+    <string name="onboarding_switch_description_bugsnag">Anonymous crash statistics, which help to track down and resolve bugs</string>
+    <!-- Shown when onboarding. Switch to enable Firebase Analytics -->
+    <string name="onboarding_switch_firebase_analytics">Firebase Analytics</string>
+    <!-- Shown when onboarding. Describes what Firebase Analytics is used for-->
+    <string name="onboarding_switch_firebase_description_analytics">Enables A/B testing of features, and tracks how users interact with the app</string>
+    <!-- Shown during onboarding, or when choosing a media provider. -->
+    <string name="onboarding_media_selection_subtitle">Choose where your music comes from. Use the Android Media Store if you\'re not sure.</string>
 </resources>

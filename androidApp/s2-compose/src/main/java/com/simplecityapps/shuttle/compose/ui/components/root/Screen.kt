@@ -17,6 +17,10 @@ sealed class Screen(
         route: String
     ) : Screen(route) {
 
+        object Onboarding : Screen.Root(
+            route = "onboarding"
+        )
+
         object Main : Screen.Root(
             route = "main"
         )
