@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 plugins {
     kotlin("multiplatform")
     id("com.android.library")
+    id("kotlin-parcelize")
     kotlin("kapt")
 }
 
@@ -18,16 +19,14 @@ kotlin {
     iosTarget("ios") {
         binaries {
             framework {
-                baseName = "shared"
+                baseName = "parcel"
             }
         }
     }
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation(project(":shared:preferences"))
-                implementation(project(":shared:inject"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
+                api("androidx.datastore:datastore-preferences:1.0.0")
             }
         }
         val commonTest by getting {
@@ -38,8 +37,7 @@ kotlin {
         }
         val androidMain by getting {
             dependencies {
-                implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.0-rc01")
-                implementation(project(":shared:preferences"))
+                // Hilt
                 implementation("com.google.dagger:hilt-android:2.38.1")
                 configurations.getByName("kapt").dependencies.add(
                     org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency(
@@ -62,6 +60,7 @@ kotlin {
 android {
     compileSdk = 31
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
+
     defaultConfig {
         minSdk = 21
         targetSdk = 31

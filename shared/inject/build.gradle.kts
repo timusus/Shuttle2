@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 plugins {
     kotlin("multiplatform")
     id("com.android.library")
-    kotlin("kapt")
+    id("kotlin-parcelize")
 }
 
 kotlin {
@@ -18,18 +18,12 @@ kotlin {
     iosTarget("ios") {
         binaries {
             framework {
-                baseName = "shared"
+                baseName = "parcel"
             }
         }
     }
     sourceSets {
-        val commonMain by getting {
-            dependencies {
-                implementation(project(":shared:preferences"))
-                implementation(project(":shared:inject"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
-            }
-        }
+        val commonMain by getting
         val commonTest by getting {
             dependencies {
                 implementation(kotlin("test-common"))
@@ -38,14 +32,7 @@ kotlin {
         }
         val androidMain by getting {
             dependencies {
-                implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.0-rc01")
-                implementation(project(":shared:preferences"))
                 implementation("com.google.dagger:hilt-android:2.38.1")
-                configurations.getByName("kapt").dependencies.add(
-                    org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency(
-                        "com.google.dagger", "hilt-compiler", "2.38.1"
-                    )
-                )
             }
         }
         val androidTest by getting {
@@ -62,6 +49,7 @@ kotlin {
 android {
     compileSdk = 31
     sourceSets["main"].manifest.srcFile("src/androidMain/AndroidManifest.xml")
+
     defaultConfig {
         minSdk = 21
         targetSdk = 31
