@@ -62,7 +62,7 @@ class CastPlayback(
         val castMediaInfo = MediaInfo.Builder(path)
             .setStreamType(MediaInfo.STREAM_TYPE_BUFFERED)
             .setContentType(mediaInfo.mimeType)
-            .setStreamDuration(current.duration.toLong())
+            .setStreamDuration((current.duration ?: 0).toLong())
             .setMetadata(metadata)
             .build()
 

@@ -48,7 +48,7 @@ class SongInfoDialogFragment : BottomSheetDialogFragment() {
         val map = mapOf(
             getString(R.string.song_info_track_title) to song.name.orEmpty(),
             getString(R.string.song_info_track_number) to song.track?.toString().orEmpty(),
-            getString(R.string.song_info_duration) to song.duration.toHms(getString(R.string.song_info_unknown)),
+            getString(R.string.song_info_duration) to song.duration?.toHms(getString(R.string.song_info_unknown)),
             getString(R.string.song_info_album_artist) to song.albumArtist.orEmpty(),
             getString(R.string.song_info_artists) to song.artists.joinToString(", "),
             getString(R.string.song_info_album) to song.album.orEmpty(),
@@ -58,7 +58,7 @@ class SongInfoDialogFragment : BottomSheetDialogFragment() {
             getString(R.string.song_info_genres) to song.genres.joinToString(", "),
             getString(R.string.song_info_path) to song.path.sanitise(),
             getString(R.string.song_info_mime_type) to song.mimeType,
-            getString(R.string.song_info_size) to "${"%.2f".format((song.size / 1024f / 1024f))}MB",
+            getString(R.string.song_info_size) to song.size?.let { "${"%.2f".format((it / 1024f / 1024f))}MB" },
             getString(R.string.song_info_bit_rate) to song.bitRate?.toString()?.let { "$it kb/s" },
             getString(R.string.song_info_sample_rate) to song.sampleRate?.toString()?.let { "$it kHz" },
             getString(R.string.song_info_channel_count) to song.channelCount?.toString(),

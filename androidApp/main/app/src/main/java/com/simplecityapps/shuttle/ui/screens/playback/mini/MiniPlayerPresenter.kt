@@ -83,7 +83,7 @@ class MiniPlayerPresenter @Inject constructor(
 
     private fun updateProgress() {
         queueManager.getCurrentItem()?.song?.let { currentSong ->
-            view?.setProgress(playbackManager.getProgress() ?: 0, currentSong.duration)
+            view?.setProgress(playbackManager.getProgress() ?: 0, currentSong.duration ?: 1)
         }
     }
 

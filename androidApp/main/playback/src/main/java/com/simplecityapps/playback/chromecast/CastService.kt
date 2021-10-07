@@ -54,7 +54,7 @@ class CastService(
                     } else {
                         try {
                             context.contentResolver.openInputStream(uri)?.let { inputStream ->
-                                AudioStream(inputStream, song.size, song.mimeType)
+                                AudioStream(inputStream, song.size ?: 0, song.mimeType ?: "audio/*")
                             }
                         } catch (e: FileNotFoundException) {
                             Timber.e(e, "Failed to retrieve audio from songId: $songId")
@@ -63,7 +63,7 @@ class CastService(
                     }
                 } else {
                     try {
-                        AudioStream(File(uri.toString()).inputStream(), song.size, song.mimeType)
+                        AudioStream(File(uri.toString()).inputStream(), song.size ?: 0, song.mimeType ?: "audio/*")
                     } catch (e: FileNotFoundException) {
                         Timber.e(e, "Failed to retrieve audio from songId: $songId")
                         null

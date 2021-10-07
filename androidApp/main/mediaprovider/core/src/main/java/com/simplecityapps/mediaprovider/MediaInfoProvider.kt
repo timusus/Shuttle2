@@ -28,6 +28,6 @@ class AggregateMediaInfoProvider(val providers: MutableSet<MediaInfoProvider> = 
     override suspend fun getMediaInfo(song: Song, castCompatibilityMode: Boolean): MediaInfo {
         val uri = Uri.parse(song.path)
         return providers.firstOrNull { it.handles(uri) }?.getMediaInfo(song, castCompatibilityMode)
-            ?: MediaInfo(path = uri, mimeType = song.mimeType, isRemote = false)
+            ?: MediaInfo(path = uri, mimeType = song.mimeType ?: "audio/*", isRemote = false)
     }
 }

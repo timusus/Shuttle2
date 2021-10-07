@@ -4,6 +4,7 @@ import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import java.util.*
@@ -23,7 +24,7 @@ fun AudioFile.toSong(providerType: MediaProviderType): Song {
         path = path,
         size = size,
         mimeType = mimeType,
-        lastModified = Instant.fromEpochMilliseconds(lastModified),
+        dateModified = Instant.fromEpochMilliseconds(lastModified),
         lastPlayed = null,
         lastCompleted = null,
         playCount = 0,
@@ -35,9 +36,11 @@ fun AudioFile.toSong(providerType: MediaProviderType): Song {
         lyrics = lyrics,
         grouping = grouping,
         bitRate = bitRate,
-        bitDepth = bitDepth,
         sampleRate = sampleRate,
-        channelCount = channelCount
+        channelCount = channelCount,
+        composer = composer,
+        externalId = null,
+        dateAdded = Clock.System.now()
     )
 }
 
@@ -55,7 +58,8 @@ enum class TagLibProperty(val key: String) {
     ReplayGainTrack("REPLAYGAIN_TRACK_GAIN"),
     ReplayGainAlbum("REPLAYGAIN_ALBUM_GAIN"),
     Lyrics("LYRICS"),
-    Grouping("GROUPING")
+    Grouping("GROUPING"),
+    Composer("COMPOSER")
 }
 
 fun KTagLib.getAudioFile(fileDescriptor: Int, filePath: String, fileName: String, lastModified: Long, size: Long, mimeType: String?): AudioFile {
@@ -95,9 +99,9 @@ fun KTagLib.getAudioFile(fileDescriptor: Int, filePath: String, fileName: String
         lyrics = metadata?.propertyMap?.get(TagLibProperty.Lyrics.key)?.firstOrNull(),
         grouping = metadata?.propertyMap?.get(TagLibProperty.Grouping.key)?.firstOrNull(),
         bitRate = metadata?.audioProperties?.bitrate,
-        bitDepth = null,
         sampleRate = metadata?.audioProperties?.sampleRate,
-        channelCount = metadata?.audioProperties?.channelCount
+        channelCount = metadata?.audioProperties?.channelCount,
+        composer = metadata?.propertyMap?.get(TagLibProperty.Composer.key)?.firstOrNull()
     )
 }
 

@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlin.math.abs
@@ -98,7 +99,7 @@ class MediaStoreMediaProvider(
                         path = songCursor.getString(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)),
                         size = songCursor.getLong(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)),
                         mimeType = songCursor.getString(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)),
-                        lastModified = Instant.fromEpochMilliseconds(
+                        dateModified = Instant.fromEpochMilliseconds(
                             songCursor.getLong(
                                 songCursor.getColumnIndexOrThrow(
                                     MediaStore.Audio.Media.DATE_MODIFIED
@@ -119,9 +120,12 @@ class MediaStoreMediaProvider(
                         lyrics = null,
                         grouping = null,
                         bitRate = null,
-                        bitDepth = null,
                         sampleRate = null,
-                        channelCount = null
+                        channelCount = null,
+                        composer = null,
+                        replayGainAlbum = null,
+                        replayGainTrack = null,
+                        dateAdded = Clock.System.now()
                     )
                     songs.add(song)
                     progress++
@@ -210,7 +214,7 @@ class MediaStoreMediaProvider(
                         existingSong.name.equals(mediaStoreSong.title, ignoreCase = true)
                                 && existingSong.album.equals(mediaStoreSong.album, ignoreCase = true)
                                 && (existingSong.artists.any { it.equals(mediaStoreSong.artist, true) } || existingSong.albumArtist.equals(mediaStoreSong.albumArtist, ignoreCase = true))
-                                && abs(existingSong.duration - mediaStoreSong.duration) <= 1000 // song duration is within 1 second
+                                && abs((existingSong.duration ?: 0) - mediaStoreSong.duration) <= 1000 // song duration is within 1 second
                     }
                 }
 

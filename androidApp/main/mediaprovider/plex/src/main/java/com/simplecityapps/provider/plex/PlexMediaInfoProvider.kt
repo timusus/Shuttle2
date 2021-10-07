@@ -30,7 +30,7 @@ class PlexMediaInfoProvider @Inject constructor(
 
         return MediaInfo(
             path = plexPath,
-            mimeType = song.mimeType,
+            mimeType = song.mimeType ?: "audio/*",
             isRemote = true
         )
     }

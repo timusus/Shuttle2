@@ -17,12 +17,12 @@ sealed class Screen(
         route: String
     ) : Screen(route) {
 
-        object Onboarding : Screen.Root(
+        object MediaProviderSelection : Screen.Root(
             route = "onboarding"
         )
 
         object Main : Screen.Root(
-            route = "main"
+            route = "ui"
         )
 
         object Settings : Screen.Root(

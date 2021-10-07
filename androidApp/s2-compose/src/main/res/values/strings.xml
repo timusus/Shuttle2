@@ -18,7 +18,7 @@
     <string name="dev_notes">Dev notes:</string>
     <!-- Title of the 'settings' screen-->
     <string name="title_settings">Settings</string>
-    <!-- Title of the 'Now Playing' screen (the main screen for controlling music playback)-->
+    <!-- Title of the 'Now Playing' screen (the ui screen for controlling music playback)-->
     <string name="title_now_playing">Now Playing</string>
     <!-- Shown at the top of the 'search' screen-->
     <string name="title_search_hint">Search Music</string>
@@ -221,37 +221,6 @@
     <!-- Settings: Title for the library tabs options (list of tabs to be displayed on home screen)-->
     <string name="pref_library_tabs_title">Library tabs</string>
 
-
-    <!-- Media Providers -->
-
-    <string name="media_provider_title"><xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g> media provider</string>
-    <string name="media_provider_scan_progress"><xliff:g example="5" id="progress">{progress}</xliff:g> / <xliff:g example="25" id="total">{total}</xliff:g> songs scanned</string>
-    <string name="media_provider_scan_success_title"><xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g> scan complete</string>
-    <string name="media_provider_scan_success_subtitle"><xliff:g example="5" id="inserts">{inserts}</xliff:g> inserts, <xliff:g example="15" id="updates">{updates}</xliff:g> updates, <xliff:g example="25" id="deletes">{deletes}</xliff:g> deletes</string>
-    <string name="media_provider_scan_failure_title">Scan failed</string>
-    <string name="media_provider_scan_failure_subtitle">No songs imported</string>
-    <string name="media_provider_button_authenticate">Authenticate</string>
-    <string name="media_provider_authenticating">Authenticating…</string>
-    <string name="media_provider_authentication_success">Authentication Successful</string>
-    <string name="media_provider_title_plex">Plex</string>
-    <string name="media_provider_title_jellyfin">Jellyfin</string>
-    <string name="media_provider_title_emby">Emby</string>
-    <string name="media_provider_type_local">Local</string>
-    <string name="media_provider_type_remote">Remote</string>
-    <string name="media_provider_add">Add Media Provider</string>
-    <string name="media_providers_add_onboarding">Add media provider(s). You can change this later</string>
-    <string name="media_providers_add">Add media provider(s)</string>
-    <string name="media_provider_toolbar_title_onboarding">Discover your music</string>
-    <string name="media_provider_toolbar_title">Media providers</string>
-    <string name="media_provider_dialog_remove_title">Remove <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
-    <string name="media_provider_dialog_remove_subtitle">This will remove all songs, playlists &amp; play counts associated with <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g> media provider</string>
-    <string name="media_provider_dialog_button_remove">Remove</string>
-    <string name="media_provider_config_hint_address">Address</string>
-    <string name="media_provider_config_hint_username">Username</string>
-    <string name="media_provider_config_hint_password">Password</string>
-    <string name="media_provider_config_switch_remember_password">Remember password</string>
-
-
     <!-- Onboarding -->
 
     <!-- Title of 'media directory selection' screen. User can choose to add directories to be scanned -->
@@ -305,4 +274,170 @@
     <string name="onboarding_switch_firebase_description_analytics">Enables A/B testing of features, and tracks how users interact with the app</string>
     <!-- Shown during onboarding, or when choosing a media provider. -->
     <string name="onboarding_media_selection_subtitle">Choose where your music comes from. Use the Android Media Store if you\'re not sure.</string>
+
+
+    <!-- Media Providers-->
+
+    <!-- The name of the S2 Media Provider - the media provider which scans the device for songs and reads their tags (metadata)-->
+    <string name="media_provider_title_s2">S2 Media Provider</string>
+    <!-- The description of the S2 Media Provider - scans user selected folders and files for metadata-->
+    <string name="media_provider_description_s2">For advanced users. Uses a custom tag reader and allows for additional features, including tag editing and replay gain</string>
+    <!-- The name of the 'Android Media Store' media provider. The 'Media Store' is an Android concept. Not sure if it would be translated.-->
+    <string name="media_provider_title_media_store">Android Media Store</string>
+    <!-- The description of the Android MediaStore media provider. The MediaStore is an Android concept. A database on the device which keeps track of song info-->
+    <string name="media_provider_description_media_store">Simple, fast access to the files in the Android Media Store database</string>
+    <!-- The name of the 'Emby' media provider. Emby is a personal media server - probably doesn't need to be translated-->
+    <string name="media_provider_title_emby">Emby</string>
+    <!-- The description of the 'Emby' media provider. Emby is a personal media server - probably doesn't need to be translated-->
+    <string name="media_provider_description_emby">Personal media server</string>
+    <!-- The name of the 'Jellyfin' media provider. Jellyfin is a personal media server - probably doesn't need to be translated-->
+    <string name="media_provider_title_jellyfin">Jellyfin</string>
+    <!-- The description of the 'Jellyfin' media provider. Jellyfin is a personal media server - probably doesn't need to be translated-->
+    <string name="media_provider_description_jellyfin">Personal media server</string>
+    <!-- The name of the 'Plex' media provider. Plex is a personal media server - probably doesn't need to be translated-->
+    <string name="media_provider_title_plex">Plex</string>
+    <!-- The description of the 'Plex' media provider. Plex is a personal media server - probably doesn't need to be translated-->
+    <string name="media_provider_description_plex">Personal media server</string>
+    <!-- Shown when a media provider is being scanned. Indicates the current progress of that scan -->
+    <string name="media_provider_scan_progress"><xliff:g example="5" id="progress">{progress}</xliff:g> / <xliff:g example="25" id="total">{total}</xliff:g> songs scanned</string>
+    <!-- Shown when a media provider scan has completed -->
+    <string name="media_provider_scan_success_subtitle"><xliff:g example="5" id="inserts">{inserts}</xliff:g> inserts, <xliff:g example="15" id="updates">{updates}</xliff:g> updates, <xliff:g example="25" id="deletes">{deletes}</xliff:g> deletes</string>
+    <!-- Shown when a media provider scan has failed -->
+    <string name="media_provider_scan_failure_title">Scan failed</string>
+    <!-- Dialog button shown to authenticate with Jellyfin/Emby/Plex (submits the user's credentials for authentication)-->
+    <string name="media_provider_button_authenticate">Authenticate</string>
+    <!-- Shown when Jellyfin/Emby/Plex is authenticating the user's credentials-->
+    <string name="media_provider_authenticating">Authenticating…</string>
+    <!-- Shown when Jellyfin/Emby/Plex has successfully authenticated the user's credentials-->
+    <string name="media_provider_authentication_success">Authentication Successful</string>
+    <!-- The longer title of Plex Media Server. 'Plex' probably doesn't need translation -->
+    <string name="media_provider_title_long_plex">Plex Media Server</string>
+    <!-- The longer title of Jellyfin Media Server. 'Jellyfin' probably doesn't need translation -->
+    <string name="media_provider_title_long_jellyfin">Jellyfin Media Server</string>
+    <!-- The longer title of Emby Media Server. 'Emby' probably doesn't need translation -->
+    <string name="media_provider_title_long_emby">Emby Media Server</string>
+    <!-- Shown when user is selecting which media provider to use. Groups media providers into local (device based) and remote (network based) media providers. -->
+    <string name="media_provider_type_local">Local</string>
+    <!-- Shown when user is selecting which media provider to use. Groups media providers into local (device based) and remote (network based) media providers. -->
+    <string name="media_provider_type_remote">Remote</string>
+    <!-- Button to add a media provider. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
+    <string name="media_provider_add">Add Media Provider</string>
+    <!-- Button to add a media provider, shown during onboarding. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
+    <string name="media_providers_add_onboarding">Add media provider(s). You can change this later</string>
+    <!-- Shown during onboarding, as the user is about to select their media providers, to discover/find their music-->
+    <string name="media_provider_toolbar_title_onboarding">Discover your music</string>
+    <!-- Title of the screen where users can select their media providers. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
+    <string name="media_provider_toolbar_title">Media providers</string>
+    <!-- Option to remove a media provider from the list of media providers to be scanned. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
+    <string name="media_provider_dialog_remove_title">Remove <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g></string>
+    <!-- Warning when user attempts to remove a media provider, that their media associated with that provider will be deleted. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc.-->
+    <string name="media_provider_dialog_remove_subtitle">This will remove all songs, playlists &amp; play counts associated with <xliff:g example="Jellyfin" id="provider_type">{provider_type}</xliff:g> media provider</string>
+    <!-- Button to remove a media provider from the list of media providers to be scanned. A media provider is a source of media, e.g. Android Media Store, S2 Media Provider, Jellyfin Media Server, etc. -->
+    <string name="media_provider_dialog_button_remove">Remove</string>
+    <!-- The address (url) of the user's Emby/Jellyfin/Plex media provider. -->
+    <string name="media_provider_config_hint_address">Address</string>
+    <!-- The username of the user's Emby/Jellyfin/Plex media provider. -->
+    <string name="media_provider_config_hint_username">Username</string>
+    <!-- The password for the user's Emby/Jellyfin/Plex media provider. -->
+    <string name="media_provider_config_hint_password">Password</string>
+    <!-- The option to remember the user's password for their Emby/Jellyfin/Plex media provider-->
+    <string name="media_provider_config_switch_remember_password">Remember password</string>
+    <!-- Favorites playlist name - user's favorite songs -->
+    <string name="playlist_title_favorites">Favorites</string>
+    <!-- 'Most Played' playlist name - playlist of songs with highest play count -->
+    <string name="playlist_title_most_played">Most Played</string>
+    <!-- 'Recently Added' playlist name - playlist of songs which have been recently added -->
+    <string name="playlist_title_recently_added">Recently Added</string>
+    <!-- 'History' playlist name - playlist of songs which have been recently played -->
+    <string name="playlist_title_history">History</string>
+    <!-- Shown when app is querying remote media provider API (jellyfin/emby/plex) -->
+    <string name="media_provider_querying_api">Querying API</string>
+    <!-- Error message shown when a remote media provider (jellyfin/emby/plex) fails to authenticate -->
+    <string name="media_provider_authentication_error">Failed to authenticate</string>
+    <!-- Error message shown when the server address is missing for a remote media provider (jellyfin/emby/plex) -->
+    <string name="media_provider_address_missing">Server address missing</string>
+    <!-- Shown when the media importer is searching for existing songs -->
+    <string name="media_import_retrieving_songs">Retrieving existing songs</string>
+    <!-- Shown when the media importer is searching for existing playlists -->
+    <string name="media_import_retrieving_playlists">Retrieving existing playlists</string>
+    <!-- Shown when the media importer is updating the app's database -->
+    <string name="media_import_updating_database">Updating database</string>
+    <!-- Shown when the media importer fails to import songs -->
+    <string name="media_import_error">An error occurred importing songs</string>
+    <!-- Shown when the S2 Media Provider fails to find any folders to scan -->
+    <string name="media_import_directories_empty">No directories/files to scan</string>
+    <!-- Shown when the S2 Media Provider is searching an m3u playlist for songs -->
+    <string name="media_import_m3u_scan">Finding songs for <xliff:g example="playlist1.m3u" id="playlist_name">{playlist_name}</xliff:g></string>
+
+
+    <!-- Menus -->
+
+    <!-- Menu option to start playback of the artist/album/all songs -->
+    <string name="menu_title_play">Play</string>
+    <!-- Menu option to shuffle artist/album/all songs -->
+    <string name="menu_title_shuffle">Shuffle</string>
+    <!-- Menu option to start 'album shuffle' mode (plays a random album, where tracks are played in order)-->
+    <string name="menu_title_album_shuffle">Album Shuffle</string>
+    <!-- Menu option to add this song to the queue, to play next -->
+    <string name="menu_title_play_next">Play Next</string>
+    <!-- Menu option to open the tag editor for this song/album/artist -->
+    <string name="menu_title_edit_tags">Edit Tags</string>
+    <!-- Menu option to configure the selected media provider -->
+    <string name="menu_title_media_provider_configure">Configure</string>
+    <!-- Menu option to remove the selected media provider -->
+    <string name="menu_title_media_provider_remove">Remove</string>
+    <!-- Menu option to show the Sleep Timer -->
+    <string name="menu_title_sleep_timer">Sleep Timer</string>
+    <!-- Menu option to add the selected song to the 'favorites' playlist -->
+    <string name="menu_title_favorite">Favorite</string>
+    <!-- Menu option to show the 'lyrics' view -->
+    <string name="menu_title_lyrics">Lyrics</string>
+    <!-- Menu option to show the 'song info' dialog -->
+    <string name="menu_title_song_info">Song Info</string>
+    <!-- Menu option to delete the selected artist/album/song -->
+    <string name="menu_title_delete">Delete</string>
+    <!-- Menu option to import a playlist from the Android Media Store-->
+    <string name="menu_title_import">Import</string>
+    <!-- Menu option to add an artist/album/song to the list of excluded (blacklisted) songs-->
+    <string name="menu_title_exclude">Exclude</string>
+    <!-- Menu option to remove an artist/album/song from a playlist, or the exclude list (blacklist)-->
+    <string name="menu_title_remove">Remove</string>
+    <!-- Menu option to open the submenu to change between 'list' and 'grid' view modes-->
+    <string name="menu_title_view_mode">View as</string>
+    <!-- Menu option to view the artist/album list as a list rather than a grid-->
+    <string name="menu_title_view_mode_list">List</string>
+    <!-- Menu option to view the artist/album list as a grid rather than a list-->
+    <string name="menu_title_view_mode_grid">Grid</string>
+    <!-- Menu option to open the sorting submenu -->
+    <string name="menu_title_sort_by">Sort by</string>
+    <!-- Menu option to sort by album name -->
+    <string name="menu_title_sort_album_name">Album Name</string>
+    <!-- Menu option to sort by artist name -->
+    <string name="menu_title_sort_artist_name">Artist Name</string>
+    <!-- Menu option to sort by song name -->
+    <string name="menu_title_sort_song_name">Song Name</string>
+    <!-- Menu option to sort by year-->
+    <string name="menu_title_sort_year">Year</string>
+    <!-- Menu option to sort by song duration -->
+    <string name="menu_title_sort_duration">Duration</string>
+    <!-- Menu option to sort by last modified date -->
+    <string name="menu_title_sort_date_modified">Last modified</string>
+    <!-- Menu option to sort playlists by a custom sort order (user-defined sort order) -->
+    <string name="menu_title_sort_custom">Custom</string>
+    <!-- Menu option to scroll to the current playing track in the queue -->
+    <string name="menu_title_scroll_to_current">Scroll to Current</string>
+    <!-- Menu option to rename a playlist-->
+    <string name="menu_title_rename">Rename</string>
+    <!-- Menu option to clear (remove) all tracks in a playlist-->
+    <string name="menu_title_clear">Clear</string>
+    <!-- Menu option to add an artist/album/song to a playlist-->
+    <string name="menu_title_add_to_playlist">Add to Playlist</string>
+    <!-- Menu option to save the current queue to a playlist -->
+    <string name="menu_title_save_queue_to_playlist">Save Queue to Playlist</string>
+    <!-- Menu option to add the selected artist/album/song to the queue-->
+    <string name="menu_title_add_to_queue">Add to Queue</string>
+    <!-- Menu option to remove the selected item from the queue -->
+    <string name="menu_title_remove_from_queue">Remove from Queue</string>
+    <!-- Menu option to remove all items from the queue -->
+    <string name="menu_title_sort_clear_queue">Clear Queue</string>
 </resources>

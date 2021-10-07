@@ -168,7 +168,7 @@ class PlaybackInitializer @Inject constructor(
 
         appCoroutineScope.launch {
             withContext(Dispatchers.IO) {
-                songRepository.setPlaybackPosition(song, song.duration)
+                songRepository.setPlaybackPosition(song, song.duration ?: 0)
                 songRepository.incrementPlayCount(song)
             }
         }

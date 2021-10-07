@@ -16,12 +16,14 @@ import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 class PreferencesModule {
 
     @Provides
+    @Singleton
     fun provideDataStore(@ApplicationContext context: Context): DataStore<Preferences> {
         return PreferenceDataStoreFactory.create(
             scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -31,11 +33,13 @@ class PreferencesModule {
     }
 
     @Provides
+    @Singleton
     fun providePreferenceManager(dataStore: DataStore<Preferences>): PreferenceManager {
         return DataStorePreferenceManager(dataStore)
     }
 
     @Provides
+    @Singleton
     fun provideGeneralPreferenceManager(preferenceManager: PreferenceManager): GeneralPreferenceManager {
         return GeneralPreferenceManager(preferenceManager)
     }

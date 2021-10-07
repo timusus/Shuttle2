@@ -123,7 +123,7 @@ class QueueBinder(
                     items = listOf(viewBinder.queueItem.song.friendlyArtistName ?: viewBinder.queueItem.song.albumArtist, viewBinder.queueItem.song.album),
                     defaultValue = itemView.resources.getString(R.string.unknown)
                 )
-            tertiary.text = viewBinder.queueItem.song.duration.toHms("--:--")
+            tertiary.text = viewBinder.queueItem.song.duration?.toHms("--:--")
 
             viewBinder.imageLoader.loadArtwork(
                 imageView = artworkImageView,
@@ -136,7 +136,7 @@ class QueueBinder(
             )
 
             progressView.isVisible = viewBinder.queueItem.isCurrent
-            progressView.setProgress((viewBinder.playbackManager.getProgress()?.toFloat() ?: 0f) / viewBinder.queueItem.song.duration.toFloat())
+            progressView.setProgress((viewBinder.playbackManager.getProgress()?.toFloat() ?: 0f) / (viewBinder.queueItem.song.duration?.toFloat() ?: 1f))
             playStateImageButton.state = viewBinder.playbackManager.playbackState()
 
             viewBinder.playbackWatcher.removeCallback(this)

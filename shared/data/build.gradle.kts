@@ -25,7 +25,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.2.1")
+                api("org.jetbrains.kotlinx:kotlinx-datetime:0.2.1")
                 implementation(project(":shared:parcel"))
             }
         }

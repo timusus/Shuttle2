@@ -73,7 +73,7 @@ object SongComparator {
     }
 
     val lastModifiedComparator: Comparator<Song> by lazy {
-        compareByDescending<Song> { song -> song.lastModified?.epochSeconds ?: 0 / 60 } // Round to the nearest minute
+        compareByDescending<Song> { song -> song.dateModified?.epochSeconds ?: 0 / 60 } // Round to the nearest minute
             .then(defaultComparator)
     }
 

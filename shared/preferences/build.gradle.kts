@@ -3,7 +3,6 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 plugins {
     kotlin("multiplatform")
     id("com.android.library")
-    id("kotlin-parcelize")
     kotlin("kapt")
 }
 
@@ -19,7 +18,7 @@ kotlin {
     iosTarget("ios") {
         binaries {
             framework {
-                baseName = "parcel"
+                baseName = "preferences"
             }
         }
     }
@@ -27,6 +26,7 @@ kotlin {
         val commonMain by getting {
             dependencies {
                 api("androidx.datastore:datastore-preferences:1.0.0")
+                implementation(project(":shared:data"))
             }
         }
         val commonTest by getting {

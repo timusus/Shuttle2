@@ -57,8 +57,8 @@ class PlexMediaProvider(
                                                 genres = emptyList(),
                                                 path = "plex://${metadata.key}",
                                                 size = metadata.media.firstOrNull()?.parts?.firstOrNull()?.size?.toLong() ?: 0L,
-                                                mimeType = "Audio/*",
-                                                lastModified = Clock.System.now(),
+                                                mimeType = "audio/*",
+                                                dateModified = Clock.System.now(),
                                                 lastPlayed = null,
                                                 lastCompleted = null,
                                                 playCount = 0,
@@ -69,9 +69,12 @@ class PlexMediaProvider(
                                                 lyrics = null,
                                                 grouping = null,
                                                 bitRate = metadata.media.firstOrNull()?.bitrate,
-                                                bitDepth = null,
                                                 sampleRate = null,
-                                                channelCount = metadata.media.firstOrNull()?.audioChannels
+                                                channelCount = metadata.media.firstOrNull()?.audioChannels,
+                                                replayGainAlbum = null,
+                                                replayGainTrack = null,
+                                                composer = null,
+                                                dateAdded = Clock.System.now()
                                             )
                                         }))
                                     }

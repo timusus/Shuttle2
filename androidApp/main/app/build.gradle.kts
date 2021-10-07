@@ -128,14 +128,14 @@ android {
 
 
         // Constraint Layout
-        implementation("androidx.constraintlayout:constraintlayout:2.1.0")
+        implementation("androidx.constraintlayout:constraintlayout:2.1.1")
 
         // Android Arch
         implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
 
         // AndroidX Navigation
-        implementation("androidx.navigation:navigation-fragment-ktx:2.4.0-alpha08")
-        implementation("androidx.navigation:navigation-ui-ktx:2.4.0-alpha08")
+        implementation("androidx.navigation:navigation-fragment-ktx:2.4.0-alpha10")
+        implementation("androidx.navigation:navigation-ui-ktx:2.4.0-alpha10")
 
         // Hilt
         implementation("com.google.dagger:hilt-android:2.38.1")

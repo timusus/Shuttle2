@@ -32,7 +32,7 @@ class JellyfinMediaInfoProvider @Inject constructor(
 
         return MediaInfo(
             path = jellyfinPath,
-            mimeType = if (castCompatibilityMode) getMimeType(jellyfinPath, song.mimeType) else song.mimeType,
+            mimeType = if (castCompatibilityMode) getMimeType(jellyfinPath, song.mimeType ?: "audio/*") else song.mimeType ?: "audio/*",
             isRemote = true
         )
     }

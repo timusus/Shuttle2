@@ -73,7 +73,7 @@ class PlaybackPresenter @Inject constructor(
         queueManager.getCurrentItem()?.song?.let { currentSong ->
             onProgressChanged(
                 position = playbackManager.getProgress() ?: 0,
-                duration = playbackManager.getDuration() ?: currentSong.duration,
+                duration = playbackManager.getDuration() ?: currentSong.duration ?: 0,
                 fromUser = false
             )
         }
@@ -164,13 +164,13 @@ class PlaybackPresenter @Inject constructor(
 
     override fun seek(fraction: Float) {
         queueManager.getCurrentItem()?.song?.let { currentSong ->
-            playbackManager.seekTo(((playbackManager.getDuration() ?: currentSong.duration) * fraction).toInt())
+            playbackManager.seekTo(((playbackManager.getDuration() ?: (currentSong.duration ?: 0)) * fraction).toInt())
         } ?: Timber.v("seek() failed, current song null")
     }
 
     override fun updateProgress(fraction: Float) {
         queueManager.getCurrentItem()?.song?.let { currentSong ->
-            view?.setProgress(((playbackManager.getDuration() ?: currentSong.duration) * fraction).toInt(), (playbackManager.getDuration() ?: currentSong.duration).toInt())
+            view?.setProgress(((playbackManager.getDuration() ?: (currentSong.duration ?: 0)) * fraction).toInt(), (playbackManager.getDuration() ?: currentSong.duration ?: 0).toInt())
         } ?: Timber.v("seek() failed, current song null")
     }
 
