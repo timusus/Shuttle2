@@ -119,7 +119,7 @@ sealed class SongQuery(
     @Parcelize
     data class RecentlyAdded(val days: Int = 14) :
         SongQuery(
-            predicate = { song -> song.lastModified?.let { it > Clock.System.now().minus(Duration.days(days)) } ?: false },
+            predicate = { song -> song.dateModified?.let { it > Clock.System.now().minus(Duration.days(days)) } ?: false },
             sortOrder = SongSortOrder.LastModified
         ) // 2 weeks
 }

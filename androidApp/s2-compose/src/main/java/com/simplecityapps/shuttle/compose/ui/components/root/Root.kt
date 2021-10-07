@@ -9,9 +9,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.simplecityapps.shuttle.compose.ui.BottomSettings
 import com.simplecityapps.shuttle.compose.ui.components.ThemedPreviewProvider
@@ -19,6 +21,8 @@ import com.simplecityapps.shuttle.compose.ui.components.onboarding.Onboarding
 import com.simplecityapps.shuttle.compose.ui.components.settings.bottomsheet.SettingsBottomSheet
 import com.simplecityapps.shuttle.compose.ui.theme.MaterialColors
 import com.simplecityapps.shuttle.compose.ui.theme.Theme
+import com.simplecityapps.shuttle.ui.mediaprovider.MediaProviderSelectionViewModel
+import com.simplecityapps.shuttle.ui.onboarding.OnboardingViewModel
 import com.simplecityapps.shuttle.ui.root.RootViewModel
 import kotlinx.coroutines.launch
 
@@ -74,10 +78,13 @@ fun Root(hasOnboarded: Boolean) {
     ) {
         NavHost(
             navController = navController,
-            startDestination = if (hasOnboarded) Screen.Root.Main.route else Screen.Root.Onboarding.route
+            startDestination = if (hasOnboarded) Screen.Root.Main.route else Screen.Root.MediaProviderSelection.route
         ) {
-            composable(Screen.Root.Onboarding.route) {
-                Onboarding()
+            composable(
+                route = Screen.Root.MediaProviderSelection.route,
+                arguments = listOf(navArgument(MediaProviderSelectionViewModel.ARG_ONBOARDING) { defaultValue = true })
+            ) {
+                Onboarding(hiltViewModel() as OnboardingViewModel)
             }
             composable(Screen.Root.Main.route) {
                 Main(

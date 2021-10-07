@@ -5,28 +5,30 @@ CREATE TABLE IF NOT EXISTS SongEntity (
     artists TEXT,
     album TEXT,
     albumArtist TEXT,
-    trackNumber INTEGER,
-    discNumber INTEGER,
-    duration INTEGER,
+    trackNumber INTEGER AS Int,
+    discNumber INTEGER AS Int,
+    duration INTEGER AS Int,
     date TEXT,
     genres TEXT,
     size INTEGER,
     mimeType TEXT,
-    playbackPosition Integer,
-    playCount Integer,
+    playbackPosition INTEGER AS Int,
+    playCount INTEGER AS Int,
     lastPlayed TEXT,
     lastCompleted TEXT,
     excluded INTEGER AS Boolean NOT NULL DEFAULT 0,
-    mediaProvider TEXT,
+    mediaProvider TEXT NOT NULL,
     externalId TEXT,
-    replayGainTrack REAL AS Float,
-    replayGainAlbum REAL AS Float,
+    replayGainTrack REAL AS Double,
+    replayGainAlbum REAL AS Double,
     lyrics TEXT,
     grouping TEXT,
     composer TEXT,
-    bitRate INTEGER,
-    sampleRate INTEGER,
-    channelCount INTEGER
+    bitRate INTEGER AS Int,
+    sampleRate INTEGER AS Int,
+    channelCount INTEGER AS Int,
+    dateModified TEXT,
+    dateAdded TEXT NOT NULL
 );
 
 selectAll:
@@ -37,3 +39,65 @@ select:
 SELECT *
 FROM SongEntity
 WHERE id = :id;
+
+insert:
+INSERT OR IGNORE INTO SongEntity (
+    id,
+    path,
+    name,
+    artists,
+    album,
+    albumArtist,
+    trackNumber,
+    discNumber,
+    duration,
+    date,
+    genres,
+    size,
+    mimeType,
+    playbackPosition,
+    playCount,
+    lastPlayed,
+    lastCompleted,
+    excluded,
+    mediaProvider,
+    externalId,
+    replayGainTrack,
+    replayGainAlbum,
+    lyrics,
+    grouping,
+    composer,
+    bitRate,
+    sampleRate,
+    channelCount,
+    dateModified,
+    dateAdded
+)
+VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,? );
+
+update:
+UPDATE SongEntity
+SET
+    name = :name,
+    artists = :artists,
+    album = :album,
+    albumArtist = :albumArtist,
+    trackNumber = :trackNumber,
+    discNumber = :discNumber,
+    duration = :duration,
+    date = :date,
+    genres = :genres,
+    size = :size,
+    mimeType = :mimeType,
+    artists = :artists,
+    externalId = :externalId,
+    replayGainTrack = :replayGainTrack,
+    replayGainAlbum = :replayGainAlbum,
+    lyrics = :lyrics,
+    grouping = :grouping,
+    composer = :composer,
+    bitRate = :bitRate,
+    sampleRate = :sampleRate,
+    channelCount = :channelCount,
+    dateModified = :dateModified
+WHERE path = :path;

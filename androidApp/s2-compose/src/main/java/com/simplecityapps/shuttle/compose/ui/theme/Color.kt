@@ -10,7 +10,7 @@ object AppColors {
     val secondary = Color(0xFF0068A5)
     val background = Color(0xFFF7F7F7)
     val onBackground = Color(0xFF212121)
-    val surface = Color(0xFFFFFFFF)
+    val surface = Color(0xFFF7F7F7)
 
     val backgroundDark = Color(0xFF111111)
     val onBackgroundDark = Color(0xFFEFF0F3)

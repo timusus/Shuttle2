@@ -73,8 +73,8 @@ dependencies {
 
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.5.0-beta01")
     implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
+    implementation(project(":shared:ui"))
 
-    implementation(project(":shared:main"))
     implementation(project(":shared:preferences"))
     implementation(project(":shared:data"))
 

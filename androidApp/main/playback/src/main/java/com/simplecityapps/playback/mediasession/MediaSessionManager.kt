@@ -13,7 +13,6 @@ import android.util.LruCache
 import androidx.core.content.res.ResourcesCompat
 import androidx.media.session.MediaButtonReceiver
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import com.simplecityapps.mediaprovider.repository.*
 import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
 import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
@@ -136,7 +135,7 @@ class MediaSessionManager @Inject constructor(
                 .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, currentItem.song.friendlyArtistName ?: currentItem.song.albumArtist ?: context.getString(R.string.unknown))
                 .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, currentItem.song.album ?: context.getString(R.string.unknown))
                 .putString(MediaMetadataCompat.METADATA_KEY_TITLE, currentItem.song.name ?: context.getString(R.string.unknown))
-                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, currentItem.song.duration.toLong())
+                .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, currentItem.song.duration?.toLong() ?: 0L)
                 .putLong(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, currentItem.song.track?.toLong() ?: 1)
                 .putLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS, queueManager.getSize().toLong())
 

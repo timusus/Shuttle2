@@ -8,6 +8,7 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import timber.log.Timber
@@ -92,7 +93,7 @@ fun SongData.toSong(): Song {
         path = path,
         size = size,
         mimeType = mimeType,
-        lastModified = Instant.fromEpochMilliseconds(lastModified.time),
+        dateModified = Instant.fromEpochMilliseconds(lastModified.time),
         lastPlayed = lastPlayed?.let { Instant.fromEpochMilliseconds(it.time) },
         lastCompleted = lastCompleted?.let { Instant.fromEpochMilliseconds(it.time) },
         playCount = playCount,
@@ -105,8 +106,9 @@ fun SongData.toSong(): Song {
         lyrics = lyrics,
         grouping = grouping,
         bitRate = bitRate,
-        bitDepth = bitDepth,
         sampleRate = sampleRate,
-        channelCount = channelCount
+        channelCount = channelCount,
+        composer = null,
+        dateAdded = Clock.System.now()
     )
 }

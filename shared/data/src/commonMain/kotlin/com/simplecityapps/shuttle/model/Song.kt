@@ -6,6 +6,7 @@ import kotlinx.datetime.LocalDate
 
 @Parcelize
 @TypeParceler<Instant?, InstantParceler>
+@TypeParceler<Instant, InstantParceler>
 @TypeParceler<LocalDate?, LocalDateParceler>
 data class Song(
     val id: Long,
@@ -15,13 +16,13 @@ data class Song(
     val album: String?,
     val track: Int?,
     val disc: Int?,
-    val duration: Int,
+    val duration: Int?,
     val date: LocalDate?,
     val genres: List<String>,
     val path: String,
-    val size: Long,
-    val mimeType: String,
-    val lastModified: Instant?,
+    val size: Long?,
+    val mimeType: String?,
+    val dateModified: Instant?,
     val lastPlayed: Instant?,
     val lastCompleted: Instant?,
     val playCount: Int,
@@ -34,9 +35,10 @@ data class Song(
     val lyrics: String?,
     val grouping: String?,
     val bitRate: Int?,
-    val bitDepth: Int?,
     val sampleRate: Int?,
-    val channelCount: Int?
+    val channelCount: Int?,
+    val composer: String?,
+    val dateAdded: Instant
 ) : Parcelable {
 
     val type: Type

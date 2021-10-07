@@ -21,7 +21,7 @@ data class AudioFile(
     val lyrics: String?,
     val grouping: String?,
     val bitRate: Int?,
-    val bitDepth: Int?,
     val sampleRate: Int?,
-    val channelCount: Int?
+    val channelCount: Int?,
+    val composer: String?
 )

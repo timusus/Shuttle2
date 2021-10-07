@@ -73,10 +73,10 @@ class DetailSongBinder(
 
             trackTextView.text = viewBinder.song.track?.toString()
             titleTextView.text = viewBinder.song.name
-            durationTextView.text = viewBinder.song.duration.toHms("--:--")
+            durationTextView.text = viewBinder.song.duration?.toHms("--:--")
 
             if ((viewBinder.song.type == Song.Type.Audiobook || viewBinder.song.type == Song.Type.Podcast) && viewBinder.song.playbackPosition != 0) {
-                progressBar.progress = (((viewBinder.song.playbackPosition.toFloat() / viewBinder.song.duration) * 1000).toInt())
+                progressBar.progress = (((viewBinder.song.playbackPosition.toFloat() / (viewBinder.song.duration ?: 1)) * 1000).toInt())
                 progressBar.isVisible = true
             } else {
                 progressBar.isVisible = false

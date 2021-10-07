@@ -26,7 +26,7 @@ class LocalAlbumRepository(
                             albumArtist = songs.firstOrNull { it.albumArtist != null }?.albumArtist,
                             artists = songs.flatMap { it.artists }.distinct(),
                             songCount = songs.size,
-                            duration = songs.sumOf { it.duration },
+                            duration = songs.sumOf { it.duration ?: 0 },
                             year = songs.mapNotNull { it.date?.year }.minOrNull(),
                             playCount = songs.minOfOrNull { it.playCount } ?: 0,
                             lastSongPlayed = songs.mapNotNull { it.lastPlayed }.maxOrNull(),

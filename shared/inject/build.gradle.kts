@@ -3,7 +3,6 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 plugins {
     kotlin("multiplatform")
     id("com.android.library")
-    id("kotlin-parcelize")
 }
 
 kotlin {
@@ -18,7 +17,7 @@ kotlin {
     iosTarget("ios") {
         binaries {
             framework {
-                baseName = "parcel"
+                baseName = "inject"
             }
         }
     }

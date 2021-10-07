@@ -7,4 +7,6 @@ interface SongSharedDatabase {
 
     fun observeAll(): Flow<List<SongEntity>>
 
+    suspend fun insertOrUpdate(songs: List<SongEntity>)
+
 }

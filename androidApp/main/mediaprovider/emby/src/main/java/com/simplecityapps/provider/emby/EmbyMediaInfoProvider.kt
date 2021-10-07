@@ -32,7 +32,7 @@ class EmbyMediaInfoProvider @Inject constructor(
 
         return MediaInfo(
             path = embyPath,
-            mimeType = if (castCompatibilityMode) getMimeType(embyPath, song.mimeType) else song.mimeType,
+            mimeType = if (castCompatibilityMode) getMimeType(embyPath, song.mimeType ?: "audio/*") else song.mimeType ?: "audio/*",
             isRemote = true
         )
     }

@@ -1,11 +1,11 @@
 package com.simplecityapps.provider.emby
 
-import com.simplecityapps.shuttle.model.MediaProviderType
 import android.content.Context
 import com.simplecityapps.mediaprovider.*
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.networking.userDescription
 import com.simplecityapps.provider.emby.http.*
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import kotlinx.coroutines.flow.*
@@ -230,8 +230,8 @@ class EmbyMediaProvider(
             genres = genres,
             path = "emby://item/${id}",
             size = 0,
-            mimeType = "Audio/*",
-            lastModified = Clock.System.now(),
+            mimeType = "audio/*",
+            dateModified = Clock.System.now(),
             lastPlayed = null,
             lastCompleted = null,
             playCount = 0,
@@ -242,9 +242,12 @@ class EmbyMediaProvider(
             lyrics = null,
             grouping = null,
             bitRate = null,
-            bitDepth = null,
             sampleRate = null,
-            channelCount = null
+            channelCount = null,
+            replayGainTrack = null,
+            replayGainAlbum = null,
+            composer = null,
+            dateAdded = Clock.System.now()
         )
     }
 }

@@ -5,9 +5,15 @@ import kotlinx.datetime.LocalDate
 
 actual object LocalDateParceler : Parceler<LocalDate?> {
 
-    override fun create(parcel: Parcel) = LocalDate.parse(parcel.readString()!!)
+    override fun create(parcel: Parcel): LocalDate? {
+        val string = parcel.readString() ?: ""
+        if (string != "") {
+            return LocalDate.parse(string)
+        }
+        return null
+    }
 
     override fun LocalDate?.write(parcel: Parcel, flags: Int) {
-        this?.toString()?.let { parcel.writeString(it) }
+        parcel.writeString(this?.toString() ?: "")
     }
 }
