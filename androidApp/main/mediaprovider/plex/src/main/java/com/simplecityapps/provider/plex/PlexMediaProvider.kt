@@ -2,7 +2,7 @@ package com.simplecityapps.provider.plex
 
 import com.simplecityapps.mediaprovider.FlowEvent
 import com.simplecityapps.mediaprovider.MediaImporter
-import com.simplecityapps.mediaprovider.MediaProvider
+import com.simplecityapps.mediaprovider.MediaProviderLegacy
 import com.simplecityapps.mediaprovider.MessageProgress
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.networking.userDescription
@@ -23,7 +23,7 @@ import timber.log.Timber
 class PlexMediaProvider(
     private val authenticationManager: PlexAuthenticationManager,
     private val itemsService: ItemsService,
-) : MediaProvider {
+) : MediaProviderLegacy {
 
     override val type: MediaProviderType
         get() = MediaProviderType.Plex

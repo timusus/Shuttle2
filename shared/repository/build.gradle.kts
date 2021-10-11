@@ -4,6 +4,7 @@ plugins {
     kotlin("multiplatform")
     id("com.android.library")
     id("kotlin-parcelize")
+    kotlin("kapt")
 }
 
 kotlin {
@@ -28,6 +29,7 @@ kotlin {
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
                 implementation(project(":shared:data"))
                 implementation(project(":shared:database"))
+                implementation(project(":shared:inject"))
             }
         }
         val commonTest by getting {
@@ -36,7 +38,16 @@ kotlin {
                 implementation(kotlin("test-annotations-common"))
             }
         }
-        val androidMain by getting
+        val androidMain by getting {
+            dependencies {
+                implementation("com.google.dagger:hilt-android:2.38.1")
+                configurations.getByName("kapt").dependencies.add(
+                    org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency(
+                        "com.google.dagger", "hilt-compiler", "2.38.1"
+                    )
+                )
+            }
+        }
         val androidTest by getting {
             dependencies {
                 implementation(kotlin("test-junit"))

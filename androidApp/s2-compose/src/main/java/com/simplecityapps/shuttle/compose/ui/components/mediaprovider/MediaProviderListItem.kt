@@ -36,17 +36,17 @@ fun MediaProviderListItem(
         Icon(
             modifier = Modifier.size(28.dp),
             painter = painterResource(id = mediaProviderType.iconResId),
-            contentDescription = stringResource(id = mediaProviderType.title),
+            contentDescription = stringResource(id = mediaProviderType.titleResId),
             tint = Color.Unspecified
         )
         Spacer(modifier = Modifier.size(16.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                text = stringResource(id = mediaProviderType.title),
+                text = stringResource(id = mediaProviderType.titleResId),
                 style = MaterialTheme.typography.body1
             )
             Text(
-                text = stringResource(id = mediaProviderType.description),
+                text = stringResource(id = mediaProviderType.descriptionResId),
                 style = MaterialTheme.typography.body2,
                 fontSize = 12.sp
             )

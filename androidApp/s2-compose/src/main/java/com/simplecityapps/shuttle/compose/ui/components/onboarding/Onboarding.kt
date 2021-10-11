@@ -23,9 +23,9 @@ import com.google.accompanist.pager.HorizontalPagerIndicator
 import com.google.accompanist.pager.rememberPagerState
 import com.simplecityapps.shuttle.compose.R
 import com.simplecityapps.shuttle.compose.ui.components.ThemedPreviewProvider
+import com.simplecityapps.shuttle.compose.ui.components.mediaimporter.MediaImporter
 import com.simplecityapps.shuttle.compose.ui.components.mediaprovider.MediaProviderBottomSheet
 import com.simplecityapps.shuttle.compose.ui.components.mediaprovider.MediaProviderSelection
-import com.simplecityapps.shuttle.compose.ui.components.mediascanner.MediaScanner
 import com.simplecityapps.shuttle.compose.ui.theme.MaterialColors
 import com.simplecityapps.shuttle.compose.ui.theme.Theme
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -91,7 +91,7 @@ fun Onboarding(
                             })
                     }
                     1 -> {
-                        MediaScanner()
+                        MediaImporter(viewModel = hiltViewModel(), isVisible = pagerState.currentPage == page)
                     }
                 }
             }

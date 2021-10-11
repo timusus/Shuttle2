@@ -18,7 +18,7 @@ class EmbyMediaProvider(
     private val context: Context,
     private val authenticationManager: EmbyAuthenticationManager,
     private val itemsService: ItemsService,
-) : MediaProvider {
+) : MediaProviderLegacy {
 
     override val type = MediaProviderType.Emby
 

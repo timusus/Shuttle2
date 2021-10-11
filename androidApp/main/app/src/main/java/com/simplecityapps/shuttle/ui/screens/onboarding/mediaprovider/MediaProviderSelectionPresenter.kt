@@ -3,7 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider
 import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStoreMediaProvider
 import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibMediaProvider
 import com.simplecityapps.mediaprovider.MediaImporter
-import com.simplecityapps.mediaprovider.MediaProvider
+import com.simplecityapps.mediaprovider.MediaProviderLegacy
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
@@ -102,7 +102,7 @@ class MediaProviderSelectionPresenter @AssistedInject constructor(
         }
     }
 
-    private fun MediaProviderType.toMediaProvider(): MediaProvider {
+    private fun MediaProviderType.toMediaProvider(): MediaProviderLegacy {
         return when (this) {
             MediaProviderType.MediaStore -> mediaStoreMediaProvider
             MediaProviderType.Shuttle -> taglibMediaProvider

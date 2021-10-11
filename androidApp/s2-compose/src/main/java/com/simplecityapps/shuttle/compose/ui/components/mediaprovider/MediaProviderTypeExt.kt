@@ -5,7 +5,7 @@ import androidx.annotation.StringRes
 import com.simplecityapps.shuttle.compose.R
 import com.simplecityapps.shuttle.model.MediaProviderType
 
-val MediaProviderType.title: Int
+val MediaProviderType.titleResId: Int
     @StringRes
     get() {
         return when (this) {
@@ -17,7 +17,7 @@ val MediaProviderType.title: Int
         }
     }
 
-val MediaProviderType.description: Int
+val MediaProviderType.descriptionResId: Int
     @StringRes
     get() {
         return when (this) {

@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 plugins {
     kotlin("multiplatform")
     id("com.android.library")
+    kotlin("kapt")
 }
 
 kotlin {
@@ -17,14 +18,18 @@ kotlin {
     iosTarget("ios") {
         binaries {
             framework {
-                baseName = "mediascanner"
+                baseName = "com/simplecityapps/shuttle/mediaimport"
             }
         }
     }
     sourceSets {
         val commonMain by getting {
             dependencies {
-
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
+                implementation(project(":shared:data"))
+                implementation(project(":shared:repository"))
+                implementation(project(":shared:preferences"))
+                implementation(project(":shared:inject"))
             }
         }
         val commonTest by getting {
@@ -33,7 +38,17 @@ kotlin {
                 implementation(kotlin("test-annotations-common"))
             }
         }
-        val androidMain by getting
+        val androidMain by getting {
+            dependencies {
+                implementation("androidx.core:core-ktx:1.6.0")
+                implementation("com.google.dagger:hilt-android:2.38.1")
+                configurations.getByName("kapt").dependencies.add(
+                    org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency(
+                        "com.google.dagger", "hilt-compiler", "2.38.1"
+                    )
+                )
+            }
+        }
         val androidTest by getting {
             dependencies {
                 implementation(kotlin("test-junit"))
