@@ -249,11 +249,13 @@
     <!-- Shown after user initially denies access to storage -->
     <string name="onboarding_permission_help_text">To find your music, S2 needs permission to read your media storage</string>
     <!-- Title of S2's Media Scanner, the thing that scans files on the device to read audio files/tags -->
-    <string name="onboarding_media_scanner_title">Media scanner</string>
+    <string name="onboarding_media_scanner_title">Media importer</string>
     <!-- Shown when the media scanner is scanning -->
-    <string name="onboarding_media_scanner_scanning">Scanning…</string>
+    <string name="onboarding_media_scanner_scanning">Importing…</string>
+    <!-- Shown when the media scanner is scanning -->
+    <string name="onboarding_media_import_importing_songs">Importing songs…</string>
     <!-- Button to initiate a media scanner scan-->
-    <string name="onboarding_media_scan">Scan</string>
+    <string name="onboarding_media_scan">Import</string>
     <!-- Button to go back to the previous page, when onboarding -->
     <string name="onboarding_button_back">Back</string>
     <!-- Button to go to the next page, when onboarding -->
@@ -274,7 +276,8 @@
     <string name="onboarding_switch_firebase_description_analytics">Enables A/B testing of features, and tracks how users interact with the app</string>
     <!-- Shown during onboarding, or when choosing a media provider. -->
     <string name="onboarding_media_selection_subtitle">Choose where your music comes from. Use the Android Media Store if you\'re not sure.</string>
-
+    <!-- Shown when the user attempts a scan with no media providers selected-->
+    <string name="media_scan_failed_no_media_providers">No media provider selected</string>
 
     <!-- Media Providers-->
 
@@ -368,7 +371,10 @@
     <string name="media_import_directories_empty">No directories/files to scan</string>
     <!-- Shown when the S2 Media Provider is searching an m3u playlist for songs -->
     <string name="media_import_m3u_scan">Finding songs for <xliff:g example="playlist1.m3u" id="playlist_name">{playlist_name}</xliff:g></string>
-
+    <!-- Shown when the media importer has successfully completed importing songs-->
+    <string name="media_import_song_import_complete">Song import complete</string>
+    <!-- Shown when the media importer has faild to importing songs-->
+    <string name="media_import_song_import_failure">Song import failed</string>
 
     <!-- Menus -->
 
@@ -440,4 +446,34 @@
     <string name="menu_title_remove_from_queue">Remove from Queue</string>
     <!-- Menu option to remove all items from the queue -->
     <string name="menu_title_sort_clear_queue">Clear Queue</string>
+
+
+    <!-- Core -->
+
+    <!-- 'Loading' text. Shown on various screens as their content is loading-->
+    <string name="loading">Loading…</string>
+    <!-- Shown in various places to indicate this particular field is unknown. E.g. the album name is 'unknown', or the artist is 'unknown' -->
+    <string name="unknown">Unknown</string>
+    <!-- Shown when the playback queue is empty -->
+    <string name="queue_empty">Queue empty</string>
+    <!-- Shown when the current playback queue is empty. Pressing the widget will just open the app. -->
+    <string name="widget_empty_text">Choose a song…</string>
+    <!-- Shown after user selects chromecast button (play on.. <which chromecast device>)-->
+    <string name="media_route_menu_title">Play on…</string>
+    <!-- Text shown on shuffle button, Shuffle mode on-->
+    <string name="shuffle_on">Shuffle on</string>
+    <!-- Text shown on shuffle button, Shuffle mode off-->
+    <string name="shuffle_off">Shuffle off</string>
+    <!-- Shown on equalizer screen. EQ Preset Flat-->
+    <string name="eq_preset_flat">Flat</string>
+    <!-- Shown on equalizer screen. EQ Preset Custom-->
+    <string name="eq_preset_custom">Custom</string>
+    <!-- Shown on equalizer screen. EQ Preset Bass boost-->
+    <string name="eq_preset_bass_boost">Bass boost</string>
+    <!-- Shown on equalizer screen. EQ Preset Bass reduction-->
+    <string name="eq_preset_bass_reduce">Bass reduction</string>
+    <!-- Shown on equalizer screen. EQ Preset Vocal boost-->
+    <string name="eq_preset_vocal_boost">Vocal boost</string>
+    <!-- Shown on equalizer screen. EQ Preset Vocal reduction-->
+    <string name="eq_preset_vocal_Reduce">Vocal reduction</string>
 </resources>

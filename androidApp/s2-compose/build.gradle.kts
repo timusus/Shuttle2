@@ -62,6 +62,7 @@ dependencies {
     implementation("com.google.accompanist:accompanist-pager:0.18.0")
     implementation("com.google.accompanist:accompanist-pager-indicators:0.18.0")
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.18.0")
+    implementation("com.google.accompanist:accompanist-permissions:0.18.0")
 
     testImplementation("junit:junit:4.13.2")
 
@@ -77,6 +78,9 @@ dependencies {
 
     implementation(project(":shared:preferences"))
     implementation(project(":shared:data"))
+    implementation(project(":shared:repository"))
+    implementation(project(":shared:database"))
+    implementation(project(":shared:mediaimport"))
 
     // Hilt
     implementation("com.google.dagger:hilt-android:2.38.1")

@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.domain.model
+package com.simplecityapps.shuttle.ui.domain.model
 
 import com.simplecityapps.shuttle.inject.Inject
 import com.simplecityapps.shuttle.model.MediaProviderType

@@ -47,7 +47,7 @@ class MediaImporter(
 
     var listeners = mutableSetOf<Listener>()
 
-    val mediaProviders: MutableSet<MediaProvider> = mutableSetOf()
+    val mediaProviders: MutableSet<MediaProviderLegacy> = mutableSetOf()
 
     var importCount: Int = 0
 
@@ -159,7 +159,7 @@ class MediaImporter(
         val deletes: Int
     )
 
-    private fun importSongs(mediaProvider: MediaProvider): Flow<FlowEvent<SongImportResult, MessageProgress>> {
+    private fun importSongs(mediaProvider: MediaProviderLegacy): Flow<FlowEvent<SongImportResult, MessageProgress>> {
         return flow {
 
             emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_import_retrieving_songs), null)))
@@ -223,7 +223,7 @@ class MediaImporter(
         val mediaProviderType: MediaProviderType
     )
 
-    private fun importPlaylists(mediaProvider: MediaProvider): Flow<FlowEvent<PlaylistImportResult, MessageProgress>> {
+    private fun importPlaylists(mediaProvider: MediaProviderLegacy): Flow<FlowEvent<PlaylistImportResult, MessageProgress>> {
         return flow {
 
             emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_import_retrieving_playlists), null)))

@@ -23,7 +23,7 @@ class TaglibMediaProvider(
     private val context: Context,
     private val kTagLib: KTagLib,
     private val fileScanner: FileScanner,
-) : MediaProvider {
+) : MediaProviderLegacy {
 
     override val type = MediaProviderType.Shuttle
 

@@ -22,7 +22,7 @@ import kotlin.math.abs
 
 class MediaStoreMediaProvider(
     private val context: Context
-) : MediaProvider {
+) : MediaProviderLegacy {
 
     override val type = MediaProviderType.MediaStore
 

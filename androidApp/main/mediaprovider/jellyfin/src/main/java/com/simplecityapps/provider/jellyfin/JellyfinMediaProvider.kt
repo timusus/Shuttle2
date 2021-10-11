@@ -18,7 +18,7 @@ class JellyfinMediaProvider(
     private val context: Context,
     private val authenticationManager: JellyfinAuthenticationManager,
     private val itemsService: ItemsService,
-) : MediaProvider {
+) : MediaProviderLegacy {
 
     override val type = MediaProviderType.Jellyfin
 

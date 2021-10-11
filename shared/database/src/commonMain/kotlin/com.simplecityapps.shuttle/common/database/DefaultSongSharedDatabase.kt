@@ -1,77 +1,82 @@
 package com.simplecityapps.shuttle.common.database
 
 import com.simplecityapps.shuttle.database.SongDatabase
+import com.simplecityapps.shuttle.model.SongData
 import com.squareup.sqldelight.db.SqlDriver
 import com.squareup.sqldelight.runtime.coroutines.asFlow
 import com.squareup.sqldelight.runtime.coroutines.mapToList
 import comsimplecityappsshuttle.common.database.SongEntity
 import kotlinx.coroutines.flow.Flow
+import kotlinx.datetime.Instant
 
-class DefaultSongSharedDatabase(private val driver: SqlDriver) : SongSharedDatabase {
+class DefaultSongSharedDatabase(
+    driver: SqlDriver
+) : SongSharedDatabase {
 
     private val database = SongDatabase(driver)
 
-    override fun observeAll(): Flow<List<SongEntity>> {
+    override fun getSongs(): Flow<List<SongEntity>> {
         return database.songDatabaseQueries.selectAll().asFlow().mapToList()
     }
 
-    override suspend fun insertOrUpdate(songs: List<SongEntity>) {
+    override suspend fun insertOrUpdate(songs: List<SongData>, insertDate: Instant) {
         database.songDatabaseQueries.transaction {
-            songs.forEach { songEntity ->
+            songs.forEach { songData ->
                 database.songDatabaseQueries.insert(
                     id = null,
-                    path = songEntity.path,
-                    name = songEntity.name,
-                    artists = songEntity.artists,
-                    album = songEntity.album,
-                    albumArtist = songEntity.albumArtist,
-                    trackNumber = songEntity.trackNumber, discNumber = songEntity.discNumber,
-                    duration = songEntity.duration,
-                    date = songEntity.date,
-                    genres = songEntity.genres,
-                    size = songEntity.size,
-                    mimeType = songEntity.mimeType,
-                    playbackPosition = songEntity.playbackPosition,
-                    playCount = songEntity.playCount,
-                    lastPlayed = songEntity.lastPlayed,
-                    lastCompleted = songEntity.lastCompleted,
-                    excluded = songEntity.excluded,
-                    mediaProvider = songEntity.mediaProvider,
-                    externalId = songEntity.externalId,
-                    replayGainTrack = songEntity.replayGainTrack,
-                    replayGainAlbum = songEntity.replayGainAlbum,
-                    lyrics = songEntity.lyrics,
-                    grouping = songEntity.grouping,
-                    composer = songEntity.composer,
-                    bitRate = songEntity.bitRate,
-                    sampleRate = songEntity.sampleRate,
-                    channelCount = songEntity.channelCount,
-                    dateModified = songEntity.dateModified,
-                    dateAdded = songEntity.dateAdded
+                    path = songData.path,
+                    name = songData.name,
+                    artists = songData.artists.joinToString(";"),
+                    album = songData.album,
+                    albumArtist = songData.albumArtist,
+                    trackNumber = songData.track,
+                    discNumber = songData.disc,
+                    duration = songData.duration,
+                    date = songData.date?.toString(),
+                    genres = songData.genres.joinToString(";"),
+                    size = songData.size,
+                    mimeType = songData.mimeType,
+                    playbackPosition = null,
+                    playCount = 0,
+                    lastPlayed = songData.lastPlayed?.toString(),
+                    lastCompleted = songData.lastCompleted?.toString(),
+                    excluded = false,
+                    mediaProvider = songData.mediaProvider.name,
+                    externalId = songData.externalId,
+                    replayGainTrack = songData.replayGainTrack,
+                    replayGainAlbum = songData.replayGainAlbum,
+                    lyrics = songData.lyrics,
+                    grouping = songData.grouping,
+                    composer = songData.composer,
+                    bitRate = songData.bitRate,
+                    sampleRate = songData.sampleRate,
+                    channelCount = songData.channelCount,
+                    dateModified = songData.dateModified?.toString(),
+                    dateAdded = insertDate.toString()
                 )
                 database.songDatabaseQueries.update(
-                    name = songEntity.name,
-                    artists = songEntity.artists,
-                    album = songEntity.album,
-                    albumArtist = songEntity.albumArtist,
-                    trackNumber = songEntity.trackNumber,
-                    discNumber = songEntity.discNumber,
-                    duration = songEntity.duration,
-                    date = songEntity.date,
-                    genres = songEntity.genres,
-                    size = songEntity.size,
-                    mimeType = songEntity.mimeType,
-                    externalId = songEntity.externalId,
-                    replayGainTrack = songEntity.replayGainTrack,
-                    replayGainAlbum = songEntity.replayGainAlbum,
-                    lyrics = songEntity.lyrics,
-                    grouping = songEntity.grouping,
-                    composer = songEntity.composer,
-                    bitRate = songEntity.bitRate,
-                    sampleRate = songEntity.sampleRate,
-                    channelCount = songEntity.channelCount,
-                    dateModified = songEntity.dateModified,
-                    path = songEntity.path
+                    name = songData.name,
+                    artists = songData.artists.joinToString(";"),
+                    album = songData.album,
+                    albumArtist = songData.albumArtist,
+                    trackNumber = songData.track,
+                    discNumber = songData.disc,
+                    duration = songData.duration,
+                    date = songData.date?.toString(),
+                    genres = songData.genres.joinToString(";"),
+                    size = songData.size,
+                    mimeType = songData.mimeType,
+                    externalId = songData.externalId,
+                    replayGainTrack = songData.replayGainTrack,
+                    replayGainAlbum = songData.replayGainAlbum,
+                    lyrics = songData.lyrics,
+                    grouping = songData.grouping,
+                    composer = songData.composer,
+                    bitRate = songData.bitRate,
+                    sampleRate = songData.sampleRate,
+                    channelCount = songData.channelCount,
+                    dateModified = songData.dateModified?.toString(),
+                    path = songData.path
                 )
             }
         }
