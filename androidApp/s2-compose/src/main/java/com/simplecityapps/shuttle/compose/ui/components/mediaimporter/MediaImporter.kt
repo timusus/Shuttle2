@@ -255,7 +255,7 @@ fun MediaImporterPreview(@PreviewParameter(ThemedPreviewProvider::class) darkThe
                             songData = fakeSongData
                         ),
                         ImportViewState.QueryingApi(
-                            mediaProviderType = MediaProviderType.MediaStore,
+                            mediaProviderType = MediaProviderType.Emby,
                             progress = Progress(15, 20)
                         ),
                         ImportViewState.Failure(mediaProviderType = MediaProviderType.Jellyfin),
