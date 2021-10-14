@@ -17,6 +17,7 @@ import com.simplecityapps.shuttle.compose.R
 import com.simplecityapps.shuttle.compose.ui.components.ThemedPreviewProvider
 import com.simplecityapps.shuttle.compose.ui.theme.Theme
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.isRemote
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -34,7 +35,7 @@ fun MediaProviderBottomSheet(mediaProviders: List<MediaProviderType>, onMediaPro
             verticalArrangement = Arrangement.spacedBy(8.dp),
             content = {
                 mediaProviders
-                    .groupBy { it.remote }
+                    .groupBy { it.isRemote() }
                     .forEach { (isRemote, mediaProviders) ->
                         item {
                             Text(

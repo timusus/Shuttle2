@@ -2,12 +2,12 @@ package com.simplecityapps.shuttle.ui.mediaimporter
 
 import com.simplecityapps.shuttle.inject.Inject
 import com.simplecityapps.shuttle.inject.hilt.HiltViewModel
-import com.simplecityapps.shuttle.mediaimport.model.GetUserSelectedMediaProviders
-import com.simplecityapps.shuttle.mediaimport.model.songs.ImportSongs
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Progress
 import com.simplecityapps.shuttle.model.SongData
 import com.simplecityapps.shuttle.ui.ViewModel
+import com.simplecityapps.shuttle.ui.domain.model.GetUserSelectedMediaProviders
+import com.simplecityapps.shuttle.ui.domain.model.ImportSongs
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect

@@ -29,7 +29,8 @@ kotlin {
                 implementation(project(":shared:data"))
                 implementation(project(":shared:inject"))
                 implementation(project(":shared:savedstate"))
-                implementation(project(":shared:mediaimport"))
+                implementation(project(":shared:mediaprovider:common"))
+                implementation(project(":shared:mediaprovider:factory"))
                 implementation(project(":shared:repository"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
             }

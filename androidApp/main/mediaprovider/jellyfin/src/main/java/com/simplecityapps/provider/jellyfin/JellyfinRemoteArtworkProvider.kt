@@ -1,7 +1,6 @@
 package com.simplecityapps.provider.jellyfin
 
 import android.net.Uri
-import com.simplecityapps.mediaprovider.RemoteArtworkProvider
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.provider.jellyfin.http.Item
 import com.simplecityapps.provider.jellyfin.http.ItemsService
@@ -13,7 +12,7 @@ class JellyfinRemoteArtworkProvider @Inject constructor(
     private val jellyfinAuthenticationManager: JellyfinAuthenticationManager,
     private val itemsService: ItemsService,
     private val credentialStore: CredentialStore
-) : RemoteArtworkProvider {
+) : com.simplecityapps.mediaprovider.RemoteArtworkProvider {
 
     override fun handles(uri: Uri): Boolean {
         return uri.scheme == "jellyfin"

@@ -22,6 +22,7 @@ import com.simplecityapps.shuttle.compose.ui.components.ThemedPreviewProvider
 import com.simplecityapps.shuttle.compose.ui.theme.MaterialColors
 import com.simplecityapps.shuttle.compose.ui.theme.Theme
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.isRemote
 import com.simplecityapps.shuttle.ui.mediaprovider.MediaProviderSelectionViewModel
 
 @Composable
@@ -72,7 +73,7 @@ fun MediaProviderSelection(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 content = {
                     selectedMediaProviders
-                        .groupBy { it.remote }
+                        .groupBy { it.isRemote() }
                         .forEach { (isRemote, mediaProviders) ->
                             item {
                                 Text(
