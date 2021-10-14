@@ -22,9 +22,14 @@ class DataStorePreferenceManager(
         return dataStore.data.map { settings -> settings[booleanPreferencesKey(key)] ?: false }
     }
 
-    override suspend fun setString(key: String, value: String) {
+    override suspend fun setString(key: String, value: String?) {
         dataStore.edit { settings ->
-            settings[stringPreferencesKey(key)] = value
+            val preferenceKey = stringPreferencesKey(key)
+            if (value == null) {
+                settings.remove(preferenceKey)
+            } else {
+                settings[preferenceKey] = value
+            }
         }
     }
 

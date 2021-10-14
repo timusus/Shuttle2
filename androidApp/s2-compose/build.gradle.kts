@@ -80,9 +80,16 @@ dependencies {
     implementation(project(":shared:data"))
     implementation(project(":shared:repository"))
     implementation(project(":shared:database"))
-    implementation(project(":shared:mediaimport"))
+    implementation(project(":shared:mediaprovider:common"))
+    implementation(project(":shared:mediaprovider:jellyfin"))
+    implementation(project(":shared:mediaprovider:factory"))
+    implementation(project(":shared:deviceinfo"))
+    implementation(project(":androidApp:common:mediaprovider:mediastore"))
 
     // Hilt
     implementation("com.google.dagger:hilt-android:2.38.1")
     kapt("com.google.dagger:hilt-compiler:2.38.1")
+
+    // Ktor
+    implementation("io.ktor:ktor-client-core:1.6.4")
 }

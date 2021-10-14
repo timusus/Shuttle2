@@ -11,6 +11,7 @@ import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.isRemote
 import com.simplecityapps.shuttle.ui.common.recyclerview.SpacesItemDecoration
 import com.simplecityapps.shuttle.ui.common.utils.withArgs
 import com.simplecityapps.shuttle.ui.screens.home.search.HeaderBinder
@@ -36,14 +37,14 @@ class MediaProviderOptionsFragment : DialogFragment() {
         val providerTypes = requireArguments().getSerializable(ARG_PROVIDER_TYPES) as List<MediaProviderType>
 
         val viewBinders = mutableListOf<ViewBinder>()
-        val localMediaTypes = providerTypes.filter { !it.remote }
+        val localMediaTypes = providerTypes.filter { !it.isRemote() }
         if (localMediaTypes.isNotEmpty()) {
             viewBinders.add(HeaderBinder(getString(R.string.media_provider_type_local)))
             viewBinders.addAll(
                 localMediaTypes.map { provider -> MediaProviderBinder(providerType = provider, listener = listener, showRemoveButton = false, showSubtitle = true) }
             )
         }
-        val remoteMediaTypes = providerTypes.filter { it.remote }
+        val remoteMediaTypes = providerTypes.filter { it.isRemote() }
         if (remoteMediaTypes.isNotEmpty()) {
             viewBinders.add(HeaderBinder(getString(R.string.media_provider_type_remote)))
             viewBinders.addAll(

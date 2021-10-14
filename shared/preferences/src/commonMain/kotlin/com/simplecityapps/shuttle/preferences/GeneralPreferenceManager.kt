@@ -28,8 +28,8 @@ class GeneralPreferenceManager(private val preferenceManager: PreferenceManager)
             .map { string ->
                 string?.split(",")
                     ?.filter { it.isNotEmpty() }
-                    ?.map {
-                        MediaProviderType.init(it.toInt())
+                    ?.mapNotNull { name ->
+                        MediaProviderType.values().firstOrNull { it.name == name }
                     }
             }
     }

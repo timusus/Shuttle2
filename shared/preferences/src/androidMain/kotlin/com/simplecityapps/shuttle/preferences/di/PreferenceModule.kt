@@ -8,6 +8,7 @@ import androidx.datastore.preferences.preferencesDataStoreFile
 import com.simplecityapps.shuttle.preferences.DataStorePreferenceManager
 import com.simplecityapps.shuttle.preferences.GeneralPreferenceManager
 import com.simplecityapps.shuttle.preferences.PreferenceManager
+import com.simplecityapps.shuttle.security.SecurityManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -42,5 +43,11 @@ class PreferencesModule {
     @Singleton
     fun provideGeneralPreferenceManager(preferenceManager: PreferenceManager): GeneralPreferenceManager {
         return GeneralPreferenceManager(preferenceManager)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSecurityManager(): SecurityManager {
+        return SecurityManager()
     }
 }
