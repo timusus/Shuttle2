@@ -93,7 +93,7 @@ fun DropDownMenu(
         expanded = expanded,
         onDismissRequest = { onDismiss() }) {
         if (mediaProviderType != MediaProviderType.MediaStore) {
-            DropdownMenuItem(onClick = { onConfigure }) {
+            DropdownMenuItem(onClick = { onConfigure() }) {
                 Text(stringResource(id = R.string.menu_title_media_provider_configure))
             }
         }

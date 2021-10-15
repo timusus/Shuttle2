@@ -3,6 +3,8 @@ package com.simplecityapps.shuttle.mediaprovider.jellyfin
 import com.simplecityapps.shuttle.deviceinfo.DeviceInfo
 import com.simplecityapps.shuttle.error.HttpStatusCode
 import com.simplecityapps.shuttle.error.RemoteServiceHttpError
+import com.simplecityapps.shuttle.logging.LogPriority
+import com.simplecityapps.shuttle.logging.logcat
 import com.simplecityapps.shuttle.mediaprovider.jellyfin.http.data.AuthenticatedCredentials
 import com.simplecityapps.shuttle.mediaprovider.jellyfin.http.service.UserService
 import kotlinx.coroutines.flow.first
@@ -11,7 +13,7 @@ import java.util.*
 
 class AuthenticationManager(
     private val userService: UserService,
-    private val credentialStore: CredentialStore,
+    private val credentialStore: JellyfinPreferenceManager,
     private val deviceInfo: DeviceInfo
 ) {
 
@@ -22,7 +24,7 @@ class AuthenticationManager(
         val address = credentialStore.getAddress().firstOrNull()
             ?: return Result.failure(Exception("Invalid address"))
 
-//        logcat { "authenticate(address: $address)" }
+        logcat { "authenticate(address: $address)" }
         val authenticationResult = userService.authenticate(
             url = address,
             username = loginCredentials.username,
@@ -49,7 +51,7 @@ class AuthenticationManager(
     suspend fun buildJellyfinPath(itemId: String, authenticatedCredentials: AuthenticatedCredentials): String? {
         val address = credentialStore.getAddress().first()
         if (address == null) {
-//            logcat(LogPriority.WARN) { "Invalid jellyfin address (${address})" }
+            logcat(LogPriority.WARN) { "Invalid jellyfin address (${address})" }
             return null
         }
 

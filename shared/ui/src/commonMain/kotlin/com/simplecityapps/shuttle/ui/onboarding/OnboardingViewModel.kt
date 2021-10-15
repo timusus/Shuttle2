@@ -1,12 +1,13 @@
 package com.simplecityapps.shuttle.ui.onboarding
 
-import com.simplecityapps.shuttle.ui.ViewModel
-import com.simplecityapps.shuttle.ui.domain.model.GetMediaProviderTypes
-import com.simplecityapps.shuttle.ui.domain.model.SetMediaProviders
 import com.simplecityapps.shuttle.inject.Inject
 import com.simplecityapps.shuttle.inject.hilt.HiltViewModel
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.defaultMediaProvider
 import com.simplecityapps.shuttle.savedstate.SavedStateHandle
+import com.simplecityapps.shuttle.ui.ViewModel
+import com.simplecityapps.shuttle.ui.domain.model.GetMediaProviderTypes
+import com.simplecityapps.shuttle.ui.domain.model.SetMediaProviders
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
@@ -21,7 +22,7 @@ class OnboardingViewModel @Inject constructor(
 
     private val isOnboarding = savedStateHandle.get<Boolean>(ARG_ONBOARDING) ?: false
 
-    val selectedMediaProviders = getMediaProviderTypes(if (isOnboarding) listOf(MediaProviderType.MediaStore) else emptyList())
+    val selectedMediaProviders = getMediaProviderTypes(if (isOnboarding) listOfNotNull(defaultMediaProvider()) else emptyList())
         .onEach { println("Media providers: $it, isOnboarding: $isOnboarding") }
         .stateIn(
             scope = coroutineScope,

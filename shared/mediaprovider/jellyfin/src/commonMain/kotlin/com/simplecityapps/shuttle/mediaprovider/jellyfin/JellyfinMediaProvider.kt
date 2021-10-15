@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.mediaprovider.jellyfin
 
+import com.simplecityapps.shuttle.logging.logcat
 import com.simplecityapps.shuttle.mediaprovider.common.MediaProvider
 import com.simplecityapps.shuttle.mediaprovider.jellyfin.http.data.AuthenticatedCredentials
 import com.simplecityapps.shuttle.mediaprovider.jellyfin.http.data.ItemResponse
@@ -12,7 +13,7 @@ import kotlin.math.min
 
 class JellyfinMediaProvider(
     private val authenticationManager: AuthenticationManager,
-    private val credentialStore: CredentialStore,
+    private val jellyfinPreferenceManager: JellyfinPreferenceManager,
     private val itemsService: ItemsService
 ) : MediaProvider {
 
@@ -23,8 +24,8 @@ class JellyfinMediaProvider(
         return flow {
             authenticationManager.authenticate().fold(
                 { authenticatedCredentials ->
-                    val address = credentialStore.getAddress().firstOrNull() ?: run {
-//                        logcat { "findSongs() failed: address null" }
+                    val address = jellyfinPreferenceManager.getAddress().firstOrNull() ?: run {
+                        logcat { "findSongs() failed: address null" }
                         emit(MediaProvider.SongRetrievalState.Failed)
                         return@flow
                     }
@@ -36,10 +37,13 @@ class JellyfinMediaProvider(
                     emit(MediaProvider.SongRetrievalState.Complete(items.map { it.toSongData() }))
                 },
                 { throwable ->
-//                    logcat { "findSongs() failed: $throwable" }
+                    logcat { "findSongs() failed: $throwable" }
                     emit(MediaProvider.SongRetrievalState.Failed)
                 }
             )
+        }.catch { throwable ->
+            logcat { "findSongs() failed: $throwable" }
+            emit(MediaProvider.SongRetrievalState.Failed)
         }
     }
 

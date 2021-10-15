@@ -28,7 +28,8 @@ import com.simplecityapps.shuttle.ui.mediaprovider.MediaProviderSelectionViewMod
 @Composable
 fun MediaProviderSelection(
     viewModel: MediaProviderSelectionViewModel,
-    onAddMediaProviderClicked: () -> Unit = {}
+    onAddMediaProvider: () -> Unit = {},
+    onConfigureMediaProvider: (MediaProviderType) -> Unit = {}
 ) {
     val selectedMediaProviders by viewModel.selectedMediaProviders.collectAsState()
 
@@ -37,7 +38,8 @@ fun MediaProviderSelection(
         onRemoveMediaProvider = { mediaProviderType ->
             viewModel.removeMediaProvider(mediaProviderType)
         },
-        onAddMediaProviderClicked = onAddMediaProviderClicked
+        onAddMediaProvider = onAddMediaProvider,
+        onConfigureMediaProvider = onConfigureMediaProvider
     )
 }
 
@@ -46,7 +48,8 @@ fun MediaProviderSelection(
 fun MediaProviderSelection(
     selectedMediaProviders: List<MediaProviderType>,
     onRemoveMediaProvider: (MediaProviderType) -> Unit = {},
-    onAddMediaProviderClicked: () -> Unit = {}
+    onAddMediaProvider: () -> Unit = {},
+    onConfigureMediaProvider: (MediaProviderType) -> Unit = {}
 ) {
     Scaffold(topBar = {
         TopAppBar(
@@ -86,7 +89,7 @@ fun MediaProviderSelection(
                                     mediaProviderType = mediaProviderType,
                                     showOverflow = true,
                                     onRemove = { onRemoveMediaProvider(mediaProviderType) },
-                                    onConfigure = {}
+                                    onConfigure = { onConfigureMediaProvider(mediaProviderType) }
                                 )
                             }
                         }
@@ -98,7 +101,7 @@ fun MediaProviderSelection(
                         .align(Alignment.CenterHorizontally)
                         .padding(bottom = 16.dp),
                     onClick = {
-                        onAddMediaProviderClicked()
+                        onAddMediaProvider()
                     }) {
                     Text(
                         text = stringResource(id = R.string.media_provider_add),

@@ -7,11 +7,12 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
 import com.simplecityapps.shuttle.deviceinfo.DeviceInfo
 import com.simplecityapps.shuttle.mediaprovider.jellyfin.AuthenticationManager
-import com.simplecityapps.shuttle.mediaprovider.jellyfin.CredentialStore
 import com.simplecityapps.shuttle.mediaprovider.jellyfin.JellyfinMediaProvider
+import com.simplecityapps.shuttle.mediaprovider.jellyfin.JellyfinPreferenceManager
 import com.simplecityapps.shuttle.mediaprovider.jellyfin.http.service.ItemsService
 import com.simplecityapps.shuttle.mediaprovider.jellyfin.http.service.UserService
-import com.simplecityapps.shuttle.mediaprovider.jellyfin.preferences.JellyfinPreferenceManager
+import com.simplecityapps.shuttle.mediaprovider.jellyfin.preferences.AesSecurePreferenceManager
+import com.simplecityapps.shuttle.preferences.SecurePreferenceManager
 import com.simplecityapps.shuttle.preferences.di.PreferencesModule
 import com.simplecityapps.shuttle.security.SecurityManager
 import dagger.Module
@@ -20,6 +21,9 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.ktor.client.*
+import io.ktor.client.engine.android.*
+import io.ktor.client.features.json.*
+import io.ktor.client.features.json.serializer.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -43,14 +47,12 @@ class MediaImportModule {
 
     @Provides
     @Singleton
-    fun provideJellyfinPreferenceManager(@Named("JellyfinDatastore") dataStore: DataStore<Preferences>, securityManager: SecurityManager): JellyfinPreferenceManager {
-        return JellyfinPreferenceManager(dataStore = dataStore, securityManager = securityManager)
-    }
-
-    @Provides
-    @Singleton
     fun provideHttpClient(): HttpClient {
-        return HttpClient()
+        return HttpClient(Android) {
+            install(JsonFeature) {
+                serializer = KotlinxSerializer()
+            }
+        }
     }
 
     @Provides
@@ -67,8 +69,14 @@ class MediaImportModule {
 
     @Provides
     @Singleton
-    fun provideCredentialStore(preferenceManager: JellyfinPreferenceManager): CredentialStore {
-        return CredentialStore(securePreferenceManager = preferenceManager)
+    fun provideSecurePreferenceManager(dataStore: DataStore<Preferences>, securityManager: SecurityManager): SecurePreferenceManager {
+        return AesSecurePreferenceManager(dataStore, securityManager)
+    }
+
+    @Provides
+    @Singleton
+    fun provideJellyfinPreferenceManager(securePreferenceManager: SecurePreferenceManager): JellyfinPreferenceManager {
+        return JellyfinPreferenceManager(securePreferenceManager = securePreferenceManager)
     }
 
     @Provides
@@ -79,14 +87,14 @@ class MediaImportModule {
 
     @Provides
     @Singleton
-    fun provideAuthenticationManager(userService: UserService, credentialStore: CredentialStore, deviceInfo: DeviceInfo): AuthenticationManager {
+    fun provideAuthenticationManager(userService: UserService, credentialStore: JellyfinPreferenceManager, deviceInfo: DeviceInfo): AuthenticationManager {
         return AuthenticationManager(userService = userService, credentialStore = credentialStore, deviceInfo = deviceInfo)
     }
 
 
     @Provides
     @Singleton
-    fun provideMediaStoreMediaProvider(authenticationManager: AuthenticationManager, credentialStore: CredentialStore, itemsService: ItemsService): JellyfinMediaProvider {
-        return JellyfinMediaProvider(authenticationManager = authenticationManager, credentialStore = credentialStore, itemsService = itemsService)
+    fun provideMediaStoreMediaProvider(authenticationManager: AuthenticationManager, credentialStore: JellyfinPreferenceManager, itemsService: ItemsService): JellyfinMediaProvider {
+        return JellyfinMediaProvider(authenticationManager = authenticationManager, jellyfinPreferenceManager = credentialStore, itemsService = itemsService)
     }
 }

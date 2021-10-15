@@ -34,7 +34,8 @@ kotlin {
                 implementation(project(":shared:deviceinfo"))
                 implementation(project(":shared:mediaprovider:common"))
                 implementation("io.ktor:ktor-client-core:1.6.4")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.0")
+                implementation("io.ktor:ktor-client-serialization:1.6.4")
+
             }
         }
         val commonTest by getting {

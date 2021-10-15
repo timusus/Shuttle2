@@ -7,3 +7,5 @@ expect enum class MediaProviderType {
 expect fun MediaProviderType.isRemote(): Boolean
 
 expect fun MediaProviderType.supportsTagEditing(): Boolean
+
+expect fun defaultMediaProvider(): MediaProviderType?

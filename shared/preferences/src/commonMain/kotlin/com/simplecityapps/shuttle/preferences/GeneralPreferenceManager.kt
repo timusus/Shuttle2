@@ -20,7 +20,7 @@ class GeneralPreferenceManager(private val preferenceManager: PreferenceManager)
     }
 
     suspend fun setMediaProviders(mediaProviders: List<MediaProviderType>) {
-        preferenceManager.setString(PreferenceKey.MEDIA_PROVIDERS, mediaProviders.map { it.ordinal }.joinToString(","))
+        preferenceManager.setString(PreferenceKey.MEDIA_PROVIDERS, mediaProviders.joinToString(",") { it.name })
     }
 
     fun getMediaProviders(): Flow<List<MediaProviderType>?> {

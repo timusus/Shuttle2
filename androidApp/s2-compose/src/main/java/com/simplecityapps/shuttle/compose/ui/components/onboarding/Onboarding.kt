@@ -6,10 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -23,6 +20,7 @@ import com.google.accompanist.pager.HorizontalPagerIndicator
 import com.google.accompanist.pager.rememberPagerState
 import com.simplecityapps.shuttle.compose.R
 import com.simplecityapps.shuttle.compose.ui.components.ThemedPreviewProvider
+import com.simplecityapps.shuttle.compose.ui.components.mediaimporter.JellyfinConfigurationView
 import com.simplecityapps.shuttle.compose.ui.components.mediaimporter.MediaImporter
 import com.simplecityapps.shuttle.compose.ui.components.mediaprovider.MediaProviderBottomSheet
 import com.simplecityapps.shuttle.compose.ui.components.mediaprovider.MediaProviderSelection
@@ -31,6 +29,11 @@ import com.simplecityapps.shuttle.compose.ui.theme.Theme
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.onboarding.OnboardingViewModel
 import kotlinx.coroutines.launch
+
+sealed class BottomSheetContent {
+    object MediaProviderList : BottomSheetContent()
+    data class ConfigureMediaProvider(val mediaProviderType: MediaProviderType) : BottomSheetContent()
+}
 
 @ExperimentalMaterialApi
 @Composable
@@ -54,18 +57,27 @@ fun Onboarding(
     val sheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
     val scope = rememberCoroutineScope()
 
+    var bottomSheetContent by remember { mutableStateOf<BottomSheetContent>(BottomSheetContent.MediaProviderList) }
+
     ModalBottomSheetLayout(
         sheetState = sheetState,
         sheetContent = {
-            MediaProviderBottomSheet(
-                mediaProviders = MediaProviderType.values().toMutableList() - selectedMediaProviders,
-                onMediaProviderTypeSelected = {
-                    onAddMediaProvider(it)
-                    scope.launch {
-                        sheetState.hide()
-                    }
+            when (bottomSheetContent) {
+                is BottomSheetContent.MediaProviderList -> {
+                    MediaProviderBottomSheet(
+                        mediaProviders = MediaProviderType.values().toMutableList() - selectedMediaProviders,
+                        onMediaProviderTypeSelected = {
+                            onAddMediaProvider(it)
+                            scope.launch {
+                                sheetState.hide()
+                            }
+                        }
+                    )
                 }
-            )
+                is BottomSheetContent.ConfigureMediaProvider -> {
+                    JellyfinConfigurationView(viewModel = hiltViewModel())
+                }
+            }
         }) {
         Column(
             Modifier
@@ -84,11 +96,19 @@ fun Onboarding(
                     0 -> {
                         MediaProviderSelection(
                             viewModel = hiltViewModel(),
-                            onAddMediaProviderClicked = {
+                            onAddMediaProvider = {
+                                bottomSheetContent = BottomSheetContent.MediaProviderList
                                 scope.launch {
                                     sheetState.animateTo(ModalBottomSheetValue.Expanded)
                                 }
-                            })
+                            },
+                            onConfigureMediaProvider = { mediaProviderType ->
+                                bottomSheetContent = BottomSheetContent.ConfigureMediaProvider(mediaProviderType)
+                                scope.launch {
+                                    sheetState.animateTo(ModalBottomSheetValue.Expanded)
+                                }
+                            }
+                        )
                     }
                     1 -> {
                         MediaImporter(viewModel = hiltViewModel(), isVisible = pagerState.currentPage == page)

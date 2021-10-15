@@ -35,7 +35,7 @@ kotlin {
         }
         val androidMain by getting {
             dependencies {
-                implementation("com.squareup.logcat:logcat:0.1")
+                api("com.squareup.logcat:logcat:0.1")
             }
         }
         val androidTest by getting {

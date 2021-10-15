@@ -31,6 +31,8 @@ kotlin {
                 implementation(project(":shared:savedstate"))
                 implementation(project(":shared:mediaprovider:common"))
                 implementation(project(":shared:mediaprovider:factory"))
+                implementation(project(":shared:mediaprovider:jellyfin"))
+                implementation(project(":shared:logging"))
                 implementation(project(":shared:repository"))
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
             }

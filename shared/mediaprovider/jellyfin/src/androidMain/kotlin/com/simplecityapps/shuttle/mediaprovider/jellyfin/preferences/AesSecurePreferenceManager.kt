@@ -10,7 +10,7 @@ import com.simplecityapps.shuttle.security.SecurityManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-class JellyfinPreferenceManager(
+class AesSecurePreferenceManager(
     private val dataStore: DataStore<Preferences>,
     private val securityManager: SecurityManager
 ) : SecurePreferenceManager {
@@ -31,7 +31,7 @@ class JellyfinPreferenceManager(
             if (value == null) {
                 settings.remove(preferenceKey)
             } else {
-                settings[preferenceKey] = securityManager.encryptData(value.toByteArray(Charsets.UTF_8)).toString(Charsets.UTF_8)
+                settings[preferenceKey] = securityManager.encryptData(value.toByteArray(Charsets.UTF_8))
             }
         }
     }
@@ -39,7 +39,7 @@ class JellyfinPreferenceManager(
     override fun getString(key: String, default: String?): Flow<String?> {
         return dataStore.data.map { settings ->
             settings[stringPreferencesKey(key)]?.let {
-                securityManager.decryptData(it.toByteArray(Charsets.UTF_8)).toString(Charsets.UTF_8)
+                securityManager.decryptData(it).toString(Charsets.UTF_8)
             } ?: default
         }
     }
