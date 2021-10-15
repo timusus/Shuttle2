@@ -63,7 +63,7 @@ class ImportSongs @Inject constructor(
                             )
                         )
                     }
-                    MediaProvider.SongRetrievalState.Failed -> {
+                    is MediaProvider.SongRetrievalState.Failed -> {
                         emit(
                             SongImportState.Failed(
                                 mediaProviderType = mediaProvider.type

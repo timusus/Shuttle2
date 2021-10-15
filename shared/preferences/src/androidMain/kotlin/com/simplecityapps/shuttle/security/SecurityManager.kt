@@ -1,8 +1,11 @@
 package com.simplecityapps.shuttle.security
 
+import android.util.Base64
+import java.nio.ByteBuffer
+import java.security.SecureRandom
 import javax.crypto.Cipher
-import javax.crypto.KeyGenerator
 import javax.crypto.spec.GCMParameterSpec
+import javax.crypto.spec.SecretKeySpec
 
 class SecurityManager {
 
@@ -10,23 +13,31 @@ class SecurityManager {
         Cipher.getInstance("AES/GCM/NoPadding")
     }
 
-    private val keyGenerator by lazy {
-        val keyGenerator = KeyGenerator.getInstance("AES")
-        keyGenerator.init(256)
-        keyGenerator
+    private val secretKey by lazy {
+        SecretKeySpec(Base64.decode("yn3uZljJFfMg0W6BQi+JHg==", Base64.DEFAULT), "AES")
     }
 
-    private val key by lazy {
-        keyGenerator.generateKey()
+    private val secureRandom by lazy { SecureRandom() }
+
+    fun encryptData(data: ByteArray): String {
+        val iv = ByteArray(12)
+        secureRandom.nextBytes(iv)
+        val parameterSpec = GCMParameterSpec(128, iv)
+
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey, parameterSpec)
+
+        val cipherData = cipher.doFinal(data)
+        val byteBuffer = ByteBuffer.allocate(iv.size + cipherData.size)
+        byteBuffer.put(iv)
+        byteBuffer.put(cipherData)
+        return Base64.encodeToString(byteBuffer.array(), Base64.DEFAULT)
     }
 
-    fun encryptData(data: ByteArray): ByteArray {
-        cipher.init(Cipher.ENCRYPT_MODE, key)
-        return cipher.doFinal(data)
-    }
+    fun decryptData(data: String): ByteArray {
+        val message = Base64.decode(data, Base64.DEFAULT)
+        val parameterSpec = GCMParameterSpec(128, message, 0, 12)
 
-    fun decryptData(encryptedData: ByteArray): ByteArray {
-        cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(128, cipher.iv))
-        return cipher.doFinal(encryptedData)
+        cipher.init(Cipher.DECRYPT_MODE, secretKey, parameterSpec)
+        return cipher.doFinal(message, 12, message.size - 12)
     }
 }

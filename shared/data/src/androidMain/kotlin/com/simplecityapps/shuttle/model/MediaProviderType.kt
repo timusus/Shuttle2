@@ -27,3 +27,7 @@ actual fun MediaProviderType.supportsTagEditing(): Boolean {
         MediaProviderType.Plex -> false
     }
 }
+
+actual fun defaultMediaProvider(): MediaProviderType? {
+    return MediaProviderType.MediaStore
+}

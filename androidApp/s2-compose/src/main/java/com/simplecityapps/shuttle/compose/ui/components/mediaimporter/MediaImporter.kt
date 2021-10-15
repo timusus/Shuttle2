@@ -36,6 +36,7 @@ import com.simplecityapps.shuttle.model.SongData
 import com.simplecityapps.shuttle.ui.mediaimporter.ImportViewState
 import com.simplecityapps.shuttle.ui.mediaimporter.MediaImporterViewModel
 import com.simplecityapps.shuttle.ui.mediaimporter.ViewState
+import logcat.logcat
 
 @Composable
 fun MediaImporter(viewModel: MediaImporterViewModel, isVisible: Boolean) {
@@ -51,6 +52,7 @@ fun MediaImporter(viewModel: MediaImporterViewModel, isVisible: Boolean) {
 
 @Composable
 fun MediaImporter(viewState: ViewState) {
+    logcat(tag = "MediaImporter") { "Rendering viewState: $viewState" }
     Scaffold(topBar = {
         TopAppBar(
             backgroundColor = MaterialColors.background,
@@ -74,6 +76,7 @@ fun MediaImporter(viewState: ViewState) {
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
                     items(viewState.importStates) { importState ->
+                        logcat(tag = "MediaImporter") { "Rendering importState: $importState" }
                         Column(
                             modifier = Modifier.fillMaxWidth()
                         ) {
@@ -99,20 +102,20 @@ fun MediaImporter(viewState: ViewState) {
                 }
             }
             is ViewState.Failed -> {
-                when (viewState.reason) {
-                    ViewState.Failed.Reason.NoMediaProviders -> {
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier.fillMaxSize()
-                        ) {
-                            Row(Modifier, verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Outlined.Error, "Error")
-                                Spacer(modifier = Modifier.size(16.dp))
-                                Column() {
-                                    Text(
-                                        text = stringResource(id = R.string.media_import_error),
-                                        style = MaterialTheme.typography.body1
-                                    )
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    Row(Modifier, verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Outlined.Error, "Error")
+                        Spacer(modifier = Modifier.size(16.dp))
+                        Column() {
+                            Text(
+                                text = stringResource(id = R.string.media_import_error),
+                                style = MaterialTheme.typography.body1
+                            )
+                            when (viewState.reason) {
+                                ViewState.Failed.Reason.NoMediaProviders -> {
                                     Text(
                                         text = stringResource(id = R.string.media_scan_failed_no_media_providers),
                                         style = MaterialTheme.typography.body2

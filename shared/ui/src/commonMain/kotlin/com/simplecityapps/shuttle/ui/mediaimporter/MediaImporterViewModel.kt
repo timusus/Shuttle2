@@ -45,7 +45,6 @@ class MediaImporterViewModel @Inject constructor(
                 importSongs(mediaProviders).collect { songImportState ->
                     importStates.removeAll { it.mediaProviderType == songImportState.mediaProviderType }
                     importStates.add(songImportState.toImportViewState())
-
                     _viewState.emit(
                         ViewState.ImportingMedia(
                             importStates = importStates

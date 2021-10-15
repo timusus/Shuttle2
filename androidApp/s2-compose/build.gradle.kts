@@ -84,6 +84,7 @@ dependencies {
     implementation(project(":shared:mediaprovider:jellyfin"))
     implementation(project(":shared:mediaprovider:factory"))
     implementation(project(":shared:deviceinfo"))
+    implementation(project(":shared:logging"))
     implementation(project(":androidApp:common:mediaprovider:mediastore"))
 
     // Hilt

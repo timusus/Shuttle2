@@ -79,7 +79,7 @@ class PlaybackPreferenceManager(
 
     var mediaProviderTypes: List<MediaProviderType>
         set(value) {
-            sharedPreferences.put("media_providers", value.map { it.ordinal }.joinToString(","))
+            sharedPreferences.put("media_providers", value.joinToString(",") { it.name })
         }
         get() {
             return sharedPreferences.get("media_providers", "")

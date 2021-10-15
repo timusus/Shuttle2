@@ -6,7 +6,7 @@ import com.simplecityapps.shuttle.preferences.SecurePreferenceManager
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 
-class CredentialStore(
+class JellyfinPreferenceManager(
     private val securePreferenceManager: SecurePreferenceManager
 ) {
 
@@ -16,6 +16,7 @@ class CredentialStore(
         const val TOKEN = "jellyfin_access_token"
         const val USER_ID = "jellyfin_user_id"
         const val ADDRESS = "jellyfin_address"
+        const val REMEMBER_PASSWORD = "remember_password"
     }
 
     suspend fun setUserName(value: String?) {
@@ -56,6 +57,14 @@ class CredentialStore(
 
     fun getAddress(): Flow<String?> {
         return securePreferenceManager.getString(PreferenceKey.ADDRESS)
+    }
+
+    suspend fun setRememberPassword(value: Boolean) {
+        securePreferenceManager.setBoolean(PreferenceKey.REMEMBER_PASSWORD, value)
+    }
+
+    fun getRememberPassword(): Flow<Boolean> {
+        return securePreferenceManager.getBoolean(PreferenceKey.REMEMBER_PASSWORD)
     }
 
     fun getLoginCredentials(): Flow<LoginCredentials?> {

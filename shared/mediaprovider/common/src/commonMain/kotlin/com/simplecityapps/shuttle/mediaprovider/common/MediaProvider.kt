@@ -13,7 +13,11 @@ interface MediaProvider {
         data class QueryingApi(val progress: Progress) : SongRetrievalState()
         data class ReadingSongData(val progress: Progress, val songData: SongData) : SongRetrievalState()
         data class Complete(val songData: List<SongData>) : SongRetrievalState()
-        object Failed : SongRetrievalState()
+        object Failed : SongRetrievalState() {
+            override fun toString(): String {
+                return "Failed"
+            }
+        }
     }
 
     fun findSongs(): Flow<SongRetrievalState>

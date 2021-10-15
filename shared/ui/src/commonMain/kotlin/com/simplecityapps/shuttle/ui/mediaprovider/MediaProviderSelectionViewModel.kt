@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.mediaprovider
 import com.simplecityapps.shuttle.inject.Inject
 import com.simplecityapps.shuttle.inject.hilt.HiltViewModel
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.defaultMediaProvider
 import com.simplecityapps.shuttle.savedstate.SavedStateHandle
 import com.simplecityapps.shuttle.ui.ViewModel
 import com.simplecityapps.shuttle.ui.domain.model.GetMediaProviderTypes
@@ -20,7 +21,7 @@ class MediaProviderSelectionViewModel @Inject constructor(
 
     private val isOnboarding = savedStateHandle.get<Boolean>(ARG_ONBOARDING) ?: false
 
-    val selectedMediaProviders = getMediaProviderTypes(if (isOnboarding) listOf(MediaProviderType.MediaStore) else emptyList())
+    val selectedMediaProviders = getMediaProviderTypes(if (isOnboarding) listOfNotNull(defaultMediaProvider()) else emptyList())
         .stateIn(
             scope = coroutineScope,
             started = SharingStarted.WhileSubscribed(),
