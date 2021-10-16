@@ -8,8 +8,8 @@ import com.simplecityapps.shuttle.mediaprovider.jellyfin.http.data.toSongData
 import com.simplecityapps.shuttle.mediaprovider.jellyfin.http.service.ItemsService
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Progress
+import com.simplecityapps.shuttle.model.Song
 import kotlinx.coroutines.flow.*
-import kotlin.math.min
 
 class JellyfinMediaProvider(
     private val authenticationManager: AuthenticationManager,
@@ -47,6 +47,11 @@ class JellyfinMediaProvider(
         }
     }
 
+    override fun findPlaylists(existingSongs: List<Song>): Flow<MediaProvider.PlaylistRetrievalState> {
+        // Todo:
+        return flowOf(MediaProvider.PlaylistRetrievalState.QueryingApi(Progress(0, 1)))
+    }
+
     data class QueryResponseProgress(val items: List<ItemResponse>, val progress: Progress)
 
     private fun queryItems(
@@ -70,8 +75,8 @@ class JellyfinMediaProvider(
                         QueryResponseProgress(
                             items = items + response.items,
                             progress = Progress(
-                                progress = startIndex,
-                                total = min(pageSize, response.totalRecordCount - (lastIndex))
+                                progress = lastIndex,
+                                total = response.totalRecordCount
                             )
                         )
                     )

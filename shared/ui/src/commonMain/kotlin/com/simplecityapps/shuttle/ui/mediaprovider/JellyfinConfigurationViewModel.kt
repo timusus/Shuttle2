@@ -64,7 +64,7 @@ class JellyfinConfigurationViewModel @Inject constructor(
                     _viewState.emit(ViewState.Authenticated)
                 },
                 onFailure = {
-                    logcat { "Authentication failed :${it.message}" }
+                    logcat { "Authentication failed: ${it.message}" }
                     _viewState.emit(ViewState.AuthenticationFailed)
                 }
             )

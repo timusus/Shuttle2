@@ -4,6 +4,7 @@ import com.simplecityapps.shuttle.inject.Inject
 import com.simplecityapps.shuttle.inject.hilt.HiltViewModel
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.defaultMediaProvider
+import com.simplecityapps.shuttle.preferences.GeneralPreferenceManager
 import com.simplecityapps.shuttle.savedstate.SavedStateHandle
 import com.simplecityapps.shuttle.ui.ViewModel
 import com.simplecityapps.shuttle.ui.domain.model.GetMediaProviderTypes
@@ -17,7 +18,8 @@ import kotlinx.coroutines.launch
 class OnboardingViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     getMediaProviderTypes: GetMediaProviderTypes,
-    val setMediaProviders: SetMediaProviders
+    val setMediaProviders: SetMediaProviders,
+    val preferenceManager: GeneralPreferenceManager
 ) : ViewModel() {
 
     private val isOnboarding = savedStateHandle.get<Boolean>(ARG_ONBOARDING) ?: false
@@ -33,6 +35,12 @@ class OnboardingViewModel @Inject constructor(
     fun addMediaProvider(mediaProviderType: MediaProviderType) {
         coroutineScope.launch {
             setMediaProviders((selectedMediaProviders.value + mediaProviderType).distinct())
+        }
+    }
+
+    fun setOnboardingComplete() {
+        coroutineScope.launch {
+            preferenceManager.setHasOnboarded(true)
         }
     }
 

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.runtime.*
@@ -151,8 +152,7 @@ fun JellyfinConfigurationView(
             ViewState.Authenticating -> {
                 Box(
                     modifier = Modifier
-                        .size(contentSize.width.toDp(), contentSize.height.toDp())
-                        .background(MaterialColors.background),
+                        .size(contentSize.width.toDp(), contentSize.height.toDp()),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
@@ -168,11 +168,16 @@ fun JellyfinConfigurationView(
                 Box(
                     modifier = Modifier
                         .size(contentSize.width.toDp(), contentSize.height.toDp())
-                        .background(MaterialColors.background)
                         .wrapContentHeight(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(stringResource(id = R.string.media_provider_authentication_success))
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(Icons.Outlined.CheckCircle, "Success Icon", tint = MaterialColors.primary)
+                        Spacer(modifier = Modifier.size(8.dp))
+                        Text(stringResource(id = R.string.media_provider_authentication_success), style = MaterialTheme.typography.body1)
+                    }
                     LaunchedEffect(viewState) {
                         delay(2000)
                         onDismiss()
@@ -183,14 +188,13 @@ fun JellyfinConfigurationView(
                 Box(
                     modifier = Modifier
                         .size(contentSize.width.toDp(), contentSize.height.toDp())
-                        .background(MaterialColors.background)
                         .wrapContentHeight(),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Text(stringResource(id = R.string.media_provider_authentication_error))
+                        Text(stringResource(id = R.string.media_provider_authentication_error), style = MaterialTheme.typography.body1)
                         Spacer(modifier = Modifier.size(16.dp))
                         Button(onClick = {
                             onRetry()

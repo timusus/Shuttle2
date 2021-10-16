@@ -8,9 +8,10 @@ import com.simplecityapps.shuttle.model.SongData
 import com.simplecityapps.shuttle.ui.ViewModel
 import com.simplecityapps.shuttle.ui.domain.model.GetUserSelectedMediaProviders
 import com.simplecityapps.shuttle.ui.domain.model.ImportSongs
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -33,24 +34,14 @@ class MediaImporterViewModel @Inject constructor(
                     )
                 )
             } else {
-                val mediaProviderTypes = mediaProviders.map { mediaProvider -> mediaProvider.type }
-                val importStates: MutableList<ImportViewState> = mediaProviderTypes.map { ImportViewState.Loading(it) }.toMutableList()
-
                 _viewState.emit(
                     ViewState.ImportingMedia(
-                        importStates = importStates
+                        importStates = mediaProviders.associate { mediaProvider ->
+                            mediaProvider.type to importSongs(mediaProvider)
+                                .map { songImportState -> songImportState.toImportViewState() }
+                        }
                     )
                 )
-
-                importSongs(mediaProviders).collect { songImportState ->
-                    importStates.removeAll { it.mediaProviderType == songImportState.mediaProviderType }
-                    importStates.add(songImportState.toImportViewState())
-                    _viewState.emit(
-                        ViewState.ImportingMedia(
-                            importStates = importStates
-                        )
-                    )
-                }
             }
         }
     }
@@ -58,7 +49,11 @@ class MediaImporterViewModel @Inject constructor(
 
 sealed class ViewState {
     object Loading : ViewState()
-    data class ImportingMedia(val importStates: List<ImportViewState>) : ViewState()
+
+    data class ImportingMedia(
+        val importStates: Map<MediaProviderType, Flow<ImportViewState>>
+    ) : ViewState()
+
     data class Failed(val reason: Reason) : ViewState() {
         enum class Reason {
             NoMediaProviders
@@ -66,31 +61,35 @@ sealed class ViewState {
     }
 }
 
-sealed class ImportViewState(open val mediaProviderType: MediaProviderType) {
-    data class Loading(override val mediaProviderType: MediaProviderType) : ImportViewState(mediaProviderType)
-    data class QueryingApi(override val mediaProviderType: MediaProviderType, val progress: Progress) : ImportViewState(mediaProviderType)
-    data class ReadingSongs(override val mediaProviderType: MediaProviderType, val progress: Progress, val songData: SongData) : ImportViewState(mediaProviderType)
-    data class UpdatingDatabase(override val mediaProviderType: MediaProviderType) : ImportViewState(mediaProviderType)
-    data class Complete(override val mediaProviderType: MediaProviderType) : ImportViewState(mediaProviderType)
-    data class Failure(override val mediaProviderType: MediaProviderType) : ImportViewState(mediaProviderType)
+sealed class ImportViewState {
+    object Loading : ImportViewState()
+    data class QueryingApi(val progress: Progress) : ImportViewState()
+    data class QueryingDatabase(val progress: Progress?) : ImportViewState()
+    data class ReadingSongs(val progress: Progress, val songData: SongData) : ImportViewState()
+    object UpdatingDatabase : ImportViewState()
+    object Complete : ImportViewState()
+    object Failure : ImportViewState()
 }
 
 fun ImportSongs.SongImportState.toImportViewState(): ImportViewState {
     return when (this) {
         is ImportSongs.SongImportState.QueryingApi -> {
-            ImportViewState.QueryingApi(mediaProviderType, progress)
+            ImportViewState.QueryingApi(progress)
         }
         is ImportSongs.SongImportState.ReadingSongData -> {
-            ImportViewState.ReadingSongs(mediaProviderType, progress, songData)
+            ImportViewState.ReadingSongs(progress, songData)
+        }
+        is ImportSongs.SongImportState.QueryingDatabase -> {
+            ImportViewState.QueryingDatabase(progress)
         }
         is ImportSongs.SongImportState.UpdatingDatabase -> {
-            ImportViewState.UpdatingDatabase(mediaProviderType)
+            ImportViewState.UpdatingDatabase
         }
         is ImportSongs.SongImportState.Complete -> {
-            ImportViewState.Complete(mediaProviderType)
+            ImportViewState.Complete
         }
         is ImportSongs.SongImportState.Failed -> {
-            ImportViewState.Failure(mediaProviderType)
+            ImportViewState.Failure
         }
     }
 }

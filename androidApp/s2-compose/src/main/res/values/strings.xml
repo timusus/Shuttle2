@@ -254,6 +254,8 @@
     <string name="onboarding_media_scanner_scanning">Importing…</string>
     <!-- Shown when the media scanner is scanning -->
     <string name="onboarding_media_import_importing_songs">Importing songs…</string>
+    <!-- Shown when the media scanner is importing from a database -->
+    <string name="onboarding_media_import_querying_database">Querying database…</string>
     <!-- Button to initiate a media scanner scan-->
     <string name="onboarding_media_scan">Import</string>
     <!-- Button to go back to the previous page, when onboarding -->

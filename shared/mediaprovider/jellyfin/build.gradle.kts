@@ -4,6 +4,7 @@ plugins {
     kotlin("multiplatform")
     id("com.android.library")
     kotlin("kapt")
+    kotlin("plugin.serialization") version "1.5.31"
 }
 
 kotlin {

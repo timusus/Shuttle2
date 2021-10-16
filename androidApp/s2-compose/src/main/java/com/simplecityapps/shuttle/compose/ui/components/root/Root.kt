@@ -84,7 +84,9 @@ fun Root(hasOnboarded: Boolean) {
                 route = Screen.Root.MediaProviderSelection.route,
                 arguments = listOf(navArgument(MediaProviderSelectionViewModel.ARG_ONBOARDING) { defaultValue = true })
             ) {
-                Onboarding(hiltViewModel() as OnboardingViewModel)
+                Onboarding(hiltViewModel() as OnboardingViewModel, onboardingComplete = {
+                    navController.navigate(Screen.Root.Main.route)
+                })
             }
             composable(Screen.Root.Main.route) {
                 Main(

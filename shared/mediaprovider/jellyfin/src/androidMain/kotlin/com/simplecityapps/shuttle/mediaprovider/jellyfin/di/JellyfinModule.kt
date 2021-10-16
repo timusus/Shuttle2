@@ -27,6 +27,7 @@ import io.ktor.client.features.json.serializer.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.serialization.ExperimentalSerializationApi
 import javax.inject.Named
 import javax.inject.Singleton
 
@@ -45,12 +46,18 @@ class MediaImportModule {
         }
     }
 
+    @OptIn(ExperimentalSerializationApi::class)
     @Provides
     @Singleton
     fun provideHttpClient(): HttpClient {
         return HttpClient(Android) {
             install(JsonFeature) {
-                serializer = KotlinxSerializer()
+                serializer = KotlinxSerializer(
+                    json = kotlinx.serialization.json.Json {
+                        ignoreUnknownKeys = true
+                        explicitNulls = false
+                    }
+                )
             }
         }
     }
