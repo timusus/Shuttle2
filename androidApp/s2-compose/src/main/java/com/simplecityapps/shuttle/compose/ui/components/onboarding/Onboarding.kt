@@ -28,6 +28,7 @@ import com.simplecityapps.shuttle.compose.ui.theme.MaterialColors
 import com.simplecityapps.shuttle.compose.ui.theme.Theme
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.onboarding.OnboardingViewModel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 sealed class BottomSheetContent {
@@ -35,16 +36,25 @@ sealed class BottomSheetContent {
     data class ConfigureMediaProvider(val mediaProviderType: MediaProviderType) : BottomSheetContent()
 }
 
+enum class OnboardingScreen {
+    MediaProviderSelection, MediaPermissions, MediaImporter
+}
+
 @ExperimentalMaterialApi
 @Composable
-fun Onboarding(viewModel: OnboardingViewModel) {
+fun Onboarding(viewModel: OnboardingViewModel, onboardingComplete: () -> Unit = {}) {
     val selectedMediaProviders by viewModel.selectedMediaProviders.collectAsState()
 
     Onboarding(
         selectedMediaProviders = selectedMediaProviders,
         onAddMediaProvider = { mediaProviderType ->
             viewModel.addMediaProvider(mediaProviderType)
-        })
+        },
+        onboardingComplete = {
+            viewModel.setOnboardingComplete()
+            onboardingComplete()
+        }
+    )
 }
 
 @ExperimentalMaterialApi
@@ -52,7 +62,8 @@ fun Onboarding(viewModel: OnboardingViewModel) {
 @Composable
 fun Onboarding(
     selectedMediaProviders: List<MediaProviderType>,
-    onAddMediaProvider: (MediaProviderType) -> Unit = {}
+    onAddMediaProvider: (MediaProviderType) -> Unit = {},
+    onboardingComplete: () -> Unit = {}
 ) {
     val sheetState = rememberModalBottomSheetState(ModalBottomSheetValue.Hidden)
     val scope = rememberCoroutineScope()
@@ -66,16 +77,28 @@ fun Onboarding(
                 is BottomSheetContent.MediaProviderList -> {
                     MediaProviderBottomSheet(
                         mediaProviders = MediaProviderType.values().toMutableList() - selectedMediaProviders,
-                        onMediaProviderTypeSelected = {
-                            onAddMediaProvider(it)
+                        onMediaProviderTypeSelected = { mediaProviderType ->
+                            onAddMediaProvider(mediaProviderType)
                             scope.launch {
                                 sheetState.hide()
+
+                                if (mediaProviderType == MediaProviderType.Jellyfin) {
+                                    delay(250)
+                                    bottomSheetContent = BottomSheetContent.ConfigureMediaProvider(mediaProviderType)
+                                    delay(50)
+                                    sheetState.animateTo(ModalBottomSheetValue.Expanded)
+                                }
                             }
+
                         }
                     )
                 }
                 is BottomSheetContent.ConfigureMediaProvider -> {
-                    JellyfinConfigurationView(viewModel = hiltViewModel())
+                    JellyfinConfigurationView(viewModel = hiltViewModel(), onDismiss = {
+                        scope.launch {
+                            sheetState.hide()
+                        }
+                    })
                 }
             }
         }) {
@@ -84,7 +107,8 @@ fun Onboarding(
                 .fillMaxSize()
                 .background(MaterialColors.background)
         ) {
-            val pagerState = rememberPagerState(pageCount = 2)
+            val onboardingScreens = remember { mutableStateListOf(OnboardingScreen.MediaProviderSelection, OnboardingScreen.MediaImporter) }
+            val pagerState = rememberPagerState(pageCount = onboardingScreens.size)
             HorizontalPager(
                 modifier = Modifier
                     .weight(1f)
@@ -92,8 +116,8 @@ fun Onboarding(
                 state = pagerState,
                 dragEnabled = false
             ) { page ->
-                when (page) {
-                    0 -> {
+                when (onboardingScreens[page]) {
+                    OnboardingScreen.MediaProviderSelection -> {
                         MediaProviderSelection(
                             viewModel = hiltViewModel(),
                             onAddMediaProvider = {
@@ -110,7 +134,10 @@ fun Onboarding(
                             }
                         )
                     }
-                    1 -> {
+                    OnboardingScreen.MediaPermissions -> {
+
+                    }
+                    OnboardingScreen.MediaImporter -> {
                         MediaImporter(viewModel = hiltViewModel(), isVisible = pagerState.currentPage == page)
                     }
                 }
@@ -130,8 +157,12 @@ fun Onboarding(
                     .padding(bottom = 24.dp, end = 24.dp),
                 enabled = selectedMediaProviders.isNotEmpty(),
                 onClick = {
-                    scope.launch {
-                        pagerState.scrollToPage(pagerState.currentPage + 1)
+                    if (pagerState.currentPage == pagerState.pageCount - 1) {
+                        onboardingComplete()
+                    } else {
+                        scope.launch {
+                            pagerState.scrollToPage(pagerState.currentPage + 1)
+                        }
                     }
                 }) {
                 Text(stringResource(id = R.string.onboarding_button_next))

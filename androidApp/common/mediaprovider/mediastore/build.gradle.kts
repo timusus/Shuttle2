@@ -35,6 +35,7 @@ dependencies {
     implementation("com.google.android.material:material:1.4.0")
     implementation(project(":shared:mediaprovider:common"))
     implementation(project(":shared:data"))
+    implementation(project(":shared:logging"))
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.2.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
 

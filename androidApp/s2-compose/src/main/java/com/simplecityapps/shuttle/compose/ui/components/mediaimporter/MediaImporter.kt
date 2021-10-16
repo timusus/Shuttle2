@@ -36,7 +36,7 @@ import com.simplecityapps.shuttle.model.SongData
 import com.simplecityapps.shuttle.ui.mediaimporter.ImportViewState
 import com.simplecityapps.shuttle.ui.mediaimporter.MediaImporterViewModel
 import com.simplecityapps.shuttle.ui.mediaimporter.ViewState
-import logcat.logcat
+import kotlinx.coroutines.flow.flowOf
 
 @Composable
 fun MediaImporter(viewModel: MediaImporterViewModel, isVisible: Boolean) {
@@ -52,7 +52,6 @@ fun MediaImporter(viewModel: MediaImporterViewModel, isVisible: Boolean) {
 
 @Composable
 fun MediaImporter(viewState: ViewState) {
-    logcat(tag = "MediaImporter") { "Rendering viewState: $viewState" }
     Scaffold(topBar = {
         TopAppBar(
             backgroundColor = MaterialColors.background,
@@ -75,8 +74,8 @@ fun MediaImporter(viewState: ViewState) {
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    items(viewState.importStates) { importState ->
-                        logcat(tag = "MediaImporter") { "Rendering importState: $importState" }
+
+                    items(viewState.importStates.keys.toList()) { mediaProviderType ->
                         Column(
                             modifier = Modifier.fillMaxWidth()
                         ) {
@@ -86,17 +85,19 @@ fun MediaImporter(viewState: ViewState) {
                             ) {
                                 Image(
                                     modifier = Modifier.size(24.dp),
-                                    painter = painterResource(id = importState.mediaProviderType.iconResId),
-                                    contentDescription = stringResource(id = importState.mediaProviderType.titleResId)
+                                    painter = painterResource(id = mediaProviderType.iconResId),
+                                    contentDescription = stringResource(id = mediaProviderType.titleResId)
                                 )
                                 Spacer(modifier = Modifier.size(16.dp))
                                 Text(
-                                    text = stringResource(id = importState.mediaProviderType.titleResId),
+                                    text = stringResource(id = mediaProviderType.titleResId),
                                     style = MaterialTheme.typography.body1
                                 )
                             }
                             Spacer(Modifier.size(4.dp))
-                            ImportProgress(importState)
+
+                            val importViewState by viewState.importStates[mediaProviderType]!!.collectAsState(initial = ImportViewState.Loading)
+                            ImportProgress(importViewState)
                         }
                     }
                 }
@@ -104,7 +105,9 @@ fun MediaImporter(viewState: ViewState) {
             is ViewState.Failed -> {
                 Box(
                     contentAlignment = Alignment.Center,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialColors.background)
                 ) {
                     Row(Modifier, verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Outlined.Error, "Error")
@@ -204,6 +207,13 @@ fun ImportProgress(songImportState: ImportViewState) {
                 progressText = stringResource(id = R.string.media_provider_querying_api)
             )
         }
+        is ImportViewState.QueryingDatabase -> {
+            ImportProgressView(
+                titleText = stringResource(id = R.string.onboarding_media_import_importing_songs),
+                progress = songImportState.progress,
+                progressText = stringResource(id = R.string.onboarding_media_import_querying_database)
+            )
+        }
         is ImportViewState.QueryingApi -> {
             ImportProgressView(
                 titleText = stringResource(id = R.string.onboarding_media_import_importing_songs),
@@ -251,18 +261,24 @@ fun MediaImporterPreview(@PreviewParameter(ThemedPreviewProvider::class) darkThe
         ) {
             MediaImporter(
                 ViewState.ImportingMedia(
-                    listOf(
-                        ImportViewState.ReadingSongs(
-                            mediaProviderType = MediaProviderType.MediaStore,
-                            progress = Progress(5, 20),
-                            songData = fakeSongData
+                    mapOf(
+                        MediaProviderType.MediaStore to flowOf(
+                            ImportViewState.ReadingSongs(
+                                progress = Progress(5, 20),
+                                songData = fakeSongData
+                            )
                         ),
-                        ImportViewState.QueryingApi(
-                            mediaProviderType = MediaProviderType.Emby,
-                            progress = Progress(15, 20)
+                        MediaProviderType.Emby to flowOf(
+                            ImportViewState.QueryingApi(
+                                progress = Progress(15, 20)
+                            )
                         ),
-                        ImportViewState.Failure(mediaProviderType = MediaProviderType.Jellyfin),
-                        ImportViewState.UpdatingDatabase(mediaProviderType = MediaProviderType.Plex)
+                        MediaProviderType.Jellyfin to flowOf(
+                            ImportViewState.Failure
+                        ),
+                        MediaProviderType.Plex to flowOf(
+                            ImportViewState.UpdatingDatabase
+                        )
                     )
                 )
             )

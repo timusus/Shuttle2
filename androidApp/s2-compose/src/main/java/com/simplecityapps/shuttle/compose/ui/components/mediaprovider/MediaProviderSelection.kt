@@ -73,7 +73,7 @@ fun MediaProviderSelection(
                     .weight(1f)
                     .fillMaxWidth()
                     .padding(start = 16.dp, top = 16.dp, bottom = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
                 content = {
                     selectedMediaProviders
                         .groupBy { it.isRemote() }

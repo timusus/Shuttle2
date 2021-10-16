@@ -17,7 +17,7 @@ class UserService(
     ): Result<AuthenticationResponse> {
         return kotlin.runCatching {
             httpClient.get(url) {
-                method = HttpMethod.Get
+                method = HttpMethod.Post
                 headers {
                     append(HttpHeaders.Accept, ContentType.Application.Json)
                     append(HttpHeaders.ContentType, ContentType.Application.Json)
