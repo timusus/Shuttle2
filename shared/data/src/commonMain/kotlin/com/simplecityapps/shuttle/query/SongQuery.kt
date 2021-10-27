@@ -1,8 +1,8 @@
 package com.simplecityapps.shuttle.query
 
-import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.key.AlbumKey
 import com.simplecityapps.shuttle.parcel.InstantParceler
 import com.simplecityapps.shuttle.parcel.Parcelable
 import com.simplecityapps.shuttle.parcel.Parcelize
@@ -35,7 +35,7 @@ sealed class SongQuery(
 
     @Parcelize
     data class ArtistGroupKey(
-        val key: AlbumArtistGroupKey?
+        val key: AlbumArtistKey?
     ) :
         SongQuery(
             predicate = { song -> song.albumArtistGroupKey == key }
@@ -52,7 +52,7 @@ sealed class SongQuery(
 
     @Parcelize
     data class AlbumGroupKey(
-        val key: com.simplecityapps.shuttle.model.AlbumGroupKey?
+        val key: AlbumKey?
     ) :
         SongQuery(
             predicate = { song -> song.albumGroupKey == key }

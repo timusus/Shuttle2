@@ -4,6 +4,7 @@ import android.content.Context
 import com.simplecityapps.shuttle.common.database.DefaultSongSharedDatabase
 import com.simplecityapps.shuttle.common.database.SongDatabaseDriver
 import com.simplecityapps.shuttle.common.database.SongSharedDatabase
+import com.simplecityapps.shuttle.repository.GenreRepository
 import com.simplecityapps.shuttle.repository.SongRepository
 import com.squareup.sqldelight.db.SqlDriver
 import dagger.Module
@@ -39,5 +40,11 @@ class RepositoryModule {
             database = database,
             scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
         )
+    }
+
+    @Provides
+    @Singleton
+    fun provideGenreRepository(songRepository: SongRepository): GenreRepository {
+        return GenreRepository(songRepository)
     }
 }

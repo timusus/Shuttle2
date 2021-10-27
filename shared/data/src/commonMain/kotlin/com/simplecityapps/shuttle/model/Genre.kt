@@ -6,7 +6,9 @@ import com.simplecityapps.shuttle.parcel.Parcelize
 @Parcelize
 data class Genre(
     val name: String,
-    val songCount: Int,
-    val duration: Int,
-    val mediaProviders: List<MediaProviderType>
-) : Parcelable
+    val songs: List<Song>,
+) : Parcelable {
+
+    val mediaProviders: List<MediaProviderType> = songs.map { it.mediaProvider }.distinct()
+    val duration = songs.sumOf { it.duration ?: 0 }
+}
