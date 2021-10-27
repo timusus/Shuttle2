@@ -4,12 +4,17 @@ import com.simplecityapps.shuttle.parcel.Parcelable
 import com.simplecityapps.shuttle.parcel.Parcelize
 
 @Parcelize
-data class AlbumArtist(
+data class Artist(
     val name: String?,
-    val artists: List<Artist>,
+    val albumArtists: List<AlbumArtist>,
     val albumCount: Int,
     val songCount: Int,
     val playCount: Int,
-    val groupKey: AlbumArtistKey,
-    val mediaProviders: List<MediaProviderType>
-) : Parcelable
+    val mediaProvider: MediaProviderType
+) : Parcelable {
+
+    val id: String
+        get() {
+            return "${mediaProvider}_${name}"
+        }
+}

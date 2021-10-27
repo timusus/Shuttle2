@@ -12,6 +12,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.pagerTabIndicatorOffset
@@ -19,6 +20,7 @@ import com.google.accompanist.pager.rememberPagerState
 import com.simplecityapps.shuttle.compose.ui.components.ThemedPreviewProvider
 import com.simplecityapps.shuttle.compose.ui.theme.MaterialColors
 import com.simplecityapps.shuttle.compose.ui.theme.Theme
+import com.simplecityapps.shuttle.ui.library.GenreListViewModel
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
@@ -55,6 +57,23 @@ fun Library() {
         }
     }) {
         HorizontalPager(state = pagerState) { page ->
+            when (val page = LibraryTab.values()[page]) {
+                LibraryTab.Genres -> {
+                    GenreList(hiltViewModel() as GenreListViewModel)
+                }
+                LibraryTab.Playlists -> {
+
+                }
+                LibraryTab.Artists -> {
+
+                }
+                LibraryTab.Albums -> {
+
+                }
+                LibraryTab.Songs -> {
+
+                }
+            }
             Box(
                 Modifier
                     .fillMaxSize()

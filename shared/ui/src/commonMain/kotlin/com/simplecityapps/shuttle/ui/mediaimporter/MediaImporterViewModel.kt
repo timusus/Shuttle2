@@ -6,8 +6,8 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Progress
 import com.simplecityapps.shuttle.model.SongData
 import com.simplecityapps.shuttle.ui.ViewModel
-import com.simplecityapps.shuttle.ui.domain.model.GetUserSelectedMediaProviders
-import com.simplecityapps.shuttle.ui.domain.model.ImportSongs
+import com.simplecityapps.shuttle.ui.domain.model.mediaprovider.ImportSongs
+import com.simplecityapps.shuttle.ui.domain.model.prefs.GetUserSelectedMediaProviders
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow

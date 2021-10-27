@@ -7,8 +7,8 @@ import com.simplecityapps.shuttle.model.defaultMediaProvider
 import com.simplecityapps.shuttle.preferences.GeneralPreferenceManager
 import com.simplecityapps.shuttle.savedstate.SavedStateHandle
 import com.simplecityapps.shuttle.ui.ViewModel
-import com.simplecityapps.shuttle.ui.domain.model.GetMediaProviderTypes
-import com.simplecityapps.shuttle.ui.domain.model.SetMediaProviders
+import com.simplecityapps.shuttle.ui.domain.model.mediaprovider.GetMediaProviderTypes
+import com.simplecityapps.shuttle.ui.domain.model.mediaprovider.SetMediaProviders
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn

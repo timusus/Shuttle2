@@ -1,7 +1,7 @@
 package com.simplecityapps.shuttle.ui.root
 
 import com.simplecityapps.shuttle.ui.ViewModel
-import com.simplecityapps.shuttle.ui.domain.model.GetHasOnboarded
+import com.simplecityapps.shuttle.ui.domain.model.prefs.GetHasOnboarded
 import com.simplecityapps.shuttle.inject.Inject
 import com.simplecityapps.shuttle.inject.hilt.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted

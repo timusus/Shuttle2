@@ -11,9 +11,9 @@ import kotlinx.datetime.LocalDate
 data class Song(
     val id: Long,
     val name: String?,
-    val albumArtist: String?,
-    val artists: List<String>,
-    val album: String?,
+    val albumArtist: AlbumArtist?,
+    val artists: List<Artist>,
+    val album: Album?,
     val track: Int?,
     val disc: Int?,
     val duration: Int?,
@@ -50,27 +50,7 @@ data class Song(
             }
         }
 
-    val albumArtistGroupKey: AlbumArtistGroupKey = AlbumArtistGroupKey(
-        albumArtist?.lowercase()?.removeArticles()
-            ?: artists.joinToString(", ") { it.lowercase().removeArticles() }.ifEmpty { null }
-    )
-
-    val albumGroupKey = AlbumGroupKey(album?.lowercase()?.removeArticles(), albumArtistGroupKey)
-
     enum class Type {
         Audio, Audiobook, Podcast
-    }
-
-    val friendlyArtistName: String? = if (artists.isNotEmpty()) {
-        if (artists.size == 1) {
-            artists.first()
-        } else {
-            artists.groupBy { it.lowercase().removeArticles() }
-                .map { map -> map.value.maxByOrNull { it.length } }
-                .joinToString(", ")
-                .ifEmpty { null }
-        }
-    } else {
-        null
     }
 }

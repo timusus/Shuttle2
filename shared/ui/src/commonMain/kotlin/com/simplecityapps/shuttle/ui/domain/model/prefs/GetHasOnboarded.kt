@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.domain.model
+package com.simplecityapps.shuttle.ui.domain.model.prefs
 
 import com.simplecityapps.shuttle.inject.Inject
 import com.simplecityapps.shuttle.preferences.GeneralPreferenceManager
