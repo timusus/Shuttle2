@@ -29,7 +29,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     // Kotlin Standard Library
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.5.30"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.20"
 
     // Timber
     implementation 'com.jakewharton.timber:timber:4.7.1'
@@ -39,10 +39,10 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-datetime:0.2.1'
 
     // Kotlin Coroutines
-    api 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0'
+    api 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2'
 
     // AndroidX Annotations
-    api "androidx.annotation:annotation:1.2.0"
+    api "androidx.annotation:annotation:1.3.0"
 
     // Phrase string formatting helper
     api 'com.github.square:phrase:master-SNAPSHOT'

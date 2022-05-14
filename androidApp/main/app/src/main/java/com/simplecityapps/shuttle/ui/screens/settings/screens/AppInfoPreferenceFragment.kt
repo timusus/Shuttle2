@@ -44,11 +44,11 @@ class AppInfoPreferenceFragment : PreferenceFragmentCompat() {
         }
 
 
-        preferenceManager.sharedPreferences.registerOnSharedPreferenceChangeListener(preferenceListener)
+        preferenceManager.sharedPreferences?.registerOnSharedPreferenceChangeListener(preferenceListener)
     }
 
     override fun onDestroyView() {
-        preferenceManager.sharedPreferences.unregisterOnSharedPreferenceChangeListener(preferenceListener)
+        preferenceManager.sharedPreferences?.unregisterOnSharedPreferenceChangeListener(preferenceListener)
 
         super.onDestroyView()
     }

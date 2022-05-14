@@ -34,17 +34,17 @@ android {
 
 dependencies {
 
-    implementation("androidx.core:core-ktx:1.6.0")
+    implementation("androidx.core:core-ktx:1.7.0")
 
     // Firebase
     api(platform("com.google.firebase:firebase-bom:28.3.0"))
     api("com.google.firebase:firebase-config-ktx")
     implementation("com.google.firebase:firebase-analytics-ktx")
-    api("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.1.1")
+    api("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.0")
 
     // Hilt
-    implementation("com.google.dagger:hilt-android:2.38.1")
-    kapt("com.google.dagger:hilt-compiler:2.38.1")
+    implementation("com.google.dagger:hilt-android:2.40.4")
+    kapt("com.google.dagger:hilt-compiler:2.40.4")
 
     // S2 Core
     implementation(project(":androidApp:main:core"))

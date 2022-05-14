@@ -21,7 +21,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     // Kotlin Standard Library
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.5.21"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.20"
 
     // RecyclerView
     implementation 'androidx.recyclerview:recyclerview:1.2.1'
@@ -30,5 +30,5 @@ dependencies {
     implementation "com.jakewharton.timber:timber:4.7.1"
 
     // Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
 }

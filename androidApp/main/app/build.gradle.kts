@@ -121,28 +121,28 @@ android {
         implementation("com.github.timusus:RecyclerView-FastScroll:dev-SNAPSHOT")
 
         // AppCompat
-        implementation("androidx.appcompat:appcompat:1.3.1")
+        implementation("androidx.appcompat:appcompat:1.4.1")
 
         // Material
-        implementation("com.google.android.material:material:1.4.0")
+        implementation("com.google.android.material:material:1.6.0")
 
 
         // Constraint Layout
-        implementation("androidx.constraintlayout:constraintlayout:2.1.0")
+        implementation("androidx.constraintlayout:constraintlayout:2.1.3")
 
         // Android Arch
         implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
 
         // AndroidX Navigation
-        implementation("androidx.navigation:navigation-fragment-ktx:2.4.0-alpha08")
-        implementation("androidx.navigation:navigation-ui-ktx:2.4.0-alpha08")
+        implementation("androidx.navigation:navigation-fragment-ktx:2.5.0-beta01")
+        implementation("androidx.navigation:navigation-ui-ktx:2.5.0-beta01")
 
         // Hilt
-        implementation("com.google.dagger:hilt-android:2.38.1")
-        kapt("com.google.dagger:hilt-compiler:2.38.1")
+        implementation("com.google.dagger:hilt-android:2.40.4")
+        kapt("com.google.dagger:hilt-compiler:2.40.4")
 
-        androidTestImplementation("com.google.dagger:hilt-android-testing:2.38.1")
-        kaptAndroidTest("com.google.dagger:hilt-android-compiler:2.37")
+        androidTestImplementation("com.google.dagger:hilt-android-testing:2.40.4")
+        kaptAndroidTest("com.google.dagger:hilt-android-compiler:2.40.4")
 
         // AssistedInject
         compileOnly("com.squareup.inject:assisted-inject-annotations-dagger2:0.6.0")
@@ -158,22 +158,22 @@ android {
         implementation("me.relex:circleindicator:2.1.4")
 
         // AndroidX Media
-        implementation("androidx.media:media:1.4.1")
+        implementation("androidx.media:media:1.6.0")
 
         // AndroidX Preference
-        implementation("androidx.preference:preference-ktx:1.1.1")
+        implementation("androidx.preference:preference-ktx:1.2.0")
 
         // ChromeCast
-        implementation("com.google.android.gms:play-services-cast-framework:20.0.0")
+        implementation("com.google.android.gms:play-services-cast-framework:21.0.1")
 
         // NanoHttp
         implementation("org.nanohttpd:nanohttpd-webserver:2.3.1")
 
         // Moshi
-        kapt("com.squareup.moshi:moshi-kotlin-codegen:1.12.0")
+        kapt("com.squareup.moshi:moshi-kotlin-codegen:1.13.0")
 
         // AndroidX Lifecycle
-        implementation("androidx.lifecycle:lifecycle-common-java8:2.3.1")
+        implementation("androidx.lifecycle:lifecycle-common-java8:2.4.1")
 
         // Noise
         implementation("com.github.paramsen:noise:2.0.0")
@@ -185,7 +185,7 @@ android {
         implementation("com.bugsnag:bugsnag-android:5.4.0")
 
         // AndroidX Lifecycle
-        implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.3.1")
+        implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.4.1")
 
         // ExoPlayer
         implementation("com.github.timusus.exoplayer:exoplayer-core:2.14.2-shuttle")
@@ -194,7 +194,7 @@ android {
         implementation("androidx.drawerlayout:drawerlayout:1.1.1")
 
         // New fragment manager
-        implementation("androidx.fragment:fragment-ktx:1.3.6")
+        implementation("androidx.fragment:fragment-ktx:1.4.1")
 
         // Glide
         implementation("com.github.bumptech.glide:glide:4.12.0")
@@ -209,10 +209,10 @@ android {
         implementation("com.mikepenz:aboutlibraries-core:8.9.0")
 
         // Billing
-        implementation("com.android.billingclient:billing-ktx:4.0.0")
+        implementation("com.android.billingclient:billing-ktx:5.0.0")
 
         // Play Core (review api)
-        implementation("com.google.android.play:core:1.10.1")
+        implementation("com.google.android.play:core:1.10.3")
         implementation("com.google.android.play:core-ktx:1.8.1")
 
         // Semantic versioning
