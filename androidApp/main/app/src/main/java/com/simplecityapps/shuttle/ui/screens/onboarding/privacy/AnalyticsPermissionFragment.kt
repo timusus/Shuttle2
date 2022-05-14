@@ -25,7 +25,6 @@ class AnalyticsPermissionFragment : Fragment(), OnboardingChild {
     @Inject
     lateinit var analyticsManager: AnalyticsManager
 
-
     // Lifecycle
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -60,7 +59,6 @@ class AnalyticsPermissionFragment : Fragment(), OnboardingChild {
             } ?: Timber.e("Failed to update state - getParent() returned null")
         }, 50)
     }
-
 
     // OnboardingChild Implementation
 

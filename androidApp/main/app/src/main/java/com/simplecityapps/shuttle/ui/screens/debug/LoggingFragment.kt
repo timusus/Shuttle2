@@ -29,7 +29,6 @@ class LoggingFragment : Fragment(), DebugLoggingTree.Callback {
 
     private var filter: Filter? = null
 
-
     // Lifecycle
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -66,7 +65,6 @@ class LoggingFragment : Fragment(), DebugLoggingTree.Callback {
         super.onDestroyView()
     }
 
-
     // Private
 
     private fun canLog(logMessage: LogMessage): Boolean {
@@ -97,7 +95,6 @@ class LoggingFragment : Fragment(), DebugLoggingTree.Callback {
         return canLog
     }
 
-
     // DebugLoggingTree.Callback Implementation
 
     override fun onLog(logMessage: LogMessage) {
@@ -105,7 +102,6 @@ class LoggingFragment : Fragment(), DebugLoggingTree.Callback {
             adapter.add(newItem = LogMessageBinder(logMessage))
         }
     }
-
 
     companion object {
 
@@ -115,7 +111,6 @@ class LoggingFragment : Fragment(), DebugLoggingTree.Callback {
             putParcelable(ARG_FILTER, filter)
         }
     }
-
 
     @Parcelize
     class Filter(

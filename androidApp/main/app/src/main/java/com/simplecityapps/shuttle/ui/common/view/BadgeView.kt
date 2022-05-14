@@ -17,7 +17,9 @@ import com.simplecityapps.shuttle.ui.common.utils.sp
 import kotlin.math.max
 
 class BadgeView @JvmOverloads constructor(
-    context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
     var badgeCount: Int = 12

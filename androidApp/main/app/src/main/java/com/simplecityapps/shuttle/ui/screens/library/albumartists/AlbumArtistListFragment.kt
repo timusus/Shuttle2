@@ -76,7 +76,6 @@ class AlbumArtistListFragment :
         )
     }
 
-
     // Lifecycle
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -160,7 +159,6 @@ class AlbumArtistListFragment :
         super.onDestroyView()
     }
 
-
     // Toolbar item selection
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -178,7 +176,6 @@ class AlbumArtistListFragment :
             else -> false
         }
     }
-
 
     // Private
 
@@ -220,25 +217,26 @@ class AlbumArtistListFragment :
         }
     }
 
-
     // AlbumArtistListContact.View Implementation
 
     override fun setAlbumArtists(albumArtists: List<AlbumArtist>, viewMode: ViewMode) {
 
         preloadModelProvider.items = albumArtists
 
-        adapter.update(albumArtists.map { albumArtist ->
-            when (viewMode) {
-                ViewMode.Grid -> {
-                    GridAlbumArtistBinder(albumArtist, imageLoader, this)
-                        .apply { selected = contextualToolbarHelper.selectedItems.contains(albumArtist) }
-                }
-                ViewMode.List -> {
-                    ListAlbumArtistBinder(albumArtist, imageLoader, this)
-                        .apply { selected = contextualToolbarHelper.selectedItems.contains(albumArtist) }
+        adapter.update(
+            albumArtists.map { albumArtist ->
+                when (viewMode) {
+                    ViewMode.Grid -> {
+                        GridAlbumArtistBinder(albumArtist, imageLoader, this)
+                            .apply { selected = contextualToolbarHelper.selectedItems.contains(albumArtist) }
+                    }
+                    ViewMode.List -> {
+                        ListAlbumArtistBinder(albumArtist, imageLoader, this)
+                            .apply { selected = contextualToolbarHelper.selectedItems.contains(albumArtist) }
+                    }
                 }
             }
-        }) {
+        ) {
             recyclerViewState?.let {
                 recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
                 recyclerViewState = null
@@ -317,7 +315,6 @@ class AlbumArtistListFragment :
         }
     }
 
-
     // AlbumArtistBinder.Listener Implementation
 
     override fun onAlbumArtistClicked(albumArtist: AlbumArtist, viewHolder: AlbumArtistBinder.ViewHolder) {
@@ -382,13 +379,11 @@ class AlbumArtistListFragment :
         viewPreloadSizeProvider.setView(holder.imageView)
     }
 
-
     // CreatePlaylistDialogFragment.Listener Implementation
 
     override fun onSave(text: String, playlistData: PlaylistData) {
         playlistMenuView.onSave(text, playlistData)
     }
-
 
     // ContextualToolbarHelper.Callback Implementation
 
@@ -415,7 +410,6 @@ class AlbumArtistListFragment :
             }
         }
     }
-
 
     // Static
 

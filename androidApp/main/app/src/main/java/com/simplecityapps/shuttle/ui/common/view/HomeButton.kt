@@ -65,7 +65,6 @@ class HomeButton @JvmOverloads constructor(
         }
     }
 
-
     enum class ButtonType(val value: Int) {
         History(0), Recent(1), Favorites(2), Shuffle(3);
 

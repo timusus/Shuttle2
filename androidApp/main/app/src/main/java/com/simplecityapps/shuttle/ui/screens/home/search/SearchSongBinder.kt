@@ -68,17 +68,17 @@ open class SearchSongBinder(
     }
 
     override fun areContentsTheSame(other: Any): Boolean {
-        return other is SearchSongBinder
-                && song.name == other.song.name
-                && song.albumArtist == other.song.albumArtist
-                && song.artists == other.song.artists
-                && song.album == other.song.album
-                && song.date == other.song.date
-                && song.track == other.song.track
-                && song.disc == other.song.disc
-                && song.playCount == other.song.playCount
-                && selected == other.selected
-                && jaroSimilarity == other.jaroSimilarity
+        return other is SearchSongBinder &&
+            song.name == other.song.name &&
+            song.albumArtist == other.song.albumArtist &&
+            song.artists == other.song.artists &&
+            song.album == other.song.album &&
+            song.date == other.song.date &&
+            song.track == other.song.track &&
+            song.disc == other.song.disc &&
+            song.playCount == other.song.playCount &&
+            selected == other.selected &&
+            jaroSimilarity == other.jaroSimilarity
     }
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<SearchSongBinder>(itemView) {
@@ -163,9 +163,11 @@ open class SearchSongBinder(
 
             // We display either the artist, or album-artist - whichever gave us a better jaro score
             var artistOrAlbumArtistStringBuilder: SpannableStringBuilder?
-            if (viewBinder.jaroSimilarity.artistNameJaroSimilarity.score >= viewBinder.jaroSimilarity.albumArtistNameJaroSimilarity.score
-                || (viewBinder.jaroSimilarity.artistNameJaroSimilarity.score < StringComparison.threshold
-                        && viewBinder.jaroSimilarity.albumArtistNameJaroSimilarity.score < StringComparison.threshold)
+            if (viewBinder.jaroSimilarity.artistNameJaroSimilarity.score >= viewBinder.jaroSimilarity.albumArtistNameJaroSimilarity.score ||
+                (
+                    viewBinder.jaroSimilarity.artistNameJaroSimilarity.score < StringComparison.threshold &&
+                        viewBinder.jaroSimilarity.albumArtistNameJaroSimilarity.score < StringComparison.threshold
+                    )
             ) {
                 artistOrAlbumArtistStringBuilder = viewBinder.song.friendlyArtistName?.let { SpannableStringBuilder(viewBinder.song.friendlyArtistName) }
                 artistOrAlbumArtistStringBuilder?.let {

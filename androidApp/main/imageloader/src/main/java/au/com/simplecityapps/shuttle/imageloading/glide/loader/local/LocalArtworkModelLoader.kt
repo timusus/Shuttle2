@@ -26,7 +26,6 @@ class LocalArtworkModelLoader : ModelLoader<LocalArtworkProvider, InputStream> {
         return true
     }
 
-
     class Factory : ModelLoaderFactory<LocalArtworkProvider, InputStream> {
 
         override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<LocalArtworkProvider, InputStream> {
@@ -34,10 +33,8 @@ class LocalArtworkModelLoader : ModelLoader<LocalArtworkProvider, InputStream> {
         }
 
         override fun teardown() {
-
         }
     }
-
 
     class LocalArtworkDataFetcher(
         private val localArtworkProvider: LocalArtworkProvider
@@ -48,7 +45,6 @@ class LocalArtworkModelLoader : ModelLoader<LocalArtworkProvider, InputStream> {
         }
 
         override fun cleanup() {
-
         }
 
         override fun getDataSource(): DataSource {
@@ -56,7 +52,6 @@ class LocalArtworkModelLoader : ModelLoader<LocalArtworkProvider, InputStream> {
         }
 
         override fun cancel() {
-
         }
 
         override fun loadData(priority: Priority, callback: DataFetcher.DataCallback<in InputStream>) {

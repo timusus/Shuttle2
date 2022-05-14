@@ -50,16 +50,21 @@ class PurchaseDialogFragment : DialogFragment() {
 
         billingManager.skuDetails
             .onEach { detailsList ->
-                adapter.update(detailsList
-                    .filter { enabledSkus.contains(it.sku) }
-                    .map { skuDetails ->
-                        SkuBinder(skuDetails, object : SkuBinder.Listener {
-                            override fun onClick(skuDetails: SkuDetails) {
-                                billingManager.launchPurchaseFlow(requireActivity(), skuDetails)
-                                dismiss()
-                            }
-                        })
-                    })
+                adapter.update(
+                    detailsList
+                        .filter { enabledSkus.contains(it.sku) }
+                        .map { skuDetails ->
+                            SkuBinder(
+                                skuDetails,
+                                object : SkuBinder.Listener {
+                                    override fun onClick(skuDetails: SkuDetails) {
+                                        billingManager.launchPurchaseFlow(requireActivity(), skuDetails)
+                                        dismiss()
+                                    }
+                                }
+                            )
+                        }
+                )
             }.launchIn(lifecycleScope)
 
         val view = layoutInflater.inflate(R.layout.dialog_purchase, null)
@@ -83,11 +88,9 @@ class PurchaseDialogFragment : DialogFragment() {
         show(fragmentManager, TAG)
     }
 
-
     companion object {
         private const val TAG = "PurchaseDialogFragment"
 
         fun newInstance(): PurchaseDialogFragment = PurchaseDialogFragment()
     }
 }
-

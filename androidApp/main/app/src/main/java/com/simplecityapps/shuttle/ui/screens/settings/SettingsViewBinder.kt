@@ -45,7 +45,6 @@ class SettingsViewBinder(
         return isSelected == (other as? SettingsViewBinder)?.isSelected
     }
 
-
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<SettingsViewBinder>(itemView) {
 
         private val icon: ImageView = itemView.findViewById(R.id.icon)

@@ -39,4 +39,3 @@ fun EqualizerBand.toNyquistBand(): NyquistBand {
 }
 
 class NyquistBand(centerFrequency: Int, val bandwidth: Int, peakGain: Double, val bandwidthGain: Double) : EqualizerBand(centerFrequency, peakGain)
-

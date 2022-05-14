@@ -49,7 +49,6 @@ class HorizontalAlbumArtistListBinder(
         return albumArtists.hashCode()
     }
 
-
     class ViewHolder(itemView: View, scope: CoroutineScope) : ViewBinder.ViewHolder<HorizontalAlbumArtistListBinder>(itemView) {
 
         private val recyclerView: RecyclerView = itemView.findViewById(R.id.recyclerView)
@@ -64,14 +63,16 @@ class HorizontalAlbumArtistListBinder(
             super.bind(viewBinder, isPartial)
 
             recyclerView.adapter = adapter
-            adapter.update(viewBinder.albumArtists.map { albumArtist ->
-                GridAlbumArtistBinder(
-                    albumArtist,
-                    viewBinder.imageLoader,
-                    listener = viewBinder.listener,
-                    fixedWidthDp = 108
-                )
-            })
+            adapter.update(
+                viewBinder.albumArtists.map { albumArtist ->
+                    GridAlbumArtistBinder(
+                        albumArtist,
+                        viewBinder.imageLoader,
+                        listener = viewBinder.listener,
+                        fixedWidthDp = 108
+                    )
+                }
+            )
         }
     }
 }

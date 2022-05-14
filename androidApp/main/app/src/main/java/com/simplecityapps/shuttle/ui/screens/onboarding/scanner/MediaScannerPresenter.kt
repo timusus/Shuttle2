@@ -58,7 +58,6 @@ class ScannerPresenter @AssistedInject constructor(
         super.unbindView()
     }
 
-
     // Private
 
     /**
@@ -90,7 +89,6 @@ class ScannerPresenter @AssistedInject constructor(
     override fun stopScan() {
         scanJob?.cancel()
     }
-
 
     // MediaImporter.Listener Implementation
 

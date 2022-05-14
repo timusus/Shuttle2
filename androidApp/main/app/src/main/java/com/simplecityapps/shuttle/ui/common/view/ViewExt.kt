@@ -69,7 +69,8 @@ fun View.fadeOut(duration: Long = 250, delay: Long = 0, completion: (() -> Unit)
             isVisible = false
             completion?.invoke()
             animator.removeAllListeners()
-        })
+        }
+    )
     animator.start()
     return animator
 }

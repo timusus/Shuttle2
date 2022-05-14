@@ -43,10 +43,10 @@ class PlaylistBinder(val playlist: com.simplecityapps.shuttle.model.Playlist, pr
     }
 
     override fun areContentsTheSame(other: Any): Boolean {
-        return playlist.name == (other as? PlaylistBinder)?.playlist?.name
-                && playlist.songCount == (other as? PlaylistBinder)?.playlist?.songCount
-                && playlist.externalId == other.playlist.externalId
-                && playlist.mediaProvider == other.playlist.mediaProvider
+        return playlist.name == (other as? PlaylistBinder)?.playlist?.name &&
+            playlist.songCount == (other as? PlaylistBinder)?.playlist?.songCount &&
+            playlist.externalId == other.playlist.externalId &&
+            playlist.mediaProvider == other.playlist.mediaProvider
     }
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<PlaylistBinder>(itemView) {

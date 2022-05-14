@@ -68,7 +68,7 @@ class PlaybackManager(
      * Note: If the current queue item fails to load, the next item in the queue is attempted
      */
     fun load(seekPosition: Int? = null, completion: (Result<Boolean>) -> Unit) {
-        Timber.v("load(seekPosition: ${seekPosition})")
+        Timber.v("load(seekPosition: $seekPosition)")
         // Some players (ExoPlayer/ChromeCast) like to be loaded on the main thread
         queueManager.getCurrentItem()?.let { currentQueueItem ->
             attemptLoad(currentQueueItem.song, queueManager.getNext()?.song, seekPosition ?: currentQueueItem.song.getStartPosition() ?: 0) { result ->
@@ -324,7 +324,6 @@ class PlaybackManager(
         return playback.getPlaybackSpeed()
     }
 
-
     // Private
 
     private fun monitorProgress(isPlaying: Boolean) {
@@ -342,7 +341,6 @@ class PlaybackManager(
             }
         }
     }
-
 
     // PlaybackWatcherCallback Implementation
 
@@ -379,7 +377,6 @@ class PlaybackManager(
         updateProgress()
     }
 
-
     // QueueChangeCallback Implementation
 
     override fun onRepeatChanged(repeatMode: QueueManager.RepeatMode) {
@@ -403,7 +400,6 @@ class PlaybackManager(
         }
     }
 
-
     // AudioFocusHelper.Listener Implementation
 
     override fun pause() {
@@ -419,7 +415,6 @@ class PlaybackManager(
     override fun duck() {
         playback.setVolume(0.2f)
     }
-
 
     /**
      * A simple handler which executes continuously between start() and stop()

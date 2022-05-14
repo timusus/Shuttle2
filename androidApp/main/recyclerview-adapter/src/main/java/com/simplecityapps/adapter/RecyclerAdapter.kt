@@ -77,7 +77,6 @@ open class RecyclerAdapter(scope: CoroutineScope, val skipIntermediateUpdates: B
         actor.trySend(AdapterOperation.Clear)
     }
 
-
     // Private
 
     private suspend fun updateInternal(newItems: MutableList<ViewBinder>, callback: (() -> Unit)? = null) {
@@ -127,7 +126,6 @@ open class RecyclerAdapter(scope: CoroutineScope, val skipIntermediateUpdates: B
         }
     }
 
-
     // RecyclerView.Adapter Implementation
 
     override fun getItemViewType(position: Int): Int {
@@ -162,7 +160,6 @@ open class RecyclerAdapter(scope: CoroutineScope, val skipIntermediateUpdates: B
         (holder as? AttachAwareViewHolder)?.onDetach()
         super.onViewDetachedFromWindow(holder)
     }
-
 
     // Logging Callback
 

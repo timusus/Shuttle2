@@ -18,7 +18,6 @@ import com.google.android.material.textfield.TextInputLayout
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.utils.withArgs
 
-
 open class EditTextAlertDialog : DialogFragment() {
 
     interface Listener {
@@ -112,7 +111,6 @@ open class EditTextAlertDialog : DialogFragment() {
     fun show(manager: FragmentManager) {
         super.show(manager, TAG)
     }
-
 
     companion object {
         const val TAG = "EditTextAlertDialog"

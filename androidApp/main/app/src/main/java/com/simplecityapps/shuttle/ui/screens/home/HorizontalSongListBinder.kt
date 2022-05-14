@@ -53,7 +53,6 @@ class HorizontalSongListBinder(
         return result
     }
 
-
     class ViewHolder(itemView: View, scope: CoroutineScope) : ViewBinder.ViewHolder<HorizontalSongListBinder>(itemView) {
 
         private val titleLabel: TextView = itemView.findViewById(R.id.titleLabel)
@@ -75,14 +74,17 @@ class HorizontalSongListBinder(
             subtitleLabel.text = viewBinder.subtitle
 
             recyclerView.adapter = adapter
-            adapter.update(viewBinder.songs.map { song ->
-                GridSongBinder(song, viewBinder.imageLoader, object : GridSongBinder.Listener {
-                    override fun onSongClicked(song: com.simplecityapps.shuttle.model.Song) {
-
-                    }
-                })
-            })
+            adapter.update(
+                viewBinder.songs.map { song ->
+                    GridSongBinder(
+                        song, viewBinder.imageLoader,
+                        object : GridSongBinder.Listener {
+                            override fun onSongClicked(song: com.simplecityapps.shuttle.model.Song) {
+                            }
+                        }
+                    )
+                }
+            )
         }
-
     }
 }

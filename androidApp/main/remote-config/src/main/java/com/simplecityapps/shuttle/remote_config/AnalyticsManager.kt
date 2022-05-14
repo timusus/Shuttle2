@@ -10,5 +10,4 @@ class AnalyticsManager @Inject constructor(@ApplicationContext val context: Cont
     fun enableAnalytics(enabled: Boolean) {
         FirebaseAnalytics.getInstance(context).setAnalyticsCollectionEnabled(enabled)
     }
-
 }

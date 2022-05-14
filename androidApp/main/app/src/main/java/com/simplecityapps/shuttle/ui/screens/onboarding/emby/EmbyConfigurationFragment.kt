@@ -133,13 +133,11 @@ class EmbyConfigurationFragment : DialogFragment() {
         return dialog
     }
 
-
     // Public
 
     fun show(manager: FragmentManager) {
         super.show(manager, "EmbyConfigurationFragment")
     }
-
 
     // Private
 
@@ -160,7 +158,6 @@ class EmbyConfigurationFragment : DialogFragment() {
 
         return !hasError
     }
-
 
     // Static
 

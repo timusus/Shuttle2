@@ -61,7 +61,6 @@ class SettingsFragment : PreferenceFragmentCompat() {
         }
     }
 
-
     // Static
 
     companion object {

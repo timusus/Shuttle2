@@ -63,7 +63,6 @@ class MediaImporter(
             return
         }
 
-
         Timber.v("Starting import..")
         val time = System.currentTimeMillis()
 
@@ -150,7 +149,6 @@ class MediaImporter(
         isImporting = false
         Timber.v("Import complete in ${System.currentTimeMillis() - time}ms)")
     }
-
 
     data class SongImportResult(
         val mediaProviderType: MediaProviderType,
@@ -262,7 +260,6 @@ class MediaImporter(
             emit(FlowEvent.Success(PlaylistImportResult(mediaProvider.type)))
         }
     }
-
 
     data class PlaylistUpdateData(
         val mediaProviderType: MediaProviderType,

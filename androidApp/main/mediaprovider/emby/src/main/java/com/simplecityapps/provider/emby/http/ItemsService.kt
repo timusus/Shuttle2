@@ -78,5 +78,5 @@ suspend fun ItemsService.item(
     userId: String,
     itemId: String
 ): NetworkResult<Item> {
-    return itemImpl("$url/Users/$userId/Items/${itemId}", token)
+    return itemImpl("$url/Users/$userId/Items/$itemId", token)
 }

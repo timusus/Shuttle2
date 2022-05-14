@@ -31,7 +31,6 @@ class RemoteArtworkSongModelLoader(
         return ModelLoader.LoadData(ObjectKey(SongArtworkProvider(model).getCacheKey()), RemoteArtworkSongFetcher(model, remoteArtworkProvider, coroutineScope))
     }
 
-
     class Factory(
         private val preferenceManager: GeneralPreferenceManager,
         private val remoteArtworkProvider: RemoteArtworkProvider,

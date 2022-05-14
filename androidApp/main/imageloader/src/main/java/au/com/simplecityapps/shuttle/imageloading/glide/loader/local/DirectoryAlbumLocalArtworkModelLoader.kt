@@ -32,7 +32,6 @@ class DirectoryAlbumLocalArtworkModelLoader(
         return true
     }
 
-
     class Factory(
         private val context: Context,
         private val songRepository: SongRepository
@@ -45,7 +44,6 @@ class DirectoryAlbumLocalArtworkModelLoader(
         override fun teardown() {
         }
     }
-
 
     class DirectoryAlbumLocalArtworkProvider(
         private val context: Context,
@@ -75,9 +73,9 @@ class DirectoryAlbumLocalArtworkModelLoader(
 
                         parentDocumentFile?.listFiles()
                             ?.filter {
-                                it.type?.startsWith("image") == true
-                                        && it.length() > 1024
-                                        && pattern.matcher(it.name ?: "").matches()
+                                it.type?.startsWith("image") == true &&
+                                    it.length() > 1024 &&
+                                    pattern.matcher(it.name ?: "").matches()
                             }
                             ?.maxByOrNull { it.length() }
                             ?.let { documentFile ->

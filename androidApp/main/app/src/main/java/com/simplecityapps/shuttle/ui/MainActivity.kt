@@ -76,12 +76,17 @@ class MainActivity :
 
     private fun handleSearchQuery(intent: Intent?) {
         if (intent?.action == MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH) {
-            ContextCompat.startForegroundService(this, (Intent(this, PlaybackService::class.java).apply {
-                action = PlaybackService.ACTION_SEARCH
-                intent.extras?.let { extras ->
-                    putExtras(extras)
-                }
-            }))
+            ContextCompat.startForegroundService(
+                this,
+                (
+                    Intent(this, PlaybackService::class.java).apply {
+                        action = PlaybackService.ACTION_SEARCH
+                        intent.extras?.let { extras ->
+                            putExtras(extras)
+                        }
+                    }
+                    )
+            )
         }
     }
 }

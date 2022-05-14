@@ -16,7 +16,9 @@ import com.simplecityapps.shuttle.ui.common.utils.dp
 import kotlin.math.abs
 
 class HorizontalSeekbar @JvmOverloads constructor(
-    context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
     interface Listener {
@@ -125,7 +127,6 @@ class HorizontalSeekbar @JvmOverloads constructor(
 
         invalidate()
     }
-
 
     /**
      * Rounds i to nearest multiple of n

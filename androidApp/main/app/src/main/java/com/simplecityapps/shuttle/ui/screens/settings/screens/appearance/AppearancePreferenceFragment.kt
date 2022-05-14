@@ -180,7 +180,6 @@ class AppearancePreferenceFragment : Fragment() {
         super.onDestroyView()
     }
 
-
     // Private
 
     private val listener = object : LibraryTabBinder.Listener {

@@ -133,13 +133,11 @@ class JellyfinConfigurationFragment : DialogFragment() {
         return dialog
     }
 
-
     // Public
 
     fun show(manager: FragmentManager) {
         super.show(manager, "JellyfinConfigurationFragment")
     }
-
 
     // Private
 
@@ -160,7 +158,6 @@ class JellyfinConfigurationFragment : DialogFragment() {
 
         return !hasError
     }
-
 
     // Static
 

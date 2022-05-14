@@ -68,7 +68,8 @@ class ChangesetBinder(
                         length,
                         Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
                     )
-                })
+                }
+            )
             spannableBuilder.append("\n\n")
             changeset.features.forEachIndexed { index, string ->
                 spannableBuilder.append(
@@ -100,7 +101,8 @@ class ChangesetBinder(
                         length,
                         Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
                     )
-                })
+                }
+            )
             spannableBuilder.append("\n\n")
             changeset.improvements.forEachIndexed { index, string ->
                 spannableBuilder.append(
@@ -131,7 +133,8 @@ class ChangesetBinder(
                         length,
                         Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
                     )
-                })
+                }
+            )
             spannableBuilder.append("\n\n")
             changeset.fixes.forEachIndexed { index, string ->
                 spannableBuilder.append(
@@ -152,7 +155,6 @@ class ChangesetBinder(
 
         return spannableBuilder
     }
-
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<ChangesetBinder>(itemView) {
         val title: TextView = itemView.findViewById(R.id.title)

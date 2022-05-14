@@ -37,7 +37,8 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class LibraryFragment : Fragment(),
+class LibraryFragment :
+    Fragment(),
     ToolbarHost,
     EditTextAlertDialog.Listener {
 
@@ -66,7 +67,6 @@ class LibraryFragment : Fragment(),
     lateinit var promoCodeService: PromoCodeService
 
     private lateinit var libraryTabs: List<LibraryTab>
-
 
     // Lifecycle
 
@@ -178,7 +178,6 @@ class LibraryFragment : Fragment(),
         super.onDestroyView()
     }
 
-
     // ViewPager2.OnPageChangeCallback Implementation
 
     private val pageChangeListener = object : ViewPager2.OnPageChangeCallback() {
@@ -187,7 +186,6 @@ class LibraryFragment : Fragment(),
             preferenceManager.currentLibraryTab = libraryTabs[position]
         }
     }
-
 
     // EditTextAlertDialog.Listener Implementation
 
@@ -203,7 +201,6 @@ class LibraryFragment : Fragment(),
             }
         }
     }
-
 
     // ToolbarHost Implementation
 

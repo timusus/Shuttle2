@@ -105,7 +105,6 @@ class TrialDialogFragment : DialogFragment() {
         show(fragmentManager, TAG)
     }
 
-
     companion object {
         private const val TAG = "TrialDialogFragment"
 

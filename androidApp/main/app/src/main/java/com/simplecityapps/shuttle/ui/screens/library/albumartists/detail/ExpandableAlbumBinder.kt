@@ -72,15 +72,14 @@ class ExpandableAlbumBinder(
 
     override fun areContentsTheSame(other: Any): Boolean {
         return (other as? ExpandableAlbumBinder)?.let {
-            album.name == other.album.name
-                    && album.albumArtist == other.album.albumArtist
-                    && expanded == other.expanded
-                    && album.songCount == other.album.songCount
-                    && album.year == other.album.year
-                    && songs.map { it.id } == other.songs.map { it.id }
+            album.name == other.album.name &&
+                album.albumArtist == other.album.albumArtist &&
+                expanded == other.expanded &&
+                album.songCount == other.album.songCount &&
+                album.year == other.album.year &&
+                songs.map { it.id } == other.songs.map { it.id }
         } ?: false
     }
-
 
     class ViewHolder(itemView: View, scope: CoroutineScope) : ViewBinder.ViewHolder<ExpandableAlbumBinder>(itemView) {
 
@@ -142,34 +141,35 @@ class ExpandableAlbumBinder(
                     entry.value.groupBy { song -> song.grouping ?: "" }
                 }
 
-            adapter.update(discGroupingSongsMap.flatMap { discEntry ->
-                val viewBinders = mutableListOf<ViewBinder>()
-                if (discGroupingSongsMap.size > 1) {
-                    viewBinders.add(
-                        DiscNumberBinder(
-                            Phrase.from(itemView.context, R.string.disc_number)
-                                .put("disc_number", discEntry.key)
-                                .format().toString()
+            adapter.update(
+                discGroupingSongsMap.flatMap { discEntry ->
+                    val viewBinders = mutableListOf<ViewBinder>()
+                    if (discGroupingSongsMap.size > 1) {
+                        viewBinders.add(
+                            DiscNumberBinder(
+                                Phrase.from(itemView.context, R.string.disc_number)
+                                    .put("disc_number", discEntry.key)
+                                    .format().toString()
+                            )
                         )
-                    )
-                }
-
-                val groupingMap = discEntry.value
-                groupingMap.flatMap { groupingEntry ->
-                    if (groupingEntry.key.isNotEmpty()) {
-                        viewBinders.add(GroupingBinder(groupingEntry.key))
                     }
-                    viewBinders.addAll(groupingEntry.value.map { song -> DetailSongBinder(song, songBinderListener) })
+
+                    val groupingMap = discEntry.value
+                    groupingMap.flatMap { groupingEntry ->
+                        if (groupingEntry.key.isNotEmpty()) {
+                            viewBinders.add(GroupingBinder(groupingEntry.key))
+                        }
+                        viewBinders.addAll(groupingEntry.value.map { song -> DetailSongBinder(song, songBinderListener) })
+                        viewBinders
+                    }
+
                     viewBinders
                 }
-
-                viewBinders
-            })
+            )
         }
 
         override fun recycle() {
             viewBinder?.imageLoader?.clear(imageView)
-
         }
 
         private val songBinderListener = object : DetailSongBinder.Listener {

@@ -18,8 +18,8 @@ open class RemoteServiceHttpError(val response: Response<*>) : RemoteServiceErro
 
     override fun toString(): String {
         return "RemoteServiceHttpError" +
-                "\n\t- code: ${response.code()} (${httpStatusCode.name})" +
-                "\n\t- message: ${super.message}"
+            "\n\t- code: ${response.code()} (${httpStatusCode.name})" +
+            "\n\t- message: ${super.message}"
     }
 }
 

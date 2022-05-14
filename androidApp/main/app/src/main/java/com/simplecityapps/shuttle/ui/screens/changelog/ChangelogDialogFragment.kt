@@ -72,25 +72,28 @@ class ChangelogDialogFragment : BottomSheetDialogFragment() {
                 viewBinders.add(NotesBinder(notes))
             }
         }
-        viewBinders.addAll(changelog?.mapIndexed { index, changeset ->
-            ChangesetBinder(
-                expanded = index == 0 || changeset.version > (preferenceManager.lastViewedChangelogVersion?.let { version ->
-                    try {
-                        Semver(version)
-                    } catch (e: Exception) {
-                        Timber.e(e)
-                        null
-                    }
-                } ?: Semver("0.0.0")),
-                changeset = changeset,
-                listener = listener
-            )
-        }.orEmpty())
+        viewBinders.addAll(
+            changelog?.mapIndexed { index, changeset ->
+                ChangesetBinder(
+                    expanded = index == 0 || changeset.version > (
+                        preferenceManager.lastViewedChangelogVersion?.let { version ->
+                            try {
+                                Semver(version)
+                            } catch (e: Exception) {
+                                Timber.e(e)
+                                null
+                            }
+                        } ?: Semver("0.0.0")
+                        ),
+                    changeset = changeset,
+                    listener = listener
+                )
+            }.orEmpty()
+        )
         adapter.update(viewBinders)
 
         preferenceManager.lastViewedChangelogVersion = BuildConfig.VERSION_NAME
     }
-
 
     fun show(fragmentManager: FragmentManager) {
         show(fragmentManager, TAG)

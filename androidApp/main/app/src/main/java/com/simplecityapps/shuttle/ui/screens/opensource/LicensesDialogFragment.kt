@@ -24,7 +24,7 @@ class LicensesDialogFragment : DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
 
-        val view = layoutInflater.inflate(R.layout.fragment_dialog_licenses , null)
+        val view = layoutInflater.inflate(R.layout.fragment_dialog_licenses, null)
         val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerView)
         recyclerView.addItemDecoration(SpacesItemDecoration(4))
         adapter = RecyclerAdapter(lifecycleScope)
@@ -58,7 +58,6 @@ class LicensesDialogFragment : DialogFragment() {
             }
         }
     }
-
 
     companion object {
         const val TAG = "LicensesDialogFragment"

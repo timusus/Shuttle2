@@ -87,12 +87,14 @@ class LocalPlaylistRepository(
     }
 
     override suspend fun addToPlaylist(playlist: Playlist, songs: List<Song>) {
-        return playlistSongJoinDao.insert(songs.map { song ->
-            PlaylistSongJoin(
-                playlistId = playlist.id,
-                songId = song.id
-            )
-        })
+        return playlistSongJoinDao.insert(
+            songs.map { song ->
+                PlaylistSongJoin(
+                    playlistId = playlist.id,
+                    songId = song.id
+                )
+            }
+        )
     }
 
     override suspend fun removeFromPlaylist(playlist: Playlist, playlistSongs: List<PlaylistSong>) {
@@ -147,11 +149,13 @@ class LocalPlaylistRepository(
     }
 
     override suspend fun updatePlaylistSongsSortOder(playlist: Playlist, playlistSongs: List<PlaylistSong>) {
-        playlistSongJoinDao.updateSortOrder(playlistSongs.map { playlistSong ->
-            PlaylistSongJoin(playlist.id, playlistSong.song.id).apply {
-                id = playlistSong.id
-                sortOrder = playlistSong.sortOrder
+        playlistSongJoinDao.updateSortOrder(
+            playlistSongs.map { playlistSong ->
+                PlaylistSongJoin(playlist.id, playlistSong.song.id).apply {
+                    id = playlistSong.id
+                    sortOrder = playlistSong.sortOrder
+                }
             }
-        })
+        )
     }
 }

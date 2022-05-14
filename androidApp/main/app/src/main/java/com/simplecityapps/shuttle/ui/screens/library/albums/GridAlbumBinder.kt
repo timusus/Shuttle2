@@ -39,7 +39,6 @@ class GridAlbumBinder(
         return 1
     }
 
-
     class ViewHolder(itemView: View) : AlbumBinder.ViewHolder(itemView) {
 
         private val title: TextView = itemView.findViewById(R.id.title)

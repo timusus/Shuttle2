@@ -41,7 +41,7 @@ class CastSessionManager @Inject constructor(
 
     override fun onSessionResuming(castSession: CastSession, s: String) {
         Timber.d("onSessionResuming")
-        if(!httpServer.wasStarted()) {
+        if (!httpServer.wasStarted()) {
             httpServer.start()
         }
     }

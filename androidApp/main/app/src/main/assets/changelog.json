@@ -1,5 +1,19 @@
 [
   {
+    "versionName": "1.0.4",
+    "releaseDate": "14/05/2022",
+    "features": [
+    ],
+    "fixes": [
+    ],
+    "improvements": [
+      "Fixed various issues causing Plex media import to fail. Please let me know if you still have trouble finding you music with Plex!"
+    ],
+    "notes": [
+      "Long time no update! Hope you're well, friends ❤️"
+    ]
+  },
+  {
     "versionName": "1.0.3",
     "releaseDate": "02/10/2021",
     "features": [

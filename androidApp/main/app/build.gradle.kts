@@ -1,6 +1,5 @@
 plugins {
     id("com.android.application")
-    id("com.github.triplet.play") version "3.6.0"
     id("kotlin-android")
     id("androidx.navigation.safeargs.kotlin")
     id("kotlin-kapt")
@@ -18,8 +17,8 @@ android {
         applicationId = "com.simplecityapps.shuttle"
         minSdk = 21
         targetSdk = 30
-        versionName = computeVersionName()
-        versionCode = computeVersionCode()
+        versionName = versionName()
+        versionCode = versionCode()
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner = "com.simplecityapps.shuttle.CustomTestRunner"
         ndk {
@@ -29,20 +28,24 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file("../keystore.ks")
-            keyAlias =
-                if (project.hasProperty("keyAlias")) project.properties["keyAlias"] as String else "default"
-            storePassword =
-                if (project.hasProperty("storePass")) project.properties["storePass"] as String else "default"
-            keyPassword =
-                if (project.hasProperty("keyPass")) project.properties["keyPass"] as String else "default"
+            if (isCiBuild() && isReleaseBuild()) {
+                val keystore = file("../keystore.ks")
+                if (!keystore.exists()) {
+                    throw Exception("Missing keystore.jks")
+                }
+                storeFile = keystore
+                storePassword = getEnv("KEYSTORE_PASSWORD")
+                keyAlias = getEnv("KEYSTORE_ALIAS")
+                keyPassword = getEnv("KEYSTORE_PASSWORD")
+            }
         }
     }
 
     buildTypes {
         getByName("debug") {
             applicationIdSuffix = ".dev"
-            if (System.getenv("JENKINS_URL") != null) {
+            if (isCiBuild()) {
+                // We want proguard enabled on CI, so our instrumented tests run on obfuscated code
                 isMinifyEnabled = true
                 proguardFiles(
                     getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -60,7 +63,6 @@ android {
         }
     }
 
-    flavorDimensions("all")
     packagingOptions {
         resources {
             excludes += setOf("META-INF/*.kotlin_module")
@@ -248,51 +250,47 @@ hilt {
     enableExperimentalClasspathAggregation = false
 }
 
-play {
-    if (System.getenv("JENKINS_URL") != null) {
-        serviceAccountCredentials.set(file(System.getenv("DEPLOYMENT_KEYS")))
-        defaultToAppBundles.set(true)
-
-        when (System.getenv("BRANCH_NAME")) {
-            "alpha" -> {
-                track.set("alpha")
-            }
-            "beta" -> {
-                track.set("beta")
-            }
-            "prod" -> {
-                track.set("production")
-            }
-        }
-    } else {
-        serviceAccountCredentials.set(file("../deployment_keys.json"))
-    }
-}
-
 apply(plugin = "com.google.gms.google-services")
 
-fun computeVersionName(): String {
-    if (System.getenv("JENKINS_URL") != null) {
-        return String.format(
-            "%d.%d.%d%s",
-            AppVersion.versionMajor,
-            AppVersion.versionMinor,
-            AppVersion.versionPatch,
-            AppVersion.versionSuffix
-        )
-    }
-    return String.format(
-        "%d.%d.%d%s",
-        AppVersion.versionMajor,
-        AppVersion.versionMinor,
-        AppVersion.versionPatch,
-        AppVersion.versionSuffix
-    )
+/**
+ * Retrieves an Environment Variable, or throws [MissingEnvVarException]
+ */
+fun getEnv(name: String): String {
+    return System.getenv(name) ?: throw MissingEnvVarException(name)
 }
 
-fun computeVersionCode(): Int {
-    // Major + minor + Jenkins build number (where available)
-    return (AppVersion.versionMajor * 10000000) + (AppVersion.versionMinor * 1000000) + (AppVersion.versionPatch * 10000) + Integer.valueOf(
-        System.getenv("BUILD_NUMBER") ?: "0"
-    )
+fun isCiBuild(): Boolean {
+    return try {
+        getEnv("CI").toBoolean()
+    } catch (e: MissingEnvVarException) {
+        println("'CI' Environment Variable not found. This build is presumed to be a non-CI build.")
+        false
+    }
+}
+
+fun isReleaseBuild(): Boolean {
+    return try {
+        getEnv("CONFIGURATION") == "Release"
+    } catch (e: MissingEnvVarException) {
+        println("'CONFIGURATION' Environment Variable not found. This build is presumed to be a Debug build.")
+        false
+    }
+}
+
+fun versionName(): String {
+    return "${AppVersion.versionMajor}.${AppVersion.versionMinor}.${AppVersion.versionPatch}${if (AppVersion.versionSuffix != null) "-${AppVersion.versionSuffix}" else ""} (${versionCode()})"
+}
+
+fun versionCode(): Int {
+    // Major + minor + CI build number (where available)
+    return (AppVersion.versionMajor * 10000000) + (AppVersion.versionMinor * 1000000) + (AppVersion.versionPatch * 10000) +
+            when {
+                isCiBuild() -> getEnv("GITHUB_RUN_NUMBER").toInt() + 20 // Add 20 due to move from Jenkins to GH Actions
+                else -> 1
+            }
+}
+
+class MissingEnvVarException(private val name: String) : Exception() {
+    override val message: String
+        get() = "Missing Environment Variable: $name"
 }

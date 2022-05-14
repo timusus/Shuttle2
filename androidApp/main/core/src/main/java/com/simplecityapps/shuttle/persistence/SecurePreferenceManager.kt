@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 class SecurePreferenceManager(private val sharedPreferences: SharedPreferences) {
 
     // Emby
-    
+
     var embyUserName: String?
         set(value) {
             sharedPreferences.put("emby_username", value)
@@ -46,7 +46,6 @@ class SecurePreferenceManager(private val sharedPreferences: SharedPreferences) 
             return sharedPreferences.getString("emby_address", null)
         }
 
-    
     // Jellyfin
 
     var jellyfinUserName: String?
@@ -88,7 +87,6 @@ class SecurePreferenceManager(private val sharedPreferences: SharedPreferences) 
         get() {
             return sharedPreferences.getString("jellyfin_address", null)
         }
-
 
     // Plex
 

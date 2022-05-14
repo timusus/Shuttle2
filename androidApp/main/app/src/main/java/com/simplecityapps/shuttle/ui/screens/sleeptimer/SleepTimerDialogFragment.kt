@@ -71,14 +71,19 @@ class SleepTimerDialogFragment : DialogFragment() {
             }
             val adapter = RecyclerAdapter(lifecycleScope)
             recyclerView.adapter = adapter
-            adapter.update(SleepTimerDuration.values().map {
-                SleepTimerBinder(it, object : SleepTimerBinder.Listener {
-                    override fun onClick(duration: SleepTimerDuration) {
-                        sleepTimer.startTimer(duration.duration, playToEndSwitch.isChecked)
-                        dialog?.dismiss()
-                    }
-                })
-            })
+            adapter.update(
+                SleepTimerDuration.values().map {
+                    SleepTimerBinder(
+                        it,
+                        object : SleepTimerBinder.Listener {
+                            override fun onClick(duration: SleepTimerDuration) {
+                                sleepTimer.startTimer(duration.duration, playToEndSwitch.isChecked)
+                                dialog?.dismiss()
+                            }
+                        }
+                    )
+                }
+            )
             builder
                 .setTitle(R.string.sleep_timer_dialog_title)
                 .setView(view)

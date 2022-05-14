@@ -152,5 +152,4 @@ class PlayPauseAnimationDrawable(context: Context) : Drawable() {
             return a + (b - a) * t
         }
     }
-
 }

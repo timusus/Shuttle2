@@ -67,7 +67,8 @@ class CastPlayback(
             .build()
 
         castSession.remoteMediaClient?.load(
-            castMediaInfo, MediaLoadOptions.Builder()
+            castMediaInfo,
+            MediaLoadOptions.Builder()
                 .setPlayPosition(seekPosition.toLong())
                 .setAutoplay(false)
                 .build()
@@ -174,7 +175,6 @@ class CastPlayback(
     }
 
     override fun setRepeatMode(repeatMode: QueueManager.RepeatMode) {
-
     }
 
     override fun setPlaybackSpeed(multiplier: Float) {
@@ -237,7 +237,6 @@ class CastPlayback(
         arrayOfObject[3] = 0xFF and (i shr 24)
         String.format("%d.%d.%d.%d", *arrayOfObject)
     }
-
 
     private inner class CastMediaClientCallback : RemoteMediaClient.Callback() {
         override fun onMetadataUpdated() {

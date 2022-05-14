@@ -93,7 +93,6 @@ class AlbumArtistDetailFragment :
 
     private var recyclerViewState: Parcelable? = null
 
-
     // Lifecycle
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -246,34 +245,37 @@ class AlbumArtistDetailFragment :
         super.onDestroyView()
     }
 
-
     // AlbumArtistDetailContract.View Implementation
 
     override fun setListData(albumSongsMap: Map<com.simplecityapps.shuttle.model.Album, List<com.simplecityapps.shuttle.model.Song>>) {
         val viewBinders = mutableListOf<ViewBinder>()
         if (albumSongsMap.isNotEmpty()) {
             viewBinders.add(HeaderBinder(getString(R.string.albums)))
-            viewBinders.addAll(albumSongsMap.map { entry ->
-                ExpandableAlbumBinder(
-                    entry.key,
-                    entry.value,
-                    imageLoader,
-                    expanded = adapter.items
-                        .filterIsInstance<ExpandableAlbumBinder>()
-                        .find { binder -> binder.album.groupKey == entry.key.groupKey }
-                        ?.expanded
-                        ?: false,
-                    scope = lifecycle.coroutineScope,
-                    listener = this
-                )
-            })
+            viewBinders.addAll(
+                albumSongsMap.map { entry ->
+                    ExpandableAlbumBinder(
+                        entry.key,
+                        entry.value,
+                        imageLoader,
+                        expanded = adapter.items
+                            .filterIsInstance<ExpandableAlbumBinder>()
+                            .find { binder -> binder.album.groupKey == entry.key.groupKey }
+                            ?.expanded
+                            ?: false,
+                        scope = lifecycle.coroutineScope,
+                        listener = this
+                    )
+                }
+            )
         }
         val songs = albumSongsMap.values.flatten()
         if (songs.isNotEmpty()) {
             viewBinders.add(HeaderBinder(getString(R.string.songs)))
-            viewBinders.addAll(songs.map { song ->
-                SongBinder(song, imageLoader, songBinderListener)
-            })
+            viewBinders.addAll(
+                songs.map { song ->
+                    SongBinder(song, imageLoader, songBinderListener)
+                }
+            )
         }
         adapter.update(viewBinders) {
             recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
@@ -309,7 +311,6 @@ class AlbumArtistDetailFragment :
     override fun showTagEditor(songs: List<com.simplecityapps.shuttle.model.Song>) {
         TagEditorAlertDialog.newInstance(songs).show(childFragmentManager)
     }
-
 
     // ExpandableAlbumArtistBinder.Listener Implementation
 
@@ -422,7 +423,6 @@ class AlbumArtistDetailFragment :
         popupMenu.show()
     }
 
-
     // SongBinder.Listener Implementation
 
     private val songBinderListener = object : SongBinder.Listener {
@@ -483,13 +483,11 @@ class AlbumArtistDetailFragment :
         }
     }
 
-
     // CreatePlaylistDialogFragment.Listener Implementation
 
     override fun onSave(text: String, playlistData: PlaylistData) {
         playlistMenuPresenter.createPlaylist(text, playlistData)
     }
-
 
     // Static
 

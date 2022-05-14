@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+set -eu
+
+SUPPORT_DIR="${BASH_SOURCE[0]%/*}/.."
+VENDOR_DIR="${SUPPORT_DIR}/Vendor"
+
+PATH="${VENDOR_DIR}/ktlint:$PATH"
+
+ktlint --android "$@" "**.kt" "!**/generated/**"

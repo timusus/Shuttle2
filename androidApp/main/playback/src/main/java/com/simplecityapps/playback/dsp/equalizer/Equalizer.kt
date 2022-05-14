@@ -11,7 +11,8 @@ object Equalizer {
 
             object Flat : Preset(
                 "Flat",
-                R.string.eq_preset_flat, listOf(
+                R.string.eq_preset_flat,
+                listOf(
                     EqualizerBand(32, 0.0).toNyquistBand(),
                     EqualizerBand(63, 0.0).toNyquistBand(),
                     EqualizerBand(125, 0.0).toNyquistBand(),
@@ -27,7 +28,8 @@ object Equalizer {
 
             object Custom : Preset(
                 "Custom",
-                R.string.eq_preset_custom, listOf(
+                R.string.eq_preset_custom,
+                listOf(
                     EqualizerBand(32, 0.0).toNyquistBand(),
                     EqualizerBand(63, 0.0).toNyquistBand(),
                     EqualizerBand(125, 0.0).toNyquistBand(),
@@ -43,7 +45,8 @@ object Equalizer {
 
             object BassBoost : Preset(
                 "Bass Boost",
-                R.string.eq_preset_bass_boost, listOf(
+                R.string.eq_preset_bass_boost,
+                listOf(
                     EqualizerBand(32, 6.0).toNyquistBand(),
                     EqualizerBand(63, 5.0).toNyquistBand(),
                     EqualizerBand(125, 4.0).toNyquistBand(),
@@ -59,7 +62,8 @@ object Equalizer {
 
             object BassReducer : Preset(
                 "Bass Reduction",
-                R.string.eq_preset_bass_reduce, listOf(
+                R.string.eq_preset_bass_reduce,
+                listOf(
                     EqualizerBand(32, -6.0).toNyquistBand(),
                     EqualizerBand(63, -5.0).toNyquistBand(),
                     EqualizerBand(125, -4.0).toNyquistBand(),
@@ -75,7 +79,8 @@ object Equalizer {
 
             object VocalBoost : Preset(
                 "Vocal Boost",
-                R.string.eq_preset_vocal_boost, listOf(
+                R.string.eq_preset_vocal_boost,
+                listOf(
                     EqualizerBand(32, -2.0).toNyquistBand(),
                     EqualizerBand(63, -3.0).toNyquistBand(),
                     EqualizerBand(125, -3.0).toNyquistBand(),
@@ -91,7 +96,8 @@ object Equalizer {
 
             object VocalReducer : Preset(
                 "Vocal Reduction",
-                R.string.eq_preset_vocal_Reduce, listOf(
+                R.string.eq_preset_vocal_Reduce,
+                listOf(
                     EqualizerBand(32, 2.0).toNyquistBand(),
                     EqualizerBand(63, 3.0).toNyquistBand(),
                     EqualizerBand(125, 3.0).toNyquistBand(),
@@ -104,7 +110,6 @@ object Equalizer {
                     EqualizerBand(16000, 2.0).toNyquistBand()
                 )
             )
-
 
             override fun equals(other: Any?): Boolean {
                 if (this === other) return true

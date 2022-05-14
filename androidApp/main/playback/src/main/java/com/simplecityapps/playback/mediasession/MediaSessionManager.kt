@@ -65,9 +65,13 @@ class MediaSessionManager @Inject constructor(
     val mediaSession: MediaSessionCompat by lazy {
         val mediaSession = MediaSessionCompat(context, "ShuttleMediaSession")
         mediaSession.setCallback(mediaSessionCallback)
-        val mediaButtonReceiverIntent = PendingIntent.getBroadcast(context, 0, Intent(Intent.ACTION_MEDIA_BUTTON).apply {
-            setClass(context, MediaButtonReceiver::class.java)
-        }, 0)
+        val mediaButtonReceiverIntent = PendingIntent.getBroadcast(
+            context, 0,
+            Intent(Intent.ACTION_MEDIA_BUTTON).apply {
+                setClass(context, MediaButtonReceiver::class.java)
+            },
+            0
+        )
         mediaSession.setMediaButtonReceiver(mediaButtonReceiverIntent)
         mediaSession
     }
@@ -82,17 +86,17 @@ class MediaSessionManager @Inject constructor(
 
         playbackStateBuilder.setActions(
             PlaybackStateCompat.ACTION_PLAY
-                    or PlaybackStateCompat.ACTION_PAUSE
-                    or PlaybackStateCompat.ACTION_SKIP_TO_NEXT
-                    or PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
-                    or PlaybackStateCompat.ACTION_SKIP_TO_QUEUE_ITEM
-                    or PlaybackStateCompat.ACTION_SEEK_TO
-                    or PlaybackStateCompat.ACTION_SET_REPEAT_MODE
-                    or PlaybackStateCompat.ACTION_SET_SHUFFLE_MODE
-                    or PlaybackStateCompat.ACTION_PREPARE_FROM_SEARCH
-                    or PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH
-                    or PlaybackStateCompat.ACTION_PREPARE_FROM_MEDIA_ID
-                    or PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID
+                or PlaybackStateCompat.ACTION_PAUSE
+                or PlaybackStateCompat.ACTION_SKIP_TO_NEXT
+                or PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
+                or PlaybackStateCompat.ACTION_SKIP_TO_QUEUE_ITEM
+                or PlaybackStateCompat.ACTION_SEEK_TO
+                or PlaybackStateCompat.ACTION_SET_REPEAT_MODE
+                or PlaybackStateCompat.ACTION_SET_SHUFFLE_MODE
+                or PlaybackStateCompat.ACTION_PREPARE_FROM_SEARCH
+                or PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH
+                or PlaybackStateCompat.ACTION_PREPARE_FROM_MEDIA_ID
+                or PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID
         )
 
         updateShuffleAction()
@@ -173,10 +177,12 @@ class MediaSessionManager @Inject constructor(
         Timber.v("updateQueue()")
         val queue = queueManager.getQueue()
         if (queue.isNotEmpty()) {
-            mediaSession.setQueue(queueManager.getQueue()
-                .subList(((queueManager.getCurrentPosition() ?: 0) - 5).coerceAtLeast(0), queueManager.getSize() - 1)
-                .take(30)
-                .map { queueItem -> queueItem.toQueueItem() })
+            mediaSession.setQueue(
+                queueManager.getQueue()
+                    .subList(((queueManager.getCurrentPosition() ?: 0) - 5).coerceAtLeast(0), queueManager.getSize() - 1)
+                    .take(30)
+                    .map { queueItem -> queueItem.toQueueItem() }
+            )
         } else {
             mediaSession.setQueue(emptyList())
         }
@@ -195,7 +201,6 @@ class MediaSessionManager @Inject constructor(
             }
         }
     }
-
 
     // PlaybackWatcherCallback Implementation
 
@@ -218,7 +223,6 @@ class MediaSessionManager @Inject constructor(
         playbackStateBuilder.setState(getPlaybackState(), playbackManager.getProgress()?.toLong() ?: PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, playbackManager.getPlaybackSpeed())
         updatePlaybackState()
     }
-
 
     // QueueChangeCallback Implementation
 
@@ -244,7 +248,6 @@ class MediaSessionManager @Inject constructor(
     override fun onRepeatChanged(repeatMode: QueueManager.RepeatMode) {
         mediaSession.setRepeatMode(repeatMode.toRepeatMode())
     }
-
 
     // MediaSessionCompat.Callback Implementation
 

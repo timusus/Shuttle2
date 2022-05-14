@@ -57,7 +57,6 @@ class ArtworkDownloadService : Service(), CoroutineScope {
     override val coroutineContext: CoroutineContext
         get() = job + exceptionHandler + Dispatchers.Main
 
-
     // Lifecycle
 
     override fun onBind(intent: Intent?): IBinder? {
@@ -139,7 +138,7 @@ class ArtworkDownloadService : Service(), CoroutineScope {
         if (intent != null) {
             val action = intent.action
             if (action != null && action == ACTION_CANCEL) {
-                //Handle a notification cancel action click:
+                // Handle a notification cancel action click:
                 job.cancel()
                 notificationManager?.cancel(NOTIFICATION_ID)
                 stopSelf()
@@ -159,7 +158,6 @@ class ArtworkDownloadService : Service(), CoroutineScope {
         super.onDestroy()
     }
 
-
     // Private
 
     private fun createNotificationChannel() {
@@ -174,7 +172,6 @@ class ArtworkDownloadService : Service(), CoroutineScope {
             }
         }
     }
-
 
     // Static
 

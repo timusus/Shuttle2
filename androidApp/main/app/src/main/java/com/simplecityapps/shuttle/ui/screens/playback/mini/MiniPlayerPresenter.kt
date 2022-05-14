@@ -58,7 +58,6 @@ class MiniPlayerPresenter @Inject constructor(
         }
     }
 
-
     // PlaybackWatcherCallback Implementation
 
     override fun onPlaybackStateChanged(playbackState: PlaybackState) {
@@ -71,13 +70,11 @@ class MiniPlayerPresenter @Inject constructor(
         view?.setProgress(position, duration)
     }
 
-
     // QueueChangeCallback Implementation
 
     override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
         view?.setCurrentSong(queueManager.getCurrentItem()?.song)
     }
-
 
     // Private
 
@@ -86,5 +83,4 @@ class MiniPlayerPresenter @Inject constructor(
             view?.setProgress(playbackManager.getProgress() ?: 0, currentSong.duration)
         }
     }
-
 }

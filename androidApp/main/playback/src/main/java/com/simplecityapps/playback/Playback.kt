@@ -47,11 +47,9 @@ interface Playback {
     fun setRepeatMode(repeatMode: QueueManager.RepeatMode)
 
     fun setAudioSessionId(id: Int) {
-
     }
 
     fun setReplayGain(trackGain: Double?, albumGain: Double?) {
-
     }
 
     fun setPlaybackSpeed(multiplier: Float)

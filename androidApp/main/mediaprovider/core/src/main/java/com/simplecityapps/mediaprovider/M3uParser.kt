@@ -18,7 +18,6 @@ class M3uParser {
             while (line != null) {
                 when {
                     line.isBlank() -> {
-
                     }
                     line.startsWith("#") -> {
                         if (line.startsWith("#EXTINF:")) {

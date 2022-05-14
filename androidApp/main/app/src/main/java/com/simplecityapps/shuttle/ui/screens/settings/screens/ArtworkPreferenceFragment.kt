@@ -66,6 +66,5 @@ class ArtworkPreferenceFragment : PreferenceFragmentCompat() {
 
             true
         }
-
     }
 }

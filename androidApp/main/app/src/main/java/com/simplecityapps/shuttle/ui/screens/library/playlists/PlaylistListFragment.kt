@@ -50,7 +50,6 @@ class PlaylistListFragment :
 
     private var recyclerViewState: Parcelable? = null
 
-
     // Lifecycle
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -96,7 +95,6 @@ class PlaylistListFragment :
         super.onDestroyView()
     }
 
-
     // PlaylistListContract.View Implementation
 
     override fun setPlaylists(playlists: List<Playlist>, smartPlaylists: List<SmartPlaylist>) {
@@ -105,18 +103,21 @@ class PlaylistListFragment :
 
         if (smartPlaylists.isNotEmpty()) {
             viewBinders.add(HeaderBinder(getString(R.string.playlists_title_smart_playlists)))
-            viewBinders.addAll(smartPlaylists.map { smartPlaylist ->
-                SmartPlaylistBinder(smartPlaylist, smartPlaylistBinderListener)
-            })
+            viewBinders.addAll(
+                smartPlaylists.map { smartPlaylist ->
+                    SmartPlaylistBinder(smartPlaylist, smartPlaylistBinderListener)
+                }
+            )
         }
 
         if (playlists.isNotEmpty()) {
             viewBinders.add(HeaderBinder(getString(R.string.playlists_title_playlists)))
         }
-        viewBinders.addAll(playlists.map { playlist ->
-            PlaylistBinder(playlist, playlistBinderListener)
-        })
-
+        viewBinders.addAll(
+            playlists.map { playlist ->
+                PlaylistBinder(playlist, playlistBinderListener)
+            }
+        )
 
         adapter.update(viewBinders) {
             recyclerViewState?.let {
@@ -158,7 +159,6 @@ class PlaylistListFragment :
     override fun setLoadingProgress(progress: Float) {
         horizontalLoadingView.setProgress(progress)
     }
-
 
     // PlaylistBinder.Listener Implementation
 
@@ -240,7 +240,6 @@ class PlaylistListFragment :
         }
     }
 
-
     // SmartPlaylistBinder.Listener Implementation
 
     private val smartPlaylistBinderListener = object : SmartPlaylistBinder.Listener {
@@ -257,7 +256,6 @@ class PlaylistListFragment :
         }
     }
 
-
     // Static
 
     companion object {
@@ -268,7 +266,6 @@ class PlaylistListFragment :
 
         fun newInstance() = PlaylistListFragment()
     }
-
 
     // EditTextAlertDialog.Listener
 

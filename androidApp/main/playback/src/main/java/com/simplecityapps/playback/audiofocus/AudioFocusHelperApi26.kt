@@ -12,11 +12,13 @@ import com.simplecityapps.playback.PlaybackWatcher
 class AudioFocusHelperApi26(context: Context, playbackWatcher: PlaybackWatcher) : AudioFocusHelperBase(context, playbackWatcher) {
 
     private val focusRequest: AudioFocusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
-        .setAudioAttributes(AudioAttributes.Builder().run {
-            setUsage(AudioAttributes.USAGE_MEDIA)
-            setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-            build()
-        })
+        .setAudioAttributes(
+            AudioAttributes.Builder().run {
+                setUsage(AudioAttributes.USAGE_MEDIA)
+                setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                build()
+            }
+        )
         .setAcceptsDelayedFocusGain(true)
         .setOnAudioFocusChangeListener(this)
         .build()

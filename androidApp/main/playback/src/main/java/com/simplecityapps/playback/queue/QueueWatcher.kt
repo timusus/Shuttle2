@@ -9,26 +9,20 @@ interface QueueChangeCallback {
     }
 
     fun onQueueChanged(reason: QueueChangeReason = QueueChangeReason.Unknown) {
-
     }
 
     fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
-
     }
 
     fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
-
     }
 
     fun onRepeatChanged(repeatMode: QueueManager.RepeatMode) {
-
     }
 
     fun onQueueRestored() {
-
     }
 }
-
 
 class QueueWatcher : QueueChangeCallback {
 
@@ -41,7 +35,6 @@ class QueueWatcher : QueueChangeCallback {
     fun removeCallback(callback: QueueChangeCallback) {
         callbacks.remove(callback)
     }
-
 
     // QueueChangeCallback Implementation
 

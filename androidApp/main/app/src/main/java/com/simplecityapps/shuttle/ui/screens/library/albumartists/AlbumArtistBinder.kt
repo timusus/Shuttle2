@@ -43,13 +43,12 @@ abstract class AlbumArtistBinder(
     override fun areContentsTheSame(other: Any): Boolean {
         if (other !is AlbumArtistBinder) return false
 
-        return albumArtist.name == other.albumArtist.name
-                && albumArtist.artists == other.albumArtist.artists
-                && albumArtist.albumCount == other.albumArtist.albumCount
-                && albumArtist.songCount == other.albumArtist.songCount
-                && selected == other.selected
+        return albumArtist.name == other.albumArtist.name &&
+            albumArtist.artists == other.albumArtist.artists &&
+            albumArtist.albumCount == other.albumArtist.albumCount &&
+            albumArtist.songCount == other.albumArtist.songCount &&
+            selected == other.selected
     }
-
 
     abstract class ViewHolder(itemView: View) : ViewBinder.ViewHolder<AlbumArtistBinder>(itemView) {
         abstract val imageView: ImageView

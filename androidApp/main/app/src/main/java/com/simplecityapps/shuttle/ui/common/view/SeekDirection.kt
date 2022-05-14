@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.common.view;
+package com.simplecityapps.shuttle.ui.common.view
 
 enum class SeekDirection {
     Forward, Backward;

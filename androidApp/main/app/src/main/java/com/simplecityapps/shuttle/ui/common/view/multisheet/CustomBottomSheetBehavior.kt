@@ -49,9 +49,9 @@ class CustomBottomSheetBehavior<V : View>(context: Context, attrs: AttributeSet?
                 peek2Ref?.get()?.let { peekView2 ->
                     peekView2.getDrawingRect(offsetViewBounds)
                     parent.offsetDescendantRectToMyCoords(peekView2, offsetViewBounds)
-                    if (offsetViewBounds.contains(event.x.toInt(), event.y.toInt())
-                        || bottomSheet2State == BottomSheetBehavior.STATE_DRAGGING
-                        || bottomSheet2State == BottomSheetBehavior.STATE_EXPANDED
+                    if (offsetViewBounds.contains(event.x.toInt(), event.y.toInt()) ||
+                        bottomSheet2State == BottomSheetBehavior.STATE_DRAGGING ||
+                        bottomSheet2State == BottomSheetBehavior.STATE_EXPANDED
                     ) {
                         return false
                     }

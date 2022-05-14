@@ -63,8 +63,8 @@ class PlexAuthenticationManager(
         }
 
         return "${credentialStore.address}${song.externalId}" +
-                "?X-Plex-Token=${authenticatedCredentials.accessToken}" +
-                "&X-Plex-Client-Identifier=s2-music-payer" +
-                "&X-Plex-Device=Android"
+            "?X-Plex-Token=${authenticatedCredentials.accessToken}" +
+            "&X-Plex-Client-Identifier=s2-music-payer" +
+            "&X-Plex-Device=Android"
     }
 }

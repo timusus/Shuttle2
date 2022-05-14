@@ -11,7 +11,9 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.getAttrColor
 
 class ProgressView @JvmOverloads constructor(
-    context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
     private val paint: Paint

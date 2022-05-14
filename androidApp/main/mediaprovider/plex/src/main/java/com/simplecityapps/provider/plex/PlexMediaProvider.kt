@@ -28,52 +28,57 @@ class PlexMediaProvider(
     override val type: MediaProviderType
         get() = MediaProviderType.Plex
 
-
     override fun findSongs(): Flow<FlowEvent<List<Song>, MessageProgress>> {
         val address = authenticationManager.getAddress() ?: run {
             return flowOf(FlowEvent.Failure("Plex address unknown"))
         }
 
         return flow {
-            (authenticationManager.getAuthenticatedCredentials() ?: authenticationManager.getLoginCredentials()
-                ?.let { loginCredentials -> authenticationManager.authenticate(address, loginCredentials).getOrNull() })
+            (
+                authenticationManager.getAuthenticatedCredentials() ?: authenticationManager.getLoginCredentials()
+                    ?.let { loginCredentials -> authenticationManager.authenticate(address, loginCredentials).getOrNull() }
+                )
                 ?.let { credentials ->
                     when (val result = itemsService.sections(url = address, token = credentials.accessToken)) {
                         is NetworkResult.Success<QueryResult> -> {
                             result.body.mediaContainer.directories?.firstOrNull { it.title.equals("music", true) }?.key?.let { section ->
                                 when (val queryResult = itemsService.items(url = address, token = credentials.accessToken, section = section)) {
                                     is NetworkResult.Success<QueryResult> -> {
-                                        emit(FlowEvent.Success(queryResult.body.mediaContainer.metadata.orEmpty().map { metadata ->
-                                            Song(
-                                                id = metadata.guid.hashCode().toLong(),
-                                                name = metadata.title,
-                                                albumArtist = metadata.grandparentTitle,
-                                                artists = listOf(metadata.grandparentTitle),
-                                                album = metadata.parentTitle,
-                                                track = metadata.index ?: 0,
-                                                disc = metadata.parentIndex ?: 0,
-                                                duration = metadata.duration.toInt(),
-                                                date = metadata.year?.let { LocalDate(it, 1, 1) },
-                                                genres = emptyList(),
-                                                path = "plex://${metadata.key}",
-                                                size = metadata.media.firstOrNull()?.parts?.firstOrNull()?.size?.toLong() ?: 0L,
-                                                mimeType = "Audio/*",
-                                                lastModified = Clock.System.now(),
-                                                lastPlayed = null,
-                                                lastCompleted = null,
-                                                playCount = 0,
-                                                playbackPosition = 0,
-                                                blacklisted = false,
-                                                externalId = metadata.media.firstOrNull()?.parts?.firstOrNull()?.key,
-                                                mediaProvider = type,
-                                                lyrics = null,
-                                                grouping = null,
-                                                bitRate = metadata.media.firstOrNull()?.bitrate,
-                                                bitDepth = null,
-                                                sampleRate = null,
-                                                channelCount = metadata.media.firstOrNull()?.audioChannels
+                                        emit(
+                                            FlowEvent.Success(
+                                                queryResult.body.mediaContainer.metadata.orEmpty().map { metadata ->
+                                                    Song(
+                                                        id = metadata.guid.hashCode().toLong(),
+                                                        name = metadata.title,
+                                                        albumArtist = metadata.grandparentTitle,
+                                                        artists = listOf(metadata.grandparentTitle),
+                                                        album = metadata.parentTitle,
+                                                        track = metadata.index ?: 0,
+                                                        disc = metadata.parentIndex ?: 0,
+                                                        duration = metadata.duration.toInt(),
+                                                        date = metadata.year?.let { LocalDate(it, 1, 1) },
+                                                        genres = emptyList(),
+                                                        path = "plex://${metadata.key}",
+                                                        size = metadata.media.firstOrNull()?.parts?.firstOrNull()?.size?.toLong() ?: 0L,
+                                                        mimeType = "Audio/*",
+                                                        lastModified = Clock.System.now(),
+                                                        lastPlayed = null,
+                                                        lastCompleted = null,
+                                                        playCount = 0,
+                                                        playbackPosition = 0,
+                                                        blacklisted = false,
+                                                        externalId = metadata.media.firstOrNull()?.parts?.firstOrNull()?.key,
+                                                        mediaProvider = type,
+                                                        lyrics = null,
+                                                        grouping = null,
+                                                        bitRate = metadata.media.firstOrNull()?.bitrate,
+                                                        bitDepth = null,
+                                                        sampleRate = null,
+                                                        channelCount = metadata.media.firstOrNull()?.audioChannels
+                                                    )
+                                                }
                                             )
-                                        }))
+                                        )
                                     }
                                     is NetworkResult.Failure -> {
                                         Timber.e(queryResult.error, queryResult.error.userDescription())
@@ -90,7 +95,6 @@ class PlexMediaProvider(
                             emit(FlowEvent.Failure(result.error.userDescription()))
                         }
                     }
-
                 } ?: run {
                 emit(FlowEvent.Failure("Failed to authenticate"))
             }

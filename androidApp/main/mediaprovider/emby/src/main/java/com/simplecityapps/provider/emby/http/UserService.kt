@@ -38,4 +38,3 @@ suspend fun UserService.authenticate(
         "MediaBrowser Client=\"Shuttle2.0\", Device=\"$deviceName\", DeviceId=\"$deviceId\", Version=\"$version\""
     )
 }
-

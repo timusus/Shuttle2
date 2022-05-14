@@ -40,7 +40,6 @@ class ArtworkBinder(
         return queueItem.hashCode()
     }
 
-
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<ArtworkBinder>(itemView) {
 
         val imageView: ImageView = itemView.findViewById(R.id.imageView)

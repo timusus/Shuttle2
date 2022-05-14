@@ -6,18 +6,14 @@ import timber.log.Timber
 interface PlaybackWatcherCallback {
 
     fun onProgressChanged(position: Int, duration: Int, fromUser: Boolean) {
-
     }
 
     fun onPlaybackStateChanged(playbackState: PlaybackState) {
-
     }
 
     fun onTrackEnded(song: Song) {
-
     }
 }
-
 
 class PlaybackWatcher : PlaybackWatcherCallback {
 
@@ -31,7 +27,6 @@ class PlaybackWatcher : PlaybackWatcherCallback {
         callbacks.remove(callback)
     }
 
-
     // PlaybackWatcherCallback Implementation
 
     override fun onProgressChanged(position: Int, duration: Int, fromUser: Boolean) {
@@ -39,7 +34,7 @@ class PlaybackWatcher : PlaybackWatcherCallback {
     }
 
     override fun onPlaybackStateChanged(playbackState: PlaybackState) {
-        Timber.v("onPlaybackStateChanged(playbackState: ${playbackState})")
+        Timber.v("onPlaybackStateChanged(playbackState: $playbackState)")
         callbacks.forEach { callback -> callback.onPlaybackStateChanged(playbackState) }
     }
 

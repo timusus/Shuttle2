@@ -177,6 +177,5 @@ class AlbumArtistListPresenter @Inject constructor(
 
     override fun updateToolbarMenu() {
         view?.updateToolbarMenuViewMode(preferenceManager.artistListViewMode.toViewMode())
-
     }
 }

@@ -47,7 +47,6 @@ class LibraryTabBinder(val tab: LibraryTab, val selected: Boolean, val listener:
         return (other as? LibraryTabBinder)?.selected == selected
     }
 
-
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<LibraryTabBinder>(itemView) {
         private val title: TextView = itemView.findViewById(R.id.title)
         private val dragHandle: ImageView = itemView.findViewById(R.id.dragHandle)

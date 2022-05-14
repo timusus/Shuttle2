@@ -163,7 +163,6 @@ class PlaybackService :
         super.onDestroy()
     }
 
-
     // Private
 
     private fun processCommand(intent: Intent) {
@@ -191,7 +190,6 @@ class PlaybackService :
             }
         }, delay)
     }
-
 
     // PlaybackWatcherCallback Implementation
 
@@ -249,7 +247,6 @@ class PlaybackService :
         }
     }
 
-
     // MediaBrowserService Implementation
 
     override fun onLoadChildren(parentId: String, result: Result<MutableList<MediaBrowserCompat.MediaItem>>) {
@@ -272,7 +269,6 @@ class PlaybackService :
             BrowserRoot("EMPTY_ROOT", null)
         }
     }
-
 
     // Static
 

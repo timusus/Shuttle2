@@ -25,7 +25,6 @@ class MediaStoreMediaProvider(
 
     override val type = MediaProviderType.MediaStore
 
-
     // Songs
 
     override fun findSongs(): Flow<FlowEvent<List<Song>, MessageProgress>> {
@@ -190,7 +189,6 @@ class MediaStoreMediaProvider(
         val path: String
     )
 
-
     // Playlists
 
     override fun findPlaylists(
@@ -207,10 +205,10 @@ class MediaStoreMediaProvider(
                     existingSongs.firstOrNull { existingSong ->
                         // We assume two songs are equal, if they have the same title, album, artist & duration. We can't be too specific, as the
                         // MediaStore scanner may have interpreted some fields differently to Shuttle's built in scanner.
-                        existingSong.name.equals(mediaStoreSong.title, ignoreCase = true)
-                                && existingSong.album.equals(mediaStoreSong.album, ignoreCase = true)
-                                && (existingSong.artists.any { it.equals(mediaStoreSong.artist, true) } || existingSong.albumArtist.equals(mediaStoreSong.albumArtist, ignoreCase = true))
-                                && abs(existingSong.duration - mediaStoreSong.duration) <= 1000 // song duration is within 1 second
+                        existingSong.name.equals(mediaStoreSong.title, ignoreCase = true) &&
+                            existingSong.album.equals(mediaStoreSong.album, ignoreCase = true) &&
+                            (existingSong.artists.any { it.equals(mediaStoreSong.artist, true) } || existingSong.albumArtist.equals(mediaStoreSong.albumArtist, ignoreCase = true)) &&
+                            abs(existingSong.duration - mediaStoreSong.duration) <= 1000 // song duration is within 1 second
                     }
                 }
 
@@ -283,7 +281,6 @@ class MediaStoreMediaProvider(
             songs
         }
     }
-
 
     data class MediaStorePlaylist(val id: Long, val name: String)
 

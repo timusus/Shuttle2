@@ -35,7 +35,6 @@ class DspFragment : Fragment(), EqualizerContract.View {
     private var replayGainAutoComplete: AutoCompleteTextView by autoCleared()
     private var preAmpSeekBar: HorizontalSeekbar by autoCleared()
 
-
     // Lifecycle
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -93,12 +92,10 @@ class DspFragment : Fragment(), EqualizerContract.View {
         presenter.bindView(this)
     }
 
-
     override fun onDestroyView() {
         presenter.unbindView()
         super.onDestroyView()
     }
-
 
     // Private
 
@@ -109,7 +106,6 @@ class DspFragment : Fragment(), EqualizerContract.View {
             ReplayGainMode.Off -> getString(R.string.dsp_replay_gain_off)
         }
     }
-
 
     // EqualizerContract.View Implementation
 
@@ -142,7 +138,6 @@ class DspFragment : Fragment(), EqualizerContract.View {
         val progress = ((gain + ReplayGainAudioProcessor.maxPreAmpGain) / (2 * ReplayGainAudioProcessor.maxPreAmpGain)).toFloat()
         preAmpSeekBar.progress = progress
     }
-
 
     // EqualizerView.Listener Implementation
 

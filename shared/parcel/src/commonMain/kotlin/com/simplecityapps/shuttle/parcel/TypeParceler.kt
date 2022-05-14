@@ -8,4 +8,4 @@ package com.simplecityapps.shuttle.parcel
 @Retention(AnnotationRetention.SOURCE)
 @Repeatable
 @Target(AnnotationTarget.CLASS, AnnotationTarget.PROPERTY)
-expect annotation class TypeParceler<T, P: Parceler<in T>>()
+expect annotation class TypeParceler<T, P : Parceler<in T>>()

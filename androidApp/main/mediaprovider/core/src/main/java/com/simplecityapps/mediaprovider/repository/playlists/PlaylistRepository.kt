@@ -25,8 +25,6 @@ interface PlaylistRepository {
     suspend fun updatePlaylistSongsSortOder(playlist: Playlist, playlistSongs: List<PlaylistSong>)
 }
 
-
-
 enum class PlaylistSortOrder : Serializable {
     Default;
 
@@ -41,4 +39,3 @@ enum class PlaylistSortOrder : Serializable {
         val defaultComparator: Comparator<Playlist> by lazy { compareBy { playlist -> playlist.id } }
     }
 }
-

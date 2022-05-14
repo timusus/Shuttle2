@@ -63,7 +63,6 @@ class PlayPauseAnimationView @JvmOverloads constructor(
                 }
             }
             PlaybackState.Loading -> {
-
             }
         }
     }

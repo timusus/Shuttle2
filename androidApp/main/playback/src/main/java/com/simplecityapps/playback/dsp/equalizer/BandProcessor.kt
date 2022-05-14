@@ -47,12 +47,12 @@ class BandProcessor(val band: NyquistBand, val sampleRate: Int, val channelCount
         }
 
         val adjustedSample = (
-                (b0 * sample)
-                        + (b1 * xHist[channelIndex][0])
-                        + (b2 * xHist[channelIndex][1])
-                        - (a1 * yHist[channelIndex][0])
-                        - (a2 * yHist[channelIndex][1])
-                ).toFloat()
+            (b0 * sample) +
+                (b1 * xHist[channelIndex][0]) +
+                (b2 * xHist[channelIndex][1]) -
+                (a1 * yHist[channelIndex][0]) -
+                (a2 * yHist[channelIndex][1])
+            ).toFloat()
 
         xHist[channelIndex][1] = xHist[channelIndex][0]
         xHist[channelIndex][0] = sample

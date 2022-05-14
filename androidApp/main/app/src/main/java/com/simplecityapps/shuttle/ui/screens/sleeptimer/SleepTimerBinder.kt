@@ -22,7 +22,6 @@ class SleepTimerBinder(val duration: SleepTimerDuration, val listener: Listener)
         return ViewTypes.SleepTimer
     }
 
-
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<SleepTimerBinder>(itemView) {
 
         val label: TextView = itemView.findViewById(R.id.label)

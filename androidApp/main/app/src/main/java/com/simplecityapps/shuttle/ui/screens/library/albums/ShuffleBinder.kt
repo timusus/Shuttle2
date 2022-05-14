@@ -30,7 +30,6 @@ class ShuffleBinder(
         return spanCount
     }
 
-
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<ShuffleBinder>(itemView) {
         val titleText: TextView = itemView.findViewById(R.id.title)
 

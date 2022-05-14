@@ -63,11 +63,13 @@ class JellyfinMediaProvider(
         return flow {
             emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_provider_querying_api), null)))
             authenticate(address)?.let { credentials ->
-                when (val queryResult = itemsService.playlists(
-                    url = address,
-                    token = credentials.accessToken,
-                    userId = credentials.userId
-                )) {
+                when (
+                    val queryResult = itemsService.playlists(
+                        url = address,
+                        token = credentials.accessToken,
+                        userId = credentials.userId
+                    )
+                ) {
                     is NetworkResult.Success<QueryResult> -> {
                         val updateData = mutableListOf<MediaImporter.PlaylistUpdateData>()
                         findSongsForPlaylists(address, credentials, queryResult.body.items, existingSongs).collectIndexed { index, playlistUpdateData ->
@@ -85,14 +87,16 @@ class JellyfinMediaProvider(
     }
 
     private suspend fun authenticate(address: String): AuthenticatedCredentials? {
-        return (authenticationManager.getAuthenticatedCredentials()
-            ?: authenticationManager.getLoginCredentials()
-                ?.let { loginCredentials ->
-                    authenticationManager.authenticate(
-                        address,
-                        loginCredentials
-                    ).getOrNull()
-                })
+        return (
+            authenticationManager.getAuthenticatedCredentials()
+                ?: authenticationManager.getLoginCredentials()
+                    ?.let { loginCredentials ->
+                        authenticationManager.authenticate(
+                            address,
+                            loginCredentials
+                        ).getOrNull()
+                    }
+            )
     }
 
     private fun queryItems(
@@ -103,13 +107,15 @@ class JellyfinMediaProvider(
         items: MutableList<Item> = mutableListOf()
     ): Flow<FlowEvent<List<Item>, MessageProgress>> {
         return flow {
-            when (val queryResult = itemsService.audioItems(
-                url = address,
-                token = credentials.accessToken,
-                userId = credentials.userId,
-                limit = pageSize,
-                startIndex = startIndex
-            )) {
+            when (
+                val queryResult = itemsService.audioItems(
+                    url = address,
+                    token = credentials.accessToken,
+                    userId = credentials.userId,
+                    limit = pageSize,
+                    startIndex = startIndex
+                )
+            ) {
                 is NetworkResult.Success<QueryResult> -> {
                     val totalRecordCount = queryResult.body.totalRecordCount
                     val lastIndex = startIndex + pageSize
@@ -177,14 +183,16 @@ class JellyfinMediaProvider(
         items: MutableList<Item> = mutableListOf()
     ): Flow<FlowEvent<List<Item>, MessageProgress>> {
         return flow {
-            when (val queryResult = itemsService.playlistItems(
-                url = address,
-                token = credentials.accessToken,
-                playlistId = playlistId,
-                limit = pageSize,
-                startIndex = startIndex,
-                userId = credentials.userId
-            )) {
+            when (
+                val queryResult = itemsService.playlistItems(
+                    url = address,
+                    token = credentials.accessToken,
+                    playlistId = playlistId,
+                    limit = pageSize,
+                    startIndex = startIndex,
+                    userId = credentials.userId
+                )
+            ) {
                 is NetworkResult.Success<QueryResult> -> {
                     val totalRecordCount = queryResult.body.totalRecordCount
                     val lastIndex = startIndex + pageSize
@@ -227,7 +235,7 @@ class JellyfinMediaProvider(
             duration = ((runTime ?: 0) / (10 * 1000)).toInt(),
             date = productionYear?.let { year -> LocalDate(year, 1, 1) },
             genres = genres,
-            path = "jellyfin://item/${id}",
+            path = "jellyfin://item/$id",
             size = 0,
             mimeType = "Audio/*",
             lastModified = Clock.System.now(),

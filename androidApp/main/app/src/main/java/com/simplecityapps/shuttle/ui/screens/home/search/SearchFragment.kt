@@ -52,7 +52,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class SearchFragment : Fragment(),
+class SearchFragment :
+    Fragment(),
     SearchContract.View,
     CreatePlaylistDialogFragment.Listener {
 
@@ -78,7 +79,6 @@ class SearchFragment : Fragment(),
     private var query = ""
 
     private val queryChannel = BroadcastChannel<String>(Channel.CONFLATED)
-
 
     // Lifecycle
 
@@ -167,7 +167,6 @@ class SearchFragment : Fragment(),
         super.onDestroyView()
     }
 
-
     // SearchContract.View Implementation
 
     override fun setData(searchResult: Triple<List<ArtistJaroSimilarity>, List<AlbumJaroSimilarity>, List<SongJaroSimilarity>>) {
@@ -178,36 +177,42 @@ class SearchFragment : Fragment(),
         val list = mutableListOf<ViewBinder>().apply {
             if (searchResult.first.isNotEmpty()) {
                 add(HeaderBinder(getString(R.string.artists)))
-                addAll(searchResult.first.map { artistResult ->
-                    SearchAlbumArtistBinder(
-                        albumArtist = artistResult.albumArtist,
-                        imageLoader = imageLoader,
-                        listener = albumArtistBinderListener,
-                        jaroSimilarity = artistResult
-                    )
-                })
+                addAll(
+                    searchResult.first.map { artistResult ->
+                        SearchAlbumArtistBinder(
+                            albumArtist = artistResult.albumArtist,
+                            imageLoader = imageLoader,
+                            listener = albumArtistBinderListener,
+                            jaroSimilarity = artistResult
+                        )
+                    }
+                )
             }
             if (searchResult.second.isNotEmpty()) {
                 add(HeaderBinder(getString(R.string.albums)))
-                addAll(searchResult.second.map { albumResult ->
-                    SearchAlbumBinder(
-                        album = albumResult.album,
-                        imageLoader = imageLoader,
-                        listener = albumBinderListener,
-                        jaroSimilarity = albumResult
-                    )
-                })
+                addAll(
+                    searchResult.second.map { albumResult ->
+                        SearchAlbumBinder(
+                            album = albumResult.album,
+                            imageLoader = imageLoader,
+                            listener = albumBinderListener,
+                            jaroSimilarity = albumResult
+                        )
+                    }
+                )
             }
             if (searchResult.third.isNotEmpty()) {
                 add(HeaderBinder(getString(R.string.songs)))
-                addAll(searchResult.third.map { songResult ->
-                    SearchSongBinder(
-                        song = songResult.song,
-                        imageLoader = imageLoader,
-                        listener = songBinderListener,
-                        jaroSimilarity = songResult
-                    )
-                })
+                addAll(
+                    searchResult.third.map { songResult ->
+                        SearchSongBinder(
+                            song = songResult.song,
+                            imageLoader = imageLoader,
+                            listener = songBinderListener,
+                            jaroSimilarity = songResult
+                        )
+                    }
+                )
             }
         }
         adapter.update(list) { recyclerView.scrollToPosition(0) }
@@ -247,7 +252,6 @@ class SearchFragment : Fragment(),
         this.query = query ?: ""
         searchView.setQuery(query, false)
     }
-
 
     // Private
 
@@ -325,7 +329,6 @@ class SearchFragment : Fragment(),
         }
 
         override fun onAlbumArtistLongClicked(view: View, albumArtist: com.simplecityapps.shuttle.model.AlbumArtist) {
-
         }
 
         override fun onOverflowClicked(view: View, albumArtist: com.simplecityapps.shuttle.model.AlbumArtist) {
@@ -383,7 +386,6 @@ class SearchFragment : Fragment(),
         }
 
         override fun onAlbumLongClicked(album: com.simplecityapps.shuttle.model.Album, viewHolder: AlbumBinder.ViewHolder) {
-
         }
 
         override fun onOverflowClicked(view: View, album: com.simplecityapps.shuttle.model.Album) {
@@ -425,7 +427,6 @@ class SearchFragment : Fragment(),
             popupMenu.show()
         }
     }
-
 
     // CreatePlaylistDialogFragment.Listener Implementation
 

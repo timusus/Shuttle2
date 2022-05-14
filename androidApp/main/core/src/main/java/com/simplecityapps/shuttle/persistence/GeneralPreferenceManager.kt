@@ -193,7 +193,6 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
             return sharedPreferences.getBoolean("media_session_artwork", true)
         }
 
-
     // Widgets
 
     var widgetDarkMode: Boolean
@@ -212,7 +211,6 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
             return sharedPreferences.getInt("widget_background_opacity", 100)
         }
 
-
     // Debugging
 
     var debugFileLogging: Boolean
@@ -222,7 +220,6 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
         get() {
             return sharedPreferences.getBoolean("pref_file_logging", false)
         }
-
 
     // Search
 
@@ -250,7 +247,6 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
             return sharedPreferences.getBoolean("search_filter_songs", true)
         }
 
-
     // Playlists
 
     var ignorePlaylistDuplicates: Boolean
@@ -261,7 +257,6 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
             return sharedPreferences.getBoolean("playlist_ignore_duplicates", false)
         }
 
-
     // Sleep Timer
 
     var sleepTimerPlayToEnd: Boolean
@@ -271,7 +266,6 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
         get() {
             return sharedPreferences.getBoolean("sleep_timer_play_to_end", false)
         }
-
 
     // Playback
 

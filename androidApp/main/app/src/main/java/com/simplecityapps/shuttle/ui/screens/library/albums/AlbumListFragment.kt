@@ -120,11 +120,14 @@ class AlbumListFragment :
         circularLoadingView = view.findViewById(R.id.circularLoadingView)
         horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
 
-        shuffleBinder = ShuffleBinder(R.string.button_album_shuffle, object : ShuffleBinder.Listener {
-            override fun onClicked() {
-                presenter.albumShuffle()
+        shuffleBinder = ShuffleBinder(
+            R.string.button_album_shuffle,
+            object : ShuffleBinder.Listener {
+                override fun onClicked() {
+                    presenter.albumShuffle()
+                }
             }
-        })
+        )
 
         savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
 
@@ -176,7 +179,6 @@ class AlbumListFragment :
         super.onDestroyView()
     }
 
-
     // Toolbar item selection
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -206,7 +208,6 @@ class AlbumListFragment :
             else -> false
         }
     }
-
 
     // Private
 
@@ -247,7 +248,6 @@ class AlbumListFragment :
             }
         }
     }
-
 
     // AlbumListContract.View Implementation
 
@@ -365,7 +365,6 @@ class AlbumListFragment :
         TagEditorAlertDialog.newInstance(songs).show(childFragmentManager)
     }
 
-
     // AlbumBinder.Listener Implementation
 
     override fun onAlbumClicked(album: Album, viewHolder: AlbumBinder.ViewHolder) {
@@ -430,13 +429,11 @@ class AlbumListFragment :
         viewPreloadSizeProvider.setView(holder.imageView)
     }
 
-
     // CreatePlaylistDialogFragment.Listener Implementation
 
     override fun onSave(text: String, playlistData: PlaylistData) {
         playlistMenuView.onSave(text, playlistData)
     }
-
 
     // ContextualToolbarHelper.Callback Implementation
 
@@ -460,7 +457,6 @@ class AlbumListFragment :
                 }
         }
     }
-
 
     // Static
 

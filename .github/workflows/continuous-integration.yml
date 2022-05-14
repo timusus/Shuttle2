@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+
+env:
+  GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.jvmargs="-XX:+HeapDumpOnOutOfMemoryError"
+
+concurrency:
+  group: ci-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit_tests:
+    name: "Unit Tests"
+    runs-on: ubuntu-latest
+    if: ${{ !github.event.pull_request.draft }}
+    timeout-minutes: 60
+
+    steps:
+      - name: "Git Checkout"
+        uses: actions/checkout@v3
+
+      - name: "Create keystore.ks"
+        run: 'echo "${{secrets.KEYSTORE_FILE}}" | base64 -d > ./androidApp/main/keystore.ks'
+
+      - name: "Create google-services.json"
+        run: 'echo "${{secrets.GOOGLE_SERVICES_JSON}}" | base64 -d > ./androidApp/main/app/google-services.json'
+
+      - name: "Set up JDK 11"
+        uses: actions/setup-java@v3.1.1
+        with:
+          distribution: zulu
+          java-version: 11
+
+      - name: "Lint Project"
+        run: "Support/Scripts/Lint"
+
+      - name: "Gradle cache"
+        uses: gradle/gradle-build-action@v2
+
+      - name: "Build and Run Unit Tests"
+        run: "Support/Scripts/UnitTest"
+
+      - name: "Unit Test Results"
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-results
+          path: |
+            **/build/reports/**/*

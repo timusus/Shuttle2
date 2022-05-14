@@ -50,9 +50,9 @@ class NetworkResultCall<S : Any>(
                     if (logErrors) {
                         Timber.e(
                             "Request failed." +
-                                    "\nmethod: ${call.request().method}" +
-                                    "\nurl: ${call.request().url}" +
-                                    "\nerror: $error"
+                                "\nmethod: ${call.request().method}" +
+                                "\nurl: ${call.request().url}" +
+                                "\nerror: $error"
                         )
                     }
                     callback.onResponse(this@NetworkResultCall, Response.success(NetworkResult.Failure(error)))
@@ -69,9 +69,9 @@ class NetworkResultCall<S : Any>(
                 if (logErrors) {
                     Timber.e(
                         "Request failed." +
-                                "\nmethod: ${call.request().method}" +
-                                "\nurl: ${call.request().url}" +
-                                "\nerror: $error"
+                            "\nmethod: ${call.request().method}" +
+                            "\nurl: ${call.request().url}" +
+                            "\nerror: $error"
                     )
                 }
                 callback.onResponse(this@NetworkResultCall, Response.success(NetworkResult.Failure(error)))

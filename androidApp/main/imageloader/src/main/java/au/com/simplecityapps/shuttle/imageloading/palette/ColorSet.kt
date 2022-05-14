@@ -80,7 +80,6 @@ class ColorSet(
         result = 31 * result + secondaryTextColor
         return result
     }
-
 }
 
 class ColorSetEvaluator : TypeEvaluator<ColorSet> {

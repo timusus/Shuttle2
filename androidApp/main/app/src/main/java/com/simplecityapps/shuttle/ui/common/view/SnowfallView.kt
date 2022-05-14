@@ -135,7 +135,6 @@ class SnowfallView(context: Context?, attrs: AttributeSet?) : View(context, attr
         }
     }
 
-
     companion object {
 
         /** Forecast a <= 1% chance of snowing  */
