@@ -199,7 +199,7 @@ android {
         implementation("androidx.fragment:fragment-ktx:1.4.1")
 
         // Glide
-        implementation("com.github.bumptech.glide:glide:4.12.0")
+        implementation("com.github.bumptech.glide:glide:4.13.2")
         kapt("com.github.bumptech.glide:compiler:4.12.0")
         implementation("com.github.bumptech.glide:okhttp3-integration:4.12.0")
         implementation("com.github.bumptech.glide:recyclerview-integration:4.12.0") {
