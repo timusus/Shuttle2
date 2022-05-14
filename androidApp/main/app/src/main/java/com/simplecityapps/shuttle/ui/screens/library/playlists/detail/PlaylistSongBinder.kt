@@ -61,18 +61,18 @@ open class PlaylistSongBinder(
     }
 
     override fun areContentsTheSame(other: Any): Boolean {
-        return other is PlaylistSongBinder
-                && playlistSong.song.name == other.playlistSong.song.name
-                && playlistSong.song.albumArtist == other.playlistSong.song.albumArtist
-                && playlistSong.song.artists == other.playlistSong.song.artists
-                && playlistSong.song.album == other.playlistSong.song.album
-                && playlistSong.song.date == other.playlistSong.song.date
-                && playlistSong.song.track == other.playlistSong.song.track
-                && playlistSong.song.disc == other.playlistSong.song.disc
-                && playlistSong.song.playCount == other.playlistSong.song.playCount
-                && selected == other.selected
-                && showDragHandle == other.showDragHandle
-                && jaroSimilarity == other.jaroSimilarity
+        return other is PlaylistSongBinder &&
+            playlistSong.song.name == other.playlistSong.song.name &&
+            playlistSong.song.albumArtist == other.playlistSong.song.albumArtist &&
+            playlistSong.song.artists == other.playlistSong.song.artists &&
+            playlistSong.song.album == other.playlistSong.song.album &&
+            playlistSong.song.date == other.playlistSong.song.date &&
+            playlistSong.song.track == other.playlistSong.song.track &&
+            playlistSong.song.disc == other.playlistSong.song.disc &&
+            playlistSong.song.playCount == other.playlistSong.song.playCount &&
+            selected == other.selected &&
+            showDragHandle == other.showDragHandle &&
+            jaroSimilarity == other.jaroSimilarity
     }
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<PlaylistSongBinder>(itemView) {

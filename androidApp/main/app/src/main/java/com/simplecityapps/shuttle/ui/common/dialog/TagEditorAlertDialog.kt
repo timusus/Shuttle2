@@ -26,10 +26,11 @@ import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class TagEditorAlertDialog : DialogFragment(),
+class TagEditorAlertDialog :
+    DialogFragment(),
     TagEditorContract.View {
 
-    private var songs: List<com.simplecityapps.shuttle.model.Song> = listOf()
+    private var songs: List<Song> = listOf()
 
     private lateinit var _data: TagEditorContract.Data
 
@@ -74,13 +75,12 @@ class TagEditorAlertDialog : DialogFragment(),
     private var lyricsInputLayout: TextInputLayout by autoCleared()
     private var lyricsEditText: EditText by autoCleared()
 
-
     // Lifecycle
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        songs = arguments?.getParcelableArrayList<com.simplecityapps.shuttle.model.Song>(ARG_SONGS) as List<com.simplecityapps.shuttle.model.Song>
+        songs = arguments?.getParcelableArrayList<Song>(ARG_SONGS) as List<Song>
     }
 
     @SuppressLint("InflateParams")
@@ -170,7 +170,6 @@ class TagEditorAlertDialog : DialogFragment(),
         super.show(manager, TAG)
     }
 
-
     // Private
 
     private fun updateSaveButton(data: TagEditorContract.Data) {
@@ -195,7 +194,6 @@ class TagEditorAlertDialog : DialogFragment(),
             onTextChange()
         }
     }
-
 
     // TagEditorContract.View Implementation
 
@@ -355,7 +353,6 @@ class TagEditorAlertDialog : DialogFragment(),
         dismiss()
     }
 
-
     // Static
 
     companion object {
@@ -364,7 +361,7 @@ class TagEditorAlertDialog : DialogFragment(),
         const val ARG_SONGS = "songs"
 
         fun newInstance(
-            songs: List<com.simplecityapps.shuttle.model.Song>? = emptyList()
+            songs: List<Song>? = emptyList()
         ): TagEditorAlertDialog = TagEditorAlertDialog().withArgs {
             putParcelableArrayList(ARG_SONGS, ArrayList(songs))
         }

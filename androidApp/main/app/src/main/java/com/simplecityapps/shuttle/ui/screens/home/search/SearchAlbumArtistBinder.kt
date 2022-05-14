@@ -45,7 +45,6 @@ class SearchAlbumArtistBinder(
         return super.areContentsTheSame(other) && other.jaroSimilarity == jaroSimilarity
     }
 
-
     class ViewHolder(itemView: View) : AlbumArtistBinder.ViewHolder(itemView) {
 
         private val title = itemView.findViewById<TextView>(R.id.title)

@@ -42,12 +42,11 @@ class ScanProgressBinder(
     }
 
     override fun areContentsTheSame(other: Any): Boolean {
-        return other is ScanProgressBinder
-                && mediaProviderType == other.mediaProviderType
-                && songImportProgressState == other.songImportProgressState
-                && playlistImportProgressState == other.playlistImportProgressState
+        return other is ScanProgressBinder &&
+            mediaProviderType == other.mediaProviderType &&
+            songImportProgressState == other.songImportProgressState &&
+            playlistImportProgressState == other.playlistImportProgressState
     }
-
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<ScanProgressBinder>(itemView) {
         val icon: ImageView = itemView.findViewById(R.id.icon)
@@ -105,7 +104,6 @@ class ScanProgressBinder(
                     songImportProgressMessage.gravity = GravityCompat.START
                     songImportSuccessImage.isVisible = false
                 }
-
             }
             when (viewBinder.playlistImportProgressState) {
                 ImportProgressState.Unknown -> {

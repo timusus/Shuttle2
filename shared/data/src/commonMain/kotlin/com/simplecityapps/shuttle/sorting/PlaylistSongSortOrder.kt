@@ -1,6 +1,6 @@
-package com.simplecityapps.shuttle.sorting;
+package com.simplecityapps.shuttle.sorting
 
-enum class PlaylistSongSortOrder  {
+enum class PlaylistSongSortOrder {
     Position,
     SongName,
     ArtistGroupKey,

@@ -35,7 +35,6 @@ class DiscNumberBinder(
         return label.hashCode()
     }
 
-
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<DiscNumberBinder>(itemView) {
 
         override fun bind(viewBinder: DiscNumberBinder, isPartial: Boolean) {

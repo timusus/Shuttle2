@@ -3,7 +3,6 @@ package com.simplecityapps.mediaprovider.repository.artists
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.sorting.AlbumArtistSortOrder
 
-
 sealed class AlbumArtistQuery(
     val predicate: ((AlbumArtist) -> Boolean),
     val sortOrder: AlbumArtistSortOrder = AlbumArtistSortOrder.Default

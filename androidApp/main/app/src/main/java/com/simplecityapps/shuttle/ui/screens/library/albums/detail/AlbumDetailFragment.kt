@@ -90,7 +90,6 @@ class AlbumDetailFragment :
 
     private var recyclerViewState: Parcelable? = null
 
-
     // Lifecycle
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -235,7 +234,6 @@ class AlbumDetailFragment :
         super.onDestroyView()
     }
 
-
     // AlbumDetailContract.View Implementation
 
     override fun setData(songs: List<com.simplecityapps.shuttle.model.Song>) {
@@ -246,23 +244,25 @@ class AlbumDetailFragment :
                 entry.value.groupBy { song -> song.grouping ?: "" }
             }
 
-        adapter.update(discGroupingSongsMap.flatMap { discEntry ->
-            val viewBinders = mutableListOf<ViewBinder>()
-            if (discGroupingSongsMap.size > 1) {
-                viewBinders.add(DiscNumberBinder(Phrase.from(context, R.string.disc_number).put("disc_number", discEntry.key).format().toString()))
-            }
-
-            val groupingMap = discEntry.value
-            groupingMap.flatMap { groupingEntry ->
-                if (groupingEntry.key.isNotEmpty()) {
-                    viewBinders.add(GroupingBinder(groupingEntry.key))
+        adapter.update(
+            discGroupingSongsMap.flatMap { discEntry ->
+                val viewBinders = mutableListOf<ViewBinder>()
+                if (discGroupingSongsMap.size > 1) {
+                    viewBinders.add(DiscNumberBinder(Phrase.from(context, R.string.disc_number).put("disc_number", discEntry.key).format().toString()))
                 }
-                viewBinders.addAll(groupingEntry.value.map { song -> DetailSongBinder(song, songBinderListener) })
+
+                val groupingMap = discEntry.value
+                groupingMap.flatMap { groupingEntry ->
+                    if (groupingEntry.key.isNotEmpty()) {
+                        viewBinders.add(GroupingBinder(groupingEntry.key))
+                    }
+                    viewBinders.addAll(groupingEntry.value.map { song -> DetailSongBinder(song, songBinderListener) })
+                    viewBinders
+                }
+
                 viewBinders
             }
-
-            viewBinders
-        }){
+        ) {
             recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
             recyclerViewState = null
         }
@@ -299,7 +299,6 @@ class AlbumDetailFragment :
     override fun showTagEditor(songs: List<com.simplecityapps.shuttle.model.Song>) {
         TagEditorAlertDialog.newInstance(songs).show(childFragmentManager)
     }
-
 
     // SongBinder.Listener Implementation
 
@@ -366,7 +365,6 @@ class AlbumDetailFragment :
     override fun onSave(text: String, playlistData: PlaylistData) {
         playlistMenuPresenter.createPlaylist(text, playlistData)
     }
-
 
     // Static
 

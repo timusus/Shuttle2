@@ -30,12 +30,12 @@ class HighPassFilter(
     fun processSample(sample: Float, channelIndex: Int): Float {
 
         val adjustedSample = (
-                ((b0 / a0) * sample)
-                        + ((b1 / a0) * xHist[channelIndex][0])
-                        + ((b2 / a0) * xHist[channelIndex][1])
-                        - ((a1 / a0) * yHist[channelIndex][0])
-                        - ((a2 / a0) * yHist[channelIndex][1])
-                ).toFloat()
+            ((b0 / a0) * sample) +
+                ((b1 / a0) * xHist[channelIndex][0]) +
+                ((b2 / a0) * xHist[channelIndex][1]) -
+                ((a1 / a0) * yHist[channelIndex][0]) -
+                ((a2 / a0) * yHist[channelIndex][1])
+            ).toFloat()
 
         xHist[channelIndex][1] = xHist[channelIndex][0]
         xHist[channelIndex][0] = sample

@@ -99,7 +99,6 @@ class TrialManager(
             writeLocalDevice(localDevice)
         }
 
-
         val timeSinceInstall = now.time - localDevice.lastUpdate.time
         return if (timeSinceInstall < preTrialLength) {
             val remaining = preTrialLength - timeSinceInstall

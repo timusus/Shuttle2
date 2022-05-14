@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.remote_config;
+package com.simplecityapps.shuttle.remote_config
 
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig

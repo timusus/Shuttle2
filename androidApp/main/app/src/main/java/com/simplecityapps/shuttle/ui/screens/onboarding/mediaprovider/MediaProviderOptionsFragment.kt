@@ -59,13 +59,11 @@ class MediaProviderOptionsFragment : DialogFragment() {
             .create()
     }
 
-
     // Public
 
     fun show(fragmentManager: FragmentManager) {
         show(fragmentManager, "MediaProviderOptionsFragment")
     }
-
 
     // Private
 
@@ -75,7 +73,6 @@ class MediaProviderOptionsFragment : DialogFragment() {
             dismiss()
         }
     }
-
 
     // Static
 

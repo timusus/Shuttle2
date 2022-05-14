@@ -26,7 +26,6 @@ class SkuBinder(val skuDetails: SkuDetails, val litener: Listener) : ViewBinder 
         return ViewTypes.Sku
     }
 
-
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<SkuBinder>(itemView) {
         val title: TextView = itemView.findViewById(R.id.title)
         val subtitle: TextView = itemView.findViewById(R.id.subtitle)

@@ -34,22 +34,29 @@ class MediaIdHelper @Inject constructor(
                             MediaDescriptionCompat.Builder()
                                 .setTitle("Artists")
                                 .setMediaId("media:/artist_root/")
-                                .build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
-                        ), MediaBrowserCompat.MediaItem(
+                                .build(),
+                            MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
+                        ),
+                        MediaBrowserCompat.MediaItem(
                             MediaDescriptionCompat.Builder()
                                 .setTitle("Albums")
                                 .setMediaId("media:/album_root/")
-                                .build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
-                        ), MediaBrowserCompat.MediaItem(
+                                .build(),
+                            MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
+                        ),
+                        MediaBrowserCompat.MediaItem(
                             MediaDescriptionCompat.Builder()
                                 .setTitle("Playlists")
                                 .setMediaId("media:/playlist_root/")
-                                .build(), MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
-                        ), MediaBrowserCompat.MediaItem(
+                                .build(),
+                            MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
+                        ),
+                        MediaBrowserCompat.MediaItem(
                             MediaDescriptionCompat.Builder()
                                 .setTitle("Shuffle All")
                                 .setMediaId("media:/shuffle_all")
-                                .build(), MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
+                                .build(),
+                            MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
                         )
                     )
                 }
@@ -199,7 +206,6 @@ class MediaIdHelper @Inject constructor(
                     pathSegments.contains("playlist") -> MediaIdWrapper.Directory.Songs.Playlist(pathSegments.getNextSegment("playlist")!!.toLong())
                     else -> throw IllegalStateException()
                 }
-
             }
             else -> {
                 val directoryPath = pathSegments.toMutableList()

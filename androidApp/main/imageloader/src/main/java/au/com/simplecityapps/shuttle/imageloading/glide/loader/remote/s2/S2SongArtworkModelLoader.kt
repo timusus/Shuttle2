@@ -31,7 +31,6 @@ class S2SongArtworkModelLoader(
         return super.buildLoadData(model, width, height, options)
     }
 
-
     class Factory(
         private val preferenceManager: GeneralPreferenceManager
     ) : ModelLoaderFactory<Song, InputStream> {

@@ -43,7 +43,8 @@ class DebugDrawerFragment : Fragment() {
                     0 -> "Debug"
                     else -> throw IllegalArgumentException()
                 }
-            })
+            }
+        )
 
         viewPager.adapter = adapter
 

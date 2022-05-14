@@ -66,7 +66,6 @@ class PlaybackPresenter @Inject constructor(
         super.unbindView()
     }
 
-
     // Private
 
     private fun updateProgress() {
@@ -118,7 +117,6 @@ class PlaybackPresenter @Inject constructor(
     private fun updatePlaybackState(playbackState: PlaybackState) {
         view?.setPlaybackState(playbackState)
     }
-
 
     // PlaybackContract.Presenter Implementation
 
@@ -245,20 +243,17 @@ class PlaybackPresenter @Inject constructor(
         playbackManager.clearQueue()
     }
 
-
     // PlaybackWatcherCallback Implementation
 
     override fun onPlaybackStateChanged(playbackState: PlaybackState) {
         updatePlaybackState(playbackState)
     }
 
-
     // PlaybackManager.ProgressCallback
 
     override fun onProgressChanged(position: Int, duration: Int, fromUser: Boolean) {
         view?.setProgress(position, duration)
     }
-
 
     // QueueChangeCallback Implementation
 

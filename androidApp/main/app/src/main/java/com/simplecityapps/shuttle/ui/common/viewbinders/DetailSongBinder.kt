@@ -54,7 +54,6 @@ class DetailSongBinder(
         return song.id.hashCode()
     }
 
-
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<DetailSongBinder>(itemView) {
 
         private val trackTextView: TextView = itemView.findViewById(R.id.trackTextView)

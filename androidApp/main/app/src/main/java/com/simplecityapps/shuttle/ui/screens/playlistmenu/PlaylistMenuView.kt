@@ -88,7 +88,6 @@ class PlaylistMenuView(
         return false
     }
 
-
     /**
      * Clears the submenu found at R.id.playlist, and populates it with items representing the passed in playlists.
      *

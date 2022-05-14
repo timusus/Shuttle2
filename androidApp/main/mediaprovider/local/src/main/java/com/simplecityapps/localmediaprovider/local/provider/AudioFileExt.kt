@@ -78,8 +78,10 @@ fun KTagLib.getAudioFile(fileDescriptor: Int, filePath: String, fileName: String
         disc = metadata?.propertyMap?.get(TagLibProperty.Disc.key)?.firstOrNull()?.substringBefore('/')?.toIntOrNull(),
         discTotal = metadata?.propertyMap?.get(TagLibProperty.Disc.key)?.firstOrNull()?.substringAfter('/', "")?.toIntOrNull(),
         duration = metadata?.audioProperties?.duration,
-        year = (metadata?.propertyMap?.get(TagLibProperty.Date.key)?.firstOrNull()
-            ?: metadata?.propertyMap?.get(TagLibProperty.OriginalDate.key)?.firstOrNull())?.parseDate()
+        year = (
+            metadata?.propertyMap?.get(TagLibProperty.Date.key)?.firstOrNull()
+                ?: metadata?.propertyMap?.get(TagLibProperty.OriginalDate.key)?.firstOrNull()
+            )?.parseDate()
             ?: metadata?.propertyMap?.get(TagLibProperty.Year.key)?.firstOrNull()?.parseDate(),
         genres = metadata?.propertyMap?.get(TagLibProperty.Genre.key).orEmpty().flatMap { genre ->
             genre.split(',', ';', '/')
@@ -100,7 +102,6 @@ fun KTagLib.getAudioFile(fileDescriptor: Int, filePath: String, fileName: String
         channelCount = metadata?.audioProperties?.channelCount
     )
 }
-
 
 fun String.parseDate(): String? {
     if (length < 4) {

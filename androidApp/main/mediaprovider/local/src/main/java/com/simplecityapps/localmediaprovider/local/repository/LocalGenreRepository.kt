@@ -30,7 +30,6 @@ class LocalGenreRepository(
             }
             .flowOn(Dispatchers.IO)
             .stateIn(scope, SharingStarted.Lazily, null)
-
     }
 
     override fun getGenres(query: GenreQuery): Flow<List<com.simplecityapps.shuttle.model.Genre>> {

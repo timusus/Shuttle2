@@ -47,7 +47,6 @@ class DirectoryBinder(
         return directory.hashCode()
     }
 
-
     class ViewHolder(val itemView: View) : ViewBinder.ViewHolder<DirectoryBinder>(itemView) {
 
         private val title: TextView = itemView.findViewById(R.id.titleLabel)

@@ -63,7 +63,6 @@ class SmartPlaylistDetailFragment :
 
     private lateinit var playlistMenuView: PlaylistMenuView
 
-
     // Lifecycle
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -131,7 +130,6 @@ class SmartPlaylistDetailFragment :
         super.onDestroyView()
     }
 
-
     // PlaylistDetailContract.View Implementation
 
     override fun setData(songs: List<com.simplecityapps.shuttle.model.Song>) {
@@ -150,9 +148,11 @@ class SmartPlaylistDetailFragment :
             heroImageView.setImageResource(R.drawable.ic_placeholder_playlist)
         }
 
-        adapter.update(songs.map { song ->
-            SongBinder(song, imageLoader, songBinderListener, showPlayCountBadge = playlist.songQuery is SongQuery.PlayCount)
-        })
+        adapter.update(
+            songs.map { song ->
+                SongBinder(song, imageLoader, songBinderListener, showPlayCountBadge = playlist.songQuery is SongQuery.PlayCount)
+            }
+        )
     }
 
     override fun onAddedToQueue(song: com.simplecityapps.shuttle.model.Song) {
@@ -170,7 +170,6 @@ class SmartPlaylistDetailFragment :
     override fun showDeleteError(error: Error) {
         Toast.makeText(requireContext(), error.userDescription(resources), Toast.LENGTH_LONG).show()
     }
-
 
     // SongBinder.Listener Implementation
 
@@ -230,7 +229,6 @@ class SmartPlaylistDetailFragment :
             popupMenu.show()
         }
     }
-
 
     // CreatePlaylistDialogFragment.Listener Implementation
 

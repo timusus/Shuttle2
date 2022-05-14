@@ -56,7 +56,8 @@ interface OnboardingChild {
 }
 
 @AndroidEntryPoint
-class OnboardingParentFragment : Fragment(),
+class OnboardingParentFragment :
+    Fragment(),
     OnboardingParent {
 
     private var viewPager: ViewPager2 by autoCleared()
@@ -78,7 +79,6 @@ class OnboardingParentFragment : Fragment(),
 
     @Inject
     lateinit var generalPreferenceManager: GeneralPreferenceManager
-
 
     // Lifecycle
 
@@ -127,7 +127,6 @@ class OnboardingParentFragment : Fragment(),
             childFragmentManager.fragments.filterIsInstance<OnboardingChild>().firstOrNull { it.page == currentPage }?.handleBackButtonClick()
         }
     }
-
 
     // PageCompletionListener Implementation
 
@@ -188,13 +187,11 @@ class OnboardingParentFragment : Fragment(),
         }
     }
 
-
     // Private
 
     private fun hasStoragePermission(): Boolean {
         return (checkSelfPermission(requireContext(), Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED)
     }
-
 
     // Static
 

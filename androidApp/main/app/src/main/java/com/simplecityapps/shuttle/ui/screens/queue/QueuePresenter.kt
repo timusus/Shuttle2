@@ -126,7 +126,6 @@ class QueuePresenter @Inject constructor(
         playbackManager.clearQueue()
     }
 
-
     // QueueBinder.Listener Implementation
 
     override fun onQueueItemClicked(queueItem: QueueItem) {
@@ -136,7 +135,6 @@ class QueuePresenter @Inject constructor(
             result.onFailure { error -> view?.showLoadError(error as Error) }
         }
     }
-
 
     // QueueChangeCallback Implementation
 

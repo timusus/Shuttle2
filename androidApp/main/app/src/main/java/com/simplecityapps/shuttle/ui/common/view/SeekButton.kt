@@ -18,7 +18,9 @@ import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import com.simplecityapps.shuttle.R
 
 class SeekButton @JvmOverloads constructor(
-    context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
 
     interface OnSeekListener {

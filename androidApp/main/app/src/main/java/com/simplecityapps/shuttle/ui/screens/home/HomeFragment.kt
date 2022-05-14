@@ -80,7 +80,6 @@ class HomeFragment :
 
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
 
-
     // Lifecycle
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -176,7 +175,6 @@ class HomeFragment :
         super.onDestroyView()
     }
 
-
     // HomeContract.View Implementation
 
     override fun showLoadError(error: Error) {
@@ -251,7 +249,6 @@ class HomeFragment :
     override fun onAddedToQueue(album: com.simplecityapps.shuttle.model.Album) {
         Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("item_name", album.name).format(), Toast.LENGTH_SHORT).show()
     }
-
 
     // Private
 
@@ -331,7 +328,6 @@ class HomeFragment :
             onOverflowClicked(viewHolder.itemView, album)
         }
 
-
         override fun onOverflowClicked(view: View, album: com.simplecityapps.shuttle.model.Album) {
             val popupMenu = PopupMenu(requireContext(), view)
             popupMenu.inflate(R.menu.menu_popup)
@@ -384,7 +380,6 @@ class HomeFragment :
             }
         }
     }
-
 
     // CreatePlaylistDialogFragment.Listener Implementation
 

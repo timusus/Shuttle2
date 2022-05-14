@@ -65,7 +65,6 @@ class MediaProviderSelectionFragment :
     private val postAnimationConstraints = ConstraintSet()
     private val transition = ChangeBounds()
 
-
     // Lifecycle
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -137,7 +136,6 @@ class MediaProviderSelectionFragment :
         super.onDestroyView()
     }
 
-
     // MediaProviderSelectionContract.View Implementation
 
     override fun showMediaProviderSelectionDialog(mediaProviderTypes: List<MediaProviderType>) {
@@ -175,7 +173,6 @@ class MediaProviderSelectionFragment :
         }
     }
 
-
     // MediaProviderSelectionFragment.Listener Implementation
 
     override fun onMediaProviderSelected(providerType: MediaProviderType) {
@@ -201,7 +198,6 @@ class MediaProviderSelectionFragment :
             }
         }
     }
-
 
     // MediaProviderViewBinder.Listener Implementation
 
@@ -251,7 +247,6 @@ class MediaProviderSelectionFragment :
         }
     }
 
-
     // OnboardingChild Implementation
 
     override val page = OnboardingPage.MediaProviderSelector
@@ -263,7 +258,6 @@ class MediaProviderSelectionFragment :
     override fun handleNextButtonClick() {
         getParent()?.goToNext() ?: Timber.e("Failed to goToNext() - getParent() returned null")
     }
-
 
     // Static
 

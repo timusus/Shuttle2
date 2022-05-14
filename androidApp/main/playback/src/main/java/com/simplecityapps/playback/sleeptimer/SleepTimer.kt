@@ -22,7 +22,6 @@ class SleepTimer(
 
     private var delay: Long = 0L
 
-
     /**
      * Start the sleep timer.
      *
@@ -77,7 +76,6 @@ class SleepTimer(
         playbackManager.pause()
         stopTimer()
     }
-
 
     // PlaybackWatcherCallback Implementation
 

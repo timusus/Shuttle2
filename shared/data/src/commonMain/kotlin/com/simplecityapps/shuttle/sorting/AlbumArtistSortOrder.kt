@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.sorting;
+package com.simplecityapps.shuttle.sorting
 
 import java.io.Serializable
 

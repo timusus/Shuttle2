@@ -78,7 +78,6 @@ class QueueBinder(
         return true
     }
 
-
     class ViewHolder(itemView: View) :
         ViewBinder.ViewHolder<QueueBinder>(itemView),
         PlaybackWatcherCallback {

@@ -91,7 +91,6 @@ class PlaybackFragment :
 
     private var recyclerViewState: Parcelable? = null
 
-
     // Lifecycle
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -131,14 +130,12 @@ class PlaybackFragment :
             override fun onSeek(seekAmount: Int) {
                 presenter.seekForward(seekAmount)
             }
-
         }
         skipPrevButton.setOnClickListener { presenter.skipPrev() }
         skipPrevButton.listener = object : SkipButton.OnSeekListener {
             override fun onSeek(seekAmount: Int) {
                 presenter.seekBackward(seekAmount)
             }
-
         }
         seekBackwardButton.listener = object : SeekButton.OnSeekListener {
             override fun onSeek(seekAmount: Int) {
@@ -235,7 +232,6 @@ class PlaybackFragment :
         presenter.unbindView()
         super.onDestroyView()
     }
-
 
     // PlaybackContract.View
 
@@ -377,7 +373,6 @@ class PlaybackFragment :
         lyricsView.fadeIn()
     }
 
-
     // SeekBar.OnSeekBarChangeListener Implementation
 
     private var isSeeking = false
@@ -398,7 +393,6 @@ class PlaybackFragment :
         presenter.seek(seekBar.progress / 1000f)
         isSeeking = false
     }
-
 
     companion object {
         const val ARG_RECYCLER_STATE = "recycler_state"

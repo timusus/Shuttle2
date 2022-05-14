@@ -177,7 +177,7 @@ class BillingManager(
     @Synchronized
     private fun processPurchases(purchases: List<Purchase>) {
         if (billingState.value == BillingState.Paid || paidVersionSkus.intersect(purchases.flatMap { purchase -> purchase.skus })
-                .isNotEmpty()
+            .isNotEmpty()
         ) {
             billingState.value = BillingState.Paid
         } else {

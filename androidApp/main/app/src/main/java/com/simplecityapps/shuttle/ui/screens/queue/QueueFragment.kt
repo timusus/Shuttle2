@@ -97,7 +97,6 @@ class QueueFragment :
 
     private var pendingScrollPosition: Int? = null
 
-
     // Lifecycle
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -226,7 +225,6 @@ class QueueFragment :
         }
     }) {}) {}
 
-
     // QueueContract.View Implementation
 
     override fun setData(queue: List<QueueItem>, progress: Float, playbackState: PlaybackState) {
@@ -287,7 +285,6 @@ class QueueFragment :
         }
     }
 
-
     // QueueBinder.Listener Implementation
 
     private val queueBinderListener = object : QueueBinder.Listener {
@@ -345,7 +342,6 @@ class QueueFragment :
         TagEditorAlertDialog.newInstance(songs).show(childFragmentManager)
     }
 
-
     // MultiSheetView.SheetStateChangeListener Implementation
 
     private val sheetStateChangeListener = object : MultiSheetView.SheetStateChangeListener {
@@ -372,7 +368,6 @@ class QueueFragment :
         }
     }
 
-
     // CreatePlaylistDialogFragment.Listener Implementation
 
     override fun onSave(text: String, playlistData: PlaylistData) {
@@ -393,7 +388,6 @@ class QueueFragment :
             }
         }
     }
-
 
     // Static
 

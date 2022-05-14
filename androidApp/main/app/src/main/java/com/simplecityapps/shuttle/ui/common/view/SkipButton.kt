@@ -12,7 +12,9 @@ import com.simplecityapps.shuttle.R
 import java.util.concurrent.TimeUnit
 
 class SkipButton @JvmOverloads constructor(
-    context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0
 ) : AppCompatImageButton(context, attrs, defStyleAttr) {
 
     interface OnSeekListener {

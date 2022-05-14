@@ -35,7 +35,6 @@ class GroupingBinder(
         return label.hashCode()
     }
 
-
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<GroupingBinder>(itemView) {
 
         override fun bind(viewBinder: GroupingBinder, isPartial: Boolean) {

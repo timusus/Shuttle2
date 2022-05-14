@@ -21,7 +21,8 @@ import timber.log.Timber
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class DirectorySelectionFragment : DialogFragment(),
+class DirectorySelectionFragment :
+    DialogFragment(),
     DirectorySelectionContract.View {
 
     @Inject
@@ -32,7 +33,6 @@ class DirectorySelectionFragment : DialogFragment(),
     private var recyclerView: RecyclerView by autoCleared()
 
     private var emptyLabel: TextView by autoCleared()
-
 
     // Lifecycle
 
@@ -81,7 +81,6 @@ class DirectorySelectionFragment : DialogFragment(),
         super.onDestroyView()
     }
 
-
     // MusicDirectoriesContract.View Implementation
 
     override fun setData(data: List<DirectorySelectionContract.Directory>) {
@@ -108,7 +107,6 @@ class DirectorySelectionFragment : DialogFragment(),
         show(fragmentManager, "DirectorySelectionFragment")
     }
 
-
     // DirectoryBinder.Listener
 
     private val directoryBinderListener = object : DirectoryBinder.Listener {
@@ -118,12 +116,10 @@ class DirectorySelectionFragment : DialogFragment(),
         }
     }
 
-
     // Static
 
     companion object {
         const val REQUEST_CODE_OPEN_DOCUMENT = 100
         fun newInstance() = DirectorySelectionFragment()
     }
-
 }

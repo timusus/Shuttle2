@@ -51,7 +51,7 @@ object SafDirectoryHelper {
                     }
 
                     if (arrayOf("mp3", "3gp", "mp4", "m4a", "m4b", "aac", "ts", "flac", "mid", "xmf", "mxmf", "midi", "rtttl", "rtx", "ota", "imy", "ogg", "mkv", "wav", "opus", "m3u", "m3u8")
-                            .contains(documentNode.ext)
+                        .contains(documentNode.ext)
                     ) {
                         // Add files with audio-related extensions
                         parent.addLeafNode(documentNode)

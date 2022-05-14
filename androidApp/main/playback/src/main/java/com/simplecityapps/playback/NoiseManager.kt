@@ -18,18 +18,15 @@ class NoiseManager(
 
     private val broadcastReceiver = NoisyReceiver(playbackManager)
 
-
     // PlaybackWatcherCallback Implementation
 
     override fun onPlaybackStateChanged(playbackState: PlaybackState) {
         when (playbackState) {
             is PlaybackState.Loading, PlaybackState.Playing -> {
                 context.registerReceiver(broadcastReceiver, IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY))
-
             }
             else -> {
                 context.safelyUnregisterReceiver(broadcastReceiver)
-
             }
         }
     }
@@ -44,11 +41,9 @@ class NoisyReceiver(val playbackManager: PlaybackManager) : BroadcastReceiver() 
     }
 }
 
-
 fun Context.safelyUnregisterReceiver(broadcastReceiver: BroadcastReceiver) {
     try {
         unregisterReceiver(broadcastReceiver)
     } catch (e: IllegalArgumentException) {
-
     }
 }

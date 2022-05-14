@@ -6,6 +6,6 @@ package com.simplecityapps.networking.retrofit.error
 class NetworkError(val hasInternetConnectivity: Boolean, val t: Throwable) : Error() {
 
     override fun toString(): String {
-        return "NetworkError (hasInternetConnectivity: ${hasInternetConnectivity}, error: ${t.localizedMessage})"
+        return "NetworkError (hasInternetConnectivity: $hasInternetConnectivity, error: ${t.localizedMessage})"
     }
 }

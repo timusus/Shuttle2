@@ -38,12 +38,10 @@ fun S2App() {
                     backgroundColor = MaterialColors.background
                 ) {
                     AppBottomNavigation(selected = false) {
-
                     }
                 }
             }
         ) {
-
         }
     }
 }

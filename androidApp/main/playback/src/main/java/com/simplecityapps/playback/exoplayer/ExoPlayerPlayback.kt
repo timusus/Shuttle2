@@ -42,14 +42,12 @@ class ExoPlayerPlayback(
                 super.onPlaybackStateChanged(state)
 
                 val playbackState = state.toExoPlaybackState()
-                Timber.v("onPlaybackStateChanged(playbackState: ${playbackState})")
+                Timber.v("onPlaybackStateChanged(playbackState: $playbackState)")
 
                 when (playbackState) {
                     ExoPlaybackState.Idle -> {
-
                     }
                     ExoPlaybackState.Buffering -> {
-
                     }
                     ExoPlaybackState.Ready -> {
                         isPlaybackReady = true
@@ -68,7 +66,6 @@ class ExoPlayerPlayback(
                         }
                     }
                     ExoPlaybackState.Unknown -> {
-
                     }
                 }
             }
@@ -116,7 +113,6 @@ class ExoPlayerPlayback(
     }
 
     private var player: SimpleExoPlayer = SimpleExoPlayer.Builder(context, renderersFactory).build()
-
 
     override suspend fun load(current: Song, next: Song?, seekPosition: Int, completion: (Result<Any?>) -> Unit) {
         Timber.v("load(current: ${current.name}|${current.mimeType}, seekPosition: $seekPosition)")

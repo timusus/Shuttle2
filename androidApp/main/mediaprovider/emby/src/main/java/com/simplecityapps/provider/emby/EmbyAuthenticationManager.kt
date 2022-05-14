@@ -68,18 +68,18 @@ class EmbyAuthenticationManager(
         }
 
         return "${credentialStore.address}/emby" +
-                "/Audio/$itemId" +
-                "/universal" +
-                "?UserId=${authenticatedCredentials.userId}" +
-                "&DeviceId=$deviceId" +
-                "&PlaySessionId=${UUID.randomUUID()}" +
-                "&Container=opus,mp3|mp3,aac,m4a,m4b|aac,flac,webma,webm,wav,ogg" +
-                "&TranscodingContainer=ts" +
-                "&TranscodingProtocol=hls" +
-                "&MaxSampleRate=48000" +
-                "&EnableRedirection=true" +
-                "&EnableRemoteMedia=true" +
-                "&AudioCodec=aac" +
-                "&api_key=${authenticatedCredentials.accessToken}"
+            "/Audio/$itemId" +
+            "/universal" +
+            "?UserId=${authenticatedCredentials.userId}" +
+            "&DeviceId=$deviceId" +
+            "&PlaySessionId=${UUID.randomUUID()}" +
+            "&Container=opus,mp3|mp3,aac,m4a,m4b|aac,flac,webma,webm,wav,ogg" +
+            "&TranscodingContainer=ts" +
+            "&TranscodingProtocol=hls" +
+            "&MaxSampleRate=48000" +
+            "&EnableRedirection=true" +
+            "&EnableRemoteMedia=true" +
+            "&AudioCodec=aac" +
+            "&api_key=${authenticatedCredentials.accessToken}"
     }
 }

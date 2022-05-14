@@ -32,7 +32,6 @@ class DirectoryAlbumArtistLocalArtworkModelLoader(
         return true
     }
 
-
     class Factory(
         private val context: Context,
         private val songRepository: SongRepository
@@ -45,7 +44,6 @@ class DirectoryAlbumArtistLocalArtworkModelLoader(
         override fun teardown() {
         }
     }
-
 
     class DirectoryAlbumArtistLocalArtworkProvider(
         private val context: Context,
@@ -85,9 +83,9 @@ class DirectoryAlbumArtistLocalArtworkModelLoader(
                             }
                         }
                         documentFiles.flatMap { it.listFiles().toList() }.filter {
-                            it.type?.startsWith("image") == true
-                                    && it.length() > 1024
-                                    && (pattern.matcher(it.name ?: "").matches() || (albumArtist.friendlyArtistName ?: albumArtist.name ?: "").contains(it.name ?: "", true))
+                            it.type?.startsWith("image") == true &&
+                                it.length() > 1024 &&
+                                (pattern.matcher(it.name ?: "").matches() || (albumArtist.friendlyArtistName ?: albumArtist.name ?: "").contains(it.name ?: "", true))
                         }.maxByOrNull { it.length() }
                             ?.let { documentFile ->
                                 context.contentResolver.openInputStream(documentFile.uri)

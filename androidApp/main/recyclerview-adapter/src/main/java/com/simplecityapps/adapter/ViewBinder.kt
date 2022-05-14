@@ -26,7 +26,8 @@ interface ViewBinder : ContentsComparator {
         return true
     }
 
-    open class ViewHolder<B : ViewBinder>(itemView: View) : RecyclerView.ViewHolder(itemView),
+    open class ViewHolder<B : ViewBinder>(itemView: View) :
+        RecyclerView.ViewHolder(itemView),
         RecyclingViewHolder,
         AttachAwareViewHolder {
 
@@ -46,7 +47,6 @@ interface ViewBinder : ContentsComparator {
         override fun onDetach() {
         }
     }
-
 
     // Extension
 

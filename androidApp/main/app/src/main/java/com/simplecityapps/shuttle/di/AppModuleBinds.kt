@@ -35,7 +35,6 @@ abstract class AppModuleBinds {
     @IntoSet
     abstract fun provideTrialInitializer(bind: TrialInitializer): AppInitializer
 
-
     @Binds
     @IntoSet
     abstract fun provideRemoteConfigInitializer(bind: RemoteConfigInitializer): AppInitializer

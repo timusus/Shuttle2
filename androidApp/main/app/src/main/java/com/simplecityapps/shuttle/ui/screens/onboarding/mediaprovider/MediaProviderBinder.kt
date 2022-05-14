@@ -51,7 +51,6 @@ class MediaProviderBinder(
         return providerType.hashCode()
     }
 
-
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<MediaProviderBinder>(itemView) {
 
         val icon: ImageView = itemView.findViewById(R.id.icon)

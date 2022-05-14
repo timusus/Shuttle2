@@ -72,7 +72,6 @@ class PlaylistDetailFragment :
 
     private var heroImage: ImageView by autoCleared()
 
-
     // Lifecycle
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -202,7 +201,6 @@ class PlaylistDetailFragment :
         super.onDestroyView()
     }
 
-
     // Private
 
     private val itemTouchHelper = object : ItemTouchHelper(object : ItemTouchHelperCallback(object : OnItemMoveListener {
@@ -210,7 +208,6 @@ class PlaylistDetailFragment :
             presenter.movePlaylistItem(from, to)
         }
     }) {}) {}
-
 
     // PlaylistDetailContract.View Implementation
 
@@ -245,14 +242,16 @@ class PlaylistDetailFragment :
             heroImage.setImageResource(R.drawable.ic_placeholder_playlist)
         }
 
-        adapter.update(playlistSongs.map { playlistSong ->
-            PlaylistSongBinder(
-                playlistSong = playlistSong,
-                imageLoader = imageLoader,
-                listener = songBinderListener,
-                showDragHandle = showDragHandle
-            )
-        })
+        adapter.update(
+            playlistSongs.map { playlistSong ->
+                PlaylistSongBinder(
+                    playlistSong = playlistSong,
+                    imageLoader = imageLoader,
+                    listener = songBinderListener,
+                    showDragHandle = showDragHandle
+                )
+            }
+        )
     }
 
     override fun updateToolbarMenuSortOrder(sortOrder: PlaylistSongSortOrder) {
@@ -295,7 +294,6 @@ class PlaylistDetailFragment :
     override fun dismiss() {
         findNavController().popBackStack()
     }
-
 
     // SongBinder.Listener Implementation
 
@@ -365,13 +363,11 @@ class PlaylistDetailFragment :
         }
     }
 
-
     // CreatePlaylistDialogFragment.Listener Implementation
 
     override fun onSave(text: String, playlistData: PlaylistData) {
         playlistMenuPresenter.createPlaylist(text, playlistData)
     }
-
 
     // EditTextAlertDialog.Listener
 

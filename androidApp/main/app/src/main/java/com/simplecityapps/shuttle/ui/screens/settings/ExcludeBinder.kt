@@ -52,7 +52,6 @@ class ExcludeBinder(
         return song.hashCode()
     }
 
-
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<ExcludeBinder>(itemView) {
 
         private val title: TextView = itemView.findViewById(R.id.title)

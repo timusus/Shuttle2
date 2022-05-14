@@ -27,7 +27,6 @@ class DirectorySongLocalArtworkModelLoader(
         return true
     }
 
-
     class Factory(val context: Context) : ModelLoaderFactory<Song, InputStream> {
 
         override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Song, InputStream> {
@@ -37,7 +36,6 @@ class DirectorySongLocalArtworkModelLoader(
         override fun teardown() {
         }
     }
-
 
     class DirectorySongLocalArtworkProvider(
         private val context: Context,
@@ -61,9 +59,9 @@ class DirectorySongLocalArtworkModelLoader(
 
             return parentDocumentFile?.listFiles()
                 ?.filter {
-                    it.type?.startsWith("image") == true
-                            && it.length() > 1024
-                            && pattern.matcher(it.name ?: "").matches()
+                    it.type?.startsWith("image") == true &&
+                        it.length() > 1024 &&
+                        pattern.matcher(it.name ?: "").matches()
                 }
                 ?.maxByOrNull { it.length() }
                 ?.let { documentFile ->

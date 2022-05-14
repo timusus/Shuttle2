@@ -16,7 +16,6 @@ import com.simplecityapps.shuttle.ui.common.ActivityLifecycleCallbacksAdapter
 import timber.log.Timber
 import javax.inject.Inject
 
-
 class CrashReportingInitializer @Inject constructor(
     private val preferenceManager: GeneralPreferenceManager
 ) : AppInitializer {
@@ -32,15 +31,18 @@ class CrashReportingInitializer @Inject constructor(
             application.registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacksAdapter {
                 override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
                     if (activity is FragmentActivity) {
-                        activity.supportFragmentManager.registerFragmentLifecycleCallbacks(object : FragmentManager.FragmentLifecycleCallbacks() {
-                            override fun onFragmentViewCreated(fm: FragmentManager, f: Fragment, v: View, savedInstanceState: Bundle?) {
-                                Bugsnag.leaveBreadcrumb(f.javaClass.simpleName, mapOf("FragmentLifecycleCallback" to "onViewCreated()"), BreadcrumbType.NAVIGATION)
-                            }
+                        activity.supportFragmentManager.registerFragmentLifecycleCallbacks(
+                            object : FragmentManager.FragmentLifecycleCallbacks() {
+                                override fun onFragmentViewCreated(fm: FragmentManager, f: Fragment, v: View, savedInstanceState: Bundle?) {
+                                    Bugsnag.leaveBreadcrumb(f.javaClass.simpleName, mapOf("FragmentLifecycleCallback" to "onViewCreated()"), BreadcrumbType.NAVIGATION)
+                                }
 
-                            override fun onFragmentViewDestroyed(fm: FragmentManager, f: Fragment) {
-                                Bugsnag.leaveBreadcrumb(f.javaClass.simpleName, mapOf("FragmentLifecycleCallback" to "onViewDestroyed()"), BreadcrumbType.NAVIGATION)
-                            }
-                        }, true)
+                                override fun onFragmentViewDestroyed(fm: FragmentManager, f: Fragment) {
+                                    Bugsnag.leaveBreadcrumb(f.javaClass.simpleName, mapOf("FragmentLifecycleCallback" to "onViewDestroyed()"), BreadcrumbType.NAVIGATION)
+                                }
+                            },
+                            true
+                        )
                     }
                 }
             })
@@ -51,7 +53,6 @@ class CrashReportingInitializer @Inject constructor(
         return 1
     }
 }
-
 
 class CrashReportingTree : Timber.Tree() {
 

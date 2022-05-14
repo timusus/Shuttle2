@@ -12,7 +12,9 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.utils.dp
 
 class CircularLoadingView @JvmOverloads constructor(
-    context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0
 ) : LinearLayout(context, attrs, defStyleAttr) {
 
     interface Listener {

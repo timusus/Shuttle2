@@ -42,7 +42,8 @@ class WidgetProvider41 : ShuttleAppWidgetProvider() {
 
             setTextViewText(R.id.title, song.name ?: context.getString(R.string.unknown))
             setTextViewText(
-                R.id.subtitle, ListPhrase.from(" • ")
+                R.id.subtitle,
+                ListPhrase.from(" • ")
                     .joinSafely(listOf(song.friendlyArtistName ?: song.albumArtist, song.album), context.getString(R.string.unknown))
             )
 

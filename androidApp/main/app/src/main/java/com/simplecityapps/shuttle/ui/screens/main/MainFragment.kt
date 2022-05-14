@@ -35,7 +35,8 @@ import java.lang.ref.WeakReference
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MainFragment : Fragment(),
+class MainFragment :
+    Fragment(),
     MainContract.View {
 
     private var multiSheetView: MultiSheetView? by autoClearedNullable()
@@ -46,7 +47,6 @@ class MainFragment : Fragment(),
     lateinit var presenter: MainPresenter
 
     private lateinit var reviewManager: ReviewManager
-
 
     // Lifecycle
 
@@ -91,7 +91,6 @@ class MainFragment : Fragment(),
             }
 
             override fun onSlide(sheet: Int, slideOffset: Float) {
-
             }
         })
 
@@ -116,7 +115,6 @@ class MainFragment : Fragment(),
         presenter.unbindView()
         super.onDestroyView()
     }
-
 
     // MainContract.View Implementation
 
@@ -167,7 +165,6 @@ class MainFragment : Fragment(),
             .show()
     }
 
-
     // Private
 
     private fun updateBackPressListener() {
@@ -183,7 +180,6 @@ class MainFragment : Fragment(),
         }
     }
 
-
     // Static
 
     companion object {
@@ -192,7 +188,6 @@ class MainFragment : Fragment(),
         const val STATE_BOTTOM_NAV_TRANSLATION_Y = "bottom_nav_alpha"
     }
 }
-
 
 fun BottomNavigationView.setupWithNavController(navController: NavController, onItemSelected: (MenuItem) -> (Unit)) {
 

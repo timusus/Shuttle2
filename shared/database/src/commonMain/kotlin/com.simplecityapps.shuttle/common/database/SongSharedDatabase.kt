@@ -6,5 +6,4 @@ import kotlinx.coroutines.flow.Flow
 interface SongSharedDatabase {
 
     fun observeAll(): Flow<List<SongEntity>>
-
 }

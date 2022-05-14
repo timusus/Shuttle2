@@ -56,7 +56,6 @@ class GridSongBinder(
         return song.hashCode()
     }
 
-
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<GridSongBinder>(itemView) {
 
         private val title: TextView = itemView.findViewById(R.id.title)

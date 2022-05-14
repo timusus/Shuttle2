@@ -58,7 +58,6 @@ class GenreListFragment :
 
     private var recyclerViewState: Parcelable? = null
 
-
     // Lifecycle
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -113,7 +112,6 @@ class GenreListFragment :
 
         super.onDestroyView()
     }
-
 
     // GenreListContract.View Implementation
 
@@ -171,7 +169,6 @@ class GenreListFragment :
         TagEditorAlertDialog.newInstance(songs).show(childFragmentManager)
     }
 
-
     // GenreBinder.Listener Implementation
 
     override fun onGenreSelected(genre: com.simplecityapps.shuttle.model.Genre, viewHolder: GenreBinder.ViewHolder) {
@@ -224,13 +221,11 @@ class GenreListFragment :
         popupMenu.show()
     }
 
-
     // CreatePlaylistDialogFragment.Listener Implementation
 
     override fun onSave(text: String, playlistData: PlaylistData) {
         playlistMenuView.onSave(text, playlistData)
     }
-
 
     // Static
 

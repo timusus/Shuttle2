@@ -7,7 +7,9 @@ import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.R
 
 class RepeatButton @JvmOverloads constructor(
-    context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0
 ) : AppCompatImageButton(context, attrs, defStyleAttr) {
 
     var repeatMode: QueueManager.RepeatMode = QueueManager.RepeatMode.Off

@@ -49,13 +49,11 @@ class StoragePermissionFragment : Fragment(), OnboardingChild {
         }
     }
 
-
     // Private
 
     private fun requestStoragePermission() {
         requestPermissions(arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE), OnboardingParentFragment.REQUEST_CODE_READ_STORAGE)
     }
-
 
     // OnboardingChild Implementation
 

@@ -26,10 +26,10 @@ suspend fun ItemsService.items(
 ): NetworkResult<QueryResult> {
     return itemsImpl(
         url = "$url/library/sections/$section/all" +
-                "?type=10" +
-                "&includeCollections=1" +
-                "&includeAdvanced=1" +
-                "&includeMeta=1",
+            "?type=10" +
+            "&includeCollections=1" +
+            "&includeAdvanced=1" +
+            "&includeMeta=1",
         token = token
     )
 }

@@ -219,13 +219,11 @@ class PlaybackNotificationManager @Inject constructor(
         }
     }
 
-
     // PlaybackWatcherCallback Implementation
 
     override fun onPlaybackStateChanged(playbackState: PlaybackState) {
         displayPlaybackNotification()
     }
-
 
     // QueueChangeCallback Implementation
 
@@ -252,7 +250,6 @@ class PlaybackNotificationManager @Inject constructor(
             displayPlaybackNotification()
         }
     }
-
 
     companion object {
         const val NOTIFICATION_CHANNEL_ID = "2"

@@ -85,7 +85,7 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
             }
         })
 
-        //First sheet view click listener
+        // First sheet view click listener
         findViewById<View>(getSheetPeekViewResId(Sheet.FIRST)).setOnClickListener { expandSheet(Sheet.FIRST) }
     }
 
@@ -291,7 +291,6 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
         }
     }
 }
-
 
 /**
  * A helper method to return the first MultiSheetView parent of the passed in View,

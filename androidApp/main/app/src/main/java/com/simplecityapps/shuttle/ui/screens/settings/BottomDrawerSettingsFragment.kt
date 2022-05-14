@@ -72,7 +72,6 @@ class BottomDrawerSettingsFragment :
         show(fragmentManager, TAG)
     }
 
-
     // Private
 
     private val destinationChangedListener = NavController.OnDestinationChangedListener { _, destination, _ -> setSelectedItem(destination.id) }
@@ -80,7 +79,6 @@ class BottomDrawerSettingsFragment :
     private fun setSelectedItem(@NavigationRes destinationIdRes: Int?) {
         presenter.currentDestinationIdRes = destinationIdRes
     }
-
 
     // SettingsViewBinder.Listener Implementation
 
@@ -99,7 +97,6 @@ class BottomDrawerSettingsFragment :
         }
     }
 
-
     // BottomDrawerSettingsContract.View Implementation
 
     override fun setData(settingsItems: List<SettingsMenuItem>, currentDestination: Int?) {
@@ -109,7 +106,6 @@ class BottomDrawerSettingsFragment :
     override fun showLoadError(error: Error) {
         Toast.makeText(context, error.userDescription(resources), Toast.LENGTH_LONG).show()
     }
-
 
     // Static
 

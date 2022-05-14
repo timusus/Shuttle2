@@ -20,7 +20,6 @@ class NotesBinder(val note: String) : ViewBinder {
         return ViewTypes.Notes
     }
 
-
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<NotesBinder>(itemView) {
         val subtitle: TextView = itemView.findViewById(R.id.subtitle)
 

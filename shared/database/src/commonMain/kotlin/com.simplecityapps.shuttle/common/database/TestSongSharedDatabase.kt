@@ -1,23 +1,23 @@
-//package com.simplecityapps.shuttle.common.database
+// package com.simplecityapps.shuttle.common.database
 //
-//import com.badoo.reaktive.base.invoke
-//import com.badoo.reaktive.completable.Completable
-//import com.badoo.reaktive.completable.completableFromFunction
-//import com.badoo.reaktive.completable.observeOn
-//import com.badoo.reaktive.maybe.Maybe
-//import com.badoo.reaktive.maybe.observeOn
-//import com.badoo.reaktive.observable.Observable
-//import com.badoo.reaktive.observable.map
-//import com.badoo.reaktive.observable.observeOn
-//import com.badoo.reaktive.scheduler.Scheduler
-//import com.badoo.reaktive.single.notNull
-//import com.badoo.reaktive.single.singleFromFunction
-//import com.badoo.reaktive.subject.behavior.BehaviorSubject
+// import com.badoo.reaktive.base.invoke
+// import com.badoo.reaktive.completable.Completable
+// import com.badoo.reaktive.completable.completableFromFunction
+// import com.badoo.reaktive.completable.observeOn
+// import com.badoo.reaktive.maybe.Maybe
+// import com.badoo.reaktive.maybe.observeOn
+// import com.badoo.reaktive.observable.Observable
+// import com.badoo.reaktive.observable.map
+// import com.badoo.reaktive.observable.observeOn
+// import com.badoo.reaktive.scheduler.Scheduler
+// import com.badoo.reaktive.single.notNull
+// import com.badoo.reaktive.single.singleFromFunction
+// import com.badoo.reaktive.subject.behavior.BehaviorSubject
 //
-//// There were problems when using real database in JS tests, hence the in-memory test implementation
-//class TestTodoSharedDatabase(
+// // There were problems when using real database in JS tests, hence the in-memory test implementation
+// class TestTodoSharedDatabase(
 //    private val scheduler: Scheduler
-//) : TodoSharedDatabase {
+// ) : TodoSharedDatabase {
 //
 //    private val itemsSubject = BehaviorSubject<Map<Long, TodoItemEntity>>(emptyMap())
 //    private val itemsObservable = itemsSubject.observeOn(scheduler)
@@ -102,4 +102,4 @@
 //            }
 //        }
 //    }
-//}
+// }

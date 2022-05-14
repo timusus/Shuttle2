@@ -63,7 +63,6 @@ class ShuttleApplication : Application(), ActivityIntentProvider {
         super.onLowMemory()
     }
 
-
     // ActivityIntentProvider Implementation
 
     override fun provideMainActivityIntent(): Intent {

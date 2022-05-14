@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.compose.ui.main;
+package com.simplecityapps.shuttle.compose.ui.main
 
 import androidx.annotation.StringRes
 import androidx.compose.material.*
@@ -7,8 +7,8 @@ import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Menu
 import androidx.compose.material.icons.outlined.QueueMusic
 import androidx.compose.material.icons.outlined.Search
-import androidx.compose.runtime.Composable;
-import androidx.compose.ui.graphics.vector.ImageVector;
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.simplecityapps.shuttle.compose.R
@@ -77,7 +77,6 @@ sealed class BottomNavItem(@StringRes val titleResId: Int, val image: ImageVecto
         )
     }
 }
-
 
 @Preview(showBackground = true)
 @Composable

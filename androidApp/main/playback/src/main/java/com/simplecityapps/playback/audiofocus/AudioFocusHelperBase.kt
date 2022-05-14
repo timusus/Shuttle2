@@ -86,7 +86,6 @@ abstract class AudioFocusHelperBase(
         }
     }
 
-
     // PlaybackWatcherCallback Implementation
 
     override fun onPlaybackStateChanged(playbackState: PlaybackState) {

@@ -66,24 +66,30 @@ class SongInfoDialogFragment : BottomSheetDialogFragment() {
         )
 
         for ((key, value) in map) {
-            containerView.addView(LinearLayout(requireContext(), null).apply {
+            containerView.addView(
+                LinearLayout(requireContext(), null).apply {
 
-                orientation = LinearLayout.HORIZONTAL
-                layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
-                setMargins(marginStart, 4.dp, marginEnd, 4.dp)
+                    orientation = LinearLayout.HORIZONTAL
+                    layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+                    setMargins(marginStart, 4.dp, marginEnd, 4.dp)
 
-                addView(TextView(requireContext()).apply {
-                    text = key
-                    gravity = Gravity.START or Gravity.TOP
-                    layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)
-                })
-                addView(Space(requireContext(), null), 8.dp, LinearLayout.LayoutParams.MATCH_PARENT)
-                addView(TextView(requireContext()).apply {
-                    text = value
-                    gravity = Gravity.START or Gravity.CENTER_VERTICAL
-                    layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1.5f)
-                })
-            })
+                    addView(
+                        TextView(requireContext()).apply {
+                            text = key
+                            gravity = Gravity.START or Gravity.TOP
+                            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f)
+                        }
+                    )
+                    addView(Space(requireContext(), null), 8.dp, LinearLayout.LayoutParams.MATCH_PARENT)
+                    addView(
+                        TextView(requireContext()).apply {
+                            text = value
+                            gravity = Gravity.START or Gravity.CENTER_VERTICAL
+                            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1.5f)
+                        }
+                    )
+                }
+            )
         }
     }
 
@@ -101,7 +107,6 @@ class SongInfoDialogFragment : BottomSheetDialogFragment() {
         }
         return this
     }
-
 
     companion object {
 

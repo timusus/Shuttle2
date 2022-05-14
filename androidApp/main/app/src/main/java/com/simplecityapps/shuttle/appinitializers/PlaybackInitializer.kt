@@ -114,7 +114,6 @@ class PlaybackInitializer @Inject constructor(
         queueManager.hasRestoredQueue = true
     }
 
-
     // QueueChangeCallback Implementation
 
     override fun onQueueChanged(reason: QueueChangeCallback.QueueChangeReason) {
@@ -138,7 +137,6 @@ class PlaybackInitializer @Inject constructor(
     override fun onRepeatChanged(repeatMode: QueueManager.RepeatMode) {
         playbackPreferenceManager.repeatMode = repeatMode
     }
-
 
     // PlaybackWatcherCallback Implementation
 
@@ -173,7 +171,6 @@ class PlaybackInitializer @Inject constructor(
             }
         }
     }
-
 
     // ProgressCallback Implementation
 

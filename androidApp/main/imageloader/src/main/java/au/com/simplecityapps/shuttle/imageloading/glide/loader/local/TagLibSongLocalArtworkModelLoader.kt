@@ -37,7 +37,6 @@ class TagLibSongLocalArtworkModelLoader(
         return true
     }
 
-
     class Factory(
         private val context: Context,
         private val kTagLib: KTagLib
@@ -52,10 +51,8 @@ class TagLibSongLocalArtworkModelLoader(
         }
 
         override fun teardown() {
-
         }
     }
-
 
     class TagLibSongLocalArtworkProvider(
         private val context: Context,

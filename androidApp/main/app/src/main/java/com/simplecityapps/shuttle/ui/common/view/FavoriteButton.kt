@@ -8,7 +8,9 @@ import androidx.vectordrawable.graphics.drawable.AnimatedVectorDrawableCompat
 import com.simplecityapps.shuttle.R
 
 class FavoriteButton @JvmOverloads constructor(
-    context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0
 ) : AppCompatImageButton(context, attrs, defStyleAttr), Checkable {
 
     private var heartDrawable = AnimatedVectorDrawableCompat.create(context, R.drawable.avd_heart)!!

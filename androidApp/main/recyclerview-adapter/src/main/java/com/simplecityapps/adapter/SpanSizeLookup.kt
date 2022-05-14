@@ -3,8 +3,8 @@ package com.simplecityapps.adapter
 import androidx.recyclerview.widget.GridLayoutManager
 
 class SpanSizeLookup(
-        private val viewModelAdapter: RecyclerAdapter,
-        private var spanCount: Int
+    private val viewModelAdapter: RecyclerAdapter,
+    private var spanCount: Int
 ) : GridLayoutManager.SpanSizeLookup() {
 
     fun setSpanCount(spanCount: Int) {

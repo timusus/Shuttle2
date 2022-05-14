@@ -68,7 +68,6 @@ class MiniPlaybackFragment : Fragment(), MiniPlayerContract.View {
         super.onDestroyView()
     }
 
-
     // MiniPlayerContract.View Implementation
 
     override fun setPlaybackState(playbackState: PlaybackState) {

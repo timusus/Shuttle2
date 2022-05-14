@@ -43,7 +43,6 @@ class AppInfoPreferenceFragment : PreferenceFragmentCompat() {
             true
         }
 
-
         preferenceManager.sharedPreferences?.registerOnSharedPreferenceChangeListener(preferenceListener)
     }
 

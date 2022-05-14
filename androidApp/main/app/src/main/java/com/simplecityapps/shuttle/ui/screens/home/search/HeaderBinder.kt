@@ -40,7 +40,6 @@ class HeaderBinder(
         return result
     }
 
-
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<HeaderBinder>(itemView) {
 
         private val titleLabel: TextView = itemView.findViewById(R.id.titleLabel)

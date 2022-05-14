@@ -61,17 +61,17 @@ open class SongBinder(
     }
 
     override fun areContentsTheSame(other: Any): Boolean {
-        return other is SongBinder
-                && song.name == other.song.name
-                && song.albumArtist == other.song.albumArtist
-                && song.artists == other.song.artists
-                && song.album == other.song.album
-                && song.date == other.song.date
-                && song.track == other.song.track
-                && song.disc == other.song.disc
-                && song.playCount == other.song.playCount
-                && selected == other.selected
-                && showPlayCountBadge == other.showPlayCountBadge
+        return other is SongBinder &&
+            song.name == other.song.name &&
+            song.albumArtist == other.song.albumArtist &&
+            song.artists == other.song.artists &&
+            song.album == other.song.album &&
+            song.date == other.song.date &&
+            song.track == other.song.track &&
+            song.disc == other.song.disc &&
+            song.playCount == other.song.playCount &&
+            selected == other.selected &&
+            showPlayCountBadge == other.showPlayCountBadge
     }
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<SongBinder>(itemView) {

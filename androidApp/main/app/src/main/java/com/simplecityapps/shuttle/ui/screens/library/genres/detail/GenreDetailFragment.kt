@@ -67,7 +67,6 @@ class GenreDetailFragment :
 
     private var toolbar: Toolbar by autoCleared()
 
-
     // Lifecycle
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -144,7 +143,6 @@ class GenreDetailFragment :
         super.onDestroyView()
     }
 
-
     // GenreDetailContract.View Implementation
 
     override fun setData(albums: List<com.simplecityapps.shuttle.model.Album>, songs: List<com.simplecityapps.shuttle.model.Song>) {
@@ -182,7 +180,6 @@ class GenreDetailFragment :
     override fun showTagEditor(songs: List<com.simplecityapps.shuttle.model.Song>) {
         TagEditorAlertDialog.newInstance(songs).show(childFragmentManager)
     }
-
 
     // SongBinder.Listener Implementation
 
@@ -255,7 +252,6 @@ class GenreDetailFragment :
         }
 
         override fun onAlbumLongClicked(album: com.simplecityapps.shuttle.model.Album, viewHolder: AlbumBinder.ViewHolder) {
-
         }
 
         override fun onOverflowClicked(view: View, album: com.simplecityapps.shuttle.model.Album) {
@@ -303,4 +299,3 @@ class GenreDetailFragment :
         playlistMenuPresenter.createPlaylist(text, playlistData)
     }
 }
-

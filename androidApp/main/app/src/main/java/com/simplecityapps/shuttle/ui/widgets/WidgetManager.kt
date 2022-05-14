@@ -36,12 +36,14 @@ class WidgetManager @Inject constructor(
             Intent(context, WidgetProvider41::class.java),
             Intent(context, WidgetProvider42::class.java)
         ).forEach { intent ->
-            context.sendBroadcast(intent.apply {
-                action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-                val ids = AppWidgetManager.getInstance(context).getAppWidgetIds(component)
-                putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
-                putExtra(ARG_UPDATE_REASON, updateReason.ordinal)
-            })
+            context.sendBroadcast(
+                intent.apply {
+                    action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+                    val ids = AppWidgetManager.getInstance(context).getAppWidgetIds(component)
+                    putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
+                    putExtra(ARG_UPDATE_REASON, updateReason.ordinal)
+                }
+            )
         }
     }
 

@@ -55,7 +55,6 @@ class MediaScannerFragment :
 
     private var scanCompleted = false
 
-
     // Lifecycle
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -122,7 +121,6 @@ class MediaScannerFragment :
         )
     }
 
-
     // ScannerContract.View Implementation
 
     override fun dismiss() {
@@ -171,7 +169,6 @@ class MediaScannerFragment :
         scanCompleted = true
     }
 
-
     // OnboardingChild Implementation
 
     override val page: OnboardingPage = OnboardingPage.Scanner
@@ -188,7 +185,6 @@ class MediaScannerFragment :
         presenter.stopScan()
         getParent()?.goToPrevious()
     }
-
 
     // Static
 

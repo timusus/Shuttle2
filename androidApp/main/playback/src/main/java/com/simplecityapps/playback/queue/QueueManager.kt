@@ -121,7 +121,6 @@ class QueueManager(
             setCurrentItem(it)
         }
 
-
         return queue.size() != 0
     }
 
@@ -331,7 +330,6 @@ class QueueManager(
         queue.insert((getCurrentPosition() ?: -1) + 1, songs.map { song -> song.toQueueItem(false) })
         queueWatcher.onQueueChanged()
     }
-
 
     /**
      * Holds a pair of lists, one representing the 'base' queue, and the other representing the 'shuffle' queue.

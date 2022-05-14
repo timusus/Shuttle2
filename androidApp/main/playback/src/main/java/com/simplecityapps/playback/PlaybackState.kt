@@ -6,7 +6,7 @@ sealed class PlaybackState {
             return "Loading"
         }
     }
-    object Playing : PlaybackState(){
+    object Playing : PlaybackState() {
         override fun toString(): String {
             return "Playing"
         }

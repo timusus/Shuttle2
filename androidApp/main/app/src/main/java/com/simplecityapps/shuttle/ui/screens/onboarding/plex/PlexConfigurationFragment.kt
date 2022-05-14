@@ -132,13 +132,11 @@ class PlexConfigurationFragment : DialogFragment() {
         return dialog
     }
 
-
     // Public
 
     fun show(manager: FragmentManager) {
         super.show(manager, "PlexConfigurationFragment")
     }
-
 
     // Private
 
@@ -165,7 +163,6 @@ class PlexConfigurationFragment : DialogFragment() {
 
         return !hasError
     }
-
 
     // Static
 

@@ -24,7 +24,6 @@ class LibraryBinder(val library: Library, val listener: Listener) : ViewBinder {
         return ViewTypes.License
     }
 
-
     class ViewHolder(val itemView: View) : ViewBinder.ViewHolder<LibraryBinder>(itemView) {
         val title: TextView = itemView.findViewById(R.id.title)
         val author: TextView = itemView.findViewById(R.id.author)

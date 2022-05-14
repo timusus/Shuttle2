@@ -76,7 +76,6 @@ class SongListFragment :
         )
     }
 
-
     // Lifecycle
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -119,11 +118,14 @@ class SongListFragment :
         circularLoadingView = view.findViewById(R.id.circularLoadingView)
         horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
 
-        shuffleBinder = ShuffleBinder(R.string.btn_shuffle, object : ShuffleBinder.Listener {
-            override fun onClicked() {
-                presenter.shuffle()
+        shuffleBinder = ShuffleBinder(
+            R.string.btn_shuffle,
+            object : ShuffleBinder.Listener {
+                override fun onClicked() {
+                    presenter.shuffle()
+                }
             }
-        })
+        )
 
         savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
 
@@ -173,7 +175,6 @@ class SongListFragment :
         super.onDestroyView()
     }
 
-
     // Toolbar item selection
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -205,7 +206,6 @@ class SongListFragment :
             else -> false
         }
     }
-
 
     // Private
 
@@ -245,7 +245,6 @@ class SongListFragment :
             }
         }
     }
-
 
     // SongListContract.View Implementation
 
@@ -405,13 +404,11 @@ class SongListFragment :
         }
     }
 
-
     // CreatePlaylistDialogFragment.Listener Implementation
 
     override fun onSave(text: String, playlistData: PlaylistData) {
         playlistMenuPresenter.createPlaylist(text, playlistData)
     }
-
 
     // ContextualToolbarHelper.Callback Implementation
 
@@ -436,7 +433,6 @@ class SongListFragment :
                 }
         }
     }
-
 
     // Static
 

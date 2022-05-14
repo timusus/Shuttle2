@@ -39,9 +39,7 @@ fun Library() {
             }
         }
     }) {
-
     }
-
 }
 
 @Preview(showBackground = true)
@@ -51,4 +49,3 @@ fun LibraryPreview() {
         Library()
     }
 }
-

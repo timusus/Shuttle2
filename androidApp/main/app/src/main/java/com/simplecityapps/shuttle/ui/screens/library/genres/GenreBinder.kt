@@ -42,8 +42,8 @@ class GenreBinder(val genre: com.simplecityapps.shuttle.model.Genre, private val
     }
 
     override fun areContentsTheSame(other: Any): Boolean {
-        return genre.name == (other as? GenreBinder)?.genre?.name
-                && genre.songCount == (other as? GenreBinder)?.genre?.songCount
+        return genre.name == (other as? GenreBinder)?.genre?.name &&
+            genre.songCount == (other as? GenreBinder)?.genre?.songCount
     }
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<GenreBinder>(itemView) {

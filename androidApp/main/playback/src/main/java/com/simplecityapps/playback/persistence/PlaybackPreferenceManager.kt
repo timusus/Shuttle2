@@ -13,7 +13,6 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import java.lang.reflect.Type
 
-
 class PlaybackPreferenceManager(
     private val sharedPreferences: SharedPreferences,
     private val moshi: Moshi
