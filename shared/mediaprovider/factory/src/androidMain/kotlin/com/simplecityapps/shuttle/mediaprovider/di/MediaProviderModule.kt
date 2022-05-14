@@ -2,7 +2,7 @@ package com.simplecityapps.shuttle.mediaprovider.di
 
 import com.simplecityapps.shuttle.mediaprovider.AndroidMediaProviderFactory
 import com.simplecityapps.shuttle.common.mediaprovider.mediastore.MediaStoreMediaProvider
-import com.simplecityapps.shuttle.mediaprovider.common.MediaProviderFactory
+import com.simplecityapps.shuttle.mediaprovider.factory.MediaProviderFactory
 import com.simplecityapps.shuttle.mediaprovider.jellyfin.JellyfinMediaProvider
 import dagger.Module
 import dagger.Provides

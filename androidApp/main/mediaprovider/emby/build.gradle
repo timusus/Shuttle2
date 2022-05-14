@@ -38,7 +38,7 @@ dependencies {
 
     implementation(project(":androidApp:main:mediaprovider:core"))
     implementation(project(":androidApp:main:core"))
-    implementation(project(":androidApp:main:networking"))
+    implementation(project(":shared:networking"))
 
     kapt 'com.squareup.moshi:moshi-kotlin-codegen:1.13.0'
 

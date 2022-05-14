@@ -18,21 +18,5 @@ data class Album(
     val playCount: Int,
     val lastSongPlayed: Instant?,
     val lastSongCompleted: Instant?,
-    val groupKey: AlbumKey?,
     val mediaProviders: List<MediaProviderType>
-) : Parcelable, Identifiable {
-
-    override val id: String
-        get() = AlbumKey(name, albumArtist)
-}
-
-
-@Parcelize
-data class AlbumKey(
-    val key: String?,
-    val albumArtistGroupKey: String?
-) : Parcelable, Identifiable {
-
-    override val id: String
-        get() = "${key}_${albumArtistGroupKey}"
-}
+) : Parcelable

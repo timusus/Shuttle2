@@ -35,14 +35,16 @@ dependencies {
     implementation project(':androidApp:main:core')
 
     // Shuttle Networking
-    implementation project(':androidApp:main:networking')
+    implementation project(':shared:networking')
 
     // Shuttle MediaProvider Core
-    implementation project(':androidApp:main:mediaprovider:core')
+//    implementation project(':androidApp:main:mediaprovider:core')
 
     // Remote media providers
-    implementation project(':androidApp:main:mediaprovider:emby')
-    implementation project(':androidApp:main:mediaprovider:jellyfin')
+//    implementation project(':androidApp:main:mediaprovider:emby')
+//    implementation project(':androidApp:main:mediaprovider:jellyfin')
+
+    implementation(project(":shared:repository"))
 
     // TagLib
     implementation("com.github.timusus:ktaglib:1.4.1")

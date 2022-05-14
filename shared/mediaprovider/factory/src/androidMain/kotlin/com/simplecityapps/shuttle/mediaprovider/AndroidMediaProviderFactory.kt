@@ -1,8 +1,7 @@
 package com.simplecityapps.shuttle.mediaprovider
 
 import com.simplecityapps.shuttle.common.mediaprovider.mediastore.MediaStoreMediaProvider
-import com.simplecityapps.shuttle.mediaprovider.common.MediaProvider
-import com.simplecityapps.shuttle.mediaprovider.common.MediaProviderFactory
+import com.simplecityapps.shuttle.mediaprovider.factory.MediaProviderFactory
 import com.simplecityapps.shuttle.mediaprovider.jellyfin.JellyfinMediaProvider
 import com.simplecityapps.shuttle.model.MediaProviderType
 
@@ -21,7 +20,6 @@ class AndroidMediaProviderFactory(
                 MediaProviderType.Emby -> TODO()
                 MediaProviderType.Jellyfin -> {
                     jellyfinMediaProvider
-
                 }
                 MediaProviderType.Plex -> TODO()
             }

@@ -4,7 +4,7 @@ plugins {
     kotlin("multiplatform")
     id("com.android.library")
     kotlin("kapt")
-    kotlin("plugin.serialization") version "1.5.30"
+    kotlin("plugin.serialization") version "1.6.20"
 }
 
 kotlin {
@@ -43,10 +43,10 @@ kotlin {
         val androidMain by getting {
             dependencies {
                 implementation("androidx.core:core-ktx:1.6.0")
-                implementation("com.google.dagger:hilt-android:2.38.1")
+                implementation("com.google.dagger:hilt-android:2.40.4")
                 configurations.getByName("kapt").dependencies.add(
                     org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency(
-                        "com.google.dagger", "hilt-compiler", "2.38.1"
+                        "com.google.dagger", "hilt-compiler", "2.40.4"
                     )
                 )
             }

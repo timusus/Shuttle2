@@ -29,11 +29,11 @@ dependencies {
     // Shuttle Core
     implementation project(path: ':androidApp:main:core')
 
-    // Shuttle Media Provider
-    implementation project(path: ':androidApp:main:mediaprovider:core')
-    implementation project(path: ':androidApp:main:mediaprovider:emby')
-    implementation project(path: ':androidApp:main:mediaprovider:jellyfin')
-    implementation project(path: ':androidApp:main:mediaprovider:plex')
+    // Media providers
+    implementation(project(":shared:mediaprovider:common"))
+    implementation(project(":shared:mediaprovider:jellyfin"))
+    implementation(project(":shared:mediaprovider:factory"))
+    implementation(project(":androidApp:common:mediaprovider:mediastore"))
 
     // Shuttle Image Loader
     implementation project(path: ':androidApp:main:imageloader')

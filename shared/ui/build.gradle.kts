@@ -48,10 +48,10 @@ kotlin {
                 implementation("androidx.navigation:navigation-fragment-ktx:2.4.0-alpha10")
                 implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.0-rc01")
                 implementation("androidx.hilt:hilt-navigation-compose:1.0.0-alpha03")
-                implementation("com.google.dagger:hilt-android:2.38.1")
+                implementation("com.google.dagger:hilt-android:2.40.4")
                 configurations.getByName("kapt").dependencies.add(
                     org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency(
-                        "com.google.dagger", "hilt-compiler", "2.38.1"
+                        "com.google.dagger", "hilt-compiler", "2.40.4"
                     )
                 )
             }

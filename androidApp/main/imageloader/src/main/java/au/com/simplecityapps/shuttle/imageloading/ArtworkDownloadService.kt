@@ -3,6 +3,7 @@ package au.com.simplecityapps.shuttle.imageloading
 import android.app.*
 import android.content.ComponentName
 import android.content.Intent
+import ahndroid.net.ConnectivityManager
 import android.net.ConnectivityManager
 import android.os.Build
 import android.os.IBinder

@@ -1,5 +1,6 @@
-package com.simplecityapps.shuttle.mediaprovider.common
+package com.simplecityapps.shuttle.mediaprovider.factory
 
+import com.simplecityapps.shuttle.mediaprovider.common.MediaProvider
 import com.simplecityapps.shuttle.model.MediaProviderType
 
 interface MediaProviderFactory {

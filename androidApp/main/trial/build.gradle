@@ -65,6 +65,6 @@ dependencies {
     // Remote config
     implementation project(':androidApp:main:remote-config')
 
-    implementation project(':androidApp:main:networking')
+    implementation project(':shared:networking')
     implementation project(':androidApp:main:core')
 }

@@ -215,3 +215,49 @@ class LibraryFragment : Fragment(),
     val contextualToolbar: Toolbar?
         get() = _contextualToolbar
 }
+
+
+fun thing() {
+
+    class MenuAdapter(
+        private val onClick: (Item) -> Unit,
+
+    ) : RecyclerViewAdapter<MenuItemViewHolder>() {
+
+        private val items: List<Item>
+
+        fun setItems(items: List<Item>) {
+            this.items = items
+            notifyDataSetChanged()
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MenuItemViewHolder {
+            val view = LayoutInflater.from(parent.context).inflate(R.layout.menu_item, parent, false)
+            return MenuItemViewHolder(view)
+        }
+
+        override fun onBindViewHolder(holder: MenuItemViewHolder, position: Int) {
+            holder.bind(items[position]
+        }
+    }
+
+    class MenuItemViewHolder(
+        view: View,
+        onClick: (item: Item) -> Unit,
+    ) : RecyclerView.ViewHolder(view) {
+
+        private var item: Item? = null
+
+        init {
+            view.setOnClickListener {
+                item?.let { onClick(it) }
+            }
+        }
+
+        fun bind(item: Item) {
+            this.item = item
+
+            // Bind views
+        }
+    }
+}

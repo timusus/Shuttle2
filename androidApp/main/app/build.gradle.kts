@@ -89,18 +89,17 @@ android {
         implementation(project(":androidApp:main:core"))
 
         // Shuttle Networking
-        implementation(project(":androidApp:main:networking"))
+        implementation(project(":shared:networking"))
 
         // TagLib
         implementation("com.github.timusus:ktaglib:1.4.1")
 
         // Shuttle
         implementation(project(":shared:data"))
-        implementation(project(":androidApp:main:mediaprovider:core"))
-        implementation(project(":androidApp:main:mediaprovider:local"))
-        implementation(project(":androidApp:main:mediaprovider:emby"))
-        implementation(project(":androidApp:main:mediaprovider:jellyfin"))
-        implementation(project(":androidApp:main:mediaprovider:plex"))
+        implementation(project(":shared:mediaprovider:common"))
+        implementation(project(":shared:mediaprovider:jellyfin"))
+        implementation(project(":shared:mediaprovider:factory"))
+        implementation(project(":androidApp:common:mediaprovider:mediastore"))
 
         // Shuttle Image Loader
         implementation(project(":androidApp:main:imageloader"))

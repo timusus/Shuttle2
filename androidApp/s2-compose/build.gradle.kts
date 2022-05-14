@@ -83,9 +83,9 @@ dependencies {
     implementation(project(":shared:mediaprovider:common"))
     implementation(project(":shared:mediaprovider:jellyfin"))
     implementation(project(":shared:mediaprovider:factory"))
+    implementation(project(":androidApp:common:mediaprovider:mediastore"))
     implementation(project(":shared:deviceinfo"))
     implementation(project(":shared:logging"))
-    implementation(project(":androidApp:common:mediaprovider:mediastore"))
 
     // Hilt
     implementation("com.google.dagger:hilt-android:2.40.4")

@@ -2,7 +2,7 @@ package com.simplecityapps.shuttle.ui.domain.model.prefs
 
 import com.simplecityapps.shuttle.inject.Inject
 import com.simplecityapps.shuttle.mediaprovider.common.MediaProvider
-import com.simplecityapps.shuttle.mediaprovider.common.MediaProviderFactory
+import com.simplecityapps.shuttle.mediaprovider.factory.MediaProviderFactory
 import com.simplecityapps.shuttle.preferences.GeneralPreferenceManager
 import kotlinx.coroutines.flow.first
 

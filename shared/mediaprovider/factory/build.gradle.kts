@@ -39,12 +39,12 @@ kotlin {
         }
         val androidMain by getting {
             dependencies {
-                implementation("androidx.core:core-ktx:1.6.0")
-                implementation("com.google.dagger:hilt-android:2.38.1")
+                implementation("androidx.core:core-ktx:1.7.0")
+                implementation("com.google.dagger:hilt-android:2.40.4")
                 implementation(project(":androidApp:common:mediaprovider:mediastore"))
                 configurations.getByName("kapt").dependencies.add(
                     org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency(
-                        "com.google.dagger", "hilt-compiler", "2.38.1"
+                        "com.google.dagger", "hilt-compiler", "2.40.4"
                     )
                 )
             }

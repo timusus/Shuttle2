@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.model
 import com.simplecityapps.shuttle.parcel.*
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
+import kotlin.coroutines.EmptyCoroutineContext.get
 
 @Parcelize
 @TypeParceler<Instant?, InstantParceler>
@@ -11,9 +12,9 @@ import kotlinx.datetime.LocalDate
 data class Song(
     val id: Long,
     val name: String?,
-    val albumArtist: AlbumArtist?,
-    val artists: List<Artist>,
-    val album: Album?,
+    val albumArtist: String?,
+    val artists: List<String>,
+    val album: String?,
     val track: Int?,
     val disc: Int?,
     val duration: Int?,

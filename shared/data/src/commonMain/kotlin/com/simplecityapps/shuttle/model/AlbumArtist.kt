@@ -10,6 +10,5 @@ data class AlbumArtist(
     val albumCount: Int,
     val songCount: Int,
     val playCount: Int,
-    val groupKey: AlbumArtistKey,
     val mediaProviders: List<MediaProviderType>
 ) : Parcelable

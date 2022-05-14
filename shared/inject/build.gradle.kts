@@ -31,7 +31,7 @@ kotlin {
         }
         val androidMain by getting {
             dependencies {
-                implementation("com.google.dagger:hilt-android:2.38.1")
+                implementation("com.google.dagger:hilt-android:2.40.4")
             }
         }
         val androidTest by getting {
