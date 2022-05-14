@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.changelog
 
 import com.vdurmont.semver4j.Semver
+import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class VersionTest {
@@ -27,15 +28,15 @@ class VersionTest {
 
         var a = Semver("0.0.1")
         var b = Semver("0.0.1")
-        assert(b.compareTo(a) == 0)
+        assertEquals(0, b.compareTo(a))
 
         a = Semver("0.1.1")
         b = Semver("0.1.1")
-        assert(b.compareTo(a) == 0)
+        assertEquals(0, b.compareTo(a))
 
         a = Semver("1.1.1")
         b = Semver("1.1.1")
-        assert(b.compareTo(a) == 0)
+        assertEquals(0, b.compareTo(a))
 
         // Larger values compare as larger
 
@@ -59,7 +60,7 @@ class VersionTest {
 
         a = Semver("1.0.0-RC1")
         b = Semver("1.0.0-RC1")
-        assert(b.compareTo(a) == 0)
+        assertEquals(0, b.compareTo(a))
 
         a = Semver("1.0.0-RC1")
         b = Semver("1.0.0-RC2")
@@ -89,7 +90,7 @@ class VersionTest {
 
         a = Semver("1.0.0-alpha01")
         b = Semver("1.0.0-alpha01")
-        assert(b.compareTo(a) == 0)
+        assertEquals(0, b.compareTo(a))
 
         a = Semver("1.0.0-alpha01")
         b = Semver("1.0.0-alpha02")
