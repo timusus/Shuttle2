@@ -120,7 +120,7 @@ android {
         implementation(project(":androidApp:main:trial"))
 
         // RecyclerView FastScroll
-        implementation("com.github.timusus:RecyclerView-FastScroll:dev-SNAPSHOT")
+        implementation("com.github.timusus:RecyclerView-FastScroll:v1.0.9")
 
         // AppCompat
         implementation("androidx.appcompat:appcompat:1.4.1")
