@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+set -xeu
+set -o pipefail
+
+# Overridable Environment
+BUILD_PATH=${BUILD_PATH:-build}
+CONFIGURATION=${CONFIGURATION:-Release}
+RESULT_PATH=${RESULT_PATH:-${BUILD_PATH}/Artifacts}
+
+function finish() {
+  # Do any work necessary even if script this fails
+  echo "Finished"
+}
+
+trap finish EXIT
+
+./gradlew :androidApp:main:app:bundleRelease
