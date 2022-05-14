@@ -43,7 +43,7 @@ dependencies {
     api("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.0")
 
     // Hilt
-    implementation("com.google.dagger:hilt-android:2.40.4")
+    implementation("com.google.dagger:hilt-android:2.42")
     kapt("com.google.dagger:hilt-compiler:2.40.4")
 
     // S2 Core
