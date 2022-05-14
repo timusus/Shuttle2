@@ -201,7 +201,7 @@ android {
         // Glide
         implementation("com.github.bumptech.glide:glide:4.12.0")
         kapt("com.github.bumptech.glide:compiler:4.12.0")
-        implementation("com.github.bumptech.glide:okhttp3-integration:4.12.0")
+        implementation("com.github.bumptech.glide:okhttp3-integration:4.13.2")
         implementation("com.github.bumptech.glide:recyclerview-integration:4.12.0") {
             // Excludes the support library because it's already included by Glide.
             isTransitive = false
