@@ -40,7 +40,7 @@ data class Metadata(
 data class Media(
     @Json(name = "id") val id: Int,
     @Json(name = "duration") val duration: Int,
-    @Json(name = "bitrate") val bitrate: Int,
+    @Json(name = "bitrate") val bitrate: Int?,
     @Json(name = "audioChannels") val audioChannels: Int,
     @Json(name = "audioCodec") val audioCodec: String,
     @Json(name = "container") val container: String,
@@ -54,5 +54,5 @@ data class Part(
     @Json(name = "duration") val duration: Int,
     @Json(name = "file") val file: String,
     @Json(name = "size") val size: Int,
-    @Json(name = "container") val container: String,
+    @Json(name = "container") val container: String?,
 )
