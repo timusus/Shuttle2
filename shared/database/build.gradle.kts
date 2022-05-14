@@ -40,7 +40,7 @@ kotlin {
         val androidMain by getting {
             dependencies {
                 implementation("com.squareup.sqldelight:android-driver:1.5.3")
-                implementation("com.squareup.sqldelight:sqlite-driver:1.5.1")
+                implementation("com.squareup.sqldelight:sqlite-driver:1.5.3")
             }
         }
 
