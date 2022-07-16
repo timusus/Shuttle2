@@ -4,7 +4,7 @@ plugins {
     kotlin("multiplatform")
     id("com.android.library")
     kotlin("kapt")
-    kotlin("plugin.serialization") version "1.6.20"
+    kotlin("plugin.serialization") version "1.6.21"
 }
 
 kotlin {
@@ -26,11 +26,14 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
                 implementation(project(":shared:data"))
                 implementation(project(":shared:repository"))
                 implementation(project(":shared:preferences"))
                 implementation(project(":shared:inject"))
+                implementation(project(":shared:deviceinfo"))
+                implementation("io.ktor:ktor-client-core:1.6.4")
+                implementation("io.ktor:ktor-client-serialization:1.6.4")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.0")
             }
         }
@@ -42,8 +45,9 @@ kotlin {
         }
         val androidMain by getting {
             dependencies {
-                implementation("androidx.core:core-ktx:1.6.0")
+                implementation("androidx.core:core-ktx:1.7.0")
                 implementation("com.google.dagger:hilt-android:2.40.4")
+                implementation("io.ktor:ktor-client-android:1.6.4")
                 configurations.getByName("kapt").dependencies.add(
                     org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency(
                         "com.google.dagger", "hilt-compiler", "2.40.4"

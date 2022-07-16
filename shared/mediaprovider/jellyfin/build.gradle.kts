@@ -26,7 +26,7 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
                 implementation(project(":shared:data"))
                 implementation(project(":shared:inject"))
                 implementation(project(":shared:preferences"))
@@ -36,6 +36,7 @@ kotlin {
                 implementation(project(":shared:mediaprovider:common"))
                 implementation("io.ktor:ktor-client-core:1.6.4")
                 implementation("io.ktor:ktor-client-serialization:1.6.4")
+                implementation("com.benasher44:uuid:0.4.0")
 
             }
         }
@@ -49,6 +50,7 @@ kotlin {
             dependencies {
                 implementation("io.ktor:ktor-client-android:1.6.4")
                 implementation("com.google.dagger:hilt-android:2.40.4")
+                implementation("androidx.datastore:datastore-preferences:1.0.0")
                 configurations.getByName("kapt").dependencies.add(
                     org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency(
                         "com.google.dagger", "hilt-compiler", "2.40.4"

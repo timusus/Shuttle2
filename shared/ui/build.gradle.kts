@@ -32,9 +32,10 @@ kotlin {
                 implementation(project(":shared:mediaprovider:common"))
                 implementation(project(":shared:mediaprovider:factory"))
                 implementation(project(":shared:mediaprovider:jellyfin"))
+                implementation(project(":shared:mediaprovider:emby"))
                 implementation(project(":shared:logging"))
                 implementation(project(":shared:repository"))
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.1")
             }
         }
         val commonTest by getting {
@@ -45,9 +46,9 @@ kotlin {
         }
         val androidMain by getting {
             dependencies {
-                implementation("androidx.navigation:navigation-fragment-ktx:2.4.0-alpha10")
-                implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.0-rc01")
-                implementation("androidx.hilt:hilt-navigation-compose:1.0.0-alpha03")
+                implementation("androidx.navigation:navigation-fragment-ktx:2.5.0-beta01")
+                implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.5.0-rc01")
+                implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
                 implementation("com.google.dagger:hilt-android:2.40.4")
                 configurations.getByName("kapt").dependencies.add(
                     org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency(

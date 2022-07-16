@@ -6,15 +6,13 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
 import com.simplecityapps.shuttle.deviceinfo.DeviceInfo
-import com.simplecityapps.shuttle.mediaprovider.jellyfin.AuthenticationManager
+import com.simplecityapps.shuttle.mediaprovider.jellyfin.JellyfinAuthenticationManager
 import com.simplecityapps.shuttle.mediaprovider.jellyfin.JellyfinMediaProvider
 import com.simplecityapps.shuttle.mediaprovider.jellyfin.JellyfinPreferenceManager
 import com.simplecityapps.shuttle.mediaprovider.jellyfin.http.service.ItemsService
 import com.simplecityapps.shuttle.mediaprovider.jellyfin.http.service.UserService
-import com.simplecityapps.shuttle.mediaprovider.jellyfin.preferences.AesSecurePreferenceManager
 import com.simplecityapps.shuttle.preferences.SecurePreferenceManager
 import com.simplecityapps.shuttle.preferences.di.PreferencesModule
-import com.simplecityapps.shuttle.security.SecurityManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -45,23 +43,7 @@ class MediaImportModule {
             context.preferencesDataStoreFile("jellyfin")
         }
     }
-
-    @OptIn(ExperimentalSerializationApi::class)
-    @Provides
-    @Singleton
-    fun provideHttpClient(): HttpClient {
-        return HttpClient(Android) {
-            install(JsonFeature) {
-                serializer = KotlinxSerializer(
-                    json = kotlinx.serialization.json.Json {
-                        ignoreUnknownKeys = true
-                        explicitNulls = false
-                    }
-                )
-            }
-        }
-    }
-
+    
     @Provides
     @Singleton
     fun provideItemsService(httpClient: HttpClient): ItemsService {
@@ -76,32 +58,20 @@ class MediaImportModule {
 
     @Provides
     @Singleton
-    fun provideSecurePreferenceManager(dataStore: DataStore<Preferences>, securityManager: SecurityManager): SecurePreferenceManager {
-        return AesSecurePreferenceManager(dataStore, securityManager)
-    }
-
-    @Provides
-    @Singleton
     fun provideJellyfinPreferenceManager(securePreferenceManager: SecurePreferenceManager): JellyfinPreferenceManager {
         return JellyfinPreferenceManager(securePreferenceManager = securePreferenceManager)
     }
 
     @Provides
     @Singleton
-    fun provideDeviceInfo(): DeviceInfo {
-        return DeviceInfo()
-    }
-
-    @Provides
-    @Singleton
-    fun provideAuthenticationManager(userService: UserService, credentialStore: JellyfinPreferenceManager, deviceInfo: DeviceInfo): AuthenticationManager {
-        return AuthenticationManager(userService = userService, credentialStore = credentialStore, deviceInfo = deviceInfo)
+    fun provideAuthenticationManager(userService: UserService, preferenceManager: JellyfinPreferenceManager, deviceInfo: DeviceInfo): JellyfinAuthenticationManager {
+        return JellyfinAuthenticationManager(userService = userService, preferenceManager = preferenceManager, deviceInfo = deviceInfo)
     }
 
 
     @Provides
     @Singleton
-    fun provideMediaStoreMediaProvider(authenticationManager: AuthenticationManager, credentialStore: JellyfinPreferenceManager, itemsService: ItemsService): JellyfinMediaProvider {
-        return JellyfinMediaProvider(authenticationManager = authenticationManager, jellyfinPreferenceManager = credentialStore, itemsService = itemsService)
+    fun provideMediaStoreMediaProvider(authenticationManager: JellyfinAuthenticationManager, preferenceManager: JellyfinPreferenceManager, itemsService: ItemsService): JellyfinMediaProvider {
+        return JellyfinMediaProvider(authenticationManager = authenticationManager, jellyfinPreferenceManager = preferenceManager, itemsService = itemsService)
     }
 }

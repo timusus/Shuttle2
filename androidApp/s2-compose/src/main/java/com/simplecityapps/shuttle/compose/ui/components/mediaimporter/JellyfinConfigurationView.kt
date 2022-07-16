@@ -12,23 +12,19 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.compose.R
 import com.simplecityapps.shuttle.compose.ui.components.ThemedPreviewProvider
 import com.simplecityapps.shuttle.compose.ui.theme.MaterialColors
 import com.simplecityapps.shuttle.compose.ui.theme.Theme
-import com.simplecityapps.shuttle.ui.mediaprovider.AuthenticationData
 import com.simplecityapps.shuttle.ui.mediaprovider.JellyfinConfigurationViewModel
-import com.simplecityapps.shuttle.ui.mediaprovider.ViewState
 import kotlinx.coroutines.delay
 
 @Composable
@@ -48,8 +44,8 @@ fun JellyfinConfigurationView(
 
 @Composable
 fun JellyfinConfigurationView(
-    viewState: ViewState,
-    onAuthenticate: (data: AuthenticationData) -> Unit = {},
+    viewState: JellyfinConfigurationViewModel.ViewState,
+    onAuthenticate: (data: JellyfinConfigurationViewModel.AuthenticationData) -> Unit = {},
     onRememberPasswordToggled: (remember: Boolean) -> Unit = {},
     onRetry: () -> Unit = {},
     onDismiss: () -> Unit = {}
@@ -63,7 +59,7 @@ fun JellyfinConfigurationView(
         )
         Spacer(modifier = Modifier.size(16.dp))
         when (viewState) {
-            is ViewState.Configuring -> {
+            is JellyfinConfigurationViewModel.ViewState.Configuring -> {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -137,7 +133,7 @@ fun JellyfinConfigurationView(
                         modifier = Modifier.align(Alignment.End),
                         onClick = {
                             onAuthenticate(
-                                AuthenticationData(
+                                JellyfinConfigurationViewModel.AuthenticationData(
                                     address = addressText,
                                     userName = userNameText,
                                     password = passwordText,
@@ -149,7 +145,7 @@ fun JellyfinConfigurationView(
                     }
                 }
             }
-            ViewState.Authenticating -> {
+            JellyfinConfigurationViewModel.ViewState.Authenticating -> {
                 Box(
                     modifier = Modifier
                         .size(contentSize.width.toDp(), contentSize.height.toDp()),
@@ -164,7 +160,7 @@ fun JellyfinConfigurationView(
                     }
                 }
             }
-            ViewState.Authenticated -> {
+            JellyfinConfigurationViewModel.ViewState.Authenticated -> {
                 Box(
                     modifier = Modifier
                         .size(contentSize.width.toDp(), contentSize.height.toDp())
@@ -184,7 +180,7 @@ fun JellyfinConfigurationView(
                     }
                 }
             }
-            ViewState.AuthenticationFailed -> {
+            JellyfinConfigurationViewModel.ViewState.AuthenticationFailed -> {
                 Box(
                     modifier = Modifier
                         .size(contentSize.width.toDp(), contentSize.height.toDp())
@@ -208,11 +204,6 @@ fun JellyfinConfigurationView(
     }
 }
 
-@Composable
-fun Int.toDp(): Dp {
-    return with(LocalDensity.current) { toDp() }
-}
-
 @Preview
 @Composable
 fun JellyfinConfigurationPreview(@PreviewParameter(ThemedPreviewProvider::class) darkTheme: Boolean) {
@@ -222,7 +213,7 @@ fun JellyfinConfigurationPreview(@PreviewParameter(ThemedPreviewProvider::class)
                 .fillMaxSize()
                 .background(MaterialColors.background)
         ) {
-            JellyfinConfigurationView(ViewState.Configuring("http://server.jellyfin.com", "my_user", "pathword", true))
+            JellyfinConfigurationView(JellyfinConfigurationViewModel.ViewState.Configuring("http://server.jellyfin.com", "my_user", "pathword", true))
         }
     }
 }
@@ -236,7 +227,7 @@ fun JellyfinConfigurationPreview2(@PreviewParameter(ThemedPreviewProvider::class
                 .fillMaxSize()
                 .background(MaterialColors.background)
         ) {
-            JellyfinConfigurationView(ViewState.Authenticating)
+            JellyfinConfigurationView(JellyfinConfigurationViewModel.ViewState.Authenticating)
         }
     }
 }
@@ -250,7 +241,7 @@ fun JellyfinConfigurationPreview3(@PreviewParameter(ThemedPreviewProvider::class
                 .fillMaxSize()
                 .background(MaterialColors.background)
         ) {
-            JellyfinConfigurationView(ViewState.Authenticated)
+            JellyfinConfigurationView(JellyfinConfigurationViewModel.ViewState.Authenticated)
         }
     }
 }

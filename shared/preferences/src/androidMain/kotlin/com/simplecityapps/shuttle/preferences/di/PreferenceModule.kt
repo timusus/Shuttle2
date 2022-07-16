@@ -5,9 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStoreFile
-import com.simplecityapps.shuttle.preferences.DataStorePreferenceManager
-import com.simplecityapps.shuttle.preferences.GeneralPreferenceManager
-import com.simplecityapps.shuttle.preferences.PreferenceManager
+import com.simplecityapps.shuttle.preferences.*
 import com.simplecityapps.shuttle.security.SecurityManager
 import dagger.Module
 import dagger.Provides
@@ -35,8 +33,20 @@ class PreferencesModule {
 
     @Provides
     @Singleton
+    fun provideSecurityManager(): SecurityManager {
+        return SecurityManager()
+    }
+
+    @Provides
+    @Singleton
     fun providePreferenceManager(dataStore: DataStore<Preferences>): PreferenceManager {
         return DataStorePreferenceManager(dataStore)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSecurePreferenceManager(dataStore: DataStore<Preferences>, securityManager: SecurityManager): SecurePreferenceManager {
+        return AesSecurePreferenceManager(dataStore = dataStore, securityManager = securityManager)
     }
 
     @Provides
@@ -45,9 +55,4 @@ class PreferencesModule {
         return GeneralPreferenceManager(preferenceManager)
     }
 
-    @Provides
-    @Singleton
-    fun provideSecurityManager(): SecurityManager {
-        return SecurityManager()
-    }
 }

@@ -38,7 +38,7 @@ dependencies {
     api 'com.squareup.okhttp3:logging-interceptor:4.9.1'
 
     // Kotlin Standard Library
-    api 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.20'
+    api 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.21'
 
     // Kotlin Extensions
     api 'androidx.core:core-ktx:1.7.0'

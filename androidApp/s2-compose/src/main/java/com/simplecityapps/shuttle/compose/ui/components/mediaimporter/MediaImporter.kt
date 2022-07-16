@@ -24,6 +24,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.simplecityapps.shuttle.common.mediaprovider.MockData
 import com.simplecityapps.shuttle.compose.R
 import com.simplecityapps.shuttle.compose.ui.components.ThemedPreviewProvider
 import com.simplecityapps.shuttle.compose.ui.components.mediaprovider.iconResId
@@ -265,7 +266,7 @@ fun MediaImporterPreview(@PreviewParameter(ThemedPreviewProvider::class) darkThe
                         MediaProviderType.MediaStore to flowOf(
                             ImportViewState.ReadingSongs(
                                 progress = Progress(5, 20),
-                                songData = fakeSongData
+                                songData = MockData.songData.first()
                             )
                         ),
                         MediaProviderType.Emby to flowOf(
@@ -325,31 +326,3 @@ internal fun SongData.displayName(): String {
         name ?: stringResource(id = R.string.unknown)
     ).joinToString(" • ")
 }
-
-val fakeSongData = SongData(
-    name = "Right Where it Belongs",
-    albumArtist = "Nine Inch Nails",
-    artists = listOf("Nine Inch Nails"),
-    album = "With Teeth",
-    track = 1,
-    disc = 2,
-    duration = 3,
-    date = null,
-    genres = emptyList(),
-    path = "",
-    size = null,
-    mimeType = null,
-    dateModified = null,
-    lastPlayed = null,
-    lastCompleted = null,
-    externalId = null,
-    mediaProvider = MediaProviderType.MediaStore,
-    replayGainTrack = null,
-    replayGainAlbum = null,
-    lyrics = null,
-    grouping = null,
-    bitRate = null,
-    sampleRate = null,
-    channelCount = null,
-    composer = null
-)

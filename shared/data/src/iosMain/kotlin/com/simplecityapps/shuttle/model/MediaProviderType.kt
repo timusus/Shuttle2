@@ -15,3 +15,7 @@ actual fun MediaProviderType.supportsTagEditing(): Boolean {
 actual fun defaultMediaProvider(): MediaProviderType? {
     return null
 }
+
+actual fun MediaProviderType.requiresConfiguration(): Boolean {
+    return false
+}

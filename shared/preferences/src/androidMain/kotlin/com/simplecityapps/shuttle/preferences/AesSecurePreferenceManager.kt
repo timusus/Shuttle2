@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.mediaprovider.jellyfin.preferences
+package com.simplecityapps.shuttle.preferences
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences

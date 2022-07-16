@@ -1,3 +1,5 @@
+@file:OptIn(InternalAPI::class)
+
 package com.simplecityapps.shuttle.mediaprovider.jellyfin.http.service
 
 import com.simplecityapps.shuttle.mediaprovider.jellyfin.http.data.ItemResponse
@@ -7,7 +9,6 @@ import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.util.*
 
-@OptIn(InternalAPI::class)
 class ItemsService(private val httpClient: HttpClient) {
 
     private suspend fun items(

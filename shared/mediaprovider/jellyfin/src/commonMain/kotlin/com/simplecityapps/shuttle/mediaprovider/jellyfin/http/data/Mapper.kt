@@ -1,6 +1,8 @@
 package com.simplecityapps.shuttle.mediaprovider.jellyfin.http.data
 
+import com.benasher44.uuid.uuid4
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.model.SongData
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate

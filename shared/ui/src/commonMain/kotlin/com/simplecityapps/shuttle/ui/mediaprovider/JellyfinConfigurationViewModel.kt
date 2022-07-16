@@ -3,7 +3,7 @@ package com.simplecityapps.shuttle.ui.mediaprovider
 import com.simplecityapps.shuttle.inject.Inject
 import com.simplecityapps.shuttle.inject.hilt.HiltViewModel
 import com.simplecityapps.shuttle.logging.logcat
-import com.simplecityapps.shuttle.mediaprovider.jellyfin.AuthenticationManager
+import com.simplecityapps.shuttle.mediaprovider.jellyfin.JellyfinAuthenticationManager
 import com.simplecityapps.shuttle.mediaprovider.jellyfin.JellyfinPreferenceManager
 import com.simplecityapps.shuttle.ui.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,31 +11,31 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
-sealed class ViewState {
-    data class Configuring(
-        val address: String?,
-        val userName: String?,
-        val password: String?,
-        val rememberPassword: Boolean
-    ) : ViewState()
-
-    object Authenticating : ViewState()
-    object Authenticated : ViewState()
-    object AuthenticationFailed : ViewState()
-}
-
-data class AuthenticationData(
-    val address: String,
-    val userName: String,
-    val password: String,
-    val rememberPassword: Boolean
-)
-
 @HiltViewModel
 class JellyfinConfigurationViewModel @Inject constructor(
-    private val authenticationManager: AuthenticationManager,
+    private val authenticationManager: JellyfinAuthenticationManager,
     private val preferenceManager: JellyfinPreferenceManager
 ) : ViewModel() {
+
+    sealed class ViewState {
+        data class Configuring(
+            val address: String?,
+            val userName: String?,
+            val password: String?,
+            val rememberPassword: Boolean
+        ) : ViewState()
+
+        object Authenticating : ViewState()
+        object Authenticated : ViewState()
+        object AuthenticationFailed : ViewState()
+    }
+
+    data class AuthenticationData(
+        val address: String,
+        val userName: String,
+        val password: String,
+        val rememberPassword: Boolean
+    )
 
     private val _viewState = MutableStateFlow<ViewState>(ViewState.Configuring(address = null, userName = null, password = null, rememberPassword = false))
     val viewState = _viewState.asStateFlow()

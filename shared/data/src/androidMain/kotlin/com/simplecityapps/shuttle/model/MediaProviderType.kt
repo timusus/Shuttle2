@@ -31,3 +31,13 @@ actual fun MediaProviderType.supportsTagEditing(): Boolean {
 actual fun defaultMediaProvider(): MediaProviderType? {
     return MediaProviderType.MediaStore
 }
+
+actual fun MediaProviderType.requiresConfiguration(): Boolean {
+    return when (this) {
+        MediaProviderType.Shuttle -> true
+        MediaProviderType.MediaStore -> false
+        MediaProviderType.Emby -> true
+        MediaProviderType.Jellyfin -> true
+        MediaProviderType.Plex -> true
+    }
+}

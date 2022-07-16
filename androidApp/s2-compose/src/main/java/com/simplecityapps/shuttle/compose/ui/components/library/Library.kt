@@ -1,11 +1,9 @@
 package com.simplecityapps.shuttle.compose.ui.components.library
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -21,13 +19,14 @@ import com.simplecityapps.shuttle.compose.ui.components.ThemedPreviewProvider
 import com.simplecityapps.shuttle.compose.ui.theme.MaterialColors
 import com.simplecityapps.shuttle.compose.ui.theme.Theme
 import com.simplecityapps.shuttle.ui.library.GenreListViewModel
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun Library() {
 
     val pagerState = rememberPagerState(pageCount = LibraryTab.values().size)
-
+    val scope = rememberCoroutineScope()
     Scaffold(topBar = {
         Column(Modifier) {
             TabRow(
@@ -43,7 +42,11 @@ fun Library() {
                     Tab(
                         modifier = Modifier.height(48.dp),
                         selected = pagerState.currentPage == index,
-                        onClick = {},
+                        onClick = {
+                            scope.launch {
+                                pagerState.animateScrollToPage(index)
+                            }
+                        },
                         selectedContentColor = MaterialColors.onBackground,
                         unselectedContentColor = MaterialColors.onBackground.copy(alpha = ContentAlpha.medium)
                     ) {
@@ -55,8 +58,11 @@ fun Library() {
                 }
             }
         }
-    }) {
-        HorizontalPager(state = pagerState) { page ->
+    }) { padding ->
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.padding(padding)
+        ) { page ->
             when (val page = LibraryTab.values()[page]) {
                 LibraryTab.Genres -> {
                     GenreList(hiltViewModel() as GenreListViewModel)

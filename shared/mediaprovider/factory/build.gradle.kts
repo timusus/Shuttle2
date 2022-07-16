@@ -29,6 +29,7 @@ kotlin {
                 implementation(project(":shared:inject"))
                 implementation(project(":shared:mediaprovider:common"))
                 implementation(project(":shared:mediaprovider:jellyfin"))
+                implementation(project(":shared:mediaprovider:emby"))
             }
         }
         val commonTest by getting {

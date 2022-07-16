@@ -1,6 +1,6 @@
 buildscript {
-    val kotlin_version by extra("1.6.20")
-    val compose_version by extra("1.2.0-alpha08")
+    val kotlin_version by extra("1.6.21")
+    val compose_version by extra("1.2.0-beta01")
     repositories {
         gradlePluginPortal()
         google()
@@ -8,7 +8,7 @@ buildscript {
     }
     dependencies {
         classpath("com.android.tools.build:gradle:7.2.0")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.20")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.21")
         classpath("androidx.navigation:navigation-safe-args-gradle-plugin:2.4.2")
         classpath("com.google.gms:google-services:4.3.10")
         classpath("com.bugsnag:bugsnag-android-gradle-plugin:7.0.0-beta01")

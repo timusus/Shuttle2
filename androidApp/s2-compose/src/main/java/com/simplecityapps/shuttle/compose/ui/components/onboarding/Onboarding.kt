@@ -20,6 +20,7 @@ import com.google.accompanist.pager.HorizontalPagerIndicator
 import com.google.accompanist.pager.rememberPagerState
 import com.simplecityapps.shuttle.compose.R
 import com.simplecityapps.shuttle.compose.ui.components.ThemedPreviewProvider
+import com.simplecityapps.shuttle.compose.ui.components.mediaimporter.EmbyConfigurationView
 import com.simplecityapps.shuttle.compose.ui.components.mediaimporter.JellyfinConfigurationView
 import com.simplecityapps.shuttle.compose.ui.components.mediaimporter.MediaImporter
 import com.simplecityapps.shuttle.compose.ui.components.mediaprovider.MediaProviderBottomSheet
@@ -27,8 +28,8 @@ import com.simplecityapps.shuttle.compose.ui.components.mediaprovider.MediaProvi
 import com.simplecityapps.shuttle.compose.ui.theme.MaterialColors
 import com.simplecityapps.shuttle.compose.ui.theme.Theme
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.requiresConfiguration
 import com.simplecityapps.shuttle.ui.onboarding.OnboardingViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 sealed class BottomSheetContent {
@@ -76,29 +77,37 @@ fun Onboarding(
             when (bottomSheetContent) {
                 is BottomSheetContent.MediaProviderList -> {
                     MediaProviderBottomSheet(
-                        mediaProviders = MediaProviderType.values().toMutableList() - selectedMediaProviders,
+                        mediaProviders = MediaProviderType.values().toMutableList() - selectedMediaProviders.toSet(),
                         onMediaProviderTypeSelected = { mediaProviderType ->
                             onAddMediaProvider(mediaProviderType)
                             scope.launch {
-                                sheetState.hide()
-
-                                if (mediaProviderType == MediaProviderType.Jellyfin) {
-                                    delay(250)
+                                if (mediaProviderType.requiresConfiguration()) {
                                     bottomSheetContent = BottomSheetContent.ConfigureMediaProvider(mediaProviderType)
-                                    delay(50)
                                     sheetState.animateTo(ModalBottomSheetValue.Expanded)
+                                } else {
+                                    sheetState.hide()
                                 }
                             }
-
                         }
                     )
                 }
                 is BottomSheetContent.ConfigureMediaProvider -> {
-                    JellyfinConfigurationView(viewModel = hiltViewModel(), onDismiss = {
-                        scope.launch {
-                            sheetState.hide()
+                    when ((bottomSheetContent as BottomSheetContent.ConfigureMediaProvider).mediaProviderType) {
+                        MediaProviderType.Emby -> {
+                            EmbyConfigurationView(viewModel = hiltViewModel(), onDismiss = {
+                                scope.launch {
+                                    sheetState.hide()
+                                }
+                            })
                         }
-                    })
+                        MediaProviderType.Jellyfin -> {
+                            JellyfinConfigurationView(viewModel = hiltViewModel(), onDismiss = {
+                                scope.launch {
+                                    sheetState.hide()
+                                }
+                            })
+                        }
+                    }
                 }
             }
         }) {

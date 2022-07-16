@@ -12,7 +12,7 @@ import com.simplecityapps.shuttle.model.Song
 import kotlinx.coroutines.flow.*
 
 class JellyfinMediaProvider(
-    private val authenticationManager: AuthenticationManager,
+    private val authenticationManager: JellyfinAuthenticationManager,
     private val jellyfinPreferenceManager: JellyfinPreferenceManager,
     private val itemsService: ItemsService
 ) : MediaProvider {

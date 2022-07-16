@@ -25,7 +25,6 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                api("androidx.datastore:datastore-preferences:1.0.0")
                 implementation(project(":shared:data"))
             }
         }
@@ -38,7 +37,9 @@ kotlin {
         val androidMain by getting {
             dependencies {
                 // Hilt
+                api("androidx.datastore:datastore-preferences-core:1.0.0")
                 implementation("com.google.dagger:hilt-android:2.40.4")
+                implementation("androidx.datastore:datastore-preferences:1.0.0")
                 configurations.getByName("kapt").dependencies.add(
                     org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency(
                         "com.google.dagger", "hilt-compiler", "2.40.4"

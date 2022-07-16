@@ -1,7 +1,8 @@
 package com.simplecityapps.shuttle.mediaprovider.di
 
-import com.simplecityapps.shuttle.mediaprovider.AndroidMediaProviderFactory
+import com.simplecityapps.shuttle.mediaprovider.factory.AndroidMediaProviderFactory
 import com.simplecityapps.shuttle.common.mediaprovider.mediastore.MediaStoreMediaProvider
+import com.simplecityapps.shuttle.mediaprovider.emby.EmbyMediaProvider
 import com.simplecityapps.shuttle.mediaprovider.factory.MediaProviderFactory
 import com.simplecityapps.shuttle.mediaprovider.jellyfin.JellyfinMediaProvider
 import dagger.Module
@@ -18,11 +19,13 @@ class MediaImportModule {
     @Singleton
     fun provideMediaProviderFactory(
         mediaStoreMediaProvider: MediaStoreMediaProvider,
-        jellyfinMediaProvider: JellyfinMediaProvider
+        jellyfinMediaProvider: JellyfinMediaProvider,
+        embyMediaProvider: EmbyMediaProvider
     ): MediaProviderFactory {
         return AndroidMediaProviderFactory(
             mediaStoreMediaProvider = mediaStoreMediaProvider,
-            jellyfinMediaProvider = jellyfinMediaProvider
+            jellyfinMediaProvider = jellyfinMediaProvider,
+            embyMediaProvider = embyMediaProvider
         )
     }
 }
