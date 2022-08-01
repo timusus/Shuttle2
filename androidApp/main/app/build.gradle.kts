@@ -140,7 +140,7 @@ android {
         implementation("androidx.navigation:navigation-ui-ktx:2.5.0-beta01")
 
         // Hilt
-        implementation("com.google.dagger:hilt-android:2.40.4")
+        implementation("com.google.dagger:hilt-android:2.43.1")
         kapt("com.google.dagger:hilt-compiler:2.40.4")
 
         androidTestImplementation("com.google.dagger:hilt-android-testing:2.40.4")
