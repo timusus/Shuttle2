@@ -43,3 +43,7 @@ If you have features or fixes, I ask that you please consider contributing to th
 
 This codebase represents years of hard work and learning as I've matured as an Android developer. I humbly request that you don't release low-effort clones for the sake of removing the pay-wall, or
 providing your own ads/other monetization strategies. If the app should be free, I'd rather make it that way myself.
+
+## Contributing to the Project
+
+Please read the [contribution guide](CONTRIBUTING.md) for details on how to contribute to this project.
