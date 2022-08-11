@@ -3,7 +3,7 @@
 set -eu
 
 SUPPORT_DIR="${BASH_SOURCE[0]%/*}/.."
-VENDOR_DIR="${SUPPORT_DIR}/Vendor"
+VENDOR_DIR="${SUPPORT_DIR}/vendor"
 
 PATH="${VENDOR_DIR}/ktlint:$PATH"
 
