@@ -1,14 +1,45 @@
-# Shuttle 2
+## S2 Music Player
 
-Shuttle Music Player 2.0
+### Welcome!
 
-<p float="left">
-  <img src="assets/Designs/Martin%20Kornelyuk/Shuttle%20Music%20Player%20v4%20Refresh%20Home%20WIP5.png" width="20%"/>
-  <img src="assets/Designs/Martin%20Kornelyuk/Shuttle%20Music%20Player%20v4%20Refresh%20History%20WIP7.png" width="20%"/>
-  <img src="assets/Designs/Martin%20Kornelyuk/Shuttle%20Music%20Player%20v5%20Refresh%20Folders%20WIP1.png" width="20%"/>
-  <img src="assets/Designs/Martin%20Kornelyuk/Shuttle%20Music%20Player%20v4%20Refresh%20Now%20Playing%20WIP9.png" width="20%"/>
-</p>
+S2 Music Player is an app for managing and playing local music on an Android device, as well as music streamed via Jellyfin, Emby or Plex
 
-### Build instructions:
+The aim is to provide all of the options you'd expect from a music player, wrapped up in a minimalist, intuitive and modern design.
 
-1. Ensure you have a valid 'google-services.json' in 'app/'
+<br/>
+<img src="assets/s2_hero_image.png" width="40%"/>
+<br/>
+<br/>
+
+### Features
+
+- Android Auto
+- Batch tag editing
+- Chromecast
+- Album shuffle
+- Sleep timer
+- Custom EQ & Preamp
+- Replay Gain
+- Day/Night & Themes
+- Jellyfin, Emby & Plex
+- Dedicated artwork server
+- Embedded lyrics
+
+S2 is currently available for download on the [Google Play Store](https://play.google.com/store/apps/details?id=com.simplecityapps.shuttle)
+
+The app is limited to a 2 week free trial, after which playback speed is slowly increased.
+
+### Community
+
+There's an active [Discord community](https://discord.gg/ESyjVgTBWa) for discussing all things relating to S2, Music & Android dev.
+
+You can find me there as @timusus
+
+### Open source
+
+The S2 source code is open sourced in good faith, for transparency and educational purposes.
+
+If you have features or fixes, I ask that you please consider contributing to this codebase, rather than releasing your own version.
+
+This codebase represents years of hard work and learning as I've matured as an Android developer. I humbly request that you don't release low-effort clones for the sake of removing the pay-wall, or
+providing your own ads/other monetization strategies. If the app should be free, I'd rather make it that way myself.

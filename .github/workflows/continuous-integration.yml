@@ -39,14 +39,14 @@ jobs:
           distribution: zulu
           java-version: 11
 
-      - name: "Lint Project"
-        run: "Support/Scripts/Lint"
+      - name: "lint Project"
+        run: "support/scripts/lint"
 
       - name: "Gradle cache"
         uses: gradle/gradle-build-action@v2
 
       - name: "Build and Run Unit Tests"
-        run: "Support/Scripts/UnitTest"
+        run: "support/scripts/unit-test"
 
       - name: "Unit Test Results"
         uses: actions/upload-artifact@v3

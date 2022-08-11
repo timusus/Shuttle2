@@ -4,7 +4,7 @@ on:
   pull_request:
     paths:
       - '.github/workflows/shellcheck.yml'
-      - 'Support/Scripts/**'
+      - 'support/scripts/**'
 
 jobs:
   shellcheck:
@@ -16,7 +16,7 @@ jobs:
         uses: reviewdog/action-shellcheck@v1.15
         with:
           reporter: github-pr-review
-          path: "Support/Scripts"
+          path: "support/scripts"
           pattern: "[A-Z]*"
           fail_on_error: true
           filter_mode: file
