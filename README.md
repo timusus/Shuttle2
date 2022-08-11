@@ -9,7 +9,6 @@ The aim is to provide all of the options you'd expect from a music player, wrapp
 <br/>
 <img src="assets/s2_hero_image.png" width="40%"/>
 <br/>
-<br/>
 
 ### Features
 
