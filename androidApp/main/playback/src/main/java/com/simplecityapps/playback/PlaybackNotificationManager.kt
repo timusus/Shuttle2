@@ -18,6 +18,7 @@ import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
+import com.simplecityapps.shuttle.pendingintent.PendingIntentCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import timber.log.Timber
 import javax.inject.Inject
@@ -73,8 +74,15 @@ class PlaybackNotificationManager @Inject constructor(
                     .setMediaSession(mediaSessionManager.mediaSession.sessionToken)
                     .setShowActionsInCompactView(0, 1, 2)
             )
-            .setContentIntent(PendingIntent.getActivity(context, 1, (context.applicationContext as ActivityIntentProvider).provideMainActivityIntent(), 0))
-            .setDeleteIntent(PendingIntent.getService(context, 1, Intent(context, PlaybackService::class.java).apply { action = PlaybackService.ACTION_NOTIFICATION_DISMISS }, 0))
+            .setContentIntent(PendingIntent.getActivity(context, 1, (context.applicationContext as ActivityIntentProvider).provideMainActivityIntent(), PendingIntentCompat.FLAG_IMMUTABLE))
+            .setDeleteIntent(
+                PendingIntent.getService(
+                    context,
+                    1,
+                    Intent(context, PlaybackService::class.java).apply { action = PlaybackService.ACTION_NOTIFICATION_DISMISS },
+                    PendingIntentCompat.FLAG_IMMUTABLE
+                )
+            )
             .addAction(prevAction)
             .addAction(playbackAction)
             .addAction(nextAction)
@@ -139,7 +147,7 @@ class PlaybackNotificationManager @Inject constructor(
             .setContentTitle(context.getString(R.string.loading))
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setContentIntent(PendingIntent.getActivity(context, 1, (context.applicationContext as ActivityIntentProvider).provideMainActivityIntent(), 0))
+            .setContentIntent(PendingIntent.getActivity(context, 1, (context.applicationContext as ActivityIntentProvider).provideMainActivityIntent(), PendingIntentCompat.FLAG_IMMUTABLE))
             .setSmallIcon(R.drawable.ic_stat_name)
             .setNotificationSilent()
             .setShowWhen(false)
@@ -157,7 +165,7 @@ class PlaybackNotificationManager @Inject constructor(
             .setContentText(context.getString(R.string.widget_empty_text))
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setContentIntent(PendingIntent.getActivity(context, 1, (context.applicationContext as ActivityIntentProvider).provideMainActivityIntent(), 0))
+            .setContentIntent(PendingIntent.getActivity(context, 1, (context.applicationContext as ActivityIntentProvider).provideMainActivityIntent(), PendingIntentCompat.FLAG_IMMUTABLE))
             .setSmallIcon(R.drawable.ic_stat_name)
             .setNotificationSilent()
             .setShowWhen(false)
@@ -176,7 +184,7 @@ class PlaybackNotificationManager @Inject constructor(
             val intent = Intent(context, PlaybackService::class.java).apply {
                 action = PlaybackService.ACTION_TOGGLE_PLAYBACK
             }
-            val pendingIntent = PendingIntent.getService(context, 1, intent, 0)
+            val pendingIntent = PendingIntent.getService(context, 1, intent, PendingIntentCompat.FLAG_IMMUTABLE)
 
             return when (playbackManager.getPlayback().playBackState()) {
                 is PlaybackState.Loading, PlaybackState.Playing -> {
@@ -193,7 +201,7 @@ class PlaybackNotificationManager @Inject constructor(
             val intent = Intent(context, PlaybackService::class.java).apply {
                 action = PlaybackService.ACTION_SKIP_PREV
             }
-            val pendingIntent = PendingIntent.getService(context, 1, intent, 0)
+            val pendingIntent = PendingIntent.getService(context, 1, intent, PendingIntentCompat.FLAG_IMMUTABLE)
             return NotificationCompat.Action(R.drawable.ic_skip_previous_black_24dp, "Prev", pendingIntent)
         }
 
@@ -202,7 +210,7 @@ class PlaybackNotificationManager @Inject constructor(
             val intent = Intent(context, PlaybackService::class.java).apply {
                 action = PlaybackService.ACTION_SKIP_NEXT
             }
-            val pendingIntent = PendingIntent.getService(context, 1, intent, 0)
+            val pendingIntent = PendingIntent.getService(context, 1, intent, PendingIntentCompat.FLAG_IMMUTABLE)
             return NotificationCompat.Action(R.drawable.ic_skip_next_black_24dp, "Prev", pendingIntent)
         }
 
