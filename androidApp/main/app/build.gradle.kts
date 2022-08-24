@@ -11,12 +11,12 @@ plugins {
 
 android {
 
-    compileSdk = 31
+    compileSdk = 32
 
     defaultConfig {
         applicationId = "com.simplecityapps.shuttle"
         minSdk = 21
-        targetSdk = 30
+        targetSdk = 32
         versionName = versionName()
         versionCode = versionCode()
         vectorDrawables.useSupportLibrary = true
@@ -125,28 +125,28 @@ android {
         implementation("com.github.timusus:RecyclerView-FastScroll:dev-SNAPSHOT")
 
         // AppCompat
-        implementation("androidx.appcompat:appcompat:1.4.1")
+        implementation("androidx.appcompat:appcompat:1.5.0")
 
         // Material
-        implementation("com.google.android.material:material:1.6.0")
+        implementation("com.google.android.material:material:1.6.1")
 
 
         // Constraint Layout
-        implementation("androidx.constraintlayout:constraintlayout:2.1.3")
+        implementation("androidx.constraintlayout:constraintlayout:2.1.4")
 
         // Android Arch
         implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
 
         // AndroidX Navigation
-        implementation("androidx.navigation:navigation-fragment-ktx:2.5.0-beta01")
-        implementation("androidx.navigation:navigation-ui-ktx:2.5.0-beta01")
+        implementation("androidx.navigation:navigation-fragment-ktx:2.5.1")
+        implementation("androidx.navigation:navigation-ui-ktx:2.5.1")
 
         // Hilt
-        implementation("com.google.dagger:hilt-android:2.40.4")
-        kapt("com.google.dagger:hilt-compiler:2.40.4")
+        implementation("com.google.dagger:hilt-android:2.43.2")
+        kapt("com.google.dagger:hilt-compiler:2.43.2")
 
-        androidTestImplementation("com.google.dagger:hilt-android-testing:2.40.4")
-        kaptAndroidTest("com.google.dagger:hilt-android-compiler:2.40.4")
+        androidTestImplementation("com.google.dagger:hilt-android-testing:2.43.2")
+        kaptAndroidTest("com.google.dagger:hilt-android-compiler:2.43.2")
 
         // AssistedInject
         compileOnly("com.squareup.inject:assisted-inject-annotations-dagger2:0.6.0")
@@ -168,7 +168,7 @@ android {
         implementation("androidx.preference:preference-ktx:1.2.0")
 
         // ChromeCast
-        implementation("com.google.android.gms:play-services-cast-framework:21.0.1")
+        implementation("com.google.android.gms:play-services-cast-framework:21.1.0")
 
         // NanoHttp
         implementation("org.nanohttpd:nanohttpd-webserver:2.3.1")
@@ -177,7 +177,7 @@ android {
         kapt("com.squareup.moshi:moshi-kotlin-codegen:1.13.0")
 
         // AndroidX Lifecycle
-        implementation("androidx.lifecycle:lifecycle-common-java8:2.4.1")
+        implementation("androidx.lifecycle:lifecycle-common-java8:2.5.1")
 
         // Noise
         implementation("com.github.paramsen:noise:2.0.0")
@@ -189,7 +189,7 @@ android {
         implementation("com.bugsnag:bugsnag-android:5.4.0")
 
         // AndroidX Lifecycle
-        implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.4.1")
+        implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.5.1")
 
         // ExoPlayer
         implementation("com.github.timusus.exoplayer:exoplayer-core:2.14.2-shuttle")
@@ -198,7 +198,7 @@ android {
         implementation("androidx.drawerlayout:drawerlayout:1.1.1")
 
         // New fragment manager
-        implementation("androidx.fragment:fragment-ktx:1.4.1")
+        implementation("androidx.fragment:fragment-ktx:1.5.2")
 
         // Glide
         implementation("com.github.bumptech.glide:glide:4.12.0")
@@ -227,7 +227,7 @@ android {
         // KotlinX DateTime
         implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.2.1")
         // Core Library Desugaring - Required for KotlinX DateTime on API < 27
-        coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.1.5")
+        coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:1.2.0")
 
 
         // Testing

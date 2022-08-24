@@ -157,6 +157,9 @@ class PlaybackInitializer @Inject constructor(
                     }
                 }
             }
+            else -> {
+                // Nothing to do
+            }
         }
     }
 

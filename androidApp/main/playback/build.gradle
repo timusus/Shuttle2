@@ -4,11 +4,11 @@ apply plugin: 'kotlin-kapt'
 apply plugin: 'dagger.hilt.android.plugin'
 
 android {
-    compileSdkVersion 31
+    compileSdkVersion 32
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 30
+        targetSdkVersion 32
     }
 
     buildTypes {
@@ -45,11 +45,11 @@ dependencies {
     implementation 'androidx.documentfile:documentfile:1.0.1'
 
     // Hilt
-    implementation 'com.google.dagger:hilt-android:2.40.4'
-    kapt 'com.google.dagger:hilt-compiler:2.40.4'
+    implementation 'com.google.dagger:hilt-android:2.43.2'
+    kapt 'com.google.dagger:hilt-compiler:2.43.2'
 
     // Chromecast
-    implementation 'com.google.android.gms:play-services-cast-framework:21.0.1'
+    implementation 'com.google.android.gms:play-services-cast-framework:21.1.0'
 
     // NanoHttp
     implementation 'org.nanohttpd:nanohttpd-webserver:2.3.1'

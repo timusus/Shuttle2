@@ -25,6 +25,7 @@
 
         <activity
             android:name=".ui.MainActivity"
+            android:exported="true"
             android:label="@string/app_name"
             android:launchMode="singleInstance"
             android:screenOrientation="userPortrait"
@@ -58,6 +59,7 @@
 
         <receiver
             android:name=".ui.widgets.WidgetProvider41"
+            android:exported="true"
             android:label="Shuttle 4x1">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
@@ -69,6 +71,7 @@
 
         <receiver
             android:name=".ui.widgets.WidgetProvider42"
+            android:exported="true"
             android:label="Shuttle 4x2">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />

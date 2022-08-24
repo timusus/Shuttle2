@@ -49,6 +49,9 @@ class TrialManager(
                         preferenceManager.appPurchasedDate = Date()
                     }
                 }
+                else -> {
+                    // Nothing to do
+                }
             }
         }
         .stateIn(coroutineScope, SharingStarted.Lazily, TrialState.Unknown)

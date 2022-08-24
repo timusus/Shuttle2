@@ -122,6 +122,7 @@
     <style name="AppTheme.Dark.ExtraDark">
         <item name="android:windowBackground">@color/bg_window_black</item>
         <item name="cardBackgroundColor">@color/bg_window_black</item>
+        <item name="android:navigationBarColor">@color/bg_window_black</item>
     </style>
 
 
