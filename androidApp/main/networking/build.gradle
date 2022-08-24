@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    compileSdkVersion 31
+    compileSdkVersion 32
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 30
+        targetSdkVersion 32
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -33,7 +33,7 @@ android {
 dependencies {
 
     // Kotlin std lib
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.6.20"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:1.7.10"
 
     // OkHttp
     implementation 'com.squareup.okhttp3:okhttp:4.9.1'

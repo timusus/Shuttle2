@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    compileSdkVersion 31
+    compileSdkVersion 32
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 30
+        targetSdkVersion 32
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -33,8 +33,8 @@ android {
 
 dependencies {
 
-    implementation 'androidx.appcompat:appcompat:1.4.1'
-    implementation 'com.google.android.material:material:1.6.0'
+    implementation 'androidx.appcompat:appcompat:1.5.0'
+    implementation 'com.google.android.material:material:1.6.1'
 
     implementation(project(":androidApp:main:mediaprovider:core"))
     implementation(project(":androidApp:main:core"))
@@ -44,8 +44,8 @@ dependencies {
 
     implementation 'com.jaredrummler:android-device-names:2.0.0'
 
-    implementation 'com.google.dagger:hilt-android:2.40.4'
-    kapt 'com.google.dagger:hilt-compiler:2.40.4'
+    implementation 'com.google.dagger:hilt-android:2.43.2'
+    kapt 'com.google.dagger:hilt-compiler:2.43.2'
 
     implementation project(':shared:data')
 

@@ -3,11 +3,11 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-parcelize'
 
 android {
-    compileSdkVersion 31
+    compileSdkVersion 32
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 30
+        targetSdkVersion 32
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary true
@@ -29,7 +29,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     // Kotlin Standard Library
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.6.20"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.7.10"
 
     // Timber
     implementation 'com.jakewharton.timber:timber:4.7.1'
@@ -39,10 +39,10 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-datetime:0.2.1'
 
     // Kotlin Coroutines
-    api 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2'
+    api 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0'
 
     // AndroidX Annotations
-    api "androidx.annotation:annotation:1.3.0"
+    api "androidx.annotation:annotation:1.4.0"
 
     // Phrase string formatting helper
     api 'com.github.square:phrase:master-SNAPSHOT'

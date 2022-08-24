@@ -41,7 +41,7 @@ class GroupingBinder(
             super.bind(viewBinder, isPartial)
 
             itemView as TextView
-            itemView.text = viewBinder.label
+            (itemView as TextView).text = viewBinder.label
         }
     }
 }

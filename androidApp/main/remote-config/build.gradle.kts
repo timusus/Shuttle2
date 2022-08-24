@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    compileSdk = 31
+    compileSdk = 32
 
     defaultConfig {
         minSdk = 21
-        targetSdk = 31
+        targetSdk = 32
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles("consumer-rules.pro")
@@ -34,17 +34,17 @@ android {
 
 dependencies {
 
-    implementation("androidx.core:core-ktx:1.7.0")
+    implementation("androidx.core:core-ktx:1.8.0")
 
     // Firebase
     api(platform("com.google.firebase:firebase-bom:28.3.0"))
     api("com.google.firebase:firebase-config-ktx")
     implementation("com.google.firebase:firebase-analytics-ktx")
-    api("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.0")
+    api("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.1")
 
     // Hilt
-    implementation("com.google.dagger:hilt-android:2.40.4")
-    kapt("com.google.dagger:hilt-compiler:2.40.4")
+    implementation("com.google.dagger:hilt-android:2.43.2")
+    kapt("com.google.dagger:hilt-compiler:2.43.2")
 
     // S2 Core
     implementation(project(":androidApp:main:core"))

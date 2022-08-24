@@ -163,6 +163,9 @@ class LibraryFragment :
                 val progress: CircularProgressView = trialMenuItem.actionView.findViewById(R.id.progress)
                 progress.setProgress(0f)
             }
+            is TrialState.Pretrial -> {
+                // Nothing to do
+            }
         }
     }
 
