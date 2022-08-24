@@ -24,6 +24,7 @@ android {
         ndk {
             debugSymbolLevel = "FULL"
         }
+        buildConfigField("String", "BUGSNAG_API_KEY", bugsnagApiKey())
     }
 
     signingConfigs {
@@ -196,7 +197,7 @@ android {
         implementation("androidx.drawerlayout:drawerlayout:1.1.1")
 
         // New fragment manager
-        implementation("androidx.fragment:fragment-ktx:1.4.1")
+        implementation("androidx.fragment:fragment-ktx:1.5.2")
 
         // Glide
         implementation("com.github.bumptech.glide:glide:4.12.0")
@@ -288,6 +289,14 @@ fun versionCode(): Int {
                 isCiBuild() -> getEnv("GITHUB_RUN_NUMBER").toInt() + 20 // Add 20 due to move from Jenkins to GH Actions
                 else -> 1
             }
+}
+
+fun bugsnagApiKey(): String {
+    return if (isCiBuild()) {
+        getEnv("BUGSNAG_API_KEY")
+    } else {
+        "123456"
+    }
 }
 
 class MissingEnvVarException(private val name: String) : Exception() {
