@@ -24,6 +24,7 @@ android {
         ndk {
             debugSymbolLevel = "FULL"
         }
+        buildConfigField("String", "BUGSNAG_API_KEY", bugsnagApiKey())
     }
 
     signingConfigs {
@@ -166,7 +167,7 @@ android {
         implementation("androidx.preference:preference-ktx:1.2.0")
 
         // ChromeCast
-        implementation("com.google.android.gms:play-services-cast-framework:21.0.1")
+        implementation("com.google.android.gms:play-services-cast-framework:21.1.0")
 
         // NanoHttp
         implementation("org.nanohttpd:nanohttpd-webserver:2.3.1")
@@ -288,6 +289,14 @@ fun versionCode(): Int {
                 isCiBuild() -> getEnv("GITHUB_RUN_NUMBER").toInt() + 20 // Add 20 due to move from Jenkins to GH Actions
                 else -> 1
             }
+}
+
+fun bugsnagApiKey(): String {
+    return if (isCiBuild()) {
+        getEnv("BUGSNAG_API_KEY")
+    } else {
+        "123456"
+    }
 }
 
 class MissingEnvVarException(private val name: String) : Exception() {
