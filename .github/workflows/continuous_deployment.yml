@@ -55,6 +55,7 @@ jobs:
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASS }}
           KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
+          BUGSNAG_API_KEY: ${{ secrets.BUGSNAG_API_KEY }}
           CONFIGURATION: Release
 
       - name: "Upload App Bundle"

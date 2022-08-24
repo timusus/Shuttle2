@@ -24,6 +24,8 @@ android {
         ndk {
             debugSymbolLevel = "FULL"
         }
+
+        manifestPlaceholders["bugsnagApiKey"] =  bugsnagApiKey()
     }
 
     signingConfigs {
@@ -288,6 +290,14 @@ fun versionCode(): Int {
                 isCiBuild() -> getEnv("GITHUB_RUN_NUMBER").toInt() + 20 // Add 20 due to move from Jenkins to GH Actions
                 else -> 1
             }
+}
+
+fun bugsnagApiKey(): String {
+    return if (isCiBuild()) {
+        getEnv("BUGSNAG_API_KEY")
+    } else {
+        "123456"
+    }
 }
 
 class MissingEnvVarException(private val name: String) : Exception() {
