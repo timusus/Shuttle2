@@ -24,6 +24,7 @@ android {
         ndk {
             debugSymbolLevel = "FULL"
         }
+        buildConfigField("String", "BUGSNAG_API_KEY", bugsnagApiKey())
     }
 
     signingConfigs {
@@ -148,7 +149,7 @@ android {
 
         // AssistedInject
         compileOnly("com.squareup.inject:assisted-inject-annotations-dagger2:0.6.0")
-        kapt("com.squareup.inject:assisted-inject-processor-dagger2:0.6.0")
+        kapt("com.squareup.inject:assisted-inject-processor-dagger2:0.8.1")
 
         // Leak Canary
         debugImplementation("com.squareup.leakcanary:leakcanary-android:2.7")
@@ -288,6 +289,14 @@ fun versionCode(): Int {
                 isCiBuild() -> getEnv("GITHUB_RUN_NUMBER").toInt() + 20 // Add 20 due to move from Jenkins to GH Actions
                 else -> 1
             }
+}
+
+fun bugsnagApiKey(): String {
+    return if (isCiBuild()) {
+        getEnv("BUGSNAG_API_KEY")
+    } else {
+        "123456"
+    }
 }
 
 class MissingEnvVarException(private val name: String) : Exception() {
