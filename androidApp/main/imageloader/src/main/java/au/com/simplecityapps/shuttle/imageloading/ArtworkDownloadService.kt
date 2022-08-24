@@ -16,6 +16,7 @@ import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
 import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.shuttle.coroutines.concurrentMap
+import com.simplecityapps.shuttle.pendingintent.PendingIntentCompat
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
@@ -82,7 +83,7 @@ class ArtworkDownloadService : Service(), CoroutineScope {
         val serviceName = ComponentName(this, ArtworkDownloadService::class.java)
         val intent = Intent(ACTION_CANCEL)
         intent.component = serviceName
-        val pendingIntent = PendingIntent.getService(this, 0, intent, 0)
+        val pendingIntent = PendingIntent.getService(this, 0, intent, PendingIntentCompat.FLAG_IMMUTABLE)
 
         val notificationBuilder = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
             .setContentTitle("Downloading artwork")

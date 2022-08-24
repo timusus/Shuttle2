@@ -16,6 +16,7 @@ import com.simplecityapps.playback.PlaybackService
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.pendingintent.PendingIntentCompat
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.MainActivity
 import dagger.hilt.android.AndroidEntryPoint
@@ -64,7 +65,7 @@ abstract class ShuttleAppWidgetProvider : AppWidgetProvider() {
         super.onUpdate(context, appWidgetManager, appWidgetIds)
 
         appWidgetIds.forEach { appWidgetId ->
-            val contentIntent: PendingIntent = PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java), 0)
+            val contentIntent: PendingIntent = PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java), PendingIntentCompat.FLAG_IMMUTABLE)
 
             val views = RemoteViews(context.packageName, getLayoutResId()).apply {
                 bind(context, appWidgetId, contentIntent, imageLoader, appWidgetManager, preferenceManager.widgetBackgroundTransparency / 100f)
@@ -107,9 +108,9 @@ abstract class ShuttleAppWidgetProvider : AppWidgetProvider() {
 
     private fun getPendingIntent(context: Context, intent: Intent): PendingIntent {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            PendingIntent.getForegroundService(context, 1, intent, 0)
+            PendingIntent.getForegroundService(context, 1, intent, PendingIntentCompat.FLAG_IMMUTABLE)
         } else {
-            PendingIntent.getService(context, 1, intent, 0)
+            PendingIntent.getService(context, 1, intent, PendingIntentCompat.FLAG_IMMUTABLE)
         }
     }
 

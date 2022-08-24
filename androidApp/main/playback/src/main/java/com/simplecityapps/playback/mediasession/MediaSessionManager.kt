@@ -28,6 +28,7 @@ import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.pendingintent.PendingIntentCompat
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.query.SongQuery
 import kotlinx.coroutines.CoroutineScope
@@ -70,7 +71,7 @@ class MediaSessionManager @Inject constructor(
             Intent(Intent.ACTION_MEDIA_BUTTON).apply {
                 setClass(context, MediaButtonReceiver::class.java)
             },
-            0
+            PendingIntentCompat.FLAG_IMMUTABLE
         )
         mediaSession.setMediaButtonReceiver(mediaButtonReceiverIntent)
         mediaSession
