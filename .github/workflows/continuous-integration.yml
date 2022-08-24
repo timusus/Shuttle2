@@ -47,6 +47,8 @@ jobs:
 
       - name: "Build and Run Unit Tests"
         run: "support/scripts/unit-test"
+        env:
+          BUGSNAG_API_KEY: ${{ secrets.BUGSNAG_API_KEY }}
 
       - name: "Unit Test Results"
         uses: actions/upload-artifact@v3

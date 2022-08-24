@@ -45,7 +45,7 @@
 
         <meta-data
             android:name="com.bugsnag.android.API_KEY"
-            android:value="3b26e2392a564498165a38914012ee41" />
+            android:value="${bugsnagApiKey}" />
 
 
         <!-- Firebase Analytics -->
