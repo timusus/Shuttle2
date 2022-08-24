@@ -24,6 +24,7 @@ android {
         ndk {
             debugSymbolLevel = "FULL"
         }
+        buildConfigField("String", "BUGSNAG_API_KEY", bugsnagApiKey())
     }
 
     signingConfigs {
@@ -130,7 +131,7 @@ android {
 
 
         // Constraint Layout
-        implementation("androidx.constraintlayout:constraintlayout:2.1.3")
+        implementation("androidx.constraintlayout:constraintlayout:2.1.4")
 
         // Android Arch
         implementation("androidx.lifecycle:lifecycle-extensions:2.2.0")
@@ -288,6 +289,14 @@ fun versionCode(): Int {
                 isCiBuild() -> getEnv("GITHUB_RUN_NUMBER").toInt() + 20 // Add 20 due to move from Jenkins to GH Actions
                 else -> 1
             }
+}
+
+fun bugsnagApiKey(): String {
+    return if (isCiBuild()) {
+        getEnv("BUGSNAG_API_KEY")
+    } else {
+        "123456"
+    }
 }
 
 class MissingEnvVarException(private val name: String) : Exception() {
