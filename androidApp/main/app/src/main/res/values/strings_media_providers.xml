@@ -25,5 +25,7 @@
     <string name="media_provider_config_hint_address">Address</string>
     <string name="media_provider_config_hint_username">Username</string>
     <string name="media_provider_config_hint_password">Password</string>
+    <string name="media_provider_config_hint_code">2FA Code</string>
+    <string name="media_provider_config_helper_code">Optional</string>
     <string name="media_provider_config_switch_remember_password">Remember password</string>
 </resources>

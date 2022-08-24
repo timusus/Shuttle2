@@ -22,11 +22,12 @@ interface UserService {
 
 suspend fun UserService.authenticate(
     username: String,
-    password: String
+    password: String,
+    authCode: String?
 ): NetworkResult<AuthenticationResult> {
     return authenticateImpl(
         "https://plex.tv/users/sign_in",
         username,
-        password
+        password + (authCode ?: "")
     )
 }

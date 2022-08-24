@@ -32,6 +32,7 @@ class PlexConfigurationFragment : DialogFragment() {
     var addressInputLayout: TextInputLayout by autoCleared()
     var loginInputLayout: TextInputLayout by autoCleared()
     var passwordInputLayout: TextInputLayout by autoCleared()
+    var authCodeInputLayout: TextInputLayout by autoCleared()
     var rememberPasswordSwitch: SwitchCompat by autoCleared()
     var loadingView: CircularLoadingView by autoCleared()
     var inputGroup: Group by autoCleared()
@@ -40,11 +41,12 @@ class PlexConfigurationFragment : DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
 
-        val view = layoutInflater.inflate(R.layout.fragment_emby_configuration, null)
+        val view = layoutInflater.inflate(R.layout.fragment_plex_configuration, null)
 
         addressInputLayout = view.findViewById(R.id.addressInputLayout)
         loginInputLayout = view.findViewById(R.id.loginInputLayout)
         passwordInputLayout = view.findViewById(R.id.passwordInputLayout)
+        authCodeInputLayout = view.findViewById(R.id.authCodeInputLayout)
         rememberPasswordSwitch = view.findViewById(R.id.rememberPasswordSwitch)
         loadingView = view.findViewById(R.id.loadingView)
         inputGroup = view.findViewById(R.id.inputGroup)
@@ -72,7 +74,9 @@ class PlexConfigurationFragment : DialogFragment() {
                 passwordInputLayout.endIconMode = TextInputLayout.END_ICON_PASSWORD_TOGGLE
             }
         }
-
+        authCodeInputLayout.editText!!.doOnTextChanged { _, _, _, _ ->
+            authCodeInputLayout.error = null
+        }
         loadingView.listener = object : CircularLoadingView.Listener {
             override fun onRetryClicked() {
                 loadingView.isVisible = false
@@ -106,7 +110,11 @@ class PlexConfigurationFragment : DialogFragment() {
 
                 plexAuthenticationManager.setAddress(addressInputLayout.editText!!.text.toString())
 
-                val loginCredentials = LoginCredentials(loginInputLayout.editText!!.text.toString(), passwordInputLayout.editText!!.text.toString())
+                val loginCredentials = LoginCredentials(
+                    username = loginInputLayout.editText!!.text.toString(),
+                    password = passwordInputLayout.editText!!.text.toString(),
+                    authCode = authCodeInputLayout.editText!!.text.toString()
+                )
 
                 lifecycleScope.launch {
                     val result = plexAuthenticationManager.authenticate(
