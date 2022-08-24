@@ -1,5 +1,21 @@
 [
   {
+    "versionName": "1.0.5-beta",
+    "releaseDate": "24/08/2022",
+    "features": [
+    ],
+    "fixes": [
+      "Fixed an issue where the 'extra dark' mode wasn't any darker at all!",
+      "Enable Plex login with 2FA"
+    ],
+    "improvements": [
+      "Updated dependencies, target Android 12L (32)"
+    ],
+    "notes": [
+      "Shuttle is now open source 🎉 You can file requests and bug reports via <a href=\"https://github.com/timusus/shuttle2/issues\">GitHub</a>"
+    ]
+  },
+  {
     "versionName": "1.0.4",
     "releaseDate": "17/06/2022",
     "features": [
