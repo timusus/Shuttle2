@@ -10,7 +10,11 @@ class CredentialStore(private val securePreferenceManager: SecurePreferenceManag
         get() {
             return securePreferenceManager.plexUserName?.let { userName ->
                 securePreferenceManager.plexPass?.let { md5Pass ->
-                    LoginCredentials(userName, md5Pass)
+                    LoginCredentials(
+                        username = userName,
+                        password = md5Pass,
+                        authCode = null
+                    )
                 }
             }
         }

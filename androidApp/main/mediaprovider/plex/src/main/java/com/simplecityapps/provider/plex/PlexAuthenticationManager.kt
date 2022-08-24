@@ -36,7 +36,8 @@ class PlexAuthenticationManager(
         Timber.d("authenticate(address: $address)")
         val authenticationResult = userService.authenticate(
             username = loginCredentials.username,
-            password = loginCredentials.password
+            password = loginCredentials.password,
+            authCode = loginCredentials.authCode
         )
 
         return when (authenticationResult) {
