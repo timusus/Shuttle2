@@ -64,15 +64,9 @@ class MainFragment :
         multiSheetView = view.findViewById(R.id.multiSheetView)
 
         val navController = Navigation.findNavController(requireActivity(), R.id.navHostFragment)
-        val navGraph = navController.navInflater.inflate(R.navigation.main)
-
-        if (generalPreferenceManager.showHomeOnLaunch) {
-            navGraph.setStartDestination(R.id.homeFragment)
-        } else {
-            navGraph.setStartDestination(R.id.libraryFragment)
+        if (navController.currentDestination == null) {
+            initializeNavGraph(navController)
         }
-
-        navController.graph = navGraph
 
         val bottomNavigationView: BottomNavigationView = view.findViewById(R.id.bottomNavigationView)
         bottomNavigationView.setupWithNavController(navController) { menuItem ->
@@ -191,6 +185,18 @@ class MainFragment :
                 }
             }
         }
+    }
+
+    private fun initializeNavGraph(navController: NavController) {
+        val navGraph = navController.navInflater.inflate(R.navigation.main)
+
+        if (generalPreferenceManager.showHomeOnLaunch) {
+            navGraph.setStartDestination(R.id.homeFragment)
+        } else {
+            navGraph.setStartDestination(R.id.libraryFragment)
+        }
+
+        navController.graph = navGraph
     }
 
     // Static
