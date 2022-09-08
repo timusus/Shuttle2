@@ -304,6 +304,14 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
                 }
                 .orEmpty()
         }
+
+    var showHomeOnLaunch: Boolean
+        set(value) {
+            sharedPreferences.put("pref_show_home_on_launch", value)
+        }
+        get() {
+            return sharedPreferences.get("pref_show_home_on_launch", false)
+        }
 }
 
 enum class LibraryTab {
