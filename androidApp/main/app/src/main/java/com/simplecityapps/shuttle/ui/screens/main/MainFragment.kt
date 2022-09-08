@@ -60,6 +60,9 @@ class MainFragment :
         multiSheetView = view.findViewById(R.id.multiSheetView)
 
         val navController = Navigation.findNavController(requireActivity(), R.id.navHostFragment)
+        val navGraph = navController.navInflater.inflate(R.navigation.main)
+        navGraph.setStartDestination(R.id.libraryFragment)
+        navController.graph = navGraph
 
         val bottomNavigationView: BottomNavigationView = view.findViewById(R.id.bottomNavigationView)
         bottomNavigationView.setupWithNavController(navController) { menuItem ->
