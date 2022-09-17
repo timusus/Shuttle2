@@ -11,12 +11,12 @@ plugins {
 
 android {
 
-    compileSdk = 32
+    compileSdk = 30
 
     defaultConfig {
         applicationId = "com.simplecityapps.shuttle"
         minSdk = 21
-        targetSdk = 32
+        targetSdk = 30
         versionName = versionName()
         versionCode = versionCode()
         vectorDrawables.useSupportLibrary = true

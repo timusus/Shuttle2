@@ -3,11 +3,11 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
 
 android {
-    compileSdkVersion 32
+    compileSdkVersion 30
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 32
+        targetSdkVersion 30
         buildConfigField("String", "PROXY_ADDR", "\"192.168.0.14\"")
         buildConfigField("Integer", "PROXY_PORT", "8888")
     }
