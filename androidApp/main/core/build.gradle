@@ -7,7 +7,7 @@ android {
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 32
+        targetSdkVersion 30
         buildConfigField("String", "PROXY_ADDR", "\"192.168.0.14\"")
         buildConfigField("Integer", "PROXY_PORT", "8888")
     }
