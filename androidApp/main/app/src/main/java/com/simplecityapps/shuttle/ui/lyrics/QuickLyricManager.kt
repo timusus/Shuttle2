@@ -29,5 +29,5 @@ object QuickLyricManager {
         return quickLyricIntent.resolveActivity(context.packageManager) != null
     }
 
-    val quickLyricIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://d3khd.app.goo.gl/jdF1"))
+    val quickLyricIntent = Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=com.geecko.QuickLyric"))
 }
