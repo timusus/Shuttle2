@@ -1,7 +1,5 @@
 package com.simplecityapps.shuttle.sorting
 
-import java.io.Serializable
-
-enum class AlbumArtistSortOrder : Serializable {
+enum class AlbumArtistSortOrder {
     Default, PlayCount
 }
