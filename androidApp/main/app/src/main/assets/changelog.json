@@ -1,5 +1,20 @@
 [
   {
+    "versionName": "1.0.5-beta2",
+    "releaseDate": "17/09/2022",
+    "features": [
+    ],
+    "fixes": [
+      "Fixed a bunch of crashes on Android 12 (thanks a lot, Google)",
+      "Fixed an issue when attempting to view QuickLyric on the Play Store"
+    ],
+    "improvements": [
+    ],
+    "notes": [
+      "Shuttle is now open source 🎉 You can file requests and bug reports via <a href=\"https://github.com/timusus/shuttle2/issues\">GitHub</a>"
+    ]
+  },
+  {
     "versionName": "1.0.5-beta",
     "releaseDate": "24/08/2022",
     "features": [
