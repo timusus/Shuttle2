@@ -40,6 +40,9 @@ class AppearancePreferenceFragment : Fragment() {
     var extraDarkSwitchBackground: View by autoCleared()
     var extraDarkSwitch: SwitchCompat by autoCleared()
 
+    var showHomeOnLaunchSwitchBackground: View by autoCleared()
+    var showHomeOnLaunchSwitch: SwitchCompat by autoCleared()
+
     var accentButtonBlue: ImageView by autoCleared()
     var accentButtonRed: ImageView by autoCleared()
     var accentButtonCyan: ImageView by autoCleared()
@@ -74,6 +77,9 @@ class AppearancePreferenceFragment : Fragment() {
 
         extraDarkSwitchBackground = view.findViewById(R.id.switchExtraDarkBackground)
         extraDarkSwitch = view.findViewById(R.id.switchExtraDark)
+
+        showHomeOnLaunchSwitchBackground = view.findViewById(R.id.switchShowHomeOnLaunchBackground)
+        showHomeOnLaunchSwitch = view.findViewById(R.id.switchShowHomeOnLaunch)
 
         accentButtonBlue = view.findViewById(R.id.accentButtonBlue)
         accentButtonRed = view.findViewById(R.id.accentButtonRed)
@@ -116,6 +122,14 @@ class AppearancePreferenceFragment : Fragment() {
         }
         extraDarkSwitchBackground.setOnClickListener {
             extraDarkSwitch.toggle()
+        }
+
+        showHomeOnLaunchSwitch.isChecked = preferenceManager.showHomeOnLaunch
+        showHomeOnLaunchSwitch.setOnCheckedChangeListener { _, isChecked ->
+            preferenceManager.showHomeOnLaunch = isChecked
+        }
+        showHomeOnLaunchSwitchBackground.setOnClickListener {
+            showHomeOnLaunchSwitch.toggle()
         }
 
         when (preferenceManager.themeAccent) {

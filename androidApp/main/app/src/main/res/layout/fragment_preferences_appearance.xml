@@ -127,17 +127,67 @@
             app:layout_constraintTop_toTopOf="@id/switchExtraDarkTitle" />
 
         <TextView
-            android:id="@+id/accentTitle"
+            android:id="@+id/navigationTitle"
             style="@style/TextTitle"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="24dp"
             android:layout_marginTop="40dp"
             android:layout_marginEnd="24dp"
-            android:text="@string/pref_theme_accent_title"
+            android:text="@string/pref_navigation_title"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/switchExtraDark" />
+
+        <TextView
+            android:id="@+id/switchShowHomeOnLaunchTitle"
+            style="@style/TextTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginEnd="8dp"
+            android:paddingVertical="24dp"
+            android:fontFamily="@font/opensans_regular"
+            android:text="@string/pref_show_home_on_launch_title"
+            app:layout_constraintEnd_toStartOf="@id/switchShowHomeOnLaunch"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/navigationTitle" />
+
+        <androidx.appcompat.widget.SwitchCompat
+            android:id="@+id/switchShowHomeOnLaunch"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="24dp"
+            android:clickable="false"
+            android:focusable="false"
+            app:layout_constraintBottom_toBottomOf="@id/switchShowHomeOnLaunchTitle"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="@id/switchShowHomeOnLaunchTitle" />
+
+        <View
+            android:id="@+id/switchShowHomeOnLaunchBackground"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:background="?selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            app:layout_constraintBottom_toBottomOf="@id/switchShowHomeOnLaunchTitle"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@id/switchShowHomeOnLaunchTitle" />
+
+        <TextView
+            android:id="@+id/accentTitle"
+            style="@style/TextTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="32dp"
+            android:layout_marginEnd="24dp"
+            android:text="@string/pref_theme_accent_title"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/switchShowHomeOnLaunch" />
 
         <HorizontalScrollView
             android:id="@+id/scrollView"
