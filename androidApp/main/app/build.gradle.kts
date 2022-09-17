@@ -25,7 +25,7 @@ android {
             debugSymbolLevel = "FULL"
         }
 
-        manifestPlaceholders["bugsnagApiKey"] =  bugsnagApiKey()
+        manifestPlaceholders["bugsnagApiKey"] = bugsnagApiKey()
     }
 
     signingConfigs {
@@ -294,7 +294,12 @@ fun versionCode(): Int {
 
 fun bugsnagApiKey(): String {
     return if (isCiBuild()) {
-        getEnv("BUGSNAG_API_KEY")
+        try {
+            getEnv("BUGSNAG_API_KEY")
+        } catch (e: MissingEnvVarException) {
+            println("'BUGSNAG_API_KEY' Environment Variable not found. BugSnag will not report issues")
+            "123456"
+        }
     } else {
         "123456"
     }
