@@ -295,7 +295,10 @@ fun versionCode(): Int {
 fun bugsnagApiKey(): String {
     return if (isCiBuild()) {
         try {
-            getEnv("BUGSNAG_API_KEY")
+            getEnv("BUGSNAG_API_KEY").ifEmpty {
+                println("'BUGSNAG_API_KEY' Environment Variable empty. BugSnag will not report issues")
+                "12345"
+            }
         } catch (e: MissingEnvVarException) {
             println("'BUGSNAG_API_KEY' Environment Variable not found. BugSnag will not report issues")
             "123456"
