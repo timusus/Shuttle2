@@ -1,5 +1,19 @@
 [
   {
+    "versionName": "1.0.5-beta3",
+    "releaseDate": "20/09/2022",
+    "features": [
+    ],
+    "fixes": [
+      "Fixed an issue where play/pause command was ignored when app is in background"
+    ],
+    "improvements": [
+    ],
+    "notes": [
+      "Shuttle is now open source 🎉 You can file requests and bug reports via <a href=\"https://github.com/timusus/shuttle2/issues\">GitHub</a>"
+    ]
+  },
+  {
     "versionName": "1.0.5-beta2",
     "releaseDate": "17/09/2022",
     "features": [
