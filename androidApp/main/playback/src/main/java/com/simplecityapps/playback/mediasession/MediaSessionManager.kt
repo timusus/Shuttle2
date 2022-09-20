@@ -71,9 +71,10 @@ class MediaSessionManager @Inject constructor(
             Intent(Intent.ACTION_MEDIA_BUTTON).apply {
                 setClass(context, MediaButtonReceiver::class.java)
             },
-            PendingIntentCompat.FLAG_IMMUTABLE
+            PendingIntentCompat.FLAG_MUTABLE
         )
         mediaSession.setMediaButtonReceiver(mediaButtonReceiverIntent)
+
         mediaSession
     }
 
@@ -402,6 +403,13 @@ class MediaSessionManager @Inject constructor(
                     }
                 } ?: Timber.v("Search query $query with focus $mediaFocus yielded no results")
             }
+        }
+
+        override fun onMediaButtonEvent(mediaButtonEvent: Intent?): Boolean {
+
+            Timber.i("onMediaButtonEvent: ${mediaButtonEvent?.action}")
+
+            return super.onMediaButtonEvent(mediaButtonEvent)
         }
     }
 
