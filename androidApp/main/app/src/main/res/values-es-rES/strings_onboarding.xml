@@ -46,9 +46,15 @@ Nota: puede que debas habilitar \"mostrar almacenamiento interno\" para ver tus 
     <!-- Shown when the S2 Media Provider is scanning song tags (metadata)-->
     <string name="onboarding_scanner_reading_song_tags">Leyendo etiquetas de canciones…</string>
     <!-- Shown when onboarding. Describes why S2 would like to use Bugsnag and Firebase Analytics-->
+    <string name="onboarding_data_collection_title">S2 desea su permiso para compartir datos y análisis de fallos anónimos</string>
     <!-- Shown when onboarding. Switch to enable Bugsnag Crash Reporting -->
+    <string name="onboarding_switch_bugsnag">Informes de fallos de Bugsnag</string>
     <!-- Shown when onboarding. Describes what Bugsnag  is used for-->
+    <string name="onboarding_switch_description_bugsnag">Estadísticas de fallos anónimos, que ayudan a rastrear y resolver errores</string>
     <!-- Shown when onboarding. Switch to enable Firebase Analytics -->
+    <string name="onboarding_switch_firebase_analytics">Análisis de Firebase</string>
     <!-- Shown when onboarding. Describes what Firebase Analytics is used for-->
+    <string name="onboarding_switch_firebase_description_analytics">Permite realizar pruebas A/B de funciones y realiza un seguimiento de cómo interactúan los usuarios con la aplicación</string>
     <!-- Shown during onboarding, or when choosing a media provider. -->
+    <string name="onboarding_media_selection_subtitle">Elige de dónde viene tu música. Use Android Media Store si no está seguro.</string>
 </resources>

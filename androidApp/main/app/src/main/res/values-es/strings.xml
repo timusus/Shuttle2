@@ -20,4 +20,12 @@
     <string name="title_now_playing">Reproduciendo ahora</string>
     <!-- Shown at the top of the 'search' screen-->
     <string name="title_search_hint">Buscar música</string>
+    <!-- Shown for alpha/beta testers, in a dialog on the main screen -->
+    <string name="crash_reporting_nag_text">Considere ativar los informes de fallos. Esto ayuda a diagnosticar y corregir problemas de manera más eficiente.</string>
+    <!-- Button shown in dialog to enable crash reporting-->
+    <string name="dialog_button_enable">Activar</string>
+    <!-- Shown once the user enables crash reporting via the 'please consider enabling crash reporting' dialog-->
+    <string name="toast_crash_reporting_enabled">Informes de fallos activado</string>
+    <string name="pref_navigation_title">Navegación</string>
+    <string name="pref_show_home_on_launch_title">Mostrar Inicio al iniciar</string>
 </resources>
