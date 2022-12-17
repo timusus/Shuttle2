@@ -29,6 +29,7 @@ import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
+import com.simplecityapps.shuttle.ui.common.autoClearedNullable
 import com.simplecityapps.shuttle.ui.common.dialog.EditTextAlertDialog
 import com.simplecityapps.shuttle.ui.common.dialog.ShowExcludeDialog
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
@@ -67,7 +68,7 @@ class QueueFragment :
     private var adapter: RecyclerAdapter? = null
     private var recyclerView: FastScrollRecyclerView? = null
 
-    private var toolbar: Toolbar by autoCleared()
+    private var toolbar: Toolbar? by autoClearedNullable()
     private var toolbarTitleTextView: TextView by autoCleared()
     private var toolbarSubtitleTextView: TextView by autoCleared()
     private var progressBar: ProgressBar by autoCleared()
@@ -123,28 +124,31 @@ class QueueFragment :
         view.findParentMultiSheetView()?.addSheetStateChangeListener(sheetStateChangeListener)
 
         toolbar = view.findViewById(R.id.toolbar)
-        toolbar.inflateMenu(R.menu.menu_up_next)
-        toolbar.setOnMenuItemClickListener { menuItem ->
+        toolbar!!.inflateMenu(R.menu.menu_up_next)
+        toolbar!!.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.scrollToCurrent -> {
                     presenter.scrollToCurrent()
                     true
                 }
+
                 R.id.playlist -> {
-                    playlistMenuView.createPlaylistMenu(toolbar.menu)
+                    playlistMenuView.createPlaylistMenu(toolbar!!.menu)
                     true
                 }
+
                 R.id.clearQueue -> {
                     presenter.clearQueue()
                     true
                 }
+
                 else -> {
                     playlistMenuView.handleMenuItem(menuItem, PlaylistData.Queue)
                 }
             }
         }
 
-        toolbar.setOnClickListener {
+        toolbar!!.setOnClickListener {
             view.findParentMultiSheetView()?.let { multiSheetView ->
                 if (multiSheetView.currentSheet != MultiSheetView.Sheet.SECOND) {
                     multiSheetView.expandSheet(MultiSheetView.Sheet.SECOND)
@@ -157,9 +161,9 @@ class QueueFragment :
         presenter.bindView(this)
         playlistMenuPresenter.bindView(playlistMenuView)
 
-        playlistMenuView.createPlaylistMenu(toolbar.menu)
+        playlistMenuView.createPlaylistMenu(toolbar!!.menu)
 
-        val trialMenuItem = toolbar.menu.findItem(R.id.trial)
+        val trialMenuItem = toolbar!!.menu.findItem(R.id.trial)
         trialMenuItem.actionView.setOnClickListener {
             TrialDialogFragment.newInstance().show(childFragmentManager)
         }
@@ -169,6 +173,7 @@ class QueueFragment :
                     is TrialState.Pretrial, is TrialState.Paid, is TrialState.Unknown -> {
                         trialMenuItem.isVisible = false
                     }
+
                     is TrialState.Trial -> {
                         trialMenuItem.isVisible = true
                         val daysRemainingText: TextView = trialMenuItem.actionView.findViewById(R.id.daysRemaining)
@@ -176,6 +181,7 @@ class QueueFragment :
                         val progress: CircularProgressView = trialMenuItem.actionView.findViewById(R.id.progress)
                         progress.setProgress((trialState.timeRemaining / trialManager.trialLength.toDouble()).toFloat())
                     }
+
                     is TrialState.Expired -> {
                         trialMenuItem.isVisible = true
                         val daysRemainingText: TextView = trialMenuItem.actionView.findViewById(R.id.daysRemaining)
@@ -314,20 +320,24 @@ class QueueFragment :
                             presenter.removeFromQueue(queueItem)
                             return@setOnMenuItemClickListener true
                         }
+
                         R.id.playNext -> {
                             presenter.playNext(queueItem)
                             return@setOnMenuItemClickListener true
                         }
+
                         R.id.exclude -> {
                             ShowExcludeDialog(requireContext(), queueItem.song.name) {
                                 presenter.exclude(queueItem)
                             }
                             return@setOnMenuItemClickListener true
                         }
+
                         R.id.editTags -> {
                             presenter.editTags(queueItem)
                             return@setOnMenuItemClickListener true
                         }
+
                         else -> {
                             playlistMenuView.handleMenuItem(menuItem, PlaylistData.Songs(queueItem.song))
                         }
@@ -347,16 +357,18 @@ class QueueFragment :
     private val sheetStateChangeListener = object : MultiSheetView.SheetStateChangeListener {
 
         override fun onSheetStateChanged(sheet: Int, state: Int) {
-            toolbar.menu.findItem(R.id.scrollToCurrent)?.isVisible = sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_EXPANDED
-            toolbar.menu.findItem(R.id.playlist)?.isVisible = sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_EXPANDED
-            toolbar.menu.findItem(R.id.clearQueue)?.isVisible = sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_EXPANDED
+            toolbar?.let { toolbar ->
+                toolbar.menu.findItem(R.id.scrollToCurrent)?.isVisible = sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_EXPANDED
+                toolbar.menu.findItem(R.id.playlist)?.isVisible = sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_EXPANDED
+                toolbar.menu.findItem(R.id.clearQueue)?.isVisible = sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_EXPANDED
 
-            if (sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_EXPANDED) {
-                toolbar.menu.findItem(R.id.trial).isVisible = false
-            }
-            if (sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_COLLAPSED) {
-                if (trialManager.trialState.value is TrialState.Trial || trialManager.trialState.value is TrialState.Expired) {
-                    toolbar.menu.findItem(R.id.trial).isVisible = true
+                if (sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_EXPANDED) {
+                    toolbar.menu.findItem(R.id.trial).isVisible = false
+                }
+                if (sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_COLLAPSED) {
+                    if (trialManager.trialState.value is TrialState.Trial || trialManager.trialState.value is TrialState.Expired) {
+                        toolbar.menu.findItem(R.id.trial).isVisible = true
+                    }
                 }
             }
         }
@@ -382,6 +394,7 @@ class QueueFragment :
                 is NetworkResult.Success -> {
                     PromoCodeDialogFragment.newInstance(result.body.promoCode).show(childFragmentManager)
                 }
+
                 is NetworkResult.Failure -> {
                     Toast.makeText(requireContext(), "Failed to retrieve promo code", Toast.LENGTH_LONG).show()
                 }
