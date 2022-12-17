@@ -137,8 +137,8 @@ class SnowfallView(context: Context?, attrs: AttributeSet?) : View(context, attr
 
     companion object {
 
-        /** Forecast a <= 1% chance of snowing  */
-        private const val LUCKY = 0.01f
+        /** Forecast a <= 5% chance of snowing  */
+        private const val LUCKY = 0.05f
 
         /** The total number of snowflakes to generate  */
         private const val TOTAL_FLAKES = 200
