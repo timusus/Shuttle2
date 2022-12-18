@@ -16,7 +16,7 @@ android {
     defaultConfig {
         applicationId = "com.simplecityapps.shuttle"
         minSdk = 21
-        targetSdk = 30
+        targetSdk = 31
         versionName = versionName()
         versionCode = versionCode()
         vectorDrawables.useSupportLibrary = true
