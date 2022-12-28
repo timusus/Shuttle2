@@ -7,73 +7,48 @@
     <!-- Shown when an unknown error occurs -->
     <string name="error_unknown">Se produjo un error desconocido</string>
     <!-- Shown when items (an album, artist or song) are added to the queue -->
-    <string name="queue_item_added"><xliff:g example="Lateralus" id="item_name">{item_name}</xliff:g>
-     añadido a la cola</string>
+    <string name="queue_item_added"><xliff:g example="Lateralus" id="item_name">{item_name}</xliff:g> añadido a la cola</string>
     <!-- Shown when songs are added to the queue -->
     <plurals name="queue_songs_added">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
-       canción añadida a la cola</item>
-        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
-       canciones añadidas a la cola</item>
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> canción añadida a la cola</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> canciones añadidas a la cola</item>
     </plurals>
     <!-- Shown when albums are added to the queue -->
     <plurals name="queue_albums_added">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
-       álbum añadido a la cola</item>
-        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
-       álbumes añadidos a la cola</item>
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> álbum añadido a la cola</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> álbumes añadidos a la cola</item>
     </plurals>
     <!-- Shown when artists are added to the queue -->
     <plurals name="queue_artists_added">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
-       artista añadido a la cola.</item>
-        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
-       artistas añadidos a la cola</item>
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> artista añadido a la cola</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> artistas añadidos a la cola</item>
     </plurals>
     <!-- Shown when current playback queue is added to a playlist -->
-    <string name="playlist_queue_added">Cola añadida a 
-    <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></string>
+    <string name="playlist_queue_added">Cola añadida a <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></string>
     <!-- Shown when songs are added to a playlist -->
     <plurals name="playlist_songs_added">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
-       canción añadida a 
-      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
-        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
-       canciones añadidas a 
-      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> canción añadida a <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> canciones añadidas a <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
     </plurals>
     <!-- Shown when albums are added to a playlist -->
     <plurals name="playlist_albums_added">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
-       álbum añadido a 
-      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
-        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
-       álbumes añadidos a 
-      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> álbum añadido a <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> álbumes añadidos a <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
     </plurals>
     <!-- Shown when artists are added to a playlist -->
     <plurals name="playlist_artists_added">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
-       artista añadido a 
-      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
-        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
-       artistas añadidos a 
-      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> artista añadido a <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> artistas añadidos a <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
     </plurals>
     <!-- Shown when genres are added to a playlist -->
     <plurals name="playlist_genres_added">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
-       género añadido a 
-      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
-        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
-       géneros añadidos a 
-      <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> género añadido a <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> géneros añadidos a <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
     </plurals>
     <!-- Shown when a song fails to be deleted -->
     <string name="delete_song_failed">No se pudo eliminar la canción</string>
     <!-- The disc number for this album-->
-    <string name="disc_number">Disco 
-    <xliff:g example="1" id="disc_number">{disc_number}</xliff:g></string>
+    <string name="disc_number">Disco <xliff:g example="1" id="disc_number">{disc_number}</xliff:g></string>
     <!-- Shown when the songs list finishes loading, and there are no songs-->
     <string name="song_list_empty">Sin canciones</string>
     <!-- Shown when the albums list finishes loading, and there are no songs-->
@@ -99,9 +74,9 @@
     <!-- Button to skip to the previous track-->
     <string name="button_skip_previous">Saltar anterior</string>
     <!-- Button to shuffle songs-->
-    <string name="button_content_description_shuffle">Shuffle</string>
+    <string name="button_content_description_shuffle">Aleatorio</string>
     <!-- Button to shuffle songs using 'album shuffle' mode (shuffles albums, but plays songs in track order)-->
-    <string name="button_album_shuffle">Shuffle de álbum</string>
+    <string name="button_album_shuffle">Álbum aleatorio</string>
     <!-- 'Loading' text. Shown on various screens as their content is loading-->
     <string name="loading">Cargando…</string>
     <!-- Shown when the playback queue is empty -->
