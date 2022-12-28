@@ -76,12 +76,6 @@ class SnowfallView(context: Context?, attrs: AttributeSet?) : View(context, attr
         }
     }
 
-    override fun onAttachedToWindow() {
-        super.onAttachedToWindow()
-
-
-    }
-
     override fun onDetachedFromWindow() {
         clear()
         super.onDetachedFromWindow()
