@@ -8,11 +8,18 @@ import android.provider.MediaStore
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.navigation.fragment.NavHostFragment
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.simplecityapps.playback.PlaybackService
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.ui.common.view.SnowfallView
 import com.simplecityapps.trial.BillingManager
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeout
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -27,6 +34,15 @@ class MainActivity :
 
     @Inject
     lateinit var billingManager: BillingManager
+
+    @Inject
+    lateinit var remoteConfig: FirebaseRemoteConfig
+
+    @Inject
+    @AppCoroutineScope
+    lateinit var scope: CoroutineScope
+
+    lateinit var snowfallView: SnowfallView
 
     // Lifecycle
 
@@ -54,6 +70,15 @@ class MainActivity :
         handleSearchQuery(intent)
 
         billingManager.queryPurchases()
+
+        snowfallView = findViewById(R.id.snowfallView)
+
+        scope.launch {
+            withTimeout(5000) {
+                remoteConfig.fetchAndActivate().await()
+            }
+            snowfallView.setForecast(remoteConfig.getDouble("snow_forecast"))
+        }
     }
 
     override fun onResume() {
@@ -78,14 +103,12 @@ class MainActivity :
         if (intent?.action == MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH) {
             ContextCompat.startForegroundService(
                 this,
-                (
-                    Intent(this, PlaybackService::class.java).apply {
-                        action = PlaybackService.ACTION_SEARCH
-                        intent.extras?.let { extras ->
-                            putExtras(extras)
-                        }
+                Intent(this, PlaybackService::class.java).apply {
+                    action = PlaybackService.ACTION_SEARCH
+                    intent.extras?.let { extras ->
+                        putExtras(extras)
                     }
-                    )
+                }
             )
         }
     }
