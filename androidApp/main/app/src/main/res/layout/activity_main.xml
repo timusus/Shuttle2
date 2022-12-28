@@ -13,6 +13,10 @@
         android:layout_height="match_parent"
         app:defaultNavHost="true" />
 
+    <com.simplecityapps.shuttle.ui.common.view.SnowfallView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
     <com.simplecityapps.shuttle.ui.common.view.KeylineView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
