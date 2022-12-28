@@ -10,6 +10,7 @@ import androidx.media.MediaBrowserServiceCompat
 import androidx.media.session.MediaButtonReceiver
 import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.androidauto.PackageValidator
+import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
@@ -48,6 +49,9 @@ class PlaybackService :
 
     @Inject
     lateinit var mediaIdHelper: MediaIdHelper
+
+    @Inject
+    lateinit var audioFocusHelper: AudioFocusHelper
 
     private var foregroundNotificationHandler: Handler? = null
 
@@ -204,18 +208,23 @@ class PlaybackService :
         delayedShutdownHandler?.removeCallbacksAndMessages(null)
 
         if (playbackState is PlaybackState.Paused) {
-            foregroundNotificationHandler?.postDelayed({
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    Timber.v("stopForeground()")
-                    stopForeground(Service.STOP_FOREGROUND_DETACH)
-                } else {
-                    Timber.v("stopForeground()")
-                    stopForeground(true)
-                    notificationManager.displayPlaybackNotification()
-                }
-            }, 150)
+            // If we're paused due to a transient loss of audio focus (like a phone call), then don't stop the foreground service.
+            // THis prevents an issue On API 31+, where the system will crash the app if we try to start the foreground service from an audio focus change.
+            // We may as well keep the service running if we intend to resume playback.
+            if (!audioFocusHelper.resumeOnFocusGain) {
+                foregroundNotificationHandler?.postDelayed({
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                        Timber.v("stopForeground()")
+                        stopForeground(Service.STOP_FOREGROUND_DETACH)
+                    } else {
+                        Timber.v("stopForeground()")
+                        stopForeground(true)
+                        notificationManager.displayPlaybackNotification()
+                    }
+                }, 150)
 
-            postDelayedShutdown()
+                postDelayedShutdown()
+            }
         }
     }
 

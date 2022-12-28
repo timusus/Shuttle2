@@ -18,7 +18,7 @@ abstract class AudioFocusHelperBase(
         context.getSystemService()
     }
 
-    private var resumeOnFocusGain: Boolean = false
+    override var resumeOnFocusGain: Boolean = false
 
     private var isPlaying: Boolean = false
 
