@@ -36,6 +36,11 @@
 
     </androidx.drawerlayout.widget.DrawerLayout>
 
+    <com.simplecityapps.shuttle.ui.common.view.SnowfallView
+        android:id="@+id/snowfallView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
     <com.simplecityapps.shuttle.ui.common.view.KeylineView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
