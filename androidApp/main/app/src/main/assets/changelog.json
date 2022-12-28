@@ -1,5 +1,19 @@
 [
   {
+    "versionName": "1.0.6",
+    "releaseDate": "29/12/2022",
+    "features": [
+    ],
+    "fixes": [
+      "Fixed a crash when resuming playback after losing audio focus (like during a phone call), on API 31+ (Android 12+)"
+    ],
+    "improvements": [
+    ],
+    "notes": [
+      "Shuttle is now open source 🎉 You can file requests and bug reports via <a href=\"https://github.com/timusus/shuttle2/issues\">GitHub</a>"
+    ]
+  },
+  {
     "versionName": "1.0.5",
     "releaseDate": "18/12/2022",
     "features": [
