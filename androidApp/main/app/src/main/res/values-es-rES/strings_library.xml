@@ -5,19 +5,15 @@
     <!-- Title for the list of albums -->
     <string name="albums">Álbumes</string>
     <plurals name="albumsPlural">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
-       álbum</item>
-        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g>
-       álbumes</item>
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> álbum</item>
+        <item quantity="other"><xliff:g example="5" id="count">{count}</xliff:g> álbumes</item>
     </plurals>
     <!-- Title for the list of songs -->
     <string name="songs">Canciones</string>
     <!-- The number of songs for an album/playlist/genre -->
     <plurals name="songsPlural">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
-       canción</item>
-        <item quantity="other"><xliff:g example="12" id="count">{count}</xliff:g>
-       canciones</item>
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> canción</item>
+        <item quantity="other"><xliff:g example="12" id="count">{count}</xliff:g> canciones</item>
     </plurals>
     <!-- Title for the list of genres -->
     <string name="genres">Géneros</string>
@@ -27,10 +23,9 @@
     <string name="library_scan_in_progress">Buscando en tu biblioteca</string>
     <!-- Shown to indicate the number of tracks/albums/artists which have been selected, in multi-selection mode-->
     <plurals name="multi_select_items_selected">
-        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
-       seleccionado(s)</item>
-        <item quantity="other"><xliff:g example="3" id="count">{count}</xliff:g>
-       seleccionado(s)</item>
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> seleccionado(s)</item>
+        <item quantity="other"><xliff:g example="3" id="count">{count}</xliff:g> seleccionado(s)</item>
     </plurals>
     <!-- Shown on the library screen, if the user has manually deselected all the library tabs in appearance settings-->
+    <string name="library_tabs_empty">No hay pestañas de biblioteca visibles</string>
 </resources>
