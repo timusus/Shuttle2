@@ -15,6 +15,12 @@ import kotlin.math.roundToInt
 
 class SnowfallView(context: Context?, attrs: AttributeSet?) : View(context, attrs) {
 
+    fun setForecast(forecast: Double) {
+        if (random.nextDouble() <= forecast) {
+            letItSnow()
+        }
+    }
+
     /** Used to paint each snowflake  */
     private val snowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.WHITE
@@ -67,14 +73,6 @@ class SnowfallView(context: Context?, attrs: AttributeSet?) : View(context, attr
                 canvas.drawCircle(snowflake.snowX(), snowflake.snowY(), snowflake.snowR, snowPaint)
             }
             invalidate()
-        }
-    }
-
-    override fun onAttachedToWindow() {
-        super.onAttachedToWindow()
-
-        if (lerp(0f, 1f, random.nextFloat()) <= LUCKY) {
-            letItSnow()
         }
     }
 
@@ -136,9 +134,6 @@ class SnowfallView(context: Context?, attrs: AttributeSet?) : View(context, attr
     }
 
     companion object {
-
-        /** Forecast a <= 5% chance of snowing  */
-        private const val LUCKY = 0.05f
 
         /** The total number of snowflakes to generate  */
         private const val TOTAL_FLAKES = 200
