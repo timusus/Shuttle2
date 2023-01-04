@@ -203,7 +203,7 @@ class PlaybackFragment :
                 else -> false
             }
         }
-        favoriteButton = toolbar.menu.findItem(R.id.favorite).actionView.findViewById(R.id.favoritesButton)
+        favoriteButton = toolbar.menu.findItem(R.id.favorite).actionView!!.findViewById(R.id.favoritesButton)
         favoriteButton.setOnClickListener {
             favoriteButton.toggle()
             presenter.setFavorite(favoriteButton.isChecked)

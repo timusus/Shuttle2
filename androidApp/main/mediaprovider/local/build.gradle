@@ -3,11 +3,11 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
 
 android {
-    compileSdkVersion 32
+    compileSdkVersion 33
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 31
+        targetSdkVersion 33
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -52,9 +52,9 @@ dependencies {
     implementation project(path: ':androidApp:main:saf')
 
     // Room
-    kapt 'androidx.room:room-compiler:2.4.3'
-    api 'androidx.room:room-runtime:2.4.3'
-    api 'androidx.room:room-ktx:2.4.3'
+    kapt 'androidx.room:room-compiler:2.5.0-rc01'
+    api 'androidx.room:room-runtime:2.5.0-rc01'
+    api 'androidx.room:room-ktx:2.5.0-rc01'
 
     // Testing
     testImplementation 'junit:junit:4.13.2'
@@ -65,8 +65,8 @@ dependencies {
     kapt("com.squareup.moshi:moshi-kotlin-codegen:1.13.0")
 
     // Hilt
-    implementation 'com.google.dagger:hilt-android:2.43.2'
-    kapt 'com.google.dagger:hilt-compiler:2.43.2'
+    implementation 'com.google.dagger:hilt-android:2.44.2'
+    kapt 'com.google.dagger:hilt-compiler:2.44.2'
 
     implementation project(':shared:data')
     implementation 'org.jetbrains.kotlinx:kotlinx-datetime:0.2.1'

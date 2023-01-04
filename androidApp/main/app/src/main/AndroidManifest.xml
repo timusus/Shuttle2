@@ -81,6 +81,15 @@
                 android:resource="@xml/appwidget_info_42" />
         </receiver>
 
+
+        <!-- WorkManager -->
+
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            tools:node="remove">
+        </provider>
+
     </application>
 
 </manifest>

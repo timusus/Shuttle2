@@ -1,7 +1,7 @@
 package com.simplecityapps.localmediaprovider.local.data.room.dao
 
 import androidx.room.*
-import androidx.room.OnConflictStrategy.IGNORE
+import androidx.room.OnConflictStrategy.Companion.IGNORE
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongDataUpdate
 import com.simplecityapps.shuttle.model.MediaProviderType

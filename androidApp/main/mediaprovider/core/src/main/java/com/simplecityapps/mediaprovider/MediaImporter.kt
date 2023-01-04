@@ -7,15 +7,18 @@ import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.query.SongQuery
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import timber.log.Timber
+import java.util.Date
 
 class MediaImporter(
     private val context: Context,
     private val songRepository: SongRepository,
-    private val playlistRepository: PlaylistRepository
+    private val playlistRepository: PlaylistRepository,
+    private val preferenceManager: GeneralPreferenceManager
 ) {
 
     interface Listener {
@@ -143,10 +146,13 @@ class MediaImporter(
             }.awaitAll()
         }
 
+        preferenceManager.lastMediaImportDate = Date()
+
         listeners.forEach { listener -> listener.onAllComplete() }
 
         importCount++
         isImporting = false
+
         Timber.v("Import complete in ${System.currentTimeMillis() - time}ms)")
     }
 

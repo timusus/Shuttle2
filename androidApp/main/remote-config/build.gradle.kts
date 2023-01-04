@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    compileSdk = 32
+    compileSdk = 33
 
     defaultConfig {
         minSdk = 21
@@ -43,8 +43,8 @@ dependencies {
     api("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.1")
 
     // Hilt
-    implementation("com.google.dagger:hilt-android:2.43.2")
-    kapt("com.google.dagger:hilt-compiler:2.43.2")
+    implementation("com.google.dagger:hilt-android:2.44.2")
+    kapt("com.google.dagger:hilt-compiler:2.44.2")
 
     // S2 Core
     implementation(project(":androidApp:main:core"))

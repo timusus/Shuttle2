@@ -11,7 +11,7 @@ plugins {
 
 android {
 
-    compileSdk = 32
+    compileSdk = 33
 
     defaultConfig {
         applicationId = "com.simplecityapps.shuttle"
@@ -142,8 +142,8 @@ android {
         implementation("androidx.navigation:navigation-ui-ktx:2.5.1")
 
         // Hilt
-        implementation("com.google.dagger:hilt-android:2.43.2")
-        kapt("com.google.dagger:hilt-compiler:2.43.2")
+        implementation("com.google.dagger:hilt-android:2.44.2")
+        kapt("com.google.dagger:hilt-compiler:2.44.2")
 
         androidTestImplementation("com.google.dagger:hilt-android-testing:2.43.2")
         kaptAndroidTest("com.google.dagger:hilt-android-compiler:2.43.2")
@@ -153,7 +153,7 @@ android {
         kapt("com.squareup.inject:assisted-inject-processor-dagger2:0.6.0")
 
         // Leak Canary
-        debugImplementation("com.squareup.leakcanary:leakcanary-android:2.7")
+        debugImplementation("com.squareup.leakcanary:leakcanary-android:2.10")
 
         // ViewPager 2
         implementation("androidx.viewpager2:viewpager2:1.1.0-beta01")
@@ -241,6 +241,11 @@ android {
 
 
         testImplementation("junit:junit:4.13.2")
+
+        // WorkManager
+        implementation("androidx.work:work-runtime-ktx:2.8.0-rc01")
+        implementation("androidx.hilt:hilt-work:1.0.0")
+        kapt("androidx.hilt:hilt-compiler:1.0.0")
     }
 }
 

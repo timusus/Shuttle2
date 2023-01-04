@@ -10,6 +10,7 @@ import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -36,8 +37,8 @@ class RepositoryModule {
 
     @Provides
     @Singleton
-    fun provideMediaImporter(@ApplicationContext context: Context, songRepository: SongRepository, playlistRepository: PlaylistRepository): MediaImporter {
-        return MediaImporter(context, songRepository, playlistRepository)
+    fun provideMediaImporter(@ApplicationContext context: Context, songRepository: SongRepository, playlistRepository: PlaylistRepository, preferenceManager: GeneralPreferenceManager): MediaImporter {
+        return MediaImporter(context, songRepository, playlistRepository, preferenceManager)
     }
 
     @Provides
