@@ -2,14 +2,14 @@ package com.simplecityapps.shuttle
 
 import android.app.Application
 import android.content.Intent
+import androidx.hilt.work.HiltWorkerFactory
+import androidx.work.Configuration
 import com.simplecityapps.playback.ActivityIntentProvider
 import com.simplecityapps.shuttle.appinitializers.AppInitializers
-import com.simplecityapps.shuttle.di.AppComponent
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.MainActivity
 import com.simplecityapps.shuttle.ui.ThemeManager
-import com.simplecityapps.shuttle.ui.widgets.WidgetManager
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DEBUG_PROPERTY_NAME
@@ -18,7 +18,10 @@ import timber.log.Timber
 import javax.inject.Inject
 
 @HiltAndroidApp
-class ShuttleApplication : Application(), ActivityIntentProvider {
+class ShuttleApplication : Application(), ActivityIntentProvider, Configuration.Provider {
+
+    @Inject
+    lateinit var workerFactory: HiltWorkerFactory
 
     @Inject
     lateinit var initializers: AppInitializers
@@ -32,11 +35,6 @@ class ShuttleApplication : Application(), ActivityIntentProvider {
     @AppCoroutineScope
     @Inject
     lateinit var appCoroutineScope: CoroutineScope
-
-    @Inject
-    lateinit var widgetManager: WidgetManager
-
-    lateinit var appComponent: AppComponent
 
     override fun onCreate() {
         super.onCreate()
@@ -68,4 +66,9 @@ class ShuttleApplication : Application(), ActivityIntentProvider {
     override fun provideMainActivityIntent(): Intent {
         return Intent(this, MainActivity::class.java)
     }
+
+    // WorkManager
+    override fun getWorkManagerConfiguration() = Configuration.Builder()
+        .setWorkerFactory(workerFactory)
+        .build()
 }

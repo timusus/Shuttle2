@@ -312,6 +312,19 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
         get() {
             return sharedPreferences.get("pref_show_home_on_launch", false)
         }
+
+    var mediaImportFrequency: Int = sharedPreferences.getString("pref_media_rescan_frequency", "0")?.toInt() ?: 0
+    var lastMediaImportDate: Date?
+        set(value) {
+            sharedPreferences.put("pref_media_last_rescan_date", value?.time)
+        }
+        get() {
+            val time = sharedPreferences.getLong("pref_media_last_rescan_date", -1)
+            if (time != -1L) {
+                return Date(time)
+            }
+            return null
+        }
 }
 
 enum class LibraryTab {
