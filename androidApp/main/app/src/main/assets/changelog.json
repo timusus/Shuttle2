@@ -1,5 +1,19 @@
 [
   {
+    "versionName": "1.0.7-beta1",
+    "releaseDate": "04/01/2022",
+    "features": [
+      "Ability to schedule media import (daily or weekly)"
+    ],
+    "fixes": [
+    ],
+    "improvements": [
+    ],
+    "notes": [
+      "Shuttle is now open source 🎉 You can file requests and bug reports via <a href=\"https://github.com/timusus/shuttle2/issues\">GitHub</a>"
+    ]
+  },
+  {
     "versionName": "1.0.6",
     "releaseDate": "29/12/2022",
     "features": [
