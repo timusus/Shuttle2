@@ -51,7 +51,7 @@ data class Media(
 data class Part(
     @Json(name = "id") val id: Int,
     @Json(name = "key") val key: String,
-    @Json(name = "duration") val duration: Int,
+    @Json(name = "duration") val duration: Int?,
     @Json(name = "file") val file: String,
     @Json(name = "size") val size: Int,
     @Json(name = "container") val container: String?,
