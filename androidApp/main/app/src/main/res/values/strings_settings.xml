@@ -162,4 +162,10 @@
     <string name="pref_firebase_analytics_subtitle">Enables A/B testing of features, and tracks how users interact with the app</string>
     <!-- Settings: Title for the library tabs options (list of tabs to be displayed on home screen)-->
     <string name="pref_library_tabs_title">Library tabs</string>
+    <!-- Settings: Title for the automatic rescan frequency (never rescan)-->
+    <string name="pref_rescan_frequency_never">Never</string>
+    <!-- Settings: Title for the automatic rescan frequency (daily rescan)-->
+    <string name="pref_rescan_frequency_daily">Daily</string>
+    <!-- Settings: Title for the automatic rescan frequency (weekly rescan)-->
+    <string name="pref_rescan_frequency_weekly">Weekly</string>
 </resources>

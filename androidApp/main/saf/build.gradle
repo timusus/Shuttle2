@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    compileSdkVersion 32
+    compileSdkVersion 33
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 31
+        targetSdkVersion 33
         consumerProguardFiles 'consumer-rules.pro'
     }
 
@@ -30,7 +30,7 @@ dependencies {
     api 'androidx.documentfile:documentfile:1.0.1'
 
     // Coroutines
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.4"
 
     // Timber
     implementation 'com.jakewharton.timber:timber:4.7.1'

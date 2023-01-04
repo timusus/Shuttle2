@@ -12,6 +12,14 @@
         android:summary="@string/pref_media_rescan_summary"
         android:title="@string/pref_media_rescan_title"
         app:iconSpaceReserved="false" />
+    <ListPreference
+        android:defaultValue="0"
+        android:entries="@array/pref_rescan_freq_entries"
+        android:entryValues="@array/pref_rescan_freq_values"
+        android:key="pref_media_rescan_frequency"
+        android:summary="@string/pref_rescan_frequency_never"
+        android:title="Rescan frequency"
+        app:iconSpaceReserved="false" />
     <Preference
         android:key="pref_excluded"
         android:summary="@string/pref_exclude_summary"

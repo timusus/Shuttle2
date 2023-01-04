@@ -136,7 +136,7 @@ class LibraryFragment :
         inflater.inflate(R.menu.menu_library, menu)
 
         val trialMenuItem = menu.findItem(R.id.trial)
-        trialMenuItem.actionView.setOnClickListener {
+        trialMenuItem.actionView!!.setOnClickListener {
             TrialDialogFragment.newInstance().show(childFragmentManager)
         }
     }
@@ -151,16 +151,16 @@ class LibraryFragment :
             }
             is TrialState.Trial -> {
                 trialMenuItem.isVisible = true
-                val daysRemainingText: TextView = trialMenuItem.actionView.findViewById(R.id.daysRemaining)
+                val daysRemainingText: TextView = trialMenuItem.actionView!!.findViewById(R.id.daysRemaining)
                 daysRemainingText.text = TimeUnit.MILLISECONDS.toDays(trialState.timeRemaining).toString()
-                val progress: CircularProgressView = trialMenuItem.actionView.findViewById(R.id.progress)
+                val progress: CircularProgressView = trialMenuItem.actionView!!.findViewById(R.id.progress)
                 progress.setProgress((trialState.timeRemaining / trialManager.trialLength.toDouble()).toFloat())
             }
             is TrialState.Expired -> {
                 trialMenuItem.isVisible = true
-                val daysRemainingText: TextView = trialMenuItem.actionView.findViewById(R.id.daysRemaining)
+                val daysRemainingText: TextView = trialMenuItem.actionView!!.findViewById(R.id.daysRemaining)
                 daysRemainingText.text = String.format("%.1fx", trialState.multiplier())
-                val progress: CircularProgressView = trialMenuItem.actionView.findViewById(R.id.progress)
+                val progress: CircularProgressView = trialMenuItem.actionView!!.findViewById(R.id.progress)
                 progress.setProgress(0f)
             }
             is TrialState.Pretrial -> {
