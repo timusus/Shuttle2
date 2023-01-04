@@ -67,7 +67,6 @@ class ShuttleApplication : Application(), ActivityIntentProvider, Configuration.
         return Intent(this, MainActivity::class.java)
     }
 
-
     // WorkManager
     override fun getWorkManagerConfiguration() = Configuration.Builder()
         .setWorkerFactory(workerFactory)

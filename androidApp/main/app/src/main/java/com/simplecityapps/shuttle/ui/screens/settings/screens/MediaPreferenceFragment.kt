@@ -112,7 +112,6 @@ class MediaPreferenceFragment : PreferenceFragmentCompat() {
             true
         }
 
-
         val rescanFrequencyPreference: ListPreference? = preferenceScreen.findPreference("pref_media_rescan_frequency")
         rescanFrequencyPreference?.setOnPreferenceChangeListener { _, newValue ->
             MediaImportWorker.updateWork(
@@ -122,8 +121,10 @@ class MediaPreferenceFragment : PreferenceFragmentCompat() {
 
             val lastScanDateString = preferenceManager.lastMediaImportDate?.let { Phrase.from(resources, R.string.pref_last_scan_date).put("date", dateFormat.format(it)).format() }
 
-            rescanFrequencyPreference.summary = (rescanFrequencyPreference.entries[rescanFrequencyPreference.entryValues.indexOf(newValue)]
-                ?: "").toString() + " " + lastScanDateString
+            rescanFrequencyPreference.summary = (
+                rescanFrequencyPreference.entries[rescanFrequencyPreference.entryValues.indexOf(newValue)]
+                    ?: ""
+                ).toString() + " " + lastScanDateString
 
             true
         }
