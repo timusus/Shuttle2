@@ -15,7 +15,7 @@
     <!-- Menu option to remove the selected media provider -->
     <string name="menu_title_media_provider_remove">Eliminar</string>
     <!-- Menu option to show the Sleep Timer -->
-    <string name="menu_title_sleep_timer">Temporizador de apagado</string>
+    <string name="menu_title_sleep_timer">Temporizador</string>
     <!-- Menu option to add the selected song to the 'favorites' playlist -->
     <string name="menu_title_favorite">Favorito</string>
     <!-- Menu option to show the 'lyrics' view -->
