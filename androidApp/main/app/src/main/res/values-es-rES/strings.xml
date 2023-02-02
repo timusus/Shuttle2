@@ -28,4 +28,8 @@
     <string name="toast_crash_reporting_enabled">Informes de fallos activado</string>
     <string name="pref_navigation_title">Navegación</string>
     <string name="pref_show_home_on_launch_title">Mostrar Inicio al iniciar</string>
+
+    <string name="pref_rescan_frequency_title">Frecuencia de reescaneo</string>
+    <!-- Shown in the media preferences screen after the 'rescan frequency' (i.e. Weekly (Last scan 3/1/23 2:02 pm))-->
+    <string name="pref_last_scan_date">(Último escaneo <xliff:g example="3/1/23 2:02 pm" id="date">{date}</xliff:g>)</string>
 </resources>
