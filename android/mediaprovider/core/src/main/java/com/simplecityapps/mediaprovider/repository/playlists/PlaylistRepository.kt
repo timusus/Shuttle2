@@ -6,6 +6,7 @@ import com.simplecityapps.shuttle.model.PlaylistSong
 import com.simplecityapps.shuttle.model.SmartPlaylist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
+import java.io.OutputStream
 import java.io.Serializable
 import kotlinx.coroutines.flow.Flow
 
@@ -70,6 +71,8 @@ interface PlaylistRepository {
         playlist: Playlist,
         externalId: String?
     )
+
+    suspend fun updateM3uFile(playlist: Playlist)
 }
 
 enum class PlaylistSortOrder : Serializable {

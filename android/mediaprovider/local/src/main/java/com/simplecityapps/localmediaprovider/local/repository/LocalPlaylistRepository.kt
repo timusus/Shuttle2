@@ -1,6 +1,7 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
 import android.content.Context
+import android.net.Uri
 import com.simplecityapps.localmediaprovider.local.data.room.dao.PlaylistDataDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.PlaylistSongJoinDao
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistData
@@ -158,6 +159,32 @@ class LocalPlaylistRepository(
             sortOrder = playlist.sortOrder
         )
     )
+
+    override suspend fun updateM3uFile(playlist: Playlist) {
+        val outputStream = playlist.externalId?.let { path ->
+            context.contentResolver.openOutputStream(Uri.parse(playlist.externalId), "wt")
+        }
+
+        if (outputStream == null) {
+            Timber.w("Unable to open M3U file at ${playlist.externalId} for playlist ${playlist.name}")
+        } else {
+            val playlistPath = Uri.decode(playlist.externalId?: "")
+            val playlistFolder = playlistPath.substringBeforeLast("/") + "/"
+
+            getSongsForPlaylist(playlist)
+                .firstOrNull()
+                .orEmpty()
+                .forEach { plSong ->
+                    // Quick-and-dirty way to relativize the song path to the m3u folder
+                    // Note that paths can be content:// URIs, for which there is no proper .relativize() method
+                    // We'll use absolute values (paths or URIs, whatever is in database) for files that are not stored in a sub-folder relative to the M3U file
+                    val songPath = Uri.decode(plSong.song.path)
+                    val relative = songPath.substringAfter(playlistFolder)
+                    val line = relative.toByteArray() + /* CRLF */ 0x0d.toByte() + 0x0A.toByte()
+                    outputStream.write(line)
+                }
+        }
+    }
 
     override suspend fun updatePlaylistSortOder(
         playlist: Playlist,
