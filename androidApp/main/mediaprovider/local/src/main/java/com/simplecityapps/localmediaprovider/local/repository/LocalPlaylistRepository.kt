@@ -122,6 +122,10 @@ class LocalPlaylistRepository(
         return playlistDataDao.delete(playlist.id)
     }
 
+    override suspend fun deleteAll(mediaProviderType: MediaProviderType) {
+        return playlistDataDao.deleteAll(mediaProviderType)
+    }
+
     override suspend fun clearPlaylist(playlist: Playlist) {
         return playlistDataDao.clear(playlist.id)
     }

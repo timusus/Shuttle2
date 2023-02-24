@@ -18,6 +18,7 @@ interface PlaylistRepository {
     suspend fun removeSongsFromPlaylist(playlist: Playlist, songs: List<Song>)
     fun getSongsForPlaylist(playlist: Playlist): Flow<List<PlaylistSong>>
     suspend fun deletePlaylist(playlist: Playlist)
+    suspend fun deleteAll(mediaProviderType: MediaProviderType)
     suspend fun clearPlaylist(playlist: Playlist)
     suspend fun renamePlaylist(playlist: Playlist, name: String)
     fun getSmartPlaylists(): Flow<List<SmartPlaylist>>
