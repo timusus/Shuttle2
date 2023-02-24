@@ -145,6 +145,7 @@ class LocalPlaylistRepository(
                 id = playlist.id,
                 name = name,
                 externalId = playlist.externalId,
+                mediaProviderType = playlist.mediaProvider,
                 sortOrder = playlist.sortOrder
             )
         )
@@ -156,6 +157,7 @@ class LocalPlaylistRepository(
                 id = playlist.id,
                 name = playlist.name,
                 externalId = playlist.externalId,
+                mediaProviderType = playlist.mediaProvider,
                 sortOrder = sortOrder
             )
         )
