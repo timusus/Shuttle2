@@ -176,4 +176,28 @@ class LocalPlaylistRepository(
             }
         )
     }
+
+    override suspend fun updatePlaylistMediaProviderType(playlist: Playlist, mediaProviderType: MediaProviderType) {
+        playlistDataDao.update(
+            PlaylistData(
+                id = playlist.id,
+                name = playlist.name,
+                sortOrder = playlist.sortOrder,
+                mediaProviderType = mediaProviderType,
+                externalId = playlist.externalId,
+            )
+        )
+    }
+
+    override suspend fun updatePlaylistExternalId(playlist: Playlist, externalId: String?) {
+        playlistDataDao.update(
+            PlaylistData(
+                id = playlist.id,
+                name = playlist.name,
+                sortOrder = playlist.sortOrder,
+                mediaProviderType = playlist.mediaProvider,
+                externalId = externalId,
+            )
+        )
+    }
 }
