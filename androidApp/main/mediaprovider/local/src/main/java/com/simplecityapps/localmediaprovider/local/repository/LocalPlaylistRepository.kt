@@ -80,21 +80,18 @@ class LocalPlaylistRepository(
                 externalId = externalId
             )
         )
-        playlistSongJoinDao.insert(songs.orEmpty().map { song -> PlaylistSongJoin(playlistId, song.id) })
+        songs.orEmpty().map { song ->
+            playlistSongJoinDao.appendSong(playlistId, song.id)
+        }
         val playlist = playlistDataDao.getPlaylist(playlistId)
         Timber.v("Created playlist: ${playlist.name} with ${playlist.songCount} songs}")
         return playlist
     }
 
     override suspend fun addToPlaylist(playlist: Playlist, songs: List<Song>) {
-        return playlistSongJoinDao.insert(
-            songs.map { song ->
-                PlaylistSongJoin(
-                    playlistId = playlist.id,
-                    songId = song.id
-                )
-            }
-        )
+        songs.map { song ->
+            playlistSongJoinDao.appendSong(playlist.id, song.id)
+        }
     }
 
     override suspend fun removeFromPlaylist(playlist: Playlist, playlistSongs: List<PlaylistSong>) {

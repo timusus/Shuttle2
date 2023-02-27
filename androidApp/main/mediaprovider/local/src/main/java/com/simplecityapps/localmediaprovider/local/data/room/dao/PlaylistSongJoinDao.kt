@@ -13,11 +13,20 @@ import kotlinx.coroutines.flow.map
 @Dao
 abstract class PlaylistSongJoinDao {
 
-    @Insert
-    abstract suspend fun insert(playlistSongJoin: PlaylistSongJoin)
+    // Add a song at the end of the playlist.
+    @Query(
+        // Inspired from https://stackoverflow.com/a/6982330
+        """
+            INSERT INTO playlist_song_join (playlistId, songId, sortOrder)
+            VALUES (
+                :playlistId,
+                :songId,
+	            (SELECT IFNULL(MAX(sortOrder),-1)+1 FROM playlist_song_join WHERE playlistId = :playlistId)
+            )
+        """
+    )
+    abstract suspend fun appendSong(playlistId: Long, songId: Long)
 
-    @Insert
-    abstract suspend fun insert(playlistSongJoins: List<PlaylistSongJoin>)
 
     @Query(
         """
