@@ -110,31 +110,40 @@ class LocalPlaylistRepository(
     override suspend fun addToPlaylist(
         playlist: Playlist,
         songs: List<Song>
-    ) = playlistSongJoinDao.insert(
-        songs.mapIndexed { i, song ->
-            PlaylistSongJoin(
-                playlistId = playlist.id,
-                songId = song.id,
-                sortOrder = (playlist.songCount + i).toLong()
-            )
-        }
-    )
+    ) {
+        playlistSongJoinDao.insert(
+            songs.mapIndexed { i, song ->
+                PlaylistSongJoin(
+                    playlistId = playlist.id,
+                    songId = song.id,
+                    sortOrder = (playlist.songCount + i).toLong()
+                )
+            }
+        )
+        updateM3uFile(playlist)
+    }
 
     override suspend fun removeFromPlaylist(
         playlist: Playlist,
         playlistSongs: List<PlaylistSong>
-    ) = playlistSongJoinDao.delete(
-        playlistId = playlist.id,
-        playlistSongIds = playlistSongs.map { playlistSong -> playlistSong.id }.toTypedArray()
-    )
+    ) {
+        playlistSongJoinDao.delete(
+            playlistId = playlist.id,
+            playlistSongIds = playlistSongs.map { playlistSong -> playlistSong.id }.toTypedArray()
+        )
+        updateM3uFile(playlist)
+    }
 
     override suspend fun removeSongsFromPlaylist(
         playlist: Playlist,
         songs: List<Song>
-    ) = playlistSongJoinDao.deleteSongs(
-        playlistId = playlist.id,
-        songIds = songs.map { it.id }.toTypedArray()
-    )
+    ) {
+        playlistSongJoinDao.deleteSongs(
+            playlistId = playlist.id,
+            songIds = songs.map { it.id }.toTypedArray()
+        )
+        updateM3uFile(playlist)
+    }
 
     override fun getSongsForPlaylist(playlist: Playlist): Flow<List<PlaylistSong>> = playlistSongJoinDao.getSongsForPlaylist(playlist.id)
         .map { playlistSong ->
@@ -145,7 +154,10 @@ class LocalPlaylistRepository(
 
     override suspend fun deleteAll(mediaProviderType: MediaProviderType) = playlistDataDao.deleteAll(mediaProviderType)
 
-    override suspend fun clearPlaylist(playlist: Playlist) = playlistDataDao.clear(playlist.id)
+    override suspend fun clearPlaylist(playlist: Playlist) {
+        playlistDataDao.clear(playlist.id)
+        updateM3uFile(playlist)
+    }
 
     override suspend fun renamePlaylist(
         playlist: Playlist,
@@ -216,6 +228,7 @@ class LocalPlaylistRepository(
                 }
             }
         )
+        updateM3uFile(playlist)
     }
 
     override suspend fun updatePlaylistMediaProviderType(
