@@ -30,9 +30,8 @@ import androidx.room.PrimaryKey
 data class PlaylistSongJoin(
     val playlistId: Long,
     val songId: Long,
+    val sortOrder: Long
 ) {
     @PrimaryKey(autoGenerate = true)
     var id: Long = 0
-
-    var sortOrder: Long = id
 }
