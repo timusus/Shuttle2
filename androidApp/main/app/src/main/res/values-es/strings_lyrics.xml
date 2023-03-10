@@ -6,4 +6,6 @@
     <string name="lyrics_quicklyric_title">QuickLyric</string>
     <!-- Shown when the QuickLyric app is unavailable-->
     <string name="lyrics_quicklyric_unavailable">QuickLyric no disponible</string>
+    <!-- Button to hide the lyrics -->
+    <string name="lyrics__close_button_title">Cerrar</string> 
 </resources>

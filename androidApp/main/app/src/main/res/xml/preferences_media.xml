@@ -18,7 +18,7 @@
         android:entryValues="@array/pref_rescan_freq_values"
         android:key="pref_media_rescan_frequency"
         android:summary="@string/pref_rescan_frequency_never"
-        android:title="Rescan frequency"
+        android:title="@string/pref_rescan_frequency_title"
         app:iconSpaceReserved="false" />
     <Preference
         android:key="pref_excluded"
