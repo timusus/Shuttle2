@@ -80,7 +80,15 @@ class LocalPlaylistRepository(
                 externalId = externalId
             )
         )
-        playlistSongJoinDao.insert(songs.orEmpty().map { song -> PlaylistSongJoin(playlistId, song.id) })
+        playlistSongJoinDao.insert(
+            songs.orEmpty().mapIndexed { i, song ->
+                PlaylistSongJoin(
+                    playlistId = playlistId,
+                    songId = song.id,
+                    sortOrder = i.toLong()
+                )
+            }
+        )
         val playlist = playlistDataDao.getPlaylist(playlistId)
         Timber.v("Created playlist: ${playlist.name} with ${playlist.songCount} songs}")
         return playlist
@@ -88,10 +96,11 @@ class LocalPlaylistRepository(
 
     override suspend fun addToPlaylist(playlist: Playlist, songs: List<Song>) {
         return playlistSongJoinDao.insert(
-            songs.map { song ->
+            songs.mapIndexed { i, song ->
                 PlaylistSongJoin(
                     playlistId = playlist.id,
-                    songId = song.id
+                    songId = song.id,
+                    sortOrder = (playlist.songCount + i).toLong()
                 )
             }
         )
@@ -151,10 +160,11 @@ class LocalPlaylistRepository(
     override suspend fun updatePlaylistSongsSortOder(playlist: Playlist, playlistSongs: List<PlaylistSong>) {
         playlistSongJoinDao.updateSortOrder(
             playlistSongs.map { playlistSong ->
-                PlaylistSongJoin(playlist.id, playlistSong.song.id).apply {
-                    id = playlistSong.id
+                PlaylistSongJoin(
+                    playlistId = playlist.id,
+                    songId = playlistSong.song.id,
                     sortOrder = playlistSong.sortOrder
-                }
+                )
             }
         )
     }
