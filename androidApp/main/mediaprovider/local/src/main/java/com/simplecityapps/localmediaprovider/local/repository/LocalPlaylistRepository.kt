@@ -164,11 +164,13 @@ class LocalPlaylistRepository(
     override suspend fun updatePlaylistSongsSortOder(playlist: Playlist, playlistSongs: List<PlaylistSong>) {
         playlistSongJoinDao.updateSortOrder(
             playlistSongs.map { playlistSong ->
-                PlaylistSongJoin(
+                var psj = PlaylistSongJoin(
                     playlistId = playlist.id,
                     songId = playlistSong.song.id,
-                    sortOrder = playlistSong.sortOrder
+                    sortOrder = playlistSong.sortOrder,
                 )
+                psj.id = playlistSong.id
+                psj
             }
         )
     }
