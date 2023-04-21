@@ -4,6 +4,7 @@ import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStor
 import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibMediaProvider
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
+import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
@@ -42,6 +43,7 @@ class MediaProviderSelectionPresenter @AssistedInject constructor(
     private val jellyfinMediaProvider: JellyfinMediaProvider,
     private val plexMediaProvider: PlexMediaProvider,
     private val songRepository: SongRepository,
+    private val playlistRepository: PlaylistRepository,
     private val queueManager: QueueManager,
     private val playbackManager: PlaybackManager,
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope,
@@ -99,6 +101,7 @@ class MediaProviderSelectionPresenter @AssistedInject constructor(
 
         appCoroutineScope.launch {
             songRepository.removeAll(mediaProviderType)
+            playlistRepository.deleteAll(mediaProviderType)
         }
     }
 

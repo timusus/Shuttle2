@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Update
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistData
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import kotlinx.coroutines.flow.Flow
 
@@ -47,4 +48,7 @@ abstract class PlaylistDataDao {
 
     @Query("DELETE FROM playlists WHERE id = :playlistId")
     abstract suspend fun delete(playlistId: Long)
+
+    @Query("DELETE FROM playlists WHERE mediaProvider = :mediaProviderType")
+    abstract suspend fun deleteAll(mediaProviderType: MediaProviderType)
 }
