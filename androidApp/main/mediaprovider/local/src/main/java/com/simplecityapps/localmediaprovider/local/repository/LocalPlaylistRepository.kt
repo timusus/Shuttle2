@@ -168,7 +168,9 @@ class LocalPlaylistRepository(
                     playlistId = playlist.id,
                     songId = playlistSong.song.id,
                     sortOrder = playlistSong.sortOrder
-                )
+                ).apply {
+                    id = playlistSong.id
+                }
             }
         )
     }
