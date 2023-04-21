@@ -15,7 +15,12 @@ import java.nio.ByteBuffer
 class ReplayGainAudioProcessor(var mode: ReplayGainMode, var preAmpGain: Double = 0.0) : BaseAudioProcessor() {
 
     var trackGain: Double? = null
+        @Synchronized get
+        @Synchronized set
+
     var albumGain: Double? = null
+        @Synchronized get
+        @Synchronized set
 
     private val gain: Double
         get() = preAmpGain + when (mode) {
@@ -46,6 +51,7 @@ class ReplayGainAudioProcessor(var mode: ReplayGainMode, var preAmpGain: Double 
                         buffer.putShort(targetSample)
                     }
                 }
+
                 C.ENCODING_PCM_24BIT -> {
                     while (inputBuffer.hasRemaining()) {
                         val sample = inputBuffer.getInt24()
@@ -53,6 +59,7 @@ class ReplayGainAudioProcessor(var mode: ReplayGainMode, var preAmpGain: Double 
                         buffer.putInt24(targetSample)
                     }
                 }
+
                 else -> {
                     // No op
                 }
