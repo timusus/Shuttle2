@@ -16,6 +16,7 @@ import com.simplecityapps.shuttle.ui.common.utils.toHms
 
 class DetailSongBinder(
     val song: Song,
+    val currentSong: Song?,
     val listener: Listener
 ) : ViewBinder,
     SectionViewBinder {
@@ -70,6 +71,7 @@ class DetailSongBinder(
         override fun bind(viewBinder: DetailSongBinder, isPartial: Boolean) {
             super.bind(viewBinder, isPartial)
 
+            itemView.isActivated = viewBinder.song == viewBinder.currentSong
             trackTextView.text = viewBinder.song.track?.toString()
             titleTextView.text = viewBinder.song.name
             durationTextView.text = viewBinder.song.duration.toHms("--:--")

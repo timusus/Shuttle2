@@ -25,6 +25,7 @@ import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.autoClearedNullable
@@ -243,6 +244,7 @@ class AlbumDetailFragment :
             .mapValues { entry ->
                 entry.value.groupBy { song -> song.grouping ?: "" }
             }
+        val currentSong = presenter.getCurrentSong()
 
         adapter.update(
             discGroupingSongsMap.flatMap { discEntry ->
@@ -256,7 +258,11 @@ class AlbumDetailFragment :
                     if (groupingEntry.key.isNotEmpty()) {
                         viewBinders.add(GroupingBinder(groupingEntry.key))
                     }
-                    viewBinders.addAll(groupingEntry.value.map { song -> DetailSongBinder(song, songBinderListener) })
+                    viewBinders.addAll(
+                        groupingEntry.value.map { song ->
+                            DetailSongBinder(song, currentSong, songBinderListener)
+                        }
+                    )
                     viewBinders
                 }
 
@@ -274,6 +280,10 @@ class AlbumDetailFragment :
 
     override fun onAddedToQueue(name: String) {
         Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("item_name", name).format(), Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onCurrentSongChanged(newCurrentSong: Song) {
+        setData(presenter.songs)
     }
 
     override fun setAlbum(album: com.simplecityapps.shuttle.model.Album) {
