@@ -89,7 +89,11 @@ class TaglibMediaProvider(
     ): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> {
         return flow {
 
-            val sanitisedSongPaths = existingSongs.associateBy { Uri.decode(it.path.substringAfterLast('/')).substringAfterLast(':') }
+            val sanitisedSongPaths = existingSongs.associateBy {
+                Uri.decode(it.path.substringAfterLast('/'))
+                    .substringAfterLast(':')
+                    .lowercase()
+            }
 
             getDocumentNodes()?.let { nodes ->
                 val m3uPlaylists = nodes
@@ -108,6 +112,7 @@ class TaglibMediaProvider(
                     }
 
                 val updates = m3uPlaylists.mapNotNull { m3uPlaylist ->
+                    Timber.i("Importing playlist ${m3uPlaylist.name}...")
                     val songs = m3uPlaylist.entries.mapIndexedNotNull { index, entry ->
                         emit(
                             FlowEvent.Progress(
@@ -118,16 +123,17 @@ class TaglibMediaProvider(
                             )
                         )
 
+                        val lowercaseEntryLocation = entry.location.lowercase()
                         sanitisedSongPaths.keys.firstOrNull { songPath ->
                             when {
-                                songPath == entry.location -> {
+                                songPath == lowercaseEntryLocation -> {
                                     true
                                 }
-                                songPath.length > entry.location.length -> {
-                                    songPath.contains(entry.location)
+                                songPath.length > lowercaseEntryLocation.length -> {
+                                    songPath.contains(lowercaseEntryLocation)
                                 }
                                 else -> {
-                                    entry.location.contains(songPath)
+                                    lowercaseEntryLocation.contains(songPath)
                                 }
                             }
                         }?.let { matchingPath ->
