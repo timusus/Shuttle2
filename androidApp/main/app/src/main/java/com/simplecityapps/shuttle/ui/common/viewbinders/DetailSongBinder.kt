@@ -71,7 +71,7 @@ class DetailSongBinder(
         override fun bind(viewBinder: DetailSongBinder, isPartial: Boolean) {
             super.bind(viewBinder, isPartial)
 
-            itemView.isActivated = viewBinder.song == viewBinder.currentSong
+            itemView.isActivated = viewBinder.song.id == viewBinder.currentSong?.id
             trackTextView.text = viewBinder.song.track?.toString()
             titleTextView.text = viewBinder.song.name
             durationTextView.text = viewBinder.song.duration.toHms("--:--")
