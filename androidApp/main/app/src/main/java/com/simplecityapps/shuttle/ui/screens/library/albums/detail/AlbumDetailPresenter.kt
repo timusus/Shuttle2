@@ -27,10 +27,9 @@ import timber.log.Timber
 interface AlbumDetailContract {
 
     interface View {
-        fun setData(songs: List<Song>)
+        fun setData(songs: List<Song>, currentSong: Song?)
         fun showLoadError(error: Error)
         fun onAddedToQueue(name: String)
-        fun onCurrentSongChanged(newCurrentSong: Song)
         fun setAlbum(album: com.simplecityapps.shuttle.model.Album)
         fun showDeleteError(error: Error)
         fun showTagEditor(songs: List<Song>)
@@ -69,8 +68,7 @@ class AlbumDetailPresenter @AssistedInject constructor(
         fun create(album: com.simplecityapps.shuttle.model.Album): AlbumDetailPresenter
     }
 
-    var songs: List<Song> = emptyList()
-        private set
+    private var songs: List<Song> = emptyList()
 
     override fun bindView(view: AlbumDetailContract.View) {
         super.bindView(view)
@@ -94,7 +92,7 @@ class AlbumDetailPresenter @AssistedInject constructor(
                 .filterNotNull()
                 .collect { songs ->
                     this@AlbumDetailPresenter.songs = songs
-                    view?.setData(songs)
+                    view?.setData(songs, getCurrentSong())
                 }
         }
     }
@@ -111,8 +109,8 @@ class AlbumDetailPresenter @AssistedInject constructor(
     }
 
     override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
-        getCurrentSong()?.let {
-            view?.onCurrentSongChanged(it)
+        getCurrentSong()?.let { currentSong ->
+            view?.setData(this@AlbumDetailPresenter.songs, currentSong)
         }
     }
 

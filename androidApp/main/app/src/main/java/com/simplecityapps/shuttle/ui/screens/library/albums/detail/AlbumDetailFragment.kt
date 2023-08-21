@@ -237,14 +237,13 @@ class AlbumDetailFragment :
 
     // AlbumDetailContract.View Implementation
 
-    override fun setData(songs: List<com.simplecityapps.shuttle.model.Song>) {
+    override fun setData(songs: List<com.simplecityapps.shuttle.model.Song>, currentSong: Song?) {
         val discGroupingSongsMap = songs
             .groupBy { song -> song.disc ?: 1 }
             .toSortedMap()
             .mapValues { entry ->
                 entry.value.groupBy { song -> song.grouping ?: "" }
             }
-        val currentSong = presenter.getCurrentSong()
 
         adapter.update(
             discGroupingSongsMap.flatMap { discEntry ->
@@ -280,10 +279,6 @@ class AlbumDetailFragment :
 
     override fun onAddedToQueue(name: String) {
         Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("item_name", name).format(), Toast.LENGTH_SHORT).show()
-    }
-
-    override fun onCurrentSongChanged(newCurrentSong: Song) {
-        setData(presenter.songs)
     }
 
     override fun setAlbum(album: com.simplecityapps.shuttle.model.Album) {
