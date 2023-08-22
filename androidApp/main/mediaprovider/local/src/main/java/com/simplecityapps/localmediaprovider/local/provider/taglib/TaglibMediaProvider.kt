@@ -89,11 +89,7 @@ class TaglibMediaProvider(
     ): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> {
         return flow {
 
-            val sanitisedSongPaths = existingSongs.associateBy {
-                Uri.decode(it.path.substringAfterLast('/'))
-                    .substringAfterLast(':')
-                    .lowercase()
-            }
+            val sanitisedSongPaths = existingSongs.associateBy { Uri.decode(it.path.substringAfterLast('/')).substringAfterLast(':') }
 
             getDocumentNodes()?.let { nodes ->
                 val m3uPlaylists = nodes
@@ -123,17 +119,16 @@ class TaglibMediaProvider(
                             )
                         )
 
-                        val lowercaseEntryLocation = entry.location.lowercase()
                         sanitisedSongPaths.keys.firstOrNull { songPath ->
                             when {
-                                songPath == lowercaseEntryLocation -> {
+                                songPath.equals(entry.location, ignoreCase = true) -> {
                                     true
                                 }
                                 songPath.length > lowercaseEntryLocation.length -> {
-                                    songPath.contains(lowercaseEntryLocation)
+                                    songPath.contains(other = entry.location, ignoreCase = true)
                                 }
                                 else -> {
-                                    lowercaseEntryLocation.contains(songPath)
+                                    entry.location.contains(other = songPath, ignoreCase = true)
                                 }
                             }
                         }?.let { matchingPath ->
