@@ -145,6 +145,7 @@ class LocalPlaylistRepository(
                 id = playlist.id,
                 name = name,
                 externalId = playlist.externalId,
+                mediaProviderType = playlist.mediaProvider,
                 sortOrder = playlist.sortOrder
             )
         )
@@ -156,6 +157,7 @@ class LocalPlaylistRepository(
                 id = playlist.id,
                 name = playlist.name,
                 externalId = playlist.externalId,
+                mediaProviderType = playlist.mediaProvider,
                 sortOrder = sortOrder
             )
         )
@@ -172,6 +174,30 @@ class LocalPlaylistRepository(
                     id = playlistSong.id
                 }
             }
+        )
+    }
+
+    override suspend fun updatePlaylistMediaProviderType(playlist: Playlist, mediaProviderType: MediaProviderType) {
+        playlistDataDao.update(
+            PlaylistData(
+                id = playlist.id,
+                name = playlist.name,
+                sortOrder = playlist.sortOrder,
+                mediaProviderType = mediaProviderType,
+                externalId = playlist.externalId,
+            )
+        )
+    }
+
+    override suspend fun updatePlaylistExternalId(playlist: Playlist, externalId: String?) {
+        playlistDataDao.update(
+            PlaylistData(
+                id = playlist.id,
+                name = playlist.name,
+                sortOrder = playlist.sortOrder,
+                mediaProviderType = playlist.mediaProvider,
+                externalId = externalId,
+            )
         )
     }
 }
