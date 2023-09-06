@@ -292,6 +292,11 @@ class MediaImporter(
                     playlistUpdateData.externalId
                 )
             } else {
+                // Update possibly stale values
+                playlistRepository.renamePlaylist(existingPlaylist, playlistUpdateData.name)
+                playlistRepository.updatePlaylistMediaProviderType(existingPlaylist, playlistUpdateData.mediaProviderType)
+                playlistRepository.updatePlaylistExternalId(existingPlaylist, playlistUpdateData.externalId)
+
                 // Look for duplicates
                 val existingSongs = playlistRepository.getSongsForPlaylist(existingPlaylist)
                     .firstOrNull()
