@@ -85,6 +85,14 @@ android {
     }
     namespace = "com.simplecityapps.shuttle"
 
+    buildFeatures {
+        compose = true
+    }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion = rootProject.extra["compose_version"] as String
+    }
+
     dependencies {
         implementation(fileTree("dir" to "libs", "include" to listOf("*.jar")))
 
@@ -125,6 +133,27 @@ android {
 
         // AppCompat
         implementation("androidx.appcompat:appcompat:1.6.1")
+
+        val composeBom = platform("androidx.compose:compose-bom:2023.10.01")
+
+        implementation(composeBom)
+        androidTestImplementation(composeBom)
+
+        // Material Design 3
+        implementation("androidx.compose.material3:material3")
+
+        // Android Studio Preview support
+        implementation("androidx.compose.ui:ui-tooling-preview")
+        debugImplementation("androidx.compose.ui:ui-tooling")
+
+        // UI Tests
+        androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+        debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+        // Optional - Integration with activities
+        implementation("androidx.activity:activity-compose:1.6.1")
+        // Optional - Integration with LiveData
+        implementation("androidx.compose.runtime:runtime-livedata")
 
         // Material
         implementation("com.google.android.material:material:1.10.0")
