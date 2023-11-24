@@ -124,7 +124,7 @@ class TaglibMediaProvider(
                                 songPath.equals(entry.location, ignoreCase = true) -> {
                                     true
                                 }
-                                songPath.length > lowercaseEntryLocation.length -> {
+                                songPath.length > entry.location.length -> {
                                     songPath.contains(other = entry.location, ignoreCase = true)
                                 }
                                 else -> {
