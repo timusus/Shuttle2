@@ -7,7 +7,9 @@ import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
 import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
@@ -17,7 +19,6 @@ import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.squareup.inject.assisted.Assisted
 import com.squareup.inject.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
@@ -25,7 +26,7 @@ import kotlinx.coroutines.launch
 interface AlbumDetailContract {
 
     interface View {
-        fun setData(songs: List<Song>)
+        fun setData(songs: List<Song>, currentSong: Song?)
         fun showLoadError(error: Error)
         fun onAddedToQueue(name: String)
         fun setAlbum(album: com.simplecityapps.shuttle.model.Album)
@@ -41,6 +42,7 @@ interface AlbumDetailContract {
         fun addToQueue(song: Song)
         fun playNext(album: com.simplecityapps.shuttle.model.Album)
         fun playNext(song: Song)
+        fun getCurrentSong(): Song?
         fun exclude(song: Song)
         fun editTags(song: Song)
         fun editTags(album: com.simplecityapps.shuttle.model.Album)
@@ -54,9 +56,11 @@ class AlbumDetailPresenter @AssistedInject constructor(
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackManager,
     private val queueManager: QueueManager,
+    private val queueWatcher: QueueWatcher,
     @Assisted private val album: com.simplecityapps.shuttle.model.Album
 ) : BasePresenter<AlbumDetailContract.View>(),
-    AlbumDetailContract.Presenter {
+    AlbumDetailContract.Presenter,
+    QueueChangeCallback {
 
     @AssistedInject.Factory
     interface Factory {
@@ -68,6 +72,7 @@ class AlbumDetailPresenter @AssistedInject constructor(
     override fun bindView(view: AlbumDetailContract.View) {
         super.bindView(view)
 
+        queueWatcher.addCallback(this)
         view.setAlbum(album)
 
         launch {
@@ -86,7 +91,7 @@ class AlbumDetailPresenter @AssistedInject constructor(
                 .filterNotNull()
                 .collect { songs ->
                     this@AlbumDetailPresenter.songs = songs
-                    view?.setData(songs)
+                    view?.setData(songs, getCurrentSong())
                 }
         }
     }
@@ -99,6 +104,12 @@ class AlbumDetailPresenter @AssistedInject constructor(
                     result.onFailure { error -> view?.showLoadError(error as Error) }
                 }
             }
+        }
+    }
+
+    override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
+        getCurrentSong()?.let { currentSong ->
+            view?.setData(this@AlbumDetailPresenter.songs, currentSong)
         }
     }
 
@@ -139,6 +150,10 @@ class AlbumDetailPresenter @AssistedInject constructor(
             playbackManager.playNext(listOf(song))
             view?.onAddedToQueue(song.name ?: context.getString(R.string.unknown))
         }
+    }
+
+    override fun getCurrentSong(): Song? {
+        return queueManager.getCurrentItem()?.song
     }
 
     override fun exclude(song: Song) {

@@ -11,8 +11,6 @@ import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.ViewBinder
-import com.simplecityapps.shuttle.model.Album
-import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
@@ -159,7 +157,7 @@ class ExpandableAlbumBinder(
                         if (groupingEntry.key.isNotEmpty()) {
                             viewBinders.add(GroupingBinder(groupingEntry.key))
                         }
-                        viewBinders.addAll(groupingEntry.value.map { song -> DetailSongBinder(song, songBinderListener) })
+                        viewBinders.addAll(groupingEntry.value.map { song -> DetailSongBinder(song, null, songBinderListener) })
                         viewBinders
                     }
 
