@@ -108,6 +108,7 @@ class TaglibMediaProvider(
                     }
 
                 val updates = m3uPlaylists.mapNotNull { m3uPlaylist ->
+                    Timber.i("Importing playlist ${m3uPlaylist.name}...")
                     val songs = m3uPlaylist.entries.mapIndexedNotNull { index, entry ->
                         emit(
                             FlowEvent.Progress(
@@ -120,14 +121,14 @@ class TaglibMediaProvider(
 
                         sanitisedSongPaths.keys.firstOrNull { songPath ->
                             when {
-                                songPath == entry.location -> {
+                                songPath.equals(entry.location, ignoreCase = true) -> {
                                     true
                                 }
                                 songPath.length > entry.location.length -> {
-                                    songPath.contains(entry.location)
+                                    songPath.contains(other = entry.location, ignoreCase = true)
                                 }
                                 else -> {
-                                    entry.location.contains(songPath)
+                                    entry.location.contains(other = songPath, ignoreCase = true)
                                 }
                             }
                         }?.let { matchingPath ->
