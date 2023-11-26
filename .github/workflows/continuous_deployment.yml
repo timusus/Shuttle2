@@ -65,8 +65,8 @@ jobs:
         with:
           name: app-bundle
           path: |
-            androidApp/main/app/build/outputs/bundle/release/app-release.aab
-            androidApp/main/app/build/outputs/mapping/release/mapping.txt
+            android/app/build/outputs/bundle/release/app-release.aab
+            android/app/build/outputs/mapping/release/mapping.txt
           retention-days: 1
 
   deploy:
