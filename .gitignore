@@ -53,13 +53,13 @@ captures/
 # Keystore files
 # Uncomment the following line if you do not want to check your keystore files in.
 #*.jks
-androidApp/main/keystore.properties
+android/app/keystore.properties
 
 # External native build folder generated in Android Studio 2.2 and later
 .externalNativeBuild
 
 # Deployment secrets
-androidApp/main/deployment_keys.json
+android/app/deployment_keys.json
 
 # Freeline
 freeline.py
