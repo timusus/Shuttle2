@@ -28,7 +28,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: "Create keystore.ks"
-        run: 'echo "${{secrets.KEYSTORE_FILE}}" | base64 -d > ./androidApp/main/keystore.ks'
+        run: 'echo "${{secrets.KEYSTORE_FILE}}" | base64 -d > ./android/app/keystore.ks'
 
       - name: Validate Gradle Wrapper
         uses: gradle/wrapper-validation-action@v1
