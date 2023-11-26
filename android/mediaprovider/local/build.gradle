@@ -1,0 +1,78 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+apply plugin: 'com.google.devtools.ksp'
+
+android {
+    compileSdk 34
+
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 34
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments += ["room.schemaLocation": "$projectDir/schemas".toString()]
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
+    }
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_11.toString()
+    }
+    packaging {
+        resources {
+            resources.excludes += ['META-INF/core_debug.kotlin_module']
+        }
+    }
+    namespace 'com.simplecityapps.localmediaprovider'
+
+    buildFeatures.buildConfig true
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    // Shuttle Core
+    implementation(project(":android:core"))
+    implementation(project(":android:data"))
+
+    // Shuttle MediaProvider Core
+    implementation project(path: ':android:mediaprovider:core')
+
+    // TagLib
+    implementation("com.github.timusus:ktaglib:1.4.1")
+
+    // Storage Access Framework
+    implementation project(path: ':android:saf')
+
+    // Room
+    ksp 'androidx.room:room-compiler:2.6.0'
+    api 'androidx.room:room-runtime:2.6.0'
+    api 'androidx.room:room-ktx:2.6.0'
+
+    // Testing
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test:runner:1.5.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+
+    // Moshi
+    ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.0")
+
+    // Hilt
+    implementation 'com.google.dagger:hilt-android:2.48.1'
+    ksp 'com.google.dagger:hilt-compiler:2.48.1'
+
+    implementation 'org.jetbrains.kotlinx:kotlinx-datetime:0.4.1'
+}

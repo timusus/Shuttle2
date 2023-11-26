@@ -15,4 +15,4 @@ function finish() {
 
 trap finish EXIT
 
-./gradlew :androidApp:main:app:bundleRelease
+./gradlew :android:app:bundleRelease

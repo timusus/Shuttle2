@@ -1,0 +1,76 @@
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+apply plugin: 'dagger.hilt.android.plugin'
+apply plugin: 'com.google.devtools.ksp'
+
+android {
+    compileSdk 34
+
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 34
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+    kotlinOptions {
+        jvmTarget = JavaVersion.VERSION_11.toString()
+    }
+    namespace 'com.simplecityapps.playback'
+
+    buildFeatures.buildConfig true
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    // Shuttle Core
+    implementation project(path: ':android:core')
+
+    // Shuttle Media Provider
+    implementation project(path: ':android:mediaprovider:core')
+    implementation project(path: ':android:mediaprovider:emby')
+    implementation project(path: ':android:mediaprovider:jellyfin')
+    implementation project(path: ':android:mediaprovider:plex')
+
+    // Shuttle Image Loader
+    implementation project(path: ':android:imageloader')
+
+    // AndroidX Media
+    implementation 'androidx.media:media:1.6.0'
+
+    // AndroidX DocumentFile
+    implementation 'androidx.documentfile:documentfile:1.0.1'
+
+    // Hilt
+    implementation 'com.google.dagger:hilt-android:2.48.1'
+    ksp 'com.google.dagger:hilt-compiler:2.48.1'
+
+    // Chromecast
+    implementation 'com.google.android.gms:play-services-cast-framework:21.3.0'
+
+    // NanoHttp
+    implementation 'org.nanohttpd:nanohttpd-webserver:2.3.1'
+
+    // ExoPlayer
+
+    implementation("com.github.timusus.exoplayer:exoplayer-core:2.14.2-shuttle")
+    implementation("com.github.timusus.exoplayer:exoplayer-hls:2.14.2-shuttle")
+    implementation("com.github.timusus.exoplayer:extension-flac:2.14.2-shuttle")
+    implementation("com.github.timusus.exoplayer:extension-opus:2.14.2-shuttle")
+
+    // Moshi
+    implementation 'com.squareup.moshi:moshi-kotlin:1.15.0'
+    ksp "com.squareup.moshi:moshi-kotlin-codegen:1.15.0"
+
+    implementation(project(':android:data'))
+}
