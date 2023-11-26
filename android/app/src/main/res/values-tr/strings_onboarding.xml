@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Title of 'media directory selection' screen. User can choose to add directories to be scanned -->
+    <string name="onboarding_directories_dialog_add_title">Medya klasörleri</string>
+    <!-- Button to allow the user to add a directory, when using the 'S2 Media Scanner' -->
+    <string name="onboarding_directories_dialog_add_button">Klasör ekle</string>
+    <!-- Error message title shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
+    <string name="onboarding_directories_dialog_missing_title">Klasör sağlayıcı bulunamıyor</string>
+    <!-- Error message description shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
+    <string name="onboarding_directories_dialog_missing_subtitle">Klasör eklemek için bir dosya sağlayıcı bulamıyor. Bir tane yüklemeniz veya Android Media Store sağlayıcısını kullanmaya geri dönmeniz gerekebilir.</string>
+    <!-- Explanation shown to user when they're about to choose which directories wil lbe scanned bv the S2 media scanner-->
+    <string name="onboarding_directories_add_directories_help_text">Müzik taraması için, S2\'nin medya klasörlerini erişimi gerekli.
+Android Dosya Sağlayıcı uygulamanız aracılığıyla bir klasör ekleyin.</string>
+    <!-- Shown when the app is scanning the user's directories for media -->
+    <string name="onboarding_directories_scanning">Taranıyor...</string>
+    <!-- Shown when the media scanner is scanning the user's directories for media-->
+    <plurals name="onboarding_directories_scan_progress">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> ses dosyası</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> ses dosyaları</item>
+    </plurals>
+    <!-- Dialog title shown to user to indicate that S2 requires permission to access their storage -->
+    <string name="onboarding_permission_dialog_title">Depolama Erişimi Gerekli</string>
+    <!-- Dialog message shown to explain that S2 requires permission to access their storage-->
+    <string name="onboarding_permission_dialog_subtitle">Müziklerinize erişim izni olmadan S2 düzgün çalışmayabilir.</string>
+    <!-- Dialog button to grant permission to the app to access users storage-->
+    <string name="onboarding_permission_button_grant">Erişim sağla</string>
+    <!-- Shown after user initially denies access to storage -->
+    <string name="onboarding_permission_help_text">Müziğinizi bulmak için S2\'nin medya depolama alanınızı okuma iznine ihtiyacı var.</string>
+    <!-- Title of S2's Media Scanner, the thing that scans files on the device to read audio files/tags -->
+    <string name="onboarding_media_scanner_title">Medya tarayıcı</string>
+    <!-- Shown when the media scanner is scanning -->
+    <string name="onboarding_media_scanner_scanning">Taranıyor...</string>
+    <!-- Button to initiate a media scanner scan-->
+    <string name="onboarding_media_scan">Tara</string>
+    <!-- Button to go back to the previous page, when onboarding -->
+    <string name="onboarding_button_back">Geri</string>
+    <!-- Button to go to the next page, when onboarding -->
+    <string name="onboarding_button_next">Sıradaki</string>
+    <!-- Button to trigger the MediaScanner to perform a rescan of audio files on the device-->
+    <string name="onboarding_media_scanner_rescan">Yeniden tara</string>
+    <!-- Shown when the S2 Media Provider is scanning song tags (metadata)-->
+    <string name="onboarding_scanner_reading_song_tags">Şarkı etiketleri okunuyor</string>
+    <!-- Shown when onboarding. Describes why S2 would like to use Firebase Analytics-->
+    <string name="onboarding_data_collection_title">S2, anonim hata verilerini ve analizlerini paylaşmak için izninizi istiyor</string>
+    <!-- Shown when onboarding. Switch to enable Crash Reporting -->
+    <string name="onboarding_switch_crash_reporting">"Firebase Hata Raporlaması
+"</string>
+    <!-- Shown when onboarding. Describes what Crash Reporting is used for-->
+    <string name="onboarding_switch_description_crash_reporting">Hataları izlemeye ve çözmeye yardımcı olan anonim hata istatistikleri</string>
+    <!-- Shown when onboarding. Switch to enable Firebase Analytics -->
+    <string name="onboarding_switch_firebase_analytics">Firebase analitikleri</string>
+    <!-- Shown when onboarding. Describes what Firebase Analytics is used for-->
+    <string name="onboarding_switch_firebase_description_analytics">Özelliklerin A/B testini etkinleştirir ve kullanıcıların uygulamayla nasıl etkileşimde bulunduğunu izler</string>
+    <!-- Shown during onboarding, or when choosing a media provider. -->
+    <string name="onboarding_media_selection_subtitle">Müziğinizin nereden geleceğine karar verin. Emin değilseniz Android Medya Store\'u kullanın.</string>
+</resources>

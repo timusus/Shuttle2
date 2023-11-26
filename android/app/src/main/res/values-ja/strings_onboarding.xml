@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Title of 'media directory selection' screen. User can choose to add directories to be scanned -->
+    <string name="onboarding_directories_dialog_add_title">メディアディレクトリ</string>
+    <!-- Button to allow the user to add a directory, when using the 'S2 Media Scanner' -->
+    <string name="onboarding_directories_dialog_add_button">ディレクトリを追加</string>
+    <!-- Error message title shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
+    <string name="onboarding_directories_dialog_missing_title">ドキュメントプロバイダーが見つかりません</string>
+    <!-- Error message description shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
+    <string name="onboarding_directories_dialog_missing_subtitle">ディレクトリを追加するためのファイルプロバイダーアプリがデバイス内に見つかりません。ファイラーアプリをインストールするか、Androidメディアストアを選択してください。</string>
+    <!-- Explanation shown to user when they're about to choose which directories wil lbe scanned bv the S2 media scanner-->
+    <string name="onboarding_directories_add_directories_help_text">音楽ファイルをスキャンするため、S2はメディアディレクトリにアクセスする必要があります。ファイルプロバイダーアプリが表示されますので、ディレクトリを追加してください。</string>
+    <!-- Shown when the app is scanning the user's directories for media -->
+    <string name="onboarding_directories_scanning">スキャン中…</string>
+    <!-- Shown when the media scanner is scanning the user's directories for media-->
+    <plurals name="onboarding_directories_scan_progress">
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+      オーディオファイル</item>
+    </plurals>
+    <!-- Dialog title shown to user to indicate that S2 requires permission to access their storage -->
+    <string name="onboarding_permission_dialog_title">ストレージの許可が必要です</string>
+    <!-- Dialog message shown to explain that S2 requires permission to access their storage-->
+    <string name="onboarding_permission_dialog_subtitle">曲ファイルへのアクセス許可がなければ、S2は正しく機能しない可能性があります</string>
+    <!-- Dialog button to grant permission to the app to access users storage-->
+    <string name="onboarding_permission_button_grant">許可する</string>
+    <!-- Shown after user initially denies access to storage -->
+    <string name="onboarding_permission_help_text">曲ファイルを見つけるため、S2 はあなたのメディアストレージの読み込み許可が必要です</string>
+    <!-- Title of S2's Media Scanner, the thing that scans files on the device to read audio files/tags -->
+    <string name="onboarding_media_scanner_title">メディアスキャナー</string>
+    <!-- Shown when the media scanner is scanning -->
+    <string name="onboarding_media_scanner_scanning">スキャン中…</string>
+    <!-- Button to initiate a media scanner scan-->
+    <string name="onboarding_media_scan">スキャン</string>
+    <!-- Button to go back to the previous page, when onboarding -->
+    <string name="onboarding_button_back">戻る</string>
+    <!-- Button to go to the next page, when onboarding -->
+    <string name="onboarding_button_next">次へ</string>
+    <!-- Button to trigger the MediaScanner to perform a rescan of audio files on the device-->
+    <string name="onboarding_media_scanner_rescan">再スキャン</string>
+    <!-- Shown when the S2 Media Provider is scanning song tags (metadata)-->
+    <string name="onboarding_scanner_reading_song_tags">曲のタグを読み込み中…</string>
+    <!-- Shown when onboarding. Describes why S2 would like to use Firebase Analytics-->
+    <string name="onboarding_data_collection_title">匿名のクラッシュデータと分析データをS2の開発者に共有するため、ユーザーの許可が必要です</string>
+    <!-- Shown when onboarding. Switch to enable Crash Reporting -->
+    <string name="onboarding_switch_crash_reporting">Firebaseクラッシュレポート</string>
+    <!-- Shown when onboarding. Describes what Crash Reporting is used for-->
+    <string name="onboarding_switch_description_crash_reporting">匿名のクラッシュ統計データは、バグの追跡と解決に役立ちます</string>
+    <!-- Shown when onboarding. Switch to enable Firebase Analytics -->
+    <string name="onboarding_switch_firebase_analytics">Firebase分析</string>
+    <!-- Shown when onboarding. Describes what Firebase Analytics is used for-->
+    <string name="onboarding_switch_firebase_description_analytics">機能のA/Bテストを有効にし、ユーザーがどのようにアプリを操作するかを解析します（今後の使い勝手の向上に役立ちます）</string>
+    <!-- Shown during onboarding, or when choosing a media provider. -->
+    <string name="onboarding_media_selection_subtitle">音楽ファイルをどこから取得するかを選択します。よくわからない場合はAndroidメディアストアを選択してください。</string>
+</resources>

@@ -7,4 +7,4 @@ VENDOR_DIR="${SUPPORT_DIR}/vendor"
 
 PATH="${VENDOR_DIR}/ktlint:$PATH"
 
-ktlint --android "$@" "**.kt" "!**/generated/**"
+ktlint "$@" "**.kt" "!**/generated/**" "!**/build/**"

@@ -21,4 +21,4 @@ function finish() {
 trap finish EXIT
 
 # Perform Unit Tests
-./gradlew :androidApp:main:app:test
+./gradlew :android:app:test

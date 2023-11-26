@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The title of the sleep timer in the bottom settings menu -->
+    <string name="settings_menu_sleep_timer">スリープタイマー</string>
+    <!-- The title of 'shuffle all' in the bottom settings menu -->
+    <string name="settings_menu_shuffle_all">すべてシャッフル</string>
+    <!-- The title of 'DSP' (dynamic sound processing) in the bottom settings menu. Could use 'sound effects', or something similar. Also shown as the title of the DSP screen. -->
+    <string name="settings_menu_dsp">DSP</string>
+    <!-- The title of 'settings' in the bottom settings menu -->
+    <string name="settings_menu_settings">設定</string>
+    <!-- Title of the dialog shown when the user changes a setting which requires the app to be restarted.-->
+    <string name="settings_crash_reporting_dialog_requires_restart">再起動が必要です</string>
+    <!-- Description of dialog shown when user changes the crash reporting opt-in setting. Explaining that the user needs to restart the app. -->
+    <string name="settings_crash_reporting_dialog_message">クラッシュレポートを完全にオプトアウトするには、S2を再起動してください。また曲を一時停止し、通知をスワイプアウトして、アプリをタスクリストからクリアしてください。</string>
+    <!-- Settings option to view the list of excluded (blacklisted) songs -->
+    <string name="settings_dialog_title_excluded">非表示</string>
+    <!-- Option to clear the list of excluded (blacklisted) songs -->
+    <string name="settings_dialog_button_clear_excludes">クリア</string>
+    <!-- Settings option to clear (delete) all existing artwork -->
+    <string name="settings_dialog_title_clear_artwork">アートワークをクリア</string>
+    <!-- Button shown to confirm clearing (deleting) of existing artwork -->
+    <string name="settings_dialog_button_clear_artwork">クリア</string>
+    <!-- Dialog warning shown when user selects option to clear (delete) existing artwork -->
+    <string name="settings_dialog_message_clear_artwork">これにより、キャッシュされたすべてのアートワークが完全に削除されます</string>
+    <!-- Settings option to download all artwork (album/artist images)-->
+    <string name="settings_dialog_title_download_artwork">すべてのアートワークをダウンロード</string>
+    <!-- Shown when user selects option to download all artwork (album/artist images) -->
+    <string name="settings_dialog_message_download_artwork">これにより、ネットワーク接続 (WiFi/データ通信/その他) に関係なく、すべてのアートワークがダウンロードされます</string>
+    <!-- Option to confirm downloading of artwork (album/artist images) -->
+    <string name="settings_dialog_button_download_artwork">ダウンロード</string>
+    <!-- Title of the dialog shown when the user changes their theme preferences, and the app must be restarted -->
+    <string name="settings_dialog_title_amoled_required_restart">再起動が必要です</string>
+    <!-- Settings option to copy debug logs to clipboard -->
+    <string name="settings_logging_clipboard_name">デバッグログ</string>
+    <!-- Shown when the debug logs have been copied to the clipboard -->
+    <string name="settings_logging_clipboard_logs_copied">ログがクリップボードにコピーされました</string>
+    <!-- Error message shown when copying debug logs failed, because the log file is too large -->
+    <string name="settings_logging_clipboard_logs_too_large">ログファイルがクリップボードには大きすぎます</string>
+    <!-- Error message shown when copying debug logs failed, because there are no logs -->
+    <string name="settings_logging_clipboard_logs_empty">ログファイルが空です</string>
+    <!-- Settings: Title for 'appearance' settings (settings related to themes, etc.) -->
+    <string name="pref_category_title_display">外観</string>
+    <!-- Settings: Title for 'media' settings. Settings related to media providers, rescanning & exclude list (blacklist) -->
+    <string name="pref_category_title_media">メディア</string>
+    <!-- Settings: Title for 'playback' settings -->
+    <string name="pref_category_title_playback">再生</string>
+    <!-- Settings: Title for artwork related settings (artist/album images) -->
+    <string name="pref_category_title_artwork">アートワーク</string>
+    <!-- Settings: Title for widget related settings  -->
+    <string name="pref_category_title_widgets">ウィジェット</string>
+    <!-- Settings: Title for playlist related settings  -->
+    <string name="pref_category_title_playlists">プレイリスト</string>
+    <!-- Settings: Title for shangelog related settings -->
+    <string name="pref_category_title_changelog">変更ログ</string>
+    <!-- Settings: Title for app info related settings -->
+    <string name="pref_category_title_app_info">アプリ情報</string>
+    <!-- Settings: Title for privacy related settings -->
+    <string name="pref_category_title_privacy">プライバシー</string>
+    <!-- Settings: Title for open source related settings -->
+    <string name="pref_category_title_open_source">オープンソース</string>
+    <!-- Settings: Title for debug related settings -->
+    <string name="pref_category_title_debug">デバッグ</string>
+    <!-- Settings: Title for settings which otherwise don't have a group -->
+    <string name="pref_category_title_other">その他</string>
+    <!-- Settings: Title for changing the theme -->
+    <string name="pref_theme_title">テーマ</string>
+    <!-- Settings: Title for 'follow system' theme mode -->
+    <string name="pref_theme_title_follow_system">システムに従う</string>
+    <!-- Settings: Title for 'light theme' theme mode -->
+    <string name="pref_theme_title_light">ライトテーマ</string>
+    <!-- Settings: Title for 'dark theme' theme mode-->
+    <string name="pref_theme_title_dark">ダークテーマ</string>
+    <!-- Settings: Description for changing the theme -->
+    <string name="pref_theme_summary">昼/夜 (デフォルト)、明るい、暗いから選択してください</string>
+    <!-- Settings: Title for changing the accent colour -->
+    <string name="pref_theme_accent_title">アクセント</string>
+    <!-- Settings: Description for changing the accent colour -->
+    <string name="pref_theme_accent_summary">テーマアクセントカラー</string>
+    <!-- Settings: Title for the option to use the 'extra dark' theme -->
+    <string name="pref_theme_extra_dark_title">エクストラダーク</string>
+    <!-- Settings: Description for the option to use the 'extra dark' theme -->
+    <string name="pref_theme_extra_dark_summary">AMOLED画面のバッテリーを少し節約するために、より暗い色を使用します</string>
+    <!-- Settings: Title for the option to choose media providers -->
+    <string name="pref_media_provider_title">メディアプロバイダー</string>
+    <!-- Settings: Description for the option to choose media providers-->
+    <string name="pref_media_provider_summary">ビルトインのメディアスキャナー、Androidメディアストア、Jellyfin、Embyから選択してください</string>
+    <!-- Settings: Title for the option to rescan the media library -->
+    <string name="pref_media_rescan_title">再スキャン</string>
+    <!-- Settings: Description for the option to rescan the media library -->
+    <string name="pref_media_rescan_summary">選択されているメディアプロバイダーを再スキャンします</string>
+    <!-- Settings: Title for the option to view the list of excluded (blacklisted) songs -->
+    <string name="pref_exclude_title">非表示</string>
+    <!-- Settings: Description for the option to view the list of excluded (blacklisted) songs -->
+    <string name="pref_exclude_summary">非表示にした項目を表示/編集します</string>
+    <!-- Settings: Title for the option to restrict artwork downloading to only work on Wi-Fi -->
+    <string name="pref_artwork_wifi_title">Wi-Fiのみ</string>
+    <!-- Settings: Description for the option to restrict artwork downloading to only work on Wi-Fi -->
+    <string name="pref_artwork_wifi_subtitle">Wi-Fiが利用可能な場合にのみ、リモートソースからアートワークをダウンロードします</string>
+    <!-- Settings: Title for the option to restrict artwork to only load from local sources -->
+    <string name="pref_artwork_local_only_title">ローカルのみ</string>
+    <!-- Settings: Description for the option to restrict artwork to only load from local sources -->
+    <string name="pref_artwork_local_only_subtitle">リモート (インターネット) ソースからアートワークをダウンロードしません</string>
+    <!-- Settings: Title for the option to clear (delete) all artwork -->
+    <string name="pref_clear_artwork_title">アートワークをクリア</string>
+    <!-- Settings: Description for the option to clear (delete) all artwork -->
+    <string name="pref_clear_artwork_subtitle">キャッシュされたアートワークをすべて削除します</string>
+    <!-- Settings: Title for the option to download all artwork (artist/album images) -->
+    <string name="pref_download_artwork_title">すべてのアートワークをダウンロード</string>
+    <!-- Settings: Title for the option to use dark mode for widgets -->
+    <string name="pref_widget_dark_mode_title">ダークモード</string>
+    <!-- Settings: Title for the option to change opacity of the widget background -->
+    <string name="pref_widget_opacity_title">背景の不透明度</string>
+    <!-- Settings: Title for the option to ignore duplicates when adding songs to a playlist -->
+    <string name="pref_ignore_duplicates_title">重複を無視</string>
+    <!-- Settings: Description for the option to ignore duplicates when adding songs to a playlist -->
+    <string name="pref_ignore_duplicates_subtitle">プレイリストに重複する曲を追加しようとしているときに確認画面を表示しません</string>
+    <!-- Settings: Title for the option to view the changelog -->
+    <string name="pref_view_changelog_title">変更ログを表示</string>
+    <!-- Settings: Title for the option to toggle whether the changelog is shown when the app is launched -->
+    <string name="pref_show_changelog_launch_title">起動時に表示</string>
+    <!-- Settings: Title for the option to turn off crash reporting -->
+    <string name="pref_crash_reporting_title">Firebaseクラッシュレポート</string>
+    <!-- Settings: Description for the option to turn off crash reporting -->
+    <string name="pref_crash_reporting_subtitle">匿名のクラッシュ統計データは、バグの追跡と解決に役立ちます</string>
+    <!-- Settings: Title for the option to view open source licenses -->
+    <string name="pref_view_licenses_title">ライセンスを表示</string>
+    <!-- Settings: Title for the option to enable debug logging (log file will be stored on disk) -->
+    <string name="pref_file_logging_title">デバッグログをファイルに記録</string>
+    <!-- Settings: Description for the option to enable debug logging (log file will be stored on disk) -->
+    <string name="pref_file_logging_subtitle">デバッグログをデバイス内のファイルに書き込みます</string>
+    <!-- Settings: Title for the option to copy the debug logs to the clipboard -->
+    <string name="pref_copy_debug_logs_subtitle">デバッグログをコピー</string>
+    <!-- Settings: Title for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->
+    <string name="pref_media_session_artwork_title">メディアセッションのアートワーク</string>
+    <!-- Settings: Description for the option to disable artwork from being associated with the 'media session'. Media Session is an Android concept, not sure how this would be translated. -->
+    <string name="pref_media_session_artwork_subtitle">Androidのメディアセッションにアートワークを提供します。ロック画面にアートワークを表示したくない場合はオフにします</string>
+    <!-- Settings: Title for the option to disable shuffle when starting a new queue -->
+    <string name="pref_disable_shuffle_on_queue_title">シャッフルモードを維持</string>
+    <!-- Settings: Description for the option to disable shuffle when starting a new queue -->
+    <string name="pref_disable_shuffle_on_queue_subtitle">新しいキューが選択されても、シャッフルモードを無効にしません</string>
+    <!-- Settings title for the day/night theme option -->
+    <string name="theme_entry_day_night">昼/夜</string>
+    <!-- Settings title for the light theme option -->
+    <string name="theme_entry_light">明るい</string>
+    <!-- Settings title for the dark theme option -->
+    <string name="theme_entry_dark">暗い</string>
+    <!-- Settings title for blue theme option (called Shuttle blue, because it uses the particular shade of blue from the original Shuttle) -->
+    <string name="theme_accent_entry_blue">Shuttleブルー</string>
+    <!-- Settings title for the cyan theme option -->
+    <string name="theme_accent_entry_cyan">シアン</string>
+    <!-- Settings title for the purple theme option -->
+    <string name="theme_accent_entry_purple">紫</string>
+    <!-- Settings title for the green theme option -->
+    <string name="theme_accent_entry_green">緑</string>
+    <!-- Settings title for the orange theme option -->
+    <string name="theme_accent_entry_orange">オレンジ</string>
+    <!-- Settings title for the red theme option -->
+    <string name="theme_accent_entry_red">赤</string>
+    <!-- Settings: Title for the option to turn off crash reporting -->
+    <string name="pref_firebase_analytics_title">Firebase分析</string>
+    <!-- Settings: Description for the option to turn off crash reporting -->
+    <string name="pref_firebase_analytics_subtitle">機能のA/Bテストを有効にし、ユーザーがどのようにアプリを操作するかを解析します（今後の使い勝手の向上に役立ちます）</string>
+    <!-- Settings: Title for the library tabs options (list of tabs to be displayed on home screen)-->
+    <string name="pref_library_tabs_title">ライブラリのタブ表示</string>
+</resources>

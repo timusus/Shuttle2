@@ -21,4 +21,4 @@ function finish() {
 trap finish EXIT
 
 # Perform Instrumented Unit Tests
-./gradlew :androidApp:main:app:connectedCheck --stacktrace
+./gradlew :android:app:connectedCheck --stacktrace

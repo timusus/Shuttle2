@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <!-- Title of 'media directory selection' screen. User can choose to add directories to be scanned -->
+    <string name="onboarding_directories_dialog_add_title">Каталоги медиа</string>
+    <!-- Button to allow the user to add a directory, when using the 'S2 Media Scanner' -->
+    <string name="onboarding_directories_dialog_add_button">Добавить каталог</string>
+    <!-- Error message title shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
+    <string name="onboarding_directories_dialog_missing_title">Отсутствует поставщик документов</string>
+    <!-- Error message description shown when the user is missing the 'document provider' app. (An app that allows them to choose files & directories) -->
+    <string name="onboarding_directories_dialog_missing_subtitle">Приложение «поставщик документов» (файловый менеджер) не может быть найдено на вашем устройстве. Возможно, вам придется установить его или вернуться к использованию «базового» медиа-сканера.</string>
+    <!-- Explanation shown to user when they're about to choose which directories wil lbe scanned bv the S2 media scanner-->
+    <string name="onboarding_directories_add_directories_help_text">Для поиска музыки S2 требуется доступ к вашим каталогам мультимедиа.
+
+Когда вы нажмете «добавить каталог», вы попадете в приложение «поставщик файлов» по умолчанию. Перейдите к папкам, содержащим вашу музыку. Вы можете добавить несколько каталогов. 
+
+Примечание. Возможно, вам потребуется включить параметр «Показывать внутреннее хранилище», чтобы просматривать папки с музыкой.</string>
+    <!-- Shown when the app is scanning the user's directories for media -->
+    <string name="onboarding_directories_scanning">Сканирование…</string>
+    <!-- Shown when the media scanner is scanning the user's directories for media-->
+    <plurals name="onboarding_directories_scan_progress">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g>
+       аудиофайл</item>
+        <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g>
+       аудиофайлы</item>
+        <item quantity="few"><xliff:g example="30" id="count">{count}</xliff:g>
+       аудиофайла</item>
+        <item quantity="many"><xliff:g example="30" id="count">{count}</xliff:g>
+       аудиофайлов</item>
+    </plurals>
+    <!-- Dialog title shown to user to indicate that S2 requires permission to access their storage -->
+    <string name="onboarding_permission_dialog_title">Требуется разрешение на хранение</string>
+    <!-- Dialog message shown to explain that S2 requires permission to access their storage-->
+    <string name="onboarding_permission_dialog_subtitle">Без разрешения на доступ к вашей музыке S2 может работать некорректно</string>
+    <!-- Dialog button to grant permission to the app to access users storage-->
+    <string name="onboarding_permission_button_grant">Предоставить разрешение</string>
+    <!-- Shown after user initially denies access to storage -->
+    <string name="onboarding_permission_help_text">Чтобы найти вашу музыку, S2 необходимо разрешение на чтение вашего хранилища мультимедиа.</string>
+    <!-- Title of S2's Media Scanner, the thing that scans files on the device to read audio files/tags -->
+    <string name="onboarding_media_scanner_title">Сканер медиа</string>
+    <!-- Shown when the media scanner is scanning -->
+    <string name="onboarding_media_scanner_scanning">Сканирование…</string>
+    <!-- Button to initiate a media scanner scan-->
+    <string name="onboarding_media_scan">Сканировать</string>
+    <!-- Button to go back to the previous page, when onboarding -->
+    <string name="onboarding_button_back">Назад</string>
+    <!-- Button to go to the next page, when onboarding -->
+    <string name="onboarding_button_next">Вперед</string>
+    <!-- Button to trigger the MediaScanner to perform a rescan of audio files on the device-->
+    <string name="onboarding_media_scanner_rescan">Повторное сканирование</string>
+    <!-- Shown when the S2 Media Provider is scanning song tags (metadata)-->
+    <string name="onboarding_scanner_reading_song_tags">Чтение тегов песен…</string>
+    <!-- Shown when onboarding. Describes why S2 would like to use Firebase Analytics-->
+    <!-- Shown when onboarding. Switch to enable Crash Reporting -->
+    <!-- Shown when onboarding. Describes what Crash Reporting is used for-->
+    <!-- Shown when onboarding. Switch to enable Firebase Analytics -->
+    <!-- Shown when onboarding. Describes what Firebase Analytics is used for-->
+    <!-- Shown during onboarding, or when choosing a media provider. -->
+</resources>
