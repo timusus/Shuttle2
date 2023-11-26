@@ -22,7 +22,6 @@ class LocalSongRepository(
     val scope: CoroutineScope,
     private val songDataDao: SongDataDao
 ) : SongRepository {
-
     private val songsRelay: StateFlow<List<Song>?> by lazy {
         songDataDao
             .getAll()
@@ -49,7 +48,10 @@ class LocalSongRepository(
             }
     }
 
-    override suspend fun insert(songs: List<Song>, mediaProviderType: MediaProviderType) {
+    override suspend fun insert(
+        songs: List<Song>,
+        mediaProviderType: MediaProviderType
+    ) {
         songDataDao.insert(songs.toSongData(mediaProviderType))
     }
 
@@ -70,7 +72,12 @@ class LocalSongRepository(
         songDataDao.deleteAll(mediaProviderType)
     }
 
-    override suspend fun insertUpdateAndDelete(inserts: List<Song>, updates: List<Song>, deletes: List<Song>, mediaProviderType: MediaProviderType): Triple<Int, Int, Int> {
+    override suspend fun insertUpdateAndDelete(
+        inserts: List<Song>,
+        updates: List<Song>,
+        deletes: List<Song>,
+        mediaProviderType: MediaProviderType
+    ): Triple<Int, Int, Int> {
         return songDataDao.insertUpdateAndDelete(inserts.toSongData(mediaProviderType), updates.toSongDataUpdate(), deletes.toSongData(mediaProviderType))
     }
 
@@ -79,12 +86,18 @@ class LocalSongRepository(
         songDataDao.incrementPlayCount(song.id)
     }
 
-    override suspend fun setPlaybackPosition(song: Song, playbackPosition: Int) {
+    override suspend fun setPlaybackPosition(
+        song: Song,
+        playbackPosition: Int
+    ) {
         Timber.v("Setting playback position to $playbackPosition for song: ${song.name}")
         songDataDao.updatePlaybackPosition(song.id, playbackPosition)
     }
 
-    override suspend fun setExcluded(songs: List<Song>, excluded: Boolean) {
+    override suspend fun setExcluded(
+        songs: List<Song>,
+        excluded: Boolean
+    ) {
         val count = songDataDao.setExcluded(songs.map { it.id }, excluded)
         Timber.v("$count song(s) excluded")
     }

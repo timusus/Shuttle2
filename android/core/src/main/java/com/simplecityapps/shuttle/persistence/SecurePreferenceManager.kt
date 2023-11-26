@@ -3,7 +3,6 @@ package com.simplecityapps.shuttle.persistence
 import android.content.SharedPreferences
 
 class SecurePreferenceManager(private val sharedPreferences: SharedPreferences) {
-
     // Emby
 
     var embyUserName: String?

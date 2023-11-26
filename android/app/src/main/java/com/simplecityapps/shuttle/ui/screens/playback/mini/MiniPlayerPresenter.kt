@@ -8,10 +8,12 @@ import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
-import timber.log.Timber
 import javax.inject.Inject
+import timber.log.Timber
 
-class MiniPlayerPresenter @Inject constructor(
+class MiniPlayerPresenter
+@Inject
+constructor(
     private val playbackManager: PlaybackManager,
     private val playbackWatcher: PlaybackWatcher,
     private val queueManager: QueueManager,
@@ -20,7 +22,6 @@ class MiniPlayerPresenter @Inject constructor(
     MiniPlayerContract.Presenter,
     PlaybackWatcherCallback,
     QueueChangeCallback {
-
     override fun bindView(view: MiniPlayerContract.View) {
         super.bindView(view)
 
@@ -66,13 +67,20 @@ class MiniPlayerPresenter @Inject constructor(
 
     // PlaybackManager.ProgressCallback
 
-    override fun onProgressChanged(position: Int, duration: Int, fromUser: Boolean) {
+    override fun onProgressChanged(
+        position: Int,
+        duration: Int,
+        fromUser: Boolean
+    ) {
         view?.setProgress(position, duration)
     }
 
     // QueueChangeCallback Implementation
 
-    override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
+    override fun onQueuePositionChanged(
+        oldPosition: Int?,
+        newPosition: Int?
+    ) {
         view?.setCurrentSong(queueManager.getCurrentItem()?.song)
     }
 

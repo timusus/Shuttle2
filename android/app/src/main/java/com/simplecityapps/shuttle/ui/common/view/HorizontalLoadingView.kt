@@ -11,12 +11,13 @@ import android.widget.TextView
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.utils.dp
 
-class HorizontalLoadingView @JvmOverloads constructor(
+class HorizontalLoadingView
+@JvmOverloads
+constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : LinearLayout(context, attrs, defStyleAttr) {
-
     private var currentState: State? = null
 
     private var animation: ValueAnimator? = null
@@ -69,6 +70,7 @@ class HorizontalLoadingView @JvmOverloads constructor(
 
     sealed class State {
         data class Loading(val message: String) : State()
+
         object None : State()
     }
 }

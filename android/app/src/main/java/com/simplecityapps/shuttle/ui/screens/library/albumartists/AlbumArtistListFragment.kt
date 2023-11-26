@@ -2,7 +2,12 @@ package com.simplecityapps.shuttle.ui.screens.library.albumartists
 
 import android.os.Bundle
 import android.os.Parcelable
-import android.view.*
+import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
@@ -23,8 +28,8 @@ import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.ui.common.ContextualToolbarHelper
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
-import com.simplecityapps.shuttle.ui.common.dialog.ShowExcludeDialog
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
+import com.simplecityapps.shuttle.ui.common.dialog.showExcludeDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.GlidePreloadModelProvider
 import com.simplecityapps.shuttle.ui.common.recyclerview.GridSpacingItemDecoration
@@ -48,7 +53,6 @@ class AlbumArtistListFragment :
     AlbumArtistBinder.Listener,
     AlbumArtistListContract.View,
     CreatePlaylistDialogFragment.Listener {
-
     private var adapter: RecyclerAdapter by autoCleared()
 
     lateinit var imageLoader: GlideImageLoader
@@ -72,7 +76,8 @@ class AlbumArtistListFragment :
     private val viewPreloadSizeProvider by lazy { ViewPreloadSizeProvider<AlbumArtist>() }
     private val preloadModelProvider by lazy {
         GlidePreloadModelProvider<AlbumArtist>(
-            imageLoader, listOf(ArtworkImageLoader.Options.CacheDecodedResource)
+            imageLoader,
+            listOf(ArtworkImageLoader.Options.CacheDecodedResource)
         )
     }
 
@@ -84,11 +89,18 @@ class AlbumArtistListFragment :
         setHasOptionsMenu(true)
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return inflater.inflate(R.layout.fragment_album_artists, container, false)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
         super.onViewCreated(view, savedInstanceState)
 
         imageLoader = GlideImageLoader(this)
@@ -99,12 +111,13 @@ class AlbumArtistListFragment :
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
         recyclerView.setRecyclerListener(RecyclerListener())
-        val preloader: RecyclerViewPreloader<AlbumArtist> = RecyclerViewPreloader(
-            imageLoader.requestManager,
-            preloadModelProvider,
-            viewPreloadSizeProvider,
-            12
-        )
+        val preloader: RecyclerViewPreloader<AlbumArtist> =
+            RecyclerViewPreloader(
+                imageLoader.requestManager,
+                preloadModelProvider,
+                viewPreloadSizeProvider,
+                12
+            )
         recyclerView.addOnScrollListener(preloader)
 
         savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
@@ -121,7 +134,10 @@ class AlbumArtistListFragment :
         playlistMenuPresenter.bindView(playlistMenuView)
     }
 
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+    override fun onCreateOptionsMenu(
+        menu: Menu,
+        inflater: MenuInflater
+    ) {
         super.onCreateOptionsMenu(menu, inflater)
 
         inflater.inflate(R.menu.menu_artist_list, menu)
@@ -219,8 +235,10 @@ class AlbumArtistListFragment :
 
     // AlbumArtistListContact.View Implementation
 
-    override fun setAlbumArtists(albumArtists: List<AlbumArtist>, viewMode: ViewMode) {
-
+    override fun setAlbumArtists(
+        albumArtists: List<AlbumArtist>,
+        viewMode: ViewMode
+    ) {
         preloadModelProvider.items = albumArtists
 
         adapter.update(
@@ -317,7 +335,10 @@ class AlbumArtistListFragment :
 
     // AlbumArtistBinder.Listener Implementation
 
-    override fun onAlbumArtistClicked(albumArtist: AlbumArtist, viewHolder: AlbumArtistBinder.ViewHolder) {
+    override fun onAlbumArtistClicked(
+        albumArtist: AlbumArtist,
+        viewHolder: AlbumArtistBinder.ViewHolder
+    ) {
         if (!contextualToolbarHelper.handleClick(albumArtist)) {
             if (findNavController().currentDestination?.id != R.id.albumArtistDetailFragment) {
                 findNavController().navigate(
@@ -330,11 +351,17 @@ class AlbumArtistListFragment :
         }
     }
 
-    override fun onAlbumArtistLongClicked(view: View, albumArtist: AlbumArtist) {
+    override fun onAlbumArtistLongClicked(
+        view: View,
+        albumArtist: AlbumArtist
+    ) {
         contextualToolbarHelper.handleLongClick(albumArtist)
     }
 
-    override fun onOverflowClicked(view: View, albumArtist: AlbumArtist) {
+    override fun onOverflowClicked(
+        view: View,
+        albumArtist: AlbumArtist
+    ) {
         val popupMenu = PopupMenu(requireContext(), view)
         popupMenu.inflate(R.menu.menu_popup)
         TagEditorMenuSanitiser.sanitise(popupMenu.menu, albumArtist.mediaProviders)
@@ -359,7 +386,7 @@ class AlbumArtistListFragment :
                         return@setOnMenuItemClickListener true
                     }
                     R.id.exclude -> {
-                        ShowExcludeDialog(requireContext(), albumArtist.name ?: albumArtist.friendlyArtistName) {
+                        showExcludeDialog(requireContext(), albumArtist.name ?: albumArtist.friendlyArtistName) {
                             presenter.exclude(albumArtist)
                         }
                         return@setOnMenuItemClickListener true
@@ -381,40 +408,46 @@ class AlbumArtistListFragment :
 
     // CreatePlaylistDialogFragment.Listener Implementation
 
-    override fun onSave(text: String, playlistData: PlaylistData) {
+    override fun onSave(
+        text: String,
+        playlistData: PlaylistData
+    ) {
         playlistMenuView.onSave(text, playlistData)
     }
 
     // ContextualToolbarHelper.Callback Implementation
 
-    private val contextualToolbarCallback = object : ContextualToolbarHelper.Callback<AlbumArtist> {
+    private val contextualToolbarCallback =
+        object : ContextualToolbarHelper.Callback<AlbumArtist> {
+            override fun onCountChanged(count: Int) {
+                contextualToolbarHelper.contextualToolbar?.title =
+                    Phrase.fromPlural(requireContext(), R.plurals.multi_select_items_selected, count)
+                        .put("count", count)
+                        .format()
+                contextualToolbarHelper.contextualToolbar?.menu?.let { menu ->
+                    TagEditorMenuSanitiser.sanitise(menu, contextualToolbarHelper.selectedItems.flatMap { albumArtist -> albumArtist.mediaProviders }.distinct())
+                }
+            }
 
-        override fun onCountChanged(count: Int) {
-            contextualToolbarHelper.contextualToolbar?.title = Phrase.fromPlural(requireContext(), R.plurals.multi_select_items_selected, count)
-                .put("count", count)
-                .format()
-            contextualToolbarHelper.contextualToolbar?.menu?.let { menu ->
-                TagEditorMenuSanitiser.sanitise(menu, contextualToolbarHelper.selectedItems.flatMap { albumArtist -> albumArtist.mediaProviders }.distinct())
+            override fun onItemUpdated(
+                item: AlbumArtist,
+                isSelected: Boolean
+            ) {
+                adapter.let { adapter ->
+                    adapter.items
+                        .filterIsInstance<AlbumArtistBinder>()
+                        .firstOrNull { it.albumArtist.groupKey == item.groupKey }
+                        ?.let { viewBinder ->
+                            viewBinder.selected = isSelected
+                            adapter.notifyItemChanged(adapter.items.indexOf(viewBinder))
+                        }
+                }
             }
         }
-
-        override fun onItemUpdated(item: AlbumArtist, isSelected: Boolean) {
-            adapter.let { adapter ->
-                adapter.items
-                    .filterIsInstance<AlbumArtistBinder>()
-                    .firstOrNull { it.albumArtist.groupKey == item.groupKey }
-                    ?.let { viewBinder ->
-                        viewBinder.selected = isSelected
-                        adapter.notifyItemChanged(adapter.items.indexOf(viewBinder))
-                    }
-            }
-        }
-    }
 
     // Static
 
     companion object {
-
         const val TAG = "AlbumArtistListFragment"
 
         const val ARG_RECYCLER_STATE = "recycler_state"

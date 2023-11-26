@@ -25,33 +25,53 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
 interface AlbumDetailContract {
-
     interface View {
-        fun setData(songs: List<Song>, currentSong: Song?)
+        fun setData(
+            songs: List<Song>,
+            currentSong: Song?
+        )
+
         fun showLoadError(error: Error)
+
         fun onAddedToQueue(name: String)
+
         fun setAlbum(album: com.simplecityapps.shuttle.model.Album)
+
         fun showDeleteError(error: Error)
+
         fun showTagEditor(songs: List<Song>)
     }
 
     interface Presenter : BaseContract.Presenter<View> {
         fun loadData()
+
         fun onSongClicked(song: Song)
+
         fun shuffle()
+
         fun addToQueue(album: com.simplecityapps.shuttle.model.Album)
+
         fun addToQueue(song: Song)
+
         fun playNext(album: com.simplecityapps.shuttle.model.Album)
+
         fun playNext(song: Song)
+
         fun getCurrentSong(): Song?
+
         fun exclude(song: Song)
+
         fun editTags(song: Song)
+
         fun editTags(album: com.simplecityapps.shuttle.model.Album)
+
         fun delete(song: Song)
     }
 }
 
-class AlbumDetailPresenter @AssistedInject constructor(
+class AlbumDetailPresenter
+@AssistedInject
+constructor(
     @ApplicationContext private val context: Context,
     private val albumRepository: AlbumRepository,
     private val songRepository: SongRepository,
@@ -62,7 +82,6 @@ class AlbumDetailPresenter @AssistedInject constructor(
 ) : BasePresenter<AlbumDetailContract.View>(),
     AlbumDetailContract.Presenter,
     QueueChangeCallback {
-
     @AssistedFactory
     interface Factory {
         fun create(album: com.simplecityapps.shuttle.model.Album): AlbumDetailPresenter
@@ -108,7 +127,10 @@ class AlbumDetailPresenter @AssistedInject constructor(
         }
     }
 
-    override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
+    override fun onQueuePositionChanged(
+        oldPosition: Int?,
+        newPosition: Int?
+    ) {
         getCurrentSong()?.let { currentSong ->
             view?.setData(this@AlbumDetailPresenter.songs, currentSong)
         }

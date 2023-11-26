@@ -6,7 +6,6 @@ import com.simplecityapps.playback.PlaybackWatcher
 
 @Suppress("DEPRECATION")
 class AudioFocusHelperApi21(context: Context, playbackWatcher: PlaybackWatcher) : AudioFocusHelperBase(context, playbackWatcher) {
-
     override fun requestAudioFocus(): Boolean {
         if (!enabled) return true
 

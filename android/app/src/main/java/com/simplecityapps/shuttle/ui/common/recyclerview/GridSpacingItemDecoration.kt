@@ -11,7 +11,6 @@ class GridSpacingItemDecoration(
     private val includeEdge: Boolean = true,
     private val offset: Int = 0
 ) : RecyclerView.ItemDecoration() {
-
     private val space: Int = space.dp
 
     override fun getItemOffsets(
@@ -20,7 +19,6 @@ class GridSpacingItemDecoration(
         parent: RecyclerView,
         state: RecyclerView.State
     ) {
-
         val spanCount = (parent.layoutManager as GridLayoutManager).spanCount
         var position = parent.getChildAdapterPosition(view)
 

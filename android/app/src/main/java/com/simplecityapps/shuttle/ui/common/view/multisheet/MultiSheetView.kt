@@ -13,12 +13,19 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.view.setMargins
 
-class MultiSheetView @JvmOverloads constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) : CoordinatorLayout(context, attrs, defStyleAttr) {
-
+class MultiSheetView
+@JvmOverloads
+constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) : CoordinatorLayout(context, attrs, defStyleAttr) {
     interface SheetStateChangeListener {
-        fun onSheetStateChanged(@Sheet sheet: Int, @BottomSheetBehavior.State state: Int)
+        fun onSheetStateChanged(
+            @Sheet sheet: Int,
+            @BottomSheetBehavior.State state: Int
+        )
 
-        fun onSlide(@Sheet sheet: Int, slideOffset: Float)
+        fun onSlide(
+            @Sheet sheet: Int,
+            slideOffset: Float
+        )
     }
 
     private lateinit var bottomSheetBehavior1: CustomBottomSheetBehavior<*>
@@ -51,45 +58,67 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
         val sheet1 = findViewById<View>(R.id.sheet1)
         bottomSheetBehavior1 = BottomSheetBehavior.from(sheet1) as CustomBottomSheetBehavior<*>
         bottomSheetBehavior1.isGestureInsetBottomIgnored = true
-        bottomSheetBehavior1.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
-            override fun onStateChanged(bottomSheet: View, newState: Int) {
-                fadeView(Sheet.FIRST, newState)
+        bottomSheetBehavior1.addBottomSheetCallback(
+            object : BottomSheetBehavior.BottomSheetCallback() {
+                override fun onStateChanged(
+                    bottomSheet: View,
+                    newState: Int
+                ) {
+                    fadeView(Sheet.FIRST, newState)
 
-                sheetStateChangeListeners.forEach { listener -> listener.onSheetStateChanged(Sheet.FIRST, newState) }
+                    sheetStateChangeListeners.forEach { listener -> listener.onSheetStateChanged(Sheet.FIRST, newState) }
+                }
+
+                override fun onSlide(
+                    bottomSheet: View,
+                    slideOffset: Float
+                ) {
+                    fadeView(findViewById(getSheetPeekViewResId(Sheet.FIRST)), slideOffset)
+
+                    sheetStateChangeListeners.forEach { listener -> listener.onSlide(Sheet.FIRST, slideOffset) }
+
+                    bottomNavigationView.translationY = bottomNavigationView.height.toFloat() * slideOffset
+                    sheet1.translationY = -bottomNavigationView.height.toFloat() + bottomNavigationView.translationY
+                }
             }
-
-            override fun onSlide(bottomSheet: View, slideOffset: Float) {
-                fadeView(findViewById(getSheetPeekViewResId(Sheet.FIRST)), slideOffset)
-
-                sheetStateChangeListeners.forEach { listener -> listener.onSlide(Sheet.FIRST, slideOffset) }
-
-                bottomNavigationView.translationY = bottomNavigationView.height.toFloat() * slideOffset
-                sheet1.translationY = -bottomNavigationView.height.toFloat() + bottomNavigationView.translationY
-            }
-        })
+        )
 
         val sheet2 = findViewById<View>(R.id.sheet2)
         bottomSheetBehavior2 = BottomSheetBehavior.from(sheet2) as BottomSheetBehavior<*>
         bottomSheetBehavior2.isGestureInsetBottomIgnored = true
-        bottomSheetBehavior2.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
-            override fun onStateChanged(bottomSheet: View, newState: Int) {
-                fadeView(Sheet.SECOND, newState)
+        bottomSheetBehavior2.addBottomSheetCallback(
+            object : BottomSheetBehavior.BottomSheetCallback() {
+                override fun onStateChanged(
+                    bottomSheet: View,
+                    newState: Int
+                ) {
+                    fadeView(Sheet.SECOND, newState)
 
-                sheetStateChangeListeners.forEach { listener -> listener.onSheetStateChanged(Sheet.SECOND, newState) }
+                    sheetStateChangeListeners.forEach { listener -> listener.onSheetStateChanged(Sheet.SECOND, newState) }
+                }
+
+                override fun onSlide(
+                    bottomSheet: View,
+                    slideOffset: Float
+                ) {
+                    fadeView(findViewById(getSheetPeekViewResId(Sheet.SECOND)), slideOffset)
+
+                    sheetStateChangeListeners.forEach { listener -> listener.onSlide(Sheet.SECOND, slideOffset) }
+                }
             }
-
-            override fun onSlide(bottomSheet: View, slideOffset: Float) {
-                fadeView(findViewById(getSheetPeekViewResId(Sheet.SECOND)), slideOffset)
-
-                sheetStateChangeListeners.forEach { listener -> listener.onSlide(Sheet.SECOND, slideOffset) }
-            }
-        })
+        )
 
         // First sheet view click listener
         findViewById<View>(getSheetPeekViewResId(Sheet.FIRST)).setOnClickListener { expandSheet(Sheet.FIRST) }
     }
 
-    override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
+    override fun onLayout(
+        changed: Boolean,
+        l: Int,
+        t: Int,
+        r: Int,
+        b: Int
+    ) {
         super.onLayout(changed, l, t, r, b)
 
         if (changed) {
@@ -110,13 +139,14 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
      */
     val currentSheet: Int
         @Sheet
-        get() = if (bottomSheetBehavior2.state == BottomSheetBehavior.STATE_EXPANDED) {
-            Sheet.SECOND
-        } else if (bottomSheetBehavior1.state == BottomSheetBehavior.STATE_EXPANDED) {
-            Sheet.FIRST
-        } else {
-            Sheet.NONE
-        }
+        get() =
+            if (bottomSheetBehavior2.state == BottomSheetBehavior.STATE_EXPANDED) {
+                Sheet.SECOND
+            } else if (bottomSheetBehavior1.state == BottomSheetBehavior.STATE_EXPANDED) {
+                Sheet.FIRST
+            } else {
+                Sheet.NONE
+            }
 
     fun addSheetStateChangeListener(sheetStateChangeListener: SheetStateChangeListener) {
         sheetStateChangeListeners.add(sheetStateChangeListener)
@@ -126,14 +156,18 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
         sheetStateChangeListeners.remove(sheetStateChangeListener)
     }
 
-    fun expandSheet(@Sheet sheet: Int) {
+    fun expandSheet(
+        @Sheet sheet: Int
+    ) {
         when (sheet) {
             Sheet.FIRST -> bottomSheetBehavior1.setState(BottomSheetBehavior.STATE_EXPANDED)
             Sheet.SECOND -> bottomSheetBehavior2.setState(BottomSheetBehavior.STATE_EXPANDED)
         }
     }
 
-    fun collapseSheet(@Sheet sheet: Int) {
+    fun collapseSheet(
+        @Sheet sheet: Int
+    ) {
         when (sheet) {
             Sheet.FIRST -> bottomSheetBehavior1.setState(BottomSheetBehavior.STATE_COLLAPSED)
             Sheet.SECOND -> bottomSheetBehavior2.setState(BottomSheetBehavior.STATE_COLLAPSED)
@@ -146,8 +180,10 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
      * @param collapse true if all expanded sheets should be collapsed.
      * @param animate  true if the change in peek height should be animated
      */
-    fun hide(collapse: Boolean, animate: Boolean) {
-
+    fun hide(
+        collapse: Boolean,
+        animate: Boolean
+    ) {
         bottomSheetBehavior1.isDraggable = false
         bottomSheetBehavior2.isDraggable = false
 
@@ -177,7 +213,6 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
      * @param animate true if the change in peek height should be animated
      */
     fun unhide(animate: Boolean) {
-
         bottomSheetBehavior1.isDraggable = true
         bottomSheetBehavior2.isDraggable = true
 
@@ -203,7 +238,9 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
     /**
      * Expand the passed in sheet, collapsing/expanding the other sheet(s) as required.
      */
-    fun goToSheet(@Sheet sheet: Int) {
+    fun goToSheet(
+        @Sheet sheet: Int
+    ) {
         when (sheet) {
             Sheet.NONE -> {
                 collapseSheet(Sheet.FIRST)
@@ -220,7 +257,9 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
         }
     }
 
-    fun restoreSheet(@Sheet sheet: Int) {
+    fun restoreSheet(
+        @Sheet sheet: Int
+    ) {
         goToSheet(sheet)
         fadeView(Sheet.FIRST, bottomSheetBehavior1.state)
         fadeView(Sheet.SECOND, bottomSheetBehavior2.state)
@@ -249,7 +288,9 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
 
     @SuppressLint("DefaultLocale")
     @IdRes
-    fun getSheetContainerViewResId(@Sheet sheet: Int): Int {
+    fun getSheetContainerViewResId(
+        @Sheet sheet: Int
+    ): Int {
         when (sheet) {
             Sheet.FIRST -> return R.id.sheet1Container
             Sheet.SECOND -> return R.id.sheet2Container
@@ -260,7 +301,9 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
 
     @SuppressLint("DefaultLocale")
     @IdRes
-    fun getSheetPeekViewResId(@Sheet sheet: Int): Int {
+    fun getSheetPeekViewResId(
+        @Sheet sheet: Int
+    ): Int {
         when (sheet) {
             Sheet.FIRST -> return R.id.sheet1PeekView
             Sheet.SECOND -> return R.id.sheet2PeekView
@@ -269,7 +312,10 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
         throw IllegalStateException(String.format("No peek view resId found for sheet: %d", sheet))
     }
 
-    private fun fadeView(@Sheet sheet: Int, @BottomSheetBehavior.State state: Int) {
+    private fun fadeView(
+        @Sheet sheet: Int,
+        @BottomSheetBehavior.State state: Int
+    ) {
         if (state == BottomSheetBehavior.STATE_EXPANDED) {
             fadeView(findViewById(getSheetPeekViewResId(sheet)), 1f)
         } else if (state == BottomSheetBehavior.STATE_COLLAPSED) {
@@ -277,7 +323,10 @@ class MultiSheetView @JvmOverloads constructor(context: Context, attrs: Attribut
         }
     }
 
-    private fun fadeView(v: View, offset: Float) {
+    private fun fadeView(
+        v: View,
+        offset: Float
+    ) {
         val alpha = 1 - offset
         v.alpha = alpha
         v.visibility = if (alpha == 0f) View.GONE else View.VISIBLE

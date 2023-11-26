@@ -2,14 +2,13 @@ package com.simplecityapps.playback.chromecast
 
 import android.net.Uri
 import fi.iki.elonen.NanoHTTPD
-import kotlinx.coroutines.runBlocking
-import timber.log.Timber
 import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.io.InputStream
+import kotlinx.coroutines.runBlocking
+import timber.log.Timber
 
 class HttpServer(private val castService: CastService) : NanoHTTPD(5000) {
-
     override fun serve(session: IHTTPSession): Response {
         val uri = Uri.parse(session.uri)
 
@@ -37,7 +36,12 @@ class HttpServer(private val castService: CastService) : NanoHTTPD(5000) {
         return newFixedLengthResponse(Response.Status.BAD_REQUEST, "text/html", "Invalid request url")
     }
 
-    private fun serveAudio(headers: MutableMap<String, String>, inputStream: InputStream, length: Long, mimeType: String): Response {
+    private fun serveAudio(
+        headers: MutableMap<String, String>,
+        inputStream: InputStream,
+        length: Long,
+        mimeType: String
+    ): Response {
         try {
             var range: String? = null
             for (key in headers.keys) {
@@ -86,7 +90,11 @@ class HttpServer(private val castService: CastService) : NanoHTTPD(5000) {
         return newFixedLengthResponse(Response.Status.NOT_FOUND, "text/html", "File not found")
     }
 
-    private fun serveArtwork(inputStream: InputStream, mimeType: String, length: Long): Response {
+    private fun serveArtwork(
+        inputStream: InputStream,
+        mimeType: String,
+        length: Long
+    ): Response {
         return newFixedLengthResponse(Response.Status.OK, mimeType, inputStream, length)
     }
 }

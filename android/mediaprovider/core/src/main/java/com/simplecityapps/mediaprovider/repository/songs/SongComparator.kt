@@ -2,8 +2,8 @@ package com.simplecityapps.mediaprovider.repository.songs
 
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.sorting.SongSortOrder
-import kotlinx.datetime.LocalDate
 import java.text.Collator
+import kotlinx.datetime.LocalDate
 
 val SongSortOrder.comparator: Comparator<Song>
     get() {
@@ -22,7 +22,6 @@ val SongSortOrder.comparator: Comparator<Song>
     }
 
 object SongComparator {
-
     private val collator: Collator by lazy {
         Collator.getInstance().apply { strength = Collator.TERTIARY }
     }

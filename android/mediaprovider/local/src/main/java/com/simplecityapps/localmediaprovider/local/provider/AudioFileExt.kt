@@ -4,9 +4,9 @@ import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.mediaprovider.model.AudioFile
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import java.util.Locale
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
-import java.util.Locale
 
 fun AudioFile.toSong(providerType: MediaProviderType): Song {
     return Song(
@@ -58,7 +58,14 @@ enum class TagLibProperty(val key: String) {
     Grouping("GROUPING")
 }
 
-fun KTagLib.getAudioFile(fileDescriptor: Int, filePath: String, fileName: String, lastModified: Long, size: Long, mimeType: String?): AudioFile {
+fun KTagLib.getAudioFile(
+    fileDescriptor: Int,
+    filePath: String,
+    fileName: String,
+    lastModified: Long,
+    size: Long,
+    mimeType: String?
+): AudioFile {
     val metadata = getMetadata(fileDescriptor)
     return AudioFile(
         path = filePath,
@@ -67,7 +74,8 @@ fun KTagLib.getAudioFile(fileDescriptor: Int, filePath: String, fileName: String
         mimeType = mimeType ?: "audio/*",
         title = metadata?.propertyMap?.get(TagLibProperty.Title.key)?.firstOrNull() ?: fileName,
         albumArtist = metadata?.propertyMap?.get(TagLibProperty.AlbumArtist.key)?.firstOrNull(),
-        artists = metadata?.propertyMap?.get(TagLibProperty.Artist.key).orEmpty().flatMap { artist ->
+        artists =
+        metadata?.propertyMap?.get(TagLibProperty.Artist.key).orEmpty().flatMap { artist ->
             artist.split(';')
                 .map { artist -> artist.trim() }
                 .filterNot { artist -> artist.isEmpty() }
@@ -78,20 +86,24 @@ fun KTagLib.getAudioFile(fileDescriptor: Int, filePath: String, fileName: String
         disc = metadata?.propertyMap?.get(TagLibProperty.Disc.key)?.firstOrNull()?.substringBefore('/')?.toIntOrNull(),
         discTotal = metadata?.propertyMap?.get(TagLibProperty.Disc.key)?.firstOrNull()?.substringAfter('/', "")?.toIntOrNull(),
         duration = metadata?.audioProperties?.duration,
-        year = (
+        year =
+        (
             metadata?.propertyMap?.get(TagLibProperty.Date.key)?.firstOrNull()
                 ?: metadata?.propertyMap?.get(TagLibProperty.OriginalDate.key)?.firstOrNull()
             )?.parseDate()
             ?: metadata?.propertyMap?.get(TagLibProperty.Year.key)?.firstOrNull()?.parseDate(),
-        genres = metadata?.propertyMap?.get(TagLibProperty.Genre.key).orEmpty().flatMap { genre ->
+        genres =
+        metadata?.propertyMap?.get(TagLibProperty.Genre.key).orEmpty().flatMap { genre ->
             genre.split(',', ';', '/')
                 .map { genre -> genre.trim() }
                 .filterNot { genre -> genre.isEmpty() }
         },
-        replayGainTrack = metadata?.propertyMap?.getCaseInsensitive(TagLibProperty.ReplayGainTrack.key)
+        replayGainTrack =
+        metadata?.propertyMap?.getCaseInsensitive(TagLibProperty.ReplayGainTrack.key)
             ?.firstOrNull()?.replace(oldValue = "db", newValue = "", ignoreCase = true)
             ?.toDoubleOrNull(),
-        replayGainAlbum = metadata?.propertyMap?.getCaseInsensitive(TagLibProperty.ReplayGainAlbum.key)
+        replayGainAlbum =
+        metadata?.propertyMap?.getCaseInsensitive(TagLibProperty.ReplayGainAlbum.key)
             ?.firstOrNull()?.replace(oldValue = "db", newValue = "", ignoreCase = true)
             ?.toDoubleOrNull(),
         lyrics = metadata?.propertyMap?.get(TagLibProperty.Lyrics.key)?.firstOrNull(),

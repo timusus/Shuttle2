@@ -22,5 +22,5 @@ data class Item(
     @Json(name = "IndexNumber") val indexNumber: Int?,
     @Json(name = "ParentIndexNumber") val parentIndexNumber: Int?,
     @Json(name = "ProductionYear") val productionYear: Int?,
-    @Json(name = "Genres") val genres: List<String> = emptyList(),
+    @Json(name = "Genres") val genres: List<String> = emptyList()
 )

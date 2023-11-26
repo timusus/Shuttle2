@@ -3,15 +3,18 @@ package com.simplecityapps.playback.queue
 import timber.log.Timber
 
 interface QueueChangeCallback {
-
     enum class QueueChangeReason {
-        Unknown, Move
+        Unknown,
+        Move
     }
 
     fun onQueueChanged(reason: QueueChangeReason = QueueChangeReason.Unknown) {
     }
 
-    fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
+    fun onQueuePositionChanged(
+        oldPosition: Int?,
+        newPosition: Int?
+    ) {
     }
 
     fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
@@ -25,7 +28,6 @@ interface QueueChangeCallback {
 }
 
 class QueueWatcher : QueueChangeCallback {
-
     private var callbacks: MutableList<QueueChangeCallback> = mutableListOf()
 
     fun addCallback(callback: QueueChangeCallback) {
@@ -43,7 +45,10 @@ class QueueWatcher : QueueChangeCallback {
         callbacks.forEach { callback -> callback.onQueueChanged(reason) }
     }
 
-    override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
+    override fun onQueuePositionChanged(
+        oldPosition: Int?,
+        newPosition: Int?
+    ) {
         Timber.v("onQueuePositionChanged(oldPosition: $oldPosition, newPosition: $newPosition)")
         callbacks.forEach { callback -> callback.onQueuePositionChanged(oldPosition, newPosition) }
     }

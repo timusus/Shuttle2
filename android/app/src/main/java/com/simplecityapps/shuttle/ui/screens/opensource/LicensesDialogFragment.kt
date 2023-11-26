@@ -19,21 +19,20 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class LicensesDialogFragment : DialogFragment() {
-
     private var adapter: RecyclerAdapter by autoCleared()
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-
         val view = layoutInflater.inflate(R.layout.fragment_dialog_licenses, null)
         val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerView)
         recyclerView.addItemDecoration(SpacesItemDecoration(4))
         adapter = RecyclerAdapter(lifecycleScope)
         recyclerView.adapter = adapter
 
-        val libraries = Libs.Builder()
-            .build()
-            .libraries
-            .sortedBy { library -> library.name }
+        val libraries =
+            Libs.Builder()
+                .build()
+                .libraries
+                .sortedBy { library -> library.name }
 
         adapter.update(
             libraries.map { LibraryBinder(it, listener) }
@@ -50,15 +49,16 @@ class LicensesDialogFragment : DialogFragment() {
         show(fragmentManager, TAG)
     }
 
-    private val listener = object : LibraryBinder.Listener {
-        override fun onItemClick(library: Library) {
-            if (!library.website.isNullOrEmpty()) {
-                val intent = Intent(Intent.ACTION_VIEW)
-                intent.data = Uri.parse(library.website)
-                startActivity(intent)
+    private val listener =
+        object : LibraryBinder.Listener {
+            override fun onItemClick(library: Library) {
+                if (!library.website.isNullOrEmpty()) {
+                    val intent = Intent(Intent.ACTION_VIEW)
+                    intent.data = Uri.parse(library.website)
+                    startActivity(intent)
+                }
             }
         }
-    }
 
     companion object {
         const val TAG = "LicensesDialogFragment"

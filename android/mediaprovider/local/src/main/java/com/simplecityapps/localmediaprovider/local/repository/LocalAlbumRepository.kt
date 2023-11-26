@@ -7,13 +7,18 @@ import com.simplecityapps.mediaprovider.repository.albums.comparator
 import com.simplecityapps.shuttle.model.Album
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 
 class LocalAlbumRepository(
     private val scope: CoroutineScope,
     private val songDataDao: SongDataDao
 ) : AlbumRepository {
-
     private val albumsRelay: StateFlow<List<Album>?> by lazy {
         songDataDao
             .getAll()

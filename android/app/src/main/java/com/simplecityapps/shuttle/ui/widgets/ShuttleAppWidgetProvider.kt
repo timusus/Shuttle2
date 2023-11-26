@@ -24,7 +24,6 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 abstract class ShuttleAppWidgetProvider : AppWidgetProvider() {
-
     @Inject
     lateinit var playbackManager: PlaybackManager
 
@@ -55,21 +54,29 @@ abstract class ShuttleAppWidgetProvider : AppWidgetProvider() {
         return if (isDarkMode) layoutResIdDark else layoutResIdLight
     }
 
-    override fun onReceive(context: Context?, intent: Intent?) {
+    override fun onReceive(
+        context: Context?,
+        intent: Intent?
+    ) {
         updateReason = WidgetManager.UpdateReason.values()[intent?.extras?.getInt(WidgetManager.ARG_UPDATE_REASON) ?: WidgetManager.UpdateReason.Unknown.ordinal]
 
         super.onReceive(context, intent)
     }
 
-    override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
+    override fun onUpdate(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetIds: IntArray
+    ) {
         super.onUpdate(context, appWidgetManager, appWidgetIds)
 
         appWidgetIds.forEach { appWidgetId ->
             val contentIntent: PendingIntent = PendingIntent.getActivity(context, 0, Intent(context, MainActivity::class.java), PendingIntentCompat.FLAG_IMMUTABLE)
 
-            val views = RemoteViews(context.packageName, getLayoutResId()).apply {
-                bind(context, appWidgetId, contentIntent, imageLoader, appWidgetManager, preferenceManager.widgetBackgroundTransparency / 100f)
-            }
+            val views =
+                RemoteViews(context.packageName, getLayoutResId()).apply {
+                    bind(context, appWidgetId, contentIntent, imageLoader, appWidgetManager, preferenceManager.widgetBackgroundTransparency / 100f)
+                }
 
             // Tell the AppWidgetManager to perform an update on the current app widget
             appWidgetManager.updateAppWidget(appWidgetId, views)
@@ -86,27 +93,33 @@ abstract class ShuttleAppWidgetProvider : AppWidgetProvider() {
     )
 
     internal fun playbackPendingIntent(context: Context): PendingIntent {
-        val intent = Intent(context, PlaybackService::class.java).apply {
-            action = PlaybackService.ACTION_TOGGLE_PLAYBACK
-        }
+        val intent =
+            Intent(context, PlaybackService::class.java).apply {
+                action = PlaybackService.ACTION_TOGGLE_PLAYBACK
+            }
         return getPendingIntent(context, intent)
     }
 
     internal fun prevPendingIntent(context: Context): PendingIntent {
-        val intent = Intent(context, PlaybackService::class.java).apply {
-            action = PlaybackService.ACTION_SKIP_PREV
-        }
+        val intent =
+            Intent(context, PlaybackService::class.java).apply {
+                action = PlaybackService.ACTION_SKIP_PREV
+            }
         return getPendingIntent(context, intent)
     }
 
     internal fun nextPendingIntent(context: Context): PendingIntent {
-        val intent = Intent(context, PlaybackService::class.java).apply {
-            action = PlaybackService.ACTION_SKIP_NEXT
-        }
+        val intent =
+            Intent(context, PlaybackService::class.java).apply {
+                action = PlaybackService.ACTION_SKIP_NEXT
+            }
         return getPendingIntent(context, intent)
     }
 
-    private fun getPendingIntent(context: Context, intent: Intent): PendingIntent {
+    private fun getPendingIntent(
+        context: Context,
+        intent: Intent
+    ): PendingIntent {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             PendingIntent.getForegroundService(context, 1, intent, PendingIntentCompat.FLAG_IMMUTABLE)
         } else {

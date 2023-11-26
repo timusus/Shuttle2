@@ -4,7 +4,11 @@ import android.app.SearchManager
 import android.app.Service
 import android.content.Intent
 import android.content.ServiceConnection
-import android.os.*
+import android.os.Build
+import android.os.Bundle
+import android.os.Handler
+import android.os.IBinder
+import android.os.Looper
 import android.support.v4.media.MediaBrowserCompat
 import androidx.media.MediaBrowserServiceCompat
 import androidx.media.session.MediaButtonReceiver
@@ -16,19 +20,18 @@ import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class PlaybackService :
     MediaBrowserServiceCompat(),
     PlaybackWatcherCallback,
     QueueChangeCallback {
-
     @Inject
     lateinit var playbackManager: PlaybackManager
 
@@ -79,7 +82,11 @@ class PlaybackService :
         sessionToken = mediaSessionManager.mediaSession.sessionToken
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int
+    ): Int {
         super.onStartCommand(intent, flags, startId)
 
         Timber.v("onStartCommand() action: ${intent?.action}")
@@ -115,7 +122,7 @@ class PlaybackService :
                        We'll allow 10 seconds, so we're not calling stopSelf() before Google ANR's us.
                        This also gives S2 time to respond to pending commands. For example, if the command is 'loadFromSearch', we don't want to stop the service
                        and allow the process to be killed while that we're in the middle of executing that command.
-                    */
+                     */
                     startForeground(PlaybackNotificationManager.NOTIFICATION_ID, notificationManager.displayQueueEmptyNotification())
                     postDelayedShutdown(10000)
                 } else {
@@ -137,7 +144,9 @@ class PlaybackService :
         // For Android auto, need to call super, or onGetRoot won't be called.
         return if ("android.media.browse.MediaBrowserService" == intent?.action) {
             super.onBind(intent)
-        } else null
+        } else {
+            null
+        }
     }
 
     override fun stopService(name: Intent?): Boolean {
@@ -258,7 +267,10 @@ class PlaybackService :
 
     // MediaBrowserService Implementation
 
-    override fun onLoadChildren(parentId: String, result: Result<MutableList<MediaBrowserCompat.MediaItem>>) {
+    override fun onLoadChildren(
+        parentId: String,
+        result: Result<MutableList<MediaBrowserCompat.MediaItem>>
+    ) {
         if ("EMPTY_ROOT" == parentId) {
             result.sendResult(mutableListOf())
         } else {
@@ -270,7 +282,11 @@ class PlaybackService :
         }
     }
 
-    override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): BrowserRoot? {
+    override fun onGetRoot(
+        clientPackageName: String,
+        clientUid: Int,
+        rootHints: Bundle?
+    ): BrowserRoot? {
         return if (packageValidator.isKnownCaller(clientPackageName, clientUid)) {
             BrowserRoot("media:/root/", null)
         } else {

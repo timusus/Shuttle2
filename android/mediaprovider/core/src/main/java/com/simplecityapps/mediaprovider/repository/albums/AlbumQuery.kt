@@ -7,7 +7,6 @@ sealed class AlbumQuery(
     val predicate: ((com.simplecityapps.shuttle.model.Album) -> Boolean),
     val sortOrder: AlbumSortOrder = AlbumSortOrder.Default
 ) {
-
     class All(sortOrder: AlbumSortOrder = AlbumSortOrder.Default) :
         AlbumQuery(
             predicate = { true },

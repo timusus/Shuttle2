@@ -12,10 +12,16 @@ import com.simplecityapps.shuttle.model.SmartPlaylist
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 
 class SmartPlaylistBinder(val playlist: SmartPlaylist, private val listener: Listener) : ViewBinder {
-
     interface Listener {
-        fun onSmartPlaylistSelected(smartPlaylist: SmartPlaylist, viewHolder: ViewHolder)
-        fun onOverflowClicked(view: View, playlist: SmartPlaylist) {}
+        fun onSmartPlaylistSelected(
+            smartPlaylist: SmartPlaylist,
+            viewHolder: ViewHolder
+        )
+
+        fun onOverflowClicked(
+            view: View,
+            playlist: SmartPlaylist
+        ) {}
     }
 
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
@@ -46,7 +52,6 @@ class SmartPlaylistBinder(val playlist: SmartPlaylist, private val listener: Lis
     }
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<SmartPlaylistBinder>(itemView) {
-
         private val titleTextView: TextView = itemView.findViewById(R.id.title)
         private val subtitleTextView: TextView = itemView.findViewById(R.id.subtitle)
         private val overflowButton: ImageButton = itemView.findViewById(R.id.overflowButton)
@@ -56,7 +61,10 @@ class SmartPlaylistBinder(val playlist: SmartPlaylist, private val listener: Lis
             overflowButton.setOnClickListener { viewBinder?.listener?.onOverflowClicked(it, viewBinder!!.playlist) }
         }
 
-        override fun bind(viewBinder: SmartPlaylistBinder, isPartial: Boolean) {
+        override fun bind(
+            viewBinder: SmartPlaylistBinder,
+            isPartial: Boolean
+        ) {
             super.bind(viewBinder, isPartial)
 
             titleTextView.setText(viewBinder.playlist.nameResId)

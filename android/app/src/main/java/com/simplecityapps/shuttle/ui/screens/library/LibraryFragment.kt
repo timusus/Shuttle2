@@ -2,7 +2,11 @@ package com.simplecityapps.shuttle.ui.screens.library
 
 import android.os.Bundle
 import android.os.Parcelable
-import android.view.*
+import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -31,17 +35,15 @@ import com.simplecityapps.trial.PromoCodeService
 import com.simplecityapps.trial.TrialManager
 import com.simplecityapps.trial.TrialState
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class LibraryFragment :
     Fragment(),
     ToolbarHost,
     EditTextAlertDialog.Listener {
-
     private var viewPager: ViewPager2? = null
 
     private var tabLayout: TabLayout by autoCleared()
@@ -76,11 +78,18 @@ class LibraryFragment :
         setHasOptionsMenu(true)
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return inflater.inflate(R.layout.fragment_library, container, false)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
         super.onViewCreated(view, savedInstanceState)
 
         libraryTabs = preferenceManager.allLibraryTabs.filter { preferenceManager.enabledLibraryTabs.contains(it) }
@@ -117,9 +126,10 @@ class LibraryFragment :
             }
             viewPager.registerOnPageChangeCallback(pageChangeListener)
 
-            tabLayoutMediator = TabLayoutMediator(tabLayout, viewPager) { tab, position ->
-                tab.text = adapter!!.getPageTitle(position)
-            }
+            tabLayoutMediator =
+                TabLayoutMediator(tabLayout, viewPager) { tab, position ->
+                    tab.text = adapter!!.getPageTitle(position)
+                }
         }
         tabLayoutMediator?.attach()
 
@@ -130,7 +140,10 @@ class LibraryFragment :
         }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+    override fun onCreateOptionsMenu(
+        menu: Menu,
+        inflater: MenuInflater
+    ) {
         super.onCreateOptionsMenu(menu, inflater)
 
         inflater.inflate(R.menu.menu_library, menu)
@@ -183,16 +196,20 @@ class LibraryFragment :
 
     // ViewPager2.OnPageChangeCallback Implementation
 
-    private val pageChangeListener = object : ViewPager2.OnPageChangeCallback() {
-        override fun onPageSelected(position: Int) {
-            contextualToolbarHelper.hide()
-            preferenceManager.currentLibraryTab = libraryTabs[position]
+    private val pageChangeListener =
+        object : ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) {
+                contextualToolbarHelper.hide()
+                preferenceManager.currentLibraryTab = libraryTabs[position]
+            }
         }
-    }
 
     // EditTextAlertDialog.Listener Implementation
 
-    override fun onSave(text: String?, extra: Parcelable?) {
+    override fun onSave(
+        text: String?,
+        extra: Parcelable?
+    ) {
         viewLifecycleOwner.lifecycleScope.launch {
             when (val result = promoCodeService.getPromoCode(text!!)) {
                 is NetworkResult.Success -> {
@@ -207,11 +224,9 @@ class LibraryFragment :
 
     // ToolbarHost Implementation
 
-    override
-    val toolbar: Toolbar?
+    override val toolbar: Toolbar?
         get() = _toolbar
 
-    override
-    val contextualToolbar: Toolbar?
+    override val contextualToolbar: Toolbar?
         get() = _contextualToolbar
 }

@@ -28,7 +28,10 @@ object PlaylistSongComparator {
 }
 
 class DelegatingComparator(private val songComparator: Comparator<Song>) : Comparator<PlaylistSong> {
-    override fun compare(o1: PlaylistSong, o2: PlaylistSong): Int {
+    override fun compare(
+        o1: PlaylistSong,
+        o2: PlaylistSong
+    ): Int {
         return songComparator.compare(o1.song, o2.song)
     }
 }

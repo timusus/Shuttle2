@@ -13,21 +13,24 @@ import com.simplecityapps.playback.exoplayer.ByteUtils.putInt24
 import java.nio.ByteBuffer
 
 class ReplayGainAudioProcessor(var mode: ReplayGainMode, var preAmpGain: Double = 0.0) : BaseAudioProcessor() {
-
     var trackGain: Double? = null
         @Synchronized get
+
         @Synchronized set
 
     var albumGain: Double? = null
         @Synchronized get
+
         @Synchronized set
 
     private val gain: Double
-        get() = preAmpGain + when (mode) {
-            ReplayGainMode.Track -> trackGain ?: albumGain ?: 0.0
-            ReplayGainMode.Album -> albumGain ?: trackGain ?: 0.0
-            ReplayGainMode.Off -> 0.0
-        }
+        get() =
+            preAmpGain +
+                when (mode) {
+                    ReplayGainMode.Track -> trackGain ?: albumGain ?: 0.0
+                    ReplayGainMode.Album -> albumGain ?: trackGain ?: 0.0
+                    ReplayGainMode.Off -> 0.0
+                }
 
     override fun onConfigure(inputAudioFormat: AudioProcessor.AudioFormat): AudioProcessor.AudioFormat {
         if (inputAudioFormat.encoding != C.ENCODING_PCM_16BIT &&

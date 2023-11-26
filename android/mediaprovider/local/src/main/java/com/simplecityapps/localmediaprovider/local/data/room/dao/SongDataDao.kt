@@ -11,16 +11,15 @@ import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongDataUpdate
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import java.util.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import timber.log.Timber
-import java.util.*
 
 @Dao
 abstract class SongDataDao {
-
     @Transaction
     @Query("SELECT * FROM songs")
     abstract suspend fun get(): List<SongData>
@@ -50,7 +49,11 @@ abstract class SongDataDao {
     abstract suspend fun delete(songData: List<SongData>): Int
 
     @Transaction
-    open suspend fun insertUpdateAndDelete(inserts: List<SongData>, updates: List<SongDataUpdate>, deletes: List<SongData>): Triple<Int, Int, Int> {
+    open suspend fun insertUpdateAndDelete(
+        inserts: List<SongData>,
+        updates: List<SongDataUpdate>,
+        deletes: List<SongData>
+    ): Triple<Int, Int, Int> {
         val insertCount = insert(inserts)
         val updateCount = update(updates)
         val deleteCount = delete(deletes)
@@ -61,13 +64,23 @@ abstract class SongDataDao {
     }
 
     @Query("UPDATE songs SET playCount = (SELECT songs.playCount + 1), lastCompleted = :lastCompleted WHERE id =:id")
-    abstract suspend fun incrementPlayCount(id: Long, lastCompleted: Date = Date())
+    abstract suspend fun incrementPlayCount(
+        id: Long,
+        lastCompleted: Date = Date()
+    )
 
     @Query("UPDATE songs SET playbackPosition = :playbackPosition, lastPlayed = :lastPlayed WHERE id =:id")
-    abstract suspend fun updatePlaybackPosition(id: Long, playbackPosition: Int, lastPlayed: Date = Date())
+    abstract suspend fun updatePlaybackPosition(
+        id: Long,
+        playbackPosition: Int,
+        lastPlayed: Date = Date()
+    )
 
     @Query("UPDATE songs SET blacklisted = :blacklisted WHERE id IN (:ids)")
-    abstract suspend fun setExcluded(ids: List<Long>, blacklisted: Boolean): Int
+    abstract suspend fun setExcluded(
+        ids: List<Long>,
+        blacklisted: Boolean
+    ): Int
 
     @Query("UPDATE songs SET blacklisted = 0")
     abstract suspend fun clearExcludeList()

@@ -22,13 +22,12 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import com.vdurmont.semver4j.Semver
 import dagger.hilt.android.AndroidEntryPoint
-import timber.log.Timber
 import java.lang.reflect.Type
 import javax.inject.Inject
+import timber.log.Timber
 
 @AndroidEntryPoint
 class ChangelogDialogFragment : BottomSheetDialogFragment() {
-
     @Inject
     lateinit var moshi: Moshi
 
@@ -39,12 +38,19 @@ class ChangelogDialogFragment : BottomSheetDialogFragment() {
 
     private var showOnLaunchSwitch: SwitchCompat by autoCleared()
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         val contextThemeWrapper = ContextThemeWrapper(activity, requireContext().theme)
         return inflater.cloneInContext(contextThemeWrapper).inflate(R.layout.fragment_dialog_changelog, container, false)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
         super.onViewCreated(view, savedInstanceState)
 
         showOnLaunchSwitch = view.findViewById(R.id.showOnLaunchSwitch)
@@ -53,13 +59,14 @@ class ChangelogDialogFragment : BottomSheetDialogFragment() {
             preferenceManager.showChangelogOnLaunch = b
         }
 
-        val changelog = try {
-            val changeSetList: Type = Types.newParameterizedType(MutableList::class.java, Changeset::class.java)
-            moshi.adapter<List<Changeset>>(changeSetList).lenient().fromJson(requireContext().assets.open("changelog.json").bufferedReader().use { it.readText() })
-        } catch (e: RuntimeException) {
-            Timber.e(e, "Invalid changelog")
-            null
-        }
+        val changelog =
+            try {
+                val changeSetList: Type = Types.newParameterizedType(MutableList::class.java, Changeset::class.java)
+                moshi.adapter<List<Changeset>>(changeSetList).lenient().fromJson(requireContext().assets.open("changelog.json").bufferedReader().use { it.readText() })
+            } catch (e: RuntimeException) {
+                Timber.e(e, "Invalid changelog")
+                null
+            }
 
         val recyclerView = view.findViewById<RecyclerView>(R.id.recyclerView)
         recyclerView.addItemDecoration(SpacesItemDecoration(4.dp))
@@ -75,7 +82,8 @@ class ChangelogDialogFragment : BottomSheetDialogFragment() {
         viewBinders.addAll(
             changelog?.mapIndexed { index, changeset ->
                 ChangesetBinder(
-                    expanded = index == 0 || changeset.version > (
+                    expanded =
+                    index == 0 || changeset.version > (
                         preferenceManager.lastViewedChangelogVersion?.let { version ->
                             try {
                                 Semver(version)
@@ -99,13 +107,17 @@ class ChangelogDialogFragment : BottomSheetDialogFragment() {
         show(fragmentManager, TAG)
     }
 
-    val listener = object : ChangesetBinder.Listener {
-        override fun onItemClicked(position: Int, expanded: Boolean) {
-            val items = adapter.items.toMutableList()
-            items[position] = (items[position] as ChangesetBinder).clone(!expanded)
-            adapter.update(items)
+    val listener =
+        object : ChangesetBinder.Listener {
+            override fun onItemClicked(
+                position: Int,
+                expanded: Boolean
+            ) {
+                val items = adapter.items.toMutableList()
+                items[position] = (items[position] as ChangesetBinder).clone(!expanded)
+                adapter.update(items)
+            }
         }
-    }
 
     companion object {
         const val TAG = "ChangelogDialog"

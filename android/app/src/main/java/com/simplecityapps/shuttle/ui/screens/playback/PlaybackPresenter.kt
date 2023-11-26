@@ -17,13 +17,15 @@ import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.simplecityapps.shuttle.ui.lyrics.QuickLyricManager
 import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import javax.inject.Inject
 
-class PlaybackPresenter @Inject constructor(
+class PlaybackPresenter
+@Inject
+constructor(
     private val playbackManager: PlaybackManager,
     private val playbackWatcher: PlaybackWatcher,
     private val queueManager: QueueManager,
@@ -31,12 +33,11 @@ class PlaybackPresenter @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val albumRepository: AlbumRepository,
     private val albumArtistRepository: AlbumArtistRepository,
-    @ApplicationContext private val context: Context,
+    @ApplicationContext private val context: Context
 ) : BasePresenter<PlaybackContract.View>(),
     PlaybackContract.Presenter,
     QueueChangeCallback,
     PlaybackWatcherCallback {
-
     private var favoriteUpdater: Job? = null
 
     override fun bindView(view: PlaybackContract.View) {
@@ -79,15 +80,17 @@ class PlaybackPresenter @Inject constructor(
 
     private fun updateFavorite() {
         favoriteUpdater?.cancel()
-        val job = launch {
-            val isFavorite = playlistRepository
-                .getSongsForPlaylist(playlistRepository.getFavoritesPlaylist())
-                .firstOrNull()
-                .orEmpty()
-                .map { it.song }
-                .contains(queueManager.getCurrentItem()?.song)
-            this@PlaybackPresenter.view?.setIsFavorite(isFavorite)
-        }
+        val job =
+            launch {
+                val isFavorite =
+                    playlistRepository
+                        .getSongsForPlaylist(playlistRepository.getFavoritesPlaylist())
+                        .firstOrNull()
+                        .orEmpty()
+                        .map { it.song }
+                        .contains(queueManager.getCurrentItem()?.song)
+                this@PlaybackPresenter.view?.setIsFavorite(isFavorite)
+            }
 
         favoriteUpdater = job
     }
@@ -253,7 +256,11 @@ class PlaybackPresenter @Inject constructor(
 
     // PlaybackManager.ProgressCallback
 
-    override fun onProgressChanged(position: Int, duration: Int, fromUser: Boolean) {
+    override fun onProgressChanged(
+        position: Int,
+        duration: Int,
+        fromUser: Boolean
+    ) {
         view?.setProgress(position, duration)
     }
 
@@ -269,7 +276,10 @@ class PlaybackPresenter @Inject constructor(
         updateQueue(queueManager.getQueue())
     }
 
-    override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
+    override fun onQueuePositionChanged(
+        oldPosition: Int?,
+        newPosition: Int?
+    ) {
         updateCurrentSong(queueManager.getCurrentItem()?.song)
         updateQueuePosition(newPosition)
         updateFavorite()

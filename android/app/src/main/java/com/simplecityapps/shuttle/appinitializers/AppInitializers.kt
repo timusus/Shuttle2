@@ -4,7 +4,9 @@ import android.app.Application
 import android.util.Log
 import javax.inject.Inject
 
-class AppInitializers @Inject constructor(
+class AppInitializers
+@Inject
+constructor(
     private val initializers: Set<@JvmSuppressWildcards AppInitializer>
 ) {
     fun init(application: Application) {

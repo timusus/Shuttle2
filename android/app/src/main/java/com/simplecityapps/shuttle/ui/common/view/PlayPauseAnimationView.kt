@@ -18,12 +18,13 @@ import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.shuttle.R
 import kotlin.math.min
 
-class PlayPauseAnimationView @JvmOverloads constructor(
+class PlayPauseAnimationView
+@JvmOverloads
+constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr) {
-
     private val animationDrawable: PlayPauseAnimationDrawable
 
     private var animator: Animator? = null
@@ -77,22 +78,34 @@ class PlayPauseAnimationView @JvmOverloads constructor(
         animator!!.start()
     }
 
-    override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+    override fun onMeasure(
+        widthMeasureSpec: Int,
+        heightMeasureSpec: Int
+    ) {
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
         val size = min(measuredWidth, measuredHeight)
         setMeasuredDimension(size, size)
     }
 
-    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+    override fun onSizeChanged(
+        w: Int,
+        h: Int,
+        oldw: Int,
+        oldh: Int
+    ) {
         super.onSizeChanged(w, h, oldw, oldh)
         animationDrawable.setBounds(0, 0, w, h)
 
-        outlineProvider = object : ViewOutlineProvider() {
-            @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-            override fun getOutline(view: View, outline: Outline) {
-                outline.setOval(0, 0, view.width, view.height)
+        outlineProvider =
+            object : ViewOutlineProvider() {
+                @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+                override fun getOutline(
+                    view: View,
+                    outline: Outline
+                ) {
+                    outline.setOval(0, 0, view.width, view.height)
+                }
             }
-        }
         clipToOutline = true
     }
 

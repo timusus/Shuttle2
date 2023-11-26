@@ -15,12 +15,11 @@ import com.simplecityapps.shuttle.debug.LogMessage
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.utils.withArgs
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.parcelize.Parcelize
 import javax.inject.Inject
+import kotlinx.parcelize.Parcelize
 
 @AndroidEntryPoint
 class LoggingFragment : Fragment(), DebugLoggingTree.Callback {
-
     @Inject lateinit var debugLoggingTree: DebugLoggingTree
 
     private var adapter: RecyclerAdapter by autoCleared()
@@ -37,11 +36,18 @@ class LoggingFragment : Fragment(), DebugLoggingTree.Callback {
         filter = arguments?.getParcelable(ARG_FILTER)
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return inflater.inflate(R.layout.fragment_debug_logging, container, false)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
         super.onViewCreated(view, savedInstanceState)
 
         adapter = RecyclerAdapter(viewLifecycleOwner.lifecycleScope)
@@ -104,12 +110,12 @@ class LoggingFragment : Fragment(), DebugLoggingTree.Callback {
     }
 
     companion object {
-
         private const val ARG_FILTER = "filter"
 
-        fun newInstance(filter: Filter? = null) = LoggingFragment().withArgs {
-            putParcelable(ARG_FILTER, filter)
-        }
+        fun newInstance(filter: Filter? = null) =
+            LoggingFragment().withArgs {
+                putParcelable(ARG_FILTER, filter)
+            }
     }
 
     @Parcelize

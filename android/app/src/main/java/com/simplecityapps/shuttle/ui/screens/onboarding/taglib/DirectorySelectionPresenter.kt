@@ -10,35 +10,46 @@ import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import javax.inject.Inject
 
 interface DirectorySelectionContract {
-
     data class Directory(val tree: DocumentNodeTree, val traversalComplete: Boolean, val hasWritePermission: Boolean)
 
     interface Presenter : BaseContract.Presenter<View> {
         fun loadData(contentResolver: ContentResolver)
+
         fun removeItem(directory: Directory)
-        fun handleSafResult(contentResolver: ContentResolver, intent: Intent)
+
+        fun handleSafResult(
+            contentResolver: ContentResolver,
+            intent: Intent
+        )
+
         fun presentDocumentProvider()
     }
 
     interface View {
         fun setData(data: List<Directory>)
-        fun startActivity(intent: Intent, requestCode: Int)
+
+        fun startActivity(
+            intent: Intent,
+            requestCode: Int
+        )
+
         fun showDocumentProviderNotAvailable()
     }
 }
 
-class DirectorySelectionPresenter @Inject constructor(
+class DirectorySelectionPresenter
+@Inject
+constructor(
     @ApplicationContext private val context: Context,
-    @AppCoroutineScope private val appCoroutineScope: CoroutineScope,
+    @AppCoroutineScope private val appCoroutineScope: CoroutineScope
 ) : DirectorySelectionContract.Presenter, BasePresenter<DirectorySelectionContract.View>() {
-
     private var data: MutableList<DirectorySelectionContract.Directory> = mutableListOf()
 
     override fun loadData(contentResolver: ContentResolver) {
@@ -62,7 +73,10 @@ class DirectorySelectionPresenter @Inject constructor(
         setData(data)
     }
 
-    override fun handleSafResult(contentResolver: ContentResolver, intent: Intent) {
+    override fun handleSafResult(
+        contentResolver: ContentResolver,
+        intent: Intent
+    ) {
         intent.data?.let { uri ->
             contentResolver.takePersistableUriPermission(uri, intent.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION))
             parseUri(contentResolver, uri, true)
@@ -79,15 +93,20 @@ class DirectorySelectionPresenter @Inject constructor(
         }
     }
 
-    private fun parseUri(contentResolver: ContentResolver, uri: Uri, hasWritePermission: Boolean) {
+    private fun parseUri(
+        contentResolver: ContentResolver,
+        uri: Uri,
+        hasWritePermission: Boolean
+    ) {
         appCoroutineScope.launch {
             SafDirectoryHelper.buildFolderNodeTree(contentResolver, uri)
                 .collect { treeStatus ->
-                    val directory = DirectorySelectionContract.Directory(
-                        tree = treeStatus.tree,
-                        traversalComplete = treeStatus is SafDirectoryHelper.TreeStatus.Complete,
-                        hasWritePermission = hasWritePermission
-                    )
+                    val directory =
+                        DirectorySelectionContract.Directory(
+                            tree = treeStatus.tree,
+                            traversalComplete = treeStatus is SafDirectoryHelper.TreeStatus.Complete,
+                            hasWritePermission = hasWritePermission
+                        )
                     val index = data.indexOfFirst { it.tree == treeStatus.tree }
                     if (index == -1) {
                         data.add(directory)

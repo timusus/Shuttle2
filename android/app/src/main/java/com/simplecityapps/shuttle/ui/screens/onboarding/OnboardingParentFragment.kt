@@ -25,8 +25,8 @@ import com.simplecityapps.shuttle.ui.screens.onboarding.privacy.AnalyticsPermiss
 import com.simplecityapps.shuttle.ui.screens.onboarding.scanner.MediaScannerFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.taglib.DirectorySelectionFragment
 import dagger.hilt.android.AndroidEntryPoint
-import me.relex.circleindicator.CircleIndicator3
 import javax.inject.Inject
+import me.relex.circleindicator.CircleIndicator3
 
 enum class OnboardingPage {
     StoragePermission,
@@ -38,21 +38,33 @@ enum class OnboardingPage {
 
 interface OnboardingParent {
     fun goToNext()
+
     fun goToPrevious()
+
     fun hideNextButton()
+
     fun showNextButton(text: String? = null)
+
     fun toggleNextButton(enabled: Boolean)
+
     fun hideBackButton()
+
     fun showBackButton(text: String? = null)
+
     fun getPages(): List<OnboardingPage>
+
     fun setPages(pages: List<OnboardingPage>)
+
     fun exit()
 }
 
 interface OnboardingChild {
     val page: OnboardingPage
+
     fun getParent(): OnboardingParent?
+
     fun handleNextButtonClick() {}
+
     fun handleBackButtonClick() {}
 }
 
@@ -60,7 +72,6 @@ interface OnboardingChild {
 class OnboardingParentFragment :
     Fragment(),
     OnboardingParent {
-
     private var viewPager: ViewPager2 by autoCleared()
 
     private var adapter: OnboardingAdapter by autoCleared()
@@ -89,11 +100,18 @@ class OnboardingParentFragment :
         adapter = OnboardingAdapter(this, args.isOnboarding)
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return inflater.inflate(R.layout.fragment_onboarding, container, false)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
         super.onViewCreated(view, savedInstanceState)
 
         viewPager = view.findViewById(R.id.viewPager)
@@ -208,9 +226,11 @@ class OnboardingParentFragment :
         const val REQUEST_CODE_READ_STORAGE = 100
 
         const val TAG = "OnboardingParentFragment"
-        fun newInstance(args: OnboardingParentFragmentArgs) = OnboardingParentFragment().apply {
-            arguments = args.toBundle()
-        }
+
+        fun newInstance(args: OnboardingParentFragmentArgs) =
+            OnboardingParentFragment().apply {
+                arguments = args.toBundle()
+            }
     }
 
     class OnboardingAdapter(fragment: Fragment, private val isOnboarding: Boolean) : FragmentStateAdapter(fragment) {

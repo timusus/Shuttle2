@@ -7,7 +7,6 @@ import retrofit2.http.Headers
 import retrofit2.http.Url
 
 interface ItemsService {
-
     @GET
     @Headers(
         "Accept: application/json",
@@ -25,7 +24,8 @@ suspend fun ItemsService.items(
     section: String
 ): NetworkResult<QueryResult> {
     return itemsImpl(
-        url = "$url/library/sections/$section/all" +
+        url =
+        "$url/library/sections/$section/all" +
             "?type=10" +
             "&includeCollections=1" +
             "&includeAdvanced=1" +
@@ -36,7 +36,7 @@ suspend fun ItemsService.items(
 
 suspend fun ItemsService.sections(
     url: String,
-    token: String,
+    token: String
 ): NetworkResult<QueryResult> {
     return itemsImpl(
         url = "$url/library/sections",

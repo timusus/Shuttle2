@@ -9,8 +9,8 @@ import android.widget.TextView
 import androidx.cardview.widget.CardView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
-import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
@@ -22,7 +22,6 @@ class GridSongBinder(
     val listener: Listener
 ) : ViewBinder,
     SectionViewBinder {
-
     interface Listener {
         fun onSongClicked(song: com.simplecityapps.shuttle.model.Song)
     }
@@ -57,7 +56,6 @@ class GridSongBinder(
     }
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<GridSongBinder>(itemView) {
-
         private val title: TextView = itemView.findViewById(R.id.title)
         private val subtitle: TextView = itemView.findViewById(R.id.subtitle)
         private val imageView: ImageView = itemView.findViewById(R.id.imageView)
@@ -70,18 +68,22 @@ class GridSongBinder(
             }
         }
 
-        override fun bind(viewBinder: GridSongBinder, isPartial: Boolean) {
+        override fun bind(
+            viewBinder: GridSongBinder,
+            isPartial: Boolean
+        ) {
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.song.name
-            subtitle.text = ListPhrase
-                .from(" • ")
-                .joinSafely(
-                    listOf(
-                        viewBinder.song.friendlyArtistName ?: viewBinder.song.albumArtist,
-                        viewBinder.song.album,
+            subtitle.text =
+                ListPhrase
+                    .from(" • ")
+                    .joinSafely(
+                        listOf(
+                            viewBinder.song.friendlyArtistName ?: viewBinder.song.albumArtist,
+                            viewBinder.song.album
+                        )
                     )
-                )
 
             viewBinder.imageLoader.loadArtwork(
                 imageView,

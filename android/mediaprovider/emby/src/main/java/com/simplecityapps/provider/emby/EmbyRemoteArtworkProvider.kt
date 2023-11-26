@@ -9,12 +9,13 @@ import com.simplecityapps.provider.emby.http.item
 import com.simplecityapps.shuttle.model.Song
 import javax.inject.Inject
 
-class EmbyRemoteArtworkProvider @Inject constructor(
+class EmbyRemoteArtworkProvider
+@Inject
+constructor(
     private val embyAuthenticationManager: EmbyAuthenticationManager,
     private val credentialStore: CredentialStore,
-    private val itemsService: ItemsService,
+    private val itemsService: ItemsService
 ) : RemoteArtworkProvider {
-
     override fun handles(uri: Uri): Boolean {
         return uri.scheme == "emby"
     }
@@ -26,12 +27,13 @@ class EmbyRemoteArtworkProvider @Inject constructor(
 
         val authenticatedCredentials = embyAuthenticationManager.getAuthenticatedCredentials() ?: return null
 
-        val result: NetworkResult<Item> = itemsService.item(
-            address,
-            authenticatedCredentials.accessToken,
-            authenticatedCredentials.userId,
-            itemId
-        )
+        val result: NetworkResult<Item> =
+            itemsService.item(
+                address,
+                authenticatedCredentials.accessToken,
+                authenticatedCredentials.userId,
+                itemId
+            )
         if (result is NetworkResult.Success) {
             return "$address/Items/${result.body.albumId}/Images/Primary?maxWidth=1000&maxHeight=1000"
         }
@@ -46,12 +48,13 @@ class EmbyRemoteArtworkProvider @Inject constructor(
 
         val authenticatedCredentials = embyAuthenticationManager.getAuthenticatedCredentials() ?: return null
 
-        val result: NetworkResult<Item> = itemsService.item(
-            address,
-            authenticatedCredentials.accessToken,
-            authenticatedCredentials.userId,
-            itemId
-        )
+        val result: NetworkResult<Item> =
+            itemsService.item(
+                address,
+                authenticatedCredentials.accessToken,
+                authenticatedCredentials.userId,
+                itemId
+            )
         if (result is NetworkResult.Success) {
             return "$address/Items/${result.body.artistItems.firstOrNull()?.id}/Images/Primary?maxWidth=1000&maxHeight=1000"
         }

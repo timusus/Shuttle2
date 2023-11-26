@@ -19,14 +19,13 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class JellyfinConfigurationFragment : DialogFragment() {
-
     @Inject
     lateinit var jellyfinAuthenticationManager: JellyfinAuthenticationManager
 
@@ -40,7 +39,6 @@ class JellyfinConfigurationFragment : DialogFragment() {
     // Lifecycle
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-
         val view = layoutInflater.inflate(R.layout.fragment_emby_configuration, null)
 
         addressInputLayout = view.findViewById(R.id.addressInputLayout)
@@ -74,12 +72,13 @@ class JellyfinConfigurationFragment : DialogFragment() {
             }
         }
 
-        loadingView.listener = object : CircularLoadingView.Listener {
-            override fun onRetryClicked() {
-                loadingView.isVisible = false
-                inputGroup.isVisible = true
+        loadingView.listener =
+            object : CircularLoadingView.Listener {
+                override fun onRetryClicked() {
+                    loadingView.isVisible = false
+                    inputGroup.isVisible = true
+                }
             }
-        }
 
         rememberPasswordSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
             if (!isChecked) {
@@ -87,16 +86,16 @@ class JellyfinConfigurationFragment : DialogFragment() {
             }
         }
 
-        val dialog = MaterialAlertDialogBuilder(requireContext())
-            .setTitle(requireContext().getString(com.simplecityapps.mediaprovider.R.string.media_provider_title_long_jellyfin))
-            .setView(view)
-            .setPositiveButton(requireContext().getString(R.string.media_provider_button_authenticate), null)
-            .setNegativeButton(requireContext().getString(R.string.dialog_button_close), null)
-            .create()
+        val dialog =
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle(requireContext().getString(com.simplecityapps.mediaprovider.R.string.media_provider_title_long_jellyfin))
+                .setView(view)
+                .setPositiveButton(requireContext().getString(R.string.media_provider_button_authenticate), null)
+                .setNegativeButton(requireContext().getString(R.string.dialog_button_close), null)
+                .create()
 
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-
                 if (!validate()) {
                     return@setOnClickListener
                 }
@@ -110,10 +109,11 @@ class JellyfinConfigurationFragment : DialogFragment() {
                 val loginCredentials = LoginCredentials(loginInputLayout.editText!!.text.toString(), passwordInputLayout.editText!!.text.toString())
 
                 lifecycleScope.launch {
-                    val result = jellyfinAuthenticationManager.authenticate(
-                        address = jellyfinAuthenticationManager.getAddress()!!,
-                        loginCredentials = loginCredentials
-                    )
+                    val result =
+                        jellyfinAuthenticationManager.authenticate(
+                            address = jellyfinAuthenticationManager.getAddress()!!,
+                            loginCredentials = loginCredentials
+                        )
                     result.onSuccess {
                         if (rememberPasswordSwitch.isChecked) {
                             jellyfinAuthenticationManager.setLoginCredentials(loginCredentials)

@@ -25,7 +25,6 @@ class BillingManager(
     context: Context,
     @AppCoroutineScope private val coroutineScope: CoroutineScope
 ) {
-
     interface Listener {
         fun onBillingClientAvailable()
     }
@@ -42,13 +41,14 @@ class BillingManager(
         listeners.remove(listener)
     }
 
-    private val paidVersionSkus = listOf(
-        "s2_subscription_full_version_monthly",
-        "s2_subscription_full_version_yearly",
-        "s2_subscription_full_version_yearly_low",
-        "s2_iap_full_version",
-        "s2_iap_full_version_low"
-    )
+    private val paidVersionSkus =
+        listOf(
+            "s2_subscription_full_version_monthly",
+            "s2_subscription_full_version_yearly",
+            "s2_subscription_full_version_yearly_low",
+            "s2_iap_full_version",
+            "s2_iap_full_version_low"
+        )
 
     val skuDetails: MutableStateFlow<Set<SkuDetails>> = MutableStateFlow(emptySet())
 
@@ -62,23 +62,24 @@ class BillingManager(
         }
     }
 
-    private val billingClientStateListener = object : BillingClientStateListener {
-        override fun onBillingServiceDisconnected() {
-            coroutineScope.launch {
-                delay(retryDelay)
-                start()
-                retryDelay *= 2
+    private val billingClientStateListener =
+        object : BillingClientStateListener {
+            override fun onBillingServiceDisconnected() {
+                coroutineScope.launch {
+                    delay(retryDelay)
+                    start()
+                    retryDelay *= 2
+                }
             }
-        }
 
-        override fun onBillingSetupFinished(billingResult: BillingResult) {
-            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                listeners.forEach { it.onBillingClientAvailable() }
-            } else {
-                Timber.e("onBillingSetupFinished (code: ${billingResult.responseCode}, message: ${billingResult.debugMessage})")
+            override fun onBillingSetupFinished(billingResult: BillingResult) {
+                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                    listeners.forEach { it.onBillingClientAvailable() }
+                } else {
+                    Timber.e("onBillingSetupFinished (code: ${billingResult.responseCode}, message: ${billingResult.debugMessage})")
+                }
             }
         }
-    }
 
     private val purchasesUpdatedListener =
         PurchasesUpdatedListener { billingResult, purchases ->
@@ -99,16 +100,20 @@ class BillingManager(
             }
         }
 
-    private val billingClient = BillingClient.newBuilder(context)
-        .setListener(purchasesUpdatedListener)
-        .enablePendingPurchases()
-        .build()
+    private val billingClient =
+        BillingClient.newBuilder(context)
+            .setListener(purchasesUpdatedListener)
+            .enablePendingPurchases()
+            .build()
 
     fun start() {
         billingClient.startConnection(billingClientStateListener)
     }
 
-    fun launchPurchaseFlow(activity: FragmentActivity, skuDetails: SkuDetails) {
+    fun launchPurchaseFlow(
+        activity: FragmentActivity,
+        skuDetails: SkuDetails
+    ) {
         if (!billingClient.isReady) {
             Timber.e("Failed to launch purchase flow: BillingClient not ready")
             return
@@ -120,26 +125,28 @@ class BillingManager(
     }
 
     suspend fun querySkuDetails() {
-        val inAppPurchaseDetails = SkuDetailsParams.newBuilder()
-            .setSkusList(
-                listOf(
-                    "s2_iap_full_version",
-                    "s2_iap_full_version_low"
+        val inAppPurchaseDetails =
+            SkuDetailsParams.newBuilder()
+                .setSkusList(
+                    listOf(
+                        "s2_iap_full_version",
+                        "s2_iap_full_version_low"
+                    )
                 )
-            )
-            .setType(BillingClient.SkuType.INAPP)
-            .build()
+                .setType(BillingClient.SkuType.INAPP)
+                .build()
 
-        val subscriptionDetails = SkuDetailsParams.newBuilder()
-            .setSkusList(
-                listOf(
-                    "s2_subscription_full_version_monthly",
-                    "s2_subscription_full_version_yearly",
-                    "s2_subscription_full_version_yearly_low"
+        val subscriptionDetails =
+            SkuDetailsParams.newBuilder()
+                .setSkusList(
+                    listOf(
+                        "s2_subscription_full_version_monthly",
+                        "s2_subscription_full_version_yearly",
+                        "s2_subscription_full_version_yearly_low"
+                    )
                 )
-            )
-            .setType(BillingClient.SkuType.SUBS)
-            .build()
+                .setType(BillingClient.SkuType.SUBS)
+                .build()
 
         listOf(inAppPurchaseDetails, subscriptionDetails).forEach { skuDetailsParams ->
             val skuDetailsResult = billingClient.querySkuDetails(skuDetailsParams)
@@ -155,13 +162,15 @@ class BillingManager(
                 BillingClient.BillingResponseCode.BILLING_UNAVAILABLE,
                 BillingClient.BillingResponseCode.ITEM_UNAVAILABLE,
                 BillingClient.BillingResponseCode.DEVELOPER_ERROR,
-                BillingClient.BillingResponseCode.ERROR -> {
+                BillingClient.BillingResponseCode.ERROR
+                -> {
                     Timber.e("onSkuDetailsResponse: ${skuDetailsResult.billingResult.responseCode} ${skuDetailsResult.billingResult.debugMessage}")
                 }
                 BillingClient.BillingResponseCode.USER_CANCELED,
                 BillingClient.BillingResponseCode.FEATURE_NOT_SUPPORTED,
                 BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED,
-                BillingClient.BillingResponseCode.ITEM_NOT_OWNED -> {
+                BillingClient.BillingResponseCode.ITEM_NOT_OWNED
+                -> {
                     // These response codes are not expected.
                     Timber.e("onSkuDetailsResponse: ${skuDetailsResult.billingResult.responseCode} ${skuDetailsResult.billingResult.debugMessage}")
                 }
@@ -175,19 +184,21 @@ class BillingManager(
             // We've got an update listener for when billing is established anyway, so this function will be called again via that
             return
         }
-        val purchaseResponseListener = PurchasesResponseListener { billingResult, purchases ->
-            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                processPurchases(purchases)
+        val purchaseResponseListener =
+            PurchasesResponseListener { billingResult, purchases ->
+                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                    processPurchases(purchases)
+                }
             }
-        }
         billingClient.queryPurchasesAsync(BillingClient.SkuType.INAPP, purchaseResponseListener)
         billingClient.queryPurchasesAsync(BillingClient.SkuType.SUBS, purchaseResponseListener)
     }
 
     @Synchronized
     private fun processPurchases(purchases: List<Purchase>) {
-        if (billingState.value == BillingState.Paid || paidVersionSkus.intersect(purchases.flatMap { purchase -> purchase.skus })
-            .isNotEmpty()
+        if (billingState.value == BillingState.Paid ||
+            paidVersionSkus.intersect(purchases.flatMap { purchase -> purchase.skus })
+                .isNotEmpty()
         ) {
             billingState.value = BillingState.Paid
         } else {
@@ -202,9 +213,10 @@ class BillingManager(
     }
 
     private fun acknowledgePurchase(purchaseToken: String) {
-        val params = AcknowledgePurchaseParams.newBuilder()
-            .setPurchaseToken(purchaseToken)
-            .build()
+        val params =
+            AcknowledgePurchaseParams.newBuilder()
+                .setPurchaseToken(purchaseToken)
+                .build()
         billingClient.acknowledgePurchase(params) { billingResult ->
             val responseCode = billingResult.responseCode
             val debugMessage = billingResult.debugMessage

@@ -6,14 +6,17 @@ import androidx.documentfile.provider.DocumentFile
 import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.localmediaprovider.local.provider.getAudioFile
 import com.simplecityapps.mediaprovider.model.AudioFile
+import java.io.FileNotFoundException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
-import java.io.FileNotFoundException
 
 class FileScanner {
-
-    suspend fun getAudioFile(context: Context, kTagLib: KTagLib, uri: Uri): AudioFile? {
+    suspend fun getAudioFile(
+        context: Context,
+        kTagLib: KTagLib,
+        uri: Uri
+    ): AudioFile? {
         return withContext(Dispatchers.IO) {
             DocumentFile.fromSingleUri(context, uri)?.let { documentFile ->
                 if (documentFile.exists()) {

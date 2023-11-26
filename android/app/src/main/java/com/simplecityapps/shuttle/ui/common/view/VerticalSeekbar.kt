@@ -15,14 +15,16 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.utils.dp
 import kotlin.math.abs
 
-class VerticalSeekbar @JvmOverloads constructor(
+class VerticalSeekbar
+@JvmOverloads
+constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
-
     interface Listener {
         fun onProgressChanged(progress: Float) {}
+
         fun onStopTracking(progress: Float)
     }
 
@@ -129,7 +131,10 @@ class VerticalSeekbar @JvmOverloads constructor(
     /**
      * Rounds i to nearest multiple of n
      */
-    private fun mRound(i: Float, n: Float): Float {
+    private fun mRound(
+        i: Float,
+        n: Float
+    ): Float {
         return if ((i % n) > n / 2) (i + n - i % n) else (i - i % n)
     }
 

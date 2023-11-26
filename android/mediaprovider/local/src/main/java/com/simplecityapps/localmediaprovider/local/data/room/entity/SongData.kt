@@ -42,7 +42,7 @@ data class SongData(
     @ColumnInfo(name = "bitRate") var bitRate: Int?,
     @ColumnInfo(name = "bitDepth") var bitDepth: Int?,
     @ColumnInfo(name = "sampleRate") var sampleRate: Int?,
-    @ColumnInfo(name = "channelCount") var channelCount: Int?,
+    @ColumnInfo(name = "channelCount") var channelCount: Int?
 ) {
     @PrimaryKey(autoGenerate = true)
     var id: Long = 0

@@ -21,17 +21,17 @@ data class Album(
     val groupKey: AlbumGroupKey?,
     val mediaProviders: List<MediaProviderType>
 ) : Parcelable {
-
-    val friendlyArtistName: String? = if (artists.isNotEmpty()) {
-        if (artists.size == 1) {
-            artists.first()
+    val friendlyArtistName: String? =
+        if (artists.isNotEmpty()) {
+            if (artists.size == 1) {
+                artists.first()
+            } else {
+                artists.groupBy { it.lowercase().removeArticles() }
+                    .map { map -> map.value.maxByOrNull { it.length } }
+                    .joinToString(", ")
+                    .ifEmpty { null }
+            }
         } else {
-            artists.groupBy { it.lowercase().removeArticles() }
-                .map { map -> map.value.maxByOrNull { it.length } }
-                .joinToString(", ")
-                .ifEmpty { null }
+            null
         }
-    } else {
-        null
-    }
 }

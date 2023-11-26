@@ -15,15 +15,15 @@ class ColorSet(
     var primaryTextColor: Int,
     var secondaryTextColor: Int
 ) {
-
     companion object {
-
         private val bitmapPaletteProcessor = BitmapPaletteProcessor()
         private val colorHelper = ColorHelper()
 
         @WorkerThread
-        fun fromBitmap(context: Context, bitmap: Bitmap): ColorSet {
-
+        fun fromBitmap(
+            context: Context,
+            bitmap: Bitmap
+        ): ColorSet {
             val colors = bitmapPaletteProcessor.processBitmap(bitmap)
             val tintedTextColors = colorHelper.ensureColors(context, true, colors.first!!, colors.second!!)
 
@@ -33,8 +33,11 @@ class ColorSet(
             return ColorSet(colors.first!!, colors.second!!, tintedTextColors.first!!, tintedTextColors.second!!, primaryTextColor, secondaryTextColor)
         }
 
-        fun fromPrimaryAccentColors(context: Context, primaryColor: Int, accentColor: Int): ColorSet {
-
+        fun fromPrimaryAccentColors(
+            context: Context,
+            primaryColor: Int,
+            accentColor: Int
+        ): ColorSet {
             val tintedTextColor = colorHelper.ensureColors(context, true, primaryColor, accentColor)
 
             val primaryTextColor = ColorHelper.resolvePrimaryColor(context, primaryColor)
@@ -83,10 +86,13 @@ class ColorSet(
 }
 
 class ColorSetEvaluator : TypeEvaluator<ColorSet> {
-
     private val argbEvaluator: ArgbEvaluator = ArgbEvaluator()
 
-    override fun evaluate(p0: Float, p1: ColorSet, p2: ColorSet): ColorSet {
+    override fun evaluate(
+        p0: Float,
+        p1: ColorSet,
+        p2: ColorSet
+    ): ColorSet {
         return ColorSet(
             argbEvaluator.evaluate(p0, p1.primaryColor, p2.primaryColor) as Int,
             argbEvaluator.evaluate(p0, p1.accentColor, p2.accentColor) as Int,

@@ -7,7 +7,6 @@ import kotlin.math.sqrt
 
 @JsonClass(generateAdapter = true)
 open class EqualizerBand(val centerFrequency: Int, var gain: Double) : Serializable {
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -28,12 +27,12 @@ open class EqualizerBand(val centerFrequency: Int, var gain: Double) : Serializa
 }
 
 fun EqualizerBand.toNyquistBand(): NyquistBand {
-
-    val bandWidthGain = if (gain > 0) {
-        sqrt((gain.pow(2) / 2)) // Boost
-    } else {
-        -sqrt((gain.pow(2) / 2)) // Cut
-    }
+    val bandWidthGain =
+        if (gain > 0) {
+            sqrt((gain.pow(2) / 2)) // Boost
+        } else {
+            -sqrt((gain.pow(2) / 2)) // Cut
+        }
 
     return NyquistBand(centerFrequency, (centerFrequency * 0.35f).toInt(), gain, bandWidthGain)
 }

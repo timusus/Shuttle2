@@ -14,15 +14,20 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class WidgetPreferenceFragment : PreferenceFragmentCompat() {
-
     @Inject
     lateinit var widgetManager: WidgetManager
 
-    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+    override fun onCreatePreferences(
+        savedInstanceState: Bundle?,
+        rootKey: String?
+    ) {
         setPreferencesFromResource(R.xml.preferences_widget, rootKey)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
         super.onViewCreated(view, savedInstanceState)
 
         val toolbar: Toolbar = view.findViewById(R.id.toolbar)

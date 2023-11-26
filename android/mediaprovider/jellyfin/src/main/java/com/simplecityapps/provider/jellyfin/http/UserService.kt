@@ -2,7 +2,11 @@ package com.simplecityapps.provider.jellyfin.http
 
 import com.jaredrummler.android.device.DeviceName
 import com.simplecityapps.networking.retrofit.NetworkResult
-import retrofit2.http.*
+import retrofit2.http.Body
+import retrofit2.http.Header
+import retrofit2.http.Headers
+import retrofit2.http.POST
+import retrofit2.http.Url
 
 interface UserService {
     @POST
@@ -22,11 +26,12 @@ suspend fun UserService.authenticate(
     username: String,
     password: String,
     deviceId: String,
-    deviceName: String = try {
-        DeviceName.getDeviceName()
-    } catch (e: Exception) {
-        "Unknown"
-    },
+    deviceName: String =
+        try {
+            DeviceName.getDeviceName()
+        } catch (e: Exception) {
+            "Unknown"
+        },
     version: String = "1.0"
 ): NetworkResult<AuthenticationResult> {
     return authenticateImpl(

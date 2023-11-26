@@ -9,12 +9,16 @@ import android.util.LruCache
 import androidx.core.content.getSystemService
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
-import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
+import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.playback.*
+import com.simplecityapps.playback.AudioEffectSessionManager
+import com.simplecityapps.playback.NoiseManager
+import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackNotificationManager
+import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi21
@@ -42,13 +46,12 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import kotlinx.coroutines.CoroutineScope
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineScope
 
 @InstallIn(SingletonComponent::class)
 @Module
 class PlaybackModule {
-
     @Singleton
     @Provides
     fun provideQueueWatcher(): QueueWatcher {
@@ -57,7 +60,10 @@ class PlaybackModule {
 
     @Singleton
     @Provides
-    fun provideQueueManager(queueWatcher: QueueWatcher, preferenceManager: GeneralPreferenceManager): QueueManager {
+    fun provideQueueManager(
+        queueWatcher: QueueWatcher,
+        preferenceManager: GeneralPreferenceManager
+    ): QueueManager {
         return QueueManager(queueWatcher, preferenceManager)
     }
 
@@ -87,7 +93,10 @@ class PlaybackModule {
 
     @Singleton
     @Provides
-    fun providePlaybackPreferenceManager(sharedPreferences: SharedPreferences, moshi: Moshi): PlaybackPreferenceManager {
+    fun providePlaybackPreferenceManager(
+        sharedPreferences: SharedPreferences,
+        moshi: Moshi
+    ): PlaybackPreferenceManager {
         return PlaybackPreferenceManager(sharedPreferences, moshi)
     }
 
@@ -125,7 +134,10 @@ class PlaybackModule {
 
     @Singleton
     @Provides
-    fun provideAudioFocusHelper(@ApplicationContext context: Context, playbackWatcher: PlaybackWatcher): AudioFocusHelper {
+    fun provideAudioFocusHelper(
+        @ApplicationContext context: Context,
+        playbackWatcher: PlaybackWatcher
+    ): AudioFocusHelper {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             return AudioFocusHelperApi26(context, playbackWatcher)
         } else {
@@ -134,17 +146,26 @@ class PlaybackModule {
     }
 
     @Provides
-    fun provideMediaIdHelper(playlistRepository: PlaylistRepository, artistRepository: AlbumArtistRepository, albumRepository: AlbumRepository, songRepository: SongRepository): MediaIdHelper {
+    fun provideMediaIdHelper(
+        playlistRepository: PlaylistRepository,
+        artistRepository: AlbumArtistRepository,
+        albumRepository: AlbumRepository,
+        songRepository: SongRepository
+    ): MediaIdHelper {
         return MediaIdHelper(playlistRepository, artistRepository, albumRepository, songRepository)
     }
 
     @Provides
-    fun provideAudioManager(@ApplicationContext context: Context): AudioManager? {
+    fun provideAudioManager(
+        @ApplicationContext context: Context
+    ): AudioManager? {
         return context.getSystemService()
     }
 
     @Provides
-    fun provideAudioEffectSessionManager(@ApplicationContext context: Context): AudioEffectSessionManager {
+    fun provideAudioEffectSessionManager(
+        @ApplicationContext context: Context
+    ): AudioEffectSessionManager {
         return AudioEffectSessionManager(context)
     }
 
@@ -166,7 +187,11 @@ class PlaybackModule {
 
     @Singleton
     @Provides
-    fun provideCastService(@ApplicationContext context: Context, songRepository: SongRepository, artworkImageLoader: ArtworkImageLoader): CastService {
+    fun provideCastService(
+        @ApplicationContext context: Context,
+        songRepository: SongRepository,
+        artworkImageLoader: ArtworkImageLoader
+    ): CastService {
         return CastService(context, songRepository, artworkImageLoader)
     }
 
@@ -226,7 +251,11 @@ class PlaybackModule {
 
     @Singleton
     @Provides
-    fun provideNoiseManager(@ApplicationContext context: Context, playbackManager: PlaybackManager, playbackWatcher: PlaybackWatcher): NoiseManager {
+    fun provideNoiseManager(
+        @ApplicationContext context: Context,
+        playbackManager: PlaybackManager,
+        playbackWatcher: PlaybackWatcher
+    ): NoiseManager {
         return NoiseManager(context, playbackManager, playbackWatcher)
     }
 
@@ -257,7 +286,10 @@ class PlaybackModule {
 
     @Singleton
     @Provides
-    fun provideSleepTimer(playbackManager: PlaybackManager, playbackWatcher: PlaybackWatcher): SleepTimer {
+    fun provideSleepTimer(
+        playbackManager: PlaybackManager,
+        playbackWatcher: PlaybackWatcher
+    ): SleepTimer {
         return SleepTimer(playbackManager, playbackWatcher)
     }
 }

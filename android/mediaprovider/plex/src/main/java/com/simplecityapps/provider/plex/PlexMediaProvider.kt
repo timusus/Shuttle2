@@ -22,16 +22,16 @@ import timber.log.Timber
 
 class PlexMediaProvider(
     private val authenticationManager: PlexAuthenticationManager,
-    private val itemsService: ItemsService,
+    private val itemsService: ItemsService
 ) : MediaProvider {
-
     override val type: MediaProviderType
         get() = MediaProviderType.Plex
 
     override fun findSongs(): Flow<FlowEvent<List<Song>, MessageProgress>> {
-        val address = authenticationManager.getAddress() ?: run {
-            return flowOf(FlowEvent.Failure("Plex address unknown"))
-        }
+        val address =
+            authenticationManager.getAddress() ?: run {
+                return flowOf(FlowEvent.Failure("Plex address unknown"))
+            }
 
         return flow {
             (
@@ -101,7 +101,10 @@ class PlexMediaProvider(
         }
     }
 
-    override fun findPlaylists(existingPlaylists: List<Playlist>, existingSongs: List<Song>): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> {
+    override fun findPlaylists(
+        existingPlaylists: List<Playlist>,
+        existingSongs: List<Song>
+    ): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> {
         return flowOf(FlowEvent.Success(emptyList()))
     }
 }

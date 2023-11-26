@@ -5,9 +5,11 @@ import com.simplecityapps.shuttle.ui.common.dialog.EditTextAlertDialog
 import com.simplecityapps.shuttle.ui.common.utils.withArgs
 
 class CreatePlaylistDialogFragment : EditTextAlertDialog() {
-
     interface Listener {
-        fun onSave(text: String, playlistData: PlaylistData)
+        fun onSave(
+            text: String,
+            playlistData: PlaylistData
+        )
     }
 
     private lateinit var playlistData: PlaylistData
@@ -27,12 +29,15 @@ class CreatePlaylistDialogFragment : EditTextAlertDialog() {
     }
 
     companion object {
-
         const val ARG_DATA = "data"
 
-        fun newInstance(playlistData: PlaylistData, hint: String?) = CreatePlaylistDialogFragment().withArgs {
-            putParcelable(ARG_DATA, playlistData)
-            putString(ARG_HINT, hint)
-        }
+        fun newInstance(
+            playlistData: PlaylistData,
+            hint: String?
+        ) =
+            CreatePlaylistDialogFragment().withArgs {
+                putParcelable(ARG_DATA, playlistData)
+                putString(ARG_HINT, hint)
+            }
     }
 }

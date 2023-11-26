@@ -20,7 +20,6 @@ class GridAlbumArtistBinder(
     val coloredBackground: Boolean = false,
     val fixedWidthDp: Int? = null
 ) : AlbumArtistBinder(albumArtist, imageLoader, listener) {
-
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
         return ViewHolder(
             LayoutInflater.from(parent.context).inflate(R.layout.grid_item_album_artist, parent, false)
@@ -32,7 +31,6 @@ class GridAlbumArtistBinder(
     }
 
     class ViewHolder(itemView: View) : AlbumArtistBinder.ViewHolder(itemView) {
-
         private val title: TextView = itemView.findViewById(R.id.title)
         private val subtitle: TextView = itemView.findViewById(R.id.subtitle)
         override val imageView: ImageView = itemView.findViewById(R.id.imageView)
@@ -51,7 +49,10 @@ class GridAlbumArtistBinder(
             viewBinder?.listener?.onViewHolderCreated(this)
         }
 
-        override fun bind(viewBinder: AlbumArtistBinder, isPartial: Boolean) {
+        override fun bind(
+            viewBinder: AlbumArtistBinder,
+            isPartial: Boolean
+        ) {
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.albumArtist.name ?: viewBinder.albumArtist.friendlyArtistName ?: itemView.resources.getString(com.simplecityapps.core.R.string.unknown)
@@ -62,10 +63,11 @@ class GridAlbumArtistBinder(
                 itemView.layoutParams.width = width.dp
             }
 
-            val options = mutableListOf(
-                ArtworkImageLoader.Options.Placeholder(ResourcesCompat.getDrawable(itemView.resources, com.simplecityapps.core.R.drawable.ic_placeholder_artist, itemView.context.theme)!!),
-                ArtworkImageLoader.Options.CacheDecodedResource
-            )
+            val options =
+                mutableListOf(
+                    ArtworkImageLoader.Options.Placeholder(ResourcesCompat.getDrawable(itemView.resources, com.simplecityapps.core.R.drawable.ic_placeholder_artist, itemView.context.theme)!!),
+                    ArtworkImageLoader.Options.CacheDecodedResource
+                )
             if (viewBinder.coloredBackground) {
                 options.add(ArtworkImageLoader.Options.LoadColorSet)
             }

@@ -19,7 +19,6 @@ import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
-import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackState
@@ -31,8 +30,8 @@ import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.autoClearedNullable
 import com.simplecityapps.shuttle.ui.common.dialog.EditTextAlertDialog
-import com.simplecityapps.shuttle.ui.common.dialog.ShowExcludeDialog
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
+import com.simplecityapps.shuttle.ui.common.dialog.showExcludeDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.ItemTouchHelperCallback
 import com.simplecityapps.shuttle.ui.common.view.CircularProgressView
@@ -49,11 +48,10 @@ import com.simplecityapps.trial.TrialManager
 import com.simplecityapps.trial.TrialState
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
-import timber.log.Timber
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @AndroidEntryPoint
 class QueueFragment :
@@ -61,7 +59,6 @@ class QueueFragment :
     QueueContract.View,
     CreatePlaylistDialogFragment.Listener,
     EditTextAlertDialog.Listener {
-
     @Inject
     lateinit var imageLoader: ArtworkImageLoader
 
@@ -100,11 +97,18 @@ class QueueFragment :
 
     // Lifecycle
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return inflater.inflate(R.layout.fragment_queue, container, false)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
         super.onViewCreated(view, savedInstanceState)
 
         playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
@@ -225,15 +229,27 @@ class QueueFragment :
         super.onDestroyView()
     }
 
-    private val itemTouchHelper = object : ItemTouchHelper(object : ItemTouchHelperCallback(object : OnItemMoveListener {
-        override fun onItemMoved(from: Int, to: Int) {
-            presenter.moveQueueItem(from, to)
-        }
-    }) {}) {}
+    private val itemTouchHelper =
+        object : ItemTouchHelper(
+            object : ItemTouchHelperCallback(
+                object : OnItemMoveListener {
+                    override fun onItemMoved(
+                        from: Int,
+                        to: Int
+                    ) {
+                        presenter.moveQueueItem(from, to)
+                    }
+                }
+            ) {}
+        ) {}
 
     // QueueContract.View Implementation
 
-    override fun setData(queue: List<QueueItem>, progress: Float, playbackState: PlaybackState) {
+    override fun setData(
+        queue: List<QueueItem>,
+        progress: Float,
+        playbackState: PlaybackState
+    ) {
         val queueItems = queue.map { queueItem -> QueueBinder(queueItem, playbackState, progress, imageLoader, playbackManager, playbackWatcher, queueBinderListener) }
         adapter?.update(
             newList = queueItems
@@ -262,12 +278,16 @@ class QueueFragment :
         progressBar.isVisible = loading
     }
 
-    override fun setQueuePosition(position: Int?, total: Int) {
+    override fun setQueuePosition(
+        position: Int?,
+        total: Int
+    ) {
         position?.let {
-            toolbarSubtitleTextView.text = Phrase.from(requireContext(), R.string.queue_position)
-                .put("position", (position + 1).toString())
-                .put("total", total.toString())
-                .format()
+            toolbarSubtitleTextView.text =
+                Phrase.from(requireContext(), R.string.queue_position)
+                    .put("position", (position + 1).toString())
+                    .put("total", total.toString())
+                    .format()
         }
     }
 
@@ -275,7 +295,10 @@ class QueueFragment :
         Toast.makeText(context, error.userDescription(resources), Toast.LENGTH_LONG).show()
     }
 
-    override fun scrollToPosition(position: Int?, forceScrollUpdate: Boolean) {
+    override fun scrollToPosition(
+        position: Int?,
+        forceScrollUpdate: Boolean
+    ) {
         position?.let {
             if (forceScrollUpdate) {
                 recyclerView?.scrollToPosition(position)
@@ -293,60 +316,60 @@ class QueueFragment :
 
     // QueueBinder.Listener Implementation
 
-    private val queueBinderListener = object : QueueBinder.Listener {
+    private val queueBinderListener =
+        object : QueueBinder.Listener {
+            override fun onQueueItemClicked(queueItem: QueueItem) {
+                presenter.onQueueItemClicked(queueItem)
+            }
 
-        override fun onQueueItemClicked(queueItem: QueueItem) {
-            presenter.onQueueItemClicked(queueItem)
-        }
+            override fun onPlayPauseClicked() {
+                presenter.togglePlayback()
+            }
 
-        override fun onPlayPauseClicked() {
-            presenter.togglePlayback()
-        }
+            override fun onStartDrag(viewHolder: QueueBinder.ViewHolder) {
+                itemTouchHelper.startDrag(viewHolder)
+            }
 
-        override fun onStartDrag(viewHolder: QueueBinder.ViewHolder) {
-            itemTouchHelper.startDrag(viewHolder)
-        }
-
-        override fun onLongPress(viewHolder: QueueBinder.ViewHolder) {
-            viewHolder.viewBinder?.queueItem?.let { queueItem ->
-                val popupMenu = PopupMenu(requireContext(), viewHolder.itemView)
-                popupMenu.inflate(R.menu.menu_queue_item)
-                TagEditorMenuSanitiser.sanitise(popupMenu.menu, listOf(queueItem.song.mediaProvider))
-                popupMenu.menu.findItem(R.id.playNext).isVisible = queueItem.isCurrent == false
-                playlistMenuView.createPlaylistMenu(popupMenu.menu)
-                popupMenu.setOnMenuItemClickListener { menuItem ->
-                    when (menuItem.itemId) {
-                        R.id.removeFromQueue -> {
-                            presenter.removeFromQueue(queueItem)
-                            return@setOnMenuItemClickListener true
-                        }
-
-                        R.id.playNext -> {
-                            presenter.playNext(queueItem)
-                            return@setOnMenuItemClickListener true
-                        }
-
-                        R.id.exclude -> {
-                            ShowExcludeDialog(requireContext(), queueItem.song.name) {
-                                presenter.exclude(queueItem)
+            override fun onLongPress(viewHolder: QueueBinder.ViewHolder) {
+                viewHolder.viewBinder?.queueItem?.let { queueItem ->
+                    val popupMenu = PopupMenu(requireContext(), viewHolder.itemView)
+                    popupMenu.inflate(R.menu.menu_queue_item)
+                    TagEditorMenuSanitiser.sanitise(popupMenu.menu, listOf(queueItem.song.mediaProvider))
+                    popupMenu.menu.findItem(R.id.playNext).isVisible = queueItem.isCurrent == false
+                    playlistMenuView.createPlaylistMenu(popupMenu.menu)
+                    popupMenu.setOnMenuItemClickListener { menuItem ->
+                        when (menuItem.itemId) {
+                            R.id.removeFromQueue -> {
+                                presenter.removeFromQueue(queueItem)
+                                return@setOnMenuItemClickListener true
                             }
-                            return@setOnMenuItemClickListener true
-                        }
 
-                        R.id.editTags -> {
-                            presenter.editTags(queueItem)
-                            return@setOnMenuItemClickListener true
-                        }
+                            R.id.playNext -> {
+                                presenter.playNext(queueItem)
+                                return@setOnMenuItemClickListener true
+                            }
 
-                        else -> {
-                            playlistMenuView.handleMenuItem(menuItem, PlaylistData.Songs(queueItem.song))
+                            R.id.exclude -> {
+                                showExcludeDialog(requireContext(), queueItem.song.name) {
+                                    presenter.exclude(queueItem)
+                                }
+                                return@setOnMenuItemClickListener true
+                            }
+
+                            R.id.editTags -> {
+                                presenter.editTags(queueItem)
+                                return@setOnMenuItemClickListener true
+                            }
+
+                            else -> {
+                                playlistMenuView.handleMenuItem(menuItem, PlaylistData.Songs(queueItem.song))
+                            }
                         }
                     }
-                }
-                popupMenu.show()
-            } ?: Timber.e("Failed to show popup menu, queue item null")
+                    popupMenu.show()
+                } ?: Timber.e("Failed to show popup menu, queue item null")
+            }
         }
-    }
 
     override fun showTagEditor(songs: List<com.simplecityapps.shuttle.model.Song>) {
         TagEditorAlertDialog.newInstance(songs).show(childFragmentManager)
@@ -354,41 +377,53 @@ class QueueFragment :
 
     // MultiSheetView.SheetStateChangeListener Implementation
 
-    private val sheetStateChangeListener = object : MultiSheetView.SheetStateChangeListener {
+    private val sheetStateChangeListener =
+        object : MultiSheetView.SheetStateChangeListener {
+            override fun onSheetStateChanged(
+                sheet: Int,
+                state: Int
+            ) {
+                toolbar?.let { toolbar ->
+                    toolbar.menu.findItem(R.id.scrollToCurrent)?.isVisible = sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_EXPANDED
+                    toolbar.menu.findItem(R.id.playlist)?.isVisible = sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_EXPANDED
+                    toolbar.menu.findItem(R.id.clearQueue)?.isVisible = sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_EXPANDED
 
-        override fun onSheetStateChanged(sheet: Int, state: Int) {
-            toolbar?.let { toolbar ->
-                toolbar.menu.findItem(R.id.scrollToCurrent)?.isVisible = sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_EXPANDED
-                toolbar.menu.findItem(R.id.playlist)?.isVisible = sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_EXPANDED
-                toolbar.menu.findItem(R.id.clearQueue)?.isVisible = sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_EXPANDED
-
-                if (sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_EXPANDED) {
-                    toolbar.menu.findItem(R.id.trial).isVisible = false
-                }
-                if (sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_COLLAPSED) {
-                    if (trialManager.trialState.value is TrialState.Trial || trialManager.trialState.value is TrialState.Expired) {
-                        toolbar.menu.findItem(R.id.trial).isVisible = true
+                    if (sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_EXPANDED) {
+                        toolbar.menu.findItem(R.id.trial).isVisible = false
+                    }
+                    if (sheet == MultiSheetView.Sheet.SECOND && state == BottomSheetBehavior.STATE_COLLAPSED) {
+                        if (trialManager.trialState.value is TrialState.Trial || trialManager.trialState.value is TrialState.Expired) {
+                            toolbar.menu.findItem(R.id.trial).isVisible = true
+                        }
                     }
                 }
             }
-        }
 
-        override fun onSlide(sheet: Int, slideOffset: Float) {
-            if (sheet == MultiSheetView.Sheet.SECOND) {
-                toolbarTitleTextView.textSize = 15 + (5 * slideOffset)
+            override fun onSlide(
+                sheet: Int,
+                slideOffset: Float
+            ) {
+                if (sheet == MultiSheetView.Sheet.SECOND) {
+                    toolbarTitleTextView.textSize = 15 + (5 * slideOffset)
+                }
             }
         }
-    }
 
     // CreatePlaylistDialogFragment.Listener Implementation
 
-    override fun onSave(text: String, playlistData: PlaylistData) {
+    override fun onSave(
+        text: String,
+        playlistData: PlaylistData
+    ) {
         playlistMenuPresenter.createPlaylist(text, playlistData)
     }
 
     // EditTextAlertDialog.Listener Implementation
 
-    override fun onSave(text: String?, extra: Parcelable?) {
+    override fun onSave(
+        text: String?,
+        extra: Parcelable?
+    ) {
         viewLifecycleOwner.lifecycleScope.launch {
             when (val result = promoCodeService.getPromoCode(text!!)) {
                 is NetworkResult.Success -> {
@@ -405,7 +440,6 @@ class QueueFragment :
     // Static
 
     companion object {
-
         const val TAG = "QueueFragment"
 
         const val ARG_RECYCLER_STATE = "recycler_state"

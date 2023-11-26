@@ -23,6 +23,8 @@ import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
 @TypeConverters(Converters::class)
 abstract class MediaDatabase : RoomDatabase() {
     abstract fun songDataDao(): SongDataDao
+
     abstract fun playlistSongJoinDataDao(): PlaylistSongJoinDao
+
     abstract fun playlistDataDao(): PlaylistDataDao
 }

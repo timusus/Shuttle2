@@ -7,20 +7,19 @@ import androidx.documentfile.provider.DocumentFile
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.query.SongQuery
+import java.io.File
+import java.io.FileNotFoundException
+import java.io.InputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 import timber.log.Timber
-import java.io.File
-import java.io.FileNotFoundException
-import java.io.InputStream
 
 class CastService(
     private val context: Context,
     private val songRepository: SongRepository,
     private val artworkImageLoader: ArtworkImageLoader
 ) {
-
     class AudioStream(val stream: InputStream, val length: Long, val mimeType: String)
 
     suspend fun getArtwork(songId: Long): ByteArray? {

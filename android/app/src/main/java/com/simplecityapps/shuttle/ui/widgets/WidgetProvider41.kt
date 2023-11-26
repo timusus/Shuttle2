@@ -13,7 +13,6 @@ import com.simplecityapps.shuttle.ui.common.utils.dp
 import com.squareup.phrase.ListPhrase
 
 class WidgetProvider41 : ShuttleAppWidgetProvider() {
-
     override val layoutResIdLight: Int
         get() = R.layout.appwidget_41
 

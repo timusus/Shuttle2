@@ -5,7 +5,8 @@ enum class MediaProviderType(val remote: Boolean, val supportsTagEditing: Boolea
     MediaStore(remote = false, supportsTagEditing = false),
     Emby(remote = true, supportsTagEditing = false),
     Jellyfin(remote = true, supportsTagEditing = false),
-    Plex(remote = true, supportsTagEditing = false);
+    Plex(remote = true, supportsTagEditing = false)
+    ;
 
     companion object {
         fun init(ordinal: Int): MediaProviderType {

@@ -5,7 +5,6 @@ import kotlin.math.max
 import kotlin.math.min
 
 object StringComparison {
-
     const val threshold = 0.90
 
     /**
@@ -25,12 +24,17 @@ object StringComparison {
      *
      * @return [JaroSimilarity]
      */
-    fun jaroDistance(a: String, b: String): JaroSimilarity {
-        if (a == b) return JaroSimilarity(
-            score = 1.0,
-            aMatchedIndices = a.mapIndexed { index, _ -> index to 1.0 }.toMap(),
-            bMatchedIndices = b.mapIndexed { index, _ -> index to 1.0 }.toMap()
-        )
+    fun jaroDistance(
+        a: String,
+        b: String
+    ): JaroSimilarity {
+        if (a == b) {
+            return JaroSimilarity(
+                score = 1.0,
+                aMatchedIndices = a.mapIndexed { index, _ -> index to 1.0 }.toMap(),
+                bMatchedIndices = b.mapIndexed { index, _ -> index to 1.0 }.toMap()
+            )
+        }
 
         val aLen = a.length
         val bLen = b.length
@@ -95,7 +99,10 @@ object StringComparison {
      * This function is derived from [jaroDistance], but weighted in favour of strings whose prefix also match
      * [https://en.wikipedia.org/wiki/Jaro%E2%80%93Winkler_distance](Wiki)
      */
-    fun jaroWinklerDistance(a: String, b: String): JaroSimilarity {
+    fun jaroWinklerDistance(
+        a: String,
+        b: String
+    ): JaroSimilarity {
         val a = Normalizer.normalize(a.toLowerCase(), Normalizer.Form.NFD)
         val b = Normalizer.normalize(b.toLowerCase(), Normalizer.Form.NFD)
 
@@ -122,7 +129,10 @@ object StringComparison {
         )
     }
 
-    fun jaroWinklerMultiDistance(a: String, b: String): JaroSimilarity {
+    fun jaroWinklerMultiDistance(
+        a: String,
+        b: String
+    ): JaroSimilarity {
         val jaroSimilarity = jaroWinklerDistance(a, b)
         if (jaroSimilarity.score >= threshold) {
             return jaroSimilarity

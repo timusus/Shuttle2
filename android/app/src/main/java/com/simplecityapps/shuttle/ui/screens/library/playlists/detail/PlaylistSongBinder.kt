@@ -26,12 +26,19 @@ open class PlaylistSongBinder(
     val jaroSimilarity: SongJaroSimilarity? = null
 ) : ViewBinder,
     SectionViewBinder {
-
     var selected: Boolean = false
 
     interface Listener {
-        fun onPlaylistSongClicked(index: Int, playlistSong: com.simplecityapps.shuttle.model.PlaylistSong)
-        fun onPlaylistSongLongClicked(holder: ViewHolder, playlistSong: com.simplecityapps.shuttle.model.PlaylistSong) {}
+        fun onPlaylistSongClicked(
+            index: Int,
+            playlistSong: com.simplecityapps.shuttle.model.PlaylistSong
+        )
+
+        fun onPlaylistSongLongClicked(
+            holder: ViewHolder,
+            playlistSong: com.simplecityapps.shuttle.model.PlaylistSong
+        ) {}
+
         fun onStartDrag(viewHolder: ViewHolder) {}
     }
 
@@ -76,7 +83,6 @@ open class PlaylistSongBinder(
     }
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<PlaylistSongBinder>(itemView) {
-
         private val title: TextView = itemView.findViewById(R.id.title)
         private val subtitle: TextView = itemView.findViewById(R.id.subtitle)
         val imageView: ImageView = itemView.findViewById(R.id.imageView)
@@ -100,25 +106,30 @@ open class PlaylistSongBinder(
             }
         }
 
-        override fun bind(viewBinder: PlaylistSongBinder, isPartial: Boolean) {
+        override fun bind(
+            viewBinder: PlaylistSongBinder,
+            isPartial: Boolean
+        ) {
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.playlistSong.song.name
-            subtitle.text = ListPhrase
-                .from(" • ")
-                .joinSafely(
-                    listOf(
-                        viewBinder.playlistSong.song.friendlyArtistName ?: viewBinder.playlistSong.song.albumArtist,
-                        viewBinder.playlistSong.song.album,
-                        viewBinder.playlistSong.song.date?.year?.toString()
+            subtitle.text =
+                ListPhrase
+                    .from(" • ")
+                    .joinSafely(
+                        listOf(
+                            viewBinder.playlistSong.song.friendlyArtistName ?: viewBinder.playlistSong.song.albumArtist,
+                            viewBinder.playlistSong.song.album,
+                            viewBinder.playlistSong.song.date?.year?.toString()
+                        )
                     )
-                )
 
-            val options = mutableListOf(
-                ArtworkImageLoader.Options.RoundedCorners(8.dp),
-                ArtworkImageLoader.Options.Crossfade(200),
-                ArtworkImageLoader.Options.Placeholder(ResourcesCompat.getDrawable(itemView.resources, com.simplecityapps.core.R.drawable.ic_placeholder_song_rounded, itemView.context.theme)!!)
-            )
+            val options =
+                mutableListOf(
+                    ArtworkImageLoader.Options.RoundedCorners(8.dp),
+                    ArtworkImageLoader.Options.Crossfade(200),
+                    ArtworkImageLoader.Options.Placeholder(ResourcesCompat.getDrawable(itemView.resources, com.simplecityapps.core.R.drawable.ic_placeholder_song_rounded, itemView.context.theme)!!)
+                )
 
             viewBinder.imageLoader.loadArtwork(
                 imageView,

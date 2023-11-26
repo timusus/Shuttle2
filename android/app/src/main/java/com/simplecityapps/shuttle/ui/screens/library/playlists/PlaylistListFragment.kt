@@ -37,7 +37,6 @@ class PlaylistListFragment :
     Fragment(),
     PlaylistListContract.View,
     EditTextAlertDialog.Listener {
-
     @Inject
     lateinit var presenter: PlaylistListPresenter
 
@@ -52,11 +51,18 @@ class PlaylistListFragment :
 
     // Lifecycle
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return inflater.inflate(R.layout.fragment_playlists, container, false)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
         super.onViewCreated(view, savedInstanceState)
 
         adapter = SectionedAdapter(viewLifecycleOwner.lifecycleScope)
@@ -97,8 +103,10 @@ class PlaylistListFragment :
 
     // PlaylistListContract.View Implementation
 
-    override fun setPlaylists(playlists: List<Playlist>, smartPlaylists: List<SmartPlaylist>) {
-
+    override fun setPlaylists(
+        playlists: List<Playlist>,
+        smartPlaylists: List<SmartPlaylist>
+    ) {
         val viewBinders = mutableListOf<ViewBinder>()
 
         if (smartPlaylists.isNotEmpty()) {
@@ -162,14 +170,102 @@ class PlaylistListFragment :
 
     // PlaylistBinder.Listener Implementation
 
-    private val playlistBinderListener = object : PlaylistBinder.Listener {
+    private val playlistBinderListener =
+        object : PlaylistBinder.Listener {
+            override fun onPlaylistSelected(
+                playlist: Playlist,
+                viewHolder: PlaylistBinder.ViewHolder
+            ) {
+                if (playlist.songCount != 0) {
+                    if (findNavController().currentDestination?.id != R.id.playlistDetailFragment) {
+                        findNavController().navigate(
+                            R.id.action_libraryFragment_to_playlistDetailFragment,
+                            PlaylistDetailFragmentArgs(playlist).toBundle(),
+                            null,
+                            null
+                        )
+                    }
+                }
+            }
 
-        override fun onPlaylistSelected(playlist: Playlist, viewHolder: PlaylistBinder.ViewHolder) {
-            if (playlist.songCount != 0) {
+            @SuppressLint("RestrictedApi")
+            override fun onOverflowClicked(
+                view: View,
+                playlist: Playlist
+            ) {
+                val popupMenu = PopupMenu(requireContext(), view)
+                popupMenu.inflate(R.menu.menu_playlist_overflow)
+
+                popupMenu.setOnMenuItemClickListener { item ->
+                    when (item.itemId) {
+                        R.id.play -> {
+                            presenter.play(playlist)
+                            true
+                        }
+                        R.id.queue -> {
+                            presenter.addToQueue(playlist)
+                            true
+                        }
+                        R.id.delete -> {
+                            MaterialAlertDialogBuilder(requireContext())
+                                .setTitle(getString(R.string.playlist_dialog_title_delete))
+                                .setMessage(
+                                    Phrase.from(requireContext(), R.string.playlist_dialog_subtitle_delete)
+                                        .put("playlist_name", playlist.name)
+                                        .format()
+                                )
+                                .setPositiveButton(getString(R.string.playlist_dialog_button_delete)) { _, _ -> presenter.delete(playlist) }
+                                .setNegativeButton(getString(R.string.dialog_button_cancel), null)
+                                .show()
+                            true
+                        }
+                        R.id.playNext -> {
+                            presenter.playNext(playlist)
+                            true
+                        }
+                        R.id.clear -> {
+                            MaterialAlertDialogBuilder(requireContext())
+                                .setTitle(getString(R.string.playlist_dialog_title_clear))
+                                .setMessage(
+                                    Phrase.from(requireContext(), R.string.playlist_dialog_subtitle_clear)
+                                        .put("playlist_name", playlist.name)
+                                        .format()
+                                )
+                                .setPositiveButton(getString(R.string.playlist_dialog_button_clear)) { _, _ -> presenter.clear(playlist) }
+                                .setNegativeButton(getString(R.string.dialog_button_cancel), null)
+                                .show()
+                            true
+                        }
+                        R.id.rename -> {
+                            EditTextAlertDialog
+                                .newInstance(
+                                    title = getString(R.string.playlist_dialog_title_rename),
+                                    hint = getString(R.string.playlist_dialog_hint_rename),
+                                    initialText = playlist.name,
+                                    extra = playlist
+                                )
+                                .show(childFragmentManager)
+                            true
+                        }
+                        else -> false
+                    }
+                }
+                popupMenu.show()
+            }
+        }
+
+    // SmartPlaylistBinder.Listener Implementation
+
+    private val smartPlaylistBinderListener =
+        object : SmartPlaylistBinder.Listener {
+            override fun onSmartPlaylistSelected(
+                smartPlaylist: SmartPlaylist,
+                viewHolder: SmartPlaylistBinder.ViewHolder
+            ) {
                 if (findNavController().currentDestination?.id != R.id.playlistDetailFragment) {
                     findNavController().navigate(
-                        R.id.action_libraryFragment_to_playlistDetailFragment,
-                        PlaylistDetailFragmentArgs(playlist).toBundle(),
+                        R.id.action_libraryFragment_to_smartPlaylistDetailFragment,
+                        SmartPlaylistDetailFragmentArgs(smartPlaylist).toBundle(),
                         null,
                         null
                     )
@@ -177,89 +273,9 @@ class PlaylistListFragment :
             }
         }
 
-        @SuppressLint("RestrictedApi")
-        override fun onOverflowClicked(view: View, playlist: Playlist) {
-            val popupMenu = PopupMenu(requireContext(), view)
-            popupMenu.inflate(R.menu.menu_playlist_overflow)
-
-            popupMenu.setOnMenuItemClickListener { item ->
-                when (item.itemId) {
-                    R.id.play -> {
-                        presenter.play(playlist)
-                        true
-                    }
-                    R.id.queue -> {
-                        presenter.addToQueue(playlist)
-                        true
-                    }
-                    R.id.delete -> {
-                        MaterialAlertDialogBuilder(requireContext())
-                            .setTitle(getString(R.string.playlist_dialog_title_delete))
-                            .setMessage(
-                                Phrase.from(requireContext(), R.string.playlist_dialog_subtitle_delete)
-                                    .put("playlist_name", playlist.name)
-                                    .format()
-                            )
-                            .setPositiveButton(getString(R.string.playlist_dialog_button_delete)) { _, _ -> presenter.delete(playlist) }
-                            .setNegativeButton(getString(R.string.dialog_button_cancel), null)
-                            .show()
-                        true
-                    }
-                    R.id.playNext -> {
-                        presenter.playNext(playlist)
-                        true
-                    }
-                    R.id.clear -> {
-                        MaterialAlertDialogBuilder(requireContext())
-                            .setTitle(getString(R.string.playlist_dialog_title_clear))
-                            .setMessage(
-                                Phrase.from(requireContext(), R.string.playlist_dialog_subtitle_clear)
-                                    .put("playlist_name", playlist.name)
-                                    .format()
-                            )
-                            .setPositiveButton(getString(R.string.playlist_dialog_button_clear)) { _, _ -> presenter.clear(playlist) }
-                            .setNegativeButton(getString(R.string.dialog_button_cancel), null)
-                            .show()
-                        true
-                    }
-                    R.id.rename -> {
-                        EditTextAlertDialog
-                            .newInstance(
-                                title = getString(R.string.playlist_dialog_title_rename),
-                                hint = getString(R.string.playlist_dialog_hint_rename),
-                                initialText = playlist.name,
-                                extra = playlist
-                            )
-                            .show(childFragmentManager)
-                        true
-                    }
-                    else -> false
-                }
-            }
-            popupMenu.show()
-        }
-    }
-
-    // SmartPlaylistBinder.Listener Implementation
-
-    private val smartPlaylistBinderListener = object : SmartPlaylistBinder.Listener {
-
-        override fun onSmartPlaylistSelected(smartPlaylist: SmartPlaylist, viewHolder: SmartPlaylistBinder.ViewHolder) {
-            if (findNavController().currentDestination?.id != R.id.playlistDetailFragment) {
-                findNavController().navigate(
-                    R.id.action_libraryFragment_to_smartPlaylistDetailFragment,
-                    SmartPlaylistDetailFragmentArgs(smartPlaylist).toBundle(),
-                    null,
-                    null
-                )
-            }
-        }
-    }
-
     // Static
 
     companion object {
-
         const val TAG = "PlaylistListFragment"
 
         const val ARG_RECYCLER_STATE = "recycler_state"
@@ -269,7 +285,10 @@ class PlaylistListFragment :
 
     // EditTextAlertDialog.Listener
 
-    override fun onSave(text: String?, extra: Parcelable?) {
+    override fun onSave(
+        text: String?,
+        extra: Parcelable?
+    ) {
         presenter.rename(extra as Playlist, text!!) // default validation ensures text is not null
     }
 }

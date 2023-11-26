@@ -7,9 +7,11 @@ import com.simplecityapps.adapter.RecyclerAdapter
 open class ItemTouchHelperCallback(
     private val onItemMoveListener: OnItemMoveListener
 ) : ItemTouchHelper.Callback() {
-
     interface OnItemMoveListener {
-        fun onItemMoved(from: Int, to: Int)
+        fun onItemMoved(
+            from: Int,
+            to: Int
+        )
     }
 
     private var startPosition = -1
@@ -20,11 +22,18 @@ open class ItemTouchHelperCallback(
         return false
     }
 
-    override fun getMovementFlags(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder): Int {
+    override fun getMovementFlags(
+        recyclerView: RecyclerView,
+        viewHolder: RecyclerView.ViewHolder
+    ): Int {
         return makeMovementFlags(ItemTouchHelper.UP or ItemTouchHelper.DOWN, 0)
     }
 
-    override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
+    override fun onMove(
+        recyclerView: RecyclerView,
+        viewHolder: RecyclerView.ViewHolder,
+        target: RecyclerView.ViewHolder
+    ): Boolean {
         if (startPosition == -1) {
             startPosition = viewHolder.adapterPosition
         }
@@ -34,10 +43,16 @@ open class ItemTouchHelperCallback(
         return true
     }
 
-    override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+    override fun onSwiped(
+        viewHolder: RecyclerView.ViewHolder,
+        direction: Int
+    ) {
     }
 
-    override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
+    override fun clearView(
+        recyclerView: RecyclerView,
+        viewHolder: RecyclerView.ViewHolder
+    ) {
         if (startPosition != -1 && endPosition != -1) {
             onItemMoveListener.onItemMoved(startPosition, endPosition)
         }

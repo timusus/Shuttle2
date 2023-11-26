@@ -17,14 +17,20 @@ import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParent
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParentFragment
 
 class StoragePermissionFragment : Fragment(), OnboardingChild {
-
     // Lifecycle
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return inflater.inflate(R.layout.fragment_onboarding_permissions, container, false)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
         super.onViewCreated(view, savedInstanceState)
 
         val mediaPermissionButton: Button = view.findViewById(R.id.grantPermissionButton)
@@ -33,7 +39,11 @@ class StoragePermissionFragment : Fragment(), OnboardingChild {
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
         if (requestCode == OnboardingParentFragment.REQUEST_CODE_READ_STORAGE && grantResults.all { result -> result == PackageManager.PERMISSION_GRANTED }) {
             getParent().goToNext()
         } else {

@@ -11,7 +11,6 @@ import com.simplecityapps.shuttle.R
 import java.lang.ref.WeakReference
 
 class CustomBottomSheetBehavior<V : View>(context: Context, attrs: AttributeSet?) : BottomSheetBehavior<V>(context, attrs) {
-
     var bottomSheet2Ref: WeakReference<BottomSheetBehavior<V>>? = null
     var peek2Ref: WeakReference<View>? = null
 
@@ -29,7 +28,11 @@ class CustomBottomSheetBehavior<V : View>(context: Context, attrs: AttributeSet?
         peek2Ref = null
     }
 
-    override fun onLayoutChild(parent: CoordinatorLayout, child: V, layoutDirection: Int): Boolean {
+    override fun onLayoutChild(
+        parent: CoordinatorLayout,
+        child: V,
+        layoutDirection: Int
+    ): Boolean {
         if (bottomSheet2Ref == null) {
             bottomSheet2Ref = WeakReference(BottomSheetBehavior.from(parent.findViewById(R.id.sheet2)) as BottomSheetBehavior<V>)
         }
@@ -40,7 +43,11 @@ class CustomBottomSheetBehavior<V : View>(context: Context, attrs: AttributeSet?
         return super.onLayoutChild(parent, child, layoutDirection)
     }
 
-    override fun onInterceptTouchEvent(parent: CoordinatorLayout, child: V, event: MotionEvent): Boolean {
+    override fun onInterceptTouchEvent(
+        parent: CoordinatorLayout,
+        child: V,
+        event: MotionEvent
+    ): Boolean {
         if (child.id == R.id.sheet1) {
             if (state == BottomSheetBehavior.STATE_EXPANDED) {
                 // If the first sheet is expanded, then we ignore touch events if either the second sheet is also expanded, being dragged, or the touch event is on the peek view

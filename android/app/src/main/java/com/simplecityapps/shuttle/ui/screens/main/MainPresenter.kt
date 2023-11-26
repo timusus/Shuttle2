@@ -10,20 +10,24 @@ import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.simplecityapps.trial.TrialManager
 import com.simplecityapps.trial.TrialState
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import java.util.Date
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 
 interface MainContract {
-
     interface View {
         fun toggleSheet(visible: Boolean)
+
         fun showChangelog()
+
         fun showTrialDialog()
+
         fun showThankYouDialog()
+
         fun launchReviewFlow()
+
         fun showCrashReportingDialog()
     }
 
@@ -32,15 +36,16 @@ interface MainContract {
     }
 }
 
-class MainPresenter @Inject constructor(
+class MainPresenter
+@Inject
+constructor(
     private val queueManager: QueueManager,
     private val queueWatcher: QueueWatcher,
     private val preferenceManager: GeneralPreferenceManager,
-    private val trialManager: TrialManager,
+    private val trialManager: TrialManager
 ) : MainContract.Presenter,
     BasePresenter<MainContract.View>(),
     QueueChangeCallback {
-
     override fun bindView(view: MainContract.View) {
         super.bindView(view)
 

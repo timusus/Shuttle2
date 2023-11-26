@@ -1,10 +1,14 @@
 package com.simplecityapps.playback.dsp.equalizer
 
+import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.pow
+import kotlin.math.sqrt
+import kotlin.math.tan
 import timber.log.Timber
-import kotlin.math.*
 
 class BandProcessor(val band: NyquistBand, val sampleRate: Int, val channelCount: Int, val referenceGain: Double) {
-
     private val G0 = referenceGain.fromDb()
     private val GB = band.bandwidthGain.fromDb()
     private val G1 = band.gain.fromDb()
@@ -35,8 +39,10 @@ class BandProcessor(val band: NyquistBand, val sampleRate: Int, val channelCount
         }
     }
 
-    fun processSample(sample: Float, channelIndex: Int): Float {
-
+    fun processSample(
+        sample: Float,
+        channelIndex: Int
+    ): Float {
         if (band.bandwidthGain == 0.0 && band.gain == 0.0) {
             return sample
         }
@@ -46,13 +52,14 @@ class BandProcessor(val band: NyquistBand, val sampleRate: Int, val channelCount
             return sample
         }
 
-        val adjustedSample = (
-            (b0 * sample) +
-                (b1 * xHist[channelIndex][0]) +
-                (b2 * xHist[channelIndex][1]) -
-                (a1 * yHist[channelIndex][0]) -
-                (a2 * yHist[channelIndex][1])
-            ).toFloat()
+        val adjustedSample =
+            (
+                (b0 * sample) +
+                    (b1 * xHist[channelIndex][0]) +
+                    (b2 * xHist[channelIndex][1]) -
+                    (a1 * yHist[channelIndex][0]) -
+                    (a2 * yHist[channelIndex][1])
+                ).toFloat()
 
         xHist[channelIndex][1] = xHist[channelIndex][0]
         xHist[channelIndex][0] = sample

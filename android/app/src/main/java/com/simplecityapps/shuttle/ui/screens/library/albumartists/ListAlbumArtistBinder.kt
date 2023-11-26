@@ -21,7 +21,6 @@ class ListAlbumArtistBinder(
     imageLoader: ArtworkImageLoader,
     listener: Listener
 ) : AlbumArtistBinder(albumArtist, imageLoader, listener) {
-
     override fun createViewHolder(parent: ViewGroup): ViewBinder.ViewHolder<out ViewBinder> {
         return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_album_artist, parent, false))
     }
@@ -49,27 +48,34 @@ class ListAlbumArtistBinder(
             viewBinder?.listener?.onViewHolderCreated(this)
         }
 
-        override fun bind(viewBinder: AlbumArtistBinder, isPartial: Boolean) {
+        override fun bind(
+            viewBinder: AlbumArtistBinder,
+            isPartial: Boolean
+        ) {
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.albumArtist.name ?: viewBinder.albumArtist.friendlyArtistName
 
-            val albumQuantity = Phrase
-                .fromPlural(itemView.resources, R.plurals.albumsPlural, viewBinder.albumArtist.albumCount)
-                .put("count", viewBinder.albumArtist.albumCount)
-                .format()
-            val songQuantity = Phrase
-                .fromPlural(itemView.resources, R.plurals.songsPlural, viewBinder.albumArtist.songCount)
-                .put("count", viewBinder.albumArtist.songCount)
-                .format()
-            subtitle.text = ListPhrase
-                .from(" • ")
-                .join(albumQuantity, songQuantity)
+            val albumQuantity =
+                Phrase
+                    .fromPlural(itemView.resources, R.plurals.albumsPlural, viewBinder.albumArtist.albumCount)
+                    .put("count", viewBinder.albumArtist.albumCount)
+                    .format()
+            val songQuantity =
+                Phrase
+                    .fromPlural(itemView.resources, R.plurals.songsPlural, viewBinder.albumArtist.songCount)
+                    .put("count", viewBinder.albumArtist.songCount)
+                    .format()
+            subtitle.text =
+                ListPhrase
+                    .from(" • ")
+                    .join(albumQuantity, songQuantity)
 
             viewBinder.imageLoader.loadArtwork(
                 imageView = imageView,
                 data = viewBinder.albumArtist,
-                options = listOf(
+                options =
+                listOf(
                     ArtworkImageLoader.Options.RoundedCorners(8.dp),
                     ArtworkImageLoader.Options.Crossfade(200),
                     ArtworkImageLoader.Options.Placeholder(ResourcesCompat.getDrawable(itemView.resources, com.simplecityapps.core.R.drawable.ic_placeholder_artist_rounded, itemView.context.theme)!!),

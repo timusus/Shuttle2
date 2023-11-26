@@ -9,7 +9,6 @@ class LowPassFilter(
     val sampleRate: Int,
     val channelCount: Int
 ) {
-
     private val q = 1.0
     private val omega = 2.0 * PI * freq / sampleRate
     private val sin = sin(omega)
@@ -27,15 +26,18 @@ class LowPassFilter(
     private val xHist = Array(channelCount) { FloatArray(2) { 0f } }
     private val yHist = Array(channelCount) { FloatArray(2) { 0f } }
 
-    fun processSample(sample: Float, channelIndex: Int): Float {
-
-        val adjustedSample = (
-            ((b0 / a0) * sample) +
-                ((b1 / a0) * xHist[channelIndex][0]) +
-                ((b2 / a0) * xHist[channelIndex][1]) -
-                ((a1 / a0) * yHist[channelIndex][0]) -
-                ((a2 / a0) * yHist[channelIndex][1])
-            ).toFloat()
+    fun processSample(
+        sample: Float,
+        channelIndex: Int
+    ): Float {
+        val adjustedSample =
+            (
+                ((b0 / a0) * sample) +
+                    ((b1 / a0) * xHist[channelIndex][0]) +
+                    ((b2 / a0) * xHist[channelIndex][1]) -
+                    ((a1 / a0) * yHist[channelIndex][0]) -
+                    ((a2 / a0) * yHist[channelIndex][1])
+                ).toFloat()
 
         xHist[channelIndex][1] = xHist[channelIndex][0]
         xHist[channelIndex][0] = sample

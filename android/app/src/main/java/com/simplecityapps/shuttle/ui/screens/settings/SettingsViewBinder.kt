@@ -13,7 +13,6 @@ class SettingsViewBinder(
     val isSelected: Boolean,
     val listener: Listener
 ) : ViewBinder {
-
     interface Listener {
         fun onMenuItemClicked(settingsItem: SettingsMenuItem)
     }
@@ -46,7 +45,6 @@ class SettingsViewBinder(
     }
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<SettingsViewBinder>(itemView) {
-
         private val icon: ImageView = itemView.findViewById(R.id.icon)
         private val label: TextView = itemView.findViewById(R.id.label)
 
@@ -56,7 +54,10 @@ class SettingsViewBinder(
             }
         }
 
-        override fun bind(viewBinder: SettingsViewBinder, isPartial: Boolean) {
+        override fun bind(
+            viewBinder: SettingsViewBinder,
+            isPartial: Boolean
+        ) {
             super.bind(viewBinder, isPartial)
 
             icon.setImageResource(viewBinder.settingsItem.icon)

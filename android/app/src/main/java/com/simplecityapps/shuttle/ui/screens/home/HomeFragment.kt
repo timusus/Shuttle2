@@ -26,8 +26,8 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
-import com.simplecityapps.shuttle.ui.common.dialog.ShowExcludeDialog
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
+import com.simplecityapps.shuttle.ui.common.dialog.showExcludeDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.view.HomeButton
 import com.simplecityapps.shuttle.ui.screens.home.search.HeaderBinder
@@ -43,21 +43,20 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
+import java.util.Calendar
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Instant.Companion.fromEpochMilliseconds
-import java.util.Calendar
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class HomeFragment :
     Fragment(),
     HomeContract.View,
     CreatePlaylistDialogFragment.Listener {
-
     @Inject
     lateinit var presenter: HomePresenter
 
@@ -82,11 +81,18 @@ class HomeFragment :
 
     // Lifecycle
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return inflater.inflate(R.layout.fragment_home, container, false)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
         super.onViewCreated(view, savedInstanceState)
 
         val historyButton: HomeButton = view.findViewById(R.id.historyButton)
@@ -252,121 +258,139 @@ class HomeFragment :
 
     // Private
 
-    private val albumArtistBinderListener = object : AlbumArtistBinder.Listener {
-
-        override fun onAlbumArtistClicked(albumArtist: com.simplecityapps.shuttle.model.AlbumArtist, viewHolder: AlbumArtistBinder.ViewHolder) {
-            if (findNavController().currentDestination?.id != R.id.albumArtistDetailFragment) {
-                findNavController().navigate(
-                    R.id.action_homeFragment_to_albumArtistDetailFragment,
-                    AlbumArtistDetailFragmentArgs(albumArtist, true).toBundle(),
-                    null,
-                    FragmentNavigatorExtras(viewHolder.imageView to viewHolder.imageView.transitionName)
-                )
+    private val albumArtistBinderListener =
+        object : AlbumArtistBinder.Listener {
+            override fun onAlbumArtistClicked(
+                albumArtist: com.simplecityapps.shuttle.model.AlbumArtist,
+                viewHolder: AlbumArtistBinder.ViewHolder
+            ) {
+                if (findNavController().currentDestination?.id != R.id.albumArtistDetailFragment) {
+                    findNavController().navigate(
+                        R.id.action_homeFragment_to_albumArtistDetailFragment,
+                        AlbumArtistDetailFragmentArgs(albumArtist, true).toBundle(),
+                        null,
+                        FragmentNavigatorExtras(viewHolder.imageView to viewHolder.imageView.transitionName)
+                    )
+                }
             }
-        }
 
-        override fun onAlbumArtistLongClicked(view: View, albumArtist: com.simplecityapps.shuttle.model.AlbumArtist) {
-            onOverflowClicked(view, albumArtist)
-        }
+            override fun onAlbumArtistLongClicked(
+                view: View,
+                albumArtist: com.simplecityapps.shuttle.model.AlbumArtist
+            ) {
+                onOverflowClicked(view, albumArtist)
+            }
 
-        override fun onOverflowClicked(view: View, albumArtist: com.simplecityapps.shuttle.model.AlbumArtist) {
-            val popupMenu = PopupMenu(requireContext(), view)
-            popupMenu.inflate(R.menu.menu_popup)
-            TagEditorMenuSanitiser.sanitise(popupMenu.menu, albumArtist.mediaProviders)
+            override fun onOverflowClicked(
+                view: View,
+                albumArtist: com.simplecityapps.shuttle.model.AlbumArtist
+            ) {
+                val popupMenu = PopupMenu(requireContext(), view)
+                popupMenu.inflate(R.menu.menu_popup)
+                TagEditorMenuSanitiser.sanitise(popupMenu.menu, albumArtist.mediaProviders)
 
-            playlistMenuView.createPlaylistMenu(popupMenu.menu)
+                playlistMenuView.createPlaylistMenu(popupMenu.menu)
 
-            popupMenu.setOnMenuItemClickListener { menuItem ->
-                if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.AlbumArtists(albumArtist))) {
-                    return@setOnMenuItemClickListener true
-                } else {
-                    when (menuItem.itemId) {
-                        R.id.play -> {
-                            presenter.play(albumArtist)
-                            return@setOnMenuItemClickListener true
-                        }
-                        R.id.queue -> {
-                            presenter.addToQueue(albumArtist)
-                            return@setOnMenuItemClickListener true
-                        }
-                        R.id.playNext -> {
-                            presenter.playNext(albumArtist)
-                            return@setOnMenuItemClickListener true
-                        }
-                        R.id.exclude -> {
-                            ShowExcludeDialog(requireContext(), albumArtist.name ?: albumArtist.friendlyArtistName) {
-                                presenter.exclude(albumArtist)
+                popupMenu.setOnMenuItemClickListener { menuItem ->
+                    if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.AlbumArtists(albumArtist))) {
+                        return@setOnMenuItemClickListener true
+                    } else {
+                        when (menuItem.itemId) {
+                            R.id.play -> {
+                                presenter.play(albumArtist)
+                                return@setOnMenuItemClickListener true
                             }
-                            return@setOnMenuItemClickListener true
-                        }
-                        R.id.editTags -> {
-                            presenter.editTags(albumArtist)
-                            return@setOnMenuItemClickListener true
-                        }
-                    }
-                }
-                false
-            }
-            popupMenu.show()
-        }
-    }
-
-    private val albumBinderListener = object : AlbumBinder.Listener {
-
-        override fun onAlbumClicked(album: com.simplecityapps.shuttle.model.Album, viewHolder: AlbumBinder.ViewHolder) {
-            if (findNavController().currentDestination?.id != R.id.albumDetailFragment) {
-                findNavController().navigate(
-                    R.id.action_homeFragment_to_albumDetailFragment,
-                    AlbumDetailFragmentArgs(album, true).toBundle(),
-                    null,
-                    FragmentNavigatorExtras(viewHolder.imageView to viewHolder.imageView.transitionName)
-                )
-            }
-        }
-
-        override fun onAlbumLongClicked(album: com.simplecityapps.shuttle.model.Album, viewHolder: AlbumBinder.ViewHolder) {
-            onOverflowClicked(viewHolder.itemView, album)
-        }
-
-        override fun onOverflowClicked(view: View, album: com.simplecityapps.shuttle.model.Album) {
-            val popupMenu = PopupMenu(requireContext(), view)
-            popupMenu.inflate(R.menu.menu_popup)
-            TagEditorMenuSanitiser.sanitise(popupMenu.menu, album.mediaProviders)
-
-            playlistMenuView.createPlaylistMenu(popupMenu.menu)
-
-            popupMenu.setOnMenuItemClickListener { menuItem ->
-                if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Albums(album))) {
-                    return@setOnMenuItemClickListener true
-                } else {
-                    when (menuItem.itemId) {
-                        R.id.play -> {
-                            presenter.play(album)
-                            return@setOnMenuItemClickListener true
-                        }
-                        R.id.queue -> {
-                            presenter.addToQueue(album)
-                            return@setOnMenuItemClickListener true
-                        }
-                        R.id.playNext -> {
-                            presenter.playNext(album)
-                            return@setOnMenuItemClickListener true
-                        }
-                        R.id.exclude -> {
-                            presenter.exclude(album)
-                            return@setOnMenuItemClickListener true
-                        }
-                        R.id.editTags -> {
-                            presenter.editTags(album)
-                            return@setOnMenuItemClickListener true
+                            R.id.queue -> {
+                                presenter.addToQueue(albumArtist)
+                                return@setOnMenuItemClickListener true
+                            }
+                            R.id.playNext -> {
+                                presenter.playNext(albumArtist)
+                                return@setOnMenuItemClickListener true
+                            }
+                            R.id.exclude -> {
+                                showExcludeDialog(requireContext(), albumArtist.name ?: albumArtist.friendlyArtistName) {
+                                    presenter.exclude(albumArtist)
+                                }
+                                return@setOnMenuItemClickListener true
+                            }
+                            R.id.editTags -> {
+                                presenter.editTags(albumArtist)
+                                return@setOnMenuItemClickListener true
+                            }
                         }
                     }
+                    false
                 }
-                false
+                popupMenu.show()
             }
-            popupMenu.show()
         }
-    }
+
+    private val albumBinderListener =
+        object : AlbumBinder.Listener {
+            override fun onAlbumClicked(
+                album: com.simplecityapps.shuttle.model.Album,
+                viewHolder: AlbumBinder.ViewHolder
+            ) {
+                if (findNavController().currentDestination?.id != R.id.albumDetailFragment) {
+                    findNavController().navigate(
+                        R.id.action_homeFragment_to_albumDetailFragment,
+                        AlbumDetailFragmentArgs(album, true).toBundle(),
+                        null,
+                        FragmentNavigatorExtras(viewHolder.imageView to viewHolder.imageView.transitionName)
+                    )
+                }
+            }
+
+            override fun onAlbumLongClicked(
+                album: com.simplecityapps.shuttle.model.Album,
+                viewHolder: AlbumBinder.ViewHolder
+            ) {
+                onOverflowClicked(viewHolder.itemView, album)
+            }
+
+            override fun onOverflowClicked(
+                view: View,
+                album: com.simplecityapps.shuttle.model.Album
+            ) {
+                val popupMenu = PopupMenu(requireContext(), view)
+                popupMenu.inflate(R.menu.menu_popup)
+                TagEditorMenuSanitiser.sanitise(popupMenu.menu, album.mediaProviders)
+
+                playlistMenuView.createPlaylistMenu(popupMenu.menu)
+
+                popupMenu.setOnMenuItemClickListener { menuItem ->
+                    if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Albums(album))) {
+                        return@setOnMenuItemClickListener true
+                    } else {
+                        when (menuItem.itemId) {
+                            R.id.play -> {
+                                presenter.play(album)
+                                return@setOnMenuItemClickListener true
+                            }
+                            R.id.queue -> {
+                                presenter.addToQueue(album)
+                                return@setOnMenuItemClickListener true
+                            }
+                            R.id.playNext -> {
+                                presenter.playNext(album)
+                                return@setOnMenuItemClickListener true
+                            }
+                            R.id.exclude -> {
+                                presenter.exclude(album)
+                                return@setOnMenuItemClickListener true
+                            }
+                            R.id.editTags -> {
+                                presenter.editTags(album)
+                                return@setOnMenuItemClickListener true
+                            }
+                        }
+                    }
+                    false
+                }
+                popupMenu.show()
+            }
+        }
 
     private fun navigateToPlaylist(query: PlaylistQuery) {
         coroutineScope.launch {
@@ -383,7 +407,10 @@ class HomeFragment :
 
     // CreatePlaylistDialogFragment.Listener Implementation
 
-    override fun onSave(text: String, playlistData: PlaylistData) {
+    override fun onSave(
+        text: String,
+        playlistData: PlaylistData
+    ) {
         playlistMenuPresenter.createPlaylist(text, playlistData)
     }
 

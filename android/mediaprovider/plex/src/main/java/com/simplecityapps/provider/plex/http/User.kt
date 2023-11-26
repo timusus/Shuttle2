@@ -8,5 +8,5 @@ import java.io.Serializable
 data class User(
     @Json(name = "id") val id: String,
     @Json(name = "email") val email: String,
-    @Json(name = "authToken") val authToken: String,
+    @Json(name = "authToken") val authToken: String
 ) : Serializable

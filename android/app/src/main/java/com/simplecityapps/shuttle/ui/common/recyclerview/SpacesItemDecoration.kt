@@ -7,11 +7,14 @@ import androidx.recyclerview.widget.RecyclerView
 import com.simplecityapps.shuttle.ui.common.utils.dp
 
 class SpacesItemDecoration(space: Int, val skipFirst: Boolean = false) : RecyclerView.ItemDecoration() {
-
     private val space: Int = space.dp
 
-    override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
-
+    override fun getItemOffsets(
+        outRect: Rect,
+        view: View,
+        parent: RecyclerView,
+        state: RecyclerView.State
+    ) {
         val orientation = (parent.layoutManager as? LinearLayoutManager)?.orientation ?: LinearLayoutManager.VERTICAL
 
         if (orientation == LinearLayoutManager.HORIZONTAL) {

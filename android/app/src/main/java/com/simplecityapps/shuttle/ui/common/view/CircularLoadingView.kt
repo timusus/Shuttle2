@@ -5,18 +5,23 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.Gravity
 import android.view.View
-import android.widget.*
+import android.widget.Button
+import android.widget.ImageView
+import android.widget.LinearLayout
+import android.widget.ProgressBar
+import android.widget.TextView
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.core.view.isVisible
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.utils.dp
 
-class CircularLoadingView @JvmOverloads constructor(
+class CircularLoadingView
+@JvmOverloads
+constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : LinearLayout(context, attrs, defStyleAttr) {
-
     interface Listener {
         fun onRetryClicked()
     }
@@ -70,44 +75,48 @@ class CircularLoadingView @JvmOverloads constructor(
                         animation = fadeIn()
                     } else {
                         animation?.cancel()
-                        animation = fadeOut(completion = {
-                            textView.text = state.message
-                            errorImageView.isVisible = false
-                            retryButton.isVisible = false
-                            progressBar.isVisible = true
-                            animation = fadeIn()
-                        })
+                        animation =
+                            fadeOut(completion = {
+                                textView.text = state.message
+                                errorImageView.isVisible = false
+                                retryButton.isVisible = false
+                                progressBar.isVisible = true
+                                animation = fadeIn()
+                            })
                     }
                 }
                 is State.Error -> {
                     animation?.cancel()
-                    animation = fadeOut(completion = {
-                        textView.text = state.message
-                        errorImageView.isVisible = true
-                        progressBar.isVisible = false
-                        retryButton.isVisible = false
-                        animation = fadeIn()
-                    })
+                    animation =
+                        fadeOut(completion = {
+                            textView.text = state.message
+                            errorImageView.isVisible = true
+                            progressBar.isVisible = false
+                            retryButton.isVisible = false
+                            animation = fadeIn()
+                        })
                 }
                 is State.Empty -> {
                     animation?.cancel()
-                    animation = fadeOut(completion = {
-                        textView.text = state.message
-                        errorImageView.isVisible = true
-                        progressBar.isVisible = false
-                        retryButton.isVisible = false
-                        animation = fadeIn()
-                    })
+                    animation =
+                        fadeOut(completion = {
+                            textView.text = state.message
+                            errorImageView.isVisible = true
+                            progressBar.isVisible = false
+                            retryButton.isVisible = false
+                            animation = fadeIn()
+                        })
                 }
                 is State.Retry -> {
                     animation?.cancel()
-                    animation = fadeOut(completion = {
-                        textView.text = state.message
-                        retryButton.isVisible = true
-                        errorImageView.isVisible = true
-                        progressBar.isVisible = false
-                        animation = fadeIn()
-                    })
+                    animation =
+                        fadeOut(completion = {
+                            textView.text = state.message
+                            retryButton.isVisible = true
+                            errorImageView.isVisible = true
+                            progressBar.isVisible = false
+                            animation = fadeIn()
+                        })
                 }
                 is State.None -> {
                     animation?.cancel()
@@ -132,9 +141,13 @@ class CircularLoadingView @JvmOverloads constructor(
 
     sealed class State {
         data class Loading(val message: String) : State()
+
         data class Empty(val message: String) : State()
+
         data class Error(val message: String) : State()
+
         data class Retry(val message: String) : State()
+
         object None : State()
     }
 }

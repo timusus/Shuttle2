@@ -16,7 +16,6 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 @Module
 class ImageLoaderModule {
-
     @Singleton
     @Provides
     fun provideImageLoader(

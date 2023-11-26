@@ -1,14 +1,13 @@
 package com.simplecityapps.shuttle.ui.common.mvp
 
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import timber.log.Timber
-import kotlin.coroutines.CoroutineContext
 
 abstract class BasePresenter<T : Any> : BaseContract.Presenter<T>, CoroutineScope {
-
     var view: T? = null
 
     private var job = SupervisorJob()

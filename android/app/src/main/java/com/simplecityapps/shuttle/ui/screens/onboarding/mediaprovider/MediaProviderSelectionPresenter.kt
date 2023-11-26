@@ -22,20 +22,24 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 interface MediaProviderSelectionContract {
-
     interface Presenter {
         fun addProviderClicked()
+
         fun addMediaProviderType(mediaProviderType: MediaProviderType)
+
         fun removeMediaProviderType(mediaProviderType: MediaProviderType)
     }
 
     interface View {
         fun showMediaProviderSelectionDialog(mediaProviderTypes: List<MediaProviderType>)
+
         fun setMediaProviders(mediaProviderTypes: List<MediaProviderType>)
     }
 }
 
-class MediaProviderSelectionPresenter @AssistedInject constructor(
+class MediaProviderSelectionPresenter
+@AssistedInject
+constructor(
     private val playbackPreferenceManager: PlaybackPreferenceManager,
     private val mediaImporter: MediaImporter,
     private val taglibMediaProvider: TaglibMediaProvider,
@@ -51,7 +55,6 @@ class MediaProviderSelectionPresenter @AssistedInject constructor(
     @Assisted private val isOnboarding: Boolean
 ) : BasePresenter<MediaProviderSelectionContract.View>(),
     MediaProviderSelectionContract.Presenter {
-
     @AssistedFactory
     interface Factory {
         fun create(isOnboarding: Boolean): MediaProviderSelectionPresenter

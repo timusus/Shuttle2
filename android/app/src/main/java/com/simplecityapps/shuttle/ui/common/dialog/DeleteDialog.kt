@@ -6,7 +6,11 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.shuttle.R
 import com.squareup.phrase.Phrase
 
-fun ShowDeleteDialog(context: Context, itemName: String?, onDelete: () -> Unit): AlertDialog {
+fun showDeleteDialog(
+    context: Context,
+    itemName: String?,
+    onDelete: () -> Unit
+): AlertDialog {
     return MaterialAlertDialogBuilder(context)
         .setTitle(context.getString(R.string.dialog_delete_title))
         .setMessage(

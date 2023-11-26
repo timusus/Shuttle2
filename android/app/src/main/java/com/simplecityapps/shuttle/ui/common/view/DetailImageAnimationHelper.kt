@@ -15,7 +15,6 @@ class DetailImageAnimationHelper(
     private val heroView: View,
     private val dummyView: View
 ) : TransitionListenerAdapter() {
-
     private val duration = 200L
     private val delay = duration / 5
 

@@ -9,7 +9,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.simplecityapps.diff.ContentsComparator
 
 interface ViewBinder : ContentsComparator {
-
     fun createViewHolder(parent: ViewGroup): ViewHolder<out ViewBinder>
 
     fun viewType(): Int
@@ -18,7 +17,10 @@ interface ViewBinder : ContentsComparator {
         return spanCount
     }
 
-    fun bindViewHolder(holder: ViewHolder<ViewBinder>, isPartial: Boolean = false) {
+    fun bindViewHolder(
+        holder: ViewHolder<ViewBinder>,
+        isPartial: Boolean = false
+    ) {
         holder.bind(this, isPartial)
     }
 
@@ -30,11 +32,13 @@ interface ViewBinder : ContentsComparator {
         RecyclerView.ViewHolder(itemView),
         RecyclingViewHolder,
         AttachAwareViewHolder {
-
         var viewBinder: B? = null
 
         @CallSuper
-        open fun bind(viewBinder: B, isPartial: Boolean) {
+        open fun bind(
+            viewBinder: B,
+            isPartial: Boolean
+        ) {
             this.viewBinder = viewBinder
         }
 
@@ -50,7 +54,9 @@ interface ViewBinder : ContentsComparator {
 
     // Extension
 
-    fun ViewGroup.inflateView(@LayoutRes layoutResId: Int): View {
+    fun ViewGroup.inflateView(
+        @LayoutRes layoutResId: Int
+    ): View {
         return LayoutInflater.from(context).inflate(layoutResId, this, false)
     }
 }

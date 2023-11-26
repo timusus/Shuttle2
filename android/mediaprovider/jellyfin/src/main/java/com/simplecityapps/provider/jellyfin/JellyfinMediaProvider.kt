@@ -19,6 +19,7 @@ import com.simplecityapps.provider.jellyfin.http.playlists
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
+import kotlin.math.min
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.collectIndexed
@@ -31,20 +32,19 @@ import kotlinx.coroutines.flow.map
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import timber.log.Timber
-import kotlin.math.min
 
 class JellyfinMediaProvider(
     private val context: Context,
     private val authenticationManager: JellyfinAuthenticationManager,
-    private val itemsService: ItemsService,
+    private val itemsService: ItemsService
 ) : MediaProvider {
-
     override val type = MediaProviderType.Jellyfin
 
     override fun findSongs(): Flow<FlowEvent<List<Song>, MessageProgress>> {
-        val address = authenticationManager.getAddress() ?: run {
-            return flowOf(FlowEvent.Failure(context.getString(R.string.media_provider_address_missing)))
-        }
+        val address =
+            authenticationManager.getAddress() ?: run {
+                return flowOf(FlowEvent.Failure(context.getString(R.string.media_provider_address_missing)))
+            }
 
         return flow {
             emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_provider_querying_api), null)))
@@ -77,19 +77,21 @@ class JellyfinMediaProvider(
         existingPlaylists: List<Playlist>,
         existingSongs: List<Song>
     ): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> {
-        val address = authenticationManager.getAddress() ?: run {
-            return flowOf(FlowEvent.Failure(context.getString(R.string.media_provider_address_missing)))
-        }
+        val address =
+            authenticationManager.getAddress() ?: run {
+                return flowOf(FlowEvent.Failure(context.getString(R.string.media_provider_address_missing)))
+            }
 
         return flow {
             emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_provider_querying_api), null)))
             authenticate(address)?.let { credentials ->
                 when (
-                    val queryResult = itemsService.playlists(
-                        url = address,
-                        token = credentials.accessToken,
-                        userId = credentials.userId
-                    )
+                    val queryResult =
+                        itemsService.playlists(
+                            url = address,
+                            token = credentials.accessToken,
+                            userId = credentials.userId
+                        )
                 ) {
                     is NetworkResult.Success<QueryResult> -> {
                         val updateData = mutableListOf<MediaImporter.PlaylistUpdateData>()
@@ -110,15 +112,15 @@ class JellyfinMediaProvider(
 
     private suspend fun authenticate(address: String): AuthenticatedCredentials? {
         return (
-                authenticationManager.getAuthenticatedCredentials()
-                    ?: authenticationManager.getLoginCredentials()
-                        ?.let { loginCredentials ->
-                            authenticationManager.authenticate(
-                                address,
-                                loginCredentials
-                            ).getOrNull()
-                        }
-                )
+            authenticationManager.getAuthenticatedCredentials()
+                ?: authenticationManager.getLoginCredentials()
+                    ?.let { loginCredentials ->
+                        authenticationManager.authenticate(
+                            address,
+                            loginCredentials
+                        ).getOrNull()
+                    }
+            )
     }
 
     private fun queryItems(
@@ -130,13 +132,14 @@ class JellyfinMediaProvider(
     ): Flow<FlowEvent<List<Item>, MessageProgress>> {
         return flow {
             when (
-                val queryResult = itemsService.audioItems(
-                    url = address,
-                    token = credentials.accessToken,
-                    userId = credentials.userId,
-                    limit = pageSize,
-                    startIndex = startIndex
-                )
+                val queryResult =
+                    itemsService.audioItems(
+                        url = address,
+                        token = credentials.accessToken,
+                        userId = credentials.userId,
+                        limit = pageSize,
+                        startIndex = startIndex
+                    )
             ) {
                 is NetworkResult.Success<QueryResult> -> {
                     val totalRecordCount = queryResult.body.totalRecordCount
@@ -208,14 +211,15 @@ class JellyfinMediaProvider(
     ): Flow<FlowEvent<List<Item>, MessageProgress>> {
         return flow {
             when (
-                val queryResult = itemsService.playlistItems(
-                    url = address,
-                    token = credentials.accessToken,
-                    playlistId = playlistId,
-                    limit = pageSize,
-                    startIndex = startIndex,
-                    userId = credentials.userId
-                )
+                val queryResult =
+                    itemsService.playlistItems(
+                        url = address,
+                        token = credentials.accessToken,
+                        playlistId = playlistId,
+                        limit = pageSize,
+                        startIndex = startIndex,
+                        userId = credentials.userId
+                    )
             ) {
                 is NetworkResult.Success<QueryResult> -> {
                     val totalRecordCount = queryResult.body.totalRecordCount

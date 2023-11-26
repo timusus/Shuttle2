@@ -31,15 +31,14 @@ import com.simplecityapps.shuttle.ui.screens.queue.QueueFragment
 import com.simplecityapps.shuttle.ui.screens.trial.ThankYouDialogFragment
 import com.simplecityapps.shuttle.ui.screens.trial.TrialDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
-import timber.log.Timber
 import java.lang.ref.WeakReference
 import javax.inject.Inject
+import timber.log.Timber
 
 @AndroidEntryPoint
 class MainFragment :
     Fragment(),
     MainContract.View {
-
     private var multiSheetView: MultiSheetView? by autoClearedNullable()
 
     private var onBackPressCallback: OnBackPressedCallback? = null
@@ -54,11 +53,18 @@ class MainFragment :
 
     // Lifecycle
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return inflater.inflate(R.layout.fragment_main, container, false)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
         super.onViewCreated(view, savedInstanceState)
 
         multiSheetView = view.findViewById(R.id.multiSheetView)
@@ -92,14 +98,22 @@ class MainFragment :
             multiSheetView?.restoreBottomSheetTranslation(savedInstanceState.getFloat(STATE_BOTTOM_NAV_TRANSLATION_Y, 0f))
         }
 
-        multiSheetView?.addSheetStateChangeListener(object : MultiSheetView.SheetStateChangeListener {
-            override fun onSheetStateChanged(sheet: Int, state: Int) {
-                updateBackPressListener()
-            }
+        multiSheetView?.addSheetStateChangeListener(
+            object : MultiSheetView.SheetStateChangeListener {
+                override fun onSheetStateChanged(
+                    sheet: Int,
+                    state: Int
+                ) {
+                    updateBackPressListener()
+                }
 
-            override fun onSlide(sheet: Int, slideOffset: Float) {
+                override fun onSlide(
+                    sheet: Int,
+                    slideOffset: Float
+                ) {
+                }
             }
-        })
+        )
 
         reviewManager = ReviewManagerFactory.create(requireContext())
 
@@ -180,9 +194,10 @@ class MainFragment :
         if (multiSheetView?.currentSheet != MultiSheetView.Sheet.NONE) {
             // Todo: Remove activity dependency.
             activity?.let { activity ->
-                onBackPressCallback = activity.onBackPressedDispatcher.addCallback {
-                    multiSheetView?.consumeBackPress()
-                }
+                onBackPressCallback =
+                    activity.onBackPressedDispatcher.addCallback {
+                        multiSheetView?.consumeBackPress()
+                    }
             }
         }
     }
@@ -208,8 +223,10 @@ class MainFragment :
     }
 }
 
-fun BottomNavigationView.setupWithNavController(navController: NavController, onItemSelected: (MenuItem) -> (Unit)) {
-
+fun BottomNavigationView.setupWithNavController(
+    navController: NavController,
+    onItemSelected: (MenuItem) -> (Unit)
+) {
     setOnNavigationItemSelectedListener { item ->
         var didNavigate = false
         try {
@@ -221,7 +238,10 @@ fun BottomNavigationView.setupWithNavController(navController: NavController, on
         didNavigate
     }
 
-    fun matchDestination(destination: NavDestination, @IdRes destId: Int): Boolean {
+    fun matchDestination(
+        destination: NavDestination,
+        @IdRes destId: Int
+    ): Boolean {
         var currentDestination: NavDestination? = destination
         while (currentDestination!!.id != destId && currentDestination.parent != null) {
             currentDestination = currentDestination.parent
@@ -253,5 +273,6 @@ fun BottomNavigationView.setupWithNavController(navController: NavController, on
                     h++
                 }
             }
-        })
+        }
+    )
 }

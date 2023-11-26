@@ -20,10 +20,13 @@ class DetailSongBinder(
     val listener: Listener
 ) : ViewBinder,
     SectionViewBinder {
-
     interface Listener {
         fun onSongClicked(song: Song)
-        fun onOverflowClicked(view: View, song: Song) {}
+
+        fun onOverflowClicked(
+            view: View,
+            song: Song
+        ) {}
     }
 
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
@@ -56,7 +59,6 @@ class DetailSongBinder(
     }
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<DetailSongBinder>(itemView) {
-
         private val trackTextView: TextView = itemView.findViewById(R.id.trackTextView)
         private val titleTextView: TextView = itemView.findViewById(R.id.titleTextView)
         private val durationTextView: TextView = itemView.findViewById(R.id.durationTextView)
@@ -68,7 +70,10 @@ class DetailSongBinder(
             overflowButton.setOnClickListener { view -> viewBinder?.listener?.onOverflowClicked(view, viewBinder!!.song) }
         }
 
-        override fun bind(viewBinder: DetailSongBinder, isPartial: Boolean) {
+        override fun bind(
+            viewBinder: DetailSongBinder,
+            isPartial: Boolean
+        ) {
             super.bind(viewBinder, isPartial)
 
             itemView.isActivated = viewBinder.song.id == viewBinder.currentSong?.id

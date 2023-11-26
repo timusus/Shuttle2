@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.ui.screens.queue
 
-import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackState
@@ -8,46 +7,75 @@ import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
+import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
-import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 interface QueueContract {
-
     interface Presenter : BaseContract.Presenter<View> {
         fun onQueueItemClicked(queueItem: QueueItem)
+
         fun togglePlayback()
+
         fun scrollToCurrent()
-        fun moveQueueItem(from: Int, to: Int)
+
+        fun moveQueueItem(
+            from: Int,
+            to: Int
+        )
+
         fun removeFromQueue(queueItem: QueueItem)
+
         fun exclude(queueItem: QueueItem)
+
         fun editTags(queueItem: QueueItem)
+
         fun saveQueueToPlaylist()
+
         fun clearQueue()
     }
 
     interface View {
-        fun setData(queue: List<QueueItem>, progress: Float, playbackState: PlaybackState)
+        fun setData(
+            queue: List<QueueItem>,
+            progress: Float,
+            playbackState: PlaybackState
+        )
+
         fun toggleEmptyView(empty: Boolean)
+
         fun toggleLoadingView(loading: Boolean)
-        fun setQueuePosition(position: Int?, total: Int)
+
+        fun setQueuePosition(
+            position: Int?,
+            total: Int
+        )
+
         fun showLoadError(error: Error)
-        fun scrollToPosition(position: Int?, forceScrollUpdate: Boolean)
+
+        fun scrollToPosition(
+            position: Int?,
+            forceScrollUpdate: Boolean
+        )
+
         fun showTagEditor(songs: List<com.simplecityapps.shuttle.model.Song>)
+
         fun clearData()
     }
 }
 
-class QueuePresenter @Inject constructor(
+class QueuePresenter
+@Inject
+constructor(
     private val queueManager: QueueManager,
     private val playbackManager: PlaybackManager,
     private val queueWatcher: QueueWatcher,
-    private val songRepository: SongRepository,
+    private val songRepository: SongRepository
 ) : BasePresenter<QueueContract.View>(),
     QueueContract.Presenter,
     QueueChangeCallback {
-
     override fun bindView(view: QueueContract.View) {
         super.bindView(view)
 
@@ -92,7 +120,10 @@ class QueuePresenter @Inject constructor(
         }
     }
 
-    override fun moveQueueItem(from: Int, to: Int) {
+    override fun moveQueueItem(
+        from: Int,
+        to: Int
+    ) {
         playbackManager.moveQueueItem(from, to)
     }
 
@@ -150,7 +181,10 @@ class QueuePresenter @Inject constructor(
         updateMiniPlayerVisibility(queueManager.getQueue().isEmpty())
     }
 
-    override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
+    override fun onQueuePositionChanged(
+        oldPosition: Int?,
+        newPosition: Int?
+    ) {
         updateQueue(false) // Currently required in order to update current item
         updateQueuePosition(false)
     }

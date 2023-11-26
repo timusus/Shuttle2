@@ -17,7 +17,6 @@ val AlbumSortOrder.comparator: Comparator<Album>
     }
 
 object AlbumComparator {
-
     private val collator by lazy {
         Collator.getInstance().apply { strength = Collator.TERTIARY }
     }

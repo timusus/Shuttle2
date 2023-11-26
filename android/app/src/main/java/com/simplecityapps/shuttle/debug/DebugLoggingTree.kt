@@ -3,14 +3,13 @@ package com.simplecityapps.shuttle.debug
 import android.content.Context
 import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
-import timber.log.Timber
 import java.util.*
+import timber.log.Timber
 
 class DebugLoggingTree(
     private val context: Context,
     private val generalPreferenceManager: GeneralPreferenceManager
 ) : Timber.DebugTree() {
-
     interface Callback {
         fun onLog(logMessage: LogMessage)
     }
@@ -29,7 +28,12 @@ class DebugLoggingTree(
         callbacks.remove(callback)
     }
 
-    override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
+    override fun log(
+        priority: Int,
+        tag: String?,
+        message: String,
+        t: Throwable?
+    ) {
         if (BuildConfig.DEBUG) {
             super.log(priority, tag, message, t)
         }
@@ -48,7 +52,10 @@ class DebugLoggingTree(
         }
     }
 
-    private fun writeToFile(context: Context, logMessage: LogMessage) {
+    private fun writeToFile(
+        context: Context,
+        logMessage: LogMessage
+    ) {
         val file = context.getFileStreamPath(FILE_NAME)
 
         // If the file is more than 24 hours old, or larger than 512kB, delete it

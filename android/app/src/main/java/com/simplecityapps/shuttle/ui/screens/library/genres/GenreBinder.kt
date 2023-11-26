@@ -6,16 +6,22 @@ import android.view.ViewGroup
 import android.widget.ImageButton
 import android.widget.TextView
 import com.simplecityapps.adapter.ViewBinder
-import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 import com.squareup.phrase.Phrase
 
 class GenreBinder(val genre: com.simplecityapps.shuttle.model.Genre, private val listener: Listener) : ViewBinder {
-
     interface Listener {
-        fun onGenreSelected(genre: com.simplecityapps.shuttle.model.Genre, viewHolder: ViewHolder)
-        fun onOverflowClicked(view: View, genre: com.simplecityapps.shuttle.model.Genre) {}
+        fun onGenreSelected(
+            genre: com.simplecityapps.shuttle.model.Genre,
+            viewHolder: ViewHolder
+        )
+
+        fun onOverflowClicked(
+            view: View,
+            genre: com.simplecityapps.shuttle.model.Genre
+        ) {}
     }
 
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
@@ -47,7 +53,6 @@ class GenreBinder(val genre: com.simplecityapps.shuttle.model.Genre, private val
     }
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<GenreBinder>(itemView) {
-
         private val titleTextView: TextView = itemView.findViewById(R.id.title)
         private val subtitleTextView: TextView = itemView.findViewById(R.id.subtitle)
         private val overflowButton: ImageButton = itemView.findViewById(R.id.overflowButton)
@@ -57,17 +62,21 @@ class GenreBinder(val genre: com.simplecityapps.shuttle.model.Genre, private val
             overflowButton.setOnClickListener { viewBinder?.listener?.onOverflowClicked(it, viewBinder!!.genre) }
         }
 
-        override fun bind(viewBinder: GenreBinder, isPartial: Boolean) {
+        override fun bind(
+            viewBinder: GenreBinder,
+            isPartial: Boolean
+        ) {
             super.bind(viewBinder, isPartial)
 
             titleTextView.text = viewBinder.genre.name
             if (viewBinder.genre.songCount == 0) {
                 subtitleTextView.text = itemView.resources.getString(R.string.song_list_empty)
             } else {
-                subtitleTextView.text = Phrase
-                    .fromPlural(itemView.context, R.plurals.songsPlural, viewBinder.genre.songCount)
-                    .put("count", viewBinder.genre.songCount)
-                    .format()
+                subtitleTextView.text =
+                    Phrase
+                        .fromPlural(itemView.context, R.plurals.songsPlural, viewBinder.genre.songCount)
+                        .put("count", viewBinder.genre.songCount)
+                        .format()
             }
         }
     }

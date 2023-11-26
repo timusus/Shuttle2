@@ -24,9 +24,11 @@ class ChangesetBinder(
     val changeset: Changeset,
     val listener: Listener?
 ) : ViewBinder {
-
     interface Listener {
-        fun onItemClicked(position: Int, expanded: Boolean)
+        fun onItemClicked(
+            position: Int,
+            expanded: Boolean
+        )
     }
 
     override fun createViewHolder(parent: ViewGroup): ViewBinder.ViewHolder<out ViewBinder> {
@@ -56,7 +58,10 @@ class ChangesetBinder(
         return (other as? ChangesetBinder)?.expanded == expanded
     }
 
-    fun getSpannableString(resources: Resources, changeset: Changeset): Spannable {
+    fun getSpannableString(
+        resources: Resources,
+        changeset: Changeset
+    ): Spannable {
         val spannableBuilder = SpannableStringBuilder()
 
         if (changeset.features.isNotEmpty()) {
@@ -168,7 +173,10 @@ class ChangesetBinder(
             }
         }
 
-        override fun bind(viewBinder: ChangesetBinder, isPartial: Boolean) {
+        override fun bind(
+            viewBinder: ChangesetBinder,
+            isPartial: Boolean
+        ) {
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.changeset.versionName
@@ -180,7 +188,6 @@ class ChangesetBinder(
     }
 
     companion object {
-
         val dateFormat: DateFormat = DateFormat.getDateInstance(DateFormat.MEDIUM)
     }
 }

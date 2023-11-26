@@ -6,7 +6,9 @@ import androidx.annotation.AttrRes
 import androidx.core.content.res.getColorOrThrow
 import androidx.core.content.res.use
 
-fun Context.getAttrColor(@AttrRes attrResId: Int): Int {
+fun Context.getAttrColor(
+    @AttrRes attrResId: Int
+): Int {
     val typedValue = TypedValue()
     obtainStyledAttributes(typedValue.data, intArrayOf(attrResId)).use { typedArray ->
         return typedArray.getColorOrThrow(0)

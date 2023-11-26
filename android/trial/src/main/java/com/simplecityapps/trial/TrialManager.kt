@@ -7,13 +7,20 @@ import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.squareup.moshi.Moshi
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.tasks.await
-import timber.log.Timber
 import java.io.File
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
+import timber.log.Timber
 
 class TrialManager(
     private val context: Context,
@@ -24,37 +31,37 @@ class TrialManager(
     billingManager: BillingManager,
     coroutineScope: CoroutineScope
 ) {
-
     private val deviceAdapter = moshi.adapter(Device::class.java)
 
     var preTrialLength = TimeUnit.DAYS.toMillis(remoteConfig.getLong("pre_trial_length"))
     var trialLength = TimeUnit.DAYS.toMillis(remoteConfig.getLong("trial_length"))
 
-    val trialState: StateFlow<TrialState> = billingManager.billingState.map { billingState ->
-        when (billingState) {
-            BillingState.Unknown -> TrialState.Unknown
-            BillingState.Paid -> {
-                TrialState.Paid
-            }
-            BillingState.Unpaid -> {
-                getTrialState()
+    val trialState: StateFlow<TrialState> =
+        billingManager.billingState.map { billingState ->
+            when (billingState) {
+                BillingState.Unknown -> TrialState.Unknown
+                BillingState.Paid -> {
+                    TrialState.Paid
+                }
+                BillingState.Unpaid -> {
+                    getTrialState()
+                }
             }
         }
-    }
-        .onEach {
-            Timber.i("trialState changed to $it")
-            when (it) {
-                TrialState.Paid -> {
-                    if (preferenceManager.appPurchasedDate == null) {
-                        preferenceManager.appPurchasedDate = Date()
+            .onEach {
+                Timber.i("trialState changed to $it")
+                when (it) {
+                    TrialState.Paid -> {
+                        if (preferenceManager.appPurchasedDate == null) {
+                            preferenceManager.appPurchasedDate = Date()
+                        }
+                    }
+                    else -> {
+                        // Nothing to do
                     }
                 }
-                else -> {
-                    // Nothing to do
-                }
             }
-        }
-        .stateIn(coroutineScope, SharingStarted.Lazily, TrialState.Unknown)
+            .stateIn(coroutineScope, SharingStarted.Lazily, TrialState.Unknown)
 
     private suspend fun getTrialState(): TrialState {
         if (preferenceManager.firebaseAnalyticsEnabled) {

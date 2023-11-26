@@ -23,28 +23,40 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 interface SmartPlaylistDetailContract {
-
     interface View {
         fun setData(songs: List<Song>)
+
         fun showLoadError(error: Error)
+
         fun onAddedToQueue(song: Song)
+
         fun onAddedToQueue(playlist: com.simplecityapps.shuttle.model.SmartPlaylist)
+
         fun showDeleteError(error: Error)
     }
 
     interface Presenter : BaseContract.Presenter<View> {
         fun loadData()
+
         fun onSongClicked(song: Song)
+
         fun shuffle()
+
         fun addToQueue(song: Song)
+
         fun playNext(song: Song)
+
         fun exclude(song: Song)
+
         fun delete(song: Song)
+
         fun addToQueue(playlist: com.simplecityapps.shuttle.model.SmartPlaylist)
     }
 }
 
-class SmartPlaylistDetailPresenter @AssistedInject constructor(
+class SmartPlaylistDetailPresenter
+@AssistedInject
+constructor(
     @ApplicationContext private val context: Context,
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackManager,
@@ -52,7 +64,6 @@ class SmartPlaylistDetailPresenter @AssistedInject constructor(
     @Assisted private val playlist: com.simplecityapps.shuttle.model.SmartPlaylist
 ) : BasePresenter<SmartPlaylistDetailContract.View>(),
     SmartPlaylistDetailContract.Presenter {
-
     @AssistedFactory
     interface Factory {
         fun create(playlist: com.simplecityapps.shuttle.model.SmartPlaylist): SmartPlaylistDetailPresenter

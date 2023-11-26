@@ -2,7 +2,12 @@ package com.simplecityapps.shuttle.ui.screens.library.songs
 
 import android.os.Bundle
 import android.os.Parcelable
-import android.view.*
+import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
 import androidx.fragment.app.Fragment
@@ -21,9 +26,9 @@ import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.shuttle.ui.common.ContextualToolbarHelper
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
-import com.simplecityapps.shuttle.ui.common.dialog.ShowDeleteDialog
-import com.simplecityapps.shuttle.ui.common.dialog.ShowExcludeDialog
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
+import com.simplecityapps.shuttle.ui.common.dialog.showDeleteDialog
+import com.simplecityapps.shuttle.ui.common.dialog.showExcludeDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.GlidePreloadModelProvider
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
@@ -45,7 +50,6 @@ class SongListFragment :
     Fragment(),
     SongListContract.View,
     CreatePlaylistDialogFragment.Listener {
-
     @Inject
     lateinit var presenter: SongListPresenter
 
@@ -72,7 +76,8 @@ class SongListFragment :
     private val viewPreloadSizeProvider by lazy { ViewPreloadSizeProvider<com.simplecityapps.shuttle.model.Song>() }
     private val preloadModelProvider by lazy {
         GlidePreloadModelProvider<com.simplecityapps.shuttle.model.Song>(
-            imageLoader, listOf(ArtworkImageLoader.Options.CacheDecodedResource)
+            imageLoader,
+            listOf(ArtworkImageLoader.Options.CacheDecodedResource)
         )
     }
 
@@ -84,11 +89,18 @@ class SongListFragment :
         setHasOptionsMenu(true)
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return inflater.inflate(R.layout.fragment_songs, container, false)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
         super.onViewCreated(view, savedInstanceState)
 
         imageLoader = GlideImageLoader(this)
@@ -97,35 +109,38 @@ class SongListFragment :
 
         playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
 
-        adapter = object : SectionedAdapter(viewLifecycleOwner.lifecycleScope) {
-            override fun getSectionName(viewBinder: ViewBinder?): String {
-                return (viewBinder as? SongBinder)?.song?.let { song ->
-                    presenter.getFastscrollPrefix(song)
-                } ?: ""
+        adapter =
+            object : SectionedAdapter(viewLifecycleOwner.lifecycleScope) {
+                override fun getSectionName(viewBinder: ViewBinder?): String {
+                    return (viewBinder as? SongBinder)?.song?.let { song ->
+                        presenter.getFastscrollPrefix(song)
+                    } ?: ""
+                }
             }
-        }
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
         recyclerView.setRecyclerListener(RecyclerListener())
-        val preloader: RecyclerViewPreloader<com.simplecityapps.shuttle.model.Song> = RecyclerViewPreloader(
-            imageLoader.requestManager,
-            preloadModelProvider,
-            viewPreloadSizeProvider,
-            12
-        )
+        val preloader: RecyclerViewPreloader<com.simplecityapps.shuttle.model.Song> =
+            RecyclerViewPreloader(
+                imageLoader.requestManager,
+                preloadModelProvider,
+                viewPreloadSizeProvider,
+                12
+            )
         recyclerView.addOnScrollListener(preloader)
 
         circularLoadingView = view.findViewById(R.id.circularLoadingView)
         horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
 
-        shuffleBinder = ShuffleBinder(
-            R.string.btn_shuffle,
-            object : ShuffleBinder.Listener {
-                override fun onClicked() {
-                    presenter.shuffle()
+        shuffleBinder =
+            ShuffleBinder(
+                R.string.btn_shuffle,
+                object : ShuffleBinder.Listener {
+                    override fun onClicked() {
+                        presenter.shuffle()
+                    }
                 }
-            }
-        )
+            )
 
         savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
 
@@ -137,7 +152,10 @@ class SongListFragment :
         playlistMenuPresenter.bindView(playlistMenuView)
     }
 
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+    override fun onCreateOptionsMenu(
+        menu: Menu,
+        inflater: MenuInflater
+    ) {
         super.onCreateOptionsMenu(menu, inflater)
 
         inflater.inflate(R.menu.menu_song_list, menu)
@@ -248,19 +266,22 @@ class SongListFragment :
 
     // SongListContract.View Implementation
 
-    override fun setData(songs: List<com.simplecityapps.shuttle.model.Song>, resetPosition: Boolean) {
-
+    override fun setData(
+        songs: List<com.simplecityapps.shuttle.model.Song>,
+        resetPosition: Boolean
+    ) {
         preloadModelProvider.items = songs
 
         if (resetPosition) {
             adapter.clear()
         }
 
-        val data = songs.map { song ->
-            SongBinder(song, imageLoader, songBinderListener).apply {
-                selected = contextualToolbarHelper.selectedItems.any { it.id == song.id }
-            }
-        }.toMutableList<ViewBinder>()
+        val data =
+            songs.map { song ->
+                SongBinder(song, imageLoader, songBinderListener).apply {
+                    selected = contextualToolbarHelper.selectedItems.any { it.id == song.id }
+                }
+            }.toMutableList<ViewBinder>()
 
         if (songs.isNotEmpty()) {
             data.add(0, shuffleBinder)
@@ -337,102 +358,112 @@ class SongListFragment :
 
     // Private
 
-    private val songBinderListener = object : SongBinder.Listener {
-
-        override fun onSongClicked(song: com.simplecityapps.shuttle.model.Song) {
-            if (!contextualToolbarHelper.handleClick(song)) {
-                presenter.onSongClicked(song)
-            }
-        }
-
-        override fun onSongLongClicked(song: com.simplecityapps.shuttle.model.Song) {
-            contextualToolbarHelper.handleLongClick(song)
-        }
-
-        override fun onOverflowClicked(view: View, song: com.simplecityapps.shuttle.model.Song) {
-            val popupMenu = PopupMenu(requireContext(), view)
-            popupMenu.inflate(R.menu.menu_popup_song)
-            TagEditorMenuSanitiser.sanitise(popupMenu.menu, listOf(song.mediaProvider))
-
-            playlistMenuView.createPlaylistMenu(popupMenu.menu)
-
-            if (song.externalId != null) {
-                popupMenu.menu.findItem(R.id.delete)?.isVisible = false
+    private val songBinderListener =
+        object : SongBinder.Listener {
+            override fun onSongClicked(song: com.simplecityapps.shuttle.model.Song) {
+                if (!contextualToolbarHelper.handleClick(song)) {
+                    presenter.onSongClicked(song)
+                }
             }
 
-            popupMenu.setOnMenuItemClickListener { menuItem ->
-                if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Songs(song))) {
-                    return@setOnMenuItemClickListener true
-                } else {
-                    when (menuItem.itemId) {
-                        R.id.queue -> {
-                            presenter.addToQueue(listOf(song))
-                            return@setOnMenuItemClickListener true
-                        }
-                        R.id.playNext -> {
-                            presenter.playNext(song)
-                            return@setOnMenuItemClickListener true
-                        }
-                        R.id.songInfo -> {
-                            SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
-                            return@setOnMenuItemClickListener true
-                        }
-                        R.id.exclude -> {
-                            ShowExcludeDialog(requireContext(), song.name) {
-                                presenter.exclude(song)
+            override fun onSongLongClicked(song: com.simplecityapps.shuttle.model.Song) {
+                contextualToolbarHelper.handleLongClick(song)
+            }
+
+            override fun onOverflowClicked(
+                view: View,
+                song: com.simplecityapps.shuttle.model.Song
+            ) {
+                val popupMenu = PopupMenu(requireContext(), view)
+                popupMenu.inflate(R.menu.menu_popup_song)
+                TagEditorMenuSanitiser.sanitise(popupMenu.menu, listOf(song.mediaProvider))
+
+                playlistMenuView.createPlaylistMenu(popupMenu.menu)
+
+                if (song.externalId != null) {
+                    popupMenu.menu.findItem(R.id.delete)?.isVisible = false
+                }
+
+                popupMenu.setOnMenuItemClickListener { menuItem ->
+                    if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Songs(song))) {
+                        return@setOnMenuItemClickListener true
+                    } else {
+                        when (menuItem.itemId) {
+                            R.id.queue -> {
+                                presenter.addToQueue(listOf(song))
+                                return@setOnMenuItemClickListener true
                             }
-                            return@setOnMenuItemClickListener true
-                        }
-                        R.id.delete -> {
-                            ShowDeleteDialog(requireContext(), song.name) {
-                                presenter.delete(song)
+                            R.id.playNext -> {
+                                presenter.playNext(song)
+                                return@setOnMenuItemClickListener true
                             }
-                            return@setOnMenuItemClickListener true
-                        }
-                        R.id.editTags -> {
-                            TagEditorAlertDialog.newInstance(listOf(song)).show(childFragmentManager)
+                            R.id.songInfo -> {
+                                SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
+                                return@setOnMenuItemClickListener true
+                            }
+                            R.id.exclude -> {
+                                showExcludeDialog(requireContext(), song.name) {
+                                    presenter.exclude(song)
+                                }
+                                return@setOnMenuItemClickListener true
+                            }
+                            R.id.delete -> {
+                                showDeleteDialog(requireContext(), song.name) {
+                                    presenter.delete(song)
+                                }
+                                return@setOnMenuItemClickListener true
+                            }
+                            R.id.editTags -> {
+                                TagEditorAlertDialog.newInstance(listOf(song)).show(childFragmentManager)
+                            }
                         }
                     }
+                    false
                 }
-                false
+                popupMenu.show()
             }
-            popupMenu.show()
-        }
 
-        override fun onViewHolderCreated(holder: SongBinder.ViewHolder) {
-            viewPreloadSizeProvider.setView(holder.imageView)
+            override fun onViewHolderCreated(holder: SongBinder.ViewHolder) {
+                viewPreloadSizeProvider.setView(holder.imageView)
+            }
         }
-    }
 
     // CreatePlaylistDialogFragment.Listener Implementation
 
-    override fun onSave(text: String, playlistData: PlaylistData) {
+    override fun onSave(
+        text: String,
+        playlistData: PlaylistData
+    ) {
         playlistMenuPresenter.createPlaylist(text, playlistData)
     }
 
     // ContextualToolbarHelper.Callback Implementation
 
-    private val contextualToolbarCallback = object : ContextualToolbarHelper.Callback<com.simplecityapps.shuttle.model.Song> {
+    private val contextualToolbarCallback =
+        object : ContextualToolbarHelper.Callback<com.simplecityapps.shuttle.model.Song> {
+            override fun onCountChanged(count: Int) {
+                contextualToolbarHelper.contextualToolbar?.title =
+                    Phrase.fromPlural(requireContext(), R.plurals.multi_select_items_selected, count)
+                        .put("count", count)
+                        .format()
+                contextualToolbarHelper.contextualToolbar?.menu?.let { menu ->
+                    TagEditorMenuSanitiser.sanitise(menu, contextualToolbarHelper.selectedItems.map { it.mediaProvider }.distinct())
+                }
+            }
 
-        override fun onCountChanged(count: Int) {
-            contextualToolbarHelper.contextualToolbar?.title = Phrase.fromPlural(requireContext(), R.plurals.multi_select_items_selected, count)
-                .put("count", count)
-                .format()
-            contextualToolbarHelper.contextualToolbar?.menu?.let { menu ->
-                TagEditorMenuSanitiser.sanitise(menu, contextualToolbarHelper.selectedItems.map { it.mediaProvider }.distinct())
+            override fun onItemUpdated(
+                item: com.simplecityapps.shuttle.model.Song,
+                isSelected: Boolean
+            ) {
+                adapter.items
+                    .filterIsInstance<SongBinder>()
+                    .firstOrNull { it.song.id == item.id }
+                    ?.let { viewBinder ->
+                        viewBinder.selected = isSelected
+                        adapter.notifyItemChanged(adapter.items.indexOf(viewBinder))
+                    }
             }
         }
-
-        override fun onItemUpdated(item: com.simplecityapps.shuttle.model.Song, isSelected: Boolean) {
-            adapter.items
-                .filterIsInstance<SongBinder>()
-                .firstOrNull { it.song.id == item.id }
-                ?.let { viewBinder ->
-                    viewBinder.selected = isSelected
-                    adapter.notifyItemChanged(adapter.items.indexOf(viewBinder))
-                }
-        }
-    }
 
     // Static
 

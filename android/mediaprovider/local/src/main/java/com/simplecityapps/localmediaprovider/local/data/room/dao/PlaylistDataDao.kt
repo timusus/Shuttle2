@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.map
 
 @Dao
 abstract class PlaylistDataDao {
-
     @Insert
     abstract suspend fun insert(playlistData: PlaylistData): Long
 
@@ -74,7 +73,7 @@ data class PlaylistEntity(
     val duration: Int,
     val sortOrder: PlaylistSongSortOrder,
     val mediaProvider: MediaProviderType,
-    val externalId: String?,
+    val externalId: String?
 )
 
 fun PlaylistEntity.toPlaylist(): Playlist {

@@ -13,16 +13,17 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import timber.log.Timber
 import javax.inject.Singleton
+import timber.log.Timber
 
 @InstallIn(SingletonComponent::class)
 @Module
 class PersistenceModule {
-
     @Singleton
     @Provides
-    fun provideSharedPrefs(@ApplicationContext context: Context): SharedPreferences {
+    fun provideSharedPrefs(
+        @ApplicationContext context: Context
+    ): SharedPreferences {
         return PreferenceManager.getDefaultSharedPreferences(context)
     }
 
@@ -35,7 +36,9 @@ class PersistenceModule {
     @SuppressLint("ApplySharedPref")
     @Singleton
     @Provides
-    fun provideSecurePreferenceManager(@ApplicationContext context: Context): SecurePreferenceManager {
+    fun provideSecurePreferenceManager(
+        @ApplicationContext context: Context
+    ): SecurePreferenceManager {
         var encryptedSharedPreferences = createEncryptedPreferences(context)
         if (encryptedSharedPreferences == null) {
             context.getSharedPreferences("encrypted_preferences", Context.MODE_PRIVATE).edit().clear().commit()

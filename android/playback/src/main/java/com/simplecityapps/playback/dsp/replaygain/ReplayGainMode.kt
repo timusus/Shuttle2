@@ -1,7 +1,10 @@
 package com.simplecityapps.playback.dsp.replaygain
 
 enum class ReplayGainMode {
-    Track, Album, Off;
+    Track,
+    Album,
+    Off
+    ;
 
     companion object {
         fun init(ordinal: Int): ReplayGainMode {

@@ -19,15 +19,14 @@ import com.simplecityapps.trial.TrialManager
 import com.simplecityapps.trial.TrialState
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 import java.util.*
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class TrialDialogFragment : DialogFragment() {
-
     @Inject
     lateinit var trialManager: TrialManager
 
@@ -36,7 +35,6 @@ class TrialDialogFragment : DialogFragment() {
 
     @SuppressLint("ClickableViewAccessibility")
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-
         preferenceManager.lastViewedTrialDialogDate = Date()
 
         val view = layoutInflater.inflate(R.layout.dialog_trial, null)

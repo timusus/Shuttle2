@@ -1,17 +1,20 @@
 package com.simplecityapps.networking.retrofit
 
 import android.net.ConnectivityManager
+import java.lang.reflect.ParameterizedType
+import java.lang.reflect.Type
 import retrofit2.Call
 import retrofit2.CallAdapter
 import retrofit2.Retrofit
-import java.lang.reflect.ParameterizedType
-import java.lang.reflect.Type
 
 class NetworkResultAdapterFactory(
     private val connectivityManager: ConnectivityManager?
 ) : CallAdapter.Factory() {
-
-    override fun get(returnType: Type, annotations: Array<Annotation>, retrofit: Retrofit): CallAdapter<*, *>? {
+    override fun get(
+        returnType: Type,
+        annotations: Array<Annotation>,
+        retrofit: Retrofit
+    ): CallAdapter<*, *>? {
         // Suspend functions wrap the response type in `Call`
         if (Call::class.java != getRawType(returnType)) {
             return null
@@ -34,11 +37,12 @@ class NetworkResultAdapterFactory(
 
         val successBodyType = getParameterUpperBound(0, responseType)
 
-        val errorBodyConverter = try {
-            retrofit.nextResponseBodyConverter<Throwable>(null, Throwable::class.java, annotations)
-        } catch (e: IllegalArgumentException) {
-            null
-        }
+        val errorBodyConverter =
+            try {
+                retrofit.nextResponseBodyConverter<Throwable>(null, Throwable::class.java, annotations)
+            } catch (e: IllegalArgumentException) {
+                null
+            }
 
         return NetworkResultCallAdapter<Any>(successBodyType, errorBodyConverter, connectivityManager)
     }

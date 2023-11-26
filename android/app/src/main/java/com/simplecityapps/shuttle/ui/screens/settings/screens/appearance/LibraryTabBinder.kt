@@ -14,10 +14,13 @@ import com.simplecityapps.shuttle.persistence.LibraryTab
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 
 class LibraryTabBinder(val tab: LibraryTab, val selected: Boolean, val listener: Listener) : ViewBinder {
-
     interface Listener {
         fun onStartDrag(viewHolder: ViewHolder)
-        fun onChecked(tab: LibraryTab, isChecked: Boolean)
+
+        fun onChecked(
+            tab: LibraryTab,
+            isChecked: Boolean
+        )
     }
 
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
@@ -65,7 +68,10 @@ class LibraryTabBinder(val tab: LibraryTab, val selected: Boolean, val listener:
             }
         }
 
-        override fun bind(viewBinder: LibraryTabBinder, isPartial: Boolean) {
+        override fun bind(
+            viewBinder: LibraryTabBinder,
+            isPartial: Boolean
+        ) {
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.tab.name(itemView.resources)

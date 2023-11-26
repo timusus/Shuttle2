@@ -22,8 +22,8 @@ import com.simplecityapps.shuttle.ui.common.viewbinders.DiscNumberBinder
 import com.simplecityapps.shuttle.ui.common.viewbinders.GroupingBinder
 import com.squareup.phrase.ListPhrase
 import com.squareup.phrase.Phrase
-import kotlinx.coroutines.CoroutineScope
 import java.util.Locale
+import kotlinx.coroutines.CoroutineScope
 
 class ExpandableAlbumBinder(
     val album: com.simplecityapps.shuttle.model.Album,
@@ -34,13 +34,31 @@ class ExpandableAlbumBinder(
     val listener: Listener?
 ) : ViewBinder,
     SectionViewBinder {
-
     interface Listener {
-        fun onSongClicked(song: com.simplecityapps.shuttle.model.Song, songs: List<com.simplecityapps.shuttle.model.Song>)
-        fun onArtworkClicked(album: com.simplecityapps.shuttle.model.Album, viewHolder: ViewHolder)
-        fun onItemClicked(position: Int, expanded: Boolean)
-        fun onOverflowClicked(view: View, album: com.simplecityapps.shuttle.model.Album) {}
-        fun onOverflowClicked(view: View, song: com.simplecityapps.shuttle.model.Song) {}
+        fun onSongClicked(
+            song: com.simplecityapps.shuttle.model.Song,
+            songs: List<com.simplecityapps.shuttle.model.Song>
+        )
+
+        fun onArtworkClicked(
+            album: com.simplecityapps.shuttle.model.Album,
+            viewHolder: ViewHolder
+        )
+
+        fun onItemClicked(
+            position: Int,
+            expanded: Boolean
+        )
+
+        fun onOverflowClicked(
+            view: View,
+            album: com.simplecityapps.shuttle.model.Album
+        ) {}
+
+        fun onOverflowClicked(
+            view: View,
+            song: com.simplecityapps.shuttle.model.Song
+        ) {}
     }
 
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
@@ -80,7 +98,6 @@ class ExpandableAlbumBinder(
     }
 
     class ViewHolder(itemView: View, scope: CoroutineScope) : ViewBinder.ViewHolder<ExpandableAlbumBinder>(itemView) {
-
         private val title: TextView = itemView.findViewById(R.id.title)
         private val subtitle: TextView = itemView.findViewById(R.id.subtitle)
         val imageView: ImageView = itemView.findViewById(R.id.imageView)
@@ -97,30 +114,36 @@ class ExpandableAlbumBinder(
             overflowButton.setOnClickListener { view -> viewBinder?.listener?.onOverflowClicked(view, viewBinder!!.album) }
         }
 
-        override fun bind(viewBinder: ExpandableAlbumBinder, isPartial: Boolean) {
+        override fun bind(
+            viewBinder: ExpandableAlbumBinder,
+            isPartial: Boolean
+        ) {
             super.bind(viewBinder, isPartial)
 
             recyclerView.visibility = if (viewBinder.expanded) View.VISIBLE else View.GONE
             itemView.isActivated = viewBinder.expanded
 
             title.text = viewBinder.album.name ?: itemView.resources.getString(com.simplecityapps.core.R.string.unknown)
-            val songsQuantity = Phrase.fromPlural(itemView.context, R.plurals.songsPlural, viewBinder.album.songCount)
-                .put("count", viewBinder.album.songCount)
-                .format()
-            subtitle.text = ListPhrase
-                .from(" • ")
-                .joinSafely(
-                    listOf(
-                        viewBinder.album.year?.toString(),
-                        songsQuantity
+            val songsQuantity =
+                Phrase.fromPlural(itemView.context, R.plurals.songsPlural, viewBinder.album.songCount)
+                    .put("count", viewBinder.album.songCount)
+                    .format()
+            subtitle.text =
+                ListPhrase
+                    .from(" • ")
+                    .joinSafely(
+                        listOf(
+                            viewBinder.album.year?.toString(),
+                            songsQuantity
+                        )
                     )
-                )
 
             if (!isPartial) {
                 viewBinder.imageLoader.loadArtwork(
                     imageView = imageView,
                     data = viewBinder.album,
-                    options = listOf(
+                    options =
+                    listOf(
                         ArtworkImageLoader.Options.RoundedCorners(8.dp),
                         ArtworkImageLoader.Options.Crossfade(200),
                         ArtworkImageLoader.Options.Placeholder(ResourcesCompat.getDrawable(itemView.resources, com.simplecityapps.core.R.drawable.ic_placeholder_album_rounded, itemView.context.theme)!!)
@@ -132,12 +155,13 @@ class ExpandableAlbumBinder(
 
             recyclerView.adapter = adapter
 
-            val discGroupingSongsMap = viewBinder.songs
-                .groupBy { song -> song.disc ?: 1 }
-                .toSortedMap()
-                .mapValues { entry ->
-                    entry.value.groupBy { song -> song.grouping ?: "" }
-                }
+            val discGroupingSongsMap =
+                viewBinder.songs
+                    .groupBy { song -> song.disc ?: 1 }
+                    .toSortedMap()
+                    .mapValues { entry ->
+                        entry.value.groupBy { song -> song.grouping ?: "" }
+                    }
 
             adapter.update(
                 discGroupingSongsMap.flatMap { discEntry ->
@@ -170,16 +194,19 @@ class ExpandableAlbumBinder(
             viewBinder?.imageLoader?.clear(imageView)
         }
 
-        private val songBinderListener = object : DetailSongBinder.Listener {
+        private val songBinderListener =
+            object : DetailSongBinder.Listener {
+                override fun onSongClicked(song: com.simplecityapps.shuttle.model.Song) {
+                    viewBinder?.listener?.onSongClicked(song, viewBinder!!.songs)
+                }
 
-            override fun onSongClicked(song: com.simplecityapps.shuttle.model.Song) {
-                viewBinder?.listener?.onSongClicked(song, viewBinder!!.songs)
+                override fun onOverflowClicked(
+                    view: View,
+                    song: com.simplecityapps.shuttle.model.Song
+                ) {
+                    viewBinder?.listener?.onOverflowClicked(view, song)
+                }
             }
-
-            override fun onOverflowClicked(view: View, song: com.simplecityapps.shuttle.model.Song) {
-                viewBinder?.listener?.onOverflowClicked(view, song)
-            }
-        }
     }
 }
 

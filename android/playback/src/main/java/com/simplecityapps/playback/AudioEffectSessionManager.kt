@@ -5,7 +5,6 @@ import android.content.Intent
 import android.media.audiofx.AudioEffect
 
 class AudioEffectSessionManager(val context: Context) {
-
     var sessionId = 0
 
     fun openAudioEffectSession() {

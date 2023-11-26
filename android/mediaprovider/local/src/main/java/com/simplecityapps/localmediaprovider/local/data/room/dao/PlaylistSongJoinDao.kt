@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.map
 
 @Dao
 abstract class PlaylistSongJoinDao {
-
     @Insert
     abstract suspend fun insert(playlistSongJoin: PlaylistSongJoin)
 
@@ -42,10 +41,16 @@ abstract class PlaylistSongJoinDao {
     }
 
     @Query("DELETE FROM playlist_song_join WHERE playlistId = :playlistId and id IN (:playlistSongIds)")
-    abstract suspend fun delete(playlistId: Long, playlistSongIds: Array<Long>)
+    abstract suspend fun delete(
+        playlistId: Long,
+        playlistSongIds: Array<Long>
+    )
 
     @Query("DELETE FROM playlist_song_join WHERE playlistId = :playlistId and songId IN (:songIds)")
-    abstract suspend fun deleteSongs(playlistId: Long, songIds: Array<Long>)
+    abstract suspend fun deleteSongs(
+        playlistId: Long,
+        songIds: Array<Long>
+    )
 
     @Update
     abstract suspend fun updateSortOrder(playlistSongJoins: List<PlaylistSongJoin>)

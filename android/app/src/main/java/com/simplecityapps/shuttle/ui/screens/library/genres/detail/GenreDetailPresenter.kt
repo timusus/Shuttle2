@@ -27,38 +27,63 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
 interface GenreDetailContract {
-
     interface View {
-        fun setData(albums: List<Album>, songs: List<Song>)
+        fun setData(
+            albums: List<Album>,
+            songs: List<Song>
+        )
+
         fun showLoadError(error: Error)
+
         fun onAddedToQueue(name: String)
+
         fun onAddedToQueue(album: Album)
+
         fun setGenre(genre: Genre)
+
         fun showDeleteError(error: Error)
+
         fun showTagEditor(songs: List<Song>)
     }
 
     interface Presenter : BaseContract.Presenter<View> {
         fun loadData()
+
         fun onSongClicked(song: Song)
+
         fun shuffle()
+
         fun addToQueue(genre: Genre)
+
         fun addToQueue(song: Song)
+
         fun playNext(genre: Genre)
+
         fun playNext(song: Song)
+
         fun exclude(song: Song)
+
         fun editTags(song: Song)
+
         fun editTags(genre: Genre)
+
         fun delete(song: Song)
+
         fun addToQueue(album: Album)
+
         fun playNext(album: Album)
+
         fun exclude(album: Album)
+
         fun editTags(album: Album)
+
         fun play(album: Album)
     }
 }
 
-class GenreDetailPresenter @AssistedInject constructor(
+class GenreDetailPresenter
+@AssistedInject
+constructor(
     @ApplicationContext private val context: Context,
     private val genreRepository: GenreRepository,
     private val songRepository: SongRepository,
@@ -68,7 +93,6 @@ class GenreDetailPresenter @AssistedInject constructor(
     @Assisted private val genre: Genre
 ) : BasePresenter<GenreDetailContract.View>(),
     GenreDetailContract.Presenter {
-
     @AssistedFactory
     interface Factory {
         fun create(genre: Genre): GenreDetailPresenter

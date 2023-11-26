@@ -23,7 +23,6 @@ class ListAlbumBinder(
     listener: Listener
 ) : AlbumBinder(album, imageLoader, listener),
     SectionViewBinder {
-
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
         return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_album, parent, false))
     }
@@ -51,26 +50,32 @@ class ListAlbumBinder(
             viewBinder?.listener?.onViewHolderCreated(this)
         }
 
-        override fun bind(viewBinder: AlbumBinder, isPartial: Boolean) {
+        override fun bind(
+            viewBinder: AlbumBinder,
+            isPartial: Boolean
+        ) {
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.album.name ?: itemView.resources.getString(com.simplecityapps.core.R.string.unknown)
-            val songQuantity = Phrase.fromPlural(itemView.context, R.plurals.songsPlural, viewBinder.album.songCount)
-                .put("count", viewBinder.album.songCount)
-                .format()
-            subtitle.text = ListPhrase
-                .from(" • ")
-                .joinSafely(
-                    listOf(
-                        viewBinder.album.albumArtist ?: viewBinder.album.friendlyArtistName,
-                        songQuantity
+            val songQuantity =
+                Phrase.fromPlural(itemView.context, R.plurals.songsPlural, viewBinder.album.songCount)
+                    .put("count", viewBinder.album.songCount)
+                    .format()
+            subtitle.text =
+                ListPhrase
+                    .from(" • ")
+                    .joinSafely(
+                        listOf(
+                            viewBinder.album.albumArtist ?: viewBinder.album.friendlyArtistName,
+                            songQuantity
+                        )
                     )
-                )
 
             viewBinder.imageLoader.loadArtwork(
                 imageView = imageView,
                 data = viewBinder.album,
-                options = listOf(
+                options =
+                listOf(
                     ArtworkImageLoader.Options.RoundedCorners(8.dp),
                     ArtworkImageLoader.Options.Crossfade(200),
                     ArtworkImageLoader.Options.Placeholder(ResourcesCompat.getDrawable(itemView.resources, com.simplecityapps.core.R.drawable.ic_placeholder_album_rounded, itemView.context.theme)!!),

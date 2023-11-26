@@ -13,14 +13,14 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 @Module
 class RemoteConfigModule {
-
     @Provides
     @Singleton
     fun provideRemoteConfig(): FirebaseRemoteConfig {
         val remoteConfig = Firebase.remoteConfig
-        val configSettings = remoteConfigSettings {
-            minimumFetchIntervalInSeconds = 3600
-        }
+        val configSettings =
+            remoteConfigSettings {
+                minimumFetchIntervalInSeconds = 3600
+            }
         remoteConfig.setConfigSettingsAsync(configSettings)
 
         remoteConfig.setDefaultsAsync(
@@ -28,7 +28,7 @@ class RemoteConfigModule {
                 "pricing_tier" to "high",
                 "pre_trial_length" to 0,
                 "trial_length" to 14L,
-                "snow_forecast" to 0.0,
+                "snow_forecast" to 0.0
             )
         )
 

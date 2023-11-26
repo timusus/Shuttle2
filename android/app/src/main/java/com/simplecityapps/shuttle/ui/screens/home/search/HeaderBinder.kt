@@ -13,7 +13,6 @@ class HeaderBinder(
     val title: String,
     val subtitle: String? = null
 ) : ViewBinder {
-
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
         return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_header, parent, false))
     }
@@ -41,11 +40,13 @@ class HeaderBinder(
     }
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<HeaderBinder>(itemView) {
-
         private val titleLabel: TextView = itemView.findViewById(R.id.titleLabel)
         private val subTitleLabel: TextView = itemView.findViewById(R.id.subtitleLabel)
 
-        override fun bind(viewBinder: HeaderBinder, isPartial: Boolean) {
+        override fun bind(
+            viewBinder: HeaderBinder,
+            isPartial: Boolean
+        ) {
             super.bind(viewBinder, isPartial)
 
             titleLabel.text = viewBinder.title

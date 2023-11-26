@@ -16,22 +16,25 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import java.util.concurrent.TimeUnit
+import javax.inject.Named
+import javax.inject.Singleton
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.create
-import java.util.concurrent.TimeUnit
-import javax.inject.Named
-import javax.inject.Singleton
 
 @InstallIn(SingletonComponent::class)
 @Module
 open class PlexMediaProviderModule {
-
     @Provides
     @Singleton
     @Named("PlexRetrofit")
-    fun provideRetrofit(@ApplicationContext context: Context, okHttpClient: OkHttpClient, moshi: Moshi): Retrofit {
+    fun provideRetrofit(
+        @ApplicationContext context: Context,
+        okHttpClient: OkHttpClient,
+        moshi: Moshi
+    ): Retrofit {
         return Retrofit.Builder()
             .baseUrl("http://localhost/") // unused
             .addCallAdapterFactory(NetworkResultAdapterFactory(context.getSystemService()))
@@ -47,13 +50,17 @@ open class PlexMediaProviderModule {
 
     @Provides
     @Singleton
-    fun provideUserService(@Named("PlexRetrofit") retrofit: Retrofit): UserService {
+    fun provideUserService(
+        @Named("PlexRetrofit") retrofit: Retrofit
+    ): UserService {
         return retrofit.create()
     }
 
     @Provides
     @Singleton
-    fun provideItemsService(@Named("PlexRetrofit") retrofit: Retrofit): ItemsService {
+    fun provideItemsService(
+        @Named("PlexRetrofit") retrofit: Retrofit
+    ): ItemsService {
         return retrofit.create()
     }
 
@@ -65,13 +72,19 @@ open class PlexMediaProviderModule {
 
     @Provides
     @Singleton
-    fun providePlexAuthenticationManager(userService: UserService, credentialStore: CredentialStore): PlexAuthenticationManager {
+    fun providePlexAuthenticationManager(
+        userService: UserService,
+        credentialStore: CredentialStore
+    ): PlexAuthenticationManager {
         return PlexAuthenticationManager(userService, credentialStore)
     }
 
     @Provides
     @Singleton
-    fun providePlexMediaProvider(authenticationManager: PlexAuthenticationManager, itemsService: ItemsService): PlexMediaProvider {
+    fun providePlexMediaProvider(
+        authenticationManager: PlexAuthenticationManager,
+        itemsService: ItemsService
+    ): PlexMediaProvider {
         return PlexMediaProvider(authenticationManager, itemsService)
     }
 

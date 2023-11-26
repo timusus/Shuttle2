@@ -6,7 +6,6 @@ import java.util.concurrent.TimeUnit
  * @param defaultValue returned if specified, and the duration being converted is 0 seconds.
  */
 fun Int.toHms(defaultValue: String? = null): String {
-
     if (this == 0 && defaultValue != null) {
         return defaultValue
     }

@@ -12,12 +12,13 @@ import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.utils.dp
 
-class PlayStateView @JvmOverloads constructor(
+class PlayStateView
+@JvmOverloads
+constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr) {
-
     private val progressBar: ProgressBar
 
     private val playPauseAnimationView: PlayPauseAnimationView
@@ -33,17 +34,19 @@ class PlayStateView @JvmOverloads constructor(
         }
 
     init {
-        val drawableColor = context.theme.obtainStyledAttributes(attrs, R.styleable.PlayPauseLoadView, 0, 0)
-            .use { typedArray ->
-                typedArray.getColor(R.styleable.PlayPauseLoadView_android_tint, Color.WHITE)
-            }
+        val drawableColor =
+            context.theme.obtainStyledAttributes(attrs, R.styleable.PlayPauseLoadView, 0, 0)
+                .use { typedArray ->
+                    typedArray.getColor(R.styleable.PlayPauseLoadView_android_tint, Color.WHITE)
+                }
 
-        progressBar = ProgressBar(context, attrs)
-            .apply {
-                id = generateViewId()
-                indeterminateTintList = ColorStateList.valueOf(drawableColor)
-                setPadding(12.dp, 12.dp, 12.dp, 12.dp)
-            }
+        progressBar =
+            ProgressBar(context, attrs)
+                .apply {
+                    id = generateViewId()
+                    indeterminateTintList = ColorStateList.valueOf(drawableColor)
+                    setPadding(12.dp, 12.dp, 12.dp, 12.dp)
+                }
 
         playPauseAnimationView = PlayPauseAnimationView(context, attrs)
 
@@ -59,9 +62,10 @@ class PlayStateView @JvmOverloads constructor(
             PlaybackState.Loading -> {
                 animator?.cancel()
 
-                animator = playPauseAnimationView.fadeOut(delay = 500) {
-                    progressBar.fadeIn()
-                }
+                animator =
+                    playPauseAnimationView.fadeOut(delay = 500) {
+                        progressBar.fadeIn()
+                    }
             }
             PlaybackState.Paused -> {
                 animator?.cancel()

@@ -10,20 +10,24 @@ import com.bumptech.glide.signature.ObjectKey
 import com.simplecityapps.mediaprovider.RemoteArtworkProvider
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
-import kotlinx.coroutines.CoroutineScope
 import java.io.InputStream
+import kotlinx.coroutines.CoroutineScope
 
 class RemoteArtworkSongModelLoader(
     private val preferenceManager: GeneralPreferenceManager,
     private val remoteArtworkProvider: RemoteArtworkProvider,
     private val coroutineScope: CoroutineScope
 ) : ModelLoader<Song, InputStream> {
-
     override fun handles(model: Song): Boolean {
         return true
     }
 
-    override fun buildLoadData(model: Song, width: Int, height: Int, options: Options): ModelLoader.LoadData<InputStream>? {
+    override fun buildLoadData(
+        model: Song,
+        width: Int,
+        height: Int,
+        options: Options
+    ): ModelLoader.LoadData<InputStream>? {
         if (preferenceManager.artworkLocalOnly) {
             return null
         }
@@ -36,7 +40,6 @@ class RemoteArtworkSongModelLoader(
         private val remoteArtworkProvider: RemoteArtworkProvider,
         private val coroutineScope: CoroutineScope
     ) : ModelLoaderFactory<Song, InputStream> {
-
         override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Song, InputStream> {
             return RemoteArtworkSongModelLoader(preferenceManager, remoteArtworkProvider, coroutineScope)
         }

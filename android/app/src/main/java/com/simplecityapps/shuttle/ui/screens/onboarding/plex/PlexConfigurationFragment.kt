@@ -18,14 +18,13 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class PlexConfigurationFragment : DialogFragment() {
-
     @Inject
     lateinit var plexAuthenticationManager: PlexAuthenticationManager
 
@@ -40,7 +39,6 @@ class PlexConfigurationFragment : DialogFragment() {
     // Lifecycle
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-
         val view = layoutInflater.inflate(R.layout.fragment_plex_configuration, null)
 
         addressInputLayout = view.findViewById(R.id.addressInputLayout)
@@ -77,12 +75,13 @@ class PlexConfigurationFragment : DialogFragment() {
         authCodeInputLayout.editText!!.doOnTextChanged { _, _, _, _ ->
             authCodeInputLayout.error = null
         }
-        loadingView.listener = object : CircularLoadingView.Listener {
-            override fun onRetryClicked() {
-                loadingView.isVisible = false
-                inputGroup.isVisible = true
+        loadingView.listener =
+            object : CircularLoadingView.Listener {
+                override fun onRetryClicked() {
+                    loadingView.isVisible = false
+                    inputGroup.isVisible = true
+                }
             }
-        }
 
         rememberPasswordSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
             if (!isChecked) {
@@ -90,16 +89,16 @@ class PlexConfigurationFragment : DialogFragment() {
             }
         }
 
-        val dialog = AlertDialog.Builder(requireContext())
-            .setTitle(getString(com.simplecityapps.mediaprovider.R.string.media_provider_title_long_plex))
-            .setView(view)
-            .setPositiveButton(requireContext().getString(R.string.media_provider_button_authenticate), null)
-            .setNegativeButton(requireContext().getString(R.string.dialog_button_close), null)
-            .create()
+        val dialog =
+            AlertDialog.Builder(requireContext())
+                .setTitle(getString(com.simplecityapps.mediaprovider.R.string.media_provider_title_long_plex))
+                .setView(view)
+                .setPositiveButton(requireContext().getString(R.string.media_provider_button_authenticate), null)
+                .setNegativeButton(requireContext().getString(R.string.dialog_button_close), null)
+                .create()
 
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-
                 if (!validate()) {
                     return@setOnClickListener
                 }
@@ -110,17 +109,19 @@ class PlexConfigurationFragment : DialogFragment() {
 
                 plexAuthenticationManager.setAddress(addressInputLayout.editText!!.text.toString())
 
-                val loginCredentials = LoginCredentials(
-                    username = loginInputLayout.editText!!.text.toString(),
-                    password = passwordInputLayout.editText!!.text.toString(),
-                    authCode = authCodeInputLayout.editText!!.text.toString()
-                )
+                val loginCredentials =
+                    LoginCredentials(
+                        username = loginInputLayout.editText!!.text.toString(),
+                        password = passwordInputLayout.editText!!.text.toString(),
+                        authCode = authCodeInputLayout.editText!!.text.toString()
+                    )
 
                 lifecycleScope.launch {
-                    val result = plexAuthenticationManager.authenticate(
-                        address = plexAuthenticationManager.getAddress()!!,
-                        loginCredentials = loginCredentials
-                    )
+                    val result =
+                        plexAuthenticationManager.authenticate(
+                            address = plexAuthenticationManager.getAddress()!!,
+                            loginCredentials = loginCredentials
+                        )
                     result.onSuccess {
                         if (rememberPasswordSwitch.isChecked) {
                             plexAuthenticationManager.setLoginCredentials(loginCredentials)

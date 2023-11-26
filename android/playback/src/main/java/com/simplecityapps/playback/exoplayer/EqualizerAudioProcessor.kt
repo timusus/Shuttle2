@@ -10,11 +10,10 @@ import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.dsp.equalizer.toNyquistBand
 import com.simplecityapps.playback.exoplayer.ByteUtils.getInt24
 import com.simplecityapps.playback.exoplayer.ByteUtils.putInt24
-import timber.log.Timber
 import java.nio.ByteBuffer
+import timber.log.Timber
 
 class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
-
     var bandProcessors = emptyList<BandProcessor>()
 
     var preset: Equalizer.Presets.Preset = Equalizer.Presets.flat
@@ -38,14 +37,15 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
             return
         }
 
-        bandProcessors = preset.bands.map { band ->
-            BandProcessor(
-                band.toNyquistBand(),
-                sampleRate = outputAudioFormat.sampleRate,
-                channelCount = outputAudioFormat.channelCount,
-                referenceGain = 0.0
-            )
-        }.toList()
+        bandProcessors =
+            preset.bands.map { band ->
+                BandProcessor(
+                    band.toNyquistBand(),
+                    sampleRate = outputAudioFormat.sampleRate,
+                    channelCount = outputAudioFormat.channelCount,
+                    referenceGain = 0.0
+                )
+            }.toList()
     }
 
     override fun onConfigure(inputAudioFormat: AudioProcessor.AudioFormat): AudioProcessor.AudioFormat {

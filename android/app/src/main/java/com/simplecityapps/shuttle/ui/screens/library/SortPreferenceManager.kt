@@ -8,7 +8,6 @@ import com.simplecityapps.shuttle.sorting.SongSortOrder
 import timber.log.Timber
 
 class SortPreferenceManager(private val sharedPreferences: SharedPreferences) {
-
     var sortOrderSongList: SongSortOrder
         set(value) {
             sharedPreferences.put("sort_order_song_list", value.name)

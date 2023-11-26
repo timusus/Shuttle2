@@ -17,16 +17,15 @@ import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.view.SnowfallView
 import com.simplecityapps.trial.BillingManager
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeout
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity :
     AppCompatActivity() {
-
     @Inject
     lateinit var preferenceManager: GeneralPreferenceManager
 

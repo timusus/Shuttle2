@@ -9,10 +9,18 @@ import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.query.SongQuery
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
-import timber.log.Timber
 import java.util.Date
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 class MediaImporter(
     private val context: Context,
@@ -20,7 +28,6 @@ class MediaImporter(
     private val playlistRepository: PlaylistRepository,
     private val preferenceManager: GeneralPreferenceManager
 ) {
-
     interface Listener {
         fun onStart(providerType: MediaProviderType) {}
 
@@ -31,7 +38,11 @@ class MediaImporter(
         )
 
         fun onSongImportComplete(providerType: MediaProviderType) {}
-        fun onSongImportFailed(providerType: MediaProviderType, message: String?) {}
+
+        fun onSongImportFailed(
+            providerType: MediaProviderType,
+            message: String?
+        ) {}
 
         fun onPlaylistImportProgress(
             providerType: MediaProviderType,
@@ -41,7 +52,11 @@ class MediaImporter(
         }
 
         fun onPlaylistImportComplete(providerType: MediaProviderType) {}
-        fun onPlaylistImportFailed(providerType: MediaProviderType, message: String?) {}
+
+        fun onPlaylistImportFailed(
+            providerType: MediaProviderType,
+            message: String?
+        ) {}
 
         fun onAllComplete() {}
     }
@@ -55,7 +70,6 @@ class MediaImporter(
     var importCount: Int = 0
 
     suspend fun import() {
-
         if (mediaProviders.isEmpty()) {
             Timber.v("Import failed, media providers empty")
             return
@@ -165,18 +179,18 @@ class MediaImporter(
 
     private fun importSongs(mediaProvider: MediaProvider): Flow<FlowEvent<SongImportResult, MessageProgress>> {
         return flow {
-
             emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_import_retrieving_songs), null)))
 
-            val existingSongs = songRepository.getSongs(
-                SongQuery.All(
-                    includeExcluded = true,
-                    providerType = mediaProvider.type
+            val existingSongs =
+                songRepository.getSongs(
+                    SongQuery.All(
+                        includeExcluded = true,
+                        providerType = mediaProvider.type
+                    )
                 )
-            )
-                .filterNotNull()
-                .firstOrNull()
-                .orEmpty()
+                    .filterNotNull()
+                    .firstOrNull()
+                    .orEmpty()
 
             mediaProvider.findSongs().collect { event ->
                 when (event) {
@@ -194,12 +208,13 @@ class MediaImporter(
                         try {
                             emit(FlowEvent.Progress<SongImportResult, MessageProgress>(MessageProgress(context.getString(R.string.media_import_updating_database), null)))
                             val songDiff = SongDiff(existingSongs, event.result).apply()
-                            val result = songRepository.insertUpdateAndDelete(
-                                inserts = songDiff.inserts,
-                                updates = songDiff.updates,
-                                deletes = songDiff.deletes,
-                                mediaProviderType = mediaProvider.type
-                            )
+                            val result =
+                                songRepository.insertUpdateAndDelete(
+                                    inserts = songDiff.inserts,
+                                    updates = songDiff.updates,
+                                    deletes = songDiff.deletes,
+                                    mediaProviderType = mediaProvider.type
+                                )
                             emit(
                                 FlowEvent.Success(
                                     SongImportResult(
@@ -229,23 +244,24 @@ class MediaImporter(
 
     private fun importPlaylists(mediaProvider: MediaProvider): Flow<FlowEvent<PlaylistImportResult, MessageProgress>> {
         return flow {
-
             emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_import_retrieving_playlists), null)))
 
-            val existingPlaylists = playlistRepository.getPlaylists(query = PlaylistQuery.All(mediaProviderType = mediaProvider.type))
-                .filterNotNull()
-                .firstOrNull()
-                .orEmpty()
+            val existingPlaylists =
+                playlistRepository.getPlaylists(query = PlaylistQuery.All(mediaProviderType = mediaProvider.type))
+                    .filterNotNull()
+                    .firstOrNull()
+                    .orEmpty()
 
-            val existingSongs = songRepository.getSongs(
-                SongQuery.All(
-                    includeExcluded = true,
-                    providerType = mediaProvider.type
+            val existingSongs =
+                songRepository.getSongs(
+                    SongQuery.All(
+                        includeExcluded = true,
+                        providerType = mediaProvider.type
+                    )
                 )
-            )
-                .filterNotNull()
-                .firstOrNull()
-                .orEmpty()
+                    .filterNotNull()
+                    .firstOrNull()
+                    .orEmpty()
 
             mediaProvider.findPlaylists(existingPlaylists, existingSongs).collect { event ->
                 when (event) {
@@ -278,9 +294,10 @@ class MediaImporter(
         playlistUpdateData: PlaylistUpdateData,
         existingPlaylists: List<Playlist>
     ) {
-        val existingPlaylist = existingPlaylists.find { playlist ->
-            playlist.mediaProvider == playlistUpdateData.mediaProviderType && (playlist.name == playlistUpdateData.name || playlist.externalId == playlistUpdateData.externalId)
-        }
+        val existingPlaylist =
+            existingPlaylists.find { playlist ->
+                playlist.mediaProvider == playlistUpdateData.mediaProviderType && (playlist.name == playlistUpdateData.name || playlist.externalId == playlistUpdateData.externalId)
+            }
 
         var songsToInsert = playlistUpdateData.songs
         if (songsToInsert.isNotEmpty()) {
@@ -298,10 +315,11 @@ class MediaImporter(
                 playlistRepository.updatePlaylistExternalId(existingPlaylist, playlistUpdateData.externalId)
 
                 // Look for duplicates
-                val existingSongs = playlistRepository.getSongsForPlaylist(existingPlaylist)
-                    .firstOrNull()
-                    .orEmpty()
-                    .map { it.song }
+                val existingSongs =
+                    playlistRepository.getSongsForPlaylist(existingPlaylist)
+                        .firstOrNull()
+                        .orEmpty()
+                        .map { it.song }
                 songsToInsert = songsToInsert.filterNot { songToInsert -> existingSongs.any { existingSong -> existingSong.id == songToInsert.id } }
                 if (songsToInsert.isNotEmpty()) {
                     Timber.v("Adding ${songsToInsert.size} songs to playlist")

@@ -17,19 +17,20 @@ import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.withContext
 import timber.log.Timber
-import javax.inject.Inject
 
-class MediaIdHelper @Inject constructor(
+class MediaIdHelper
+@Inject
+constructor(
     private val playlistRepository: PlaylistRepository,
     private val artistRepository: AlbumArtistRepository,
     private val albumRepository: AlbumRepository,
     private val songRepository: SongRepository
 ) {
-
     suspend fun getChildren(mediaId: String): List<MediaBrowserCompat.MediaItem> {
         return withContext(Dispatchers.IO) {
             when (val mediaIdWrapper: MediaIdWrapper? = parseMediaId(mediaId)) {
@@ -65,12 +66,15 @@ class MediaIdHelper @Inject constructor(
                         )
                     )
                 }
+
                 is MediaIdWrapper.Directory.Artists -> {
                     artistRepository.getAlbumArtists(AlbumArtistQuery.All()).firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
                 }
+
                 is MediaIdWrapper.Directory.Albums.All -> {
                     albumRepository.getAlbums(AlbumQuery.All()).firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
                 }
+
                 is MediaIdWrapper.Directory.Albums.Artist -> {
                     albumRepository.getAlbums(
                         AlbumQuery.ArtistGroupKey(
@@ -81,16 +85,19 @@ class MediaIdHelper @Inject constructor(
                     ).firstOrNull().orEmpty()
                         .map { it.toMediaItem(mediaId) }
                 }
+
                 is MediaIdWrapper.Directory.Playlists -> {
                     playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)).firstOrNull().orEmpty().map { it.toMediaItem(mediaId) }
                 }
+
                 is MediaIdWrapper.Directory.Songs.Album -> {
                     songRepository
                         .getSongs(
                             SongQuery.AlbumGroupKeys(
                                 listOf(
                                     SongQuery.AlbumGroupKey(
-                                        key = AlbumGroupKey(
+                                        key =
+                                        AlbumGroupKey(
                                             key = mediaIdWrapper.albumGroupKey,
                                             albumArtistGroupKey = AlbumArtistGroupKey(mediaIdWrapper.albumArtistGroupKey)
                                         )
@@ -102,6 +109,7 @@ class MediaIdHelper @Inject constructor(
                         .orEmpty()
                         .map { it.toMediaItem(mediaId) }
                 }
+
                 is MediaIdWrapper.Directory.Songs.Playlist -> {
                     playlistRepository.getPlaylists(PlaylistQuery.PlaylistId(mediaIdWrapper.playlistId)).firstOrNull()?.firstOrNull()?.let { playlist ->
                         playlistRepository.getSongsForPlaylist(playlist)
@@ -110,6 +118,7 @@ class MediaIdHelper @Inject constructor(
                             .map { it.song.toMediaItem(mediaId) }
                     }.orEmpty()
                 }
+
                 else -> mutableListOf()
             }
         }
@@ -156,15 +165,14 @@ class MediaIdHelper @Inject constructor(
     }
 
     sealed class MediaIdWrapper {
-
         sealed class Directory : MediaIdWrapper() {
-
             object Root : Directory()
 
             object Artists : Directory()
 
             sealed class Albums : Directory() {
                 object All : Albums()
+
                 class Artist(val albumArtistGroupKey: String) : Albums()
             }
 
@@ -172,6 +180,7 @@ class MediaIdHelper @Inject constructor(
 
             sealed class Songs : Directory() {
                 class Album(val albumGroupKey: String, val albumArtistGroupKey: String) : Songs()
+
                 class Playlist(val playlistId: Long) : Songs()
             }
         }
@@ -200,6 +209,7 @@ class MediaIdHelper @Inject constructor(
                     MediaIdWrapper.Directory.Albums.All
                 }
             }
+
             "songs" -> {
                 when {
                     pathSegments.contains("album") -> {
@@ -208,10 +218,12 @@ class MediaIdHelper @Inject constructor(
                             albumArtistGroupKey = pathSegments.getNextSegment("artist")!!
                         )
                     }
+
                     pathSegments.contains("playlist") -> MediaIdWrapper.Directory.Songs.Playlist(pathSegments.getNextSegment("playlist")!!.toLong())
                     else -> throw IllegalStateException()
                 }
             }
+
             else -> {
                 val directoryPath = pathSegments.toMutableList()
                 directoryPath.removeAt(directoryPath.size - 1)
@@ -239,39 +251,46 @@ class MediaIdHelper @Inject constructor(
                 is MediaIdWrapper.Song -> {
                     when (mediaIdWrapper.directory) {
                         is MediaIdWrapper.Directory.Songs.Album -> {
-                            val songs = songRepository
-                                .getSongs(
-                                    SongQuery.AlbumGroupKeys(
-                                        listOf(
-                                            SongQuery.AlbumGroupKey(
-                                                AlbumGroupKey(
-                                                    key = mediaIdWrapper.directory.albumGroupKey,
-                                                    albumArtistGroupKey = AlbumArtistGroupKey(mediaIdWrapper.directory.albumArtistGroupKey)
+                            val songs =
+                                songRepository
+                                    .getSongs(
+                                        SongQuery.AlbumGroupKeys(
+                                            listOf(
+                                                SongQuery.AlbumGroupKey(
+                                                    AlbumGroupKey(
+                                                        key = mediaIdWrapper.directory.albumGroupKey,
+                                                        albumArtistGroupKey = AlbumArtistGroupKey(mediaIdWrapper.directory.albumArtistGroupKey)
+                                                    )
                                                 )
                                             )
                                         )
                                     )
-                                )
-                                .firstOrNull()
-                                .orEmpty()
+                                    .firstOrNull()
+                                    .orEmpty()
                             PlayQueue(songs, songs.indexOfFirst { it.id == mediaIdWrapper.songId })
                         }
+
                         is MediaIdWrapper.Directory.Songs.Playlist -> {
-                            val playlistSongs = playlistRepository.getPlaylists(PlaylistQuery.PlaylistId(mediaIdWrapper.directory.playlistId)).firstOrNull()?.firstOrNull()?.let { playlist ->
-                                playlistRepository.getSongsForPlaylist(playlist).firstOrNull().orEmpty()
-                            }.orEmpty()
+                            val playlistSongs =
+                                playlistRepository.getPlaylists(PlaylistQuery.PlaylistId(mediaIdWrapper.directory.playlistId)).firstOrNull()?.firstOrNull()?.let { playlist ->
+                                    playlistRepository.getSongsForPlaylist(playlist).firstOrNull().orEmpty()
+                                }.orEmpty()
                             PlayQueue(playlistSongs.map { it.song }, playlistSongs.indexOfFirst { it.song.id == mediaIdWrapper.songId })
                         }
+
                         else -> throw IllegalStateException("Cannot retrieve play queue for songId: ${mediaIdWrapper.songId}, directory: ${mediaIdWrapper.directory}")
                     }
                 }
+
                 is MediaIdWrapper.ShuffleAll -> {
-                    val songs = songRepository
-                        .getSongs(SongQuery.All())
-                        .firstOrNull()
-                        .orEmpty()
+                    val songs =
+                        songRepository
+                            .getSongs(SongQuery.All())
+                            .firstOrNull()
+                            .orEmpty()
                     PlayQueue(songs.shuffled(), 0)
                 }
+
                 else -> {
                     null
                 }

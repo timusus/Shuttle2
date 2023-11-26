@@ -13,7 +13,6 @@ class ShuffleBinder(
     @StringRes val titleIdRes: Int,
     val listener: Listener
 ) : ViewBinder {
-
     interface Listener {
         fun onClicked()
     }
@@ -39,7 +38,10 @@ class ShuffleBinder(
             }
         }
 
-        override fun bind(viewBinder: ShuffleBinder, isPartial: Boolean) {
+        override fun bind(
+            viewBinder: ShuffleBinder,
+            isPartial: Boolean
+        ) {
             super.bind(viewBinder, isPartial)
 
             titleText.setText(viewBinder.titleIdRes)

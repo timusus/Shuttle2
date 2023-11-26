@@ -11,12 +11,12 @@ import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.query.SongQuery
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.runBlocking
-import timber.log.Timber
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.InputStream
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.runBlocking
+import timber.log.Timber
 
 class TagLibAlbumLocalArtworkModelLoader(
     private val context: Context,
@@ -24,8 +24,12 @@ class TagLibAlbumLocalArtworkModelLoader(
     private val localArtworkModelLoader: LocalArtworkModelLoader,
     private val songRepository: SongRepository
 ) : ModelLoader<Album, InputStream> {
-
-    override fun buildLoadData(model: Album, width: Int, height: Int, options: Options): ModelLoader.LoadData<InputStream>? {
+    override fun buildLoadData(
+        model: Album,
+        width: Int,
+        height: Int,
+        options: Options
+    ): ModelLoader.LoadData<InputStream>? {
         return localArtworkModelLoader.buildLoadData(TagLibAlbumLocalArtworkProvider(context, kTagLib, model, songRepository), width, height, options)
     }
 
@@ -38,7 +42,6 @@ class TagLibAlbumLocalArtworkModelLoader(
         private val kTagLib: KTagLib,
         private val songRepository: SongRepository
     ) : ModelLoaderFactory<Album, InputStream> {
-
         override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Album, InputStream> {
             return TagLibAlbumLocalArtworkModelLoader(context, kTagLib, multiFactory.build(LocalArtworkProvider::class.java, InputStream::class.java) as LocalArtworkModelLoader, songRepository)
         }
@@ -54,18 +57,18 @@ class TagLibAlbumLocalArtworkModelLoader(
         private val songRepository: SongRepository
     ) : AlbumArtworkProvider(album),
         LocalArtworkProvider {
-
         override fun getInputStream(): InputStream? {
             return runBlocking {
                 songRepository.getSongs(SongQuery.AlbumGroupKeys(listOf(SongQuery.AlbumGroupKey(album.groupKey))))
                     .firstOrNull()
                     ?.firstOrNull()
                     ?.let { song ->
-                        val uri: Uri = if (song.path.startsWith("content://")) {
-                            Uri.parse(song.path)
-                        } else {
-                            Uri.fromFile(File(song.path))
-                        }
+                        val uri: Uri =
+                            if (song.path.startsWith("content://")) {
+                                Uri.parse(song.path)
+                            } else {
+                                Uri.fromFile(File(song.path))
+                            }
                         try {
                             context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
                                 kTagLib.getArtwork(pfd.detachFd())?.inputStream()

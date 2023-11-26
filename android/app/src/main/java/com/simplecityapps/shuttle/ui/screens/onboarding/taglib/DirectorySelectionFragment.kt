@@ -17,14 +17,13 @@ import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import dagger.hilt.android.AndroidEntryPoint
-import timber.log.Timber
 import javax.inject.Inject
+import timber.log.Timber
 
 @AndroidEntryPoint
 class DirectorySelectionFragment :
     DialogFragment(),
     DirectorySelectionContract.View {
-
     @Inject
     lateinit var presenter: DirectorySelectionPresenter
 
@@ -36,7 +35,11 @@ class DirectorySelectionFragment :
 
     // Lifecycle
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    override fun onActivityResult(
+        requestCode: Int,
+        resultCode: Int,
+        data: Intent?
+    ) {
         super.onActivityResult(requestCode, resultCode, data)
 
         if (requestCode == REQUEST_CODE_OPEN_DOCUMENT && resultCode == Activity.RESULT_OK) {
@@ -48,7 +51,6 @@ class DirectorySelectionFragment :
 
     @SuppressLint("InflateParams")
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-
         val view = layoutInflater.inflate(R.layout.fragment_onboarding_directories, null)
 
         emptyLabel = view.findViewById(R.id.emptyLabel)
@@ -60,12 +62,13 @@ class DirectorySelectionFragment :
         presenter.bindView(this)
         presenter.loadData(requireContext().contentResolver)
 
-        val dialog = MaterialAlertDialogBuilder(requireContext())
-            .setTitle(getString(R.string.onboarding_directories_dialog_add_title))
-            .setView(view)
-            .setNeutralButton(getString(R.string.onboarding_directories_dialog_add_button), null)
-            .setPositiveButton(getString(R.string.dialog_button_done), null)
-            .create()
+        val dialog =
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle(getString(R.string.onboarding_directories_dialog_add_title))
+                .setView(view)
+                .setNeutralButton(getString(R.string.onboarding_directories_dialog_add_button), null)
+                .setPositiveButton(getString(R.string.dialog_button_done), null)
+                .create()
 
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_NEUTRAL).setOnClickListener {
@@ -91,7 +94,10 @@ class DirectorySelectionFragment :
         (dialog as? AlertDialog)?.getButton(AlertDialog.BUTTON_POSITIVE)?.isEnabled = data.all { it.traversalComplete }
     }
 
-    override fun startActivity(intent: Intent, requestCode: Int) {
+    override fun startActivity(
+        intent: Intent,
+        requestCode: Int
+    ) {
         startActivityForResult(intent, requestCode)
     }
 
@@ -109,17 +115,18 @@ class DirectorySelectionFragment :
 
     // DirectoryBinder.Listener
 
-    private val directoryBinderListener = object : DirectoryBinder.Listener {
-
-        override fun onRemoveClicked(directory: DirectorySelectionContract.Directory) {
-            presenter.removeItem(directory)
+    private val directoryBinderListener =
+        object : DirectoryBinder.Listener {
+            override fun onRemoveClicked(directory: DirectorySelectionContract.Directory) {
+                presenter.removeItem(directory)
+            }
         }
-    }
 
     // Static
 
     companion object {
         const val REQUEST_CODE_OPEN_DOCUMENT = 100
+
         fun newInstance() = DirectorySelectionFragment()
     }
 }

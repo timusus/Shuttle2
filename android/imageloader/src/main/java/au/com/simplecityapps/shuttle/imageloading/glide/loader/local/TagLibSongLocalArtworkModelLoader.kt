@@ -9,20 +9,25 @@ import com.bumptech.glide.load.model.ModelLoaderFactory
 import com.bumptech.glide.load.model.MultiModelLoaderFactory
 import com.simplecityapps.ktaglib.KTagLib
 import com.simplecityapps.shuttle.model.Song
-import timber.log.Timber
 import java.io.File
 import java.io.FileNotFoundException
 import java.io.InputStream
+import timber.log.Timber
 
 class TagLibSongLocalArtworkModelLoader(
     private val context: Context,
     private val kTagLib: KTagLib,
     private val localArtworkModelLoader: LocalArtworkModelLoader
 ) : ModelLoader<Song, InputStream> {
-
-    override fun buildLoadData(model: Song, width: Int, height: Int, options: Options): ModelLoader.LoadData<InputStream>? {
+    override fun buildLoadData(
+        model: Song,
+        width: Int,
+        height: Int,
+        options: Options
+    ): ModelLoader.LoadData<InputStream>? {
         return localArtworkModelLoader.buildLoadData(
-            model = TagLibSongLocalArtworkProvider(
+            model =
+            TagLibSongLocalArtworkProvider(
                 context = context,
                 kTagLib = kTagLib,
                 song = model
@@ -41,7 +46,6 @@ class TagLibSongLocalArtworkModelLoader(
         private val context: Context,
         private val kTagLib: KTagLib
     ) : ModelLoaderFactory<Song, InputStream> {
-
         override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Song, InputStream> {
             return TagLibSongLocalArtworkModelLoader(
                 context = context,
@@ -60,13 +64,13 @@ class TagLibSongLocalArtworkModelLoader(
         song: Song
     ) : SongArtworkProvider(song),
         LocalArtworkProvider {
-
         override fun getInputStream(): InputStream? {
-            val uri: Uri = if (song.path.startsWith("content://")) {
-                Uri.parse(song.path)
-            } else {
-                Uri.fromFile(File(song.path))
-            }
+            val uri: Uri =
+                if (song.path.startsWith("content://")) {
+                    Uri.parse(song.path)
+                } else {
+                    Uri.fromFile(File(song.path))
+                }
             try {
                 context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
                     return kTagLib.getArtwork(pfd.detachFd())?.inputStream()

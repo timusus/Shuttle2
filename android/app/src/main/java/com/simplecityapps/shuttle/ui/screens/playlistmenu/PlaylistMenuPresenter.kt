@@ -17,19 +17,25 @@ import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import javax.inject.Inject
 
 interface PlaylistMenuContract {
-
     interface View : CreatePlaylistDialogFragment.Listener {
         fun onPlaylistCreated(playlist: Playlist)
-        fun onAddedToPlaylist(playlist: Playlist, playlistData: PlaylistData)
+
+        fun onAddedToPlaylist(
+            playlist: Playlist,
+            playlistData: PlaylistData
+        )
+
         fun onPlaylistAddFailed(error: Error)
+
         fun showCreatePlaylistDialog(playlistData: PlaylistData)
+
         fun onAddToPlaylistWithDuplicates(
             playlist: Playlist,
             playlistData: PlaylistData,
@@ -40,14 +46,27 @@ interface PlaylistMenuContract {
 
     interface Presenter : BaseContract.Presenter<View> {
         var playlists: List<Playlist>
+
         fun loadPlaylists()
-        fun createPlaylist(name: String, playlistData: PlaylistData?)
-        fun addToPlaylist(playlist: Playlist, playlistData: PlaylistData, ignoreDuplicates: Boolean = false)
+
+        fun createPlaylist(
+            name: String,
+            playlistData: PlaylistData?
+        )
+
+        fun addToPlaylist(
+            playlist: Playlist,
+            playlistData: PlaylistData,
+            ignoreDuplicates: Boolean = false
+        )
+
         fun setIgnorePlaylistDuplicates(ignorePlaylistDuplicates: Boolean)
     }
 }
 
-class PlaylistMenuPresenter @Inject constructor(
+class PlaylistMenuPresenter
+@Inject
+constructor(
     @ApplicationContext private val context: Context,
     private val playlistRepository: PlaylistRepository,
     private val songRepository: SongRepository,
@@ -56,7 +75,6 @@ class PlaylistMenuPresenter @Inject constructor(
     private val preferenceManager: GeneralPreferenceManager
 ) : PlaylistMenuContract.Presenter,
     BasePresenter<PlaylistMenuContract.View>() {
-
     override var playlists: List<Playlist> = emptyList()
 
     override fun bindView(view: PlaylistMenuContract.View) {
@@ -74,15 +92,19 @@ class PlaylistMenuPresenter @Inject constructor(
         }
     }
 
-    override fun createPlaylist(name: String, playlistData: PlaylistData?) {
+    override fun createPlaylist(
+        name: String,
+        playlistData: PlaylistData?
+    ) {
         launch {
             val songs = playlistData?.getSongs()
-            val playlist = playlistRepository.createPlaylist(
-                name = name,
-                mediaProviderType = MediaProviderType.Shuttle,
-                songs = songs,
-                externalId = null
-            )
+            val playlist =
+                playlistRepository.createPlaylist(
+                    name = name,
+                    mediaProviderType = MediaProviderType.Shuttle,
+                    songs = songs,
+                    externalId = null
+                )
 
             if (playlistData != null) {
                 view?.onAddedToPlaylist(playlist, playlistData)
@@ -92,7 +114,11 @@ class PlaylistMenuPresenter @Inject constructor(
         }
     }
 
-    override fun addToPlaylist(playlist: Playlist, playlistData: PlaylistData, ignoreDuplicates: Boolean) {
+    override fun addToPlaylist(
+        playlist: Playlist,
+        playlistData: PlaylistData,
+        ignoreDuplicates: Boolean
+    ) {
         launch {
             if (ignoreDuplicates || preferenceManager.ignorePlaylistDuplicates) {
                 addToPlaylist(playlist, playlistData)
@@ -111,7 +137,10 @@ class PlaylistMenuPresenter @Inject constructor(
         }
     }
 
-    private fun addToPlaylist(playlist: Playlist, playlistData: PlaylistData) {
+    private fun addToPlaylist(
+        playlist: Playlist,
+        playlistData: PlaylistData
+    ) {
         launch {
             val songs = playlistData.getSongs()
             if (songs.isNotEmpty()) {

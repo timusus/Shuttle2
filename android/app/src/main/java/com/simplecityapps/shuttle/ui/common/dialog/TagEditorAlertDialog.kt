@@ -15,8 +15,8 @@ import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputLayout
-import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.closeKeyboard
 import com.simplecityapps.shuttle.ui.common.utils.withArgs
@@ -29,7 +29,6 @@ import javax.inject.Inject
 class TagEditorAlertDialog :
     DialogFragment(),
     TagEditorContract.View {
-
     private var songs: List<Song> = listOf()
 
     private lateinit var _data: TagEditorContract.Data
@@ -85,16 +84,16 @@ class TagEditorAlertDialog :
 
     @SuppressLint("InflateParams")
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-
         val view = layoutInflater.inflate(R.layout.fragment_dialog_edit_tags, null)
 
         uiGroup = view.findViewById(R.id.uiGroup)
         loadingView = view.findViewById(R.id.loadingView)
 
         subtitleText = view.findViewById(R.id.subtitleText)
-        subtitleText.text = Phrase.fromPlural(resources, R.plurals.edit_tags_editing_count_songs, songs.size)
-            .put("count", songs.size)
-            .format()
+        subtitleText.text =
+            Phrase.fromPlural(resources, R.plurals.edit_tags_editing_count_songs, songs.size)
+                .put("count", songs.size)
+                .format()
 
         titleInputLayout = view.findViewById(R.id.titleInputLayout)
         titleEditText = view.findViewById(R.id.titleEditText)
@@ -140,12 +139,13 @@ class TagEditorAlertDialog :
         lyricsEditText = view.findViewById(R.id.lyricsEditText)
         lyricsInputLayout.isEndIconVisible = false
 
-        val dialog = MaterialAlertDialogBuilder(requireContext())
-            .setTitle(getString(R.string.edit_tags_action))
-            .setView(view)
-            .setNegativeButton(getString(R.string.dialog_button_close), null)
-            .setPositiveButton(getString(R.string.dialog_button_save)) { _, _ -> lyricsInputLayout.closeKeyboard() }
-            .create()
+        val dialog =
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle(getString(R.string.edit_tags_action))
+                .setView(view)
+                .setNegativeButton(getString(R.string.dialog_button_close), null)
+                .setPositiveButton(getString(R.string.dialog_button_save)) { _, _ -> lyricsInputLayout.closeKeyboard() }
+                .create()
 
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).apply {
@@ -178,7 +178,12 @@ class TagEditorAlertDialog :
         }
     }
 
-    private fun setupResetButton(inputLayout: TextInputLayout, editText: EditText, field: TagEditorContract.Field, onTextChange: () -> Unit) {
+    private fun setupResetButton(
+        inputLayout: TextInputLayout,
+        editText: EditText,
+        field: TagEditorContract.Field,
+        onTextChange: () -> Unit
+    ) {
         inputLayout.isEndIconVisible = false
         editText.addTextChangedListener(afterTextChanged = { editable ->
             field.currentValue = editable.toString()
@@ -362,8 +367,9 @@ class TagEditorAlertDialog :
 
         fun newInstance(
             songs: List<Song>? = emptyList()
-        ): TagEditorAlertDialog = TagEditorAlertDialog().withArgs {
-            putParcelableArrayList(ARG_SONGS, ArrayList(songs))
-        }
+        ): TagEditorAlertDialog =
+            TagEditorAlertDialog().withArgs {
+                putParcelableArrayList(ARG_SONGS, ArrayList(songs))
+            }
     }
 }

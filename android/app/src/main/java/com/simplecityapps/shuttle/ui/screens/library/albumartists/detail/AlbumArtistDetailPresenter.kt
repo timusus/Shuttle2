@@ -28,40 +28,67 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
 class AlbumArtistDetailContract {
-
     interface View {
         fun setListData(albumSongsMap: Map<Album, List<Song>>)
+
         fun showLoadError(error: Error)
+
         fun onAddedToQueue(name: String)
+
         fun setAlbumArtist(albumArtist: AlbumArtist)
+
         fun showDeleteError(error: Error)
+
         fun showTagEditor(songs: List<Song>)
     }
 
     interface Presenter : BaseContract.Presenter<View> {
         fun loadData()
-        fun onSongClicked(song: Song, songs: List<Song>)
+
+        fun onSongClicked(
+            song: Song,
+            songs: List<Song>
+        )
+
         fun onSongClicked(song: Song)
+
         fun play()
+
         fun shuffle()
+
         fun shuffleAlbums()
+
         fun addToQueue(albumArtist: AlbumArtist)
+
         fun play(album: Album)
+
         fun addToQueue(album: Album)
+
         fun addToQueue(song: Song)
+
         fun playNext(album: AlbumArtist)
+
         fun playNext(album: Album)
+
         fun playNext(song: Song)
+
         fun exclude(song: Song)
+
         fun editTags(song: Song)
+
         fun exclude(album: Album)
+
         fun editTags(album: Album)
+
         fun editTags(albumArtist: AlbumArtist)
+
         fun delete(song: Song)
     }
 }
 
-class AlbumArtistDetailPresenter @AssistedInject constructor(
+class AlbumArtistDetailPresenter
+@AssistedInject
+constructor(
     @ApplicationContext private val context: Context,
     private val albumArtistRepository: AlbumArtistRepository,
     private val albumRepository: AlbumRepository,
@@ -71,7 +98,6 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
     @Assisted private val albumArtist: AlbumArtist
 ) : BasePresenter<AlbumArtistDetailContract.View>(),
     AlbumArtistDetailContract.Presenter {
-
     @AssistedFactory
     interface Factory {
         fun create(albumArtist: AlbumArtist): AlbumArtistDetailPresenter
@@ -122,7 +148,10 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
         onSongClicked(song, this.songs)
     }
 
-    override fun onSongClicked(song: Song, songs: List<Song>) {
+    override fun onSongClicked(
+        song: Song,
+        songs: List<Song>
+    ) {
         launch {
             if (queueManager.setQueue(songs = songs, position = songs.indexOf(song))) {
                 playbackManager.load { result ->
@@ -135,10 +164,11 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
 
     override fun play() {
         launch {
-            val songs = songRepository
-                .getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = albumArtist.groupKey))))
-                .firstOrNull()
-                .orEmpty()
+            val songs =
+                songRepository
+                    .getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = albumArtist.groupKey))))
+                    .firstOrNull()
+                    .orEmpty()
             if (queueManager.setQueue(songs)) {
                 playbackManager.load { result ->
                     result.onSuccess { playbackManager.play() }
@@ -150,10 +180,11 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
 
     override fun shuffle() {
         launch {
-            val songs = songRepository
-                .getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = albumArtist.groupKey))))
-                .firstOrNull()
-                .orEmpty()
+            val songs =
+                songRepository
+                    .getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = albumArtist.groupKey))))
+                    .firstOrNull()
+                    .orEmpty()
             playbackManager.shuffle(songs) { result ->
                 result.onSuccess { playbackManager.play() }
                 result.onFailure { error -> view?.showLoadError(error as Error) }
@@ -163,15 +194,17 @@ class AlbumArtistDetailPresenter @AssistedInject constructor(
 
     override fun shuffleAlbums() {
         launch {
-            val albums = songRepository
-                .getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = albumArtist.groupKey))))
-                .firstOrNull()
-                .orEmpty()
-                .groupBy { it.album }
+            val albums =
+                songRepository
+                    .getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = albumArtist.groupKey))))
+                    .firstOrNull()
+                    .orEmpty()
+                    .groupBy { it.album }
 
-            val songs = albums.keys.shuffled().flatMap { key ->
-                albums.getValue(key)
-            }
+            val songs =
+                albums.keys.shuffled().flatMap { key ->
+                    albums.getValue(key)
+                }
 
             if (queueManager.setQueue(songs)) {
                 playbackManager.load { result ->

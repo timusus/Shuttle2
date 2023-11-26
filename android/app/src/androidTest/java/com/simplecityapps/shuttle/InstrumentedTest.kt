@@ -16,7 +16,6 @@ import org.junit.Test
 
 @HiltAndroidTest
 class InstrumentedTest {
-
     @get:Rule
     var hiltRule = HiltAndroidRule(this)
 

@@ -10,7 +10,11 @@ import kotlin.math.roundToInt
 class DividerItemDecoration(private val divider: Drawable) : RecyclerView.ItemDecoration() {
     private val bounds: Rect = Rect()
 
-    override fun onDraw(canvas: Canvas, parent: RecyclerView, state: RecyclerView.State) {
+    override fun onDraw(
+        canvas: Canvas,
+        parent: RecyclerView,
+        state: RecyclerView.State
+    ) {
         canvas.save()
         val left: Int
         val right: Int
@@ -18,7 +22,9 @@ class DividerItemDecoration(private val divider: Drawable) : RecyclerView.ItemDe
             left = parent.paddingLeft
             right = parent.width - parent.paddingRight
             canvas.clipRect(
-                left, parent.paddingTop, right,
+                left,
+                parent.paddingTop,
+                right,
                 parent.height - parent.paddingBottom
             )
         } else {
@@ -37,9 +43,16 @@ class DividerItemDecoration(private val divider: Drawable) : RecyclerView.ItemDe
         canvas.restore()
     }
 
-    override fun getItemOffsets(outRect: Rect, view: View, parent: RecyclerView, state: RecyclerView.State) {
+    override fun getItemOffsets(
+        outRect: Rect,
+        view: View,
+        parent: RecyclerView,
+        state: RecyclerView.State
+    ) {
         if (parent.getChildAdapterPosition(view) == state.itemCount - 1) {
             outRect.setEmpty()
-        } else outRect.set(0, 0, 0, divider.intrinsicHeight)
+        } else {
+            outRect.set(0, 0, 0, divider.intrinsicHeight)
+        }
     }
 }

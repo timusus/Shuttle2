@@ -10,17 +10,15 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.delay
 import javax.inject.Inject
+import kotlinx.coroutines.delay
 
 @AndroidEntryPoint
 class ThankYouDialogFragment : DialogFragment() {
-
     @Inject
     lateinit var preferenceManager: GeneralPreferenceManager
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-
         preferenceManager.hasSeenThankYouDialog = true
 
         val view = layoutInflater.inflate(R.layout.dialog_thanks, null)

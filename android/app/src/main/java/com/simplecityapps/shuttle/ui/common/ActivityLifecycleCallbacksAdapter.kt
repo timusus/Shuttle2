@@ -5,7 +5,10 @@ import android.app.Application
 import android.os.Bundle
 
 interface ActivityLifecycleCallbacksAdapter : Application.ActivityLifecycleCallbacks {
-    override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+    override fun onActivityCreated(
+        activity: Activity,
+        savedInstanceState: Bundle?
+    ) {
     }
 
     override fun onActivityStarted(activity: Activity) {
@@ -20,7 +23,10 @@ interface ActivityLifecycleCallbacksAdapter : Application.ActivityLifecycleCallb
     override fun onActivityStopped(activity: Activity) {
     }
 
-    override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {
+    override fun onActivitySaveInstanceState(
+        activity: Activity,
+        outState: Bundle
+    ) {
     }
 
     override fun onActivityDestroyed(activity: Activity) {

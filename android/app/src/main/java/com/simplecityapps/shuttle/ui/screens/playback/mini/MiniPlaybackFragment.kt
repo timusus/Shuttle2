@@ -23,7 +23,6 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class MiniPlaybackFragment : Fragment(), MiniPlayerContract.View {
-
     @Inject
     lateinit var presenter: MiniPlayerPresenter
 
@@ -37,11 +36,18 @@ class MiniPlaybackFragment : Fragment(), MiniPlayerContract.View {
     private var subtitleTextView: TextView by autoCleared()
     private var progressView: ProgressView by autoCleared()
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return inflater.inflate(R.layout.fragment_mini_playback, container, false)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
         super.onViewCreated(view, savedInstanceState)
 
         imageView = view.findViewById(R.id.imageView)
@@ -55,11 +61,12 @@ class MiniPlaybackFragment : Fragment(), MiniPlayerContract.View {
 
         playStateView.setOnClickListener { presenter.togglePlayback() }
         skipNextButton.setOnClickListener { presenter.skipToNext() }
-        skipNextButton.listener = object : SkipButton.OnSeekListener {
-            override fun onSeek(seekAmount: Int) {
-                presenter.seekForward(seekAmount)
+        skipNextButton.listener =
+            object : SkipButton.OnSeekListener {
+                override fun onSeek(seekAmount: Int) {
+                    presenter.seekForward(seekAmount)
+                }
             }
-        }
     }
 
     override fun onDestroyView() {
@@ -77,20 +84,24 @@ class MiniPlaybackFragment : Fragment(), MiniPlayerContract.View {
     override fun setCurrentSong(song: Song?) {
         song?.let {
             titleTextView.text = song.name ?: getString(com.simplecityapps.core.R.string.unknown)
-            subtitleTextView.text = ListPhrase.from(" • ")
-                .joinSafely(
-                    items = listOf(song.friendlyArtistName ?: song.albumArtist, song.album),
-                    defaultValue = getString(com.simplecityapps.core.R.string.unknown)
-                )
+            subtitleTextView.text =
+                ListPhrase.from(" • ")
+                    .joinSafely(
+                        items = listOf(song.friendlyArtistName ?: song.albumArtist, song.album),
+                        defaultValue = getString(com.simplecityapps.core.R.string.unknown)
+                    )
             imageLoader.loadArtwork(
                 imageView = imageView,
                 data = song,
-                options = listOf(ArtworkImageLoader.Options.RoundedCorners(8.dp)),
+                options = listOf(ArtworkImageLoader.Options.RoundedCorners(8.dp))
             )
         }
     }
 
-    override fun setProgress(position: Int, duration: Int) {
+    override fun setProgress(
+        position: Int,
+        duration: Int
+    ) {
         progressView.setProgress((position.toFloat() / duration))
     }
 }

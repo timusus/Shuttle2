@@ -15,12 +15,13 @@ import com.simplecityapps.playback.dsp.equalizer.EqualizerBand
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.view.VerticalSeekbar
 
-class EqualizerView @JvmOverloads constructor(
+class EqualizerView
+@JvmOverloads
+constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : LinearLayout(context, attrs, defStyleAttr) {
-
     interface Listener {
         fun onBandChanged(band: EqualizerBand)
     }
@@ -51,7 +52,10 @@ class EqualizerView @JvmOverloads constructor(
         seekbarViews.forEach { it.isActivated = activated }
     }
 
-    fun configure(maxGain: Int, equalizer: Equalizer.Presets.Preset) {
+    fun configure(
+        maxGain: Int,
+        equalizer: Equalizer.Presets.Preset
+    ) {
         this.maxGain = maxGain
         this.equalizer = equalizer
     }
@@ -70,17 +74,18 @@ class EqualizerView @JvmOverloads constructor(
             }
 
             val seekbar: VerticalSeekbar = bandView.findViewById(R.id.seekbar)
-            seekbar.listener = object : VerticalSeekbar.Listener {
-                override fun onStopTracking(progress: Float) {
-                    val gain = (maxGain - ((maxGain * 2.0) * progress))
-                    listener?.onBandChanged(EqualizerBand(band.centerFrequency, gain))
-                }
+            seekbar.listener =
+                object : VerticalSeekbar.Listener {
+                    override fun onStopTracking(progress: Float) {
+                        val gain = (maxGain - ((maxGain * 2.0) * progress))
+                        listener?.onBandChanged(EqualizerBand(band.centerFrequency, gain))
+                    }
 
-                override fun onProgressChanged(progress: Float) {
-                    val gain = (maxGain - ((maxGain * 2.0) * progress))
-                    listener?.onBandChanged(EqualizerBand(band.centerFrequency, gain))
+                    override fun onProgressChanged(progress: Float) {
+                        val gain = (maxGain - ((maxGain * 2.0) * progress))
+                        listener?.onBandChanged(EqualizerBand(band.centerFrequency, gain))
+                    }
                 }
-            }
             seekbar.progress = ((maxGain - band.gain) / (maxGain * 2.0)).toFloat()
 
             val textView: TextView = bandView.findViewById(R.id.bandLabel)
@@ -107,18 +112,19 @@ class EqualizerView @JvmOverloads constructor(
 
     private fun updateBands() {
         animator?.cancel()
-        animator = ValueAnimator.ofFloat(0f, 1f).apply {
-            duration = 450
-            interpolator = AccelerateDecelerateInterpolator()
-            addUpdateListener {
-                equalizer.bands.forEachIndexed { index, band ->
-                    seekbarViews.getOrNull(index)?.apply {
-                        progress = lerp(progress, (((maxGain - band.gain) / (maxGain * 2.0)).toFloat()), animatedValue as Float)
-                        invalidate()
+        animator =
+            ValueAnimator.ofFloat(0f, 1f).apply {
+                duration = 450
+                interpolator = AccelerateDecelerateInterpolator()
+                addUpdateListener {
+                    equalizer.bands.forEachIndexed { index, band ->
+                        seekbarViews.getOrNull(index)?.apply {
+                            progress = lerp(progress, (((maxGain - band.gain) / (maxGain * 2.0)).toFloat()), animatedValue as Float)
+                            invalidate()
+                        }
                     }
                 }
+                start()
             }
-            start()
-        }
     }
 }

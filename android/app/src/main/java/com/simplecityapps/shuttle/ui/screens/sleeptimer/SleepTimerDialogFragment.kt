@@ -23,7 +23,6 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class SleepTimerDialogFragment : DialogFragment() {
-
     @Inject
     lateinit var sleepTimer: SleepTimer
 
@@ -33,8 +32,9 @@ class SleepTimerDialogFragment : DialogFragment() {
     private var handler: Handler? = null
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val builder = MaterialAlertDialogBuilder(requireContext())
-            .setTitle(getString(R.string.sleep_timer_dialog_title))
+        val builder =
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle(getString(R.string.sleep_timer_dialog_title))
 
         sleepTimer.timeRemaining()?.let { timeRemaining ->
             // Sleep timer is currently active
@@ -59,7 +59,6 @@ class SleepTimerDialogFragment : DialogFragment() {
                 SleepTimerDialogFragment().show(parentFragmentManager)
             }
         } ?: run {
-
             // Sleep timer is not currently active
 
             val view = layoutInflater.inflate(R.layout.dialog_sleep_timer, null)
@@ -127,7 +126,10 @@ class SleepTimerDialogFragment : DialogFragment() {
     }
 }
 
-enum class SleepTimerDuration(@StringRes val nameResId: Int, val duration: Long) {
+enum class SleepTimerDuration(
+    @StringRes val nameResId: Int,
+    val duration: Long
+) {
     FiveMins(R.string.sleep_timer_5_minutes, TimeUnit.MINUTES.toMillis(5)),
     FifteenMins(R.string.sleep_timer_15_minutes, TimeUnit.MINUTES.toMillis(15)),
     ThirtyMins(R.string.sleep_timer_30_minutes, TimeUnit.MINUTES.toMillis(30)),

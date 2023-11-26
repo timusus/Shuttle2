@@ -16,15 +16,12 @@ import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.ViewBinder
-import com.simplecityapps.shuttle.model.Album
-import com.simplecityapps.shuttle.model.Genre
-import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
-import com.simplecityapps.shuttle.ui.common.dialog.ShowDeleteDialog
-import com.simplecityapps.shuttle.ui.common.dialog.ShowExcludeDialog
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
+import com.simplecityapps.shuttle.ui.common.dialog.showDeleteDialog
+import com.simplecityapps.shuttle.ui.common.dialog.showExcludeDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.screens.home.HorizontalAlbumListBinder
 import com.simplecityapps.shuttle.ui.screens.home.search.HeaderBinder
@@ -45,7 +42,6 @@ class GenreDetailFragment :
     Fragment(),
     GenreDetailContract.View,
     CreatePlaylistDialogFragment.Listener {
-
     @Inject
     lateinit var presenterFactory: GenreDetailPresenter.Factory
 
@@ -76,11 +72,18 @@ class GenreDetailFragment :
         presenter = presenterFactory.create(genre)
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return inflater.inflate(R.layout.fragment_genre_detail, container, false)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
         super.onViewCreated(view, savedInstanceState)
 
         adapter = RecyclerAdapter(viewLifecycleOwner.lifecycleScope)
@@ -145,7 +148,10 @@ class GenreDetailFragment :
 
     // GenreDetailContract.View Implementation
 
-    override fun setData(albums: List<com.simplecityapps.shuttle.model.Album>, songs: List<com.simplecityapps.shuttle.model.Song>) {
+    override fun setData(
+        albums: List<com.simplecityapps.shuttle.model.Album>,
+        songs: List<com.simplecityapps.shuttle.model.Song>
+    ) {
         val viewBinders = mutableListOf<ViewBinder>()
         viewBinders.add(HeaderBinder(getString(R.string.albums)))
         viewBinders.add(HorizontalAlbumListBinder(albums, imageLoader, false, viewLifecycleOwner.lifecycleScope, albumBinderListener))
@@ -168,9 +174,10 @@ class GenreDetailFragment :
 
     override fun setGenre(genre: com.simplecityapps.shuttle.model.Genre) {
         toolbar.title = genre.name
-        toolbar.subtitle = Phrase.fromPlural(resources, R.plurals.songsPlural, genre.songCount)
-            .put("count", genre.songCount)
-            .format()
+        toolbar.subtitle =
+            Phrase.fromPlural(resources, R.plurals.songsPlural, genre.songCount)
+                .put("count", genre.songCount)
+                .format()
     }
 
     override fun showDeleteError(error: Error) {
@@ -183,119 +190,134 @@ class GenreDetailFragment :
 
     // SongBinder.Listener Implementation
 
-    private val songBinderListener = object : SongBinder.Listener {
-
-        override fun onSongClicked(song: com.simplecityapps.shuttle.model.Song) {
-            presenter.onSongClicked(song)
-        }
-
-        override fun onOverflowClicked(view: View, song: com.simplecityapps.shuttle.model.Song) {
-            val popupMenu = PopupMenu(requireContext(), view)
-            popupMenu.inflate(R.menu.menu_popup_song)
-
-            playlistMenuView.createPlaylistMenu(popupMenu.menu)
-
-            if (song.externalId != null) {
-                popupMenu.menu.findItem(R.id.delete)?.isVisible = false
+    private val songBinderListener =
+        object : SongBinder.Listener {
+            override fun onSongClicked(song: com.simplecityapps.shuttle.model.Song) {
+                presenter.onSongClicked(song)
             }
 
-            popupMenu.setOnMenuItemClickListener { menuItem ->
-                if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Songs(song))) {
-                    return@setOnMenuItemClickListener true
-                } else {
-                    when (menuItem.itemId) {
-                        R.id.queue -> {
-                            presenter.addToQueue(song)
-                            return@setOnMenuItemClickListener true
-                        }
-                        R.id.playNext -> {
-                            presenter.playNext(song)
-                            return@setOnMenuItemClickListener true
-                        }
-                        R.id.songInfo -> {
-                            SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
-                            return@setOnMenuItemClickListener true
-                        }
-                        R.id.exclude -> {
-                            ShowExcludeDialog(requireContext(), song.name) {
-                                presenter.exclude(song)
+            override fun onOverflowClicked(
+                view: View,
+                song: com.simplecityapps.shuttle.model.Song
+            ) {
+                val popupMenu = PopupMenu(requireContext(), view)
+                popupMenu.inflate(R.menu.menu_popup_song)
+
+                playlistMenuView.createPlaylistMenu(popupMenu.menu)
+
+                if (song.externalId != null) {
+                    popupMenu.menu.findItem(R.id.delete)?.isVisible = false
+                }
+
+                popupMenu.setOnMenuItemClickListener { menuItem ->
+                    if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Songs(song))) {
+                        return@setOnMenuItemClickListener true
+                    } else {
+                        when (menuItem.itemId) {
+                            R.id.queue -> {
+                                presenter.addToQueue(song)
+                                return@setOnMenuItemClickListener true
                             }
-                            return@setOnMenuItemClickListener true
-                        }
-                        R.id.editTags -> {
-                            presenter.editTags(song)
-                            return@setOnMenuItemClickListener true
-                        }
-                        R.id.delete -> {
-                            ShowDeleteDialog(requireContext(), song.name) {
-                                presenter.delete(song)
+                            R.id.playNext -> {
+                                presenter.playNext(song)
+                                return@setOnMenuItemClickListener true
                             }
-                            return@setOnMenuItemClickListener true
+                            R.id.songInfo -> {
+                                SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
+                                return@setOnMenuItemClickListener true
+                            }
+                            R.id.exclude -> {
+                                showExcludeDialog(requireContext(), song.name) {
+                                    presenter.exclude(song)
+                                }
+                                return@setOnMenuItemClickListener true
+                            }
+                            R.id.editTags -> {
+                                presenter.editTags(song)
+                                return@setOnMenuItemClickListener true
+                            }
+                            R.id.delete -> {
+                                showDeleteDialog(requireContext(), song.name) {
+                                    presenter.delete(song)
+                                }
+                                return@setOnMenuItemClickListener true
+                            }
                         }
                     }
+                    false
                 }
-                false
+                popupMenu.show()
             }
-            popupMenu.show()
-        }
-    }
-
-    private val albumBinderListener = object : AlbumBinder.Listener {
-
-        override fun onAlbumClicked(album: com.simplecityapps.shuttle.model.Album, viewHolder: AlbumBinder.ViewHolder) {
-            findNavController().navigate(
-                R.id.action_genreDetailFragment_to_albumDetailFragment,
-                AlbumDetailFragmentArgs(album, true).toBundle(),
-                null,
-                FragmentNavigatorExtras(viewHolder.imageView to viewHolder.imageView.transitionName)
-            )
         }
 
-        override fun onAlbumLongClicked(album: com.simplecityapps.shuttle.model.Album, viewHolder: AlbumBinder.ViewHolder) {
-        }
+    private val albumBinderListener =
+        object : AlbumBinder.Listener {
+            override fun onAlbumClicked(
+                album: com.simplecityapps.shuttle.model.Album,
+                viewHolder: AlbumBinder.ViewHolder
+            ) {
+                findNavController().navigate(
+                    R.id.action_genreDetailFragment_to_albumDetailFragment,
+                    AlbumDetailFragmentArgs(album, true).toBundle(),
+                    null,
+                    FragmentNavigatorExtras(viewHolder.imageView to viewHolder.imageView.transitionName)
+                )
+            }
 
-        override fun onOverflowClicked(view: View, album: com.simplecityapps.shuttle.model.Album) {
-            val popupMenu = PopupMenu(requireContext(), view)
-            popupMenu.inflate(R.menu.menu_popup)
+            override fun onAlbumLongClicked(
+                album: com.simplecityapps.shuttle.model.Album,
+                viewHolder: AlbumBinder.ViewHolder
+            ) {
+            }
 
-            playlistMenuView.createPlaylistMenu(popupMenu.menu)
+            override fun onOverflowClicked(
+                view: View,
+                album: com.simplecityapps.shuttle.model.Album
+            ) {
+                val popupMenu = PopupMenu(requireContext(), view)
+                popupMenu.inflate(R.menu.menu_popup)
 
-            popupMenu.setOnMenuItemClickListener { menuItem ->
-                if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Albums(album))) {
-                    return@setOnMenuItemClickListener true
-                } else {
-                    when (menuItem.itemId) {
-                        R.id.play -> {
-                            presenter.play(album)
-                            return@setOnMenuItemClickListener true
-                        }
-                        R.id.queue -> {
-                            presenter.addToQueue(album)
-                            return@setOnMenuItemClickListener true
-                        }
-                        R.id.playNext -> {
-                            presenter.playNext(album)
-                            return@setOnMenuItemClickListener true
-                        }
-                        R.id.exclude -> {
-                            presenter.exclude(album)
-                            return@setOnMenuItemClickListener true
-                        }
-                        R.id.editTags -> {
-                            presenter.editTags(album)
-                            return@setOnMenuItemClickListener true
+                playlistMenuView.createPlaylistMenu(popupMenu.menu)
+
+                popupMenu.setOnMenuItemClickListener { menuItem ->
+                    if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Albums(album))) {
+                        return@setOnMenuItemClickListener true
+                    } else {
+                        when (menuItem.itemId) {
+                            R.id.play -> {
+                                presenter.play(album)
+                                return@setOnMenuItemClickListener true
+                            }
+                            R.id.queue -> {
+                                presenter.addToQueue(album)
+                                return@setOnMenuItemClickListener true
+                            }
+                            R.id.playNext -> {
+                                presenter.playNext(album)
+                                return@setOnMenuItemClickListener true
+                            }
+                            R.id.exclude -> {
+                                presenter.exclude(album)
+                                return@setOnMenuItemClickListener true
+                            }
+                            R.id.editTags -> {
+                                presenter.editTags(album)
+                                return@setOnMenuItemClickListener true
+                            }
                         }
                     }
+                    false
                 }
-                false
+                popupMenu.show()
             }
-            popupMenu.show()
         }
-    }
 
     // CreatePlaylistDialogFragment.Listener Implementation
 
-    override fun onSave(text: String, playlistData: PlaylistData) {
+    override fun onSave(
+        text: String,
+        playlistData: PlaylistData
+    ) {
         playlistMenuPresenter.createPlaylist(text, playlistData)
     }
 }

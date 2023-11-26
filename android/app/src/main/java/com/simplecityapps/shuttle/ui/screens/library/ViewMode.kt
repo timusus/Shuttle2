@@ -1,7 +1,8 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
 enum class ViewMode {
-    List, Grid
+    List,
+    Grid
 }
 
 fun String?.toViewMode(): ViewMode {

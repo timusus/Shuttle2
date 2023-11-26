@@ -11,7 +11,6 @@ class NoiseManager(
     playbackManager: PlaybackManager,
     playbackWatcher: PlaybackWatcher
 ) : PlaybackWatcherCallback {
-
     init {
         playbackWatcher.addCallback(this)
     }
@@ -33,8 +32,10 @@ class NoiseManager(
 }
 
 class NoisyReceiver(val playbackManager: PlaybackManager) : BroadcastReceiver() {
-
-    override fun onReceive(context: Context?, intent: Intent?) {
+    override fun onReceive(
+        context: Context?,
+        intent: Intent?
+    ) {
         if (intent?.action == AudioManager.ACTION_AUDIO_BECOMING_NOISY) {
             playbackManager.pause()
         }

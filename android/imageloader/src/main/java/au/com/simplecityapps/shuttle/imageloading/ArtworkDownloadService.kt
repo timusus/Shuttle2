@@ -23,6 +23,9 @@ import com.simplecityapps.shuttle.coroutines.concurrentMap
 import com.simplecityapps.shuttle.pendingintent.PendingIntentCompat
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import dagger.hilt.android.AndroidEntryPoint
+import java.util.concurrent.TimeUnit
+import javax.inject.Inject
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,13 +37,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.util.concurrent.TimeUnit
-import javax.inject.Inject
-import kotlin.coroutines.CoroutineContext
 
 @AndroidEntryPoint
 class ArtworkDownloadService : Service(), CoroutineScope {
-
     private val notificationManager: NotificationManager? by lazy {
         getSystemService()
     }
@@ -94,30 +93,33 @@ class ArtworkDownloadService : Service(), CoroutineScope {
         intent.component = serviceName
         val pendingIntent = PendingIntent.getService(this, 0, intent, PendingIntentCompat.FLAG_IMMUTABLE)
 
-        val notificationBuilder = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-            .setContentTitle("Downloading artwork")
-            .setSmallIcon(android.R.drawable.stat_sys_download)
-            .setOngoing(true)
-            .setProgress(100, 0, true)
-            .addAction(NotificationCompat.Action(R.drawable.ic_baseline_close_24, "Cancel", pendingIntent))
+        val notificationBuilder =
+            NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+                .setContentTitle("Downloading artwork")
+                .setSmallIcon(android.R.drawable.stat_sys_download)
+                .setOngoing(true)
+                .setProgress(100, 0, true)
+                .addAction(NotificationCompat.Action(R.drawable.ic_baseline_close_24, "Cancel", pendingIntent))
 
         notificationManager?.notify(NOTIFICATION_ID, notificationBuilder.build())
 
         launch {
-            val albumFutures = albumRepository.getAlbums(AlbumQuery.All()).first().map {
-                imageLoader.requestManager
-                    .downloadOnly()
-                    .load(it)
-                    .submit()
-            }
+            val albumFutures =
+                albumRepository.getAlbums(AlbumQuery.All()).first().map {
+                    imageLoader.requestManager
+                        .downloadOnly()
+                        .load(it)
+                        .submit()
+                }
 
-            val artistFutures = albumArtistRepository.getAlbumArtists(AlbumArtistQuery.All()).first().map {
-                imageLoader.requestManager
-                    .downloadOnly()
-                    .load(it)
-                    .load(it)
-                    .submit()
-            }
+            val artistFutures =
+                albumArtistRepository.getAlbumArtists(AlbumArtistQuery.All()).first().map {
+                    imageLoader.requestManager
+                        .downloadOnly()
+                        .load(it)
+                        .load(it)
+                        .submit()
+                }
 
             val futures = albumFutures + artistFutures
 
@@ -144,7 +146,11 @@ class ArtworkDownloadService : Service(), CoroutineScope {
         }
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    override fun onStartCommand(
+        intent: Intent?,
+        flags: Int,
+        startId: Int
+    ): Int {
         if (intent != null) {
             val action = intent.action
             if (action != null && action == ACTION_CANCEL) {

@@ -36,7 +36,6 @@ class LocalPlaylistRepository(
     private val playlistDataDao: PlaylistDataDao,
     private val playlistSongJoinDao: PlaylistSongJoinDao
 ) : PlaylistRepository {
-
     private val playlistsRelay: StateFlow<List<Playlist>?> by lazy {
         playlistDataDao
             .getAll()
@@ -82,15 +81,21 @@ class LocalPlaylistRepository(
         }
     }
 
-    override suspend fun createPlaylist(name: String, mediaProviderType: MediaProviderType, songs: List<Song>?, externalId: String?): Playlist {
-        val playlistId = playlistDataDao.insert(
-            PlaylistData(
-                name = name,
-                sortOrder = PlaylistSongSortOrder.Position,
-                mediaProviderType = mediaProviderType,
-                externalId = externalId
+    override suspend fun createPlaylist(
+        name: String,
+        mediaProviderType: MediaProviderType,
+        songs: List<Song>?,
+        externalId: String?
+    ): Playlist {
+        val playlistId =
+            playlistDataDao.insert(
+                PlaylistData(
+                    name = name,
+                    sortOrder = PlaylistSongSortOrder.Position,
+                    mediaProviderType = mediaProviderType,
+                    externalId = externalId
+                )
             )
-        )
         playlistSongJoinDao.insert(
             songs.orEmpty().mapIndexed { i, song ->
                 PlaylistSongJoin(
@@ -105,7 +110,10 @@ class LocalPlaylistRepository(
         return playlist
     }
 
-    override suspend fun addToPlaylist(playlist: Playlist, songs: List<Song>) {
+    override suspend fun addToPlaylist(
+        playlist: Playlist,
+        songs: List<Song>
+    ) {
         return playlistSongJoinDao.insert(
             songs.mapIndexed { i, song ->
                 PlaylistSongJoin(
@@ -117,14 +125,20 @@ class LocalPlaylistRepository(
         )
     }
 
-    override suspend fun removeFromPlaylist(playlist: Playlist, playlistSongs: List<PlaylistSong>) {
+    override suspend fun removeFromPlaylist(
+        playlist: Playlist,
+        playlistSongs: List<PlaylistSong>
+    ) {
         return playlistSongJoinDao.delete(
             playlistId = playlist.id,
             playlistSongIds = playlistSongs.map { playlistSong -> playlistSong.id }.toTypedArray()
         )
     }
 
-    override suspend fun removeSongsFromPlaylist(playlist: Playlist, songs: List<Song>) {
+    override suspend fun removeSongsFromPlaylist(
+        playlist: Playlist,
+        songs: List<Song>
+    ) {
         return playlistSongJoinDao.deleteSongs(
             playlistId = playlist.id,
             songIds = songs.map { it.id }.toTypedArray()
@@ -150,7 +164,10 @@ class LocalPlaylistRepository(
         return playlistDataDao.clear(playlist.id)
     }
 
-    override suspend fun renamePlaylist(playlist: Playlist, name: String) {
+    override suspend fun renamePlaylist(
+        playlist: Playlist,
+        name: String
+    ) {
         return playlistDataDao.update(
             PlaylistData(
                 id = playlist.id,
@@ -162,7 +179,10 @@ class LocalPlaylistRepository(
         )
     }
 
-    override suspend fun updatePlaylistSortOder(playlist: Playlist, sortOrder: PlaylistSongSortOrder) {
+    override suspend fun updatePlaylistSortOder(
+        playlist: Playlist,
+        sortOrder: PlaylistSongSortOrder
+    ) {
         playlistDataDao.update(
             PlaylistData(
                 id = playlist.id,
@@ -174,7 +194,10 @@ class LocalPlaylistRepository(
         )
     }
 
-    override suspend fun updatePlaylistSongsSortOder(playlist: Playlist, playlistSongs: List<PlaylistSong>) {
+    override suspend fun updatePlaylistSongsSortOder(
+        playlist: Playlist,
+        playlistSongs: List<PlaylistSong>
+    ) {
         playlistSongJoinDao.updateSortOrder(
             playlistSongs.map { playlistSong ->
                 PlaylistSongJoin(
@@ -188,26 +211,32 @@ class LocalPlaylistRepository(
         )
     }
 
-    override suspend fun updatePlaylistMediaProviderType(playlist: Playlist, mediaProviderType: MediaProviderType) {
+    override suspend fun updatePlaylistMediaProviderType(
+        playlist: Playlist,
+        mediaProviderType: MediaProviderType
+    ) {
         playlistDataDao.update(
             PlaylistData(
                 id = playlist.id,
                 name = playlist.name,
                 sortOrder = playlist.sortOrder,
                 mediaProviderType = mediaProviderType,
-                externalId = playlist.externalId,
+                externalId = playlist.externalId
             )
         )
     }
 
-    override suspend fun updatePlaylistExternalId(playlist: Playlist, externalId: String?) {
+    override suspend fun updatePlaylistExternalId(
+        playlist: Playlist,
+        externalId: String?
+    ) {
         playlistDataDao.update(
             PlaylistData(
                 id = playlist.id,
                 name = playlist.name,
                 sortOrder = playlist.sortOrder,
                 mediaProviderType = playlist.mediaProvider,
-                externalId = externalId,
+                externalId = externalId
             )
         )
     }

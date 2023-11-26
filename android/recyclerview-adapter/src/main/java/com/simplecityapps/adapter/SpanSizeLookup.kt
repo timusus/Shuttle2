@@ -6,7 +6,6 @@ class SpanSizeLookup(
     private val viewModelAdapter: RecyclerAdapter,
     private var spanCount: Int
 ) : GridLayoutManager.SpanSizeLookup() {
-
     fun setSpanCount(spanCount: Int) {
         this.spanCount = spanCount
     }

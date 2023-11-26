@@ -20,7 +20,6 @@ class ScanProgressBinder(
     val songImportProgressState: ImportProgressState,
     val playlistImportProgressState: ImportProgressState
 ) : ViewBinder {
-
     override fun createViewHolder(parent: ViewGroup): ViewBinder.ViewHolder<out ViewBinder> {
         return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_scan_progress, parent, false))
     }
@@ -62,7 +61,10 @@ class ScanProgressBinder(
         val playlistImportProgressMessage: TextView = itemView.findViewById(R.id.playlistImportProgressMessage)
         val playlistImportSuccessImage: ImageView = itemView.findViewById(R.id.playlistImportSuccessImage)
 
-        override fun bind(viewBinder: ScanProgressBinder, isPartial: Boolean) {
+        override fun bind(
+            viewBinder: ScanProgressBinder,
+            isPartial: Boolean
+        ) {
             super.bind(viewBinder, isPartial)
 
             titleTextView.text = viewBinder.mediaProviderType.title(itemView.context)

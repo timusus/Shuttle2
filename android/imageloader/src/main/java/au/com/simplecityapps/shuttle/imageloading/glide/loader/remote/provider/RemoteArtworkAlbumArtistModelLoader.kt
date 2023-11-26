@@ -11,8 +11,8 @@ import com.simplecityapps.mediaprovider.RemoteArtworkProvider
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
-import kotlinx.coroutines.CoroutineScope
 import java.io.InputStream
+import kotlinx.coroutines.CoroutineScope
 
 class RemoteArtworkAlbumArtistModelLoader(
     private val preferenceManager: GeneralPreferenceManager,
@@ -20,12 +20,16 @@ class RemoteArtworkAlbumArtistModelLoader(
     private val remoteArtworkProvider: RemoteArtworkProvider,
     private val coroutineScope: CoroutineScope
 ) : ModelLoader<AlbumArtist, InputStream> {
-
     override fun handles(model: AlbumArtist): Boolean {
         return true
     }
 
-    override fun buildLoadData(model: AlbumArtist, width: Int, height: Int, options: Options): ModelLoader.LoadData<InputStream>? {
+    override fun buildLoadData(
+        model: AlbumArtist,
+        width: Int,
+        height: Int,
+        options: Options
+    ): ModelLoader.LoadData<InputStream>? {
         if (preferenceManager.artworkLocalOnly) {
             return null
         }
@@ -39,7 +43,6 @@ class RemoteArtworkAlbumArtistModelLoader(
         private val remoteArtworkProvider: RemoteArtworkProvider,
         private val coroutineScope: CoroutineScope
     ) : ModelLoaderFactory<AlbumArtist, InputStream> {
-
         override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<AlbumArtist, InputStream> {
             return RemoteArtworkAlbumArtistModelLoader(preferenceManager, songRepository, remoteArtworkProvider, coroutineScope)
         }

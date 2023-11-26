@@ -11,7 +11,6 @@ import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 class GroupingBinder(
     val label: String
 ) : ViewBinder {
-
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
         return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_grouping, parent, false))
     }
@@ -36,8 +35,10 @@ class GroupingBinder(
     }
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<GroupingBinder>(itemView) {
-
-        override fun bind(viewBinder: GroupingBinder, isPartial: Boolean) {
+        override fun bind(
+            viewBinder: GroupingBinder,
+            isPartial: Boolean
+        ) {
             super.bind(viewBinder, isPartial)
 
             itemView as TextView

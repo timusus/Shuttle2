@@ -2,7 +2,7 @@ package com.simplecityapps.provider.jellyfin.http
 
 open class LoginCredentials(
     val username: String,
-    val password: String,
+    val password: String
 )
 
 class AuthenticatedCredentials(

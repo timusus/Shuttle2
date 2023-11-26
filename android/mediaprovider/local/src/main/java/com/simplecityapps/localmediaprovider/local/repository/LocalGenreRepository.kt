@@ -5,18 +5,24 @@ import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
 import com.simplecityapps.mediaprovider.repository.genres.comparator
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.mediaprovider.repository.songs.comparator
+import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 
 class LocalGenreRepository(
     private val scope: CoroutineScope,
     val songRepository: SongRepository
 ) : GenreRepository {
-
-    private val genreRelay: StateFlow<Map<String, List<com.simplecityapps.shuttle.model.Song>>?> by lazy {
+    private val genreRelay: StateFlow<Map<String, List<Song>>?> by lazy {
         songRepository
             .getSongs(SongQuery.All())
             .map { songs ->
@@ -32,7 +38,7 @@ class LocalGenreRepository(
             .stateIn(scope, SharingStarted.Lazily, null)
     }
 
-    override fun getGenres(query: GenreQuery): Flow<List<com.simplecityapps.shuttle.model.Genre>> {
+    override fun getGenres(query: GenreQuery): Flow<List<Genre>> {
         return genreRelay
             .filterNotNull()
             .map { genres ->
@@ -51,7 +57,10 @@ class LocalGenreRepository(
             }
     }
 
-    override fun getSongsForGenres(genres: List<String>, songQuery: SongQuery): Flow<List<Song>> {
+    override fun getSongsForGenres(
+        genres: List<String>,
+        songQuery: SongQuery
+    ): Flow<List<Song>> {
         return genreRelay
             .filterNotNull()
             .map {

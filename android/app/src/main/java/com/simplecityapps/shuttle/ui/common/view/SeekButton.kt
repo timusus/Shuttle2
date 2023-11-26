@@ -17,14 +17,14 @@ import androidx.core.content.res.use
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import com.simplecityapps.shuttle.R
 
-class SeekButton @JvmOverloads constructor(
+class SeekButton
+@JvmOverloads
+constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
-
     interface OnSeekListener {
-
         /**
          * The seek amount, in seconds
          */
@@ -43,13 +43,14 @@ class SeekButton @JvmOverloads constructor(
         set(value) {
             field = value
 
-            seekDrawable = ContextCompat.getDrawable(
-                context,
-                when (direction) {
-                    SeekDirection.Forward -> R.drawable.ic_seek_forward_black_24dp
-                    SeekDirection.Backward -> R.drawable.ic_seek_backward_black_24dp
-                }
-            )!!.mutate()
+            seekDrawable =
+                ContextCompat.getDrawable(
+                    context,
+                    when (direction) {
+                        SeekDirection.Forward -> R.drawable.ic_seek_forward_black_24dp
+                        SeekDirection.Backward -> R.drawable.ic_seek_backward_black_24dp
+                    }
+                )!!.mutate()
         }
 
     var listener: OnSeekListener? = null

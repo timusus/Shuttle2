@@ -9,12 +9,13 @@ import android.widget.FrameLayout
 import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.ui.common.utils.dp
 
-class KeylineView @JvmOverloads constructor(
+class KeylineView
+@JvmOverloads
+constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr) {
-
     private val enabled = false
 
     private val paint = Paint()

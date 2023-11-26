@@ -3,7 +3,6 @@ package com.simplecityapps.playback.exoplayer
 import java.nio.ByteBuffer
 
 object ByteUtils {
-
     fun ByteBuffer.getInt24(): Int {
         val sample = this.getInt(position() + 2) shl 16 or (this.getInt(position() + 1) and 0xFF shl 8) or (this.getInt(position()) and 0xFF)
         position(position() + 3)

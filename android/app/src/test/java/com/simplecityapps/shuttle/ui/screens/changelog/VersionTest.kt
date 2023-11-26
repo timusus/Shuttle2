@@ -5,7 +5,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class VersionTest {
-
     @Test
     fun testVersionIsValid() {
         Semver("0.1.0")
@@ -23,7 +22,6 @@ class VersionTest {
 
     @Test
     fun compareTo() {
-
         // Same values compare as equal
 
         var a = Semver("0.0.1")

@@ -18,6 +18,8 @@ import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
 import com.simplecityapps.shuttle.ui.screens.library.ViewMode
 import com.simplecityapps.shuttle.ui.screens.library.toViewMode
+import java.util.*
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -26,46 +28,70 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
-import java.util.*
-import javax.inject.Inject
 
 class AlbumListContract {
-
     sealed class LoadingState {
         object Scanning : LoadingState()
+
         object Loading : LoadingState()
+
         object Empty : LoadingState()
+
         object None : LoadingState()
     }
 
     interface View {
-        fun setAlbums(albums: List<Album>, viewMode: ViewMode, resetPosition: Boolean)
+        fun setAlbums(
+            albums: List<Album>,
+            viewMode: ViewMode,
+            resetPosition: Boolean
+        )
+
         fun updateToolbarMenuSortOrder(sortOrder: AlbumSortOrder)
+
         fun updateToolbarMenuViewMode(viewMode: ViewMode)
+
         fun onAddedToQueue(albums: List<Album>)
+
         fun setLoadingState(state: LoadingState)
+
         fun setLoadingProgress(progress: Float)
+
         fun showLoadError(error: Error)
+
         fun showTagEditor(songs: List<Song>)
+
         fun setViewMode(viewMode: ViewMode)
     }
 
     interface Presenter {
         fun loadAlbums(resetPosition: Boolean)
+
         fun addToQueue(albums: List<Album>)
+
         fun playNext(album: Album)
+
         fun exclude(album: Album)
+
         fun editTags(albums: List<Album>)
+
         fun play(album: Album)
+
         fun setViewMode(viewMode: ViewMode)
+
         fun albumShuffle()
+
         fun setSortOrder(albumSortOrder: AlbumSortOrder)
+
         fun getFastscrollPrefix(album: Album): String?
+
         fun updateToolbarMenu()
     }
 }
 
-class AlbumListPresenter @Inject constructor(
+class AlbumListPresenter
+@Inject
+constructor(
     private val albumRepository: AlbumRepository,
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackManager,
@@ -75,16 +101,20 @@ class AlbumListPresenter @Inject constructor(
     private val queueManager: QueueManager
 ) : AlbumListContract.Presenter,
     BasePresenter<AlbumListContract.View>() {
-
     private var albums: List<Album> = emptyList()
 
-    private val mediaImporterListener = object : MediaImporter.Listener {
-        override fun onSongImportProgress(providerType: MediaProviderType, message: String, progress: Progress?) {
-            progress?.let {
-                view?.setLoadingProgress(progress.asFloat())
+    private val mediaImporterListener =
+        object : MediaImporter.Listener {
+            override fun onSongImportProgress(
+                providerType: MediaProviderType,
+                message: String,
+                progress: Progress?
+            ) {
+                progress?.let {
+                    view?.setLoadingProgress(progress.asFloat())
+                }
             }
         }
-    }
 
     override fun bindView(view: AlbumListContract.View) {
         super.bindView(view)
@@ -133,10 +163,11 @@ class AlbumListPresenter @Inject constructor(
 
     override fun addToQueue(albums: List<Album>) {
         launch {
-            val songs = songRepository
-                .getSongs(SongQuery.AlbumGroupKeys(albums.map { SongQuery.AlbumGroupKey(key = it.groupKey) }))
-                .firstOrNull()
-                .orEmpty()
+            val songs =
+                songRepository
+                    .getSongs(SongQuery.AlbumGroupKeys(albums.map { SongQuery.AlbumGroupKey(key = it.groupKey) }))
+                    .firstOrNull()
+                    .orEmpty()
             playbackManager.addToQueue(songs)
             view?.onAddedToQueue(albums)
         }
@@ -144,10 +175,11 @@ class AlbumListPresenter @Inject constructor(
 
     override fun playNext(album: Album) {
         launch {
-            val songs = songRepository
-                .getSongs(SongQuery.AlbumGroupKeys(listOf(SongQuery.AlbumGroupKey(key = album.groupKey))))
-                .firstOrNull()
-                .orEmpty()
+            val songs =
+                songRepository
+                    .getSongs(SongQuery.AlbumGroupKeys(listOf(SongQuery.AlbumGroupKey(key = album.groupKey))))
+                    .firstOrNull()
+                    .orEmpty()
             playbackManager.playNext(songs)
             view?.onAddedToQueue(listOf(album))
         }
@@ -162,10 +194,11 @@ class AlbumListPresenter @Inject constructor(
 
     override fun exclude(album: Album) {
         launch {
-            val songs = songRepository
-                .getSongs(SongQuery.AlbumGroupKeys(listOf(SongQuery.AlbumGroupKey(key = album.groupKey))))
-                .firstOrNull()
-                .orEmpty()
+            val songs =
+                songRepository
+                    .getSongs(SongQuery.AlbumGroupKeys(listOf(SongQuery.AlbumGroupKey(key = album.groupKey))))
+                    .firstOrNull()
+                    .orEmpty()
             songRepository.setExcluded(songs, true)
             queueManager.remove(queueManager.getQueue().filter { queueItem -> songs.contains(queueItem.song) })
         }
@@ -173,20 +206,22 @@ class AlbumListPresenter @Inject constructor(
 
     override fun editTags(albums: List<Album>) {
         launch {
-            val songs = songRepository
-                .getSongs(SongQuery.AlbumGroupKeys(albums.map { album -> SongQuery.AlbumGroupKey(key = album.groupKey) }))
-                .firstOrNull()
-                .orEmpty()
+            val songs =
+                songRepository
+                    .getSongs(SongQuery.AlbumGroupKeys(albums.map { album -> SongQuery.AlbumGroupKey(key = album.groupKey) }))
+                    .firstOrNull()
+                    .orEmpty()
             view?.showTagEditor(songs)
         }
     }
 
     override fun play(album: Album) {
         launch {
-            val songs = songRepository
-                .getSongs(SongQuery.AlbumGroupKeys(listOf(SongQuery.AlbumGroupKey(key = album.groupKey))))
-                .firstOrNull()
-                .orEmpty()
+            val songs =
+                songRepository
+                    .getSongs(SongQuery.AlbumGroupKeys(listOf(SongQuery.AlbumGroupKey(key = album.groupKey))))
+                    .firstOrNull()
+                    .orEmpty()
             if (queueManager.setQueue(songs)) {
                 playbackManager.load { result ->
                     result.onSuccess { playbackManager.play() }
@@ -198,15 +233,17 @@ class AlbumListPresenter @Inject constructor(
 
     override fun albumShuffle() {
         launch {
-            val albums = songRepository
-                .getSongs(SongQuery.All())
-                .firstOrNull()
-                .orEmpty()
-                .groupBy { it.album }
+            val albums =
+                songRepository
+                    .getSongs(SongQuery.All())
+                    .firstOrNull()
+                    .orEmpty()
+                    .groupBy { it.album }
 
-            val songs = albums.keys.shuffled().flatMap { key ->
-                albums.getValue(key)
-            }
+            val songs =
+                albums.keys.shuffled().flatMap { key ->
+                    albums.getValue(key)
+                }
 
             if (queueManager.setQueue(songs)) {
                 playbackManager.load { result ->

@@ -5,7 +5,6 @@ import kotlinx.datetime.Instant
 import kotlinx.parcelize.Parceler
 
 object InstantParceler : Parceler<Instant?> {
-
     override fun create(parcel: Parcel): Instant? {
         val epochSeconds = parcel.readLong()
         if (epochSeconds != -1L) {
@@ -14,7 +13,10 @@ object InstantParceler : Parceler<Instant?> {
         return null
     }
 
-    override fun Instant?.write(parcel: Parcel, flags: Int) {
+    override fun Instant?.write(
+        parcel: Parcel,
+        flags: Int
+    ) {
         parcel.writeLong(this?.epochSeconds ?: -1L)
     }
 }

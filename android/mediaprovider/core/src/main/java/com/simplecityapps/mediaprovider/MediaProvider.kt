@@ -1,14 +1,13 @@
 package com.simplecityapps.mediaprovider
 
-import com.simplecityapps.shuttle.model.MediaProviderType
 import android.content.Context
 import androidx.annotation.DrawableRes
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import kotlinx.coroutines.flow.Flow
 
 interface MediaProvider {
-
     val type: MediaProviderType
 
     fun findSongs(): Flow<FlowEvent<List<Song>, MessageProgress>>

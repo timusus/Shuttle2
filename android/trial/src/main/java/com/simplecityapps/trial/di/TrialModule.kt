@@ -16,22 +16,25 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import javax.inject.Named
+import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import okhttp3.Credentials
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
-import javax.inject.Named
-import javax.inject.Singleton
 
 @InstallIn(SingletonComponent::class)
 @Module
 class TrialModule {
-
     @Provides
     @Singleton
     @Named("S2ApiRetrofit")
-    fun provideRetrofit(@ApplicationContext context: Context, okHttpClient: OkHttpClient, moshi: Moshi): Retrofit {
+    fun provideRetrofit(
+        @ApplicationContext context: Context,
+        okHttpClient: OkHttpClient,
+        moshi: Moshi
+    ): Retrofit {
         return Retrofit.Builder()
             .baseUrl("https://api.shuttlemusicplayer.app/")
             .addCallAdapterFactory(NetworkResultAdapterFactory(context.getSystemService()))
@@ -53,19 +56,26 @@ class TrialModule {
 
     @Provides
     @Singleton
-    fun provideDeviceService(@Named("S2ApiRetrofit") retrofit: Retrofit): DeviceService {
+    fun provideDeviceService(
+        @Named("S2ApiRetrofit") retrofit: Retrofit
+    ): DeviceService {
         return retrofit.create(DeviceService::class.java)
     }
 
     @Provides
     @Singleton
-    fun providePromoCodeService(@Named("S2ApiRetrofit") retrofit: Retrofit): PromoCodeService {
+    fun providePromoCodeService(
+        @Named("S2ApiRetrofit") retrofit: Retrofit
+    ): PromoCodeService {
         return retrofit.create(PromoCodeService::class.java)
     }
 
     @Provides
     @Singleton
-    fun provideBillingManager(@ApplicationContext context: Context, @AppCoroutineScope coroutineScope: CoroutineScope): BillingManager {
+    fun provideBillingManager(
+        @ApplicationContext context: Context,
+        @AppCoroutineScope coroutineScope: CoroutineScope
+    ): BillingManager {
         return BillingManager(context, coroutineScope)
     }
 

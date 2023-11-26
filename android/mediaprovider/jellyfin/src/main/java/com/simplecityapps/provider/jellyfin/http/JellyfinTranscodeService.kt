@@ -5,7 +5,8 @@ import retrofit2.http.HEAD
 import retrofit2.http.Url
 
 interface JellyfinTranscodeService {
-
     @HEAD
-    suspend fun transcode(@Url url: String): Response<Void>
+    suspend fun transcode(
+        @Url url: String
+    ): Response<Void>
 }

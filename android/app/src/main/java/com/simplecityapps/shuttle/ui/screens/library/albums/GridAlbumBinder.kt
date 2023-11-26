@@ -25,7 +25,6 @@ class GridAlbumBinder(
     val fixedWidthDp: Int? = null
 ) : AlbumBinder(album, imageLoader, listener),
     SectionViewBinder {
-
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
         return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.grid_item_album, parent, false))
     }
@@ -39,7 +38,6 @@ class GridAlbumBinder(
     }
 
     class ViewHolder(itemView: View) : AlbumBinder.ViewHolder(itemView) {
-
         private val title: TextView = itemView.findViewById(R.id.title)
         private val subtitle: TextView = itemView.findViewById(R.id.subtitle)
         override val imageView: ImageView = itemView.findViewById(R.id.imageView)
@@ -59,7 +57,10 @@ class GridAlbumBinder(
             viewBinder?.listener?.onViewHolderCreated(this)
         }
 
-        override fun bind(viewBinder: AlbumBinder, isPartial: Boolean) {
+        override fun bind(
+            viewBinder: AlbumBinder,
+            isPartial: Boolean
+        ) {
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.album.name ?: itemView.resources.getString(com.simplecityapps.core.R.string.unknown)
@@ -67,10 +68,11 @@ class GridAlbumBinder(
 
             viewBinder as GridAlbumBinder
 
-            val options = mutableListOf(
-                ArtworkImageLoader.Options.Placeholder(ResourcesCompat.getDrawable(itemView.resources, com.simplecityapps.core.R.drawable.ic_placeholder_album, itemView.context.theme)!!),
-                ArtworkImageLoader.Options.CacheDecodedResource
-            )
+            val options =
+                mutableListOf(
+                    ArtworkImageLoader.Options.Placeholder(ResourcesCompat.getDrawable(itemView.resources, com.simplecityapps.core.R.drawable.ic_placeholder_album, itemView.context.theme)!!),
+                    ArtworkImageLoader.Options.CacheDecodedResource
+                )
             if (viewBinder.coloredBackground) {
                 options.add(ArtworkImageLoader.Options.LoadColorSet)
             }

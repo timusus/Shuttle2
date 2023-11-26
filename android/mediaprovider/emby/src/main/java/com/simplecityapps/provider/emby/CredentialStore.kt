@@ -5,7 +5,6 @@ import com.simplecityapps.provider.emby.http.LoginCredentials
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 
 class CredentialStore(private val securePreferenceManager: SecurePreferenceManager) {
-
     var loginCredentials: LoginCredentials?
         get() {
             return securePreferenceManager.embyUserName?.let { userName ->

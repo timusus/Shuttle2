@@ -4,7 +4,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 abstract class Diff<T>(private val existingData: List<T>, private val newData: List<T>) {
-
     class Result<T>(
         val inserts: List<T>,
         val updates: List<T>,
@@ -18,12 +17,18 @@ abstract class Diff<T>(private val existingData: List<T>, private val newData: L
     /**
      * Determine whether two entries represent the same data
      */
-    abstract fun isEqual(a: T, b: T): Boolean
+    abstract fun isEqual(
+        a: T,
+        b: T
+    ): Boolean
 
     /**
      * When two items are considered equal, we have an opportunity to copy data from the old entry to the new
      */
-    abstract fun update(oldData: T, newData: T): T
+    abstract fun update(
+        oldData: T,
+        newData: T
+    ): T
 
     suspend fun apply(): Result<T> {
         if (existingData.isEmpty()) {

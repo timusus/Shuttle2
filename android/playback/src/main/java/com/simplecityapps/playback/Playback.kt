@@ -4,10 +4,14 @@ import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.model.Song
 
 interface Playback {
-
     var callback: Callback?
 
-    suspend fun load(current: Song, next: Song?, seekPosition: Int, completion: (Result<Any?>) -> Unit)
+    suspend fun load(
+        current: Song,
+        next: Song?,
+        seekPosition: Int,
+        completion: (Result<Any?>) -> Unit
+    )
 
     suspend fun loadNext(song: Song?)
 
@@ -49,7 +53,10 @@ interface Playback {
     fun setAudioSessionId(id: Int) {
     }
 
-    fun setReplayGain(trackGain: Double?, albumGain: Double?) {
+    fun setReplayGain(
+        trackGain: Double?,
+        albumGain: Double?
+    ) {
     }
 
     fun setPlaybackSpeed(multiplier: Float)

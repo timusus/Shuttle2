@@ -11,14 +11,18 @@ import com.simplecityapps.playback.queue.QueueWatcher
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
-class WidgetManager @Inject constructor(
+class WidgetManager
+@Inject
+constructor(
     @ApplicationContext private val context: Context,
     private val playbackWatcher: PlaybackWatcher,
     private val queueWatcher: QueueWatcher
 ) : PlaybackWatcherCallback, QueueChangeCallback {
-
     enum class UpdateReason {
-        PlaystateChanged, QueueChanged, QueuePositionChanged, Unknown
+        PlaystateChanged,
+        QueueChanged,
+        QueuePositionChanged,
+        Unknown
     }
 
     fun registerCallbacks() {
@@ -61,7 +65,10 @@ class WidgetManager @Inject constructor(
         updateAppWidgets(UpdateReason.QueueChanged)
     }
 
-    override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
+    override fun onQueuePositionChanged(
+        oldPosition: Int?,
+        newPosition: Int?
+    ) {
         super.onQueuePositionChanged(oldPosition, newPosition)
 
         updateAppWidgets(UpdateReason.QueuePositionChanged)

@@ -32,13 +32,18 @@ open class SearchSongBinder(
     val jaroSimilarity: SongJaroSimilarity
 ) : ViewBinder,
     SectionViewBinder {
-
     var selected: Boolean = false
 
     interface Listener {
         fun onSongClicked(song: com.simplecityapps.shuttle.model.Song)
+
         fun onSongLongClicked(song: com.simplecityapps.shuttle.model.Song) {}
-        fun onOverflowClicked(view: View, song: com.simplecityapps.shuttle.model.Song) {}
+
+        fun onOverflowClicked(
+            view: View,
+            song: com.simplecityapps.shuttle.model.Song
+        ) {}
+
         fun onViewHolderCreated(holder: ViewHolder) {}
     }
 
@@ -82,7 +87,6 @@ open class SearchSongBinder(
     }
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<SearchSongBinder>(itemView) {
-
         private val title: TextView = itemView.findViewById(R.id.title)
         private val subtitle: TextView = itemView.findViewById(R.id.subtitle)
         val imageView: ImageView = itemView.findViewById(R.id.imageView)
@@ -107,25 +111,31 @@ open class SearchSongBinder(
             viewBinder?.listener?.onViewHolderCreated(this)
         }
 
-        override fun bind(viewBinder: SearchSongBinder, isPartial: Boolean) {
+        override fun bind(
+            viewBinder: SearchSongBinder,
+            isPartial: Boolean
+        ) {
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.song.name ?: itemView.resources.getString(com.simplecityapps.core.R.string.unknown)
-            subtitle.text = ListPhrase
-                .from(" • ")
-                .joinSafely(
-                    items = listOf(
-                        viewBinder.song.friendlyArtistName ?: viewBinder.song.albumArtist,
-                        viewBinder.song.album,
-                    ),
-                    defaultValue = itemView.resources.getString(com.simplecityapps.core.R.string.unknown)
-                )
+            subtitle.text =
+                ListPhrase
+                    .from(" • ")
+                    .joinSafely(
+                        items =
+                        listOf(
+                            viewBinder.song.friendlyArtistName ?: viewBinder.song.albumArtist,
+                            viewBinder.song.album
+                        ),
+                        defaultValue = itemView.resources.getString(com.simplecityapps.core.R.string.unknown)
+                    )
 
-            val options = mutableListOf(
-                ArtworkImageLoader.Options.RoundedCorners(8.dp),
-                ArtworkImageLoader.Options.Crossfade(200),
-                ArtworkImageLoader.Options.Placeholder(ResourcesCompat.getDrawable(itemView.resources, com.simplecityapps.core.R.drawable.ic_placeholder_song_rounded, itemView.context.theme)!!)
-            )
+            val options =
+                mutableListOf(
+                    ArtworkImageLoader.Options.RoundedCorners(8.dp),
+                    ArtworkImageLoader.Options.Crossfade(200),
+                    ArtworkImageLoader.Options.Placeholder(ResourcesCompat.getDrawable(itemView.resources, com.simplecityapps.core.R.drawable.ic_placeholder_song_rounded, itemView.context.theme)!!)
+                )
 
             viewBinder.imageLoader.loadArtwork(
                 imageView,
@@ -224,12 +234,13 @@ open class SearchSongBinder(
                 }
             }
 
-            subtitle.text = listOfNotNull(
-                artistOrAlbumArtistStringBuilder,
-                albumNameStringBuilder,
-            )
-                .joinToSpannedString(" • ")
-                .ifEmpty { itemView.resources.getString(com.simplecityapps.core.R.string.unknown) }
+            subtitle.text =
+                listOfNotNull(
+                    artistOrAlbumArtistStringBuilder,
+                    albumNameStringBuilder
+                )
+                    .joinToSpannedString(" • ")
+                    .ifEmpty { itemView.resources.getString(com.simplecityapps.core.R.string.unknown) }
         }
 
         override fun recycle() {

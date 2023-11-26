@@ -8,7 +8,6 @@ open class DocumentNode(
     override val displayName: String,
     open val mimeType: String
 ) : FileNode {
-
     val ext by lazy { displayName.substringAfterLast('.') }
 
     override fun equals(other: Any?): Boolean {

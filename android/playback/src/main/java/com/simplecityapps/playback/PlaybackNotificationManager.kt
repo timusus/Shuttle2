@@ -20,10 +20,12 @@ import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.pendingintent.PendingIntentCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
-import timber.log.Timber
 import javax.inject.Inject
+import timber.log.Timber
 
-class PlaybackNotificationManager @Inject constructor(
+class PlaybackNotificationManager
+@Inject
+constructor(
     @ApplicationContext private val context: Context,
     private val notificationManager: NotificationManager,
     private val playbackManager: PlaybackManager,
@@ -35,7 +37,6 @@ class PlaybackNotificationManager @Inject constructor(
     private val artworkImageLoader: ArtworkImageLoader
 ) : PlaybackWatcherCallback,
     QueueChangeCallback {
-
     private val placeholder: Bitmap? by lazy {
         drawableToBitmap(context.resources.getDrawable(com.simplecityapps.playback.R.drawable.ic_music_note_black_24dp, context.theme))
     }
@@ -59,37 +60,38 @@ class PlaybackNotificationManager @Inject constructor(
 
         val song = queueManager.getCurrentItem()?.song
 
-        val notificationBuilder = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
-            .apply {
-                song?.let { song ->
-                    setContentTitle(song.name ?: context.getString(com.simplecityapps.core.R.string.unknown))
-                    setContentText(song.friendlyArtistName ?: song.albumArtist ?: context.getString(com.simplecityapps.core.R.string.unknown))
+        val notificationBuilder =
+            NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
+                .apply {
+                    song?.let { song ->
+                        setContentTitle(song.name ?: context.getString(com.simplecityapps.core.R.string.unknown))
+                        setContentText(song.friendlyArtistName ?: song.albumArtist ?: context.getString(com.simplecityapps.core.R.string.unknown))
+                    }
                 }
-            }
-            .setShowWhen(false)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setSmallIcon(com.simplecityapps.playback.R.drawable.ic_stat_name)
-            .setStyle(
-                androidx.media.app.NotificationCompat.MediaStyle()
-                    .setMediaSession(mediaSessionManager.mediaSession.sessionToken)
-                    .setShowActionsInCompactView(0, 1, 2)
-            )
-            .setContentIntent(PendingIntent.getActivity(context, 1, (context.applicationContext as ActivityIntentProvider).provideMainActivityIntent(), PendingIntentCompat.FLAG_IMMUTABLE))
-            .setDeleteIntent(
-                PendingIntent.getService(
-                    context,
-                    1,
-                    Intent(context, PlaybackService::class.java).apply { action = PlaybackService.ACTION_NOTIFICATION_DISMISS },
-                    PendingIntentCompat.FLAG_IMMUTABLE
+                .setShowWhen(false)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setSmallIcon(com.simplecityapps.playback.R.drawable.ic_stat_name)
+                .setStyle(
+                    androidx.media.app.NotificationCompat.MediaStyle()
+                        .setMediaSession(mediaSessionManager.mediaSession.sessionToken)
+                        .setShowActionsInCompactView(0, 1, 2)
                 )
-            )
-            .addAction(prevAction)
-            .addAction(playbackAction)
-            .addAction(nextAction)
-            .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setNotificationSilent()
-            .setLargeIcon(placeholder)
+                .setContentIntent(PendingIntent.getActivity(context, 1, (context.applicationContext as ActivityIntentProvider).provideMainActivityIntent(), PendingIntentCompat.FLAG_IMMUTABLE))
+                .setDeleteIntent(
+                    PendingIntent.getService(
+                        context,
+                        1,
+                        Intent(context, PlaybackService::class.java).apply { action = PlaybackService.ACTION_NOTIFICATION_DISMISS },
+                        PendingIntentCompat.FLAG_IMMUTABLE
+                    )
+                )
+                .addAction(prevAction)
+                .addAction(playbackAction)
+                .addAction(nextAction)
+                .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setNotificationSilent()
+                .setLargeIcon(placeholder)
 
         val artworkSize = 512
 
@@ -102,7 +104,7 @@ class PlaybackNotificationManager @Inject constructor(
                 artworkImageLoader.loadBitmap(
                     data = song,
                     width = artworkSize,
-                    height = artworkSize,
+                    height = artworkSize
                 ) { image ->
                     if (image != null) {
                         if (song.id == queueManager.getCurrentItem()?.song?.id) {
@@ -143,15 +145,16 @@ class PlaybackNotificationManager @Inject constructor(
     fun displayLoadingNotification(): Notification {
         Timber.v("displayLoadingNotification")
         createNotificationChannel()
-        val notification = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
-            .setContentTitle(context.getString(com.simplecityapps.core.R.string.loading))
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setContentIntent(PendingIntent.getActivity(context, 1, (context.applicationContext as ActivityIntentProvider).provideMainActivityIntent(), PendingIntentCompat.FLAG_IMMUTABLE))
-            .setSmallIcon(com.simplecityapps.playback.R.drawable.ic_stat_name)
-            .setNotificationSilent()
-            .setShowWhen(false)
-            .build()
+        val notification =
+            NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
+                .setContentTitle(context.getString(com.simplecityapps.core.R.string.loading))
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setContentIntent(PendingIntent.getActivity(context, 1, (context.applicationContext as ActivityIntentProvider).provideMainActivityIntent(), PendingIntentCompat.FLAG_IMMUTABLE))
+                .setSmallIcon(com.simplecityapps.playback.R.drawable.ic_stat_name)
+                .setNotificationSilent()
+                .setShowWhen(false)
+                .build()
 
         notificationManager.notify(NOTIFICATION_ID, notification)
         return notification
@@ -160,16 +163,17 @@ class PlaybackNotificationManager @Inject constructor(
     fun displayQueueEmptyNotification(): Notification {
         Timber.v("displayQueueEmptyNotification")
         createNotificationChannel()
-        val notification = NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
-            .setContentTitle(context.getString(com.simplecityapps.core.R.string.queue_empty))
-            .setContentText(context.getString(com.simplecityapps.core.R.string.widget_empty_text))
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setContentIntent(PendingIntent.getActivity(context, 1, (context.applicationContext as ActivityIntentProvider).provideMainActivityIntent(), PendingIntentCompat.FLAG_IMMUTABLE))
-            .setSmallIcon(R.drawable.ic_stat_name)
-            .setNotificationSilent()
-            .setShowWhen(false)
-            .build()
+        val notification =
+            NotificationCompat.Builder(context, NOTIFICATION_CHANNEL_ID)
+                .setContentTitle(context.getString(com.simplecityapps.core.R.string.queue_empty))
+                .setContentText(context.getString(com.simplecityapps.core.R.string.widget_empty_text))
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .setContentIntent(PendingIntent.getActivity(context, 1, (context.applicationContext as ActivityIntentProvider).provideMainActivityIntent(), PendingIntentCompat.FLAG_IMMUTABLE))
+                .setSmallIcon(R.drawable.ic_stat_name)
+                .setNotificationSilent()
+                .setShowWhen(false)
+                .build()
 
         notificationManager.notify(NOTIFICATION_ID, notification)
         return notification
@@ -181,9 +185,10 @@ class PlaybackNotificationManager @Inject constructor(
 
     private val playbackAction: NotificationCompat.Action
         get() {
-            val intent = Intent(context, PlaybackService::class.java).apply {
-                action = PlaybackService.ACTION_TOGGLE_PLAYBACK
-            }
+            val intent =
+                Intent(context, PlaybackService::class.java).apply {
+                    action = PlaybackService.ACTION_TOGGLE_PLAYBACK
+                }
             val pendingIntent = PendingIntent.getService(context, 1, intent, PendingIntentCompat.FLAG_IMMUTABLE)
 
             return when (playbackManager.getPlayback().playBackState()) {
@@ -199,18 +204,20 @@ class PlaybackNotificationManager @Inject constructor(
 
     private val prevAction: NotificationCompat.Action
         get() {
-            val intent = Intent(context, PlaybackService::class.java).apply {
-                action = PlaybackService.ACTION_SKIP_PREV
-            }
+            val intent =
+                Intent(context, PlaybackService::class.java).apply {
+                    action = PlaybackService.ACTION_SKIP_PREV
+                }
             val pendingIntent = PendingIntent.getService(context, 1, intent, PendingIntentCompat.FLAG_IMMUTABLE)
             return NotificationCompat.Action(R.drawable.ic_skip_previous_black_24dp, "Prev", pendingIntent)
         }
 
     private val nextAction: NotificationCompat.Action
         get() {
-            val intent = Intent(context, PlaybackService::class.java).apply {
-                action = PlaybackService.ACTION_SKIP_NEXT
-            }
+            val intent =
+                Intent(context, PlaybackService::class.java).apply {
+                    action = PlaybackService.ACTION_SKIP_NEXT
+                }
             val pendingIntent = PendingIntent.getService(context, 1, intent, PendingIntentCompat.FLAG_IMMUTABLE)
             return NotificationCompat.Action(R.drawable.ic_skip_next_black_24dp, "Prev", pendingIntent)
         }
@@ -254,7 +261,10 @@ class PlaybackNotificationManager @Inject constructor(
         }
     }
 
-    override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
+    override fun onQueuePositionChanged(
+        oldPosition: Int?,
+        newPosition: Int?
+    ) {
         if (queueManager.getQueue().isNotEmpty()) {
             displayPlaybackNotification()
         }
@@ -265,18 +275,18 @@ class PlaybackNotificationManager @Inject constructor(
         const val NOTIFICATION_ID = 1
 
         fun drawableToBitmap(drawable: Drawable): Bitmap {
-
             if (drawable is BitmapDrawable) {
                 if (drawable.bitmap != null) {
                     return drawable.bitmap
                 }
             }
 
-            val bitmap: Bitmap = if (drawable.intrinsicWidth <= 0 || drawable.intrinsicHeight <= 0) {
-                Bitmap.createBitmap(4, 4, Bitmap.Config.ARGB_8888)
-            } else {
-                Bitmap.createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
-            }
+            val bitmap: Bitmap =
+                if (drawable.intrinsicWidth <= 0 || drawable.intrinsicHeight <= 0) {
+                    Bitmap.createBitmap(4, 4, Bitmap.Config.ARGB_8888)
+                } else {
+                    Bitmap.createBitmap(drawable.intrinsicWidth, drawable.intrinsicHeight, Bitmap.Config.ARGB_8888)
+                }
 
             val canvas = Canvas(bitmap)
             drawable.setBounds(0, 0, canvas.width, canvas.height)

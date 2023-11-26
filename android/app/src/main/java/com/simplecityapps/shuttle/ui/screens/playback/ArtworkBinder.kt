@@ -16,7 +16,6 @@ class ArtworkBinder(
     val queueItem: QueueItem,
     val imageLoader: ArtworkImageLoader
 ) : ViewBinder {
-
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
         return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_artwork, parent, false))
     }
@@ -41,17 +40,20 @@ class ArtworkBinder(
     }
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<ArtworkBinder>(itemView) {
-
         val imageView: ImageView = itemView.findViewById(R.id.imageView)
 
-        override fun bind(viewBinder: ArtworkBinder, isPartial: Boolean) {
+        override fun bind(
+            viewBinder: ArtworkBinder,
+            isPartial: Boolean
+        ) {
             super.bind(viewBinder, isPartial)
 
             if (!isPartial) {
                 viewBinder.imageLoader.loadArtwork(
                     imageView = imageView,
                     data = viewBinder.queueItem.song,
-                    options = listOf(
+                    options =
+                    listOf(
                         ArtworkImageLoader.Options.RoundedCorners(16.dp),
                         ArtworkImageLoader.Options.Placeholder(ResourcesCompat.getDrawable(itemView.resources, com.simplecityapps.core.R.drawable.ic_placeholder_song, itemView.context.theme)!!)
                     )

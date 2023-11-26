@@ -17,7 +17,6 @@ import com.simplecityapps.shuttle.ui.screens.home.search.HeaderBinder
 import java.io.Serializable
 
 class MediaProviderOptionsFragment : DialogFragment() {
-
     interface Listener {
         fun onMediaProviderSelected(providerType: MediaProviderType)
     }
@@ -25,7 +24,6 @@ class MediaProviderOptionsFragment : DialogFragment() {
     // Lifecycle
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-
         val view = layoutInflater.inflate(R.layout.fragment_media_provider_options, null)
 
         val recyclerView: RecyclerView = view.findViewById(R.id.recyclerView)
@@ -67,19 +65,22 @@ class MediaProviderOptionsFragment : DialogFragment() {
 
     // Private
 
-    private val listener = object : MediaProviderBinder.Listener {
-        override fun onItemClicked(providerType: MediaProviderType) {
-            (parentFragment as? Listener)?.onMediaProviderSelected(providerType)
-            dismiss()
+    private val listener =
+        object : MediaProviderBinder.Listener {
+            override fun onItemClicked(providerType: MediaProviderType) {
+                (parentFragment as? Listener)?.onMediaProviderSelected(providerType)
+                dismiss()
+            }
         }
-    }
 
     // Static
 
     companion object {
         const val ARG_PROVIDER_TYPES = "provider_types"
-        fun newInstance(providerTypes: List<MediaProviderType>) = MediaProviderOptionsFragment().withArgs {
-            putSerializable(ARG_PROVIDER_TYPES, providerTypes as Serializable)
-        }
+
+        fun newInstance(providerTypes: List<MediaProviderType>) =
+            MediaProviderOptionsFragment().withArgs {
+                putSerializable(ARG_PROVIDER_TYPES, providerTypes as Serializable)
+            }
     }
 }

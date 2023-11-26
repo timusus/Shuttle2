@@ -11,7 +11,6 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 object SafDirectoryHelper {
-
     /**
      * Traverses the contents of [rootUri], building a [DocumentNodeTree] (Trie) representing the directory structure.
      *
@@ -38,7 +37,11 @@ object SafDirectoryHelper {
         }.flowOn(Dispatchers.IO)
     }
 
-    private suspend fun traverseDocumentNodes(parent: DocumentNodeTree, contentResolver: ContentResolver, rootUri: Uri) {
+    private suspend fun traverseDocumentNodes(
+        parent: DocumentNodeTree,
+        contentResolver: ContentResolver,
+        rootUri: Uri
+    ) {
         val documentNodes = retrieveDocumentNodes(contentResolver, DocumentsContract.buildChildDocumentsUriUsingTree(rootUri, parent.documentId), rootUri)
         for (documentNode in documentNodes) {
             when (documentNode) {
@@ -51,7 +54,7 @@ object SafDirectoryHelper {
                     }
 
                     if (arrayOf("mp3", "3gp", "mp4", "m4a", "m4b", "aac", "ts", "flac", "mid", "xmf", "mxmf", "midi", "rtttl", "rtx", "ota", "imy", "ogg", "mkv", "wav", "opus", "m3u", "m3u8")
-                        .contains(documentNode.ext)
+                            .contains(documentNode.ext)
                     ) {
                         // Add files with audio-related extensions
                         parent.addLeafNode(documentNode)
@@ -67,7 +70,11 @@ object SafDirectoryHelper {
      *
      * This involves a content resolver query, and should be called from a background thread.
      */
-    private suspend fun retrieveDocumentNodes(contentResolver: ContentResolver, uri: Uri, rootUri: Uri): List<DocumentNode> {
+    private suspend fun retrieveDocumentNodes(
+        contentResolver: ContentResolver,
+        uri: Uri,
+        rootUri: Uri
+    ): List<DocumentNode> {
         return withContext(Dispatchers.IO) {
             val documentNodes = mutableListOf<DocumentNode>()
             try {
@@ -118,6 +125,7 @@ object SafDirectoryHelper {
 
     sealed class TreeStatus(val tree: DocumentNodeTree) {
         class Progress(tree: DocumentNodeTree) : TreeStatus(tree)
+
         class Complete(tree: DocumentNodeTree) : TreeStatus(tree)
 
         override fun equals(other: Any?): Boolean {

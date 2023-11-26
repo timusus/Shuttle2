@@ -1,5 +1,10 @@
 package com.simplecityapps.shuttle.sorting
 
 enum class AlbumSortOrder {
-    Default, AlbumName, ArtistGroupKey, Year, PlayCount, RecentlyPlayed
+    Default,
+    AlbumName,
+    ArtistGroupKey,
+    Year,
+    PlayCount,
+    RecentlyPlayed
 }

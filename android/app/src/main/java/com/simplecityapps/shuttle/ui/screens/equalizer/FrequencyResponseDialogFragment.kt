@@ -30,17 +30,16 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.math.log10
 import kotlin.math.pow
 import kotlin.math.sqrt
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @AndroidEntryPoint
 class FrequencyResponseDialogFragment : DialogFragment() {
-
     private var lineChart: LineChart by autoCleared()
     private var loadingView: CircularLoadingView by autoCleared()
 
@@ -68,7 +67,6 @@ class FrequencyResponseDialogFragment : DialogFragment() {
 
     @SuppressLint("InflateParams")
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-
         val view = View.inflate(requireContext(), R.layout.fragment_frequency_response_dialog, null)
 
         lineChart = view.findViewById(R.id.lineChart)
@@ -91,7 +89,6 @@ class FrequencyResponseDialogFragment : DialogFragment() {
     }
 
     fun setData(data: Map<Float, Float>) {
-
         val entries = data.map { Entry(log10(it.key), it.value) }
 
         val dataset = LineDataSet(entries, getString(R.string.dsp_dialog_frequency_response_title))
@@ -110,11 +107,12 @@ class FrequencyResponseDialogFragment : DialogFragment() {
         lineChart.axisLeft.axisMinimum = -20f
         lineChart.axisLeft.axisMaximum = 20f
         lineChart.axisLeft.labelCount = 10
-        lineChart.axisLeft.valueFormatter = object : ValueFormatter() {
-            override fun getFormattedValue(value: Float): String {
-                return "%.1f".format(value) + "dB"
+        lineChart.axisLeft.valueFormatter =
+            object : ValueFormatter() {
+                override fun getFormattedValue(value: Float): String {
+                    return "%.1f".format(value) + "dB"
+                }
             }
-        }
         lineChart.axisRight.isEnabled = false
 
         lineChart.xAxis.textColor = textColor
@@ -123,16 +121,17 @@ class FrequencyResponseDialogFragment : DialogFragment() {
         lineChart.xAxis.position = XAxis.XAxisPosition.BOTTOM
         lineChart.xAxis.setDrawAxisLine(false)
         lineChart.xAxis.setLabelCount(8, true)
-        lineChart.xAxis.valueFormatter = object : ValueFormatter() {
-            override fun getFormattedValue(value: Float): String {
-                val unscaled = 10f.pow(value)
-                return if (unscaled >= 1000) {
-                    "%.0f".format(unscaled / 1000) + " kHz"
-                } else {
-                    "%.0f".format(unscaled) + " Hz"
+        lineChart.xAxis.valueFormatter =
+            object : ValueFormatter() {
+                override fun getFormattedValue(value: Float): String {
+                    val unscaled = 10f.pow(value)
+                    return if (unscaled >= 1000) {
+                        "%.0f".format(unscaled / 1000) + " kHz"
+                    } else {
+                        "%.0f".format(unscaled) + " Hz"
+                    }
                 }
             }
-        }
 
         lineChart.description.isEnabled = false
         lineChart.setScaleEnabled(true)
@@ -162,18 +161,19 @@ class FrequencyResponseDialogFragment : DialogFragment() {
             val gain = playbackPreferenceManager.preAmpGain
             val delta = gain.fromDb()
 
-            src = src.map { value ->
-                var newValue = value
+            src =
+                src.map { value ->
+                    var newValue = value
 
-                if (gain != 0.0) {
-                    newValue = MathUtils.clamp((newValue * delta), Short.MIN_VALUE.toDouble(), Short.MAX_VALUE.toDouble()).toFloat()
-                }
+                    if (gain != 0.0) {
+                        newValue = MathUtils.clamp((newValue * delta), Short.MIN_VALUE.toDouble(), Short.MAX_VALUE.toDouble()).toFloat()
+                    }
 
-                for (band in audioProcessor.bandProcessors) {
-                    newValue = band.processSample(newValue, 0)
-                }
-                newValue
-            }.toFloatArray()
+                    for (band in audioProcessor.bandProcessors) {
+                        newValue = band.processSample(newValue, 0)
+                    }
+                    newValue
+                }.toFloatArray()
 
             val dst = FloatArray(size + 2)
 

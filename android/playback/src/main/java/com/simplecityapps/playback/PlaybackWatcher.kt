@@ -4,8 +4,11 @@ import com.simplecityapps.shuttle.model.Song
 import timber.log.Timber
 
 interface PlaybackWatcherCallback {
-
-    fun onProgressChanged(position: Int, duration: Int, fromUser: Boolean) {
+    fun onProgressChanged(
+        position: Int,
+        duration: Int,
+        fromUser: Boolean
+    ) {
     }
 
     fun onPlaybackStateChanged(playbackState: PlaybackState) {
@@ -16,7 +19,6 @@ interface PlaybackWatcherCallback {
 }
 
 class PlaybackWatcher : PlaybackWatcherCallback {
-
     private var callbacks: MutableSet<PlaybackWatcherCallback> = mutableSetOf()
 
     fun addCallback(callback: PlaybackWatcherCallback) {
@@ -29,7 +31,11 @@ class PlaybackWatcher : PlaybackWatcherCallback {
 
     // PlaybackWatcherCallback Implementation
 
-    override fun onProgressChanged(position: Int, duration: Int, fromUser: Boolean) {
+    override fun onProgressChanged(
+        position: Int,
+        duration: Int,
+        fromUser: Boolean
+    ) {
         callbacks.forEach { callback -> callback.onProgressChanged(position, duration, fromUser) }
     }
 

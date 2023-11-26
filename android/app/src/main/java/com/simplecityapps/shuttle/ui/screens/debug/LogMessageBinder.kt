@@ -13,7 +13,6 @@ import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 class LogMessageBinder(
     val logMessage: LogMessage
 ) : ViewBinder {
-
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
         return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_debug_log, parent, false))
     }
@@ -38,12 +37,14 @@ class LogMessageBinder(
     }
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<LogMessageBinder>(itemView) {
-
         private val timestampTextView: TextView = itemView.findViewById(R.id.timestampTextView)
         private val tagTextView: TextView = itemView.findViewById(R.id.tagTextView)
         private val messageTextViewBinder: TextView = itemView.findViewById(R.id.messageTextView)
 
-        override fun bind(viewBinder: LogMessageBinder, isPartial: Boolean) {
+        override fun bind(
+            viewBinder: LogMessageBinder,
+            isPartial: Boolean
+        ) {
             super.bind(viewBinder, isPartial)
 
             timestampTextView.text = LogMessage.dateFormat.format(viewBinder.logMessage.date)

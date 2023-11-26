@@ -33,7 +33,6 @@ class SearchAlbumBinder(
     private val jaroSimilarity: AlbumJaroSimilarity
 ) : AlbumBinder(album, imageLoader, listener),
     SectionViewBinder {
-
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
         return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_album, parent, false))
     }
@@ -49,7 +48,6 @@ class SearchAlbumBinder(
     }
 
     class ViewHolder(itemView: View) : AlbumBinder.ViewHolder(itemView) {
-
         private val title: TextView = itemView.findViewById(R.id.title)
         private val subtitle: TextView = itemView.findViewById(R.id.subtitle)
         override val imageView: ImageView = itemView.findViewById(R.id.imageView)
@@ -71,27 +69,34 @@ class SearchAlbumBinder(
             viewBinder?.listener?.onViewHolderCreated(this)
         }
 
-        override fun bind(viewBinder: AlbumBinder, isPartial: Boolean) {
+        override fun bind(
+            viewBinder: AlbumBinder,
+            isPartial: Boolean
+        ) {
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.album.name ?: itemView.resources.getString(com.simplecityapps.core.R.string.unknown)
-            val songQuantity = Phrase.fromPlural(itemView.context, R.plurals.songsPlural, viewBinder.album.songCount)
-                .put("count", viewBinder.album.songCount)
-                .format()
-            subtitle.text = ListPhrase
-                .from(" • ")
-                .joinSafely(
-                    items = listOf(
-                        viewBinder.album.albumArtist ?: viewBinder.album.friendlyArtistName,
-                        songQuantity
-                    ),
-                    defaultValue = itemView.resources.getString(com.simplecityapps.core.R.string.unknown)
-                )
+            val songQuantity =
+                Phrase.fromPlural(itemView.context, R.plurals.songsPlural, viewBinder.album.songCount)
+                    .put("count", viewBinder.album.songCount)
+                    .format()
+            subtitle.text =
+                ListPhrase
+                    .from(" • ")
+                    .joinSafely(
+                        items =
+                        listOf(
+                            viewBinder.album.albumArtist ?: viewBinder.album.friendlyArtistName,
+                            songQuantity
+                        ),
+                        defaultValue = itemView.resources.getString(com.simplecityapps.core.R.string.unknown)
+                    )
 
             viewBinder.imageLoader.loadArtwork(
                 imageView = imageView,
                 data = viewBinder.album,
-                options = listOf(
+                options =
+                listOf(
                     ArtworkImageLoader.Options.RoundedCorners(8.dp),
                     ArtworkImageLoader.Options.Crossfade(200),
                     ArtworkImageLoader.Options.Placeholder(ResourcesCompat.getDrawable(itemView.resources, com.simplecityapps.core.R.drawable.ic_placeholder_album_rounded, itemView.context.theme)!!),
@@ -106,7 +111,10 @@ class SearchAlbumBinder(
             highlightMatchedStrings(viewBinder as SearchAlbumBinder, songQuantity)
         }
 
-        private fun highlightMatchedStrings(viewBinder: SearchAlbumBinder, songQuantity: CharSequence) {
+        private fun highlightMatchedStrings(
+            viewBinder: SearchAlbumBinder,
+            songQuantity: CharSequence
+        ) {
             viewBinder.album.name?.let {
                 if (viewBinder.jaroSimilarity.nameJaroSimilarity.score >= StringComparison.threshold) {
                     val nameStringBuilder = SpannableStringBuilder(viewBinder.album.name)
@@ -142,10 +150,11 @@ class SearchAlbumBinder(
                             // This is possible because the jaro similarity function does string normalisation, so we're not necessarily using the exact same string
                         }
                     }
-                    subtitle.text = listOf(
-                        artistNameStringBuilder,
-                        songQuantity
-                    ).joinToSpannedString(" • ")
+                    subtitle.text =
+                        listOf(
+                            artistNameStringBuilder,
+                            songQuantity
+                        ).joinToSpannedString(" • ")
                 }
             }
         }

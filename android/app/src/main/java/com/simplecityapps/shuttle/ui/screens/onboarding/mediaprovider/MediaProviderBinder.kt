@@ -22,10 +22,13 @@ class MediaProviderBinder(
     val showRemoveButton: Boolean,
     val showSubtitle: Boolean
 ) : ViewBinder {
-
     interface Listener {
         fun onItemClicked(providerType: MediaProviderType) {}
-        fun onOverflowClicked(view: View, providerType: MediaProviderType) {}
+
+        fun onOverflowClicked(
+            view: View,
+            providerType: MediaProviderType
+        ) {}
     }
 
     override fun createViewHolder(parent: ViewGroup): ViewBinder.ViewHolder<out ViewBinder> {
@@ -52,7 +55,6 @@ class MediaProviderBinder(
     }
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<MediaProviderBinder>(itemView) {
-
         val icon: ImageView = itemView.findViewById(R.id.icon)
         val title: TextView = itemView.findViewById(R.id.title)
         val subtitle: TextView = itemView.findViewById(R.id.subtitle)
@@ -67,7 +69,10 @@ class MediaProviderBinder(
             }
         }
 
-        override fun bind(viewBinder: MediaProviderBinder, isPartial: Boolean) {
+        override fun bind(
+            viewBinder: MediaProviderBinder,
+            isPartial: Boolean
+        ) {
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.providerType.title(itemView.context)

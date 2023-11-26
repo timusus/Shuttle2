@@ -5,10 +5,13 @@ import androidx.core.view.isVisible
 import timber.log.Timber
 
 class ContextualToolbarHelper<T> {
-
     interface Callback<T> {
         fun onCountChanged(count: Int)
-        fun onItemUpdated(item: T, isSelected: Boolean)
+
+        fun onItemUpdated(
+            item: T,
+            isSelected: Boolean
+        )
     }
 
     var isActive = false

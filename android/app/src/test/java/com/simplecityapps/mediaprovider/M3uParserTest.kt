@@ -4,7 +4,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class M3uParserTest {
-
     private val m3uParser = M3uParser()
 
     @Test

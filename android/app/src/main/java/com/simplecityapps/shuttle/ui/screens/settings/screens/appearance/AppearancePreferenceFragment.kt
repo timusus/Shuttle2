@@ -26,7 +26,6 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class AppearancePreferenceFragment : Fragment() {
-
     @Inject
     lateinit var preferenceManager: GeneralPreferenceManager
 
@@ -57,11 +56,18 @@ class AppearancePreferenceFragment : Fragment() {
 
     private var recyclerViewState: Parcelable? = null
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return inflater.inflate(R.layout.fragment_preferences_appearance, container, false)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
         super.onViewCreated(view, savedInstanceState)
 
         libraryTabs = preferenceManager.allLibraryTabs.toMutableList()
@@ -99,12 +105,13 @@ class AppearancePreferenceFragment : Fragment() {
             button.setOnClickListener { v ->
                 themeButtons.forEach { button -> button.isActivated = button == v }
 
-                val newTheme: GeneralPreferenceManager.Theme = when (v) {
-                    themeButtonLight -> GeneralPreferenceManager.Theme.Light
-                    themeButtonDark -> GeneralPreferenceManager.Theme.Dark
-                    themeButtonSystem -> GeneralPreferenceManager.Theme.DayNight
-                    else -> throw IllegalStateException("Invalid theme choice")
-                }
+                val newTheme: GeneralPreferenceManager.Theme =
+                    when (v) {
+                        themeButtonLight -> GeneralPreferenceManager.Theme.Light
+                        themeButtonDark -> GeneralPreferenceManager.Theme.Dark
+                        themeButtonSystem -> GeneralPreferenceManager.Theme.DayNight
+                        else -> throw IllegalStateException("Invalid theme choice")
+                    }
 
                 if (newTheme != preferenceManager.themeBase) {
                     preferenceManager.themeBase = newTheme
@@ -145,15 +152,16 @@ class AppearancePreferenceFragment : Fragment() {
             it.setOnClickListener { v ->
                 accentButtons.forEach { button -> button.isActivated = button == v }
 
-                val newAccent: GeneralPreferenceManager.Accent = when (v) {
-                    accentButtonBlue -> GeneralPreferenceManager.Accent.Default
-                    accentButtonRed -> GeneralPreferenceManager.Accent.Orange
-                    accentButtonCyan -> GeneralPreferenceManager.Accent.Cyan
-                    accentButtonPurple -> GeneralPreferenceManager.Accent.Purple
-                    accentButtonGreen -> GeneralPreferenceManager.Accent.Green
-                    accentButtonOrange -> GeneralPreferenceManager.Accent.Amber
-                    else -> throw IllegalStateException("Invalid accent choice")
-                }
+                val newAccent: GeneralPreferenceManager.Accent =
+                    when (v) {
+                        accentButtonBlue -> GeneralPreferenceManager.Accent.Default
+                        accentButtonRed -> GeneralPreferenceManager.Accent.Orange
+                        accentButtonCyan -> GeneralPreferenceManager.Accent.Cyan
+                        accentButtonPurple -> GeneralPreferenceManager.Accent.Purple
+                        accentButtonGreen -> GeneralPreferenceManager.Accent.Green
+                        accentButtonOrange -> GeneralPreferenceManager.Accent.Amber
+                        else -> throw IllegalStateException("Invalid accent choice")
+                    }
 
                 if (newAccent != preferenceManager.themeAccent) {
                     preferenceManager.themeAccent = newAccent
@@ -164,10 +172,11 @@ class AppearancePreferenceFragment : Fragment() {
 
         tabsRecyclerView = view.findViewById(R.id.tabsRecyclerView)
         itemTouchHelper.attachToRecyclerView(tabsRecyclerView)
-        recyclerAdapter = RecyclerAdapter(
-            scope = viewLifecycleOwner.lifecycle.coroutineScope,
-            skipIntermediateUpdates = false
-        )
+        recyclerAdapter =
+            RecyclerAdapter(
+                scope = viewLifecycleOwner.lifecycle.coroutineScope,
+                skipIntermediateUpdates = false
+            )
         tabsRecyclerView.adapter = recyclerAdapter
 
         savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
@@ -196,30 +205,42 @@ class AppearancePreferenceFragment : Fragment() {
 
     // Private
 
-    private val listener = object : LibraryTabBinder.Listener {
-        override fun onStartDrag(viewHolder: LibraryTabBinder.ViewHolder) {
-            itemTouchHelper.startDrag(viewHolder)
-        }
-
-        override fun onChecked(tab: LibraryTab, isChecked: Boolean) {
-            val tabs = preferenceManager.enabledLibraryTabs.toMutableSet()
-            if (isChecked) {
-                tabs.add(tab)
-            } else {
-                tabs.remove(tab)
+    private val listener =
+        object : LibraryTabBinder.Listener {
+            override fun onStartDrag(viewHolder: LibraryTabBinder.ViewHolder) {
+                itemTouchHelper.startDrag(viewHolder)
             }
-            preferenceManager.enabledLibraryTabs = tabs.toList()
 
-            recyclerAdapter.update(libraryTabs.map { LibraryTabBinder(it, preferenceManager.enabledLibraryTabs.contains(it), this) })
-        }
-    }
+            override fun onChecked(
+                tab: LibraryTab,
+                isChecked: Boolean
+            ) {
+                val tabs = preferenceManager.enabledLibraryTabs.toMutableSet()
+                if (isChecked) {
+                    tabs.add(tab)
+                } else {
+                    tabs.remove(tab)
+                }
+                preferenceManager.enabledLibraryTabs = tabs.toList()
 
-    private val itemTouchHelper = object : ItemTouchHelper(object : ItemTouchHelperCallback(object : OnItemMoveListener {
-        override fun onItemMoved(from: Int, to: Int) {
-            libraryTabs.add(to, libraryTabs.removeAt(from))
-            preferenceManager.allLibraryTabs = libraryTabs
+                recyclerAdapter.update(libraryTabs.map { LibraryTabBinder(it, preferenceManager.enabledLibraryTabs.contains(it), this) })
+            }
         }
-    }) {}) {}
+
+    private val itemTouchHelper =
+        object : ItemTouchHelper(
+            object : ItemTouchHelperCallback(
+                object : OnItemMoveListener {
+                    override fun onItemMoved(
+                        from: Int,
+                        to: Int
+                    ) {
+                        libraryTabs.add(to, libraryTabs.removeAt(from))
+                        preferenceManager.allLibraryTabs = libraryTabs
+                    }
+                }
+            ) {}
+        ) {}
 
     private fun setTheme() {
         themeManager.setDayNightMode()

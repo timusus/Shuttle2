@@ -17,12 +17,13 @@ import androidx.core.content.ContextCompat
 import androidx.core.content.res.use
 import com.simplecityapps.shuttle.R
 
-class HomeButton @JvmOverloads constructor(
+class HomeButton
+@JvmOverloads
+constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : LinearLayout(context, attrs, defStyleAttr) {
-
     private val image: ImageView
     private val label: TextView
 
@@ -58,7 +59,9 @@ class HomeButton @JvmOverloads constructor(
         image.imageTintList = ColorStateList.valueOf(ContextCompat.getColor(context, type.data.foregroundColor))
     }
 
-    private fun getColor(@AttrRes res: Int): Int {
+    private fun getColor(
+        @AttrRes res: Int
+    ): Int {
         with(TypedValue()) {
             context.theme.resolveAttribute(res, this, true)
             return ContextCompat.getColor(context, resourceId)
@@ -66,7 +69,11 @@ class HomeButton @JvmOverloads constructor(
     }
 
     enum class ButtonType(val value: Int) {
-        History(0), Recent(1), Favorites(2), Shuffle(3);
+        History(0),
+        Recent(1),
+        Favorites(2),
+        Shuffle(3)
+        ;
 
         data class Data(
             @DrawableRes val image: Int,

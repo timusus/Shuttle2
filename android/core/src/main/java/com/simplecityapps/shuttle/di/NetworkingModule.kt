@@ -8,18 +8,17 @@ import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
-import timber.log.Timber
 import java.net.InetSocketAddress
 import java.net.Proxy
 import java.util.*
 import javax.inject.Singleton
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
+import timber.log.Timber
 
 @InstallIn(SingletonComponent::class)
 @Module
 open class NetworkingModule {
-
     @Singleton
     @Provides
     fun provideLoggingInterceptor(): HttpLoggingInterceptor {

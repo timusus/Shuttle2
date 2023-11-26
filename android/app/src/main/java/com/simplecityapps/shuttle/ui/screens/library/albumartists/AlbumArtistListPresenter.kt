@@ -13,47 +13,68 @@ import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.simplecityapps.shuttle.ui.screens.library.ViewMode
 import com.simplecityapps.shuttle.ui.screens.library.toViewMode
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 interface AlbumArtistListContract {
-
     sealed class LoadingState {
         object Scanning : LoadingState()
+
         object Loading : LoadingState()
+
         object Empty : LoadingState()
+
         object None : LoadingState()
     }
 
     interface View {
-        fun setAlbumArtists(albumArtists: List<com.simplecityapps.shuttle.model.AlbumArtist>, viewMode: ViewMode)
+        fun setAlbumArtists(
+            albumArtists: List<com.simplecityapps.shuttle.model.AlbumArtist>,
+            viewMode: ViewMode
+        )
+
         fun onAddedToQueue(albumArtists: List<com.simplecityapps.shuttle.model.AlbumArtist>)
+
         fun setLoadingState(state: LoadingState)
+
         fun setLoadingProgress(progress: Progress?)
+
         fun showLoadError(error: Error)
+
         fun showTagEditor(songs: List<com.simplecityapps.shuttle.model.Song>)
+
         fun setViewMode(viewMode: ViewMode)
+
         fun updateToolbarMenuViewMode(viewMode: ViewMode)
     }
 
     interface Presenter {
         fun loadAlbumArtists()
+
         fun addToQueue(albumArtists: List<com.simplecityapps.shuttle.model.AlbumArtist>)
+
         fun playNext(albumArtist: com.simplecityapps.shuttle.model.AlbumArtist)
+
         fun exclude(albumArtist: com.simplecityapps.shuttle.model.AlbumArtist)
+
         fun editTags(albumArtists: List<com.simplecityapps.shuttle.model.AlbumArtist>)
+
         fun play(albumArtist: com.simplecityapps.shuttle.model.AlbumArtist)
+
         fun setViewMode(viewMode: ViewMode)
+
         fun updateToolbarMenu()
     }
 }
 
-class AlbumArtistListPresenter @Inject constructor(
+class AlbumArtistListPresenter
+@Inject
+constructor(
     private val albumArtistRepository: AlbumArtistRepository,
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackManager,
@@ -62,14 +83,18 @@ class AlbumArtistListPresenter @Inject constructor(
     private val queueManager: QueueManager
 ) : AlbumArtistListContract.Presenter,
     BasePresenter<AlbumArtistListContract.View>() {
-
     private var albumArtists: List<com.simplecityapps.shuttle.model.AlbumArtist> = emptyList()
 
-    private val mediaImporterListener = object : MediaImporter.Listener {
-        override fun onSongImportProgress(providerType: MediaProviderType, message: String, progress: Progress?) {
-            view?.setLoadingProgress(progress)
+    private val mediaImporterListener =
+        object : MediaImporter.Listener {
+            override fun onSongImportProgress(
+                providerType: MediaProviderType,
+                message: String,
+                progress: Progress?
+            ) {
+                view?.setLoadingProgress(progress)
+            }
         }
-    }
 
     override fun bindView(view: AlbumArtistListContract.View) {
         super.bindView(view)
@@ -117,10 +142,11 @@ class AlbumArtistListPresenter @Inject constructor(
 
     override fun addToQueue(albumArtists: List<com.simplecityapps.shuttle.model.AlbumArtist>) {
         launch {
-            val songs = songRepository
-                .getSongs(SongQuery.ArtistGroupKeys(albumArtists.map { albumArtist -> SongQuery.ArtistGroupKey(key = albumArtist.groupKey) }))
-                .firstOrNull()
-                .orEmpty()
+            val songs =
+                songRepository
+                    .getSongs(SongQuery.ArtistGroupKeys(albumArtists.map { albumArtist -> SongQuery.ArtistGroupKey(key = albumArtist.groupKey) }))
+                    .firstOrNull()
+                    .orEmpty()
             playbackManager.addToQueue(songs)
             view?.onAddedToQueue(albumArtists)
         }
@@ -128,10 +154,11 @@ class AlbumArtistListPresenter @Inject constructor(
 
     override fun playNext(albumArtist: com.simplecityapps.shuttle.model.AlbumArtist) {
         launch {
-            val songs = songRepository
-                .getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = albumArtist.groupKey))))
-                .firstOrNull()
-                .orEmpty()
+            val songs =
+                songRepository
+                    .getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = albumArtist.groupKey))))
+                    .firstOrNull()
+                    .orEmpty()
             playbackManager.playNext(songs)
             view?.onAddedToQueue(listOf(albumArtist))
         }
@@ -145,10 +172,11 @@ class AlbumArtistListPresenter @Inject constructor(
 
     override fun exclude(albumArtist: com.simplecityapps.shuttle.model.AlbumArtist) {
         launch {
-            val songs = songRepository
-                .getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = albumArtist.groupKey))))
-                .firstOrNull()
-                .orEmpty()
+            val songs =
+                songRepository
+                    .getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = albumArtist.groupKey))))
+                    .firstOrNull()
+                    .orEmpty()
             songRepository.setExcluded(songs, true)
         }
     }
@@ -162,10 +190,11 @@ class AlbumArtistListPresenter @Inject constructor(
 
     override fun play(albumArtist: com.simplecityapps.shuttle.model.AlbumArtist) {
         launch {
-            val songs = songRepository
-                .getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = albumArtist.groupKey))))
-                .firstOrNull()
-                .orEmpty()
+            val songs =
+                songRepository
+                    .getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = albumArtist.groupKey))))
+                    .firstOrNull()
+                    .orEmpty()
             if (queueManager.setQueue(songs)) {
                 playbackManager.load { result ->
                     result.onSuccess { playbackManager.play() }

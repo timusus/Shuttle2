@@ -11,7 +11,7 @@ interface UserService {
     @Headers(
         "Accept: application/json",
         "Content-Type: application/json",
-        "X-Plex-Client-Identifier: Shuttle Music Player",
+        "X-Plex-Client-Identifier: Shuttle Music Player"
     )
     suspend fun authenticateImpl(
         @Url url: String,

@@ -8,7 +8,6 @@ import androidx.annotation.WorkerThread
 import au.com.simplecityapps.shuttle.imageloading.palette.ColorSet
 
 interface ArtworkImageLoader {
-
     fun loadArtwork(
         imageView: ImageView,
         data: Any,
@@ -46,6 +45,7 @@ interface ArtworkImageLoader {
         class Crossfade(val duration: Int) : Options()
 
         class Placeholder(val placeholderRes: Drawable) : Options()
+
         class Error(val errorRes: Drawable) : Options()
 
         object CircleCrop : Options()
@@ -54,8 +54,11 @@ interface ArtworkImageLoader {
 
         sealed class Priority : Options() {
             object Low : Options.Priority()
+
             object Default : Options.Priority()
+
             object High : Options.Priority()
+
             object Max : Options.Priority()
         }
 

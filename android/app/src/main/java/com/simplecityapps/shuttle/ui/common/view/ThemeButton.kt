@@ -11,12 +11,13 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.core.content.res.use
 import com.simplecityapps.shuttle.R
 
-class ThemeButton @JvmOverloads constructor(
+class ThemeButton
+@JvmOverloads
+constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : LinearLayoutCompat(context, attrs, defStyleAttr) {
-
     private val image: ImageView
     private val label: TextView
 

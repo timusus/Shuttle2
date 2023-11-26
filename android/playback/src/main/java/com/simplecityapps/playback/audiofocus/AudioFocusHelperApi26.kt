@@ -10,18 +10,18 @@ import com.simplecityapps.playback.PlaybackWatcher
 
 @TargetApi(Build.VERSION_CODES.O)
 class AudioFocusHelperApi26(context: Context, playbackWatcher: PlaybackWatcher) : AudioFocusHelperBase(context, playbackWatcher) {
-
-    private val focusRequest: AudioFocusRequest = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
-        .setAudioAttributes(
-            AudioAttributes.Builder().run {
-                setUsage(AudioAttributes.USAGE_MEDIA)
-                setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                build()
-            }
-        )
-        .setAcceptsDelayedFocusGain(true)
-        .setOnAudioFocusChangeListener(this)
-        .build()
+    private val focusRequest: AudioFocusRequest =
+        AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
+            .setAudioAttributes(
+                AudioAttributes.Builder().run {
+                    setUsage(AudioAttributes.USAGE_MEDIA)
+                    setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    build()
+                }
+            )
+            .setAcceptsDelayedFocusGain(true)
+            .setOnAudioFocusChangeListener(this)
+            .build()
 
     override fun requestAudioFocus(): Boolean {
         if (!enabled) return true

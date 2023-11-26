@@ -9,7 +9,6 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 
 class SleepTimerBinder(val duration: SleepTimerDuration, val listener: Listener) : ViewBinder {
-
     interface Listener {
         fun onClick(duration: SleepTimerDuration)
     }
@@ -23,7 +22,6 @@ class SleepTimerBinder(val duration: SleepTimerDuration, val listener: Listener)
     }
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<SleepTimerBinder>(itemView) {
-
         val label: TextView = itemView.findViewById(R.id.label)
 
         init {
@@ -32,7 +30,10 @@ class SleepTimerBinder(val duration: SleepTimerDuration, val listener: Listener)
             }
         }
 
-        override fun bind(viewBinder: SleepTimerBinder, isPartial: Boolean) {
+        override fun bind(
+            viewBinder: SleepTimerBinder,
+            isPartial: Boolean
+        ) {
             super.bind(viewBinder, isPartial)
 
             label.setText(viewBinder.duration.nameResId)

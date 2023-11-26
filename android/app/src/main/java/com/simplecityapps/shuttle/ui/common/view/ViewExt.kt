@@ -38,7 +38,10 @@ fun View.increaseTouchableArea(amount: Int) {
     }
 }
 
-fun View.fadeIn(duration: Long = 250, delay: Long = 0): ValueAnimator? {
+fun View.fadeIn(
+    duration: Long = 250,
+    delay: Long = 0
+): ValueAnimator? {
     if (isVisible && alpha == 1f) return null
 
     val animator = ObjectAnimator.ofFloat(this, View.ALPHA, alpha, 1f)
@@ -53,7 +56,11 @@ fun View.fadeIn(duration: Long = 250, delay: Long = 0): ValueAnimator? {
     return animator
 }
 
-fun View.fadeOut(duration: Long = 250, delay: Long = 0, completion: (() -> Unit)? = null): ValueAnimator? {
+fun View.fadeOut(
+    duration: Long = 250,
+    delay: Long = 0,
+    completion: (() -> Unit)? = null
+): ValueAnimator? {
     if (!isVisible) {
         completion?.invoke()
         return null

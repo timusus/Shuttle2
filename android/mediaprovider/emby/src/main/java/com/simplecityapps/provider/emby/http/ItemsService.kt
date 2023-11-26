@@ -1,10 +1,13 @@
 package com.simplecityapps.provider.emby.http
 
 import com.simplecityapps.networking.retrofit.NetworkResult
-import retrofit2.http.*
+import retrofit2.http.GET
+import retrofit2.http.Header
+import retrofit2.http.Headers
+import retrofit2.http.Query
+import retrofit2.http.Url
 
 interface ItemsService {
-
     @GET
     @Headers(
         "Accept: application/json",
@@ -28,7 +31,7 @@ interface ItemsService {
     )
     suspend fun itemImpl(
         @Url url: String,
-        @Header("X-Emby-Token") token: String,
+        @Header("X-Emby-Token") token: String
     ): NetworkResult<Item>
 }
 

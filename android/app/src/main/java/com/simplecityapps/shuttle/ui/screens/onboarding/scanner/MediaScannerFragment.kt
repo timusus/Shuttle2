@@ -25,8 +25,11 @@ import javax.inject.Inject
 
 sealed class ImportProgressState {
     object Unknown : ImportProgressState()
+
     data class InProgress(val progress: Progress?, val message: String) : ImportProgressState()
+
     object Complete : ImportProgressState()
+
     data class Failed(val message: String?) : ImportProgressState()
 }
 
@@ -35,7 +38,6 @@ class MediaScannerFragment :
     Fragment(),
     ScannerContract.View,
     OnboardingChild {
-
     private var toolbar: Toolbar by autoCleared()
     private var rescanButton: Button by autoCleared()
     private var recyclerView: RecyclerView by autoCleared()
@@ -66,11 +68,18 @@ class MediaScannerFragment :
         shouldShowToolbar = requireArguments().getBoolean(ARG_SHOW_TOOLBAR)
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return inflater.inflate(R.layout.fragment_scanner, container, false)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
         super.onViewCreated(view, savedInstanceState)
 
         presenter = presenterFactory.create(shouldDismissOnScanComplete)
@@ -132,7 +141,11 @@ class MediaScannerFragment :
         rescanButton.isVisible = false
     }
 
-    override fun setSongImportProgress(providerType: MediaProviderType, progress: Progress?, message: String) {
+    override fun setSongImportProgress(
+        providerType: MediaProviderType,
+        progress: Progress?,
+        message: String
+    ) {
         songImportProgress[providerType] = ImportProgressState.InProgress(progress, message)
         updateImportProgress()
     }
@@ -142,12 +155,19 @@ class MediaScannerFragment :
         updateImportProgress()
     }
 
-    override fun setSongImportFailed(providerType: MediaProviderType, message: String?) {
+    override fun setSongImportFailed(
+        providerType: MediaProviderType,
+        message: String?
+    ) {
         songImportProgress[providerType] = ImportProgressState.Failed(message)
         updateImportProgress()
     }
 
-    override fun setPlaylistImportProgress(providerType: MediaProviderType, progress: Progress?, message: String) {
+    override fun setPlaylistImportProgress(
+        providerType: MediaProviderType,
+        progress: Progress?,
+        message: String
+    ) {
         playlistImportProgress[providerType] = ImportProgressState.InProgress(progress, message)
         updateImportProgress()
     }
@@ -157,7 +177,10 @@ class MediaScannerFragment :
         updateImportProgress()
     }
 
-    override fun setPlaylistImportFailed(providerType: MediaProviderType, message: String?) {
+    override fun setPlaylistImportFailed(
+        providerType: MediaProviderType,
+        message: String?
+    ) {
         playlistImportProgress[providerType] = ImportProgressState.Failed(message)
         updateImportProgress()
     }
@@ -189,17 +212,22 @@ class MediaScannerFragment :
     // Static
 
     companion object {
-
         private const val ARG_SCAN_AUTOMATICALLY = "scan_automatically"
         private const val ARG_SHOW_RESCAN_BUTTON = "show_rescan_button"
         private const val ARG_DISMISS_ON_SCAN_COMPLETE = "dismiss_on_complete"
         private const val ARG_SHOW_TOOLBAR = "show_toolbar"
 
-        fun newInstance(scanAutomatically: Boolean, showRescanButton: Boolean, dismissOnScanComplete: Boolean, showToolbar: Boolean) = MediaScannerFragment().withArgs {
-            putBoolean(ARG_SCAN_AUTOMATICALLY, scanAutomatically)
-            putBoolean(ARG_SHOW_RESCAN_BUTTON, showRescanButton)
-            putBoolean(ARG_DISMISS_ON_SCAN_COMPLETE, dismissOnScanComplete)
-            putBoolean(ARG_SHOW_TOOLBAR, showToolbar)
-        }
+        fun newInstance(
+            scanAutomatically: Boolean,
+            showRescanButton: Boolean,
+            dismissOnScanComplete: Boolean,
+            showToolbar: Boolean
+        ) =
+            MediaScannerFragment().withArgs {
+                putBoolean(ARG_SCAN_AUTOMATICALLY, scanAutomatically)
+                putBoolean(ARG_SHOW_RESCAN_BUTTON, showRescanButton)
+                putBoolean(ARG_DISMISS_ON_SCAN_COMPLETE, dismissOnScanComplete)
+                putBoolean(ARG_SHOW_TOOLBAR, showToolbar)
+            }
     }
 }

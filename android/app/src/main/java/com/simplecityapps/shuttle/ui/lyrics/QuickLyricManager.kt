@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import android.net.Uri
 
 object QuickLyricManager {
-
     fun isQuickLyricInstalled(context: Context): Boolean {
         return try {
             context.packageManager.getPackageInfo("com.geecko.QuickLyric", PackageManager.GET_ACTIVITIES)
@@ -16,7 +15,10 @@ object QuickLyricManager {
         }
     }
 
-    fun buildLyricsIntent(artistName: String, songName: String): Intent {
+    fun buildLyricsIntent(
+        artistName: String,
+        songName: String
+    ): Intent {
         return Intent("com.geecko.QuickLyric.getLyrics").apply {
             putExtra("TAGS", arrayOf(artistName, songName))
         }

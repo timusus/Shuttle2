@@ -11,11 +11,11 @@ import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.model.Song
+import kotlin.math.max
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import kotlin.math.max
 
 class PlaybackManager(
     private val queueManager: QueueManager,
@@ -30,7 +30,6 @@ class PlaybackManager(
 ) : Playback.Callback,
     AudioFocusHelper.Listener,
     QueueChangeCallback {
-
     private var progressHandler: ProgressHandler = ProgressHandler()
 
     private var playback: Playback = exoplayerPlayback
@@ -67,7 +66,10 @@ class PlaybackManager(
      * Loads the current queue. The boolean in [Result] indicates whether the current queue item successfully loaded.
      * Note: If the current queue item fails to load, the next item in the queue is attempted
      */
-    fun load(seekPosition: Int? = null, completion: (Result<Boolean>) -> Unit) {
+    fun load(
+        seekPosition: Int? = null,
+        completion: (Result<Boolean>) -> Unit
+    ) {
         Timber.v("load(seekPosition: $seekPosition)")
         // Some players (ExoPlayer/ChromeCast) like to be loaded on the main thread
         queueManager.getCurrentItem()?.let { currentQueueItem ->
@@ -80,38 +82,48 @@ class PlaybackManager(
         } ?: Timber.e("Load failed - no current queue item")
     }
 
-    private fun attemptLoad(current: Song, next: Song?, seekPosition: Int, attempt: Int = 1, completion: (Result<Boolean>) -> Unit) {
+    private fun attemptLoad(
+        current: Song,
+        next: Song?,
+        seekPosition: Int,
+        attempt: Int = 1,
+        completion: (Result<Boolean>) -> Unit
+    ) {
         Timber.v("attemptLoad(current song: ${current.name}, seekPosition: $seekPosition, attempt: $attempt)")
 
         loadJob?.cancel()
-        loadJob = appCoroutineScope.launch {
-            playback.load(current, next, seekPosition) { result ->
-                result.onSuccess {
-                    playback.setReplayGain(trackGain = current.replayGainTrack, albumGain = current.replayGainAlbum)
-                    completion(Result.success(attempt == 1))
-                }
-                result.onFailure { error ->
-                    // Attempt to load the next item in the queue. If there is no next item, or we're on repeat, or we've made 15 previous attempts, call completion(error).
-                    if (queueManager.getCurrentPosition() != queueManager.getSize() - 1 && attempt < 15) {
-                        queueManager.getNext()?.let { nextQueueItem ->
-                            if (nextQueueItem != queueManager.getCurrentItem()) {
-                                queueManager.skipToNext(true)
-                                attemptLoad(nextQueueItem.song, queueManager.getNext()?.song, 0, attempt + 1, completion)
-                            } else {
+        loadJob =
+            appCoroutineScope.launch {
+                playback.load(current, next, seekPosition) { result ->
+                    result.onSuccess {
+                        playback.setReplayGain(trackGain = current.replayGainTrack, albumGain = current.replayGainAlbum)
+                        completion(Result.success(attempt == 1))
+                    }
+                    result.onFailure { error ->
+                        // Attempt to load the next item in the queue. If there is no next item, or we're on repeat, or we've made 15 previous attempts, call completion(error).
+                        if (queueManager.getCurrentPosition() != queueManager.getSize() - 1 && attempt < 15) {
+                            queueManager.getNext()?.let { nextQueueItem ->
+                                if (nextQueueItem != queueManager.getCurrentItem()) {
+                                    queueManager.skipToNext(true)
+                                    attemptLoad(nextQueueItem.song, queueManager.getNext()?.song, 0, attempt + 1, completion)
+                                } else {
+                                    completion(Result.failure(error))
+                                }
+                            } ?: run {
                                 completion(Result.failure(error))
                             }
-                        } ?: run {
+                        } else {
                             completion(Result.failure(error))
                         }
-                    } else {
-                        completion(Result.failure(error))
                     }
                 }
             }
-        }
     }
 
-    suspend fun shuffle(songs: List<Song>, completion: (Result<Any?>) -> Unit) {
+    suspend fun shuffle(
+        songs: List<Song>,
+        completion: (Result<Any?>) -> Unit
+    ) {
         queueManager.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = false)
         if (queueManager.setQueue(songs, songs.shuffled(), 0)) {
             load(0, completion)
@@ -155,7 +167,10 @@ class PlaybackManager(
         }
     }
 
-    fun skipToNext(ignoreRepeat: Boolean = false, completion: ((Result<Any?>) -> Unit)? = null) {
+    fun skipToNext(
+        ignoreRepeat: Boolean = false,
+        completion: ((Result<Any?>) -> Unit)? = null
+    ) {
         if (queueManager.skipToNext(ignoreRepeat)) {
             queueManager.getCurrentItem()?.let { currentQueueItem ->
                 appCoroutineScope.launch {
@@ -169,7 +184,10 @@ class PlaybackManager(
         }
     }
 
-    fun skipToPrev(force: Boolean = false, completion: ((Result<Any?>) -> Unit)? = null) {
+    fun skipToPrev(
+        force: Boolean = false,
+        completion: ((Result<Any?>) -> Unit)? = null
+    ) {
         if (force || playback.getProgress() ?: 0 < 2000) {
             queueManager.skipToPrevious()
             queueManager.getCurrentItem()?.let { currentQueueItem ->
@@ -228,17 +246,21 @@ class PlaybackManager(
 
     suspend fun addToQueue(songs: List<Song>) {
         if (queueManager.getQueue().isEmpty()) {
-            if (queueManager.setQueue(songs))
+            if (queueManager.setQueue(songs)) {
                 load { result ->
                     result.onSuccess { play() }
                     result.onFailure { throwable -> Timber.e(throwable, "Failed to load songs (addToQueue())") }
                 }
+            }
         } else {
             queueManager.addToQueue(songs)
         }
     }
 
-    fun moveQueueItem(from: Int, to: Int) {
+    fun moveQueueItem(
+        from: Int,
+        to: Int
+    ) {
         queueManager.move(from, to)
         appCoroutineScope.launch {
             playback.loadNext(queueManager.getNext()?.song)
@@ -394,7 +416,10 @@ class PlaybackManager(
         }
     }
 
-    override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
+    override fun onQueuePositionChanged(
+        oldPosition: Int?,
+        newPosition: Int?
+    ) {
         queueManager.getCurrentItem()?.song?.let { song ->
             playback.setReplayGain(trackGain = song.replayGainTrack, albumGain = song.replayGainAlbum)
         }
@@ -420,15 +445,15 @@ class PlaybackManager(
      * A simple handler which executes continuously between start() and stop()
      */
     class ProgressHandler : Handler(Looper.getMainLooper()) {
-
         var callback: (() -> Unit)? = null
 
-        private val runnable = object : Runnable {
-            override fun run() {
-                callback?.invoke()
-                postDelayed(this, 100)
+        private val runnable =
+            object : Runnable {
+                override fun run() {
+                    callback?.invoke()
+                    postDelayed(this, 100)
+                }
             }
-        }
 
         fun start(callback: () -> Unit) {
             Timber.v("start()")

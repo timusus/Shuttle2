@@ -5,7 +5,13 @@ import android.graphics.Bitmap
 import android.net.ConnectivityManager
 import android.util.Log
 import androidx.annotation.Keep
-import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.*
+import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.DirectoryAlbumArtistLocalArtworkModelLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.DirectoryAlbumLocalArtworkModelLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.DirectorySongLocalArtworkModelLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.LocalArtworkModelLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.LocalArtworkProvider
+import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.TagLibAlbumLocalArtworkModelLoader
+import au.com.simplecityapps.shuttle.imageloading.glide.loader.local.TagLibSongLocalArtworkModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.provider.RemoteArtworkAlbumArtistModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.provider.RemoteArtworkAlbumModelLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.loader.remote.provider.RemoteArtworkSongModelLoader
@@ -36,11 +42,11 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
+import java.io.IOException
+import java.io.InputStream
 import kotlinx.coroutines.CoroutineScope
 import okhttp3.Credentials
 import okhttp3.OkHttpClient
-import java.io.IOException
-import java.io.InputStream
 
 object NoConnectivityException : IOException("No connectivity")
 
@@ -48,44 +54,52 @@ object NoConnectivityException : IOException("No connectivity")
 @Excludes(OkHttpLibraryGlideModule::class)
 @Keep
 class ImageLoaderGlideModule : AppGlideModule() {
-
     @EntryPoint
     @InstallIn(SingletonComponent::class)
     internal interface ImageLoaderGlideModuleEntryPoint {
         fun provideHttpClient(): OkHttpClient
+
         fun providePreferenceManager(): GeneralPreferenceManager
+
         fun provideSongRepository(): SongRepository
+
         fun provideAggregateRemoteArtworkProvider(): AggregateRemoteArtworkProvider
+
         fun provideKTagLib(): KTagLib
 
         @AppCoroutineScope
         fun provideCoroutineScope(): CoroutineScope
     }
 
-    override fun registerComponents(context: Context, glide: Glide, registry: Registry) {
+    override fun registerComponents(
+        context: Context,
+        glide: Glide,
+        registry: Registry
+    ) {
         val entryPoint: ImageLoaderGlideModuleEntryPoint = EntryPointAccessors.fromApplication(context, ImageLoaderGlideModuleEntryPoint::class.java)
 
         val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as? ConnectivityManager
 
-        val okHttpClient = entryPoint.provideHttpClient()
-            .newBuilder()
-            .authenticator { route, response ->
-                if (route?.address?.url?.host == "api.shuttlemusicplayer.app") {
-                    response.request
-                        .newBuilder()
-                        .header("Authorization", Credentials.basic("s2", "aEqRKgkCbqALjEm9Eg7e7Qi5"))
-                        .build()
-                } else {
-                    response.request
+        val okHttpClient =
+            entryPoint.provideHttpClient()
+                .newBuilder()
+                .authenticator { route, response ->
+                    if (route?.address?.url?.host == "api.shuttlemusicplayer.app") {
+                        response.request
+                            .newBuilder()
+                            .header("Authorization", Credentials.basic("s2", "aEqRKgkCbqALjEm9Eg7e7Qi5"))
+                            .build()
+                    } else {
+                        response.request
+                    }
                 }
-            }
-            .addNetworkInterceptor { chain ->
-                if (entryPoint.providePreferenceManager().artworkWifiOnly && connectivityManager?.isActiveNetworkMetered == true) {
-                    throw NoConnectivityException
+                .addNetworkInterceptor { chain ->
+                    if (entryPoint.providePreferenceManager().artworkWifiOnly && connectivityManager?.isActiveNetworkMetered == true) {
+                        throw NoConnectivityException
+                    }
+                    chain.proceed(chain.request())
                 }
-                chain.proceed(chain.request())
-            }
-            .build()
+                .build()
 
         // Generic loaders
         registry.replace(GlideUrl::class.java, InputStream::class.java, OkHttpUrlLoader.Factory(okHttpClient))
@@ -94,50 +108,55 @@ class ImageLoaderGlideModule : AppGlideModule() {
 
         // Local
 
-        val directorySongLocalArtworkModelLoaderFactory = DirectorySongLocalArtworkModelLoader.Factory(
-            context = context
-        )
+        val directorySongLocalArtworkModelLoaderFactory =
+            DirectorySongLocalArtworkModelLoader.Factory(
+                context = context
+            )
         registry.append(
             Song::class.java,
             InputStream::class.java,
             directorySongLocalArtworkModelLoaderFactory
         )
 
-        val tagLibSongLocalArtworkModelLoaderFactory = TagLibSongLocalArtworkModelLoader.Factory(
-            context = context,
-            kTagLib = entryPoint.provideKTagLib()
-        )
+        val tagLibSongLocalArtworkModelLoaderFactory =
+            TagLibSongLocalArtworkModelLoader.Factory(
+                context = context,
+                kTagLib = entryPoint.provideKTagLib()
+            )
         registry.append(
             Song::class.java,
             InputStream::class.java,
             tagLibSongLocalArtworkModelLoaderFactory
         )
 
-        val directoryAlbumLocalArtworkModelLoaderFactory = DirectoryAlbumLocalArtworkModelLoader.Factory(
-            context = context,
-            songRepository = entryPoint.provideSongRepository()
-        )
+        val directoryAlbumLocalArtworkModelLoaderFactory =
+            DirectoryAlbumLocalArtworkModelLoader.Factory(
+                context = context,
+                songRepository = entryPoint.provideSongRepository()
+            )
         registry.append(
             Album::class.java,
             InputStream::class.java,
             directoryAlbumLocalArtworkModelLoaderFactory
         )
 
-        val directoryAlbumArtistLocalArtworkModelLoaderFactory = DirectoryAlbumArtistLocalArtworkModelLoader.Factory(
-            context = context,
-            songRepository = entryPoint.provideSongRepository()
-        )
+        val directoryAlbumArtistLocalArtworkModelLoaderFactory =
+            DirectoryAlbumArtistLocalArtworkModelLoader.Factory(
+                context = context,
+                songRepository = entryPoint.provideSongRepository()
+            )
         registry.append(
             AlbumArtist::class.java,
             InputStream::class.java,
             directoryAlbumArtistLocalArtworkModelLoaderFactory
         )
 
-        val tagLibAlbumLocalArtworkModelLoaderFactory = TagLibAlbumLocalArtworkModelLoader.Factory(
-            context = context,
-            kTagLib = entryPoint.provideKTagLib(),
-            songRepository = entryPoint.provideSongRepository()
-        )
+        val tagLibAlbumLocalArtworkModelLoaderFactory =
+            TagLibAlbumLocalArtworkModelLoader.Factory(
+                context = context,
+                kTagLib = entryPoint.provideKTagLib(),
+                songRepository = entryPoint.provideSongRepository()
+            )
         registry.append(
             Album::class.java,
             InputStream::class.java,
@@ -203,7 +222,10 @@ class ImageLoaderGlideModule : AppGlideModule() {
         return false
     }
 
-    override fun applyOptions(context: Context, builder: GlideBuilder) {
+    override fun applyOptions(
+        context: Context,
+        builder: GlideBuilder
+    ) {
         if (BuildConfig.DEBUG) {
             builder.setLogLevel(Log.ERROR)
         }

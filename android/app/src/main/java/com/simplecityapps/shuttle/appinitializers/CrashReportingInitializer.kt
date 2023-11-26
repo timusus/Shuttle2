@@ -13,13 +13,14 @@ import com.google.firebase.ktx.Firebase
 import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.ActivityLifecycleCallbacksAdapter
-import timber.log.Timber
 import javax.inject.Inject
+import timber.log.Timber
 
-class CrashReportingInitializer @Inject constructor(
-    private val preferenceManager: GeneralPreferenceManager,
+class CrashReportingInitializer
+@Inject
+constructor(
+    private val preferenceManager: GeneralPreferenceManager
 ) : AppInitializer {
-
     override fun init(application: Application) {
         if (preferenceManager.crashReportingEnabled) {
             Firebase.crashlytics.setCrashlyticsCollectionEnabled(true)
@@ -28,24 +29,37 @@ class CrashReportingInitializer @Inject constructor(
                 Timber.plant(CrashReportingTree())
             }
 
-            application.registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacksAdapter {
-                override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-                    if (activity is FragmentActivity) {
-                        activity.supportFragmentManager.registerFragmentLifecycleCallbacks(
-                            object : FragmentManager.FragmentLifecycleCallbacks() {
-                                override fun onFragmentViewCreated(fm: FragmentManager, f: Fragment, v: View, savedInstanceState: Bundle?) {
-                                    Firebase.crashlytics.log("onViewCreated: ${f.javaClass.simpleName}")
-                                }
+            application.registerActivityLifecycleCallbacks(
+                object : ActivityLifecycleCallbacksAdapter {
+                    override fun onActivityCreated(
+                        activity: Activity,
+                        savedInstanceState: Bundle?
+                    ) {
+                        if (activity is FragmentActivity) {
+                            activity.supportFragmentManager.registerFragmentLifecycleCallbacks(
+                                object : FragmentManager.FragmentLifecycleCallbacks() {
+                                    override fun onFragmentViewCreated(
+                                        fm: FragmentManager,
+                                        f: Fragment,
+                                        v: View,
+                                        savedInstanceState: Bundle?
+                                    ) {
+                                        Firebase.crashlytics.log("onViewCreated: ${f.javaClass.simpleName}")
+                                    }
 
-                                override fun onFragmentViewDestroyed(fm: FragmentManager, f: Fragment) {
-                                    Firebase.crashlytics.log("onViewDestroyed: ${f.javaClass.simpleName}")
-                                }
-                            },
-                            true
-                        )
+                                    override fun onFragmentViewDestroyed(
+                                        fm: FragmentManager,
+                                        f: Fragment
+                                    ) {
+                                        Firebase.crashlytics.log("onViewDestroyed: ${f.javaClass.simpleName}")
+                                    }
+                                },
+                                true
+                            )
+                        }
                     }
                 }
-            })
+            )
         }
     }
 
@@ -55,8 +69,12 @@ class CrashReportingInitializer @Inject constructor(
 }
 
 class CrashReportingTree : Timber.Tree() {
-
-    override fun log(priority: Int, tag: String?, message: String, throwable: Throwable?) {
+    override fun log(
+        priority: Int,
+        tag: String?,
+        message: String,
+        throwable: Throwable?
+    ) {
         try {
             throwable?.let {
                 Firebase.crashlytics.log("message")

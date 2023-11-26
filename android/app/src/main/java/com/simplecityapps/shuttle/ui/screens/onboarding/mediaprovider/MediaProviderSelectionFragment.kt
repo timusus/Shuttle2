@@ -37,8 +37,8 @@ import com.simplecityapps.shuttle.ui.screens.onboarding.plex.PlexConfigurationFr
 import com.simplecityapps.shuttle.ui.screens.onboarding.taglib.DirectorySelectionFragment
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
-import timber.log.Timber
 import javax.inject.Inject
+import timber.log.Timber
 
 @AndroidEntryPoint
 class MediaProviderSelectionFragment :
@@ -46,7 +46,6 @@ class MediaProviderSelectionFragment :
     OnboardingChild,
     MediaProviderSelectionContract.View,
     MediaProviderOptionsFragment.Listener {
-
     private var toolbar: Toolbar by autoCleared()
 
     private var isOnboarding = true
@@ -73,11 +72,18 @@ class MediaProviderSelectionFragment :
         isOnboarding = requireArguments().getBoolean(ARG_ONBOARDING)
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return inflater.inflate(R.layout.fragment_media_provider_selector, container, false)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
         super.onViewCreated(view, savedInstanceState)
 
         presenter = presenterFactory.create(isOnboarding)
@@ -201,51 +207,55 @@ class MediaProviderSelectionFragment :
 
     // MediaProviderViewBinder.Listener Implementation
 
-    val listener = object : MediaProviderBinder.Listener {
-        override fun onOverflowClicked(view: View, providerType: MediaProviderType) {
-            val popupMenu = PopupMenu(requireContext(), view)
-            popupMenu.inflate(R.menu.menu_media_provider_popup)
-            popupMenu.menu.findItem(R.id.configure).isVisible = providerType != MediaProviderType.MediaStore
-            popupMenu.setOnMenuItemClickListener {
-                when (it.itemId) {
-                    R.id.configure -> {
-                        when (providerType) {
-                            MediaProviderType.Shuttle -> DirectorySelectionFragment.newInstance().show(childFragmentManager)
-                            MediaProviderType.Emby -> EmbyConfigurationFragment.newInstance().show(childFragmentManager)
-                            MediaProviderType.Jellyfin -> JellyfinConfigurationFragment.newInstance().show(childFragmentManager)
-                            MediaProviderType.Plex -> PlexConfigurationFragment.newInstance().show(childFragmentManager)
-                            MediaProviderType.MediaStore -> {
-                                // Nothing to do
+    val listener =
+        object : MediaProviderBinder.Listener {
+            override fun onOverflowClicked(
+                view: View,
+                providerType: MediaProviderType
+            ) {
+                val popupMenu = PopupMenu(requireContext(), view)
+                popupMenu.inflate(R.menu.menu_media_provider_popup)
+                popupMenu.menu.findItem(R.id.configure).isVisible = providerType != MediaProviderType.MediaStore
+                popupMenu.setOnMenuItemClickListener {
+                    when (it.itemId) {
+                        R.id.configure -> {
+                            when (providerType) {
+                                MediaProviderType.Shuttle -> DirectorySelectionFragment.newInstance().show(childFragmentManager)
+                                MediaProviderType.Emby -> EmbyConfigurationFragment.newInstance().show(childFragmentManager)
+                                MediaProviderType.Jellyfin -> JellyfinConfigurationFragment.newInstance().show(childFragmentManager)
+                                MediaProviderType.Plex -> PlexConfigurationFragment.newInstance().show(childFragmentManager)
+                                MediaProviderType.MediaStore -> {
+                                    // Nothing to do
+                                }
+                            }
+                        }
+                        R.id.remove -> {
+                            if (isOnboarding) {
+                                presenter.removeMediaProviderType(providerType)
+                            } else {
+                                MaterialAlertDialogBuilder(requireContext())
+                                    .setTitle(
+                                        Phrase.from(requireContext(), R.string.media_provider_dialog_remove_title)
+                                            .put("provider_type", providerType.title(requireContext()))
+                                            .format()
+                                    )
+                                    .setMessage(
+                                        Phrase.from(requireContext(), R.string.media_provider_dialog_remove_subtitle)
+                                            .put("provider_type", providerType.title(requireContext()))
+                                            .format()
+                                    )
+                                    .setPositiveButton(getString(R.string.media_provider_dialog_button_remove)) { _, _ -> presenter.removeMediaProviderType(providerType) }
+                                    .setNegativeButton(getString(R.string.dialog_button_cancel), null)
+                                    .show()
+                                return@setOnMenuItemClickListener true
                             }
                         }
                     }
-                    R.id.remove -> {
-                        if (isOnboarding) {
-                            presenter.removeMediaProviderType(providerType)
-                        } else {
-                            MaterialAlertDialogBuilder(requireContext())
-                                .setTitle(
-                                    Phrase.from(requireContext(), R.string.media_provider_dialog_remove_title)
-                                        .put("provider_type", providerType.title(requireContext()))
-                                        .format()
-                                )
-                                .setMessage(
-                                    Phrase.from(requireContext(), R.string.media_provider_dialog_remove_subtitle)
-                                        .put("provider_type", providerType.title(requireContext()))
-                                        .format()
-                                )
-                                .setPositiveButton(getString(R.string.media_provider_dialog_button_remove)) { _, _ -> presenter.removeMediaProviderType(providerType) }
-                                .setNegativeButton(getString(R.string.dialog_button_cancel), null)
-                                .show()
-                            return@setOnMenuItemClickListener true
-                        }
-                    }
+                    true
                 }
-                true
+                popupMenu.show()
             }
-            popupMenu.show()
         }
-    }
 
     // OnboardingChild Implementation
 
@@ -263,6 +273,7 @@ class MediaProviderSelectionFragment :
 
     companion object {
         const val ARG_ONBOARDING = "is_onboarding"
+
         fun newInstance(isOnboarding: Boolean = true): MediaProviderSelectionFragment {
             return MediaProviderSelectionFragment().withArgs { putBoolean(ARG_ONBOARDING, isOnboarding) }
         }

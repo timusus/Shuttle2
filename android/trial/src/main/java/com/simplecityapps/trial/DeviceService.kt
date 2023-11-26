@@ -5,7 +5,8 @@ import retrofit2.http.GET
 import retrofit2.http.Path
 
 interface DeviceService {
-
     @GET("v1/devices/{deviceId}")
-    suspend fun getDevice(@Path("deviceId") deviceId: String): NetworkResult<Device>
+    suspend fun getDevice(
+        @Path("deviceId") deviceId: String
+    ): NetworkResult<Device>
 }

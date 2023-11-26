@@ -10,7 +10,6 @@ interface TreeNode<TN, N> : Serializable {
 }
 
 interface Trie<TN : TreeNode<TN, N>, N : Node> : TreeNode<TN, N> {
-
     fun addTreeNode(treeNode: TN): TN {
         treeNodes.firstOrNull { childTreeNode -> childTreeNode == treeNode }?.let { existingChildNode ->
             return existingChildNode

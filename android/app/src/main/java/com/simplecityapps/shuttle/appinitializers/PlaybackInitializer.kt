@@ -6,7 +6,12 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.content.ContextCompat
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.playback.*
+import com.simplecityapps.playback.NoiseManager
+import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackService
+import com.simplecityapps.playback.PlaybackState
+import com.simplecityapps.playback.PlaybackWatcher
+import com.simplecityapps.playback.PlaybackWatcherCallback
 import com.simplecityapps.playback.chromecast.CastSessionManager
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
@@ -17,6 +22,7 @@ import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filterNotNull
@@ -24,12 +30,13 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
-import javax.inject.Inject
 
 /**
  * Restores the queue when the app is launched. Saves the queue and queue position when they change.
  */
-class PlaybackInitializer @Inject constructor(
+class PlaybackInitializer
+@Inject
+constructor(
     @ApplicationContext private val context: Context,
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackManager,
@@ -44,7 +51,6 @@ class PlaybackInitializer @Inject constructor(
 ) : AppInitializer,
     QueueChangeCallback,
     PlaybackWatcherCallback {
-
     private var progress = 0
 
     private var initTime = 0L
@@ -63,7 +69,6 @@ class PlaybackInitializer @Inject constructor(
         val queuePosition = playbackPreferenceManager.queuePosition
 
         appCoroutineScope.launch {
-
             queueManager.setShuffleMode(shuffleMode, reshuffle = false)
             queueManager.setRepeatMode(repeatMode)
 
@@ -71,7 +76,10 @@ class PlaybackInitializer @Inject constructor(
         }
     }
 
-    private suspend fun restoreQueue(queuePosition: Int?, seekPosition: Int) {
+    private suspend fun restoreQueue(
+        queuePosition: Int?,
+        seekPosition: Int
+    ) {
         val queueRestoreStartTime = System.currentTimeMillis()
         queuePosition?.let {
             val songIds = playbackPreferenceManager.queueIds?.split(',')?.map { id -> id.toLong() }.orEmpty()
@@ -81,18 +89,20 @@ class PlaybackInitializer @Inject constructor(
                     val allSongIds = songIds.toMutableSet()
                     allSongIds.addAll(shuffleSongIds.orEmpty())
 
-                    val allSongs = songRepository.getSongs(SongQuery.SongIds(allSongIds.toList()))
-                        .filterNotNull()
-                        .firstOrNull()
-                        .orEmpty()
+                    val allSongs =
+                        songRepository.getSongs(SongQuery.SongIds(allSongIds.toList()))
+                            .filterNotNull()
+                            .firstOrNull()
+                            .orEmpty()
 
                     val songOrderMap = songIds.withIndex().associate { songId -> songId.value to songId.index }
                     val songs = allSongs.sortedBy { song -> songOrderMap[song.id] }
 
-                    val shuffleSongs = shuffleSongIds?.let {
-                        val shuffleSongOrderMap = shuffleSongIds.withIndex().associate { songId -> songId.value to songId.index }
-                        allSongs.sortedBy { song -> shuffleSongOrderMap[song.id] }
-                    }
+                    val shuffleSongs =
+                        shuffleSongIds?.let {
+                            val shuffleSongOrderMap = shuffleSongIds.withIndex().associate { songId -> songId.value to songId.index }
+                            allSongs.sortedBy { song -> shuffleSongOrderMap[song.id] }
+                        }
 
                     withContext(Dispatchers.Main) {
                         queueManager.setQueue(
@@ -117,16 +127,21 @@ class PlaybackInitializer @Inject constructor(
     // QueueChangeCallback Implementation
 
     override fun onQueueChanged(reason: QueueChangeCallback.QueueChangeReason) {
-        playbackPreferenceManager.queueIds = queueManager.getQueue(QueueManager.ShuffleMode.Off)
-            .map { queueItem -> queueItem.song.id }
-            .joinToString(",")
+        playbackPreferenceManager.queueIds =
+            queueManager.getQueue(QueueManager.ShuffleMode.Off)
+                .map { queueItem -> queueItem.song.id }
+                .joinToString(",")
 
-        playbackPreferenceManager.shuffleQueueIds = queueManager.getQueue(QueueManager.ShuffleMode.On)
-            .map { queueItem -> queueItem.song.id }
-            .joinToString(",")
+        playbackPreferenceManager.shuffleQueueIds =
+            queueManager.getQueue(QueueManager.ShuffleMode.On)
+                .map { queueItem -> queueItem.song.id }
+                .joinToString(",")
     }
 
-    override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
+    override fun onQueuePositionChanged(
+        oldPosition: Int?,
+        newPosition: Int?
+    ) {
         playbackPreferenceManager.queuePosition = newPosition
     }
 
@@ -177,7 +192,11 @@ class PlaybackInitializer @Inject constructor(
 
     // ProgressCallback Implementation
 
-    override fun onProgressChanged(position: Int, duration: Int, fromUser: Boolean) {
+    override fun onProgressChanged(
+        position: Int,
+        duration: Int,
+        fromUser: Boolean
+    ) {
         if (progress == 0) {
             progress = position
         }

@@ -18,9 +18,8 @@ import com.simplecityapps.shuttle.ui.screens.library.songs.SongListFragment
 class LibraryPagerAdapter(
     val context: Context,
     fragmentManager: FragmentManager,
-    lifecycle: Lifecycle,
+    lifecycle: Lifecycle
 ) : FragmentStateAdapter(fragmentManager, lifecycle) {
-
     var items: List<LibraryTab> = emptyList()
         set(value) {
             if (field != value) {

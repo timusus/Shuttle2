@@ -10,9 +10,8 @@ import android.widget.Toast
 import androidx.appcompat.widget.SwitchCompat
 import androidx.fragment.app.FragmentManager
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.simplecityapps.shuttle.model.Playlist
-import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.squareup.phrase.Phrase
 import timber.log.Timber
@@ -25,12 +24,14 @@ class PlaylistMenuView(
     private val presenter: PlaylistMenuContract.Presenter,
     private val fragmentManager: FragmentManager
 ) : PlaylistMenuContract.View {
-
     override fun onPlaylistCreated(playlist: com.simplecityapps.shuttle.model.Playlist) {
         showPlaylistCreatedToast(context, playlist)
     }
 
-    override fun onAddedToPlaylist(playlist: com.simplecityapps.shuttle.model.Playlist, playlistData: PlaylistData) {
+    override fun onAddedToPlaylist(
+        playlist: com.simplecityapps.shuttle.model.Playlist,
+        playlistData: PlaylistData
+    ) {
         showAddedToPlaylistToast(context, playlist, playlistData)
     }
 
@@ -42,20 +43,29 @@ class PlaylistMenuView(
         CreatePlaylistDialogFragment.newInstance(playlistData, context.getString(R.string.playlist_create_dialog_playlist_name_hint)).show(fragmentManager)
     }
 
-    override fun onSave(text: String, playlistData: PlaylistData) {
+    override fun onSave(
+        text: String,
+        playlistData: PlaylistData
+    ) {
         presenter.createPlaylist(text, playlistData)
     }
 
     @SuppressLint("InflateParams")
-    override fun onAddToPlaylistWithDuplicates(playlist: com.simplecityapps.shuttle.model.Playlist, playlistData: PlaylistData, deduplicatedPlaylistData: PlaylistData.Songs, duplicates: List<com.simplecityapps.shuttle.model.Song>) {
+    override fun onAddToPlaylistWithDuplicates(
+        playlist: com.simplecityapps.shuttle.model.Playlist,
+        playlistData: PlaylistData,
+        deduplicatedPlaylistData: PlaylistData.Songs,
+        duplicates: List<com.simplecityapps.shuttle.model.Song>
+    ) {
         val view = LayoutInflater.from(context).inflate(R.layout.dialog_playlist_duplicate, null)
         val subtitle: TextView = view.findViewById(R.id.title)
         val alwaysAddSwitch: SwitchCompat = view.findViewById(R.id.alwaysAddSwitch)
 
-        subtitle.text = Phrase.fromPlural(context, R.plurals.playlist_menu_duplicates_dialog_subtitle, duplicates.size)
-            .putOptional("count", duplicates.size)
-            .put("playlist_name", playlist.name)
-            .format()
+        subtitle.text =
+            Phrase.fromPlural(context, R.plurals.playlist_menu_duplicates_dialog_subtitle, duplicates.size)
+                .putOptional("count", duplicates.size)
+                .put("playlist_name", playlist.name)
+                .format()
 
         alwaysAddSwitch.setOnCheckedChangeListener { _, isChecked ->
             presenter.setIgnorePlaylistDuplicates(isChecked)
@@ -129,7 +139,10 @@ class PlaylistMenuView(
         return item.itemId == playlistCreateId
     }
 
-    private fun showPlaylistCreatedToast(context: Context, playlist: com.simplecityapps.shuttle.model.Playlist) {
+    private fun showPlaylistCreatedToast(
+        context: Context,
+        playlist: com.simplecityapps.shuttle.model.Playlist
+    ) {
         Toast.makeText(
             context,
             Phrase.from(context, R.string.playlist_menu_create_playlist_success)
@@ -139,11 +152,18 @@ class PlaylistMenuView(
         ).show()
     }
 
-    private fun showAddedToPlaylistToast(context: Context, playlist: com.simplecityapps.shuttle.model.Playlist, playlistData: PlaylistData) {
+    private fun showAddedToPlaylistToast(
+        context: Context,
+        playlist: com.simplecityapps.shuttle.model.Playlist,
+        playlistData: PlaylistData
+    ) {
         Toast.makeText(context, playlistData.getPlaylistSavedMessage(context.resources, playlist.name), Toast.LENGTH_LONG).show()
     }
 
-    private fun showPlaylistAddFailedToast(context: Context, error: Error) {
+    private fun showPlaylistAddFailedToast(
+        context: Context,
+        error: Error
+    ) {
         Toast.makeText(
             context,
             Phrase.from(context, R.string.playlist_menu_create_playlist_failure)

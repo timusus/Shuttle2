@@ -1,6 +1,10 @@
 package com.simplecityapps.networking
 
-import com.simplecityapps.networking.retrofit.error.*
+import com.simplecityapps.networking.retrofit.error.NetworkError
+import com.simplecityapps.networking.retrofit.error.RemoteServiceError
+import com.simplecityapps.networking.retrofit.error.RemoteServiceHttpError
+import com.simplecityapps.networking.retrofit.error.UnexpectedError
+import com.simplecityapps.networking.retrofit.error.UserFriendlyError
 
 fun Throwable.userDescription(): String {
     return (this as? Error)?.userDescription() ?: "An unknown error occurred."

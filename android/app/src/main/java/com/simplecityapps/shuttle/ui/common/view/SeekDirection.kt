@@ -1,7 +1,9 @@
 package com.simplecityapps.shuttle.ui.common.view
 
 enum class SeekDirection {
-    Forward, Backward;
+    Forward,
+    Backward
+    ;
 
     companion object {
         fun fromInt(value: Int): SeekDirection {

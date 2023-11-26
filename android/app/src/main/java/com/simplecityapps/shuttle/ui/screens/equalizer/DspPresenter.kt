@@ -11,31 +11,44 @@ import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import javax.inject.Inject
 
 interface EqualizerContract {
-
     interface View {
-        fun initializeEqualizerView(activated: Boolean, equalizer: Equalizer.Presets.Preset, maxBandGain: Int)
+        fun initializeEqualizerView(
+            activated: Boolean,
+            equalizer: Equalizer.Presets.Preset,
+            maxBandGain: Int
+        )
+
         fun updateEqualizerView(preset: Equalizer.Presets.Preset)
+
         fun updateSelectedEqPreset(preset: Equalizer.Presets.Preset)
+
         fun showEqEnabled(enabled: Boolean)
+
         fun updateSelectedReplayGainMode(mode: ReplayGainMode)
+
         fun updatePreAmpGain(gain: Double)
     }
 
     interface Presenter : BaseContract.Presenter<View> {
         fun toggleEqualizer(activated: Boolean)
+
         fun updateBand(band: EqualizerBand)
+
         fun setEqPreset(preset: Equalizer.Presets.Preset)
+
         fun setReplayGainMode(mode: ReplayGainMode)
+
         fun setPreAmpGain(gain: Double)
     }
 }
 
-class DspPresenter @Inject constructor(
+class DspPresenter
+@Inject
+constructor(
     private val playbackPreferenceManager: PlaybackPreferenceManager,
     private val equalizerAudioProcessor: EqualizerAudioProcessor,
     private val replayGainAudioProcessor: ReplayGainAudioProcessor
 ) : BasePresenter<EqualizerContract.View>(), EqualizerContract.Presenter {
-
     override fun bindView(view: EqualizerContract.View) {
         super.bindView(view)
 

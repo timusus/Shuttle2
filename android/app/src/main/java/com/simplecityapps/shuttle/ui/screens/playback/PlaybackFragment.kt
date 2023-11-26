@@ -57,7 +57,6 @@ class PlaybackFragment :
     Fragment(),
     PlaybackContract.View,
     SeekBar.OnSeekBarChangeListener {
-
     @Inject
     lateinit var presenter: PlaybackPresenter
 
@@ -100,11 +99,18 @@ class PlaybackFragment :
 
     // Lifecycle
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return inflater.inflate(R.layout.fragment_playback, container, false)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
         super.onViewCreated(view, savedInstanceState)
 
         recyclerView = view.findViewById(R.id.recyclerView)
@@ -133,27 +139,31 @@ class PlaybackFragment :
         shuffleButton.setOnClickListener { presenter.toggleShuffle() }
         repeatButton.setOnClickListener { presenter.toggleRepeat() }
         skipButton.setOnClickListener { presenter.skipNext() }
-        skipButton.listener = object : SkipButton.OnSeekListener {
-            override fun onSeek(seekAmount: Int) {
-                presenter.seekForward(seekAmount)
+        skipButton.listener =
+            object : SkipButton.OnSeekListener {
+                override fun onSeek(seekAmount: Int) {
+                    presenter.seekForward(seekAmount)
+                }
             }
-        }
         skipPrevButton.setOnClickListener { presenter.skipPrev() }
-        skipPrevButton.listener = object : SkipButton.OnSeekListener {
-            override fun onSeek(seekAmount: Int) {
-                presenter.seekBackward(seekAmount)
+        skipPrevButton.listener =
+            object : SkipButton.OnSeekListener {
+                override fun onSeek(seekAmount: Int) {
+                    presenter.seekBackward(seekAmount)
+                }
             }
-        }
-        seekBackwardButton.listener = object : SeekButton.OnSeekListener {
-            override fun onSeek(seekAmount: Int) {
-                presenter.seekBackward(seekAmount)
+        seekBackwardButton.listener =
+            object : SeekButton.OnSeekListener {
+                override fun onSeek(seekAmount: Int) {
+                    presenter.seekBackward(seekAmount)
+                }
             }
-        }
-        seekForwardButton.listener = object : SeekButton.OnSeekListener {
-            override fun onSeek(seekAmount: Int) {
-                presenter.seekForward(seekAmount)
+        seekForwardButton.listener =
+            object : SeekButton.OnSeekListener {
+                override fun onSeek(seekAmount: Int) {
+                    presenter.seekForward(seekAmount)
+                }
             }
-        }
         seekBar.setOnSeekBarChangeListener(this)
         artistTextView.setOnClickListener {
             presenter.goToArtist()
@@ -235,7 +245,6 @@ class PlaybackFragment :
     }
 
     override fun onDestroyView() {
-
         presenter.unbindView()
         super.onDestroyView()
     }
@@ -288,7 +297,10 @@ class PlaybackFragment :
         }
     }
 
-    override fun setQueuePosition(position: Int?, total: Int) {
+    override fun setQueuePosition(
+        position: Int?,
+        total: Int
+    ) {
         position?.let { recyclerView.scrollToPosition(position) }
         pendingScrollPosition = position
     }
@@ -314,7 +326,10 @@ class PlaybackFragment :
         adapter.clear()
     }
 
-    override fun setProgress(position: Int, duration: Int) {
+    override fun setProgress(
+        position: Int,
+        duration: Int
+    ) {
         if (!isSeeking) {
             if (position == 0 || abs(position - this.seekPosition) >= 1000) {
                 currentTimeTextView.text = position.toHms()
@@ -356,7 +371,10 @@ class PlaybackFragment :
         }, 200)
     }
 
-    override fun launchQuickLyric(artistName: String, songName: String) {
+    override fun launchQuickLyric(
+        artistName: String,
+        songName: String
+    ) {
         val intent = QuickLyricManager.buildLyricsIntent(artistName, songName)
         if (intent.resolveActivity(requireContext().packageManager) != null) {
             requireContext().startActivity(intent)
@@ -383,7 +401,12 @@ class PlaybackFragment :
     // SeekBar.OnSeekBarChangeListener Implementation
 
     private var isSeeking = false
-    override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
+
+    override fun onProgressChanged(
+        seekBar: SeekBar,
+        progress: Int,
+        fromUser: Boolean
+    ) {
         if (fromUser) {
             // A little hack - temporarily allow us to update the progress text.
             isSeeking = false

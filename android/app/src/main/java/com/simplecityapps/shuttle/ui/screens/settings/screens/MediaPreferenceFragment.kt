@@ -29,15 +29,14 @@ import com.simplecityapps.shuttle.ui.screens.onboarding.scanner.MediaScannerDial
 import com.simplecityapps.shuttle.ui.screens.settings.ExcludeBinder
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
+import java.text.DateFormat
+import javax.inject.Inject
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import java.text.DateFormat
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class MediaPreferenceFragment : PreferenceFragmentCompat() {
-
     @Inject
     lateinit var songRepository: SongRepository
 
@@ -52,11 +51,17 @@ class MediaPreferenceFragment : PreferenceFragmentCompat() {
 
     private var mediaImportListener: MediaImporter.Listener? = null
 
-    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+    override fun onCreatePreferences(
+        savedInstanceState: Bundle?,
+        rootKey: String?
+    ) {
         setPreferencesFromResource(R.xml.preferences_media, rootKey)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
         super.onViewCreated(view, savedInstanceState)
 
         val toolbar: Toolbar = view.findViewById(R.id.toolbar)
@@ -80,13 +85,14 @@ class MediaPreferenceFragment : PreferenceFragmentCompat() {
             val emptyLabel = dialogView.findViewById<TextView>(R.id.emptyLabel)
             recyclerView.adapter = adapter
 
-            val excludeListener = object : ExcludeBinder.Listener {
-                override fun onRemoveClicked(song: com.simplecityapps.shuttle.model.Song) {
-                    viewLifecycleOwner.lifecycleScope.launch {
-                        songRepository.setExcluded(listOf(song), false)
+            val excludeListener =
+                object : ExcludeBinder.Listener {
+                    override fun onRemoveClicked(song: com.simplecityapps.shuttle.model.Song) {
+                        viewLifecycleOwner.lifecycleScope.launch {
+                            songRepository.setExcluded(listOf(song), false)
+                        }
                     }
                 }
-            }
 
             viewLifecycleOwner.lifecycleScope.launch {
                 songRepository
@@ -129,16 +135,21 @@ class MediaPreferenceFragment : PreferenceFragmentCompat() {
             true
         }
 
-        mediaImportListener = object : MediaImporter.Listener {
-            override fun onSongImportProgress(providerType: MediaProviderType, message: String, progress: Progress?) {
-            }
+        mediaImportListener =
+            object : MediaImporter.Listener {
+                override fun onSongImportProgress(
+                    providerType: MediaProviderType,
+                    message: String,
+                    progress: Progress?
+                ) {
+                }
 
-            override fun onAllComplete() {
-                super.onAllComplete()
+                override fun onAllComplete() {
+                    super.onAllComplete()
 
-                updateLastScannedText()
+                    updateLastScannedText()
+                }
             }
-        }
 
         mediaImporter.listeners.add(mediaImportListener!!)
     }
@@ -150,7 +161,6 @@ class MediaPreferenceFragment : PreferenceFragmentCompat() {
     }
 
     override fun onDestroyView() {
-
         mediaImporter.listeners.remove(mediaImportListener)
 
         super.onDestroyView()

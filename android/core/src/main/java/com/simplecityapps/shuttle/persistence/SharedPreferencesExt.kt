@@ -4,7 +4,10 @@ package com.simplecityapps.shuttle.persistence
 
 import android.content.SharedPreferences
 
-inline fun <reified T> SharedPreferences.get(key: String, defaultValue: T): T {
+inline fun <reified T> SharedPreferences.get(
+    key: String,
+    defaultValue: T
+): T {
     when (T::class) {
         Boolean::class -> return this.getBoolean(key, defaultValue as Boolean) as T
         Float::class -> return this.getFloat(key, defaultValue as Float) as T
@@ -21,7 +24,10 @@ inline fun <reified T> SharedPreferences.get(key: String, defaultValue: T): T {
     return defaultValue
 }
 
-inline fun <reified T> SharedPreferences.put(key: String, value: T) {
+inline fun <reified T> SharedPreferences.put(
+    key: String,
+    value: T
+) {
     val editor = this.edit()
 
     when (T::class) {

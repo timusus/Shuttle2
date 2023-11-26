@@ -13,7 +13,6 @@ abstract class AudioFocusHelperBase(
 ) : AudioFocusHelper,
     AudioManager.OnAudioFocusChangeListener,
     PlaybackWatcherCallback {
-
     internal val audioManager: AudioManager? by lazy {
         context.getSystemService()
     }

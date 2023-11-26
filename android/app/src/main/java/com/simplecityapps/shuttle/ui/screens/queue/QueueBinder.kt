@@ -37,11 +37,13 @@ class QueueBinder(
     val listener: Listener
 ) : ViewBinder,
     SectionViewBinder {
-
     interface Listener {
         fun onQueueItemClicked(queueItem: QueueItem)
+
         fun onPlayPauseClicked()
+
         fun onStartDrag(viewHolder: ViewHolder)
+
         fun onLongPress(viewHolder: ViewHolder)
     }
 
@@ -81,7 +83,6 @@ class QueueBinder(
     class ViewHolder(itemView: View) :
         ViewBinder.ViewHolder<QueueBinder>(itemView),
         PlaybackWatcherCallback {
-
         private val title: TextView = itemView.findViewById(R.id.title)
         private val subtitle: TextView = itemView.findViewById(R.id.subtitle)
         private val tertiary: TextView = itemView.findViewById(R.id.tertiary)
@@ -113,21 +114,26 @@ class QueueBinder(
             }
         }
 
-        override fun bind(viewBinder: QueueBinder, isPartial: Boolean) {
+        override fun bind(
+            viewBinder: QueueBinder,
+            isPartial: Boolean
+        ) {
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.queueItem.song.name
-            subtitle.text = ListPhrase.from(" • ")
-                .joinSafely(
-                    items = listOf(viewBinder.queueItem.song.friendlyArtistName ?: viewBinder.queueItem.song.albumArtist, viewBinder.queueItem.song.album),
-                    defaultValue = itemView.resources.getString(com.simplecityapps.core.R.string.unknown)
-                )
+            subtitle.text =
+                ListPhrase.from(" • ")
+                    .joinSafely(
+                        items = listOf(viewBinder.queueItem.song.friendlyArtistName ?: viewBinder.queueItem.song.albumArtist, viewBinder.queueItem.song.album),
+                        defaultValue = itemView.resources.getString(com.simplecityapps.core.R.string.unknown)
+                    )
             tertiary.text = viewBinder.queueItem.song.duration.toHms("--:--")
 
             viewBinder.imageLoader.loadArtwork(
                 imageView = artworkImageView,
                 data = viewBinder.queueItem.song,
-                options = listOf(
+                options =
+                listOf(
                     ArtworkImageLoader.Options.RoundedCorners(8.dp),
                     ArtworkImageLoader.Options.Crossfade(200),
                     ArtworkImageLoader.Options.Placeholder(ResourcesCompat.getDrawable(itemView.resources, com.simplecityapps.core.R.drawable.ic_placeholder_song_rounded, itemView.context.theme)!!)
@@ -166,7 +172,11 @@ class QueueBinder(
             viewBinder?.playbackWatcher?.removeCallback(this)
         }
 
-        override fun onProgressChanged(position: Int, duration: Int, fromUser: Boolean) {
+        override fun onProgressChanged(
+            position: Int,
+            duration: Int,
+            fromUser: Boolean
+        ) {
             progressView.setProgress((position / duration.toFloat()))
         }
 

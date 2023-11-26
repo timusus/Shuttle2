@@ -6,12 +6,13 @@ import androidx.appcompat.widget.AppCompatImageButton
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.R
 
-class ShuffleButton @JvmOverloads constructor(
+class ShuffleButton
+@JvmOverloads
+constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : AppCompatImageButton(context, attrs, defStyleAttr) {
-
     var shuffleMode: QueueManager.ShuffleMode = QueueManager.ShuffleMode.Off
         set(value) {
             if (field != value) {

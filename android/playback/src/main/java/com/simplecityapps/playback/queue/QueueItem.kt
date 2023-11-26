@@ -8,7 +8,6 @@ class QueueItem(
     val song: Song,
     val isCurrent: Boolean
 ) {
-
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -33,6 +32,10 @@ fun Song.toQueueItem(isCurrent: Boolean): QueueItem {
     return QueueItem(UUID.randomUUID().mostSignificantBits and Long.MAX_VALUE, this, isCurrent)
 }
 
-fun QueueItem.clone(uid: Long = this.uid, song: Song = this.song, isCurrent: Boolean = this.isCurrent): QueueItem {
+fun QueueItem.clone(
+    uid: Long = this.uid,
+    song: Song = this.song,
+    isCurrent: Boolean = this.isCurrent
+): QueueItem {
     return QueueItem(uid, song, isCurrent)
 }

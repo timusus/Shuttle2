@@ -18,7 +18,6 @@ import timber.log.Timber
 
 @OptIn(ObsoleteCoroutinesApi::class)
 open class RecyclerAdapter(scope: CoroutineScope, val skipIntermediateUpdates: Boolean = true) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
-
     var items = mutableListOf<ViewBinder>()
         private set
 
@@ -28,9 +27,13 @@ open class RecyclerAdapter(scope: CoroutineScope, val skipIntermediateUpdates: B
 
     sealed class AdapterOperation {
         class Update(val newItems: MutableList<ViewBinder>, val callback: (() -> Unit)?) : AdapterOperation()
+
         class Add(val index: Int, val newItem: ViewBinder) : AdapterOperation()
+
         class Remove(val index: Int) : AdapterOperation()
+
         object Clear : AdapterOperation()
+
         class Move(val fromPosition: Int, val toPosition: Int) : AdapterOperation()
     }
 
@@ -38,33 +41,41 @@ open class RecyclerAdapter(scope: CoroutineScope, val skipIntermediateUpdates: B
         LoggingListUpdateCallback()
     }
 
-    private val actor = scope.actor<AdapterOperation>(capacity = Channel.CONFLATED) {
-        for (operation in channel) {
-            when (operation) {
-                is AdapterOperation.Update -> {
-                    updateJob?.cancel()
-                    updateJob = launch {
-                        updateInternal(operation.newItems, operation.callback)
+    private val actor =
+        scope.actor<AdapterOperation>(capacity = Channel.CONFLATED) {
+            for (operation in channel) {
+                when (operation) {
+                    is AdapterOperation.Update -> {
+                        updateJob?.cancel()
+                        updateJob =
+                            launch {
+                                updateInternal(operation.newItems, operation.callback)
+                            }
                     }
+                    is AdapterOperation.Add -> addInternal(operation.index, operation.newItem)
+                    is AdapterOperation.Remove -> removeInternal(operation.index)
+                    is AdapterOperation.Clear -> {
+                        updateJob?.cancel() // If there's a pending update we may as well cancel it
+                        clearInternal()
+                    }
+                    is AdapterOperation.Move -> moveInternal(operation.fromPosition, operation.toPosition)
                 }
-                is AdapterOperation.Add -> addInternal(operation.index, operation.newItem)
-                is AdapterOperation.Remove -> removeInternal(operation.index)
-                is AdapterOperation.Clear -> {
-                    updateJob?.cancel() // If there's a pending update we may as well cancel it
-                    clearInternal()
-                }
-                is AdapterOperation.Move -> moveInternal(operation.fromPosition, operation.toPosition)
             }
         }
-    }
 
     // Public
 
-    fun update(newList: List<ViewBinder>, completion: (() -> Unit)? = null) {
+    fun update(
+        newList: List<ViewBinder>,
+        completion: (() -> Unit)? = null
+    ) {
         actor.trySend(AdapterOperation.Update(newList.toMutableList(), completion))
     }
 
-    fun add(index: Int = items.size, newItem: ViewBinder) {
+    fun add(
+        index: Int = items.size,
+        newItem: ViewBinder
+    ) {
         actor.trySend(AdapterOperation.Add(index, newItem))
     }
 
@@ -76,7 +87,10 @@ open class RecyclerAdapter(scope: CoroutineScope, val skipIntermediateUpdates: B
         actor.trySend(AdapterOperation.Remove(items.indexOf(item)))
     }
 
-    fun move(fromPosition: Int, toPosition: Int) {
+    fun move(
+        fromPosition: Int,
+        toPosition: Int
+    ) {
         actor.trySend(AdapterOperation.Move(fromPosition, toPosition))
     }
 
@@ -86,13 +100,17 @@ open class RecyclerAdapter(scope: CoroutineScope, val skipIntermediateUpdates: B
 
     // Private
 
-    private suspend fun updateInternal(newItems: MutableList<ViewBinder>, callback: (() -> Unit)? = null) {
-        val diffResult = withContext(Dispatchers.IO) {
-            if (skipIntermediateUpdates) {
-                delay(50) // Acts as a debounce, there's a 50ms window for a new job to come in and cancel this one
+    private suspend fun updateInternal(
+        newItems: MutableList<ViewBinder>,
+        callback: (() -> Unit)? = null
+    ) {
+        val diffResult =
+            withContext(Dispatchers.IO) {
+                if (skipIntermediateUpdates) {
+                    delay(50) // Acts as a debounce, there's a 50ms window for a new job to come in and cancel this one
+                }
+                DiffUtil.calculateDiff(DiffCallbacks(items.toList(), newItems))
             }
-            DiffUtil.calculateDiff(DiffCallbacks(items.toList(), newItems))
-        }
 
         withContext(Dispatchers.Main) {
             items = newItems.toMutableList()
@@ -104,7 +122,10 @@ open class RecyclerAdapter(scope: CoroutineScope, val skipIntermediateUpdates: B
         }
     }
 
-    private suspend fun addInternal(index: Int, newItem: ViewBinder) {
+    private suspend fun addInternal(
+        index: Int,
+        newItem: ViewBinder
+    ) {
         withContext(Dispatchers.Main) {
             items.add(index, newItem)
             notifyItemInserted(index)
@@ -126,7 +147,10 @@ open class RecyclerAdapter(scope: CoroutineScope, val skipIntermediateUpdates: B
         }
     }
 
-    private suspend fun moveInternal(fromPosition: Int, toPosition: Int) {
+    private suspend fun moveInternal(
+        fromPosition: Int,
+        toPosition: Int
+    ) {
         withContext(Dispatchers.Main) {
             items.add(toPosition, items.removeAt(fromPosition))
             notifyItemMoved(fromPosition, toPosition)
@@ -143,18 +167,28 @@ open class RecyclerAdapter(scope: CoroutineScope, val skipIntermediateUpdates: B
         return items.size
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+    override fun onCreateViewHolder(
+        parent: ViewGroup,
+        viewType: Int
+    ): RecyclerView.ViewHolder {
         return items.firstOrNull { adapterViewModel -> adapterViewModel.viewType() == viewType }?.createViewHolder(
             parent
         ) ?: throw IllegalStateException("Cannot create ViewHolder for view viewType: $viewType")
     }
 
-    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+    override fun onBindViewHolder(
+        holder: RecyclerView.ViewHolder,
+        position: Int
+    ) {
         @Suppress("UNCHECKED_CAST")
         items[position].bindViewHolder(holder as ViewBinder.ViewHolder<ViewBinder>)
     }
 
-    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int, payloads: MutableList<Any>) {
+    override fun onBindViewHolder(
+        holder: RecyclerView.ViewHolder,
+        position: Int,
+        payloads: MutableList<Any>
+    ) {
         items[position].bindViewHolder(holder as ViewBinder.ViewHolder<ViewBinder>, payloads.isNotEmpty())
     }
 
@@ -171,19 +205,32 @@ open class RecyclerAdapter(scope: CoroutineScope, val skipIntermediateUpdates: B
     // Logging Callback
 
     private class LoggingListUpdateCallback : ListUpdateCallback {
-        override fun onChanged(position: Int, count: Int, payload: Any?) {
+        override fun onChanged(
+            position: Int,
+            count: Int,
+            payload: Any?
+        ) {
             Timber.v("onChanged() $count")
         }
 
-        override fun onMoved(fromPosition: Int, toPosition: Int) {
+        override fun onMoved(
+            fromPosition: Int,
+            toPosition: Int
+        ) {
             Timber.v("onMoved() from: $fromPosition to: $toPosition")
         }
 
-        override fun onInserted(position: Int, count: Int) {
+        override fun onInserted(
+            position: Int,
+            count: Int
+        ) {
             Timber.v("onInserted() $count")
         }
 
-        override fun onRemoved(position: Int, count: Int) {
+        override fun onRemoved(
+            position: Int,
+            count: Int
+        ) {
             Timber.v("onRemoved() $count")
         }
     }

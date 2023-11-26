@@ -16,7 +16,6 @@ import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.error.userDescription
-
 import com.simplecityapps.shuttle.ui.screens.sleeptimer.SleepTimerDialogFragment
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -25,18 +24,24 @@ import javax.inject.Inject
 class BottomDrawerSettingsFragment :
     BottomSheetDialogFragment(),
     BottomDrawerSettingsContract.View {
-
     // Lifecycle
 
     @Inject lateinit var presenter: BottomDrawerSettingsPresenter
 
     private var adapter: RecyclerAdapter by autoCleared()
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return inflater.inflate(R.layout.fragment_bottom_drawer, container, false)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
         super.onViewCreated(view, savedInstanceState)
 
         adapter = RecyclerAdapter(viewLifecycleOwner.lifecycleScope)
@@ -76,30 +81,34 @@ class BottomDrawerSettingsFragment :
 
     private val destinationChangedListener = NavController.OnDestinationChangedListener { _, destination, _ -> setSelectedItem(destination.id) }
 
-    private fun setSelectedItem(@NavigationRes destinationIdRes: Int?) {
+    private fun setSelectedItem(
+        @NavigationRes destinationIdRes: Int?
+    ) {
         presenter.currentDestinationIdRes = destinationIdRes
     }
 
     // SettingsViewBinder.Listener Implementation
 
-    private val settingsItemClickListener = object : SettingsViewBinder.Listener {
+    private val settingsItemClickListener =
+        object : SettingsViewBinder.Listener {
+            override fun onMenuItemClicked(settingsItem: SettingsMenuItem) {
+                dismiss()
 
-        override fun onMenuItemClicked(settingsItem: SettingsMenuItem) {
-
-            dismiss()
-
-            when (settingsItem) {
-                SettingsMenuItem.Shuffle -> presenter.shuffleAll()
-                SettingsMenuItem.SleepTimer -> SleepTimerDialogFragment.newInstance().show(requireFragmentManager())
-                SettingsMenuItem.Dsp -> findNavController().navigate(R.id.action_bottomSheetFragment_to_equalizerFragment)
-                SettingsMenuItem.Settings -> findNavController().navigate(R.id.action_bottomSheetFragment_to_settingsFragment)
+                when (settingsItem) {
+                    SettingsMenuItem.Shuffle -> presenter.shuffleAll()
+                    SettingsMenuItem.SleepTimer -> SleepTimerDialogFragment.newInstance().show(requireFragmentManager())
+                    SettingsMenuItem.Dsp -> findNavController().navigate(R.id.action_bottomSheetFragment_to_equalizerFragment)
+                    SettingsMenuItem.Settings -> findNavController().navigate(R.id.action_bottomSheetFragment_to_settingsFragment)
+                }
             }
         }
-    }
 
     // BottomDrawerSettingsContract.View Implementation
 
-    override fun setData(settingsItems: List<SettingsMenuItem>, currentDestination: Int?) {
+    override fun setData(
+        settingsItems: List<SettingsMenuItem>,
+        currentDestination: Int?
+    ) {
         adapter.update(settingsItems.map { settingsItem -> SettingsViewBinder(settingsItem, false, settingsItemClickListener) })
     }
 

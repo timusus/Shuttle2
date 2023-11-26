@@ -8,8 +8,8 @@ import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.ViewBinder
-import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.common.recyclerview.SpacesItemDecoration
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 import com.simplecityapps.shuttle.ui.screens.library.songs.GridSongBinder
@@ -22,7 +22,6 @@ class HorizontalSongListBinder(
     val imageLoader: ArtworkImageLoader,
     val scope: CoroutineScope
 ) : ViewBinder {
-
     override fun createViewHolder(parent: ViewGroup): ViewBinder.ViewHolder<out ViewBinder> {
         return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_horizontal_list, parent, false), scope)
     }
@@ -54,7 +53,6 @@ class HorizontalSongListBinder(
     }
 
     class ViewHolder(itemView: View, scope: CoroutineScope) : ViewBinder.ViewHolder<HorizontalSongListBinder>(itemView) {
-
         private val titleLabel: TextView = itemView.findViewById(R.id.titleLabel)
         private val subtitleLabel: TextView = itemView.findViewById(R.id.subtitleLabel)
         private val headerContainer: View = itemView.findViewById(R.id.headerContainer)
@@ -67,7 +65,10 @@ class HorizontalSongListBinder(
 //            headerContainer.setOnClick Listener { viewBinder?.listener?.onHeaderClicked() }
         }
 
-        override fun bind(viewBinder: HorizontalSongListBinder, isPartial: Boolean) {
+        override fun bind(
+            viewBinder: HorizontalSongListBinder,
+            isPartial: Boolean
+        ) {
             super.bind(viewBinder, isPartial)
 
             titleLabel.text = viewBinder.title
@@ -77,7 +78,8 @@ class HorizontalSongListBinder(
             adapter.update(
                 viewBinder.songs.map { song ->
                     GridSongBinder(
-                        song, viewBinder.imageLoader,
+                        song,
+                        viewBinder.imageLoader,
                         object : GridSongBinder.Listener {
                             override fun onSongClicked(song: com.simplecityapps.shuttle.model.Song) {
                             }

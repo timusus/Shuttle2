@@ -31,11 +31,11 @@ import androidx.annotation.XmlRes
 import androidx.media.MediaBrowserServiceCompat
 import com.simplecityapps.playback.BuildConfig
 import com.simplecityapps.playback.R
-import org.xmlpull.v1.XmlPullParserException
-import timber.log.Timber
 import java.io.IOException
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
+import org.xmlpull.v1.XmlPullParserException
+import timber.log.Timber
 
 /**
  * Validates that the calling package is authorized to browse a [MediaBrowserServiceCompat].
@@ -49,7 +49,10 @@ import java.security.NoSuchAlgorithmException
  *
  * For more information, see res/xml/allowed_media_browser_callers.xml.
  */
-class PackageValidator(context: Context, @XmlRes xmlResId: Int) {
+class PackageValidator(
+    context: Context,
+    @XmlRes xmlResId: Int
+) {
     private val context: Context
     private val packageManager: PackageManager
 
@@ -75,7 +78,10 @@ class PackageValidator(context: Context, @XmlRes xmlResId: Int) {
      * @param callingUid The user id of the caller.
      * @return `true` if the caller is known, `false` otherwise.
      */
-    fun isKnownCaller(callingPackage: String, callingUid: Int): Boolean {
+    fun isKnownCaller(
+        callingPackage: String,
+        callingUid: Int
+    ): Boolean {
         // If the caller has already been checked, return the previous result here.
         val (checkedUid, checkResult) = callerChecked[callingPackage] ?: Pair(0, false)
         if (checkedUid == callingUid) {
@@ -96,8 +102,9 @@ class PackageValidator(context: Context, @XmlRes xmlResId: Int) {
          */
 
         // Build the caller info for the rest of the checks here.
-        val callerPackageInfo = buildCallerInfo(callingPackage)
-            ?: throw IllegalStateException("Caller wasn't found in the system?")
+        val callerPackageInfo =
+            buildCallerInfo(callingPackage)
+                ?: throw IllegalStateException("Caller wasn't found in the system?")
 
         // Verify that things aren't ... broken. (This test should always pass.)
         if (callerPackageInfo.uid != callingUid) {
@@ -105,38 +112,40 @@ class PackageValidator(context: Context, @XmlRes xmlResId: Int) {
         }
 
         val callerSignature = callerPackageInfo.signature
-        val isPackageInWhitelist = certificateWhitelist[callingPackage]?.signatures?.first {
-            it.signature == callerSignature
-        } != null
+        val isPackageInWhitelist =
+            certificateWhitelist[callingPackage]?.signatures?.first {
+                it.signature == callerSignature
+            } != null
 
-        val isCallerKnown = when {
-            // If it's our own app making the call, allow it.
-            callingUid == Process.myUid() -> true
-            // If it's one of the apps on the whitelist, allow it.
-            isPackageInWhitelist -> true
-            // If the system is making the call, allow it.
-            callingUid == Process.SYSTEM_UID -> true
-            // If the app was signed by the same certificate as the platform itself, also allow it.
-            callerSignature == platformSignature -> true
-            /**
-             * [MEDIA_CONTENT_CONTROL] permission is only available to system applications, and
-             * while it isn't required to allow these apps to connect to a
-             * [MediaBrowserServiceCompat], allowing this ensures optimal compatability with apps
-             * such as Android TV and the Google Assistant.
-             */
-            callerPackageInfo.permissions.contains(MEDIA_CONTENT_CONTROL) -> true
-            /**
-             * This last permission can be specifically granted to apps, and, in addition to
-             * allowing them to retrieve notifications, it also allows them to connect to an
-             * active [MediaSessionCompat].
-             * As with the above, it's not required to allow apps holding this permission to
-             * connect to your [MediaBrowserServiceCompat], but it does allow easy comparability
-             * with apps such as Wear OS.
-             */
-            callerPackageInfo.permissions.contains(BIND_NOTIFICATION_LISTENER_SERVICE) -> true
-            // If none of the pervious checks succeeded, then the caller is unrecognized.
-            else -> false
-        }
+        val isCallerKnown =
+            when {
+                // If it's our own app making the call, allow it.
+                callingUid == Process.myUid() -> true
+                // If it's one of the apps on the whitelist, allow it.
+                isPackageInWhitelist -> true
+                // If the system is making the call, allow it.
+                callingUid == Process.SYSTEM_UID -> true
+                // If the app was signed by the same certificate as the platform itself, also allow it.
+                callerSignature == platformSignature -> true
+                /**
+                 * [MEDIA_CONTENT_CONTROL] permission is only available to system applications, and
+                 * while it isn't required to allow these apps to connect to a
+                 * [MediaBrowserServiceCompat], allowing this ensures optimal compatability with apps
+                 * such as Android TV and the Google Assistant.
+                 */
+                callerPackageInfo.permissions.contains(MEDIA_CONTENT_CONTROL) -> true
+                /**
+                 * This last permission can be specifically granted to apps, and, in addition to
+                 * allowing them to retrieve notifications, it also allows them to connect to an
+                 * active [MediaSessionCompat].
+                 * As with the above, it's not required to allow apps holding this permission to
+                 * connect to your [MediaBrowserServiceCompat], but it does allow easy comparability
+                 * with apps such as Wear OS.
+                 */
+                callerPackageInfo.permissions.contains(BIND_NOTIFICATION_LISTENER_SERVICE) -> true
+                // If none of the pervious checks succeeded, then the caller is unrecognized.
+                else -> false
+            }
 
         if (!isCallerKnown) {
             logUnknownCaller(callerPackageInfo)
@@ -222,17 +231,17 @@ class PackageValidator(context: Context, @XmlRes xmlResId: Int) {
         }
 
     private fun buildCertificateWhitelist(parser: XmlResourceParser): Map<String, KnownCallerInfo> {
-
         val certificateWhitelist = LinkedHashMap<String, KnownCallerInfo>()
         try {
             var eventType = parser.next()
             while (eventType != XmlResourceParser.END_DOCUMENT) {
                 if (eventType == XmlResourceParser.START_TAG) {
-                    val callerInfo = when (parser.name) {
-                        "signing_certificate" -> parseV1Tag(parser)
-                        "signature" -> parseV2Tag(parser)
-                        else -> null
-                    }
+                    val callerInfo =
+                        when (parser.name) {
+                            "signing_certificate" -> parseV1Tag(parser)
+                            "signature" -> parseV2Tag(parser)
+                            else -> null
+                        }
 
                     callerInfo?.let { info ->
                         val packageName = info.packageName

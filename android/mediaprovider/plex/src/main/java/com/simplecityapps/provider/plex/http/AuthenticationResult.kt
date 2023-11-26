@@ -6,5 +6,5 @@ import java.io.Serializable
 
 @JsonClass(generateAdapter = true)
 data class AuthenticationResult(
-    @Json(name = "user") val user: User,
+    @Json(name = "user") val user: User
 ) : Serializable

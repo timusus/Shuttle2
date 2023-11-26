@@ -6,30 +6,33 @@ import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.trial.BillingManager
 import com.simplecityapps.trial.TrialManager
 import com.simplecityapps.trial.TrialState
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import javax.inject.Inject
 
-class TrialInitializer @Inject constructor(
+class TrialInitializer
+@Inject
+constructor(
     private val trialManager: TrialManager,
     private val playbackManager: PlaybackManager,
     private val billingManager: BillingManager,
     @AppCoroutineScope private val coroutineScope: CoroutineScope
 ) : AppInitializer {
-
     override fun init(application: Application) {
         Timber.v("Initializing trial manager")
-        billingManager.addListener(object : BillingManager.Listener {
-            override fun onBillingClientAvailable() {
-                Timber.v("Billing client available")
-                billingManager.queryPurchases()
-                coroutineScope.launch {
-                    billingManager.querySkuDetails()
+        billingManager.addListener(
+            object : BillingManager.Listener {
+                override fun onBillingClientAvailable() {
+                    Timber.v("Billing client available")
+                    billingManager.queryPurchases()
+                    coroutineScope.launch {
+                        billingManager.querySkuDetails()
+                    }
                 }
             }
-        })
+        )
         billingManager.start()
 
         coroutineScope.launch {

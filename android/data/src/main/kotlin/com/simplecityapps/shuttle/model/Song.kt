@@ -42,7 +42,6 @@ data class Song(
     val sampleRate: Int?,
     val channelCount: Int?
 ) : Parcelable {
-
     val type: Type
         get() {
             return when {
@@ -52,27 +51,31 @@ data class Song(
             }
         }
 
-    val albumArtistGroupKey: AlbumArtistGroupKey = AlbumArtistGroupKey(
-        albumArtist?.lowercase()?.removeArticles()
-            ?: artists.joinToString(", ") { it.lowercase().removeArticles() }.ifEmpty { null }
-    )
+    val albumArtistGroupKey: AlbumArtistGroupKey =
+        AlbumArtistGroupKey(
+            albumArtist?.lowercase()?.removeArticles()
+                ?: artists.joinToString(", ") { it.lowercase().removeArticles() }.ifEmpty { null }
+        )
 
     val albumGroupKey = AlbumGroupKey(album?.lowercase()?.removeArticles(), albumArtistGroupKey)
 
     enum class Type {
-        Audio, Audiobook, Podcast
+        Audio,
+        Audiobook,
+        Podcast
     }
 
-    val friendlyArtistName: String? = if (artists.isNotEmpty()) {
-        if (artists.size == 1) {
-            artists.first()
+    val friendlyArtistName: String? =
+        if (artists.isNotEmpty()) {
+            if (artists.size == 1) {
+                artists.first()
+            } else {
+                artists.groupBy { it.lowercase().removeArticles() }
+                    .map { map -> map.value.maxByOrNull { it.length } }
+                    .joinToString(", ")
+                    .ifEmpty { null }
+            }
         } else {
-            artists.groupBy { it.lowercase().removeArticles() }
-                .map { map -> map.value.maxByOrNull { it.length } }
-                .joinToString(", ")
-                .ifEmpty { null }
+            null
         }
-    } else {
-        null
-    }
 }

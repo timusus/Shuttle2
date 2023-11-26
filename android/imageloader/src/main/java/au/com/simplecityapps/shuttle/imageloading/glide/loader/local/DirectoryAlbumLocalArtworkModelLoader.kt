@@ -12,19 +12,23 @@ import com.bumptech.glide.load.model.MultiModelLoaderFactory
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.query.SongQuery
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.io.InputStream
 import java.util.regex.Pattern
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.runBlocking
 
 class DirectoryAlbumLocalArtworkModelLoader(
     private val context: Context,
     private val localArtworkModelLoader: LocalArtworkModelLoader,
     private val songRepository: SongRepository
 ) : ModelLoader<Album, InputStream> {
-
-    override fun buildLoadData(model: Album, width: Int, height: Int, options: Options): ModelLoader.LoadData<InputStream> {
+    override fun buildLoadData(
+        model: Album,
+        width: Int,
+        height: Int,
+        options: Options
+    ): ModelLoader.LoadData<InputStream> {
         return localArtworkModelLoader.buildLoadData(DirectoryAlbumLocalArtworkProvider(context, model, songRepository), width, height, options)
     }
 
@@ -36,7 +40,6 @@ class DirectoryAlbumLocalArtworkModelLoader(
         private val context: Context,
         private val songRepository: SongRepository
     ) : ModelLoaderFactory<Album, InputStream> {
-
         override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Album, InputStream> {
             return DirectoryAlbumLocalArtworkModelLoader(context, multiFactory.build(LocalArtworkProvider::class.java, InputStream::class.java) as LocalArtworkModelLoader, songRepository)
         }
@@ -51,25 +54,25 @@ class DirectoryAlbumLocalArtworkModelLoader(
         private val songRepository: SongRepository
     ) : AlbumArtworkProvider(album),
         LocalArtworkProvider {
-
         override fun getInputStream(): InputStream? {
             return runBlocking {
                 songRepository.getSongs(SongQuery.AlbumGroupKeys(listOf(SongQuery.AlbumGroupKey(album.groupKey))))
                     .firstOrNull()
                     ?.firstOrNull()
                     ?.let { song ->
-                        val parentDocumentFile = if (DocumentsContract.isDocumentUri(context, song.path.toUri())) {
-                            val parent = song.path.substringBeforeLast("%2F", "")
-                            if (parent.isNotEmpty()) {
-                                DocumentFile.fromTreeUri(context, parent.toUri())
+                        val parentDocumentFile =
+                            if (DocumentsContract.isDocumentUri(context, song.path.toUri())) {
+                                val parent = song.path.substringBeforeLast("%2F", "")
+                                if (parent.isNotEmpty()) {
+                                    DocumentFile.fromTreeUri(context, parent.toUri())
+                                } else {
+                                    null
+                                }
                             } else {
-                                null
+                                File(song.path).parentFile?.let { parent ->
+                                    DocumentFile.fromFile(parent)
+                                }
                             }
-                        } else {
-                            File(song.path).parentFile?.let { parent ->
-                                DocumentFile.fromFile(parent)
-                            }
-                        }
 
                         parentDocumentFile?.listFiles()
                             ?.filter {

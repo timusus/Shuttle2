@@ -16,18 +16,18 @@ import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.recyclerview.DividerItemDecoration
 import com.simplecityapps.trial.BillingManager
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class PurchaseDialogFragment : DialogFragment() {
-
-    private var enabledSkus = listOf(
-        "s2_subscription_full_version_monthly",
-        "s2_subscription_full_version_yearly",
-        "s2_iap_full_version"
-    )
+    private var enabledSkus =
+        listOf(
+            "s2_subscription_full_version_monthly",
+            "s2_subscription_full_version_yearly",
+            "s2_iap_full_version"
+        )
 
     @Inject
     lateinit var billingManager: BillingManager
@@ -38,12 +38,12 @@ class PurchaseDialogFragment : DialogFragment() {
     private var adapter: RecyclerAdapter by autoCleared()
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-
         if (firebaseConfig.getString("pricing_tier") == "low") {
-            enabledSkus = listOf(
-                "s2_subscription_full_version_yearly_low",
-                "s2_iap_full_version_low"
-            )
+            enabledSkus =
+                listOf(
+                    "s2_subscription_full_version_yearly_low",
+                    "s2_iap_full_version_low"
+                )
         }
 
         adapter = RecyclerAdapter(lifecycleScope)

@@ -7,7 +7,6 @@ import retrofit2.Response
  * A Remote Service Error with a HttpStatus code.
  */
 open class RemoteServiceHttpError(val response: Response<*>) : RemoteServiceError() {
-
     val httpStatusCode = HttpStatusCode.values().firstOrNull { statusCode -> statusCode.code == response.code() } ?: Unknown
 
     val isClientError: Boolean
@@ -24,7 +23,6 @@ open class RemoteServiceHttpError(val response: Response<*>) : RemoteServiceErro
 }
 
 enum class HttpStatusCode(val code: Int) {
-
     Unknown(-1),
 
     // Client Errors
@@ -68,5 +66,5 @@ enum class HttpStatusCode(val code: Int) {
     InsufficientStorage(507),
     LoopDetected(508),
     NotExtended(510),
-    NetworkAuthenticationRequired(511);
+    NetworkAuthenticationRequired(511)
 }

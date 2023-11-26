@@ -5,12 +5,13 @@ import com.simplecityapps.shuttle.model.Song
 
 interface RemoteArtworkProvider {
     fun handles(uri: Uri): Boolean
+
     suspend fun getAlbumArtworkUrl(song: Song): String?
+
     suspend fun getArtistArtworkUrl(song: Song): String?
 }
 
 class AggregateRemoteArtworkProvider(val providers: MutableSet<RemoteArtworkProvider>) : RemoteArtworkProvider {
-
     override fun handles(uri: Uri): Boolean {
         return providers.any { it.handles(uri) }
     }

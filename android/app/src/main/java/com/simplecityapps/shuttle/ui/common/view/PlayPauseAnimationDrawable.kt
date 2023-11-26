@@ -4,14 +4,20 @@ import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.animation.ObjectAnimator
 import android.content.Context
-import android.graphics.*
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.ColorFilter
+import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.PixelFormat
+import android.graphics.Rect
+import android.graphics.RectF
 import android.graphics.drawable.Drawable
 import android.util.Property
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.utils.dp
 
 class PlayPauseAnimationDrawable(context: Context) : Drawable() {
-
     private var color = Color.WHITE
     private val mLeftPauseBar = Path()
     private val mRightPauseBar = Path()
@@ -29,11 +35,13 @@ class PlayPauseAnimationDrawable(context: Context) : Drawable() {
     val pausePlayAnimator: Animator
         get() {
             val anim: Animator = ObjectAnimator.ofFloat(this, PROGRESS, if (isPlay) 1f else 0f, if (isPlay) 0f else 1f)
-            anim.addListener(object : AnimatorListenerAdapter() {
-                override fun onAnimationStart(animation: Animator) {
-                    isPlay = !isPlay
+            anim.addListener(
+                object : AnimatorListenerAdapter() {
+                    override fun onAnimationStart(animation: Animator) {
+                        isPlay = !isPlay
+                    }
                 }
-            })
+            )
             return anim
         }
 
@@ -134,21 +142,28 @@ class PlayPauseAnimationDrawable(context: Context) : Drawable() {
     }
 
     companion object {
+        private val PROGRESS: Property<PlayPauseAnimationDrawable, Float> =
+            object : Property<PlayPauseAnimationDrawable, Float>(Float::class.java, "progress") {
+                override fun get(d: PlayPauseAnimationDrawable): Float {
+                    return d.progress
+                }
 
-        private val PROGRESS: Property<PlayPauseAnimationDrawable, Float> = object : Property<PlayPauseAnimationDrawable, Float>(Float::class.java, "progress") {
-            override fun get(d: PlayPauseAnimationDrawable): Float {
-                return d.progress
+                override fun set(
+                    d: PlayPauseAnimationDrawable,
+                    value: Float
+                ) {
+                    d.progress = value
+                }
             }
-
-            override fun set(d: PlayPauseAnimationDrawable, value: Float) {
-                d.progress = value
-            }
-        }
 
         /**
          * Linear interpolate between a and b with parameter t.
          */
-        private fun lerp(a: Float, b: Float, t: Float): Float {
+        private fun lerp(
+            a: Float,
+            b: Float,
+            t: Float
+        ): Float {
             return a + (b - a) * t
         }
     }

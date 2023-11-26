@@ -11,12 +11,13 @@ import androidx.core.content.res.use
 import com.simplecityapps.shuttle.R
 import java.util.concurrent.TimeUnit
 
-class SkipButton @JvmOverloads constructor(
+class SkipButton
+@JvmOverloads
+constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : AppCompatImageButton(context, attrs, defStyleAttr) {
-
     interface OnSeekListener {
         fun onSeek(seekAmount: Int)
     }
@@ -33,13 +34,14 @@ class SkipButton @JvmOverloads constructor(
         set(value) {
             field = value
 
-            skipDrawable = ContextCompat.getDrawable(
-                context,
-                when (direction) {
-                    SeekDirection.Forward -> com.simplecityapps.playback.R.drawable.ic_skip_next_black_24dp
-                    SeekDirection.Backward -> com.simplecityapps.playback.R.drawable.ic_skip_previous_black_24dp
-                }
-            )!!.mutate()
+            skipDrawable =
+                ContextCompat.getDrawable(
+                    context,
+                    when (direction) {
+                        SeekDirection.Forward -> com.simplecityapps.playback.R.drawable.ic_skip_next_black_24dp
+                        SeekDirection.Backward -> com.simplecityapps.playback.R.drawable.ic_skip_previous_black_24dp
+                    }
+                )!!.mutate()
         }
 
     init {
@@ -77,12 +79,13 @@ class SkipButton @JvmOverloads constructor(
         return super.onTouchEvent(event)
     }
 
-    private val runnable = object : Runnable {
-        override fun run() {
-            listener?.onSeek(seekAmount)
-            if (isPressed) {
-                postDelayed(this, repeatInterval)
+    private val runnable =
+        object : Runnable {
+            override fun run() {
+                listener?.onSeek(seekAmount)
+                if (isPressed) {
+                    postDelayed(this, repeatInterval)
+                }
             }
         }
-    }
 }

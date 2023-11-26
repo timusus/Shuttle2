@@ -11,44 +11,62 @@ import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
+import javax.inject.Inject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 class GenreListContract {
-
     sealed class LoadingState {
         object Scanning : LoadingState()
+
         object Loading : LoadingState()
+
         object Empty : LoadingState()
+
         object None : LoadingState()
     }
 
     interface View {
-        fun setGenres(genres: List<Genre>, resetPosition: Boolean)
+        fun setGenres(
+            genres: List<Genre>,
+            resetPosition: Boolean
+        )
+
         fun onAddedToQueue(genre: Genre)
+
         fun setLoadingState(state: LoadingState)
+
         fun setLoadingProgress(progress: Progress?)
+
         fun showLoadError(error: Error)
+
         fun showTagEditor(songs: List<com.simplecityapps.shuttle.model.Song>)
     }
 
     interface Presenter {
         fun loadGenres(resetPosition: Boolean)
+
         fun addToQueue(genre: Genre)
+
         fun playNext(genre: Genre)
+
         fun exclude(genre: Genre)
+
         fun editTags(genre: Genre)
+
         fun play(genre: Genre)
+
         fun getFastscrollPrefix(genre: Genre): String?
     }
 }
 
-class GenreListPresenter @Inject constructor(
+class GenreListPresenter
+@Inject
+constructor(
     private val genreRepository: GenreRepository,
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackManager,
@@ -56,14 +74,18 @@ class GenreListPresenter @Inject constructor(
     private val queueManager: QueueManager
 ) : GenreListContract.Presenter,
     BasePresenter<GenreListContract.View>() {
-
     private var genres: List<Genre>? = null
 
-    private val mediaImporterListener = object : MediaImporter.Listener {
-        override fun onSongImportProgress(providerType: MediaProviderType, message: String, progress: Progress?) {
-            view?.setLoadingProgress(progress)
+    private val mediaImporterListener =
+        object : MediaImporter.Listener {
+            override fun onSongImportProgress(
+                providerType: MediaProviderType,
+                message: String,
+                progress: Progress?
+            ) {
+                view?.setLoadingProgress(progress)
+            }
         }
-    }
 
     override fun unbindView() {
         super.unbindView()
@@ -104,9 +126,10 @@ class GenreListPresenter @Inject constructor(
 
     override fun addToQueue(genre: Genre) {
         launch {
-            val songs = genreRepository.getSongsForGenre(genre.name, SongQuery.All())
-                .firstOrNull()
-                .orEmpty()
+            val songs =
+                genreRepository.getSongsForGenre(genre.name, SongQuery.All())
+                    .firstOrNull()
+                    .orEmpty()
             playbackManager.addToQueue(songs)
             view?.onAddedToQueue(genre)
         }
@@ -114,9 +137,10 @@ class GenreListPresenter @Inject constructor(
 
     override fun playNext(genre: Genre) {
         launch {
-            val songs = genreRepository.getSongsForGenre(genre.name, SongQuery.All())
-                .firstOrNull()
-                .orEmpty()
+            val songs =
+                genreRepository.getSongsForGenre(genre.name, SongQuery.All())
+                    .firstOrNull()
+                    .orEmpty()
             playbackManager.playNext(songs)
             view?.onAddedToQueue(genre)
         }
@@ -124,9 +148,10 @@ class GenreListPresenter @Inject constructor(
 
     override fun exclude(genre: Genre) {
         launch {
-            val songs = genreRepository.getSongsForGenre(genre.name, SongQuery.All())
-                .firstOrNull()
-                .orEmpty()
+            val songs =
+                genreRepository.getSongsForGenre(genre.name, SongQuery.All())
+                    .firstOrNull()
+                    .orEmpty()
             songRepository.setExcluded(songs, true)
             queueManager.remove(queueManager.getQueue().filter { queueItem -> songs.contains(queueItem.song) })
         }
@@ -134,18 +159,20 @@ class GenreListPresenter @Inject constructor(
 
     override fun editTags(genre: Genre) {
         launch {
-            val songs = genreRepository.getSongsForGenre(genre.name, SongQuery.All())
-                .firstOrNull()
-                .orEmpty()
+            val songs =
+                genreRepository.getSongsForGenre(genre.name, SongQuery.All())
+                    .firstOrNull()
+                    .orEmpty()
             view?.showTagEditor(songs)
         }
     }
 
     override fun play(genre: Genre) {
         launch {
-            val songs = genreRepository.getSongsForGenre(genre.name, SongQuery.All())
-                .firstOrNull()
-                .orEmpty()
+            val songs =
+                genreRepository.getSongsForGenre(genre.name, SongQuery.All())
+                    .firstOrNull()
+                    .orEmpty()
             if (queueManager.setQueue(songs)) {
                 playbackManager.load { result ->
                     result.onSuccess { playbackManager.play() }

@@ -11,7 +11,7 @@ data class QueryResult(
 @JsonClass(generateAdapter = true)
 data class MediaContainer(
     @Json(name = "Metadata") val metadata: List<Metadata>?,
-    @Json(name = "Directory") val directories: List<Directory>?,
+    @Json(name = "Directory") val directories: List<Directory>?
 )
 
 @JsonClass(generateAdapter = true)
@@ -33,7 +33,7 @@ data class Metadata(
     @Json(name = "parentTitle") val parentTitle: String,
     @Json(name = "grandparentTitle") val grandparentTitle: String,
     @Json(name = "parentYear") val year: Int?,
-    @Json(name = "Media") val media: List<Media>,
+    @Json(name = "Media") val media: List<Media>
 )
 
 @JsonClass(generateAdapter = true)
@@ -44,7 +44,7 @@ data class Media(
     @Json(name = "audioChannels") val audioChannels: Int,
     @Json(name = "audioCodec") val audioCodec: String,
     @Json(name = "container") val container: String,
-    @Json(name = "Part") val parts: List<Part>,
+    @Json(name = "Part") val parts: List<Part>
 )
 
 @JsonClass(generateAdapter = true)
@@ -54,5 +54,5 @@ data class Part(
     @Json(name = "duration") val duration: Int?,
     @Json(name = "file") val file: String,
     @Json(name = "size") val size: Int,
-    @Json(name = "container") val container: String?,
+    @Json(name = "container") val container: String?
 )

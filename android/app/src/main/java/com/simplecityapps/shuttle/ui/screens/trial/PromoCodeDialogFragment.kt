@@ -16,7 +16,6 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.utils.withArgs
 
 class PromoCodeDialogFragment : DialogFragment() {
-
     @SuppressLint("SetTextI18n")
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val promoCode = requireArguments().getString(ARG_PROMO_CODE)
@@ -48,8 +47,10 @@ class PromoCodeDialogFragment : DialogFragment() {
     companion object {
         private const val TAG = "PromoCodeDialog"
         const val ARG_PROMO_CODE = "promo_code"
-        fun newInstance(promoCode: String): PromoCodeDialogFragment = PromoCodeDialogFragment().withArgs {
-            putString(ARG_PROMO_CODE, promoCode)
-        }
+
+        fun newInstance(promoCode: String): PromoCodeDialogFragment =
+            PromoCodeDialogFragment().withArgs {
+                putString(ARG_PROMO_CODE, promoCode)
+            }
     }
 }

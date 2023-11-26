@@ -6,7 +6,11 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.shuttle.R
 import com.squareup.phrase.Phrase
 
-fun ShowExcludeDialog(context: Context, itemName: String?, onExclude: () -> Unit): AlertDialog {
+fun showExcludeDialog(
+    context: Context,
+    itemName: String?,
+    onExclude: () -> Unit
+): AlertDialog {
     return MaterialAlertDialogBuilder(context)
         .setTitle(context.getString(R.string.dialog_exclude_title))
         .setMessage(

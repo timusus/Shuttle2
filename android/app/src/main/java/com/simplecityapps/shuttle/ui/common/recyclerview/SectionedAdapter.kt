@@ -6,7 +6,6 @@ import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
 import kotlinx.coroutines.CoroutineScope
 
 open class SectionedAdapter(scope: CoroutineScope) : RecyclerAdapter(scope), FastScrollRecyclerView.SectionedAdapter {
-
     override fun getSectionName(position: Int): String {
         return getSectionName(items.getOrNull(position)) ?: ""
     }

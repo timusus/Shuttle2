@@ -11,7 +11,6 @@ import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 import com.squareup.phrase.Phrase
 
 class LibraryBinder(val library: Library, val listener: Listener) : ViewBinder {
-
     interface Listener {
         fun onItemClick(library: Library)
     }
@@ -36,24 +35,31 @@ class LibraryBinder(val library: Library, val listener: Listener) : ViewBinder {
             }
         }
 
-        override fun bind(viewBinder: LibraryBinder, isPartial: Boolean) {
+        override fun bind(
+            viewBinder: LibraryBinder,
+            isPartial: Boolean
+        ) {
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.library.name.ifEmpty { itemView.context.getString(com.simplecityapps.core.R.string.unknown) }
 
-            author.text = Phrase.from(itemView.context, R.string.open_source_library_author)
-                .put("author", viewBinder.library.organization?.name.orEmpty().ifEmpty { itemView.context.getString(com.simplecityapps.core.R.string.unknown) })
-                .format()
+            author.text =
+                Phrase.from(itemView.context, R.string.open_source_library_author)
+                    .put("author", viewBinder.library.organization?.name.orEmpty().ifEmpty { itemView.context.getString(com.simplecityapps.core.R.string.unknown) })
+                    .format()
 
-            version.text = Phrase.from(itemView.context, R.string.open_source_library_version)
-                .put("version", viewBinder.library.artifactVersion.orEmpty().ifEmpty { itemView.context.getString(com.simplecityapps.core.R.string.unknown) })
-                .format()
+            version.text =
+                Phrase.from(itemView.context, R.string.open_source_library_version)
+                    .put("version", viewBinder.library.artifactVersion.orEmpty().ifEmpty { itemView.context.getString(com.simplecityapps.core.R.string.unknown) })
+                    .format()
 
-            license.text = Phrase.from(itemView.context, R.string.open_source_library_license)
-                .put(
-                    "license",
-                    viewBinder.library.licenses.firstOrNull()?.name.orEmpty().ifEmpty { itemView.context.getString(com.simplecityapps.core.R.string.unknown) })
-                .format()
+            license.text =
+                Phrase.from(itemView.context, R.string.open_source_library_license)
+                    .put(
+                        "license",
+                        viewBinder.library.licenses.firstOrNull()?.name.orEmpty().ifEmpty { itemView.context.getString(com.simplecityapps.core.R.string.unknown) }
+                    )
+                    .format()
         }
     }
 }

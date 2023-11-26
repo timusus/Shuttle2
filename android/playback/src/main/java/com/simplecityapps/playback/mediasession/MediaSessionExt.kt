@@ -41,10 +41,11 @@ fun QueueManager.ShuffleMode.toShuffleMode(): Int {
 }
 
 fun QueueItem.toQueueItem(): MediaSessionCompat.QueueItem {
-    val mediaDescription = MediaDescriptionCompat.Builder()
-        .setMediaId(song.id.toString())
-        .setTitle(song.name)
-        .setSubtitle(song.albumArtist)
-        .build()
+    val mediaDescription =
+        MediaDescriptionCompat.Builder()
+            .setMediaId(song.id.toString())
+            .setTitle(song.name)
+            .setSubtitle(song.albumArtist)
+            .build()
     return MediaSessionCompat.QueueItem(mediaDescription, uid)
 }

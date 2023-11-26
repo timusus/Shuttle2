@@ -9,12 +9,13 @@ import android.util.AttributeSet
 import android.view.View
 import com.simplecityapps.shuttle.ui.common.getAttrColor
 
-class ProgressView @JvmOverloads constructor(
+class ProgressView
+@JvmOverloads
+constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
-
     private val paint: Paint
 
     private val rect: RectF = RectF()

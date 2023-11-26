@@ -4,7 +4,6 @@ import android.content.SharedPreferences
 import java.util.Date
 
 class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences) {
-
     var previousVersionCode: Int
         set(value) {
             sharedPreferences.put("previous_version_code", value)
@@ -74,7 +73,9 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
         }
 
     enum class Theme {
-        DayNight, Light, Dark
+        DayNight,
+        Light,
+        Dark
     }
 
     var themeBase: Theme
@@ -86,7 +87,12 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
         }
 
     enum class Accent {
-        Default, Orange, Cyan, Purple, Green, Amber
+        Default,
+        Orange,
+        Cyan,
+        Purple,
+        Green,
+        Amber
     }
 
     var themeAccent: Accent
@@ -328,5 +334,9 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
 }
 
 enum class LibraryTab {
-    Genres, Playlists, Artists, Albums, Songs
+    Genres,
+    Playlists,
+    Artists,
+    Albums,
+    Songs
 }

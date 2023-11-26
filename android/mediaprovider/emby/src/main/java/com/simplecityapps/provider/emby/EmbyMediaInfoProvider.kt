@@ -8,27 +8,32 @@ import com.simplecityapps.provider.emby.http.EmbyTranscodeService
 import com.simplecityapps.shuttle.model.Song
 import javax.inject.Inject
 
-class EmbyMediaInfoProvider @Inject constructor(
+class EmbyMediaInfoProvider
+@Inject
+constructor(
     private val embyAuthenticationManager: EmbyAuthenticationManager,
     private val embyTranscodeService: EmbyTranscodeService
 ) : MediaInfoProvider {
-
     override fun handles(uri: Uri): Boolean {
         return uri.scheme == "emby"
     }
 
     @Throws(IllegalStateException::class)
-    override suspend fun getMediaInfo(song: Song, castCompatibilityMode: Boolean): MediaInfo {
-        val embyPath = embyAuthenticationManager.getAuthenticatedCredentials()?.let { authenticatedCredentials ->
-            embyAuthenticationManager.buildEmbyPath(
-                Uri.parse(song.path).pathSegments.last(),
-                authenticatedCredentials
-            )?.toUri() ?: run {
-                throw IllegalStateException("Failed to build emby path")
+    override suspend fun getMediaInfo(
+        song: Song,
+        castCompatibilityMode: Boolean
+    ): MediaInfo {
+        val embyPath =
+            embyAuthenticationManager.getAuthenticatedCredentials()?.let { authenticatedCredentials ->
+                embyAuthenticationManager.buildEmbyPath(
+                    Uri.parse(song.path).pathSegments.last(),
+                    authenticatedCredentials
+                )?.toUri() ?: run {
+                    throw IllegalStateException("Failed to build emby path")
+                }
+            } ?: run {
+                throw IllegalStateException("Failed to authenticate")
             }
-        } ?: run {
-            throw IllegalStateException("Failed to authenticate")
-        }
 
         return MediaInfo(
             path = embyPath,
@@ -37,7 +42,10 @@ class EmbyMediaInfoProvider @Inject constructor(
         )
     }
 
-    private suspend fun getMimeType(path: Uri, defaultMimeType: String): String {
+    private suspend fun getMimeType(
+        path: Uri,
+        defaultMimeType: String
+    ): String {
         val response = embyTranscodeService.transcode(path.toString())
         return if (response.isSuccessful) {
             return response.headers()["Content-Type"] ?: defaultMimeType

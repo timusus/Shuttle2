@@ -18,8 +18,12 @@ class DirectorySongLocalArtworkModelLoader(
     private val context: Context,
     private val localArtworkModelLoader: LocalArtworkModelLoader
 ) : ModelLoader<Song, InputStream> {
-
-    override fun buildLoadData(model: Song, width: Int, height: Int, options: Options): ModelLoader.LoadData<InputStream>? {
+    override fun buildLoadData(
+        model: Song,
+        width: Int,
+        height: Int,
+        options: Options
+    ): ModelLoader.LoadData<InputStream>? {
         return localArtworkModelLoader.buildLoadData(DirectorySongLocalArtworkProvider(context, model), width, height, options)
     }
 
@@ -28,7 +32,6 @@ class DirectorySongLocalArtworkModelLoader(
     }
 
     class Factory(val context: Context) : ModelLoaderFactory<Song, InputStream> {
-
         override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Song, InputStream> {
             return DirectorySongLocalArtworkModelLoader(context, multiFactory.build(LocalArtworkProvider::class.java, InputStream::class.java) as LocalArtworkModelLoader)
         }
@@ -42,20 +45,20 @@ class DirectorySongLocalArtworkModelLoader(
         song: Song
     ) : SongArtworkProvider(song),
         LocalArtworkProvider {
-
         override fun getInputStream(): InputStream? {
-            val parentDocumentFile = if (DocumentsContract.isDocumentUri(context, song.path.toUri())) {
-                val parent = song.path.substringBeforeLast("%2F", "")
-                if (parent.isNotEmpty()) {
-                    DocumentFile.fromTreeUri(context, parent.toUri())
+            val parentDocumentFile =
+                if (DocumentsContract.isDocumentUri(context, song.path.toUri())) {
+                    val parent = song.path.substringBeforeLast("%2F", "")
+                    if (parent.isNotEmpty()) {
+                        DocumentFile.fromTreeUri(context, parent.toUri())
+                    } else {
+                        null
+                    }
                 } else {
-                    null
+                    File(song.path).parentFile?.let { parent ->
+                        DocumentFile.fromFile(parent)
+                    }
                 }
-            } else {
-                File(song.path).parentFile?.let { parent ->
-                    DocumentFile.fromFile(parent)
-                }
-            }
 
             return parentDocumentFile?.listFiles()
                 ?.filter {

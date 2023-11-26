@@ -6,12 +6,12 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.parcel.InstantParceler
 import com.simplecityapps.shuttle.sorting.SongSortOrder
+import kotlin.time.Duration.Companion.days
+import kotlin.time.ExperimentalTime
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.parcelize.Parcelize
 import kotlinx.parcelize.TypeParceler
-import kotlin.time.Duration.Companion.days
-import kotlin.time.ExperimentalTime
 
 sealed class SongQuery(
     open val predicate: (Song) -> Boolean,
@@ -19,7 +19,6 @@ sealed class SongQuery(
     open val includeExcluded: Boolean = false,
     open val providerType: MediaProviderType? = null
 ) : Parcelable {
-
     @Parcelize
     data class All(
         override val includeExcluded: Boolean = false,

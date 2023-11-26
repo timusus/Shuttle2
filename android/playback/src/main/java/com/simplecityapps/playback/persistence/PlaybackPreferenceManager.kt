@@ -1,11 +1,11 @@
 package com.simplecityapps.playback.persistence
 
-import com.simplecityapps.shuttle.model.MediaProviderType
 import android.content.SharedPreferences
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.dsp.equalizer.EqualizerBand
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.get
 import com.simplecityapps.shuttle.persistence.put
 import com.squareup.moshi.JsonAdapter
@@ -17,7 +17,6 @@ class PlaybackPreferenceManager(
     private val sharedPreferences: SharedPreferences,
     private val moshi: Moshi
 ) {
-
     /**
      * A comma separated list of song ids
      */

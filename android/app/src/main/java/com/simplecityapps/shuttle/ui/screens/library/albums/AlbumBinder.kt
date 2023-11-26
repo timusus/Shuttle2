@@ -14,13 +14,24 @@ abstract class AlbumBinder(
     val listener: Listener? = null
 ) : ViewBinder,
     SectionViewBinder {
-
     var selected: Boolean = false
 
     interface Listener {
-        fun onAlbumClicked(album: com.simplecityapps.shuttle.model.Album, viewHolder: ViewHolder)
-        fun onAlbumLongClicked(album: com.simplecityapps.shuttle.model.Album, viewHolder: ViewHolder)
-        fun onOverflowClicked(view: View, album: com.simplecityapps.shuttle.model.Album) {}
+        fun onAlbumClicked(
+            album: com.simplecityapps.shuttle.model.Album,
+            viewHolder: ViewHolder
+        )
+
+        fun onAlbumLongClicked(
+            album: com.simplecityapps.shuttle.model.Album,
+            viewHolder: ViewHolder
+        )
+
+        fun onOverflowClicked(
+            view: View,
+            album: com.simplecityapps.shuttle.model.Album
+        ) {}
+
         fun onViewHolderCreated(holder: ViewHolder) {}
     }
 

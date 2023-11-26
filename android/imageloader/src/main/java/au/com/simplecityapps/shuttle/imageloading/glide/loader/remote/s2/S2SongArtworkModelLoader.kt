@@ -15,8 +15,12 @@ class S2SongArtworkModelLoader(
     urlLoader: ModelLoader<GlideUrl, InputStream>,
     private val preferenceManager: GeneralPreferenceManager
 ) : BaseGlideUrlLoader<Song>(urlLoader) {
-
-    override fun getUrl(model: Song, width: Int, height: Int, options: Options?): String {
+    override fun getUrl(
+        model: Song,
+        width: Int,
+        height: Int,
+        options: Options?
+    ): String {
         return "https://api.shuttlemusicplayer.app/v1/artwork?artist=${(model.albumArtist ?: model.friendlyArtistName)!!.urlEncode()}&album=${model.album!!.urlEncode()}"
     }
 
@@ -24,7 +28,12 @@ class S2SongArtworkModelLoader(
         return model.album != null && (model.albumArtist ?: model.friendlyArtistName) != null
     }
 
-    override fun buildLoadData(model: Song, width: Int, height: Int, options: Options): ModelLoader.LoadData<InputStream>? {
+    override fun buildLoadData(
+        model: Song,
+        width: Int,
+        height: Int,
+        options: Options
+    ): ModelLoader.LoadData<InputStream>? {
         if (preferenceManager.artworkLocalOnly) {
             return null
         }
@@ -34,7 +43,6 @@ class S2SongArtworkModelLoader(
     class Factory(
         private val preferenceManager: GeneralPreferenceManager
     ) : ModelLoaderFactory<Song, InputStream> {
-
         override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Song, InputStream> {
             return S2SongArtworkModelLoader(multiFactory.build(GlideUrl::class.java, InputStream::class.java), preferenceManager)
         }

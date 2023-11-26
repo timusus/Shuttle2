@@ -3,11 +3,12 @@ package com.simplecityapps.playback.dsp.equalizer
 import androidx.annotation.StringRes
 
 object Equalizer {
-
     object Presets {
-
-        sealed class Preset(val name: String, @StringRes val nameResId: Int, val bands: List<NyquistBand>) {
-
+        sealed class Preset(
+            val name: String,
+            @StringRes val nameResId: Int,
+            val bands: List<NyquistBand>
+        ) {
             object Flat : Preset(
                 "Flat",
                 com.simplecityapps.core.R.string.eq_preset_flat,

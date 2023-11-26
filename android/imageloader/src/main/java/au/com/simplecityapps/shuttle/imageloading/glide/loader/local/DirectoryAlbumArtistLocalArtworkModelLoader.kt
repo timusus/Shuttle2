@@ -12,19 +12,23 @@ import com.bumptech.glide.load.model.MultiModelLoaderFactory
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.query.SongQuery
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.io.InputStream
 import java.util.regex.Pattern
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.runBlocking
 
 class DirectoryAlbumArtistLocalArtworkModelLoader(
     private val context: Context,
     private val localArtworkModelLoader: LocalArtworkModelLoader,
     private val songRepository: SongRepository
 ) : ModelLoader<AlbumArtist, InputStream> {
-
-    override fun buildLoadData(model: AlbumArtist, width: Int, height: Int, options: Options): ModelLoader.LoadData<InputStream>? {
+    override fun buildLoadData(
+        model: AlbumArtist,
+        width: Int,
+        height: Int,
+        options: Options
+    ): ModelLoader.LoadData<InputStream>? {
         return localArtworkModelLoader.buildLoadData(DirectoryAlbumArtistLocalArtworkProvider(context, model, songRepository), width, height, options)
     }
 
@@ -36,7 +40,6 @@ class DirectoryAlbumArtistLocalArtworkModelLoader(
         private val context: Context,
         private val songRepository: SongRepository
     ) : ModelLoaderFactory<AlbumArtist, InputStream> {
-
         override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<AlbumArtist, InputStream> {
             return DirectoryAlbumArtistLocalArtworkModelLoader(context, multiFactory.build(LocalArtworkProvider::class.java, InputStream::class.java) as LocalArtworkModelLoader, songRepository)
         }
@@ -51,7 +54,6 @@ class DirectoryAlbumArtistLocalArtworkModelLoader(
         private val songRepository: SongRepository
     ) : AlbumArtistArtworkProvider(albumArtist),
         LocalArtworkProvider {
-
         override fun getInputStream(): InputStream? {
             return runBlocking {
                 songRepository.getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(albumArtist.groupKey))))

@@ -16,7 +16,9 @@ import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 
-class MediaProviderInitializer @Inject constructor(
+class MediaProviderInitializer
+@Inject
+constructor(
     @ApplicationContext private val context: Context,
     private val mediaImporter: MediaImporter,
     private val preferenceManager: GeneralPreferenceManager,
@@ -27,7 +29,6 @@ class MediaProviderInitializer @Inject constructor(
     private val jellyfinMediaProvider: JellyfinMediaProvider,
     private val plexMediaProvider: PlexMediaProvider
 ) : AppInitializer {
-
     override fun init(application: Application) {
         playbackPreferenceManager.mediaProviderTypes.forEach { type ->
             when (type) {

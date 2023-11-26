@@ -7,8 +7,8 @@ import androidx.recyclerview.widget.RecyclerView
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.ViewBinder
-import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.ui.common.recyclerview.SpacesItemDecoration
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumBinder
@@ -22,7 +22,6 @@ class HorizontalAlbumListBinder(
     val scope: CoroutineScope,
     val listener: AlbumBinder.Listener
 ) : ViewBinder {
-
     override fun createViewHolder(parent: ViewGroup): ViewBinder.ViewHolder<out ViewBinder> {
         return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_horizontal_list, parent, false), scope)
     }
@@ -49,7 +48,6 @@ class HorizontalAlbumListBinder(
     }
 
     class ViewHolder(itemView: View, scope: CoroutineScope) : ViewBinder.ViewHolder<HorizontalAlbumListBinder>(itemView) {
-
         private val recyclerView: RecyclerView = itemView.findViewById(R.id.recyclerView)
 
         val adapter: RecyclerAdapter = RecyclerAdapter(scope)
@@ -58,7 +56,10 @@ class HorizontalAlbumListBinder(
             recyclerView.addItemDecoration(SpacesItemDecoration(4))
         }
 
-        override fun bind(viewBinder: HorizontalAlbumListBinder, isPartial: Boolean) {
+        override fun bind(
+            viewBinder: HorizontalAlbumListBinder,
+            isPartial: Boolean
+        ) {
             super.bind(viewBinder, isPartial)
 
             recyclerView.adapter = adapter

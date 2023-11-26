@@ -13,7 +13,6 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 
 class SkuBinder(val skuDetails: SkuDetails, val litener: Listener) : ViewBinder {
-
     interface Listener {
         fun onClick(skuDetails: SkuDetails)
     }
@@ -38,7 +37,10 @@ class SkuBinder(val skuDetails: SkuDetails, val litener: Listener) : ViewBinder 
             }
         }
 
-        override fun bind(viewBinder: SkuBinder, isPartial: Boolean) {
+        override fun bind(
+            viewBinder: SkuBinder,
+            isPartial: Boolean
+        ) {
             super.bind(viewBinder, isPartial)
 
             title.text = viewBinder.skuDetails.title.substringBefore('(')

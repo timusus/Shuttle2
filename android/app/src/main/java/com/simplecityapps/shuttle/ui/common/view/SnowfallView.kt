@@ -14,7 +14,6 @@ import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 
 class SnowfallView(context: Context?, attrs: AttributeSet?) : View(context, attrs) {
-
     fun setForecast(forecast: Double) {
         if (random.nextDouble() <= forecast) {
             letItSnow()
@@ -22,10 +21,11 @@ class SnowfallView(context: Context?, attrs: AttributeSet?) : View(context, attr
     }
 
     /** Used to paint each snowflake  */
-    private val snowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = Color.WHITE
-        style = Paint.Style.FILL
-    }
+    private val snowPaint =
+        Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.WHITE
+            style = Paint.Style.FILL
+        }
 
     /** The snowflakes currently falling  */
     private val snowflakes: MutableList<Snowflake> = mutableListOf()
@@ -38,24 +38,27 @@ class SnowfallView(context: Context?, attrs: AttributeSet?) : View(context, attr
 
     /** Wait a few seconds before displaying snow  */
     private val snowfallDelay
-        get() = TimeUnit.SECONDS.toMillis(
-            random.nextInt(60)
-                .coerceAtLeast(5).toLong()
-        )
+        get() =
+            TimeUnit.SECONDS.toMillis(
+                random.nextInt(60)
+                    .coerceAtLeast(5).toLong()
+            )
 
     /** The duration for which it will snow**/
     private val snowfallDuration
-        get() = TimeUnit.SECONDS.toMillis(
-            random.nextInt(180)
-                .coerceAtLeast(60).toLong()
-        )
+        get() =
+            TimeUnit.SECONDS.toMillis(
+                random.nextInt(180)
+                    .coerceAtLeast(60).toLong()
+            )
 
     /** Interval between adding more snow  */
     private val snowfallTimeIncrement
-        get() = TimeUnit.SECONDS.toMillis(
-            random.nextInt(8)
-                .coerceAtLeast(2).toLong()
-        )
+        get() =
+            TimeUnit.SECONDS.toMillis(
+                random.nextInt(8)
+                    .coerceAtLeast(2).toLong()
+            )
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
@@ -134,7 +137,6 @@ class SnowfallView(context: Context?, attrs: AttributeSet?) : View(context, attr
     }
 
     companion object {
-
         /** The total number of snowflakes to generate  */
         private const val TOTAL_FLAKES = 200
 
@@ -172,11 +174,17 @@ class Snowflake(
     var shouldRemove = false
 
     fun snowX(): Float {
-        return velX.let { snowX += it; snowX }
+        return velX.let {
+            snowX += it
+            snowX
+        }
     }
 
     fun snowY(): Float {
-        return velY.let { snowY += it; snowY }
+        return velY.let {
+            snowY += it
+            snowY
+        }
     }
 
     fun reset() {

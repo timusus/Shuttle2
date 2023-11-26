@@ -19,10 +19,16 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.utils.withArgs
 
 open class EditTextAlertDialog : DialogFragment() {
-
     interface Listener {
-        fun onSave(text: String?, extra: Parcelable? = null)
-        fun validate(string: String?, extra: Parcelable? = null): Boolean {
+        fun onSave(
+            text: String?,
+            extra: Parcelable? = null
+        )
+
+        fun validate(
+            string: String?,
+            extra: Parcelable? = null
+        ): Boolean {
             return !string.isNullOrEmpty()
         }
     }
@@ -47,22 +53,33 @@ open class EditTextAlertDialog : DialogFragment() {
 
     @SuppressLint("InflateParams")
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-
         val view = layoutInflater.inflate(R.layout.fragment_dialog_edit_text, null)
 
         val textInputLayout: TextInputLayout = view.findViewById(R.id.inputLayout)
         hint?.let { textInputLayout.hint = hint }
 
         editText = view.findViewById(R.id.editText)
-        editText?.addTextChangedListener(object : TextWatcher {
-            override fun afterTextChanged(s: Editable?) {}
+        editText?.addTextChangedListener(
+            object : TextWatcher {
+                override fun afterTextChanged(s: Editable?) {}
 
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+                override fun beforeTextChanged(
+                    s: CharSequence?,
+                    start: Int,
+                    count: Int,
+                    after: Int
+                ) {}
 
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                validate()
+                override fun onTextChanged(
+                    s: CharSequence?,
+                    start: Int,
+                    before: Int,
+                    count: Int
+                ) {
+                    validate()
+                }
             }
-        })
+        )
         editText?.inputType = inputType
         initialText?.let {
             editText!!.setText(initialText)
@@ -127,12 +144,13 @@ open class EditTextAlertDialog : DialogFragment() {
             initialText: String? = null,
             extra: Parcelable? = null,
             inputType: Int = InputType.TYPE_TEXT_FLAG_CAP_WORDS
-        ): EditTextAlertDialog = EditTextAlertDialog().withArgs {
-            putString(ARG_TITLE, title)
-            putString(ARG_HINT, hint)
-            putString(ARG_INITIAL_TEXT, initialText)
-            putParcelable(ARG_EXTRA, extra)
-            putInt(ARG_INPUT_TYPE, inputType)
-        }
+        ): EditTextAlertDialog =
+            EditTextAlertDialog().withArgs {
+                putString(ARG_TITLE, title)
+                putString(ARG_HINT, hint)
+                putString(ARG_INITIAL_TEXT, initialText)
+                putParcelable(ARG_EXTRA, extra)
+                putInt(ARG_INPUT_TYPE, inputType)
+            }
     }
 }

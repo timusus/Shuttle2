@@ -20,6 +20,8 @@ import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
 import dagger.hilt.android.qualifiers.ApplicationContext
+import java.util.*
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
@@ -28,43 +30,63 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.*
-import javax.inject.Inject
 
 interface SongListContract {
-
     sealed class LoadingState {
         object Scanning : LoadingState()
+
         object Loading : LoadingState()
+
         object Empty : LoadingState()
+
         object None : LoadingState()
     }
 
     interface View {
-        fun setData(songs: List<Song>, resetPosition: Boolean)
+        fun setData(
+            songs: List<Song>,
+            resetPosition: Boolean
+        )
+
         fun updateToolbarMenuSortOrder(sortOrder: SongSortOrder)
+
         fun showLoadError(error: Error)
+
         fun onAddedToQueue(songs: List<Song>)
+
         fun setLoadingState(state: LoadingState)
+
         fun setLoadingProgress(progress: Progress?)
+
         fun showDeleteError(error: Error)
     }
 
     interface Presenter : BaseContract.Presenter<View> {
         fun loadSongs(resetPosition: Boolean)
+
         fun onSongClicked(song: Song)
+
         fun addToQueue(songs: List<Song>)
+
         fun playNext(song: Song)
+
         fun exclude(song: Song)
+
         fun delete(song: Song)
+
         fun setSortOrder(songSortOrder: SongSortOrder)
+
         fun getFastscrollPrefix(song: Song): String?
+
         fun updateToolbarMenu()
+
         fun shuffle()
     }
 }
 
-class SongListPresenter @Inject constructor(
+class SongListPresenter
+@Inject
+constructor(
     @ApplicationContext private val context: Context,
     private val playbackManager: PlaybackManager,
     private val songRepository: SongRepository,
@@ -74,14 +96,18 @@ class SongListPresenter @Inject constructor(
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope
 ) : BasePresenter<SongListContract.View>(),
     SongListContract.Presenter {
-
     var songs: List<Song> = emptyList()
 
-    private val mediaImporterListener = object : MediaImporter.Listener {
-        override fun onSongImportProgress(providerType: MediaProviderType, message: String, progress: Progress?) {
-            view?.setLoadingProgress(progress)
+    private val mediaImporterListener =
+        object : MediaImporter.Listener {
+            override fun onSongImportProgress(
+                providerType: MediaProviderType,
+                message: String,
+                progress: Progress?
+            ) {
+                view?.setLoadingProgress(progress)
+            }
         }
-    }
 
     override fun bindView(view: SongListContract.View) {
         super.bindView(view)

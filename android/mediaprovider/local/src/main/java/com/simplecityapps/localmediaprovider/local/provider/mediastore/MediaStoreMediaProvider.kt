@@ -4,10 +4,15 @@ import android.content.Context
 import android.provider.MediaStore
 import androidx.core.database.getIntOrNull
 import androidx.core.database.getStringOrNull
-import com.simplecityapps.mediaprovider.*
+import com.simplecityapps.mediaprovider.FlowEvent
+import com.simplecityapps.mediaprovider.MediaImporter
+import com.simplecityapps.mediaprovider.MediaProvider
+import com.simplecityapps.mediaprovider.MessageProgress
+import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
+import kotlin.math.abs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.Flow
@@ -17,12 +22,10 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
-import kotlin.math.abs
 
 class MediaStoreMediaProvider(
     private val context: Context
 ) : MediaProvider {
-
     override val type = MediaProviderType.MediaStore
 
     // Songs
@@ -30,30 +33,31 @@ class MediaStoreMediaProvider(
     override fun findSongs(): Flow<FlowEvent<List<Song>, MessageProgress>> {
         return flow {
             var songs = mutableListOf<Song>()
-            val songCursor = context.contentResolver.query(
-                MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                arrayOf(
-                    MediaStore.Audio.Media._ID,
-                    MediaStore.Audio.Media.DATA,
-                    MediaStore.Audio.Media.TITLE,
-                    MediaStore.Audio.Media.ARTIST_ID,
-                    MediaStore.Audio.Media.ARTIST,
-                    MediaStore.Audio.Media.ALBUM_ID,
-                    MediaStore.Audio.Media.ALBUM,
-                    MediaStore.Audio.Media.DURATION,
-                    MediaStore.Audio.Media.SIZE,
-                    MediaStore.Audio.Media.YEAR,
-                    MediaStore.Audio.Media.TRACK,
-                    MediaStore.Audio.Media.DATE_MODIFIED,
-                    MediaStore.Audio.Media.IS_PODCAST,
-                    MediaStore.Audio.Media.BOOKMARK,
-                    MediaStore.Audio.Media.MIME_TYPE,
-                    "album_artist"
-                ),
-                "${MediaStore.Audio.Media.IS_MUSIC}=1 OR ${MediaStore.Audio.Media.IS_PODCAST}=1",
-                null,
-                null
-            )
+            val songCursor =
+                context.contentResolver.query(
+                    MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
+                    arrayOf(
+                        MediaStore.Audio.Media._ID,
+                        MediaStore.Audio.Media.DATA,
+                        MediaStore.Audio.Media.TITLE,
+                        MediaStore.Audio.Media.ARTIST_ID,
+                        MediaStore.Audio.Media.ARTIST,
+                        MediaStore.Audio.Media.ALBUM_ID,
+                        MediaStore.Audio.Media.ALBUM,
+                        MediaStore.Audio.Media.DURATION,
+                        MediaStore.Audio.Media.SIZE,
+                        MediaStore.Audio.Media.YEAR,
+                        MediaStore.Audio.Media.TRACK,
+                        MediaStore.Audio.Media.DATE_MODIFIED,
+                        MediaStore.Audio.Media.IS_PODCAST,
+                        MediaStore.Audio.Media.BOOKMARK,
+                        MediaStore.Audio.Media.MIME_TYPE,
+                        "album_artist"
+                    ),
+                    "${MediaStore.Audio.Media.IS_MUSIC}=1 OR ${MediaStore.Audio.Media.IS_PODCAST}=1",
+                    null,
+                    null
+                )
 
             songCursor?.use {
                 val size = songCursor.count
@@ -71,63 +75,70 @@ class MediaStoreMediaProvider(
                         }
                     }
 
-                    val song = Song(
-                        id = 0,
-                        name = songCursor.getStringOrNull(
-                            songCursor.getColumnIndexOrThrow(
-                                MediaStore.Audio.Media.TITLE
-                            )
-                        ),
-                        artists = songCursor.getStringOrNull(
-                            songCursor.getColumnIndexOrThrow(
-                                MediaStore.Audio.Media.ARTIST
-                            )
-                        )?.let { listOf(it) } ?: emptyList(),
-                        albumArtist = songCursor.getStringOrNull(songCursor.getColumnIndex("album_artist")),
-                        album = songCursor.getStringOrNull(
-                            songCursor.getColumnIndexOrThrow(
-                                MediaStore.Audio.Media.ALBUM
-                            )
-                        ),
-                        track = track,
-                        disc = disc,
-                        duration = songCursor.getInt(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)),
-                        date = songCursor.getIntOrNull(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR))?.let { LocalDate(it, 1, 1) },
-                        genres = emptyList(),
-                        path = songCursor.getString(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)),
-                        size = songCursor.getLong(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)),
-                        mimeType = songCursor.getString(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)),
-                        lastModified = Instant.fromEpochMilliseconds(
+                    val song =
+                        Song(
+                            id = 0,
+                            name =
+                            songCursor.getStringOrNull(
+                                songCursor.getColumnIndexOrThrow(
+                                    MediaStore.Audio.Media.TITLE
+                                )
+                            ),
+                            artists =
+                            songCursor.getStringOrNull(
+                                songCursor.getColumnIndexOrThrow(
+                                    MediaStore.Audio.Media.ARTIST
+                                )
+                            )?.let { listOf(it) } ?: emptyList(),
+                            albumArtist = songCursor.getStringOrNull(songCursor.getColumnIndex("album_artist")),
+                            album =
+                            songCursor.getStringOrNull(
+                                songCursor.getColumnIndexOrThrow(
+                                    MediaStore.Audio.Media.ALBUM
+                                )
+                            ),
+                            track = track,
+                            disc = disc,
+                            duration = songCursor.getInt(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)),
+                            date = songCursor.getIntOrNull(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.YEAR))?.let { LocalDate(it, 1, 1) },
+                            genres = emptyList(),
+                            path = songCursor.getString(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)),
+                            size = songCursor.getLong(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)),
+                            mimeType = songCursor.getString(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)),
+                            lastModified =
+                            Instant.fromEpochMilliseconds(
+                                songCursor.getLong(
+                                    songCursor.getColumnIndexOrThrow(
+                                        MediaStore.Audio.Media.DATE_MODIFIED
+                                    )
+                                ) * 1000
+                            ),
+                            lastPlayed = null,
+                            lastCompleted = null,
+                            playCount = 0,
+                            playbackPosition = 0,
+                            blacklisted = false,
+                            externalId =
                             songCursor.getLong(
                                 songCursor.getColumnIndexOrThrow(
-                                    MediaStore.Audio.Media.DATE_MODIFIED
+                                    MediaStore.Audio.Media._ID
                                 )
-                            ) * 1000
-                        ),
-                        lastPlayed = null,
-                        lastCompleted = null,
-                        playCount = 0,
-                        playbackPosition = 0,
-                        blacklisted = false,
-                        externalId = songCursor.getLong(
-                            songCursor.getColumnIndexOrThrow(
-                                MediaStore.Audio.Media._ID
-                            )
-                        ).toString(),
-                        mediaProvider = type,
-                        lyrics = null,
-                        grouping = null,
-                        bitRate = null,
-                        bitDepth = null,
-                        sampleRate = null,
-                        channelCount = null
-                    )
+                            ).toString(),
+                            mediaProvider = type,
+                            lyrics = null,
+                            grouping = null,
+                            bitRate = null,
+                            bitDepth = null,
+                            sampleRate = null,
+                            channelCount = null
+                        )
                     songs.add(song)
                     progress++
                     emit(
                         FlowEvent.Progress(
                             MessageProgress(
-                                message = listOf(
+                                message =
+                                listOf(
                                     song.friendlyArtistName ?: song.albumArtist,
                                     song.name
                                 ).joinToString(" • "),
@@ -158,16 +169,18 @@ class MediaStoreMediaProvider(
                         null
                     )?.use { genreSongCursor ->
                         while (currentCoroutineContext().isActive && genreSongCursor.moveToNext()) {
-                            val songId = genreSongCursor.getLong(
-                                genreSongCursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
-                            ).toString()
-                            songs = songs.map { song ->
-                                if (song.externalId == songId) {
-                                    song.copy(genres = song.genres + genre)
-                                } else {
-                                    song
-                                }
-                            }.toMutableList()
+                            val songId =
+                                genreSongCursor.getLong(
+                                    genreSongCursor.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
+                                ).toString()
+                            songs =
+                                songs.map { song ->
+                                    if (song.externalId == songId) {
+                                        song.copy(genres = song.genres + genre)
+                                    } else {
+                                        song
+                                    }
+                                }.toMutableList()
                         }
                     }
                 }
@@ -197,30 +210,33 @@ class MediaStoreMediaProvider(
     ): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> {
         return flow {
             val mediaStorePlaylists = findMediaStorePlaylists().toList()
-            val updates = mediaStorePlaylists.mapIndexed { i, mediaStorePlaylist ->
-                val mediaStoreSongs = findSongsForMediaStorePlaylist(mediaStorePlaylist.id)
+            val updates =
+                mediaStorePlaylists.mapIndexed { i, mediaStorePlaylist ->
+                    val mediaStoreSongs = findSongsForMediaStorePlaylist(mediaStorePlaylist.id)
 
-                // Associate Media Store songs with Shuttle's songs
-                val matchingSongs = mediaStoreSongs.mapNotNull { mediaStoreSong ->
-                    existingSongs.firstOrNull { existingSong ->
-                        // We assume two songs are equal, if they have the same title, album, artist & duration. We can't be too specific, as the
-                        // MediaStore scanner may have interpreted some fields differently to Shuttle's built in scanner.
-                        existingSong.name.equals(mediaStoreSong.title, ignoreCase = true) &&
-                            existingSong.album.equals(mediaStoreSong.album, ignoreCase = true) &&
-                            (existingSong.artists.any { it.equals(mediaStoreSong.artist, true) } || existingSong.albumArtist.equals(mediaStoreSong.albumArtist, ignoreCase = true)) &&
-                            abs(existingSong.duration - mediaStoreSong.duration) <= 1000 // song duration is within 1 second
-                    }
+                    // Associate Media Store songs with Shuttle's songs
+                    val matchingSongs =
+                        mediaStoreSongs.mapNotNull { mediaStoreSong ->
+                            existingSongs.firstOrNull { existingSong ->
+                                // We assume two songs are equal, if they have the same title, album, artist & duration. We can't be too specific, as the
+                                // MediaStore scanner may have interpreted some fields differently to Shuttle's built in scanner.
+                                existingSong.name.equals(mediaStoreSong.title, ignoreCase = true) &&
+                                    existingSong.album.equals(mediaStoreSong.album, ignoreCase = true) &&
+                                    (existingSong.artists.any { it.equals(mediaStoreSong.artist, true) } || existingSong.albumArtist.equals(mediaStoreSong.albumArtist, ignoreCase = true)) &&
+                                    abs(existingSong.duration - mediaStoreSong.duration) <= 1000 // song duration is within 1 second
+                            }
+                        }
+
+                    val updateData =
+                        MediaImporter.PlaylistUpdateData(
+                            type,
+                            mediaStorePlaylist.name,
+                            matchingSongs,
+                            mediaStorePlaylist.id.toString()
+                        )
+                    emit(FlowEvent.Progress(MessageProgress("Found playlist", Progress(i, mediaStorePlaylists.size))))
+                    updateData
                 }
-
-                val updateData = MediaImporter.PlaylistUpdateData(
-                    type,
-                    mediaStorePlaylist.name,
-                    matchingSongs,
-                    mediaStorePlaylist.id.toString()
-                )
-                emit(FlowEvent.Progress(MessageProgress("Found playlist", Progress(i, mediaStorePlaylists.size))))
-                updateData
-            }
 
             emit(FlowEvent.Success(updates.toList()))
         }
@@ -230,24 +246,25 @@ class MediaStoreMediaProvider(
         return withContext(Dispatchers.IO) {
             val songs = mutableListOf<MediaStoreSong>()
 
-            val cursor = context.contentResolver.query(
-                MediaStore.Audio.Playlists.Members.getContentUri("external", mediaStorePlaylistId),
-                arrayOf(
-                    MediaStore.Audio.Playlists.Members.TITLE,
-                    MediaStore.Audio.Playlists.Members.ALBUM,
-                    MediaStore.Audio.Playlists.Members.ARTIST,
-                    MediaStore.Audio.Playlists.Members.DURATION,
-                    MediaStore.Audio.Playlists.Members.YEAR,
-                    MediaStore.Audio.Media.TRACK,
-                    MediaStore.Audio.Playlists.Members.MIME_TYPE,
-                    MediaStore.Audio.Playlists.Members.DATA,
-                    MediaStore.Audio.Playlists.Members.PLAY_ORDER,
-                    "album_artist"
-                ),
-                null,
-                null,
-                MediaStore.Audio.Playlists.Members.DEFAULT_SORT_ORDER
-            )
+            val cursor =
+                context.contentResolver.query(
+                    MediaStore.Audio.Playlists.Members.getContentUri("external", mediaStorePlaylistId),
+                    arrayOf(
+                        MediaStore.Audio.Playlists.Members.TITLE,
+                        MediaStore.Audio.Playlists.Members.ALBUM,
+                        MediaStore.Audio.Playlists.Members.ARTIST,
+                        MediaStore.Audio.Playlists.Members.DURATION,
+                        MediaStore.Audio.Playlists.Members.YEAR,
+                        MediaStore.Audio.Media.TRACK,
+                        MediaStore.Audio.Playlists.Members.MIME_TYPE,
+                        MediaStore.Audio.Playlists.Members.DATA,
+                        MediaStore.Audio.Playlists.Members.PLAY_ORDER,
+                        "album_artist"
+                    ),
+                    null,
+                    null,
+                    MediaStore.Audio.Playlists.Members.DEFAULT_SORT_ORDER
+                )
 
             cursor?.use {
                 while (cursor.moveToNext()) {
@@ -286,17 +303,17 @@ class MediaStoreMediaProvider(
 
     private fun findMediaStorePlaylists(): Flow<MediaStorePlaylist> {
         return flow {
-
-            val cursor = context.contentResolver.query(
-                MediaStore.Audio.Playlists.EXTERNAL_CONTENT_URI,
-                arrayOf(
-                    MediaStore.Audio.Playlists._ID,
-                    MediaStore.Audio.Playlists.NAME
-                ),
-                null,
-                null,
-                MediaStore.Audio.Playlists.DEFAULT_SORT_ORDER
-            )
+            val cursor =
+                context.contentResolver.query(
+                    MediaStore.Audio.Playlists.EXTERNAL_CONTENT_URI,
+                    arrayOf(
+                        MediaStore.Audio.Playlists._ID,
+                        MediaStore.Audio.Playlists.NAME
+                    ),
+                    null,
+                    null,
+                    MediaStore.Audio.Playlists.DEFAULT_SORT_ORDER
+                )
 
             cursor?.use {
                 while (cursor.moveToNext()) {

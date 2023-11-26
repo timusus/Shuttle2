@@ -11,7 +11,6 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.utils.dp
 
 class WidgetProvider42 : ShuttleAppWidgetProvider() {
-
     override val layoutResIdLight: Int
         get() = R.layout.appwidget_42
 

@@ -10,9 +10,10 @@ class QueueManager(
     private val queueWatcher: QueueWatcher,
     private val preferenceManager: GeneralPreferenceManager
 ) {
-
     enum class ShuffleMode {
-        Off, On;
+        Off,
+        On
+        ;
 
         companion object {
             fun init(ordinal: Int): ShuffleMode {
@@ -26,7 +27,10 @@ class QueueManager(
     }
 
     enum class RepeatMode {
-        Off, All, One;
+        Off,
+        All,
+        One
+        ;
 
         companion object {
             fun init(ordinal: Int): RepeatMode {
@@ -65,7 +69,11 @@ class QueueManager(
      *
      * @return true if the queue was successfully set, and is not empty.
      */
-    suspend fun setQueue(songs: List<Song>, shuffleSongs: List<Song>? = null, position: Int = 0): Boolean {
+    suspend fun setQueue(
+        songs: List<Song>,
+        shuffleSongs: List<Song>? = null,
+        position: Int = 0
+    ): Boolean {
         if (position < 0 || position >= songs.size) {
             Timber.e("Invalid queue position: $position (songs.size: ${songs.size})")
             return false
@@ -108,12 +116,14 @@ class QueueManager(
         }
 
         when (shuffleMode) {
-            ShuffleMode.Off -> if (existingQueueChanged) {
-                queueWatcher.onQueueChanged()
-            }
-            ShuffleMode.On -> if (shuffleQueueChanged) {
-                queueWatcher.onQueueChanged()
-            }
+            ShuffleMode.Off ->
+                if (existingQueueChanged) {
+                    queueWatcher.onQueueChanged()
+                }
+            ShuffleMode.On ->
+                if (shuffleQueueChanged) {
+                    queueWatcher.onQueueChanged()
+                }
         }
 
         currentItem?.let {
@@ -230,7 +240,10 @@ class QueueManager(
      * @param shuffleMode [ShuffleMode]
      * @param reshuffle if true, re-shuffle the shuffle-queue when the [shuffleMode] is [ShuffleMode.On].
      */
-    suspend fun setShuffleMode(shuffleMode: ShuffleMode, reshuffle: Boolean) {
+    suspend fun setShuffleMode(
+        shuffleMode: ShuffleMode,
+        reshuffle: Boolean
+    ) {
         if (this.shuffleMode != shuffleMode) {
             val previousPosition = getCurrentPosition()
 
@@ -316,7 +329,10 @@ class QueueManager(
         queueWatcher.onQueueChanged()
     }
 
-    fun move(from: Int, to: Int) {
+    fun move(
+        from: Int,
+        to: Int
+    ) {
         val oldPosition = getCurrentPosition()
         queue.move(from, to, shuffleMode)
         val currentPosition = getCurrentPosition()
@@ -335,7 +351,6 @@ class QueueManager(
      * Holds a pair of lists, one representing the 'base' queue, and the other representing the 'shuffle' queue.
      */
     class Queue {
-
         private var baseList: MutableList<QueueItem> = mutableListOf()
         private var shuffleList: MutableList<QueueItem> = mutableListOf()
 
@@ -346,7 +361,10 @@ class QueueManager(
             }
         }
 
-        fun getItem(shuffleMode: ShuffleMode, position: Int): QueueItem? {
+        fun getItem(
+            shuffleMode: ShuffleMode,
+            position: Int
+        ): QueueItem? {
             return get(shuffleMode).getOrNull(position)
         }
 
@@ -379,7 +397,10 @@ class QueueManager(
             shuffleList.addAll(items.shuffled())
         }
 
-        fun insert(position: Int, items: List<QueueItem>) {
+        fun insert(
+            position: Int,
+            items: List<QueueItem>
+        ) {
             baseList.addAll(position, items)
             shuffleList.addAll(position, items)
         }
@@ -394,7 +415,10 @@ class QueueManager(
             shuffleList.clear()
         }
 
-        fun replace(old: QueueItem, new: QueueItem) {
+        fun replace(
+            old: QueueItem,
+            new: QueueItem
+        ) {
             if (baseList.isNotEmpty()) {
                 baseList[baseList.indexOf(old)] = new
             }
@@ -403,7 +427,11 @@ class QueueManager(
             }
         }
 
-        fun move(from: Int, to: Int, shuffleMode: ShuffleMode) {
+        fun move(
+            from: Int,
+            to: Int,
+            shuffleMode: ShuffleMode
+        ) {
             val list = get(shuffleMode)
             list.add(to, list.removeAt(from))
         }

@@ -20,45 +20,87 @@ import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 interface PlaylistDetailContract {
-
     interface View {
-        fun setData(playlistSongs: List<PlaylistSong>, showDragHandle: Boolean)
+        fun setData(
+            playlistSongs: List<PlaylistSong>,
+            showDragHandle: Boolean
+        )
+
         fun updateToolbarMenuSortOrder(sortOrder: PlaylistSongSortOrder)
+
         fun showLoadError(error: Error)
+
         fun onAddedToQueue(playlistSong: PlaylistSong)
+
         fun onAddedToQueue(playlist: Playlist)
+
         fun setPlaylist(playlist: Playlist)
+
         fun showDeleteError(error: Error)
+
         fun showTagEditor(playlistSongs: List<PlaylistSong>)
+
         fun dismiss()
     }
 
     interface Presenter : BaseContract.Presenter<View> {
-        fun onSongClicked(playlistSong: PlaylistSong, index: Int)
+        fun onSongClicked(
+            playlistSong: PlaylistSong,
+            index: Int
+        )
+
         fun shuffle()
+
         fun addToQueue(playlistSong: PlaylistSong)
+
         fun playNext(playlistSong: PlaylistSong)
+
         fun exclude(playlistSong: PlaylistSong)
+
         fun editTags(playlistSong: PlaylistSong)
+
         fun remove(playlistSong: PlaylistSong)
+
         fun delete(playlistSong: PlaylistSong)
+
         fun addToQueue(playlist: Playlist)
+
         fun delete(playlist: Playlist)
+
         fun clear(playlist: Playlist)
-        fun rename(playlist: Playlist, name: String)
+
+        fun rename(
+            playlist: Playlist,
+            name: String
+        )
+
         fun setSortOrder(sortOrder: PlaylistSongSortOrder)
+
         fun updateToolbarMenu()
-        fun movePlaylistItem(from: Int, to: Int)
+
+        fun movePlaylistItem(
+            from: Int,
+            to: Int
+        )
     }
 }
 
-class PlaylistDetailPresenter @AssistedInject constructor(
+class PlaylistDetailPresenter
+@AssistedInject
+constructor(
     @ApplicationContext private val context: Context,
     private val playlistRepository: PlaylistRepository,
     private val songRepository: SongRepository,
@@ -67,32 +109,33 @@ class PlaylistDetailPresenter @AssistedInject constructor(
     @Assisted playlist: Playlist
 ) : BasePresenter<PlaylistDetailContract.View>(),
     PlaylistDetailContract.Presenter {
-
     @AssistedFactory
     interface Factory {
         fun create(playlist: Playlist): PlaylistDetailPresenter
     }
 
-    private val playlist = playlistRepository.getPlaylists(PlaylistQuery.PlaylistId(playlist.id))
-        .map { playlists ->
-            playlists.firstOrNull()
-        }
-        .filterNotNull()
-        .stateIn(
-            scope = this,
-            started = SharingStarted.Lazily,
-            initialValue = playlist
-        )
+    private val playlist =
+        playlistRepository.getPlaylists(PlaylistQuery.PlaylistId(playlist.id))
+            .map { playlists ->
+                playlists.firstOrNull()
+            }
+            .filterNotNull()
+            .stateIn(
+                scope = this,
+                started = SharingStarted.Lazily,
+                initialValue = playlist
+            )
 
-    private val playlistSongs: StateFlow<List<PlaylistSong>?> = this.playlist
-        .flatMapLatest { playlist ->
-            playlistRepository.getSongsForPlaylist(playlist)
-        }
-        .stateIn(
-            scope = this,
-            started = SharingStarted.Lazily,
-            initialValue = null
-        )
+    private val playlistSongs: StateFlow<List<PlaylistSong>?> =
+        this.playlist
+            .flatMapLatest { playlist ->
+                playlistRepository.getSongsForPlaylist(playlist)
+            }
+            .stateIn(
+                scope = this,
+                started = SharingStarted.Lazily,
+                initialValue = null
+            )
 
     override fun bindView(view: PlaylistDetailContract.View) {
         super.bindView(view)
@@ -112,7 +155,10 @@ class PlaylistDetailPresenter @AssistedInject constructor(
             }.launchIn(this)
     }
 
-    override fun onSongClicked(playlistSong: PlaylistSong, index: Int) {
+    override fun onSongClicked(
+        playlistSong: PlaylistSong,
+        index: Int
+    ) {
         launch {
             if (queueManager.setQueue(songs = playlistSongs.value.orEmpty().map { it.song }, position = index)) {
                 playbackManager.load { result ->
@@ -200,7 +246,10 @@ class PlaylistDetailPresenter @AssistedInject constructor(
         }
     }
 
-    override fun rename(playlist: Playlist, name: String) {
+    override fun rename(
+        playlist: Playlist,
+        name: String
+    ) {
         launch {
             playlistRepository.renamePlaylist(playlist, name)
         }
@@ -221,7 +270,10 @@ class PlaylistDetailPresenter @AssistedInject constructor(
         view?.updateToolbarMenuSortOrder(playlist.value.sortOrder)
     }
 
-    override fun movePlaylistItem(from: Int, to: Int) {
+    override fun movePlaylistItem(
+        from: Int,
+        to: Int
+    ) {
         launch {
             var newSongs = playlistSongs.value.orEmpty().toMutableList()
             newSongs.add(to, newSongs.removeAt(from))

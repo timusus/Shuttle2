@@ -1,7 +1,6 @@
 package com.simplecityapps.playback.chromecast
 
 import android.content.Context
-
 import com.google.android.gms.cast.framework.CastOptions
 import com.google.android.gms.cast.framework.OptionsProvider
 import com.google.android.gms.cast.framework.SessionProvider

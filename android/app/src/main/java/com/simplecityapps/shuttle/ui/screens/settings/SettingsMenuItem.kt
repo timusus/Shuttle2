@@ -4,8 +4,11 @@ import androidx.annotation.StringRes
 import com.simplecityapps.shuttle.R
 
 enum class SettingsMenuItem {
-
-    Shuffle, SleepTimer, Dsp, Settings;
+    Shuffle,
+    SleepTimer,
+    Dsp,
+    Settings
+    ;
 
     val icon: Int
         get() {

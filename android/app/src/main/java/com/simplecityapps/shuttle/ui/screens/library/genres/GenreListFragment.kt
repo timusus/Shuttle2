@@ -15,13 +15,11 @@ import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.Progress
-import com.simplecityapps.shuttle.model.Genre
-import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
-import com.simplecityapps.shuttle.ui.common.dialog.ShowExcludeDialog
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
+import com.simplecityapps.shuttle.ui.common.dialog.showExcludeDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
@@ -41,7 +39,6 @@ class GenreListFragment :
     GenreBinder.Listener,
     GenreListContract.View,
     CreatePlaylistDialogFragment.Listener {
-
     private var adapter: RecyclerAdapter by autoCleared()
 
     private var recyclerView: RecyclerView by autoCleared()
@@ -60,22 +57,30 @@ class GenreListFragment :
 
     // Lifecycle
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
         return inflater.inflate(R.layout.fragment_genres, container, false)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    override fun onViewCreated(
+        view: View,
+        savedInstanceState: Bundle?
+    ) {
         super.onViewCreated(view, savedInstanceState)
 
         playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
 
-        adapter = object : SectionedAdapter(viewLifecycleOwner.lifecycleScope) {
-            override fun getSectionName(viewBinder: ViewBinder?): String? {
-                return (viewBinder as? GenreBinder)?.genre?.let { genre ->
-                    presenter.getFastscrollPrefix(genre)
+        adapter =
+            object : SectionedAdapter(viewLifecycleOwner.lifecycleScope) {
+                override fun getSectionName(viewBinder: ViewBinder?): String? {
+                    return (viewBinder as? GenreBinder)?.genre?.let { genre ->
+                        presenter.getFastscrollPrefix(genre)
+                    }
                 }
             }
-        }
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
         recyclerView.setRecyclerListener(RecyclerListener())
@@ -115,7 +120,10 @@ class GenreListFragment :
 
     // GenreListContract.View Implementation
 
-    override fun setGenres(genres: List<com.simplecityapps.shuttle.model.Genre>, resetPosition: Boolean) {
+    override fun setGenres(
+        genres: List<com.simplecityapps.shuttle.model.Genre>,
+        resetPosition: Boolean
+    ) {
         if (resetPosition) {
             adapter.clear()
         }
@@ -171,7 +179,10 @@ class GenreListFragment :
 
     // GenreBinder.Listener Implementation
 
-    override fun onGenreSelected(genre: com.simplecityapps.shuttle.model.Genre, viewHolder: GenreBinder.ViewHolder) {
+    override fun onGenreSelected(
+        genre: com.simplecityapps.shuttle.model.Genre,
+        viewHolder: GenreBinder.ViewHolder
+    ) {
         if (findNavController().currentDestination?.id != R.id.genreDetailFragment) {
             findNavController().navigate(
                 R.id.action_libraryFragment_to_genreDetailFragment,
@@ -180,7 +191,10 @@ class GenreListFragment :
         }
     }
 
-    override fun onOverflowClicked(view: View, genre: com.simplecityapps.shuttle.model.Genre) {
+    override fun onOverflowClicked(
+        view: View,
+        genre: com.simplecityapps.shuttle.model.Genre
+    ) {
         val popupMenu = PopupMenu(requireContext(), view)
         popupMenu.inflate(R.menu.menu_popup)
         TagEditorMenuSanitiser.sanitise(popupMenu.menu, genre.mediaProviders)
@@ -205,7 +219,7 @@ class GenreListFragment :
                         return@setOnMenuItemClickListener true
                     }
                     R.id.exclude -> {
-                        ShowExcludeDialog(requireContext(), genre.name) {
+                        showExcludeDialog(requireContext(), genre.name) {
                             presenter.exclude(genre)
                         }
                         return@setOnMenuItemClickListener true
@@ -223,14 +237,16 @@ class GenreListFragment :
 
     // CreatePlaylistDialogFragment.Listener Implementation
 
-    override fun onSave(text: String, playlistData: PlaylistData) {
+    override fun onSave(
+        text: String,
+        playlistData: PlaylistData
+    ) {
         playlistMenuView.onSave(text, playlistData)
     }
 
     // Static
 
     companion object {
-
         const val TAG = "GenreListFragment"
 
         const val ARG_RECYCLER_STATE = "recycler_state"

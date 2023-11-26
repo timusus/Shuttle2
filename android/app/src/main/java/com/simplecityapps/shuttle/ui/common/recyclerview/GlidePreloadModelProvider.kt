@@ -9,7 +9,6 @@ class GlidePreloadModelProvider<T>(
     val imageLoader: GlideImageLoader,
     val options: List<ArtworkImageLoader.Options>
 ) : PreloadModelProvider<T> {
-
     var items: List<T> = emptyList()
 
     override fun getPreloadItems(position: Int): List<T> {

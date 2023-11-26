@@ -20,10 +20,12 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 @Module(includes = [AppModuleBinds::class])
 class AppModule {
-
     @Singleton
     @Provides
-    fun provideDebugLoggingTree(@ApplicationContext context: Context, generalPreferenceManager: GeneralPreferenceManager): DebugLoggingTree {
+    fun provideDebugLoggingTree(
+        @ApplicationContext context: Context,
+        generalPreferenceManager: GeneralPreferenceManager
+    ): DebugLoggingTree {
         return DebugLoggingTree(context, generalPreferenceManager)
     }
 
@@ -31,7 +33,10 @@ class AppModule {
     @Provides
     fun provideArtworkCache(): LruCache<String, Bitmap> {
         return object : LruCache<String, Bitmap>(10 * 1024 * 1024) {
-            override fun sizeOf(key: String, value: Bitmap): Int {
+            override fun sizeOf(
+                key: String,
+                value: Bitmap
+            ): Int {
                 return value.allocationByteCount
             }
         }

@@ -5,15 +5,14 @@ import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.PlaybackWatcherCallback
 import com.simplecityapps.shuttle.model.Song
-import timber.log.Timber
 import java.util.*
 import kotlin.math.max
+import timber.log.Timber
 
 class SleepTimer(
     private val playbackManager: PlaybackManager,
     private val playbackWatcher: PlaybackWatcher
 ) : PlaybackWatcherCallback {
-
     private var handler: Handler? = null
 
     private var playToEnd: Boolean = false
@@ -28,8 +27,10 @@ class SleepTimer(
      * @param delay time in milliseconds until the sleep timer should sleep.
      * @param playToEnd whether to wait until the current track ends before pausing playback.
      */
-    fun startTimer(delay: Long, playToEnd: Boolean) {
-
+    fun startTimer(
+        delay: Long,
+        playToEnd: Boolean
+    ) {
         Timber.v("startTimer() called.. Delay: ${delay}ms")
 
         startTime = Date()

@@ -11,7 +11,6 @@ import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 class DiscNumberBinder(
     val label: String
 ) : ViewBinder {
-
     override fun createViewHolder(parent: ViewGroup): ViewHolder {
         return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_disc_number, parent, false))
     }
@@ -36,8 +35,10 @@ class DiscNumberBinder(
     }
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<DiscNumberBinder>(itemView) {
-
-        override fun bind(viewBinder: DiscNumberBinder, isPartial: Boolean) {
+        override fun bind(
+            viewBinder: DiscNumberBinder,
+            isPartial: Boolean
+        ) {
             super.bind(viewBinder, isPartial)
 
             itemView as TextView
