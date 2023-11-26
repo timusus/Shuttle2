@@ -29,7 +29,7 @@ android {
     signingConfigs {
         create("release") {
             if (isCiBuild() && isReleaseBuild()) {
-                val keystore = file("../keystore.ks")
+                val keystore = file("./keystore.ks")
                 if (!keystore.exists()) {
                     throw Exception("Missing keystore.jks")
                 }
