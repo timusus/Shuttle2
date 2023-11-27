@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.mikepenz.aboutlibraries.Libs
 import com.mikepenz.aboutlibraries.entity.Library
+import com.mikepenz.aboutlibraries.util.withContext
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.autoCleared
@@ -28,11 +29,11 @@ class LicensesDialogFragment : DialogFragment() {
         adapter = RecyclerAdapter(lifecycleScope)
         recyclerView.adapter = adapter
 
-        val libraries =
-            Libs.Builder()
-                .build()
-                .libraries
-                .sortedBy { library -> library.name }
+        val libraries = Libs.Builder()
+            .withContext(requireContext())
+            .build()
+            .libraries
+            .sortedBy { library -> library.name }
 
         adapter.update(
             libraries.map { LibraryBinder(it, listener) }
