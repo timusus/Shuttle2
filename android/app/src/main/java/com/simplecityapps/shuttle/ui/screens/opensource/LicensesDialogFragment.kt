@@ -30,10 +30,10 @@ class LicensesDialogFragment : DialogFragment() {
         recyclerView.adapter = adapter
 
         val libraries = Libs.Builder()
-                .withContext(requireContext())
-                .build()
-                .libraries
-                .sortedBy { library -> library.name }
+            .withContext(requireContext())
+            .build()
+            .libraries
+            .sortedBy { library -> library.name }
 
         adapter.update(
             libraries.map { LibraryBinder(it, listener) }
