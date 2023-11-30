@@ -13,7 +13,6 @@ import java.util.Date
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
@@ -42,7 +41,8 @@ class MediaImporter(
         fun onSongImportFailed(
             providerType: MediaProviderType,
             message: String?
-        ) {}
+        ) {
+        }
 
         fun onPlaylistImportProgress(
             providerType: MediaProviderType,
@@ -56,7 +56,8 @@ class MediaImporter(
         fun onPlaylistImportFailed(
             providerType: MediaProviderType,
             message: String?
-        ) {}
+        ) {
+        }
 
         fun onAllComplete() {}
     }
@@ -104,6 +105,7 @@ class MediaImporter(
                                         )
                                     }
                                 }
+
                                 is FlowEvent.Success -> {
                                     listeners.forEach { listener ->
                                         listener.onSongImportComplete(
@@ -111,6 +113,7 @@ class MediaImporter(
                                         )
                                     }
                                 }
+
                                 is FlowEvent.Failure -> {
                                     listeners.forEach { listener ->
                                         listener.onSongImportFailed(
@@ -122,10 +125,11 @@ class MediaImporter(
                             }
                         }
                     }
+                }
+            }.awaitAll()
 
-                    // Gives the song import a chance to complete.. Otherwise, we might not yet have any existing songs to match with our playlist songs
-                    delay(500)
-
+            mediaProviders.map { mediaProvider ->
+                async {
                     importPlaylists(mediaProvider).collect { event ->
                         withContext(Dispatchers.Main) {
                             when (event) {
@@ -138,6 +142,7 @@ class MediaImporter(
                                         )
                                     }
                                 }
+
                                 is FlowEvent.Success -> {
                                     listeners.forEach { listener ->
                                         listener.onPlaylistImportComplete(
@@ -145,6 +150,7 @@ class MediaImporter(
                                         )
                                     }
                                 }
+
                                 is FlowEvent.Failure -> {
                                     listeners.forEach { listener ->
                                         listener.onPlaylistImportFailed(
@@ -204,6 +210,7 @@ class MediaImporter(
                             )
                         )
                     }
+
                     is FlowEvent.Success -> {
                         try {
                             emit(FlowEvent.Progress<SongImportResult, MessageProgress>(MessageProgress(context.getString(R.string.media_import_updating_database), null)))
@@ -230,6 +237,7 @@ class MediaImporter(
                             emit(FlowEvent.Failure(context.getString(R.string.media_import_error)))
                         }
                     }
+
                     is FlowEvent.Failure -> {
                         emit(event)
                     }
@@ -268,12 +276,14 @@ class MediaImporter(
                     is FlowEvent.Progress -> {
                         emit(FlowEvent.Progress<PlaylistImportResult, MessageProgress>(event.data))
                     }
+
                     is FlowEvent.Success -> {
                         event.result.forEachIndexed { i, playlistUpdateData ->
                             emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_import_updating_database), Progress(i, event.result.size))))
                             createOrUpdatePlaylist(playlistUpdateData, existingPlaylists)
                         }
                     }
+
                     is FlowEvent.Failure -> {
                         emit(event)
                     }
