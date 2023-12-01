@@ -7,21 +7,32 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.RecyclerView
-import com.simplecityapps.adapter.RecyclerAdapter
-import com.simplecityapps.adapter.RecyclerListener
-import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.dialog.showExcludeDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
-import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.screens.library.genres.detail.GenreDetailFragmentArgs
@@ -31,6 +42,7 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
+import timber.log.Timber
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -39,9 +51,7 @@ class GenreListFragment :
     GenreBinder.Listener,
     GenreListContract.View,
     CreatePlaylistDialogFragment.Listener {
-    private var adapter: RecyclerAdapter by autoCleared()
-
-    private var recyclerView: RecyclerView by autoCleared()
+    private var composeView: ComposeView by autoCleared()
     private var circularLoadingView: CircularLoadingView by autoCleared()
     private var horizontalLoadingView: HorizontalLoadingView by autoCleared()
 
@@ -73,17 +83,9 @@ class GenreListFragment :
 
         playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
 
-        adapter =
-            object : SectionedAdapter(viewLifecycleOwner.lifecycleScope) {
-                override fun getSectionName(viewBinder: ViewBinder?): String? {
-                    return (viewBinder as? GenreBinder)?.genre?.let { genre ->
-                        presenter.getFastscrollPrefix(genre)
-                    }
-                }
-            }
-        recyclerView = view.findViewById(R.id.recyclerView)
-        recyclerView.adapter = adapter
-        recyclerView.setRecyclerListener(RecyclerListener())
+        composeView = view.findViewById(R.id.composeView)
+        presenter.loadGenres(false)
+
 
         circularLoadingView = view.findViewById(R.id.circularLoadingView)
         horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
@@ -102,8 +104,6 @@ class GenreListFragment :
 
     override fun onPause() {
         super.onPause()
-
-        recyclerViewState = recyclerView.layoutManager?.onSaveInstanceState()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -120,20 +120,47 @@ class GenreListFragment :
 
     // GenreListContract.View Implementation
 
-    override fun setGenres(
-        genres: List<com.simplecityapps.shuttle.model.Genre>,
-        resetPosition: Boolean
-    ) {
-        if (resetPosition) {
-            adapter.clear()
+    override fun setGenres(genres: List<com.simplecityapps.shuttle.model.Genre>, resetPosition: Boolean) {
+        composeView.setContent {
+            GenreList(genres)
         }
+    }
 
-        val data = genres.map { genre -> GenreBinder(genre, this) }.toMutableList<ViewBinder>()
+    @Composable
+    private fun GenreList(genres: List<Genre>, modifier: Modifier = Modifier) {
+        LazyColumn(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            items(genres) { genre ->
+                GenreListItem(genre)
+            }
+        }
+    }
 
-        adapter.update(data) {
-            recyclerViewState?.let {
-                recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
-                recyclerViewState = null
+    @Composable
+    private fun GenreListItem(genre: Genre, modifier: Modifier = Modifier) {
+        Row(modifier) {
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .clickable { this@GenreListFragment.onGenreSelected(genre) },
+            ) {
+                Text(
+                    text = genre.name,
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    text = Phrase
+                        .fromPlural(LocalContext.current, R.plurals.songsPlural, genre.songCount)
+                        .put("count", genre.songCount)
+                        .format()
+                        .toString(),
+                    style = MaterialTheme.typography.bodySmall,
+                )
             }
         }
     }
@@ -180,8 +207,7 @@ class GenreListFragment :
     // GenreBinder.Listener Implementation
 
     override fun onGenreSelected(
-        genre: com.simplecityapps.shuttle.model.Genre,
-        viewHolder: GenreBinder.ViewHolder
+        genre: com.simplecityapps.shuttle.model.Genre
     ) {
         if (findNavController().currentDestination?.id != R.id.genreDetailFragment) {
             findNavController().navigate(

@@ -7,15 +7,13 @@ import android.widget.ImageButton
 import android.widget.TextView
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 import com.squareup.phrase.Phrase
 
 class GenreBinder(val genre: com.simplecityapps.shuttle.model.Genre, private val listener: Listener) : ViewBinder {
     interface Listener {
         fun onGenreSelected(
-            genre: com.simplecityapps.shuttle.model.Genre,
-            viewHolder: ViewHolder
+            genre: com.simplecityapps.shuttle.model.Genre
         )
 
         fun onOverflowClicked(
@@ -58,7 +56,7 @@ class GenreBinder(val genre: com.simplecityapps.shuttle.model.Genre, private val
         private val overflowButton: ImageButton = itemView.findViewById(R.id.overflowButton)
 
         init {
-            itemView.setOnClickListener { viewBinder?.listener?.onGenreSelected(viewBinder!!.genre, this) }
+            itemView.setOnClickListener { viewBinder?.listener?.onGenreSelected(viewBinder!!.genre) }
             overflowButton.setOnClickListener { viewBinder?.listener?.onOverflowClicked(it, viewBinder!!.genre) }
         }
 
