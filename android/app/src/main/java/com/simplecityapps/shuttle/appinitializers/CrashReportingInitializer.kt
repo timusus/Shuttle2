@@ -77,7 +77,7 @@ class CrashReportingTree : Timber.Tree() {
     ) {
         try {
             throwable?.let {
-                Firebase.crashlytics.log("message")
+                Firebase.crashlytics.log("tag: $tag, message: $message, throwable: ${throwable.message}")
             }
         } catch (error: Exception) {
             Log.e("CrashReportingTree", "Failed to log to CrashReportingTree. \n[ tag: $tag\nmessage: $message. ]", error)
