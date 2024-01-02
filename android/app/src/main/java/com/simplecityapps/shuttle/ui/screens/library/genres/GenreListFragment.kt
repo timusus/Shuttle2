@@ -15,12 +15,25 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
@@ -42,7 +55,6 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
-import timber.log.Timber
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -142,10 +154,13 @@ class GenreListFragment :
 
     @Composable
     private fun GenreListItem(genre: Genre, modifier: Modifier = Modifier) {
-        Row(modifier) {
+        Row(
+            modifier = modifier,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Column(
                 Modifier
-                    .fillMaxWidth()
+                    .weight(1f)
                     .clickable { this@GenreListFragment.onGenreSelected(genre) },
             ) {
                 Text(
@@ -160,6 +175,119 @@ class GenreListFragment :
                         .format()
                         .toString(),
                     style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            GenreMenu(genre)
+        }
+    }
+
+    @Composable
+    private fun GenreMenu(genre: Genre) {
+        var isMenuOpened by remember { mutableStateOf(false) }
+        var isAddToPlaylistSubmenuOpen by remember { mutableStateOf(false) }
+
+        IconButton(
+            onClick = { isMenuOpened = true },
+        ) {
+            Icon(
+                Icons.Default.MoreVert,
+                contentDescription = "Genre menu",
+            )
+            DropdownMenu(
+                expanded = isMenuOpened,
+                onDismissRequest = { isMenuOpened = false },
+            ) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(id = R.string.menu_title_play)) },
+                    onClick = {
+                        presenter.play(genre)
+                        isMenuOpened = false
+                    },
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(id = R.string.menu_title_add_to_queue)) },
+                    onClick = {
+                        presenter.addToQueue(genre)
+                        isMenuOpened = false
+                    },
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(id = R.string.menu_title_add_to_playlist)) },
+                    onClick = {
+                        isMenuOpened = false
+                        isAddToPlaylistSubmenuOpen = true
+                    },
+                    trailingIcon = {
+                        Icon(Icons.Default.KeyboardArrowRight, contentDescription = null)
+                    },
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(id = R.string.menu_title_play_next)) },
+                    onClick = {
+                        presenter.playNext(genre)
+                        isMenuOpened = false
+                    },
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(id = R.string.menu_title_exclude)) },
+                    onClick = {
+                        presenter.exclude(genre)
+                        isMenuOpened = false
+                    },
+                )
+
+                val supportsTagEditing = genre.mediaProviders.all {
+                        mediaProvider -> mediaProvider.supportsTagEditing
+                }
+
+                if (supportsTagEditing) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(id = R.string.menu_title_edit_tags)) },
+                        onClick = {
+                            presenter.editTags(genre)
+                            isMenuOpened = false
+                        },
+                    )
+                }
+            }
+            AddToPlaylistSubmenu(
+                genre = genre,
+                expanded = isAddToPlaylistSubmenuOpen,
+                onDismiss = { isAddToPlaylistSubmenuOpen = false },
+            )
+        }
+    }
+
+    @Composable
+    private fun AddToPlaylistSubmenu(
+        genre: Genre,
+        expanded: Boolean = false,
+        onDismiss: () -> Unit = {},
+    ) {
+        val playlistData = PlaylistData.Genres(genre)
+
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = onDismiss,
+        ) {
+            DropdownMenuItem(
+                text = { Text(stringResource(id = R.string.playlist_menu_create_playlist)) },
+                onClick = {
+                    CreatePlaylistDialogFragment.newInstance(
+                        playlistData,
+                        context?.getString(R.string.playlist_create_dialog_playlist_name_hint)
+                    ).show(childFragmentManager)
+                    onDismiss()
+                },
+            )
+
+            for (playlist in playlistMenuPresenter.playlists) {
+                DropdownMenuItem(
+                    text = { Text(playlist.name) },
+                    onClick = {
+                        playlistMenuPresenter.addToPlaylist(playlist, playlistData)
+                        onDismiss()
+                    },
                 )
             }
         }
