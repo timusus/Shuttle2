@@ -1,45 +1,23 @@
 [
   {
-    "versionName": "1.0.7-beta3",
-    "releaseDate": "01/12/2023",
-    "features": [
-    ],
-    "fixes": [
-      "Fixed an issue preventing remote media providers from authenticating"
-    ],
-    "improvements": [
-    ],
-    "notes": [
-      "Shuttle is now open source 🎉 You can file requests and bug reports via <a href=\"https://github.com/timusus/shuttle2/issues\">GitHub</a>"
-    ]
-  },
-  {
-    "versionName": "1.0.7-beta2",
-    "releaseDate": "26/11/2023",
-    "features": [
-    ],
-    "fixes": [
-      "Fixed a Plex importing issue"
-    ],
-    "improvements": [
-      "Dependency updates & general maintenance"
-    ],
-    "notes": [
-      "Shuttle is now open source 🎉 You can file requests and bug reports via <a href=\"https://github.com/timusus/shuttle2/issues\">GitHub</a>"
-    ]
-  },
-  {
-    "versionName": "1.0.7-beta1",
-    "releaseDate": "04/01/2023",
+    "versionName": "1.0.7",
+    "releaseDate": "11/01/2024",
     "features": [
       "Ability to schedule media import (daily or weekly)"
     ],
     "fixes": [
+      "Fixed an issue preventing remote media providers from authenticating",
+      "Fixed a Plex importing issue",
+      "Fixed issue where songs sort order appears somewhat random after adding songs to playlist",
+      "Fixed case sensitivity issue when importing m3u's",
+      "Fixed an issue where playlist import might fail for large libraries"
     ],
     "improvements": [
+      "Dependency updates & general maintenance",
+      "Highlight currently playing song on Album Detail view"
     ],
     "notes": [
-      "Shuttle is now open source 🎉 You can file requests and bug reports via <a href=\"https://github.com/timusus/shuttle2/issues\">GitHub</a>"
+      "Shuttle is 11 years old 👊💀🐴"
     ]
   },
   {
