@@ -41,9 +41,9 @@ data class Media(
     @Json(name = "id") val id: Int,
     @Json(name = "duration") val duration: Int?,
     @Json(name = "bitrate") val bitrate: Int?,
-    @Json(name = "audioChannels") val audioChannels: Int,
-    @Json(name = "audioCodec") val audioCodec: String,
-    @Json(name = "container") val container: String,
+    @Json(name = "audioChannels") val audioChannels: Int?,
+    @Json(name = "audioCodec") val audioCodec: String?,
+    @Json(name = "container") val container: String?,
     @Json(name = "Part") val parts: List<Part>
 )
 
