@@ -6,7 +6,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.appcompat.widget.PopupMenu
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -25,6 +24,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,14 +37,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
+import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Genre
-import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
+import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
-import com.simplecityapps.shuttle.ui.common.dialog.showExcludeDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
@@ -60,15 +61,12 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class GenreListFragment :
     Fragment(),
-    GenreBinder.Listener,
-    GenreListContract.View,
     CreatePlaylistDialogFragment.Listener {
     private var composeView: ComposeView by autoCleared()
     private var circularLoadingView: CircularLoadingView by autoCleared()
     private var horizontalLoadingView: HorizontalLoadingView by autoCleared()
 
-    @Inject
-    lateinit var presenter: GenreListPresenter
+    private val viewModel: GenreListViewModel by viewModels()
 
     @Inject
     lateinit var playlistMenuPresenter: PlaylistMenuPresenter
@@ -76,6 +74,17 @@ class GenreListFragment :
     private lateinit var playlistMenuView: PlaylistMenuView
 
     private var recyclerViewState: Parcelable? = null
+
+    private val mediaImporterListener =
+        object : MediaImporter.Listener {
+            override fun onSongImportProgress(
+                providerType: MediaProviderType,
+                message: String,
+                progress: Progress?,
+            ) {
+                this@GenreListFragment.setLoadingProgress(progress)
+            }
+        }
 
     // Lifecycle
 
@@ -96,7 +105,7 @@ class GenreListFragment :
         playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
 
         composeView = view.findViewById(R.id.composeView)
-        presenter.loadGenres(false)
+        loadGenres()
 
 
         circularLoadingView = view.findViewById(R.id.circularLoadingView)
@@ -104,14 +113,51 @@ class GenreListFragment :
 
         savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
 
-        presenter.bindView(this)
         playlistMenuPresenter.bindView(playlistMenuView)
+    }
+
+    fun loadGenres() {
+        composeView.setContent {
+            val viewState by viewModel.viewState.collectAsState()
+
+            Genres(viewState)
+        }
+    }
+
+    @Composable
+    private fun Genres(viewState: GenreListViewModel.ViewState) {
+        when (viewState) {
+            is GenreListViewModel.ViewState.Scanning -> {
+                this.setLoadingState(LoadingState.Scanning)
+            }
+
+            is GenreListViewModel.ViewState.Loading -> {
+                this.setLoadingState(LoadingState.Loading)
+            }
+
+            is GenreListViewModel.ViewState.Ready -> {
+                if (viewState.genres.isEmpty()) {
+                    if (viewModel.isImportingMedia()) {
+                        viewModel.addMediaImporterListener(mediaImporterListener)
+                        this.setLoadingState(LoadingState.Scanning)
+                    } else {
+                        viewModel.removeMediaImporterListener(mediaImporterListener)
+                        this.setLoadingState(LoadingState.Empty)
+                    }
+                } else {
+                    viewModel.removeMediaImporterListener(mediaImporterListener)
+                    this.setLoadingState(LoadingState.None)
+                }
+
+                GenreList(genres = viewState.genres)
+            }
+        }
     }
 
     override fun onResume() {
         super.onResume()
 
-        presenter.loadGenres(false)
+        loadGenres()
     }
 
     override fun onPause() {
@@ -124,19 +170,12 @@ class GenreListFragment :
     }
 
     override fun onDestroyView() {
-        presenter.unbindView()
         playlistMenuPresenter.unbindView()
 
         super.onDestroyView()
     }
 
     // GenreListContract.View Implementation
-
-    override fun setGenres(genres: List<com.simplecityapps.shuttle.model.Genre>, resetPosition: Boolean) {
-        composeView.setContent {
-            GenreList(genres)
-        }
-    }
 
     @Composable
     private fun GenreList(genres: List<Genre>, modifier: Modifier = Modifier) {
@@ -200,14 +239,20 @@ class GenreListFragment :
                 DropdownMenuItem(
                     text = { Text(stringResource(id = R.string.menu_title_play)) },
                     onClick = {
-                        presenter.play(genre)
+                        viewModel.play(genre) { result ->
+                            result.onFailure { error -> showLoadError(error as Error) }
+                        }
                         isMenuOpened = false
                     },
                 )
                 DropdownMenuItem(
                     text = { Text(stringResource(id = R.string.menu_title_add_to_queue)) },
                     onClick = {
-                        presenter.addToQueue(genre)
+                        viewModel.addToQueue(genre) { result ->
+                            result.onSuccess { genre ->
+                                onAddedToQueue(genre)
+                            }
+                        }
                         isMenuOpened = false
                     },
                 )
@@ -224,27 +269,35 @@ class GenreListFragment :
                 DropdownMenuItem(
                     text = { Text(stringResource(id = R.string.menu_title_play_next)) },
                     onClick = {
-                        presenter.playNext(genre)
+                        viewModel.playNext(genre) { result ->
+                            result.onSuccess { genre ->
+                                onAddedToQueue(genre)
+                            }
+                        }
                         isMenuOpened = false
                     },
                 )
                 DropdownMenuItem(
                     text = { Text(stringResource(id = R.string.menu_title_exclude)) },
                     onClick = {
-                        presenter.exclude(genre)
+                        viewModel.exclude(genre)
                         isMenuOpened = false
                     },
                 )
 
-                val supportsTagEditing = genre.mediaProviders.all {
-                        mediaProvider -> mediaProvider.supportsTagEditing
+                val supportsTagEditing = genre.mediaProviders.all { mediaProvider ->
+                    mediaProvider.supportsTagEditing
                 }
 
                 if (supportsTagEditing) {
                     DropdownMenuItem(
                         text = { Text(stringResource(id = R.string.menu_title_edit_tags)) },
                         onClick = {
-                            presenter.editTags(genre)
+                            viewModel.editTags(genre) { result ->
+                                result.onSuccess { songs ->
+                                    showTagEditor(songs)
+                                }
+                            }
                             isMenuOpened = false
                         },
                     )
@@ -293,48 +346,46 @@ class GenreListFragment :
         }
     }
 
-    override fun onAddedToQueue(genre: com.simplecityapps.shuttle.model.Genre) {
+    fun onAddedToQueue(genre: com.simplecityapps.shuttle.model.Genre) {
         Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("item_name", genre.name).format(), Toast.LENGTH_SHORT).show()
     }
 
-    override fun setLoadingState(state: GenreListContract.LoadingState) {
+    fun setLoadingState(state: LoadingState) {
         when (state) {
-            is GenreListContract.LoadingState.Scanning -> {
+            is LoadingState.Scanning -> {
                 horizontalLoadingView.setState(HorizontalLoadingView.State.Loading(getString(R.string.library_scan_in_progress)))
                 circularLoadingView.setState(CircularLoadingView.State.None)
             }
-            is GenreListContract.LoadingState.Loading -> {
+            is LoadingState.Loading -> {
                 horizontalLoadingView.setState(HorizontalLoadingView.State.None)
                 circularLoadingView.setState(CircularLoadingView.State.Loading(getString(R.string.loading)))
             }
-            is GenreListContract.LoadingState.Empty -> {
+            is LoadingState.Empty -> {
                 horizontalLoadingView.setState(HorizontalLoadingView.State.None)
                 circularLoadingView.setState(CircularLoadingView.State.Empty(getString(R.string.genre_list_empty)))
             }
-            is GenreListContract.LoadingState.None -> {
+            is LoadingState.None -> {
                 horizontalLoadingView.setState(HorizontalLoadingView.State.None)
                 circularLoadingView.setState(CircularLoadingView.State.None)
             }
         }
     }
 
-    override fun setLoadingProgress(progress: Progress?) {
+    fun setLoadingProgress(progress: Progress?) {
         progress?.let {
             horizontalLoadingView.setProgress(progress.asFloat())
         }
     }
 
-    override fun showLoadError(error: Error) {
+    fun showLoadError(error: Error) {
         Toast.makeText(context, error.userDescription(resources), Toast.LENGTH_LONG).show()
     }
 
-    override fun showTagEditor(songs: List<com.simplecityapps.shuttle.model.Song>) {
+    fun showTagEditor(songs: List<com.simplecityapps.shuttle.model.Song>) {
         TagEditorAlertDialog.newInstance(songs).show(childFragmentManager)
     }
 
-    // GenreBinder.Listener Implementation
-
-    override fun onGenreSelected(
+    fun onGenreSelected(
         genre: com.simplecityapps.shuttle.model.Genre
     ) {
         if (findNavController().currentDestination?.id != R.id.genreDetailFragment) {
@@ -343,50 +394,6 @@ class GenreListFragment :
                 GenreDetailFragmentArgs(genre).toBundle()
             )
         }
-    }
-
-    override fun onOverflowClicked(
-        view: View,
-        genre: com.simplecityapps.shuttle.model.Genre
-    ) {
-        val popupMenu = PopupMenu(requireContext(), view)
-        popupMenu.inflate(R.menu.menu_popup)
-        TagEditorMenuSanitiser.sanitise(popupMenu.menu, genre.mediaProviders)
-
-        playlistMenuView.createPlaylistMenu(popupMenu.menu)
-
-        popupMenu.setOnMenuItemClickListener { menuItem ->
-            if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Genres(genre))) {
-                return@setOnMenuItemClickListener true
-            } else {
-                when (menuItem.itemId) {
-                    R.id.play -> {
-                        presenter.play(genre)
-                        return@setOnMenuItemClickListener true
-                    }
-                    R.id.queue -> {
-                        presenter.addToQueue(genre)
-                        return@setOnMenuItemClickListener true
-                    }
-                    R.id.playNext -> {
-                        presenter.playNext(genre)
-                        return@setOnMenuItemClickListener true
-                    }
-                    R.id.exclude -> {
-                        showExcludeDialog(requireContext(), genre.name) {
-                            presenter.exclude(genre)
-                        }
-                        return@setOnMenuItemClickListener true
-                    }
-                    R.id.editTags -> {
-                        presenter.editTags(genre)
-                        return@setOnMenuItemClickListener true
-                    }
-                }
-            }
-            false
-        }
-        popupMenu.show()
     }
 
     // CreatePlaylistDialogFragment.Listener Implementation
@@ -406,5 +413,12 @@ class GenreListFragment :
         const val ARG_RECYCLER_STATE = "recycler_state"
 
         fun newInstance() = GenreListFragment()
+    }
+
+    sealed class LoadingState {
+        object Scanning : LoadingState()
+        object Loading : LoadingState()
+        object Empty : LoadingState()
+        object None : LoadingState()
     }
 }
