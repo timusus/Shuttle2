@@ -82,7 +82,7 @@ class GenreListFragment :
                 message: String,
                 progress: Progress?,
             ) {
-                this@GenreListFragment.setLoadingProgress(progress)
+                setLoadingProgress(progress)
             }
         }
 
@@ -116,7 +116,7 @@ class GenreListFragment :
         playlistMenuPresenter.bindView(playlistMenuView)
     }
 
-    fun loadGenres() {
+    private fun loadGenres() {
         composeView.setContent {
             val viewState by viewModel.viewState.collectAsState()
 
@@ -128,25 +128,25 @@ class GenreListFragment :
     private fun Genres(viewState: GenreListViewModel.ViewState) {
         when (viewState) {
             is GenreListViewModel.ViewState.Scanning -> {
-                this.setLoadingState(LoadingState.Scanning)
+                setLoadingState(LoadingState.Scanning)
             }
 
             is GenreListViewModel.ViewState.Loading -> {
-                this.setLoadingState(LoadingState.Loading)
+                setLoadingState(LoadingState.Loading)
             }
 
             is GenreListViewModel.ViewState.Ready -> {
                 if (viewState.genres.isEmpty()) {
                     if (viewModel.isImportingMedia()) {
                         viewModel.addMediaImporterListener(mediaImporterListener)
-                        this.setLoadingState(LoadingState.Scanning)
+                        setLoadingState(LoadingState.Scanning)
                     } else {
                         viewModel.removeMediaImporterListener(mediaImporterListener)
-                        this.setLoadingState(LoadingState.Empty)
+                        setLoadingState(LoadingState.Empty)
                     }
                 } else {
                     viewModel.removeMediaImporterListener(mediaImporterListener)
-                    this.setLoadingState(LoadingState.None)
+                    setLoadingState(LoadingState.None)
                 }
 
                 GenreList(genres = viewState.genres)
@@ -156,12 +156,7 @@ class GenreListFragment :
 
     override fun onResume() {
         super.onResume()
-
         loadGenres()
-    }
-
-    override fun onPause() {
-        super.onPause()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -174,8 +169,6 @@ class GenreListFragment :
 
         super.onDestroyView()
     }
-
-    // GenreListContract.View Implementation
 
     @Composable
     private fun GenreList(genres: List<Genre>, modifier: Modifier = Modifier) {
@@ -200,7 +193,7 @@ class GenreListFragment :
             Column(
                 Modifier
                     .weight(1f)
-                    .clickable { this@GenreListFragment.onGenreSelected(genre) },
+                    .clickable { onGenreSelected(genre) },
             ) {
                 Text(
                     text = genre.name,
@@ -346,24 +339,27 @@ class GenreListFragment :
         }
     }
 
-    fun onAddedToQueue(genre: com.simplecityapps.shuttle.model.Genre) {
+    fun onAddedToQueue(genre: Genre) {
         Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("item_name", genre.name).format(), Toast.LENGTH_SHORT).show()
     }
 
-    fun setLoadingState(state: LoadingState) {
+    private fun setLoadingState(state: LoadingState) {
         when (state) {
             is LoadingState.Scanning -> {
                 horizontalLoadingView.setState(HorizontalLoadingView.State.Loading(getString(R.string.library_scan_in_progress)))
                 circularLoadingView.setState(CircularLoadingView.State.None)
             }
+
             is LoadingState.Loading -> {
                 horizontalLoadingView.setState(HorizontalLoadingView.State.None)
                 circularLoadingView.setState(CircularLoadingView.State.Loading(getString(R.string.loading)))
             }
+
             is LoadingState.Empty -> {
                 horizontalLoadingView.setState(HorizontalLoadingView.State.None)
                 circularLoadingView.setState(CircularLoadingView.State.Empty(getString(R.string.genre_list_empty)))
             }
+
             is LoadingState.None -> {
                 horizontalLoadingView.setState(HorizontalLoadingView.State.None)
                 circularLoadingView.setState(CircularLoadingView.State.None)
@@ -385,9 +381,7 @@ class GenreListFragment :
         TagEditorAlertDialog.newInstance(songs).show(childFragmentManager)
     }
 
-    fun onGenreSelected(
-        genre: com.simplecityapps.shuttle.model.Genre
-    ) {
+    private fun onGenreSelected(genre: Genre) {
         if (findNavController().currentDestination?.id != R.id.genreDetailFragment) {
             findNavController().navigate(
                 R.id.action_libraryFragment_to_genreDetailFragment,
