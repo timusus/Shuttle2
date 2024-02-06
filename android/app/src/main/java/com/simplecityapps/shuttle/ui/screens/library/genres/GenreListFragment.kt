@@ -1,7 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library.genres
 
 import android.os.Bundle
-import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -73,8 +72,6 @@ class GenreListFragment :
 
     private lateinit var playlistMenuView: PlaylistMenuView
 
-    private var recyclerViewState: Parcelable? = null
-
     // Lifecycle
 
     override fun onCreateView(
@@ -99,8 +96,6 @@ class GenreListFragment :
 
         circularLoadingView = view.findViewById(R.id.circularLoadingView)
         horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
-
-        savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
 
         playlistMenuPresenter.bindView(playlistMenuView)
     }
@@ -157,11 +152,6 @@ class GenreListFragment :
     override fun onResume() {
         super.onResume()
         loadGenres()
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        outState.putParcelable(ARG_RECYCLER_STATE, recyclerViewState)
-        super.onSaveInstanceState(outState)
     }
 
     override fun onDestroyView() {
@@ -403,8 +393,6 @@ class GenreListFragment :
 
     companion object {
         const val TAG = "GenreListFragment"
-
-        const val ARG_RECYCLER_STATE = "recycler_state"
 
         fun newInstance() = GenreListFragment()
     }
