@@ -75,17 +75,6 @@ class GenreListFragment :
 
     private var recyclerViewState: Parcelable? = null
 
-    private val mediaImporterListener =
-        object : MediaImporter.Listener {
-            override fun onSongImportProgress(
-                providerType: MediaProviderType,
-                message: String,
-                progress: Progress?,
-            ) {
-                setLoadingProgress(progress)
-            }
-        }
-
     // Lifecycle
 
     override fun onCreateView(
@@ -136,6 +125,17 @@ class GenreListFragment :
             }
 
             is GenreListViewModel.ViewState.Ready -> {
+                val mediaImporterListener =
+                    object : MediaImporter.Listener {
+                        override fun onSongImportProgress(
+                            providerType: MediaProviderType,
+                            message: String,
+                            progress: Progress?,
+                        ) {
+                            setLoadingProgress(progress)
+                        }
+                    }
+
                 if (viewState.genres.isEmpty()) {
                     if (viewModel.isImportingMedia()) {
                         viewModel.addMediaImporterListener(mediaImporterListener)
