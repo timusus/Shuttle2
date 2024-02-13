@@ -7,6 +7,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
+<!--
     <com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
         android:id="@+id/recyclerView"
         style="@style/FastScrollRecyclerView"
@@ -17,6 +18,14 @@
         android:paddingTop="8dp"
         app:layoutManager="androidx.recyclerview.widget.GridLayoutManager"
         tools:listitem="@layout/list_item_genre" />
+-->
+
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/composeView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingTop="8dp"
+        />
 
     <com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
         android:id="@+id/circularLoadingView"
