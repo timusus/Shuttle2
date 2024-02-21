@@ -88,16 +88,14 @@ class GenreListFragment :
     ) {
         super.onViewCreated(view, savedInstanceState)
 
-        playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
-
-        composeView = view.findViewById(R.id.composeView)
-        loadGenres()
-
-
         circularLoadingView = view.findViewById(R.id.circularLoadingView)
         horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
 
+        playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
         playlistMenuPresenter.bindView(playlistMenuView)
+
+        composeView = view.findViewById(R.id.composeView)
+        loadGenres()
     }
 
     private fun loadGenres() {
