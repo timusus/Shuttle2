@@ -10,6 +10,8 @@ plugins {
 }
 
 android {
+    val fragment_version = "1.6.2"
+    val mockk_version = "1.13.11"
 
     compileSdk = 34
 
@@ -138,6 +140,7 @@ android {
 
         implementation(composeBom)
         androidTestImplementation(composeBom)
+        testImplementation(composeBom)
 
         // Material Design 3
         implementation("androidx.compose.material3:material3")
@@ -219,7 +222,7 @@ android {
         implementation("androidx.drawerlayout:drawerlayout:1.2.0")
 
         // New fragment manager
-        implementation("androidx.fragment:fragment-ktx:1.6.2")
+        implementation("androidx.fragment:fragment-ktx:$fragment_version")
 
         // Glide
         implementation("com.github.bumptech.glide:glide:4.16.0")
@@ -259,6 +262,11 @@ android {
         androidTestImplementation("androidx.test:rules:1.5.0")
         androidTestImplementation("androidx.test:core-ktx:1.5.0")
         androidTestImplementation("org.hamcrest:hamcrest-library:1.3")
+        implementation("androidx.test.ext:junit-ktx:1.1.5")
+        debugImplementation("androidx.fragment:fragment-testing:$fragment_version")
+        androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+        androidTestImplementation("io.mockk:mockk-android:${mockk_version}")
+        androidTestImplementation("io.mockk:mockk-agent:${mockk_version}")
 
         // Remote config
         implementation(project(":android:remote-config"))
@@ -273,6 +281,14 @@ android {
     }
 
     buildFeatures.buildConfig = true
+
+    packaging {
+        resources.excludes.addAll(
+            listOf(
+                "META-INF/*",
+            )
+        )
+    }
 }
 
 apply(plugin = "com.google.gms.google-services")
