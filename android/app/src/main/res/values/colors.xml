@@ -44,6 +44,9 @@
     <color name="vertical_seekbar_guideline_light">#10000000</color>
     <color name="vertical_seekbar_guideline_dark">#20FFFFFF</color>
 
+    <!-- Fast scrollbar -->
+    <color name="fast_scrollbar_track">#28000000</color>
+    <color name="fast_scrollbar_text">#ffffffff</color>
 
     <!-- TextInputLayout -->
     <color name="helperTextColorDark">#E65100</color>

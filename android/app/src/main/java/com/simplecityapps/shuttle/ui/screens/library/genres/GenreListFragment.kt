@@ -9,12 +9,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -48,6 +50,7 @@ import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
+import com.simplecityapps.shuttle.ui.common.view.FastScrollableListContainer
 import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.screens.library.genres.detail.GenreDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
@@ -161,15 +164,27 @@ class GenreListFragment :
 
     @Composable
     private fun GenreList(genres: List<Genre>, modifier: Modifier = Modifier) {
-        LazyColumn(
+        val state = rememberLazyListState()
+
+        FastScrollableListContainer(
+            listState = state,
+            indicatorTextProvider = { index ->
+                genres[index].name[0].uppercaseChar().toString()
+            },
             modifier = modifier
-                .fillMaxWidth()
-                .testTag("genres-list-lazy-column")
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+                .fillMaxSize()
+                .padding(start = 0.dp),
         ) {
-            items(genres) { genre ->
-                GenreListItem(genre)
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag("genres-list-lazy-column"),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                state = state,
+            ) {
+                items(genres) { genre ->
+                    GenreListItem(genre)
+                }
             }
         }
     }
@@ -246,7 +261,7 @@ class GenreListFragment :
                         isAddToPlaylistSubmenuOpen = true
                     },
                     trailingIcon = {
-                        Icon(Icons.Default.KeyboardArrowRight, contentDescription = null)
+                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
                     },
                 )
                 DropdownMenuItem(
