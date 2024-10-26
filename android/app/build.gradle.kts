@@ -286,13 +286,11 @@ android {
     }
 
     buildFeatures.buildConfig = true
+}
 
-    packaging {
-        resources.excludes.addAll(
-            listOf(
-                "META-INF/*",
-            )
-        )
+androidComponents {
+    onVariants(selector().withBuildType("release")) {
+        it.packaging.resources.excludes.add("META-INF/**")
     }
 }
 
