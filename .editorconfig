@@ -10,3 +10,4 @@ ktlint_standard_package-name=disabled
 ktlint_code_style=android_studio
 ktlint_standard_trailing-comma-on-declaration-site=disabled
 ktlint_standard_trailing-comma-on-call-site=disabled
+ktlint_function_naming_ignore_when_annotated_with=Composable
