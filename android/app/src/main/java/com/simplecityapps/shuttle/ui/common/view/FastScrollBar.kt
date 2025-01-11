@@ -61,13 +61,16 @@ fun FastScrollableListContainer(
     ) {
         content()
 
-        Row(Modifier.align(Alignment.TopEnd)) {
-            FastScrollbar(
-                listState = listState,
-                indicatorTextProvider = indicatorTextProvider,
-                modifier = Modifier
-                    .fillMaxHeight(),
-            )
+        val totalItemsCount by remember { derivedStateOf { listState.layoutInfo.totalItemsCount } }
+        if (totalItemsCount != 0) {
+            Row(Modifier.align(Alignment.TopEnd)) {
+                FastScrollbar(
+                    listState = listState,
+                    indicatorTextProvider = indicatorTextProvider,
+                    modifier = Modifier
+                        .fillMaxHeight(),
+                )
+            }
         }
     }
 }
