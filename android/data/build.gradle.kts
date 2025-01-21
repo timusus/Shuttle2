@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 21
@@ -22,6 +22,6 @@ android {
     }
 
     dependencies {
-        implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.1")
+        implementation(libs.kotlinx.datetime)
     }
 }

@@ -103,8 +103,8 @@ object StringComparison {
         a: String,
         b: String
     ): JaroSimilarity {
-        val a = Normalizer.normalize(a.toLowerCase(), Normalizer.Form.NFD)
-        val b = Normalizer.normalize(b.toLowerCase(), Normalizer.Form.NFD)
+        val a = Normalizer.normalize(a.lowercase(), Normalizer.Form.NFD)
+        val b = Normalizer.normalize(b.lowercase(), Normalizer.Form.NFD)
 
         val jaroSimilarity = jaroDistance(a, b)
         val prefixScale = 0.1

@@ -4,11 +4,11 @@ apply plugin: 'dagger.hilt.android.plugin'
 apply plugin: 'com.google.devtools.ksp'
 
 android {
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 34
+        targetSdkVersion 35
     }
 
     buildTypes {
@@ -46,31 +46,31 @@ dependencies {
     implementation project(path: ':android:imageloader')
 
     // AndroidX Media
-    implementation 'androidx.media:media:1.6.0'
+    implementation libs.androidx.media
 
     // AndroidX DocumentFile
-    implementation 'androidx.documentfile:documentfile:1.0.1'
+    implementation libs.androidx.documentfile
 
     // Hilt
-    implementation 'com.google.dagger:hilt-android:2.48.1'
-    ksp 'com.google.dagger:hilt-compiler:2.48.1'
+    implementation libs.hilt
+    ksp libs.hilt.compiler
 
     // Chromecast
-    implementation 'com.google.android.gms:play-services-cast-framework:21.3.0'
+    implementation libs.google.play.services.cast.framework
 
     // NanoHttp
-    implementation 'org.nanohttpd:nanohttpd-webserver:2.3.1'
+    implementation libs.nanohttpd.webserver
 
     // ExoPlayer
 
-    implementation("com.github.timusus.exoplayer:exoplayer-core:2.14.2-shuttle")
-    implementation("com.github.timusus.exoplayer:exoplayer-hls:2.14.2-shuttle")
-    implementation("com.github.timusus.exoplayer:extension-flac:2.14.2-shuttle")
-    implementation("com.github.timusus.exoplayer:extension-opus:2.14.2-shuttle")
+    implementation(libs.exoplayer.core)
+    implementation(libs.exoplayer.hls)
+    implementation(libs.exoplayer.extensionFlac)
+    implementation(libs.exoplayer.extensionOpus)
 
     // Moshi
-    implementation 'com.squareup.moshi:moshi-kotlin:1.15.0'
-    ksp "com.squareup.moshi:moshi-kotlin-codegen:1.15.0"
+    implementation libs.moshi.kotlin
+    ksp libs.moshi.kotlinCodegen
 
     implementation(project(':android:data'))
 }

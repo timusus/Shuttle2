@@ -9,7 +9,7 @@ import com.simplecityapps.shuttle.ui.common.recyclerview.SectionViewBinder
 import java.util.*
 
 abstract class AlbumBinder(
-    val album: com.simplecityapps.shuttle.model.Album,
+    val album: Album,
     val imageLoader: ArtworkImageLoader,
     val listener: Listener? = null
 ) : ViewBinder,
@@ -18,25 +18,25 @@ abstract class AlbumBinder(
 
     interface Listener {
         fun onAlbumClicked(
-            album: com.simplecityapps.shuttle.model.Album,
+            album: Album,
             viewHolder: ViewHolder
         )
 
         fun onAlbumLongClicked(
-            album: com.simplecityapps.shuttle.model.Album,
+            album: Album,
             viewHolder: ViewHolder
         )
 
         fun onOverflowClicked(
             view: View,
-            album: com.simplecityapps.shuttle.model.Album
+            album: Album
         ) {}
 
         fun onViewHolderCreated(holder: ViewHolder) {}
     }
 
     override fun getSectionName(): String? {
-        return album.groupKey?.key?.firstOrNull()?.toString()?.toUpperCase(Locale.getDefault())
+        return album.groupKey?.key?.firstOrNull()?.toString()?.uppercase(Locale.getDefault())
     }
 
     override fun equals(other: Any?): Boolean {

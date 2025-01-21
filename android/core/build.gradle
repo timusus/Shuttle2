@@ -3,11 +3,11 @@ apply plugin: 'kotlin-android'
 apply plugin: 'com.google.devtools.ksp'
 
 android {
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 34
+        targetSdkVersion 35
         buildConfigField("String", "PROXY_ADDR", "\"192.168.0.14\"")
         buildConfigField("Integer", "PROXY_PORT", "8888")
     }
@@ -40,52 +40,48 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     // AndroidX Preferences
-    implementation "androidx.preference:preference-ktx:1.2.1"
+    implementation libs.androidx.preference.ktx
 
     // OkHttp Logging Interceptor
-    api 'com.squareup.okhttp3:logging-interceptor:4.12.0'
+    api libs.okhttp3.loggingInterceptor
 
     // Kotlin Standard Library
-    api 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.20'
+    api libs.kotlin.stdlib
 
     // Kotlin Extensions
-    api 'androidx.core:core-ktx:1.12.0'
+    api libs.androidx.core.ktx
 
     // AndroidX Annotations
-    api "androidx.annotation:annotation:1.7.0"
+    api libs.androidx.annotation
 
     // Hilt core
-    implementation 'com.google.dagger:hilt-android:2.48.1'
-    ksp 'com.google.dagger:hilt-compiler:2.48.1'
+    implementation libs.hilt
+    ksp libs.hilt.compiler
 
     // Timber
-    api 'com.jakewharton.timber:timber:4.7.1'
+    api libs.timber
 
     // Coroutines
-    api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-    api("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    api(libs.kotlinx.coroutinesCore)
+    api(libs.kotlinx.coroutinesAndroid)
 
     // OKHttp
-    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation libs.okhttp3.okhttp
 
     // Retrofit
-    implementation 'com.squareup.retrofit2:converter-moshi:2.10.0-SNAPSHOT'
+    implementation libs.retrofit2.converterMoshi
 
     // Moshi
-    implementation 'com.squareup.moshi:moshi:1.15.0'
-    implementation 'com.squareup.moshi:moshi-kotlin:1.15.0'
-    implementation 'com.squareup.moshi:moshi-adapters:1.15.0'
+    implementation libs.moshi
+    implementation libs.moshi.kotlin
+    implementation libs.moshi.adapters
 
     // Encrypted Shared Preferences
-    api 'androidx.security:security-crypto:1.1.0-alpha06'
+    api libs.androidx.security.crypto
 
     // Material Design Components
-    implementation 'com.google.android.material:material:1.10.0'
+    implementation libs.google.material
 
     // Phrase string formatting helper
-    api 'com.github.square:phrase:master-SNAPSHOT'
-}
-
-repositories {
-    mavenCentral()
+    api libs.square.phrase
 }

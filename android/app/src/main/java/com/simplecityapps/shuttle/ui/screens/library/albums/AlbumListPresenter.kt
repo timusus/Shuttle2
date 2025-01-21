@@ -275,8 +275,8 @@ constructor(
 
     override fun getFastscrollPrefix(album: Album): String? {
         return when (sortPreferenceManager.sortOrderAlbumList) {
-            AlbumSortOrder.AlbumName -> album.groupKey?.key?.firstOrNull()?.toString()?.toUpperCase(Locale.getDefault())
-            AlbumSortOrder.ArtistGroupKey -> album.groupKey?.albumArtistGroupKey?.key?.firstOrNull()?.toString()?.toUpperCase(Locale.getDefault())
+            AlbumSortOrder.AlbumName -> album.groupKey?.key?.firstOrNull()?.toString()?.uppercase(Locale.getDefault())
+            AlbumSortOrder.ArtistGroupKey -> album.groupKey?.albumArtistGroupKey?.key?.firstOrNull()?.toString()?.uppercase(Locale.getDefault())
             AlbumSortOrder.Year -> album.year.toString()
             else -> null
         }

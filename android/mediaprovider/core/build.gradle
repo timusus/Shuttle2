@@ -5,11 +5,11 @@ apply plugin: 'dagger.hilt.android.plugin'
 apply plugin: 'com.google.devtools.ksp'
 
 android {
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 34
+        targetSdkVersion 35
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary true
@@ -41,32 +41,32 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     // Kotlin Standard Library
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.20"
+    implementation libs.kotlin.stdlib
 
     // Timber
-    implementation 'com.jakewharton.timber:timber:4.7.1'
+    implementation libs.timber
 
     implementation project(':android:data')
 
     // Shuttle Core
     implementation(project(":android:core"))
 
-    implementation 'org.jetbrains.kotlinx:kotlinx-datetime:0.4.1'
+    implementation libs.kotlinx.datetime
 
     // Kotlin Coroutines
-    api 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3'
+    api libs.kotlinx.coroutinesCore
 
     // AndroidX Annotations
-    api "androidx.annotation:annotation:1.7.0"
+    api libs.androidx.annotation
 
     // Phrase string formatting helper
-    api 'com.github.square:phrase:master-SNAPSHOT'
+    api libs.square.phrase
 
     // WorkManager
-    implementation("androidx.work:work-runtime-ktx:2.9.0-rc01")
-    implementation("androidx.hilt:hilt-work:1.1.0")
-    implementation("com.google.dagger:hilt-android:2.48.1")
-    ksp("com.google.dagger:hilt-compiler:2.48.1")
-    ksp("androidx.hilt:hilt-compiler:1.1.0")
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.androidx.hilt.work)
+    implementation(libs.hilt)
+    ksp(libs.hilt.compiler)
+    ksp(libs.androidx.hilt.compiler)
 
 }

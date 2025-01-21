@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 34
+        targetSdkVersion 35
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -27,27 +27,26 @@ android {
     }
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_11.toString()
-        freeCompilerArgs = freeCompilerArgs + "-Xallow-result-return-type"
     }
     namespace 'com.simplecityapps.provider.plex'
 }
 
 dependencies {
 
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.10.0'
+    implementation libs.androidx.appcompat
+    implementation libs.google.material
 
     implementation(project(":android:data"))
     implementation(project(":android:mediaprovider:core"))
     implementation(project(":android:core"))
     implementation(project(":android:networking"))
 
-    ksp 'com.squareup.moshi:moshi-kotlin-codegen:1.15.0'
+    ksp libs.moshi.kotlinCodegen
 
-    implementation 'com.jaredrummler:android-device-names:2.0.0'
+    implementation libs.jaredrummler.androidDeviceNames
 
-    implementation 'com.google.dagger:hilt-android:2.48.1'
-    ksp 'com.google.dagger:hilt-compiler:2.48.1'
+    implementation libs.hilt
+    ksp libs.hilt.compiler
 
-    implementation 'org.jetbrains.kotlinx:kotlinx-datetime:0.4.1'
+    implementation libs.kotlinx.datetime
 }
