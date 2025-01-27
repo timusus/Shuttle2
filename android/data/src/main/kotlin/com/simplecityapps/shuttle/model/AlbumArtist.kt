@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.model
 
 import android.os.Parcelable
+import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
@@ -13,7 +14,8 @@ data class AlbumArtist(
     val groupKey: AlbumArtistGroupKey,
     val mediaProviders: List<MediaProviderType>
 ) : Parcelable {
-    val friendlyArtistName: String? =
+    @IgnoredOnParcel
+    val friendlyArtistName: String? by lazy {
         if (artists.isNotEmpty()) {
             if (artists.size == 1) {
                 artists.first()
@@ -26,4 +28,5 @@ data class AlbumArtist(
         } else {
             null
         }
+    }
 }

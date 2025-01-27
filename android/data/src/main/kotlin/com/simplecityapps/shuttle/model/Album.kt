@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.model
 import android.os.Parcelable
 import com.simplecityapps.shuttle.parcel.InstantParceler
 import kotlinx.datetime.Instant
+import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import kotlinx.parcelize.TypeParceler
 
@@ -21,17 +22,20 @@ data class Album(
     val groupKey: AlbumGroupKey?,
     val mediaProviders: List<MediaProviderType>
 ) : Parcelable {
-    val friendlyArtistName: String? =
-        if (artists.isNotEmpty()) {
-            if (artists.size == 1) {
-                artists.first()
+    @IgnoredOnParcel
+    val friendlyArtistName: String?
+        by lazy {
+            if (artists.isNotEmpty()) {
+                if (artists.size == 1) {
+                    artists.first()
+                } else {
+                    artists.groupBy { it.lowercase().removeArticles() }
+                        .map { map -> map.value.maxByOrNull { it.length } }
+                        .joinToString(", ")
+                        .ifEmpty { null }
+                }
             } else {
-                artists.groupBy { it.lowercase().removeArticles() }
-                    .map { map -> map.value.maxByOrNull { it.length } }
-                    .joinToString(", ")
-                    .ifEmpty { null }
+                null
             }
-        } else {
-            null
         }
 }
