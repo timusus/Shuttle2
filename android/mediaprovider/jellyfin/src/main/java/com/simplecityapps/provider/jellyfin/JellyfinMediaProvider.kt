@@ -20,6 +20,7 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import kotlin.math.min
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.collectIndexed
@@ -172,6 +173,7 @@ class JellyfinMediaProvider(
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private fun findSongsForPlaylists(
         address: String,
         credentials: AuthenticatedCredentials,

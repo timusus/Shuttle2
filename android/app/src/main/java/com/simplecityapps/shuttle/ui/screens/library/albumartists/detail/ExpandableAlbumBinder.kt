@@ -70,7 +70,7 @@ class ExpandableAlbumBinder(
     }
 
     override fun getSectionName(): String? {
-        return album.groupKey?.key?.firstOrNull()?.toString()?.toUpperCase(Locale.getDefault())
+        return album.groupKey?.key?.firstOrNull()?.toString()?.uppercase(Locale.getDefault())
     }
 
     override fun equals(other: Any?): Boolean {

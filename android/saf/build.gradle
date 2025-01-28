@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 34
+        targetSdkVersion 35
         consumerProguardFiles 'consumer-rules.pro'
     }
 
@@ -35,14 +35,14 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     // Kotlin Standard Library
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.9.20"
+    implementation libs.kotlin.stdlib
 
     // SAF
-    api 'androidx.documentfile:documentfile:1.0.1'
+    api libs.androidx.documentfile
 
     // Coroutines
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3"
+    implementation libs.kotlinx.coroutinesCore
 
     // Timber
-    implementation 'com.jakewharton.timber:timber:4.7.1'
+    implementation libs.timber
 }

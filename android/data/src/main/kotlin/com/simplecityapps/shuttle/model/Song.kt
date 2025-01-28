@@ -5,6 +5,7 @@ import com.simplecityapps.shuttle.parcel.InstantParceler
 import com.simplecityapps.shuttle.parcel.LocalDateParceler
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
+import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import kotlinx.parcelize.TypeParceler
 
@@ -51,13 +52,16 @@ data class Song(
             }
         }
 
-    val albumArtistGroupKey: AlbumArtistGroupKey =
+    @IgnoredOnParcel
+    val albumArtistGroupKey: AlbumArtistGroupKey by lazy {
         AlbumArtistGroupKey(
             albumArtist?.lowercase()?.removeArticles()
                 ?: artists.joinToString(", ") { it.lowercase().removeArticles() }.ifEmpty { null }
         )
+    }
 
-    val albumGroupKey = AlbumGroupKey(album?.lowercase()?.removeArticles(), albumArtistGroupKey)
+    @IgnoredOnParcel
+    val albumGroupKey by lazy { AlbumGroupKey(album?.lowercase()?.removeArticles(), albumArtistGroupKey) }
 
     enum class Type {
         Audio,
@@ -65,7 +69,8 @@ data class Song(
         Podcast
     }
 
-    val friendlyArtistName: String? =
+    @IgnoredOnParcel
+    val friendlyArtistName: String? by lazy {
         if (artists.isNotEmpty()) {
             if (artists.size == 1) {
                 artists.first()
@@ -78,4 +83,5 @@ data class Song(
         } else {
             null
         }
+    }
 }

@@ -3,11 +3,11 @@ apply plugin: 'kotlin-android'
 apply plugin: 'com.google.devtools.ksp'
 
 android {
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 34
+        targetSdkVersion 35
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -52,27 +52,27 @@ dependencies {
     implementation project(path: ':android:mediaprovider:core')
 
     // TagLib
-    implementation("com.github.timusus:ktaglib:1.4.1")
+    implementation(libs.timusus.ktaglib)
 
     // Storage Access Framework
     implementation project(path: ':android:saf')
 
     // Room
-    ksp 'androidx.room:room-compiler:2.6.0'
-    api 'androidx.room:room-runtime:2.6.0'
-    api 'androidx.room:room-ktx:2.6.0'
+    ksp libs.androidx.room.compiler
+    api libs.androidx.room.runtime
+    api libs.androidx.room.ktx
 
     // Testing
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test:runner:1.5.2'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    testImplementation libs.junit
+    androidTestImplementation libs.androidx.runner
+    androidTestImplementation libs.androidx.espresso.core
 
     // Moshi
-    ksp("com.squareup.moshi:moshi-kotlin-codegen:1.15.0")
+    ksp(libs.moshi.kotlinCodegen)
 
     // Hilt
-    implementation 'com.google.dagger:hilt-android:2.48.1'
-    ksp 'com.google.dagger:hilt-compiler:2.48.1'
+    implementation libs.hilt
+    ksp libs.hilt.compiler
 
-    implementation 'org.jetbrains.kotlinx:kotlinx-datetime:0.4.1'
+    implementation libs.kotlinx.datetime
 }

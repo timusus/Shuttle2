@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 21
@@ -33,22 +33,22 @@ android {
 
 dependencies {
 
-    implementation("androidx.core:core-ktx:1.12.0")
+    implementation(libs.androidx.core.ktx)
 
     // Firebase
-    api(platform("com.google.firebase:firebase-bom:32.6.0"))
-    api("com.google.firebase:firebase-config-ktx")
-    implementation("com.google.firebase:firebase-analytics-ktx")
-    api("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+    api(platform(libs.firebase.bom))
+    api(libs.firebase.config.ktx)
+    implementation(libs.firebase.analytics.ktx)
+    api(libs.kotlinx.coroutinesPlayServices)
 
     // Hilt
-    implementation("com.google.dagger:hilt-android:2.48.1")
-    ksp("com.google.dagger:hilt-compiler:2.48.1")
+    implementation(libs.hilt)
+    ksp(libs.hilt.compiler)
 
     // S2 Core
     implementation(project(":android:core"))
 
-    testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
 }
