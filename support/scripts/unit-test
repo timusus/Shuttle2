@@ -12,7 +12,6 @@ RESULT_PATH=${RESULT_PATH:-${BUILD_PATH}/Artifacts}
 # eg: JUNIT_PATH="${RESULT_PATH}/test-results.xml"
 #SUPPORT_DIR="${BASH_SOURCE[0]%/*}/.."
 
-
 function finish() {
   # Do any work necessary even if script this fails
   echo "Finished"
@@ -21,4 +20,4 @@ function finish() {
 trap finish EXIT
 
 # Perform Unit Tests
-./gradlew :android:app:test
+./gradlew testDebugUnitTest
