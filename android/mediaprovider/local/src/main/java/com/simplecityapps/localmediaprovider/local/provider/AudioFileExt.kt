@@ -8,38 +8,36 @@ import java.util.Locale
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 
-fun AudioFile.toSong(providerType: MediaProviderType): Song {
-    return Song(
-        id = 0,
-        name = title,
-        artists = artists,
-        albumArtist = albumArtist,
-        album = album,
-        track = track,
-        disc = disc,
-        duration = duration ?: 0,
-        date = year?.toIntOrNull()?.let { LocalDate(it, 1, 1) },
-        genres = genres,
-        path = path,
-        size = size,
-        mimeType = mimeType,
-        lastModified = Instant.fromEpochMilliseconds(lastModified),
-        lastPlayed = null,
-        lastCompleted = null,
-        playCount = 0,
-        playbackPosition = 0,
-        blacklisted = false,
-        mediaProvider = providerType,
-        replayGainTrack = replayGainTrack,
-        replayGainAlbum = replayGainAlbum,
-        lyrics = lyrics,
-        grouping = grouping,
-        bitRate = bitRate,
-        bitDepth = bitDepth,
-        sampleRate = sampleRate,
-        channelCount = channelCount
-    )
-}
+fun AudioFile.toSong(providerType: MediaProviderType): Song = Song(
+    id = 0,
+    name = title,
+    artists = artists,
+    albumArtist = albumArtist,
+    album = album,
+    track = track,
+    disc = disc,
+    duration = duration ?: 0,
+    date = year?.toIntOrNull()?.let { LocalDate(it, 1, 1) },
+    genres = genres,
+    path = path,
+    size = size,
+    mimeType = mimeType,
+    lastModified = Instant.fromEpochMilliseconds(lastModified),
+    lastPlayed = null,
+    lastCompleted = null,
+    playCount = 0,
+    playbackPosition = 0,
+    blacklisted = false,
+    mediaProvider = providerType,
+    replayGainTrack = replayGainTrack,
+    replayGainAlbum = replayGainAlbum,
+    lyrics = lyrics,
+    grouping = grouping,
+    bitRate = bitRate,
+    bitDepth = bitDepth,
+    sampleRate = sampleRate,
+    channelCount = channelCount
+)
 
 enum class TagLibProperty(val key: String) {
     Title("TITLE"),
@@ -124,6 +122,4 @@ fun String.parseDate(): String? {
     return this
 }
 
-fun <V> Map<String, V>.getCaseInsensitive(key: String): V? {
-    return get(key) ?: get(key.lowercase(Locale.US))
-}
+fun <V> Map<String, V>.getCaseInsensitive(key: String): V? = get(key) ?: get(key.lowercase(Locale.US))

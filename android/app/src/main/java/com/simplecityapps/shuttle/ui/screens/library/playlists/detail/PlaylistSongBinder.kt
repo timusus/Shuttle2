@@ -42,17 +42,11 @@ open class PlaylistSongBinder(
         fun onStartDrag(viewHolder: ViewHolder) {}
     }
 
-    override fun createViewHolder(parent: ViewGroup): ViewHolder {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_playlist_song, parent, false))
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewHolder = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_playlist_song, parent, false))
 
-    override fun viewType(): Int {
-        return ViewTypes.Song
-    }
+    override fun viewType(): Int = ViewTypes.Song
 
-    override fun getSectionName(): String? {
-        return playlistSong.song.name?.firstOrNull()?.toString()
-    }
+    override fun getSectionName(): String? = playlistSong.song.name?.firstOrNull()?.toString()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -63,24 +57,20 @@ open class PlaylistSongBinder(
         return true
     }
 
-    override fun hashCode(): Int {
-        return playlistSong.id.hashCode()
-    }
+    override fun hashCode(): Int = playlistSong.id.hashCode()
 
-    override fun areContentsTheSame(other: Any): Boolean {
-        return other is PlaylistSongBinder &&
-            playlistSong.song.name == other.playlistSong.song.name &&
-            playlistSong.song.albumArtist == other.playlistSong.song.albumArtist &&
-            playlistSong.song.artists == other.playlistSong.song.artists &&
-            playlistSong.song.album == other.playlistSong.song.album &&
-            playlistSong.song.date == other.playlistSong.song.date &&
-            playlistSong.song.track == other.playlistSong.song.track &&
-            playlistSong.song.disc == other.playlistSong.song.disc &&
-            playlistSong.song.playCount == other.playlistSong.song.playCount &&
-            selected == other.selected &&
-            showDragHandle == other.showDragHandle &&
-            jaroSimilarity == other.jaroSimilarity
-    }
+    override fun areContentsTheSame(other: Any): Boolean = other is PlaylistSongBinder &&
+        playlistSong.song.name == other.playlistSong.song.name &&
+        playlistSong.song.albumArtist == other.playlistSong.song.albumArtist &&
+        playlistSong.song.artists == other.playlistSong.song.artists &&
+        playlistSong.song.album == other.playlistSong.song.album &&
+        playlistSong.song.date == other.playlistSong.song.date &&
+        playlistSong.song.track == other.playlistSong.song.track &&
+        playlistSong.song.disc == other.playlistSong.song.disc &&
+        playlistSong.song.playCount == other.playlistSong.song.playCount &&
+        selected == other.selected &&
+        showDragHandle == other.showDragHandle &&
+        jaroSimilarity == other.jaroSimilarity
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<PlaylistSongBinder>(itemView) {
         private val title: TextView = itemView.findViewById(R.id.title)

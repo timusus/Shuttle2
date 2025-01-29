@@ -22,54 +22,50 @@ class CastService(
 ) {
     class AudioStream(val stream: InputStream, val length: Long, val mimeType: String)
 
-    suspend fun getArtwork(songId: Long): ByteArray? {
-        return songRepository.getSongs(SongQuery.SongIds(listOf(songId))).firstOrNull()?.firstOrNull()?.let { song ->
-            artworkImageLoader.loadBitmap(song)
-        }
+    suspend fun getArtwork(songId: Long): ByteArray? = songRepository.getSongs(SongQuery.SongIds(listOf(songId))).firstOrNull()?.firstOrNull()?.let { song ->
+        artworkImageLoader.loadBitmap(song)
     }
 
-    suspend fun getAudio(songId: Long): AudioStream? {
-        return withContext(Dispatchers.IO) {
-            songRepository.getSongs(SongQuery.SongIds(listOf(songId))).firstOrNull()?.firstOrNull()?.let { song ->
-                val uri = Uri.parse(song.path)
-                if (song.path.startsWith("content://")) {
-                    if (DocumentsContract.isDocumentUri(context, uri)) {
-                        val documentFile = DocumentFile.fromSingleUri(context, uri)
-                        documentFile?.let {
-                            if (it.exists()) {
-                                try {
-                                    context.contentResolver.openInputStream(documentFile.uri)?.let { inputStream ->
-                                        AudioStream(inputStream, documentFile.length(), documentFile.type ?: "audio/*")
-                                    }
-                                } catch (e: FileNotFoundException) {
-                                    Timber.e(e, "Failed to retrieve audio from songId: $songId")
-                                    null
+    suspend fun getAudio(songId: Long): AudioStream? = withContext(Dispatchers.IO) {
+        songRepository.getSongs(SongQuery.SongIds(listOf(songId))).firstOrNull()?.firstOrNull()?.let { song ->
+            val uri = Uri.parse(song.path)
+            if (song.path.startsWith("content://")) {
+                if (DocumentsContract.isDocumentUri(context, uri)) {
+                    val documentFile = DocumentFile.fromSingleUri(context, uri)
+                    documentFile?.let {
+                        if (it.exists()) {
+                            try {
+                                context.contentResolver.openInputStream(documentFile.uri)?.let { inputStream ->
+                                    AudioStream(inputStream, documentFile.length(), documentFile.type ?: "audio/*")
                                 }
-                            } else {
-                                Timber.e("Failed to retrieve audio from songId: $songId (Document file doesn't exist)")
+                            } catch (e: FileNotFoundException) {
+                                Timber.e(e, "Failed to retrieve audio from songId: $songId")
                                 null
                             }
-                        }
-                    } else {
-                        try {
-                            context.contentResolver.openInputStream(uri)?.let { inputStream ->
-                                AudioStream(inputStream, song.size, song.mimeType)
-                            }
-                        } catch (e: FileNotFoundException) {
-                            Timber.e(e, "Failed to retrieve audio from songId: $songId")
+                        } else {
+                            Timber.e("Failed to retrieve audio from songId: $songId (Document file doesn't exist)")
                             null
                         }
                     }
                 } else {
                     try {
-                        AudioStream(File(uri.toString()).inputStream(), song.size, song.mimeType)
+                        context.contentResolver.openInputStream(uri)?.let { inputStream ->
+                            AudioStream(inputStream, song.size, song.mimeType)
+                        }
                     } catch (e: FileNotFoundException) {
                         Timber.e(e, "Failed to retrieve audio from songId: $songId")
                         null
-                    } catch (e: SecurityException) {
-                        Timber.e(e, "Failed to retrieve audio from songId: $songId")
-                        null
                     }
+                }
+            } else {
+                try {
+                    AudioStream(File(uri.toString()).inputStream(), song.size, song.mimeType)
+                } catch (e: FileNotFoundException) {
+                    Timber.e(e, "Failed to retrieve audio from songId: $songId")
+                    null
+                } catch (e: SecurityException) {
+                    Timber.e(e, "Failed to retrieve audio from songId: $songId")
+                    null
                 }
             }
         }

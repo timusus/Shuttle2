@@ -21,21 +21,19 @@ object SafDirectoryHelper {
     fun buildFolderNodeTree(
         contentResolver: ContentResolver,
         rootUri: Uri
-    ): Flow<TreeStatus> {
-        return flow {
-            try {
-                val docUri = DocumentsContract.buildDocumentUriUsingTree(rootUri, DocumentsContract.getTreeDocumentId(rootUri))
-                retrieveDocumentNodes(contentResolver, docUri, rootUri).firstOrNull()?.let { rootDocumentNode ->
-                    val tree = DocumentNodeTree(docUri, rootUri, rootDocumentNode.documentId, rootDocumentNode.displayName, rootDocumentNode.mimeType)
-                    emit(TreeStatus.Progress(tree))
-                    traverseDocumentNodes(tree, contentResolver, rootUri)
-                    emit(TreeStatus.Complete(tree))
-                }
-            } catch (e: SecurityException) {
-                Timber.e(e, "Failed to build folder tree ($rootUri)")
+    ): Flow<TreeStatus> = flow {
+        try {
+            val docUri = DocumentsContract.buildDocumentUriUsingTree(rootUri, DocumentsContract.getTreeDocumentId(rootUri))
+            retrieveDocumentNodes(contentResolver, docUri, rootUri).firstOrNull()?.let { rootDocumentNode ->
+                val tree = DocumentNodeTree(docUri, rootUri, rootDocumentNode.documentId, rootDocumentNode.displayName, rootDocumentNode.mimeType)
+                emit(TreeStatus.Progress(tree))
+                traverseDocumentNodes(tree, contentResolver, rootUri)
+                emit(TreeStatus.Complete(tree))
             }
-        }.flowOn(Dispatchers.IO)
-    }
+        } catch (e: SecurityException) {
+            Timber.e(e, "Failed to build folder tree ($rootUri)")
+        }
+    }.flowOn(Dispatchers.IO)
 
     private suspend fun traverseDocumentNodes(
         parent: DocumentNodeTree,
@@ -74,53 +72,51 @@ object SafDirectoryHelper {
         contentResolver: ContentResolver,
         uri: Uri,
         rootUri: Uri
-    ): List<DocumentNode> {
-        return withContext(Dispatchers.IO) {
-            val documentNodes = mutableListOf<DocumentNode>()
-            try {
-                contentResolver.query(
-                    uri,
-                    arrayOf(
-                        DocumentsContract.Document.COLUMN_DOCUMENT_ID,
-                        DocumentsContract.Document.COLUMN_DISPLAY_NAME,
-                        DocumentsContract.Document.COLUMN_MIME_TYPE
-                    ),
-                    null,
-                    null,
-                    null
-                ).use { cursor ->
-                    cursor?.let {
-                        while (cursor.moveToNext()) {
-                            val mimeType = cursor.getString(2)
-                            val documentId = cursor.getString(0)
-                            if (mimeType == DocumentsContract.Document.MIME_TYPE_DIR) {
-                                documentNodes.add(
-                                    DocumentNodeTree(
-                                        uri = DocumentsContract.buildDocumentUriUsingTree(uri, documentId),
-                                        rootUri = rootUri,
-                                        documentId = documentId,
-                                        displayName = cursor.getString(1),
-                                        mimeType = mimeType
-                                    )
+    ): List<DocumentNode> = withContext(Dispatchers.IO) {
+        val documentNodes = mutableListOf<DocumentNode>()
+        try {
+            contentResolver.query(
+                uri,
+                arrayOf(
+                    DocumentsContract.Document.COLUMN_DOCUMENT_ID,
+                    DocumentsContract.Document.COLUMN_DISPLAY_NAME,
+                    DocumentsContract.Document.COLUMN_MIME_TYPE
+                ),
+                null,
+                null,
+                null
+            ).use { cursor ->
+                cursor?.let {
+                    while (cursor.moveToNext()) {
+                        val mimeType = cursor.getString(2)
+                        val documentId = cursor.getString(0)
+                        if (mimeType == DocumentsContract.Document.MIME_TYPE_DIR) {
+                            documentNodes.add(
+                                DocumentNodeTree(
+                                    uri = DocumentsContract.buildDocumentUriUsingTree(uri, documentId),
+                                    rootUri = rootUri,
+                                    documentId = documentId,
+                                    displayName = cursor.getString(1),
+                                    mimeType = mimeType
                                 )
-                            } else {
-                                documentNodes.add(
-                                    DocumentNode(
-                                        uri = DocumentsContract.buildDocumentUriUsingTree(uri, documentId),
-                                        documentId = documentId,
-                                        displayName = cursor.getString(1),
-                                        mimeType = mimeType
-                                    )
+                            )
+                        } else {
+                            documentNodes.add(
+                                DocumentNode(
+                                    uri = DocumentsContract.buildDocumentUriUsingTree(uri, documentId),
+                                    documentId = documentId,
+                                    displayName = cursor.getString(1),
+                                    mimeType = mimeType
                                 )
-                            }
+                            )
                         }
-                    } ?: Timber.e("Failed to iterate cursor (null)")
-                }
-            } catch (e: SecurityException) {
-                Timber.e("Failed to retrieve document node for uri: $uri")
+                    }
+                } ?: Timber.e("Failed to iterate cursor (null)")
             }
-            documentNodes
+        } catch (e: SecurityException) {
+            Timber.e("Failed to retrieve document node for uri: $uri")
         }
+        documentNodes
     }
 
     sealed class TreeStatus(val tree: DocumentNodeTree) {
@@ -139,8 +135,6 @@ object SafDirectoryHelper {
             return true
         }
 
-        override fun hashCode(): Int {
-            return tree.hashCode()
-        }
+        override fun hashCode(): Int = tree.hashCode()
     }
 }

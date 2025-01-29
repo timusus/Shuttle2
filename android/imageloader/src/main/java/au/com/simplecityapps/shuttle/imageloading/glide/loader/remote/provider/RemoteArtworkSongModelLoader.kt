@@ -18,9 +18,7 @@ class RemoteArtworkSongModelLoader(
     private val remoteArtworkProvider: RemoteArtworkProvider,
     private val coroutineScope: CoroutineScope
 ) : ModelLoader<Song, InputStream> {
-    override fun handles(model: Song): Boolean {
-        return true
-    }
+    override fun handles(model: Song): Boolean = true
 
     override fun buildLoadData(
         model: Song,
@@ -40,9 +38,7 @@ class RemoteArtworkSongModelLoader(
         private val remoteArtworkProvider: RemoteArtworkProvider,
         private val coroutineScope: CoroutineScope
     ) : ModelLoaderFactory<Song, InputStream> {
-        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Song, InputStream> {
-            return RemoteArtworkSongModelLoader(preferenceManager, remoteArtworkProvider, coroutineScope)
-        }
+        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Song, InputStream> = RemoteArtworkSongModelLoader(preferenceManager, remoteArtworkProvider, coroutineScope)
 
         override fun teardown() {}
     }

@@ -78,9 +78,8 @@ class MediaProviderOptionsFragment : DialogFragment() {
     companion object {
         const val ARG_PROVIDER_TYPES = "provider_types"
 
-        fun newInstance(providerTypes: List<MediaProviderType>) =
-            MediaProviderOptionsFragment().withArgs {
-                putSerializable(ARG_PROVIDER_TYPES, providerTypes as Serializable)
-            }
+        fun newInstance(providerTypes: List<MediaProviderType>) = MediaProviderOptionsFragment().withArgs {
+            putSerializable(ARG_PROVIDER_TYPES, providerTypes as Serializable)
+        }
     }
 }

@@ -25,39 +25,27 @@ class AppModule {
     fun provideDebugLoggingTree(
         @ApplicationContext context: Context,
         generalPreferenceManager: GeneralPreferenceManager
-    ): DebugLoggingTree {
-        return DebugLoggingTree(context, generalPreferenceManager)
+    ): DebugLoggingTree = DebugLoggingTree(context, generalPreferenceManager)
+
+    @Singleton
+    @Provides
+    fun provideArtworkCache(): LruCache<String, Bitmap> = object : LruCache<String, Bitmap>(10 * 1024 * 1024) {
+        override fun sizeOf(
+            key: String,
+            value: Bitmap
+        ): Int = value.allocationByteCount
     }
 
     @Singleton
     @Provides
-    fun provideArtworkCache(): LruCache<String, Bitmap> {
-        return object : LruCache<String, Bitmap>(10 * 1024 * 1024) {
-            override fun sizeOf(
-                key: String,
-                value: Bitmap
-            ): Int {
-                return value.allocationByteCount
-            }
-        }
-    }
+    fun provideSortPreferenceManager(preference: SharedPreferences): SortPreferenceManager = SortPreferenceManager(preference)
 
     @Singleton
     @Provides
-    fun provideSortPreferenceManager(preference: SharedPreferences): SortPreferenceManager {
-        return SortPreferenceManager(preference)
-    }
-
-    @Singleton
-    @Provides
-    fun provideThemeManager(preferenceManager: GeneralPreferenceManager): ThemeManager {
-        return ThemeManager(preferenceManager)
-    }
+    fun provideThemeManager(preferenceManager: GeneralPreferenceManager): ThemeManager = ThemeManager(preferenceManager)
 
     @Singleton
     @Provides
     @Named("randomSeed")
-    fun provideRandomSeed(): Long {
-        return Random().nextLong()
-    }
+    fun provideRandomSeed(): Long = Random().nextLong()
 }

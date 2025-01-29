@@ -88,31 +88,19 @@ class NetworkResultCall<S : Any>(
         )
     }
 
-    override fun execute(): Response<NetworkResult<S>> {
-        throw(IllegalStateException("execute() not supported"))
-    }
+    override fun execute(): Response<NetworkResult<S>> = throw(IllegalStateException("execute() not supported"))
 
-    override fun isExecuted(): Boolean {
-        return call.isExecuted
-    }
+    override fun isExecuted(): Boolean = call.isExecuted
 
-    override fun clone(): Call<NetworkResult<S>> {
-        return NetworkResultCall(call.clone(), errorBodyConverter, connectivityManager = connectivityManager)
-    }
+    override fun clone(): Call<NetworkResult<S>> = NetworkResultCall(call.clone(), errorBodyConverter, connectivityManager = connectivityManager)
 
     override fun cancel() {
         call.cancel()
     }
 
-    override fun isCanceled(): Boolean {
-        return call.isCanceled
-    }
+    override fun isCanceled(): Boolean = call.isCanceled
 
-    override fun request(): Request {
-        return call.request()
-    }
+    override fun request(): Request = call.request()
 
-    override fun timeout(): Timeout {
-        return call.timeout()
-    }
+    override fun timeout(): Timeout = call.timeout()
 }

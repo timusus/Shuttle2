@@ -25,13 +25,9 @@ class PlaylistBinder(val playlist: com.simplecityapps.shuttle.model.Playlist, pr
         ) {}
     }
 
-    override fun createViewHolder(parent: ViewGroup): ViewHolder {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_playlist, parent, false))
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewHolder = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_playlist, parent, false))
 
-    override fun viewType(): Int {
-        return ViewTypes.Playlist
-    }
+    override fun viewType(): Int = ViewTypes.Playlist
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -44,16 +40,12 @@ class PlaylistBinder(val playlist: com.simplecityapps.shuttle.model.Playlist, pr
         return true
     }
 
-    override fun hashCode(): Int {
-        return playlist.hashCode()
-    }
+    override fun hashCode(): Int = playlist.hashCode()
 
-    override fun areContentsTheSame(other: Any): Boolean {
-        return playlist.name == (other as? PlaylistBinder)?.playlist?.name &&
-            playlist.songCount == (other as? PlaylistBinder)?.playlist?.songCount &&
-            playlist.externalId == other.playlist.externalId &&
-            playlist.mediaProvider == other.playlist.mediaProvider
-    }
+    override fun areContentsTheSame(other: Any): Boolean = playlist.name == (other as? PlaylistBinder)?.playlist?.name &&
+        playlist.songCount == (other as? PlaylistBinder)?.playlist?.songCount &&
+        playlist.externalId == other.playlist.externalId &&
+        playlist.mediaProvider == other.playlist.mediaProvider
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<PlaylistBinder>(itemView) {
         private val imageView: ImageView = itemView.findViewById(R.id.imageView)

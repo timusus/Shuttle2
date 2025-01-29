@@ -39,7 +39,9 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @AndroidEntryPoint
-class ArtworkDownloadService : Service(), CoroutineScope {
+class ArtworkDownloadService :
+    Service(),
+    CoroutineScope {
     private val notificationManager: NotificationManager? by lazy {
         getSystemService()
     }
@@ -68,9 +70,7 @@ class ArtworkDownloadService : Service(), CoroutineScope {
 
     // Lifecycle
 
-    override fun onBind(intent: Intent?): IBinder? {
-        return null
-    }
+    override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
         super.onCreate()

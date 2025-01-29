@@ -19,7 +19,9 @@ import javax.inject.Inject
 import kotlinx.parcelize.Parcelize
 
 @AndroidEntryPoint
-class LoggingFragment : Fragment(), DebugLoggingTree.Callback {
+class LoggingFragment :
+    Fragment(),
+    DebugLoggingTree.Callback {
     @Inject lateinit var debugLoggingTree: DebugLoggingTree
 
     private var adapter: RecyclerAdapter by autoCleared()
@@ -40,9 +42,7 @@ class LoggingFragment : Fragment(), DebugLoggingTree.Callback {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_debug_logging, container, false)
-    }
+    ): View? = inflater.inflate(R.layout.fragment_debug_logging, container, false)
 
     override fun onViewCreated(
         view: View,
@@ -112,10 +112,9 @@ class LoggingFragment : Fragment(), DebugLoggingTree.Callback {
     companion object {
         private const val ARG_FILTER = "filter"
 
-        fun newInstance(filter: Filter? = null) =
-            LoggingFragment().withArgs {
-                putParcelable(ARG_FILTER, filter)
-            }
+        fun newInstance(filter: Filter? = null) = LoggingFragment().withArgs {
+            putParcelable(ARG_FILTER, filter)
+        }
     }
 
     @Parcelize

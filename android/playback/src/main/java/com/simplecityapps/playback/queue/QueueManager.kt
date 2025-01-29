@@ -16,12 +16,10 @@ class QueueManager(
         ;
 
         companion object {
-            fun init(ordinal: Int): ShuffleMode {
-                return when (ordinal) {
-                    On.ordinal -> On
-                    Off.ordinal -> Off
-                    else -> Off
-                }
+            fun init(ordinal: Int): ShuffleMode = when (ordinal) {
+                On.ordinal -> On
+                Off.ordinal -> Off
+                else -> Off
             }
         }
     }
@@ -33,13 +31,11 @@ class QueueManager(
         ;
 
         companion object {
-            fun init(ordinal: Int): RepeatMode {
-                return when (ordinal) {
-                    All.ordinal -> All
-                    One.ordinal -> One
-                    Off.ordinal -> Off
-                    else -> Off
-                }
+            fun init(ordinal: Int): RepeatMode = when (ordinal) {
+                All.ordinal -> All
+                One.ordinal -> One
+                Off.ordinal -> Off
+                else -> Off
             }
         }
     }
@@ -154,9 +150,7 @@ class QueueManager(
         }
     }
 
-    fun getCurrentItem(): QueueItem? {
-        return currentItem
-    }
+    fun getCurrentItem(): QueueItem? = currentItem
 
     fun getCurrentPosition(): Int? {
         val index = queue.get(shuffleMode).indexOf(currentItem)
@@ -167,9 +161,7 @@ class QueueManager(
         return null
     }
 
-    fun getSize(): Int {
-        return queue.size()
-    }
+    fun getSize(): Int = queue.size()
 
     fun remove(items: List<QueueItem>) {
         val oldPosition = getCurrentPosition()
@@ -192,12 +184,10 @@ class QueueManager(
      *
      * @param ignoreRepeat whether to ignore the current repeat mode, and return the next item as if repeat mode is 'all'
      */
-    fun getNext(ignoreRepeat: Boolean = false): QueueItem? {
-        return if (ignoreRepeat) {
-            getNext(RepeatMode.All)
-        } else {
-            getNext(repeatMode)
-        }
+    fun getNext(ignoreRepeat: Boolean = false): QueueItem? = if (ignoreRepeat) {
+        getNext(RepeatMode.All)
+    } else {
+        getNext(repeatMode)
     }
 
     private fun getNext(repeatMode: RepeatMode): QueueItem? {
@@ -226,13 +216,9 @@ class QueueManager(
         return currentQueue.getOrNull(currentQueue.indexOf(currentItem) - 1)
     }
 
-    fun getQueue(): List<QueueItem> {
-        return queue.get(shuffleMode)
-    }
+    fun getQueue(): List<QueueItem> = queue.get(shuffleMode)
 
-    fun getQueue(shuffleMode: ShuffleMode): List<QueueItem> {
-        return queue.get(shuffleMode)
-    }
+    fun getQueue(shuffleMode: ShuffleMode): List<QueueItem> = queue.get(shuffleMode)
 
     /**
      * Sets the shuffle mode
@@ -267,9 +253,7 @@ class QueueManager(
         }
     }
 
-    fun getShuffleMode(): ShuffleMode {
-        return shuffleMode
-    }
+    fun getShuffleMode(): ShuffleMode = shuffleMode
 
     suspend fun toggleShuffleMode() {
         when (shuffleMode) {
@@ -285,9 +269,7 @@ class QueueManager(
         }
     }
 
-    fun getRepeatMode(): RepeatMode {
-        return repeatMode
-    }
+    fun getRepeatMode(): RepeatMode = repeatMode
 
     fun toggleRepeatMode() {
         when (repeatMode) {
@@ -354,19 +336,15 @@ class QueueManager(
         private var baseList: MutableList<QueueItem> = mutableListOf()
         private var shuffleList: MutableList<QueueItem> = mutableListOf()
 
-        fun get(shuffleMode: ShuffleMode): MutableList<QueueItem> {
-            return when (shuffleMode) {
-                ShuffleMode.Off -> baseList
-                ShuffleMode.On -> shuffleList
-            }
+        fun get(shuffleMode: ShuffleMode): MutableList<QueueItem> = when (shuffleMode) {
+            ShuffleMode.Off -> baseList
+            ShuffleMode.On -> shuffleList
         }
 
         fun getItem(
             shuffleMode: ShuffleMode,
             position: Int
-        ): QueueItem? {
-            return get(shuffleMode).getOrNull(position)
-        }
+        ): QueueItem? = get(shuffleMode).getOrNull(position)
 
         fun setBaseQueue(items: List<QueueItem>) {
             baseList = items.toMutableList()
@@ -436,8 +414,6 @@ class QueueManager(
             list.add(to, list.removeAt(from))
         }
 
-        fun size(): Int {
-            return baseList.size
-        }
+        fun size(): Int = baseList.size
     }
 }

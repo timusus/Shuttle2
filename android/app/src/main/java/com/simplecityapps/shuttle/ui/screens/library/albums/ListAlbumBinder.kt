@@ -23,13 +23,9 @@ class ListAlbumBinder(
     listener: Listener
 ) : AlbumBinder(album, imageLoader, listener),
     SectionViewBinder {
-    override fun createViewHolder(parent: ViewGroup): ViewHolder {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_album, parent, false))
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewHolder = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_album, parent, false))
 
-    override fun viewType(): Int {
-        return ViewTypes.AlbumList
-    }
+    override fun viewType(): Int = ViewTypes.AlbumList
 
     class ViewHolder(itemView: View) : AlbumBinder.ViewHolder(itemView) {
         private val title: TextView = itemView.findViewById(R.id.title)

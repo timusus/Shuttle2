@@ -29,22 +29,16 @@ class TagLibAlbumLocalArtworkModelLoader(
         width: Int,
         height: Int,
         options: Options
-    ): ModelLoader.LoadData<InputStream>? {
-        return localArtworkModelLoader.buildLoadData(TagLibAlbumLocalArtworkProvider(context, kTagLib, model, songRepository), width, height, options)
-    }
+    ): ModelLoader.LoadData<InputStream>? = localArtworkModelLoader.buildLoadData(TagLibAlbumLocalArtworkProvider(context, kTagLib, model, songRepository), width, height, options)
 
-    override fun handles(model: Album): Boolean {
-        return true
-    }
+    override fun handles(model: Album): Boolean = true
 
     class Factory(
         private val context: Context,
         private val kTagLib: KTagLib,
         private val songRepository: SongRepository
     ) : ModelLoaderFactory<Album, InputStream> {
-        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Album, InputStream> {
-            return TagLibAlbumLocalArtworkModelLoader(context, kTagLib, multiFactory.build(LocalArtworkProvider::class.java, InputStream::class.java) as LocalArtworkModelLoader, songRepository)
-        }
+        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Album, InputStream> = TagLibAlbumLocalArtworkModelLoader(context, kTagLib, multiFactory.build(LocalArtworkProvider::class.java, InputStream::class.java) as LocalArtworkModelLoader, songRepository)
 
         override fun teardown() {
         }
@@ -57,37 +51,35 @@ class TagLibAlbumLocalArtworkModelLoader(
         private val songRepository: SongRepository
     ) : AlbumArtworkProvider(album),
         LocalArtworkProvider {
-        override fun getInputStream(): InputStream? {
-            return runBlocking {
-                songRepository.getSongs(SongQuery.AlbumGroupKeys(listOf(SongQuery.AlbumGroupKey(album.groupKey))))
-                    .firstOrNull()
-                    ?.firstOrNull()
-                    ?.let { song ->
-                        val uri: Uri =
-                            if (song.path.startsWith("content://")) {
-                                Uri.parse(song.path)
-                            } else {
-                                Uri.fromFile(File(song.path))
-                            }
-                        try {
-                            context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
-                                kTagLib.getArtwork(pfd.detachFd())?.inputStream()
-                            }
-                        } catch (e: SecurityException) {
-                            Timber.v("Failed to retrieve artwork (permission denial)")
-                            null
-                        } catch (e: IllegalStateException) {
-                            Timber.v("Failed to retrieve artwork (fd problem)")
-                            null
-                        } catch (e: SecurityException) {
-                            Timber.v("Failed to retrieve artwork (security problem)")
-                            null
-                        } catch (e: FileNotFoundException) {
-                            Timber.v("Failed to retrieve artwork (file not found)")
-                            null
+        override fun getInputStream(): InputStream? = runBlocking {
+            songRepository.getSongs(SongQuery.AlbumGroupKeys(listOf(SongQuery.AlbumGroupKey(album.groupKey))))
+                .firstOrNull()
+                ?.firstOrNull()
+                ?.let { song ->
+                    val uri: Uri =
+                        if (song.path.startsWith("content://")) {
+                            Uri.parse(song.path)
+                        } else {
+                            Uri.fromFile(File(song.path))
                         }
+                    try {
+                        context.contentResolver.openFileDescriptor(uri, "r")?.use { pfd ->
+                            kTagLib.getArtwork(pfd.detachFd())?.inputStream()
+                        }
+                    } catch (e: SecurityException) {
+                        Timber.v("Failed to retrieve artwork (permission denial)")
+                        null
+                    } catch (e: IllegalStateException) {
+                        Timber.v("Failed to retrieve artwork (fd problem)")
+                        null
+                    } catch (e: SecurityException) {
+                        Timber.v("Failed to retrieve artwork (security problem)")
+                        null
+                    } catch (e: FileNotFoundException) {
+                        Timber.v("Failed to retrieve artwork (file not found)")
+                        null
                     }
-            }
+                }
         }
     }
 }

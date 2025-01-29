@@ -16,16 +16,16 @@ import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingPage
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParent
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParentFragment
 
-class StoragePermissionFragment : Fragment(), OnboardingChild {
+class StoragePermissionFragment :
+    Fragment(),
+    OnboardingChild {
     // Lifecycle
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_onboarding_permissions, container, false)
-    }
+    ): View? = inflater.inflate(R.layout.fragment_onboarding_permissions, container, false)
 
     override fun onViewCreated(
         view: View,
@@ -66,12 +66,10 @@ class StoragePermissionFragment : Fragment(), OnboardingChild {
         requestPermissions(arrayOf(getStoragePermission()), OnboardingParentFragment.REQUEST_CODE_READ_STORAGE)
     }
 
-    private fun getStoragePermission(): String {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            Manifest.permission.READ_MEDIA_AUDIO
-        } else {
-            Manifest.permission.READ_EXTERNAL_STORAGE
-        }
+    private fun getStoragePermission(): String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        Manifest.permission.READ_MEDIA_AUDIO
+    } else {
+        Manifest.permission.READ_EXTERNAL_STORAGE
     }
 
     // OnboardingChild Implementation

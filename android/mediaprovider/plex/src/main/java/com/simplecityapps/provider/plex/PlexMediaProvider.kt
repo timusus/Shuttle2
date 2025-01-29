@@ -104,7 +104,5 @@ class PlexMediaProvider(
     override fun findPlaylists(
         existingPlaylists: List<Playlist>,
         existingSongs: List<Song>
-    ): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> {
-        return flowOf(FlowEvent.Success(emptyList()))
-    }
+    ): Flow<FlowEvent<List<MediaImporter.PlaylistUpdateData>, MessageProgress>> = flowOf(FlowEvent.Success(emptyList()))
 }

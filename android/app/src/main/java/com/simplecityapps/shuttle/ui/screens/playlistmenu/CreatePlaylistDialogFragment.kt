@@ -24,9 +24,7 @@ class CreatePlaylistDialogFragment : EditTextAlertDialog() {
         (parentFragment as? Listener)?.onSave(string, playlistData)
     }
 
-    override fun isValid(string: String?): Boolean {
-        return string?.isNotEmpty() ?: false
-    }
+    override fun isValid(string: String?): Boolean = string?.isNotEmpty() ?: false
 
     companion object {
         const val ARG_DATA = "data"
@@ -34,10 +32,9 @@ class CreatePlaylistDialogFragment : EditTextAlertDialog() {
         fun newInstance(
             playlistData: PlaylistData,
             hint: String?
-        ) =
-            CreatePlaylistDialogFragment().withArgs {
-                putParcelable(ARG_DATA, playlistData)
-                putString(ARG_HINT, hint)
-            }
+        ) = CreatePlaylistDialogFragment().withArgs {
+            putParcelable(ARG_DATA, playlistData)
+            putString(ARG_HINT, hint)
+        }
     }
 }

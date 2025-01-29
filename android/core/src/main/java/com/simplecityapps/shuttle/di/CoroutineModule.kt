@@ -18,18 +18,14 @@ import timber.log.Timber
 class CoroutineModule {
     @Singleton
     @Provides
-    fun coroutineExceptionHandler(): CoroutineExceptionHandler {
-        return CoroutineExceptionHandler { _, throwable ->
-            Timber.e(throwable)
-        }
+    fun coroutineExceptionHandler(): CoroutineExceptionHandler = CoroutineExceptionHandler { _, throwable ->
+        Timber.e(throwable)
     }
 
     @Singleton
     @Provides
     @AppSupervisorJob
-    fun appSupervisorJob(): Job {
-        return SupervisorJob()
-    }
+    fun appSupervisorJob(): Job = SupervisorJob()
 
     @Singleton
     @Provides
@@ -37,9 +33,7 @@ class CoroutineModule {
     fun provideAppCoroutineScope(
         @AppSupervisorJob job: Job,
         coroutineExceptionHandler: CoroutineExceptionHandler
-    ): CoroutineScope {
-        return CoroutineScope(Dispatchers.Main + job + coroutineExceptionHandler)
-    }
+    ): CoroutineScope = CoroutineScope(Dispatchers.Main + job + coroutineExceptionHandler)
 }
 
 @Retention(AnnotationRetention.BINARY)

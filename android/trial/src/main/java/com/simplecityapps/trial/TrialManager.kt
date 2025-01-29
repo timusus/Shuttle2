@@ -119,16 +119,14 @@ class TrialManager(
         }
     }
 
-    private suspend fun getRemoteDevice(deviceId: String): Device? {
-        return when (val result = deviceService.getDevice(deviceId)) {
-            is NetworkResult.Success -> {
-                Timber.i("Retrieved remote device")
-                result.body
-            }
-            is NetworkResult.Failure -> {
-                Timber.e("Failed to retrieve remote device: ${result.error}")
-                null
-            }
+    private suspend fun getRemoteDevice(deviceId: String): Device? = when (val result = deviceService.getDevice(deviceId)) {
+        is NetworkResult.Success -> {
+            Timber.i("Retrieved remote device")
+            result.body
+        }
+        is NetworkResult.Failure -> {
+            Timber.e("Failed to retrieve remote device: ${result.error}")
+            null
         }
     }
 
@@ -162,11 +160,9 @@ class TrialManager(
      * Otherwise, a GUID is generated and stored in internal storage - which will persist across installations via auto-backup, if enabled by the user
      */
     @SuppressLint("HardwareIds")
-    private fun getDeviceId(): String {
-        return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
-        } else {
-            UUID.randomUUID().toString()
-        }
+    private fun getDeviceId(): String = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+        Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
+    } else {
+        UUID.randomUUID().toString()
     }
 }

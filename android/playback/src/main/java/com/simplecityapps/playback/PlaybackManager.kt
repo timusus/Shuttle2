@@ -218,23 +218,17 @@ class PlaybackManager(
         }
     }
 
-    fun playbackState(): PlaybackState {
-        return playback.playBackState()
-    }
+    fun playbackState(): PlaybackState = playback.playBackState()
 
     /**
      * @return the current seek position, in milliseconds
      */
-    fun getProgress(): Int? {
-        return playback.getProgress()
-    }
+    fun getProgress(): Int? = playback.getProgress()
 
     /**
      * @return the track duration, in milliseconds
      */
-    fun getDuration(): Int? {
-        return playback.getDuration()
-    }
+    fun getDuration(): Int? = playback.getDuration()
 
     /**
      * The position to seek to, in milliseconds
@@ -302,9 +296,7 @@ class PlaybackManager(
         }
     }
 
-    fun getPlayback(): Playback {
-        return playback
-    }
+    fun getPlayback(): Playback = playback
 
     fun switchToPlayback(playback: Playback) {
         Timber.v("switchToPlayback(playback: ${playback.javaClass.simpleName})")
@@ -342,9 +334,7 @@ class PlaybackManager(
         playback.setPlaybackSpeed(multiplier)
     }
 
-    fun getPlaybackSpeed(): Float {
-        return playback.getPlaybackSpeed()
-    }
+    fun getPlaybackSpeed(): Float = playback.getPlaybackSpeed()
 
     // Private
 
@@ -469,6 +459,4 @@ class PlaybackManager(
     }
 }
 
-private fun Song.getStartPosition(): Int? {
-    return if (type == Song.Type.Podcast || type == Song.Type.Audiobook) max(0, playbackPosition - 5000) else null
-}
+private fun Song.getStartPosition(): Int? = if (type == Song.Type.Podcast || type == Song.Type.Audiobook) max(0, playbackPosition - 5000) else null

@@ -15,11 +15,9 @@ open class RemoteServiceHttpError(val response: Response<*>) : RemoteServiceErro
     val isServerError: Boolean
         get() = response.code() in 500..599
 
-    override fun toString(): String {
-        return "RemoteServiceHttpError" +
-            "\n\t- code: ${response.code()} (${httpStatusCode.name})" +
-            "\n\t- message: ${super.message}"
-    }
+    override fun toString(): String = "RemoteServiceHttpError" +
+        "\n\t- code: ${response.code()} (${httpStatusCode.name})" +
+        "\n\t- message: ${super.message}"
 }
 
 enum class HttpStatusCode(val code: Int) {

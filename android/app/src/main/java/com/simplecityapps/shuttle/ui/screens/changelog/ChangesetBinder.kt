@@ -31,13 +31,9 @@ class ChangesetBinder(
         )
     }
 
-    override fun createViewHolder(parent: ViewGroup): ViewBinder.ViewHolder<out ViewBinder> {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_changeset, parent, false))
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewBinder.ViewHolder<out ViewBinder> = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_changeset, parent, false))
 
-    override fun viewType(): Int {
-        return ViewTypes.Changelog
-    }
+    override fun viewType(): Int = ViewTypes.Changelog
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -50,13 +46,9 @@ class ChangesetBinder(
         return true
     }
 
-    override fun hashCode(): Int {
-        return changeset.hashCode()
-    }
+    override fun hashCode(): Int = changeset.hashCode()
 
-    override fun areContentsTheSame(other: Any): Boolean {
-        return (other as? ChangesetBinder)?.expanded == expanded
-    }
+    override fun areContentsTheSame(other: Any): Boolean = (other as? ChangesetBinder)?.expanded == expanded
 
     fun getSpannableString(
         resources: Resources,
@@ -192,6 +184,4 @@ class ChangesetBinder(
     }
 }
 
-fun ChangesetBinder.clone(expanded: Boolean): ChangesetBinder {
-    return ChangesetBinder(expanded, changeset, listener)
-}
+fun ChangesetBinder.clone(expanded: Boolean): ChangesetBinder = ChangesetBinder(expanded, changeset, listener)

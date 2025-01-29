@@ -22,7 +22,9 @@ import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class MiniPlaybackFragment : Fragment(), MiniPlayerContract.View {
+class MiniPlaybackFragment :
+    Fragment(),
+    MiniPlayerContract.View {
     @Inject
     lateinit var presenter: MiniPlayerPresenter
 
@@ -40,9 +42,7 @@ class MiniPlaybackFragment : Fragment(), MiniPlayerContract.View {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_mini_playback, container, false)
-    }
+    ): View? = inflater.inflate(R.layout.fragment_mini_playback, container, false)
 
     override fun onViewCreated(
         view: View,

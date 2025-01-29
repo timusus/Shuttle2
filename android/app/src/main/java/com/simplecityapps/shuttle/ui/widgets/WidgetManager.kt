@@ -17,7 +17,8 @@ constructor(
     @ApplicationContext private val context: Context,
     private val playbackWatcher: PlaybackWatcher,
     private val queueWatcher: QueueWatcher
-) : PlaybackWatcherCallback, QueueChangeCallback {
+) : PlaybackWatcherCallback,
+    QueueChangeCallback {
     enum class UpdateReason {
         PlaystateChanged,
         QueueChanged,

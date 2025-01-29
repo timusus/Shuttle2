@@ -8,7 +8,5 @@ interface AppInitializer {
     /**
      * Optional priority. Higher priority intiializers will be initialized earlier
      */
-    fun priority(): Int {
-        return -1
-    }
+    fun priority(): Int = -1
 }

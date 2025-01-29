@@ -24,13 +24,9 @@ class GenreBinder(val genre: com.simplecityapps.shuttle.model.Genre, private val
         ) {}
     }
 
-    override fun createViewHolder(parent: ViewGroup): ViewHolder {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_genre, parent, false))
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewHolder = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_genre, parent, false))
 
-    override fun viewType(): Int {
-        return ViewTypes.Genre
-    }
+    override fun viewType(): Int = ViewTypes.Genre
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -43,14 +39,10 @@ class GenreBinder(val genre: com.simplecityapps.shuttle.model.Genre, private val
         return true
     }
 
-    override fun hashCode(): Int {
-        return genre.hashCode()
-    }
+    override fun hashCode(): Int = genre.hashCode()
 
-    override fun areContentsTheSame(other: Any): Boolean {
-        return genre.name == (other as? GenreBinder)?.genre?.name &&
-            genre.songCount == (other as? GenreBinder)?.genre?.songCount
-    }
+    override fun areContentsTheSame(other: Any): Boolean = genre.name == (other as? GenreBinder)?.genre?.name &&
+        genre.songCount == (other as? GenreBinder)?.genre?.songCount
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<GenreBinder>(itemView) {
         private val titleTextView: TextView = itemView.findViewById(R.id.title)

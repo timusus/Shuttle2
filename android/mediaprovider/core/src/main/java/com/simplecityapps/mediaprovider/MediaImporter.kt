@@ -183,114 +183,110 @@ class MediaImporter(
         val deletes: Int
     )
 
-    private fun importSongs(mediaProvider: MediaProvider): Flow<FlowEvent<SongImportResult, MessageProgress>> {
-        return flow {
-            emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_import_retrieving_songs), null)))
+    private fun importSongs(mediaProvider: MediaProvider): Flow<FlowEvent<SongImportResult, MessageProgress>> = flow {
+        emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_import_retrieving_songs), null)))
 
-            val existingSongs =
-                songRepository.getSongs(
-                    SongQuery.All(
-                        includeExcluded = true,
-                        providerType = mediaProvider.type
-                    )
+        val existingSongs =
+            songRepository.getSongs(
+                SongQuery.All(
+                    includeExcluded = true,
+                    providerType = mediaProvider.type
                 )
-                    .filterNotNull()
-                    .firstOrNull()
-                    .orEmpty()
+            )
+                .filterNotNull()
+                .firstOrNull()
+                .orEmpty()
 
-            mediaProvider.findSongs().collect { event ->
-                when (event) {
-                    is FlowEvent.Progress -> {
+        mediaProvider.findSongs().collect { event ->
+            when (event) {
+                is FlowEvent.Progress -> {
+                    emit(
+                        FlowEvent.Progress<SongImportResult, MessageProgress>(
+                            MessageProgress(
+                                message = event.data.message,
+                                progress = event.data.progress
+                            )
+                        )
+                    )
+                }
+
+                is FlowEvent.Success -> {
+                    try {
+                        emit(FlowEvent.Progress<SongImportResult, MessageProgress>(MessageProgress(context.getString(R.string.media_import_updating_database), null)))
+                        val songDiff = SongDiff(existingSongs, event.result).apply()
+                        val result =
+                            songRepository.insertUpdateAndDelete(
+                                inserts = songDiff.inserts,
+                                updates = songDiff.updates,
+                                deletes = songDiff.deletes,
+                                mediaProviderType = mediaProvider.type
+                            )
                         emit(
-                            FlowEvent.Progress<SongImportResult, MessageProgress>(
-                                MessageProgress(
-                                    message = event.data.message,
-                                    progress = event.data.progress
+                            FlowEvent.Success(
+                                SongImportResult(
+                                    inserts = result.first,
+                                    updates = result.second,
+                                    deletes = result.third,
+                                    mediaProviderType = mediaProvider.type
                                 )
                             )
                         )
-                    }
-
-                    is FlowEvent.Success -> {
-                        try {
-                            emit(FlowEvent.Progress<SongImportResult, MessageProgress>(MessageProgress(context.getString(R.string.media_import_updating_database), null)))
-                            val songDiff = SongDiff(existingSongs, event.result).apply()
-                            val result =
-                                songRepository.insertUpdateAndDelete(
-                                    inserts = songDiff.inserts,
-                                    updates = songDiff.updates,
-                                    deletes = songDiff.deletes,
-                                    mediaProviderType = mediaProvider.type
-                                )
-                            emit(
-                                FlowEvent.Success(
-                                    SongImportResult(
-                                        inserts = result.first,
-                                        updates = result.second,
-                                        deletes = result.third,
-                                        mediaProviderType = mediaProvider.type
-                                    )
-                                )
-                            )
-                        } catch (e: Exception) {
-                            Timber.e(e, "Failed to update song repository")
-                            emit(FlowEvent.Failure(context.getString(R.string.media_import_error)))
-                        }
-                    }
-
-                    is FlowEvent.Failure -> {
-                        emit(event)
+                    } catch (e: Exception) {
+                        Timber.e(e, "Failed to update song repository")
+                        emit(FlowEvent.Failure(context.getString(R.string.media_import_error)))
                     }
                 }
+
+                is FlowEvent.Failure -> {
+                    emit(event)
+                }
             }
-        }.flowOn(Dispatchers.IO)
-    }
+        }
+    }.flowOn(Dispatchers.IO)
 
     data class PlaylistImportResult(
         val mediaProviderType: MediaProviderType
     )
 
-    private fun importPlaylists(mediaProvider: MediaProvider): Flow<FlowEvent<PlaylistImportResult, MessageProgress>> {
-        return flow {
-            emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_import_retrieving_playlists), null)))
+    private fun importPlaylists(mediaProvider: MediaProvider): Flow<FlowEvent<PlaylistImportResult, MessageProgress>> = flow {
+        emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_import_retrieving_playlists), null)))
 
-            val existingPlaylists =
-                playlistRepository.getPlaylists(query = PlaylistQuery.All(mediaProviderType = mediaProvider.type))
-                    .filterNotNull()
-                    .firstOrNull()
-                    .orEmpty()
+        val existingPlaylists =
+            playlistRepository.getPlaylists(query = PlaylistQuery.All(mediaProviderType = mediaProvider.type))
+                .filterNotNull()
+                .firstOrNull()
+                .orEmpty()
 
-            val existingSongs =
-                songRepository.getSongs(
-                    SongQuery.All(
-                        includeExcluded = true,
-                        providerType = mediaProvider.type
-                    )
+        val existingSongs =
+            songRepository.getSongs(
+                SongQuery.All(
+                    includeExcluded = true,
+                    providerType = mediaProvider.type
                 )
-                    .filterNotNull()
-                    .firstOrNull()
-                    .orEmpty()
+            )
+                .filterNotNull()
+                .firstOrNull()
+                .orEmpty()
 
-            mediaProvider.findPlaylists(existingPlaylists, existingSongs).collect { event ->
-                when (event) {
-                    is FlowEvent.Progress -> {
-                        emit(FlowEvent.Progress<PlaylistImportResult, MessageProgress>(event.data))
-                    }
+        mediaProvider.findPlaylists(existingPlaylists, existingSongs).collect { event ->
+            when (event) {
+                is FlowEvent.Progress -> {
+                    emit(FlowEvent.Progress<PlaylistImportResult, MessageProgress>(event.data))
+                }
 
-                    is FlowEvent.Success -> {
-                        event.result.forEachIndexed { i, playlistUpdateData ->
-                            emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_import_updating_database), Progress(i, event.result.size))))
-                            createOrUpdatePlaylist(playlistUpdateData, existingPlaylists)
-                        }
-                    }
-
-                    is FlowEvent.Failure -> {
-                        emit(event)
+                is FlowEvent.Success -> {
+                    event.result.forEachIndexed { i, playlistUpdateData ->
+                        emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_import_updating_database), Progress(i, event.result.size))))
+                        createOrUpdatePlaylist(playlistUpdateData, existingPlaylists)
                     }
                 }
+
+                is FlowEvent.Failure -> {
+                    emit(event)
+                }
             }
-            emit(FlowEvent.Success(PlaylistImportResult(mediaProvider.type)))
         }
+        emit(FlowEvent.Success(PlaylistImportResult(mediaProvider.type)))
     }
 
     data class PlaylistUpdateData(

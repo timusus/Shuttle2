@@ -27,11 +27,9 @@ class LogMessage(val priority: Int, val tag: String?, val message: String, val t
         return result
     }
 
-    override fun toString(): String {
-        return "${dateFormat.format(date)}" +
-            "\n$priority/$tag" +
-            "\n$message"
-    }
+    override fun toString(): String = "${dateFormat.format(date)}" +
+        "\n$priority/$tag" +
+        "\n$message"
 
     companion object {
         @SuppressLint("SimpleDateFormat")

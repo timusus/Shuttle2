@@ -115,15 +115,13 @@ class ExoPlayerPlayback(
                 enableFloatOutput: Boolean,
                 enableAudioTrackPlaybackParams: Boolean,
                 enableOffload: Boolean
-            ): AudioSink {
-                return DefaultAudioSink(
-                    AudioCapabilities.DEFAULT_AUDIO_CAPABILITIES,
-                    DefaultAudioSink.DefaultAudioProcessorChain(
-                        equalizerAudioProcessor,
-                        replayGainAudioProcessor
-                    ).audioProcessors
-                )
-            }
+            ): AudioSink = DefaultAudioSink(
+                AudioCapabilities.DEFAULT_AUDIO_CAPABILITIES,
+                DefaultAudioSink.DefaultAudioProcessorChain(
+                    equalizerAudioProcessor,
+                    replayGainAudioProcessor
+                ).audioProcessors
+            )
         }.apply {
             setExtensionRendererMode(EXTENSION_RENDERER_MODE_ON)
         }
@@ -216,33 +214,25 @@ class ExoPlayerPlayback(
         isReleased = true
     }
 
-    override fun playBackState(): PlaybackState {
-        return if (player.isPlaying || player.playWhenReady) {
-            PlaybackState.Playing
-        } else {
-            PlaybackState.Paused
-        }
+    override fun playBackState(): PlaybackState = if (player.isPlaying || player.playWhenReady) {
+        PlaybackState.Playing
+    } else {
+        PlaybackState.Paused
     }
 
     override fun seek(position: Int) {
         player.seekTo(position.toLong())
     }
 
-    override fun getProgress(): Int {
-        return player.contentPosition.toInt()
-    }
+    override fun getProgress(): Int = player.contentPosition.toInt()
 
-    override fun getDuration(): Int? {
-        return player.duration.takeIf { duration -> duration != C.TIME_UNSET }?.toInt()
-    }
+    override fun getDuration(): Int? = player.duration.takeIf { duration -> duration != C.TIME_UNSET }?.toInt()
 
     override fun setVolume(volume: Float) {
         player.audioComponent?.volume = volume
     }
 
-    override fun getResumeWhenSwitched(oldPlayback: Playback): Boolean {
-        return oldPlayback !is CastPlayback
-    }
+    override fun getResumeWhenSwitched(oldPlayback: Playback): Boolean = oldPlayback !is CastPlayback
 
     override fun setRepeatMode(repeatMode: QueueManager.RepeatMode) {
         player.repeatMode = repeatMode.toRepeatMode()
@@ -269,9 +259,7 @@ class ExoPlayerPlayback(
         player.setPlaybackParameters(PlaybackParameters(multiplier, multiplier))
     }
 
-    override fun getPlaybackSpeed(): Float {
-        return player.playbackParameters.speed
-    }
+    override fun getPlaybackSpeed(): Float = player.playbackParameters.speed
 
     enum class ExoPlaybackState {
         Idle,
@@ -281,14 +269,12 @@ class ExoPlayerPlayback(
         Unknown
     }
 
-    fun Int.toExoPlaybackState(): ExoPlaybackState {
-        return when (this) {
-            1 -> ExoPlaybackState.Idle
-            2 -> ExoPlaybackState.Buffering
-            3 -> ExoPlaybackState.Ready
-            4 -> ExoPlaybackState.Ended
-            else -> ExoPlaybackState.Unknown
-        }
+    fun Int.toExoPlaybackState(): ExoPlaybackState = when (this) {
+        1 -> ExoPlaybackState.Idle
+        2 -> ExoPlaybackState.Buffering
+        3 -> ExoPlaybackState.Ready
+        4 -> ExoPlaybackState.Ended
+        else -> ExoPlaybackState.Unknown
     }
 
     enum class TransitionReason {
@@ -299,21 +285,17 @@ class ExoPlayerPlayback(
         Unknown
     }
 
-    fun Int.toTransitionReason(): TransitionReason {
-        return when (this) {
-            0 -> TransitionReason.Repeat
-            1 -> TransitionReason.Auto
-            2 -> TransitionReason.Seek
-            3 -> TransitionReason.PlaylistChanged
-            else -> TransitionReason.Unknown
-        }
+    fun Int.toTransitionReason(): TransitionReason = when (this) {
+        0 -> TransitionReason.Repeat
+        1 -> TransitionReason.Auto
+        2 -> TransitionReason.Seek
+        3 -> TransitionReason.PlaylistChanged
+        else -> TransitionReason.Unknown
     }
 
     @Throws(IllegalStateException::class)
-    fun getMediaItem(mediaInfo: MediaInfo): MediaItem {
-        return MediaItem.Builder()
-            .setMimeType(mediaInfo.mimeType)
-            .setUri(mediaInfo.path)
-            .build()
-    }
+    fun getMediaItem(mediaInfo: MediaInfo): MediaItem = MediaItem.Builder()
+        .setMimeType(mediaInfo.mimeType)
+        .setUri(mediaInfo.path)
+        .build()
 }

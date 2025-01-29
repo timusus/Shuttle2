@@ -46,16 +46,12 @@ class ColorSet(
             return ColorSet(primaryColor, accentColor, tintedTextColor.first!!, tintedTextColor.second!!, primaryTextColor, secondaryTextColor)
         }
 
-        fun empty(): ColorSet {
-            return ColorSet(Color.TRANSPARENT, Color.TRANSPARENT, Color.TRANSPARENT, Color.TRANSPARENT, Color.TRANSPARENT, Color.TRANSPARENT)
-        }
+        fun empty(): ColorSet = ColorSet(Color.TRANSPARENT, Color.TRANSPARENT, Color.TRANSPARENT, Color.TRANSPARENT, Color.TRANSPARENT, Color.TRANSPARENT)
 
         /**
          * @return an approximate byte size for this object. Currently based on 6 integers @ 4 bytes each and a safety factor of 3
          */
-        fun estimatedSize(): Int {
-            return 6 * 4 * 3
-        }
+        fun estimatedSize(): Int = 6 * 4 * 3
     }
 
     override fun equals(other: Any?): Boolean {
@@ -92,14 +88,12 @@ class ColorSetEvaluator : TypeEvaluator<ColorSet> {
         p0: Float,
         p1: ColorSet,
         p2: ColorSet
-    ): ColorSet {
-        return ColorSet(
-            argbEvaluator.evaluate(p0, p1.primaryColor, p2.primaryColor) as Int,
-            argbEvaluator.evaluate(p0, p1.accentColor, p2.accentColor) as Int,
-            argbEvaluator.evaluate(p0, p1.primaryTextColorTinted, p2.primaryTextColor) as Int,
-            argbEvaluator.evaluate(p0, p1.secondaryTextColorTinted, p2.secondaryTextColorTinted) as Int,
-            argbEvaluator.evaluate(p0, p1.primaryTextColor, p2.primaryTextColor) as Int,
-            argbEvaluator.evaluate(p0, p1.secondaryTextColor, p2.secondaryTextColor) as Int
-        )
-    }
+    ): ColorSet = ColorSet(
+        argbEvaluator.evaluate(p0, p1.primaryColor, p2.primaryColor) as Int,
+        argbEvaluator.evaluate(p0, p1.accentColor, p2.accentColor) as Int,
+        argbEvaluator.evaluate(p0, p1.primaryTextColorTinted, p2.primaryTextColor) as Int,
+        argbEvaluator.evaluate(p0, p1.secondaryTextColorTinted, p2.secondaryTextColorTinted) as Int,
+        argbEvaluator.evaluate(p0, p1.primaryTextColor, p2.primaryTextColor) as Int,
+        argbEvaluator.evaluate(p0, p1.secondaryTextColor, p2.secondaryTextColor) as Int
+    )
 }

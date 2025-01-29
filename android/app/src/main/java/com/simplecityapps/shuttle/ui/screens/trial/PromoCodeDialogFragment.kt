@@ -48,9 +48,8 @@ class PromoCodeDialogFragment : DialogFragment() {
         private const val TAG = "PromoCodeDialog"
         const val ARG_PROMO_CODE = "promo_code"
 
-        fun newInstance(promoCode: String): PromoCodeDialogFragment =
-            PromoCodeDialogFragment().withArgs {
-                putString(ARG_PROMO_CODE, promoCode)
-            }
+        fun newInstance(promoCode: String): PromoCodeDialogFragment = PromoCodeDialogFragment().withArgs {
+            putString(ARG_PROMO_CODE, promoCode)
+        }
     }
 }

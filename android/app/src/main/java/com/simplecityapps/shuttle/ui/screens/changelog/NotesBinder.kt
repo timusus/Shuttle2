@@ -11,13 +11,9 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 
 class NotesBinder(val note: String) : ViewBinder {
-    override fun createViewHolder(parent: ViewGroup): ViewBinder.ViewHolder<out ViewBinder> {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_notes, parent, false))
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewBinder.ViewHolder<out ViewBinder> = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_notes, parent, false))
 
-    override fun viewType(): Int {
-        return ViewTypes.Notes
-    }
+    override fun viewType(): Int = ViewTypes.Notes
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<NotesBinder>(itemView) {
         val subtitle: TextView = itemView.findViewById(R.id.subtitle)

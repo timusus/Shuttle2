@@ -47,17 +47,11 @@ class QueueBinder(
         fun onLongPress(viewHolder: ViewHolder)
     }
 
-    override fun createViewHolder(parent: ViewGroup): ViewHolder {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_queue, parent, false))
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewHolder = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_queue, parent, false))
 
-    override fun viewType(): Int {
-        return ViewTypes.Queue
-    }
+    override fun viewType(): Int = ViewTypes.Queue
 
-    override fun getSectionName(): String? {
-        return queueItem.song.name?.firstOrNull()?.toString()
-    }
+    override fun getSectionName(): String? = queueItem.song.name?.firstOrNull()?.toString()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -68,9 +62,7 @@ class QueueBinder(
         return true
     }
 
-    override fun hashCode(): Int {
-        return queueItem.hashCode()
-    }
+    override fun hashCode(): Int = queueItem.hashCode()
 
     override fun areContentsTheSame(other: Any): Boolean {
         (other as? QueueBinder)?.let {

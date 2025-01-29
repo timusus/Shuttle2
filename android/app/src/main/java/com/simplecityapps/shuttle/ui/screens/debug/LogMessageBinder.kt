@@ -13,13 +13,9 @@ import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 class LogMessageBinder(
     val logMessage: LogMessage
 ) : ViewBinder {
-    override fun createViewHolder(parent: ViewGroup): ViewHolder {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_debug_log, parent, false))
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewHolder = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_debug_log, parent, false))
 
-    override fun viewType(): Int {
-        return ViewTypes.Log
-    }
+    override fun viewType(): Int = ViewTypes.Log
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -32,9 +28,7 @@ class LogMessageBinder(
         return true
     }
 
-    override fun hashCode(): Int {
-        return logMessage.hashCode()
-    }
+    override fun hashCode(): Int = logMessage.hashCode()
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<LogMessageBinder>(itemView) {
         private val timestampTextView: TextView = itemView.findViewById(R.id.timestampTextView)
@@ -52,15 +46,13 @@ class LogMessageBinder(
             messageTextViewBinder.text = viewBinder.logMessage.message
         }
 
-        private fun Int.getPriorityString(): String {
-            return when (this) {
-                Log.VERBOSE -> "V"
-                Log.DEBUG -> "D"
-                Log.INFO -> "I"
-                Log.WARN -> "W"
-                Log.ERROR -> "E"
-                else -> ""
-            }
+        private fun Int.getPriorityString(): String = when (this) {
+            Log.VERBOSE -> "V"
+            Log.DEBUG -> "D"
+            Log.INFO -> "I"
+            Log.WARN -> "W"
+            Log.ERROR -> "E"
+            else -> ""
         }
     }
 }

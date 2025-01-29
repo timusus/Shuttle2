@@ -175,9 +175,7 @@ constructor(
         }
     }
 
-    override fun getCurrentSong(): Song? {
-        return queueManager.getCurrentItem()?.song
-    }
+    override fun getCurrentSong(): Song? = queueManager.getCurrentItem()?.song
 
     override fun exclude(song: Song) {
         launch {

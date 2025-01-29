@@ -34,63 +34,49 @@ open class PlexMediaProviderModule {
         @ApplicationContext context: Context,
         okHttpClient: OkHttpClient,
         moshi: Moshi
-    ): Retrofit {
-        return Retrofit.Builder()
-            .baseUrl("http://localhost/") // unused
-            .addCallAdapterFactory(NetworkResultAdapterFactory(context.getSystemService()))
-            .addConverterFactory(MoshiConverterFactory.create(moshi))
-            .client(
-                okHttpClient
-                    .newBuilder()
-                    .readTimeout(90, TimeUnit.SECONDS)
-                    .build()
-            )
-            .build()
-    }
+    ): Retrofit = Retrofit.Builder()
+        .baseUrl("http://localhost/") // unused
+        .addCallAdapterFactory(NetworkResultAdapterFactory(context.getSystemService()))
+        .addConverterFactory(MoshiConverterFactory.create(moshi))
+        .client(
+            okHttpClient
+                .newBuilder()
+                .readTimeout(90, TimeUnit.SECONDS)
+                .build()
+        )
+        .build()
 
     @Provides
     @Singleton
     fun provideUserService(
         @Named("PlexRetrofit") retrofit: Retrofit
-    ): UserService {
-        return retrofit.create()
-    }
+    ): UserService = retrofit.create()
 
     @Provides
     @Singleton
     fun provideItemsService(
         @Named("PlexRetrofit") retrofit: Retrofit
-    ): ItemsService {
-        return retrofit.create()
-    }
+    ): ItemsService = retrofit.create()
 
     @Provides
     @Singleton
-    fun provideCredentialStore(securePreferenceManager: SecurePreferenceManager): CredentialStore {
-        return CredentialStore(securePreferenceManager)
-    }
+    fun provideCredentialStore(securePreferenceManager: SecurePreferenceManager): CredentialStore = CredentialStore(securePreferenceManager)
 
     @Provides
     @Singleton
     fun providePlexAuthenticationManager(
         userService: UserService,
         credentialStore: CredentialStore
-    ): PlexAuthenticationManager {
-        return PlexAuthenticationManager(userService, credentialStore)
-    }
+    ): PlexAuthenticationManager = PlexAuthenticationManager(userService, credentialStore)
 
     @Provides
     @Singleton
     fun providePlexMediaProvider(
         authenticationManager: PlexAuthenticationManager,
         itemsService: ItemsService
-    ): PlexMediaProvider {
-        return PlexMediaProvider(authenticationManager, itemsService)
-    }
+    ): PlexMediaProvider = PlexMediaProvider(authenticationManager, itemsService)
 
     @Provides
     @Singleton
-    fun providePlexMediaPathProvider(authenticationManager: PlexAuthenticationManager): PlexMediaInfoProvider {
-        return PlexMediaInfoProvider(authenticationManager)
-    }
+    fun providePlexMediaPathProvider(authenticationManager: PlexAuthenticationManager): PlexMediaInfoProvider = PlexMediaInfoProvider(authenticationManager)
 }

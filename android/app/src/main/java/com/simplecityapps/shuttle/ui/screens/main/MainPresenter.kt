@@ -43,8 +43,8 @@ constructor(
     private val queueWatcher: QueueWatcher,
     private val preferenceManager: GeneralPreferenceManager,
     private val trialManager: TrialManager
-) : MainContract.Presenter,
-    BasePresenter<MainContract.View>(),
+) : BasePresenter<MainContract.View>(),
+    MainContract.Presenter,
     QueueChangeCallback {
     override fun bindView(view: MainContract.View) {
         super.bindView(view)

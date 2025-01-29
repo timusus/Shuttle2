@@ -18,7 +18,10 @@ import kotlinx.coroutines.DEBUG_PROPERTY_VALUE_ON
 import timber.log.Timber
 
 @HiltAndroidApp
-class ShuttleApplication : Application(), ActivityIntentProvider, Configuration.Provider {
+class ShuttleApplication :
+    Application(),
+    ActivityIntentProvider,
+    Configuration.Provider {
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
 
@@ -62,9 +65,7 @@ class ShuttleApplication : Application(), ActivityIntentProvider, Configuration.
 
     // ActivityIntentProvider Implementation
 
-    override fun provideMainActivityIntent(): Intent {
-        return Intent(this, MainActivity::class.java)
-    }
+    override fun provideMainActivityIntent(): Intent = Intent(this, MainActivity::class.java)
 
     // WorkManager
 

@@ -56,11 +56,9 @@ class ThemeManager(
         AppCompatDelegate.setDefaultNightMode(getDayNightMode())
     }
 
-    private fun getDayNightMode(): Int {
-        return when (preferenceManager.themeBase) {
-            GeneralPreferenceManager.Theme.DayNight -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
-            GeneralPreferenceManager.Theme.Light -> AppCompatDelegate.MODE_NIGHT_NO
-            GeneralPreferenceManager.Theme.Dark -> AppCompatDelegate.MODE_NIGHT_YES
-        }
+    private fun getDayNightMode(): Int = when (preferenceManager.themeBase) {
+        GeneralPreferenceManager.Theme.DayNight -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+        GeneralPreferenceManager.Theme.Light -> AppCompatDelegate.MODE_NIGHT_NO
+        GeneralPreferenceManager.Theme.Dark -> AppCompatDelegate.MODE_NIGHT_YES
     }
 }

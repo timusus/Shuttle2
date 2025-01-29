@@ -31,7 +31,5 @@ class DelegatingComparator(private val songComparator: Comparator<Song>) : Compa
     override fun compare(
         o1: PlaylistSong,
         o2: PlaylistSong
-    ): Int {
-        return songComparator.compare(o1.song, o2.song)
-    }
+    ): Int = songComparator.compare(o1.song, o2.song)
 }

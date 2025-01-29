@@ -61,9 +61,7 @@ class GenreListFragment :
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_genres, container, false)
-    }
+    ): View? = inflater.inflate(R.layout.fragment_genres, container, false)
 
     override fun onViewCreated(
         view: View,
@@ -75,10 +73,8 @@ class GenreListFragment :
 
         adapter =
             object : SectionedAdapter(viewLifecycleOwner.lifecycleScope) {
-                override fun getSectionName(viewBinder: ViewBinder?): String? {
-                    return (viewBinder as? GenreBinder)?.genre?.let { genre ->
-                        presenter.getFastscrollPrefix(genre)
-                    }
+                override fun getSectionName(viewBinder: ViewBinder?): String? = (viewBinder as? GenreBinder)?.genre?.let { genre ->
+                    presenter.getFastscrollPrefix(genre)
                 }
             }
         recyclerView = view.findViewById(R.id.recyclerView)

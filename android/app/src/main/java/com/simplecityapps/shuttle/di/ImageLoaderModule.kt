@@ -20,21 +20,17 @@ class ImageLoaderModule {
     @Provides
     fun provideImageLoader(
         @ApplicationContext context: Context
-    ): ArtworkImageLoader {
-        return GlideImageLoader(context)
-    }
+    ): ArtworkImageLoader = GlideImageLoader(context)
 
     @Singleton
     @Provides
     fun provideAggregateRemoteArtworkProvider(
         embyRemoteArtworkProvider: EmbyRemoteArtworkProvider,
         jellyfinRemoteArtworkProvider: JellyfinRemoteArtworkProvider
-    ): AggregateRemoteArtworkProvider {
-        return AggregateRemoteArtworkProvider(
-            mutableSetOf(
-                embyRemoteArtworkProvider,
-                jellyfinRemoteArtworkProvider
-            )
+    ): AggregateRemoteArtworkProvider = AggregateRemoteArtworkProvider(
+        mutableSetOf(
+            embyRemoteArtworkProvider,
+            jellyfinRemoteArtworkProvider
         )
-    }
+    )
 }

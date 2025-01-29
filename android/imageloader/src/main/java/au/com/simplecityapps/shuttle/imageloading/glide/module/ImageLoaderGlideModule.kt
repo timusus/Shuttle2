@@ -218,9 +218,7 @@ class ImageLoaderGlideModule : AppGlideModule() {
         )
     }
 
-    override fun isManifestParsingEnabled(): Boolean {
-        return false
-    }
+    override fun isManifestParsingEnabled(): Boolean = false
 
     override fun applyOptions(
         context: Context,

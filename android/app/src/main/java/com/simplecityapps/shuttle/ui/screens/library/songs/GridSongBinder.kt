@@ -26,17 +26,11 @@ class GridSongBinder(
         fun onSongClicked(song: com.simplecityapps.shuttle.model.Song)
     }
 
-    override fun createViewHolder(parent: ViewGroup): ViewHolder {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.grid_item_song, parent, false))
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewHolder = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.grid_item_song, parent, false))
 
-    override fun viewType(): Int {
-        return ViewTypes.Song
-    }
+    override fun viewType(): Int = ViewTypes.Song
 
-    override fun getSectionName(): String? {
-        return song.name?.firstOrNull()?.toString()
-    }
+    override fun getSectionName(): String? = song.name?.firstOrNull()?.toString()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -47,13 +41,9 @@ class GridSongBinder(
         return true
     }
 
-    override fun areContentsTheSame(other: Any): Boolean {
-        return song.playCount == (other as? GridSongBinder)?.song?.playCount
-    }
+    override fun areContentsTheSame(other: Any): Boolean = song.playCount == (other as? GridSongBinder)?.song?.playCount
 
-    override fun hashCode(): Int {
-        return song.hashCode()
-    }
+    override fun hashCode(): Int = song.hashCode()
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<GridSongBinder>(itemView) {
         private val title: TextView = itemView.findViewById(R.id.title)

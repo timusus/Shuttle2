@@ -21,13 +21,9 @@ class ListAlbumArtistBinder(
     imageLoader: ArtworkImageLoader,
     listener: Listener
 ) : AlbumArtistBinder(albumArtist, imageLoader, listener) {
-    override fun createViewHolder(parent: ViewGroup): ViewBinder.ViewHolder<out ViewBinder> {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_album_artist, parent, false))
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewBinder.ViewHolder<out ViewBinder> = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_album_artist, parent, false))
 
-    override fun viewType(): Int {
-        return ViewTypes.AlbumArtistList
-    }
+    override fun viewType(): Int = ViewTypes.AlbumArtistList
 
     class ViewHolder(itemView: View) : AlbumArtistBinder.ViewHolder(itemView) {
         private val title = itemView.findViewById<TextView>(R.id.title)

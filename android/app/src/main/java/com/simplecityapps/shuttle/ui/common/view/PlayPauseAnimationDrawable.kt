@@ -137,16 +137,12 @@ class PlayPauseAnimationDrawable(context: Context) : Drawable() {
         invalidateSelf()
     }
 
-    override fun getOpacity(): Int {
-        return PixelFormat.TRANSLUCENT
-    }
+    override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
 
     companion object {
         private val PROGRESS: Property<PlayPauseAnimationDrawable, Float> =
             object : Property<PlayPauseAnimationDrawable, Float>(Float::class.java, "progress") {
-                override fun get(d: PlayPauseAnimationDrawable): Float {
-                    return d.progress
-                }
+                override fun get(d: PlayPauseAnimationDrawable): Float = d.progress
 
                 override fun set(
                     d: PlayPauseAnimationDrawable,
@@ -163,8 +159,6 @@ class PlayPauseAnimationDrawable(context: Context) : Drawable() {
             a: Float,
             b: Float,
             t: Float
-        ): Float {
-            return a + (b - a) * t
-        }
+        ): Float = a + (b - a) * t
     }
 }

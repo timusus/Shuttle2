@@ -28,15 +28,13 @@ abstract class PlaylistSongJoinDao {
     )
     abstract fun getSongDataForPlaylist(playlistId: Long): Flow<List<PlaylistSongData>>
 
-    fun getSongsForPlaylist(playlistId: Long): Flow<List<PlaylistSong>> {
-        return getSongDataForPlaylist(playlistId).map { list ->
-            list.map { playlistSongData ->
-                PlaylistSong(
-                    playlistSongData.playlistSongId,
-                    playlistSongData.sortOrder,
-                    playlistSongData.songData.toSong()
-                )
-            }
+    fun getSongsForPlaylist(playlistId: Long): Flow<List<PlaylistSong>> = getSongDataForPlaylist(playlistId).map { list ->
+        list.map { playlistSongData ->
+            PlaylistSong(
+                playlistSongData.playlistSongId,
+                playlistSongData.sortOrder,
+                playlistSongData.songData.toSong()
+            )
         }
     }
 

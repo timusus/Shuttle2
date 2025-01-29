@@ -19,7 +19,8 @@ class MediaStoreContentObserverInitializer
 constructor(
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope,
     private val mediaImporter: MediaImporter
-) : ContentObserver(null), AppInitializer {
+) : ContentObserver(null),
+    AppInitializer {
     override fun init(application: Application) {
         application.contentResolver.registerContentObserver(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, true, this)
     }

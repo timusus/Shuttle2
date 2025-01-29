@@ -10,7 +10,5 @@ class SpanSizeLookup(
         this.spanCount = spanCount
     }
 
-    override fun getSpanSize(position: Int): Int {
-        return viewModelAdapter.items.getOrNull(position)?.spanSize(spanCount) ?: 1
-    }
+    override fun getSpanSize(position: Int): Int = viewModelAdapter.items.getOrNull(position)?.spanSize(spanCount) ?: 1
 }

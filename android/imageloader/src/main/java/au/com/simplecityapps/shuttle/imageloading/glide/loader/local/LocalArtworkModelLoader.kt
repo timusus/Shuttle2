@@ -22,18 +22,12 @@ class LocalArtworkModelLoader : ModelLoader<LocalArtworkProvider, InputStream> {
         width: Int,
         height: Int,
         options: Options
-    ): ModelLoader.LoadData<InputStream> {
-        return ModelLoader.LoadData(ObjectKey(model.getCacheKey()), LocalArtworkDataFetcher(model))
-    }
+    ): ModelLoader.LoadData<InputStream> = ModelLoader.LoadData(ObjectKey(model.getCacheKey()), LocalArtworkDataFetcher(model))
 
-    override fun handles(model: LocalArtworkProvider): Boolean {
-        return true
-    }
+    override fun handles(model: LocalArtworkProvider): Boolean = true
 
     class Factory : ModelLoaderFactory<LocalArtworkProvider, InputStream> {
-        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<LocalArtworkProvider, InputStream> {
-            return LocalArtworkModelLoader()
-        }
+        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<LocalArtworkProvider, InputStream> = LocalArtworkModelLoader()
 
         override fun teardown() {
         }
@@ -42,16 +36,12 @@ class LocalArtworkModelLoader : ModelLoader<LocalArtworkProvider, InputStream> {
     class LocalArtworkDataFetcher(
         private val localArtworkProvider: LocalArtworkProvider
     ) : DataFetcher<InputStream> {
-        override fun getDataClass(): Class<InputStream> {
-            return InputStream::class.java
-        }
+        override fun getDataClass(): Class<InputStream> = InputStream::class.java
 
         override fun cleanup() {
         }
 
-        override fun getDataSource(): DataSource {
-            return DataSource.REMOTE
-        }
+        override fun getDataSource(): DataSource = DataSource.REMOTE
 
         override fun cancel() {
         }

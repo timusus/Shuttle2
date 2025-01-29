@@ -27,33 +27,27 @@ data class SongDataUpdate(
     @ColumnInfo(name = "grouping") var grouping: String? = null
 )
 
-fun SongData.toSongDataUpdate(): SongDataUpdate {
-    return SongDataUpdate(
-        id = id,
-        name = name,
-        track = track,
-        disc = disc,
-        duration = duration,
-        year = year,
-        genres = genres,
-        albumArtist = albumArtist,
-        artists = artists,
-        album = album,
-        size = size,
-        mimeType = mimeType,
-        lastModified = lastModified,
-        externalId = externalId,
-        replayGainTrack = replayGainTrack,
-        replayGainAlbum = replayGainAlbum,
-        lyrics = lyrics,
-        grouping = grouping
-    )
-}
+fun SongData.toSongDataUpdate(): SongDataUpdate = SongDataUpdate(
+    id = id,
+    name = name,
+    track = track,
+    disc = disc,
+    duration = duration,
+    year = year,
+    genres = genres,
+    albumArtist = albumArtist,
+    artists = artists,
+    album = album,
+    size = size,
+    mimeType = mimeType,
+    lastModified = lastModified,
+    externalId = externalId,
+    replayGainTrack = replayGainTrack,
+    replayGainAlbum = replayGainAlbum,
+    lyrics = lyrics,
+    grouping = grouping
+)
 
-fun Song.toSongDataUpdate(): SongDataUpdate {
-    return toSongData(MediaProviderType.Shuttle).toSongDataUpdate()
-}
+fun Song.toSongDataUpdate(): SongDataUpdate = toSongData(MediaProviderType.Shuttle).toSongDataUpdate()
 
-fun List<Song>.toSongDataUpdate(): List<SongDataUpdate> {
-    return map { song -> song.toSongDataUpdate() }
-}
+fun List<Song>.toSongDataUpdate(): List<SongDataUpdate> = map { song -> song.toSongDataUpdate() }

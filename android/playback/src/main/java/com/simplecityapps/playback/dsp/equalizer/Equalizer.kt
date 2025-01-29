@@ -122,9 +122,7 @@ object Equalizer {
                 return true
             }
 
-            override fun hashCode(): Int {
-                return name.hashCode()
-            }
+            override fun hashCode(): Int = name.hashCode()
         }
 
         val flat = Preset.Flat

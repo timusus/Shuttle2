@@ -48,41 +48,37 @@ data class SongData(
     var id: Long = 0
 }
 
-fun Song.toSongData(mediaProviderType: MediaProviderType): SongData {
-    return SongData(
-        name = name,
-        track = track,
-        disc = disc,
-        duration = duration,
-        year = date?.year,
-        genres = genres,
-        path = path,
-        albumArtist = albumArtist,
-        artists = artists,
-        album = album,
-        size = size,
-        mimeType = mimeType,
-        lastModified = lastModified?.let { Date(it.toEpochMilliseconds()) } ?: Date(),
-        playbackPosition = playbackPosition,
-        playCount = playCount,
-        lastPlayed = lastPlayed?.let { Date(it.toEpochMilliseconds()) },
-        lastCompleted = lastCompleted?.let { Date(it.toEpochMilliseconds()) },
-        excluded = false,
-        externalId = externalId,
-        mediaProvider = mediaProviderType,
-        replayGainTrack = replayGainTrack,
-        replayGainAlbum = replayGainAlbum,
-        lyrics = lyrics,
-        grouping = grouping,
-        bitRate = bitRate,
-        bitDepth = bitDepth,
-        sampleRate = sampleRate,
-        channelCount = channelCount
-    ).apply {
-        id = this@toSongData.id
-    }
+fun Song.toSongData(mediaProviderType: MediaProviderType): SongData = SongData(
+    name = name,
+    track = track,
+    disc = disc,
+    duration = duration,
+    year = date?.year,
+    genres = genres,
+    path = path,
+    albumArtist = albumArtist,
+    artists = artists,
+    album = album,
+    size = size,
+    mimeType = mimeType,
+    lastModified = lastModified?.let { Date(it.toEpochMilliseconds()) } ?: Date(),
+    playbackPosition = playbackPosition,
+    playCount = playCount,
+    lastPlayed = lastPlayed?.let { Date(it.toEpochMilliseconds()) },
+    lastCompleted = lastCompleted?.let { Date(it.toEpochMilliseconds()) },
+    excluded = false,
+    externalId = externalId,
+    mediaProvider = mediaProviderType,
+    replayGainTrack = replayGainTrack,
+    replayGainAlbum = replayGainAlbum,
+    lyrics = lyrics,
+    grouping = grouping,
+    bitRate = bitRate,
+    bitDepth = bitDepth,
+    sampleRate = sampleRate,
+    channelCount = channelCount
+).apply {
+    id = this@toSongData.id
 }
 
-fun List<Song>.toSongData(mediaProviderType: MediaProviderType): List<SongData> {
-    return map { song -> song.toSongData(mediaProviderType) }
-}
+fun List<Song>.toSongData(mediaProviderType: MediaProviderType): List<SongData> = map { song -> song.toSongData(mediaProviderType) }

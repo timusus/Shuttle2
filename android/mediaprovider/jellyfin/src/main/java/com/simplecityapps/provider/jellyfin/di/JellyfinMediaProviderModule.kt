@@ -37,53 +37,43 @@ open class JellyfinMediaProviderModule {
         @ApplicationContext context: Context,
         okHttpClient: OkHttpClient,
         moshi: Moshi
-    ): Retrofit {
-        return Retrofit.Builder()
-            .baseUrl("http://localhost/") // unused
-            .addCallAdapterFactory(NetworkResultAdapterFactory(context.getSystemService()))
-            .addConverterFactory(MoshiConverterFactory.create(moshi))
-            .client(
-                okHttpClient
-                    .newBuilder()
-                    .readTimeout(90, TimeUnit.SECONDS)
-                    .build()
-            )
-            .build()
-    }
+    ): Retrofit = Retrofit.Builder()
+        .baseUrl("http://localhost/") // unused
+        .addCallAdapterFactory(NetworkResultAdapterFactory(context.getSystemService()))
+        .addConverterFactory(MoshiConverterFactory.create(moshi))
+        .client(
+            okHttpClient
+                .newBuilder()
+                .readTimeout(90, TimeUnit.SECONDS)
+                .build()
+        )
+        .build()
 
     @Provides
     @Singleton
     fun provideUserService(
         @Named("JellyfinRetrofit") retrofit: Retrofit
-    ): UserService {
-        return retrofit.create()
-    }
+    ): UserService = retrofit.create()
 
     @Provides
     @Singleton
     fun provideItemsService(
         @Named("JellyfinRetrofit") retrofit: Retrofit
-    ): ItemsService {
-        return retrofit.create()
-    }
+    ): ItemsService = retrofit.create()
 
     @Provides
     @Singleton
     fun provideTranscodeService(
         @Named("JellyfinRetrofit") retrofit: Retrofit
-    ): JellyfinTranscodeService {
-        return retrofit.create()
-    }
+    ): JellyfinTranscodeService = retrofit.create()
 
     @Provides
     @Singleton
-    fun provideCredentialStore(securePreferenceManager: SecurePreferenceManager): CredentialStore {
-        return CredentialStore(securePreferenceManager).apply {
-            if (BuildConfig.DEBUG) {
-                if (loginCredentials == null) {
-                    loginCredentials = LoginCredentials("tim", "")
-                    address = "https://jellyfin.mediaserver.timmalseed.dev"
-                }
+    fun provideCredentialStore(securePreferenceManager: SecurePreferenceManager): CredentialStore = CredentialStore(securePreferenceManager).apply {
+        if (BuildConfig.DEBUG) {
+            if (loginCredentials == null) {
+                loginCredentials = LoginCredentials("tim", "")
+                address = "https://jellyfin.mediaserver.timmalseed.dev"
             }
         }
     }
@@ -93,9 +83,7 @@ open class JellyfinMediaProviderModule {
     fun provideJellyfinAuthenticationManager(
         userService: UserService,
         credentialStore: CredentialStore
-    ): JellyfinAuthenticationManager {
-        return JellyfinAuthenticationManager(userService, credentialStore)
-    }
+    ): JellyfinAuthenticationManager = JellyfinAuthenticationManager(userService, credentialStore)
 
     @Provides
     @Singleton
@@ -103,16 +91,12 @@ open class JellyfinMediaProviderModule {
         @ApplicationContext context: Context,
         authenticationManager: JellyfinAuthenticationManager,
         itemsService: ItemsService
-    ): JellyfinMediaProvider {
-        return JellyfinMediaProvider(context, authenticationManager, itemsService)
-    }
+    ): JellyfinMediaProvider = JellyfinMediaProvider(context, authenticationManager, itemsService)
 
     @Provides
     @Singleton
     fun provideJellyfinMediaPathProvider(
         authenticationManager: JellyfinAuthenticationManager,
         transcodeService: JellyfinTranscodeService
-    ): JellyfinMediaInfoProvider {
-        return JellyfinMediaInfoProvider(authenticationManager, transcodeService)
-    }
+    ): JellyfinMediaInfoProvider = JellyfinMediaInfoProvider(authenticationManager, transcodeService)
 }

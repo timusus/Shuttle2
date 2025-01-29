@@ -99,8 +99,8 @@ constructor(
     private val preferenceManager: GeneralPreferenceManager,
     private val sortPreferenceManager: SortPreferenceManager,
     private val queueManager: QueueManager
-) : AlbumListContract.Presenter,
-    BasePresenter<AlbumListContract.View>() {
+) : BasePresenter<AlbumListContract.View>(),
+    AlbumListContract.Presenter {
     private var albums: List<Album> = emptyList()
 
     private val mediaImporterListener =
@@ -273,12 +273,10 @@ constructor(
         view?.updateToolbarMenuViewMode(preferenceManager.albumListViewMode.toViewMode())
     }
 
-    override fun getFastscrollPrefix(album: Album): String? {
-        return when (sortPreferenceManager.sortOrderAlbumList) {
-            AlbumSortOrder.AlbumName -> album.groupKey?.key?.firstOrNull()?.toString()?.uppercase(Locale.getDefault())
-            AlbumSortOrder.ArtistGroupKey -> album.groupKey?.albumArtistGroupKey?.key?.firstOrNull()?.toString()?.uppercase(Locale.getDefault())
-            AlbumSortOrder.Year -> album.year.toString()
-            else -> null
-        }
+    override fun getFastscrollPrefix(album: Album): String? = when (sortPreferenceManager.sortOrderAlbumList) {
+        AlbumSortOrder.AlbumName -> album.groupKey?.key?.firstOrNull()?.toString()?.uppercase(Locale.getDefault())
+        AlbumSortOrder.ArtistGroupKey -> album.groupKey?.albumArtistGroupKey?.key?.firstOrNull()?.toString()?.uppercase(Locale.getDefault())
+        AlbumSortOrder.Year -> album.year.toString()
+        else -> null
     }
 }

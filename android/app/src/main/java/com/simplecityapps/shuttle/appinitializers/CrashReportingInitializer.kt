@@ -63,9 +63,7 @@ constructor(
         }
     }
 
-    override fun priority(): Int {
-        return 1
-    }
+    override fun priority(): Int = 1
 }
 
 class CrashReportingTree : Timber.Tree() {

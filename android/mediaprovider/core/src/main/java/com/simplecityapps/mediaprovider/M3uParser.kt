@@ -47,7 +47,5 @@ class M3uParser {
     /**
      * Sanitises paths, converting windows file separators to unix, and removing any leading windows directory qualifiers (e.g. c:\)
      */
-    fun String.sanitise(): String {
-        return substringAfter(":\\").replace('\\', '/')
-    }
+    fun String.sanitise(): String = substringAfter(":\\").replace('\\', '/')
 }

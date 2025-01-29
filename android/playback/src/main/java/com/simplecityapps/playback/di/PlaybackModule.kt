@@ -54,32 +54,26 @@ import kotlinx.coroutines.CoroutineScope
 class PlaybackModule {
     @Singleton
     @Provides
-    fun provideQueueWatcher(): QueueWatcher {
-        return QueueWatcher()
-    }
+    fun provideQueueWatcher(): QueueWatcher = QueueWatcher()
 
     @Singleton
     @Provides
     fun provideQueueManager(
         queueWatcher: QueueWatcher,
         preferenceManager: GeneralPreferenceManager
-    ): QueueManager {
-        return QueueManager(queueWatcher, preferenceManager)
-    }
+    ): QueueManager = QueueManager(queueWatcher, preferenceManager)
 
     @Singleton
     @Provides
-    fun provideEqualizer(playbackPreferenceManager: PlaybackPreferenceManager): EqualizerAudioProcessor {
-        return EqualizerAudioProcessor(playbackPreferenceManager.equalizerEnabled).apply {
-            // Restore current eq
-            preset = playbackPreferenceManager.preset
+    fun provideEqualizer(playbackPreferenceManager: PlaybackPreferenceManager): EqualizerAudioProcessor = EqualizerAudioProcessor(playbackPreferenceManager.equalizerEnabled).apply {
+        // Restore current eq
+        preset = playbackPreferenceManager.preset
 
-            // Restore custom eq bands
-            playbackPreferenceManager.customPresetBands?.forEach { restoredBand ->
-                Equalizer.Presets.custom.bands.forEach { customBand ->
-                    if (customBand.centerFrequency == restoredBand.centerFrequency) {
-                        customBand.gain = restoredBand.gain
-                    }
+        // Restore custom eq bands
+        playbackPreferenceManager.customPresetBands?.forEach { restoredBand ->
+            Equalizer.Presets.custom.bands.forEach { customBand ->
+                if (customBand.centerFrequency == restoredBand.centerFrequency) {
+                    customBand.gain = restoredBand.gain
                 }
             }
         }
@@ -87,18 +81,14 @@ class PlaybackModule {
 
     @Singleton
     @Provides
-    fun provideReplayGainAudioProcessor(playbackPreferenceManager: PlaybackPreferenceManager): ReplayGainAudioProcessor {
-        return ReplayGainAudioProcessor(playbackPreferenceManager.replayGainMode, playbackPreferenceManager.preAmpGain)
-    }
+    fun provideReplayGainAudioProcessor(playbackPreferenceManager: PlaybackPreferenceManager): ReplayGainAudioProcessor = ReplayGainAudioProcessor(playbackPreferenceManager.replayGainMode, playbackPreferenceManager.preAmpGain)
 
     @Singleton
     @Provides
     fun providePlaybackPreferenceManager(
         sharedPreferences: SharedPreferences,
         moshi: Moshi
-    ): PlaybackPreferenceManager {
-        return PlaybackPreferenceManager(sharedPreferences, moshi)
-    }
+    ): PlaybackPreferenceManager = PlaybackPreferenceManager(sharedPreferences, moshi)
 
     @Singleton
     @Provides
@@ -106,15 +96,13 @@ class PlaybackModule {
         embyMediaPathProvider: EmbyMediaInfoProvider,
         jellyfinMediaPathProvider: JellyfinMediaInfoProvider,
         plexMediaPathProvider: PlexMediaInfoProvider
-    ): AggregateMediaInfoProvider {
-        return AggregateMediaInfoProvider(
-            mutableSetOf(
-                embyMediaPathProvider,
-                jellyfinMediaPathProvider,
-                plexMediaPathProvider
-            )
+    ): AggregateMediaInfoProvider = AggregateMediaInfoProvider(
+        mutableSetOf(
+            embyMediaPathProvider,
+            jellyfinMediaPathProvider,
+            plexMediaPathProvider
         )
-    }
+    )
 
     @Provides
     fun provideExoPlayerPlayback(
@@ -122,15 +110,11 @@ class PlaybackModule {
         equalizerAudioProcessor: EqualizerAudioProcessor,
         replayGainAudioProcessor: ReplayGainAudioProcessor,
         mediaPathProvider: AggregateMediaInfoProvider
-    ): ExoPlayerPlayback {
-        return ExoPlayerPlayback(context, equalizerAudioProcessor, replayGainAudioProcessor, mediaPathProvider)
-    }
+    ): ExoPlayerPlayback = ExoPlayerPlayback(context, equalizerAudioProcessor, replayGainAudioProcessor, mediaPathProvider)
 
     @Singleton
     @Provides
-    fun providePlaybackWatcher(): PlaybackWatcher {
-        return PlaybackWatcher()
-    }
+    fun providePlaybackWatcher(): PlaybackWatcher = PlaybackWatcher()
 
     @Singleton
     @Provides
@@ -151,23 +135,17 @@ class PlaybackModule {
         artistRepository: AlbumArtistRepository,
         albumRepository: AlbumRepository,
         songRepository: SongRepository
-    ): MediaIdHelper {
-        return MediaIdHelper(playlistRepository, artistRepository, albumRepository, songRepository)
-    }
+    ): MediaIdHelper = MediaIdHelper(playlistRepository, artistRepository, albumRepository, songRepository)
 
     @Provides
     fun provideAudioManager(
         @ApplicationContext context: Context
-    ): AudioManager? {
-        return context.getSystemService()
-    }
+    ): AudioManager? = context.getSystemService()
 
     @Provides
     fun provideAudioEffectSessionManager(
         @ApplicationContext context: Context
-    ): AudioEffectSessionManager {
-        return AudioEffectSessionManager(context)
-    }
+    ): AudioEffectSessionManager = AudioEffectSessionManager(context)
 
     @Singleton
     @Provides
@@ -181,9 +159,7 @@ class PlaybackModule {
         @AppCoroutineScope coroutineScope: CoroutineScope,
         queueWatcher: QueueWatcher,
         audioManager: AudioManager?
-    ): PlaybackManager {
-        return PlaybackManager(queueManager, playbackWatcher, audioFocusHelper, playbackPreferenceManager, audioEffectSessionManager, coroutineScope, playback, queueWatcher, audioManager)
-    }
+    ): PlaybackManager = PlaybackManager(queueManager, playbackWatcher, audioFocusHelper, playbackPreferenceManager, audioEffectSessionManager, coroutineScope, playback, queueWatcher, audioManager)
 
     @Singleton
     @Provides
@@ -191,15 +167,11 @@ class PlaybackModule {
         @ApplicationContext context: Context,
         songRepository: SongRepository,
         artworkImageLoader: ArtworkImageLoader
-    ): CastService {
-        return CastService(context, songRepository, artworkImageLoader)
-    }
+    ): CastService = CastService(context, songRepository, artworkImageLoader)
 
     @Singleton
     @Provides
-    fun provideHttpServer(castService: CastService): HttpServer {
-        return HttpServer(castService)
-    }
+    fun provideHttpServer(castService: CastService): HttpServer = HttpServer(castService)
 
     @Singleton
     @Provides
@@ -209,9 +181,7 @@ class PlaybackModule {
         httpServer: HttpServer,
         exoPlayerPlayback: ExoPlayerPlayback,
         mediaPathProvider: AggregateMediaInfoProvider
-    ): CastSessionManager {
-        return CastSessionManager(playbackManager, context, httpServer, exoPlayerPlayback, mediaPathProvider)
-    }
+    ): CastSessionManager = CastSessionManager(playbackManager, context, httpServer, exoPlayerPlayback, mediaPathProvider)
 
     @Singleton
     @Provides
@@ -230,24 +200,22 @@ class PlaybackModule {
         playbackWatcher: PlaybackWatcher,
         queueWatcher: QueueWatcher,
         mediaIdHelper: MediaIdHelper
-    ): MediaSessionManager {
-        return MediaSessionManager(
-            context,
-            appCoroutineScope,
-            playbackManager,
-            queueManager,
-            mediaIdHelper,
-            artistRepository,
-            albumRepository,
-            songRepository,
-            genreRepository,
-            artworkImageLoader,
-            artworkCache,
-            preferenceManager,
-            playbackWatcher,
-            queueWatcher
-        )
-    }
+    ): MediaSessionManager = MediaSessionManager(
+        context,
+        appCoroutineScope,
+        playbackManager,
+        queueManager,
+        mediaIdHelper,
+        artistRepository,
+        albumRepository,
+        songRepository,
+        genreRepository,
+        artworkImageLoader,
+        artworkCache,
+        preferenceManager,
+        playbackWatcher,
+        queueWatcher
+    )
 
     @Singleton
     @Provides
@@ -255,9 +223,7 @@ class PlaybackModule {
         @ApplicationContext context: Context,
         playbackManager: PlaybackManager,
         playbackWatcher: PlaybackWatcher
-    ): NoiseManager {
-        return NoiseManager(context, playbackManager, playbackWatcher)
-    }
+    ): NoiseManager = NoiseManager(context, playbackManager, playbackWatcher)
 
     @Singleton
     @Provides
@@ -270,26 +236,22 @@ class PlaybackModule {
         queueWatcher: QueueWatcher,
         lruCache: LruCache<String, Bitmap>,
         artworkImageLoader: ArtworkImageLoader
-    ): PlaybackNotificationManager {
-        return PlaybackNotificationManager(
-            context,
-            context.getSystemService()!!,
-            playbackManager,
-            queueManager,
-            mediaSessionManager,
-            playbackWatcher,
-            queueWatcher,
-            lruCache,
-            artworkImageLoader
-        )
-    }
+    ): PlaybackNotificationManager = PlaybackNotificationManager(
+        context,
+        context.getSystemService()!!,
+        playbackManager,
+        queueManager,
+        mediaSessionManager,
+        playbackWatcher,
+        queueWatcher,
+        lruCache,
+        artworkImageLoader
+    )
 
     @Singleton
     @Provides
     fun provideSleepTimer(
         playbackManager: PlaybackManager,
         playbackWatcher: PlaybackWatcher
-    ): SleepTimer {
-        return SleepTimer(playbackManager, playbackWatcher)
-    }
+    ): SleepTimer = SleepTimer(playbackManager, playbackWatcher)
 }

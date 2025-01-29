@@ -47,17 +47,11 @@ open class SearchSongBinder(
         fun onViewHolderCreated(holder: ViewHolder) {}
     }
 
-    override fun createViewHolder(parent: ViewGroup): ViewHolder {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_song, parent, false))
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewHolder = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_song, parent, false))
 
-    override fun viewType(): Int {
-        return ViewTypes.Song
-    }
+    override fun viewType(): Int = ViewTypes.Song
 
-    override fun getSectionName(): String? {
-        return song.name?.firstOrNull()?.toString()
-    }
+    override fun getSectionName(): String? = song.name?.firstOrNull()?.toString()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -68,23 +62,19 @@ open class SearchSongBinder(
         return true
     }
 
-    override fun hashCode(): Int {
-        return song.id.hashCode()
-    }
+    override fun hashCode(): Int = song.id.hashCode()
 
-    override fun areContentsTheSame(other: Any): Boolean {
-        return other is SearchSongBinder &&
-            song.name == other.song.name &&
-            song.albumArtist == other.song.albumArtist &&
-            song.artists == other.song.artists &&
-            song.album == other.song.album &&
-            song.date == other.song.date &&
-            song.track == other.song.track &&
-            song.disc == other.song.disc &&
-            song.playCount == other.song.playCount &&
-            selected == other.selected &&
-            jaroSimilarity == other.jaroSimilarity
-    }
+    override fun areContentsTheSame(other: Any): Boolean = other is SearchSongBinder &&
+        song.name == other.song.name &&
+        song.albumArtist == other.song.albumArtist &&
+        song.artists == other.song.artists &&
+        song.album == other.song.album &&
+        song.date == other.song.date &&
+        song.track == other.song.track &&
+        song.disc == other.song.disc &&
+        song.playCount == other.song.playCount &&
+        selected == other.selected &&
+        jaroSimilarity == other.jaroSimilarity
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<SearchSongBinder>(itemView) {
         private val title: TextView = itemView.findViewById(R.id.title)

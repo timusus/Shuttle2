@@ -17,7 +17,9 @@ import javax.inject.Inject
 import timber.log.Timber
 
 @AndroidEntryPoint
-class AnalyticsPermissionFragment : Fragment(), OnboardingChild {
+class AnalyticsPermissionFragment :
+    Fragment(),
+    OnboardingChild {
     @Inject
     lateinit var preferenceManager: GeneralPreferenceManager
 
@@ -30,9 +32,7 @@ class AnalyticsPermissionFragment : Fragment(), OnboardingChild {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_onboarding_privacy, container, false)
-    }
+    ): View? = inflater.inflate(R.layout.fragment_onboarding_privacy, container, false)
 
     override fun onViewCreated(
         view: View,

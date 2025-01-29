@@ -50,11 +50,7 @@ class RemoteArtworkSongFetcher(
         httpUrlFetcher?.cancel()
     }
 
-    override fun getDataClass(): Class<InputStream> {
-        return InputStream::class.java
-    }
+    override fun getDataClass(): Class<InputStream> = InputStream::class.java
 
-    override fun getDataSource(): DataSource {
-        return DataSource.REMOTE
-    }
+    override fun getDataSource(): DataSource = DataSource.REMOTE
 }

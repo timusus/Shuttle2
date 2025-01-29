@@ -11,13 +11,9 @@ import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 class GroupingBinder(
     val label: String
 ) : ViewBinder {
-    override fun createViewHolder(parent: ViewGroup): ViewHolder {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_grouping, parent, false))
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewHolder = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_grouping, parent, false))
 
-    override fun viewType(): Int {
-        return ViewTypes.Grouping
-    }
+    override fun viewType(): Int = ViewTypes.Grouping
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -30,9 +26,7 @@ class GroupingBinder(
         return true
     }
 
-    override fun hashCode(): Int {
-        return label.hashCode()
-    }
+    override fun hashCode(): Int = label.hashCode()
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<GroupingBinder>(itemView) {
         override fun bind(

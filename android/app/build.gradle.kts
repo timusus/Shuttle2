@@ -7,6 +7,7 @@ plugins {
     id("dagger.hilt.android.plugin")
     id("com.google.firebase.crashlytics")
     id("com.google.devtools.ksp")
+    alias(libs.plugins.compose.compiler)
 }
 
 android {
@@ -83,10 +84,36 @@ android {
         abortOnError = false
         checkReleaseBuilds = false
     }
+
+    buildFeatures {
+        compose = true
+    }
+
     namespace = "com.simplecityapps.shuttle"
 
     dependencies {
         implementation(fileTree("dir" to "libs", "include" to listOf("*.jar")))
+
+        val composeBom = platform(libs.androidx.compose.bom)
+        implementation(composeBom)
+        androidTestImplementation(composeBom)
+
+        // Choose one of the following:
+        // Material Design 3
+        implementation(libs.androidx.material3)
+        // or Material Design 2
+        implementation(libs.androidx.material)
+        // or skip Material Design and build directly on top of foundational components
+        implementation(libs.androidx.foundation)
+        // or only import the main APIs for the underlying toolkit systems,
+        // such as input and measurement/layout
+        implementation(libs.androidx.ui)
+
+        // Android Studio Preview support
+        implementation(libs.androidx.ui.tooling.preview)
+        debugImplementation(libs.androidx.ui.tooling)
+
+        implementation(libs.androidx.lifecycle.viewmodel.compose)
 
         // Shuttle Core
         implementation(project(":android:core"))

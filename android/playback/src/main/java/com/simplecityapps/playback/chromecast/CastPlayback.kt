@@ -138,12 +138,10 @@ class CastPlayback(
         isReleased = true
     }
 
-    override fun playBackState(): PlaybackState {
-        return if (castSession.remoteMediaClient?.isPlaying == true || isMeantToBePlaying) {
-            PlaybackState.Playing
-        } else {
-            PlaybackState.Paused
-        }
+    override fun playBackState(): PlaybackState = if (castSession.remoteMediaClient?.isPlaying == true || isMeantToBePlaying) {
+        PlaybackState.Playing
+    } else {
+        PlaybackState.Paused
     }
 
     override fun seek(position: Int) {
@@ -170,17 +168,13 @@ class CastPlayback(
         return castSession.remoteMediaClient?.approximateStreamPosition?.toInt()
     }
 
-    override fun getDuration(): Int? {
-        return castSession.remoteMediaClient?.streamDuration?.toInt()
-    }
+    override fun getDuration(): Int? = castSession.remoteMediaClient?.streamDuration?.toInt()
 
     override fun setVolume(volume: Float) {
         // Nothing to do
     }
 
-    override fun getResumeWhenSwitched(oldPlayback: Playback): Boolean {
-        return true
-    }
+    override fun getResumeWhenSwitched(oldPlayback: Playback): Boolean = true
 
     override fun setRepeatMode(repeatMode: QueueManager.RepeatMode) {
     }
@@ -189,9 +183,7 @@ class CastPlayback(
         castSession.remoteMediaClient?.setPlaybackRate(multiplier.toDouble())
     }
 
-    override fun getPlaybackSpeed(): Float {
-        return castSession.remoteMediaClient?.mediaStatus?.playbackRate?.toFloat() ?: 1f
-    }
+    override fun getPlaybackSpeed(): Float = castSession.remoteMediaClient?.mediaStatus?.playbackRate?.toFloat() ?: 1f
 
     override fun updateLastKnownStreamPosition() {
         super.updateLastKnownStreamPosition()
@@ -201,9 +193,7 @@ class CastPlayback(
         }
     }
 
-    override fun respondsToAudioFocus(): Boolean {
-        return false
-    }
+    override fun respondsToAudioFocus(): Boolean = false
 
     private fun updatePlaybackState() {
         val playerState = castSession.remoteMediaClient?.playerState
@@ -264,14 +254,12 @@ class CastPlayback(
     }
 }
 
-fun Int.playerStateToString(): String {
-    return when (this) {
-        MediaStatus.PLAYER_STATE_IDLE -> "IDLE"
-        MediaStatus.PLAYER_STATE_PLAYING -> "PLAYING"
-        MediaStatus.PLAYER_STATE_PAUSED -> "PAUSED"
-        MediaStatus.PLAYER_STATE_LOADING -> "LOADING"
-        MediaStatus.PLAYER_STATE_BUFFERING -> "BUFFERING"
-        MediaStatus.PLAYER_STATE_UNKNOWN -> "UNKNOWN"
-        else -> "Unknown"
-    }
+fun Int.playerStateToString(): String = when (this) {
+    MediaStatus.PLAYER_STATE_IDLE -> "IDLE"
+    MediaStatus.PLAYER_STATE_PLAYING -> "PLAYING"
+    MediaStatus.PLAYER_STATE_PAUSED -> "PAUSED"
+    MediaStatus.PLAYER_STATE_LOADING -> "LOADING"
+    MediaStatus.PLAYER_STATE_BUFFERING -> "BUFFERING"
+    MediaStatus.PLAYER_STATE_UNKNOWN -> "UNKNOWN"
+    else -> "Unknown"
 }

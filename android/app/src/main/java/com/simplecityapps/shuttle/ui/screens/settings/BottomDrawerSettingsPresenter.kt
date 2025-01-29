@@ -37,8 +37,7 @@ constructor(
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackManager,
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope
-) :
-    BasePresenter<BottomDrawerSettingsContract.View>(),
+) : BasePresenter<BottomDrawerSettingsContract.View>(),
     BottomDrawerSettingsContract.Presenter {
     @NavigationRes
     var currentDestinationIdRes: Int? = null

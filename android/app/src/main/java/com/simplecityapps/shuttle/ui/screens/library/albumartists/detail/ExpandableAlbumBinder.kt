@@ -61,17 +61,11 @@ class ExpandableAlbumBinder(
         ) {}
     }
 
-    override fun createViewHolder(parent: ViewGroup): ViewHolder {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_album_expandable, parent, false), scope)
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewHolder = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_album_expandable, parent, false), scope)
 
-    override fun viewType(): Int {
-        return ViewTypes.ExpandableAlbum
-    }
+    override fun viewType(): Int = ViewTypes.ExpandableAlbum
 
-    override fun getSectionName(): String? {
-        return album.groupKey?.key?.firstOrNull()?.toString()?.uppercase(Locale.getDefault())
-    }
+    override fun getSectionName(): String? = album.groupKey?.key?.firstOrNull()?.toString()?.uppercase(Locale.getDefault())
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -82,20 +76,16 @@ class ExpandableAlbumBinder(
         return true
     }
 
-    override fun hashCode(): Int {
-        return album.groupKey.hashCode()
-    }
+    override fun hashCode(): Int = album.groupKey.hashCode()
 
-    override fun areContentsTheSame(other: Any): Boolean {
-        return (other as? ExpandableAlbumBinder)?.let {
-            album.name == other.album.name &&
-                album.albumArtist == other.album.albumArtist &&
-                expanded == other.expanded &&
-                album.songCount == other.album.songCount &&
-                album.year == other.album.year &&
-                songs.map { it.id } == other.songs.map { it.id }
-        } ?: false
-    }
+    override fun areContentsTheSame(other: Any): Boolean = (other as? ExpandableAlbumBinder)?.let {
+        album.name == other.album.name &&
+            album.albumArtist == other.album.albumArtist &&
+            expanded == other.expanded &&
+            album.songCount == other.album.songCount &&
+            album.year == other.album.year &&
+            songs.map { it.id } == other.songs.map { it.id }
+    } ?: false
 
     class ViewHolder(itemView: View, scope: CoroutineScope) : ViewBinder.ViewHolder<ExpandableAlbumBinder>(itemView) {
         private val title: TextView = itemView.findViewById(R.id.title)
@@ -210,6 +200,4 @@ class ExpandableAlbumBinder(
     }
 }
 
-fun ExpandableAlbumBinder.clone(expanded: Boolean): ExpandableAlbumBinder {
-    return ExpandableAlbumBinder(album, songs, imageLoader, expanded, scope, listener)
-}
+fun ExpandableAlbumBinder.clone(expanded: Boolean): ExpandableAlbumBinder = ExpandableAlbumBinder(album, songs, imageLoader, expanded, scope, listener)

@@ -110,8 +110,7 @@ constructor(
     private val playbackManager: PlaybackManager,
     private val queueManager: QueueManager,
     private val preferenceManager: GeneralPreferenceManager
-) :
-    BasePresenter<SearchContract.View>(),
+) : BasePresenter<SearchContract.View>(),
     SearchContract.Presenter {
     private var query: String? = null
 

@@ -28,21 +28,15 @@ class DirectoryAlbumLocalArtworkModelLoader(
         width: Int,
         height: Int,
         options: Options
-    ): ModelLoader.LoadData<InputStream> {
-        return localArtworkModelLoader.buildLoadData(DirectoryAlbumLocalArtworkProvider(context, model, songRepository), width, height, options)
-    }
+    ): ModelLoader.LoadData<InputStream> = localArtworkModelLoader.buildLoadData(DirectoryAlbumLocalArtworkProvider(context, model, songRepository), width, height, options)
 
-    override fun handles(model: Album): Boolean {
-        return true
-    }
+    override fun handles(model: Album): Boolean = true
 
     class Factory(
         private val context: Context,
         private val songRepository: SongRepository
     ) : ModelLoaderFactory<Album, InputStream> {
-        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Album, InputStream> {
-            return DirectoryAlbumLocalArtworkModelLoader(context, multiFactory.build(LocalArtworkProvider::class.java, InputStream::class.java) as LocalArtworkModelLoader, songRepository)
-        }
+        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Album, InputStream> = DirectoryAlbumLocalArtworkModelLoader(context, multiFactory.build(LocalArtworkProvider::class.java, InputStream::class.java) as LocalArtworkModelLoader, songRepository)
 
         override fun teardown() {
         }
@@ -54,38 +48,36 @@ class DirectoryAlbumLocalArtworkModelLoader(
         private val songRepository: SongRepository
     ) : AlbumArtworkProvider(album),
         LocalArtworkProvider {
-        override fun getInputStream(): InputStream? {
-            return runBlocking {
-                songRepository.getSongs(SongQuery.AlbumGroupKeys(listOf(SongQuery.AlbumGroupKey(album.groupKey))))
-                    .firstOrNull()
-                    ?.firstOrNull()
-                    ?.let { song ->
-                        val parentDocumentFile =
-                            if (DocumentsContract.isDocumentUri(context, song.path.toUri())) {
-                                val parent = song.path.substringBeforeLast("%2F", "")
-                                if (parent.isNotEmpty()) {
-                                    DocumentFile.fromTreeUri(context, parent.toUri())
-                                } else {
-                                    null
-                                }
+        override fun getInputStream(): InputStream? = runBlocking {
+            songRepository.getSongs(SongQuery.AlbumGroupKeys(listOf(SongQuery.AlbumGroupKey(album.groupKey))))
+                .firstOrNull()
+                ?.firstOrNull()
+                ?.let { song ->
+                    val parentDocumentFile =
+                        if (DocumentsContract.isDocumentUri(context, song.path.toUri())) {
+                            val parent = song.path.substringBeforeLast("%2F", "")
+                            if (parent.isNotEmpty()) {
+                                DocumentFile.fromTreeUri(context, parent.toUri())
                             } else {
-                                File(song.path).parentFile?.let { parent ->
-                                    DocumentFile.fromFile(parent)
-                                }
+                                null
                             }
+                        } else {
+                            File(song.path).parentFile?.let { parent ->
+                                DocumentFile.fromFile(parent)
+                            }
+                        }
 
-                        parentDocumentFile?.listFiles()
-                            ?.filter {
-                                it.type?.startsWith("image") == true &&
-                                    it.length() > 1024 &&
-                                    pattern.matcher(it.name ?: "").matches()
-                            }
-                            ?.maxByOrNull { it.length() }
-                            ?.let { documentFile ->
-                                context.contentResolver.openInputStream(documentFile.uri)
-                            }
-                    }
-            }
+                    parentDocumentFile?.listFiles()
+                        ?.filter {
+                            it.type?.startsWith("image") == true &&
+                                it.length() > 1024 &&
+                                pattern.matcher(it.name ?: "").matches()
+                        }
+                        ?.maxByOrNull { it.length() }
+                        ?.let { documentFile ->
+                            context.contentResolver.openInputStream(documentFile.uri)
+                        }
+                }
         }
 
         companion object {

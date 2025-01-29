@@ -21,35 +21,29 @@ import timber.log.Timber
 open class NetworkingModule {
     @Singleton
     @Provides
-    fun provideLoggingInterceptor(): HttpLoggingInterceptor {
-        return HttpLoggingInterceptor { message ->
-            Timber.tag(NETWORK_LOG_TAG).v(message)
-        }.apply {
-            level = HttpLoggingInterceptor.Level.NONE
-        }
+    fun provideLoggingInterceptor(): HttpLoggingInterceptor = HttpLoggingInterceptor { message ->
+        Timber.tag(NETWORK_LOG_TAG).v(message)
+    }.apply {
+        level = HttpLoggingInterceptor.Level.NONE
     }
 
     @Singleton
     @Provides
-    fun provideOkHttpClient(loggingInterceptor: HttpLoggingInterceptor): OkHttpClient {
-        return OkHttpClient.Builder()
-            .apply {
-                if (BuildConfig.PROXY_ENABLED) {
-                    this.proxy(Proxy(Proxy.Type.HTTP, InetSocketAddress(BuildConfig.PROXY_ADDR, BuildConfig.PROXY_PORT)))
-                }
+    fun provideOkHttpClient(loggingInterceptor: HttpLoggingInterceptor): OkHttpClient = OkHttpClient.Builder()
+        .apply {
+            if (BuildConfig.PROXY_ENABLED) {
+                this.proxy(Proxy(Proxy.Type.HTTP, InetSocketAddress(BuildConfig.PROXY_ADDR, BuildConfig.PROXY_PORT)))
             }
-            .addInterceptor(loggingInterceptor)
-            .build()
-    }
+        }
+        .addInterceptor(loggingInterceptor)
+        .build()
 
     @Singleton
     @Provides
-    fun provideMoshi(): Moshi {
-        return Moshi.Builder()
-            .addLast(KotlinJsonAdapterFactory())
-            .add(Date::class.java, Rfc3339DateJsonAdapter())
-            .build()
-    }
+    fun provideMoshi(): Moshi = Moshi.Builder()
+        .addLast(KotlinJsonAdapterFactory())
+        .add(Date::class.java, Rfc3339DateJsonAdapter())
+        .build()
 
     companion object {
         const val NETWORK_LOG_TAG = "OkHttp"

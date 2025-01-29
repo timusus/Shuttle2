@@ -15,7 +15,11 @@ import com.simplecityapps.shuttle.ui.common.view.setMargins
 
 class MultiSheetView
 @JvmOverloads
-constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0) : CoordinatorLayout(context, attrs, defStyleAttr) {
+constructor(
+    context: Context,
+    attrs: AttributeSet? = null,
+    defStyleAttr: Int = 0
+) : CoordinatorLayout(context, attrs, defStyleAttr) {
     interface SheetStateChangeListener {
         fun onSheetStateChanged(
             @Sheet sheet: Int,
@@ -348,6 +352,4 @@ constructor(context: Context, attrs: AttributeSet? = null, defStyleAttr: Int = 0
  * @param v the view whose hierarchy will be traversed.
  * @return the first MultiSheetView of the passed in view, or null if none can be found.
  */
-fun View?.findParentMultiSheetView(): MultiSheetView? {
-    return (this as? MultiSheetView) ?: (this?.parent as? View)?.findParentMultiSheetView()
-}
+fun View?.findParentMultiSheetView(): MultiSheetView? = (this as? MultiSheetView) ?: (this?.parent as? View)?.findParentMultiSheetView()

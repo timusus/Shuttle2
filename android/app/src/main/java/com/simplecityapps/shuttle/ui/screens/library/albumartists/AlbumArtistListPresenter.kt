@@ -81,8 +81,8 @@ constructor(
     private val mediaImporter: MediaImporter,
     private val preferenceManager: GeneralPreferenceManager,
     private val queueManager: QueueManager
-) : AlbumArtistListContract.Presenter,
-    BasePresenter<AlbumArtistListContract.View>() {
+) : BasePresenter<AlbumArtistListContract.View>(),
+    AlbumArtistListContract.Presenter {
     private var albumArtists: List<com.simplecityapps.shuttle.model.AlbumArtist> = emptyList()
 
     private val mediaImporterListener =

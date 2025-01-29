@@ -66,8 +66,8 @@ constructor(
     private val playlistRepository: PlaylistRepository,
     private val playbackManager: PlaybackManager,
     private val queueManager: QueueManager
-) : PlaylistListContract.Presenter,
-    BasePresenter<PlaylistListContract.View>() {
+) : BasePresenter<PlaylistListContract.View>(),
+    PlaylistListContract.Presenter {
     override fun loadPlaylists() {
         view?.setLoadingState(PlaylistListContract.LoadingState.Loading)
 

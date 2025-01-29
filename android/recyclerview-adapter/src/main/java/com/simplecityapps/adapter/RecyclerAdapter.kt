@@ -159,22 +159,16 @@ open class RecyclerAdapter(scope: CoroutineScope, val skipIntermediateUpdates: B
 
     // RecyclerView.Adapter Implementation
 
-    override fun getItemViewType(position: Int): Int {
-        return items[position].viewType()
-    }
+    override fun getItemViewType(position: Int): Int = items[position].viewType()
 
-    override fun getItemCount(): Int {
-        return items.size
-    }
+    override fun getItemCount(): Int = items.size
 
     override fun onCreateViewHolder(
         parent: ViewGroup,
         viewType: Int
-    ): RecyclerView.ViewHolder {
-        return items.firstOrNull { adapterViewModel -> adapterViewModel.viewType() == viewType }?.createViewHolder(
-            parent
-        ) ?: throw IllegalStateException("Cannot create ViewHolder for view viewType: $viewType")
-    }
+    ): RecyclerView.ViewHolder = items.firstOrNull { adapterViewModel -> adapterViewModel.viewType() == viewType }?.createViewHolder(
+        parent
+    ) ?: throw IllegalStateException("Cannot create ViewHolder for view viewType: $viewType")
 
     override fun onBindViewHolder(
         holder: RecyclerView.ViewHolder,

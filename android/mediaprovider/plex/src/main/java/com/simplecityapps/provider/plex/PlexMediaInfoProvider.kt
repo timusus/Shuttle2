@@ -12,9 +12,7 @@ class PlexMediaInfoProvider
 constructor(
     private val plexAuthenticationManager: PlexAuthenticationManager
 ) : MediaInfoProvider {
-    override fun handles(uri: Uri): Boolean {
-        return uri.scheme == "plex"
-    }
+    override fun handles(uri: Uri): Boolean = uri.scheme == "plex"
 
     @Throws(IllegalStateException::class)
     override suspend fun getMediaInfo(

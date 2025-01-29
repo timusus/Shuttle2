@@ -22,7 +22,9 @@ import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
 @AndroidEntryPoint
-class DspFragment : Fragment(), EqualizerContract.View {
+class DspFragment :
+    Fragment(),
+    EqualizerContract.View {
     @Inject
     lateinit var presenter: DspPresenter
 
@@ -40,9 +42,7 @@ class DspFragment : Fragment(), EqualizerContract.View {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_dsp, container, false)
-    }
+    ): View? = inflater.inflate(R.layout.fragment_dsp, container, false)
 
     override fun onViewCreated(
         view: View,
@@ -105,12 +105,10 @@ class DspFragment : Fragment(), EqualizerContract.View {
 
     // Private
 
-    private fun ReplayGainMode.displayName(): String {
-        return when (this) {
-            ReplayGainMode.Track -> getString(R.string.dsp_replay_gain_track)
-            ReplayGainMode.Album -> getString(R.string.dsp_replay_gain_album)
-            ReplayGainMode.Off -> getString(R.string.dsp_replay_gain_off)
-        }
+    private fun ReplayGainMode.displayName(): String = when (this) {
+        ReplayGainMode.Track -> getString(R.string.dsp_replay_gain_track)
+        ReplayGainMode.Album -> getString(R.string.dsp_replay_gain_album)
+        ReplayGainMode.Off -> getString(R.string.dsp_replay_gain_off)
     }
 
     // EqualizerContract.View Implementation

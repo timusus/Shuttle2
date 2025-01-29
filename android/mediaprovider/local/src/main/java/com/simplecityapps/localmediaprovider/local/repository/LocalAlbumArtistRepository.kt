@@ -38,15 +38,13 @@ class LocalAlbumArtistRepository(val scope: CoroutineScope, private val songData
             .stateIn(scope, SharingStarted.Lazily, null)
     }
 
-    override fun getAlbumArtists(query: AlbumArtistQuery): Flow<List<AlbumArtist>> {
-        return albumArtistsRelay
-            .filterNotNull()
-            .map { albumArtists ->
-                albumArtists
-                    .filter(query.predicate)
-                    .toMutableList()
-                    .sortedWith(query.sortOrder.comparator)
-            }
-            .flowOn(Dispatchers.IO)
-    }
+    override fun getAlbumArtists(query: AlbumArtistQuery): Flow<List<AlbumArtist>> = albumArtistsRelay
+        .filterNotNull()
+        .map { albumArtists ->
+            albumArtists
+                .filter(query.predicate)
+                .toMutableList()
+                .sortedWith(query.sortOrder.comparator)
+        }
+        .flowOn(Dispatchers.IO)
 }

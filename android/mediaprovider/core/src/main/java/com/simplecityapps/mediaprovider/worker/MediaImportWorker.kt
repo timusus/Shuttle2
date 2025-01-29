@@ -71,11 +71,9 @@ enum class ImportFrequency(val value: Int) {
     Weekly(2)
     ;
 
-    fun intervalInDays(): Long {
-        return when (this) {
-            Never -> 0L
-            Daily -> 1L
-            Weekly -> 7L
-        }
+    fun intervalInDays(): Long = when (this) {
+        Never -> 0L
+        Daily -> 1L
+        Weekly -> 7L
     }
 }

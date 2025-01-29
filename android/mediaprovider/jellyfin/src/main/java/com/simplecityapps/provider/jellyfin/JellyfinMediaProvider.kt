@@ -111,18 +111,16 @@ class JellyfinMediaProvider(
         }
     }
 
-    private suspend fun authenticate(address: String): AuthenticatedCredentials? {
-        return (
-            authenticationManager.getAuthenticatedCredentials()
-                ?: authenticationManager.getLoginCredentials()
-                    ?.let { loginCredentials ->
-                        authenticationManager.authenticate(
-                            address,
-                            loginCredentials
-                        ).getOrNull()
-                    }
-            )
-    }
+    private suspend fun authenticate(address: String): AuthenticatedCredentials? = (
+        authenticationManager.getAuthenticatedCredentials()
+            ?: authenticationManager.getLoginCredentials()
+                ?.let { loginCredentials ->
+                    authenticationManager.authenticate(
+                        address,
+                        loginCredentials
+                    ).getOrNull()
+                }
+        )
 
     private fun queryItems(
         address: String,
@@ -130,45 +128,43 @@ class JellyfinMediaProvider(
         startIndex: Int = 0,
         pageSize: Int = 500,
         items: MutableList<Item> = mutableListOf()
-    ): Flow<FlowEvent<List<Item>, MessageProgress>> {
-        return flow {
-            when (
-                val queryResult =
-                    itemsService.audioItems(
-                        url = address,
-                        token = credentials.accessToken,
-                        userId = credentials.userId,
-                        limit = pageSize,
-                        startIndex = startIndex
-                    )
-            ) {
-                is NetworkResult.Success<QueryResult> -> {
-                    val totalRecordCount = queryResult.body.totalRecordCount
-                    val lastIndex = startIndex + pageSize
+    ): Flow<FlowEvent<List<Item>, MessageProgress>> = flow {
+        when (
+            val queryResult =
+                itemsService.audioItems(
+                    url = address,
+                    token = credentials.accessToken,
+                    userId = credentials.userId,
+                    limit = pageSize,
+                    startIndex = startIndex
+                )
+        ) {
+            is NetworkResult.Success<QueryResult> -> {
+                val totalRecordCount = queryResult.body.totalRecordCount
+                val lastIndex = startIndex + pageSize
 
-                    emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_provider_querying_api), Progress(lastIndex, totalRecordCount))))
+                emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_provider_querying_api), Progress(lastIndex, totalRecordCount))))
 
-                    items.addAll(queryResult.body.items)
+                items.addAll(queryResult.body.items)
 
-                    if (lastIndex < totalRecordCount) {
-                        emitAll(
-                            queryItems(
-                                address = address,
-                                credentials = credentials,
-                                startIndex = lastIndex,
-                                pageSize = min(pageSize, totalRecordCount - lastIndex),
-                                items = items
-                            )
+                if (lastIndex < totalRecordCount) {
+                    emitAll(
+                        queryItems(
+                            address = address,
+                            credentials = credentials,
+                            startIndex = lastIndex,
+                            pageSize = min(pageSize, totalRecordCount - lastIndex),
+                            items = items
                         )
-                    } else {
-                        emit(FlowEvent.Success(items))
-                    }
+                    )
+                } else {
+                    emit(FlowEvent.Success(items))
                 }
+            }
 
-                is NetworkResult.Failure -> {
-                    Timber.e(queryResult.error, queryResult.error.userDescription())
-                    emit(FlowEvent.Failure(queryResult.error.userDescription()))
-                }
+            is NetworkResult.Failure -> {
+                Timber.e(queryResult.error, queryResult.error.userDescription())
+                emit(FlowEvent.Failure(queryResult.error.userDescription()))
             }
         }
     }
@@ -179,29 +175,27 @@ class JellyfinMediaProvider(
         credentials: AuthenticatedCredentials,
         playlistItems: List<Item>,
         existingSongs: List<Song>
-    ): Flow<MediaImporter.PlaylistUpdateData> {
-        return playlistItems
-            .asFlow()
-            .flatMapConcat { playlistItem ->
-                queryPlaylistItems(address, credentials, playlistItem.id)
-                    .map { event ->
-                        when (event) {
-                            is FlowEvent.Success -> {
-                                MediaImporter.PlaylistUpdateData(
-                                    mediaProviderType = type,
-                                    name = playlistItem.name ?: context.getString(com.simplecityapps.core.R.string.unknown),
-                                    songs = event.result.mapNotNull { item -> existingSongs.firstOrNull { it.externalId == item.id } },
-                                    externalId = playlistItem.id
-                                )
-                            }
-
-                            is FlowEvent.Failure -> null
-                            is FlowEvent.Progress -> null
+    ): Flow<MediaImporter.PlaylistUpdateData> = playlistItems
+        .asFlow()
+        .flatMapConcat { playlistItem ->
+            queryPlaylistItems(address, credentials, playlistItem.id)
+                .map { event ->
+                    when (event) {
+                        is FlowEvent.Success -> {
+                            MediaImporter.PlaylistUpdateData(
+                                mediaProviderType = type,
+                                name = playlistItem.name ?: context.getString(com.simplecityapps.core.R.string.unknown),
+                                songs = event.result.mapNotNull { item -> existingSongs.firstOrNull { it.externalId == item.id } },
+                                externalId = playlistItem.id
+                            )
                         }
+
+                        is FlowEvent.Failure -> null
+                        is FlowEvent.Progress -> null
                     }
-            }
-            .filterNotNull()
-    }
+                }
+        }
+        .filterNotNull()
 
     private fun queryPlaylistItems(
         address: String,
@@ -210,79 +204,75 @@ class JellyfinMediaProvider(
         startIndex: Int = 0,
         pageSize: Int = 500,
         items: MutableList<Item> = mutableListOf()
-    ): Flow<FlowEvent<List<Item>, MessageProgress>> {
-        return flow {
-            when (
-                val queryResult =
-                    itemsService.playlistItems(
-                        url = address,
-                        token = credentials.accessToken,
-                        playlistId = playlistId,
-                        limit = pageSize,
-                        startIndex = startIndex,
-                        userId = credentials.userId
-                    )
-            ) {
-                is NetworkResult.Success<QueryResult> -> {
-                    val totalRecordCount = queryResult.body.totalRecordCount
-                    val lastIndex = startIndex + pageSize
+    ): Flow<FlowEvent<List<Item>, MessageProgress>> = flow {
+        when (
+            val queryResult =
+                itemsService.playlistItems(
+                    url = address,
+                    token = credentials.accessToken,
+                    playlistId = playlistId,
+                    limit = pageSize,
+                    startIndex = startIndex,
+                    userId = credentials.userId
+                )
+        ) {
+            is NetworkResult.Success<QueryResult> -> {
+                val totalRecordCount = queryResult.body.totalRecordCount
+                val lastIndex = startIndex + pageSize
 
-                    emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_provider_querying_api), Progress(lastIndex, totalRecordCount))))
+                emit(FlowEvent.Progress(MessageProgress(context.getString(R.string.media_provider_querying_api), Progress(lastIndex, totalRecordCount))))
 
-                    items.addAll(queryResult.body.items)
+                items.addAll(queryResult.body.items)
 
-                    if (lastIndex < totalRecordCount) {
-                        emitAll(
-                            queryItems(
-                                address = address,
-                                credentials = credentials,
-                                startIndex = lastIndex,
-                                pageSize = min(pageSize, totalRecordCount - lastIndex),
-                                items = items
-                            )
+                if (lastIndex < totalRecordCount) {
+                    emitAll(
+                        queryItems(
+                            address = address,
+                            credentials = credentials,
+                            startIndex = lastIndex,
+                            pageSize = min(pageSize, totalRecordCount - lastIndex),
+                            items = items
                         )
-                    } else {
-                        emit(FlowEvent.Success(items))
-                    }
+                    )
+                } else {
+                    emit(FlowEvent.Success(items))
                 }
+            }
 
-                is NetworkResult.Failure -> {
-                    Timber.e(queryResult.error, queryResult.error.userDescription())
-                    emit(FlowEvent.Failure(queryResult.error.userDescription()))
-                }
+            is NetworkResult.Failure -> {
+                Timber.e(queryResult.error, queryResult.error.userDescription())
+                emit(FlowEvent.Failure(queryResult.error.userDescription()))
             }
         }
     }
 
-    private fun Item.toSong(): Song {
-        return Song(
-            id = 0,
-            name = name,
-            albumArtist = albumArtist,
-            artists = artists.filter { it.isNotEmpty() },
-            album = album,
-            track = indexNumber,
-            disc = parentIndexNumber,
-            duration = ((runTime ?: 0) / (10 * 1000)).toInt(),
-            date = productionYear?.let { year -> LocalDate(year, 1, 1) },
-            genres = genres,
-            path = "jellyfin://item/$id",
-            size = 0,
-            mimeType = "Audio/*",
-            lastModified = Clock.System.now(),
-            lastPlayed = null,
-            lastCompleted = null,
-            playCount = 0,
-            playbackPosition = 0,
-            blacklisted = false,
-            externalId = id,
-            mediaProvider = MediaProviderType.Jellyfin,
-            lyrics = null,
-            grouping = null,
-            bitRate = null,
-            bitDepth = null,
-            sampleRate = null,
-            channelCount = null
-        )
-    }
+    private fun Item.toSong(): Song = Song(
+        id = 0,
+        name = name,
+        albumArtist = albumArtist,
+        artists = artists.filter { it.isNotEmpty() },
+        album = album,
+        track = indexNumber,
+        disc = parentIndexNumber,
+        duration = ((runTime ?: 0) / (10 * 1000)).toInt(),
+        date = productionYear?.let { year -> LocalDate(year, 1, 1) },
+        genres = genres,
+        path = "jellyfin://item/$id",
+        size = 0,
+        mimeType = "Audio/*",
+        lastModified = Clock.System.now(),
+        lastPlayed = null,
+        lastCompleted = null,
+        playCount = 0,
+        playbackPosition = 0,
+        blacklisted = false,
+        externalId = id,
+        mediaProvider = MediaProviderType.Jellyfin,
+        lyrics = null,
+        grouping = null,
+        bitRate = null,
+        bitDepth = null,
+        sampleRate = null,
+        channelCount = null
+    )
 }

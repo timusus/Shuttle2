@@ -44,9 +44,7 @@ interface Playback {
 
     fun updateLastKnownStreamPosition() {}
 
-    fun getResumeWhenSwitched(oldPlayback: Playback): Boolean {
-        return false
-    }
+    fun getResumeWhenSwitched(oldPlayback: Playback): Boolean = false
 
     fun setRepeatMode(repeatMode: QueueManager.RepeatMode)
 
@@ -63,9 +61,7 @@ interface Playback {
 
     fun getPlaybackSpeed(): Float
 
-    fun respondsToAudioFocus(): Boolean {
-        return true
-    }
+    fun respondsToAudioFocus(): Boolean = true
 
     interface Callback {
         fun onPlaybackStateChanged(playbackState: PlaybackState)

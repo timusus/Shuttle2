@@ -76,9 +76,7 @@ class MediaProviderSelectionFragment :
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_media_provider_selector, container, false)
-    }
+    ): View? = inflater.inflate(R.layout.fragment_media_provider_selector, container, false)
 
     override fun onViewCreated(
         view: View,
@@ -261,9 +259,7 @@ class MediaProviderSelectionFragment :
 
     override val page = OnboardingPage.MediaProviderSelector
 
-    override fun getParent(): OnboardingParent? {
-        return parentFragment as? OnboardingParent
-    }
+    override fun getParent(): OnboardingParent? = parentFragment as? OnboardingParent
 
     override fun handleNextButtonClick() {
         getParent()?.goToNext() ?: Timber.e("Failed to goToNext() - getParent() returned null")
@@ -274,8 +270,6 @@ class MediaProviderSelectionFragment :
     companion object {
         const val ARG_ONBOARDING = "is_onboarding"
 
-        fun newInstance(isOnboarding: Boolean = true): MediaProviderSelectionFragment {
-            return MediaProviderSelectionFragment().withArgs { putBoolean(ARG_ONBOARDING, isOnboarding) }
-        }
+        fun newInstance(isOnboarding: Boolean = true): MediaProviderSelectionFragment = MediaProviderSelectionFragment().withArgs { putBoolean(ARG_ONBOARDING, isOnboarding) }
     }
 }

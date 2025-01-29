@@ -14,15 +14,9 @@ class PagerAdapter(
     val fragmentFactory: (position: Int) -> Fragment,
     val titleFactory: (position: Int) -> String
 ) : FragmentStateAdapter(fragmentManager, lifecycle) {
-    fun getPageTitle(position: Int): CharSequence {
-        return titleFactory(position)
-    }
+    fun getPageTitle(position: Int): CharSequence = titleFactory(position)
 
-    override fun getItemCount(): Int {
-        return size
-    }
+    override fun getItemCount(): Int = size
 
-    override fun createFragment(position: Int): Fragment {
-        return fragmentFactory(position)
-    }
+    override fun createFragment(position: Int): Fragment = fragmentFactory(position)
 }

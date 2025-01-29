@@ -21,17 +21,11 @@ class HorizontalAlbumArtistListBinder(
     val scope: CoroutineScope,
     val listener: AlbumArtistBinder.Listener
 ) : ViewBinder {
-    override fun createViewHolder(parent: ViewGroup): ViewBinder.ViewHolder<out ViewBinder> {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_horizontal_list, parent, false), scope)
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewBinder.ViewHolder<out ViewBinder> = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_horizontal_list, parent, false), scope)
 
-    override fun viewType(): Int {
-        return ViewTypes.HorizontalAlbumArtistSection
-    }
+    override fun viewType(): Int = ViewTypes.HorizontalAlbumArtistSection
 
-    override fun areContentsTheSame(other: Any): Boolean {
-        return albumArtists == (other as? HorizontalAlbumArtistListBinder)?.albumArtists
-    }
+    override fun areContentsTheSame(other: Any): Boolean = albumArtists == (other as? HorizontalAlbumArtistListBinder)?.albumArtists
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -44,9 +38,7 @@ class HorizontalAlbumArtistListBinder(
         return true
     }
 
-    override fun hashCode(): Int {
-        return albumArtists.hashCode()
-    }
+    override fun hashCode(): Int = albumArtists.hashCode()
 
     class ViewHolder(itemView: View, scope: CoroutineScope) : ViewBinder.ViewHolder<HorizontalAlbumArtistListBinder>(itemView) {
         private val recyclerView: RecyclerView = itemView.findViewById(R.id.recyclerView)

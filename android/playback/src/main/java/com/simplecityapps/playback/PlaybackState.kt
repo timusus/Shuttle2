@@ -2,20 +2,14 @@ package com.simplecityapps.playback
 
 sealed class PlaybackState {
     object Loading : PlaybackState() {
-        override fun toString(): String {
-            return "Loading"
-        }
+        override fun toString(): String = "Loading"
     }
 
     object Playing : PlaybackState() {
-        override fun toString(): String {
-            return "Playing"
-        }
+        override fun toString(): String = "Playing"
     }
 
     object Paused : PlaybackState()
 
-    override fun toString(): String {
-        return "Paused"
-    }
+    override fun toString(): String = "Paused"
 }

@@ -49,7 +49,8 @@ class DirectorySelectionPresenter
 constructor(
     @ApplicationContext private val context: Context,
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope
-) : DirectorySelectionContract.Presenter, BasePresenter<DirectorySelectionContract.View>() {
+) : BasePresenter<DirectorySelectionContract.View>(),
+    DirectorySelectionContract.Presenter {
     private var data: MutableList<DirectorySelectionContract.Directory> = mutableListOf()
 
     override fun loadData(contentResolver: ContentResolver) {

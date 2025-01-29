@@ -9,9 +9,7 @@ abstract class Diff<T>(private val existingData: List<T>, private val newData: L
         val updates: List<T>,
         val deletes: List<T>
     ) {
-        override fun toString(): String {
-            return "${inserts.count()} inserts, ${updates.count()} updates, ${deletes.count()} deletes"
-        }
+        override fun toString(): String = "${inserts.count()} inserts, ${updates.count()} updates, ${deletes.count()} deletes"
     }
 
     /**

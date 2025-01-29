@@ -38,46 +38,42 @@ class LocalGenreRepository(
             .stateIn(scope, SharingStarted.Lazily, null)
     }
 
-    override fun getGenres(query: GenreQuery): Flow<List<Genre>> {
-        return genreRelay
-            .filterNotNull()
-            .map { genres ->
-                genres
-                    .map { entry ->
-                        com.simplecityapps.shuttle.model.Genre(
-                            entry.key,
-                            entry.value.size,
-                            entry.value.sumBy { song -> song.duration },
-                            entry.value.map { song -> song.mediaProvider }.distinct()
-                        )
-                    }
-                    .filter(query.predicate)
-                    .toMutableList()
-                    .sortedWith(query.sortOrder.comparator)
-            }
-    }
+    override fun getGenres(query: GenreQuery): Flow<List<Genre>> = genreRelay
+        .filterNotNull()
+        .map { genres ->
+            genres
+                .map { entry ->
+                    com.simplecityapps.shuttle.model.Genre(
+                        entry.key,
+                        entry.value.size,
+                        entry.value.sumBy { song -> song.duration },
+                        entry.value.map { song -> song.mediaProvider }.distinct()
+                    )
+                }
+                .filter(query.predicate)
+                .toMutableList()
+                .sortedWith(query.sortOrder.comparator)
+        }
 
     override fun getSongsForGenres(
         genres: List<String>,
         songQuery: SongQuery
-    ): Flow<List<Song>> {
-        return genreRelay
-            .filterNotNull()
-            .map {
-                genres.flatMap { genre ->
-                    it[genre].orEmpty()
-                }
+    ): Flow<List<Song>> = genreRelay
+        .filterNotNull()
+        .map {
+            genres.flatMap { genre ->
+                it[genre].orEmpty()
             }
-            .map { songs ->
-                var result = songs
+        }
+        .map { songs ->
+            var result = songs
 
-                if (!songQuery.includeExcluded) {
-                    result = songs.filterNot { it.blacklisted }
-                }
-
-                result
-                    .filter(songQuery.predicate)
-                    .sortedWith(songQuery.sortOrder.comparator)
+            if (!songQuery.includeExcluded) {
+                result = songs.filterNot { it.blacklisted }
             }
-    }
+
+            result
+                .filter(songQuery.predicate)
+                .sortedWith(songQuery.sortOrder.comparator)
+        }
 }

@@ -29,21 +29,13 @@ class DetailSongBinder(
         ) {}
     }
 
-    override fun createViewHolder(parent: ViewGroup): ViewHolder {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_detail_song, parent, false))
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewHolder = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_detail_song, parent, false))
 
-    override fun viewType(): Int {
-        return ViewTypes.DetailSong
-    }
+    override fun viewType(): Int = ViewTypes.DetailSong
 
-    override fun getSectionName(): String? {
-        return song.name?.firstOrNull()?.toString()
-    }
+    override fun getSectionName(): String? = song.name?.firstOrNull()?.toString()
 
-    override fun areContentsTheSame(other: Any): Boolean {
-        return song.playbackPosition == (other as? Song)?.playbackPosition
-    }
+    override fun areContentsTheSame(other: Any): Boolean = song.playbackPosition == (other as? Song)?.playbackPosition
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -54,9 +46,7 @@ class DetailSongBinder(
         return true
     }
 
-    override fun hashCode(): Int {
-        return song.id.hashCode()
-    }
+    override fun hashCode(): Int = song.id.hashCode()
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<DetailSongBinder>(itemView) {
         private val trackTextView: TextView = itemView.findViewById(R.id.trackTextView)

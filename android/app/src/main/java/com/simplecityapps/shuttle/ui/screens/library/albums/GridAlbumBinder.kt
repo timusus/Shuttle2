@@ -25,17 +25,11 @@ class GridAlbumBinder(
     val fixedWidthDp: Int? = null
 ) : AlbumBinder(album, imageLoader, listener),
     SectionViewBinder {
-    override fun createViewHolder(parent: ViewGroup): ViewHolder {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.grid_item_album, parent, false))
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewHolder = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.grid_item_album, parent, false))
 
-    override fun viewType(): Int {
-        return ViewTypes.AlbumGrid
-    }
+    override fun viewType(): Int = ViewTypes.AlbumGrid
 
-    override fun spanSize(spanCount: Int): Int {
-        return 1
-    }
+    override fun spanSize(spanCount: Int): Int = 1
 
     class ViewHolder(itemView: View) : AlbumBinder.ViewHolder(itemView) {
         private val title: TextView = itemView.findViewById(R.id.title)
