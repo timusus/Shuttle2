@@ -7,13 +7,11 @@ enum class ReplayGainMode {
     ;
 
     companion object {
-        fun init(ordinal: Int): ReplayGainMode {
-            return when (ordinal) {
-                Track.ordinal -> Track
-                Album.ordinal -> Album
-                Off.ordinal -> Off
-                else -> Off
-            }
+        fun init(ordinal: Int): ReplayGainMode = when (ordinal) {
+            Track.ordinal -> Track
+            Album.ordinal -> Album
+            Off.ordinal -> Off
+            else -> Off
         }
     }
 }

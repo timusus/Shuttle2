@@ -8,6 +8,4 @@ interface ToolbarHost {
     val contextualToolbar: Toolbar?
 }
 
-fun Fragment.findToolbarHost(): ToolbarHost? {
-    return (this as? ToolbarHost) ?: parentFragment?.findToolbarHost()
-}
+fun Fragment.findToolbarHost(): ToolbarHost? = (this as? ToolbarHost) ?: parentFragment?.findToolbarHost()

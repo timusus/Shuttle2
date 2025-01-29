@@ -6,14 +6,10 @@ class SongDiff(existingData: List<Song>, newData: List<Song>) : Diff<Song>(exist
     override fun isEqual(
         a: Song,
         b: Song
-    ): Boolean {
-        return a.path == b.path
-    }
+    ): Boolean = a.path == b.path
 
     override fun update(
         oldData: Song,
         newData: Song
-    ): Song {
-        return newData.copy(id = oldData.id)
-    }
+    ): Song = newData.copy(id = oldData.id)
 }

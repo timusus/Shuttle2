@@ -13,13 +13,9 @@ class HeaderBinder(
     val title: String,
     val subtitle: String? = null
 ) : ViewBinder {
-    override fun createViewHolder(parent: ViewGroup): ViewHolder {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_header, parent, false))
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewHolder = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_header, parent, false))
 
-    override fun viewType(): Int {
-        return ViewTypes.Header
-    }
+    override fun viewType(): Int = ViewTypes.Header
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

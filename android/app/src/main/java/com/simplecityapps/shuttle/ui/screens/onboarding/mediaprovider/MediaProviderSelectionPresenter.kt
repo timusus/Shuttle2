@@ -109,13 +109,11 @@ constructor(
         }
     }
 
-    private fun MediaProviderType.toMediaProvider(): MediaProvider {
-        return when (this) {
-            MediaProviderType.MediaStore -> mediaStoreMediaProvider
-            MediaProviderType.Shuttle -> taglibMediaProvider
-            MediaProviderType.Emby -> embyMediaProvider
-            MediaProviderType.Jellyfin -> jellyfinMediaProvider
-            MediaProviderType.Plex -> plexMediaProvider
-        }
+    private fun MediaProviderType.toMediaProvider(): MediaProvider = when (this) {
+        MediaProviderType.MediaStore -> mediaStoreMediaProvider
+        MediaProviderType.Shuttle -> taglibMediaProvider
+        MediaProviderType.Emby -> embyMediaProvider
+        MediaProviderType.Jellyfin -> jellyfinMediaProvider
+        MediaProviderType.Plex -> plexMediaProvider
     }
 }

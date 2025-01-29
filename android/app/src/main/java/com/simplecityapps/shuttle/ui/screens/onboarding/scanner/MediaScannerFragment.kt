@@ -72,9 +72,7 @@ class MediaScannerFragment :
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_scanner, container, false)
-    }
+    ): View? = inflater.inflate(R.layout.fragment_scanner, container, false)
 
     override fun onViewCreated(
         view: View,
@@ -196,9 +194,7 @@ class MediaScannerFragment :
 
     override val page: OnboardingPage = OnboardingPage.Scanner
 
-    override fun getParent(): OnboardingParent? {
-        return parentFragment as? OnboardingParent
-    }
+    override fun getParent(): OnboardingParent? = parentFragment as? OnboardingParent
 
     override fun handleNextButtonClick() {
         getParent()?.exit()
@@ -222,12 +218,11 @@ class MediaScannerFragment :
             showRescanButton: Boolean,
             dismissOnScanComplete: Boolean,
             showToolbar: Boolean
-        ) =
-            MediaScannerFragment().withArgs {
-                putBoolean(ARG_SCAN_AUTOMATICALLY, scanAutomatically)
-                putBoolean(ARG_SHOW_RESCAN_BUTTON, showRescanButton)
-                putBoolean(ARG_DISMISS_ON_SCAN_COMPLETE, dismissOnScanComplete)
-                putBoolean(ARG_SHOW_TOOLBAR, showToolbar)
-            }
+        ) = MediaScannerFragment().withArgs {
+            putBoolean(ARG_SCAN_AUTOMATICALLY, scanAutomatically)
+            putBoolean(ARG_SHOW_RESCAN_BUTTON, showRescanButton)
+            putBoolean(ARG_DISMISS_ON_SCAN_COMPLETE, dismissOnScanComplete)
+            putBoolean(ARG_SHOW_TOOLBAR, showToolbar)
+        }
     }
 }

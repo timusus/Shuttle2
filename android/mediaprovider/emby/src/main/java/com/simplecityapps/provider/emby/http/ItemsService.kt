@@ -44,9 +44,7 @@ suspend fun ItemsService.audioItems(
     fields: String? = "Genres,ProductionYear",
     limit: Int = 2500,
     startIndex: Int = 0
-): NetworkResult<QueryResult> {
-    return itemsImpl("$url/Users/$userId/Items", token, recursive, itemTypes, fields, limit, startIndex)
-}
+): NetworkResult<QueryResult> = itemsImpl("$url/Users/$userId/Items", token, recursive, itemTypes, fields, limit, startIndex)
 
 suspend fun ItemsService.playlists(
     url: String,
@@ -57,9 +55,7 @@ suspend fun ItemsService.playlists(
     fields: String? = null,
     limit: Int = 2500,
     startIndex: Int = 0
-): NetworkResult<QueryResult> {
-    return itemsImpl("$url/Users/$userId/Items", token, recursive, itemTypes, fields, limit, startIndex)
-}
+): NetworkResult<QueryResult> = itemsImpl("$url/Users/$userId/Items", token, recursive, itemTypes, fields, limit, startIndex)
 
 suspend fun ItemsService.playlistItems(
     url: String,
@@ -71,15 +67,11 @@ suspend fun ItemsService.playlistItems(
     limit: Int = 2500,
     startIndex: Int = 0,
     userId: String
-): NetworkResult<QueryResult> {
-    return itemsImpl("$url/Playlists/$playlistId/Items", token, recursive, itemTypes, fields, limit, startIndex, userId)
-}
+): NetworkResult<QueryResult> = itemsImpl("$url/Playlists/$playlistId/Items", token, recursive, itemTypes, fields, limit, startIndex, userId)
 
 suspend fun ItemsService.item(
     url: String,
     token: String,
     userId: String,
     itemId: String
-): NetworkResult<Item> {
-    return itemImpl("$url/Users/$userId/Items/$itemId", token)
-}
+): NetworkResult<Item> = itemImpl("$url/Users/$userId/Items/$itemId", token)

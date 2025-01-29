@@ -20,13 +20,9 @@ class ScanProgressBinder(
     val songImportProgressState: ImportProgressState,
     val playlistImportProgressState: ImportProgressState
 ) : ViewBinder {
-    override fun createViewHolder(parent: ViewGroup): ViewBinder.ViewHolder<out ViewBinder> {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_scan_progress, parent, false))
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewBinder.ViewHolder<out ViewBinder> = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_scan_progress, parent, false))
 
-    override fun viewType(): Int {
-        return ViewTypes.ScanProgress
-    }
+    override fun viewType(): Int = ViewTypes.ScanProgress
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -36,16 +32,12 @@ class ScanProgressBinder(
         return true
     }
 
-    override fun hashCode(): Int {
-        return mediaProviderType.hashCode()
-    }
+    override fun hashCode(): Int = mediaProviderType.hashCode()
 
-    override fun areContentsTheSame(other: Any): Boolean {
-        return other is ScanProgressBinder &&
-            mediaProviderType == other.mediaProviderType &&
-            songImportProgressState == other.songImportProgressState &&
-            playlistImportProgressState == other.playlistImportProgressState
-    }
+    override fun areContentsTheSame(other: Any): Boolean = other is ScanProgressBinder &&
+        mediaProviderType == other.mediaProviderType &&
+        songImportProgressState == other.songImportProgressState &&
+        playlistImportProgressState == other.playlistImportProgressState
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<ScanProgressBinder>(itemView) {
         val icon: ImageView = itemView.findViewById(R.id.icon)

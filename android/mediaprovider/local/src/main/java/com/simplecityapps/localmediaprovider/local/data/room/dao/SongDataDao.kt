@@ -28,11 +28,9 @@ abstract class SongDataDao {
     @Query("SELECT * FROM songs ORDER BY albumArtist, album, track")
     abstract fun getAllSongData(): Flow<List<SongData>>
 
-    fun getAll(): Flow<List<Song>> {
-        return getAllSongData().map { list ->
-            list.map { songData ->
-                songData.toSong()
-            }
+    fun getAll(): Flow<List<Song>> = getAllSongData().map { list ->
+        list.map { songData ->
+            songData.toSong()
         }
     }
 
@@ -95,36 +93,34 @@ abstract class SongDataDao {
     abstract suspend fun delete(id: Long)
 }
 
-fun SongData.toSong(): Song {
-    return Song(
-        id = id,
-        name = name,
-        albumArtist = albumArtist,
-        artists = artists,
-        album = album,
-        track = track,
-        disc = disc,
-        duration = duration,
-        date = year?.let { LocalDate(it, 1, 1) },
-        genres = genres,
-        path = path,
-        size = size,
-        mimeType = mimeType,
-        lastModified = Instant.fromEpochMilliseconds(lastModified.time),
-        lastPlayed = lastPlayed?.let { Instant.fromEpochMilliseconds(it.time) },
-        lastCompleted = lastCompleted?.let { Instant.fromEpochMilliseconds(it.time) },
-        playCount = playCount,
-        playbackPosition = playbackPosition,
-        blacklisted = excluded,
-        externalId = externalId,
-        mediaProvider = mediaProvider,
-        replayGainTrack = replayGainTrack,
-        replayGainAlbum = replayGainAlbum,
-        lyrics = lyrics,
-        grouping = grouping,
-        bitRate = bitRate,
-        bitDepth = bitDepth,
-        sampleRate = sampleRate,
-        channelCount = channelCount
-    )
-}
+fun SongData.toSong(): Song = Song(
+    id = id,
+    name = name,
+    albumArtist = albumArtist,
+    artists = artists,
+    album = album,
+    track = track,
+    disc = disc,
+    duration = duration,
+    date = year?.let { LocalDate(it, 1, 1) },
+    genres = genres,
+    path = path,
+    size = size,
+    mimeType = mimeType,
+    lastModified = Instant.fromEpochMilliseconds(lastModified.time),
+    lastPlayed = lastPlayed?.let { Instant.fromEpochMilliseconds(it.time) },
+    lastCompleted = lastCompleted?.let { Instant.fromEpochMilliseconds(it.time) },
+    playCount = playCount,
+    playbackPosition = playbackPosition,
+    blacklisted = excluded,
+    externalId = externalId,
+    mediaProvider = mediaProvider,
+    replayGainTrack = replayGainTrack,
+    replayGainAlbum = replayGainAlbum,
+    lyrics = lyrics,
+    grouping = grouping,
+    bitRate = bitRate,
+    bitDepth = bitDepth,
+    sampleRate = sampleRate,
+    channelCount = channelCount
+)

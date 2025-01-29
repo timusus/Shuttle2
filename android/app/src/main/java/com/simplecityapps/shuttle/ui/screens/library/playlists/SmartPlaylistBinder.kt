@@ -24,13 +24,9 @@ class SmartPlaylistBinder(val playlist: SmartPlaylist, private val listener: Lis
         ) {}
     }
 
-    override fun createViewHolder(parent: ViewGroup): ViewHolder {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_smart_playlist, parent, false))
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewHolder = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_smart_playlist, parent, false))
 
-    override fun viewType(): Int {
-        return ViewTypes.SmartPlaylist
-    }
+    override fun viewType(): Int = ViewTypes.SmartPlaylist
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -43,13 +39,9 @@ class SmartPlaylistBinder(val playlist: SmartPlaylist, private val listener: Lis
         return true
     }
 
-    override fun hashCode(): Int {
-        return playlist.hashCode()
-    }
+    override fun hashCode(): Int = playlist.hashCode()
 
-    override fun areContentsTheSame(other: Any): Boolean {
-        return playlist.nameResId == (other as? SmartPlaylistBinder)?.playlist?.nameResId
-    }
+    override fun areContentsTheSame(other: Any): Boolean = playlist.nameResId == (other as? SmartPlaylistBinder)?.playlist?.nameResId
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<SmartPlaylistBinder>(itemView) {
         private val titleTextView: TextView = itemView.findViewById(R.id.title)

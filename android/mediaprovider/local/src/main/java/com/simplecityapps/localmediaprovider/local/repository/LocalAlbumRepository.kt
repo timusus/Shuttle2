@@ -45,13 +45,11 @@ class LocalAlbumRepository(
             .stateIn(scope, SharingStarted.Lazily, null)
     }
 
-    override fun getAlbums(query: AlbumQuery): Flow<List<Album>> {
-        return albumsRelay
-            .filterNotNull()
-            .map { albums ->
-                albums
-                    .filter(query.predicate)
-                    .sortedWith(query.sortOrder.comparator)
-            }
-    }
+    override fun getAlbums(query: AlbumQuery): Flow<List<Album>> = albumsRelay
+        .filterNotNull()
+        .map { albums ->
+            albums
+                .filter(query.predicate)
+                .sortedWith(query.sortOrder.comparator)
+        }
 }

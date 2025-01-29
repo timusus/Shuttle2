@@ -21,9 +21,7 @@ class DebugDrawerFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_debug_drawer, container, false)
-    }
+    ): View? = inflater.inflate(R.layout.fragment_debug_drawer, container, false)
 
     override fun onViewCreated(
         view: View,

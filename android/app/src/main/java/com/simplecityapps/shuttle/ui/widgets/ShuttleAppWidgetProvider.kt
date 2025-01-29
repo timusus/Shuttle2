@@ -50,9 +50,7 @@ abstract class ShuttleAppWidgetProvider : AppWidgetProvider() {
     val isDarkMode: Boolean
         get() = preferenceManager.widgetDarkMode
 
-    private fun getLayoutResId(): Int {
-        return if (isDarkMode) layoutResIdDark else layoutResIdLight
-    }
+    private fun getLayoutResId(): Int = if (isDarkMode) layoutResIdDark else layoutResIdLight
 
     override fun onReceive(
         context: Context?,
@@ -119,26 +117,20 @@ abstract class ShuttleAppWidgetProvider : AppWidgetProvider() {
     private fun getPendingIntent(
         context: Context,
         intent: Intent
-    ): PendingIntent {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            PendingIntent.getForegroundService(context, 1, intent, PendingIntentCompat.FLAG_IMMUTABLE)
-        } else {
-            PendingIntent.getService(context, 1, intent, PendingIntentCompat.FLAG_IMMUTABLE)
+    ): PendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        PendingIntent.getForegroundService(context, 1, intent, PendingIntentCompat.FLAG_IMMUTABLE)
+    } else {
+        PendingIntent.getService(context, 1, intent, PendingIntentCompat.FLAG_IMMUTABLE)
+    }
+
+    fun getPlaybackDrawable(): Int = when (playbackManager.playbackState()) {
+        is PlaybackState.Loading, PlaybackState.Playing -> {
+            if (isDarkMode) R.drawable.ic_pause_white_24dp else com.simplecityapps.playback.R.drawable.ic_pause_black_24dp
+        }
+        else -> {
+            if (isDarkMode) R.drawable.ic_play_arrow_white_24dp else com.simplecityapps.playback.R.drawable.ic_play_arrow_black_24dp
         }
     }
 
-    fun getPlaybackDrawable(): Int {
-        return when (playbackManager.playbackState()) {
-            is PlaybackState.Loading, PlaybackState.Playing -> {
-                if (isDarkMode) R.drawable.ic_pause_white_24dp else com.simplecityapps.playback.R.drawable.ic_pause_black_24dp
-            }
-            else -> {
-                if (isDarkMode) R.drawable.ic_play_arrow_white_24dp else com.simplecityapps.playback.R.drawable.ic_play_arrow_black_24dp
-            }
-        }
-    }
-
-    fun getPlaceholderDrawable(): Int {
-        return if (isDarkMode) R.drawable.ic_music_note_white_24dp else com.simplecityapps.playback.R.drawable.ic_music_note_black_24dp
-    }
+    fun getPlaceholderDrawable(): Int = if (isDarkMode) R.drawable.ic_music_note_white_24dp else com.simplecityapps.playback.R.drawable.ic_music_note_black_24dp
 }

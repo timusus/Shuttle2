@@ -23,18 +23,12 @@ class DirectorySongLocalArtworkModelLoader(
         width: Int,
         height: Int,
         options: Options
-    ): ModelLoader.LoadData<InputStream>? {
-        return localArtworkModelLoader.buildLoadData(DirectorySongLocalArtworkProvider(context, model), width, height, options)
-    }
+    ): ModelLoader.LoadData<InputStream>? = localArtworkModelLoader.buildLoadData(DirectorySongLocalArtworkProvider(context, model), width, height, options)
 
-    override fun handles(model: Song): Boolean {
-        return true
-    }
+    override fun handles(model: Song): Boolean = true
 
     class Factory(val context: Context) : ModelLoaderFactory<Song, InputStream> {
-        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Song, InputStream> {
-            return DirectorySongLocalArtworkModelLoader(context, multiFactory.build(LocalArtworkProvider::class.java, InputStream::class.java) as LocalArtworkModelLoader)
-        }
+        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Song, InputStream> = DirectorySongLocalArtworkModelLoader(context, multiFactory.build(LocalArtworkProvider::class.java, InputStream::class.java) as LocalArtworkModelLoader)
 
         override fun teardown() {
         }

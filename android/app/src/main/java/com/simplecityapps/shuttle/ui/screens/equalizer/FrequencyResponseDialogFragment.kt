@@ -109,9 +109,7 @@ class FrequencyResponseDialogFragment : DialogFragment() {
         lineChart.axisLeft.labelCount = 10
         lineChart.axisLeft.valueFormatter =
             object : ValueFormatter() {
-                override fun getFormattedValue(value: Float): String {
-                    return "%.1f".format(value) + "dB"
-                }
+                override fun getFormattedValue(value: Float): String = "%.1f".format(value) + "dB"
             }
         lineChart.axisRight.isEnabled = false
 
@@ -144,46 +142,44 @@ class FrequencyResponseDialogFragment : DialogFragment() {
         lineChart.invalidate()
     }
 
-    private suspend fun calculateFft(): Map<Float, Float> {
-        return withContext(Dispatchers.IO) {
-            val audioProcessor = EqualizerAudioProcessor(true)
-            audioProcessor.configure(AudioProcessor.AudioFormat(44100, 1, C.ENCODING_PCM_16BIT))
-            audioProcessor.flush()
-            audioProcessor.preset = preset
+    private suspend fun calculateFft(): Map<Float, Float> = withContext(Dispatchers.IO) {
+        val audioProcessor = EqualizerAudioProcessor(true)
+        audioProcessor.configure(AudioProcessor.AudioFormat(44100, 1, C.ENCODING_PCM_16BIT))
+        audioProcessor.flush()
+        audioProcessor.preset = preset
 
-            val size = 2.0.pow(14).toInt()
+        val size = 2.0.pow(14).toInt()
 
-            val noise = Noise.real(size)
+        val noise = Noise.real(size)
 
-            var src = FloatArray(size)
-            src[0] = 1f
+        var src = FloatArray(size)
+        src[0] = 1f
 
-            val gain = playbackPreferenceManager.preAmpGain
-            val delta = gain.fromDb()
+        val gain = playbackPreferenceManager.preAmpGain
+        val delta = gain.fromDb()
 
-            src =
-                src.map { value ->
-                    var newValue = value
+        src =
+            src.map { value ->
+                var newValue = value
 
-                    if (gain != 0.0) {
-                        newValue = MathUtils.clamp((newValue * delta), Short.MIN_VALUE.toDouble(), Short.MAX_VALUE.toDouble()).toFloat()
-                    }
+                if (gain != 0.0) {
+                    newValue = MathUtils.clamp((newValue * delta), Short.MIN_VALUE.toDouble(), Short.MAX_VALUE.toDouble()).toFloat()
+                }
 
-                    for (band in audioProcessor.bandProcessors) {
-                        newValue = band.processSample(newValue, 0)
-                    }
-                    newValue
-                }.toFloatArray()
+                for (band in audioProcessor.bandProcessors) {
+                    newValue = band.processSample(newValue, 0)
+                }
+                newValue
+            }.toFloatArray()
 
-            val dst = FloatArray(size + 2)
+        val dst = FloatArray(size + 2)
 
-            noise.fft(src, dst)
+        noise.fft(src, dst)
 
-            (0 until size / 2).associateBy(
-                { index -> ((index / (size / 2f)) * (44100 / 2f)) },
-                { index -> (20f * log10(sqrt(((dst[index * 2]).pow(2)) + ((dst[index * 2 + 1]).pow(2))))) }
-            )
-        }
+        (0 until size / 2).associateBy(
+            { index -> ((index / (size / 2f)) * (44100 / 2f)) },
+            { index -> (20f * log10(sqrt(((dst[index * 2]).pow(2)) + ((dst[index * 2 + 1]).pow(2))))) }
+        )
     }
 
     fun show(fragmentManager: FragmentManager) {

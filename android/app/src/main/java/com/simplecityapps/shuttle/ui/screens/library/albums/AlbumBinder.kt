@@ -35,9 +35,7 @@ abstract class AlbumBinder(
         fun onViewHolderCreated(holder: ViewHolder) {}
     }
 
-    override fun getSectionName(): String? {
-        return album.groupKey?.key?.firstOrNull()?.toString()?.uppercase(Locale.getDefault())
-    }
+    override fun getSectionName(): String? = album.groupKey?.key?.firstOrNull()?.toString()?.uppercase(Locale.getDefault())
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -48,9 +46,7 @@ abstract class AlbumBinder(
         return true
     }
 
-    override fun hashCode(): Int {
-        return album.hashCode()
-    }
+    override fun hashCode(): Int = album.hashCode()
 
     override fun areContentsTheSame(other: Any): Boolean {
         if (other !is AlbumBinder) return false

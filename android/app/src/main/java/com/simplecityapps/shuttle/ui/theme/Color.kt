@@ -5,12 +5,10 @@ import androidx.compose.ui.graphics.Color
 
 data class Theme(
     val light: ColorScheme,
-    val dark: ColorScheme,
+    val dark: ColorScheme
 )
 
-fun Theme.getColorScheme(useDark: Boolean = false): ColorScheme {
-    return if (useDark) dark else light
-}
+fun Theme.getColorScheme(useDark: Boolean = false): ColorScheme = if (useDark) dark else light
 
 val ShuttleTheme = Theme(
     light = ColorScheme(
@@ -170,7 +168,6 @@ val OrangeTheme = Theme(
         surfaceTint = Color(0xFFFFB4A9)
     )
 )
-
 
 val CyanTheme = Theme(
     light = ColorScheme(

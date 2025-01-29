@@ -7,7 +7,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import timber.log.Timber
 
-abstract class BasePresenter<T : Any> : BaseContract.Presenter<T>, CoroutineScope {
+abstract class BasePresenter<T : Any> :
+    BaseContract.Presenter<T>,
+    CoroutineScope {
     var view: T? = null
 
     private var job = SupervisorJob()

@@ -17,25 +17,19 @@ class EmbyAuthenticationManager(
 ) {
     private val deviceId = UUID.randomUUID().toString()
 
-    fun getLoginCredentials(): LoginCredentials? {
-        return credentialStore.loginCredentials
-    }
+    fun getLoginCredentials(): LoginCredentials? = credentialStore.loginCredentials
 
     fun setLoginCredentials(loginCredentials: LoginCredentials?) {
         credentialStore.loginCredentials = loginCredentials
     }
 
-    fun getAuthenticatedCredentials(): AuthenticatedCredentials? {
-        return credentialStore.authenticatedCredentials
-    }
+    fun getAuthenticatedCredentials(): AuthenticatedCredentials? = credentialStore.authenticatedCredentials
 
     fun setAddress(address: String) {
         credentialStore.address = address
     }
 
-    fun getAddress(): String? {
-        return credentialStore.address
-    }
+    fun getAddress(): String? = credentialStore.address
 
     suspend fun authenticate(
         address: String,

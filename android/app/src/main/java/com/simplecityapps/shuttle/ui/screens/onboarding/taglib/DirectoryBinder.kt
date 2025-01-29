@@ -19,17 +19,11 @@ class DirectoryBinder(
         fun onRemoveClicked(directory: DirectorySelectionContract.Directory)
     }
 
-    override fun createViewHolder(parent: ViewGroup): ViewHolder {
-        return ViewHolder(parent.inflateView(R.layout.list_item_onboaring_directory))
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewHolder = ViewHolder(parent.inflateView(R.layout.list_item_onboaring_directory))
 
-    override fun viewType(): Int {
-        return ViewTypes.OnboardingDirectory
-    }
+    override fun viewType(): Int = ViewTypes.OnboardingDirectory
 
-    override fun areContentsTheSame(other: Any): Boolean {
-        return directory.traversalComplete == (other as? DirectoryBinder)?.directory?.traversalComplete
-    }
+    override fun areContentsTheSame(other: Any): Boolean = directory.traversalComplete == (other as? DirectoryBinder)?.directory?.traversalComplete
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -42,9 +36,7 @@ class DirectoryBinder(
         return true
     }
 
-    override fun hashCode(): Int {
-        return directory.hashCode()
-    }
+    override fun hashCode(): Int = directory.hashCode()
 
     class ViewHolder(val itemView: View) : ViewBinder.ViewHolder<DirectoryBinder>(itemView) {
         private val title: TextView = itemView.findViewById(R.id.titleLabel)

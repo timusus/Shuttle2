@@ -17,15 +17,11 @@ import javax.inject.Singleton
 class MediaProviderModule {
     @Provides
     @Singleton
-    fun provideFileScanner(): FileScanner {
-        return FileScanner()
-    }
+    fun provideFileScanner(): FileScanner = FileScanner()
 
     @Provides
     @Singleton
-    fun provideKTagLib(): KTagLib {
-        return KTagLib()
-    }
+    fun provideKTagLib(): KTagLib = KTagLib()
 
     @Provides
     @Singleton
@@ -33,15 +29,11 @@ class MediaProviderModule {
         @ApplicationContext context: Context,
         kTagLib: KTagLib,
         fileScanner: FileScanner
-    ): TaglibMediaProvider {
-        return TaglibMediaProvider(context, kTagLib, fileScanner)
-    }
+    ): TaglibMediaProvider = TaglibMediaProvider(context, kTagLib, fileScanner)
 
     @Provides
     @Singleton
     fun provideMediaStoreSongProvider(
         @ApplicationContext context: Context
-    ): MediaStoreMediaProvider {
-        return MediaStoreMediaProvider(context)
-    }
+    ): MediaStoreMediaProvider = MediaStoreMediaProvider(context)
 }

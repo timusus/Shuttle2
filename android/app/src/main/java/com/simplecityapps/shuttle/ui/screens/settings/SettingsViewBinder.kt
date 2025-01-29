@@ -17,13 +17,9 @@ class SettingsViewBinder(
         fun onMenuItemClicked(settingsItem: SettingsMenuItem)
     }
 
-    override fun createViewHolder(parent: ViewGroup): ViewHolder {
-        return ViewHolder(parent.inflateView(R.layout.list_item_settings))
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewHolder = ViewHolder(parent.inflateView(R.layout.list_item_settings))
 
-    override fun viewType(): Int {
-        return ViewTypes.Settings
-    }
+    override fun viewType(): Int = ViewTypes.Settings
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -36,13 +32,9 @@ class SettingsViewBinder(
         return true
     }
 
-    override fun hashCode(): Int {
-        return settingsItem.hashCode()
-    }
+    override fun hashCode(): Int = settingsItem.hashCode()
 
-    override fun areContentsTheSame(other: Any): Boolean {
-        return isSelected == (other as? SettingsViewBinder)?.isSelected
-    }
+    override fun areContentsTheSame(other: Any): Boolean = isSelected == (other as? SettingsViewBinder)?.isSelected
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<SettingsViewBinder>(itemView) {
         private val icon: ImageView = itemView.findViewById(R.id.icon)

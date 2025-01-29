@@ -14,9 +14,7 @@ constructor(
     private val jellyfinAuthenticationManager: JellyfinAuthenticationManager,
     private val jellyfinTranscodeService: JellyfinTranscodeService
 ) : MediaInfoProvider {
-    override fun handles(uri: Uri): Boolean {
-        return uri.scheme == "jellyfin"
-    }
+    override fun handles(uri: Uri): Boolean = uri.scheme == "jellyfin"
 
     @Throws(IllegalStateException::class)
     override suspend fun getMediaInfo(

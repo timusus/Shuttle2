@@ -286,13 +286,11 @@ class PlaybackService :
         clientPackageName: String,
         clientUid: Int,
         rootHints: Bundle?
-    ): BrowserRoot? {
-        return if (packageValidator.isKnownCaller(clientPackageName, clientUid)) {
-            BrowserRoot("media:/root/", null)
-        } else {
-            Timber.v("OnGetRoot: Browsing NOT ALLOWED for unknown caller. Returning empty browser root so all apps can use MediaController. $clientPackageName")
-            BrowserRoot("EMPTY_ROOT", null)
-        }
+    ): BrowserRoot? = if (packageValidator.isKnownCaller(clientPackageName, clientUid)) {
+        BrowserRoot("media:/root/", null)
+    } else {
+        Timber.v("OnGetRoot: Browsing NOT ALLOWED for unknown caller. Returning empty browser root so all apps can use MediaController. $clientPackageName")
+        BrowserRoot("EMPTY_ROOT", null)
     }
 
     // Static

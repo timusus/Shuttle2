@@ -6,12 +6,10 @@ enum class SeekDirection {
     ;
 
     companion object {
-        fun fromInt(value: Int): SeekDirection {
-            return when (value) {
-                0 -> Forward
-                1 -> Backward
-                else -> throw IllegalStateException("Invalid seek direction value")
-            }
+        fun fromInt(value: Int): SeekDirection = when (value) {
+            0 -> Forward
+            1 -> Backward
+            else -> throw IllegalStateException("Invalid seek direction value")
         }
     }
 }

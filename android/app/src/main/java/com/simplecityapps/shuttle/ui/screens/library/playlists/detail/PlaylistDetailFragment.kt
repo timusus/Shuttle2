@@ -84,9 +84,7 @@ class PlaylistDetailFragment :
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_playlist_detail, container, false)
-    }
+    ): View? = inflater.inflate(R.layout.fragment_playlist_detail, container, false)
 
     override fun onViewCreated(
         view: View,

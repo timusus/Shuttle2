@@ -134,9 +134,7 @@ constructor(
     private fun mRound(
         i: Float,
         n: Float
-    ): Float {
-        return if ((i % n) > n / 2) (i + n - i % n) else (i - i % n)
-    }
+    ): Float = if ((i % n) > n / 2) (i + n - i % n) else (i - i % n)
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)

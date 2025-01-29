@@ -72,8 +72,8 @@ constructor(
     private val playbackManager: PlaybackManager,
     private val mediaImporter: MediaImporter,
     private val queueManager: QueueManager
-) : GenreListContract.Presenter,
-    BasePresenter<GenreListContract.View>() {
+) : BasePresenter<GenreListContract.View>(),
+    GenreListContract.Presenter {
     private var genres: List<Genre>? = null
 
     private val mediaImporterListener =
@@ -182,7 +182,5 @@ constructor(
         }
     }
 
-    override fun getFastscrollPrefix(genre: Genre): String? {
-        return genre.name.first().toString()
-    }
+    override fun getFastscrollPrefix(genre: Genre): String? = genre.name.first().toString()
 }

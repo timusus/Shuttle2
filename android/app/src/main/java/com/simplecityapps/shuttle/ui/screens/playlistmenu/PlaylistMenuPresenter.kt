@@ -73,8 +73,8 @@ constructor(
     private val genreRepository: GenreRepository,
     private val queueManager: QueueManager,
     private val preferenceManager: GeneralPreferenceManager
-) : PlaylistMenuContract.Presenter,
-    BasePresenter<PlaylistMenuContract.View>() {
+) : BasePresenter<PlaylistMenuContract.View>(),
+    PlaylistMenuContract.Presenter {
     override var playlists: List<Playlist> = emptyList()
 
     override fun bindView(view: PlaylistMenuContract.View) {

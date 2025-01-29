@@ -23,13 +23,9 @@ class LibraryTabBinder(val tab: LibraryTab, val selected: Boolean, val listener:
         )
     }
 
-    override fun createViewHolder(parent: ViewGroup): ViewHolder {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_library_tab, parent, false))
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewHolder = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_library_tab, parent, false))
 
-    override fun viewType(): Int {
-        return ViewTypes.LibraryTab
-    }
+    override fun viewType(): Int = ViewTypes.LibraryTab
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -42,13 +38,9 @@ class LibraryTabBinder(val tab: LibraryTab, val selected: Boolean, val listener:
         return true
     }
 
-    override fun hashCode(): Int {
-        return tab.hashCode()
-    }
+    override fun hashCode(): Int = tab.hashCode()
 
-    override fun areContentsTheSame(other: Any): Boolean {
-        return (other as? LibraryTabBinder)?.selected == selected
-    }
+    override fun areContentsTheSame(other: Any): Boolean = (other as? LibraryTabBinder)?.selected == selected
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<LibraryTabBinder>(itemView) {
         private val title: TextView = itemView.findViewById(R.id.title)
@@ -80,12 +72,10 @@ class LibraryTabBinder(val tab: LibraryTab, val selected: Boolean, val listener:
     }
 }
 
-private fun LibraryTab.name(resources: Resources): String {
-    return when (this) {
-        LibraryTab.Genres -> resources.getString(R.string.genres)
-        LibraryTab.Playlists -> resources.getString(R.string.library_playlists)
-        LibraryTab.Artists -> resources.getString(R.string.artists)
-        LibraryTab.Albums -> resources.getString(R.string.albums)
-        LibraryTab.Songs -> resources.getString(R.string.songs)
-    }
+private fun LibraryTab.name(resources: Resources): String = when (this) {
+    LibraryTab.Genres -> resources.getString(R.string.genres)
+    LibraryTab.Playlists -> resources.getString(R.string.library_playlists)
+    LibraryTab.Artists -> resources.getString(R.string.artists)
+    LibraryTab.Albums -> resources.getString(R.string.albums)
+    LibraryTab.Songs -> resources.getString(R.string.songs)
 }

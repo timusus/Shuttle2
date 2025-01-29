@@ -29,13 +29,9 @@ class SearchAlbumArtistBinder(
     listener: Listener,
     private val jaroSimilarity: ArtistJaroSimilarity
 ) : AlbumArtistBinder(albumArtist, imageLoader, listener) {
-    override fun createViewHolder(parent: ViewGroup): ViewBinder.ViewHolder<out ViewBinder> {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_album_artist, parent, false))
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewBinder.ViewHolder<out ViewBinder> = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_album_artist, parent, false))
 
-    override fun viewType(): Int {
-        return ViewTypes.AlbumArtistList
-    }
+    override fun viewType(): Int = ViewTypes.AlbumArtistList
 
     override fun areContentsTheSame(other: Any): Boolean {
         if (other !is SearchAlbumArtistBinder) return false

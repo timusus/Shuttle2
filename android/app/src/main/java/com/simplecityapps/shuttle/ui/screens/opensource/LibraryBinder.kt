@@ -15,13 +15,9 @@ class LibraryBinder(val library: Library, val listener: Listener) : ViewBinder {
         fun onItemClick(library: Library)
     }
 
-    override fun createViewHolder(parent: ViewGroup): ViewHolder {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_license, parent, false))
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewHolder = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_license, parent, false))
 
-    override fun viewType(): Int {
-        return ViewTypes.License
-    }
+    override fun viewType(): Int = ViewTypes.License
 
     class ViewHolder(val itemView: View) : ViewBinder.ViewHolder<LibraryBinder>(itemView) {
         val title: TextView = itemView.findViewById(R.id.title)

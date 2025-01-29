@@ -109,9 +109,7 @@ constructor(
         clipToOutline = true
     }
 
-    override fun verifyDrawable(who: Drawable): Boolean {
-        return who === animationDrawable || super.verifyDrawable(who)
-    }
+    override fun verifyDrawable(who: Drawable): Boolean = who === animationDrawable || super.verifyDrawable(who)
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)

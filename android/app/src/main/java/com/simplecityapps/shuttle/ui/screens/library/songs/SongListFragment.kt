@@ -93,9 +93,7 @@ class SongListFragment :
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_songs, container, false)
-    }
+    ): View? = inflater.inflate(R.layout.fragment_songs, container, false)
 
     override fun onViewCreated(
         view: View,
@@ -111,11 +109,9 @@ class SongListFragment :
 
         adapter =
             object : SectionedAdapter(viewLifecycleOwner.lifecycleScope) {
-                override fun getSectionName(viewBinder: ViewBinder?): String {
-                    return (viewBinder as? SongBinder)?.song?.let { song ->
-                        presenter.getFastscrollPrefix(song)
-                    } ?: ""
-                }
+                override fun getSectionName(viewBinder: ViewBinder?): String = (viewBinder as? SongBinder)?.song?.let { song ->
+                    presenter.getFastscrollPrefix(song)
+                } ?: ""
             }
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
@@ -195,34 +191,32 @@ class SongListFragment :
 
     // Toolbar item selection
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.sortSongName -> {
-                presenter.setSortOrder(SongSortOrder.SongName)
-                true
-            }
-            R.id.sortArtistName -> {
-                presenter.setSortOrder(SongSortOrder.ArtistGroupKey)
-                true
-            }
-            R.id.sortAlbumName -> {
-                presenter.setSortOrder(SongSortOrder.AlbumGroupKey)
-                true
-            }
-            R.id.sortSongYear -> {
-                presenter.setSortOrder(SongSortOrder.Year)
-                true
-            }
-            R.id.sortSongDuration -> {
-                presenter.setSortOrder(SongSortOrder.Duration)
-                true
-            }
-            R.id.sortSongDateModified -> {
-                presenter.setSortOrder(SongSortOrder.LastModified)
-                true
-            }
-            else -> false
+    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+        R.id.sortSongName -> {
+            presenter.setSortOrder(SongSortOrder.SongName)
+            true
         }
+        R.id.sortArtistName -> {
+            presenter.setSortOrder(SongSortOrder.ArtistGroupKey)
+            true
+        }
+        R.id.sortAlbumName -> {
+            presenter.setSortOrder(SongSortOrder.AlbumGroupKey)
+            true
+        }
+        R.id.sortSongYear -> {
+            presenter.setSortOrder(SongSortOrder.Year)
+            true
+        }
+        R.id.sortSongDuration -> {
+            presenter.setSortOrder(SongSortOrder.Duration)
+            true
+        }
+        R.id.sortSongDateModified -> {
+            presenter.setSortOrder(SongSortOrder.LastModified)
+            true
+        }
+        else -> false
     }
 
     // Private

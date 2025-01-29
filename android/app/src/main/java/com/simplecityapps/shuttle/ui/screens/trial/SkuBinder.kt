@@ -17,13 +17,9 @@ class SkuBinder(val skuDetails: SkuDetails, val litener: Listener) : ViewBinder 
         fun onClick(skuDetails: SkuDetails)
     }
 
-    override fun createViewHolder(parent: ViewGroup): ViewHolder {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_sku, parent, false))
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewHolder = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_sku, parent, false))
 
-    override fun viewType(): Int {
-        return ViewTypes.Sku
-    }
+    override fun viewType(): Int = ViewTypes.Sku
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<SkuBinder>(itemView) {
         val title: TextView = itemView.findViewById(R.id.title)

@@ -173,18 +173,14 @@ class Snowflake(
     var snowY: Float = startY
     var shouldRemove = false
 
-    fun snowX(): Float {
-        return velX.let {
-            snowX += it
-            snowX
-        }
+    fun snowX(): Float = velX.let {
+        snowX += it
+        snowX
     }
 
-    fun snowY(): Float {
-        return velY.let {
-            snowY += it
-            snowY
-        }
+    fun snowY(): Float = velY.let {
+        snowY += it
+        snowY
     }
 
     fun reset() {

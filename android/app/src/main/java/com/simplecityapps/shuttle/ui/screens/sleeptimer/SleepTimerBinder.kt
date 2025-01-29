@@ -13,13 +13,9 @@ class SleepTimerBinder(val duration: SleepTimerDuration, val listener: Listener)
         fun onClick(duration: SleepTimerDuration)
     }
 
-    override fun createViewHolder(parent: ViewGroup): ViewHolder {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_sleep_timer, parent, false))
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewHolder = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_sleep_timer, parent, false))
 
-    override fun viewType(): Int {
-        return ViewTypes.SleepTimer
-    }
+    override fun viewType(): Int = ViewTypes.SleepTimer
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<SleepTimerBinder>(itemView) {
         val label: TextView = itemView.findViewById(R.id.label)

@@ -22,17 +22,11 @@ class HorizontalSongListBinder(
     val imageLoader: ArtworkImageLoader,
     val scope: CoroutineScope
 ) : ViewBinder {
-    override fun createViewHolder(parent: ViewGroup): ViewBinder.ViewHolder<out ViewBinder> {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_horizontal_list, parent, false), scope)
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewBinder.ViewHolder<out ViewBinder> = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_horizontal_list, parent, false), scope)
 
-    override fun viewType(): Int {
-        return ViewTypes.HorizontalSongSection
-    }
+    override fun viewType(): Int = ViewTypes.HorizontalSongSection
 
-    override fun areContentsTheSame(other: Any): Boolean {
-        return songs == (other as? HorizontalSongListBinder)?.songs
-    }
+    override fun areContentsTheSame(other: Any): Boolean = songs == (other as? HorizontalSongListBinder)?.songs
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

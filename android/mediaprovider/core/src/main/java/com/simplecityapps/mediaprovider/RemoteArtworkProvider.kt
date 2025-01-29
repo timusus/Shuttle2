@@ -12,9 +12,7 @@ interface RemoteArtworkProvider {
 }
 
 class AggregateRemoteArtworkProvider(val providers: MutableSet<RemoteArtworkProvider>) : RemoteArtworkProvider {
-    override fun handles(uri: Uri): Boolean {
-        return providers.any { it.handles(uri) }
-    }
+    override fun handles(uri: Uri): Boolean = providers.any { it.handles(uri) }
 
     override suspend fun getAlbumArtworkUrl(song: Song): String? {
         val uri = Uri.parse(song.path)

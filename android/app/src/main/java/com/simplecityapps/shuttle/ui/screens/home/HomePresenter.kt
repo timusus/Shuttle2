@@ -80,7 +80,8 @@ constructor(
     private val playbackManager: PlaybackManager,
     private val queueManager: QueueManager,
     @Named("randomSeed") private val seed: Long
-) : HomeContract.Presenter, BasePresenter<HomeContract.View>() {
+) : BasePresenter<HomeContract.View>(),
+    HomeContract.Presenter {
     override fun shuffleAll() {
         launch {
             val songs = songRepository.getSongs(SongQuery.All()).firstOrNull().orEmpty()

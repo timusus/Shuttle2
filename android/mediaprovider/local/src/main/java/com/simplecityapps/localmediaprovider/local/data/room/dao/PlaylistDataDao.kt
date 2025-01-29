@@ -31,11 +31,9 @@ abstract class PlaylistDataDao {
     )
     abstract fun getAllPlaylistData(): Flow<List<PlaylistEntity>>
 
-    fun getAll(): Flow<List<Playlist>> {
-        return getAllPlaylistData().map { list ->
-            list.map { playlistData ->
-                playlistData.toPlaylist()
-            }
+    fun getAll(): Flow<List<Playlist>> = getAllPlaylistData().map { list ->
+        list.map { playlistData ->
+            playlistData.toPlaylist()
         }
     }
 
@@ -52,9 +50,7 @@ abstract class PlaylistDataDao {
     )
     abstract suspend fun getPlaylistData(playlistId: Long): PlaylistEntity
 
-    suspend fun getPlaylist(playlistId: Long): Playlist {
-        return getPlaylistData(playlistId).toPlaylist()
-    }
+    suspend fun getPlaylist(playlistId: Long): Playlist = getPlaylistData(playlistId).toPlaylist()
 
     @Query("DELETE FROM playlist_song_join WHERE playlistId = :playlistId")
     abstract suspend fun clear(playlistId: Long)
@@ -76,14 +72,12 @@ data class PlaylistEntity(
     val externalId: String?
 )
 
-fun PlaylistEntity.toPlaylist(): Playlist {
-    return Playlist(
-        id = id,
-        name = name,
-        songCount = songCount,
-        duration = duration,
-        sortOrder = sortOrder,
-        mediaProvider = mediaProvider,
-        externalId = externalId
-    )
-}
+fun PlaylistEntity.toPlaylist(): Playlist = Playlist(
+    id = id,
+    name = name,
+    songCount = songCount,
+    duration = duration,
+    sortOrder = sortOrder,
+    mediaProvider = mediaProvider,
+    externalId = externalId
+)

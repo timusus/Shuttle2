@@ -14,7 +14,5 @@ constructor(
         Timber.plant(debugLoggingTree)
     }
 
-    override fun priority(): Int {
-        return 2
-    }
+    override fun priority(): Int = 2
 }

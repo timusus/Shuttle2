@@ -13,9 +13,7 @@ interface ViewBinder : ContentsComparator {
 
     fun viewType(): Int
 
-    fun spanSize(spanCount: Int): Int {
-        return spanCount
-    }
+    fun spanSize(spanCount: Int): Int = spanCount
 
     fun bindViewHolder(
         holder: ViewHolder<ViewBinder>,
@@ -24,9 +22,7 @@ interface ViewBinder : ContentsComparator {
         holder.bind(this, isPartial)
     }
 
-    override fun areContentsTheSame(other: Any): Boolean {
-        return true
-    }
+    override fun areContentsTheSame(other: Any): Boolean = true
 
     open class ViewHolder<B : ViewBinder>(itemView: View) :
         RecyclerView.ViewHolder(itemView),
@@ -56,7 +52,5 @@ interface ViewBinder : ContentsComparator {
 
     fun ViewGroup.inflateView(
         @LayoutRes layoutResId: Int
-    ): View {
-        return LayoutInflater.from(context).inflate(layoutResId, this, false)
-    }
+    ): View = LayoutInflater.from(context).inflate(layoutResId, this, false)
 }

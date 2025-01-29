@@ -104,9 +104,7 @@ class OnboardingParentFragment :
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_onboarding, container, false)
-    }
+    ): View? = inflater.inflate(R.layout.fragment_onboarding, container, false)
 
     override fun onViewCreated(
         view: View,
@@ -149,9 +147,7 @@ class OnboardingParentFragment :
 
     // PageCompletionListener Implementation
 
-    override fun getPages(): List<OnboardingPage> {
-        return adapter.data
-    }
+    override fun getPages(): List<OnboardingPage> = adapter.data
 
     override fun setPages(pages: List<OnboardingPage>) {
         adapter.data = pages
@@ -208,16 +204,12 @@ class OnboardingParentFragment :
 
     // Private
 
-    private fun hasStoragePermission(): Boolean {
-        return (checkSelfPermission(requireContext(), getStoragePermission()) == PackageManager.PERMISSION_GRANTED)
-    }
+    private fun hasStoragePermission(): Boolean = (checkSelfPermission(requireContext(), getStoragePermission()) == PackageManager.PERMISSION_GRANTED)
 
-    private fun getStoragePermission(): String {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            Manifest.permission.READ_MEDIA_AUDIO
-        } else {
-            Manifest.permission.READ_EXTERNAL_STORAGE
-        }
+    private fun getStoragePermission(): String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        Manifest.permission.READ_MEDIA_AUDIO
+    } else {
+        Manifest.permission.READ_EXTERNAL_STORAGE
     }
 
     // Static
@@ -227,10 +219,9 @@ class OnboardingParentFragment :
 
         const val TAG = "OnboardingParentFragment"
 
-        fun newInstance(args: OnboardingParentFragmentArgs) =
-            OnboardingParentFragment().apply {
-                arguments = args.toBundle()
-            }
+        fun newInstance(args: OnboardingParentFragmentArgs) = OnboardingParentFragment().apply {
+            arguments = args.toBundle()
+        }
     }
 
     class OnboardingAdapter(fragment: Fragment, private val isOnboarding: Boolean) : FragmentStateAdapter(fragment) {
@@ -244,22 +235,16 @@ class OnboardingParentFragment :
 
         override fun getItemCount() = data.size
 
-        override fun getItemId(position: Int): Long {
-            return data[position].hashCode().toLong()
-        }
+        override fun getItemId(position: Int): Long = data[position].hashCode().toLong()
 
-        override fun containsItem(itemId: Long): Boolean {
-            return data.any { it.hashCode().toLong() == itemId }
-        }
+        override fun containsItem(itemId: Long): Boolean = data.any { it.hashCode().toLong() == itemId }
 
-        override fun createFragment(position: Int): Fragment {
-            return when (data[position]) {
-                OnboardingPage.StoragePermission -> StoragePermissionFragment()
-                OnboardingPage.AnalyticsPermission -> AnalyticsPermissionFragment()
-                OnboardingPage.MediaProviderSelector -> MediaProviderSelectionFragment.newInstance(isOnboarding)
-                OnboardingPage.MusicDirectories -> DirectorySelectionFragment()
-                OnboardingPage.Scanner -> MediaScannerFragment.newInstance(scanAutomatically = true, showRescanButton = false, dismissOnScanComplete = isOnboarding, showToolbar = true)
-            }
+        override fun createFragment(position: Int): Fragment = when (data[position]) {
+            OnboardingPage.StoragePermission -> StoragePermissionFragment()
+            OnboardingPage.AnalyticsPermission -> AnalyticsPermissionFragment()
+            OnboardingPage.MediaProviderSelector -> MediaProviderSelectionFragment.newInstance(isOnboarding)
+            OnboardingPage.MusicDirectories -> DirectorySelectionFragment()
+            OnboardingPage.Scanner -> MediaScannerFragment.newInstance(scanAutomatically = true, showRescanButton = false, dismissOnScanComplete = isOnboarding, showToolbar = true)
         }
     }
 }

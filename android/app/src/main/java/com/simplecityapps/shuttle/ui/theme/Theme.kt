@@ -16,7 +16,7 @@ data class ColorFamily(
     val color: Color,
     val onColor: Color,
     val colorContainer: Color,
-    val onColorContainer: Color,
+    val onColorContainer: Color
 )
 
 @Composable
@@ -25,9 +25,8 @@ fun AppTheme(
     theme: GeneralPreferenceManager.Theme = GeneralPreferenceManager.Theme.DayNight,
     accent: GeneralPreferenceManager.Accent = GeneralPreferenceManager.Accent.Default,
     extraDark: Boolean = false,
-    content: @Composable () -> Unit,
+    content: @Composable () -> Unit
 ) {
-
     val isDark = when (theme) {
         GeneralPreferenceManager.Theme.DayNight -> isSystemInDarkTheme()
         GeneralPreferenceManager.Theme.Light -> false
@@ -53,4 +52,3 @@ fun AppTheme(
         content = content
     )
 }
-

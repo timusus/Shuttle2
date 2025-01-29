@@ -20,15 +20,11 @@ class GridAlbumArtistBinder(
     val coloredBackground: Boolean = false,
     val fixedWidthDp: Int? = null
 ) : AlbumArtistBinder(albumArtist, imageLoader, listener) {
-    override fun createViewHolder(parent: ViewGroup): ViewHolder {
-        return ViewHolder(
-            LayoutInflater.from(parent.context).inflate(R.layout.grid_item_album_artist, parent, false)
-        )
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewHolder = ViewHolder(
+        LayoutInflater.from(parent.context).inflate(R.layout.grid_item_album_artist, parent, false)
+    )
 
-    override fun viewType(): Int {
-        return ViewTypes.AlbumArtistGrid
-    }
+    override fun viewType(): Int = ViewTypes.AlbumArtistGrid
 
     class ViewHolder(itemView: View) : AlbumArtistBinder.ViewHolder(itemView) {
         private val title: TextView = itemView.findViewById(R.id.title)

@@ -8,8 +8,8 @@ class DocumentNodeTree(
     override val documentId: String,
     override val displayName: String,
     override val mimeType: String
-) : Trie<DocumentNodeTree, DocumentNode>,
-    DocumentNode(uri, documentId, displayName, mimeType) {
+) : DocumentNode(uri, documentId, displayName, mimeType),
+    Trie<DocumentNodeTree, DocumentNode> {
     override val treeNodes: LinkedHashSet<DocumentNodeTree> = linkedSetOf()
     override val leafNodes: LinkedHashSet<DocumentNode> = linkedSetOf()
 

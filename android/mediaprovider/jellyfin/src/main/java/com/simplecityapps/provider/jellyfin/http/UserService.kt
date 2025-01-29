@@ -33,13 +33,11 @@ suspend fun UserService.authenticate(
             "Unknown"
         },
     version: String = "1.0"
-): NetworkResult<AuthenticationResult> {
-    return authenticateImpl(
-        "$url/Users/AuthenticateByName",
-        mapOf(
-            "username" to username,
-            "pw" to password
-        ),
-        "MediaBrowser Client=\"Shuttle2.0\", Device=\"$deviceName\", DeviceId=\"$deviceId\", Version=\"$version\""
-    )
-}
+): NetworkResult<AuthenticationResult> = authenticateImpl(
+    "$url/Users/AuthenticateByName",
+    mapOf(
+        "username" to username,
+        "pw" to password
+    ),
+    "MediaBrowser Client=\"Shuttle2.0\", Device=\"$deviceName\", DeviceId=\"$deviceId\", Version=\"$version\""
+)

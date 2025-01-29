@@ -17,17 +17,11 @@ class ShuffleBinder(
         fun onClicked()
     }
 
-    override fun createViewHolder(parent: ViewGroup): ViewBinder.ViewHolder<out ViewBinder> {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_shuffle, parent, false))
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewBinder.ViewHolder<out ViewBinder> = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_shuffle, parent, false))
 
-    override fun viewType(): Int {
-        return ViewTypes.AlbumShuffle
-    }
+    override fun viewType(): Int = ViewTypes.AlbumShuffle
 
-    override fun spanSize(spanCount: Int): Int {
-        return spanCount
-    }
+    override fun spanSize(spanCount: Int): Int = spanCount
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<ShuffleBinder>(itemView) {
         val titleText: TextView = itemView.findViewById(R.id.title)

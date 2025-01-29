@@ -8,13 +8,9 @@ import com.simplecityapps.playback.R
 
 @Suppress("unused")
 class CastOptionsProvider : OptionsProvider {
-    override fun getCastOptions(context: Context): CastOptions {
-        return CastOptions.Builder()
-            .setReceiverApplicationId(context.getString(R.string.cast_app_id))
-            .build()
-    }
+    override fun getCastOptions(context: Context): CastOptions = CastOptions.Builder()
+        .setReceiverApplicationId(context.getString(R.string.cast_app_id))
+        .build()
 
-    override fun getAdditionalSessionProviders(context: Context): List<SessionProvider>? {
-        return null
-    }
+    override fun getAdditionalSessionProviders(context: Context): List<SessionProvider>? = null
 }

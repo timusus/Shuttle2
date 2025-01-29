@@ -63,8 +63,8 @@ constructor(
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope,
     private val mediaImporter: MediaImporter,
     @Assisted private val shouldDismissOnScanComplete: Boolean
-) : ScannerContract.Presenter,
-    BasePresenter<ScannerContract.View>() {
+) : BasePresenter<ScannerContract.View>(),
+    ScannerContract.Presenter {
     @AssistedFactory
     interface Factory {
         fun create(shouldDismissOnScanComplete: Boolean): ScannerPresenter

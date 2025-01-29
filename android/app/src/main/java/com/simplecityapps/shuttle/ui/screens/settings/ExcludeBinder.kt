@@ -26,17 +26,11 @@ class ExcludeBinder(
         fun onRemoveClicked(song: com.simplecityapps.shuttle.model.Song)
     }
 
-    override fun createViewHolder(parent: ViewGroup): ViewHolder {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_exclude, parent, false))
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewHolder = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_exclude, parent, false))
 
-    override fun viewType(): Int {
-        return ViewTypes.ExcludeList
-    }
+    override fun viewType(): Int = ViewTypes.ExcludeList
 
-    override fun getSectionName(): String? {
-        return song.name?.firstOrNull()?.toString()
-    }
+    override fun getSectionName(): String? = song.name?.firstOrNull()?.toString()
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -47,9 +41,7 @@ class ExcludeBinder(
         return true
     }
 
-    override fun hashCode(): Int {
-        return song.hashCode()
-    }
+    override fun hashCode(): Int = song.hashCode()
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<ExcludeBinder>(itemView) {
         private val title: TextView = itemView.findViewById(R.id.title)

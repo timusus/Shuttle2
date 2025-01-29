@@ -34,50 +34,42 @@ class TrialModule {
         @ApplicationContext context: Context,
         okHttpClient: OkHttpClient,
         moshi: Moshi
-    ): Retrofit {
-        return Retrofit.Builder()
-            .baseUrl("https://api.shuttlemusicplayer.app/")
-            .addCallAdapterFactory(NetworkResultAdapterFactory(context.getSystemService()))
-            .addConverterFactory(MoshiConverterFactory.create(moshi))
-            .client(
-                okHttpClient.newBuilder().authenticator { route, response ->
-                    if (route?.address?.url?.host == "api.shuttlemusicplayer.app") {
-                        response.request
-                            .newBuilder()
-                            .header("Authorization", Credentials.basic("s2", "aEqRKgkCbqALjEm9Eg7e7Qi5"))
-                            .build()
-                    } else {
-                        response.request
-                    }
-                }.build()
-            )
-            .build()
-    }
+    ): Retrofit = Retrofit.Builder()
+        .baseUrl("https://api.shuttlemusicplayer.app/")
+        .addCallAdapterFactory(NetworkResultAdapterFactory(context.getSystemService()))
+        .addConverterFactory(MoshiConverterFactory.create(moshi))
+        .client(
+            okHttpClient.newBuilder().authenticator { route, response ->
+                if (route?.address?.url?.host == "api.shuttlemusicplayer.app") {
+                    response.request
+                        .newBuilder()
+                        .header("Authorization", Credentials.basic("s2", "aEqRKgkCbqALjEm9Eg7e7Qi5"))
+                        .build()
+                } else {
+                    response.request
+                }
+            }.build()
+        )
+        .build()
 
     @Provides
     @Singleton
     fun provideDeviceService(
         @Named("S2ApiRetrofit") retrofit: Retrofit
-    ): DeviceService {
-        return retrofit.create(DeviceService::class.java)
-    }
+    ): DeviceService = retrofit.create(DeviceService::class.java)
 
     @Provides
     @Singleton
     fun providePromoCodeService(
         @Named("S2ApiRetrofit") retrofit: Retrofit
-    ): PromoCodeService {
-        return retrofit.create(PromoCodeService::class.java)
-    }
+    ): PromoCodeService = retrofit.create(PromoCodeService::class.java)
 
     @Provides
     @Singleton
     fun provideBillingManager(
         @ApplicationContext context: Context,
         @AppCoroutineScope coroutineScope: CoroutineScope
-    ): BillingManager {
-        return BillingManager(context, coroutineScope)
-    }
+    ): BillingManager = BillingManager(context, coroutineScope)
 
     @Provides
     @Singleton
@@ -89,7 +81,5 @@ class TrialModule {
         remoteConfig: FirebaseRemoteConfig,
         billingManager: BillingManager,
         @AppCoroutineScope coroutineScope: CoroutineScope
-    ): TrialManager {
-        return TrialManager(context, moshi, deviceService, preferenceManager, remoteConfig, billingManager, coroutineScope)
-    }
+    ): TrialManager = TrialManager(context, moshi, deviceService, preferenceManager, remoteConfig, billingManager, coroutineScope)
 }

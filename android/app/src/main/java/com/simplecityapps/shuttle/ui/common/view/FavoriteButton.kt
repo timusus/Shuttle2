@@ -13,7 +13,8 @@ constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
-) : AppCompatImageButton(context, attrs, defStyleAttr), Checkable {
+) : AppCompatImageButton(context, attrs, defStyleAttr),
+    Checkable {
     private var heartDrawable = AnimatedVectorDrawableCompat.create(context, R.drawable.avd_heart)!!
     private var heartDrawableReverse = AnimatedVectorDrawableCompat.create(context, R.drawable.avd_heart_reverse)!!
 
@@ -27,9 +28,7 @@ constructor(
         }
     }
 
-    override fun isChecked(): Boolean {
-        return isChecked
-    }
+    override fun isChecked(): Boolean = isChecked
 
     override fun setChecked(isChecked: Boolean) {
         (drawable as AnimatedVectorDrawableCompat).stop()

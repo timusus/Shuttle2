@@ -129,12 +129,11 @@ constructor(
         }
     }
 
-    private fun getPlaybackState() =
-        when (playbackManager.playbackState()) {
-            is PlaybackState.Loading -> PlaybackStateCompat.STATE_BUFFERING
-            is PlaybackState.Playing -> PlaybackStateCompat.STATE_PLAYING
-            else -> PlaybackStateCompat.STATE_PAUSED
-        }
+    private fun getPlaybackState() = when (playbackManager.playbackState()) {
+        is PlaybackState.Loading -> PlaybackStateCompat.STATE_BUFFERING
+        is PlaybackState.Playing -> PlaybackStateCompat.STATE_PLAYING
+        else -> PlaybackStateCompat.STATE_PAUSED
+    }
 
     private fun updatePlaybackState() {
         Timber.v("updatePlaybackState()")

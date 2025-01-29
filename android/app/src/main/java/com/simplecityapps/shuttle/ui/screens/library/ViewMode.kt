@@ -5,6 +5,4 @@ enum class ViewMode {
     Grid
 }
 
-fun String?.toViewMode(): ViewMode {
-    return ViewMode.valueOf(this ?: ViewMode.List.name)
-}
+fun String?.toViewMode(): ViewMode = ViewMode.valueOf(this ?: ViewMode.List.name)

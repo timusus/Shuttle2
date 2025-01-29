@@ -31,13 +31,9 @@ class MediaProviderBinder(
         ) {}
     }
 
-    override fun createViewHolder(parent: ViewGroup): ViewBinder.ViewHolder<out ViewBinder> {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_media_provider, parent, false))
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewBinder.ViewHolder<out ViewBinder> = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_media_provider, parent, false))
 
-    override fun viewType(): Int {
-        return ViewTypes.MediaProvider
-    }
+    override fun viewType(): Int = ViewTypes.MediaProvider
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -50,9 +46,7 @@ class MediaProviderBinder(
         return true
     }
 
-    override fun hashCode(): Int {
-        return providerType.hashCode()
-    }
+    override fun hashCode(): Int = providerType.hashCode()
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<MediaProviderBinder>(itemView) {
         val icon: ImageView = itemView.findViewById(R.id.icon)

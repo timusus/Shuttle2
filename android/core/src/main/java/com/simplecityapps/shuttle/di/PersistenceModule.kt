@@ -23,15 +23,11 @@ class PersistenceModule {
     @Provides
     fun provideSharedPrefs(
         @ApplicationContext context: Context
-    ): SharedPreferences {
-        return PreferenceManager.getDefaultSharedPreferences(context)
-    }
+    ): SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
 
     @Singleton
     @Provides
-    fun provideGeneralPreferenceManager(preference: SharedPreferences): GeneralPreferenceManager {
-        return GeneralPreferenceManager(preference)
-    }
+    fun provideGeneralPreferenceManager(preference: SharedPreferences): GeneralPreferenceManager = GeneralPreferenceManager(preference)
 
     @SuppressLint("ApplySharedPref")
     @Singleton

@@ -19,23 +19,15 @@ class QueueItem(
         return true
     }
 
-    override fun hashCode(): Int {
-        return uid.hashCode()
-    }
+    override fun hashCode(): Int = uid.hashCode()
 
-    override fun toString(): String {
-        return "QueueItem(song=${song.name}, isCurrent=$isCurrent)"
-    }
+    override fun toString(): String = "QueueItem(song=${song.name}, isCurrent=$isCurrent)"
 }
 
-fun Song.toQueueItem(isCurrent: Boolean): QueueItem {
-    return QueueItem(UUID.randomUUID().mostSignificantBits and Long.MAX_VALUE, this, isCurrent)
-}
+fun Song.toQueueItem(isCurrent: Boolean): QueueItem = QueueItem(UUID.randomUUID().mostSignificantBits and Long.MAX_VALUE, this, isCurrent)
 
 fun QueueItem.clone(
     uid: Long = this.uid,
     song: Song = this.song,
     isCurrent: Boolean = this.isCurrent
-): QueueItem {
-    return QueueItem(uid, song, isCurrent)
-}
+): QueueItem = QueueItem(uid, song, isCurrent)

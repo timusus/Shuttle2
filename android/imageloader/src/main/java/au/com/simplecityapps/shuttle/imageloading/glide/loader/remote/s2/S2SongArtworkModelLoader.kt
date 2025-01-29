@@ -20,13 +20,9 @@ class S2SongArtworkModelLoader(
         width: Int,
         height: Int,
         options: Options?
-    ): String {
-        return "https://api.shuttlemusicplayer.app/v1/artwork?artist=${(model.albumArtist ?: model.friendlyArtistName)!!.urlEncode()}&album=${model.album!!.urlEncode()}"
-    }
+    ): String = "https://api.shuttlemusicplayer.app/v1/artwork?artist=${(model.albumArtist ?: model.friendlyArtistName)!!.urlEncode()}&album=${model.album!!.urlEncode()}"
 
-    override fun handles(model: Song): Boolean {
-        return model.album != null && (model.albumArtist ?: model.friendlyArtistName) != null
-    }
+    override fun handles(model: Song): Boolean = model.album != null && (model.albumArtist ?: model.friendlyArtistName) != null
 
     override fun buildLoadData(
         model: Song,
@@ -43,9 +39,7 @@ class S2SongArtworkModelLoader(
     class Factory(
         private val preferenceManager: GeneralPreferenceManager
     ) : ModelLoaderFactory<Song, InputStream> {
-        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Song, InputStream> {
-            return S2SongArtworkModelLoader(multiFactory.build(GlideUrl::class.java, InputStream::class.java), preferenceManager)
-        }
+        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Song, InputStream> = S2SongArtworkModelLoader(multiFactory.build(GlideUrl::class.java, InputStream::class.java), preferenceManager)
 
         override fun teardown() {}
     }

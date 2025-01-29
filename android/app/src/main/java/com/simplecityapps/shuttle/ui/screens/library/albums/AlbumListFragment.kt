@@ -96,9 +96,7 @@ class AlbumListFragment :
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_albums, container, false)
-    }
+    ): View? = inflater.inflate(R.layout.fragment_albums, container, false)
 
     override fun onViewCreated(
         view: View,
@@ -112,10 +110,8 @@ class AlbumListFragment :
 
         adapter =
             object : SectionedAdapter(viewLifecycleOwner.lifecycleScope) {
-                override fun getSectionName(viewBinder: ViewBinder?): String? {
-                    return (viewBinder as? AlbumBinder)?.album?.let { album ->
-                        presenter.getFastscrollPrefix(album)
-                    }
+                override fun getSectionName(viewBinder: ViewBinder?): String? = (viewBinder as? AlbumBinder)?.album?.let { album ->
+                    presenter.getFastscrollPrefix(album)
                 }
             }
         recyclerView = view.findViewById(R.id.recyclerView)
@@ -199,32 +195,30 @@ class AlbumListFragment :
 
     // Toolbar item selection
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.listViewMode -> {
-                adapter.clear()
-                presenter.setViewMode(ViewMode.List)
-                true
-            }
-            R.id.gridViewMode -> {
-                adapter.clear()
-                presenter.setViewMode(ViewMode.Grid)
-                true
-            }
-            R.id.sortAlbumName -> {
-                presenter.setSortOrder(AlbumSortOrder.AlbumName)
-                true
-            }
-            R.id.sortArtistName -> {
-                presenter.setSortOrder(AlbumSortOrder.ArtistGroupKey)
-                true
-            }
-            R.id.sortAlbumYear -> {
-                presenter.setSortOrder(AlbumSortOrder.Year)
-                true
-            }
-            else -> false
+    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+        R.id.listViewMode -> {
+            adapter.clear()
+            presenter.setViewMode(ViewMode.List)
+            true
         }
+        R.id.gridViewMode -> {
+            adapter.clear()
+            presenter.setViewMode(ViewMode.Grid)
+            true
+        }
+        R.id.sortAlbumName -> {
+            presenter.setSortOrder(AlbumSortOrder.AlbumName)
+            true
+        }
+        R.id.sortArtistName -> {
+            presenter.setSortOrder(AlbumSortOrder.ArtistGroupKey)
+            true
+        }
+        R.id.sortAlbumYear -> {
+            presenter.setSortOrder(AlbumSortOrder.Year)
+            true
+        }
+        else -> false
     }
 
     // Private

@@ -24,35 +24,29 @@ class TagLibSongLocalArtworkModelLoader(
         width: Int,
         height: Int,
         options: Options
-    ): ModelLoader.LoadData<InputStream>? {
-        return localArtworkModelLoader.buildLoadData(
-            model =
-            TagLibSongLocalArtworkProvider(
-                context = context,
-                kTagLib = kTagLib,
-                song = model
-            ),
-            width = width,
-            height = height,
-            options = options
-        )
-    }
+    ): ModelLoader.LoadData<InputStream>? = localArtworkModelLoader.buildLoadData(
+        model =
+        TagLibSongLocalArtworkProvider(
+            context = context,
+            kTagLib = kTagLib,
+            song = model
+        ),
+        width = width,
+        height = height,
+        options = options
+    )
 
-    override fun handles(model: Song): Boolean {
-        return true
-    }
+    override fun handles(model: Song): Boolean = true
 
     class Factory(
         private val context: Context,
         private val kTagLib: KTagLib
     ) : ModelLoaderFactory<Song, InputStream> {
-        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Song, InputStream> {
-            return TagLibSongLocalArtworkModelLoader(
-                context = context,
-                kTagLib = kTagLib,
-                localArtworkModelLoader = multiFactory.build(LocalArtworkProvider::class.java, InputStream::class.java) as LocalArtworkModelLoader
-            )
-        }
+        override fun build(multiFactory: MultiModelLoaderFactory): ModelLoader<Song, InputStream> = TagLibSongLocalArtworkModelLoader(
+            context = context,
+            kTagLib = kTagLib,
+            localArtworkModelLoader = multiFactory.build(LocalArtworkProvider::class.java, InputStream::class.java) as LocalArtworkModelLoader
+        )
 
         override fun teardown() {
         }

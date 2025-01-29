@@ -93,9 +93,7 @@ class AlbumArtistListFragment :
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_album_artists, container, false)
-    }
+    ): View? = inflater.inflate(R.layout.fragment_album_artists, container, false)
 
     override fun onViewCreated(
         view: View,
@@ -177,20 +175,18 @@ class AlbumArtistListFragment :
 
     // Toolbar item selection
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            R.id.gridViewMode -> {
-                adapter.clear()
-                presenter.setViewMode(ViewMode.Grid)
-                true
-            }
-            R.id.listViewMode -> {
-                adapter.clear()
-                presenter.setViewMode(ViewMode.List)
-                true
-            }
-            else -> false
+    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+        R.id.gridViewMode -> {
+            adapter.clear()
+            presenter.setViewMode(ViewMode.Grid)
+            true
         }
+        R.id.listViewMode -> {
+            adapter.clear()
+            presenter.setViewMode(ViewMode.List)
+            true
+        }
+        else -> false
     }
 
     // Private

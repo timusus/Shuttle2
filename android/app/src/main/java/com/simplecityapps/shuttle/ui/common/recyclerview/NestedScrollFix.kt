@@ -18,7 +18,9 @@ fun RecyclerView.enforceSingleScrollDirection() {
     addOnScrollListener(enforcer)
 }
 
-private class SingleScrollDirectionEnforcer : RecyclerView.OnScrollListener(), OnItemTouchListener {
+private class SingleScrollDirectionEnforcer :
+    RecyclerView.OnScrollListener(),
+    OnItemTouchListener {
     private var scrollState = RecyclerView.SCROLL_STATE_IDLE
     private var scrollPointerId = -1
     private var initialTouchX = 0

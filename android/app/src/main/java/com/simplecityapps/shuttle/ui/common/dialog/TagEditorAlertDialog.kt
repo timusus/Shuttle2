@@ -31,7 +31,7 @@ class TagEditorAlertDialog :
     TagEditorContract.View {
     private var songs: List<Song> = listOf()
 
-    private lateinit var _data: TagEditorContract.Data
+    private lateinit var data: TagEditorContract.Data
 
     @Inject
     lateinit var presenter: TagEditorPresenter
@@ -150,7 +150,7 @@ class TagEditorAlertDialog :
         dialog.setOnShowListener {
             dialog.getButton(AlertDialog.BUTTON_POSITIVE).apply {
                 setOnClickListener {
-                    presenter.save(_data)
+                    presenter.save(data)
                 }
             }
         }
@@ -203,7 +203,7 @@ class TagEditorAlertDialog :
     // TagEditorContract.View Implementation
 
     override fun setData(data: TagEditorContract.Data) {
-        _data = data
+        this.data = data
 
         updateSaveButton(data)
         val textChangeListener: () -> Unit = {
@@ -217,7 +217,7 @@ class TagEditorAlertDialog :
                 titleInputLayout.helperText = getString(R.string.edit_tags_multiple_values)
             }
         }
-        setupResetButton(titleInputLayout, titleEditText, _data.titleField, textChangeListener)
+        setupResetButton(titleInputLayout, titleEditText, this.data.titleField, textChangeListener)
 
         data.albumArtistField.apply {
             albumArtistEditText.setText(initialValue)
@@ -226,7 +226,7 @@ class TagEditorAlertDialog :
                 albumArtistInputLayout.helperText = getString(R.string.edit_tags_multiple_values)
             }
         }
-        setupResetButton(albumArtistInputLayout, albumArtistEditText, _data.albumArtistField, textChangeListener)
+        setupResetButton(albumArtistInputLayout, albumArtistEditText, this.data.albumArtistField, textChangeListener)
 
         data.artistField.apply {
             artistEditText.setText(initialValue)
@@ -235,7 +235,7 @@ class TagEditorAlertDialog :
                 artistInputLayout.helperText = getString(R.string.edit_tags_multiple_values)
             }
         }
-        setupResetButton(artistInputLayout, artistEditText, _data.artistField, textChangeListener)
+        setupResetButton(artistInputLayout, artistEditText, this.data.artistField, textChangeListener)
 
         data.albumField.apply {
             albumInputLayout.isVisible = visible
@@ -244,7 +244,7 @@ class TagEditorAlertDialog :
             }
             albumEditText.setText(initialValue)
         }
-        setupResetButton(albumInputLayout, albumEditText, _data.albumField, textChangeListener)
+        setupResetButton(albumInputLayout, albumEditText, this.data.albumField, textChangeListener)
 
         data.dateField.apply {
             yearEditText.setText(initialValue)
@@ -253,7 +253,7 @@ class TagEditorAlertDialog :
                 yearInputLayout.helperText = getString(R.string.edit_tags_multiple_values)
             }
         }
-        setupResetButton(yearInputLayout, yearEditText, _data.dateField, textChangeListener)
+        setupResetButton(yearInputLayout, yearEditText, this.data.dateField, textChangeListener)
 
         data.trackField.apply {
             trackEditText.setText(initialValue)
@@ -262,7 +262,7 @@ class TagEditorAlertDialog :
                 trackInputLayout.helperText = getString(R.string.edit_tags_multiple_values)
             }
         }
-        setupResetButton(trackInputLayout, trackEditText, _data.trackField, textChangeListener)
+        setupResetButton(trackInputLayout, trackEditText, this.data.trackField, textChangeListener)
 
         data.trackTotalField.apply {
             trackTotalEditText.setText(initialValue)
@@ -271,7 +271,7 @@ class TagEditorAlertDialog :
                 trackTotalInputLayout.helperText = getString(R.string.edit_tags_multiple_values)
             }
         }
-        setupResetButton(trackTotalInputLayout, trackTotalEditText, _data.trackTotalField, textChangeListener)
+        setupResetButton(trackTotalInputLayout, trackTotalEditText, this.data.trackTotalField, textChangeListener)
 
         data.discField.apply {
             discEditText.setText(initialValue)
@@ -280,7 +280,7 @@ class TagEditorAlertDialog :
                 discInputLayout.helperText = getString(R.string.edit_tags_multiple_values)
             }
         }
-        setupResetButton(discInputLayout, discEditText, _data.discField, textChangeListener)
+        setupResetButton(discInputLayout, discEditText, this.data.discField, textChangeListener)
 
         data.discTotalField.apply {
             discTotalEditText.setText(initialValue)
@@ -289,7 +289,7 @@ class TagEditorAlertDialog :
                 discTotalInputLayout.helperText = getString(R.string.edit_tags_multiple_values)
             }
         }
-        setupResetButton(discTotalInputLayout, discTotalEditText, _data.discTotalField, textChangeListener)
+        setupResetButton(discTotalInputLayout, discTotalEditText, this.data.discTotalField, textChangeListener)
 
         data.genreField.apply {
             genreEditText.setText(initialValue)
@@ -299,7 +299,7 @@ class TagEditorAlertDialog :
             }
         }
 
-        setupResetButton(genreInputLayout, genreEditText, _data.genreField, textChangeListener)
+        setupResetButton(genreInputLayout, genreEditText, this.data.genreField, textChangeListener)
 
         data.lyricsField.apply {
             lyricsEditText.setText(initialValue)
@@ -309,7 +309,7 @@ class TagEditorAlertDialog :
             }
         }
 
-        setupResetButton(lyricsInputLayout, lyricsEditText, _data.lyricsField, textChangeListener)
+        setupResetButton(lyricsInputLayout, lyricsEditText, this.data.lyricsField, textChangeListener)
     }
 
     override fun setLoading(loadingState: TagEditorContract.LoadingState) {
@@ -367,9 +367,8 @@ class TagEditorAlertDialog :
 
         fun newInstance(
             songs: List<Song>? = emptyList()
-        ): TagEditorAlertDialog =
-            TagEditorAlertDialog().withArgs {
-                putParcelableArrayList(ARG_SONGS, ArrayList(songs))
-            }
+        ): TagEditorAlertDialog = TagEditorAlertDialog().withArgs {
+            putParcelableArrayList(ARG_SONGS, ArrayList(songs))
+        }
     }
 }

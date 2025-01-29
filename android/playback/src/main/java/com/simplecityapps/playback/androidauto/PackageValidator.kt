@@ -206,11 +206,10 @@ class PackageValidator(
      * @return [PackageInfo] for the package name or null if it's not found.
      */
     @SuppressLint("PackageManagerGetSignatures")
-    private fun getPackageInfo(callingPackage: String): PackageInfo? =
-        packageManager.getPackageInfo(
-            callingPackage,
-            PackageManager.GET_SIGNATURES or PackageManager.GET_PERMISSIONS
-        )
+    private fun getPackageInfo(callingPackage: String): PackageInfo? = packageManager.getPackageInfo(
+        callingPackage,
+        PackageManager.GET_SIGNATURES or PackageManager.GET_PERMISSIONS
+    )
 
     /**
      * Gets the signature of a given package's [PackageInfo].
@@ -304,17 +303,14 @@ class PackageValidator(
     /**
      * Finds the Android platform signing key signature. This key is never null.
      */
-    private fun getSystemSignature(): String =
-        getPackageInfo(ANDROID_PLATFORM)?.let { platformInfo ->
-            getSignature(platformInfo)
-        } ?: throw IllegalStateException("Platform signature not found")
+    private fun getSystemSignature(): String = getPackageInfo(ANDROID_PLATFORM)?.let { platformInfo ->
+        getSignature(platformInfo)
+    } ?: throw IllegalStateException("Platform signature not found")
 
     /**
      * Creates a SHA-256 signature given a Base64 encoded certificate.
      */
-    private fun getSignatureSha256(certificate: String): String {
-        return getSignatureSha256(Base64.decode(certificate, Base64.DEFAULT))
-    }
+    private fun getSignatureSha256(certificate: String): String = getSignatureSha256(Base64.decode(certificate, Base64.DEFAULT))
 
     /**
      * Creates a SHA-256 signature given a certificate byte array.

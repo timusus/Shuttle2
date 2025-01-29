@@ -135,9 +135,7 @@ class PlaylistMenuView(
      *
      * Typically used in association with [createPlaylistMenu]
      */
-    private fun isCreatePlaylistMenuItem(item: MenuItem): Boolean {
-        return item.itemId == playlistCreateId
-    }
+    private fun isCreatePlaylistMenuItem(item: MenuItem): Boolean = item.itemId == playlistCreateId
 
     private fun showPlaylistCreatedToast(
         context: Context,

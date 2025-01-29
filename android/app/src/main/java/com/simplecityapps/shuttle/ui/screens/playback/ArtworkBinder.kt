@@ -16,13 +16,9 @@ class ArtworkBinder(
     val queueItem: QueueItem,
     val imageLoader: ArtworkImageLoader
 ) : ViewBinder {
-    override fun createViewHolder(parent: ViewGroup): ViewHolder {
-        return ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_artwork, parent, false))
-    }
+    override fun createViewHolder(parent: ViewGroup): ViewHolder = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_artwork, parent, false))
 
-    override fun viewType(): Int {
-        return ViewTypes.Artwork
-    }
+    override fun viewType(): Int = ViewTypes.Artwork
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -35,9 +31,7 @@ class ArtworkBinder(
         return true
     }
 
-    override fun hashCode(): Int {
-        return queueItem.hashCode()
-    }
+    override fun hashCode(): Int = queueItem.hashCode()
 
     class ViewHolder(itemView: View) : ViewBinder.ViewHolder<ArtworkBinder>(itemView) {
         val imageView: ImageView = itemView.findViewById(R.id.imageView)

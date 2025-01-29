@@ -16,9 +16,7 @@ constructor(
     private val credentialStore: CredentialStore,
     private val itemsService: ItemsService
 ) : RemoteArtworkProvider {
-    override fun handles(uri: Uri): Boolean {
-        return uri.scheme == "emby"
-    }
+    override fun handles(uri: Uri): Boolean = uri.scheme == "emby"
 
     override suspend fun getAlbumArtworkUrl(song: Song): String? {
         val itemId = Uri.parse(song.path).pathSegments.last() ?: return null

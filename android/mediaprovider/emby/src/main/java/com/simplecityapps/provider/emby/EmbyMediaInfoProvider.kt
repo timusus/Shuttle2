@@ -14,9 +14,7 @@ constructor(
     private val embyAuthenticationManager: EmbyAuthenticationManager,
     private val embyTranscodeService: EmbyTranscodeService
 ) : MediaInfoProvider {
-    override fun handles(uri: Uri): Boolean {
-        return uri.scheme == "emby"
-    }
+    override fun handles(uri: Uri): Boolean = uri.scheme == "emby"
 
     @Throws(IllegalStateException::class)
     override suspend fun getMediaInfo(

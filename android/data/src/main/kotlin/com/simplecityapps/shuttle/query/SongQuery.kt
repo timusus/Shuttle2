@@ -24,93 +24,83 @@ sealed class SongQuery(
         override val includeExcluded: Boolean = false,
         override val sortOrder: SongSortOrder = SongSortOrder.Default,
         override val providerType: MediaProviderType? = null
-    ) :
-        SongQuery(
-            predicate = { true },
-            sortOrder = sortOrder,
-            includeExcluded = includeExcluded,
-            providerType = providerType
-        )
+    ) : SongQuery(
+        predicate = { true },
+        sortOrder = sortOrder,
+        includeExcluded = includeExcluded,
+        providerType = providerType
+    )
 
     @Parcelize
     data class ArtistGroupKey(
         val key: AlbumArtistGroupKey?
-    ) :
-        SongQuery(
-            predicate = { song -> song.albumArtistGroupKey == key }
-        )
+    ) : SongQuery(
+        predicate = { song -> song.albumArtistGroupKey == key }
+    )
 
     @Parcelize
     data class ArtistGroupKeys(
         private val artistGroupKeys: List<ArtistGroupKey>
-    ) :
-        SongQuery(
-            predicate = { song -> artistGroupKeys.any { albumArtist -> albumArtist.predicate(song) } },
-            sortOrder = SongSortOrder.Track
-        )
+    ) : SongQuery(
+        predicate = { song -> artistGroupKeys.any { albumArtist -> albumArtist.predicate(song) } },
+        sortOrder = SongSortOrder.Track
+    )
 
     @Parcelize
     data class AlbumGroupKey(
         val key: com.simplecityapps.shuttle.model.AlbumGroupKey?
-    ) :
-        SongQuery(
-            predicate = { song -> song.albumGroupKey == key }
-        )
+    ) : SongQuery(
+        predicate = { song -> song.albumGroupKey == key }
+    )
 
     @Parcelize
     data class AlbumGroupKeys(
         val albumGroupKeys: List<AlbumGroupKey>
-    ) :
-        SongQuery(
-            predicate = { song -> albumGroupKeys.any { it.predicate(song) } },
-            sortOrder = SongSortOrder.Track
-        )
+    ) : SongQuery(
+        predicate = { song -> albumGroupKeys.any { it.predicate(song) } },
+        sortOrder = SongSortOrder.Track
+    )
 
     @Parcelize
     data class SongIds(
         val songIds: List<Long>
-    ) :
-        SongQuery(
-            predicate = { song -> songIds.contains(song.id) }
-        )
+    ) : SongQuery(
+        predicate = { song -> songIds.contains(song.id) }
+    )
 
     @Parcelize
     @TypeParceler<Instant, InstantParceler>
     data class LastPlayed(
         val after: Instant
-    ) :
-        SongQuery(
-            predicate = { song -> song.lastPlayed?.let { it > after } ?: false },
-            sortOrder = SongSortOrder.LastCompleted
-        )
+    ) : SongQuery(
+        predicate = { song -> song.lastPlayed?.let { it > after } ?: false },
+        sortOrder = SongSortOrder.LastCompleted
+    )
 
     @Parcelize
     @TypeParceler<Instant, InstantParceler>
     data class LastCompleted(
         val after: Instant
-    ) :
-        SongQuery(
-            predicate = { song -> song.lastCompleted?.let { it > after } ?: false },
-            sortOrder = SongSortOrder.LastCompleted
-        )
+    ) : SongQuery(
+        predicate = { song -> song.lastCompleted?.let { it > after } ?: false },
+        sortOrder = SongSortOrder.LastCompleted
+    )
 
     @Parcelize
     data class Search(
         val query: String
-    ) :
-        SongQuery(
-            predicate = { song -> song.name?.contains(query, true) ?: false || song.album?.contains(query, true) ?: false || song.albumArtist?.contains(query, true) ?: false }
-        )
+    ) : SongQuery(
+        predicate = { song -> song.name?.contains(query, true) ?: false || song.album?.contains(query, true) ?: false || song.albumArtist?.contains(query, true) ?: false }
+    )
 
     @Parcelize
     data class PlayCount(
         val count: Int,
         override val sortOrder: SongSortOrder
-    ) :
-        SongQuery(
-            predicate = { song -> song.playCount >= count },
-            sortOrder = sortOrder
-        )
+    ) : SongQuery(
+        predicate = { song -> song.playCount >= count },
+        sortOrder = sortOrder
+    )
 
     // Todo: This isn't really 'recently added', any songs which have had their contents modified will show up here.
     //   Best to add a 'dateAdded' column.

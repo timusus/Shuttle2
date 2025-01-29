@@ -119,9 +119,8 @@ class SongInfoDialogFragment : BottomSheetDialogFragment() {
 
         private const val TAG = "SongInfoDialogFragment"
 
-        fun newInstance(song: com.simplecityapps.shuttle.model.Song): SongInfoDialogFragment =
-            SongInfoDialogFragment().withArgs {
-                putParcelable(ARG_SONG, song)
-            }
+        fun newInstance(song: com.simplecityapps.shuttle.model.Song): SongInfoDialogFragment = SongInfoDialogFragment().withArgs {
+            putParcelable(ARG_SONG, song)
+        }
     }
 }

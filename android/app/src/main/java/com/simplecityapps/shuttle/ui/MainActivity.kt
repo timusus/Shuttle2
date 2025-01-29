@@ -24,8 +24,7 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeout
 
 @AndroidEntryPoint
-class MainActivity :
-    AppCompatActivity() {
+class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var preferenceManager: GeneralPreferenceManager
 
@@ -95,16 +94,12 @@ class MainActivity :
 
     // Private
 
-    private fun hasStoragePermission(): Boolean {
-        return (ContextCompat.checkSelfPermission(this, getStoragePermission()) == PackageManager.PERMISSION_GRANTED)
-    }
+    private fun hasStoragePermission(): Boolean = (ContextCompat.checkSelfPermission(this, getStoragePermission()) == PackageManager.PERMISSION_GRANTED)
 
-    private fun getStoragePermission(): String {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            Manifest.permission.READ_MEDIA_AUDIO
-        } else {
-            Manifest.permission.READ_EXTERNAL_STORAGE
-        }
+    private fun getStoragePermission(): String = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        Manifest.permission.READ_MEDIA_AUDIO
+    } else {
+        Manifest.permission.READ_EXTERNAL_STORAGE
     }
 
     private fun handleSearchQuery(intent: Intent?) {

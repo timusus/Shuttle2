@@ -24,9 +24,7 @@ class AggregateMediaInfoProvider(val providers: MutableSet<MediaInfoProvider> = 
         providers.remove(provider)
     }
 
-    override fun handles(uri: Uri): Boolean {
-        return true
-    }
+    override fun handles(uri: Uri): Boolean = true
 
     override suspend fun getMediaInfo(
         song: Song,

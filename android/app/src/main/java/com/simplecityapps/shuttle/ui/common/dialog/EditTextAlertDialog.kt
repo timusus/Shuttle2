@@ -28,9 +28,7 @@ open class EditTextAlertDialog : DialogFragment() {
         fun validate(
             string: String?,
             extra: Parcelable? = null
-        ): Boolean {
-            return !string.isNullOrEmpty()
-        }
+        ): Boolean = !string.isNullOrEmpty()
     }
 
     private var editText: EditText? = null
@@ -121,9 +119,7 @@ open class EditTextAlertDialog : DialogFragment() {
         (dialog as? AlertDialog)?.getButton(AlertDialog.BUTTON_POSITIVE)?.isEnabled = isValid(editText?.text?.toString())
     }
 
-    open fun isValid(string: String?): Boolean {
-        return (parentFragment as? Listener)?.validate(string, extra) ?: !string.isNullOrEmpty()
-    }
+    open fun isValid(string: String?): Boolean = (parentFragment as? Listener)?.validate(string, extra) ?: !string.isNullOrEmpty()
 
     fun show(manager: FragmentManager) {
         super.show(manager, TAG)
@@ -144,13 +140,12 @@ open class EditTextAlertDialog : DialogFragment() {
             initialText: String? = null,
             extra: Parcelable? = null,
             inputType: Int = InputType.TYPE_TEXT_FLAG_CAP_WORDS
-        ): EditTextAlertDialog =
-            EditTextAlertDialog().withArgs {
-                putString(ARG_TITLE, title)
-                putString(ARG_HINT, hint)
-                putString(ARG_INITIAL_TEXT, initialText)
-                putParcelable(ARG_EXTRA, extra)
-                putInt(ARG_INPUT_TYPE, inputType)
-            }
+        ): EditTextAlertDialog = EditTextAlertDialog().withArgs {
+            putString(ARG_TITLE, title)
+            putString(ARG_HINT, hint)
+            putString(ARG_INITIAL_TEXT, initialText)
+            putParcelable(ARG_EXTRA, extra)
+            putInt(ARG_INPUT_TYPE, inputType)
+        }
     }
 }

@@ -94,7 +94,5 @@ class HttpServer(private val castService: CastService) : NanoHTTPD(5000) {
         inputStream: InputStream,
         mimeType: String,
         length: Long
-    ): Response {
-        return newFixedLengthResponse(Response.Status.OK, mimeType, inputStream, length)
-    }
+    ): Response = newFixedLengthResponse(Response.Status.OK, mimeType, inputStream, length)
 }

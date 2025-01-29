@@ -10,6 +10,4 @@ fun <T> Iterable<T>.joinToSpannedString(
     limit: Int = -1,
     truncated: CharSequence = "...",
     transform: ((T) -> CharSequence)? = null
-): SpannedString {
-    return SpannedString(joinTo(SpannableStringBuilder(), separator, prefix, postfix, limit, truncated, transform))
-}
+): SpannedString = SpannedString(joinTo(SpannableStringBuilder(), separator, prefix, postfix, limit, truncated, transform))

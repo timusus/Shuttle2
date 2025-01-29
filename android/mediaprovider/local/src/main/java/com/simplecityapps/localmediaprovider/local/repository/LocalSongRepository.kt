@@ -29,24 +29,22 @@ class LocalSongRepository(
             .stateIn(scope, SharingStarted.Lazily, null)
     }
 
-    override fun getSongs(query: SongQuery): Flow<List<Song>?> {
-        return songsRelay
-            .map { songs ->
-                var result = songs
+    override fun getSongs(query: SongQuery): Flow<List<Song>?> = songsRelay
+        .map { songs ->
+            var result = songs
 
-                if (!query.includeExcluded) {
-                    result = songs?.filterNot { it.blacklisted }
-                }
-
-                query.providerType?.let { providerType ->
-                    result = songs?.filter { song -> song.mediaProvider == providerType }
-                }
-
-                result
-                    ?.filter(query.predicate)
-                    ?.sortedWith(query.sortOrder.comparator)
+            if (!query.includeExcluded) {
+                result = songs?.filterNot { it.blacklisted }
             }
-    }
+
+            query.providerType?.let { providerType ->
+                result = songs?.filter { song -> song.mediaProvider == providerType }
+            }
+
+            result
+                ?.filter(query.predicate)
+                ?.sortedWith(query.sortOrder.comparator)
+        }
 
     override suspend fun insert(
         songs: List<Song>,
@@ -59,9 +57,7 @@ class LocalSongRepository(
         songDataDao.update(songs.toSongDataUpdate())
     }
 
-    override suspend fun update(song: Song): Int {
-        return songDataDao.update(song.toSongDataUpdate())
-    }
+    override suspend fun update(song: Song): Int = songDataDao.update(song.toSongDataUpdate())
 
     override suspend fun remove(song: Song) {
         Timber.v("Deleting song")
@@ -77,9 +73,7 @@ class LocalSongRepository(
         updates: List<Song>,
         deletes: List<Song>,
         mediaProviderType: MediaProviderType
-    ): Triple<Int, Int, Int> {
-        return songDataDao.insertUpdateAndDelete(inserts.toSongData(mediaProviderType), updates.toSongDataUpdate(), deletes.toSongData(mediaProviderType))
-    }
+    ): Triple<Int, Int, Int> = songDataDao.insertUpdateAndDelete(inserts.toSongData(mediaProviderType), updates.toSongDataUpdate(), deletes.toSongData(mediaProviderType))
 
     override suspend fun incrementPlayCount(song: Song) {
         Timber.v("Incrementing play count for song: ${song.name}")

@@ -125,7 +125,8 @@ constructor(
     private val kTagLib: KTagLib,
     private val fileScanner: FileScanner,
     private val songRepository: SongRepository
-) : BasePresenter<TagEditorContract.View>(), TagEditorContract.Presenter {
+) : BasePresenter<TagEditorContract.View>(),
+    TagEditorContract.Presenter {
     private lateinit var uneditables: List<Pair<com.simplecityapps.shuttle.model.Song, AudioFile?>>
     private lateinit var editables: List<Pair<com.simplecityapps.shuttle.model.Song, AudioFile?>>
 

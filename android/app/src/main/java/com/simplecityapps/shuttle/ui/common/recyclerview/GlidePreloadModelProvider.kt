@@ -18,7 +18,5 @@ class GlidePreloadModelProvider<T>(
         return listOf(items[position])
     }
 
-    override fun getPreloadRequestBuilder(item: T & Any): RequestBuilder<*>? {
-        return imageLoader.getRequestBuilder(options).load(item)
-    }
+    override fun getPreloadRequestBuilder(item: T & Any): RequestBuilder<*>? = imageLoader.getRequestBuilder(options).load(item)
 }

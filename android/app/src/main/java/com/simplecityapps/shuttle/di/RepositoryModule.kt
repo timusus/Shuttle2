@@ -30,18 +30,14 @@ class RepositoryModule {
     @Singleton
     fun provideMediaDatabase(
         @ApplicationContext context: Context
-    ): MediaDatabase {
-        return DatabaseProvider(context).database
-    }
+    ): MediaDatabase = DatabaseProvider(context).database
 
     @Provides
     @Singleton
     fun provideSongRepository(
         database: MediaDatabase,
         @AppCoroutineScope appCoroutineScope: CoroutineScope
-    ): SongRepository {
-        return LocalSongRepository(appCoroutineScope, database.songDataDao())
-    }
+    ): SongRepository = LocalSongRepository(appCoroutineScope, database.songDataDao())
 
     @Provides
     @Singleton
@@ -50,27 +46,21 @@ class RepositoryModule {
         songRepository: SongRepository,
         playlistRepository: PlaylistRepository,
         preferenceManager: GeneralPreferenceManager
-    ): MediaImporter {
-        return MediaImporter(context, songRepository, playlistRepository, preferenceManager)
-    }
+    ): MediaImporter = MediaImporter(context, songRepository, playlistRepository, preferenceManager)
 
     @Provides
     @Singleton
     fun provideAlbumRepository(
         database: MediaDatabase,
         @AppCoroutineScope appCoroutineScope: CoroutineScope
-    ): AlbumRepository {
-        return LocalAlbumRepository(appCoroutineScope, database.songDataDao())
-    }
+    ): AlbumRepository = LocalAlbumRepository(appCoroutineScope, database.songDataDao())
 
     @Provides
     @Singleton
     fun provideAlbumArtistRepository(
         database: MediaDatabase,
         @AppCoroutineScope appCoroutineScope: CoroutineScope
-    ): AlbumArtistRepository {
-        return LocalAlbumArtistRepository(appCoroutineScope, database.songDataDao())
-    }
+    ): AlbumArtistRepository = LocalAlbumArtistRepository(appCoroutineScope, database.songDataDao())
 
     @Provides
     @Singleton
@@ -78,16 +68,12 @@ class RepositoryModule {
         @ApplicationContext context: Context,
         database: MediaDatabase,
         @AppCoroutineScope appCoroutineScope: CoroutineScope
-    ): PlaylistRepository {
-        return LocalPlaylistRepository(context, appCoroutineScope, database.playlistDataDao(), database.playlistSongJoinDataDao())
-    }
+    ): PlaylistRepository = LocalPlaylistRepository(context, appCoroutineScope, database.playlistDataDao(), database.playlistSongJoinDataDao())
 
     @Provides
     @Singleton
     fun provideGenreRepository(
         songRepository: SongRepository,
         @AppCoroutineScope appCoroutineScope: CoroutineScope
-    ): GenreRepository {
-        return LocalGenreRepository(appCoroutineScope, songRepository)
-    }
+    ): GenreRepository = LocalGenreRepository(appCoroutineScope, songRepository)
 }

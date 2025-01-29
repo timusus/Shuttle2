@@ -3,7 +3,6 @@ package com.simplecityapps.shuttle.ui.common
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.observe
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
@@ -11,7 +10,7 @@ import kotlin.reflect.KProperty
  * @see AutoClearedValue
  */
 class AutoClearedNullableValue<T : Any?>(val fragment: Fragment) : ReadWriteProperty<Fragment, T?> {
-    private var _value: T? = null
+    private var value: T? = null
 
     init {
         fragment.lifecycle.addObserver(
@@ -21,7 +20,7 @@ class AutoClearedNullableValue<T : Any?>(val fragment: Fragment) : ReadWriteProp
                         viewLifecycleOwner?.lifecycle?.addObserver(
                             object : DefaultLifecycleObserver {
                                 override fun onDestroy(owner: LifecycleOwner) {
-                                    _value = null
+                                    value = null
                                 }
                             }
                         )
@@ -34,16 +33,14 @@ class AutoClearedNullableValue<T : Any?>(val fragment: Fragment) : ReadWriteProp
     override fun getValue(
         thisRef: Fragment,
         property: KProperty<*>
-    ): T? {
-        return _value
-    }
+    ): T? = value
 
     override fun setValue(
         thisRef: Fragment,
         property: KProperty<*>,
         value: T?
     ) {
-        _value = value
+        this.value = value
     }
 }
 

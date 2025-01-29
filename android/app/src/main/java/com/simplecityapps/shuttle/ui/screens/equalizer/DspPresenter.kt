@@ -48,7 +48,8 @@ constructor(
     private val playbackPreferenceManager: PlaybackPreferenceManager,
     private val equalizerAudioProcessor: EqualizerAudioProcessor,
     private val replayGainAudioProcessor: ReplayGainAudioProcessor
-) : BasePresenter<EqualizerContract.View>(), EqualizerContract.Presenter {
+) : BasePresenter<EqualizerContract.View>(),
+    EqualizerContract.Presenter {
     override fun bindView(view: EqualizerContract.View) {
         super.bindView(view)
 

@@ -60,9 +60,7 @@ class AppearancePreferenceFragment : Fragment() {
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        return inflater.inflate(R.layout.fragment_preferences_appearance, container, false)
-    }
+    ): View? = inflater.inflate(R.layout.fragment_preferences_appearance, container, false)
 
     override fun onViewCreated(
         view: View,

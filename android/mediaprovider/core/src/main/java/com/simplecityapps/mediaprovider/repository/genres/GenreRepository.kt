@@ -16,7 +16,5 @@ interface GenreRepository {
     fun getSongsForGenre(
         genre: String,
         songQuery: SongQuery
-    ): Flow<List<Song>> {
-        return getSongsForGenres(listOf(genre), songQuery)
-    }
+    ): Flow<List<Song>> = getSongsForGenres(listOf(genre), songQuery)
 }
