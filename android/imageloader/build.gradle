@@ -2,7 +2,6 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'dagger.hilt.android.plugin'
 apply plugin: 'com.google.devtools.ksp'
-apply plugin: 'com.google.devtools.ksp'
 
 android {
     compileSdk 35
@@ -10,13 +9,7 @@ android {
     defaultConfig {
         minSdkVersion 21
         targetSdkVersion 35
-    }
-
-    buildTypes {
-        release {
-            minifyEnabled true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
+        consumerProguardFiles "consumer-rules.pro"
     }
 
     compileOptions {

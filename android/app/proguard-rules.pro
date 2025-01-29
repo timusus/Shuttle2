@@ -102,11 +102,11 @@
 }
 
 # Change here com.yourcompany.yourpackage
--keep,includedescriptorclasses class com.simplecityapps.shuttle.**$$serializer { *; } # <-- change package name to your app's
--keepclassmembers class com.simplecityapps.shuttle.** { # <-- change package name to your app's
+-keep,includedescriptorclasses class com.simplecityapps.shuttle.**$$serializer { *; }
+-keepclassmembers class com.simplecityapps.shuttle.** {
     *** Companion;
 }
--keepclasseswithmembers class com.simplecityapps.shuttle.** { # <-- change package name to your app's
+-keepclasseswithmembers class com.simplecityapps.shuttle.** {
     kotlinx.serialization.KSerializer serializer(...);
 }
 
