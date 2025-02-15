@@ -7,5 +7,4 @@ VENDOR_DIR="${SUPPORT_DIR}/vendor"
 
 PATH="${VENDOR_DIR}/ktlint:$PATH"
 
-ktlint -R "${VENDOR_DIR}/ktlint/ktlint-compose-0.4.22-all.jar" \
-  "$@" "**.kt" "!**/generated/**" "!**/build/**"
+ktlint "$@" "**.kt" "!**/generated/**" "!**/build/**"
