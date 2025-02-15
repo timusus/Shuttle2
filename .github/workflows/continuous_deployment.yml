@@ -46,7 +46,7 @@ jobs:
         run: "support/scripts/unit-test"
 
       - name: "Unit Test Results"
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-results
@@ -61,7 +61,7 @@ jobs:
           CONFIGURATION: Release
 
       - name: "Upload App Bundle"
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: app-bundle
           path: |

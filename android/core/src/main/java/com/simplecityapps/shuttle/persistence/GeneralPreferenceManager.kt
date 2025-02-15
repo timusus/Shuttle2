@@ -2,8 +2,14 @@ package com.simplecityapps.shuttle.persistence
 
 import android.content.SharedPreferences
 import java.util.Date
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.StateFlow
+import stateFlowForBoolean
+import stateFlowForMappedValue
 
-class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences) {
+class GeneralPreferenceManager(
+    private val sharedPreferences: SharedPreferences
+) {
     var previousVersionCode: Int
         set(value) {
             sharedPreferences.put("previous_version_code", value)
@@ -83,8 +89,16 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
             sharedPreferences.put("pref_theme", value.ordinal.toString())
         }
         get() {
-            return Theme.values()[sharedPreferences.get("pref_theme", "0").toInt()]
+            return Theme.entries[sharedPreferences.get("pref_theme", "0").toInt()]
         }
+
+    fun theme(scope: CoroutineScope): StateFlow<Theme> = sharedPreferences.stateFlowForMappedValue(
+        key = "pref_theme",
+        default = "0",
+        getter = { key, default -> getString(key, default) },
+        mapper = { value -> Theme.entries[value.toInt()] },
+        scope = scope
+    )
 
     enum class Accent {
         Default,
@@ -100,8 +114,16 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
             sharedPreferences.put("pref_theme_accent", value.ordinal.toString())
         }
         get() {
-            return Accent.values()[sharedPreferences.get("pref_theme_accent", "0").toInt()]
+            return Accent.entries[sharedPreferences.get("pref_theme_accent", "0").toInt()]
         }
+
+    fun accent(scope: CoroutineScope): StateFlow<Accent> = sharedPreferences.stateFlowForMappedValue(
+        key = "pref_theme_accent",
+        default = "0",
+        getter = { key, default -> getString(key, default) },
+        mapper = { value -> Accent.entries[value.toInt()] },
+        scope = scope
+    )
 
     var themeExtraDark: Boolean
         set(value) {
@@ -110,6 +132,12 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
         get() {
             return sharedPreferences.get("pref_theme_extra_dark", false)
         }
+
+    fun extraDark(scope: CoroutineScope): StateFlow<Boolean> = sharedPreferences.stateFlowForBoolean(
+        key = "pref_theme_extra_dark",
+        default = false,
+        scope = scope
+    )
 
     var artworkWifiOnly: Boolean
         set(value) {
@@ -291,7 +319,7 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
             return sharedPreferences.getString("pref_library_tabs_all", null)
                 ?.split(",")
                 ?.map { LibraryTab.valueOf(it) }
-                ?: LibraryTab.values().toList()
+                ?: LibraryTab.entries.toList()
         }
 
     var enabledLibraryTabs: List<LibraryTab>
@@ -299,7 +327,7 @@ class GeneralPreferenceManager(private val sharedPreferences: SharedPreferences)
             sharedPreferences.put("pref_library_tabs_enabled", value.joinToString(","))
         }
         get() {
-            return sharedPreferences.getString("pref_library_tabs_enabled", LibraryTab.values().joinToString(","))
+            return sharedPreferences.getString("pref_library_tabs_enabled", LibraryTab.entries.joinToString(","))
                 ?.split(",")
                 ?.mapNotNull {
                     try {

@@ -7,6 +7,8 @@ agp = "8.8.0"
 billing-ktx = "7.1.1"
 circleindicator = "2.1.6"
 compose = "2025.01.00"
+compose-lint-checks = "1.4.2"
+detekt = "1.23.7"
 ksp = "2.1.0-1.0.29"
 constraintlayout = "2.2.0"
 converter-moshi = "2.11.0"
@@ -107,7 +109,9 @@ androidx-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview
 androidx-viewpager2 = { module = "androidx.viewpager2:viewpager2", version.ref = "viewpager2" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "work-runtime-ktx" }
 billingclient-billingKtx = { module = "com.android.billingclient:billing-ktx", version.ref = "billing-ktx" }
+compose-lint-checks = { module = "com.slack.lint.compose:compose-lint-checks", version.ref = "compose-lint-checks" }
 design-fluentSystemIcons = { module = "com.microsoft.design:fluent-system-icons", version.ref = "fluent-system-icons" }
+detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
 exoplayer-core = { module = "com.github.timusus.exoplayer:exoplayer-core", version.ref = "exoplayer-shuttle" }
 exoplayer-extensionFlac = { module = "com.github.timusus.exoplayer:extension-flac", version.ref = "exoplayer-shuttle" }
 exoplayer-extensionOpus = { module = "com.github.timusus.exoplayer:extension-opus", version.ref = "exoplayer-shuttle" }
@@ -161,6 +165,7 @@ vdurmont-semver4j = { module = "com.vdurmont:semver4j", version.ref = "semver4j"
 aboutlibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutlibraries" }
 android-application = { id = "com.android.application", version.ref = "agp" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt"}
 firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebase-crashlytics" }
 google-services = { id = "com.google.gms.google-services", version.ref = "google-services" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt-android" }
