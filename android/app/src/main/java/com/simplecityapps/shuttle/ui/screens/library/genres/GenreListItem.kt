@@ -22,11 +22,13 @@ import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.theme.AppTheme
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
 
 @Composable
 fun GenreListItem(
     genre: Genre,
-    playlists: List<Playlist>,
+    playlists: PersistentList<Playlist>,
     modifier: Modifier = Modifier,
     onSelectGenre: (genre: Genre) -> Unit = {},
     onPlayGenre: (Genre) -> Unit = {},
@@ -91,7 +93,7 @@ private fun GenreListItemPreview() {
                 duration = 10,
                 mediaProviders = listOf(MediaProviderType.MediaStore)
             ),
-            playlists = listOf(
+            playlists = persistentListOf(
                 Playlist(
                     id = 1,
                     name = "Playlist",

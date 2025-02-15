@@ -9,6 +9,7 @@ circleindicator = "2.1.6"
 compose = "2025.01.00"
 compose-lint-checks = "1.4.2"
 detekt = "1.23.7"
+kotlinx-collections-immutable = "0.3.8"
 ksp = "2.1.0-1.0.29"
 constraintlayout = "2.2.0"
 converter-moshi = "2.11.0"
@@ -135,6 +136,7 @@ hilt = { module = "com.google.dagger:hilt-android", version.ref = "hilt-android"
 jaredrummler-androidDeviceNames = { module = "com.jaredrummler:android-device-names", version.ref = "android-device-names" }
 junit = { module = "junit:junit", version.ref = "junit" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
+kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlinx-collections-immutable" }
 kotlinx-coroutinesAndroid = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines-android" }
 kotlinx-coroutinesCore = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines-core" }
 kotlinx-coroutinesPlayServices = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "kotlinx-coroutines-play-services" }

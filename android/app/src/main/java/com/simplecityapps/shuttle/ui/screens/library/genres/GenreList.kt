@@ -17,11 +17,12 @@ import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
+import kotlinx.collections.immutable.PersistentList
 
 @Composable
 fun GenreList(
     viewState: GenreListViewModel.ViewState,
-    playlists: List<Playlist>,
+    playlists: PersistentList<Playlist>,
     setLoadingState: (GenreListFragment.LoadingState) -> Unit,
     setLoadingProgress: (progress: Progress?) -> Unit,
     onSelectGenre: (genre: Genre) -> Unit,
@@ -68,8 +69,8 @@ fun GenreList(
 
 @Composable
 private fun GenreList(
-    genres: List<Genre>,
-    playlists: List<Playlist>,
+    genres: PersistentList<Genre>,
+    playlists: PersistentList<Playlist>,
     onSelectGenre: (genre: Genre) -> Unit,
     onPlayGenre: (Genre) -> Unit,
     onAddToQueue: (Genre) -> Unit,

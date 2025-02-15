@@ -272,6 +272,8 @@ android {
 
         detektPlugins(libs.detekt.formatting)
 
+        implementation(libs.kotlinx.collections.immutable)
+
         lintChecks(libs.compose.lint.checks)
     }
 

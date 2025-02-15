@@ -30,6 +30,7 @@ import com.simplecityapps.shuttle.ui.theme.AppTheme
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import kotlinx.collections.immutable.toPersistentList
 
 @AndroidEntryPoint
 class GenreListFragment :
@@ -82,7 +83,7 @@ class GenreListFragment :
             ) {
                 GenreList(
                     viewState = viewState,
-                    playlists = playlistMenuPresenter.playlists,
+                    playlists = playlistMenuPresenter.playlists.toPersistentList(),
                     setLoadingState = {
                         setLoadingState(it)
                     },

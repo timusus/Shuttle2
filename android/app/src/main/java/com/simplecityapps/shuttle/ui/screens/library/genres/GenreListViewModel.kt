@@ -17,6 +17,8 @@ import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.query.SongQuery
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
@@ -47,7 +49,7 @@ class GenreListViewModel @Inject constructor(
             if (songImportState is SongImportState.ImportProgress) {
                 _viewState.emit(ViewState.Scanning(songImportState.progress))
             } else {
-                _viewState.emit(ViewState.Ready(genres))
+                _viewState.emit(ViewState.Ready(genres.toPersistentList()))
             }
         }
             .onStart {
@@ -114,6 +116,6 @@ class GenreListViewModel @Inject constructor(
     sealed class ViewState {
         data class Scanning(val progress: Progress?) : ViewState()
         data object Loading : ViewState()
-        data class Ready(val genres: List<Genre>) : ViewState()
+        data class Ready(val genres: PersistentList<Genre>) : ViewState()
     }
 }
