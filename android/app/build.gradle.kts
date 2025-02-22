@@ -105,14 +105,14 @@ android {
         // or Material Design 2
         implementation(libs.androidx.material)
         // or skip Material Design and build directly on top of foundational components
-        implementation(libs.androidx.foundation)
+        implementation(libs.androidx.compose.foundation)
         // or only import the main APIs for the underlying toolkit systems,
         // such as input and measurement/layout
         implementation(libs.androidx.ui)
 
         // Android Studio Preview support
-        implementation(libs.androidx.ui.tooling.preview)
-        debugImplementation(libs.androidx.ui.tooling)
+        implementation(libs.androidx.compose.ui.tooling.preview)
+        debugImplementation(libs.androidx.compose.ui.tooling)
 
         implementation(libs.androidx.lifecycle.viewmodel.compose)
 
@@ -274,7 +274,11 @@ android {
 
         implementation(libs.kotlinx.collections.immutable)
 
+        implementation(libs.androidx.activity.compose)
+
         lintChecks(libs.compose.lint.checks)
+
+        implementation(project(":android:composeui"))
     }
 
     buildFeatures.buildConfig = true

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <dataSource name="artwork@shuttlemusicplayer.app">
-  <database-model serializer="dbm" dbms="MYSQL" family-id="MYSQL" format-version="4.49">
+  <database-model serializer="dbm" dbms="MYSQL" family-id="MYSQL" format-version="4.53">
     <root id="1">
       <DefaultCasing>exact</DefaultCasing>
       <DefaultEngine>InnoDB</DefaultEngine>
@@ -965,8 +965,7 @@ ghost|schema||app||UPDATE|G</Grants>
     </schema>
     <schema id="289" parent="1" name="artwork">
       <Current>1</Current>
-      <IntrospectionTimestamp>2023-09-15.08:43:30</IntrospectionTimestamp>
-      <LocalIntrospectionTimestamp>2023-09-14.22:43:29</LocalIntrospectionTimestamp>
+      <LastIntrospectionLocalTimestamp>2023-09-14.22:43:29</LastIntrospectionLocalTimestamp>
       <CollationName>utf8mb4_general_ci</CollationName>
     </schema>
     <schema id="290" parent="1" name="ghost">
@@ -1000,23 +999,23 @@ ghost|schema||app||UPDATE|G</Grants>
       <CollationName>utf8mb4_general_ci</CollationName>
     </table>
     <column id="299" parent="294" name="artist">
-      <DasType>varchar(191)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>1</Position>
+      <StoredType>varchar(191)|0s</StoredType>
     </column>
     <column id="300" parent="294" name="album">
-      <DasType>varchar(191)|0s</DasType>
       <Position>2</Position>
+      <StoredType>varchar(191)|0s</StoredType>
     </column>
     <column id="301" parent="294" name="hasArtwork">
-      <DasType>int|0s</DasType>
       <NotNull>1</NotNull>
       <Position>3</Position>
+      <StoredType>int|0s</StoredType>
     </column>
     <column id="302" parent="294" name="lastUpdate">
-      <DasType>varchar(191)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>4</Position>
+      <StoredType>varchar(191)|0s</StoredType>
     </column>
     <index id="303" parent="294" name="album_idx">
       <ColNames>artist
@@ -1032,33 +1031,33 @@ album</ColNames>
       <UnderlyingIndexName>album_idx</UnderlyingIndexName>
     </key>
     <column id="306" parent="295" name="deviceId">
-      <DasType>varchar(191)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>1</Position>
+      <StoredType>varchar(191)|0s</StoredType>
     </column>
     <column id="307" parent="295" name="lastUpdate">
-      <DasType>varchar(191)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>2</Position>
+      <StoredType>varchar(191)|0s</StoredType>
     </column>
     <column id="308" parent="296" name="emailHash">
-      <DasType>varchar(191)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>1</Position>
+      <StoredType>varchar(191)|0s</StoredType>
     </column>
     <column id="309" parent="296" name="promoCode">
-      <DasType>varchar(191)|0s</DasType>
       <Position>2</Position>
+      <StoredType>varchar(191)|0s</StoredType>
     </column>
     <column id="310" parent="297" name="promoCode">
-      <DasType>varchar(191)|0s</DasType>
       <NotNull>1</NotNull>
       <Position>1</Position>
+      <StoredType>varchar(191)|0s</StoredType>
     </column>
     <column id="311" parent="298" name="version">
-      <DasType>int|0s</DasType>
       <NotNull>1</NotNull>
       <Position>1</Position>
+      <StoredType>int|0s</StoredType>
     </column>
   </database-model>
 </dataSource>

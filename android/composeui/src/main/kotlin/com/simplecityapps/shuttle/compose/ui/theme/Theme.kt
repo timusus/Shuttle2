@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.theme
+package com.simplecityapps.shuttle.compose.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -9,28 +9,27 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 
 @Immutable
 data class ColorFamily(
     val color: Color,
     val onColor: Color,
     val colorContainer: Color,
-    val onColorContainer: Color
+    val onColorContainer: Color,
 )
 
 @Composable
 fun AppTheme(
     dynamicColor: Boolean = false,
-    theme: GeneralPreferenceManager.Theme = GeneralPreferenceManager.Theme.DayNight,
-    accent: GeneralPreferenceManager.Accent = GeneralPreferenceManager.Accent.Default,
+    theme: ThemeBase = ThemeBase.DayNight,
+    accent: ThemeAccent = ThemeAccent.Default,
     extraDark: Boolean = false,
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val isDark = when (theme) {
-        GeneralPreferenceManager.Theme.DayNight -> isSystemInDarkTheme()
-        GeneralPreferenceManager.Theme.Light -> false
-        GeneralPreferenceManager.Theme.Dark -> true
+        ThemeBase.DayNight -> isSystemInDarkTheme()
+        ThemeBase.Light -> false
+        ThemeBase.Dark -> true
     }
 
     val colorScheme = if (dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -38,12 +37,12 @@ fun AppTheme(
         if (isDark) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
     } else {
         when (accent) {
-            GeneralPreferenceManager.Accent.Default -> ShuttleTheme.getColorScheme(isDark)
-            GeneralPreferenceManager.Accent.Orange -> OrangeTheme.getColorScheme(isDark)
-            GeneralPreferenceManager.Accent.Cyan -> CyanTheme.getColorScheme(isDark)
-            GeneralPreferenceManager.Accent.Purple -> PurpleTheme.getColorScheme(isDark)
-            GeneralPreferenceManager.Accent.Green -> GreenTheme.getColorScheme(isDark)
-            GeneralPreferenceManager.Accent.Amber -> AmberTheme.getColorScheme(isDark)
+            ThemeAccent.Default -> ShuttleTheme.getColorScheme(isDark)
+            ThemeAccent.Orange -> OrangeTheme.getColorScheme(isDark)
+            ThemeAccent.Cyan -> CyanTheme.getColorScheme(isDark)
+            ThemeAccent.Purple -> PurpleTheme.getColorScheme(isDark)
+            ThemeAccent.Green -> GreenTheme.getColorScheme(isDark)
+            ThemeAccent.Amber -> AmberTheme.getColorScheme(isDark)
         }
     }
     MaterialTheme(
@@ -51,4 +50,19 @@ fun AppTheme(
         typography = AppTypography,
         content = content
     )
+}
+
+enum class ThemeBase {
+    DayNight,
+    Light,
+    Dark
+}
+
+enum class ThemeAccent {
+    Default,
+    Orange,
+    Cyan,
+    Purple,
+    Green,
+    Amber
 }

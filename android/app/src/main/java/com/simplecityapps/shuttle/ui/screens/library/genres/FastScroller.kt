@@ -50,10 +50,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import com.simplecityapps.shuttle.ui.theme.AppTheme
-import kotlin.math.roundToInt
+import com.simplecityapps.shuttle.compose.ui.theme.AppTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 @Composable
 fun FastScroller(

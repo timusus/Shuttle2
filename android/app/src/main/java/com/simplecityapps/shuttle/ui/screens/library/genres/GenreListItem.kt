@@ -15,13 +15,13 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.compose.ui.theme.AppTheme
+import com.simplecityapps.shuttle.compose.ui.theme.ThemeAccent
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
-import com.simplecityapps.shuttle.ui.theme.AppTheme
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 
@@ -84,7 +84,7 @@ fun GenreListItem(
 @Composable
 private fun GenreListItemPreview() {
     AppTheme(
-        accent = GeneralPreferenceManager.Accent.Default
+        accent = ThemeAccent.Default
     ) {
         GenreListItem(
             genre = Genre(

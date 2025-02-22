@@ -3,12 +3,14 @@ aboutlibraries = "10.9.2"
 android-device-names = "2.0.0"
 annotation = "1.9.1"
 appcompat = "1.7.0"
-agp = "8.8.0"
+agp = "8.8.0-alpha05"
 billing-ktx = "7.1.1"
 circleindicator = "2.1.6"
-compose = "2025.01.00"
+compose = "2025.02.00"
 compose-lint-checks = "1.4.2"
+androidxComposeMaterial3 = "1.3.1"
 detekt = "1.23.7"
+githubCompose = "1.0.0-beta01"
 kotlinx-collections-immutable = "0.3.8"
 ksp = "2.1.0-1.0.29"
 constraintlayout = "2.2.0"
@@ -29,21 +31,24 @@ hamcrest-library = "1.3"
 hilt-android = "2.55"
 hilt-compiler = "1.2.0"
 hilt-work = "1.2.0"
+androidXHiltNavigationCompose = "1.2.0"
 junit = "4.13.2"
 junit-version = "1.2.1"
 kotlin = "2.1.0"
-kotlinx-coroutines-android = "1.8.1"
-kotlinx-coroutines-core = "1.8.1"
-kotlinx-coroutines-play-services = "1.8.1"
+kotlinx-coroutines-android = "1.10.1"
+kotlinx-coroutines-core = "1.10.1"
+kotlinx-coroutines-play-services = "1.10.1"
 kotlinx-datetime = "0.4.1"
 ktaglib = "1.4.1"
 leakcanary-android = "2.10"
 lifecycle-common-java8 = "2.8.7"
 lifecycle-extensions = "2.2.0"
-lifecycle-runtime-ktx = "2.8.7"
+androidx-lifecycle = "2.8.7"
 lifecycle-viewmodel-compose = "2.8.7"
 logging-interceptor = "4.12.0"
 material = "1.12.0"
+material3 = "1.3.1"
+materialIconsExtended = "1.7.8"
 media = "1.7.0"
 moshi = "1.15.1"
 moshi-adapters = "1.15.0"
@@ -70,24 +75,39 @@ semver4j = "3.1.0"
 timber = "4.7.1"
 viewpager2 = "1.1.0"
 work-runtime-ktx = "2.10.0"
+core-ktx = "1.15.0"
 
 [libraries]
+androidx-activity-compose = { module = "androidx.activity:activity-compose" }
 androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose"}
+androidx-compose-foundation = { module = "androidx.compose.foundation:foundation" }
+androidx-compose-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout" }
+androidx-compose-material-iconsExtended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "materialIconsExtended" }
+androidx-compose-material = { module = "androidx.compose.material:material", version.ref = "material" }
+androidx-compose-material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
+androidx-compose-material3-windowSizeClass = { group = "androidx.compose.material3", name = "material3-window-size-class", version.ref = "androidxComposeMaterial3" }
+androidx-compose-ui-test = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+androidx-compose-ui-testManifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-compose-ui-util = { group = "androidx.compose.ui", name = "ui-util" }
+androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime" }
 androidx-constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "constraintlayout" }
 androidx-core-ktx = { module = "androidx.test:core-ktx", version.ref = "core-ktx-version" }
 androidx-documentfile = { module = "androidx.documentfile:documentfile", version.ref = "documentfile" }
 androidx-drawerlayout = { module = "androidx.drawerlayout:drawerlayout", version.ref = "drawerlayout" }
 androidx-espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "espresso-core" }
-androidx-foundation = { module = "androidx.compose.foundation:foundation" }
 androidx-fragment-ktx = { module = "androidx.fragment:fragment-ktx", version.ref = "fragment-ktx" }
 androidx-hilt-compiler = { module = "androidx.hilt:hilt-compiler", version.ref = "hilt-compiler" }
 androidx-hilt-work = { module = "androidx.hilt:hilt-work", version.ref = "hilt-work" }
+androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "androidXHiltNavigationCompose" }
 androidx-junit = { module = "androidx.test.ext:junit", version.ref = "junit-version" }
 androidx-lifecycle-common-java8 = { module = "androidx.lifecycle:lifecycle-common-java8", version.ref = "lifecycle-common-java8" }
 androidx-lifecycle-extensions = { module = "androidx.lifecycle:lifecycle-extensions", version.ref = "lifecycle-extensions" }
-androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle-runtime-ktx" }
+androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "androidx-lifecycle" }
+androidx-lifecycle-runtimeCompose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle-viewmodel-compose" }
 androidx-material = { module = "androidx.compose.material:material" }
 androidx-material3 = { module = "androidx.compose.material3:material3" }
@@ -105,8 +125,6 @@ androidx-rules = { module = "androidx.test:rules", version.ref = "core-ktx-versi
 androidx-runner = { module = "androidx.test:runner", version.ref = "runner" }
 androidx-security-crypto = { module = "androidx.security:security-crypto", version.ref = "security-crypto" }
 androidx-ui = { module = "androidx.compose.ui:ui" }
-androidx-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
-androidx-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 androidx-viewpager2 = { module = "androidx.viewpager2:viewpager2", version.ref = "viewpager2" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "work-runtime-ktx" }
 billingclient-billingKtx = { module = "com.android.billingclient:billing-ktx", version.ref = "billing-ktx" }
@@ -123,6 +141,7 @@ firebase-config-ktx = { module = "com.google.firebase:firebase-config-ktx" }
 firebase-crashlytics = { module = "com.google.firebase:firebase-crashlytics" }
 glide = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
 glide-annotations = { module = "com.github.bumptech.glide:annotations", version.ref = "glide" }
+glide-compose = { module = "com.github.bumptech.glide:compose", version.ref = "githubCompose" }
 glide-ksp = { module = "com.github.bumptech.glide:ksp", version.ref = "glide" }
 glide-okhttp3Integration = { module = "com.github.bumptech.glide:okhttp3-integration", version.ref = "okhttp3-integration" }
 google-material = { module = "com.google.android.material:material", version.ref = "material" }
@@ -161,6 +180,12 @@ timusus-ktaglib = { module = "com.github.timusus:ktaglib", version.ref = "ktagli
 timusus-recyclerViewFastScroll = { module = "com.github.timusus:RecyclerView-FastScroll", version.ref = "recyclerview-fastscroll" }
 tools-desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar-jdk-libs" }
 vdurmont-semver4j = { module = "com.vdurmont:semver4j", version.ref = "semver4j" }
+core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
+
+# Dependencies of the included build-logic
+android-gradlePlugin = { group = "com.android.tools.build", name = "gradle", version.ref = "agp" }
+compose-gradlePlugin = { module = "org.jetbrains.kotlin:compose-compiler-gradle-plugin", version.ref = "kotlin" }
+kotlin-gradlePlugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
 
 [plugins]
 
@@ -173,3 +198,4 @@ google-services = { id = "com.google.gms.google-services", version.ref = "google
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt-android" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+android-library = { id = "com.android.library", version.ref = "agp" }

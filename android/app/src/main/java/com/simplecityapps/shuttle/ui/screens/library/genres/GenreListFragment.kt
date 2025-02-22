@@ -14,8 +14,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.fragment.findNavController
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.compose.ui.theme.AppTheme
+import com.simplecityapps.shuttle.compose.ui.theme.ThemeAccent
+import com.simplecityapps.shuttle.compose.ui.theme.ThemeBase
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
@@ -26,11 +30,10 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFr
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
-import com.simplecityapps.shuttle.ui.theme.AppTheme
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 import kotlinx.collections.immutable.toPersistentList
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class GenreListFragment :
@@ -77,8 +80,8 @@ class GenreListFragment :
             val extraDark by viewModel.extraDark.collectAsStateWithLifecycle()
 
             AppTheme(
-                theme = theme,
-                accent = accent,
+                theme = theme.toTheme(),
+                accent = accent.toAccent(),
                 extraDark = extraDark
             ) {
                 GenreList(
@@ -215,5 +218,25 @@ class GenreListFragment :
         data object Loading : LoadingState()
         data object Empty : LoadingState()
         data object None : LoadingState()
+    }
+}
+
+
+fun GeneralPreferenceManager.Theme.toTheme(): ThemeBase {
+    return when (this) {
+        GeneralPreferenceManager.Theme.Light -> ThemeBase.Light
+        GeneralPreferenceManager.Theme.Dark -> ThemeBase.Dark
+        GeneralPreferenceManager.Theme.DayNight -> ThemeBase.DayNight
+    }
+}
+
+fun GeneralPreferenceManager.Accent.toAccent(): ThemeAccent {
+    return when(this) {
+        GeneralPreferenceManager.Accent.Default -> ThemeAccent.Default
+        GeneralPreferenceManager.Accent.Orange -> ThemeAccent.Orange
+        GeneralPreferenceManager.Accent.Cyan -> ThemeAccent.Cyan
+        GeneralPreferenceManager.Accent.Purple -> ThemeAccent.Purple
+        GeneralPreferenceManager.Accent.Green -> ThemeAccent.Green
+        GeneralPreferenceManager.Accent.Amber -> ThemeAccent.Amber
     }
 }

@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.theme
+package com.simplecityapps.shuttle.compose.ui.theme
 
 import androidx.compose.material3.Typography
 
