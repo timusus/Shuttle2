@@ -91,7 +91,7 @@ private fun GenreList(
             contentPadding = PaddingValues(vertical = 16.dp, horizontal = 8.dp),
             state = state
         ) {
-            items(genres + genres + genres + genres) { genre ->
+            items(genres) { genre ->
                 GenreListItem(
                     genre = genre,
                     playlists = playlists,
@@ -110,7 +110,7 @@ private fun GenreList(
             modifier = Modifier.fillMaxSize().padding(vertical = 8.dp),
             state = state,
             getPopupText = { index ->
-                (genres + genres + genres + genres)[index].name.firstOrNull()?.toString()
+                (genres)[index].name.firstOrNull()?.toString()
             }
         )
     }
