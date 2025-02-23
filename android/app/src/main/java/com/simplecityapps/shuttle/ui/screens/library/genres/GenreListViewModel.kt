@@ -41,9 +41,8 @@ class GenreListViewModel @Inject constructor(
     init {
         combine(
             genreRepository.getGenres(GenreQuery.All()),
-            mediaImportObserver.songImportState,
-            mediaImportObserver.playlistImportState
-        ) { genres, songImportState, playlistImportState ->
+            mediaImportObserver.songImportState
+        ) { genres, songImportState ->
             if (songImportState is SongImportState.ImportProgress) {
                 _viewState.emit(ViewState.Scanning(songImportState.progress))
             } else {
