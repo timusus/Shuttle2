@@ -1,7 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library.songs
 
 import android.os.Bundle
-import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
@@ -10,15 +9,15 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.RecyclerView
+import androidx.fragment.app.viewModels
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
-import com.bumptech.glide.integration.recyclerview.RecyclerViewPreloader
 import com.bumptech.glide.util.ViewPreloadSizeProvider
 import com.simplecityapps.adapter.RecyclerAdapter
-import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.shuttle.R
@@ -31,7 +30,6 @@ import com.simplecityapps.shuttle.ui.common.dialog.showDeleteDialog
 import com.simplecityapps.shuttle.ui.common.dialog.showExcludeDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.GlidePreloadModelProvider
-import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
@@ -56,6 +54,9 @@ class SongListFragment :
     @Inject
     lateinit var playlistMenuPresenter: PlaylistMenuPresenter
 
+    private var composeView: ComposeView by autoCleared()
+
+    private val viewModel: SongListViewModel by viewModels()
     private var adapter: RecyclerAdapter by autoCleared()
 
     lateinit var imageLoader: GlideImageLoader
@@ -67,7 +68,7 @@ class SongListFragment :
     private var circularLoadingView: CircularLoadingView by autoCleared()
     private var horizontalLoadingView: HorizontalLoadingView by autoCleared()
 
-    private var recyclerView: RecyclerView by autoCleared()
+    // private var recyclerView: RecyclerView by autoCleared()
 
     private var recyclerViewState: Parcelable? = null
 
@@ -107,6 +108,17 @@ class SongListFragment :
 
         playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
 
+        composeView = view.findViewById(R.id.composeView)
+
+        composeView.setContent {
+            val viewState by viewModel.viewState.collectAsState()
+
+            SongList(
+               viewState = viewState,
+            )
+        }
+
+/*
         adapter =
             object : SectionedAdapter(viewLifecycleOwner.lifecycleScope) {
                 override fun getSectionName(viewBinder: ViewBinder?): String = (viewBinder as? SongBinder)?.song?.let { song ->
@@ -124,6 +136,7 @@ class SongListFragment :
                 12
             )
         recyclerView.addOnScrollListener(preloader)
+*/
 
         circularLoadingView = view.findViewById(R.id.circularLoadingView)
         horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
@@ -174,7 +187,7 @@ class SongListFragment :
             contextualToolbar?.setOnMenuItemClickListener(null)
         }
 
-        recyclerViewState = recyclerView.layoutManager?.onSaveInstanceState()
+        // recyclerViewState = recyclerView.layoutManager?.onSaveInstanceState()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -282,10 +295,12 @@ class SongListFragment :
         }
 
         adapter.update(data) {
+/*
             recyclerViewState?.let {
                 recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
                 recyclerViewState = null
             }
+*/
         }
     }
 
