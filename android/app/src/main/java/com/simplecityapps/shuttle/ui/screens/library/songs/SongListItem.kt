@@ -23,11 +23,11 @@ import com.squareup.phrase.ListPhrase
 import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 
-
 @Composable
 fun SongListItem(
     song: Song,
     modifier: Modifier = Modifier,
+    onAddToQueue: (Song) -> Unit = {},
 ) {
     Row(
         modifier = modifier,
@@ -58,6 +58,10 @@ fun SongListItem(
                 color = MaterialTheme.colorScheme.onBackground,
             )
         }
+        SongMenu(
+            song = song,
+            onAddToQueue = onAddToQueue,
+        )
     }
 }
 

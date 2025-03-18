@@ -114,7 +114,14 @@ class SongListFragment :
             val viewState by viewModel.viewState.collectAsState()
 
             SongList(
-               viewState = viewState,
+                viewState = viewState,
+                onAddToQueue = { song ->
+                    viewModel.addToQueue(song) { result ->
+                        result.onSuccess { song ->
+                            onAddedToQueue(listOf(song))
+                        }
+                    }
+                }
             )
         }
 

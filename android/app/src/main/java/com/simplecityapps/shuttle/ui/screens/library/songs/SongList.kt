@@ -26,6 +26,7 @@ import com.simplecityapps.shuttle.ui.common.components.LoadingStatusIndicator
 fun SongList(
     viewState: SongListViewModel.ViewState,
     modifier: Modifier = Modifier,
+    onAddToQueue: (Song) -> Unit = {},
 ) {
     when (viewState) {
         is SongListViewModel.ViewState.Scanning -> {
@@ -60,7 +61,7 @@ fun SongList(
             } else {
                 SongList(
                     songs = viewState.songs,
-
+                    onAddToQueue = onAddToQueue,
                 )
             }
         }
@@ -71,6 +72,7 @@ fun SongList(
 private fun SongList(
     songs: List<Song>,
     modifier: Modifier = Modifier,
+    onAddToQueue: (Song) -> Unit = {},
 ) {
     val state = rememberLazyListState()
 
@@ -86,6 +88,7 @@ private fun SongList(
             items(songs) { song ->
                 SongListItem(
                     song = song,
+                    onAddToQueue = onAddToQueue,
                 )
             }
         }

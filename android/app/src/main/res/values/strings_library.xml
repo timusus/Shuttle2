@@ -28,4 +28,6 @@
     </plurals>
     <!-- Shown on the library screen, if the user has manually deselected all the library tabs in appearance settings-->
     <string name="library_tabs_empty">No library tabs visible</string>
+    <!-- Content description the song context menu icon -->
+    <string name="song_context_menu">Song context menu</string>
 </resources>
