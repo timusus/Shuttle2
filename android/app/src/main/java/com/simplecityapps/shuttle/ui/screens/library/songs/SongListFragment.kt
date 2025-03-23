@@ -128,7 +128,10 @@ class SongListFragment :
                             onAddedToQueue(listOf(song))
                         }
                     }
-                }
+                },
+                onSongInfo = { song ->
+                    SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
+                },
             )
         }
 
