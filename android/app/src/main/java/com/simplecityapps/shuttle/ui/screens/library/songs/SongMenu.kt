@@ -28,6 +28,7 @@ fun SongMenu(
     onSongInfo: (Song) -> Unit,
     onExclude: (Song) -> Unit,
     onEditTags: (Song) -> Unit,
+    onDelete: (Song) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var isMenuOpened by remember { mutableStateOf(false) }
@@ -82,6 +83,16 @@ fun SongMenu(
                         onEditTags(song)
                         isMenuOpened = false
                     },
+                )
+            }
+
+            if (song.externalId == null) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(id = R.string.menu_title_delete)) },
+                    onClick = {
+                        onDelete(song)
+                        isMenuOpened = false
+                    }
                 )
             }
         }

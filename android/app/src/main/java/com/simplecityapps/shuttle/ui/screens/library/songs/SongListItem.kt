@@ -32,6 +32,7 @@ fun SongListItem(
     onSongInfo: (Song) -> Unit = {},
     onExclude: (Song) -> Unit = {},
     onEditTags: (Song) -> Unit = {},
+    onDelete: (Song) -> Unit = {},
 ) {
     Row(
         modifier = modifier,
@@ -69,6 +70,7 @@ fun SongListItem(
             onSongInfo = onSongInfo,
             onExclude = onExclude,
             onEditTags = onEditTags,
+            onDelete = onDelete,
         )
     }
 }

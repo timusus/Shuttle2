@@ -29,6 +29,7 @@ import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.dialog.showDeleteDialog
 import com.simplecityapps.shuttle.ui.common.dialog.showExcludeDialog
+import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.GlidePreloadModelProvider
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
@@ -138,6 +139,15 @@ class SongListFragment :
                 },
                 onEditTags = { song ->
                     showTagEditor(song)
+                },
+                onDelete = { song ->
+                    showDeleteDialog(requireContext(), song.name) {
+                        try {
+                            viewModel.delete(song)
+                        } catch (e: UserFriendlyError) {
+                            showDeleteError(e)
+                        }
+                    }
                 },
             )
         }

@@ -1,7 +1,10 @@
 package com.simplecityapps.shuttle.ui.screens.library.songs
 
+import android.app.Application
 import androidx.annotation.OpenForTesting
-import androidx.lifecycle.ViewModel
+import androidx.core.net.toUri
+import androidx.documentfile.provider.DocumentFile
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.MediaImportObserver
 import com.simplecityapps.mediaprovider.Progress
@@ -9,8 +12,10 @@ import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
+import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -29,8 +34,9 @@ class SongListViewModel @Inject constructor(
     private val playbackManager: PlaybackManager,
     private val queueManager: QueueManager,
     private val sortPreferenceManager: SortPreferenceManager,
-    mediaImportObserver: MediaImportObserver
-) : ViewModel() {
+    mediaImportObserver: MediaImportObserver,
+    application: Application,
+) : AndroidViewModel(application) {
     private val _viewState = MutableStateFlow<ViewState>(ViewState.Loading)
     val viewState = _viewState.asStateFlow()
 
@@ -75,6 +81,21 @@ class SongListViewModel @Inject constructor(
                     .getQueue()
                     .filter { queueItem -> song == queueItem.song },
             )
+        }
+    }
+
+    fun delete(song: Song) {
+        val context = getApplication<Application>().applicationContext
+        val documentFile = DocumentFile.fromSingleUri(context, song.path.toUri())
+
+        if (documentFile?.delete() == false) {
+            throw UserFriendlyError(context.getString(R.string.delete_song_failed))
+        }
+
+        viewModelScope.launch {
+            songRepository.remove(song)
+            val songQueueItem = queueManager.getQueue().filter { it.song.id == song.id }
+            queueManager.remove(songQueueItem)
         }
     }
 
