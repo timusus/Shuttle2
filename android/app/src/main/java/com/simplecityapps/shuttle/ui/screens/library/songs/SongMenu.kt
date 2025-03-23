@@ -27,6 +27,7 @@ fun SongMenu(
     onPlayNext: (Song) -> Unit,
     onSongInfo: (Song) -> Unit,
     onExclude: (Song) -> Unit,
+    onEditTags: (Song) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var isMenuOpened by remember { mutableStateOf(false) }
@@ -73,6 +74,16 @@ fun SongMenu(
                     isMenuOpened = false
                 },
             )
+
+            if (song.mediaProvider.supportsTagEditing) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(id = R.string.menu_title_edit_tags)) },
+                    onClick = {
+                        onEditTags(song)
+                        isMenuOpened = false
+                    },
+                )
+            }
         }
     }
 }

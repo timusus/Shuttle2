@@ -21,6 +21,7 @@ import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.shuttle.ui.common.ContextualToolbarHelper
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
@@ -134,6 +135,9 @@ class SongListFragment :
                 },
                 onExclude = { song ->
                     viewModel.exclude(song)
+                },
+                onEditTags = { song ->
+                    showTagEditor(song)
                 },
             )
         }
@@ -342,6 +346,10 @@ class SongListFragment :
 
     override fun showLoadError(error: Error) {
         Toast.makeText(context, error.userDescription(resources), Toast.LENGTH_LONG).show()
+    }
+
+    fun showTagEditor(song: Song) {
+        TagEditorAlertDialog.newInstance(listOf(song)).show(childFragmentManager)
     }
 
     override fun onAddedToQueue(songs: List<com.simplecityapps.shuttle.model.Song>) {

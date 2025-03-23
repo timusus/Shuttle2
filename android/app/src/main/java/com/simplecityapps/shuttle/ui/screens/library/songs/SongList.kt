@@ -30,6 +30,7 @@ fun SongList(
     onPlayNext: (Song) -> Unit = {},
     onSongInfo: (Song) -> Unit = {},
     onExclude: (Song) -> Unit = {},
+    onEditTags: (Song) -> Unit = {},
 ) {
     when (viewState) {
         is SongListViewModel.ViewState.Scanning -> {
@@ -68,6 +69,7 @@ fun SongList(
                     onPlayNext = onPlayNext,
                     onSongInfo = onSongInfo,
                     onExclude = onExclude,
+                    onEditTags = onEditTags,
                 )
             }
         }
@@ -82,6 +84,7 @@ private fun SongList(
     onPlayNext: (Song) -> Unit = {},
     onSongInfo: (Song) -> Unit = {},
     onExclude: (Song) -> Unit = {},
+    onEditTags: (Song) -> Unit = {},
 ) {
     val state = rememberLazyListState()
 
@@ -101,6 +104,7 @@ private fun SongList(
                     onPlayNext = onPlayNext,
                     onSongInfo = onSongInfo,
                     onExclude = onExclude,
+                    onEditTags = onEditTags,
                 )
             }
         }
