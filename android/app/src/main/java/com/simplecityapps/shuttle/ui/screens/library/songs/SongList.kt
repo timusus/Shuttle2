@@ -29,6 +29,7 @@ fun SongList(
     onAddToQueue: (Song) -> Unit = {},
     onPlayNext: (Song) -> Unit = {},
     onSongInfo: (Song) -> Unit = {},
+    onExclude: (Song) -> Unit = {},
 ) {
     when (viewState) {
         is SongListViewModel.ViewState.Scanning -> {
@@ -66,6 +67,7 @@ fun SongList(
                     onAddToQueue = onAddToQueue,
                     onPlayNext = onPlayNext,
                     onSongInfo = onSongInfo,
+                    onExclude = onExclude,
                 )
             }
         }
@@ -79,6 +81,7 @@ private fun SongList(
     onAddToQueue: (Song) -> Unit = {},
     onPlayNext: (Song) -> Unit = {},
     onSongInfo: (Song) -> Unit = {},
+    onExclude: (Song) -> Unit = {},
 ) {
     val state = rememberLazyListState()
 
@@ -97,6 +100,7 @@ private fun SongList(
                     onAddToQueue = onAddToQueue,
                     onPlayNext = onPlayNext,
                     onSongInfo = onSongInfo,
+                    onExclude = onExclude,
                 )
             }
         }

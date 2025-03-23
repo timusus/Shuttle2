@@ -30,6 +30,7 @@ fun SongListItem(
     onAddToQueue: (Song) -> Unit = {},
     onPlayNext: (Song) -> Unit = {},
     onSongInfo: (Song) -> Unit = {},
+    onExclude: (Song) -> Unit = {},
 ) {
     Row(
         modifier = modifier,
@@ -65,6 +66,7 @@ fun SongListItem(
             onAddToQueue = onAddToQueue,
             onPlayNext = onPlayNext,
             onSongInfo = onSongInfo,
+            onExclude = onExclude,
         )
     }
 }

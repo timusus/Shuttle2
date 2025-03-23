@@ -132,6 +132,9 @@ class SongListFragment :
                 onSongInfo = { song ->
                     SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
                 },
+                onExclude = { song ->
+                    viewModel.exclude(song)
+                },
             )
         }
 

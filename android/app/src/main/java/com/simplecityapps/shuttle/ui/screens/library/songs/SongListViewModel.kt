@@ -8,6 +8,7 @@ import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
@@ -26,6 +27,7 @@ import kotlinx.coroutines.launch
 class SongListViewModel @Inject constructor(
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackManager,
+    private val queueManager: QueueManager,
     private val sortPreferenceManager: SortPreferenceManager,
     mediaImportObserver: MediaImportObserver
 ) : ViewModel() {
@@ -62,6 +64,17 @@ class SongListViewModel @Inject constructor(
         viewModelScope.launch {
             playbackManager.playNext(listOf(song))
             completion(Result.success(song))
+        }
+    }
+
+    fun exclude(song: Song) {
+        viewModelScope.launch {
+            songRepository.setExcluded(listOf(song), true)
+            queueManager.remove(
+                queueManager
+                    .getQueue()
+                    .filter { queueItem -> song == queueItem.song },
+            )
         }
     }
 

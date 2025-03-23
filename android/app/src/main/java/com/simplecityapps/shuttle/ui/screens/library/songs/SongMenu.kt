@@ -26,6 +26,7 @@ fun SongMenu(
     onAddToQueue: (Song) -> Unit,
     onPlayNext: (Song) -> Unit,
     onSongInfo: (Song) -> Unit,
+    onExclude: (Song) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var isMenuOpened by remember { mutableStateOf(false) }
@@ -62,6 +63,13 @@ fun SongMenu(
                 text = { Text(stringResource(id = R.string.menu_title_song_info)) },
                 onClick = {
                     onSongInfo(song)
+                    isMenuOpened = false
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(id = R.string.menu_title_exclude)) },
+                onClick = {
+                    onExclude(song)
                     isMenuOpened = false
                 },
             )
