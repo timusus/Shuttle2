@@ -28,6 +28,7 @@ fun SongListItem(
     song: Song,
     modifier: Modifier = Modifier,
     onAddToQueue: (Song) -> Unit = {},
+    onPlayNext: (Song) -> Unit = {},
 ) {
     Row(
         modifier = modifier,
@@ -61,6 +62,7 @@ fun SongListItem(
         SongMenu(
             song = song,
             onAddToQueue = onAddToQueue,
+            onPlayNext = onPlayNext,
         )
     }
 }

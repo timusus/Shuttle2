@@ -121,6 +121,13 @@ class SongListFragment :
                             onAddedToQueue(listOf(song))
                         }
                     }
+                },
+                onPlayNext = { song ->
+                    viewModel.playNext(song) { result ->
+                        result.onSuccess { song ->
+                            onAddedToQueue(listOf(song))
+                        }
+                    }
                 }
             )
         }

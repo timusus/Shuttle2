@@ -27,6 +27,7 @@ fun SongList(
     viewState: SongListViewModel.ViewState,
     modifier: Modifier = Modifier,
     onAddToQueue: (Song) -> Unit = {},
+    onPlayNext: (Song) -> Unit,
 ) {
     when (viewState) {
         is SongListViewModel.ViewState.Scanning -> {
@@ -62,6 +63,7 @@ fun SongList(
                 SongList(
                     songs = viewState.songs,
                     onAddToQueue = onAddToQueue,
+                    onPlayNext = onPlayNext,
                 )
             }
         }
@@ -73,6 +75,7 @@ private fun SongList(
     songs: List<Song>,
     modifier: Modifier = Modifier,
     onAddToQueue: (Song) -> Unit = {},
+    onPlayNext: (Song) -> Unit = {},
 ) {
     val state = rememberLazyListState()
 
@@ -89,6 +92,7 @@ private fun SongList(
                 SongListItem(
                     song = song,
                     onAddToQueue = onAddToQueue,
+                    onPlayNext = onPlayNext,
                 )
             }
         }

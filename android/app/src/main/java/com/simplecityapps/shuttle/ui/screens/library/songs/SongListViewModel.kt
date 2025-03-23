@@ -58,6 +58,13 @@ class SongListViewModel @Inject constructor(
         }
     }
 
+    fun playNext(song: Song, completion: (Result<Song>) -> Unit) {
+        viewModelScope.launch {
+            playbackManager.playNext(listOf(song))
+            completion(Result.success(song))
+        }
+    }
+
     sealed class ViewState {
         data class Scanning(val progress: Progress?) : ViewState()
         data object Loading : ViewState()

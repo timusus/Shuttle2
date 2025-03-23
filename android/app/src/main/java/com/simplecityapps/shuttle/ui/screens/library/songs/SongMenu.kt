@@ -24,6 +24,7 @@ import com.simplecityapps.shuttle.model.Song
 fun SongMenu(
     song: Song,
     onAddToQueue: (Song) -> Unit,
+    onPlayNext: (Song) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var isMenuOpened by remember { mutableStateOf(false) }
@@ -46,6 +47,13 @@ fun SongMenu(
                 text = { Text(stringResource(id = R.string.menu_title_add_to_queue)) },
                 onClick = {
                     onAddToQueue(song)
+                    isMenuOpened = false
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(id = R.string.menu_title_play_next)) },
+                onClick = {
+                    onPlayNext(song)
                     isMenuOpened = false
                 }
             )
