@@ -16,22 +16,27 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.common.components.CircularLoadingState
 import com.simplecityapps.shuttle.ui.common.components.FastScroller
 import com.simplecityapps.shuttle.ui.common.components.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.common.components.LoadingStatusIndicator
+import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 
 @Composable
 fun SongList(
     viewState: SongListViewModel.ViewState,
+    playlists: List<Playlist>,
+    onAddToQueue: (Song) -> Unit,
+    onAddToPlaylist: (playlist: Playlist, playlistData: PlaylistData) -> Unit,
+    onShowCreatePlaylistDialog: (song: Song) -> Unit,
+    onPlayNext: (Song) -> Unit,
+    onSongInfo: (Song) -> Unit,
+    onExclude: (Song) -> Unit,
+    onEditTags: (Song) -> Unit,
+    onDelete: (Song) -> Unit,
     modifier: Modifier = Modifier,
-    onAddToQueue: (Song) -> Unit = {},
-    onPlayNext: (Song) -> Unit = {},
-    onSongInfo: (Song) -> Unit = {},
-    onExclude: (Song) -> Unit = {},
-    onEditTags: (Song) -> Unit = {},
-    onDelete: (Song) -> Unit = {},
 ) {
     when (viewState) {
         is SongListViewModel.ViewState.Scanning -> {
@@ -66,7 +71,10 @@ fun SongList(
             } else {
                 SongList(
                     songs = viewState.songs,
+                    playlists = playlists,
                     onAddToQueue = onAddToQueue,
+                    onAddToPlaylist = onAddToPlaylist,
+                    onShowCreatePlaylistDialog = onShowCreatePlaylistDialog,
                     onPlayNext = onPlayNext,
                     onSongInfo = onSongInfo,
                     onExclude = onExclude,
@@ -81,13 +89,16 @@ fun SongList(
 @Composable
 private fun SongList(
     songs: List<Song>,
+    playlists: List<Playlist>,
+    onAddToQueue: (Song) -> Unit,
+    onAddToPlaylist: (playlist: Playlist, playlistData: PlaylistData) -> Unit,
+    onShowCreatePlaylistDialog: (song: Song) -> Unit,
+    onPlayNext: (Song) -> Unit,
+    onSongInfo: (Song) -> Unit,
+    onExclude: (Song) -> Unit,
+    onEditTags: (Song) -> Unit,
+    onDelete: (Song) -> Unit,
     modifier: Modifier = Modifier,
-    onAddToQueue: (Song) -> Unit = {},
-    onPlayNext: (Song) -> Unit = {},
-    onSongInfo: (Song) -> Unit = {},
-    onExclude: (Song) -> Unit = {},
-    onEditTags: (Song) -> Unit = {},
-    onDelete: (Song) -> Unit = {},
 ) {
     val state = rememberLazyListState()
 
@@ -103,7 +114,10 @@ private fun SongList(
             items(songs) { song ->
                 SongListItem(
                     song = song,
+                    playlists = playlists,
                     onAddToQueue = onAddToQueue,
+                    onAddToPlaylist = onAddToPlaylist,
+                    onShowCreatePlaylistDialog = onShowCreatePlaylistDialog,
                     onPlayNext = onPlayNext,
                     onSongInfo = onSongInfo,
                     onExclude = onExclude,

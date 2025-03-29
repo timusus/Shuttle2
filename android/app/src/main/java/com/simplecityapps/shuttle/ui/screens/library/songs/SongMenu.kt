@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.library.songs
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -18,20 +19,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 
 @Composable
 fun SongMenu(
     song: Song,
+    playlists: List<Playlist>,
     onAddToQueue: (Song) -> Unit,
     onPlayNext: (Song) -> Unit,
     onSongInfo: (Song) -> Unit,
     onExclude: (Song) -> Unit,
     onEditTags: (Song) -> Unit,
     onDelete: (Song) -> Unit,
+    onAddToPlaylist: (playlist: Playlist, playlistData: PlaylistData) -> Unit,
+    onShowCreatePlaylistDialog: (song: Song) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var isMenuOpened by remember { mutableStateOf(false) }
+    var isAddToPlaylistSubmenuOpen by remember { mutableStateOf(false) }
 
     IconButton(
         modifier = modifier,
@@ -52,6 +59,16 @@ fun SongMenu(
                 onClick = {
                     onAddToQueue(song)
                     isMenuOpened = false
+                }
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(id = R.string.menu_title_add_to_playlist)) },
+                onClick = {
+                    isMenuOpened = false
+                    isAddToPlaylistSubmenuOpen = true
+                },
+                trailingIcon = {
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
                 }
             )
             DropdownMenuItem(
@@ -96,5 +113,13 @@ fun SongMenu(
                 )
             }
         }
+        AddToPlaylistSubmenu(
+            song = song,
+            expanded = isAddToPlaylistSubmenuOpen,
+            onDismiss = { isAddToPlaylistSubmenuOpen = false },
+            playlists = playlists,
+            onAddToPlaylist = onAddToPlaylist,
+            onShowCreatePlaylistDialog = onShowCreatePlaylistDialog,
+        )
     }
 }

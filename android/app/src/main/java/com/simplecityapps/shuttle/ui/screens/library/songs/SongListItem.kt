@@ -15,9 +15,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.core.R
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
+import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.theme.AppTheme
 import com.squareup.phrase.ListPhrase
 import kotlin.time.Instant
@@ -26,8 +28,11 @@ import kotlinx.datetime.LocalDate
 @Composable
 fun SongListItem(
     song: Song,
+    playlists: List<Playlist>,
     modifier: Modifier = Modifier,
     onAddToQueue: (Song) -> Unit = {},
+    onAddToPlaylist: (playlist: Playlist, playlistData: PlaylistData) -> Unit = { _, _ -> },
+    onShowCreatePlaylistDialog: (song: Song) -> Unit = {},
     onPlayNext: (Song) -> Unit = {},
     onSongInfo: (Song) -> Unit = {},
     onExclude: (Song) -> Unit = {},
@@ -65,7 +70,10 @@ fun SongListItem(
         }
         SongMenu(
             song = song,
+            playlists = playlists,
             onAddToQueue = onAddToQueue,
+            onAddToPlaylist = onAddToPlaylist,
+            onShowCreatePlaylistDialog = onShowCreatePlaylistDialog,
             onPlayNext = onPlayNext,
             onSongInfo = onSongInfo,
             onExclude = onExclude,
@@ -111,6 +119,7 @@ private fun SongListItemPreview() {
                 sampleRate = null,
                 channelCount = null,
             ),
+            playlists = emptyList(),
         )
     }
 }

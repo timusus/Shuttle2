@@ -43,6 +43,8 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -109,20 +111,32 @@ class SongListFragment :
         setHasOptionsMenu(true)
 
         playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
+        playlistMenuPresenter.bindView(playlistMenuView)
 
         composeView = view.findViewById(R.id.composeView)
 
         composeView.setContent {
             val viewState by viewModel.viewState.collectAsState()
+            val playlists by playlistMenuPresenter.playlistsState.collectAsState()
 
             SongList(
                 viewState = viewState,
+                playlists = playlists.toImmutableList(),
                 onAddToQueue = { song ->
                     viewModel.addToQueue(song) { result ->
                         result.onSuccess { song ->
                             onAddedToQueue(listOf(song))
                         }
                     }
+                },
+                onAddToPlaylist = { playlist, playlistData ->
+                    playlistMenuPresenter.addToPlaylist(playlist, playlistData)
+                },
+                onShowCreatePlaylistDialog = { song ->
+                    CreatePlaylistDialogFragment.newInstance(
+                        PlaylistData.Songs(song),
+                        context?.getString(R.string.playlist_create_dialog_playlist_name_hint)
+                    ).show(childFragmentManager)
                 },
                 onPlayNext = { song ->
                     viewModel.playNext(song) { result ->
@@ -192,7 +206,6 @@ class SongListFragment :
         updateContextualToolbar()
 
         presenter.bindView(this)
-        playlistMenuPresenter.bindView(playlistMenuView)
     }
 
     override fun onCreateOptionsMenu(
