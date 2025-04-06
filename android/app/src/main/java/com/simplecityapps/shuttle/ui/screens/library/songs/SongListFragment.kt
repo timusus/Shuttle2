@@ -122,6 +122,13 @@ class SongListFragment :
             SongList(
                 viewState = viewState,
                 playlists = playlists.toImmutableList(),
+                onSongClicked = { song ->
+                    viewModel.play(song) { result ->
+                        result.onFailure { error ->
+                            showLoadError(error as Error)
+                        }
+                    }
+                },
                 onAddToQueue = { song ->
                     viewModel.addToQueue(song) { result ->
                         result.onSuccess { song ->

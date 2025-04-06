@@ -28,6 +28,7 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 fun SongList(
     viewState: SongListViewModel.ViewState,
     playlists: List<Playlist>,
+    onSongClicked: (Song) -> Unit,
     onAddToQueue: (Song) -> Unit,
     onAddToPlaylist: (playlist: Playlist, playlistData: PlaylistData) -> Unit,
     onShowCreatePlaylistDialog: (song: Song) -> Unit,
@@ -72,6 +73,7 @@ fun SongList(
                 SongList(
                     songs = viewState.songs,
                     playlists = playlists,
+                    onSongClicked = onSongClicked,
                     onAddToQueue = onAddToQueue,
                     onAddToPlaylist = onAddToPlaylist,
                     onShowCreatePlaylistDialog = onShowCreatePlaylistDialog,
@@ -90,6 +92,7 @@ fun SongList(
 private fun SongList(
     songs: List<Song>,
     playlists: List<Playlist>,
+    onSongClicked: (Song) -> Unit,
     onAddToQueue: (Song) -> Unit,
     onAddToPlaylist: (playlist: Playlist, playlistData: PlaylistData) -> Unit,
     onShowCreatePlaylistDialog: (song: Song) -> Unit,
@@ -115,6 +118,7 @@ private fun SongList(
                 SongListItem(
                     song = song,
                     playlists = playlists,
+                    onSongClicked = onSongClicked,
                     onAddToQueue = onAddToQueue,
                     onAddToPlaylist = onAddToPlaylist,
                     onShowCreatePlaylistDialog = onShowCreatePlaylistDialog,

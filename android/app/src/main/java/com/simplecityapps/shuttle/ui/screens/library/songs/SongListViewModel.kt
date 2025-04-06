@@ -59,6 +59,21 @@ class SongListViewModel @Inject constructor(
             .launchIn(viewModelScope)
     }
 
+    private fun play(song: Song, completion: (Result<Boolean>) -> Unit) {
+        viewModelScope.launch {
+            val songs = viewState.value.let {
+                if (it is ViewState.Ready) it.songs else listOf(song)
+            }
+
+            if (queueManager.setQueue(songs = songs, position = songs.indexOf(song))) {
+                playbackManager.load { result ->
+                    result.onSuccess { playbackManager.play() }
+                    completion(result)
+                }
+            }
+        }
+    }
+
     fun addToQueue(song: Song, completion: (Result<Song>) -> Unit) {
         viewModelScope.launch {
             playbackManager.addToQueue(listOf(song))

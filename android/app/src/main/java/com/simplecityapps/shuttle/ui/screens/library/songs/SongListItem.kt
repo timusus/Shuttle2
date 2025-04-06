@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.library.songs
 
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,6 +31,7 @@ fun SongListItem(
     song: Song,
     playlists: List<Playlist>,
     modifier: Modifier = Modifier,
+    onSongClicked: (Song) -> Unit = {},
     onAddToQueue: (Song) -> Unit = {},
     onAddToPlaylist: (playlist: Playlist, playlistData: PlaylistData) -> Unit = { _, _ -> },
     onShowCreatePlaylistDialog: (song: Song) -> Unit = {},
@@ -46,7 +48,8 @@ fun SongListItem(
         Column(
             Modifier
                 .padding(start = 8.dp)
-                .weight(1f),
+                .weight(1f)
+                .clickable { onSongClicked(song) },
         ) {
             Text(
                 modifier = Modifier.fillMaxWidth(),
