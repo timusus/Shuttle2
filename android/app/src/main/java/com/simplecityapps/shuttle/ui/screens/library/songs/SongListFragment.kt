@@ -12,6 +12,7 @@ import androidx.appcompat.widget.PopupMenu
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
@@ -35,7 +36,6 @@ import com.simplecityapps.shuttle.ui.common.recyclerview.GlidePreloadModelProvid
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
 import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
-import com.simplecityapps.shuttle.ui.screens.library.albums.ShuffleBinder
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
@@ -64,8 +64,6 @@ class SongListFragment :
     private var adapter: RecyclerAdapter by autoCleared()
 
     lateinit var imageLoader: GlideImageLoader
-
-    private lateinit var shuffleBinder: ShuffleBinder
 
     private lateinit var playlistMenuView: PlaylistMenuView
 
@@ -170,6 +168,13 @@ class SongListFragment :
                         }
                     }
                 },
+                onShuffle = {
+                    viewModel.shuffle { result ->
+                        result.onFailure { error ->
+                            showLoadError(error as Error)
+                        }
+                    }
+                }
             )
         }
 
@@ -195,16 +200,6 @@ class SongListFragment :
 
         circularLoadingView = view.findViewById(R.id.circularLoadingView)
         horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
-
-        shuffleBinder =
-            ShuffleBinder(
-                R.string.btn_shuffle,
-                object : ShuffleBinder.Listener {
-                    override fun onClicked() {
-                        presenter.shuffle()
-                    }
-                }
-            )
 
         savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
 
@@ -343,10 +338,6 @@ class SongListFragment :
                     selected = contextualToolbarHelper.selectedItems.any { it.id == song.id }
                 }
             }.toMutableList<ViewBinder>()
-
-        if (songs.isNotEmpty()) {
-            data.add(0, shuffleBinder)
-        }
 
         adapter.update(data) {
 /*

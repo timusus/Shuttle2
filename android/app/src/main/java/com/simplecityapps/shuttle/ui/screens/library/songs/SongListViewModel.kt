@@ -114,6 +114,26 @@ class SongListViewModel @Inject constructor(
         }
     }
 
+    fun shuffle(completion: (Result<Any?>) -> Unit) {
+        val songs = getSongs()
+
+        if (songs.isEmpty()) {
+            completion(Result.failure(UserFriendlyError("Your library is empty")))
+            return
+        }
+
+        viewModelScope.launch {
+            playbackManager.shuffle(songs) { result ->
+                result.onSuccess { playbackManager.play() }
+                completion(result)
+            }
+        }
+    }
+
+    private fun getSongs(): List<Song> = viewState.value.let {
+        if (it is ViewState.Ready) it.songs else emptyList()
+    }
+
     sealed class ViewState {
         data class Scanning(val progress: Progress?) : ViewState()
         data object Loading : ViewState()

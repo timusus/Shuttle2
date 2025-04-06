@@ -37,6 +37,7 @@ fun SongList(
     onExclude: (Song) -> Unit,
     onEditTags: (Song) -> Unit,
     onDelete: (Song) -> Unit,
+    onShuffle: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     when (viewState) {
@@ -82,6 +83,7 @@ fun SongList(
                     onExclude = onExclude,
                     onEditTags = onEditTags,
                     onDelete = onDelete,
+                    onShuffle = onShuffle,
                 )
             }
         }
@@ -101,6 +103,7 @@ private fun SongList(
     onExclude: (Song) -> Unit,
     onEditTags: (Song) -> Unit,
     onDelete: (Song) -> Unit,
+    onShuffle: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val state = rememberLazyListState()
@@ -114,6 +117,9 @@ private fun SongList(
             contentPadding = PaddingValues(vertical = 16.dp, horizontal = 8.dp),
             state = state,
         ) {
+            item {
+                ShuffleListItem(onClick = onShuffle)
+            }
             items(songs) { song ->
                 SongListItem(
                     song = song,

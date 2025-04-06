@@ -6,7 +6,6 @@ import androidx.documentfile.provider.DocumentFile
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.mediaprovider.repository.songs.comparator
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.R
@@ -20,16 +19,14 @@ import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
 import dagger.hilt.android.qualifiers.ApplicationContext
-import java.util.*
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import java.util.Locale
+import javax.inject.Inject
 
 interface SongListContract {
     sealed class LoadingState {
@@ -77,10 +74,6 @@ interface SongListContract {
         fun setSortOrder(songSortOrder: SongSortOrder)
 
         fun getFastscrollPrefix(song: Song): String?
-
-        fun updateToolbarMenu()
-
-        fun shuffle()
     }
 }
 
@@ -222,23 +215,5 @@ constructor(
         SongSortOrder.AlbumGroupKey -> song.albumGroupKey.key?.firstOrNull()?.toString()?.uppercase(Locale.getDefault())
         SongSortOrder.Year -> song.date?.year?.toString()
         else -> null
-    }
-
-    override fun shuffle() {
-        if (songs.isEmpty()) {
-            view?.showLoadError(UserFriendlyError("Your library is empty"))
-            return
-        }
-
-        appCoroutineScope.launch {
-            playbackManager.shuffle(songs) { result ->
-                result.onSuccess { playbackManager.play() }
-                result.onFailure { error -> view?.showLoadError(Error(error)) }
-            }
-        }
-    }
-
-    override fun updateToolbarMenu() {
-        view?.updateToolbarMenuSortOrder(sortPreferenceManager.sortOrderSongList)
     }
 }
