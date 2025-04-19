@@ -1,7 +1,8 @@
 package com.simplecityapps.shuttle.ui.screens.library.songs
 
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,12 +27,15 @@ import com.squareup.phrase.ListPhrase
 import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SongListItem(
     song: Song,
+    isSelected: Boolean,
     playlists: List<Playlist>,
     modifier: Modifier = Modifier,
-    onSongClicked: (Song) -> Unit = {},
+    onClick: (Song) -> Unit = {},
+    onLongClick: (Song) -> Unit = {},
     onAddToQueue: (Song) -> Unit = {},
     onAddToPlaylist: (playlist: Playlist, playlistData: PlaylistData) -> Unit = { _, _ -> },
     onShowCreatePlaylistDialog: (song: Song) -> Unit = {},
@@ -49,7 +53,10 @@ fun SongListItem(
             Modifier
                 .padding(start = 8.dp)
                 .weight(1f)
-                .clickable { onSongClicked(song) },
+                .combinedClickable(
+                    onClick = { onClick(song) },
+                    onLongClick = { onLongClick(song) },
+                ),
         ) {
             Text(
                 modifier = Modifier.fillMaxWidth(),
@@ -63,6 +70,7 @@ fun SongListItem(
                     .from(" • ")
                     .joinSafely(
                         listOf(
+                            if (isSelected) "[x]" else "[ ]",
                             song.friendlyArtistName ?: song.albumArtist,
                             song.album
                         )
@@ -122,6 +130,7 @@ private fun SongListItemPreview() {
                 sampleRate = null,
                 channelCount = null,
             ),
+            isSelected = true,
             playlists = emptyList(),
         )
     }

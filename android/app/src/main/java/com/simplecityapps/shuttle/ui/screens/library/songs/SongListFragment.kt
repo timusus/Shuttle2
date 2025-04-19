@@ -15,6 +15,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.bumptech.glide.util.ViewPreloadSizeProvider
@@ -113,6 +114,50 @@ class SongListFragment :
 
         composeView = view.findViewById(R.id.composeView)
 
+        circularLoadingView = view.findViewById(R.id.circularLoadingView)
+        horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
+
+        savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
+
+        contextualToolbarHelper = ContextualToolbarHelper()
+        updateContextualToolbar()
+
+/*
+        lifecycleScope.launch {
+            viewModel.viewState
+                .filterIsInstance<SongListViewModel.ViewState.Ready>()
+                .collect { state ->
+                    contextualToolbarCallback.onCountChanged(state.selectedSongs.size)
+                }
+        }
+*/
+
+        lifecycleScope.launch {
+            viewModel.selectedSongCountState
+                .collect { count ->
+                    if (count == 0) {
+                        contextualToolbarHelper.let {
+                            it.toolbar?.isVisible = true
+                            it.contextualToolbar?.isVisible = false
+                        }
+                    } else {
+                        contextualToolbarHelper.let {
+                            it.toolbar?.isVisible = false
+                            it.contextualToolbar?.isVisible = true
+                        }
+
+                        // onCountChanged()
+                        contextualToolbarHelper.contextualToolbar?.title =
+                            Phrase.fromPlural(requireContext(), R.plurals.multi_select_items_selected, count)
+                                .put("count", count)
+                                .format()
+                        contextualToolbarHelper.contextualToolbar?.menu?.let { menu ->
+                            TagEditorMenuSanitiser.sanitise(menu, contextualToolbarHelper.selectedItems.map { it.mediaProvider }.distinct())
+                        }
+                    }
+                }
+        }
+
         composeView.setContent {
             val viewState by viewModel.viewState.collectAsState()
             val playlists by playlistMenuPresenter.playlistsState.collectAsState()
@@ -120,12 +165,15 @@ class SongListFragment :
             SongList(
                 viewState = viewState,
                 playlists = playlists.toImmutableList(),
-                onSongClicked = { song ->
-                    viewModel.play(song) { result ->
+                onSongClick = { song ->
+                    viewModel.onSongClick(song) { result ->
                         result.onFailure { error ->
                             showLoadError(error as Error)
                         }
                     }
+                },
+                onSongLongClick = { song ->
+                    viewModel.onSongLongClick(song)
                 },
                 onAddToQueue = { song ->
                     viewModel.addToQueue(song) { result ->
@@ -197,15 +245,6 @@ class SongListFragment :
             )
         recyclerView.addOnScrollListener(preloader)
 */
-
-        circularLoadingView = view.findViewById(R.id.circularLoadingView)
-        horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
-
-        savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
-
-        contextualToolbarHelper = ContextualToolbarHelper()
-
-        updateContextualToolbar()
 
         presenter.bindView(this)
     }
@@ -297,8 +336,7 @@ class SongListFragment :
                     }
                     when (menuItem.itemId) {
                         R.id.queue -> {
-                            presenter.addToQueue(contextualToolbarHelper.selectedItems.toList())
-                            contextualToolbarHelper.hide()
+                            viewModel.addSelectedToQueue()
                             true
                         }
                         R.id.editTags -> {

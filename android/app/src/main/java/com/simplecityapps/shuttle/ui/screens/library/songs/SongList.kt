@@ -28,7 +28,8 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 fun SongList(
     viewState: SongListViewModel.ViewState,
     playlists: List<Playlist>,
-    onSongClicked: (Song) -> Unit,
+    onSongClick: (Song) -> Unit,
+    onSongLongClick: (Song) -> Unit,
     onAddToQueue: (Song) -> Unit,
     onAddToPlaylist: (playlist: Playlist, playlistData: PlaylistData) -> Unit,
     onShowCreatePlaylistDialog: (song: Song) -> Unit,
@@ -73,8 +74,10 @@ fun SongList(
             } else {
                 SongList(
                     songs = viewState.songs,
+                    selectedSongs = viewState.selectedSongs,
                     playlists = playlists,
-                    onSongClicked = onSongClicked,
+                    onSongClick = onSongClick,
+                    onSongLongClick = onSongLongClick,
                     onAddToQueue = onAddToQueue,
                     onAddToPlaylist = onAddToPlaylist,
                     onShowCreatePlaylistDialog = onShowCreatePlaylistDialog,
@@ -93,8 +96,10 @@ fun SongList(
 @Composable
 private fun SongList(
     songs: List<Song>,
+    selectedSongs: Set<Song>,
     playlists: List<Playlist>,
-    onSongClicked: (Song) -> Unit,
+    onSongClick: (Song) -> Unit,
+    onSongLongClick: (Song) -> Unit,
     onAddToQueue: (Song) -> Unit,
     onAddToPlaylist: (playlist: Playlist, playlistData: PlaylistData) -> Unit,
     onShowCreatePlaylistDialog: (song: Song) -> Unit,
@@ -123,8 +128,10 @@ private fun SongList(
             items(songs) { song ->
                 SongListItem(
                     song = song,
+                    isSelected = selectedSongs.contains(song),
                     playlists = playlists,
-                    onSongClicked = onSongClicked,
+                    onClick = onSongClick,
+                    onLongClick = onSongLongClick,
                     onAddToQueue = onAddToQueue,
                     onAddToPlaylist = onAddToPlaylist,
                     onShowCreatePlaylistDialog = onShowCreatePlaylistDialog,

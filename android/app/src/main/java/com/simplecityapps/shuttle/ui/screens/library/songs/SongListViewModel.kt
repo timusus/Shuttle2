@@ -24,8 +24,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
+
 
 @OpenForTesting
 @HiltViewModel
@@ -40,23 +42,49 @@ class SongListViewModel @Inject constructor(
     private val _viewState = MutableStateFlow<ViewState>(ViewState.Loading)
     val viewState = _viewState.asStateFlow()
 
+    private val selectedSongsState = MutableStateFlow(emptySet<Song>())
+    val selectedSongCountState = selectedSongsState.asStateFlow()
+        .map { selectedSongs -> selectedSongs.size }
+
     init {
         combine(
             songRepository
                 .getSongs(SongQuery.All(sortOrder = sortPreferenceManager.sortOrderSongList))
                 .filterNotNull(),
             mediaImportObserver.songImportState,
-        ) { songs, songImportState ->
+            selectedSongsState,
+        ) { songs, songImportState, selectedSongs ->
             if (songImportState is SongImportState.ImportProgress) {
                 _viewState.emit(ViewState.Scanning(songImportState.progress))
             } else {
-                _viewState.emit(ViewState.Ready(songs))
+                _viewState.emit(ViewState.Ready(songs, selectedSongs))
             }
         }
             .onStart {
                 _viewState.emit(ViewState.Loading)
             }
             .launchIn(viewModelScope)
+    }
+
+    fun onSongClick(song: Song, completion: (Result<Boolean>) -> Unit) {
+        if (isSelecting()) {
+            toggleSongSelection(song)
+            completion(Result.success(true))
+        } else {
+            play(song, completion)
+        }
+    }
+
+    fun onSongLongClick(song: Song) {
+        toggleSongSelection(song)
+    }
+
+    private fun toggleSongSelection(song: Song) {
+        selectedSongsState.value = if (selectedSongsState.value.contains(song)) {
+            selectedSongsState.value - song
+        } else {
+            selectedSongsState.value + song
+        }
     }
 
     private fun play(song: Song, completion: (Result<Boolean>) -> Unit) {
@@ -78,6 +106,13 @@ class SongListViewModel @Inject constructor(
         viewModelScope.launch {
             playbackManager.addToQueue(listOf(song))
             completion(Result.success(song))
+        }
+    }
+
+    fun addSelectedToQueue() {
+        viewModelScope.launch {
+            playbackManager.addToQueue(selectedSongsState.value.toList())
+            selectedSongsState.value = emptySet()
         }
     }
 
@@ -134,9 +169,14 @@ class SongListViewModel @Inject constructor(
         if (it is ViewState.Ready) it.songs else emptyList()
     }
 
+    private fun isSelecting() = selectedSongsState.value.isNotEmpty()
+
     sealed class ViewState {
         data class Scanning(val progress: Progress?) : ViewState()
         data object Loading : ViewState()
-        data class Ready(val songs: List<Song>) : ViewState()
+        data class Ready(
+            val songs: List<Song>,
+            val selectedSongs: Set<Song>,
+        ) : ViewState()
     }
 }
