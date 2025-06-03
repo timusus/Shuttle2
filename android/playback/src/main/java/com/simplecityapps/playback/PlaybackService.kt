@@ -20,12 +20,12 @@ import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class PlaybackService :
@@ -60,7 +60,7 @@ class PlaybackService :
 
     private var delayedShutdownHandler: Handler? = null
 
-    private val packageValidator: PackageValidator by lazy { PackageValidator(this, R.xml.allowed_media_browser_callers) }
+    private val packageValidator: PackageValidator by lazy { PackageValidator(this) }
 
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
 
@@ -286,7 +286,7 @@ class PlaybackService :
         clientPackageName: String,
         clientUid: Int,
         rootHints: Bundle?
-    ): BrowserRoot? = if (packageValidator.isKnownCaller(clientPackageName, clientUid)) {
+    ): BrowserRoot? = if (packageValidator.isCallerAllowed(this, clientPackageName, clientUid)) {
         BrowserRoot("media:/root/", null)
     } else {
         Timber.v("OnGetRoot: Browsing NOT ALLOWED for unknown caller. Returning empty browser root so all apps can use MediaController. $clientPackageName")
