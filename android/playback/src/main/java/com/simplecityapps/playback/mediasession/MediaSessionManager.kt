@@ -36,6 +36,7 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.pendingintent.PendingIntentCompat
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.query.SongQuery
+import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.emptyFlow
@@ -44,7 +45,6 @@ import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import javax.inject.Inject
 
 class MediaSessionManager
 @Inject
@@ -62,7 +62,7 @@ constructor(
     private val artworkCache: LruCache<String, Bitmap?>,
     private val preferenceManager: GeneralPreferenceManager,
     playbackWatcher: PlaybackWatcher,
-    queueWatcher: QueueWatcher,
+    queueWatcher: QueueWatcher
 ) : PlaybackWatcherCallback,
     QueueChangeCallback {
     private val placeholder: Bitmap? by lazy {
@@ -118,7 +118,7 @@ constructor(
 
             override fun onPlayFromMediaId(
                 mediaId: String?,
-                extras: Bundle?,
+                extras: Bundle?
             ) {
                 Timber.v("onPlayFromMediaId()")
                 playFromMediaId(playWhenReady = true, mediaId = mediaId, extras = extras)
@@ -126,7 +126,7 @@ constructor(
 
             override fun onPrepareFromMediaId(
                 mediaId: String?,
-                extras: Bundle?,
+                extras: Bundle?
             ) {
                 Timber.v("onPrepareFromMediaId()")
                 playFromMediaId(playWhenReady = false, mediaId = mediaId, extras = extras)
@@ -135,7 +135,7 @@ constructor(
             private fun playFromMediaId(
                 playWhenReady: Boolean,
                 mediaId: String?,
-                extras: Bundle?,
+                extras: Bundle?
             ) {
                 Timber.v("playFromMediaId()")
                 appCoroutineScope.launch {
@@ -158,7 +158,7 @@ constructor(
 
             override fun onPlayFromSearch(
                 query: String?,
-                extras: Bundle?,
+                extras: Bundle?
             ) {
                 Timber.v("onPlayFromSearch()")
                 playFromSearch(playWhenReady = true, query = query, extras = extras)
@@ -166,7 +166,7 @@ constructor(
 
             override fun onPrepareFromSearch(
                 query: String?,
-                extras: Bundle?,
+                extras: Bundle?
             ) {
                 Timber.v("onPrepareFromSearch()")
                 playFromSearch(playWhenReady = false, query = query, extras = extras)
@@ -174,7 +174,7 @@ constructor(
 
             override fun onCustomAction(
                 action: String?,
-                extras: Bundle?,
+                extras: Bundle?
             ) {
                 if (action == ACTION_SHUFFLE) {
                     appCoroutineScope.launch {
@@ -186,7 +186,7 @@ constructor(
             private fun playFromSearch(
                 playWhenReady: Boolean,
                 query: String?,
-                extras: Bundle?,
+                extras: Bundle?
             ) {
                 Timber.v("performSearch($query)")
 
@@ -263,33 +263,33 @@ constructor(
 
     init {
         mediaSession.setCallback(mediaSessionCallback)
-            val mediaButtonReceiverIntent =
-                PendingIntent.getBroadcast(
-                    context,
-                    0,
-                    Intent(Intent.ACTION_MEDIA_BUTTON).apply {
-                        setClass(context, MediaButtonReceiver::class.java)
-                    },
-                    PendingIntentCompat.FLAG_MUTABLE
-                )
-            mediaSession.setMediaButtonReceiver(mediaButtonReceiverIntent)
+        val mediaButtonReceiverIntent =
+            PendingIntent.getBroadcast(
+                context,
+                0,
+                Intent(Intent.ACTION_MEDIA_BUTTON).apply {
+                    setClass(context, MediaButtonReceiver::class.java)
+                },
+                PendingIntentCompat.FLAG_MUTABLE
+            )
+        mediaSession.setMediaButtonReceiver(mediaButtonReceiverIntent)
 
         playbackWatcher.addCallback(this)
         queueWatcher.addCallback(this)
 
         playbackStateBuilder.setActions(
             PlaybackStateCompat.ACTION_PLAY
-                    or PlaybackStateCompat.ACTION_PAUSE
-                    or PlaybackStateCompat.ACTION_SKIP_TO_NEXT
-                    or PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
-                    or PlaybackStateCompat.ACTION_SKIP_TO_QUEUE_ITEM
-                    or PlaybackStateCompat.ACTION_SEEK_TO
-                    or PlaybackStateCompat.ACTION_SET_REPEAT_MODE
-                    or PlaybackStateCompat.ACTION_SET_SHUFFLE_MODE
-                    or PlaybackStateCompat.ACTION_PREPARE_FROM_SEARCH
-                    or PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH
-                    or PlaybackStateCompat.ACTION_PREPARE_FROM_MEDIA_ID
-                    or PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID
+                or PlaybackStateCompat.ACTION_PAUSE
+                or PlaybackStateCompat.ACTION_SKIP_TO_NEXT
+                or PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
+                or PlaybackStateCompat.ACTION_SKIP_TO_QUEUE_ITEM
+                or PlaybackStateCompat.ACTION_SEEK_TO
+                or PlaybackStateCompat.ACTION_SET_REPEAT_MODE
+                or PlaybackStateCompat.ACTION_SET_SHUFFLE_MODE
+                or PlaybackStateCompat.ACTION_PREPARE_FROM_SEARCH
+                or PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH
+                or PlaybackStateCompat.ACTION_PREPARE_FROM_MEDIA_ID
+                or PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID
         )
 
         updateShuffleAction()
@@ -416,7 +416,7 @@ constructor(
     override fun onProgressChanged(
         position: Int,
         duration: Int,
-        fromUser: Boolean,
+        fromUser: Boolean
     ) {
         if (fromUser) {
             playbackStateBuilder.setState(getPlaybackState(), position.toLong(), playbackManager.getPlaybackSpeed())
@@ -444,7 +444,7 @@ constructor(
 
     override fun onQueuePositionChanged(
         oldPosition: Int?,
-        newPosition: Int?,
+        newPosition: Int?
     ) {
         updateCurrentQueueItem()
     }
