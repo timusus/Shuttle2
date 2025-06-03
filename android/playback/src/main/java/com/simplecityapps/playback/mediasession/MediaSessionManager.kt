@@ -69,206 +69,11 @@ constructor(
         PlaybackNotificationManager.drawableToBitmap(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_music_note_black_24dp, context.theme)!!)
     }
 
-    val mediaSession: MediaSessionCompat by lazy {
-        val mediaSession = MediaSessionCompat(context, "ShuttleMediaSession")
-        mediaSession.setCallback(mediaSessionCallback)
-        val mediaButtonReceiverIntent =
-            PendingIntent.getBroadcast(
-                context,
-                0,
-                Intent(Intent.ACTION_MEDIA_BUTTON).apply {
-                    setClass(context, MediaButtonReceiver::class.java)
-                },
-                PendingIntentCompat.FLAG_MUTABLE
-            )
-        mediaSession.setMediaButtonReceiver(mediaButtonReceiverIntent)
-
-        mediaSession
-    }
+    val mediaSession: MediaSessionCompat = MediaSessionCompat(context, "ShuttleMediaSession")
 
     private var activeQueueItemId = -1L
 
     private var playbackStateBuilder = PlaybackStateCompat.Builder()
-
-    init {
-        playbackWatcher.addCallback(this)
-        queueWatcher.addCallback(this)
-
-        playbackStateBuilder.setActions(
-            PlaybackStateCompat.ACTION_PLAY
-                or PlaybackStateCompat.ACTION_PAUSE
-                or PlaybackStateCompat.ACTION_SKIP_TO_NEXT
-                or PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
-                or PlaybackStateCompat.ACTION_SKIP_TO_QUEUE_ITEM
-                or PlaybackStateCompat.ACTION_SEEK_TO
-                or PlaybackStateCompat.ACTION_SET_REPEAT_MODE
-                or PlaybackStateCompat.ACTION_SET_SHUFFLE_MODE
-                or PlaybackStateCompat.ACTION_PREPARE_FROM_SEARCH
-                or PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH
-                or PlaybackStateCompat.ACTION_PREPARE_FROM_MEDIA_ID
-                or PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID
-        )
-
-        updateShuffleAction()
-    }
-
-    private fun updateShuffleAction() {
-        playbackStateBuilder = playbackStateBuilder.copyWithoutCustomActions()
-        when (queueManager.getShuffleMode()) {
-            QueueManager.ShuffleMode.Off -> {
-                playbackStateBuilder.addCustomAction(
-                    PlaybackStateCompat.CustomAction.Builder(ACTION_SHUFFLE, context.getString(com.simplecityapps.core.R.string.shuffle_on), R.drawable.ic_shuffle_off_black_24dp).build()
-                )
-            }
-
-            QueueManager.ShuffleMode.On -> {
-                playbackStateBuilder.addCustomAction(
-                    PlaybackStateCompat.CustomAction.Builder(ACTION_SHUFFLE, context.getString(com.simplecityapps.core.R.string.shuffle_off), R.drawable.ic_shuffle_black_24dp).build()
-                )
-            }
-        }
-    }
-
-    private fun getPlaybackState() = when (playbackManager.playbackState()) {
-        is PlaybackState.Loading -> PlaybackStateCompat.STATE_BUFFERING
-        is PlaybackState.Playing -> PlaybackStateCompat.STATE_PLAYING
-        else -> PlaybackStateCompat.STATE_PAUSED
-    }
-
-    private fun updatePlaybackState() {
-        Timber.v("updatePlaybackState()")
-        val playbackState = playbackStateBuilder.build()
-        activeQueueItemId = playbackState.activeQueueItemId
-        mediaSession.setPlaybackState(playbackState)
-    }
-
-    private fun updateMetadata() {
-        Timber.v("updateMetadata()")
-        queueManager.getCurrentItem()?.let { currentItem ->
-            val mediaMetadataCompat =
-                MediaMetadataCompat.Builder()
-                    .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, currentItem.song.id.toString())
-                    .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ARTIST, currentItem.song.albumArtist)
-                    .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, currentItem.song.friendlyArtistName ?: currentItem.song.albumArtist ?: context.getString(com.simplecityapps.core.R.string.unknown))
-                    .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, currentItem.song.album ?: context.getString(com.simplecityapps.core.R.string.unknown))
-                    .putString(MediaMetadataCompat.METADATA_KEY_TITLE, currentItem.song.name ?: context.getString(com.simplecityapps.core.R.string.unknown))
-                    .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, currentItem.song.duration.toLong())
-                    .putLong(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, currentItem.song.track?.toLong() ?: 1)
-                    .putLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS, queueManager.getSize().toLong())
-
-            if (preferenceManager.mediaSessionArtwork) {
-                mediaMetadataCompat.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, placeholder)
-
-                val artworkSize = 512
-                synchronized(artworkCache) {
-                    artworkCache[currentItem.song.getArtworkCacheKey(artworkSize, artworkSize)]?.let { image ->
-                        mediaMetadataCompat.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, image)
-                    }
-                } ?: run {
-                    artworkImageLoader.loadBitmap(
-                        data = currentItem.song,
-                        width = artworkSize,
-                        height = artworkSize
-                    ) { image ->
-                        mediaMetadataCompat.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, image)
-                        mediaSession.setMetadata(mediaMetadataCompat.build())
-                        if (image != null) {
-                            synchronized(artworkCache) {
-                                artworkCache.put(currentItem.song.getArtworkCacheKey(artworkSize, artworkSize), image)
-                            }
-                        }
-                    }
-                }
-            }
-
-            mediaSession.setMetadata(mediaMetadataCompat.build())
-        } ?: Timber.e("Metadata update failed.. current item null")
-    }
-
-    private fun updateQueue() {
-        Timber.v("updateQueue()")
-        val queue = queueManager.getQueue()
-        if (queue.isNotEmpty()) {
-            mediaSession.setQueue(
-                queueManager.getQueue()
-                    .subList(((queueManager.getCurrentPosition() ?: 0) - 5).coerceAtLeast(0), queueManager.getSize() - 1)
-                    .take(30)
-                    .map { queueItem -> queueItem.toQueueItem() }
-            )
-        } else {
-            mediaSession.setQueue(emptyList())
-        }
-    }
-
-    private fun updateCurrentQueueItem() {
-        Timber.v("updateCurrentQueueItem()")
-        queueManager.getCurrentItem()?.let { currentItem ->
-            val activeQueueItemId = currentItem.toQueueItem().queueId
-            if (activeQueueItemId != this.activeQueueItemId) {
-                updateQueue()
-                playbackStateBuilder.setActiveQueueItemId(activeQueueItemId)
-                playbackStateBuilder.setState(getPlaybackState(), 0L, playbackManager.getPlaybackSpeed())
-                updatePlaybackState()
-                updateMetadata()
-            }
-        }
-    }
-
-    // PlaybackWatcherCallback Implementation
-
-    override fun onPlaybackStateChanged(playbackState: PlaybackState) {
-        mediaSession.isActive = playbackState == PlaybackState.Loading || playbackState == PlaybackState.Playing
-        playbackStateBuilder.setState(getPlaybackState(), playbackManager.getProgress()?.toLong() ?: PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, playbackManager.getPlaybackSpeed())
-        updatePlaybackState()
-    }
-
-    override fun onProgressChanged(
-        position: Int,
-        duration: Int,
-        fromUser: Boolean
-    ) {
-        if (fromUser) {
-            playbackStateBuilder.setState(getPlaybackState(), position.toLong(), playbackManager.getPlaybackSpeed())
-            updatePlaybackState()
-        }
-    }
-
-    override fun onTrackEnded(song: Song) {
-        super.onTrackEnded(song)
-
-        playbackStateBuilder.setState(getPlaybackState(), playbackManager.getProgress()?.toLong() ?: PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, playbackManager.getPlaybackSpeed())
-        updatePlaybackState()
-    }
-
-    // QueueChangeCallback Implementation
-
-    override fun onQueueRestored() {
-        updateQueue()
-        updateCurrentQueueItem()
-    }
-
-    override fun onQueueChanged(reason: QueueChangeCallback.QueueChangeReason) {
-        updateQueue()
-    }
-
-    override fun onQueuePositionChanged(
-        oldPosition: Int?,
-        newPosition: Int?
-    ) {
-        updateCurrentQueueItem()
-    }
-
-    override fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
-        mediaSession.setShuffleMode(shuffleMode.toShuffleMode())
-        updateShuffleAction()
-        updatePlaybackState()
-    }
-
-    override fun onRepeatChanged(repeatMode: QueueManager.RepeatMode) {
-        mediaSession.setRepeatMode(repeatMode.toRepeatMode())
-    }
-
-    // MediaSessionCompat.Callback Implementation
 
     private val mediaSessionCallback =
         object : MediaSessionCompat.Callback() {
@@ -455,6 +260,204 @@ constructor(
                 return super.onMediaButtonEvent(mediaButtonEvent)
             }
         }
+
+    init {
+        mediaSession.setCallback(mediaSessionCallback)
+        val mediaButtonReceiverIntent =
+            PendingIntent.getBroadcast(
+                context,
+                0,
+                Intent(Intent.ACTION_MEDIA_BUTTON).apply {
+                    setClass(context, MediaButtonReceiver::class.java)
+                },
+                PendingIntentCompat.FLAG_MUTABLE
+            )
+        mediaSession.setMediaButtonReceiver(mediaButtonReceiverIntent)
+
+        playbackWatcher.addCallback(this)
+        queueWatcher.addCallback(this)
+
+        playbackStateBuilder.setActions(
+            PlaybackStateCompat.ACTION_PLAY
+                or PlaybackStateCompat.ACTION_PAUSE
+                or PlaybackStateCompat.ACTION_SKIP_TO_NEXT
+                or PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
+                or PlaybackStateCompat.ACTION_SKIP_TO_QUEUE_ITEM
+                or PlaybackStateCompat.ACTION_SEEK_TO
+                or PlaybackStateCompat.ACTION_SET_REPEAT_MODE
+                or PlaybackStateCompat.ACTION_SET_SHUFFLE_MODE
+                or PlaybackStateCompat.ACTION_PREPARE_FROM_SEARCH
+                or PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH
+                or PlaybackStateCompat.ACTION_PREPARE_FROM_MEDIA_ID
+                or PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID
+        )
+
+        updateShuffleAction()
+
+//        playbackStateBuilder.setState(
+//            getPlaybackState(),
+//            playbackManager.getProgress()?.toLong() ?: PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN,
+//            playbackManager.getPlaybackSpeed()
+//        )
+
+        mediaSession.setPlaybackState(playbackStateBuilder.build())
+    }
+
+    private fun updateShuffleAction() {
+        playbackStateBuilder = playbackStateBuilder.copyWithoutCustomActions()
+        when (queueManager.getShuffleMode()) {
+            QueueManager.ShuffleMode.Off -> {
+                playbackStateBuilder.addCustomAction(
+                    PlaybackStateCompat.CustomAction.Builder(ACTION_SHUFFLE, context.getString(com.simplecityapps.core.R.string.shuffle_on), R.drawable.ic_shuffle_off_black_24dp).build()
+                )
+            }
+
+            QueueManager.ShuffleMode.On -> {
+                playbackStateBuilder.addCustomAction(
+                    PlaybackStateCompat.CustomAction.Builder(ACTION_SHUFFLE, context.getString(com.simplecityapps.core.R.string.shuffle_off), R.drawable.ic_shuffle_black_24dp).build()
+                )
+            }
+        }
+    }
+
+    private fun getPlaybackState() = when (playbackManager.playbackState()) {
+        is PlaybackState.Loading -> PlaybackStateCompat.STATE_BUFFERING
+        is PlaybackState.Playing -> PlaybackStateCompat.STATE_PLAYING
+        else -> PlaybackStateCompat.STATE_PAUSED
+    }
+
+    private fun updatePlaybackState() {
+        Timber.v("updatePlaybackState()")
+        val playbackState = playbackStateBuilder.build()
+        activeQueueItemId = playbackState.activeQueueItemId
+        mediaSession.setPlaybackState(playbackState)
+    }
+
+    private fun updateMetadata() {
+        Timber.v("updateMetadata()")
+        queueManager.getCurrentItem()?.let { currentItem ->
+            val mediaMetadataCompat =
+                MediaMetadataCompat.Builder()
+                    .putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, currentItem.song.id.toString())
+                    .putString(MediaMetadataCompat.METADATA_KEY_ALBUM_ARTIST, currentItem.song.albumArtist)
+                    .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, currentItem.song.friendlyArtistName ?: currentItem.song.albumArtist ?: context.getString(com.simplecityapps.core.R.string.unknown))
+                    .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, currentItem.song.album ?: context.getString(com.simplecityapps.core.R.string.unknown))
+                    .putString(MediaMetadataCompat.METADATA_KEY_TITLE, currentItem.song.name ?: context.getString(com.simplecityapps.core.R.string.unknown))
+                    .putLong(MediaMetadataCompat.METADATA_KEY_DURATION, currentItem.song.duration.toLong())
+                    .putLong(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, currentItem.song.track?.toLong() ?: 1)
+                    .putLong(MediaMetadataCompat.METADATA_KEY_NUM_TRACKS, queueManager.getSize().toLong())
+
+            if (preferenceManager.mediaSessionArtwork) {
+                mediaMetadataCompat.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, placeholder)
+
+                val artworkSize = 512
+                synchronized(artworkCache) {
+                    artworkCache[currentItem.song.getArtworkCacheKey(artworkSize, artworkSize)]?.let { image ->
+                        mediaMetadataCompat.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, image)
+                    }
+                } ?: run {
+                    artworkImageLoader.loadBitmap(
+                        data = currentItem.song,
+                        width = artworkSize,
+                        height = artworkSize
+                    ) { image ->
+                        mediaMetadataCompat.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, image)
+                        mediaSession.setMetadata(mediaMetadataCompat.build())
+                        if (image != null) {
+                            synchronized(artworkCache) {
+                                artworkCache.put(currentItem.song.getArtworkCacheKey(artworkSize, artworkSize), image)
+                            }
+                        }
+                    }
+                }
+            }
+
+            mediaSession.setMetadata(mediaMetadataCompat.build())
+        } ?: Timber.e("Metadata update failed.. current item null")
+    }
+
+    private fun updateQueue() {
+        Timber.v("updateQueue()")
+        val queue = queueManager.getQueue()
+        if (queue.isNotEmpty()) {
+            mediaSession.setQueue(
+                queueManager.getQueue()
+                    .subList(((queueManager.getCurrentPosition() ?: 0) - 5).coerceAtLeast(0), queueManager.getSize() - 1)
+                    .take(30)
+                    .map { queueItem -> queueItem.toQueueItem() }
+            )
+        } else {
+            mediaSession.setQueue(emptyList())
+        }
+    }
+
+    private fun updateCurrentQueueItem() {
+        Timber.v("updateCurrentQueueItem()")
+        queueManager.getCurrentItem()?.let { currentItem ->
+            val activeQueueItemId = currentItem.toQueueItem().queueId
+            if (activeQueueItemId != this.activeQueueItemId) {
+                updateQueue()
+                playbackStateBuilder.setActiveQueueItemId(activeQueueItemId)
+                playbackStateBuilder.setState(getPlaybackState(), 0L, playbackManager.getPlaybackSpeed())
+                updatePlaybackState()
+                updateMetadata()
+            }
+        }
+    }
+
+    // PlaybackWatcherCallback Implementation
+
+    override fun onPlaybackStateChanged(playbackState: PlaybackState) {
+        mediaSession.isActive = playbackState == PlaybackState.Loading || playbackState == PlaybackState.Playing
+        playbackStateBuilder.setState(getPlaybackState(), playbackManager.getProgress()?.toLong() ?: PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, playbackManager.getPlaybackSpeed())
+        updatePlaybackState()
+    }
+
+    override fun onProgressChanged(
+        position: Int,
+        duration: Int,
+        fromUser: Boolean
+    ) {
+        if (fromUser) {
+            playbackStateBuilder.setState(getPlaybackState(), position.toLong(), playbackManager.getPlaybackSpeed())
+            updatePlaybackState()
+        }
+    }
+
+    override fun onTrackEnded(song: Song) {
+        super.onTrackEnded(song)
+
+        playbackStateBuilder.setState(getPlaybackState(), playbackManager.getProgress()?.toLong() ?: PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, playbackManager.getPlaybackSpeed())
+        updatePlaybackState()
+    }
+
+    // QueueChangeCallback Implementation
+
+    override fun onQueueRestored() {
+        updateQueue()
+        updateCurrentQueueItem()
+    }
+
+    override fun onQueueChanged(reason: QueueChangeCallback.QueueChangeReason) {
+        updateQueue()
+    }
+
+    override fun onQueuePositionChanged(
+        oldPosition: Int?,
+        newPosition: Int?
+    ) {
+        updateCurrentQueueItem()
+    }
+
+    override fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
+        mediaSession.setShuffleMode(shuffleMode.toShuffleMode())
+        updateShuffleAction()
+        updatePlaybackState()
+    }
+
+    override fun onRepeatChanged(repeatMode: QueueManager.RepeatMode) {
+        mediaSession.setRepeatMode(repeatMode.toRepeatMode())
+    }
 
     fun PlaybackStateCompat.Builder.copyWithoutCustomActions(): PlaybackStateCompat.Builder {
         val thing = this.build()

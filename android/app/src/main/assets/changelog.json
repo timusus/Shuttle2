@@ -1,5 +1,22 @@
 [
   {
+    "versionName": "1.0.8-alpha01",
+    "releaseDate": "03/06/2025",
+    "features": [
+
+    ],
+    "fixes": [
+
+    ],
+    "improvements": [
+      "Attempt to fix an issue where Google Assistant won't work with Shuttle (This won't work)",
+      "Migrate some stuff to Compose (Thanks Àlex Magaz Graça)"
+    ],
+    "notes": [
+      "What's up? I want to make Shuttle great again. I just need more hours in the day, and more days in the week!"
+    ]
+  },
+  {
     "versionName": "1.0.7",
     "releaseDate": "11/01/2024",
     "features": [
