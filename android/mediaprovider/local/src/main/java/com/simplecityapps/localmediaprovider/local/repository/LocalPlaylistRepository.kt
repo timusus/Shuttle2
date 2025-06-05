@@ -180,7 +180,7 @@ class LocalPlaylistRepository(
         if (outputStream == null) {
             Timber.w("Unable to open M3U file at ${playlist.externalId} for playlist ${playlist.name}")
         } else {
-            val playlistPath = Uri.decode(playlist.externalId?: "")
+            val playlistPath = Uri.decode(playlist.externalId ?: "")
             val playlistFolder = playlistPath.substringBeforeLast("/") + "/"
 
             getSongsForPlaylist(playlist)
@@ -192,7 +192,8 @@ class LocalPlaylistRepository(
                     // We'll use absolute values (paths or URIs, whatever is in database) for files that are not stored in a sub-folder relative to the M3U file
                     val songPath = Uri.decode(plSong.song.path)
                     val relative = songPath.substringAfter(playlistFolder)
-                    val line = relative.toByteArray() + /* CRLF */ 0x0d.toByte() + 0x0A.toByte()
+                    val crlf = 0x0d.toByte() + 0x0A.toByte()
+                    val line = relative.toByteArray() + crlf
                     outputStream.write(line)
                 }
         }
