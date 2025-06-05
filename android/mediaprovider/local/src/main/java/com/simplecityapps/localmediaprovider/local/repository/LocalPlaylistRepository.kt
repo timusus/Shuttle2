@@ -191,10 +191,9 @@ class LocalPlaylistRepository(
                     // Note that paths can be content:// URIs, for which there is no proper .relativize() method
                     // We'll use absolute values (paths or URIs, whatever is in database) for files that are not stored in a sub-folder relative to the M3U file
                     val songPath = Uri.decode(plSong.song.path)
-                    val relative = songPath.substringAfter(playlistFolder)
-                    val crlf = 0x0d.toByte() + 0x0A.toByte()
-                    val line = relative.toByteArray() + crlf
-                    outputStream.write(line)
+                    val crlf = "\r\n"
+                    val relative = songPath.substringAfter(playlistFolder) + crlf
+                    outputStream.write(relative.toByteArray())
                 }
         }
     }
