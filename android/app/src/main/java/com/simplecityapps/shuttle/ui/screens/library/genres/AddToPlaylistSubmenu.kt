@@ -10,16 +10,17 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
+import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 fun AddToPlaylistSubmenu(
-    modifier: Modifier = Modifier,
     genre: Genre,
+    playlists: ImmutableList<Playlist>,
+    onAddToPlaylist: (playlist: Playlist, playlistData: PlaylistData) -> Unit,
+    modifier: Modifier = Modifier,
     expanded: Boolean = false,
     onDismiss: () -> Unit = {},
-    playlists: List<Playlist>,
-    onAddToPlaylist: (playlist: Playlist, playlistData: PlaylistData) -> Unit,
-    onShowCreatePlaylistDialog: (genre: Genre) -> Unit
+    onShowCreatePlaylistDialog: (genre: Genre) -> Unit,
 ) {
     val playlistData = PlaylistData.Genres(genre)
 

@@ -22,11 +22,12 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
+import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 fun GenreMenu(
     genre: Genre,
-    playlists: List<Playlist>,
+    playlists: ImmutableList<Playlist>,
     onPlayGenre: (Genre) -> Unit,
     onAddToQueue: (Genre) -> Unit,
     onPlayNext: (Genre) -> Unit,

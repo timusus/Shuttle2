@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.ui.screens.library.genres
 
-import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,7 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.pluralStringResource
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Genre
@@ -22,11 +21,13 @@ import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.theme.AppTheme
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 @Composable
 fun GenreListItem(
     genre: Genre,
-    playlists: List<Playlist>,
+    playlists: ImmutableList<Playlist>,
     modifier: Modifier = Modifier,
     onSelectGenre: (genre: Genre) -> Unit = {},
     onPlayGenre: (Genre) -> Unit = {},
@@ -35,7 +36,7 @@ fun GenreListItem(
     onExclude: (Genre) -> Unit = {},
     onAddToPlaylist: (playlist: Playlist, playlistData: PlaylistData) -> Unit = { _, _ -> },
     onEditTags: (Genre) -> Unit = {},
-    onShowCreatePlaylistDialog: (genre: Genre) -> Unit = {}
+    onShowCreatePlaylistDialog: (genre: Genre) -> Unit = {},
 ) {
     Row(
         modifier = modifier,
@@ -77,8 +78,7 @@ fun GenreListItem(
     }
 }
 
-@Preview(showBackground = true)
-@Preview(showBackground = true, uiMode = UI_MODE_NIGHT_YES)
+@PreviewLightDark
 @Composable
 private fun GenreListItemPreview() {
     AppTheme(
@@ -91,7 +91,7 @@ private fun GenreListItemPreview() {
                 duration = 10,
                 mediaProviders = listOf(MediaProviderType.MediaStore)
             ),
-            playlists = listOf(
+            playlists = persistentListOf(
                 Playlist(
                     id = 1,
                     name = "Playlist",

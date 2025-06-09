@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.screens.library.genres
+package com.simplecityapps.shuttle.ui.common.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
