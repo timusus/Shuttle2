@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import com.simplecityapps.shuttle.persistence.get
 import com.simplecityapps.shuttle.persistence.put
 import com.simplecityapps.shuttle.sorting.AlbumSortOrder
+import com.simplecityapps.shuttle.sorting.GenreSortOrder
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import timber.log.Timber
 
@@ -30,6 +31,19 @@ class SortPreferenceManager(private val sharedPreferences: SharedPreferences) {
             } catch (e: IllegalArgumentException) {
                 Timber.e(e, "Failed to retrieve sort order")
                 AlbumSortOrder.AlbumName
+            }
+        }
+
+    var sortOrderGenreList: GenreSortOrder
+        set(value) {
+            sharedPreferences.put("sort_order_genre_list", value.name)
+        }
+        get() {
+            return try {
+                GenreSortOrder.valueOf(sharedPreferences.get("sort_order_genre_list", GenreSortOrder.Name.name))
+            } catch (e: IllegalArgumentException) {
+                Timber.e(e, "Failed to retrieve sort order")
+                GenreSortOrder.Name
             }
         }
 }
