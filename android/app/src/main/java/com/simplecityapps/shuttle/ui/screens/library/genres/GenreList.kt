@@ -16,12 +16,14 @@ import androidx.compose.ui.unit.dp
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Playlist
+import com.simplecityapps.shuttle.sorting.GenreSortOrder
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 
 @Composable
 fun GenreList(
     viewState: GenreListViewModel.ViewState,
     playlists: List<Playlist>,
+    setToolbarMenu: (sortOrder: GenreSortOrder) -> Unit,
     setLoadingState: (GenreListFragment.LoadingState) -> Unit,
     setLoadingProgress: (progress: Progress?) -> Unit,
     onSelectGenre: (genre: Genre) -> Unit,
@@ -49,6 +51,8 @@ fun GenreList(
             } else {
                 setLoadingState(GenreListFragment.LoadingState.None)
             }
+
+            setToolbarMenu(viewState.sortOrder)
 
             GenreList(
                 genres = viewState.genres,

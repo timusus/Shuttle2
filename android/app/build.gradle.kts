@@ -264,6 +264,8 @@ android {
 
 
         testImplementation(libs.junit)
+        testImplementation(libs.mockk)
+        testImplementation(libs.kotlinx.coroutines.test)
 
         // WorkManager
         implementation(libs.androidx.work.runtime.ktx)

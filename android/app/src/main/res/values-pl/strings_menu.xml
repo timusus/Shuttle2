@@ -46,6 +46,10 @@
     <string name="menu_title_sort_song_name">Nazwa piosenki</string>
     <!-- Menu option to sort by year-->
     <string name="menu_title_sort_year">Rok</string>
+    <!-- Menu option to sort by name -->
+    <string name="menu_title_sort_name">Imię</string>
+    <!-- Menu option to sort by song count -->
+    <string name="menu_title_sort_song_count">Liczba piosenek</string>
     <!-- Menu option to sort by song duration -->
     <string name="menu_title_sort_duration">Trwanie</string>
     <!-- Menu option to sort by last modified date -->

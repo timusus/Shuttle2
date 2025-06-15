@@ -46,6 +46,10 @@
     <string name="menu_title_sort_song_name">Titel van een liedje</string>
     <!-- Menu option to sort by year-->
     <string name="menu_title_sort_year">Jaar</string>
+    <!-- Menu option to sort by name -->
+    <string name="menu_title_sort_name">Naam</string>
+    <!-- Menu option to sort by song count -->
+    <string name="menu_title_sort_song_count">Aantal nummers</string>
     <!-- Menu option to sort by song duration -->
     <string name="menu_title_sort_duration">Looptijd</string>
     <!-- Menu option to sort by last modified date -->

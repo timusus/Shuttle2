@@ -46,6 +46,10 @@
     <string name="menu_title_sort_song_name">Nombre de canción</string>
     <!-- Menu option to sort by year-->
     <string name="menu_title_sort_year">Año</string>
+    <!-- Menu option to sort by name -->
+    <string name="menu_title_sort_name">Nombre</string>
+    <!-- Menu option to sort by song count -->
+    <string name="menu_title_sort_song_count">Número de canciones</string>
     <!-- Menu option to sort by song duration -->
     <string name="menu_title_sort_duration">Duración</string>
     <!-- Menu option to sort by last modified date -->
