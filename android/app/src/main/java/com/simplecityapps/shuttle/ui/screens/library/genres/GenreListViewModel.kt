@@ -51,7 +51,7 @@ class GenreListViewModel @Inject constructor(
             mediaImportObserver.songImportState
         ) { genres, songImportState ->
             if (songImportState is SongImportState.ImportProgress) {
-                _viewState.emit(ViewState.Scanning(songImportState.progress))
+                _viewState.emit(ViewState.Scanning(songImportState.progress, sortPreferenceManager.sortOrderGenreList))
             } else {
                 _viewState.emit(ViewState.Ready(genres, sortPreferenceManager.sortOrderGenreList))
             }
@@ -116,14 +116,17 @@ class GenreListViewModel @Inject constructor(
     fun setSortOrder(sortOrder: GenreSortOrder) {
         if (sortPreferenceManager.sortOrderGenreList == sortOrder) return
 
+        Timber.i("Updating sort order: $sortOrder")
         viewModelScope.launch {
-            Timber.i("Updating sort order: $sortOrder")
-            val state = _viewState.value
-            if (state is ViewState.Ready) {
-                withContext(Dispatchers.IO) {
-                    sortPreferenceManager.sortOrderGenreList = sortOrder
+            withContext(Dispatchers.IO) {
+                sortPreferenceManager.sortOrderGenreList = sortOrder
+            }
+            when (val state = _viewState.value) {
+                is ViewState.Scanning -> _viewState.emit(ViewState.Scanning(state.progress, sortOrder))
+                is ViewState.Ready -> _viewState.emit(ViewState.Ready(state.genres.sortedWith(sortOrder.comparator), sortOrder))
+                else -> {
+                    // View is not created
                 }
-                _viewState.emit(ViewState.Ready(state.genres.sortedWith(sortOrder.comparator), sortOrder))
             }
         }
     }
@@ -133,8 +136,8 @@ class GenreListViewModel @Inject constructor(
         .orEmpty()
 
     sealed class ViewState {
-        data class Scanning(val progress: Progress?) : ViewState()
         data object Loading : ViewState()
+        data class Scanning(val progress: Progress?, val sortOrder: GenreSortOrder) : ViewState()
         data class Ready(val genres: List<Genre>, val sortOrder: GenreSortOrder) : ViewState()
     }
 }

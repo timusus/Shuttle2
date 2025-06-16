@@ -39,6 +39,7 @@ fun GenreList(
         is GenreListViewModel.ViewState.Scanning -> {
             setLoadingState(GenreListFragment.LoadingState.Scanning)
             setLoadingProgress(viewState.progress)
+            setToolbarMenu(viewState.sortOrder)
         }
 
         is GenreListViewModel.ViewState.Loading -> {
