@@ -46,6 +46,10 @@
     <string name="menu_title_sort_song_name">歌曲名称</string>
     <!-- Menu option to sort by year-->
     <string name="menu_title_sort_year">年份</string>
+    <!-- Menu option to sort by name -->
+    <string name="menu_title_sort_name">名字</string>
+    <!-- Menu option to sort by song count -->
+    <string name="menu_title_sort_song_count">歌曲数量</string>
     <!-- Menu option to sort by song duration -->
     <string name="menu_title_sort_duration">时长</string>
     <!-- Menu option to sort by last modified date -->

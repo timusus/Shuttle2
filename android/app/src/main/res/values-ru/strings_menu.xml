@@ -46,6 +46,10 @@
     <string name="menu_title_sort_song_name">Название песни</string>
     <!-- Menu option to sort by year-->
     <string name="menu_title_sort_year">Год</string>
+    <!-- Menu option to sort by name -->
+    <string name="menu_title_sort_name">"Имя"</string>
+    <!-- Menu option to sort by song count -->
+    <string name="menu_title_sort_song_count">Количество песен</string>
     <!-- Menu option to sort by song duration -->
     <string name="menu_title_sort_duration">Продолжительность</string>
     <!-- Menu option to sort by last modified date -->
