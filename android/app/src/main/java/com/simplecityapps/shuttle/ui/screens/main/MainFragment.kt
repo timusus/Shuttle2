@@ -71,6 +71,7 @@ class MainFragment :
         if (navController.currentDestination == null) {
             initializeNavGraph(navController)
         }
+        
 
         val bottomNavigationView: BottomNavigationView = view.findViewById(R.id.bottomNavigationView)
         bottomNavigationView.setupWithNavController(navController) { menuItem ->
@@ -91,9 +92,12 @@ class MainFragment :
                 .add(R.id.sheet1PeekView, MiniPlaybackFragment(), "MiniPlaybackFragment")
                 .add(R.id.sheet2Container, QueueFragment.newInstance(), "QueueFragment")
                 .commit()
+            
         } else {
-            multiSheetView?.restoreSheet(savedInstanceState.getInt(STATE_CURRENT_SHEET))
-            multiSheetView?.restoreBottomSheetTranslation(savedInstanceState.getFloat(STATE_BOTTOM_NAV_TRANSLATION_Y, 0f))
+            val currentSheet = savedInstanceState.getInt(STATE_CURRENT_SHEET)
+            val bottomNavTranslation = savedInstanceState.getFloat(STATE_BOTTOM_NAV_TRANSLATION_Y, 0f)
+            multiSheetView?.restoreSheet(currentSheet)
+            multiSheetView?.restoreBottomSheetTranslation(bottomNavTranslation)
         }
 
         multiSheetView?.addSheetStateChangeListener(
