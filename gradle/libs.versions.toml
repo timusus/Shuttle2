@@ -9,6 +9,7 @@ circleindicator = "2.1.6"
 compose = "2025.01.00"
 compose-lint-checks = "1.4.2"
 detekt = "1.23.7"
+kotlinx-collections-immutable = "0.4.0"
 ksp = "2.1.0-1.0.29"
 constraintlayout = "2.2.0"
 converter-moshi = "2.11.0"
@@ -60,7 +61,7 @@ phrase = "master-SNAPSHOT"
 play-services-cast-framework = "22.0.0"
 preference-ktx = "1.2.1"
 recyclerview = "1.4.0"
-recyclerview-fastscroll = "dev-SNAPSHOT"
+recyclerview-fastscroll = "2.0.1"
 review = "2.0.2"
 room-compiler = "2.6.1"
 runner = "1.6.2"
@@ -135,6 +136,7 @@ hilt = { module = "com.google.dagger:hilt-android", version.ref = "hilt-android"
 jaredrummler-androidDeviceNames = { module = "com.jaredrummler:android-device-names", version.ref = "android-device-names" }
 junit = { module = "junit:junit", version.ref = "junit" }
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
+kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlinx-collections-immutable" }
 kotlinx-coroutinesAndroid = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines-android" }
 kotlinx-coroutinesCore = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines-core" }
 kotlinx-coroutinesPlayServices = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "kotlinx-coroutines-play-services" }
@@ -156,7 +158,7 @@ retrofit2-retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref =
 square-phrase = { module = "com.github.square:phrase", version.ref = "phrase" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 timusus-ktaglib = { module = "com.github.timusus:ktaglib", version.ref = "ktaglib" }
-timusus-recyclerViewFastScroll = { module = "com.github.timusus:RecyclerView-FastScroll", version.ref = "recyclerview-fastscroll" }
+timusus-recyclerViewFastScroll = { module = "com.simplecityapps:recyclerview-fastscroll", version.ref = "recyclerview-fastscroll" }
 tools-desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar-jdk-libs" }
 vdurmont-semver4j = { module = "com.vdurmont:semver4j", version.ref = "semver4j" }
 

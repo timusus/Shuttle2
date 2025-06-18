@@ -130,6 +130,13 @@ constructor(
             sheet1Container.setMargins(bottomMargin = bottomSheetBehavior2.peekHeight)
             navHostFragment.setMargins(bottomMargin = bottomNavigationView.height + bottomSheetBehavior1.peekHeight)
         }
+
+        // Always ensure sheet1 maintains correct translation relative to bottomNav
+        // This fixes issues where navigation resets the translation
+        val expectedTranslation = -bottomNavigationView.height.toFloat() + bottomNavigationView.translationY
+        if (sheet1.translationY != expectedTranslation) {
+            sheet1.translationY = expectedTranslation
+        }
     }
 
     val isHidden: Boolean
@@ -274,6 +281,7 @@ constructor(
 
     fun restoreBottomSheetTranslation(translationY: Float) {
         bottomNavigationView.translationY = translationY
+        sheet1.translationY = -bottomNavigationView.height.toFloat() + translationY
     }
 
     fun consumeBackPress(): Boolean {
@@ -320,10 +328,11 @@ constructor(
         @Sheet sheet: Int,
         @BottomSheetBehavior.State state: Int
     ) {
+        val peekView = findViewById<View>(getSheetPeekViewResId(sheet))
         if (state == BottomSheetBehavior.STATE_EXPANDED) {
-            fadeView(findViewById(getSheetPeekViewResId(sheet)), 1f)
+            fadeView(peekView, 1f)
         } else if (state == BottomSheetBehavior.STATE_COLLAPSED) {
-            fadeView(findViewById(getSheetPeekViewResId(sheet)), 0f)
+            fadeView(peekView, 0f)
         }
     }
 

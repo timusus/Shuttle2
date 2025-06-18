@@ -12,15 +12,12 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.fragment.findNavController
-import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.error.userDescription
-import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
-import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.screens.library.genres.detail.GenreDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
@@ -30,14 +27,13 @@ import com.simplecityapps.shuttle.ui.theme.AppTheme
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import kotlinx.collections.immutable.toImmutableList
 
 @AndroidEntryPoint
 class GenreListFragment :
     Fragment(),
     CreatePlaylistDialogFragment.Listener {
     private var composeView: ComposeView by autoCleared()
-    private var circularLoadingView: CircularLoadingView by autoCleared()
-    private var horizontalLoadingView: HorizontalLoadingView by autoCleared()
 
     private val viewModel: GenreListViewModel by viewModels()
 
@@ -60,9 +56,6 @@ class GenreListFragment :
     ) {
         super.onViewCreated(view, savedInstanceState)
 
-        circularLoadingView = view.findViewById(R.id.circularLoadingView)
-        horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
-
         playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
         playlistMenuPresenter.bindView(playlistMenuView)
 
@@ -70,7 +63,6 @@ class GenreListFragment :
 
         composeView.setContent {
             val viewState by viewModel.viewState.collectAsState()
-
             val theme by viewModel.theme.collectAsStateWithLifecycle()
             val accent by viewModel.accent.collectAsStateWithLifecycle()
             val extraDark by viewModel.extraDark.collectAsStateWithLifecycle()
@@ -82,13 +74,7 @@ class GenreListFragment :
             ) {
                 GenreList(
                     viewState = viewState,
-                    playlists = playlistMenuPresenter.playlists,
-                    setLoadingState = {
-                        setLoadingState(it)
-                    },
-                    setLoadingProgress = {
-                        setLoadingProgress(it)
-                    },
+                    playlists = playlistMenuPresenter.playlists.toImmutableList(),
                     onSelectGenre = {
                         onGenreSelected(it)
                     },
@@ -145,36 +131,6 @@ class GenreListFragment :
         Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("item_name", genre.name).format(), Toast.LENGTH_SHORT).show()
     }
 
-    private fun setLoadingState(state: LoadingState) {
-        when (state) {
-            is LoadingState.Scanning -> {
-                horizontalLoadingView.setState(HorizontalLoadingView.State.Loading(getString(R.string.library_scan_in_progress)))
-                circularLoadingView.setState(CircularLoadingView.State.None)
-            }
-
-            is LoadingState.Loading -> {
-                horizontalLoadingView.setState(HorizontalLoadingView.State.None)
-                circularLoadingView.setState(CircularLoadingView.State.Loading(getString(R.string.loading)))
-            }
-
-            is LoadingState.Empty -> {
-                horizontalLoadingView.setState(HorizontalLoadingView.State.None)
-                circularLoadingView.setState(CircularLoadingView.State.Empty(getString(R.string.genre_list_empty)))
-            }
-
-            is LoadingState.None -> {
-                horizontalLoadingView.setState(HorizontalLoadingView.State.None)
-                circularLoadingView.setState(CircularLoadingView.State.None)
-            }
-        }
-    }
-
-    private fun setLoadingProgress(progress: Progress?) {
-        progress?.let {
-            horizontalLoadingView.setProgress(progress.asFloat())
-        }
-    }
-
     fun showLoadError(error: Error) {
         Toast.makeText(context, error.userDescription(resources), Toast.LENGTH_LONG).show()
     }
@@ -209,10 +165,9 @@ class GenreListFragment :
         fun newInstance() = GenreListFragment()
     }
 
-    sealed class LoadingState {
-        data object Scanning : LoadingState()
-        data object Loading : LoadingState()
-        data object Empty : LoadingState()
-        data object None : LoadingState()
-    }
+//    sealed class LoadingState {
+//        data object Scanning : LoadingState()
+//        data object Loading : LoadingState()
+//        data object Empty : LoadingState()
+//    }
 }

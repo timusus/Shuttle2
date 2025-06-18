@@ -98,17 +98,8 @@ android {
         val composeBom = platform(libs.androidx.compose.bom)
         implementation(composeBom)
         androidTestImplementation(composeBom)
-
-        // Choose one of the following:
-        // Material Design 3
+        implementation(libs.kotlinx.collections.immutable)
         implementation(libs.androidx.material3)
-        // or Material Design 2
-        implementation(libs.androidx.material)
-        // or skip Material Design and build directly on top of foundational components
-        implementation(libs.androidx.foundation)
-        // or only import the main APIs for the underlying toolkit systems,
-        // such as input and measurement/layout
-        implementation(libs.androidx.ui)
 
         // Android Studio Preview support
         implementation(libs.androidx.ui.tooling.preview)
@@ -251,7 +242,6 @@ android {
         // Firebase
         implementation(platform(libs.firebase.bom))
         implementation(libs.firebase.crashlytics)
-
 
         // Testing
         androidTestImplementation(libs.androidx.runner)
