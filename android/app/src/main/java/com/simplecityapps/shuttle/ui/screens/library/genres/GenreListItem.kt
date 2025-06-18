@@ -36,7 +36,7 @@ fun GenreListItem(
     onExclude: (Genre) -> Unit = {},
     onAddToPlaylist: (playlist: Playlist, playlistData: PlaylistData) -> Unit = { _, _ -> },
     onEditTags: (Genre) -> Unit = {},
-    onShowCreatePlaylistDialog: (genre: Genre) -> Unit = {},
+    onShowCreatePlaylistDialog: (genre: Genre) -> Unit = {}
 ) {
     Row(
         modifier = modifier,

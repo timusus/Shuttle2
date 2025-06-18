@@ -130,7 +130,7 @@ constructor(
             sheet1Container.setMargins(bottomMargin = bottomSheetBehavior2.peekHeight)
             navHostFragment.setMargins(bottomMargin = bottomNavigationView.height + bottomSheetBehavior1.peekHeight)
         }
-        
+
         // Always ensure sheet1 maintains correct translation relative to bottomNav
         // This fixes issues where navigation resets the translation
         val expectedTranslation = -bottomNavigationView.height.toFloat() + bottomNavigationView.translationY

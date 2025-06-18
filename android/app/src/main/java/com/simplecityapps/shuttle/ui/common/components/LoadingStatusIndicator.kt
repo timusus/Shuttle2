@@ -29,7 +29,7 @@ fun LoadingStatusIndicator(
     state: CircularLoadingState,
     modifier: Modifier = Modifier,
     onRetryClicked: () -> Unit = {},
-    progressColor: Color = MaterialTheme.colorScheme.primary,
+    progressColor: Color = MaterialTheme.colorScheme.primary
 ) {
     Column(
         modifier = modifier
@@ -49,12 +49,12 @@ fun LoadingStatusIndicator(
 
             is CircularLoadingState.Error,
             is CircularLoadingState.Empty,
-            is CircularLoadingState.Retry,
-                -> {
+            is CircularLoadingState.Retry
+            -> {
                 Icon(
                     painter = painterResource(R.drawable.ic_error_outline_black_24dp),
                     contentDescription = "Error",
-                    tint = MaterialTheme.colorScheme.error,
+                    tint = MaterialTheme.colorScheme.error
                 )
             }
         }
@@ -74,7 +74,7 @@ fun LoadingStatusIndicator(
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedButton(
-                onClick = onRetryClicked,
+                onClick = onRetryClicked
             ) {
                 Text("Retry")
             }

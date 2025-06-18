@@ -20,7 +20,7 @@ fun AddToPlaylistSubmenu(
     modifier: Modifier = Modifier,
     expanded: Boolean = false,
     onDismiss: () -> Unit = {},
-    onShowCreatePlaylistDialog: (genre: Genre) -> Unit,
+    onShowCreatePlaylistDialog: (genre: Genre) -> Unit
 ) {
     val playlistData = PlaylistData.Genres(genre)
 

@@ -45,7 +45,7 @@ fun GenreList(
     onExclude: (Genre) -> Unit = {},
     onEditTags: (Genre) -> Unit = {},
     onAddToPlaylist: (playlist: Playlist, playlistData: PlaylistData) -> Unit = { _, _ -> },
-    onShowCreatePlaylistDialog: (genre: Genre) -> Unit = {},
+    onShowCreatePlaylistDialog: (genre: Genre) -> Unit = {}
 ) {
     when (viewState) {
         is GenreListViewModel.ViewState.Scanning -> {
@@ -108,7 +108,7 @@ private fun GenreList(
     onEditTags: (Genre) -> Unit,
     onAddToPlaylist: (playlist: Playlist, playlistData: PlaylistData) -> Unit,
     modifier: Modifier = Modifier,
-    onShowCreatePlaylistDialog: (genre: Genre) -> Unit,
+    onShowCreatePlaylistDialog: (genre: Genre) -> Unit
 ) {
     val state = rememberLazyListState()
 
@@ -147,7 +147,6 @@ private fun GenreList(
         )
     }
 }
-
 
 @PreviewLightDark
 @Composable

@@ -23,7 +23,7 @@ fun HorizontalLoadingView(
     modifier: Modifier = Modifier,
     message: String? = null,
     progress: Float = 0f,
-    textColor: Color = MaterialTheme.colorScheme.onBackground,
+    textColor: Color = MaterialTheme.colorScheme.onBackground
 ) {
     Column(
         modifier = modifier
