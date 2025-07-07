@@ -19,10 +19,12 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.common.components.CircularLoadingState
+import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.shuttle.ui.common.components.FastScroller
 import com.simplecityapps.shuttle.ui.common.components.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.common.components.LoadingStatusIndicator
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
+import java.util.Locale
 
 @Composable
 fun SongList(
@@ -75,6 +77,7 @@ fun SongList(
                 SongList(
                     songs = viewState.songs,
                     selectedSongs = viewState.selectedSongs,
+                    sortOrder = viewState.sortOrder,
                     playlists = playlists,
                     onSongClick = onSongClick,
                     onSongLongClick = onSongLongClick,
@@ -97,6 +100,7 @@ fun SongList(
 private fun SongList(
     songs: List<Song>,
     selectedSongs: Set<Song>,
+    sortOrder: SongSortOrder,
     playlists: List<Playlist>,
     onSongClick: (Song) -> Unit,
     onSongLongClick: (Song) -> Unit,
@@ -147,8 +151,16 @@ private fun SongList(
             modifier = Modifier.fillMaxSize().padding(vertical = 8.dp),
             state = state,
             getPopupText = { index ->
-                (songs)[index].name?.firstOrNull()?.toString() ?: "" // FIXME
+                getFastscrollPopupText(songs[index], sortOrder)
             },
         )
     }
 }
+
+fun getFastscrollPopupText(song: Song, sortOrder: SongSortOrder): String = when (sortOrder) {
+    SongSortOrder.SongName -> song.name?.firstOrNull()?.toString()
+    SongSortOrder.ArtistGroupKey -> song.albumArtistGroupKey.key?.firstOrNull()?.toString()?.uppercase(Locale.getDefault())
+    SongSortOrder.AlbumGroupKey -> song.albumGroupKey.key?.firstOrNull()?.toString()?.uppercase(Locale.getDefault())
+    SongSortOrder.Year -> song.date?.year?.toString()
+    else -> null
+} ?: ""

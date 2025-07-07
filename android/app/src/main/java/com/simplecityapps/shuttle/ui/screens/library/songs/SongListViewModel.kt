@@ -10,15 +10,18 @@ import com.simplecityapps.mediaprovider.MediaImportObserver
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
+import com.simplecityapps.mediaprovider.repository.songs.comparator
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
+import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
@@ -27,6 +30,8 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 
 @OpenForTesting
@@ -46,6 +51,9 @@ class SongListViewModel @Inject constructor(
     val selectedSongCountState = selectedSongsState.asStateFlow()
         .map { selectedSongs -> selectedSongs.size }
 
+    private val _selectedSortOrder = MutableStateFlow(sortPreferenceManager.sortOrderSongList)
+    val selectedSortOrder = _selectedSortOrder.asStateFlow()
+
     init {
         combine(
             songRepository
@@ -53,11 +61,13 @@ class SongListViewModel @Inject constructor(
                 .filterNotNull(),
             mediaImportObserver.songImportState,
             selectedSongsState,
-        ) { songs, songImportState, selectedSongs ->
+            _selectedSortOrder,
+        ) { songs, songImportState, selectedSongs, __selectedSortOrder ->
             if (songImportState is SongImportState.ImportProgress) {
                 _viewState.emit(ViewState.Scanning(songImportState.progress))
             } else {
-                _viewState.emit(ViewState.Ready(songs, selectedSongs))
+                val sortedSongs = songs.sortedWith(__selectedSortOrder.comparator)
+                _viewState.emit(ViewState.Ready(sortedSongs, selectedSongs, __selectedSortOrder))
             }
         }
             .onStart {
@@ -80,6 +90,7 @@ class SongListViewModel @Inject constructor(
     }
 
     private fun toggleSongSelection(song: Song) {
+        Timber.d("foo: toggleSongSelection: ${hashCode()}")
         selectedSongsState.value = if (selectedSongsState.value.contains(song)) {
             selectedSongsState.value - song
         } else {
@@ -171,12 +182,26 @@ class SongListViewModel @Inject constructor(
 
     private fun isSelecting() = selectedSongsState.value.isNotEmpty()
 
+    fun setSortOrder(sortOrder: SongSortOrder) {
+        if (sortPreferenceManager.sortOrderSongList == sortOrder) {
+            return
+        }
+
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                sortPreferenceManager.sortOrderSongList = sortOrder
+                _selectedSortOrder.value = sortOrder
+            }
+        }
+    }
+
     sealed class ViewState {
         data class Scanning(val progress: Progress?) : ViewState()
         data object Loading : ViewState()
         data class Ready(
             val songs: List<Song>,
             val selectedSongs: Set<Song>,
+            val sortOrder: SongSortOrder,
         ) : ViewState()
     }
 }

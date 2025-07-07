@@ -15,7 +15,9 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.bumptech.glide.util.ViewPreloadSizeProvider
@@ -132,7 +134,7 @@ class SongListFragment :
         }
 */
 
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             viewModel.selectedSongCountState
                 .collect { count ->
                     if (count == 0) {
@@ -156,6 +158,15 @@ class SongListFragment :
                         }
                     }
                 }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.selectedSortOrder
+                    .collect { sortOrder ->
+                        updateToolbarMenuSortOrder(sortOrder)
+                    }
+            }
         }
 
         composeView.setContent {
@@ -226,26 +237,6 @@ class SongListFragment :
             )
         }
 
-/*
-        adapter =
-            object : SectionedAdapter(viewLifecycleOwner.lifecycleScope) {
-                override fun getSectionName(viewBinder: ViewBinder?): String = (viewBinder as? SongBinder)?.song?.let { song ->
-                    presenter.getFastscrollPrefix(song)
-                } ?: ""
-            }
-        recyclerView = view.findViewById(R.id.recyclerView)
-        recyclerView.adapter = adapter
-        recyclerView.setRecyclerListener(RecyclerListener())
-        val preloader: RecyclerViewPreloader<com.simplecityapps.shuttle.model.Song> =
-            RecyclerViewPreloader(
-                imageLoader.requestManager,
-                preloadModelProvider,
-                viewPreloadSizeProvider,
-                12
-            )
-        recyclerView.addOnScrollListener(preloader)
-*/
-
         presenter.bindView(this)
     }
 
@@ -256,8 +247,7 @@ class SongListFragment :
         super.onCreateOptionsMenu(menu, inflater)
 
         inflater.inflate(R.menu.menu_song_list, menu)
-
-        presenter.updateToolbarMenu()
+        updateToolbarMenuSortOrder(viewModel.selectedSortOrder.value)
     }
 
     override fun onResume() {
@@ -294,27 +284,27 @@ class SongListFragment :
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
         R.id.sortSongName -> {
-            presenter.setSortOrder(SongSortOrder.SongName)
+            viewModel.setSortOrder(SongSortOrder.SongName)
             true
         }
         R.id.sortArtistName -> {
-            presenter.setSortOrder(SongSortOrder.ArtistGroupKey)
+            viewModel.setSortOrder(SongSortOrder.ArtistGroupKey)
             true
         }
         R.id.sortAlbumName -> {
-            presenter.setSortOrder(SongSortOrder.AlbumGroupKey)
+            viewModel.setSortOrder(SongSortOrder.AlbumGroupKey)
             true
         }
         R.id.sortSongYear -> {
-            presenter.setSortOrder(SongSortOrder.Year)
+            viewModel.setSortOrder(SongSortOrder.Year)
             true
         }
         R.id.sortSongDuration -> {
-            presenter.setSortOrder(SongSortOrder.Duration)
+            viewModel.setSortOrder(SongSortOrder.Duration)
             true
         }
         R.id.sortSongDateModified -> {
-            presenter.setSortOrder(SongSortOrder.LastModified)
+            viewModel.setSortOrder(SongSortOrder.LastModified)
             true
         }
         else -> false

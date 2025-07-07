@@ -71,9 +71,9 @@ interface SongListContract {
 
         fun delete(song: Song)
 
-        fun setSortOrder(songSortOrder: SongSortOrder)
-
         fun getFastscrollPrefix(song: Song): String?
+
+        fun updateToolbarMenu()
     }
 }
 
@@ -104,8 +104,6 @@ constructor(
 
     override fun bindView(view: SongListContract.View) {
         super.bindView(view)
-
-        view.updateToolbarMenuSortOrder(sortPreferenceManager.sortOrderSongList)
     }
 
     override fun unbindView() {
@@ -196,24 +194,15 @@ constructor(
         }
     }
 
-    override fun setSortOrder(songSortOrder: SongSortOrder) {
-        if (sortPreferenceManager.sortOrderSongList != songSortOrder) {
-            launch {
-                withContext(Dispatchers.IO) {
-                    sortPreferenceManager.sortOrderSongList = songSortOrder
-                    this@SongListPresenter.songs = songs.sortedWith(songSortOrder.comparator)
-                }
-                view?.setData(songs, true)
-                view?.updateToolbarMenuSortOrder(songSortOrder)
-            }
-        }
-    }
-
     override fun getFastscrollPrefix(song: Song): String? = when (sortPreferenceManager.sortOrderSongList) {
         SongSortOrder.SongName -> song.name?.firstOrNull()?.toString()
         SongSortOrder.ArtistGroupKey -> song.albumArtistGroupKey.key?.firstOrNull()?.toString()?.uppercase(Locale.getDefault())
         SongSortOrder.AlbumGroupKey -> song.albumGroupKey.key?.firstOrNull()?.toString()?.uppercase(Locale.getDefault())
         SongSortOrder.Year -> song.date?.year?.toString()
         else -> null
+    }
+
+    override fun updateToolbarMenu() {
+        view?.updateToolbarMenuSortOrder(sortPreferenceManager.sortOrderSongList)
     }
 }
