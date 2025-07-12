@@ -44,6 +44,19 @@
             </intent-filter>
         </activity>
 
+        <!-- Shortcut Handler Activity -->
+        <activity
+            android:name=".ui.ShortcutHandlerActivity"
+            android:exported="true"
+            android:theme="@style/AppTheme.Transparent"
+            android:excludeFromRecents="true"
+            android:taskAffinity="">
+            <intent-filter>
+                <action android:name="com.simplecityapps.shuttle.shortcuts.TOGGLE_PLAYBACK" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
         <!-- Firebase Analytics -->
         <meta-data
             android:name="firebase_analytics_collection_enabled"
