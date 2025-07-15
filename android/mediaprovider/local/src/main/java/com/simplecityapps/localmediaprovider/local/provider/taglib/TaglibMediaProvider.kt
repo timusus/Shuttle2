@@ -150,7 +150,7 @@ class TaglibMediaProvider(
                                 mediaProviderType = type,
                                 name = m3uPlaylist.name,
                                 songs = songs,
-                                externalId = m3uPlaylist.name
+                                externalId = m3uPlaylist.path
                             )
                         updateData
                     } else {
