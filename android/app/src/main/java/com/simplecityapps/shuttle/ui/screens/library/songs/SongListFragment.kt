@@ -8,7 +8,6 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.appcompat.widget.PopupMenu
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
@@ -22,8 +21,6 @@ import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.bumptech.glide.util.ViewPreloadSizeProvider
 import com.simplecityapps.adapter.RecyclerAdapter
-import com.simplecityapps.adapter.ViewBinder
-import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.sorting.SongSortOrder
@@ -32,12 +29,9 @@ import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.dialog.showDeleteDialog
-import com.simplecityapps.shuttle.ui.common.dialog.showExcludeDialog
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.recyclerview.GlidePreloadModelProvider
-import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
-import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
@@ -53,10 +47,7 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class SongListFragment :
     Fragment(),
-    SongListContract.View,
     CreatePlaylistDialogFragment.Listener {
-    @Inject
-    lateinit var presenter: SongListPresenter
 
     @Inject
     lateinit var playlistMenuPresenter: PlaylistMenuPresenter
@@ -69,13 +60,6 @@ class SongListFragment :
     lateinit var imageLoader: GlideImageLoader
 
     private lateinit var playlistMenuView: PlaylistMenuView
-
-    private var circularLoadingView: CircularLoadingView by autoCleared()
-    private var horizontalLoadingView: HorizontalLoadingView by autoCleared()
-
-    // private var recyclerView: RecyclerView by autoCleared()
-
-    private var recyclerViewState: Parcelable? = null
 
     private var contextualToolbarHelper: ContextualToolbarHelper<com.simplecityapps.shuttle.model.Song> by autoCleared()
 
@@ -115,11 +99,6 @@ class SongListFragment :
         playlistMenuPresenter.bindView(playlistMenuView)
 
         composeView = view.findViewById(R.id.composeView)
-
-        circularLoadingView = view.findViewById(R.id.circularLoadingView)
-        horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
-
-        savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
 
         contextualToolbarHelper = ContextualToolbarHelper()
         updateContextualToolbar()
@@ -236,8 +215,6 @@ class SongListFragment :
                 }
             )
         }
-
-        presenter.bindView(this)
     }
 
     override fun onCreateOptionsMenu(
@@ -253,8 +230,6 @@ class SongListFragment :
     override fun onResume() {
         super.onResume()
 
-        presenter.loadSongs(false)
-
         updateContextualToolbar()
     }
 
@@ -264,17 +239,9 @@ class SongListFragment :
         findToolbarHost()?.apply {
             contextualToolbar?.setOnMenuItemClickListener(null)
         }
-
-        // recyclerViewState = recyclerView.layoutManager?.onSaveInstanceState()
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        outState.putParcelable(ARG_RECYCLER_STATE, recyclerViewState)
-        super.onSaveInstanceState(outState)
     }
 
     override fun onDestroyView() {
-        presenter.unbindView()
         playlistMenuPresenter.unbindView()
 
         super.onDestroyView()
@@ -348,36 +315,7 @@ class SongListFragment :
         }
     }
 
-    // SongListContract.View Implementation
-
-    override fun setData(
-        songs: List<com.simplecityapps.shuttle.model.Song>,
-        resetPosition: Boolean
-    ) {
-        preloadModelProvider.items = songs
-
-        if (resetPosition) {
-            adapter.clear()
-        }
-
-        val data =
-            songs.map { song ->
-                SongBinder(song, imageLoader, songBinderListener).apply {
-                    selected = contextualToolbarHelper.selectedItems.any { it.id == song.id }
-                }
-            }.toMutableList<ViewBinder>()
-
-        adapter.update(data) {
-/*
-            recyclerViewState?.let {
-                recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
-                recyclerViewState = null
-            }
-*/
-        }
-    }
-
-    override fun updateToolbarMenuSortOrder(sortOrder: SongSortOrder) {
+    fun updateToolbarMenuSortOrder(sortOrder: SongSortOrder) {
         findToolbarHost()?.toolbar?.menu?.let { menu ->
             when (sortOrder) {
                 SongSortOrder.SongName -> menu.findItem(R.id.sortSongName)?.isChecked = true
@@ -393,7 +331,7 @@ class SongListFragment :
         }
     }
 
-    override fun showLoadError(error: Error) {
+    fun showLoadError(error: Error) {
         Toast.makeText(context, error.userDescription(resources), Toast.LENGTH_LONG).show()
     }
 
@@ -401,7 +339,7 @@ class SongListFragment :
         TagEditorAlertDialog.newInstance(listOf(song)).show(childFragmentManager)
     }
 
-    override fun onAddedToQueue(songs: List<com.simplecityapps.shuttle.model.Song>) {
+    fun onAddedToQueue(songs: List<com.simplecityapps.shuttle.model.Song>) {
         Toast.makeText(
             context,
             Phrase.fromPlural(resources, R.plurals.queue_songs_added, songs.size)
@@ -411,108 +349,20 @@ class SongListFragment :
         ).show()
     }
 
-    override fun setLoadingState(state: SongListContract.LoadingState) {
-        when (state) {
-            is SongListContract.LoadingState.Scanning -> {
-                horizontalLoadingView.setState(HorizontalLoadingView.State.Loading(getString(R.string.library_scan_in_progress)))
-                circularLoadingView.setState(CircularLoadingView.State.None)
-            }
-            is SongListContract.LoadingState.Loading -> {
-                horizontalLoadingView.setState(HorizontalLoadingView.State.None)
-                circularLoadingView.setState(CircularLoadingView.State.Loading(getString(R.string.loading)))
-            }
-            is SongListContract.LoadingState.Empty -> {
-                horizontalLoadingView.setState(HorizontalLoadingView.State.None)
-                circularLoadingView.setState(CircularLoadingView.State.Empty(getString(R.string.song_list_empty)))
-            }
-            is SongListContract.LoadingState.None -> {
-                horizontalLoadingView.setState(HorizontalLoadingView.State.None)
-                circularLoadingView.setState(CircularLoadingView.State.None)
-            }
-        }
-    }
-
-    override fun setLoadingProgress(progress: Progress?) {
-        progress?.let {
-            horizontalLoadingView.setProgress(progress.asFloat())
-        }
-    }
-
-    override fun showDeleteError(error: Error) {
+    fun showDeleteError(error: Error) {
         Toast.makeText(requireContext(), error.userDescription(resources), Toast.LENGTH_LONG).show()
     }
 
     // Private
 
+/*
     private val songBinderListener =
         object : SongBinder.Listener {
-            override fun onSongClicked(song: com.simplecityapps.shuttle.model.Song) {
-                if (!contextualToolbarHelper.handleClick(song)) {
-                    presenter.onSongClicked(song)
-                }
-            }
-
-            override fun onSongLongClicked(song: com.simplecityapps.shuttle.model.Song) {
-                contextualToolbarHelper.handleLongClick(song)
-            }
-
-            override fun onOverflowClicked(
-                view: View,
-                song: com.simplecityapps.shuttle.model.Song
-            ) {
-                val popupMenu = PopupMenu(requireContext(), view)
-                popupMenu.inflate(R.menu.menu_popup_song)
-                TagEditorMenuSanitiser.sanitise(popupMenu.menu, listOf(song.mediaProvider))
-
-                playlistMenuView.createPlaylistMenu(popupMenu.menu)
-
-                if (song.externalId != null) {
-                    popupMenu.menu.findItem(R.id.delete)?.isVisible = false
-                }
-
-                popupMenu.setOnMenuItemClickListener { menuItem ->
-                    if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Songs(song))) {
-                        return@setOnMenuItemClickListener true
-                    } else {
-                        when (menuItem.itemId) {
-                            R.id.queue -> {
-                                presenter.addToQueue(listOf(song))
-                                return@setOnMenuItemClickListener true
-                            }
-                            R.id.playNext -> {
-                                presenter.playNext(song)
-                                return@setOnMenuItemClickListener true
-                            }
-                            R.id.songInfo -> {
-                                SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
-                                return@setOnMenuItemClickListener true
-                            }
-                            R.id.exclude -> {
-                                showExcludeDialog(requireContext(), song.name) {
-                                    presenter.exclude(song)
-                                }
-                                return@setOnMenuItemClickListener true
-                            }
-                            R.id.delete -> {
-                                showDeleteDialog(requireContext(), song.name) {
-                                    presenter.delete(song)
-                                }
-                                return@setOnMenuItemClickListener true
-                            }
-                            R.id.editTags -> {
-                                TagEditorAlertDialog.newInstance(listOf(song)).show(childFragmentManager)
-                            }
-                        }
-                    }
-                    false
-                }
-                popupMenu.show()
-            }
-
             override fun onViewHolderCreated(holder: SongBinder.ViewHolder) {
                 viewPreloadSizeProvider.setView(holder.imageView)
             }
         }
+*/
 
     // CreatePlaylistDialogFragment.Listener Implementation
 
