@@ -11,7 +11,6 @@ import android.widget.Toast
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
-import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -20,11 +19,9 @@ import androidx.lifecycle.repeatOnLifecycle
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
 import com.bumptech.glide.util.ViewPreloadSizeProvider
-import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.sorting.SongSortOrder
-import com.simplecityapps.shuttle.ui.common.ContextualToolbarHelper
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
@@ -55,13 +52,10 @@ class SongListFragment :
     private var composeView: ComposeView by autoCleared()
 
     private val viewModel: SongListViewModel by viewModels()
-    private var adapter: RecyclerAdapter by autoCleared()
 
     lateinit var imageLoader: GlideImageLoader
 
     private lateinit var playlistMenuView: PlaylistMenuView
-
-    private var contextualToolbarHelper: ContextualToolbarHelper<com.simplecityapps.shuttle.model.Song> by autoCleared()
 
     private val viewPreloadSizeProvider by lazy { ViewPreloadSizeProvider<com.simplecityapps.shuttle.model.Song>() }
     private val preloadModelProvider by lazy {
@@ -100,40 +94,26 @@ class SongListFragment :
 
         composeView = view.findViewById(R.id.composeView)
 
-        contextualToolbarHelper = ContextualToolbarHelper()
         updateContextualToolbar()
 
-/*
-        lifecycleScope.launch {
-            viewModel.viewState
-                .filterIsInstance<SongListViewModel.ViewState.Ready>()
-                .collect { state ->
-                    contextualToolbarCallback.onCountChanged(state.selectedSongs.size)
-                }
-        }
-*/
-
         viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.selectedSongCountState
+            viewModel.contextualToolbarHelper.selectedSongCountState
                 .collect { count ->
                     if (count == 0) {
-                        contextualToolbarHelper.let {
-                            it.toolbar?.isVisible = true
-                            it.contextualToolbar?.isVisible = false
-                        }
+                        viewModel.contextualToolbarHelper.hide()
                     } else {
-                        contextualToolbarHelper.let {
-                            it.toolbar?.isVisible = false
-                            it.contextualToolbar?.isVisible = true
-                        }
+                        viewModel.contextualToolbarHelper.show()
 
-                        // onCountChanged()
-                        contextualToolbarHelper.contextualToolbar?.title =
+                        viewModel.contextualToolbarHelper.contextualToolbar?.title =
                             Phrase.fromPlural(requireContext(), R.plurals.multi_select_items_selected, count)
                                 .put("count", count)
                                 .format()
-                        contextualToolbarHelper.contextualToolbar?.menu?.let { menu ->
-                            TagEditorMenuSanitiser.sanitise(menu, contextualToolbarHelper.selectedItems.map { it.mediaProvider }.distinct())
+                        viewModel.contextualToolbarHelper.contextualToolbar?.menu?.let { menu ->
+                            TagEditorMenuSanitiser.sanitise(
+                                menu,
+                                viewModel.contextualToolbarHelper
+                                    .selectedSongsMediaProviders()
+                            )
                         }
                     }
                 }
@@ -284,11 +264,15 @@ class SongListFragment :
             contextualToolbar?.let { contextualToolbar ->
                 contextualToolbar.menu.clear()
                 contextualToolbar.inflateMenu(R.menu.menu_multi_select)
-                TagEditorMenuSanitiser.sanitise(contextualToolbar.menu, contextualToolbarHelper.selectedItems.map { it.mediaProvider }.distinct())
+                TagEditorMenuSanitiser.sanitise(
+                    contextualToolbar.menu,
+                    viewModel.contextualToolbarHelper.selectedSongsMediaProviders(),
+                )
                 contextualToolbar.setOnMenuItemClickListener { menuItem ->
                     playlistMenuView.createPlaylistMenu(contextualToolbar.menu)
-                    if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Songs(contextualToolbarHelper.selectedItems.toList()))) {
-                        contextualToolbarHelper.hide()
+                    val selectedSongs = viewModel.contextualToolbarHelper.selectedSongsState.value.toList()
+                    if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Songs(selectedSongs))) {
+                        viewModel.contextualToolbarHelper.hide()
                         return@setOnMenuItemClickListener true
                     }
                     when (menuItem.itemId) {
@@ -297,20 +281,20 @@ class SongListFragment :
                             true
                         }
                         R.id.editTags -> {
-                            TagEditorAlertDialog.newInstance(contextualToolbarHelper.selectedItems.toList()).show(childFragmentManager)
-                            contextualToolbarHelper.hide()
+                            TagEditorAlertDialog.newInstance(selectedSongs)
+                                .show(childFragmentManager)
+                            viewModel.contextualToolbarHelper.hide()
                             true
                         }
                         else -> false
                     }
                 }
             }
-            contextualToolbarHelper.contextualToolbar = contextualToolbar
-            contextualToolbarHelper.toolbar = toolbar
-            contextualToolbarHelper.callback = contextualToolbarCallback
+            viewModel.contextualToolbarHelper.contextualToolbar = contextualToolbar
+            viewModel.contextualToolbarHelper.toolbar = toolbar
 
-            if (contextualToolbarHelper.selectedItems.isNotEmpty()) {
-                contextualToolbarHelper.show()
+            if (viewModel.contextualToolbarHelper.isSelecting()) {
+                viewModel.contextualToolbarHelper.show()
             }
         }
     }
@@ -372,34 +356,6 @@ class SongListFragment :
     ) {
         playlistMenuPresenter.createPlaylist(text, playlistData)
     }
-
-    // ContextualToolbarHelper.Callback Implementation
-
-    private val contextualToolbarCallback =
-        object : ContextualToolbarHelper.Callback<com.simplecityapps.shuttle.model.Song> {
-            override fun onCountChanged(count: Int) {
-                contextualToolbarHelper.contextualToolbar?.title =
-                    Phrase.fromPlural(requireContext(), R.plurals.multi_select_items_selected, count)
-                        .put("count", count)
-                        .format()
-                contextualToolbarHelper.contextualToolbar?.menu?.let { menu ->
-                    TagEditorMenuSanitiser.sanitise(menu, contextualToolbarHelper.selectedItems.map { it.mediaProvider }.distinct())
-                }
-            }
-
-            override fun onItemUpdated(
-                item: com.simplecityapps.shuttle.model.Song,
-                isSelected: Boolean
-            ) {
-                adapter.items
-                    .filterIsInstance<SongBinder>()
-                    .firstOrNull { it.song.id == item.id }
-                    ?.let { viewBinder ->
-                        viewBinder.selected = isSelected
-                        adapter.notifyItemChanged(adapter.items.indexOf(viewBinder))
-                    }
-            }
-        }
 
     // Static
 

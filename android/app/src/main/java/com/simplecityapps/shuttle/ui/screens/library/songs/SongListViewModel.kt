@@ -17,6 +17,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.sorting.SongSortOrder
+import com.simplecityapps.shuttle.ui.common.ComposeContextualToolbarHelper
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -27,12 +28,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import timber.log.Timber
-
 
 @OpenForTesting
 @HiltViewModel
@@ -47,12 +45,10 @@ class SongListViewModel @Inject constructor(
     private val _viewState = MutableStateFlow<ViewState>(ViewState.Loading)
     val viewState = _viewState.asStateFlow()
 
-    private val selectedSongsState = MutableStateFlow(emptySet<Song>())
-    val selectedSongCountState = selectedSongsState.asStateFlow()
-        .map { selectedSongs -> selectedSongs.size }
-
     private val _selectedSortOrder = MutableStateFlow(sortPreferenceManager.sortOrderSongList)
     val selectedSortOrder = _selectedSortOrder.asStateFlow()
+
+    val contextualToolbarHelper = ComposeContextualToolbarHelper()
 
     init {
         combine(
@@ -60,7 +56,7 @@ class SongListViewModel @Inject constructor(
                 .getSongs(SongQuery.All(sortOrder = sortPreferenceManager.sortOrderSongList))
                 .filterNotNull(),
             mediaImportObserver.songImportState,
-            selectedSongsState,
+            contextualToolbarHelper.selectedSongsState,
             _selectedSortOrder,
         ) { songs, songImportState, selectedSongs, __selectedSortOrder ->
             if (songImportState is SongImportState.ImportProgress) {
@@ -77,8 +73,8 @@ class SongListViewModel @Inject constructor(
     }
 
     fun onSongClick(song: Song, completion: (Result<Boolean>) -> Unit) {
-        if (isSelecting()) {
-            toggleSongSelection(song)
+        if (contextualToolbarHelper.isSelecting()) {
+            contextualToolbarHelper.toggleSongSelection(song)
             completion(Result.success(true))
         } else {
             play(song, completion)
@@ -86,16 +82,7 @@ class SongListViewModel @Inject constructor(
     }
 
     fun onSongLongClick(song: Song) {
-        toggleSongSelection(song)
-    }
-
-    private fun toggleSongSelection(song: Song) {
-        Timber.d("foo: toggleSongSelection: ${hashCode()}")
-        selectedSongsState.value = if (selectedSongsState.value.contains(song)) {
-            selectedSongsState.value - song
-        } else {
-            selectedSongsState.value + song
-        }
+        contextualToolbarHelper.toggleSongSelection(song)
     }
 
     private fun play(song: Song, completion: (Result<Boolean>) -> Unit) {
@@ -122,8 +109,8 @@ class SongListViewModel @Inject constructor(
 
     fun addSelectedToQueue() {
         viewModelScope.launch {
-            playbackManager.addToQueue(selectedSongsState.value.toList())
-            selectedSongsState.value = emptySet()
+            playbackManager.addToQueue(contextualToolbarHelper.selectedSongsState.value.toList())
+            contextualToolbarHelper.clearSelection()
         }
     }
 
@@ -179,8 +166,6 @@ class SongListViewModel @Inject constructor(
     private fun getSongs(): List<Song> = viewState.value.let {
         if (it is ViewState.Ready) it.songs else emptyList()
     }
-
-    private fun isSelecting() = selectedSongsState.value.isNotEmpty()
 
     fun setSortOrder(sortOrder: SongSortOrder) {
         if (sortPreferenceManager.sortOrderSongList == sortOrder) {
