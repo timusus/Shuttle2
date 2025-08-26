@@ -63,6 +63,7 @@ class GenreListFragment :
 
         composeView.setContent {
             val viewState by viewModel.viewState.collectAsState()
+            val playlists by playlistMenuPresenter.playlistsState.collectAsState()
             val theme by viewModel.theme.collectAsStateWithLifecycle()
             val accent by viewModel.accent.collectAsStateWithLifecycle()
 
@@ -72,7 +73,7 @@ class GenreListFragment :
             ) {
                 GenreList(
                     viewState = viewState,
-                    playlists = playlistMenuPresenter.playlists.toImmutableList(),
+                    playlists = playlists.toImmutableList(),
                     onSelectGenre = {
                         onGenreSelected(it)
                     },

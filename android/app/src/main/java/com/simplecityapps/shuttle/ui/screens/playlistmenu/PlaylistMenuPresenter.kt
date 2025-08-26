@@ -17,6 +17,8 @@ import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.firstOrNull
@@ -76,6 +78,8 @@ constructor(
 ) : BasePresenter<PlaylistMenuContract.View>(),
     PlaylistMenuContract.Presenter {
     override var playlists: List<Playlist> = emptyList()
+    private val _playlistsState = MutableStateFlow(emptyList<Playlist>())
+    val playlistsState = _playlistsState.asStateFlow()
 
     override fun bindView(view: PlaylistMenuContract.View) {
         super.bindView(view)
@@ -88,6 +92,7 @@ constructor(
             playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null))
                 .collect { playlists ->
                     this@PlaylistMenuPresenter.playlists = playlists
+                    this@PlaylistMenuPresenter._playlistsState.value = playlists
                 }
         }
     }
