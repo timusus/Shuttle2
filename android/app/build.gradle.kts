@@ -233,6 +233,7 @@ android {
             // Excludes the support library because it's already included by Glide.
             isTransitive = false
         }
+        implementation(libs.glide.compose)
 
         // About Libraries
         implementation(libs.mikepenz.aboutlibrariesCore)
