@@ -16,9 +16,6 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
-import com.bumptech.glide.util.ViewPreloadSizeProvider
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.sorting.SongSortOrder
@@ -28,7 +25,6 @@ import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.dialog.showDeleteDialog
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.error.userDescription
-import com.simplecityapps.shuttle.ui.common.recyclerview.GlidePreloadModelProvider
 import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
@@ -53,17 +49,7 @@ class SongListFragment :
 
     private val viewModel: SongListViewModel by viewModels()
 
-    lateinit var imageLoader: GlideImageLoader
-
     private lateinit var playlistMenuView: PlaylistMenuView
-
-    private val viewPreloadSizeProvider by lazy { ViewPreloadSizeProvider<com.simplecityapps.shuttle.model.Song>() }
-    private val preloadModelProvider by lazy {
-        GlidePreloadModelProvider<com.simplecityapps.shuttle.model.Song>(
-            imageLoader,
-            listOf(ArtworkImageLoader.Options.CacheDecodedResource)
-        )
-    }
 
     // Lifecycle
 
@@ -84,8 +70,6 @@ class SongListFragment :
         savedInstanceState: Bundle?
     ) {
         super.onViewCreated(view, savedInstanceState)
-
-        imageLoader = GlideImageLoader(this)
 
         setHasOptionsMenu(true)
 
@@ -336,17 +320,6 @@ class SongListFragment :
     fun showDeleteError(error: Error) {
         Toast.makeText(requireContext(), error.userDescription(resources), Toast.LENGTH_LONG).show()
     }
-
-    // Private
-
-/*
-    private val songBinderListener =
-        object : SongBinder.Listener {
-            override fun onViewHolderCreated(holder: SongBinder.ViewHolder) {
-                viewPreloadSizeProvider.setView(holder.imageView)
-            }
-        }
-*/
 
     // CreatePlaylistDialogFragment.Listener Implementation
 

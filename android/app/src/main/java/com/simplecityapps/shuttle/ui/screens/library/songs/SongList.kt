@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library.songs
 
+import android.graphics.drawable.Drawable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -8,14 +9,21 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.R
+import com.bumptech.glide.RequestBuilder
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.rememberGlidePreloadingData
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.load.resource.bitmap.CenterCrop
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.common.components.CircularLoadingState
@@ -25,6 +33,7 @@ import com.simplecityapps.shuttle.ui.common.components.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.common.components.LoadingStatusIndicator
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import java.util.Locale
+import com.simplecityapps.shuttle.ui.common.utils.dp as dpToInt
 
 @Composable
 fun SongList(
@@ -96,6 +105,7 @@ fun SongList(
     }
 }
 
+@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 private fun SongList(
     songs: List<Song>,
@@ -117,6 +127,20 @@ private fun SongList(
 ) {
     val state = rememberLazyListState()
 
+    val preloadingData =
+        rememberGlidePreloadingData(
+            data = songs,
+            preloadImageSize = Size(40.dpToInt.toFloat(), 40.dpToInt.toFloat()),
+        ) { item: Song, requestBuilder: RequestBuilder<Drawable> ->
+            requestBuilder
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .transform(CenterCrop())
+                .transform(RoundedCorners(8.dpToInt))
+                // Glide ignores this in Compose for now, but not a big deal
+                .transition(withCrossFade(200))
+                .load(item)
+        }
+
     Box(modifier = modifier.fillMaxSize()) {
         LazyColumn(
             modifier = Modifier
@@ -129,11 +153,14 @@ private fun SongList(
             item {
                 ShuffleListItem(onClick = onShuffle)
             }
-            items(songs) { song ->
+            items(preloadingData.size) { index ->
+                val (song, artworkPreloadRequestBuilder) = preloadingData[index]
+
                 SongListItem(
                     song = song,
                     isSelected = selectedSongs.contains(song),
                     playlists = playlists,
+                    artworkPreloadRequestBuilder = artworkPreloadRequestBuilder,
                     onClick = onSongClick,
                     onLongClick = onSongLongClick,
                     onAddToQueue = onAddToQueue,
