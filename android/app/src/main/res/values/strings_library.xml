@@ -32,4 +32,6 @@
     <string name="song_context_menu">Song context menu</string>
     <!-- Content description for an artwork image. -->
     <string name="artwork">Artwork</string>
+    <!-- Content description the selection mark image in a list. -->
+    <string name="selection_mark">Selection mark</string>
 </resources>

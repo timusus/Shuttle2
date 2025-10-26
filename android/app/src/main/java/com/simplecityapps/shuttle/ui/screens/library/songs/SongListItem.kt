@@ -3,19 +3,28 @@ package com.simplecityapps.shuttle.ui.screens.library.songs
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.graphics.drawable.Drawable
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -67,26 +76,30 @@ fun SongListItem(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        GlideImage(
-            model = song,
-            contentDescription = stringResource(com.simplecityapps.shuttle.R.string.artwork),
-            loading = placeholder(R.drawable.ic_placeholder_song_rounded),
+        SelectionMark(
+            isSelected = isSelected,
             modifier = Modifier
                 .width(40.dp)
                 .height(40.dp),
         ) {
-            // If this request finishes before than the one from the thumbnail,
-            // the result of the thumbnail one won't replace it. So, we need to
-            // repeat all options again here.
-            // TODO: Find a way to copy options from artworkPreloadRequestBuilder
-            //  to `it`. Maybe wait for the Compose API to stabilize first.
-            it
-                .diskCacheStrategy(DiskCacheStrategy.ALL)
-                .transform(CenterCrop())
-                .transform(RoundedCorners(8.dpToInt))
-                // Glide ignores this in Compose for now, but not a big deal
-                .transition(withCrossFade(200))
-                .thumbnail(artworkPreloadRequestBuilder)
+            GlideImage(
+                model = song,
+                contentDescription = stringResource(com.simplecityapps.shuttle.R.string.artwork),
+                loading = placeholder(R.drawable.ic_placeholder_song_rounded),
+            ) {
+                // If this request finishes before than the one from the thumbnail,
+                // the result of the thumbnail one won't replace it. So, we need to
+                // repeat all options again here.
+                // TODO: Find a way to copy options from artworkPreloadRequestBuilder
+                //  to `it`. Maybe wait for the Compose API to stabilize first.
+                it
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .transform(CenterCrop())
+                    .transform(RoundedCorners(8.dpToInt))
+                    // Glide ignores this in Compose for now, but not a big deal
+                    .transition(withCrossFade(200))
+                    .thumbnail(artworkPreloadRequestBuilder)
+            }
         }
         Column(
             Modifier
@@ -109,7 +122,6 @@ fun SongListItem(
                     .from(" • ")
                     .joinSafely(
                         listOf(
-                            if (isSelected) "[x]" else "[ ]",
                             song.friendlyArtistName ?: song.albumArtist,
                             song.album
                         )
@@ -129,6 +141,46 @@ fun SongListItem(
             onExclude = onExclude,
             onEditTags = onEditTags,
             onDelete = onDelete,
+        )
+    }
+}
+
+@OptIn(
+    ExperimentalFoundationApi::class,
+    ExperimentalGlideComposeApi::class,
+)
+@Composable
+private fun SelectionMark(
+    isSelected: Boolean,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier,
+    ) {
+        content()
+
+        if (isSelected) {
+            SelectionMarkOverlay()
+        }
+    }
+}
+
+@Composable
+private fun SelectionMarkOverlay() {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .fillMaxSize()
+            .clip(RoundedCornerShape(8.dp))
+            .background(Color(0, 0, 0, 112))
+            .padding(8.dp),
+    ) {
+        Image(
+            painter = painterResource(com.simplecityapps.shuttle.R.drawable.ic_baseline_check_24),
+            contentDescription = stringResource(com.simplecityapps.shuttle.R.string.selection_mark),
+            colorFilter = ColorFilter.tint(Color.White),
         )
     }
 }
