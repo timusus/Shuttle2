@@ -66,7 +66,7 @@ data class PlaylistEntity(
     val id: Long,
     val name: String,
     val songCount: Int,
-    val duration: Int,
+    val duration: Int?,
     val sortOrder: PlaylistSongSortOrder,
     val mediaProvider: MediaProviderType,
     val externalId: String?
@@ -76,7 +76,7 @@ fun PlaylistEntity.toPlaylist(): Playlist = Playlist(
     id = id,
     name = name,
     songCount = songCount,
-    duration = duration,
+    duration = duration ?: 0,
     sortOrder = sortOrder,
     mediaProvider = mediaProvider,
     externalId = externalId
