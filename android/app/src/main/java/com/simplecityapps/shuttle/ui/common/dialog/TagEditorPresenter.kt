@@ -264,7 +264,7 @@ constructor(
                                             withContext(Dispatchers.Main) {
                                                 view?.setLoading(TagEditorContract.LoadingState.WritingTags(index, editables.size))
                                             }
-                                            return@mapIndexed song to kTagLib.writeMetadata(pfd.detachFd(), metadata)
+                                            return@mapIndexed song to kTagLib.writeMetadata(pfd.detachFd(), metadata, uri.lastPathSegment)
                                         }
                                     } catch (e: IllegalStateException) {
                                         Timber.e(e, "Failed to update tags")
