@@ -6,14 +6,18 @@ on:
       - '.github/workflows/shellcheck.yml'
       - 'support/scripts/**'
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   shellcheck:
     name: ShellCheck
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: ShellCheck Support Scripts
-        uses: reviewdog/action-shellcheck@v1.15
+        uses: reviewdog/action-shellcheck@v1.27
         with:
           reporter: github-pr-review
           path: "support/scripts"
