@@ -301,7 +301,7 @@ fun isReleaseBuild(): Boolean {
 }
 
 fun versionName(): String {
-    return "${AppVersion.versionMajor}.${AppVersion.versionMinor}.${AppVersion.versionPatch}${if (AppVersion.versionSuffix != null) "-${AppVersion.versionSuffix}" else ""} (${versionCode()})"
+    return "${AppVersion.versionMajor}.${AppVersion.versionMinor}.${AppVersion.versionPatch}${if (!AppVersion.versionSuffix.isNullOrEmpty()) "-${AppVersion.versionSuffix}" else ""} (${versionCode()})"
 }
 
 fun versionCode(): Int {
