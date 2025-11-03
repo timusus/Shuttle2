@@ -28,7 +28,7 @@ constructor(
                     Timber.v("Billing client available")
                     billingManager.queryPurchases()
                     coroutineScope.launch {
-                        billingManager.querySkuDetails()
+                        billingManager.queryProductDetails()
                     }
                 }
             }

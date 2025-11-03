@@ -13,12 +13,12 @@ plugins {
 
 android {
 
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.simplecityapps.shuttle"
-        minSdk = 21
-        targetSdk = 35
+        minSdk = 23
+        targetSdk = 36
         versionName = versionName()
         versionCode = versionCode()
         vectorDrawables.useSupportLibrary = true
@@ -79,7 +79,10 @@ android {
 
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_11.toString()
-        freeCompilerArgs = freeCompilerArgs + "-Xopt-in=kotlin.RequiresOptIn"
+        freeCompilerArgs = freeCompilerArgs + listOf(
+            "-Xopt-in=kotlin.RequiresOptIn",
+            "-Xopt-in=kotlin.time.ExperimentalTime"
+        )
     }
     lint {
         abortOnError = false
@@ -99,7 +102,9 @@ android {
         implementation(composeBom)
         androidTestImplementation(composeBom)
         implementation(libs.kotlinx.collections.immutable)
+        implementation(libs.kotlinx.datetime)
         implementation(libs.androidx.material3)
+        implementation("androidx.compose.material:material-icons-extended")
 
         // Android Studio Preview support
         implementation(libs.androidx.ui.tooling.preview)

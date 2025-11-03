@@ -3,11 +3,11 @@ apply plugin: 'kotlin-android'
 apply plugin: 'com.google.devtools.ksp'
 
 android {
-    compileSdk 35
+    compileSdk 36
 
     defaultConfig {
-        minSdkVersion 21
-        targetSdkVersion 35
+        minSdkVersion 23
+        targetSdkVersion 36
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -33,6 +33,12 @@ android {
     namespace 'com.simplecityapps.localmediaprovider'
 
     buildFeatures.buildConfig true
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask.class).configureEach {
+    compilerOptions {
+        optIn.add('kotlin.time.ExperimentalTime')
+    }
 }
 
 dependencies {

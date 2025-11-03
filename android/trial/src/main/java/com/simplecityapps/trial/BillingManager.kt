@@ -7,12 +7,14 @@ import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingFlowParams
 import com.android.billingclient.api.BillingResult
+import com.android.billingclient.api.PendingPurchasesParams
+import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesResponseListener
 import com.android.billingclient.api.PurchasesUpdatedListener
-import com.android.billingclient.api.SkuDetails
-import com.android.billingclient.api.SkuDetailsParams
-import com.android.billingclient.api.querySkuDetails
+import com.android.billingclient.api.QueryProductDetailsParams
+import com.android.billingclient.api.QueryPurchasesParams
+import com.android.billingclient.api.queryProductDetails
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
@@ -50,7 +52,7 @@ class BillingManager(
             "s2_iap_full_version_low"
         )
 
-    val skuDetails: MutableStateFlow<Set<SkuDetails>> = MutableStateFlow(emptySet())
+    val productDetails: MutableStateFlow<Set<ProductDetails>> = MutableStateFlow(emptySet())
 
     val billingState: MutableStateFlow<BillingState> = MutableStateFlow(BillingState.Unknown)
 
@@ -103,7 +105,11 @@ class BillingManager(
     private val billingClient =
         BillingClient.newBuilder(context)
             .setListener(purchasesUpdatedListener)
-            .enablePendingPurchases()
+            .enablePendingPurchases(
+                PendingPurchasesParams.newBuilder()
+                    .enableOneTimeProducts()
+                    .build()
+            )
             .build()
 
     fun start() {
@@ -112,49 +118,65 @@ class BillingManager(
 
     fun launchPurchaseFlow(
         activity: FragmentActivity,
-        skuDetails: SkuDetails
+        productDetails: ProductDetails
     ) {
         if (!billingClient.isReady) {
             Timber.e("Failed to launch purchase flow: BillingClient not ready")
             return
         }
+
+        val productDetailsParamsList = listOf(
+            BillingFlowParams.ProductDetailsParams.newBuilder()
+                .setProductDetails(productDetails)
+                .build()
+        )
+
         billingClient.launchBillingFlow(
             activity,
-            BillingFlowParams.newBuilder().setSkuDetails(skuDetails).build()
+            BillingFlowParams.newBuilder()
+                .setProductDetailsParamsList(productDetailsParamsList)
+                .build()
         )
     }
 
-    suspend fun querySkuDetails() {
-        val inAppPurchaseDetails =
-            SkuDetailsParams.newBuilder()
-                .setSkusList(
-                    listOf(
-                        "s2_iap_full_version",
-                        "s2_iap_full_version_low"
-                    )
-                )
-                .setType(BillingClient.SkuType.INAPP)
+    suspend fun queryProductDetails() {
+        val inAppProductList = listOf(
+            QueryProductDetailsParams.Product.newBuilder()
+                .setProductId("s2_iap_full_version")
+                .setProductType(BillingClient.ProductType.INAPP)
+                .build(),
+            QueryProductDetailsParams.Product.newBuilder()
+                .setProductId("s2_iap_full_version_low")
+                .setProductType(BillingClient.ProductType.INAPP)
+                .build()
+        )
+
+        val subscriptionProductList = listOf(
+            QueryProductDetailsParams.Product.newBuilder()
+                .setProductId("s2_subscription_full_version_monthly")
+                .setProductType(BillingClient.ProductType.SUBS)
+                .build(),
+            QueryProductDetailsParams.Product.newBuilder()
+                .setProductId("s2_subscription_full_version_yearly")
+                .setProductType(BillingClient.ProductType.SUBS)
+                .build(),
+            QueryProductDetailsParams.Product.newBuilder()
+                .setProductId("s2_subscription_full_version_yearly_low")
+                .setProductType(BillingClient.ProductType.SUBS)
+                .build()
+        )
+
+        listOf(inAppProductList, subscriptionProductList).forEach { productList ->
+            val params = QueryProductDetailsParams.newBuilder()
+                .setProductList(productList)
                 .build()
 
-        val subscriptionDetails =
-            SkuDetailsParams.newBuilder()
-                .setSkusList(
-                    listOf(
-                        "s2_subscription_full_version_monthly",
-                        "s2_subscription_full_version_yearly",
-                        "s2_subscription_full_version_yearly_low"
-                    )
-                )
-                .setType(BillingClient.SkuType.SUBS)
-                .build()
-
-        listOf(inAppPurchaseDetails, subscriptionDetails).forEach { skuDetailsParams ->
-            val skuDetailsResult = billingClient.querySkuDetails(skuDetailsParams)
-            when (skuDetailsResult.billingResult.responseCode) {
+            val productDetailsResult = billingClient.queryProductDetails(params)
+            when (productDetailsResult.billingResult.responseCode) {
                 BillingClient.BillingResponseCode.OK -> {
-                    skuDetails.value =
-                        (skuDetails.value + skuDetailsResult.skuDetailsList.orEmpty())
-                            .sortedByDescending { skuDetails -> skuDetails.type } // Show subs first
+                    productDetails.value =
+                        (productDetails.value + productDetailsResult.productDetailsList.orEmpty())
+                            .sortedByDescending { it.productType } // Show subs first
                             .toSet()
                 }
                 BillingClient.BillingResponseCode.SERVICE_DISCONNECTED,
@@ -164,7 +186,7 @@ class BillingManager(
                 BillingClient.BillingResponseCode.DEVELOPER_ERROR,
                 BillingClient.BillingResponseCode.ERROR
                 -> {
-                    Timber.e("onSkuDetailsResponse: ${skuDetailsResult.billingResult.responseCode} ${skuDetailsResult.billingResult.debugMessage}")
+                    Timber.e("onProductDetailsResponse: ${productDetailsResult.billingResult.responseCode} ${productDetailsResult.billingResult.debugMessage}")
                 }
                 BillingClient.BillingResponseCode.USER_CANCELED,
                 BillingClient.BillingResponseCode.FEATURE_NOT_SUPPORTED,
@@ -172,7 +194,7 @@ class BillingManager(
                 BillingClient.BillingResponseCode.ITEM_NOT_OWNED
                 -> {
                     // These response codes are not expected.
-                    Timber.e("onSkuDetailsResponse: ${skuDetailsResult.billingResult.responseCode} ${skuDetailsResult.billingResult.debugMessage}")
+                    Timber.e("onProductDetailsResponse: ${productDetailsResult.billingResult.responseCode} ${productDetailsResult.billingResult.debugMessage}")
                 }
             }
         }
@@ -190,14 +212,22 @@ class BillingManager(
                     processPurchases(purchases)
                 }
             }
-        billingClient.queryPurchasesAsync(BillingClient.SkuType.INAPP, purchaseResponseListener)
-        billingClient.queryPurchasesAsync(BillingClient.SkuType.SUBS, purchaseResponseListener)
+
+        val inAppParams = QueryPurchasesParams.newBuilder()
+            .setProductType(BillingClient.ProductType.INAPP)
+            .build()
+        billingClient.queryPurchasesAsync(inAppParams, purchaseResponseListener)
+
+        val subsParams = QueryPurchasesParams.newBuilder()
+            .setProductType(BillingClient.ProductType.SUBS)
+            .build()
+        billingClient.queryPurchasesAsync(subsParams, purchaseResponseListener)
     }
 
     @Synchronized
     private fun processPurchases(purchases: List<Purchase>) {
         if (billingState.value == BillingState.Paid ||
-            paidVersionSkus.intersect(purchases.flatMap { purchase -> purchase.skus })
+            paidVersionSkus.intersect(purchases.flatMap { purchase -> purchase.products })
                 .isNotEmpty()
         ) {
             billingState.value = BillingState.Paid

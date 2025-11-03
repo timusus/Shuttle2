@@ -50,7 +50,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Instant.Companion.fromEpochMilliseconds
+import kotlin.time.Instant
+import kotlin.time.Instant.Companion.fromEpochMilliseconds
 
 @AndroidEntryPoint
 class HomeFragment :
