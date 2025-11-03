@@ -7,14 +7,14 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.core.view.isInvisible
 import com.android.billingclient.api.BillingClient
-import com.android.billingclient.api.SkuDetails
+import com.android.billingclient.api.ProductDetails
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
 
-class SkuBinder(val skuDetails: SkuDetails, val litener: Listener) : ViewBinder {
+class SkuBinder(val productDetails: ProductDetails, val litener: Listener) : ViewBinder {
     interface Listener {
-        fun onClick(skuDetails: SkuDetails)
+        fun onClick(productDetails: ProductDetails)
     }
 
     override fun createViewHolder(parent: ViewGroup): ViewHolder = ViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.list_item_sku, parent, false))
@@ -29,7 +29,7 @@ class SkuBinder(val skuDetails: SkuDetails, val litener: Listener) : ViewBinder 
 
         init {
             itemView.setOnClickListener {
-                viewBinder?.litener?.onClick(viewBinder!!.skuDetails)
+                viewBinder?.litener?.onClick(viewBinder!!.productDetails)
             }
         }
 
@@ -39,12 +39,15 @@ class SkuBinder(val skuDetails: SkuDetails, val litener: Listener) : ViewBinder 
         ) {
             super.bind(viewBinder, isPartial)
 
-            title.text = viewBinder.skuDetails.title.substringBefore('(')
-            subtitle.text = viewBinder.skuDetails.description
-            price.text = viewBinder.skuDetails.price
-            priceOutlined.text = viewBinder.skuDetails.price
-            price.isInvisible = viewBinder.skuDetails.type == BillingClient.SkuType.SUBS
-            priceOutlined.isInvisible = viewBinder.skuDetails.type == BillingClient.SkuType.INAPP
+            title.text = viewBinder.productDetails.name.substringBefore('(')
+            subtitle.text = viewBinder.productDetails.description
+            val formattedPrice = viewBinder.productDetails.oneTimePurchaseOfferDetails?.formattedPrice
+                ?: viewBinder.productDetails.subscriptionOfferDetails?.firstOrNull()?.pricingPhases?.pricingPhaseList?.firstOrNull()?.formattedPrice
+                ?: ""
+            price.text = formattedPrice
+            priceOutlined.text = formattedPrice
+            price.isInvisible = viewBinder.productDetails.productType == BillingClient.ProductType.SUBS
+            priceOutlined.isInvisible = viewBinder.productDetails.productType == BillingClient.ProductType.INAPP
         }
     }
 }

@@ -5,10 +5,10 @@ plugins {
 }
 
 android {
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
-        minSdk = 21
+        minSdk = 23
     }
     namespace = "com.simplecityapps.shuttle.data"
 
@@ -20,8 +20,14 @@ android {
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
+}
 
-    dependencies {
-        implementation(libs.kotlinx.datetime)
+kotlin {
+    compilerOptions {
+        optIn.add("kotlin.time.ExperimentalTime")
     }
+}
+
+dependencies {
+    implementation(libs.kotlinx.datetime)
 }

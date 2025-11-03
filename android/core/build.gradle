@@ -4,11 +4,11 @@ apply plugin: 'com.google.devtools.ksp'
 apply plugin: 'dagger.hilt.android.plugin'
 
 android {
-    compileSdk 35
+    compileSdk 36
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 35
+        targetSdkVersion 36
         buildConfigField("String", "PROXY_ADDR", "\"192.168.0.14\"")
         buildConfigField("Integer", "PROXY_PORT", "8888")
     }

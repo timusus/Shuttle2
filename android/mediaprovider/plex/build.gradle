@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    compileSdk 35
+    compileSdk 36
 
     defaultConfig {
-        minSdkVersion 21
-        targetSdkVersion 35
+        minSdkVersion 23
+        targetSdkVersion 36
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -22,6 +22,12 @@ android {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
     namespace 'com.simplecityapps.provider.plex'
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask.class).configureEach {
+    compilerOptions {
+        optIn.add('kotlin.time.ExperimentalTime')
+    }
 }
 
 dependencies {

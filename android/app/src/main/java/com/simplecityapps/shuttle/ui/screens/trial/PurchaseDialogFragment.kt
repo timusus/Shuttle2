@@ -7,7 +7,7 @@ import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
-import com.android.billingclient.api.SkuDetails
+import com.android.billingclient.api.ProductDetails
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.firebase.remoteconfig.FirebaseRemoteConfig
 import com.simplecityapps.adapter.RecyclerAdapter
@@ -22,7 +22,7 @@ import kotlinx.coroutines.flow.onEach
 
 @AndroidEntryPoint
 class PurchaseDialogFragment : DialogFragment() {
-    private var enabledSkus =
+    private var enabledProductIds =
         listOf(
             "s2_subscription_full_version_monthly",
             "s2_subscription_full_version_yearly",
@@ -39,7 +39,7 @@ class PurchaseDialogFragment : DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         if (firebaseConfig.getString("pricing_tier") == "low") {
-            enabledSkus =
+            enabledProductIds =
                 listOf(
                     "s2_subscription_full_version_yearly_low",
                     "s2_iap_full_version_low"
@@ -48,17 +48,17 @@ class PurchaseDialogFragment : DialogFragment() {
 
         adapter = RecyclerAdapter(lifecycleScope)
 
-        billingManager.skuDetails
+        billingManager.productDetails
             .onEach { detailsList ->
                 adapter.update(
                     detailsList
-                        .filter { enabledSkus.contains(it.sku) }
-                        .map { skuDetails ->
+                        .filter { enabledProductIds.contains(it.productId) }
+                        .map { productDetails ->
                             SkuBinder(
-                                skuDetails,
+                                productDetails,
                                 object : SkuBinder.Listener {
-                                    override fun onClick(skuDetails: SkuDetails) {
-                                        billingManager.launchPurchaseFlow(requireActivity(), skuDetails)
+                                    override fun onClick(productDetails: ProductDetails) {
+                                        billingManager.launchPurchaseFlow(requireActivity(), productDetails)
                                         dismiss()
                                     }
                                 }

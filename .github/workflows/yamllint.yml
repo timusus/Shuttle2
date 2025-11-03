@@ -1,17 +1,22 @@
 name: Yaml Lint
+
 on:
   pull_request:
     branches: [main]
     paths:
       - '**.yml'
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   yamllint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: yaml-lint
-        uses: reviewdog/action-yamllint@v1.6
+        uses: reviewdog/action-yamllint@v1.20
         with:
           level: error
           reporter: github-pr-review
