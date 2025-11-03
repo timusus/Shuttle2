@@ -45,13 +45,12 @@ import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import java.util.Calendar
 import javax.inject.Inject
+import kotlin.time.Instant.Companion.fromEpochMilliseconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
-import kotlin.time.Instant
-import kotlin.time.Instant.Companion.fromEpochMilliseconds
 
 @AndroidEntryPoint
 class HomeFragment :

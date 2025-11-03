@@ -12,11 +12,11 @@ import com.bumptech.glide.load.model.MultiModelLoaderFactory
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.query.SongQuery
-import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.runBlocking
 import java.io.File
 import java.io.InputStream
 import java.util.regex.Pattern
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.runBlocking
 
 class DirectoryAlbumArtistLocalArtworkModelLoader(
     private val context: Context,
