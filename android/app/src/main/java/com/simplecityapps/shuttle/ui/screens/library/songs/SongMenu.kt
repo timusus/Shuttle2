@@ -103,7 +103,7 @@ fun SongMenu(
                 )
             }
 
-            if (song.externalId == null) {
+            if (song.canBeDeleted()) {
                 DropdownMenuItem(
                     text = { Text(stringResource(id = R.string.menu_title_delete)) },
                     onClick = {

@@ -84,4 +84,6 @@ data class Song(
             null
         }
     }
+
+    fun canBeDeleted(): Boolean = externalId == null
 }
