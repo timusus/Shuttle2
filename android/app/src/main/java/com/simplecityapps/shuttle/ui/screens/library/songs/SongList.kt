@@ -99,6 +99,7 @@ fun SongList(
                     onEditTags = onEditTags,
                     onDelete = onDelete,
                     onShuffle = onShuffle,
+                    modifier = modifier,
                 )
             }
         }
