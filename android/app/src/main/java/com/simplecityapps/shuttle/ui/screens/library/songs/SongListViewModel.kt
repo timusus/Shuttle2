@@ -124,11 +124,7 @@ class SongListViewModel @Inject constructor(
     fun exclude(song: Song) {
         viewModelScope.launch {
             songRepository.setExcluded(listOf(song), true)
-            queueManager.remove(
-                queueManager
-                    .getQueue()
-                    .filter { queueItem -> song == queueItem.song },
-            )
+            queueManager.remove(song)
         }
     }
 
@@ -142,8 +138,7 @@ class SongListViewModel @Inject constructor(
 
         viewModelScope.launch {
             songRepository.remove(song)
-            val songQueueItem = queueManager.getQueue().filter { it.song.id == song.id }
-            queueManager.remove(songQueueItem)
+            queueManager.remove(song)
         }
     }
 
