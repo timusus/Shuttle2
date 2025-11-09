@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.ui.screens.library.AddToPlaylistSubmenu
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import kotlinx.collections.immutable.ImmutableList
 
@@ -115,12 +116,13 @@ fun SongMenu(
             }
         }
         AddToPlaylistSubmenu(
-            song = song,
+            playableItem = song,
             expanded = isAddToPlaylistSubmenuOpen,
             onDismiss = { isAddToPlaylistSubmenuOpen = false },
             playlists = playlists,
             onAddToPlaylist = onAddToPlaylist,
-            onShowCreatePlaylistDialog = onShowCreatePlaylistDialog,
+            playlistDataCreator = { song -> PlaylistData.Songs(song) },
+            onShowCreatePlaylistDialog = onShowCreatePlaylistDialog
         )
     }
 }
