@@ -15,6 +15,7 @@ import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.shuttle.ui.common.ComposeContextualToolbarHelper
@@ -39,6 +40,7 @@ class SongListViewModel @Inject constructor(
     private val playbackManager: PlaybackManager,
     private val queueManager: QueueManager,
     private val sortPreferenceManager: SortPreferenceManager,
+    preferenceManager: GeneralPreferenceManager,
     mediaImportObserver: MediaImportObserver,
     application: Application,
 ) : AndroidViewModel(application) {
@@ -49,6 +51,9 @@ class SongListViewModel @Inject constructor(
     val selectedSortOrder = _selectedSortOrder.asStateFlow()
 
     val contextualToolbarHelper = ComposeContextualToolbarHelper()
+
+    val theme = preferenceManager.theme(viewModelScope)
+    val accent = preferenceManager.accent(viewModelScope)
 
     init {
         combine(

@@ -14,6 +14,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.simplecityapps.shuttle.R
@@ -31,6 +32,7 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
+import com.simplecityapps.shuttle.ui.theme.AppTheme
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.collections.immutable.toImmutableList
@@ -116,68 +118,76 @@ class SongListFragment :
             val viewState by viewModel.viewState.collectAsState()
             val playlists by playlistMenuPresenter.playlistsState.collectAsState()
 
-            SongList(
-                viewState = viewState,
-                playlists = playlists.toImmutableList(),
-                onSongClick = { song ->
-                    viewModel.onSongClick(song) { result ->
-                        result.onFailure { error ->
-                            showLoadError(error as Error)
+            val theme by viewModel.theme.collectAsStateWithLifecycle()
+            val accent by viewModel.accent.collectAsStateWithLifecycle()
+
+            AppTheme(
+                theme = theme,
+                accent = accent,
+            ) {
+                SongList(
+                    viewState = viewState,
+                    playlists = playlists.toImmutableList(),
+                    onSongClick = { song ->
+                        viewModel.onSongClick(song) { result ->
+                            result.onFailure { error ->
+                                showLoadError(error as Error)
+                            }
+                        }
+                    },
+                    onSongLongClick = { song ->
+                        viewModel.onSongLongClick(song)
+                    },
+                    onAddToQueue = { song ->
+                        viewModel.addToQueue(song) { result ->
+                            result.onSuccess { song ->
+                                onAddedToQueue(listOf(song))
+                            }
+                        }
+                    },
+                    onAddToPlaylist = { playlist, playlistData ->
+                        playlistMenuPresenter.addToPlaylist(playlist, playlistData)
+                    },
+                    onShowCreatePlaylistDialog = { song ->
+                        CreatePlaylistDialogFragment.newInstance(
+                            PlaylistData.Songs(song),
+                            context?.getString(R.string.playlist_create_dialog_playlist_name_hint)
+                        ).show(childFragmentManager)
+                    },
+                    onPlayNext = { song ->
+                        viewModel.playNext(song) { result ->
+                            result.onSuccess { song ->
+                                onAddedToQueue(listOf(song))
+                            }
+                        }
+                    },
+                    onSongInfo = { song ->
+                        SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
+                    },
+                    onExclude = { song ->
+                        viewModel.exclude(song)
+                    },
+                    onEditTags = { song ->
+                        showTagEditor(song)
+                    },
+                    onDelete = { song ->
+                        showDeleteDialog(requireContext(), song.name) {
+                            try {
+                                viewModel.delete(song)
+                            } catch (e: UserFriendlyError) {
+                                showDeleteError(e)
+                            }
+                        }
+                    },
+                    onShuffle = {
+                        viewModel.shuffle { result ->
+                            result.onFailure { error ->
+                                showLoadError(error as Error)
+                            }
                         }
                     }
-                },
-                onSongLongClick = { song ->
-                    viewModel.onSongLongClick(song)
-                },
-                onAddToQueue = { song ->
-                    viewModel.addToQueue(song) { result ->
-                        result.onSuccess { song ->
-                            onAddedToQueue(listOf(song))
-                        }
-                    }
-                },
-                onAddToPlaylist = { playlist, playlistData ->
-                    playlistMenuPresenter.addToPlaylist(playlist, playlistData)
-                },
-                onShowCreatePlaylistDialog = { song ->
-                    CreatePlaylistDialogFragment.newInstance(
-                        PlaylistData.Songs(song),
-                        context?.getString(R.string.playlist_create_dialog_playlist_name_hint)
-                    ).show(childFragmentManager)
-                },
-                onPlayNext = { song ->
-                    viewModel.playNext(song) { result ->
-                        result.onSuccess { song ->
-                            onAddedToQueue(listOf(song))
-                        }
-                    }
-                },
-                onSongInfo = { song ->
-                    SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
-                },
-                onExclude = { song ->
-                    viewModel.exclude(song)
-                },
-                onEditTags = { song ->
-                    showTagEditor(song)
-                },
-                onDelete = { song ->
-                    showDeleteDialog(requireContext(), song.name) {
-                        try {
-                            viewModel.delete(song)
-                        } catch (e: UserFriendlyError) {
-                            showDeleteError(e)
-                        }
-                    }
-                },
-                onShuffle = {
-                    viewModel.shuffle { result ->
-                        result.onFailure { error ->
-                            showLoadError(error as Error)
-                        }
-                    }
-                }
-            )
+                )
+            }
         }
     }
 
