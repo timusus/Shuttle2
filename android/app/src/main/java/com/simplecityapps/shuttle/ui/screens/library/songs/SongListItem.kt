@@ -43,12 +43,15 @@ import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
+import com.simplecityapps.shuttle.ui.common.utils.dp as dpToInt
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.theme.AppTheme
 import com.squareup.phrase.ListPhrase
+import kotlin.collections.emptyList
 import kotlin.time.Instant
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.datetime.LocalDate
-import com.simplecityapps.shuttle.ui.common.utils.dp as dpToInt
 
 @OptIn(
     ExperimentalFoundationApi::class,
@@ -58,7 +61,7 @@ import com.simplecityapps.shuttle.ui.common.utils.dp as dpToInt
 fun SongListItem(
     song: Song,
     isSelected: Boolean,
-    playlists: List<Playlist>,
+    playlists: ImmutableList<Playlist>,
     artworkPreloadRequestBuilder: RequestBuilder<Drawable>,
     modifier: Modifier = Modifier,
     onClick: (Song) -> Unit = {},
@@ -222,7 +225,7 @@ private fun SongListItemPreview() {
                 channelCount = null,
             ),
             isSelected = true,
-            playlists = emptyList(),
+            playlists = emptyList<Playlist>().toImmutableList(),
             artworkPreloadRequestBuilder = Glide.with(LocalContext.current).load(null as? String)
         )
     }

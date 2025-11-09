@@ -16,7 +16,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.simplecityapps.shuttle.R
 import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.rememberGlidePreloadingData
@@ -24,21 +23,26 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
+import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.ui.common.components.CircularLoadingState
 import com.simplecityapps.shuttle.sorting.SongSortOrder
+import com.simplecityapps.shuttle.ui.common.components.CircularLoadingState
 import com.simplecityapps.shuttle.ui.common.components.FastScroller
 import com.simplecityapps.shuttle.ui.common.components.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.common.components.LoadingStatusIndicator
+import com.simplecityapps.shuttle.ui.common.utils.dp as dpToInt
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import java.util.Locale
-import com.simplecityapps.shuttle.ui.common.utils.dp as dpToInt
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableSet
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableSet
 
 @Composable
 fun SongList(
     viewState: SongListViewModel.ViewState,
-    playlists: List<Playlist>,
+    playlists: ImmutableList<Playlist>,
     onSongClick: (Song) -> Unit,
     onSongLongClick: (Song) -> Unit,
     onAddToQueue: (Song) -> Unit,
@@ -84,8 +88,8 @@ fun SongList(
                 )
             } else {
                 SongList(
-                    songs = viewState.songs,
-                    selectedSongs = viewState.selectedSongs,
+                    songs = viewState.songs.toImmutableList(),
+                    selectedSongs = viewState.selectedSongs.toImmutableSet(),
                     sortOrder = viewState.sortOrder,
                     playlists = playlists,
                     onSongClick = onSongClick,
@@ -109,10 +113,10 @@ fun SongList(
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 private fun SongList(
-    songs: List<Song>,
-    selectedSongs: Set<Song>,
+    songs: ImmutableList<Song>,
+    selectedSongs: ImmutableSet<Song>,
     sortOrder: SongSortOrder,
-    playlists: List<Playlist>,
+    playlists: ImmutableList<Playlist>,
     onSongClick: (Song) -> Unit,
     onSongLongClick: (Song) -> Unit,
     onAddToQueue: (Song) -> Unit,

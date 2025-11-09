@@ -22,11 +22,12 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
+import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 fun SongMenu(
     song: Song,
-    playlists: List<Playlist>,
+    playlists: ImmutableList<Playlist>,
     onAddToQueue: (Song) -> Unit,
     onPlayNext: (Song) -> Unit,
     onSongInfo: (Song) -> Unit,
