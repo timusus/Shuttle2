@@ -5,7 +5,12 @@ import kotlin.math.max
 import kotlin.math.min
 
 object StringComparison {
-    const val threshold = 0.90
+    /**
+     * Default similarity threshold for search results.
+     * Lowered from 0.90 to 0.85 to allow more partial matches
+     * (e.g., "beatles" matching "The Beatles", "zeppelin" matching "Led Zeppelin")
+     */
+    const val threshold = 0.85
 
     /**
      * @param score A decimal representing the similarity of two strings. A value of 1.0 indicates an exact match
@@ -129,23 +134,57 @@ object StringComparison {
         )
     }
 
+    /**
+     * Enhanced multi-word matching that handles both single and multi-word queries.
+     * First attempts to match the full query against the full target.
+     * If that doesn't meet the threshold, tries:
+     * 1. Matching full query against individual target words
+     * 2. Matching individual query words against the full target (for multi-word queries)
+     *
+     * This allows queries like "dark side" to match "The Dark Side of the Moon"
+     * and "zeppelin" to match "Led Zeppelin"
+     */
     fun jaroWinklerMultiDistance(
         a: String,
-        b: String
+        b: String,
+        multiWordThreshold: Double = threshold
     ): JaroSimilarity {
+        // First try matching the full strings
         val jaroSimilarity = jaroWinklerDistance(a, b)
-        if (jaroSimilarity.score >= threshold) {
+        if (jaroSimilarity.score >= multiWordThreshold) {
             return jaroSimilarity
         }
 
         val bSplit = b.split(" ")
 
-        return bSplit.mapIndexed { bIndex, b ->
-            val splitSimilarity = jaroWinklerDistance(a, b)
+        // Try matching full query against each word in target
+        val targetWordMatches = bSplit.mapIndexed { bIndex, bWord ->
+            val splitSimilarity = jaroWinklerDistance(a, bWord)
             splitSimilarity.copy(
                 aMatchedIndices = splitSimilarity.aMatchedIndices,
-                bMatchedIndices = splitSimilarity.bMatchedIndices.mapKeys { it.key + bIndex + bSplit.take(bIndex).sumBy { it.length } }
+                bMatchedIndices = splitSimilarity.bMatchedIndices.mapKeys {
+                    it.key + bIndex + bSplit.take(bIndex).sumBy { it.length }
+                }
             )
-        }.maxByOrNull { it.score }!!
+        }
+
+        // If query has multiple words, also try matching each query word against full target
+        val aSplit = a.split(" ")
+        val queryWordMatches = if (aSplit.size > 1) {
+            aSplit.mapIndexed { aIndex, aWord ->
+                val splitSimilarity = jaroWinklerDistance(aWord, b)
+                splitSimilarity.copy(
+                    aMatchedIndices = splitSimilarity.aMatchedIndices.mapKeys {
+                        it.key + aIndex + aSplit.take(aIndex).sumBy { it.length }
+                    },
+                    bMatchedIndices = splitSimilarity.bMatchedIndices
+                )
+            }
+        } else {
+            emptyList()
+        }
+
+        // Return the best match from all strategies
+        return (targetWordMatches + queryWordMatches).maxByOrNull { it.score }!!
     }
 }

@@ -141,9 +141,8 @@ constructor(
                             .map { albumArtists ->
                                 albumArtists
                                     .map { albumArtist -> ArtistJaroSimilarity(albumArtist, query) }
-                                    .filter { it.albumArtistNameJaroSimilarity.score > StringComparison.threshold || it.artistNameJaroSimilarity.score > StringComparison.threshold }
-                                    .sortedByDescending { if (it.albumArtistNameJaroSimilarity.score > StringComparison.threshold) it.albumArtistNameJaroSimilarity.score else 0.0 }
-                                    .sortedByDescending { if (it.artistNameJaroSimilarity.score > StringComparison.threshold) it.artistNameJaroSimilarity.score else 0.0 }
+                                    .filter { it.compositeScore > StringComparison.threshold }
+                                    .sortedByDescending { it.compositeScore }
                             }
                 }
 
@@ -153,10 +152,8 @@ constructor(
                         albumRepository.getAlbums(AlbumQuery.All())
                             .map { albums ->
                                 albums.map { album -> AlbumJaroSimilarity(album, query) }
-                                    .filter { it.nameJaroSimilarity.score > StringComparison.threshold || it.albumArtistNameJaroSimilarity.score > StringComparison.threshold || it.artistNameJaroSimilarity.score > StringComparison.threshold }
-                                    .sortedByDescending { if (it.albumArtistNameJaroSimilarity.score > StringComparison.threshold) it.albumArtistNameJaroSimilarity.score else 0.0 }
-                                    .sortedByDescending { if (it.artistNameJaroSimilarity.score > StringComparison.threshold) it.artistNameJaroSimilarity.score else 0.0 }
-                                    .sortedByDescending { it.nameJaroSimilarity.score }
+                                    .filter { it.compositeScore > StringComparison.threshold }
+                                    .sortedByDescending { it.compositeScore }
                             }
                 }
 
@@ -168,11 +165,9 @@ constructor(
                                 songs.orEmpty()
                                     .asSequence()
                                     .map { song -> SongJaroSimilarity(song, query) }
-                                    .filter { it.nameJaroSimilarity.score > StringComparison.threshold || it.albumArtistNameJaroSimilarity.score > StringComparison.threshold || it.artistNameJaroSimilarity.score > StringComparison.threshold || it.albumNameJaroSimilarity.score > StringComparison.threshold }
-                                    .sortedByDescending { if (it.albumArtistNameJaroSimilarity.score > StringComparison.threshold) it.albumArtistNameJaroSimilarity.score else 0.0 }
-                                    .sortedByDescending { if (it.artistNameJaroSimilarity.score > StringComparison.threshold) it.albumArtistNameJaroSimilarity.score else 0.0 }
-                                    .sortedByDescending { if (it.albumNameJaroSimilarity.score > StringComparison.threshold) it.albumNameJaroSimilarity.score else 0.0 }
-                                    .sortedByDescending { if (it.nameJaroSimilarity.score > StringComparison.threshold) it.nameJaroSimilarity.score else 0.0 }.toList()
+                                    .filter { it.compositeScore > StringComparison.threshold }
+                                    .sortedByDescending { it.compositeScore }
+                                    .toList()
                             }
                 }
 
