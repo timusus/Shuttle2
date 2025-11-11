@@ -23,6 +23,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
+import com.simplecityapps.shuttle.sorting.GenreSortOrder
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
 import com.simplecityapps.shuttle.ui.common.components.CircularLoadingState
 import com.simplecityapps.shuttle.ui.common.components.FastScroller
@@ -37,6 +38,7 @@ import kotlinx.collections.immutable.toImmutableList
 fun GenreList(
     viewState: GenreListViewModel.ViewState,
     playlists: ImmutableList<Playlist>,
+    setToolbarMenu: (sortOrder: GenreSortOrder) -> Unit,
     modifier: Modifier = Modifier,
     onSelectGenre: (genre: Genre) -> Unit = {},
     onPlayGenre: (Genre) -> Unit = {},
@@ -49,6 +51,7 @@ fun GenreList(
 ) {
     when (viewState) {
         is GenreListViewModel.ViewState.Scanning -> {
+            setToolbarMenu(viewState.sortOrder)
             HorizontalLoadingView(
                 modifier = modifier
                     .fillMaxSize()
@@ -69,6 +72,7 @@ fun GenreList(
         }
 
         is GenreListViewModel.ViewState.Ready -> {
+            setToolbarMenu(viewState.sortOrder)
             if (viewState.genres.isEmpty()) {
                 LoadingStatusIndicator(
                     modifier = modifier
@@ -159,7 +163,8 @@ private fun GenreListLoadingPreview() {
         ) {
             GenreList(
                 viewState = GenreListViewModel.ViewState.Loading,
-                playlists = samplePlaylists
+                playlists = samplePlaylists,
+                setToolbarMenu = {}
             )
         }
     }
@@ -175,8 +180,9 @@ private fun GenreListScanningPreview() {
                 .background(MaterialTheme.colorScheme.background)
         ) {
             GenreList(
-                viewState = GenreListViewModel.ViewState.Scanning(progress = Progress(20, 205)),
-                playlists = samplePlaylists
+                viewState = GenreListViewModel.ViewState.Scanning(progress = Progress(20, 205), sortOrder = GenreSortOrder.Name),
+                playlists = samplePlaylists,
+                setToolbarMenu = {}
             )
         }
     }
@@ -192,8 +198,9 @@ private fun GenreListEmptyPreview() {
                 .background(MaterialTheme.colorScheme.background)
         ) {
             GenreList(
-                viewState = GenreListViewModel.ViewState.Ready(genres = emptyList()),
-                playlists = samplePlaylists
+                viewState = GenreListViewModel.ViewState.Ready(genres = emptyList(), sortOrder = GenreSortOrder.Name),
+                playlists = samplePlaylists,
+                setToolbarMenu = {}
             )
         }
     }
@@ -210,9 +217,11 @@ private fun GenreListPreview() {
         ) {
             GenreList(
                 viewState = GenreListViewModel.ViewState.Ready(
-                    genres = sampleGenres
+                    genres = sampleGenres,
+                    sortOrder = GenreSortOrder.Name
                 ),
-                playlists = samplePlaylists
+                playlists = samplePlaylists,
+                setToolbarMenu = {}
             )
         }
     }

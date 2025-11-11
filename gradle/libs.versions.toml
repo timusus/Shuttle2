@@ -35,6 +35,7 @@ kotlin = "2.2.21"
 kotlinx-coroutines-android = "1.10.2"
 kotlinx-coroutines-core = "1.10.2"
 kotlinx-coroutines-play-services = "1.10.2"
+kotlinx-coroutines-test = "1.10.2"
 kotlinx-datetime = "0.7.1"
 ktaglib = "1.6.1"
 leakcanary-android = "2.14"
@@ -45,6 +46,7 @@ lifecycle-viewmodel-compose = "2.9.4"
 logging-interceptor = "5.3.0"
 material = "1.13.0"
 media = "1.7.1"
+mockk = "1.14.2"
 moshi = "1.15.2"
 moshi-adapters = "1.15.2"
 moshi-kotlin = "1.15.2"
@@ -140,9 +142,11 @@ kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collec
 kotlinx-coroutinesAndroid = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines-android" }
 kotlinx-coroutinesCore = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines-core" }
 kotlinx-coroutinesPlayServices = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "kotlinx-coroutines-play-services" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlinx-coroutines-test" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanary-android" }
 mikepenz-aboutlibrariesCore = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutlibraries" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 moshi = { module = "com.squareup.moshi:moshi", version.ref = "moshi" }
 moshi-adapters = { module = "com.squareup.moshi:moshi-adapters", version.ref = "moshi-adapters" }
 moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "moshi-kotlin" }
