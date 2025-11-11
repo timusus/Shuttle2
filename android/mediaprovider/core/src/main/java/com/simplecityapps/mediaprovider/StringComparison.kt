@@ -163,7 +163,7 @@ object StringComparison {
             splitSimilarity.copy(
                 aMatchedIndices = splitSimilarity.aMatchedIndices,
                 bMatchedIndices = splitSimilarity.bMatchedIndices.mapKeys {
-                    it.key + bIndex + bSplit.take(bIndex).sumBy { it.length }
+                    it.key + bIndex + bSplit.take(bIndex).sumOf { it.length }
                 }
             )
         }
@@ -175,7 +175,7 @@ object StringComparison {
                 val splitSimilarity = jaroWinklerDistance(aWord, b)
                 splitSimilarity.copy(
                     aMatchedIndices = splitSimilarity.aMatchedIndices.mapKeys {
-                        it.key + aIndex + aSplit.take(aIndex).sumBy { it.length }
+                        it.key + aIndex + aSplit.take(aIndex).sumOf { it.length }
                     },
                     bMatchedIndices = splitSimilarity.bMatchedIndices
                 )
