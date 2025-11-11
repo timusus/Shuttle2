@@ -1,6 +1,7 @@
 package com.simplecityapps.mediaprovider
 
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class StringComparisonTest {
@@ -121,9 +122,9 @@ class StringComparisonTest {
     @Test
     fun `handles typos with reasonable tolerance`() {
         val typos = listOf(
-            "beatels" to "beatles",    // common typo
-            "zepplin" to "zeppelin",    // common misspelling
-            "niravna" to "nirvana"      // transposed letters
+            "beatels" to "beatles", // common typo
+            "zepplin" to "zeppelin", // common misspelling
+            "niravna" to "nirvana" // transposed letters
         )
 
         typos.forEach { (query, target) ->

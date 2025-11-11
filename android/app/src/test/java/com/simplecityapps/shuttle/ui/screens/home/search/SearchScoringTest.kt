@@ -5,8 +5,8 @@ import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
-import kotlinx.datetime.Instant
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SearchScoringTest {
@@ -17,64 +17,58 @@ class SearchScoringTest {
         album: String? = "Test Album",
         albumArtist: String? = "Test Artist",
         artists: List<String> = listOf("Test Artist")
-    ): Song {
-        return Song(
-            id = 1L,
-            name = name,
-            album = album,
-            albumArtist = albumArtist,
-            artists = artists,
-            track = 1,
-            disc = 1,
-            duration = 180,
-            date = null,
-            genres = emptyList(),
-            path = "/test/path.mp3",
-            size = 1000L,
-            mimeType = "audio/mpeg",
-            lastModified = null,
-            lastPlayed = null,
-            lastCompleted = null,
-            playCount = 0,
-            playbackPosition = 0,
-            blacklisted = false,
-            mediaProvider = MediaProviderType.MediaStore,
-            lyrics = null,
-            grouping = null,
-            bitRate = null,
-            bitDepth = null,
-            sampleRate = null,
-            channelCount = null
-        )
-    }
+    ): Song = Song(
+        id = 1L,
+        name = name,
+        album = album,
+        albumArtist = albumArtist,
+        artists = artists,
+        track = 1,
+        disc = 1,
+        duration = 180,
+        date = null,
+        genres = emptyList(),
+        path = "/test/path.mp3",
+        size = 1000L,
+        mimeType = "audio/mpeg",
+        lastModified = null,
+        lastPlayed = null,
+        lastCompleted = null,
+        playCount = 0,
+        playbackPosition = 0,
+        blacklisted = false,
+        mediaProvider = MediaProviderType.MediaStore,
+        lyrics = null,
+        grouping = null,
+        bitRate = null,
+        bitDepth = null,
+        sampleRate = null,
+        channelCount = null
+    )
 
     private fun createTestAlbum(
         name: String? = "Test Album",
         albumArtist: String? = "Test Artist",
         artists: List<String> = listOf("Test Artist")
-    ): Album {
-        return Album(
-            name = name,
-            albumArtist = albumArtist,
-            artists = artists,
-            songCount = 10,
-            duration = 1800,
-            groupKey = "test-key"
-        )
-    }
+    ): Album = Album(
+        name = name,
+        albumArtist = albumArtist,
+        artists = artists,
+        songCount = 10,
+        duration = 1800,
+        groupKey = "test-key"
+    )
 
     private fun createTestAlbumArtist(
         name: String? = "Test Artist",
         artists: List<String> = listOf("Test Artist")
-    ): AlbumArtist {
-        return AlbumArtist(
-            name = name,
-            artists = artists,
-            albumCount = 5,
-            songCount = 50,
-            groupKey = "test-key"
-        )
-    }
+    ): AlbumArtist = AlbumArtist(
+        name = name,
+        artists = artists,
+        albumCount = 5,
+        songCount = 50,
+        groupKey = "test-key"
+    )
 
     @Test
     fun `SongJaroSimilarity - exact song name match has highest score`() {
