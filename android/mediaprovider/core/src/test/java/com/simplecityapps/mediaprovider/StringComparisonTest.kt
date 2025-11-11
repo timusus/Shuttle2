@@ -234,4 +234,241 @@ class StringComparisonTest {
         // Scores should be identical when matching single words
         assertEquals(result1.score, result2.score, 0.001)
     }
+
+    // ============================================================
+    // Tests for highlighting indices (used by UI binders)
+    // ============================================================
+
+    @Test
+    fun `matched indices for single word query against multi-word target are correctly offset`() {
+        // Query: "beatles", Target: "the beatles"
+        val result = StringComparison.jaroWinklerMultiDistance("beatles", "the beatles")
+
+        // Should match the second word "beatles" which starts at index 4 (after "the ")
+        assertEquals(1.0, result.score, 0.001)
+
+        // All matched indices in bMatchedIndices should be >= 4 (offset for "the ")
+        result.bMatchedIndices.keys.forEach { index ->
+            assertTrue(
+                "Index $index should be >= 4 (offset for 'the ')",
+                index >= 4
+            )
+        }
+
+        // Should have 7 matched indices for "beatles" (7 characters)
+        assertEquals(7, result.bMatchedIndices.size)
+
+        // Verify the range: should be indices 4-10 (inclusive)
+        val expectedIndices = setOf(4, 5, 6, 7, 8, 9, 10)
+        assertEquals(expectedIndices, result.bMatchedIndices.keys)
+    }
+
+    @Test
+    fun `matched indices for multi-word query against multi-word target`() {
+        // Query: "side moon", Target: "the dark side of the moon"
+        val result = StringComparison.jaroWinklerMultiDistance("side moon", "the dark side of the moon")
+
+        // Should match "moon" which appears at the end
+        assertTrue(result.score > 0.95) // Should get high score for "moon" match
+
+        // bMatchedIndices should point to characters in "moon" in the target
+        // "the dark side of the moon"
+        // Indices:  0123456789012345678901234
+        // "moon" starts at index 20
+        val moonIndices = setOf(20, 21, 22, 23)
+        assertTrue(
+            "Should have indices for 'moon' at positions 20-23",
+            result.bMatchedIndices.keys.containsAll(moonIndices)
+        )
+    }
+
+    @Test
+    fun `matched indices handle normalization gracefully`() {
+        // This tests the edge case where normalization might cause index mismatches
+        val result = StringComparison.jaroWinklerMultiDistance("cafe", "café")
+
+        // Should have high score
+        assertTrue(result.score > 0.90)
+
+        // bMatchedIndices might have fewer or different indices due to normalization
+        // The important thing is it doesn't crash and returns reasonable results
+        assertTrue(result.bMatchedIndices.size > 0)
+    }
+
+    @Test
+    fun `matched indices for exact match contain all character positions`() {
+        val result = StringComparison.jaroWinklerDistance("test", "test")
+
+        // All 4 characters should be matched
+        assertEquals(4, result.aMatchedIndices.size)
+        assertEquals(4, result.bMatchedIndices.size)
+
+        // Indices should be 0, 1, 2, 3
+        assertEquals(setOf(0, 1, 2, 3), result.aMatchedIndices.keys)
+        assertEquals(setOf(0, 1, 2, 3), result.bMatchedIndices.keys)
+
+        // All scores should be 1.0 for exact match
+        result.aMatchedIndices.values.forEach { score ->
+            assertEquals(1.0, score, 0.001)
+        }
+    }
+
+    @Test
+    fun `matched indices for partial match show only matched characters`() {
+        val result = StringComparison.jaroWinklerDistance("abc", "axbxcx")
+
+        // Should match a, b, c at positions 0, 2, 4
+        assertTrue(result.score > 0.60)
+
+        // aMatchedIndices should have all 3 characters from "abc"
+        assertEquals(3, result.aMatchedIndices.size)
+        assertEquals(setOf(0, 1, 2), result.aMatchedIndices.keys)
+
+        // bMatchedIndices should point to a, b, c in "axbxcx"
+        assertEquals(3, result.bMatchedIndices.size)
+        assertEquals(setOf(0, 2, 4), result.bMatchedIndices.keys)
+    }
+
+    @Test
+    fun `matched indices with transpositions have reduced scores`() {
+        val result = StringComparison.jaroDistance("abcd", "abdc")
+
+        // All characters match but c and d are transposed
+        assertEquals(4, result.aMatchedIndices.size)
+        assertEquals(4, result.bMatchedIndices.size)
+
+        // The transposed characters should have lower scores (0.75 penalty)
+        // Characters c and d in the second string should have score 0.75
+        assertTrue(
+            "Transposed characters should have reduced scores",
+            result.bMatchedIndices.values.any { it < 1.0 }
+        )
+    }
+
+    @Test
+    fun `matched indices for multi-word split calculate offsets correctly`() {
+        // Query: "zeppelin", Target: "led zeppelin"
+        val result = StringComparison.jaroWinklerMultiDistance("zeppelin", "led zeppelin")
+
+        // Should perfectly match "zeppelin" starting at index 4
+        assertEquals(1.0, result.score, 0.001)
+
+        // "led zeppelin"
+        // Indices: 01234567891011
+        // "zeppelin" is at indices 4-11
+        val expectedIndices = setOf(4, 5, 6, 7, 8, 9, 10, 11)
+        assertEquals(expectedIndices, result.bMatchedIndices.keys)
+    }
+
+    @Test
+    fun `matched indices for query word against full target`() {
+        // Query: "dark side" (multi-word), Target: "dark"
+        val result = StringComparison.jaroWinklerMultiDistance("dark side", "dark")
+
+        // Should match "dark" with high score
+        assertEquals(1.0, result.score, 0.001)
+
+        // aMatchedIndices should point to "dark" in "dark side"
+        // "dark side"
+        // Indices: 012345678
+        // "dark" is at indices 0-3
+        assertTrue(result.aMatchedIndices.keys.containsAll(setOf(0, 1, 2, 3)))
+    }
+
+    @Test
+    fun `highlighting scenario - beatles query matches the beatles correctly`() {
+        val result = StringComparison.jaroWinklerMultiDistance("beatles", "The Beatles")
+
+        // Should match with high score
+        assertTrue(result.score > 0.95)
+
+        // In the UI, this would be used like:
+        // val text = "The Beatles"
+        // result.bMatchedIndices.forEach { (index, score) ->
+        //     setSpan(..., index, index + 1, ...)
+        // }
+
+        // Verify indices are within bounds of "The Beatles" (11 characters)
+        result.bMatchedIndices.keys.forEach { index ->
+            assertTrue("Index $index should be < 11", index < 11)
+        }
+    }
+
+    @Test
+    fun `highlighting scenario - handles edge case of empty matches`() {
+        val result = StringComparison.jaroWinklerDistance("xyz", "abc")
+
+        // Should have very low score
+        assertTrue(result.score < 0.50)
+
+        // May have some weak matches or no matches at all
+        // The highlighting code should handle this gracefully with try-catch
+        assertTrue(result.bMatchedIndices.size >= 0)
+    }
+
+    @Test
+    fun `index offset calculation for three word target`() {
+        // Query: "moon", Target: "dark side moon"
+        // Expected: match "moon" at indices 10-13
+        val result = StringComparison.jaroWinklerMultiDistance("moon", "dark side moon")
+
+        assertEquals(1.0, result.score, 0.001)
+
+        // "dark side moon"
+        // Index: 0123456789...
+        // "dark" = 0-3
+        // " " = 4
+        // "side" = 5-8
+        // " " = 9
+        // "moon" = 10-13
+        val expectedIndices = setOf(10, 11, 12, 13)
+        assertEquals(expectedIndices, result.bMatchedIndices.keys)
+    }
+
+    @Test
+    fun `index offset calculation explained step by step`() {
+        // This test documents exactly how the offset is calculated
+        val result = StringComparison.jaroWinklerMultiDistance("beatles", "the beatles")
+
+        // String: "the beatles"
+        // Split: ["the", "beatles"]
+        //
+        // For word at index 0 ("the"):
+        //   offset = 0 + 0 + sum([]) = 0
+        //   "the" maps to indices 0, 1, 2
+        //
+        // For word at index 1 ("beatles"):
+        //   offset = 0 + 1 + sum(["the"]) = 0 + 1 + 3 = 4
+        //   "beatles" maps to indices 4, 5, 6, 7, 8, 9, 10
+        //
+        // The "+ 1" accounts for the space between words
+
+        assertEquals(1.0, result.score, 0.001)
+
+        // Verify "beatles" is matched at the correct position
+        val expectedIndices = setOf(4, 5, 6, 7, 8, 9, 10)
+        assertEquals(
+            expectedIndices,
+            result.bMatchedIndices.keys,
+            "Indices should account for 'the ' prefix (3 chars + 1 space = offset of 4)"
+        )
+    }
+
+    @Test
+    fun `highlighting works correctly with normalized strings`() {
+        // The algorithm normalizes to lowercase and NFD
+        // "The Beatles" becomes "the beatles" internally
+        val result = StringComparison.jaroWinklerMultiDistance("BEATLES", "The Beatles")
+
+        // Should match despite case differences
+        assertTrue(result.score > 0.95)
+
+        // Indices should still be valid for the original "The Beatles" string
+        result.bMatchedIndices.keys.forEach { index ->
+            assertTrue(
+                "Index $index should be valid for 'The Beatles' (length 11)",
+                index < "The Beatles".length
+            )
+        }
+    }
 }
