@@ -187,6 +187,13 @@ class PlaybackService :
             ACTION_SKIP_PREV -> playbackManager.skipToPrev()
             ACTION_SKIP_NEXT -> playbackManager.skipToNext(ignoreRepeat = true)
             ACTION_SEARCH -> mediaSessionManager.mediaSession.controller?.transportControls?.playFromSearch(intent.extras?.getString(SearchManager.QUERY), Bundle())
+            Intent.ACTION_VIEW -> {
+                // Handle opening audio files
+                intent.data?.let { uri ->
+                    Timber.v("Handling ACTION_VIEW for URI: $uri")
+                    mediaSessionManager.mediaSession.controller?.transportControls?.playFromUri(uri, Bundle())
+                }
+            }
         }
     }
 
