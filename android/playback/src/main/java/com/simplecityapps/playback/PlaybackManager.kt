@@ -382,6 +382,10 @@ class PlaybackManager(
 
         if (trackWentToNext) {
             queueManager.skipToNext()
+            // Set ReplayGain immediately for the now-current track to avoid delay during automatic transitions
+            queueManager.getCurrentItem()?.song?.let { song ->
+                playback.setReplayGain(trackGain = song.replayGainTrack, albumGain = song.replayGainAlbum)
+            }
             appCoroutineScope.launch {
                 playback.loadNext(queueManager.getNext()?.song)
             }
