@@ -94,7 +94,6 @@ class PlaybackManager(
         loadJob?.cancel()
         loadJob =
             appCoroutineScope.launch {
-                playback.setReplayGain(trackGain = current.replayGainTrack, albumGain = current.replayGainAlbum)
                 playback.load(current, next, seekPosition) { result ->
                     result.onSuccess {
                         completion(Result.success(attempt == 1))
@@ -174,7 +173,6 @@ class PlaybackManager(
         if (queueManager.skipToNext(ignoreRepeat)) {
             queueManager.getCurrentItem()?.let { currentQueueItem ->
                 appCoroutineScope.launch {
-                    playback.setReplayGain(trackGain = currentQueueItem.song.replayGainTrack, albumGain = currentQueueItem.song.replayGainAlbum)
                     playback.load(currentQueueItem.song, queueManager.getNext()?.song, 0) { result ->
                         result.onSuccess { play() }
                         result.onFailure { error -> Timber.w("load() failed. Error: $error") }
@@ -193,7 +191,6 @@ class PlaybackManager(
             queueManager.skipToPrevious()
             queueManager.getCurrentItem()?.let { currentQueueItem ->
                 appCoroutineScope.launch {
-                    playback.setReplayGain(trackGain = currentQueueItem.song.replayGainTrack, albumGain = currentQueueItem.song.replayGainAlbum)
                     playback.load(currentQueueItem.song, queueManager.getNext()?.song, 0) { result ->
                         result.onSuccess { play() }
                         result.onFailure { error -> Timber.w("load() failed. Error: $error") }
@@ -211,7 +208,6 @@ class PlaybackManager(
             queueManager.skipTo(position)
             queueManager.getCurrentItem()?.let { currentQueueItem ->
                 appCoroutineScope.launch {
-                    playback.setReplayGain(trackGain = currentQueueItem.song.replayGainTrack, albumGain = currentQueueItem.song.replayGainAlbum)
                     playback.load(currentQueueItem.song, queueManager.getNext()?.song, 0) { result ->
                         result.onSuccess { play() }
                         result.onFailure { error -> Timber.w("load() failed. Error: $error") }
@@ -382,10 +378,6 @@ class PlaybackManager(
 
         if (trackWentToNext) {
             queueManager.skipToNext()
-            // Set ReplayGain immediately for the now-current track to avoid delay during automatic transitions
-            queueManager.getCurrentItem()?.song?.let { song ->
-                playback.setReplayGain(trackGain = song.replayGainTrack, albumGain = song.replayGainAlbum)
-            }
             appCoroutineScope.launch {
                 playback.loadNext(queueManager.getNext()?.song)
             }
