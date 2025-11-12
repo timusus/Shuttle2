@@ -382,7 +382,7 @@ constructor(
         if (queue.isNotEmpty()) {
             mediaSession.setQueue(
                 queueManager.getQueue()
-                    .subList(((queueManager.getCurrentPosition() ?: 0) - 5).coerceAtLeast(0), queueManager.getSize() - 1)
+                    .subList(((queueManager.getCurrentPosition() ?: 0) - 5).coerceAtLeast(0), queueManager.getSize())
                     .take(30)
                     .map { queueItem -> queueItem.toQueueItem() }
             )
