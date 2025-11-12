@@ -2,6 +2,7 @@ package com.simplecityapps.playback.dsp.replaygain
 
 import androidx.core.math.MathUtils.clamp
 import com.google.android.exoplayer2.C
+import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.audio.AudioProcessor
 import com.google.android.exoplayer2.audio.AudioProcessor.UnhandledAudioFormatException
 import com.google.android.exoplayer2.audio.BaseAudioProcessor
@@ -10,6 +11,8 @@ import com.simplecityapps.playback.exoplayer.ByteUtils.Int24_MAX_VALUE
 import com.simplecityapps.playback.exoplayer.ByteUtils.Int24_MIN_VALUE
 import com.simplecityapps.playback.exoplayer.ByteUtils.getInt24
 import com.simplecityapps.playback.exoplayer.ByteUtils.putInt24
+import com.simplecityapps.playback.exoplayer.ExoPlayerPlayback
+import timber.log.Timber
 import java.nio.ByteBuffer
 
 class ReplayGainAudioProcessor(var mode: ReplayGainMode, var preAmpGain: Double = 0.0) : BaseAudioProcessor() {
@@ -23,14 +26,33 @@ class ReplayGainAudioProcessor(var mode: ReplayGainMode, var preAmpGain: Double 
 
         @Synchronized set
 
+    // Reference to player to query current MediaItem
+    var player: Player? = null
+
     private val gain: Double
-        get() =
-            preAmpGain +
+        get() {
+            // Try to get gain from current MediaItem's tag first
+            player?.currentMediaItem?.localConfiguration?.tag?.let { tag ->
+                if (tag is ExoPlayerPlayback.ReplayGainTag) {
+                    val itemTrackGain = tag.trackGain
+                    val itemAlbumGain = tag.albumGain
+                    return preAmpGain +
+                        when (mode) {
+                            ReplayGainMode.Track -> itemTrackGain ?: itemAlbumGain ?: 0.0
+                            ReplayGainMode.Album -> itemAlbumGain ?: itemTrackGain ?: 0.0
+                            ReplayGainMode.Off -> 0.0
+                        }
+                }
+            }
+
+            // Fall back to manually set values
+            return preAmpGain +
                 when (mode) {
                     ReplayGainMode.Track -> trackGain ?: albumGain ?: 0.0
                     ReplayGainMode.Album -> albumGain ?: trackGain ?: 0.0
                     ReplayGainMode.Off -> 0.0
                 }
+        }
 
     override fun onConfigure(inputAudioFormat: AudioProcessor.AudioFormat): AudioProcessor.AudioFormat {
         if (inputAudioFormat.encoding != C.ENCODING_PCM_16BIT &&
