@@ -1,6 +1,7 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
 import com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao
+import com.simplecityapps.localmediaprovider.local.data.room.dao.toSong
 import com.simplecityapps.localmediaprovider.local.data.room.entity.toSongData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.toSongDataUpdate
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
@@ -45,6 +46,24 @@ class LocalSongRepository(
                 ?.filter(query.predicate)
                 ?.sortedWith(query.sortOrder.comparator)
         }
+
+    override suspend fun getSongsDirect(query: SongQuery): List<Song> {
+        val songs = songDataDao.get().map { it.toSong() }
+
+        var result = songs
+
+        if (!query.includeExcluded) {
+            result = songs.filterNot { it.blacklisted }
+        }
+
+        query.providerType?.let { providerType ->
+            result = songs.filter { song -> song.mediaProvider == providerType }
+        }
+
+        return result
+            .filter(query.predicate)
+            .sortedWith(query.sortOrder.comparator)
+    }
 
     override suspend fun insert(
         songs: List<Song>,

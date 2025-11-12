@@ -8,6 +8,8 @@ import kotlinx.coroutines.flow.Flow
 interface SongRepository {
     fun getSongs(query: SongQuery): Flow<List<Song>?>
 
+    suspend fun getSongsDirect(query: SongQuery): List<Song>
+
     suspend fun insert(
         songs: List<Song>,
         mediaProviderType: MediaProviderType
