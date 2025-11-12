@@ -14,15 +14,40 @@ data class ArtistJaroSimilarity(
     /**
      * Composite score that weighs different fields based on their importance.
      * Both artist name fields are considered equally important (weight 1.0 and 0.95).
-     * Exact matches get a small boost.
+     * Exact matches get a small boost before weighting.
      */
     val compositeScore: Double by lazy {
-        val albumArtistScore = albumArtistNameJaroSimilarity.score * 1.0
-        val artistScore = artistNameJaroSimilarity.score * 0.95
+        // Apply boost to exact matches before weighting
+        val albumArtistScoreRaw = if (albumArtistNameJaroSimilarity.score >= 0.999) albumArtistNameJaroSimilarity.score + 0.01 else albumArtistNameJaroSimilarity.score
+        val artistScoreRaw = if (artistNameJaroSimilarity.score >= 0.999) artistNameJaroSimilarity.score + 0.01 else artistNameJaroSimilarity.score
 
-        val bestScore = max(albumArtistScore, artistScore)
+        // Apply weighting after boost
+        val albumArtistScore = albumArtistScoreRaw * 1.0
+        val artistScore = artistScoreRaw * 0.95
 
-        // Boost exact matches (score >= 0.999) by 0.01 to ensure they rank highest
-        if (bestScore >= 0.999) bestScore + 0.01 else bestScore
+        max(albumArtistScore, artistScore)
+    }
+
+    /**
+     * Length of the artist name after stripping articles, used for tie-breaking.
+     * When multiple artists have the same score, prefer shorter names.
+     */
+    val strippedNameLength: Int by lazy {
+        stripArticlesForSorting(albumArtist.name ?: "").length
+    }
+
+    companion object {
+        // Helper to strip articles for tie-breaking (matches StringComparison.stripArticles behavior)
+        private fun stripArticlesForSorting(s: String): String {
+            val normalized = s.lowercase().trim()
+            val articles = listOf("the", "a", "an", "el", "la", "los", "las", "le", "les", "der", "die", "das")
+            for (article in articles) {
+                val pattern = "^$article\\s+"
+                if (normalized.matches(Regex(pattern + ".*"))) {
+                    return normalized.replaceFirst(Regex(pattern), "")
+                }
+            }
+            return normalized
+        }
     }
 }

@@ -142,7 +142,10 @@ constructor(
                                 albumArtists
                                     .map { albumArtist -> ArtistJaroSimilarity(albumArtist, query) }
                                     .filter { it.compositeScore > StringComparison.threshold }
-                                    .sortedByDescending { it.compositeScore }
+                                    .sortedWith(
+                                        compareByDescending<ArtistJaroSimilarity> { it.compositeScore }
+                                            .thenBy { it.strippedNameLength }
+                                    )
                             }
                 }
 
@@ -153,7 +156,10 @@ constructor(
                             .map { albums ->
                                 albums.map { album -> AlbumJaroSimilarity(album, query) }
                                     .filter { it.compositeScore > StringComparison.threshold }
-                                    .sortedByDescending { it.compositeScore }
+                                    .sortedWith(
+                                        compareByDescending<AlbumJaroSimilarity> { it.compositeScore }
+                                            .thenBy { it.strippedNameLength }
+                                    )
                             }
                 }
 
@@ -166,7 +172,10 @@ constructor(
                                     .asSequence()
                                     .map { song -> SongJaroSimilarity(song, query) }
                                     .filter { it.compositeScore > StringComparison.threshold }
-                                    .sortedByDescending { it.compositeScore }
+                                    .sortedWith(
+                                        compareByDescending<SongJaroSimilarity> { it.compositeScore }
+                                            .thenBy { it.strippedNameLength }
+                                    )
                                     .toList()
                             }
                 }

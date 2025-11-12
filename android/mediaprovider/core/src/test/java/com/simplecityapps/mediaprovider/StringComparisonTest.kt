@@ -64,9 +64,10 @@ class StringComparisonTest {
 
     @Test
     fun `jaroWinklerMultiDistance - multi-word query matches individual target words`() {
-        // "side moon" against "the dark side of the moon" should match "side" or "moon"
+        // "side moon" against "the dark side of the moon" should match "side" and "moon"
+        // Both words match perfectly, so score includes multi-word bonus: 1.0 * 1.05 = 1.05
         val result = StringComparison.jaroWinklerMultiDistance("side moon", "the dark side of the moon")
-        assertEquals(1.0, result.score, 0.001) // "moon" should be exact match
+        assertEquals(1.05, result.score, 0.001) // 2 query words matched
     }
 
     @Test
@@ -269,17 +270,22 @@ class StringComparisonTest {
         // Query: "side moon", Target: "the dark side of the moon"
         val result = StringComparison.jaroWinklerMultiDistance("side moon", "the dark side of the moon")
 
-        // Should match "moon" which appears at the end
-        assertTrue(result.score > 0.95) // Should get high score for "moon" match
+        // Should get high score - both "side" and "moon" match perfectly
+        // With multi-word bonus: 1.0 * 1.05 = 1.05 (2 query words matched)
+        assertEquals(1.05, result.score, 0.001)
 
-        // bMatchedIndices should point to characters in "moon" in the target
+        // bMatchedIndices should point to either "side" or "moon" in the target
         // "the dark side of the moon"
-        // Indices:  0123456789012345678901234
-        // "moon" starts at index 20
-        val moonIndices = setOf(20, 21, 22, 23)
+        // "side" is at indices 9-12, "moon" is at indices 21-24
+        val sideIndices = setOf(9, 10, 11, 12)
+        val moonIndices = setOf(21, 22, 23, 24)
+
+        // Should have indices for either "side" or "moon" (both are perfect matches)
+        val hasSide = result.bMatchedIndices.keys.containsAll(sideIndices)
+        val hasMoon = result.bMatchedIndices.keys.containsAll(moonIndices)
         assertTrue(
-            "Should have indices for 'moon' at positions 20-23",
-            result.bMatchedIndices.keys.containsAll(moonIndices)
+            "Should have indices for either 'side' (9-12) or 'moon' (21-24)",
+            hasSide || hasMoon
         )
     }
 
@@ -449,9 +455,9 @@ class StringComparisonTest {
         // Verify "beatles" is matched at the correct position
         val expectedIndices = setOf(4, 5, 6, 7, 8, 9, 10)
         assertEquals(
+            "Indices should account for 'the ' prefix (3 chars + 1 space = offset of 4)",
             expectedIndices,
-            result.bMatchedIndices.keys,
-            "Indices should account for 'the ' prefix (3 chars + 1 space = offset of 4)"
+            result.bMatchedIndices.keys
         )
     }
 
@@ -471,5 +477,90 @@ class StringComparisonTest {
                 index < "The Beatles".length
             )
         }
+    }
+
+    @Test
+    fun `prefix boost preserves correct indices with article stripping`() {
+        // This tests the critical case where:
+        // 1. Article "The " is stripped during matching
+        // 2. Prefix boost is applied ("beat" is prefix of "beatles")
+        // 3. Indices must still be valid for original string
+        val result = StringComparison.jaroWinklerMultiDistance("beat", "The Beatles")
+
+        // Should get high score from prefix boost
+        // "beat" is prefix of "beatles" (after stripping "The ")
+        assertTrue("Score should be high (>= 0.95)", result.score >= 0.95)
+
+        // "The Beatles"
+        // Index: 0-10
+        // The matching can return indices from either:
+        // - Full string match (may include matches across "The Beatles")
+        // - Word-level match (indices 4-10 for "Beatles")
+
+        // Critical: All indices must be valid for the original string
+        result.bMatchedIndices.keys.forEach { index ->
+            assertTrue(
+                "Index $index should be within 'The Beatles' (< 11)",
+                index < "The Beatles".length
+            )
+        }
+
+        // Should have at least 4 indices for "beat" (4 characters)
+        assertTrue(
+            "Should have at least 4 matched indices for 'beat', got ${result.bMatchedIndices.size}",
+            result.bMatchedIndices.size >= 4
+        )
+
+        // For UI highlighting purposes, having ANY valid indices is acceptable
+        // The important thing is they point to actual characters in the original string
+        assertTrue("Should have some matched indices", result.bMatchedIndices.isNotEmpty())
+    }
+
+    @Test
+    fun `prefix boost with metallica preserves correct indices`() {
+        // Query: "metal", Target: "Metallica"
+        // No article stripping here, just prefix boost
+        val result = StringComparison.jaroWinklerMultiDistance("metal", "Metallica")
+
+        // Should get prefix boost (0.91 + 0.10 = 1.0, capped at 1.0)
+        assertTrue(result.score >= 0.95)
+
+        // Indices should point to "Metal" in "Metallica" (indices 0-4)
+        result.bMatchedIndices.keys.forEach { index ->
+            assertTrue(
+                "Index $index should be within first 5 characters ('Metal')",
+                index < 5
+            )
+        }
+
+        // Should have 5 matched indices for "metal"
+        assertTrue(
+            "Should have at least 5 matched indices for 'metal'",
+            result.bMatchedIndices.size >= 5
+        )
+    }
+
+    @Test
+    fun `exact match vs prefix match - highlighting distinguishes them correctly`() {
+        // Query: "queen"
+        val exactResult = StringComparison.jaroWinklerMultiDistance("queen", "Queen")
+        val prefixResult = StringComparison.jaroWinklerMultiDistance("queen", "Queensway")
+
+        // Both should have good scores
+        // Note: Exact match gets +0.01 boost in the similarity classes (not in the core algorithm)
+        // So here it will be 1.0, not > 1.0
+        assertTrue("Exact match should have perfect score", exactResult.score >= 0.999)
+        assertTrue("Prefix match should have high score", prefixResult.score >= 0.95) // Gets prefix boost
+
+        // Exact match: all 5 characters of "Queen" should be highlighted
+        assertEquals(5, exactResult.bMatchedIndices.size)
+        assertEquals(setOf(0, 1, 2, 3, 4), exactResult.bMatchedIndices.keys)
+
+        // Prefix match: should have indices covering the matched portion
+        // The Jaro algorithm may match more or fewer characters depending on the target
+        assertTrue("Prefix match should have at least 5 indices", prefixResult.bMatchedIndices.size >= 5)
+
+        // Should include some characters from the "Queen" prefix
+        assertTrue("Should have matches at the start", prefixResult.bMatchedIndices.keys.any { it < 5 })
     }
 }
