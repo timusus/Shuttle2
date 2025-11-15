@@ -4,7 +4,6 @@ import android.content.SharedPreferences
 import java.util.Date
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
-import stateFlowForBoolean
 import stateFlowForMappedValue
 
 class GeneralPreferenceManager(

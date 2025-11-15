@@ -26,4 +26,3 @@ class ColorSchemePreviewParameterProvider : PreviewParameterProvider<ColorScheme
             AmberTheme.getColorScheme(useDark = true)
         )
 }
-

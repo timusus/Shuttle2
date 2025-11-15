@@ -48,7 +48,7 @@ class StoragePermissionScreenFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?,
+        savedInstanceState: Bundle?
     ): View {
         val onboardingParent = parentFragment as OnboardingParent
         return ComposeView(requireContext()).apply {
@@ -64,7 +64,7 @@ class StoragePermissionScreenFragment : Fragment() {
 @Composable
 fun StoragePermissionScreen(
     onPermissionGranted: () -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     val activity = LocalActivity.current
     val storagePermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -87,7 +87,7 @@ fun StoragePermissionScreen(
         modifier = modifier,
         showPermissionRationale = showPermissionRationale,
         onDismissPermissionRationale = { showPermissionRationale = false },
-        onGrantPermissionClick = { launcher.launch(storagePermission) },
+        onGrantPermissionClick = { launcher.launch(storagePermission) }
     )
 }
 
@@ -96,12 +96,12 @@ private fun StoragePermissionScreen(
     showPermissionRationale: Boolean,
     onGrantPermissionClick: () -> Unit,
     onDismissPermissionRationale: () -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     if (showPermissionRationale) {
         PermissionRationaleDialog(
             onDismissRequest = onDismissPermissionRationale,
-            onGrantPermissionClick = onGrantPermissionClick,
+            onGrantPermissionClick = onGrantPermissionClick
         )
     }
     Column(
@@ -110,7 +110,7 @@ private fun StoragePermissionScreen(
             .background(MaterialTheme.colorScheme.surfaceContainerLowest)
             .padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
             contentDescription = null,
@@ -118,7 +118,7 @@ private fun StoragePermissionScreen(
                 .size(196.dp)
                 .padding(top = 40.dp),
             tint = MaterialTheme.colorScheme.primary,
-            painter = painterResource(R.drawable.ic_launcher_foreground),
+            painter = painterResource(R.drawable.ic_launcher_foreground)
         )
         Spacer(modifier = Modifier.weight(1f))
         Text(
@@ -137,7 +137,7 @@ private fun StoragePermissionScreen(
 private fun PermissionRationaleDialog(
     onDismissRequest: () -> Unit,
     onGrantPermissionClick: () -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     AlertDialog(
         modifier = modifier,
@@ -168,7 +168,7 @@ private fun Preview(@PreviewParameter(ColorSchemePreviewParameterProvider::class
         StoragePermissionScreen(
             onGrantPermissionClick = {},
             showPermissionRationale = false,
-            onDismissPermissionRationale = {},
+            onDismissPermissionRationale = {}
         )
     }
 }
@@ -180,7 +180,7 @@ private fun Rationale(@PreviewParameter(ColorSchemePreviewParameterProvider::cla
         StoragePermissionScreen(
             onGrantPermissionClick = {},
             showPermissionRationale = true,
-            onDismissPermissionRationale = {},
+            onDismissPermissionRationale = {}
         )
     }
 }
