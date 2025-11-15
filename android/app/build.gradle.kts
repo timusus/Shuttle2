@@ -101,6 +101,8 @@ android {
         val composeBom = platform(libs.androidx.compose.bom)
         implementation(composeBom)
         androidTestImplementation(composeBom)
+        implementation(libs.androidx.activity.ktx)
+        implementation(libs.androidx.activity.compose)
         implementation(libs.kotlinx.collections.immutable)
         implementation(libs.kotlinx.datetime)
         implementation(libs.androidx.material3)

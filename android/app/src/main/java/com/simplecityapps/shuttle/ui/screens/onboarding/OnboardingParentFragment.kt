@@ -20,7 +20,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.MediaProviderSelectionFragment
-import com.simplecityapps.shuttle.ui.screens.onboarding.permissions.StoragePermissionFragment
+import com.simplecityapps.shuttle.ui.screens.onboarding.permissions.StoragePermissionScreenFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.privacy.AnalyticsPermissionFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.scanner.MediaScannerFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.taglib.DirectorySelectionFragment
@@ -103,12 +103,12 @@ class OnboardingParentFragment :
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View? = inflater.inflate(R.layout.fragment_onboarding, container, false)
 
     override fun onViewCreated(
         view: View,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -240,7 +240,7 @@ class OnboardingParentFragment :
         override fun containsItem(itemId: Long): Boolean = data.any { it.hashCode().toLong() == itemId }
 
         override fun createFragment(position: Int): Fragment = when (data[position]) {
-            OnboardingPage.StoragePermission -> StoragePermissionFragment()
+            OnboardingPage.StoragePermission -> StoragePermissionScreenFragment()
             OnboardingPage.AnalyticsPermission -> AnalyticsPermissionFragment()
             OnboardingPage.MediaProviderSelector -> MediaProviderSelectionFragment.newInstance(isOnboarding)
             OnboardingPage.MusicDirectories -> DirectorySelectionFragment()

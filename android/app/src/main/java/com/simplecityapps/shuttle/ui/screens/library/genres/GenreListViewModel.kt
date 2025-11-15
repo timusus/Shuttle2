@@ -57,7 +57,6 @@ class GenreListViewModel @Inject constructor(
 
     val theme = preferenceManager.theme(viewModelScope)
     val accent = preferenceManager.accent(viewModelScope)
-    val extraDark = preferenceManager.extraDark(viewModelScope)
 
     fun play(genre: Genre, completion: (Result<Boolean>) -> Unit) {
         viewModelScope.launch {

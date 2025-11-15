@@ -133,12 +133,6 @@ class GeneralPreferenceManager(
             return sharedPreferences.get("pref_theme_extra_dark", false)
         }
 
-    fun extraDark(scope: CoroutineScope): StateFlow<Boolean> = sharedPreferences.stateFlowForBoolean(
-        key = "pref_theme_extra_dark",
-        default = false,
-        scope = scope
-    )
-
     var artworkWifiOnly: Boolean
         set(value) {
             sharedPreferences.put("artwork_wifi_only", value)
