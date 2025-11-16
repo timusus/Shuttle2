@@ -38,14 +38,17 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingChild
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingPage
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParent
+import com.simplecityapps.shuttle.ui.snapshot.Snapshot
 import com.simplecityapps.shuttle.ui.theme.AppTheme
 import com.simplecityapps.shuttle.ui.theme.ColorSchemePreviewParameterProvider
 
-class AnalyticsPermissionScreenFragment : Fragment(), OnboardingChild {
+class AnalyticsPermissionScreenFragment :
+    Fragment(),
+    OnboardingChild {
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?,
+        savedInstanceState: Bundle?
     ): View {
         val onboardingParent = parentFragment as OnboardingParent
         return ComposeView(requireContext()).apply {
@@ -74,7 +77,7 @@ class AnalyticsPermissionScreenFragment : Fragment(), OnboardingChild {
 @Composable
 private fun AnalyticsPermissionScreen(
     modifier: Modifier = Modifier,
-    viewModel: AnalyticsPermissionViewModel = hiltViewModel(),
+    viewModel: AnalyticsPermissionViewModel = hiltViewModel()
 ) {
     val analyticsChecked by viewModel.analyticsEnabled.collectAsStateWithLifecycle()
     val crashlyticsChecked by viewModel.crashlyticsEnabled.collectAsStateWithLifecycle()
@@ -96,7 +99,7 @@ private fun AnalyticsPermissionScreen(
     crashlyticsChecked: Boolean,
     onAnalyticsCheckedChange: (Boolean) -> Unit,
     onCrashlyticsCheckedChange: (Boolean) -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier
@@ -154,6 +157,7 @@ private fun AnalyticsPermissionScreen(
     }
 }
 
+@Snapshot
 @Preview
 @Composable
 private fun Preview(@PreviewParameter(ColorSchemePreviewParameterProvider::class) colorScheme: ColorScheme) {
