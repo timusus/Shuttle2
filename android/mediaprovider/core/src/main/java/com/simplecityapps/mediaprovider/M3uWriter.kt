@@ -61,7 +61,5 @@ class M3uWriter {
      * @param songs List of songs to include in the playlist
      * @return M3U file content as a string
      */
-    fun write(songs: List<Song>): String {
-        return write(songs) { it.path } ?: ""
-    }
+    fun write(songs: List<Song>): String = write(songs) { it.path } ?: ""
 }

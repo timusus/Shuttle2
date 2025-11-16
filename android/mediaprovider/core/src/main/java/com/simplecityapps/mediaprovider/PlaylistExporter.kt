@@ -1,14 +1,13 @@
 package com.simplecityapps.mediaprovider
 
-import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
 import com.simplecityapps.shuttle.model.Song
+import java.io.IOException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import timber.log.Timber
-import java.io.IOException
 
 /**
  * PlaylistExporter handles exporting playlists to m3u files.
@@ -135,15 +134,13 @@ class PlaylistExporter(
      * Note: Many m3u players may not be able to use content:// URIs,
      * so this is a known limitation when exporting playlists on Android.
      */
-    private fun resolvePathForSong(song: Song): String? {
-        return when {
-            // If path doesn't start with content://, assume it's a real file path
-            !song.path.startsWith("content://") -> song.path
+    private fun resolvePathForSong(song: Song): String? = when {
+        // If path doesn't start with content://, assume it's a real file path
+        !song.path.startsWith("content://") -> song.path
 
-            // Try to extract real path from content URI
-            else -> {
-                tryGetRealPath(song.path) ?: song.path
-            }
+        // Try to extract real path from content URI
+        else -> {
+            tryGetRealPath(song.path) ?: song.path
         }
     }
 
@@ -156,22 +153,20 @@ class PlaylistExporter(
      * @param contentUri The content:// URI to resolve
      * @return Real file path if available, null otherwise
      */
-    private fun tryGetRealPath(contentUri: String): String? {
-        return try {
-            val uri = Uri.parse(contentUri)
+    private fun tryGetRealPath(contentUri: String): String? = try {
+        val uri = Uri.parse(contentUri)
 
-            // Try to get the document ID and extract path information
-            // This is a limited approach and won't work for all cases
-            val documentFile = DocumentFile.fromSingleUri(context, uri)
-            documentFile?.name?.let { fileName ->
-                // If we have a filename but no full path, at least use the filename
-                // This allows relative paths in m3u files which some players can handle
-                fileName
-            }
-        } catch (e: Exception) {
-            Timber.w(e, "Could not resolve real path for: $contentUri")
-            null
+        // Try to get the document ID and extract path information
+        // This is a limited approach and won't work for all cases
+        val documentFile = DocumentFile.fromSingleUri(context, uri)
+        documentFile?.name?.let { fileName ->
+            // If we have a filename but no full path, at least use the filename
+            // This allows relative paths in m3u files which some players can handle
+            fileName
         }
+    } catch (e: Exception) {
+        Timber.w(e, "Could not resolve real path for: $contentUri")
+        null
     }
 
     /**
