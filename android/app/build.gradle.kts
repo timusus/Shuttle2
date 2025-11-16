@@ -97,6 +97,35 @@ android {
         compose = true
     }
 
+    testOptions {
+        managedDevices {
+            devices {
+                create<com.android.build.api.dsl.ManagedVirtualDevice>("pixel4api30") {
+                    device = "Pixel 4"
+                    apiLevel = 30
+                    systemImageSource = "aosp-atd"
+                }
+                create<com.android.build.api.dsl.ManagedVirtualDevice>("pixel6api31") {
+                    device = "Pixel 6"
+                    apiLevel = 31
+                    systemImageSource = "aosp"
+                }
+                create<com.android.build.api.dsl.ManagedVirtualDevice>("pixel6api34") {
+                    device = "Pixel 6"
+                    apiLevel = 34
+                    systemImageSource = "aosp"
+                }
+            }
+            groups {
+                create("ci") {
+                    targetDevices.add(devices["pixel4api30"])
+                    targetDevices.add(devices["pixel6api34"])
+                }
+            }
+        }
+        animationsDisabled = true
+    }
+
     namespace = "com.simplecityapps.shuttle"
 
     dependencies {
@@ -263,6 +292,12 @@ android {
         androidTestImplementation(libs.androidx.rules)
         androidTestImplementation(libs.androidx.core.ktx)
         androidTestImplementation(libs.hamcrest.library)
+        androidTestImplementation(libs.androidx.junit)
+        androidTestImplementation(libs.androidx.espresso.core)
+        androidTestImplementation(libs.androidx.ui.test.junit4)
+        androidTestImplementation(libs.androidx.ui.test.manifest)
+        androidTestImplementation(libs.androidx.uiautomator)
+        debugImplementation(libs.androidx.ui.test.manifest)
 
         // Remote config
         implementation(project(":android:remote-config"))
