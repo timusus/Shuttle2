@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.home.search
 
 import android.content.Context
+import android.util.Log
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.simplecityapps.mediaprovider.StringComparison
@@ -112,6 +113,14 @@ constructor(
     private val preferenceManager: GeneralPreferenceManager
 ) : BasePresenter<SearchContract.View>(),
     SearchContract.Presenter {
+
+    companion object {
+        private const val TAG = "SearchPresenter"
+        // Performance logging disabled in production for performance
+        // Set to true for development/debugging only
+        private const val ENABLE_PERFORMANCE_LOGGING = false
+    }
+
     private var query: String? = null
 
     private var searchResult: Triple<List<ArtistJaroSimilarity>, List<AlbumJaroSimilarity>, List<SongJaroSimilarity>> =
@@ -129,65 +138,106 @@ constructor(
         queryJob?.cancel()
         if (query.isEmpty()) {
             this.query = query
-            view?.setData(Triple(emptyList(), emptyList(), emptyList()))
+            // Don't call setData for empty queries - let the fragment handle the empty state
             return
         }
+
+        val searchStartTime = if (ENABLE_PERFORMANCE_LOGGING) System.currentTimeMillis() else 0L
+        if (ENABLE_PERFORMANCE_LOGGING) {
+            Log.d(TAG, "=== Starting FTS-enhanced search for query: '$query' ===")
+            StringComparison.resetPerformanceCounters()
+        }
+
         queryJob =
             launch {
-                var artistResults: Flow<List<ArtistJaroSimilarity>> = flowOf(emptyList())
+                // Step 1: Use FTS to get candidate sets (fast pre-filtering)
+                // Step 2: Apply Jaro-Winkler similarity on candidates (accurate scoring)
+                // Step 3: Sort by Jaro-Winkler score
+
+                var artistResults: List<ArtistJaroSimilarity> = emptyList()
                 if (preferenceManager.searchFilterArtists) {
-                    artistResults =
-                        artistRepository.getAlbumArtists(AlbumArtistQuery.All())
-                            .map { albumArtists ->
-                                albumArtists
-                                    .map { albumArtist -> ArtistJaroSimilarity(albumArtist, query) }
-                                    .filter { it.compositeScore > StringComparison.threshold }
-                                    .sortedWith(
-                                        compareByDescending<ArtistJaroSimilarity> { it.compositeScore }
-                                            .thenBy { it.strippedNameLength }
-                                    )
-                            }
-                }
-
-                var albumResults: Flow<List<AlbumJaroSimilarity>> = flowOf(emptyList())
-                if (preferenceManager.searchFilterAlbums) {
-                    albumResults =
-                        albumRepository.getAlbums(AlbumQuery.All())
-                            .map { albums ->
-                                albums.map { album -> AlbumJaroSimilarity(album, query) }
-                                    .filter { it.compositeScore > StringComparison.threshold }
-                                    .sortedWith(
-                                        compareByDescending<AlbumJaroSimilarity> { it.compositeScore }
-                                            .thenBy { it.strippedNameLength }
-                                    )
-                            }
-                }
-
-                var songResults: Flow<List<SongJaroSimilarity>> = flowOf(emptyList())
-                if (preferenceManager.searchFilterSongs) {
-                    songResults =
-                        songRepository.getSongs(SongQuery.All())
-                            .map { songs ->
-                                songs.orEmpty()
-                                    .asSequence()
-                                    .map { song -> SongJaroSimilarity(song, query) }
-                                    .filter { it.compositeScore > StringComparison.threshold }
-                                    .sortedWith(
-                                        compareByDescending<SongJaroSimilarity> { it.compositeScore }
-                                            .thenBy { it.strippedNameLength }
-                                    )
-                                    .toList()
-                            }
-                }
-
-                combine(artistResults, albumResults, songResults) { artists, albums, songs ->
-                    Triple(artists, albums, songs)
-                }
-                    .flowOn(Dispatchers.IO)
-                    .collect { results ->
-                        searchResult = results
-                        view?.setData(results)
+                    val artistStartTime = if (ENABLE_PERFORMANCE_LOGGING) System.currentTimeMillis() else 0L
+                    val ftsCandidates = artistRepository.searchAlbumArtistsFts(query, limit = 200)
+                    if (ENABLE_PERFORMANCE_LOGGING) {
+                        val ftsTime = System.currentTimeMillis() - artistStartTime
+                        Log.d(TAG, "FTS found ${ftsCandidates.size} artist candidates in ${ftsTime}ms")
                     }
+
+                    artistResults = ftsCandidates
+                        .map { albumArtist -> ArtistJaroSimilarity(albumArtist, query) }
+                        .filter { it.compositeScore > StringComparison.threshold }
+                        .sortedWith(
+                            compareByDescending<ArtistJaroSimilarity> { it.compositeScore }
+                                .thenBy { it.strippedNameLength }
+                        )
+                        .take(50)  // Limit to top 50 results
+
+                    if (ENABLE_PERFORMANCE_LOGGING) {
+                        val artistTime = System.currentTimeMillis() - artistStartTime
+                        Log.d(TAG, "Artist search: ${artistResults.size}/${ftsCandidates.size} candidates matched, took ${artistTime}ms total")
+                    }
+                }
+
+                var albumResults: List<AlbumJaroSimilarity> = emptyList()
+                if (preferenceManager.searchFilterAlbums) {
+                    val albumStartTime = if (ENABLE_PERFORMANCE_LOGGING) System.currentTimeMillis() else 0L
+                    val ftsCandidates = albumRepository.searchAlbumsFts(query, limit = 400)
+                    if (ENABLE_PERFORMANCE_LOGGING) {
+                        val ftsTime = System.currentTimeMillis() - albumStartTime
+                        Log.d(TAG, "FTS found ${ftsCandidates.size} album candidates in ${ftsTime}ms")
+                    }
+
+                    albumResults = ftsCandidates
+                        .map { album -> AlbumJaroSimilarity(album, query) }
+                        .filter { it.compositeScore > StringComparison.threshold }
+                        .sortedWith(
+                            compareByDescending<AlbumJaroSimilarity> { it.compositeScore }
+                                .thenBy { it.strippedNameLength }
+                        )
+                        .take(50)  // Limit to top 50 results
+
+                    if (ENABLE_PERFORMANCE_LOGGING) {
+                        val albumTime = System.currentTimeMillis() - albumStartTime
+                        Log.d(TAG, "Album search: ${albumResults.size}/${ftsCandidates.size} candidates matched, took ${albumTime}ms total")
+                    }
+                }
+
+                var songResults: List<SongJaroSimilarity> = emptyList()
+                if (preferenceManager.searchFilterSongs) {
+                    val songStartTime = if (ENABLE_PERFORMANCE_LOGGING) System.currentTimeMillis() else 0L
+                    val ftsCandidates = songRepository.searchSongsFts(query, limit = 500)
+                    if (ENABLE_PERFORMANCE_LOGGING) {
+                        val ftsTime = System.currentTimeMillis() - songStartTime
+                        Log.d(TAG, "FTS found ${ftsCandidates.size} song candidates in ${ftsTime}ms")
+                    }
+
+                    songResults = ftsCandidates
+                        .asSequence()
+                        .map { song -> SongJaroSimilarity(song, query) }
+                        .filter { it.compositeScore > StringComparison.threshold }
+                        .sortedWith(
+                            compareByDescending<SongJaroSimilarity> { it.compositeScore }
+                                .thenBy { it.strippedNameLength }
+                        )
+                        .take(50)  // Limit to top 50 results
+                        .toList()
+
+                    if (ENABLE_PERFORMANCE_LOGGING) {
+                        val songTime = System.currentTimeMillis() - songStartTime
+                        Log.d(TAG, "Song search: ${songResults.size}/${ftsCandidates.size} candidates matched, took ${songTime}ms total")
+                    }
+                }
+
+                val results = Triple(artistResults, albumResults, songResults)
+                searchResult = results
+                view?.setData(results)
+
+                if (ENABLE_PERFORMANCE_LOGGING) {
+                    val totalSearchTime = System.currentTimeMillis() - searchStartTime
+                    Log.d(TAG, "=== FTS-enhanced search completed in ${totalSearchTime}ms ===")
+                    Log.d(TAG, "Results: ${results.first.size} artists, ${results.second.size} albums, ${results.third.size} songs")
+                    StringComparison.logPerformanceStats()
+                }
             }
         this.query = query
     }

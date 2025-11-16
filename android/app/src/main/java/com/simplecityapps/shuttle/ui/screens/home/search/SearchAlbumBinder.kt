@@ -111,9 +111,10 @@ class SearchAlbumBinder(
             viewBinder: SearchAlbumBinder,
             songQuantity: CharSequence
         ) {
-            viewBinder.album.name?.let {
-                if (viewBinder.jaroSimilarity.nameJaroSimilarity.score >= StringComparison.threshold) {
-                    val nameStringBuilder = SpannableStringBuilder(viewBinder.album.name)
+            // Highlight album name if it has matches
+            viewBinder.album.name?.let { albumName ->
+                val nameStringBuilder = SpannableStringBuilder(albumName)
+                if (viewBinder.jaroSimilarity.nameJaroSimilarity.bMatchedIndices.isNotEmpty()) {
                     viewBinder.jaroSimilarity.nameJaroSimilarity.bMatchedIndices.forEach { (index, score) ->
                         try {
                             nameStringBuilder.setSpan(
@@ -126,13 +127,14 @@ class SearchAlbumBinder(
                             // This is possible because the jaro similarity function does string normalisation, so we're not necessarily using the exact same string
                         }
                     }
-                    title.text = nameStringBuilder
                 }
+                title.text = nameStringBuilder
             }
 
-            viewBinder.album.albumArtist ?: viewBinder.album.friendlyArtistName?.let {
-                if (viewBinder.jaroSimilarity.albumArtistNameJaroSimilarity.score >= StringComparison.threshold) {
-                    val artistNameStringBuilder = SpannableStringBuilder(viewBinder.album.albumArtist ?: viewBinder.album.friendlyArtistName)
+            // Highlight artist name if it has matches
+            (viewBinder.album.albumArtist ?: viewBinder.album.friendlyArtistName)?.let { artistName ->
+                val artistNameStringBuilder = SpannableStringBuilder(artistName)
+                if (viewBinder.jaroSimilarity.albumArtistNameJaroSimilarity.bMatchedIndices.isNotEmpty()) {
                     viewBinder.jaroSimilarity.albumArtistNameJaroSimilarity.bMatchedIndices.forEach { (index, score) ->
                         try {
                             artistNameStringBuilder.setSpan(
@@ -146,12 +148,12 @@ class SearchAlbumBinder(
                             // This is possible because the jaro similarity function does string normalisation, so we're not necessarily using the exact same string
                         }
                     }
-                    subtitle.text =
-                        listOf(
-                            artistNameStringBuilder,
-                            songQuantity
-                        ).joinToSpannedString(" • ")
                 }
+                subtitle.text =
+                    listOf(
+                        artistNameStringBuilder,
+                        songQuantity
+                    ).joinToSpannedString(" • ")
             }
         }
 

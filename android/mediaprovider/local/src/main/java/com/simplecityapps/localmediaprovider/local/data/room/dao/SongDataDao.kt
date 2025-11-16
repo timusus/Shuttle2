@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy.Companion.IGNORE
 import androidx.room.Query
+import androidx.room.SkipQueryVerification
 import androidx.room.Transaction
 import androidx.room.Update
 import com.simplecityapps.localmediaprovider.local.data.room.entity.SongData
@@ -91,6 +92,157 @@ abstract class SongDataDao {
 
     @Query("DELETE FROM songs WHERE id = :id")
     abstract suspend fun delete(id: Long)
+
+    // FTS (Full-Text Search) methods for improved search performance
+
+    /**
+     * Search songs using FTS. Returns a limited set of candidate songs that match the query.
+     * The query should be preprocessed into FTS4 query syntax (e.g., "beatles" or "dark* OR side*")
+     *
+     * Note: @SkipQueryVerification is used because songs_fts is a virtual table created via migration,
+     * and Room's compile-time validation cannot verify it.
+     */
+    @SkipQueryVerification
+    @Transaction
+    @Query("""
+        SELECT songs.* FROM songs_fts
+        JOIN songs ON songs.id = songs_fts.docid
+        WHERE songs_fts MATCH :ftsQuery
+        AND songs.blacklisted = 0
+        LIMIT :limit
+    """)
+    abstract suspend fun searchSongsFts(ftsQuery: String, limit: Int = 100): List<SongData>
+
+    /**
+     * Search for album group keys using FTS.
+     * Returns distinct album identifiers (albumArtist + album) that match the query.
+     *
+     * Note: @SkipQueryVerification is used because songs_fts is a virtual table created via migration,
+     * and Room's compile-time validation cannot verify it.
+     */
+    @SkipQueryVerification
+    @Query("""
+        SELECT DISTINCT songs.albumArtist, songs.album
+        FROM songs_fts
+        JOIN songs ON songs.id = songs_fts.docid
+        WHERE songs_fts MATCH :ftsQuery
+        AND songs.blacklisted = 0
+        LIMIT :limit
+    """)
+    abstract suspend fun searchAlbumGroupKeysFts(ftsQuery: String, limit: Int = 200): List<AlbumGroupKeyResult>
+
+    /**
+     * Search for artist group keys using FTS.
+     * Returns distinct albumArtist values that match the query.
+     *
+     * Note: @SkipQueryVerification is used because songs_fts is a virtual table created via migration,
+     * and Room's compile-time validation cannot verify it.
+     */
+    @SkipQueryVerification
+    @Query("""
+        SELECT DISTINCT songs.albumArtist
+        FROM songs_fts
+        JOIN songs ON songs.id = songs_fts.docid
+        WHERE songs_fts MATCH :ftsQuery
+        AND songs.blacklisted = 0
+        LIMIT :limit
+    """)
+    abstract suspend fun searchArtistGroupKeysFts(ftsQuery: String, limit: Int = 100): List<String>
+
+    /**
+     * Search for songs belonging to albums that match the FTS query.
+     * Returns all songs from the matched albums, grouped by album.
+     *
+     * This is more efficient than searchAlbumGroupKeysFts() + filtering all songs in memory,
+     * as it uses a SQL subquery to fetch only the needed songs.
+     *
+     * Note: @SkipQueryVerification is used because songs_fts is a virtual table created via migration,
+     * and Room's compile-time validation cannot verify it.
+     */
+    @SkipQueryVerification
+    @Transaction
+    @Query("""
+        SELECT songs.*
+        FROM songs
+        WHERE (songs.albumArtist, songs.album) IN (
+            SELECT DISTINCT songs.albumArtist, songs.album
+            FROM songs_fts
+            JOIN songs ON songs.id = songs_fts.docid
+            WHERE songs_fts MATCH :ftsQuery
+            AND songs.blacklisted = 0
+            LIMIT :limit
+        )
+        AND songs.blacklisted = 0
+        ORDER BY songs.albumArtist, songs.album, songs.track
+    """)
+    abstract suspend fun searchAlbumsWithGroupKeysFts(ftsQuery: String, limit: Int = 200): List<SongData>
+
+    /**
+     * Search for songs belonging to artists that match the FTS query.
+     * Returns all songs from the matched artists.
+     *
+     * This is more efficient than searchArtistGroupKeysFts() + filtering all songs in memory,
+     * as it uses a SQL subquery to fetch only the needed songs.
+     *
+     * Note: @SkipQueryVerification is used because songs_fts is a virtual table created via migration,
+     * and Room's compile-time validation cannot verify it.
+     */
+    @SkipQueryVerification
+    @Transaction
+    @Query("""
+        SELECT songs.*
+        FROM songs
+        WHERE songs.albumArtist IN (
+            SELECT DISTINCT songs.albumArtist
+            FROM songs_fts
+            JOIN songs ON songs.id = songs_fts.docid
+            WHERE songs_fts MATCH :ftsQuery
+            AND songs.blacklisted = 0
+            LIMIT :limit
+        )
+        AND songs.blacklisted = 0
+        ORDER BY songs.albumArtist, songs.album, songs.track
+    """)
+    abstract suspend fun searchArtistsWithGroupKeysFts(ftsQuery: String, limit: Int = 100): List<SongData>
+}
+
+/**
+ * Result class for album group key searches
+ */
+data class AlbumGroupKeyResult(
+    val albumArtist: String?,
+    val album: String?
+)
+
+/**
+ * Converts a user search query into FTS4 query syntax.
+ * Supports multi-word queries with OR logic and prefix matching.
+ *
+ * Examples:
+ * - "beatles" -> "beatles*"
+ * - "dark side" -> "dark* OR side*"
+ * - "led zeppelin" -> "led* OR zeppelin*"
+ */
+fun String.toFtsQuery(): String {
+    if (this.isBlank()) return ""
+
+    // Split into words, remove empty strings, and escape special FTS characters
+    val words = this.trim()
+        .split("\\s+".toRegex())
+        .filter { it.isNotBlank() }
+        .map { word ->
+            // Escape FTS special characters: " and *
+            val escaped = word.replace("\"", "\"\"")
+            // Add prefix wildcard for partial matching
+            "\"$escaped\"*"
+        }
+
+    // If single word, return as-is. Otherwise join with OR
+    return if (words.size == 1) {
+        words.first()
+    } else {
+        words.joinToString(" OR ")
+    }
 }
 
 fun SongData.toSong(): Song = Song(

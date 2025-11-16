@@ -1,5 +1,6 @@
 package com.simplecityapps.mediaprovider
 
+import android.util.Log
 import com.simplecityapps.mediaprovider.StringComparison.jaroDistance
 import java.text.Normalizer
 import java.util.Locale
@@ -7,12 +8,46 @@ import kotlin.math.max
 import kotlin.math.min
 
 object StringComparison {
+    private const val TAG = "StringComparison"
+    // Performance logging disabled in production for performance (5-10% overhead)
+    // Set to true for development/debugging only
+    private const val ENABLE_PERFORMANCE_LOGGING = false
+
     /**
      * Default similarity threshold for search results.
-     * Lowered from 0.90 to 0.85 to allow more partial matches
-     * (e.g., "beatles" matching "The Beatles", "zeppelin" matching "Led Zeppelin")
+     * Lowered from 0.90 → 0.85 → 0.82 to allow more fuzzy matches and typos
+     * (e.g., "beatels" matching "The Beatles", "zepelin" matching "Led Zeppelin")
+     * Combined with FTS fallback, this provides excellent fuzzy search coverage.
      */
-    const val threshold = 0.85
+    const val threshold = 0.82
+
+    // Performance counters
+    @Volatile private var jaroDistanceCallCount = 0
+    @Volatile private var jaroWinklerDistanceCallCount = 0
+    @Volatile private var jaroWinklerMultiDistanceCallCount = 0
+    @Volatile private var totalJaroDistanceTimeNs = 0L
+    @Volatile private var totalJaroWinklerDistanceTimeNs = 0L
+    @Volatile private var totalJaroWinklerMultiDistanceTimeNs = 0L
+
+    fun resetPerformanceCounters() {
+        jaroDistanceCallCount = 0
+        jaroWinklerDistanceCallCount = 0
+        jaroWinklerMultiDistanceCallCount = 0
+        totalJaroDistanceTimeNs = 0L
+        totalJaroWinklerDistanceTimeNs = 0L
+        totalJaroWinklerMultiDistanceTimeNs = 0L
+    }
+
+    fun logPerformanceStats() {
+        if (!ENABLE_PERFORMANCE_LOGGING) return
+
+        Log.d(TAG, "=== StringComparison Performance Stats ===")
+        Log.d(TAG, "jaroDistance: $jaroDistanceCallCount calls, avg ${if (jaroDistanceCallCount > 0) totalJaroDistanceTimeNs / jaroDistanceCallCount / 1000 else 0}μs, total ${totalJaroDistanceTimeNs / 1_000_000}ms")
+        Log.d(TAG, "jaroWinklerDistance: $jaroWinklerDistanceCallCount calls, avg ${if (jaroWinklerDistanceCallCount > 0) totalJaroWinklerDistanceTimeNs / jaroWinklerDistanceCallCount / 1000 else 0}μs, total ${totalJaroWinklerDistanceTimeNs / 1_000_000}ms")
+        Log.d(TAG, "jaroWinklerMultiDistance: $jaroWinklerMultiDistanceCallCount calls, avg ${if (jaroWinklerMultiDistanceCallCount > 0) totalJaroWinklerMultiDistanceTimeNs / jaroWinklerMultiDistanceCallCount / 1000 else 0}μs, total ${totalJaroWinklerMultiDistanceTimeNs / 1_000_000}ms")
+        val totalTimeMs = (totalJaroDistanceTimeNs + totalJaroWinklerDistanceTimeNs + totalJaroWinklerMultiDistanceTimeNs) / 1_000_000
+        Log.d(TAG, "Total computation time: ${totalTimeMs}ms")
+    }
 
     /**
      * Definite and indefinite articles by locale.
@@ -85,7 +120,13 @@ object StringComparison {
         a: String,
         b: String
     ): JaroSimilarity {
+        val startTime = if (ENABLE_PERFORMANCE_LOGGING) System.nanoTime() else 0L
+
         if (a == b) {
+            if (ENABLE_PERFORMANCE_LOGGING) {
+                jaroDistanceCallCount++
+                totalJaroDistanceTimeNs += System.nanoTime() - startTime
+            }
             return JaroSimilarity(
                 score = 1.0,
                 aMatchedIndices = a.mapIndexed { index, _ -> index to 1.0 }.toMap(),
@@ -144,11 +185,18 @@ object StringComparison {
         }
         transpositions /= 2
 
-        return JaroSimilarity(
+        val result = JaroSimilarity(
             score = ((matches / aLen.toDouble() + matches / bLen.toDouble() + (matches - transpositions) / matches.toDouble()) / 3.0),
             aMatchedIndices = aMatchScores,
             bMatchedIndices = bMatchScores
         )
+
+        if (ENABLE_PERFORMANCE_LOGGING) {
+            jaroDistanceCallCount++
+            totalJaroDistanceTimeNs += System.nanoTime() - startTime
+        }
+
+        return result
     }
 
     /**
@@ -160,6 +208,8 @@ object StringComparison {
         a: String,
         b: String
     ): JaroSimilarity {
+        val startTime = if (ENABLE_PERFORMANCE_LOGGING) System.nanoTime() else 0L
+
         val a = Normalizer.normalize(a.lowercase(), Normalizer.Form.NFD)
         val b = Normalizer.normalize(b.lowercase(), Normalizer.Form.NFD)
 
@@ -179,11 +229,18 @@ object StringComparison {
         }
         prefix = prefix.coerceAtMost(4)
 
-        return JaroSimilarity(
+        val result = JaroSimilarity(
             score = jaroSimilarity.score + (prefix * prefixScale * (1 - jaroSimilarity.score)),
             aMatchedIndices = jaroSimilarity.aMatchedIndices,
             bMatchedIndices = jaroSimilarity.bMatchedIndices
         )
+
+        if (ENABLE_PERFORMANCE_LOGGING) {
+            jaroWinklerDistanceCallCount++
+            totalJaroWinklerDistanceTimeNs += System.nanoTime() - startTime
+        }
+
+        return result
     }
 
     /**
@@ -209,6 +266,8 @@ object StringComparison {
         b: String,
         multiWordThreshold: Double = threshold
     ): JaroSimilarity {
+        val startTime = if (ENABLE_PERFORMANCE_LOGGING) System.nanoTime() else 0L
+
         val aSplit = a.split(" ")
         val bSplit = b.split(" ")
 
@@ -261,11 +320,15 @@ object StringComparison {
         )
 
         // Strategy 3: If query has multiple words, try matching each query word against each target word
-        if (aSplit.size > 1) {
+        // Cache these scores to avoid redundant calculations in applyMultiWordCoverageBonus
+        val wordToWordScores: Map<Pair<Int, Int>, Double>? = if (aSplit.size > 1) {
+            val scoresMap = mutableMapOf<Pair<Int, Int>, Double>()
             allMatches.addAll(
                 aSplit.flatMapIndexed { aIndex, aWord ->
                     bSplit.mapIndexed { bIndex, bWord ->
                         val splitSimilarity = jaroWinklerDistance(aWord, bWord)
+                        // Cache the score for later use
+                        scoresMap[Pair(aIndex, bIndex)] = splitSimilarity.score
                         splitSimilarity.copy(
                             aMatchedIndices = splitSimilarity.aMatchedIndices.mapKeys {
                                 it.key + aIndex + aSplit.take(aIndex).sumOf { it.length }
@@ -277,6 +340,9 @@ object StringComparison {
                     }
                 }
             )
+            scoresMap
+        } else {
+            null
         }
 
         // Get the best match from all strategies
@@ -291,8 +357,14 @@ object StringComparison {
         }
 
         // Apply multi-word coverage bonus for multi-word queries
-        if (aSplit.size > 1) {
-            bestMatch = applyMultiWordCoverageBonus(aSplit, bSplit, bestMatch)
+        // This also combines matched indices from all matched words for highlighting
+        if (aSplit.size > 1 && wordToWordScores != null) {
+            bestMatch = applyMultiWordCoverageBonus(aSplit, bSplit, bestMatch, wordToWordScores, allMatches)
+        }
+
+        if (ENABLE_PERFORMANCE_LOGGING) {
+            jaroWinklerMultiDistanceCallCount++
+            totalJaroWinklerMultiDistanceTimeNs += System.nanoTime() - startTime
         }
 
         return bestMatch
@@ -300,6 +372,7 @@ object StringComparison {
 
     /**
      * Applies a bonus to the score when multiple query words are present in the target.
+     * Also combines matched indices from all matched words for proper highlighting.
      *
      * For example, searching "queen stone" should rank "Queens of the Stone Age" higher
      * than just "Queen", because the target contains both query words.
@@ -310,23 +383,55 @@ object StringComparison {
      * - 2 query words matched: score * 1.05
      * - 3 query words matched: score * 1.10
      *
+     * Additionally, this function now combines the bMatchedIndices from all matched words,
+     * so searching "dark side" will highlight both "dark" AND "side" in "The Dark Side".
+     *
      * Note: Using multiplication preserves relative ranking of similar matches while
      * rewarding completeness. This works even when base scores are very high (near 1.0).
+     *
+     * @param wordToWordScores Cached word-to-word similarity scores to avoid redundant calculations.
+     *                         Map keys are Pair(queryWordIndex, targetWordIndex).
+     * @param allMatches All similarity matches from different strategies, used to extract matched indices.
      */
     private fun applyMultiWordCoverageBonus(
         queryWords: List<String>,
         targetWords: List<String>,
-        baseSimilarity: JaroSimilarity
+        baseSimilarity: JaroSimilarity,
+        wordToWordScores: Map<Pair<Int, Int>, Double>,
+        allMatches: List<JaroSimilarity>
     ): JaroSimilarity {
-        // For each query word, find its best match against any target word
-        val queryWordMatches = queryWords.map { queryWord ->
-            targetWords.map { targetWord ->
-                jaroWinklerDistance(queryWord, targetWord).score
-            }.maxOrNull() ?: 0.0
+        // For each query word, find its best match against any target word using cached scores
+        val queryWordBestMatches = queryWords.mapIndexed { queryIndex, _ ->
+            var bestScore = 0.0
+            var bestTargetIndex = -1
+            targetWords.indices.forEach { targetIndex ->
+                val score = wordToWordScores[Pair(queryIndex, targetIndex)] ?: 0.0
+                if (score > bestScore) {
+                    bestScore = score
+                    bestTargetIndex = targetIndex
+                }
+            }
+            Triple(queryIndex, bestTargetIndex, bestScore)
         }
 
-        // Count how many query words found a good match (score >= 0.85)
-        val matchedQueryWords = queryWordMatches.count { it >= 0.85 }
+        // Count how many query words found a good match (score >= 0.82, using current threshold)
+        val matchedQueryWords = queryWordBestMatches.count { it.third >= threshold }
+
+        // Combine bMatchedIndices from all matched words for highlighting
+        val combinedBMatchedIndices = mutableMapOf<Int, Double>()
+        if (matchedQueryWords > 1) {
+            // Find all word-to-word matches in allMatches and combine their bMatchedIndices
+            queryWordBestMatches.filter { it.third >= threshold }.forEach { (queryIndex, targetIndex, _) ->
+                // Find the corresponding match in allMatches
+                // allMatches structure: [fullStringMatch, ...strategy2Matches, ...strategy3Matches]
+                // Strategy 3 starts at index: 1 + targetWords.size
+                val matchIndex = 1 + targetWords.size + (queryIndex * targetWords.size + targetIndex)
+                if (matchIndex < allMatches.size) {
+                    val wordMatch = allMatches[matchIndex]
+                    combinedBMatchedIndices.putAll(wordMatch.bMatchedIndices)
+                }
+            }
+        }
 
         // Apply multiplicative bonus if multiple query words matched
         // This rewards targets that match more query words
@@ -338,8 +443,16 @@ object StringComparison {
 
         val finalScore = baseSimilarity.score * multiplier
 
+        // Use combined indices if we found multiple matches, otherwise keep original
+        val finalBMatchedIndices = if (combinedBMatchedIndices.isNotEmpty()) {
+            combinedBMatchedIndices
+        } else {
+            baseSimilarity.bMatchedIndices
+        }
+
         return baseSimilarity.copy(
-            score = finalScore
+            score = finalScore,
+            bMatchedIndices = finalBMatchedIndices
         )
     }
 }
