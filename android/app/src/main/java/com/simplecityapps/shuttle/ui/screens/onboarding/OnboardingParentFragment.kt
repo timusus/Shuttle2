@@ -215,8 +215,6 @@ class OnboardingParentFragment :
     // Static
 
     companion object {
-        const val REQUEST_CODE_READ_STORAGE = 100
-
         const val TAG = "OnboardingParentFragment"
 
         fun newInstance(args: OnboardingParentFragmentArgs) = OnboardingParentFragment().apply {
