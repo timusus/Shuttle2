@@ -19,14 +19,14 @@ import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.autoCleared
-import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.MediaProviderSelectionScreenFragment
+import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.MediaProviderSelectionFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.permissions.StoragePermissionScreenFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.privacy.AnalyticsPermissionScreenFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.scanner.MediaScannerFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.taglib.DirectorySelectionFragment
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
 import me.relex.circleindicator.CircleIndicator3
+import javax.inject.Inject
 
 enum class OnboardingPage {
     StoragePermission,
@@ -240,7 +240,7 @@ class OnboardingParentFragment :
         override fun createFragment(position: Int): Fragment = when (data[position]) {
             OnboardingPage.StoragePermission -> StoragePermissionScreenFragment()
             OnboardingPage.AnalyticsPermission -> AnalyticsPermissionScreenFragment()
-            OnboardingPage.MediaProviderSelector -> MediaProviderSelectionScreenFragment()
+            OnboardingPage.MediaProviderSelector -> MediaProviderSelectionFragment.newInstance(isOnboarding)
             OnboardingPage.MusicDirectories -> DirectorySelectionFragment()
             OnboardingPage.Scanner -> MediaScannerFragment.newInstance(scanAutomatically = true, showRescanButton = false, dismissOnScanComplete = isOnboarding, showToolbar = true)
         }
