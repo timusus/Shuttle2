@@ -72,4 +72,24 @@ class PlexAuthenticationManager(
             "&X-Plex-Client-Identifier=s2-music-payer" +
             "&X-Plex-Device=Android"
     }
+
+    /**
+     * Builds a direct download URL for offline playback
+     * For Plex, the download URL is the same as the streaming URL since Plex doesn't transcode by default
+     */
+    fun buildPlexDownloadPath(
+        song: Song,
+        authenticatedCredentials: AuthenticatedCredentials
+    ): String? {
+        if (credentialStore.address == null) {
+            Timber.w("Invalid plex address (${credentialStore.address})")
+            return null
+        }
+
+        return "${credentialStore.address}${song.externalId}" +
+            "?X-Plex-Token=${authenticatedCredentials.accessToken}" +
+            "&X-Plex-Client-Identifier=s2-music-player" +
+            "&X-Plex-Device=Android" +
+            "&download=1"
+    }
 }
