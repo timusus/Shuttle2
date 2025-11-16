@@ -20,7 +20,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.MediaProviderSelectionFragment
-import com.simplecityapps.shuttle.ui.screens.onboarding.scanner.MediaScannerFragment
+import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.scanner.MediaScannerFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.taglib.DirectorySelectionFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.permissions.privacy.AnalyticsPermissionScreenFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.permissions.storage.StoragePermissionScreenFragment
