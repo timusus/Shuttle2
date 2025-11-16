@@ -1,14 +1,19 @@
 package com.simplecityapps.shuttle.ui.widgets
 
-import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
+import androidx.glance.appwidget.GlanceAppWidgetManager
+import androidx.glance.appwidget.updateAll
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.PlaybackWatcherCallback
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueWatcher
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class WidgetManager
@@ -19,6 +24,9 @@ constructor(
     private val queueWatcher: QueueWatcher
 ) : PlaybackWatcherCallback,
     QueueChangeCallback {
+
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
     enum class UpdateReason {
         PlaystateChanged,
         QueueChanged,
@@ -36,19 +44,11 @@ constructor(
         queueWatcher.removeCallback(this)
     }
 
-    fun updateAppWidgets(updateReason: UpdateReason) {
-        listOf(
-            Intent(context, WidgetProvider41::class.java),
-            Intent(context, WidgetProvider42::class.java)
-        ).forEach { intent ->
-            context.sendBroadcast(
-                intent.apply {
-                    action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-                    val ids = AppWidgetManager.getInstance(context).getAppWidgetIds(component)
-                    putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, ids)
-                    putExtra(ARG_UPDATE_REASON, updateReason.ordinal)
-                }
-            )
+    fun updateAppWidgets(updateReason: UpdateReason = UpdateReason.Unknown) {
+        scope.launch {
+            // Update all widgets using Glance API
+            Widget41().updateAll(context)
+            Widget42().updateAll(context)
         }
     }
 
@@ -56,7 +56,6 @@ constructor(
 
     override fun onPlaybackStateChanged(playbackState: PlaybackState) {
         super.onPlaybackStateChanged(playbackState)
-
         updateAppWidgets(UpdateReason.PlaystateChanged)
     }
 
@@ -71,7 +70,6 @@ constructor(
         newPosition: Int?
     ) {
         super.onQueuePositionChanged(oldPosition, newPosition)
-
         updateAppWidgets(UpdateReason.QueuePositionChanged)
     }
 
