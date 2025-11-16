@@ -49,6 +49,7 @@ constructor(
             // Update all widgets using Glance API
             Widget41().updateAll(context)
             Widget42().updateAll(context)
+            Widget43().updateAll(context)
         }
     }
 
