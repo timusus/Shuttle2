@@ -759,6 +759,23 @@ class SyncAwarePlaylistRepository(
     }
 
     // Similar for remove, delete, rename, reorder...
+
+    private fun Playlist.shouldSync(): Boolean {
+        // Only sync regular playlists from remote media providers
+        return mediaProvider.isRemote() &&        // Jellyfin, Emby, or Plex
+               externalId != null &&              // Has remote identity
+               !isSmartPlaylist()                 // Not a smart playlist (query-based)
+    }
+
+    private fun Playlist.isSmartPlaylist(): Boolean {
+        // Smart playlists are query-based and shouldn't be synced
+        // They're typically read-only on servers
+        return name in listOf(
+            context.getString(R.string.playlist_title_recently_added),
+            context.getString(R.string.playlist_title_most_played)
+            // Add other smart playlist names as needed
+        )
+    }
 }
 ```
 
@@ -797,9 +814,52 @@ Tasks:
   }
   ```
 
+- [ ] Configure WorkManager with daily default
+  ```kotlin
+  enum class SyncFrequency(val hours: Long) {
+      FIFTEEN_MINUTES(0),  // 15 min (for paid/power users)
+      HOURLY(1),
+      SIX_HOURS(6),
+      DAILY(24),           // DEFAULT
+      MANUAL(-1)           // Only manual sync
+  }
+
+  fun scheduleSyncWorker(frequency: SyncFrequency) {
+      val constraints = Constraints.Builder()
+          .setRequiredNetworkType(NetworkType.CONNECTED)
+          .setRequiresBatteryNotLow(true)
+          .build()
+
+      val request = when (frequency) {
+          MANUAL -> null  // Cancel periodic sync
+          FIFTEEN_MINUTES -> {
+              PeriodicWorkRequestBuilder<PlaylistSyncWorker>(15, TimeUnit.MINUTES)
+                  .setConstraints(constraints)
+                  .build()
+          }
+          else -> {
+              PeriodicWorkRequestBuilder<PlaylistSyncWorker>(frequency.hours, TimeUnit.HOURS)
+                  .setConstraints(constraints)
+                  .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 10, TimeUnit.MINUTES)
+                  .build()
+          }
+      }
+
+      WorkManager.getInstance(context)
+          .enqueueUniquePeriodicWork(
+              "playlist_sync",
+              ExistingPeriodicWorkPolicy.REPLACE,
+              request
+          )
+  }
+  ```
+
 - [ ] Set up constraints (network required, battery not low)
 
 - [ ] Add manual "Sync Now" button in settings
+  - Triggers immediate one-time work request
+  - Shows progress indicator
+  - Displays results (X playlists synced, Y conflicts)
 
 **Success Criteria**: Sync operations execute successfully in background
 
@@ -867,7 +927,20 @@ Tasks:
   - Handle URI-based item references
   - One-at-a-time removal
 
-- [ ] Add server-specific settings (enable/disable sync per server)
+- [ ] Add global sync settings per media server
+  ```kotlin
+  // Settings UI structure
+  Settings > Playlist Sync
+    ├─ Enable Jellyfin Sync: [Toggle]  (default: OFF)
+    ├─ Enable Emby Sync: [Toggle]      (default: OFF)
+    ├─ Enable Plex Sync: [Toggle]      (default: OFF)
+    ├─ Sync Frequency: [Dropdown]      (default: Daily)
+    ├─ Conflict Resolution: [Dropdown] (default: Auto-merge)
+    └─ [Sync Now] button
+  ```
+  - Global enable/disable per server type
+  - Simpler than per-playlist configuration
+  - Can add per-playlist granularity in future if requested
 
 **Success Criteria**: All three servers support bidirectional sync
 
@@ -898,19 +971,57 @@ Tasks:
 
 **Success Criteria**: Production-ready with <1% failure rate
 
-### 5.2 Feature Flags
+### 5.2 Feature Flags & User Settings
 
-Use feature flags for gradual rollout:
+**Developer Feature Flags** (for gradual rollout):
 
 ```kotlin
 object SyncFeatureFlags {
+    // Master kill switch for entire sync feature
     const val ENABLE_SYNC = "enable_playlist_sync"
+
+    // Per-server rollout flags (can enable for subset of users)
     const val ENABLE_JELLYFIN_SYNC = "enable_jellyfin_playlist_sync"
     const val ENABLE_EMBY_SYNC = "enable_emby_playlist_sync"
     const val ENABLE_PLEX_SYNC = "enable_plex_playlist_sync"
+
+    // Experimental features
     const val ENABLE_AUTO_CONFLICT_RESOLUTION = "enable_auto_conflict_resolution"
 }
 ```
+
+**User Settings** (per-server enable/disable):
+
+```kotlin
+class PlaylistSyncPreferences(private val prefs: SharedPreferences) {
+    var jellyfinSyncEnabled: Boolean
+        get() = prefs.getBoolean("jellyfin_sync_enabled", false)
+        set(value) = prefs.edit().putBoolean("jellyfin_sync_enabled", value).apply()
+
+    var embySyncEnabled: Boolean
+        get() = prefs.getBoolean("emby_sync_enabled", false)
+        set(value) = prefs.edit().putBoolean("emby_sync_enabled", value).apply()
+
+    var plexSyncEnabled: Boolean
+        get() = prefs.getBoolean("plex_sync_enabled", false)
+        set(value) = prefs.edit().putBoolean("plex_sync_enabled", value).apply()
+
+    var syncFrequency: SyncFrequency
+        get() = SyncFrequency.valueOf(
+            prefs.getString("sync_frequency", SyncFrequency.DAILY.name)!!
+        )
+        set(value) = prefs.edit().putString("sync_frequency", value.name).apply()
+
+    var conflictResolution: ConflictPreference
+        get() = ConflictPreference.valueOf(
+            prefs.getString("conflict_preference", ConflictPreference.MERGE_AUTO.name)!!
+        )
+        set(value) = prefs.edit().putString("conflict_preference", value.name).apply()
+}
+```
+
+**Note**: Both feature flag AND user setting must be enabled for sync to operate.
+This allows gradual rollout (feature flag) while giving users control (user setting).
 
 ### 5.3 Rollback Strategy
 
@@ -988,28 +1099,51 @@ sealed class ConflictResolutionChoice {
 **Pros**: User control
 **Cons**: Requires user intervention, may block sync
 
-### 6.3 Recommended Strategy
+### 6.3 Recommended Strategy (Implemented)
 
-**Hybrid Approach**:
+**Safe Auto-Merge with User Prompts for Complex Conflicts**:
 
-1. **Auto-resolve safe conflicts**:
-   - Union merge for non-overlapping adds
-   - Remote wins for metadata (name) if local unchanged
+Default behavior prioritizes not losing user data while minimizing interruptions:
 
-2. **Flag complex conflicts for user**:
-   - Overlapping removes
-   - Concurrent renames
-   - Reorder conflicts
+1. **Auto-resolve safe conflicts (no user prompt)**:
+   - ✅ **Union merge** for non-overlapping adds (both sides added different songs)
+   - ✅ **Preserve all content** - combine local and remote changes
+   - ✅ **Timestamp-based order** - use most recent modification time to determine song order
+   - ✅ **Metadata sync** - accept remote metadata (name, description) if local unchanged
 
-3. **Provide user preferences**:
+2. **Prompt user for destructive conflicts**:
+   - ⚠️ **Concurrent renames** - "Playlist renamed to X locally and Y remotely"
+   - ⚠️ **Concurrent deletions** - "Song removed locally but exists remotely"
+   - ⚠️ **Complex reorders** - Both sides reordered differently
+
+3. **User preference setting**:
    ```kotlin
    enum class ConflictPreference {
-       ALWAYS_LOCAL,
-       ALWAYS_REMOTE,
-       MERGE_AUTO,
-       ASK_ME
+       MERGE_AUTO,       // Default: Auto-merge safe, prompt for complex (RECOMMENDED)
+       ALWAYS_LOCAL,     // Always push local changes
+       ALWAYS_REMOTE,    // Always pull remote changes
+       ASK_ME            // Prompt for every conflict
    }
    ```
+
+**Example auto-merge scenario**:
+```
+Local:  [Song A, Song B, Song C] + adds Song D
+Remote: [Song A, Song B, Song C] + adds Song E
+
+Result: [Song A, Song B, Song C, Song D, Song E]  ✅ Auto-merged
+```
+
+**Example user-prompt scenario**:
+```
+Local:  Renamed "Rock" → "Best Rock"
+Remote: Renamed "Rock" → "Rock Classics"
+
+Action: Show dialog with options:
+  - Keep "Best Rock" (local)
+  - Keep "Rock Classics" (remote)
+  - Enter custom name
+```
 
 ---
 
@@ -1178,17 +1312,54 @@ This architecture provides a **solid foundation** for bidirectional playlist syn
 3. Create tickets for Phase 1 tasks
 4. Begin implementation
 
-### Open Questions
+### Design Decisions (Resolved)
 
-1. **User Preference**: Default conflict resolution strategy?
-2. **Sync Frequency**: How often to run background sync? (15 min, 1 hour, manual only?)
-3. **Scope**: Should smart playlists sync? (Read-only on servers typically)
-4. **UX**: Should sync be opt-in per playlist or global setting?
+1. **Default Conflict Resolution Strategy**: **Safe Auto-Merge**
+   - Use union merge for additive operations (both sides added different songs)
+   - Preserve all content when safe to do so
+   - Prompt user only for destructive conflicts (concurrent deletions, renames)
+   - Aligns with user expectation: "don't lose my changes"
+
+2. **Sync Frequency**: **Daily (user configurable)**
+   - Default: Daily background sync (battery-friendly, low server load)
+   - User options: 15 min, 1 hour, 6 hours, daily, manual only
+   - Immediate sync available via manual "Sync Now" button
+   - User-initiated changes can trigger immediate sync (debounced)
+
+3. **Sync Scope**: **Global per media server**
+   - Settings: "Enable Jellyfin Sync", "Enable Emby Sync", "Enable Plex Sync"
+   - All playlists from enabled servers sync automatically
+   - Simpler UX, less configuration overhead
+   - Can add per-playlist granularity in future if needed
+
+4. **Smart Playlists**: **No sync**
+   - Smart playlists are query-based and dynamically generated
+   - Servers typically don't support modifying smart playlist queries
+   - Keep them local-only or read-only from server
+   - Focus sync effort on regular playlists
 
 ---
 
-**Document Version**: 1.0
+**Document Version**: 1.1
 **Last Updated**: 2025-11-16
-**Review Status**: Pending Approval
+**Review Status**: Ready for Implementation
 **Estimated Effort**: 12 weeks (1 developer)
 **Priority**: High (community requested feature)
+
+## Changelog
+
+### Version 1.1 (2025-11-16)
+- ✅ Resolved all open design questions
+- Added **Safe Auto-Merge** as default conflict resolution strategy
+- Specified **Daily** as default sync frequency (user configurable)
+- Clarified **global per-server** sync settings approach
+- Excluded **smart playlists** from sync
+- Added detailed WorkManager configuration
+- Added user settings preferences structure
+- Expanded conflict resolution examples
+
+### Version 1.0 (2025-11-16)
+- Initial architecture proposal
+- Core component design
+- API capability analysis
+- Phased implementation plan
