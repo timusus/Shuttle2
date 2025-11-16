@@ -138,11 +138,6 @@ class ExoPlayerPlayback(
 
     private var player: SimpleExoPlayer = SimpleExoPlayer.Builder(context, renderersFactory).build()
 
-    init {
-        // Give the ReplayGainAudioProcessor access to the player so it can query currentMediaItem
-        replayGainAudioProcessor.player = player
-    }
-
     override suspend fun load(
         current: Song,
         next: Song?,
@@ -153,7 +148,6 @@ class ExoPlayerPlayback(
 
         if (isReleased) {
             player = SimpleExoPlayer.Builder(context, renderersFactory).build()
-            replayGainAudioProcessor.player = player
             isReleased = false
         }
 
