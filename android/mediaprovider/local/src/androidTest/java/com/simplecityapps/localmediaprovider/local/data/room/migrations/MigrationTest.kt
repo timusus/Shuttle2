@@ -7,11 +7,12 @@ import androidx.sqlite.db.framework.FrameworkSQLiteOpenHelperFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
-import org.junit.Assert.*
+import java.io.IOException
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.io.IOException
 
 /**
  * Tests for database migrations, specifically MIGRATION_40_41 which adds FTS4 support.
@@ -248,7 +249,7 @@ class MigrationTest {
             put("size", 3000000)
             put("mimeType", "audio/mpeg")
             put("lastModified", System.currentTimeMillis())
-            put("blacklisted", 1)  // Blacklisted!
+            put("blacklisted", 1) // Blacklisted!
             put("playCount", 0)
             put("playbackPosition", 0)
             put("mediaProvider", "LOCAL")
