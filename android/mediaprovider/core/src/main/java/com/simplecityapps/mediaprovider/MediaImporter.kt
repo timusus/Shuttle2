@@ -257,15 +257,16 @@ class MediaImporter(
                 .firstOrNull()
                 .orEmpty()
 
-        // Use getSongsDirect() to bypass StateFlow cache and ensure fresh data from database
-        // This fixes a race condition where the StateFlow may not have updated yet after song import
         val existingSongs =
-            songRepository.getSongsDirect(
+            songRepository.getSongs(
                 SongQuery.All(
                     includeExcluded = true,
                     providerType = mediaProvider.type
                 )
             )
+                .filterNotNull()
+                .firstOrNull()
+                .orEmpty()
 
         mediaProvider.findPlaylists(existingPlaylists, existingSongs).collect { event ->
             when (event) {
