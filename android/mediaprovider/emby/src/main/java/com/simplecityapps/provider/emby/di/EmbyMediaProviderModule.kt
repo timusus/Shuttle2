@@ -11,6 +11,7 @@ import com.simplecityapps.provider.emby.EmbyMediaProvider
 import com.simplecityapps.provider.emby.http.EmbyTranscodeService
 import com.simplecityapps.provider.emby.http.ItemsService
 import com.simplecityapps.provider.emby.http.LoginCredentials
+import com.simplecityapps.provider.emby.http.PlaybackReportingService
 import com.simplecityapps.provider.emby.http.UserService
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import com.squareup.moshi.Moshi
@@ -66,6 +67,12 @@ open class EmbyMediaProviderModule {
     fun provideTranscodeService(
         @Named("EmbyRetrofit") retrofit: Retrofit
     ): EmbyTranscodeService = retrofit.create()
+
+    @Provides
+    @Singleton
+    fun providePlaybackReportingService(
+        @Named("EmbyRetrofit") retrofit: Retrofit
+    ): PlaybackReportingService = retrofit.create()
 
     @Provides
     @Singleton
