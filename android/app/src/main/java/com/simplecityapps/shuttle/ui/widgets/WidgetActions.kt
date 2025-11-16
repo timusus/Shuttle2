@@ -7,8 +7,6 @@ import androidx.glance.GlanceId
 import androidx.glance.action.ActionParameters
 import androidx.glance.appwidget.action.ActionCallback
 import com.simplecityapps.playback.PlaybackService
-import dagger.hilt.android.qualifiers.ApplicationContext
-import javax.inject.Inject
 
 class PlayPauseAction : ActionCallback {
     override suspend fun onAction(

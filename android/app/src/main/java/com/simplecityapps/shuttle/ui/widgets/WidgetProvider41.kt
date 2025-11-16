@@ -40,7 +40,6 @@ import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
 import com.squareup.phrase.ListPhrase
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.EntryPointAccessors
-import javax.inject.Inject
 
 class Widget41 : GlanceAppWidget() {
 
@@ -155,14 +154,12 @@ class Widget41 : GlanceAppWidget() {
         }
     }
 
-    private fun getPlayPauseIcon(playbackManager: PlaybackManager, isDarkMode: Boolean): Int {
-        return when (playbackManager.playbackState()) {
-            is PlaybackState.Loading, PlaybackState.Playing -> {
-                if (isDarkMode) R.drawable.ic_pause_white_24dp else com.simplecityapps.playback.R.drawable.ic_pause_black_24dp
-            }
-            else -> {
-                if (isDarkMode) R.drawable.ic_play_arrow_white_24dp else com.simplecityapps.playback.R.drawable.ic_play_arrow_black_24dp
-            }
+    private fun getPlayPauseIcon(playbackManager: PlaybackManager, isDarkMode: Boolean): Int = when (playbackManager.playbackState()) {
+        is PlaybackState.Loading, PlaybackState.Playing -> {
+            if (isDarkMode) R.drawable.ic_pause_white_24dp else com.simplecityapps.playback.R.drawable.ic_pause_black_24dp
+        }
+        else -> {
+            if (isDarkMode) R.drawable.ic_play_arrow_white_24dp else com.simplecityapps.playback.R.drawable.ic_play_arrow_black_24dp
         }
     }
 }
