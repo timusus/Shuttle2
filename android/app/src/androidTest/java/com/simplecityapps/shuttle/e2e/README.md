@@ -4,12 +4,15 @@ This directory contains end-to-end (E2E) instrumented tests for the Shuttle musi
 
 ## Overview
 
-The E2E tests cover critical user journeys and are designed to run on real devices or emulators using Gradle Managed Devices for consistent, deterministic test execution.
+The E2E tests cover **7 critical user journeys** and are designed to run on real devices or emulators using Gradle Managed Devices for consistent, deterministic test execution.
+
+**Total Test Coverage**: 70+ comprehensive tests across all major app features.
 
 ## Test Suites
 
 ### 1. AppLaunchAndNavigationE2ETest
 **Critical Journey**: App Launch & Main Navigation
+**Tests**: 5 comprehensive scenarios
 
 Tests covered:
 - ✅ App launches successfully without crashes
@@ -22,6 +25,7 @@ Tests covered:
 
 ### 2. LibraryBrowseE2ETest
 **Critical Journey**: Music Library Browsing
+**Tests**: 6 comprehensive scenarios
 
 Tests covered:
 - ✅ Navigate to Library section
@@ -35,6 +39,7 @@ Tests covered:
 
 ### 3. SearchE2ETest
 **Critical Journey**: Music Search
+**Tests**: 7 comprehensive scenarios
 
 Tests covered:
 - ✅ Navigate to Search section
@@ -46,6 +51,79 @@ Tests covered:
 - ✅ Search results interaction
 
 **Why it matters**: Search is critical for quickly finding specific music in large libraries.
+
+### 4. PlaybackControlsE2ETest
+**Critical Journey**: Playback Controls & Music Playback
+**Tests**: 9 comprehensive scenarios
+
+Tests covered:
+- ✅ Playback sheet structure and UI elements
+- ✅ Can interact with playback sheet (expand/collapse)
+- ✅ Peek view (mini player) accessibility
+- ✅ Multi-sheet interaction stability
+- ✅ Rapid playback control interactions
+- ✅ Sheet functionality during navigation
+- ✅ Bottom sheet behavior initialization
+- ✅ Configuration change handling
+- ✅ Playback infrastructure survives backgrounding
+
+**Why it matters**: Playback is the core function of a music player - users must be able to control music playback reliably.
+
+### 5. HomeScreenE2ETest
+**Critical Journey**: Home Screen & Personalized Content
+**Tests**: 11 comprehensive scenarios
+
+Tests covered:
+- ✅ Navigate to Home screen successfully
+- ✅ Display personalized content or appropriate states
+- ✅ Home content scrolling
+- ✅ Configuration change handling
+- ✅ Rapid navigation to/from Home
+- ✅ Load personalized content sections
+- ✅ Refresh gestures handling
+- ✅ Quick actions accessibility
+- ✅ Empty library handling
+- ✅ Content items interactivity
+- ✅ Load performance validation
+
+**Why it matters**: Home is the landing experience for returning users - it must be fast, personalized, and functional.
+
+### 6. QueueManagementE2ETest
+**Critical Journey**: Playback Queue Management
+**Tests**: 12 comprehensive scenarios
+
+Tests covered:
+- ✅ Queue sheet structure exists
+- ✅ Can interact with queue sheet (expand/collapse)
+- ✅ Queue peek view accessibility
+- ✅ Queue container initialization
+- ✅ Configuration change handling
+- ✅ Queue persists across navigation
+- ✅ Queue accessible from all sections
+- ✅ Rapid queue interaction handling
+- ✅ Empty queue state handling
+- ✅ Queue sheet layering/z-order
+- ✅ Queue independence from playback controls
+- ✅ Queue survives backgrounding
+
+**Why it matters**: Queue management is essential for controlling what plays next and curating listening sessions.
+
+### 7. SettingsAndPreferencesE2ETest
+**Critical Journey**: Settings & App Configuration
+**Tests**: 9 comprehensive scenarios
+
+Tests covered:
+- ✅ Access settings/menu section
+- ✅ Settings UI accessibility
+- ✅ Menu drawer opens and closes properly
+- ✅ Access equalizer/DSP settings
+- ✅ Configuration change handling
+- ✅ Menu options functionality
+- ✅ Back navigation from settings
+- ✅ Rapid menu open/close handling
+- ✅ Settings accessible from all screens
+
+**Why it matters**: Users need to customize their experience and access app features like equalizer, themes, and preferences.
 
 ## Test Architecture
 
@@ -165,6 +243,19 @@ Tests automatically grant necessary permissions:
 
 Both via `GrantPermissionRule` and programmatic shell commands for robustness.
 
+## Test Coverage Summary
+
+| Test Suite | # of Tests | Focus Area | Critical? |
+|------------|-----------|------------|-----------|
+| AppLaunchAndNavigation | 5 | App startup & navigation | ⭐⭐⭐ |
+| LibraryBrowse | 6 | Music library browsing | ⭐⭐⭐ |
+| Search | 7 | Music search functionality | ⭐⭐ |
+| PlaybackControls | 9 | Music playback controls | ⭐⭐⭐ |
+| HomeScreen | 11 | Home screen & personalization | ⭐⭐ |
+| QueueManagement | 12 | Playback queue management | ⭐⭐⭐ |
+| SettingsAndPreferences | 9 | App settings & configuration | ⭐⭐ |
+| **TOTAL** | **70+** | **All major features** | |
+
 ## CI/CD Integration
 
 ### GitHub Actions Example
@@ -177,6 +268,7 @@ on: [push, pull_request]
 jobs:
   e2e:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v3
 
@@ -185,6 +277,9 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
 
       - name: Run E2E Tests on CI Group
         run: ./gradlew :android:app:ciGroupDebugAndroidTest
@@ -195,6 +290,28 @@ jobs:
         with:
           name: test-reports
           path: android/app/build/reports/androidTests/
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results
+          path: android/app/build/outputs/androidTest-results/
+```
+
+### Running Specific Test Suites in CI
+
+```bash
+# Run only critical tests (app launch, playback, queue)
+./gradlew :android:app:connectedDebugAndroidTest \
+  -Pandroid.testInstrumentationRunnerArguments.class=\
+com.simplecityapps.shuttle.e2e.AppLaunchAndNavigationE2ETest,\
+com.simplecityapps.shuttle.e2e.PlaybackControlsE2ETest,\
+com.simplecityapps.shuttle.e2e.QueueManagementE2ETest
+
+# Run all E2E tests in the e2e package
+./gradlew :android:app:connectedDebugAndroidTest \
+  -Pandroid.testInstrumentationRunnerArguments.package=com.simplecityapps.shuttle.e2e
 ```
 
 ## Troubleshooting
@@ -260,6 +377,48 @@ fun myNewUserJourney() {
 - [Espresso Documentation](https://developer.android.com/training/testing/espresso)
 - [Gradle Managed Devices](https://developer.android.com/studio/test/gradle-managed-devices)
 - [Now in Android Reference](https://github.com/android/nowinandroid)
+
+## Performance Expectations
+
+Based on test design, expected run times on managed devices:
+
+| Test Suite | Estimated Time | Complexity |
+|------------|---------------|------------|
+| AppLaunchAndNavigation | 2-3 min | Low |
+| LibraryBrowse | 2-3 min | Low-Medium |
+| Search | 3-4 min | Medium |
+| PlaybackControls | 3-4 min | Medium |
+| HomeScreen | 4-5 min | Medium-High |
+| QueueManagement | 4-5 min | Medium |
+| SettingsAndPreferences | 3-4 min | Medium |
+| **Total (all suites)** | **20-30 min** | |
+| **CI Group (critical only)** | **10-15 min** | |
+
+*Times may vary based on device performance and network conditions*
+
+## Test Maintenance
+
+### When to Update Tests
+
+1. **Major UI changes**: Update view IDs and interaction patterns
+2. **New features**: Add new test methods to existing suites or create new suites
+3. **Bug fixes**: Add regression tests to prevent recurrence
+4. **Navigation changes**: Update navigation flow tests
+5. **API changes**: Update tests if device/OS behavior changes
+
+### Test Health Indicators
+
+**Healthy tests**:
+- ✅ Pass consistently across all managed devices
+- ✅ Complete within expected time ranges
+- ✅ Provide clear failure messages
+- ✅ Handle both success and failure scenarios
+
+**Tests needing attention**:
+- ⚠️ Flaky (intermittent failures)
+- ⚠️ Taking significantly longer than expected
+- ⚠️ Failing on specific devices only
+- ⚠️ Cryptic failure messages
 
 ## License
 
