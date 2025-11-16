@@ -318,9 +318,17 @@ private fun MediaProviderTypeItem(
     modifier: Modifier = Modifier,
     trailingContent: @Composable (() -> Unit)? = null
 ) {
+    val description: String = when (provider) {
+        MediaProviderType.Shuttle -> stringResource(com.simplecityapps.mediaprovider.R.string.media_provider_description_s2)
+        MediaProviderType.MediaStore -> stringResource(com.simplecityapps.mediaprovider.R.string.media_provider_description_media_store)
+        MediaProviderType.Jellyfin -> stringResource(com.simplecityapps.mediaprovider.R.string.media_provider_description_jellyfin)
+        MediaProviderType.Emby -> stringResource(com.simplecityapps.mediaprovider.R.string.media_provider_description_emby)
+        MediaProviderType.Plex -> stringResource(com.simplecityapps.mediaprovider.R.string.media_provider_description_plex)
+    }
     ListItem(
         trailingContent = trailingContent,
         headlineContent = { Text(text = provider.name) },
+        supportingContent = { Text(text = description) },
         modifier = modifier.clip(RoundedCornerShape(8.dp)),
         leadingContent = {
             Icon(

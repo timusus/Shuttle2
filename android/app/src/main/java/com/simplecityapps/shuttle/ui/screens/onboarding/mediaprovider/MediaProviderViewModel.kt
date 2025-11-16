@@ -52,17 +52,18 @@ class MediaProviderViewModel @Inject constructor(
     fun onAddMediaProvider(provider: MediaProviderType) {
         mediaImporter.mediaProviders += provider.toMediaProvider()
         _mediaProviders.update { providers -> providers + provider }
+        _showAddMediaProviderDialog.update { false }
     }
 
     fun onRemoveMediaProvider() {
         val provider = _showProviderOverflowMenu.value!!
         mediaImporter.mediaProviders -= provider.toMediaProvider()
         _mediaProviders.update { providers -> providers - provider }
+        _showProviderOverflowMenu.update { null }
     }
 
     fun onAddMediaProviderClicked() {
         _showAddMediaProviderDialog.update { true }
-        _showAddMediaProviderDialog.update { false }
     }
 
     fun onDismissAddMediaProviderRequest() {
