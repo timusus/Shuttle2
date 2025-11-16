@@ -4,10 +4,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.hardware.usb.UsbDevice
 import android.hardware.usb.UsbManager
 import android.media.AudioDeviceInfo
-import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioMixerAttributes
 import android.os.Build
@@ -111,7 +109,7 @@ class BitPerfectManager(
         val devices = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
         return devices.firstOrNull { device ->
             device.type == AudioDeviceInfo.TYPE_USB_DEVICE ||
-            device.type == AudioDeviceInfo.TYPE_USB_HEADSET
+                device.type == AudioDeviceInfo.TYPE_USB_HEADSET
         }
     }
 
@@ -160,9 +158,12 @@ class BitPerfectManager(
             if (result == AudioManager.SUCCESS) {
                 isActive = true
                 currentUsbDevice = device
-                Log.i(TAG, "Bit-perfect mode activated: ${bitPerfectAttribute.format.sampleRate}Hz, " +
+                Log.i(
+                    TAG,
+                    "Bit-perfect mode activated: ${bitPerfectAttribute.format.sampleRate}Hz, " +
                         "${bitPerfectAttribute.format.channelCount}ch, " +
-                        "encoding=${bitPerfectAttribute.format.encoding}")
+                        "encoding=${bitPerfectAttribute.format.encoding}"
+                )
 
                 // Notify listeners that bit-perfect mode is active
                 notifyBitPerfectStateChanged(true, device)
@@ -170,7 +171,6 @@ class BitPerfectManager(
                 Log.e(TAG, "Failed to set preferred mixer attributes")
                 disableBitPerfect()
             }
-
         } catch (e: Exception) {
             Log.e(TAG, "Error configuring bit-perfect mode", e)
             disableBitPerfect()
