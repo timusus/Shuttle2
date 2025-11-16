@@ -103,6 +103,7 @@ android {
         androidTestImplementation(composeBom)
         implementation(libs.androidx.activity.ktx)
         implementation(libs.androidx.activity.compose)
+        implementation(libs.androidx.hilt.navigation.compose)
         implementation(libs.kotlinx.collections.immutable)
         implementation(libs.kotlinx.datetime)
         implementation(libs.androidx.material3)
