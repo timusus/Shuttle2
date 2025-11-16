@@ -3,8 +3,20 @@ package com.simplecityapps.shuttle.playback
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.PlaybackWatcherCallback
 import com.simplecityapps.provider.emby.EmbyAuthenticationManager
+import com.simplecityapps.provider.emby.http.PlaybackReportingService as EmbyPlaybackReportingService
+import com.simplecityapps.provider.emby.http.playbackProgress as embyPlaybackProgress
+import com.simplecityapps.provider.emby.http.playbackStart as embyPlaybackStart
+import com.simplecityapps.provider.emby.http.playbackStopped as embyPlaybackStopped
 import com.simplecityapps.provider.jellyfin.JellyfinAuthenticationManager
+import com.simplecityapps.provider.jellyfin.http.PlaybackReportingService as JellyfinPlaybackReportingService
+import com.simplecityapps.provider.jellyfin.http.playbackProgress as jellyfinPlaybackProgress
+import com.simplecityapps.provider.jellyfin.http.playbackStart as jellyfinPlaybackStart
+import com.simplecityapps.provider.jellyfin.http.playbackStopped as jellyfinPlaybackStopped
 import com.simplecityapps.provider.plex.PlexAuthenticationManager
+import com.simplecityapps.provider.plex.http.PlaybackReportingService as PlexPlaybackReportingService
+import com.simplecityapps.provider.plex.http.PlaybackState as PlexPlaybackState
+import com.simplecityapps.provider.plex.http.markPlayed as plexMarkPlayed
+import com.simplecityapps.provider.plex.http.timelineUpdate as plexTimelineUpdate
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
@@ -17,18 +29,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import com.simplecityapps.provider.jellyfin.http.PlaybackReportingService as JellyfinPlaybackReportingService
-import com.simplecityapps.provider.jellyfin.http.playbackProgress as jellyfinPlaybackProgress
-import com.simplecityapps.provider.jellyfin.http.playbackStart as jellyfinPlaybackStart
-import com.simplecityapps.provider.jellyfin.http.playbackStopped as jellyfinPlaybackStopped
-import com.simplecityapps.provider.emby.http.PlaybackReportingService as EmbyPlaybackReportingService
-import com.simplecityapps.provider.emby.http.playbackProgress as embyPlaybackProgress
-import com.simplecityapps.provider.emby.http.playbackStart as embyPlaybackStart
-import com.simplecityapps.provider.emby.http.playbackStopped as embyPlaybackStopped
-import com.simplecityapps.provider.plex.http.PlaybackReportingService as PlexPlaybackReportingService
-import com.simplecityapps.provider.plex.http.PlaybackState as PlexPlaybackState
-import com.simplecityapps.provider.plex.http.markPlayed as plexMarkPlayed
-import com.simplecityapps.provider.plex.http.timelineUpdate as plexTimelineUpdate
 
 /**
  * Coordinates playback reporting to remote media servers (Jellyfin, Emby, Plex).
