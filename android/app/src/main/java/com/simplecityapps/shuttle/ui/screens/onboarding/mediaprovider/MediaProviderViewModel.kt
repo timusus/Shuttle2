@@ -6,21 +6,23 @@ import com.simplecityapps.localmediaprovider.local.provider.mediastore.MediaStor
 import com.simplecityapps.localmediaprovider.local.provider.taglib.TaglibMediaProvider
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
+import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.provider.emby.EmbyMediaProvider
 import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
 import com.simplecityapps.provider.plex.PlexMediaProvider
 import com.simplecityapps.shuttle.model.MediaProviderType
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import javax.inject.Inject
 
 @HiltViewModel
 class MediaProviderViewModel @Inject constructor(
+    playbackPreferenceManager: PlaybackPreferenceManager,
     private val mediaImporter: MediaImporter,
     private val plexMediaProvider: PlexMediaProvider,
     private val embyMediaProvider: EmbyMediaProvider,
@@ -29,7 +31,9 @@ class MediaProviderViewModel @Inject constructor(
     private val mediaStoreMediaProvider: MediaStoreMediaProvider
 ) : ViewModel() {
 
-    private val _mediaProviders = MutableStateFlow(listOf(MediaProviderType.MediaStore))
+    private val _mediaProviders = MutableStateFlow(
+        playbackPreferenceManager.mediaProviderTypes.ifEmpty { listOf(MediaProviderType.MediaStore) }
+    )
     val mediaProviders = _mediaProviders.asStateFlow()
 
     val unAddedMediaProviders = _mediaProviders
