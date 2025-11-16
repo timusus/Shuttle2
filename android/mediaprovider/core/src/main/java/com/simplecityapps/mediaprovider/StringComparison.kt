@@ -9,6 +9,7 @@ import kotlin.math.min
 
 object StringComparison {
     private const val TAG = "StringComparison"
+
     // Performance logging disabled in production for performance (5-10% overhead)
     // Set to true for development/debugging only
     private const val ENABLE_PERFORMANCE_LOGGING = false
@@ -23,10 +24,15 @@ object StringComparison {
 
     // Performance counters
     @Volatile private var jaroDistanceCallCount = 0
+
     @Volatile private var jaroWinklerDistanceCallCount = 0
+
     @Volatile private var jaroWinklerMultiDistanceCallCount = 0
+
     @Volatile private var totalJaroDistanceTimeNs = 0L
+
     @Volatile private var totalJaroWinklerDistanceTimeNs = 0L
+
     @Volatile private var totalJaroWinklerMultiDistanceTimeNs = 0L
 
     fun resetPerformanceCounters() {

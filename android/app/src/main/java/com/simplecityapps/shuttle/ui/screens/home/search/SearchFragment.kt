@@ -174,7 +174,7 @@ class SearchFragment :
 
         viewLifecycleOwner.lifecycleScope.launch {
             queryFlow
-                .debounce(300)  // Reduced from 500ms to 300ms based on UX research
+                .debounce(300) // Reduced from 500ms to 300ms based on UX research
                 .flowOn(Dispatchers.IO)
                 .collect { query ->
                     presenter.loadData(query)

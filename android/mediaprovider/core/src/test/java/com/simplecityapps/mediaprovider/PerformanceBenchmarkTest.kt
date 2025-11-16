@@ -1,8 +1,7 @@
 package com.simplecityapps.mediaprovider
 
-import org.junit.Test
 import kotlin.system.measureNanoTime
-import kotlin.system.measureTimeMillis
+import org.junit.Test
 
 /**
  * Performance benchmarks for string comparison and search algorithms.
@@ -26,12 +25,10 @@ class PerformanceBenchmarkTest {
         val avgTimeUs: Double = avgTimeNs / 1000.0,
         val avgTimeMs: Double = avgTimeNs / 1_000_000.0
     ) {
-        override fun toString(): String {
-            return when {
-                avgTimeMs >= 1.0 -> "$operation: avg ${String.format("%.2f", avgTimeMs)}ms ($iterations iterations, total ${totalTimeMs}ms)"
-                avgTimeUs >= 1.0 -> "$operation: avg ${String.format("%.2f", avgTimeUs)}μs ($iterations iterations, total ${totalTimeMs}ms)"
-                else -> "$operation: avg ${avgTimeNs}ns ($iterations iterations, total ${totalTimeMs}ms)"
-            }
+        override fun toString(): String = when {
+            avgTimeMs >= 1.0 -> "$operation: avg ${String.format("%.2f", avgTimeMs)}ms ($iterations iterations, total ${totalTimeMs}ms)"
+            avgTimeUs >= 1.0 -> "$operation: avg ${String.format("%.2f", avgTimeUs)}μs ($iterations iterations, total ${totalTimeMs}ms)"
+            else -> "$operation: avg ${avgTimeNs}ns ($iterations iterations, total ${totalTimeMs}ms)"
         }
     }
 
@@ -383,8 +380,10 @@ class PerformanceBenchmarkTest {
         val newApproachResult = benchmark("NEW: FTS pre-filter + Jaro-Winkler on ~100 candidates", iterations = 5) {
             // Simulate FTS returning ~100 candidates (this would be <10ms with real FTS)
             val ftsCandidates = library
-                .filter { it.contains("beatles", ignoreCase = true) ||
-                         it.contains("beat", ignoreCase = true) }
+                .filter {
+                    it.contains("beatles", ignoreCase = true) ||
+                        it.contains("beat", ignoreCase = true)
+                }
                 .take(100)
 
             // Apply Jaro-Winkler only on FTS candidates

@@ -104,13 +104,15 @@ abstract class SongDataDao {
      */
     @SkipQueryVerification
     @Transaction
-    @Query("""
+    @Query(
+        """
         SELECT songs.* FROM songs_fts
         JOIN songs ON songs.id = songs_fts.docid
         WHERE songs_fts MATCH :ftsQuery
         AND songs.blacklisted = 0
         LIMIT :limit
-    """)
+    """
+    )
     abstract suspend fun searchSongsFts(ftsQuery: String, limit: Int = 100): List<SongData>
 
     /**
@@ -121,14 +123,16 @@ abstract class SongDataDao {
      * and Room's compile-time validation cannot verify it.
      */
     @SkipQueryVerification
-    @Query("""
+    @Query(
+        """
         SELECT DISTINCT songs.albumArtist, songs.album
         FROM songs_fts
         JOIN songs ON songs.id = songs_fts.docid
         WHERE songs_fts MATCH :ftsQuery
         AND songs.blacklisted = 0
         LIMIT :limit
-    """)
+    """
+    )
     abstract suspend fun searchAlbumGroupKeysFts(ftsQuery: String, limit: Int = 200): List<AlbumGroupKeyResult>
 
     /**
@@ -139,14 +143,16 @@ abstract class SongDataDao {
      * and Room's compile-time validation cannot verify it.
      */
     @SkipQueryVerification
-    @Query("""
+    @Query(
+        """
         SELECT DISTINCT songs.albumArtist
         FROM songs_fts
         JOIN songs ON songs.id = songs_fts.docid
         WHERE songs_fts MATCH :ftsQuery
         AND songs.blacklisted = 0
         LIMIT :limit
-    """)
+    """
+    )
     abstract suspend fun searchArtistGroupKeysFts(ftsQuery: String, limit: Int = 100): List<String>
 
     /**
@@ -161,7 +167,8 @@ abstract class SongDataDao {
      */
     @SkipQueryVerification
     @Transaction
-    @Query("""
+    @Query(
+        """
         SELECT songs.*
         FROM songs
         WHERE (songs.albumArtist, songs.album) IN (
@@ -174,7 +181,8 @@ abstract class SongDataDao {
         )
         AND songs.blacklisted = 0
         ORDER BY songs.albumArtist, songs.album, songs.track
-    """)
+    """
+    )
     abstract suspend fun searchAlbumsWithGroupKeysFts(ftsQuery: String, limit: Int = 200): List<SongData>
 
     /**
@@ -189,7 +197,8 @@ abstract class SongDataDao {
      */
     @SkipQueryVerification
     @Transaction
-    @Query("""
+    @Query(
+        """
         SELECT songs.*
         FROM songs
         WHERE songs.albumArtist IN (
@@ -202,7 +211,8 @@ abstract class SongDataDao {
         )
         AND songs.blacklisted = 0
         ORDER BY songs.albumArtist, songs.album, songs.track
-    """)
+    """
+    )
     abstract suspend fun searchArtistsWithGroupKeysFts(ftsQuery: String, limit: Int = 100): List<SongData>
 }
 

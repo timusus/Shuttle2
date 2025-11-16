@@ -5,9 +5,7 @@ import android.util.Log
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.simplecityapps.mediaprovider.StringComparison
-import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
 import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
-import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackManager
@@ -23,13 +21,8 @@ import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
@@ -116,6 +109,7 @@ constructor(
 
     companion object {
         private const val TAG = "SearchPresenter"
+
         // Performance logging disabled in production for performance
         // Set to true for development/debugging only
         private const val ENABLE_PERFORMANCE_LOGGING = false
@@ -170,7 +164,7 @@ constructor(
                             compareByDescending<ArtistJaroSimilarity> { it.compositeScore }
                                 .thenBy { it.strippedNameLength }
                         )
-                        .take(50)  // Limit to top 50 results
+                        .take(50) // Limit to top 50 results
 
                     if (ENABLE_PERFORMANCE_LOGGING) {
                         val artistTime = System.currentTimeMillis() - artistStartTime
@@ -194,7 +188,7 @@ constructor(
                             compareByDescending<AlbumJaroSimilarity> { it.compositeScore }
                                 .thenBy { it.strippedNameLength }
                         )
-                        .take(50)  // Limit to top 50 results
+                        .take(50) // Limit to top 50 results
 
                     if (ENABLE_PERFORMANCE_LOGGING) {
                         val albumTime = System.currentTimeMillis() - albumStartTime
@@ -219,7 +213,7 @@ constructor(
                             compareByDescending<SongJaroSimilarity> { it.compositeScore }
                                 .thenBy { it.strippedNameLength }
                         )
-                        .take(50)  // Limit to top 50 results
+                        .take(50) // Limit to top 50 results
                         .toList()
 
                     if (ENABLE_PERFORMANCE_LOGGING) {

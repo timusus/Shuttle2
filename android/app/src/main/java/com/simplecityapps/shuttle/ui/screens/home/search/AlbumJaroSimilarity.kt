@@ -13,11 +13,12 @@ data class AlbumJaroSimilarity(
      * Used for highlighting the matched field in the UI.
      */
     enum class MatchedField {
-        NAME,    // Album name
-        ARTIST   // Artist or album artist
+        NAME, // Album name
+        ARTIST // Artist or album artist
     }
 
     val nameJaroSimilarity = album.name?.let { name -> StringComparison.jaroWinklerMultiDistance(query, name) } ?: StringComparison.JaroSimilarity(0.0, emptyMap(), emptyMap())
+
     // Use the same string that will be displayed in the UI (albumArtist ?: friendlyArtistName)
     // This ensures matched indices align with the displayed text
     val displayArtistName = album.albumArtist ?: album.friendlyArtistName
@@ -69,8 +70,8 @@ data class AlbumJaroSimilarity(
         }
 
         // Apply field weights (increased artist from 0.80 to 0.85)
-        val nameScore = nameScoreWithBoost * 1.0   // Primary field
-        val artistScore = artistScoreWithBoost * 0.85  // Secondary (up from 0.80)
+        val nameScore = nameScoreWithBoost * 1.0 // Primary field
+        val artistScore = artistScoreWithBoost * 0.85 // Secondary (up from 0.80)
 
         // DisMax scoring: best match + tie-breaker bonus for other fields
         val allScores = listOf(nameScore, artistScore).sortedDescending()

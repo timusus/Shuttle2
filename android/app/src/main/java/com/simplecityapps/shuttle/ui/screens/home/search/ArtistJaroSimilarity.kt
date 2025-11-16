@@ -2,7 +2,6 @@ package com.simplecityapps.shuttle.ui.screens.home.search
 
 import com.simplecityapps.mediaprovider.StringComparison
 import com.simplecityapps.shuttle.model.AlbumArtist
-import kotlin.math.max
 
 data class ArtistJaroSimilarity(
     val albumArtist: com.simplecityapps.shuttle.model.AlbumArtist,
@@ -13,8 +12,8 @@ data class ArtistJaroSimilarity(
      * Used for highlighting the matched field in the UI.
      */
     enum class MatchedField {
-        ALBUM_ARTIST,  // Album artist name
-        ARTIST         // Joined artist names
+        ALBUM_ARTIST, // Album artist name
+        ARTIST // Joined artist names
     }
 
     // Use the same string that will be displayed in the UI (name ?: friendlyArtistName)
@@ -67,8 +66,8 @@ data class ArtistJaroSimilarity(
         }
 
         // Apply field weights (both fields weighted almost equally)
-        val albumArtistScore = albumArtistScoreWithBoost * 1.0    // Primary field
-        val artistScore = artistScoreWithBoost * 0.98             // Nearly equal (up from 0.95)
+        val albumArtistScore = albumArtistScoreWithBoost * 1.0 // Primary field
+        val artistScore = artistScoreWithBoost * 0.98 // Nearly equal (up from 0.95)
 
         // DisMax scoring: best match + tie-breaker bonus for other fields
         val allScores = listOf(albumArtistScore, artistScore).sortedDescending()
