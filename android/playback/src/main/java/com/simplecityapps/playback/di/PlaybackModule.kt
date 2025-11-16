@@ -15,6 +15,7 @@ import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.AudioEffectSessionManager
+import com.simplecityapps.playback.BitPerfectManager
 import com.simplecityapps.playback.NoiseManager
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackNotificationManager
@@ -224,6 +225,14 @@ class PlaybackModule {
         playbackManager: PlaybackManager,
         playbackWatcher: PlaybackWatcher
     ): NoiseManager = NoiseManager(context, playbackManager, playbackWatcher)
+
+    @Singleton
+    @Provides
+    fun provideBitPerfectManager(
+        @ApplicationContext context: Context,
+        playbackPreferenceManager: PlaybackPreferenceManager,
+        playbackWatcher: PlaybackWatcher
+    ): BitPerfectManager = BitPerfectManager(context, playbackPreferenceManager, playbackWatcher)
 
     @Singleton
     @Provides
