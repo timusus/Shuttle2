@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -9,6 +11,7 @@ plugins {
     id("com.google.devtools.ksp")
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.detekt)
+    alias(libs.plugins.paparazzi)
 }
 
 android {
@@ -72,18 +75,19 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
         isCoreLibraryDesugaringEnabled = true
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
-        freeCompilerArgs = freeCompilerArgs + listOf(
+    kotlin.compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
+        freeCompilerArgs.addAll(
             "-Xopt-in=kotlin.RequiresOptIn",
             "-Xopt-in=kotlin.time.ExperimentalTime"
         )
     }
+
     lint {
         abortOnError = false
         checkReleaseBuilds = false
@@ -101,6 +105,12 @@ android {
         val composeBom = platform(libs.androidx.compose.bom)
         implementation(composeBom)
         androidTestImplementation(composeBom)
+        implementation(libs.androidx.activity.ktx)
+        implementation(libs.androidx.activity.compose)
+        implementation(libs.androidx.hilt.navigation.compose)
+        testImplementation(libs.cashapp.paparazzi)
+        testImplementation(libs.test.parameter.injector)
+        testImplementation(libs.compose.preview.scanner)
         implementation(libs.kotlinx.collections.immutable)
         implementation(libs.kotlinx.datetime)
         implementation(libs.androidx.material3)

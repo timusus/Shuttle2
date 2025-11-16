@@ -4,7 +4,6 @@ import android.content.SharedPreferences
 import java.util.Date
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
-import stateFlowForBoolean
 import stateFlowForMappedValue
 
 class GeneralPreferenceManager(
@@ -132,12 +131,6 @@ class GeneralPreferenceManager(
         get() {
             return sharedPreferences.get("pref_theme_extra_dark", false)
         }
-
-    fun extraDark(scope: CoroutineScope): StateFlow<Boolean> = sharedPreferences.stateFlowForBoolean(
-        key = "pref_theme_extra_dark",
-        default = false,
-        scope = scope
-    )
 
     var artworkWifiOnly: Boolean
         set(value) {
