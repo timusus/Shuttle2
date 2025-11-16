@@ -2,6 +2,7 @@ package com.simplecityapps.playback.download
 
 import android.content.Context
 import com.simplecityapps.mediaprovider.repository.downloads.DownloadRepository
+import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.provider.emby.EmbyAuthenticationManager
 import com.simplecityapps.provider.jellyfin.JellyfinAuthenticationManager
 import com.simplecityapps.provider.plex.PlexAuthenticationManager
@@ -11,6 +12,7 @@ import com.simplecityapps.shuttle.model.Song
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.io.FileOutputStream
+import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
@@ -18,9 +20,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import timber.log.Timber
@@ -32,6 +36,7 @@ import timber.log.Timber
 class DownloadManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val downloadRepository: DownloadRepository,
+    private val songRepository: SongRepository,
     private val jellyfinAuthManager: JellyfinAuthenticationManager,
     private val embyAuthManager: EmbyAuthenticationManager,
     private val plexAuthManager: PlexAuthenticationManager,
@@ -175,75 +180,64 @@ class DownloadManager @Inject constructor(
      */
     private suspend fun performDownload(songId: Long) {
         try {
-            // Get the song from the download repository
-            val download = downloadRepository.getDownload(
-                // We need to create a minimal Song object with just the ID
-                // In a real implementation, we'd fetch the full Song from SongRepository
-                Song(
-                    id = songId,
-                    name = null,
-                    albumArtist = null,
-                    artists = emptyList(),
-                    album = null,
-                    track = null,
-                    disc = null,
-                    duration = 0,
-                    date = null,
-                    genres = emptyList(),
-                    path = "",
-                    size = 0,
-                    mimeType = "",
-                    lastModified = null,
-                    lastPlayed = null,
-                    lastCompleted = null,
-                    playCount = 0,
-                    playbackPosition = 0,
-                    blacklisted = false,
-                    mediaProvider = MediaProviderType.Shuttle,
-                    lyrics = null,
-                    grouping = null,
-                    bitRate = null,
-                    bitDepth = null,
-                    sampleRate = null,
-                    channelCount = null
-                )
-            ) ?: return
+            // Get the full song from the repository
+            val songs = songRepository.getSongs(com.simplecityapps.mediaprovider.repository.songs.SongQuery.All()).firstOrNull()
+            val song = songs?.find { it.id == songId }
 
-            // TODO: Get full song from SongRepository
-            // For now, this is a placeholder
-            Timber.d("Download started for song ID: $songId")
+            if (song == null) {
+                Timber.e("Song not found for download: $songId")
+                return
+            }
+
+            Timber.d("Download started for song: ${song.name}")
+
+            // Get download URL
+            val downloadUrl = getDownloadUrl(song)
+            if (downloadUrl == null) {
+                Timber.e("Failed to get download URL for song: ${song.name}")
+                downloadRepository.markDownloadFailed(song, "Failed to generate download URL")
+                return
+            }
+
+            // Get destination file
+            val destinationFile = getDownloadPath(song)
+
+            // Create parent directories
+            destinationFile.parentFile?.mkdirs()
+
+            // Download the file
+            withContext(Dispatchers.IO) {
+                downloadFile(downloadUrl, destinationFile) { progress, downloadedBytes, totalBytes ->
+                    scope.launch {
+                        downloadRepository.updateDownloadProgress(
+                            song,
+                            progress,
+                            downloadedBytes,
+                            totalBytes
+                        )
+                    }
+                }
+            }
+
+            // Mark as completed
+            downloadRepository.markDownloadCompleted(
+                song,
+                destinationFile.absolutePath,
+                destinationFile.length()
+            )
+
+            Timber.d("Download completed for song: ${song.name}")
 
         } catch (e: Exception) {
             Timber.e(e, "Download failed for song ID: $songId")
-            val song = Song(
-                id = songId,
-                name = null,
-                albumArtist = null,
-                artists = emptyList(),
-                album = null,
-                track = null,
-                disc = null,
-                duration = 0,
-                date = null,
-                genres = emptyList(),
-                path = "",
-                size = 0,
-                mimeType = "",
-                lastModified = null,
-                lastPlayed = null,
-                lastCompleted = null,
-                playCount = 0,
-                playbackPosition = 0,
-                blacklisted = false,
-                mediaProvider = MediaProviderType.Shuttle,
-                lyrics = null,
-                grouping = null,
-                bitRate = null,
-                bitDepth = null,
-                sampleRate = null,
-                channelCount = null
-            )
-            downloadRepository.markDownloadFailed(song, e.message ?: "Unknown error")
+
+            // Try to get the song to mark it as failed
+            val songs = songRepository.getSongs(com.simplecityapps.mediaprovider.repository.songs.SongQuery.All()).firstOrNull()
+            val song = songs?.find { it.id == songId }
+
+            if (song != null) {
+                downloadRepository.markDownloadFailed(song, e.message ?: "Unknown error")
+            }
         }
     }
 
