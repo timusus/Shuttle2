@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.screens.onboarding.scanner
+package com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.scanner
 
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.Progress

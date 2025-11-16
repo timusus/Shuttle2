@@ -12,13 +12,13 @@ import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
 import com.simplecityapps.provider.plex.PlexMediaProvider
 import com.simplecityapps.shuttle.model.MediaProviderType
 import dagger.hilt.android.lifecycle.HiltViewModel
-import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import javax.inject.Inject
 
 @HiltViewModel
 class MediaProviderViewModel @Inject constructor(
@@ -53,6 +53,9 @@ class MediaProviderViewModel @Inject constructor(
     private val _showProviderOverflowMenu = MutableStateFlow<MediaProviderType?>(null)
     val showProviderOverflowMenu = _showProviderOverflowMenu.asStateFlow()
 
+    private val _configureMediaProvider = MutableStateFlow<MediaProviderType?>(null)
+    val configureMediaProvider = _configureMediaProvider.asStateFlow()
+
     fun onAddMediaProvider(provider: MediaProviderType) {
         mediaImporter.mediaProviders += provider.toMediaProvider()
         _mediaProviders.update { providers -> providers + provider }
@@ -80,6 +83,15 @@ class MediaProviderViewModel @Inject constructor(
 
     fun onDismissMediaProviderOverflowMenu() {
         _showProviderOverflowMenu.update { null }
+    }
+
+    fun onConfigureProviderClick(provider: MediaProviderType) {
+        _configureMediaProvider.update { provider }
+        _showProviderOverflowMenu.update { null }
+    }
+
+    fun onConsumeConfigureMediaProvider() {
+        _configureMediaProvider.update { null }
     }
 
     private fun MediaProviderType.toMediaProvider(): MediaProvider = when (this) {

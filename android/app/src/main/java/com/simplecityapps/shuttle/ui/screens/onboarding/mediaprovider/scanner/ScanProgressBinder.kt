@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.screens.onboarding.scanner
+package com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.scanner
 
 import android.view.LayoutInflater
 import android.view.View
