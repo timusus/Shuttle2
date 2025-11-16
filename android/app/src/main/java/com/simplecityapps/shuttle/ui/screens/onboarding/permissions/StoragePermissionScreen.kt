@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.sp
 import androidx.fragment.app.Fragment
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParent
+import com.simplecityapps.shuttle.ui.snapshot.Snapshot
 import com.simplecityapps.shuttle.ui.theme.AppTheme
 import com.simplecityapps.shuttle.ui.theme.ColorSchemePreviewParameterProvider
 
@@ -161,6 +162,7 @@ private fun PermissionRationaleDialog(
     )
 }
 
+@Snapshot
 @Preview
 @Composable
 private fun Preview(@PreviewParameter(ColorSchemePreviewParameterProvider::class) colorScheme: ColorScheme) {
@@ -173,6 +175,7 @@ private fun Preview(@PreviewParameter(ColorSchemePreviewParameterProvider::class
     }
 }
 
+@Snapshot
 @Preview
 @Composable
 private fun Rationale(@PreviewParameter(ColorSchemePreviewParameterProvider::class) colorScheme: ColorScheme) {
