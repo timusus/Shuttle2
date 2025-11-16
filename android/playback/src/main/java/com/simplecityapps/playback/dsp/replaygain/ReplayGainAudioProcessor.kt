@@ -31,11 +31,13 @@ class ReplayGainAudioProcessor(var mode: ReplayGainMode, var preAmpGain: Double 
     @Volatile
     var trackGain: Double? = null
         @Synchronized get
+
         @Synchronized set
 
     @Volatile
     var albumGain: Double? = null
         @Synchronized get
+
         @Synchronized set
 
     private val gain: Double
