@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.View
 import androidx.appcompat.widget.Toolbar
 import androidx.navigation.fragment.findNavController
-import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SeekBarPreference
 import com.simplecityapps.shuttle.R
@@ -33,11 +32,6 @@ class WidgetPreferenceFragment : PreferenceFragmentCompat() {
         val toolbar: Toolbar = view.findViewById(R.id.toolbar)
         toolbar.setNavigationOnClickListener { findNavController().popBackStack() }
         toolbar.setTitle(R.string.pref_category_title_widgets)
-
-        preferenceScreen.findPreference<Preference>("widget_dark_mode")?.setOnPreferenceClickListener {
-            widgetManager.updateAppWidgets(WidgetManager.UpdateReason.Unknown)
-            true
-        }
 
         preferenceScreen.findPreference<SeekBarPreference>("widget_background_opacity")?.setOnPreferenceChangeListener { _, _ ->
             widgetManager.updateAppWidgets(WidgetManager.UpdateReason.Unknown)

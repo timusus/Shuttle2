@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.widgets
 
 import android.content.Context
+import android.content.res.Configuration
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -70,7 +71,7 @@ class Widget43 : GlanceAppWidget() {
         preferenceManager: GeneralPreferenceManager
     ) {
         val currentItem = queueManager.getCurrentItem()
-        val isDarkMode = preferenceManager.widgetDarkMode
+        val isDarkMode = (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
         val backgroundAlpha = preferenceManager.widgetBackgroundTransparency / 100f
 
         val backgroundColor = if (isDarkMode) {
