@@ -1,5 +1,7 @@
 [versions]
+activity = "1.11.0"
 aboutlibraries = "13.1.0"
+android = "0.7.1"
 android-device-names = "2.1.1"
 annotation = "1.9.1"
 appcompat = "1.7.1"
@@ -57,6 +59,7 @@ noise = "3.0.3"
 okhttp = "5.3.0"
 okhttp3-integration = "5.0.5"
 palette-ktx = "1.0.0"
+paparazzi = "2.0.0-alpha02"
 phrase = "master-SNAPSHOT"
 play-services-cast-framework = "22.2.0"
 preference-ktx = "1.2.1"
@@ -67,14 +70,17 @@ room-compiler = "2.8.3"
 runner = "1.7.0"
 security-crypto = "1.1.0"
 semver4j = "3.1.0"
+test-parameter-injector = "1.19"
 timber = "5.0.1"
 viewpager2 = "1.1.0"
 work-runtime-ktx = "2.11.0"
 
 [libraries]
+androidx-activity-ktx = { module = "androidx.activity:activity-ktx", version.ref = "activity" }
+androidx-activity-compose = { module = "androidx.activity:activity-compose"}
 androidx-annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
 androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
-androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose"}
+androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose" }
 androidx-constraintlayout = { module = "androidx.constraintlayout:constraintlayout", version.ref = "constraintlayout" }
 androidx-core-ktx = { module = "androidx.test:core-ktx", version.ref = "core-ktx-version" }
 androidx-documentfile = { module = "androidx.documentfile:documentfile", version.ref = "documentfile" }
@@ -83,6 +89,7 @@ androidx-espresso-core = { module = "androidx.test.espresso:espresso-core", vers
 androidx-foundation = { module = "androidx.compose.foundation:foundation" }
 androidx-fragment-ktx = { module = "androidx.fragment:fragment-ktx", version.ref = "fragment-ktx" }
 androidx-hilt-compiler = { module = "androidx.hilt:hilt-compiler", version.ref = "hilt-compiler" }
+androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hilt-compiler" }
 androidx-hilt-work = { module = "androidx.hilt:hilt-work", version.ref = "hilt-work" }
 androidx-junit = { module = "androidx.test.ext:junit", version.ref = "junit-version" }
 androidx-lifecycle-common-java8 = { module = "androidx.lifecycle:lifecycle-common-java8", version.ref = "lifecycle-common-java8" }
@@ -111,7 +118,9 @@ androidx-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview
 androidx-viewpager2 = { module = "androidx.viewpager2:viewpager2", version.ref = "viewpager2" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "work-runtime-ktx" }
 billingclient-billingKtx = { module = "com.android.billingclient:billing-ktx", version.ref = "billing-ktx" }
+cashapp-paparazzi = { module = "app.cash.paparazzi:paparazzi", version.ref = "paparazzi" }
 compose-lint-checks = { module = "com.slack.lint.compose:compose-lint-checks", version.ref = "compose-lint-checks" }
+compose-preview-scanner = { module = "io.github.sergio-sastre.ComposablePreviewScanner:android", version.ref = "android" }
 design-fluentSystemIcons = { module = "com.microsoft.design:fluent-system-icons", version.ref = "fluent-system-icons" }
 detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
 exoplayer-core = { module = "com.github.timusus.exoplayer:exoplayer-core", version.ref = "exoplayer-shuttle" }
@@ -157,6 +166,7 @@ relex-circleindicator = { module = "me.relex:circleindicator", version.ref = "ci
 retrofit2-converterMoshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "converter-moshi" }
 retrofit2-retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "converter-moshi" }
 square-phrase = { module = "com.github.square:phrase", version.ref = "phrase" }
+test-parameter-injector = { module = "com.google.testparameterinjector:test-parameter-injector", version.ref = "test-parameter-injector" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 timusus-ktaglib = { module = "com.github.timusus:ktaglib", version.ref = "ktaglib" }
 timusus-recyclerViewFastScroll = { module = "com.simplecityapps:recyclerview-fastscroll", version.ref = "recyclerview-fastscroll" }
@@ -168,9 +178,10 @@ vdurmont-semver4j = { module = "com.vdurmont:semver4j", version.ref = "semver4j"
 aboutlibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutlibraries" }
 android-application = { id = "com.android.application", version.ref = "agp" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt"}
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebase-crashlytics" }
 google-services = { id = "com.google.gms.google-services", version.ref = "google-services" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt-android" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+paparazzi = { id = "app.cash.paparazzi", version.ref = "paparazzi" }

@@ -65,12 +65,10 @@ class GenreListFragment :
             val viewState by viewModel.viewState.collectAsState()
             val theme by viewModel.theme.collectAsStateWithLifecycle()
             val accent by viewModel.accent.collectAsStateWithLifecycle()
-            val extraDark by viewModel.extraDark.collectAsStateWithLifecycle()
 
             AppTheme(
                 theme = theme,
-                accent = accent,
-                extraDark = extraDark
+                accent = accent
             ) {
                 GenreList(
                     viewState = viewState,

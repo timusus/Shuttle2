@@ -86,7 +86,7 @@ class MainActivity : AppCompatActivity() {
         billingManager.queryPurchases()
     }
 
-    override fun onNewIntent(intent: Intent?) {
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
 
         handleSearchQuery(intent)

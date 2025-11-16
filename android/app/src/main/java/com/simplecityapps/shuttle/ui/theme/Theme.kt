@@ -24,7 +24,6 @@ fun AppTheme(
     dynamicColor: Boolean = false,
     theme: GeneralPreferenceManager.Theme = GeneralPreferenceManager.Theme.DayNight,
     accent: GeneralPreferenceManager.Accent = GeneralPreferenceManager.Accent.Default,
-    extraDark: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val isDark = when (theme) {
