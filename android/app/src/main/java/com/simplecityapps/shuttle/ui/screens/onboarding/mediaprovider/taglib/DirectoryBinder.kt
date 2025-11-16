@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.screens.onboarding.taglib
+package com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.taglib
 
 import android.view.View
 import android.view.ViewGroup

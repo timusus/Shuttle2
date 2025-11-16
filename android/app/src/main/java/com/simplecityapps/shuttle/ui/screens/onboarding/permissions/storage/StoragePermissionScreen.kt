@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.screens.onboarding.permissions
+package com.simplecityapps.shuttle.ui.screens.onboarding.permissions.storage
 
 import android.Manifest
 import android.os.Build

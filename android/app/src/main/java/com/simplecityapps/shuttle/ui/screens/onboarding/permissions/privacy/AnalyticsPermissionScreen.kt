@@ -1,6 +1,5 @@
-package com.simplecityapps.shuttle.ui.screens.onboarding.privacy
+package com.simplecityapps.shuttle.ui.screens.onboarding.permissions.privacy
 
-import android.R.attr.text
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -33,7 +32,6 @@ import androidx.core.view.postDelayed
 import androidx.fragment.app.Fragment
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingChild
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingPage

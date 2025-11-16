@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.screens.onboarding.taglib
+package com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.taglib
 
 import android.content.ContentResolver
 import android.content.Context
@@ -12,7 +12,6 @@ import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import timber.log.Timber
 

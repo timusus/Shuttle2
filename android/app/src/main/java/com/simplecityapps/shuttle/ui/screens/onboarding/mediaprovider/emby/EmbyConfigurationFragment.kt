@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.screens.onboarding.plex
+package com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.emby
 
 import android.app.Dialog
 import android.os.Bundle
@@ -10,10 +10,11 @@ import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputLayout
 import com.simplecityapps.networking.userDescription
-import com.simplecityapps.provider.plex.PlexAuthenticationManager
-import com.simplecityapps.provider.plex.http.LoginCredentials
+import com.simplecityapps.provider.emby.EmbyAuthenticationManager
+import com.simplecityapps.provider.emby.http.LoginCredentials
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
@@ -24,14 +25,13 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @AndroidEntryPoint
-class PlexConfigurationFragment : DialogFragment() {
+class EmbyConfigurationFragment : DialogFragment() {
     @Inject
-    lateinit var plexAuthenticationManager: PlexAuthenticationManager
+    lateinit var embyAuthenticationManager: EmbyAuthenticationManager
 
     var addressInputLayout: TextInputLayout by autoCleared()
     var loginInputLayout: TextInputLayout by autoCleared()
     var passwordInputLayout: TextInputLayout by autoCleared()
-    var authCodeInputLayout: TextInputLayout by autoCleared()
     var rememberPasswordSwitch: SwitchCompat by autoCleared()
     var loadingView: CircularLoadingView by autoCleared()
     var inputGroup: Group by autoCleared()
@@ -39,23 +39,22 @@ class PlexConfigurationFragment : DialogFragment() {
     // Lifecycle
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val view = layoutInflater.inflate(R.layout.fragment_plex_configuration, null)
+        val view = layoutInflater.inflate(R.layout.fragment_emby_configuration, null)
 
         addressInputLayout = view.findViewById(R.id.addressInputLayout)
         loginInputLayout = view.findViewById(R.id.loginInputLayout)
         passwordInputLayout = view.findViewById(R.id.passwordInputLayout)
-        authCodeInputLayout = view.findViewById(R.id.authCodeInputLayout)
         rememberPasswordSwitch = view.findViewById(R.id.rememberPasswordSwitch)
         loadingView = view.findViewById(R.id.loadingView)
         inputGroup = view.findViewById(R.id.inputGroup)
 
-        plexAuthenticationManager.getAddress()?.let { address ->
+        embyAuthenticationManager.getAddress()?.let { address ->
             addressInputLayout.editText?.setText(address)
         }
-        plexAuthenticationManager.getLoginCredentials()?.username?.let { username ->
+        embyAuthenticationManager.getLoginCredentials()?.username?.let { username ->
             loginInputLayout.editText?.setText(username)
         }
-        plexAuthenticationManager.getLoginCredentials()?.password?.let { password ->
+        embyAuthenticationManager.getLoginCredentials()?.password?.let { password ->
             passwordInputLayout.editText?.setText(password)
             passwordInputLayout.endIconMode = TextInputLayout.END_ICON_NONE
         }
@@ -72,9 +71,7 @@ class PlexConfigurationFragment : DialogFragment() {
                 passwordInputLayout.endIconMode = TextInputLayout.END_ICON_PASSWORD_TOGGLE
             }
         }
-        authCodeInputLayout.editText!!.doOnTextChanged { _, _, _, _ ->
-            authCodeInputLayout.error = null
-        }
+
         loadingView.listener =
             object : CircularLoadingView.Listener {
                 override fun onRetryClicked() {
@@ -85,13 +82,13 @@ class PlexConfigurationFragment : DialogFragment() {
 
         rememberPasswordSwitch.setOnCheckedChangeListener { buttonView, isChecked ->
             if (!isChecked) {
-                plexAuthenticationManager.setLoginCredentials(null)
+                embyAuthenticationManager.setLoginCredentials(null)
             }
         }
 
         val dialog =
-            AlertDialog.Builder(requireContext())
-                .setTitle(getString(com.simplecityapps.mediaprovider.R.string.media_provider_title_long_plex))
+            MaterialAlertDialogBuilder(requireContext())
+                .setTitle(requireContext().getString(com.simplecityapps.mediaprovider.R.string.media_provider_title_long_emby))
                 .setView(view)
                 .setPositiveButton(requireContext().getString(R.string.media_provider_button_authenticate), null)
                 .setNegativeButton(requireContext().getString(R.string.dialog_button_close), null)
@@ -107,31 +104,26 @@ class PlexConfigurationFragment : DialogFragment() {
                 loadingView.setState(CircularLoadingView.State.Loading(requireContext().getString(R.string.media_provider_authenticating)))
                 loadingView.isVisible = true
 
-                plexAuthenticationManager.setAddress(addressInputLayout.editText!!.text.toString())
+                embyAuthenticationManager.setAddress(addressInputLayout.editText!!.text.toString())
 
-                val loginCredentials =
-                    LoginCredentials(
-                        username = loginInputLayout.editText!!.text.toString(),
-                        password = passwordInputLayout.editText!!.text.toString(),
-                        authCode = authCodeInputLayout.editText!!.text.toString()
-                    )
+                val loginCredentials = LoginCredentials(loginInputLayout.editText!!.text.toString(), passwordInputLayout.editText!!.text.toString())
 
                 lifecycleScope.launch {
                     val result =
-                        plexAuthenticationManager.authenticate(
-                            address = plexAuthenticationManager.getAddress()!!,
+                        embyAuthenticationManager.authenticate(
+                            address = embyAuthenticationManager.getAddress()!!,
                             loginCredentials = loginCredentials
                         )
                     result.onSuccess {
                         if (rememberPasswordSwitch.isChecked) {
-                            plexAuthenticationManager.setLoginCredentials(loginCredentials)
+                            embyAuthenticationManager.setLoginCredentials(loginCredentials)
                         }
                         loadingView.setState(CircularLoadingView.State.Empty(requireContext().getString(R.string.media_provider_authentication_success)))
                         delay(1000)
                         dialog.dismiss()
                     }
                     result.onFailure { error ->
-                        Timber.e("Plex authentication failed. Error ${error.localizedMessage}")
+                        Timber.e("Emby authentication failed. Error ${error.localizedMessage}")
                         loadingView.setState(CircularLoadingView.State.Retry(error.userDescription()))
                     }
                 }
@@ -144,7 +136,7 @@ class PlexConfigurationFragment : DialogFragment() {
     // Public
 
     fun show(manager: FragmentManager) {
-        super.show(manager, "PlexConfigurationFragment")
+        super.show(manager, "EmbyConfigurationFragment")
     }
 
     // Private
@@ -154,19 +146,13 @@ class PlexConfigurationFragment : DialogFragment() {
 
         // Host
         if (addressInputLayout.editText!!.text.isEmpty()) {
-            addressInputLayout.error = getString(R.string.validation_field_required)
+            addressInputLayout.error = requireContext().getString(R.string.validation_field_required)
             hasError = true
         }
 
         // Username
         if (loginInputLayout.editText!!.text.isEmpty()) {
-            loginInputLayout.error = getString(R.string.validation_field_required)
-            hasError = true
-        }
-
-        // Password
-        if (passwordInputLayout.editText!!.text.isEmpty()) {
-            passwordInputLayout.error = getString(R.string.validation_field_required)
+            loginInputLayout.error = requireContext().getString(R.string.validation_field_required)
             hasError = true
         }
 
@@ -176,6 +162,6 @@ class PlexConfigurationFragment : DialogFragment() {
     // Static
 
     companion object {
-        fun newInstance() = PlexConfigurationFragment()
+        fun newInstance() = EmbyConfigurationFragment()
     }
 }

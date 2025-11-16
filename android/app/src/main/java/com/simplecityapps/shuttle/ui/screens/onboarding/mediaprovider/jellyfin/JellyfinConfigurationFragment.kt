@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.screens.onboarding.jellyfin
+package com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.jellyfin
 
 import android.app.Dialog
 import android.os.Bundle
