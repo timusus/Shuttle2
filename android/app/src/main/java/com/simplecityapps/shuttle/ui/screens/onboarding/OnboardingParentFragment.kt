@@ -25,8 +25,8 @@ import com.simplecityapps.shuttle.ui.screens.onboarding.privacy.AnalyticsPermiss
 import com.simplecityapps.shuttle.ui.screens.onboarding.scanner.MediaScannerFragment
 import com.simplecityapps.shuttle.ui.screens.onboarding.taglib.DirectorySelectionFragment
 import dagger.hilt.android.AndroidEntryPoint
-import me.relex.circleindicator.CircleIndicator3
 import javax.inject.Inject
+import me.relex.circleindicator.CircleIndicator3
 
 enum class OnboardingPage {
     StoragePermission,
