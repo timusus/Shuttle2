@@ -60,7 +60,7 @@ jobs:
         run: "support/scripts/unit-test"
 
       - name: "Run Snapshot Tests"
-        run: "./gradlew app:verifyPaparazziDebug"
+        run: "./gradlew android:app:verifyPaparazziDebug"
 
       - name: "Unit Test Results"
         uses: actions/upload-artifact@v4
