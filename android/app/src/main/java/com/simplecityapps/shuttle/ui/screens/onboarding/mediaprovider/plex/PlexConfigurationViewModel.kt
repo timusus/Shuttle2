@@ -91,6 +91,7 @@ class PlexConfigurationViewModel @Inject constructor(
                 address = address,
                 loginCredentials = loginCredentials
             ).onSuccess {
+                plexAuthenticationManager.setAddress(address)
                 if (rememberPassword) {
                     plexAuthenticationManager.setLoginCredentials(loginCredentials)
                 }
