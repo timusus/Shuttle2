@@ -74,6 +74,12 @@ abstract class SongDataDao {
         lastPlayed: Date = Date()
     )
 
+    @Query("UPDATE songs SET rating = :rating WHERE id = :id")
+    abstract suspend fun updateRating(
+        id: Long,
+        rating: Int
+    )
+
     @Query("UPDATE songs SET blacklisted = :blacklisted WHERE id IN (:ids)")
     abstract suspend fun setExcluded(
         ids: List<Long>,
@@ -112,6 +118,7 @@ fun SongData.toSong(): Song = Song(
     lastCompleted = lastCompleted?.let { Instant.fromEpochMilliseconds(it.time) },
     playCount = playCount,
     playbackPosition = playbackPosition,
+    rating = rating,
     blacklisted = excluded,
     externalId = externalId,
     mediaProvider = mediaProvider,

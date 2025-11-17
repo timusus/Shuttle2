@@ -35,6 +35,11 @@ interface SongRepository {
         playbackPosition: Int
     )
 
+    suspend fun setRating(
+        song: Song,
+        rating: Int
+    )
+
     suspend fun setExcluded(
         songs: List<Song>,
         excluded: Boolean

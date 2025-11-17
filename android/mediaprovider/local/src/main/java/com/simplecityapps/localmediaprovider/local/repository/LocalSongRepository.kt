@@ -88,6 +88,14 @@ class LocalSongRepository(
         songDataDao.updatePlaybackPosition(song.id, playbackPosition)
     }
 
+    override suspend fun setRating(
+        song: Song,
+        rating: Int
+    ) {
+        Timber.v("Setting rating to $rating for song: ${song.name}")
+        songDataDao.updateRating(song.id, rating)
+    }
+
     override suspend fun setExcluded(
         songs: List<Song>,
         excluded: Boolean
