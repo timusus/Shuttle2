@@ -1,10 +1,12 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
 import android.content.Context
+import android.net.Uri
 import com.simplecityapps.localmediaprovider.local.data.room.dao.PlaylistDataDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.PlaylistSongJoinDao
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistSongJoin
+import com.simplecityapps.mediaprovider.PlaylistExporter
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.playlists.comparator
@@ -36,6 +38,10 @@ class LocalPlaylistRepository(
     private val playlistDataDao: PlaylistDataDao,
     private val playlistSongJoinDao: PlaylistSongJoinDao
 ) : PlaylistRepository {
+    private val playlistExporter: PlaylistExporter by lazy {
+        PlaylistExporter(context)
+    }
+
     private val playlistsRelay: StateFlow<List<Playlist>?> by lazy {
         playlistDataDao
             .getAll()
@@ -218,6 +224,45 @@ class LocalPlaylistRepository(
                 mediaProviderType = playlist.mediaProvider,
                 externalId = externalId
             )
+        )
+    }
+
+    override suspend fun exportPlaylistToUri(
+        playlist: Playlist,
+        destinationUri: Uri,
+        pathResolver: ((Song) -> String?)?
+    ): PlaylistExporter.ExportResult {
+        val songs = getSongsForPlaylist(playlist).firstOrNull()?.map { it.song } ?: emptyList()
+        return playlistExporter.exportToUri(
+            playlistName = playlist.name,
+            songs = songs,
+            destinationUri = destinationUri,
+            pathResolver = pathResolver
+        )
+    }
+
+    override suspend fun exportPlaylistToDirectory(
+        playlist: Playlist,
+        directoryUri: Uri,
+        pathResolver: ((Song) -> String?)?
+    ): PlaylistExporter.ExportResult {
+        val songs = getSongsForPlaylist(playlist).firstOrNull()?.map { it.song } ?: emptyList()
+        return playlistExporter.exportToDirectory(
+            playlistName = playlist.name,
+            songs = songs,
+            directoryUri = directoryUri,
+            pathResolver = pathResolver
+        )
+    }
+
+    override suspend fun generatePlaylistM3uContent(
+        playlist: Playlist,
+        pathResolver: ((Song) -> String?)?
+    ): String? {
+        val songs = getSongsForPlaylist(playlist).firstOrNull()?.map { it.song } ?: emptyList()
+        return playlistExporter.generateM3uContent(
+            songs = songs,
+            pathResolver = pathResolver
         )
     }
 }

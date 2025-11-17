@@ -43,6 +43,10 @@
         android:title="@string/menu_title_add_to_queue"
         app:showAsAction="never" />
     <item
+        android:id="@+id/export"
+        android:title="@string/playlist_menu_export"
+        app:showAsAction="never" />
+    <item
         android:id="@+id/rename"
         android:title="@string/menu_title_rename"
         app:showAsAction="never" />

@@ -90,4 +90,16 @@
     <string name="media_import_directories_empty">No directories/files to scan</string>
     <!-- Shown when the S2 Media Provider is searching an m3u playlist for songs -->
     <string name="media_import_m3u_scan">Finding songs for <xliff:g example="playlist1.m3u" id="playlist_name">{playlist_name}</xliff:g></string>
+    <!-- Menu option to export a playlist to an m3u file -->
+    <string name="playlist_menu_export">Export playlist</string>
+    <!-- Title of dialog shown when exporting a playlist -->
+    <string name="playlist_export_dialog_title">Export playlist</string>
+    <!-- Message shown when a playlist is successfully exported -->
+    <string name="playlist_export_success">Playlist exported successfully</string>
+    <!-- Error message shown when playlist export fails -->
+    <string name="playlist_export_failed">Failed to export playlist: <xliff:g example="Permission denied" id="error_message">{error_message}</xliff:g></string>
+    <!-- Message shown when a playlist has no songs to export -->
+    <string name="playlist_export_empty">Playlist is empty. Nothing to export.</string>
+    <!-- Message shown when choosing where to save the exported playlist file -->
+    <string name="playlist_export_choose_location">Choose export location</string>
 </resources>
