@@ -87,6 +87,15 @@ class ExoPlayerPlayback(
                 val transitionReason = reason.toTransitionReason()
                 Timber.v("onMediaItemTransition(reason: ${reason.toTransitionReason()})")
 
+                // Update ReplayGain immediately from the MediaItem's tag to ensure correct gain for this track
+                mediaItem?.localConfiguration?.tag?.let { tag ->
+                    if (tag is ReplayGainTag) {
+                        Timber.v("Updating ReplayGain from MediaItem tag: track=${tag.trackGain}, album=${tag.albumGain}")
+                        replayGainAudioProcessor.trackGain = tag.trackGain
+                        replayGainAudioProcessor.albumGain = tag.albumGain
+                    }
+                }
+
                 when (transitionReason) {
                     TransitionReason.Repeat -> callback?.onTrackEnded(true)
                     TransitionReason.Auto -> callback?.onTrackEnded(true)
@@ -150,7 +159,11 @@ class ExoPlayerPlayback(
 
         val mediaInfo = mediaInfoProvider.getMediaInfo(current)
         player.addListener(eventListener)
-        player.setMediaItem(getMediaItem(mediaInfo))
+        val mediaItem = getMediaItem(mediaInfo, current.replayGainTrack, current.replayGainAlbum)
+        player.setMediaItem(mediaItem)
+        // Set ReplayGain immediately for the current track in case onMediaItemTransition doesn't fire
+        replayGainAudioProcessor.trackGain = current.replayGainTrack
+        replayGainAudioProcessor.albumGain = current.replayGainAlbum
         player.seekTo(seekPosition.toLong())
         player.prepare()
 
@@ -174,7 +187,7 @@ class ExoPlayerPlayback(
 
         val nextMediaItem: MediaItem? =
             song?.let {
-                getMediaItem(mediaInfoProvider.getMediaInfo(song))
+                getMediaItem(mediaInfoProvider.getMediaInfo(song), song.replayGainTrack, song.replayGainAlbum)
             }
 
         val count = player.mediaItemCount
@@ -293,9 +306,16 @@ class ExoPlayerPlayback(
         else -> TransitionReason.Unknown
     }
 
+    data class ReplayGainTag(val trackGain: Double?, val albumGain: Double?)
+
     @Throws(IllegalStateException::class)
-    fun getMediaItem(mediaInfo: MediaInfo): MediaItem = MediaItem.Builder()
+    fun getMediaItem(
+        mediaInfo: MediaInfo,
+        trackGain: Double? = null,
+        albumGain: Double? = null
+    ): MediaItem = MediaItem.Builder()
         .setMimeType(mediaInfo.mimeType)
         .setUri(mediaInfo.path)
+        .setTag(ReplayGainTag(trackGain, albumGain))
         .build()
 }

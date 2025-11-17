@@ -96,7 +96,6 @@ class PlaybackManager(
             appCoroutineScope.launch {
                 playback.load(current, next, seekPosition) { result ->
                     result.onSuccess {
-                        playback.setReplayGain(trackGain = current.replayGainTrack, albumGain = current.replayGainAlbum)
                         completion(Result.success(attempt == 1))
                     }
                     result.onFailure { error ->
