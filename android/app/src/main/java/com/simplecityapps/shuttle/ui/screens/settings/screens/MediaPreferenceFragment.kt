@@ -25,7 +25,7 @@ import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParentFragmentArgs
-import com.simplecityapps.shuttle.ui.screens.onboarding.scanner.MediaScannerDialogFragment
+import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.scanner.MediaScannerDialogFragment
 import com.simplecityapps.shuttle.ui.screens.settings.ExcludeBinder
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint

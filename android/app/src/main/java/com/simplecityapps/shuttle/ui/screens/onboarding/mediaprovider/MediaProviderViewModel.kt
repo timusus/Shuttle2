@@ -53,6 +53,9 @@ class MediaProviderViewModel @Inject constructor(
     private val _showProviderOverflowMenu = MutableStateFlow<MediaProviderType?>(null)
     val showProviderOverflowMenu = _showProviderOverflowMenu.asStateFlow()
 
+    private val _configureMediaProvider = MutableStateFlow<MediaProviderType?>(null)
+    val configureMediaProvider = _configureMediaProvider.asStateFlow()
+
     fun onAddMediaProvider(provider: MediaProviderType) {
         mediaImporter.mediaProviders += provider.toMediaProvider()
         _mediaProviders.update { providers -> providers + provider }
@@ -80,6 +83,15 @@ class MediaProviderViewModel @Inject constructor(
 
     fun onDismissMediaProviderOverflowMenu() {
         _showProviderOverflowMenu.update { null }
+    }
+
+    fun onConfigureProviderClick(provider: MediaProviderType) {
+        _configureMediaProvider.update { provider }
+        _showProviderOverflowMenu.update { null }
+    }
+
+    fun onConsumeConfigureMediaProvider() {
+        _configureMediaProvider.update { null }
     }
 
     private fun MediaProviderType.toMediaProvider(): MediaProvider = when (this) {

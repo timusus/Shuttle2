@@ -31,10 +31,10 @@ import com.simplecityapps.shuttle.ui.screens.home.search.HeaderBinder
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingChild
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingPage
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParent
-import com.simplecityapps.shuttle.ui.screens.onboarding.emby.EmbyConfigurationFragment
-import com.simplecityapps.shuttle.ui.screens.onboarding.jellyfin.JellyfinConfigurationFragment
-import com.simplecityapps.shuttle.ui.screens.onboarding.plex.PlexConfigurationFragment
-import com.simplecityapps.shuttle.ui.screens.onboarding.taglib.DirectorySelectionFragment
+import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.emby.EmbyConfigurationFragment
+import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.jellyfin.JellyfinConfigurationFragment
+import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.plex.PlexConfigurationFragment
+import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.taglib.DirectorySelectionFragment
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject

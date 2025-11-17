@@ -54,6 +54,7 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingChild
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingPage
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParent
+import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.plex.PlexConfigurationDialog
 import com.simplecityapps.shuttle.ui.snapshot.Snapshot
 import com.simplecityapps.shuttle.ui.theme.AppTheme
 import com.simplecityapps.shuttle.ui.theme.ColorSchemePreviewParameterProvider
@@ -97,8 +98,20 @@ private fun MediaProviderSelectionScreen(
 ) {
     val mediaProviders by viewModel.mediaProviders.collectAsStateWithLifecycle()
     val unAddedMediaProviders by viewModel.unAddedMediaProviders.collectAsStateWithLifecycle()
+    val configureMediaProvider by viewModel.configureMediaProvider.collectAsStateWithLifecycle()
     val showAddProviderDialog by viewModel.showAddMediaProviderDialog.collectAsStateWithLifecycle()
     val showProviderOverflowMenu by viewModel.showProviderOverflowMenu.collectAsStateWithLifecycle()
+
+    if (configureMediaProvider != null) {
+        when (configureMediaProvider!!) {
+            MediaProviderType.Shuttle -> TODO()
+            MediaProviderType.MediaStore -> TODO()
+            MediaProviderType.Emby -> TODO()
+            MediaProviderType.Jellyfin -> TODO()
+            MediaProviderType.Plex -> PlexConfigurationDialog(onDismissRequest = viewModel::onConsumeConfigureMediaProvider)
+        }
+    }
+
     MediaProviderSelectionScreen(
         modifier = modifier,
         mediaProviders = mediaProviders,
@@ -107,6 +120,7 @@ private fun MediaProviderSelectionScreen(
         showProviderOverflowMenu = showProviderOverflowMenu,
         onMediaProviderTypeClick = viewModel::onAddMediaProvider,
         onRemoveProviderClick = viewModel::onRemoveMediaProvider,
+        onConfigureProviderClick = viewModel::onConfigureProviderClick,
         onAddMediaProviderClick = viewModel::onAddMediaProviderClicked,
         onProviderOverflowMenuClick = viewModel::onMediaProviderOverflowMenuClicked,
         onDismissOverflowMenuRequest = viewModel::onDismissMediaProviderOverflowMenu,
@@ -124,6 +138,7 @@ private fun MediaProviderSelectionScreen(
     onAddMediaProviderClick: () -> Unit,
     onDismissOverflowMenuRequest: () -> Unit,
     onDismissAddMediaProviderRequest: () -> Unit,
+    onConfigureProviderClick: (MediaProviderType) -> Unit,
     onMediaProviderTypeClick: (MediaProviderType) -> Unit,
     onProviderOverflowMenuClick: (MediaProviderType) -> Unit,
     modifier: Modifier = Modifier
@@ -161,6 +176,7 @@ private fun MediaProviderSelectionScreen(
             onRemoveProviderClick = onRemoveProviderClick,
             onOverflowMenuClick = onProviderOverflowMenuClick,
             showProviderOverflowMenu = showProviderOverflowMenu,
+            onConfigureProviderClick = onConfigureProviderClick,
             onDismissOverflowMenuRequest = onDismissOverflowMenuRequest
         )
 
@@ -238,6 +254,7 @@ private fun LazyMediaProviderTypeColumn(
     onRemoveProviderClick: () -> Unit,
     onDismissOverflowMenuRequest: () -> Unit,
     onOverflowMenuClick: (MediaProviderType) -> Unit,
+    onConfigureProviderClick: (MediaProviderType) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -254,7 +271,8 @@ private fun LazyMediaProviderTypeColumn(
                         onRemoveProviderClick = onRemoveProviderClick,
                         onOverflowMenuClick = { onOverflowMenuClick(provider) },
                         onDismissOverflowMenuRequest = onDismissOverflowMenuRequest,
-                        showProviderOverflowMenu = showProviderOverflowMenu == provider
+                        showProviderOverflowMenu = showProviderOverflowMenu == provider,
+                        onConfigureProviderClick = { onConfigureProviderClick(provider) }
                     )
                 }
             }
@@ -285,6 +303,7 @@ private fun MediaProviderTypeItem(
     showProviderOverflowMenu: Boolean,
     onOverflowMenuClick: () -> Unit,
     onRemoveProviderClick: () -> Unit,
+    onConfigureProviderClick: () -> Unit,
     onDismissOverflowMenuRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -303,6 +322,12 @@ private fun MediaProviderTypeItem(
                 expanded = showProviderOverflowMenu,
                 onDismissRequest = onDismissOverflowMenuRequest
             ) {
+                if (provider != MediaProviderType.MediaStore) {
+                    DropdownMenuItem(
+                        onClick = onConfigureProviderClick,
+                        text = { Text(stringResource(R.string.menu_title_media_provider_configure)) }
+                    )
+                }
                 DropdownMenuItem(
                     onClick = onRemoveProviderClick,
                     text = { Text(stringResource(R.string.menu_title_remove)) }
@@ -350,6 +375,7 @@ private fun Preview(@PreviewParameter(ColorSchemePreviewParameterProvider::class
             onRemoveProviderClick = {},
             onAddMediaProviderClick = {},
             onMediaProviderTypeClick = {},
+            onConfigureProviderClick = {},
             onProviderOverflowMenuClick = {},
             onDismissOverflowMenuRequest = {},
             onDismissAddMediaProviderRequest = {},
@@ -370,6 +396,7 @@ private fun AddMediaProviderDialog(@PreviewParameter(ColorSchemePreviewParameter
             onRemoveProviderClick = {},
             onAddMediaProviderClick = {},
             onMediaProviderTypeClick = {},
+            onConfigureProviderClick = {},
             onProviderOverflowMenuClick = {},
             onDismissOverflowMenuRequest = {},
             onDismissAddMediaProviderRequest = {},
