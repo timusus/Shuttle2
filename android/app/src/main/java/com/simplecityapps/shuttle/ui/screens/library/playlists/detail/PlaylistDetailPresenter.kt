@@ -66,11 +66,15 @@ interface PlaylistDetailContract {
 
         fun addToQueue(playlistSong: PlaylistSong)
 
+        fun addToQueue(playlistSongs: List<PlaylistSong>)
+
         fun playNext(playlistSong: PlaylistSong)
 
         fun exclude(playlistSong: PlaylistSong)
 
         fun editTags(playlistSong: PlaylistSong)
+
+        fun editTags(playlistSongs: List<PlaylistSong>)
 
         fun remove(playlistSong: PlaylistSong)
 
@@ -189,6 +193,12 @@ constructor(
         }
     }
 
+    override fun addToQueue(playlistSongs: List<PlaylistSong>) {
+        launch {
+            playbackManager.addToQueue(playlistSongs.map { it.song })
+        }
+    }
+
     override fun addToQueue(playlist: Playlist) {
         launch {
             playbackManager.addToQueue(playlistSongs.value.orEmpty().map { it.song })
@@ -212,6 +222,10 @@ constructor(
 
     override fun editTags(playlistSong: PlaylistSong) {
         view?.showTagEditor(listOf(playlistSong))
+    }
+
+    override fun editTags(playlistSongs: List<PlaylistSong>) {
+        view?.showTagEditor(playlistSongs)
     }
 
     override fun remove(playlistSong: PlaylistSong) {
