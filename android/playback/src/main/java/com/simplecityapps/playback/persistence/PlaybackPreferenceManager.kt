@@ -96,6 +96,14 @@ class PlaybackPreferenceManager(
             return sharedPreferences.get("equalizer_enabled", false)
         }
 
+    var bitPerfectEnabled: Boolean
+        set(value) {
+            sharedPreferences.put("bit_perfect_enabled", value)
+        }
+        get() {
+            return sharedPreferences.get("bit_perfect_enabled", false)
+        }
+
     var replayGainMode: ReplayGainMode
         set(value) {
             sharedPreferences.put("replaygain_mode", value.ordinal)

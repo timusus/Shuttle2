@@ -9,4 +9,11 @@
         android:title="@string/pref_disable_shuffle_on_queue_title"
         app:iconSpaceReserved="false" />
 
+    <SwitchPreference
+        android:defaultValue="false"
+        android:key="bit_perfect_enabled"
+        android:summary="@string/pref_bit_perfect_subtitle"
+        android:title="@string/pref_bit_perfect_title"
+        app:iconSpaceReserved="false" />
+
 </PreferenceScreen>

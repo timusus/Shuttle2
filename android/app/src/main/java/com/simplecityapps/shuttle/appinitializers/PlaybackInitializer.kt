@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.content.ContextCompat
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
+import com.simplecityapps.playback.BitPerfectManager
 import com.simplecityapps.playback.NoiseManager
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackService
@@ -47,6 +48,7 @@ constructor(
     @Suppress("unused") private val castSessionManager: CastSessionManager,
     @Suppress("unused") private val mediaSessionManager: MediaSessionManager,
     @Suppress("unused") private val noiseManager: NoiseManager,
+    @Suppress("unused") private val bitPerfectManager: BitPerfectManager,
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope
 ) : AppInitializer,
     QueueChangeCallback,
