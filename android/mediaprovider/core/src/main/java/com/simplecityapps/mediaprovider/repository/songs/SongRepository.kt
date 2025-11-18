@@ -41,4 +41,14 @@ interface SongRepository {
     )
 
     suspend fun clearExcludeList()
+
+    /**
+     * Search songs using full-text search (FTS).
+     * Returns a limited set of candidate songs that match the query.
+     *
+     * @param query The search query (will be converted to FTS syntax internally)
+     * @param limit Maximum number of results to return
+     * @return List of songs matching the FTS query
+     */
+    suspend fun searchSongsFts(query: String, limit: Int = 100): List<Song>
 }

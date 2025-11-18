@@ -57,10 +57,14 @@ class SearchFragment :
     private var adapter: RecyclerAdapter by autoCleared()
     private var searchView: SearchView by autoCleared()
     private var recyclerView: RecyclerView by autoCleared()
+    private var progressBar: View by autoCleared()
+    private var emptyStateView: View by autoCleared()
     private var toolbar: Toolbar by autoCleared()
     private var artistsChip: Chip by autoCleared()
     private var albumsChip: Chip by autoCleared()
     private var songsChip: Chip by autoCleared()
+
+    private var hasSearched = false
 
     @Inject
     lateinit var presenter: SearchPresenter
@@ -103,6 +107,9 @@ class SearchFragment :
         recyclerView = view.findViewById(R.id.recyclerView)
         recyclerView.adapter = adapter
 
+        progressBar = view.findViewById(R.id.progressBar)
+        emptyStateView = view.findViewById(R.id.emptyStateView)
+
         searchView = view.findViewById(R.id.searchView)
         searchView.setOnQueryTextListener(
             object : SearchView.OnQueryTextListener {
@@ -113,7 +120,23 @@ class SearchFragment :
 
                 override fun onQueryTextChange(text: String): Boolean {
                     viewLifecycleOwner.lifecycleScope.launch {
-                        queryFlow.update { text.trim() }
+                        val trimmedText = text.trim()
+                        queryFlow.update { trimmedText }
+
+                        // Show loading indicator when user types a non-empty query
+                        if (trimmedText.isNotEmpty()) {
+                            progressBar.visibility = View.VISIBLE
+                            recyclerView.visibility = View.GONE
+                            emptyStateView.visibility = View.GONE
+                        } else {
+                            // Clear all views when query is empty (initial state)
+                            progressBar.visibility = View.GONE
+                            recyclerView.visibility = View.VISIBLE
+                            emptyStateView.visibility = View.GONE
+                            hasSearched = false
+                            // Clear the adapter to show empty recycler view
+                            adapter.clear()
+                        }
                     }
                     return true
                 }
@@ -151,7 +174,7 @@ class SearchFragment :
 
         viewLifecycleOwner.lifecycleScope.launch {
             queryFlow
-                .debounce(500)
+                .debounce(300) // Reduced from 500ms to 300ms based on UX research
                 .flowOn(Dispatchers.IO)
                 .collect { query ->
                     presenter.loadData(query)
@@ -169,6 +192,25 @@ class SearchFragment :
     // SearchContract.View Implementation
 
     override fun setData(searchResult: Triple<List<ArtistJaroSimilarity>, List<AlbumJaroSimilarity>, List<SongJaroSimilarity>>) {
+        // Mark that we've completed a search
+        hasSearched = true
+
+        // Hide loading indicator
+        progressBar.visibility = View.GONE
+
+        // Check if we have any results
+        val hasResults = searchResult.first.isNotEmpty() || searchResult.second.isNotEmpty() || searchResult.third.isNotEmpty()
+
+        // Show/hide views based on whether we have results
+        if (hasResults) {
+            recyclerView.visibility = View.VISIBLE
+            emptyStateView.visibility = View.GONE
+        } else {
+            // Only show "No results found" if we've performed a search
+            recyclerView.visibility = View.GONE
+            emptyStateView.visibility = if (hasSearched) View.VISIBLE else View.GONE
+        }
+
         // If we're displaying too many items, clear the adapter data, so calculating the diff is faster
         if (adapter.itemCount > 100) {
             adapter.clear()

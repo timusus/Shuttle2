@@ -46,7 +46,7 @@ class LocalGenreRepository(
                     com.simplecityapps.shuttle.model.Genre(
                         entry.key,
                         entry.value.size,
-                        entry.value.sumBy { song -> song.duration },
+                        entry.value.sumOf { song -> song.duration },
                         entry.value.map { song -> song.mediaProvider }.distinct()
                     )
                 }

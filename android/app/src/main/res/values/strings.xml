@@ -20,6 +20,8 @@
     <string name="title_now_playing">Now Playing</string>
     <!-- Shown at the top of the 'search' screen-->
     <string name="title_search_hint">Search Music</string>
+    <!-- Shown when search returns no results -->
+    <string name="search_no_results">No results found</string>
     <!-- Shown for alpha/beta testers, in a dialog on the main screen -->
     <string name="crash_reporting_nag_text">Please consider enabling crash reporting. This helps to diagnose and correct problems more efficiently</string>
     <!-- Button shown in dialog to enable crash reporting-->

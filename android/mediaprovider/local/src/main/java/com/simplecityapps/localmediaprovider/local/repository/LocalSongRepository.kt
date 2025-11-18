@@ -1,6 +1,8 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
 import com.simplecityapps.localmediaprovider.local.data.room.dao.SongDataDao
+import com.simplecityapps.localmediaprovider.local.data.room.dao.toFtsQuery
+import com.simplecityapps.localmediaprovider.local.data.room.dao.toSong
 import com.simplecityapps.localmediaprovider.local.data.room.entity.toSongData
 import com.simplecityapps.localmediaprovider.local.data.room.entity.toSongDataUpdate
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
@@ -99,5 +101,23 @@ class LocalSongRepository(
     override suspend fun clearExcludeList() {
         Timber.v("Clearing excluded")
         songDataDao.clearExcludeList()
+    }
+
+    override suspend fun searchSongsFts(query: String, limit: Int): List<Song> {
+        val ftsQuery = query.toFtsQuery()
+        val ftsResults = songDataDao.searchSongsFts(ftsQuery, limit).map { it.toSong() }
+
+        // If FTS returns no results and query is long enough, fall back to full scan
+        // This allows fuzzy matching on typos that FTS misses
+        if (ftsResults.isEmpty() && query.length >= 3) {
+            Timber.d("FTS returned zero results for '$query', falling back to full scan for fuzzy matching")
+            // Get all non-blacklisted songs, limit to 5000 for performance
+            return songsRelay.value
+                ?.filterNot { it.blacklisted }
+                ?.take(5000)
+                ?: emptyList()
+        }
+
+        return ftsResults
     }
 }
