@@ -85,4 +85,23 @@ class EmbyAuthenticationManager(
             "&AudioCodec=aac" +
             "&api_key=${authenticatedCredentials.accessToken}"
     }
+
+    /**
+     * Builds a direct download URL for offline playback (no transcoding)
+     */
+    fun buildEmbyDownloadPath(
+        itemId: String,
+        authenticatedCredentials: AuthenticatedCredentials
+    ): String? {
+        if (credentialStore.address == null) {
+            Timber.w("Invalid emby address")
+            return null
+        }
+
+        return "${credentialStore.address}/emby" +
+            "/Audio/$itemId" +
+            "/stream" +
+            "?static=true" +
+            "&api_key=${authenticatedCredentials.accessToken}"
+    }
 }
