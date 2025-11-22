@@ -12,13 +12,13 @@ import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
 import com.simplecityapps.provider.plex.PlexMediaProvider
 import com.simplecityapps.shuttle.model.MediaProviderType
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import javax.inject.Inject
 
 @HiltViewModel
 class MediaProviderSelectionViewModel @Inject constructor(
