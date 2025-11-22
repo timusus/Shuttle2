@@ -1,6 +1,7 @@
 package com.simplecityapps.localmediaprovider.local.repository
 
 import android.content.Context
+import android.net.Uri
 import com.simplecityapps.localmediaprovider.local.data.room.dao.PlaylistDataDao
 import com.simplecityapps.localmediaprovider.local.data.room.dao.PlaylistSongJoinDao
 import com.simplecityapps.localmediaprovider.local.data.room.entity.PlaylistData
@@ -109,31 +110,40 @@ class LocalPlaylistRepository(
     override suspend fun addToPlaylist(
         playlist: Playlist,
         songs: List<Song>
-    ) = playlistSongJoinDao.insert(
-        songs.mapIndexed { i, song ->
-            PlaylistSongJoin(
-                playlistId = playlist.id,
-                songId = song.id,
-                sortOrder = (playlist.songCount + i).toLong()
-            )
-        }
-    )
+    ) {
+        playlistSongJoinDao.insert(
+            songs.mapIndexed { i, song ->
+                PlaylistSongJoin(
+                    playlistId = playlist.id,
+                    songId = song.id,
+                    sortOrder = (playlist.songCount + i).toLong()
+                )
+            }
+        )
+        updateM3uFile(playlist)
+    }
 
     override suspend fun removeFromPlaylist(
         playlist: Playlist,
         playlistSongs: List<PlaylistSong>
-    ) = playlistSongJoinDao.delete(
-        playlistId = playlist.id,
-        playlistSongIds = playlistSongs.map { playlistSong -> playlistSong.id }.toTypedArray()
-    )
+    ) {
+        playlistSongJoinDao.delete(
+            playlistId = playlist.id,
+            playlistSongIds = playlistSongs.map { playlistSong -> playlistSong.id }.toTypedArray()
+        )
+        updateM3uFile(playlist)
+    }
 
     override suspend fun removeSongsFromPlaylist(
         playlist: Playlist,
         songs: List<Song>
-    ) = playlistSongJoinDao.deleteSongs(
-        playlistId = playlist.id,
-        songIds = songs.map { it.id }.toTypedArray()
-    )
+    ) {
+        playlistSongJoinDao.deleteSongs(
+            playlistId = playlist.id,
+            songIds = songs.map { it.id }.toTypedArray()
+        )
+        updateM3uFile(playlist)
+    }
 
     override fun getSongsForPlaylist(playlist: Playlist): Flow<List<PlaylistSong>> = playlistSongJoinDao.getSongsForPlaylist(playlist.id)
         .map { playlistSong ->
@@ -144,7 +154,10 @@ class LocalPlaylistRepository(
 
     override suspend fun deleteAll(mediaProviderType: MediaProviderType) = playlistDataDao.deleteAll(mediaProviderType)
 
-    override suspend fun clearPlaylist(playlist: Playlist) = playlistDataDao.clear(playlist.id)
+    override suspend fun clearPlaylist(playlist: Playlist) {
+        playlistDataDao.clear(playlist.id)
+        updateM3uFile(playlist)
+    }
 
     override suspend fun renamePlaylist(
         playlist: Playlist,
@@ -158,6 +171,32 @@ class LocalPlaylistRepository(
             sortOrder = playlist.sortOrder
         )
     )
+
+    override suspend fun updateM3uFile(playlist: Playlist) {
+        val outputStream = playlist.externalId?.let { path ->
+            context.contentResolver.openOutputStream(Uri.parse(playlist.externalId), "wt")
+        }
+
+        if (outputStream == null) {
+            Timber.w("Unable to open M3U file at ${playlist.externalId} for playlist ${playlist.name}")
+        } else {
+            val playlistPath = Uri.decode(playlist.externalId ?: "")
+            val playlistFolder = playlistPath.substringBeforeLast("/") + "/"
+
+            getSongsForPlaylist(playlist)
+                .firstOrNull()
+                .orEmpty()
+                .forEach { plSong ->
+                    // Quick-and-dirty way to relativize the song path to the m3u folder
+                    // Note that paths can be content:// URIs, for which there is no proper .relativize() method
+                    // We'll use absolute values (paths or URIs, whatever is in database) for files that are not stored in a sub-folder relative to the M3U file
+                    val songPath = Uri.decode(plSong.song.path)
+                    val crlf = "\r\n"
+                    val relative = songPath.substringAfter(playlistFolder) + crlf
+                    outputStream.write(relative.toByteArray())
+                }
+        }
+    }
 
     override suspend fun updatePlaylistSortOder(
         playlist: Playlist,
@@ -189,6 +228,7 @@ class LocalPlaylistRepository(
                 }
             }
         )
+        updateM3uFile(playlist)
     }
 
     override suspend fun updatePlaylistMediaProviderType(
