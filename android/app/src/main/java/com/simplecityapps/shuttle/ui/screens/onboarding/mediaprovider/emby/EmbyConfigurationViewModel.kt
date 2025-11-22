@@ -1,9 +1,9 @@
-package com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.plex
+package com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.emby
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.simplecityapps.provider.plex.PlexAuthenticationManager
-import com.simplecityapps.provider.plex.http.LoginCredentials
+import com.simplecityapps.provider.emby.EmbyAuthenticationManager
+import com.simplecityapps.provider.emby.http.LoginCredentials
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,13 +14,13 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @HiltViewModel
-class PlexConfigurationViewModel @Inject constructor(
-    private val plexAuthenticationManager: PlexAuthenticationManager
+class EmbyConfigurationViewModel @Inject constructor(
+    private val embyAuthenticationManager: EmbyAuthenticationManager
 ) : ViewModel() {
 
-    private val _viewState = MutableStateFlow(PlexConfigurationViewState.Empty)
+    private val _viewState = MutableStateFlow(EmbyConfigurationViewState.Empty)
     val viewState = _viewState.map { state ->
-        PlexConfigurationViewState(
+        EmbyConfigurationViewState(
             address = state.address,
             loginCredentials = state.loginCredentials,
             rememberPassword = state.rememberPassword,
@@ -37,10 +37,10 @@ class PlexConfigurationViewModel @Inject constructor(
 
     fun onInitializeConfiguration() {
         _viewState.update {
-            PlexConfigurationViewState.Empty.copy(
-                address = plexAuthenticationManager.getAddress() ?: "",
-                rememberPassword = plexAuthenticationManager.getLoginCredentials() != null,
-                loginCredentials = plexAuthenticationManager.getLoginCredentials() ?: LoginCredentials.Empty
+            EmbyConfigurationViewState.Empty.copy(
+                address = embyAuthenticationManager.getAddress() ?: "",
+                rememberPassword = embyAuthenticationManager.getLoginCredentials() != null,
+                loginCredentials = embyAuthenticationManager.getLoginCredentials() ?: LoginCredentials.Empty
             )
         }
     }
@@ -63,15 +63,9 @@ class PlexConfigurationViewModel @Inject constructor(
         }
     }
 
-    fun onAuthCodeChange(authCode: String) {
-        _viewState.update { state ->
-            state.copy(loginCredentials = state.loginCredentials.copy(authCode = authCode))
-        }
-    }
-
     fun onRememberPasswordChange(remember: Boolean) {
         if (!remember) {
-            plexAuthenticationManager.setLoginCredentials(null)
+            embyAuthenticationManager.setLoginCredentials(null)
         }
         _viewState.update { state ->
             state.copy(rememberPassword = remember)
@@ -85,22 +79,22 @@ class PlexConfigurationViewModel @Inject constructor(
     ) {
         viewModelScope.launch {
             _viewState.update { state ->
-                state.copy(authenticationState = PlexAuthenticationState.Loading)
+                state.copy(authenticationState = EmbyAuthenticationState.Loading)
             }
-            plexAuthenticationManager.authenticate(
+            embyAuthenticationManager.authenticate(
                 address = address,
                 loginCredentials = loginCredentials
             ).onSuccess {
-                plexAuthenticationManager.setAddress(address)
+                embyAuthenticationManager.setAddress(address)
                 if (rememberPassword) {
-                    plexAuthenticationManager.setLoginCredentials(loginCredentials)
+                    embyAuthenticationManager.setLoginCredentials(loginCredentials)
                 }
                 _viewState.update { state ->
-                    state.copy(authenticationState = PlexAuthenticationState.Success)
+                    state.copy(authenticationState = EmbyAuthenticationState.Success)
                 }
             }.onFailure { error ->
                 _viewState.update { state ->
-                    state.copy(authenticationState = PlexAuthenticationState.Error(error))
+                    state.copy(authenticationState = EmbyAuthenticationState.Error(error))
                 }
             }
         }

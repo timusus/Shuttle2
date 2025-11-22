@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.plex
+package com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.emby
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -38,7 +37,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
@@ -46,29 +44,28 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.simplecityapps.provider.plex.http.LoginCredentials
+import com.simplecityapps.provider.emby.http.LoginCredentials
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.snapshot.Snapshot
 import com.simplecityapps.shuttle.ui.theme.ColorSchemePreviewParameterProvider
 
 @Composable
-fun PlexConfigurationDialog(
+fun EmbyConfigurationDialog(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: PlexConfigurationViewModel = hiltViewModel()
+    viewModel: EmbyConfigurationViewModel = hiltViewModel()
 ) {
     val viewState by viewModel.viewState.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) {
         viewModel.onInitializeConfiguration()
     }
-    PlexConfigurationDialog(
+    EmbyConfigurationDialog(
         modifier = modifier,
         viewState = viewState,
         onDismissRequest = onDismissRequest,
         onAddressChange = viewModel::onAddressChange,
         onUsernameChange = viewModel::onUsernameChange,
         onPasswordChange = viewModel::onPasswordChange,
-        onAuthCodeChange = viewModel::onAuthCodeChange,
         onRememberPasswordChange = viewModel::onRememberPasswordChange,
         onAuthenticateClick = {
             viewModel.onAuthenticateClick(
@@ -81,12 +78,11 @@ fun PlexConfigurationDialog(
 }
 
 @Composable
-private fun PlexConfigurationDialog(
-    viewState: PlexConfigurationViewState,
+private fun EmbyConfigurationDialog(
+    viewState: EmbyConfigurationViewState,
     onDismissRequest: () -> Unit,
     onAuthenticateClick: () -> Unit,
     onAddressChange: (String) -> Unit,
-    onAuthCodeChange: (String) -> Unit,
     onUsernameChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
     onRememberPasswordChange: (Boolean) -> Unit,
@@ -96,7 +92,7 @@ private fun PlexConfigurationDialog(
         modifier = modifier,
         onDismissRequest = onDismissRequest,
         title = {
-            Text(text = stringResource(com.simplecityapps.mediaprovider.R.string.media_provider_title_long_plex))
+            Text(text = stringResource(com.simplecityapps.mediaprovider.R.string.media_provider_title_long_emby))
         },
         text = {
             AnimatedContent(
@@ -104,36 +100,35 @@ private fun PlexConfigurationDialog(
                 transitionSpec = { EnterTransition.None togetherWith ExitTransition.None }
             ) { state ->
                 when (state) {
-                    PlexAuthenticationState.Success -> {
+                    EmbyAuthenticationState.Success -> {
                         LaunchedEffect(Unit) {
                             onDismissRequest()
                         }
                     }
 
-                    PlexAuthenticationState.Loading -> PlexAuthenticationLoading()
-                    is PlexAuthenticationState.Error -> PlexAuthenticationError(state = state)
-                    null -> PlexAuthenticationInputForm(
+                    EmbyAuthenticationState.Loading -> EmbyAuthenticationLoading()
+                    is EmbyAuthenticationState.Error -> EmbyAuthenticationError(state = state)
+                    null -> EmbyAuthenticationInputForm(
                         address = viewState.address,
                         rememberPassword = viewState.rememberPassword,
                         loginCredentials = viewState.loginCredentials,
                         onAddressChange = onAddressChange,
                         onUsernameChange = onUsernameChange,
                         onPasswordChange = onPasswordChange,
-                        onAuthCodeChange = onAuthCodeChange,
                         onRememberPasswordChange = onRememberPasswordChange
                     )
                 }
             }
         },
         dismissButton = {
-            AnimatedVisibility(visible = viewState.authenticationState != PlexAuthenticationState.Loading) {
+            AnimatedVisibility(visible = viewState.authenticationState != EmbyAuthenticationState.Loading) {
                 TextButton(onClick = onDismissRequest) {
                     Text(text = stringResource(R.string.dialog_button_close))
                 }
             }
         },
         confirmButton = {
-            AnimatedVisibility(visible = viewState.authenticationState != PlexAuthenticationState.Loading) {
+            AnimatedVisibility(visible = viewState.authenticationState != EmbyAuthenticationState.Loading) {
                 TextButton(
                     onClick = onAuthenticateClick,
                     enabled = viewState.canAuthenticate
@@ -146,14 +141,13 @@ private fun PlexConfigurationDialog(
 }
 
 @Composable
-private fun PlexAuthenticationInputForm(
+private fun EmbyAuthenticationInputForm(
     address: String,
     rememberPassword: Boolean,
     loginCredentials: LoginCredentials,
     onAddressChange: (String) -> Unit,
     onUsernameChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
-    onAuthCodeChange: (String) -> Unit,
     onRememberPasswordChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -173,10 +167,6 @@ private fun PlexAuthenticationInputForm(
             password = loginCredentials.password,
             onPasswordChange = onPasswordChange
         )
-        AuthCodeInputField(
-            authCode = loginCredentials.authCode,
-            onAuthCodeChange = onAuthCodeChange
-        )
         RememberPasswordSwitch(
             rememberPassword = rememberPassword,
             onRememberPasswordChange = onRememberPasswordChange
@@ -185,7 +175,7 @@ private fun PlexAuthenticationInputForm(
 }
 
 @Composable
-private fun PlexAuthenticationLoading() {
+private fun EmbyAuthenticationLoading() {
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -197,8 +187,8 @@ private fun PlexAuthenticationLoading() {
 }
 
 @Composable
-private fun PlexAuthenticationError(
-    state: PlexAuthenticationState.Error,
+private fun EmbyAuthenticationError(
+    state: EmbyAuthenticationState.Error,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -214,7 +204,7 @@ private fun PlexAuthenticationError(
             Text(
                 color = MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.bodyLarge,
-                text = "Unable to authenticate with your Plex server."
+                text = "Unable to authenticate with your Emby server."
             )
         }
         Column(
@@ -262,33 +252,6 @@ private fun RememberPasswordSwitch(
         Switch(
             checked = rememberPassword,
             onCheckedChange = onRememberPasswordChange
-        )
-    }
-}
-
-@Composable
-private fun AuthCodeInputField(
-    authCode: String?,
-    onAuthCodeChange: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Column(
-        modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        OutlinedTextField(
-            singleLine = true,
-            value = authCode ?: "",
-            onValueChange = onAuthCodeChange,
-            keyboardOptions = KeyboardOptions.Default.copy(
-                keyboardType = KeyboardType.Number
-            ),
-            label = { Text(stringResource(R.string.media_provider_config_hint_code)) }
-        )
-        Text(
-            color = MaterialTheme.colorScheme.tertiary,
-            style = MaterialTheme.typography.bodySmall,
-            text = stringResource(R.string.media_provider_config_helper_code)
         )
     }
 }
@@ -353,7 +316,7 @@ private fun AddressInputField(
         Text(
             color = MaterialTheme.colorScheme.tertiary,
             style = MaterialTheme.typography.labelSmall,
-            text = "e.g. https://my.plex.server.com/32400"
+            text = "e.g. http://my.server.com:8080"
         )
     }
 }
@@ -363,15 +326,14 @@ private fun AddressInputField(
 @Composable
 private fun Loading(@PreviewParameter(ColorSchemePreviewParameterProvider::class) colorScheme: ColorScheme) {
     MaterialTheme(colorScheme = colorScheme) {
-        PlexConfigurationDialog(
+        EmbyConfigurationDialog(
             onDismissRequest = {},
-            viewState = PlexConfigurationViewState.Empty.copy(
-                authenticationState = PlexAuthenticationState.Loading
+            viewState = EmbyConfigurationViewState.Empty.copy(
+                authenticationState = EmbyAuthenticationState.Loading
             ),
             onAddressChange = {},
             onUsernameChange = {},
             onPasswordChange = {},
-            onAuthCodeChange = {},
             onAuthenticateClick = {},
             onRememberPasswordChange = {}
         )
@@ -383,14 +345,13 @@ private fun Loading(@PreviewParameter(ColorSchemePreviewParameterProvider::class
 @Composable
 private fun Success(@PreviewParameter(ColorSchemePreviewParameterProvider::class) colorScheme: ColorScheme) {
     MaterialTheme(colorScheme = colorScheme) {
-        PlexConfigurationDialog(
+        EmbyConfigurationDialog(
             onDismissRequest = {},
-            viewState = PlexConfigurationViewState(
+            viewState = EmbyConfigurationViewState(
                 address = "http://",
                 loginCredentials = LoginCredentials(
                     username = "shuttle",
-                    password = "musicplayer",
-                    authCode = null
+                    password = "musicplayer"
                 ),
                 canAuthenticate = true,
                 rememberPassword = false,
@@ -399,7 +360,6 @@ private fun Success(@PreviewParameter(ColorSchemePreviewParameterProvider::class
             onAddressChange = {},
             onUsernameChange = {},
             onPasswordChange = {},
-            onAuthCodeChange = {},
             onAuthenticateClick = {},
             onRememberPasswordChange = {}
         )
@@ -411,17 +371,16 @@ private fun Success(@PreviewParameter(ColorSchemePreviewParameterProvider::class
 @Composable
 private fun Error(@PreviewParameter(ColorSchemePreviewParameterProvider::class) colorScheme: ColorScheme) {
     MaterialTheme(colorScheme = colorScheme) {
-        PlexConfigurationDialog(
+        EmbyConfigurationDialog(
             onDismissRequest = {},
-            viewState = PlexConfigurationViewState.Empty.copy(
-                authenticationState = PlexAuthenticationState.Error(
+            viewState = EmbyConfigurationViewState.Empty.copy(
+                authenticationState = EmbyAuthenticationState.Error(
                     error = RuntimeException("Unable to connect to server")
                 )
             ),
             onAddressChange = {},
             onUsernameChange = {},
             onPasswordChange = {},
-            onAuthCodeChange = {},
             onAuthenticateClick = {},
             onRememberPasswordChange = {}
         )

@@ -54,6 +54,7 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingChild
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingPage
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParent
+import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.emby.EmbyConfigurationDialog
 import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.plex.PlexConfigurationDialog
 import com.simplecityapps.shuttle.ui.snapshot.Snapshot
 import com.simplecityapps.shuttle.ui.theme.AppTheme
@@ -94,7 +95,7 @@ class MediaProviderSelectionScreenFragment :
 @Composable
 private fun MediaProviderSelectionScreen(
     modifier: Modifier = Modifier,
-    viewModel: MediaProviderViewModel = hiltViewModel()
+    viewModel: MediaProviderSelectionViewModel = hiltViewModel()
 ) {
     val mediaProviders by viewModel.mediaProviders.collectAsStateWithLifecycle()
     val unAddedMediaProviders by viewModel.unAddedMediaProviders.collectAsStateWithLifecycle()
@@ -106,7 +107,7 @@ private fun MediaProviderSelectionScreen(
         when (configureMediaProvider!!) {
             MediaProviderType.Shuttle -> TODO()
             MediaProviderType.MediaStore -> TODO()
-            MediaProviderType.Emby -> TODO()
+            MediaProviderType.Emby -> EmbyConfigurationDialog(onDismissRequest = viewModel::onConsumeConfigureMediaProvider)
             MediaProviderType.Jellyfin -> TODO()
             MediaProviderType.Plex -> PlexConfigurationDialog(onDismissRequest = viewModel::onConsumeConfigureMediaProvider)
         }
