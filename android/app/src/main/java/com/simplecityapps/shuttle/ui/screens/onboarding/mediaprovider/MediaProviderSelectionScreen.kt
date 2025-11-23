@@ -56,6 +56,7 @@ import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingPage
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParent
 import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.emby.EmbyConfigurationDialog
 import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.plex.PlexConfigurationDialog
+import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.taglib.DirectorySelectionDialog
 import com.simplecityapps.shuttle.ui.snapshot.Snapshot
 import com.simplecityapps.shuttle.ui.theme.AppTheme
 import com.simplecityapps.shuttle.ui.theme.ColorSchemePreviewParameterProvider
@@ -105,8 +106,8 @@ private fun MediaProviderSelectionScreen(
 
     if (configureMediaProvider != null) {
         when (configureMediaProvider!!) {
-            MediaProviderType.Shuttle -> TODO()
-            MediaProviderType.MediaStore -> TODO()
+            MediaProviderType.Shuttle -> DirectorySelectionDialog(onDismissRequest = viewModel::onConsumeConfigureMediaProvider)
+            MediaProviderType.MediaStore -> Unit
             MediaProviderType.Emby -> EmbyConfigurationDialog(onDismissRequest = viewModel::onConsumeConfigureMediaProvider)
             MediaProviderType.Jellyfin -> TODO()
             MediaProviderType.Plex -> PlexConfigurationDialog(onDismissRequest = viewModel::onConsumeConfigureMediaProvider)
