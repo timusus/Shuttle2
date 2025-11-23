@@ -54,6 +54,8 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingChild
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingPage
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParent
+import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.emby.EmbyConfigurationDialog
+import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.jellyfin.JellyfinConfigurationDialog
 import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.plex.PlexConfigurationDialog
 import com.simplecityapps.shuttle.ui.snapshot.Snapshot
 import com.simplecityapps.shuttle.ui.theme.AppTheme
