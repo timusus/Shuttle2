@@ -31,6 +31,7 @@ data class Song(
     val lastCompleted: Instant?,
     val playCount: Int,
     val playbackPosition: Int,
+    val rating: Int = 0, // 0-5 star rating (0 = unrated)
     val blacklisted: Boolean,
     val externalId: String? = null,
     val mediaProvider: MediaProviderType,
