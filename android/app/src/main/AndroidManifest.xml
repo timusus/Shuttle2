@@ -89,6 +89,18 @@
                 android:resource="@xml/appwidget_info_42" />
         </receiver>
 
+        <receiver
+            android:name=".ui.widgets.WidgetProvider43"
+            android:exported="true"
+            android:label="Shuttle 4x3">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/appwidget_info_43" />
+        </receiver>
+
         <!-- Crashlytics -->
         <meta-data
             android:name="firebase_crashlytics_collection_enabled"
