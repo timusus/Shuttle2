@@ -260,6 +260,9 @@ android {
         implementation(libs.firebase.crashlytics)
 
         // Testing
+        testImplementation(libs.kotest)
+        testImplementation(libs.mockk)
+        testImplementation(libs.kotlinx.coroutinesTest)
         androidTestImplementation(libs.androidx.runner)
         androidTestImplementation(libs.androidx.rules)
         androidTestImplementation(libs.androidx.core.ktx)
