@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 
 interface DirectorySelectionContract {
-    data class Directory(val tree: DocumentNodeTree, val traversalComplete: Boolean, val hasWritePermission: Boolean)
+    data class Directory(val tree: DocumentNodeTree, val traversalComplete: Boolean)
 
     interface Presenter : BaseContract.Presenter<View> {
         fun loadData(contentResolver: ContentResolver)
@@ -58,7 +58,7 @@ constructor(
             setData(data)
         } else {
             uris.forEach { uriPermission ->
-                parseUri(contentResolver, uriPermission.uri, uriPermission.isWritePermission)
+                parseUri(contentResolver, uriPermission.uri)
             }
         }
     }
@@ -79,7 +79,7 @@ constructor(
     ) {
         intent.data?.let { uri ->
             contentResolver.takePersistableUriPermission(uri, intent.flags and (Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION))
-            parseUri(contentResolver, uri, true)
+            parseUri(contentResolver, uri)
         }
     }
 
@@ -95,8 +95,7 @@ constructor(
 
     private fun parseUri(
         contentResolver: ContentResolver,
-        uri: Uri,
-        hasWritePermission: Boolean
+        uri: Uri
     ) {
         appCoroutineScope.launch {
             SafDirectoryHelper.buildFolderNodeTree(contentResolver, uri)
@@ -104,8 +103,7 @@ constructor(
                     val directory =
                         DirectorySelectionContract.Directory(
                             tree = treeStatus.tree,
-                            traversalComplete = treeStatus is SafDirectoryHelper.TreeStatus.Complete,
-                            hasWritePermission = hasWritePermission
+                            traversalComplete = treeStatus is SafDirectoryHelper.TreeStatus.Complete
                         )
                     val index = data.indexOfFirst { it.tree == treeStatus.tree }
                     if (index == -1) {
