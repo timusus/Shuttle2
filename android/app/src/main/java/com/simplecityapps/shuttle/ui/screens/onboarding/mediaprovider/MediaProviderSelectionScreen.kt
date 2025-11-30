@@ -55,6 +55,7 @@ import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingChild
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingPage
 import com.simplecityapps.shuttle.ui.screens.onboarding.OnboardingParent
 import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.emby.EmbyConfigurationDialog
+import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.jellyfin.JellyfinConfigurationDialog
 import com.simplecityapps.shuttle.ui.screens.onboarding.mediaprovider.plex.PlexConfigurationDialog
 import com.simplecityapps.shuttle.ui.snapshot.Snapshot
 import com.simplecityapps.shuttle.ui.theme.AppTheme
@@ -108,7 +109,7 @@ private fun MediaProviderSelectionScreen(
             MediaProviderType.Shuttle -> TODO()
             MediaProviderType.MediaStore -> TODO()
             MediaProviderType.Emby -> EmbyConfigurationDialog(onDismissRequest = viewModel::onConsumeConfigureMediaProvider)
-            MediaProviderType.Jellyfin -> TODO()
+            MediaProviderType.Jellyfin -> JellyfinConfigurationDialog(onDismissRequest = viewModel::onConsumeConfigureMediaProvider)
             MediaProviderType.Plex -> PlexConfigurationDialog(onDismissRequest = viewModel::onConsumeConfigureMediaProvider)
         }
     }
