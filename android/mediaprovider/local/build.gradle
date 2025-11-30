@@ -66,6 +66,7 @@ dependencies {
     testImplementation libs.junit
     androidTestImplementation libs.androidx.runner
     androidTestImplementation libs.androidx.espresso.core
+    androidTestImplementation libs.androidx.room.testing
 
     // Moshi
     ksp(libs.moshi.kotlinCodegen)
