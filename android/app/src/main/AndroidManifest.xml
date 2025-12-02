@@ -8,6 +8,11 @@
 
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
 
+    <!-- Permissions for foreground download service -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <queries>
         <intent>
             <action android:name="android.intent.action.OPEN_DOCUMENT_TREE" />
@@ -100,6 +105,12 @@
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"
             tools:node="remove"></provider>
+
+        <!-- Download Service -->
+        <service
+            android:name="com.simplecityapps.playback.download.DownloadService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
 
     </application>
 
