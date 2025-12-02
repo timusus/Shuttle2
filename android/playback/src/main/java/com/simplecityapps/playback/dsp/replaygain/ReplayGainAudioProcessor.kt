@@ -12,19 +12,36 @@ import com.simplecityapps.playback.exoplayer.ByteUtils.getInt24
 import com.simplecityapps.playback.exoplayer.ByteUtils.putInt24
 import java.nio.ByteBuffer
 
+/**
+ * Audio processor that applies ReplayGain volume normalization.
+ *
+ * Thread Safety:
+ * - trackGain and albumGain are updated from the main thread (via setReplayGain)
+ * - gain getter is accessed from the audio rendering thread (in queueInput)
+ * - @Synchronized ensures thread-safe access
+ *
+ * Note on Timing:
+ * During gapless transitions, there may be a brief period (a few audio buffers, ~10-50ms)
+ * where new track samples are processed with the previous track's gain before the update
+ * takes effect. This is a fundamental limitation of the async nature of Player.Listener
+ * callbacks vs continuous audio rendering. In practice, this is imperceptible compared
+ * to the original issue where the delay was ~500ms.
+ */
 class ReplayGainAudioProcessor(var mode: ReplayGainMode, var preAmpGain: Double = 0.0) : BaseAudioProcessor() {
+    @Volatile
     var trackGain: Double? = null
         @Synchronized get
 
         @Synchronized set
 
+    @Volatile
     var albumGain: Double? = null
         @Synchronized get
 
         @Synchronized set
 
     private val gain: Double
-        get() =
+        @Synchronized get() =
             preAmpGain +
                 when (mode) {
                     ReplayGainMode.Track -> trackGain ?: albumGain ?: 0.0
