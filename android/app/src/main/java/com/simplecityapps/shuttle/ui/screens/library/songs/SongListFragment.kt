@@ -35,9 +35,9 @@ import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
 import com.simplecityapps.shuttle.ui.theme.AppTheme
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @AndroidEntryPoint
 class SongListFragment :
@@ -317,7 +317,7 @@ class SongListFragment :
         TagEditorAlertDialog.newInstance(listOf(song)).show(childFragmentManager)
     }
 
-    fun onAddedToQueue(songs: List<com.simplecityapps.shuttle.model.Song>) {
+    fun onAddedToQueue(songs: List<Song>) {
         Toast.makeText(
             context,
             Phrase.fromPlural(resources, R.plurals.queue_songs_added, songs.size)
