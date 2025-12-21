@@ -66,9 +66,7 @@ fun FastScroller(
     thumb: @Composable () -> Unit = {
         DefaultThumb()
     },
-    popup: @Composable (index: Int) -> Unit = { currentItemIndex ->
-        DefaultPopup(text = getPopupText(currentItemIndex))
-    }
+    popup: @Composable ((index: Int) -> Unit)? = null
 ) {
     val coroutineScope = rememberCoroutineScope()
     val density = LocalDensity.current
@@ -175,6 +173,9 @@ fun FastScroller(
                 thumb()
             }
 
+            val resolvedPopup = popup ?: { currentItemIndex ->
+                DefaultPopup(text = getPopupText(currentItemIndex))
+            }
             // Position the popup so its bottom aligns with the thumb center.
             var popupHeight by remember { mutableFloatStateOf(0f) }
             Box(
@@ -193,7 +194,7 @@ fun FastScroller(
                     enter = fadeIn(tween(durationMillis = 150)),
                     exit = fadeOut(tween(durationMillis = 200))
                 ) {
-                    popup(currentItemIndex)
+                    resolvedPopup(currentItemIndex)
                 }
             }
         }
@@ -260,6 +261,10 @@ fun DefaultPopup(
         }
     }
 }
+
+/** Pass this to the popup composable in FastScroller to hide it. */
+@Composable
+fun NoPopup(index: Int) = Unit
 
 /**
  * Data class holding computed thumb scroll state, including an estimated average item height.

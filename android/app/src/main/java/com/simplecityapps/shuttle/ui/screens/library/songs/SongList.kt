@@ -31,6 +31,7 @@ import com.simplecityapps.shuttle.ui.common.components.CircularLoadingState
 import com.simplecityapps.shuttle.ui.common.components.FastScroller
 import com.simplecityapps.shuttle.ui.common.components.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.common.components.LoadingStatusIndicator
+import com.simplecityapps.shuttle.ui.common.components.NoPopup
 import com.simplecityapps.shuttle.ui.common.utils.dp as dpToInt
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import java.util.Locale
@@ -185,6 +186,7 @@ private fun SongList(
             getPopupText = { index ->
                 getFastscrollPopupText(songs[index], sortOrder)
             },
+            popup = getFastscrollPopup(sortOrder)
         )
     }
 }
@@ -196,3 +198,18 @@ fun getFastscrollPopupText(song: Song, sortOrder: SongSortOrder): String = when 
     SongSortOrder.Year -> song.date?.year?.toString()
     else -> null
 } ?: ""
+
+fun getFastscrollPopup(sortOrder: SongSortOrder): @Composable ((Int) -> Unit)? = when (sortOrder) {
+    // Leave the default popup for these cases
+    SongSortOrder.SongName,
+    SongSortOrder.ArtistGroupKey,
+    SongSortOrder.AlbumGroupKey,
+    SongSortOrder.Year -> null
+
+    // Don't show popup in these cases
+    SongSortOrder.LastModified,
+    SongSortOrder.Duration -> ::NoPopup
+
+    // The rest of sort orders aren't available in the menu
+    else -> null
+}
