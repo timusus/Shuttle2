@@ -239,7 +239,7 @@ fun DefaultPopup(
     text?.let {
         Box(
             modifier = modifier
-                .padding(end = 16.dp)
+                .offset(x = (-16).dp)
                 .sizeIn(minWidth = 64.dp, minHeight = 64.dp)
                 .background(
                     color = MaterialTheme.colorScheme.primary,
@@ -249,7 +249,8 @@ fun DefaultPopup(
                         bottomStartPercent = 50,
                         bottomEndPercent = 0
                     )
-                ),
+                )
+                .padding(start = 16.dp, end = 16.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(
