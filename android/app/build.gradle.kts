@@ -28,6 +28,7 @@ android {
         testInstrumentationRunner = "com.simplecityapps.shuttle.CustomTestRunner"
         ndk {
             debugSymbolLevel = "FULL"
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
         }
     }
 
