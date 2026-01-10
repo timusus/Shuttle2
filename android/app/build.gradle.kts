@@ -220,6 +220,9 @@ android {
         // ExoPlayer
         implementation(libs.exoplayer.core)
         implementation(libs.exoplayer.hls)
+        // Local AARs with 16KB-aligned native libs (for Android page size compatibility)
+        implementation(files("libs/extension-flac.aar"))
+        implementation(files("libs/extension-opus.aar"))
 
         implementation(libs.androidx.drawerlayout)
 
