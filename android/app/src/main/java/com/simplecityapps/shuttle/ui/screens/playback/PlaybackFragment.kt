@@ -99,12 +99,12 @@ class PlaybackFragment :
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?,
+        savedInstanceState: Bundle?
     ): View? = inflater.inflate(R.layout.fragment_playback, container, false)
 
     override fun onViewCreated(
         view: View,
-        savedInstanceState: Bundle?,
+        savedInstanceState: Bundle?
     ) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -304,7 +304,7 @@ class PlaybackFragment :
 
     override fun setQueuePosition(
         position: Int?,
-        total: Int,
+        total: Int
     ) {
         position?.let { recyclerView.scrollToPosition(position) }
         pendingScrollPosition = position
@@ -333,7 +333,7 @@ class PlaybackFragment :
 
     override fun setProgress(
         position: Int,
-        duration: Int,
+        duration: Int
     ) {
         if (!isSeeking) {
             if (position == 0 || abs(position - this.seekPosition) >= 1000) {
@@ -392,7 +392,7 @@ class PlaybackFragment :
     override fun onProgressChanged(
         seekBar: SeekBar,
         progress: Int,
-        fromUser: Boolean,
+        fromUser: Boolean
     ) {
         if (fromUser) {
             // A little hack - temporarily allow us to update the progress text.

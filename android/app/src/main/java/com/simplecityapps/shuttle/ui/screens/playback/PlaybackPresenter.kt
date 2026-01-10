@@ -16,11 +16,11 @@ import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import javax.inject.Inject
 
 class PlaybackPresenter
 @Inject
