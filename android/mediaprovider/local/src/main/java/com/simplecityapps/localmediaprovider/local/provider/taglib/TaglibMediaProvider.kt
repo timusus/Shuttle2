@@ -41,7 +41,7 @@ class TaglibMediaProvider(
     override fun findSongs(): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
         getDocumentNodes()?.let { nodes ->
             val songs = mutableListOf<Song>()
-            getAudioFiles(nodes.filter { it.ext != "m3u" && it.ext != "m3u8" })
+            getAudioFiles(nodes.filter { it.ext != "m3u" && it.ext != "m3u8" && it.ext != "pls" })
                 .collectIndexed { index, audioFile ->
                     val song = audioFile.toSong(type)
                     emit(
