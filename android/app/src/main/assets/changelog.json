@@ -1,16 +1,20 @@
 [
   {
     "versionName": "1.0.8",
-    "releaseDate": "03/11/2025",
+    "releaseDate": "10/01/2026",
     "features": [
+      "Added app shortcut to toggle playback"
     ],
     "fixes": [
-      "Fixed an issue where some tags could not be read"
+      "Fixed an issue where some tags could not be read",
+      "Fixed a bluetooth metadata issue affecting the queue after track 7",
+      "Removed QuickLyric - no longer available on the Play Store"
     ],
     "improvements": [
       "Migrate some stuff to Compose (Thanks Àlex Magaz Graça)",
       "Add support for hidden files in folder based artwork with `.` in filename (e.g. `.cover.jpg`) (Thnks a-gss)",
-      "Ensure native libraries support 16kb page size (new Android requirement)"
+      "Ensure native libraries support 16kb page size (new Android requirement)",
+      "Improved native artwork detection"
     ],
     "notes": [
       "What's up? I want to make Shuttle great again. I just need more hours in the day, and more days in the week!"
