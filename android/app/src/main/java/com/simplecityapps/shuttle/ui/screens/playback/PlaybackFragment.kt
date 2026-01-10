@@ -8,7 +8,6 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.SeekBar
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -42,7 +41,6 @@ import com.simplecityapps.shuttle.ui.common.view.fadeIn
 import com.simplecityapps.shuttle.ui.common.view.fadeOut
 import com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
 import com.simplecityapps.shuttle.ui.common.view.multisheet.findParentMultiSheetView
-import com.simplecityapps.shuttle.ui.lyrics.QuickLyricManager
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.detail.AlbumArtistDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.queue.QueueFragment
@@ -88,7 +86,6 @@ class PlaybackFragment :
     private var lyricsView: View by autoCleared()
     private var lyricsText: TextView by autoCleared()
     private var closeLyricsButton: Button by autoCleared()
-    private var quickLyricButton: Button by autoCleared()
 
     private var pendingScrollPosition: Int? = null
 
@@ -174,8 +171,6 @@ class PlaybackFragment :
         lyricsText = view.findViewById(R.id.lyricsTextView)
         closeLyricsButton = view.findViewById(R.id.closeLyricsButton)
         closeLyricsButton.setOnClickListener { lyricsView.fadeOut() }
-        quickLyricButton = view.findViewById(R.id.quickLyricButton)
-        quickLyricButton.setOnClickListener { presenter.launchQuickLyric() }
 
         recyclerView.adapter = adapter
         recyclerView.setRecyclerListener(RecyclerListener())
@@ -197,24 +192,29 @@ class PlaybackFragment :
                     presenter.sleepTimerClicked()
                     true
                 }
+
                 R.id.lyrics -> {
-                    presenter.showOrLaunchLyrics()
+                    presenter.showLyrics()
                     true
                 }
+
                 R.id.songInfo -> {
                     presenter.showSongInfo()
                     true
                 }
+
                 R.id.editTags -> {
                     queueManager.getCurrentItem()?.song?.let { song ->
                         TagEditorAlertDialog.newInstance(listOf(song)).show(childFragmentManager)
                     }
                     true
                 }
+
                 R.id.clearQueue -> {
                     presenter.clearQueue()
                     true
                 }
+
                 else -> false
             }
         }
@@ -274,6 +274,7 @@ class PlaybackFragment :
                     skipPrevButton.isVisible = false
                     skipButton.isVisible = false
                 }
+
                 else -> {
                     seekBackwardButton.isVisible = false
                     seekForwardButton.isVisible = false
@@ -290,7 +291,13 @@ class PlaybackFragment :
             }
 
             toolbar.menu.findItem(R.id.lyrics)?.let { menuItem ->
-                menuItem.title = song.lyrics?.let { getString(R.string.lyrics_title) } ?: getString(R.string.lyrics_quicklyric_title)
+                val title = song.lyrics?.let { getString(R.string.lyrics_title) }
+                if (title == null) {
+                    menuItem.isVisible = false
+                } else {
+                    menuItem.title = title
+                    menuItem.isVisible = true
+                }
             }
         }
     }
@@ -367,24 +374,6 @@ class PlaybackFragment :
         view?.postDelayed({
             view?.findParentMultiSheetView()?.goToSheet(MultiSheetView.Sheet.NONE)
         }, 200)
-    }
-
-    override fun launchQuickLyric(
-        artistName: String,
-        songName: String
-    ) {
-        val intent = QuickLyricManager.buildLyricsIntent(artistName, songName)
-        if (intent.resolveActivity(requireContext().packageManager) != null) {
-            requireContext().startActivity(intent)
-        }
-    }
-
-    override fun getQuickLyric() {
-        requireContext().startActivity(QuickLyricManager.quickLyricIntent)
-    }
-
-    override fun showQuickLyricUnavailable() {
-        Toast.makeText(requireContext(), getString(R.string.lyrics_quicklyric_unavailable), Toast.LENGTH_LONG).show()
     }
 
     override fun showSongInfoDialog(song: Song) {

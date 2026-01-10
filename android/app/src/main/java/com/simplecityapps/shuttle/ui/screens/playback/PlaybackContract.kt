@@ -39,15 +39,6 @@ interface PlaybackContract {
 
         fun goToArtist(artist: com.simplecityapps.shuttle.model.AlbumArtist)
 
-        fun launchQuickLyric(
-            artistName: String,
-            songName: String
-        )
-
-        fun getQuickLyric()
-
-        fun showQuickLyricUnavailable()
-
         fun showSongInfoDialog(song: com.simplecityapps.shuttle.model.Song)
 
         fun displayLyrics(lyrics: String)
@@ -84,9 +75,7 @@ interface PlaybackContract {
 
         fun showSongInfo()
 
-        fun showOrLaunchLyrics()
-
-        fun launchQuickLyric()
+        fun showLyrics()
 
         fun clearQueue()
     }

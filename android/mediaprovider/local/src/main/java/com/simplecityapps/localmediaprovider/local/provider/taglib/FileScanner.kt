@@ -25,7 +25,7 @@ class FileScanner {
                             return@withContext kTagLib.getAudioFile(
                                 pfd.detachFd(),
                                 uri.toString(),
-                                documentFile.name?.substringBeforeLast(".") ?: "Unknown",
+                                documentFile.name ?: "Unknown",
                                 documentFile.lastModified(),
                                 documentFile.length(),
                                 documentFile.type
