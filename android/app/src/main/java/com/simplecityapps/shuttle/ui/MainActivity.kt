@@ -1,11 +1,13 @@
 package com.simplecityapps.shuttle.ui
 
 import android.Manifest
+import android.app.ForegroundServiceStartNotAllowedException
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
+import timber.log.Timber
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.navigation.fragment.NavHostFragment
@@ -104,15 +106,23 @@ class MainActivity : AppCompatActivity() {
 
     private fun handleSearchQuery(intent: Intent?) {
         if (intent?.action == MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH) {
-            ContextCompat.startForegroundService(
-                this,
-                Intent(this, PlaybackService::class.java).apply {
-                    action = PlaybackService.ACTION_SEARCH
-                    intent.extras?.let { extras ->
-                        putExtras(extras)
+            try {
+                ContextCompat.startForegroundService(
+                    this,
+                    Intent(this, PlaybackService::class.java).apply {
+                        action = PlaybackService.ACTION_SEARCH
+                        intent.extras?.let { extras ->
+                            putExtras(extras)
+                        }
                     }
+                )
+            } catch (e: IllegalStateException) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && e is ForegroundServiceStartNotAllowedException) {
+                    Timber.w(e, "Cannot start foreground service from search query - app may be in restricted state")
+                } else {
+                    throw e
                 }
-            )
+            }
         }
     }
 }
