@@ -46,6 +46,7 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import timber.log.Timber
 
 @AndroidEntryPoint
 class AlbumArtistListFragment :
@@ -336,13 +337,18 @@ class AlbumArtistListFragment :
         viewHolder: AlbumArtistBinder.ViewHolder
     ) {
         if (!contextualToolbarHelper.handleClick(albumArtist)) {
-            if (findNavController().currentDestination?.id != R.id.albumArtistDetailFragment) {
-                findNavController().navigate(
-                    R.id.action_libraryFragment_to_albumArtistDetailFragment,
-                    AlbumArtistDetailFragmentArgs(albumArtist).toBundle(),
-                    null,
-                    FragmentNavigatorExtras(viewHolder.imageView to viewHolder.imageView.transitionName)
-                )
+            // Verify we're on libraryFragment (where the action is defined) before navigating
+            if (findNavController().currentDestination?.id == R.id.libraryFragment) {
+                try {
+                    findNavController().navigate(
+                        R.id.action_libraryFragment_to_albumArtistDetailFragment,
+                        AlbumArtistDetailFragmentArgs(albumArtist).toBundle(),
+                        null,
+                        FragmentNavigatorExtras(viewHolder.imageView to viewHolder.imageView.transitionName)
+                    )
+                } catch (e: IllegalArgumentException) {
+                    Timber.e(e, "Failed to navigate to album artist detail")
+                }
             }
         }
     }

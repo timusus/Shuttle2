@@ -43,7 +43,7 @@ class MainActivity : AppCompatActivity() {
     @AppCoroutineScope
     lateinit var scope: CoroutineScope
 
-    lateinit var snowfallView: SnowfallView
+    var snowfallView: SnowfallView? = null
 
     // Lifecycle
 
@@ -78,7 +78,7 @@ class MainActivity : AppCompatActivity() {
             withTimeout(5000) {
                 remoteConfig.fetchAndActivate().await()
             }
-            snowfallView.setForecast(remoteConfig.getDouble("snow_forecast"))
+            snowfallView?.setForecast(remoteConfig.getDouble("snow_forecast"))
         }
     }
 

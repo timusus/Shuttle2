@@ -93,7 +93,7 @@ class PlaybackService :
 
         Timber.v("onStartCommand() action: ${intent?.action}")
 
-        if (intent == null && (playbackManager.playbackState() != PlaybackState.Loading || playbackManager.playbackState() != PlaybackState.Playing)) {
+        if (intent == null && (playbackManager.playbackState() != PlaybackState.Loading && playbackManager.playbackState() != PlaybackState.Playing)) {
             stopForeground(true)
             return START_NOT_STICKY
         }
@@ -106,8 +106,15 @@ class PlaybackService :
         intent?.let {
             when (intent.action) {
                 ACTION_NOTIFICATION_DISMISS -> {
-                    // The user has swiped away the notification. This is only possible when the service is no longer running in the foreground
+                    // The user has swiped away the notification. This is only possible when the service is no longer running in the foreground.
+                    // We still need to call startForeground() in case this was started via startForegroundService().
                     Timber.v("Stopping due to notification dismiss")
+                    val notification = if (queueManager.getQueue().isEmpty()) {
+                        notificationManager.displayQueueEmptyNotification()
+                    } else {
+                        notificationManager.displayPlaybackNotification()
+                    }
+                    startForegroundSafely(notification)
                     stopSelf()
                     return START_NOT_STICKY
                 }
