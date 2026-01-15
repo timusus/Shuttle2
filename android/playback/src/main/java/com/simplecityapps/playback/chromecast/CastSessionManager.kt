@@ -19,9 +19,18 @@ constructor(
     private val exoPlayerPlayback: ExoPlayerPlayback,
     private val mediaInfoProvider: MediaInfoProvider
 ) : SessionManagerListener<CastSession> {
+    var isAvailable: Boolean = false
+        private set
+
     init {
-        val sessionManager = CastContext.getSharedInstance(applicationContext).sessionManager
-        sessionManager.addSessionManagerListener(this, CastSession::class.java)
+        try {
+            val sessionManager = CastContext.getSharedInstance(applicationContext).sessionManager
+            sessionManager.addSessionManagerListener(this, CastSession::class.java)
+            isAvailable = true
+        } catch (e: Exception) {
+            // Cast framework unavailable on this device (e.g., no Google Play Services)
+            Timber.w(e, "Failed to initialize Cast framework - Chromecast will be unavailable")
+        }
     }
 
     override fun onSessionStarting(castSession: CastSession) {

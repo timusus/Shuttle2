@@ -20,6 +20,7 @@ import com.google.android.gms.cast.framework.CastButtonFactory
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.playback.PlaybackState
+import com.simplecityapps.playback.chromecast.CastSessionManager
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.R
@@ -63,6 +64,9 @@ class PlaybackFragment :
 
     @Inject
     lateinit var queueManager: QueueManager
+
+    @Inject
+    lateinit var castSessionManager: CastSessionManager
 
     private var recyclerView: RecyclerView by autoCleared()
 
@@ -224,7 +228,11 @@ class PlaybackFragment :
             presenter.setFavorite(favoriteButton.isChecked)
         }
 
-        CastButtonFactory.setUpMediaRouteButton(requireContext(), toolbar.menu, R.id.media_route_menu_item)
+        if (castSessionManager.isAvailable) {
+            CastButtonFactory.setUpMediaRouteButton(requireContext(), toolbar.menu, R.id.media_route_menu_item)
+        } else {
+            toolbar.menu.findItem(R.id.media_route_menu_item)?.isVisible = false
+        }
 
         savedInstanceState?.getParcelable<Parcelable>(QueueFragment.ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
 
