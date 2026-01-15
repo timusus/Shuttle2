@@ -35,7 +35,9 @@ constructor(
 
     override fun onSessionStarting(castSession: CastSession) {
         Timber.d("onSessionStarting")
-        httpServer.start()
+        if (!httpServer.isAlive) {
+            httpServer.start()
+        }
     }
 
     override fun onSessionStarted(
@@ -53,6 +55,7 @@ constructor(
         i: Int
     ) {
         Timber.e("onSessionStartFailed")
+        httpServer.stop()
     }
 
     override fun onSessionResuming(
@@ -60,7 +63,7 @@ constructor(
         s: String
     ) {
         Timber.d("onSessionResuming")
-        if (!httpServer.wasStarted()) {
+        if (!httpServer.isAlive) {
             httpServer.start()
         }
     }
@@ -83,6 +86,7 @@ constructor(
         i: Int
     ) {
         Timber.e("onSessionResumeFailed ($i)")
+        httpServer.stop()
     }
 
     override fun onSessionSuspended(
