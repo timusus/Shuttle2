@@ -4,7 +4,7 @@ plugins {
     id("com.android.application")
     id("kotlin-android")
     id("androidx.navigation.safeargs.kotlin")
-    id("com.mikepenz.aboutlibraries.plugin")
+    id("com.mikepenz.aboutlibraries.plugin.android")
     id("kotlin-parcelize")
     id("dagger.hilt.android.plugin")
     id("com.google.firebase.crashlytics")
@@ -239,7 +239,7 @@ android {
         }
 
         // About Libraries
-        implementation(libs.mikepenz.aboutlibrariesCore)
+        implementation(libs.mikepenz.aboutlibraries)
 
         // Billing
         implementation(libs.billingclient.billingKtx)
