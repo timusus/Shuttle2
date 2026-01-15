@@ -2,8 +2,10 @@ package com.simplecityapps.shuttle.appinitializers
 
 import android.annotation.SuppressLint
 import android.app.Application
+import android.app.ForegroundServiceStartNotAllowedException
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import androidx.core.content.ContextCompat
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.NoiseManager
@@ -158,7 +160,15 @@ constructor(
     override fun onPlaybackStateChanged(playbackState: PlaybackState) {
         when (playbackState) {
             is PlaybackState.Playing -> {
-                ContextCompat.startForegroundService(context, Intent(context, PlaybackService::class.java))
+                try {
+                    ContextCompat.startForegroundService(context, Intent(context, PlaybackService::class.java))
+                } catch (e: IllegalStateException) {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && e is ForegroundServiceStartNotAllowedException) {
+                        Timber.w(e, "Cannot start foreground service from background - likely audio focus regained while app in background")
+                    } else {
+                        throw e
+                    }
+                }
             }
             is PlaybackState.Paused -> {
                 playbackPreferenceManager.playbackPosition = playbackManager.getProgress()

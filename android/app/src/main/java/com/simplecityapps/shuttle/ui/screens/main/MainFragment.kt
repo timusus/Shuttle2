@@ -165,7 +165,8 @@ class MainFragment :
             if (task.isSuccessful) {
                 // We got the ReviewInfo object
                 val reviewInfo = task.result
-                reviewManager.launchReviewFlow(requireActivity(), reviewInfo)
+                // Use nullable activity since fragment may be detached when async callback fires
+                activity?.let { reviewManager.launchReviewFlow(it, reviewInfo) }
             } else {
                 // There was some problem, log or handle the error code.
                 Timber.e(task.exception ?: Exception("Unknown"), "Failed to launch review flow")

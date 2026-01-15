@@ -1,5 +1,7 @@
 package com.simplecityapps.playback
 
+import android.app.ForegroundServiceStartNotAllowedException
+import android.app.Notification
 import android.app.SearchManager
 import android.app.Service
 import android.content.Intent
@@ -91,7 +93,7 @@ class PlaybackService :
 
         Timber.v("onStartCommand() action: ${intent?.action}")
 
-        if (intent == null && (playbackManager.playbackState() != PlaybackState.Loading || playbackManager.playbackState() != PlaybackState.Playing)) {
+        if (intent == null && (playbackManager.playbackState() != PlaybackState.Loading && playbackManager.playbackState() != PlaybackState.Playing)) {
             stopForeground(true)
             return START_NOT_STICKY
         }
@@ -104,8 +106,15 @@ class PlaybackService :
         intent?.let {
             when (intent.action) {
                 ACTION_NOTIFICATION_DISMISS -> {
-                    // The user has swiped away the notification. This is only possible when the service is no longer running in the foreground
+                    // The user has swiped away the notification. This is only possible when the service is no longer running in the foreground.
+                    // We still need to call startForeground() in case this was started via startForegroundService().
                     Timber.v("Stopping due to notification dismiss")
+                    val notification = if (queueManager.getQueue().isEmpty()) {
+                        notificationManager.displayQueueEmptyNotification()
+                    } else {
+                        notificationManager.displayPlaybackNotification()
+                    }
+                    startForegroundSafely(notification)
                     stopSelf()
                     return START_NOT_STICKY
                 }
@@ -123,16 +132,16 @@ class PlaybackService :
                        This also gives S2 time to respond to pending commands. For example, if the command is 'loadFromSearch', we don't want to stop the service
                        and allow the process to be killed while that we're in the middle of executing that command.
                      */
-                    startForeground(PlaybackNotificationManager.NOTIFICATION_ID, notificationManager.displayQueueEmptyNotification())
+                    startForegroundSafely(notificationManager.displayQueueEmptyNotification())
                     postDelayedShutdown(10000)
                 } else {
                     Timber.v("startForeground() called. Showing notification: Playback")
-                    startForeground(PlaybackNotificationManager.NOTIFICATION_ID, notificationManager.displayPlaybackNotification())
+                    startForegroundSafely(notificationManager.displayPlaybackNotification())
                 }
                 processCommand(intent)
             } else {
                 Timber.v("startForeground() called. Showing notification: Loading")
-                startForeground(PlaybackNotificationManager.NOTIFICATION_ID, notificationManager.displayLoadingNotification())
+                startForegroundSafely(notificationManager.displayLoadingNotification())
                 pendingStartCommands.add(intent)
             }
         }
@@ -177,6 +186,21 @@ class PlaybackService :
     }
 
     // Private
+
+    private fun startForegroundSafely(notification: Notification) {
+        try {
+            startForeground(PlaybackNotificationManager.NOTIFICATION_ID, notification)
+        } catch (e: IllegalStateException) {
+            // ForegroundServiceStartNotAllowedException (API 31+) extends IllegalStateException
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && e is ForegroundServiceStartNotAllowedException) {
+                Timber.w(e, "Unable to start foreground service - likely started from background context (e.g., media button broadcast)")
+                // Still display the notification even if we can't start foreground
+                notificationManager.notify(notification)
+            } else {
+                throw e
+            }
+        }
+    }
 
     private fun processCommand(intent: Intent) {
         Timber.v("processCommand()")

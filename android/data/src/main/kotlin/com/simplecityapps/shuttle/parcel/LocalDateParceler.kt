@@ -5,7 +5,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.parcelize.Parceler
 
 object LocalDateParceler : Parceler<LocalDate?> {
-    override fun create(parcel: Parcel) = LocalDate.parse(parcel.readString()!!)
+    override fun create(parcel: Parcel): LocalDate? = parcel.readString()?.let { LocalDate.parse(it) }
 
     override fun LocalDate?.write(
         parcel: Parcel,

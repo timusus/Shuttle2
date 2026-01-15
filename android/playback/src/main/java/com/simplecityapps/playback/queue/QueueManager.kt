@@ -398,10 +398,16 @@ class QueueManager(
             new: QueueItem
         ) {
             if (baseList.isNotEmpty()) {
-                baseList[baseList.indexOf(old)] = new
+                val baseIndex = baseList.indexOf(old)
+                if (baseIndex != -1) {
+                    baseList[baseIndex] = new
+                }
             }
             if (shuffleList.isNotEmpty()) {
-                shuffleList[shuffleList.indexOf(old)] = new
+                val shuffleIndex = shuffleList.indexOf(old)
+                if (shuffleIndex != -1) {
+                    shuffleList[shuffleIndex] = new
+                }
             }
         }
 
