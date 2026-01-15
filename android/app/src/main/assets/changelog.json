@@ -1,5 +1,22 @@
 [
   {
+    "versionName": "1.0.9",
+    "releaseDate": "15/01/2026",
+    "features": [
+
+    ],
+    "fixes": [
+      "Fixed Chromecast reliability issues",
+      "Fixed a long-standing issue where the app could crash when playing from the background",
+      "Various stability improvements"
+    ],
+    "improvements": [
+    ],
+    "notes": [
+      "What's up? I want to make Shuttle great again. I just need more hours in the day, and more days in the week!"
+    ]
+  },
+  {
     "versionName": "1.0.8",
     "releaseDate": "10/01/2026",
     "features": [
