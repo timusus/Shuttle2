@@ -1,5 +1,7 @@
 package com.simplecityapps.playback
 
+import android.app.ForegroundServiceStartNotAllowedException
+import android.app.Notification
 import android.app.SearchManager
 import android.app.Service
 import android.content.Intent
@@ -123,16 +125,16 @@ class PlaybackService :
                        This also gives S2 time to respond to pending commands. For example, if the command is 'loadFromSearch', we don't want to stop the service
                        and allow the process to be killed while that we're in the middle of executing that command.
                      */
-                    startForeground(PlaybackNotificationManager.NOTIFICATION_ID, notificationManager.displayQueueEmptyNotification())
+                    startForegroundSafely(notificationManager.displayQueueEmptyNotification())
                     postDelayedShutdown(10000)
                 } else {
                     Timber.v("startForeground() called. Showing notification: Playback")
-                    startForeground(PlaybackNotificationManager.NOTIFICATION_ID, notificationManager.displayPlaybackNotification())
+                    startForegroundSafely(notificationManager.displayPlaybackNotification())
                 }
                 processCommand(intent)
             } else {
                 Timber.v("startForeground() called. Showing notification: Loading")
-                startForeground(PlaybackNotificationManager.NOTIFICATION_ID, notificationManager.displayLoadingNotification())
+                startForegroundSafely(notificationManager.displayLoadingNotification())
                 pendingStartCommands.add(intent)
             }
         }
@@ -177,6 +179,21 @@ class PlaybackService :
     }
 
     // Private
+
+    private fun startForegroundSafely(notification: Notification) {
+        try {
+            startForeground(PlaybackNotificationManager.NOTIFICATION_ID, notification)
+        } catch (e: IllegalStateException) {
+            // ForegroundServiceStartNotAllowedException (API 31+) extends IllegalStateException
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && e is ForegroundServiceStartNotAllowedException) {
+                Timber.w(e, "Unable to start foreground service - likely started from background context (e.g., media button broadcast)")
+                // Still display the notification even if we can't start foreground
+                notificationManager.notify(notification)
+            } else {
+                throw e
+            }
+        }
+    }
 
     private fun processCommand(intent: Intent) {
         Timber.v("processCommand()")
