@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.trial
 
 import android.app.Dialog
 import android.os.Bundle
+import android.widget.Toast
 import androidx.core.content.res.ResourcesCompat
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
@@ -58,8 +59,16 @@ class PurchaseDialogFragment : DialogFragment() {
                                 productDetails,
                                 object : SkuBinder.Listener {
                                     override fun onClick(productDetails: ProductDetails) {
-                                        billingManager.launchPurchaseFlow(requireActivity(), productDetails)
-                                        dismiss()
+                                        val launched = billingManager.launchPurchaseFlow(requireActivity(), productDetails)
+                                        if (launched) {
+                                            dismiss()
+                                        } else {
+                                            Toast.makeText(
+                                                requireContext(),
+                                                "Unable to connect to Google Play. Please try again.",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
                                     }
                                 }
                             )
