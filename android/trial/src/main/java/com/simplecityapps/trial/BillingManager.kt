@@ -119,10 +119,10 @@ class BillingManager(
     fun launchPurchaseFlow(
         activity: FragmentActivity,
         productDetails: ProductDetails
-    ) {
+    ): Boolean {
         if (!billingClient.isReady) {
             Timber.e("Failed to launch purchase flow: BillingClient not ready")
-            return
+            return false
         }
 
         val productDetailsParamsList = listOf(
@@ -137,6 +137,7 @@ class BillingManager(
                 .setProductDetailsParamsList(productDetailsParamsList)
                 .build()
         )
+        return true
     }
 
     suspend fun queryProductDetails() {
