@@ -30,7 +30,6 @@ import android.util.Base64
 import androidx.annotation.XmlRes
 import androidx.media.MediaBrowserServiceCompat
 import com.simplecityapps.playback.BuildConfig
-import com.simplecityapps.playback.R
 import java.io.IOException
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
