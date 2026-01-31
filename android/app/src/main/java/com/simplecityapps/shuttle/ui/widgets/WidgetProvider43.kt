@@ -29,9 +29,9 @@ import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.height
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
-import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
+import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackState
@@ -42,7 +42,7 @@ import com.simplecityapps.shuttle.ui.MainActivity
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.EntryPointAccessors
 
-class Widget42 : GlanceAppWidget() {
+class Widget43 : GlanceAppWidget() {
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         // Access Hilt dependencies through EntryPoint
@@ -53,7 +53,7 @@ class Widget42 : GlanceAppWidget() {
 
         provideContent {
             GlanceTheme {
-                Widget42Content(
+                Widget43Content(
                     context = context,
                     playbackManager = entryPoint.playbackManager(),
                     queueManager = entryPoint.queueManager(),
@@ -64,7 +64,7 @@ class Widget42 : GlanceAppWidget() {
     }
 
     @Composable
-    private fun Widget42Content(
+    private fun Widget43Content(
         context: Context,
         playbackManager: PlaybackManager,
         queueManager: QueueManager,
@@ -85,101 +85,106 @@ class Widget42 : GlanceAppWidget() {
                 .fillMaxSize()
                 .background(backgroundColor)
                 .cornerRadius(16.dp)
-                .padding(12.dp)
+                .padding(16.dp)
                 .clickable(actionStartActivity<MainActivity>()),
+            horizontalAlignment = Alignment.CenterHorizontally,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
+            // Large artwork - this is the main focus of the 4x3 widget
+            Image(
+                provider = currentItem?.song?.let {
+                    // TODO: Load actual artwork - Glance has limitations with async image loading
+                    ImageProvider(if (isDarkMode) R.drawable.ic_music_note_white_24dp else com.simplecityapps.playback.R.drawable.ic_music_note_black_24dp)
+                } ?: ImageProvider(com.simplecityapps.core.R.drawable.ic_shuttle_logo),
+                contentDescription = "Album artwork",
+                modifier = GlanceModifier
+                    .size(200.dp)
+                    .cornerRadius(8.dp),
+                contentScale = ContentScale.Crop
+            )
+
+            Spacer(modifier = GlanceModifier.height(16.dp))
+
+            // Song info
+            Column(
                 modifier = GlanceModifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Artwork
-                Image(
-                    provider = currentItem?.song?.let {
-                        // TODO: Load actual artwork - Glance has limitations with async image loading
-                        ImageProvider(if (isDarkMode) R.drawable.ic_music_note_white_24dp else com.simplecityapps.playback.R.drawable.ic_music_note_black_24dp)
-                    } ?: ImageProvider(com.simplecityapps.core.R.drawable.ic_shuttle_logo),
-                    contentDescription = "Album artwork",
-                    modifier = GlanceModifier
-                        .size(80.dp)
-                        .cornerRadius(4.dp),
-                    contentScale = ContentScale.Crop
+                Text(
+                    text = currentItem?.song?.name ?: context.getString(R.string.queue_empty),
+                    style = TextStyle(
+                        color = GlanceTheme.colors.onSurface,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center
+                    ),
+                    maxLines = 1
                 )
 
-                Spacer(modifier = GlanceModifier.width(12.dp))
+                Spacer(modifier = GlanceModifier.height(4.dp))
 
-                // Song info
-                Column(
-                    modifier = GlanceModifier.defaultWeight()
-                ) {
-                    Text(
-                        text = currentItem?.song?.name ?: context.getString(R.string.queue_empty),
-                        style = TextStyle(
-                            color = GlanceTheme.colors.onSurface,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Normal
-                        ),
-                        maxLines = 1
-                    )
+                Text(
+                    text = currentItem?.song?.let { song ->
+                        song.friendlyArtistName ?: song.albumArtist ?: context.getString(com.simplecityapps.core.R.string.unknown)
+                    } ?: context.getString(com.simplecityapps.core.R.string.widget_empty_text),
+                    style = TextStyle(
+                        color = GlanceTheme.colors.onSurfaceVariant,
+                        fontSize = 14.sp,
+                        textAlign = TextAlign.Center
+                    ),
+                    maxLines = 1
+                )
 
-                    Spacer(modifier = GlanceModifier.height(2.dp))
+                Spacer(modifier = GlanceModifier.height(2.dp))
 
-                    Text(
-                        text = currentItem?.song?.let { song ->
-                            song.friendlyArtistName ?: song.albumArtist ?: context.getString(com.simplecityapps.core.R.string.unknown)
-                        } ?: context.getString(com.simplecityapps.core.R.string.widget_empty_text),
-                        style = TextStyle(
-                            color = GlanceTheme.colors.onSurfaceVariant,
-                            fontSize = 12.sp
-                        ),
-                        maxLines = 1
-                    )
-
-                    Spacer(modifier = GlanceModifier.height(2.dp))
-
-                    Text(
-                        text = currentItem?.song?.album ?: "",
-                        style = TextStyle(
-                            color = GlanceTheme.colors.onSurfaceVariant,
-                            fontSize = 12.sp
-                        ),
-                        maxLines = 1
-                    )
-                }
+                Text(
+                    text = currentItem?.song?.album ?: "",
+                    style = TextStyle(
+                        color = GlanceTheme.colors.onSurfaceVariant,
+                        fontSize = 12.sp,
+                        textAlign = TextAlign.Center
+                    ),
+                    maxLines = 1
+                )
             }
 
-            if (currentItem != null) {
-                Spacer(modifier = GlanceModifier.height(8.dp))
+            Spacer(modifier = GlanceModifier.height(16.dp))
 
+            if (currentItem != null) {
                 // Playback controls
                 Row(
                     modifier = GlanceModifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Previous button
                     Image(
-                        provider = ImageProvider(if (isDarkMode) R.drawable.ic_skip_previous_white_24dp else R.drawable.ic_skip_previous_black_24dp),
+                        provider = ImageProvider(if (isDarkMode) R.drawable.ic_skip_previous_white_24dp else com.simplecityapps.playback.R.drawable.ic_skip_previous_black_24dp),
                         contentDescription = "Previous",
                         modifier = GlanceModifier
-                            .size(48.dp)
+                            .size(56.dp)
                             .clickable(actionRunCallback<PreviousTrackAction>())
                     )
 
-                    // Play/Pause button
+                    Spacer(modifier = GlanceModifier.size(8.dp))
+
+                    // Play/Pause button (larger for emphasis)
                     Image(
                         provider = ImageProvider(getPlayPauseIcon(playbackManager, isDarkMode)),
                         contentDescription = "Play/Pause",
                         modifier = GlanceModifier
-                            .size(48.dp)
+                            .size(64.dp)
                             .clickable(actionRunCallback<PlayPauseAction>())
                     )
+
+                    Spacer(modifier = GlanceModifier.size(8.dp))
 
                     // Next button
                     Image(
                         provider = ImageProvider(if (isDarkMode) R.drawable.ic_skip_next_white_24dp else R.drawable.ic_skip_next_black_24dp),
                         contentDescription = "Next",
                         modifier = GlanceModifier
-                            .size(48.dp)
+                            .size(56.dp)
                             .clickable(actionRunCallback<NextTrackAction>())
                     )
                 }
@@ -198,6 +203,6 @@ class Widget42 : GlanceAppWidget() {
 }
 
 @AndroidEntryPoint
-class WidgetProvider42 : GlanceAppWidgetReceiver() {
-    override val glanceAppWidget: GlanceAppWidget = Widget42()
+class WidgetProvider43 : GlanceAppWidgetReceiver() {
+    override val glanceAppWidget: GlanceAppWidget = Widget43()
 }
