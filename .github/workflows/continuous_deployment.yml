@@ -19,6 +19,7 @@ jobs:
   build:
     name: "Build"
     runs-on: ubuntu-latest
+    if: github.actor == 'timusus'
     timeout-minutes: 60
 
     steps:
