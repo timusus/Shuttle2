@@ -76,7 +76,7 @@ Hilt with `@HiltAndroidApp`, `@AndroidEntryPoint`. DI modules in `app/di/`: AppM
 - **Min SDK 23**, Target/Compile SDK 36
 - **ExoPlayer**: Custom build (`2.14.2-shuttle-16kb`) with FLAC/Opus extensions as local AARs
 - **Version catalog**: `gradle/libs.versions.toml`
-- **Versioning**: Defined in `buildSrc/src/main/kotlin/AppVersion.kt`
+- **Versioning**: Date-based from git tags (`vYYMMDDNN` → version code `YYMMDDNN`, version name `YYYY.MM.DD`)
 - Debug builds use `.dev` app ID suffix
 - R8 full mode is disabled (Retrofit compatibility)
 
@@ -98,7 +98,7 @@ support/scripts/lint -F
 ## Branch Conventions
 
 - Trunk-based: commit and push directly to `main`
-- Tag `v*` (e.g. `git tag v1.0.10 && git push origin v1.0.10`) triggers build + deploy to Google Play (internal track)
+- Tag `vYYMMDDNN` (e.g. `git tag v26032801 && git push origin v26032801`) triggers build + deploy to Google Play (internal track)
 - External contributors use PRs to `main` (CI runs lint, unit tests, snapshot tests, instrumented tests)
 
 ## Testing

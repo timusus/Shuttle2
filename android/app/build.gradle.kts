@@ -350,17 +350,35 @@ fun isReleaseBuild(): Boolean {
     }
 }
 
+// Tag format: vYYMMDDNN (e.g., v26032801 -> versionCode 26032801, versionName 2026.03.28)
+fun getVersionFromGitTag(): Pair<Int, String> {
+    val tag = try {
+        val process = ProcessBuilder("git", "describe", "--tags", "--abbrev=0", "--match", "v[0-9]*")
+            .redirectErrorStream(true)
+            .start()
+        process.inputStream.bufferedReader().readText().trim().removePrefix("v")
+    } catch (_: Exception) {
+        null
+    } ?: return 1 to "1.0.0"
+
+    val code = tag.toIntOrNull() ?: return 1 to "1.0.0"
+    val name = if (tag.length >= 6) {
+        val year = "20${tag.substring(0, 2)}"
+        val month = tag.substring(2, 4)
+        val day = tag.substring(4, 6)
+        "$year.$month.$day"
+    } else {
+        "1.0.0"
+    }
+    return code to name
+}
+
 fun versionName(): String {
-    return "${AppVersion.versionMajor}.${AppVersion.versionMinor}.${AppVersion.versionPatch}${if (!AppVersion.versionSuffix.isNullOrEmpty()) "-${AppVersion.versionSuffix}" else ""} (${versionCode()})"
+    return findProperty("versionName")?.toString() ?: getVersionFromGitTag().second
 }
 
 fun versionCode(): Int {
-    // Major + minor + CI build number (where available)
-    return (AppVersion.versionMajor * 10000000) + (AppVersion.versionMinor * 1000000) + (AppVersion.versionPatch * 10000) +
-            when {
-                isCiBuild() -> getEnv("GITHUB_RUN_NUMBER").toInt() + 20 // Add 20 due to move from Jenkins to GH Actions
-                else -> 1
-            }
+    return findProperty("versionCode")?.toString()?.toIntOrNull() ?: getVersionFromGitTag().first
 }
 
 class MissingEnvVarException(private val name: String) : Exception() {
