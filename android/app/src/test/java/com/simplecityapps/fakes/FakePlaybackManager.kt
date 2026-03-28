@@ -12,6 +12,7 @@ class FakePlaybackManager : PlaybackOperations {
     var shuffled = mutableListOf<Song>()
 
     var loadResult: Result<Boolean> = Result.success(true)
+    var shuffleResult: Result<Any?> = Result.success(null)
 
     override fun load(seekPosition: Int?, completion: (Result<Boolean>) -> Unit) {
         completion(loadResult)
@@ -34,7 +35,7 @@ class FakePlaybackManager : PlaybackOperations {
 
     override suspend fun shuffle(songs: List<Song>, completion: (Result<Any?>) -> Unit) {
         shuffled.addAll(songs)
-        completion(Result.success(null))
+        completion(shuffleResult)
     }
 
     override fun seekTo(position: Int) {}
