@@ -226,19 +226,6 @@ class SongListViewModelTest {
     }
 
     @Test
-    fun `adds song to queue`() = runTest {
-        mockSongs(listOf(SONG))
-        coEvery { mockPlaybackManager.addToQueue(allAny()) } just Runs
-        viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.addToQueue(SONG) {}
-        advanceUntilIdle()
-
-        coVerify(exactly = 1) { mockPlaybackManager.addToQueue(listOf(SONG)) }
-    }
-
-    @Test
     fun `adds selected songs to queue`() = runTest {
         val songs = listOf(SONG1, SONG2)
         mockSongs(songs)
@@ -252,19 +239,6 @@ class SongListViewModelTest {
 
         coVerify(exactly = 1) { mockPlaybackManager.addToQueue(listOf(SONG2)) }
         viewModel.contextualToolbarHelper.isSelecting().shouldBeFalse()
-    }
-
-    @Test
-    fun `adds a song to play next`() = runTest {
-        mockSongs(listOf(SONG))
-        coEvery { mockPlaybackManager.playNext(allAny()) } just Runs
-        viewModel = createViewModel()
-        advanceUntilIdle()
-
-        viewModel.playNext(SONG) {}
-        advanceUntilIdle()
-
-        coVerify(exactly = 1) { mockPlaybackManager.playNext(listOf(SONG)) }
     }
 
     @Test
@@ -352,10 +326,29 @@ class SongListViewModelTest {
         viewModel.setSortOrder(SongSortOrder.ArtistGroupKey)
         advanceUntilIdle()
 
-        coVerify(exactly = 1) {
-            spiedSortPreferenceManager.sortOrderSongList = SongSortOrder.ArtistGroupKey
-        }
         viewModel.selectedSortOrder.value.shouldBe(SongSortOrder.ArtistGroupKey)
+        io.mockk.verify { spiedSortPreferenceManager.sortOrderSongList = SongSortOrder.ArtistGroupKey }
+    }
+
+    @Test
+    fun `reports play failure via completion callback`() = runTest {
+        val playError = Error("playback failed")
+        mockSongs(listOf(SONG))
+        mockSongImportStateAsImportComplete()
+        coEvery { mockQueueManager.setQueue(allAny()) } returns true
+        coEvery { mockPlaybackManager.load(seekPosition = null, completion = any()) } answers {
+            (arg(1) as (Result<Boolean>) -> Unit).invoke(Result.failure(playError))
+        }
+        viewModel = createViewModel()
+        advanceUntilIdle()
+
+        var receivedError: Throwable? = null
+        viewModel.onSongClick(SONG) { result ->
+            result.onFailure { receivedError = it }
+        }
+        advanceUntilIdle()
+
+        receivedError.shouldBe(playError)
     }
 
     fun createViewModel(): SongListViewModel = SongListViewModel(

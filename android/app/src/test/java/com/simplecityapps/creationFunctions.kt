@@ -1,7 +1,10 @@
 package com.simplecityapps
 
+import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 
@@ -47,4 +50,34 @@ fun createSong(
     bitDepth = null,
     sampleRate = null,
     channelCount = null,
+)
+
+fun createGenre(
+    name: String = "Rock",
+    songCount: Int = 10,
+    duration: Int = 600,
+    mediaProviders: List<MediaProviderType> = listOf(MediaProviderType.Shuttle),
+) = Genre(
+    name = name,
+    songCount = songCount,
+    duration = duration,
+    mediaProviders = mediaProviders,
+)
+
+fun createPlaylist(
+    id: Long = 1,
+    name: String = "My Playlist",
+    songCount: Int = 5,
+    duration: Int = 300,
+    sortOrder: PlaylistSongSortOrder = PlaylistSongSortOrder.Position,
+    mediaProvider: MediaProviderType = MediaProviderType.Shuttle,
+    externalId: String? = null,
+) = Playlist(
+    id = id,
+    name = name,
+    songCount = songCount,
+    duration = duration,
+    sortOrder = sortOrder,
+    mediaProvider = mediaProvider,
+    externalId = externalId,
 )
