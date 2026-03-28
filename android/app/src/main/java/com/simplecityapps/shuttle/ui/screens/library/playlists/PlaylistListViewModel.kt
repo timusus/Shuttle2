@@ -7,8 +7,8 @@ import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.playback.PlaybackOperations
-import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.model.Playlist
+import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -25,7 +25,7 @@ import kotlinx.coroutines.launch
 class PlaylistListViewModel @Inject constructor(
     private val playlistRepository: PlaylistRepository,
     private val playbackManager: PlaybackOperations,
-    private val queueManager: QueueOperations,
+    private val playSongs: PlaySongs,
     mediaImportObserver: SongImportStateProvider,
 ) : ViewModel() {
 
@@ -62,15 +62,9 @@ class PlaylistListViewModel @Inject constructor(
     fun onPlay(playlist: Playlist) {
         viewModelScope.launch {
             val songs = playlistRepository.getSongsForPlaylist(playlist).firstOrNull().orEmpty().map { it.song }
-            if (queueManager.setQueue(songs)) {
-                playbackManager.load { result ->
-                    result.onSuccess { playbackManager.play() }
-                    result.onFailure { error ->
-                        viewModelScope.launch {
-                            _events.emit(PlaylistListUiEvent.PlaybackFailed(error.message))
-                        }
-                    }
-                }
+            val result = playSongs(songs)
+            if (result is PlaySongs.Result.Failure) {
+                _events.emit(PlaylistListUiEvent.PlaybackFailed(result.message))
             }
         }
     }

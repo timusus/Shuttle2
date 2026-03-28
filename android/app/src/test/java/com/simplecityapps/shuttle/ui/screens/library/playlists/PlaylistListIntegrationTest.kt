@@ -8,6 +8,7 @@ import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.importComplete
+import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -112,7 +113,7 @@ class PlaylistListIntegrationTest {
     private fun createViewModel(): PlaylistListViewModel = PlaylistListViewModel(
         playlistRepository = fakePlaylistRepository,
         playbackManager = FakePlaybackManager(),
-        queueManager = FakeQueueManager(),
+        playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
         mediaImportObserver = fakeImportState,
     )
 }
