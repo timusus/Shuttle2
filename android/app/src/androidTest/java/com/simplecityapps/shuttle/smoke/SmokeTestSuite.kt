@@ -11,6 +11,7 @@ import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.contrib.RecyclerViewActions
 import androidx.test.espresso.matcher.ViewMatchers.hasDescendant
+import androidx.test.espresso.matcher.ViewMatchers.isClickable
 import androidx.test.espresso.matcher.ViewMatchers.isDescendantOfA
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withId
@@ -156,10 +157,8 @@ class SmokeTestSuite {
         // Wait for navigation
         Thread.sleep(500)
 
-        // Verify artist detail screen shows toolbar and content
-        onView(withId(R.id.toolbar))
-            .check(matches(isDisplayed()))
-        onView(withId(R.id.recyclerView))
+        // Verify artist detail screen shows toolbar (scoped to CollapsingToolbarLayout to avoid ambiguity)
+        onView(allOf(withId(R.id.toolbar), isDescendantOfA(withId(R.id.collapsingToolbarLayout))))
             .check(matches(isDisplayed()))
     }
 
@@ -187,10 +186,10 @@ class SmokeTestSuite {
 
         Thread.sleep(500)
 
-        // Verify full playback controls are visible
-        onView(withId(R.id.playPauseButton))
+        // Verify full playback controls are visible (scoped to sheet1Container, isClickable to avoid child view ambiguity)
+        onView(allOf(withId(R.id.playPauseButton), isDescendantOfA(withId(R.id.sheet1Container)), isClickable()))
             .check(matches(isDisplayed()))
-        onView(withId(R.id.seekBar))
+        onView(allOf(withId(R.id.seekBar), isDescendantOfA(withId(R.id.sheet1Container))))
             .check(matches(isDisplayed()))
         onView(allOf(withId(R.id.shuffleButton), isDescendantOfA(withId(R.id.sheet1Container))))
             .check(matches(isDisplayed()))
