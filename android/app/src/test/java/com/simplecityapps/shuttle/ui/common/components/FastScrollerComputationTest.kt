@@ -1,7 +1,6 @@
 package com.simplecityapps.shuttle.ui.common.components
 
 import io.kotest.matchers.floats.shouldBeGreaterThan
-import io.kotest.matchers.floats.shouldBeLessThan
 import io.kotest.matchers.ints.shouldBeGreaterThanOrEqual
 import io.kotest.matchers.ints.shouldBeLessThanOrEqual
 import io.kotest.matchers.shouldBe
