@@ -185,10 +185,15 @@ Each ViewModel that needs the playlist list adds `PlaylistRepository` to its `co
 ```kotlin
 fun addToPlaylist(playlist: Playlist, playlistData: PlaylistData, ignoreDuplicates: Boolean = false) {
     viewModelScope.launch {
-        when (val result = addToPlaylist(playlist, playlistData, ignoreDuplicates)) {
-            is AddToPlaylist.Result.Success -> _events.emit(UiEvent.AddedToPlaylist(result.playlist, result.playlistData))
-            is AddToPlaylist.Result.DuplicatesFound -> _events.emit(UiEvent.PlaylistDuplicatesFound(...))
-            is AddToPlaylist.Result.Failure -> _events.emit(UiEvent.PlaylistAddFailed(result.message))
+        when (val result = addToPlaylistUseCase(playlist, playlistData, ignoreDuplicates)) {
+            is AddToPlaylist.Result.Success ->
+                _events.emit(UiEvent.AddedToPlaylist(result.playlist, result.playlistData))
+            is AddToPlaylist.Result.DuplicatesFound ->
+                _events.emit(UiEvent.PlaylistDuplicatesFound(
+                    result.playlist, result.playlistData, result.deduplicatedSongs, result.duplicates
+                ))
+            is AddToPlaylist.Result.Failure ->
+                _events.emit(UiEvent.PlaylistAddFailed(result.message))
         }
     }
 }
@@ -196,18 +201,21 @@ fun addToPlaylist(playlist: Playlist, playlistData: PlaylistData, ignoreDuplicat
 
 ### ViewModel method for create-playlist
 
-Direct repository call — no use case needed:
+Each screen already knows the concrete songs when it constructs `PlaylistData` for the create-playlist dialog (e.g. `PlaylistData.Songs(song)`). The `CreatePlaylistDialogFragment` passes this back in `onSave`. The ViewModel extracts the song list and calls the repository directly — no use case needed:
 
 ```kotlin
-fun createPlaylist(name: String, playlistData: PlaylistData?) {
+fun createPlaylist(name: String, playlistData: PlaylistData.Songs?) {
     viewModelScope.launch {
-        val songs = playlistData?.let { addToPlaylist.resolveSongs(it) }
-        playlistRepository.createPlaylist(name, MediaProviderType.Shuttle, songs, null)
+        playlistRepository.createPlaylist(name, MediaProviderType.Shuttle, playlistData?.data, null)
     }
 }
 ```
 
-Note: `resolveSongs` would need to be exposed or duplicated. Alternatively, `CreatePlaylistDialogFragment` could pass `PlaylistData.Songs` (pre-resolved) so the ViewModel just calls the repository directly. This is simpler since each screen already knows the songs at the point of creating the playlist data.
+The migrated screens only ever pass `PlaylistData.Songs` to `CreatePlaylistDialogFragment`, so narrowing the parameter type is safe.
+
+### Preference for ignoring duplicates
+
+The "always add duplicates" switch in the duplicate dialog writes `preferenceManager.ignorePlaylistDuplicates`. This is a one-liner that the Fragment handles directly when the user toggles the switch — same as `PlaylistMenuView` does today. The Fragment injects `GeneralPreferenceManager` for this single write. No use case needed.
 
 ## Fragment Changes
 
