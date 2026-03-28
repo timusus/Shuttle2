@@ -1,7 +1,9 @@
 package com.simplecityapps.shuttle.ui.screens.library.songs
 
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
@@ -71,6 +73,33 @@ class SongListRobot(private val rule: ComposeContentTestRule) {
         }
     }
 
+    fun setContentWithViewModel(
+        viewModel: SongListViewModel,
+        playlists: List<Playlist> = emptyList(),
+    ) {
+        resetCallbacks()
+        rule.setContent {
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            AppTheme {
+                SongList(
+                    uiState = uiState,
+                    playlists = playlists.toImmutableList(),
+                    onSongClick = { viewModel.onSongClick(it) },
+                    onSongLongClick = { viewModel.onSongLongClick(it) },
+                    onAddToQueue = { lastAddedToQueue = it },
+                    onAddToPlaylist = { playlist, data -> lastAddToPlaylist = playlist to data },
+                    onShowCreatePlaylistDialog = { lastCreatePlaylistDialog = it },
+                    onPlayNext = { lastPlayNext = it },
+                    onSongInfo = { lastSongInfo = it },
+                    onExclude = { lastExcluded = it },
+                    onEditTags = { lastEditTags = it },
+                    onDelete = { lastDeleted = it },
+                    onShuffle = { shuffleClicked = true },
+                )
+            }
+        }
+    }
+
     private fun resetCallbacks() {
         lastSongClicked = null
         lastSongLongClicked = null
@@ -111,6 +140,10 @@ class SongListRobot(private val rule: ComposeContentTestRule) {
 
     fun clickText(text: String) {
         rule.onNodeWithText(text).performClick()
+    }
+
+    fun longClick(text: String) {
+        rule.onNodeWithText(text).performTouchInput { longClick() }
     }
 
     fun openContextMenu() {
