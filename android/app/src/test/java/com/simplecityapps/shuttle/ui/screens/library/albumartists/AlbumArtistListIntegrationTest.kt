@@ -9,6 +9,7 @@ import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.importComplete
+import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -150,7 +151,7 @@ class AlbumArtistListIntegrationTest {
         albumArtistRepository = fakeAlbumArtistRepository,
         songRepository = fakeSongRepository,
         playbackManager = FakePlaybackManager(),
-        queueManager = FakeQueueManager(),
+        playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
         preferenceManager = fakePreferences,
         mediaImportObserver = fakeImportState,
     )

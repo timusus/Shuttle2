@@ -9,11 +9,11 @@ import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackOperations
-import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.common.SelectionState
+import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
 import com.simplecityapps.shuttle.ui.screens.library.ViewMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -51,7 +51,7 @@ class AlbumArtistListViewModel @Inject constructor(
     private val albumArtistRepository: AlbumArtistRepository,
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackOperations,
-    private val queueManager: QueueOperations,
+    private val playSongs: PlaySongs,
     private val preferenceManager: ArtistListPreferences,
     mediaImportObserver: SongImportStateProvider,
 ) : ViewModel() {
@@ -105,15 +105,9 @@ class AlbumArtistListViewModel @Inject constructor(
     fun onPlay(albumArtist: AlbumArtist) {
         viewModelScope.launch {
             val songs = getSongsForArtist(albumArtist)
-            if (queueManager.setQueue(songs)) {
-                playbackManager.load { result ->
-                    result.onSuccess { playbackManager.play() }
-                    result.onFailure { error ->
-                        viewModelScope.launch {
-                            _events.emit(AlbumArtistListUiEvent.PlaybackFailed(error.message))
-                        }
-                    }
-                }
+            val result = playSongs(songs)
+            if (result is PlaySongs.Result.Failure) {
+                _events.emit(AlbumArtistListUiEvent.PlaybackFailed(result.message))
             }
         }
     }
