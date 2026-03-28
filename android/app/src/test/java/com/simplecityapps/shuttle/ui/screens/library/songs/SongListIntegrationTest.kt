@@ -2,14 +2,17 @@ package com.simplecityapps.shuttle.ui.screens.library.songs
 
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.simplecityapps.createSong
+import com.simplecityapps.fakes.FakeGenreRepository
 import com.simplecityapps.fakes.FakePlaybackManager
+import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueManager
-import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
-import com.simplecityapps.shuttle.ui.common.playback.ShuffleSongs
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.FakeSortPreferences
 import com.simplecityapps.fakes.importComplete
+import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
+import com.simplecityapps.shuttle.ui.common.playback.ShuffleSongs
+import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -40,6 +43,7 @@ class SongListIntegrationTest {
     val composeTestRule = createComposeRule()
 
     private val fakeSongRepository = FakeSongRepository()
+    private val fakePlaylistRepository = FakePlaylistRepository()
     private val fakeImportState = FakeSongImportStateProvider()
     private val fakeSortPreferences = FakeSortPreferences()
 
@@ -159,6 +163,11 @@ class SongListIntegrationTest {
         queueManager = FakeQueueManager(),
         playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
         shuffleSongs = ShuffleSongs(FakePlaybackManager()),
+        addToPlaylistUseCase = AddToPlaylist(
+            fakePlaylistRepository, songRepository, FakeGenreRepository(), FakeQueueManager(),
+            ignorePlaylistDuplicates = { false },
+        ),
+        playlistRepository = fakePlaylistRepository,
         sortPreferenceManager = fakeSortPreferences,
         ioDispatcher = mainDispatcherRule.testDispatcher,
         mediaImportObserver = fakeImportState,

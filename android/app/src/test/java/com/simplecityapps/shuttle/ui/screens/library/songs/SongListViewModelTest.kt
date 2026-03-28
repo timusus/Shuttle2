@@ -1,13 +1,16 @@
 package com.simplecityapps.shuttle.ui.screens.library.songs
 
+import com.simplecityapps.fakes.FakeGenreRepository
 import com.simplecityapps.fakes.FakePlaybackManager
+import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueManager
-import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
-import com.simplecityapps.shuttle.ui.common.playback.ShuffleSongs
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.FakeSortPreferences
 import com.simplecityapps.fakes.importComplete
+import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
+import com.simplecityapps.shuttle.ui.common.playback.ShuffleSongs
+import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +34,7 @@ import org.junit.Test
 @ExperimentalCoroutinesApi
 class SongListViewModelTest {
     private val fakeSongRepository = FakeSongRepository()
+    private val fakePlaylistRepository = FakePlaylistRepository()
     private val fakeImportState = FakeSongImportStateProvider()
     private val fakeSortPreferences = FakeSortPreferences()
 
@@ -66,6 +70,11 @@ class SongListViewModelTest {
         queueManager = FakeQueueManager(),
         playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
         shuffleSongs = ShuffleSongs(FakePlaybackManager()),
+        addToPlaylistUseCase = AddToPlaylist(
+            fakePlaylistRepository, fakeSongRepository, FakeGenreRepository(), FakeQueueManager(),
+            ignorePlaylistDuplicates = { false },
+        ),
+        playlistRepository = fakePlaylistRepository,
         sortPreferenceManager = fakeSortPreferences,
         ioDispatcher = testDispatcher,
         mediaImportObserver = fakeImportState,

@@ -5,12 +5,18 @@ import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
+import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
+import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.mediaprovider.repository.songs.comparator
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.di.IoDispatcher
+import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
+import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.shuttle.ui.common.SelectionState
@@ -34,6 +40,7 @@ import kotlinx.coroutines.withContext
 
 data class SongListUiState(
     val songs: List<Song> = emptyList(),
+    val playlists: List<Playlist> = emptyList(),
     val selectedSongs: Set<Song> = emptySet(),
     val sortOrder: SongSortOrder = SongSortOrder.Default,
     val loadingState: LoadingState = LoadingState.Loading,
@@ -48,6 +55,14 @@ sealed interface SongListUiEvent {
     data class AddedToQueue(val songCount: Int) : SongListUiEvent
     data class PlaybackFailed(val errorMessage: String?) : SongListUiEvent
     data object LibraryEmpty : SongListUiEvent
+    data class AddedToPlaylist(val playlist: Playlist, val playlistData: PlaylistData) : SongListUiEvent
+    data class PlaylistDuplicatesFound(
+        val playlist: Playlist,
+        val playlistData: PlaylistData,
+        val deduplicatedSongs: PlaylistData.Songs,
+        val duplicates: List<Song>,
+    ) : SongListUiEvent
+    data class PlaylistAddFailed(val message: String?) : SongListUiEvent
 }
 
 @HiltViewModel
@@ -57,6 +72,8 @@ class SongListViewModel @Inject constructor(
     private val queueManager: QueueOperations,
     private val playSongs: PlaySongs,
     private val shuffleSongs: ShuffleSongs,
+    private val addToPlaylistUseCase: AddToPlaylist,
+    private val playlistRepository: PlaylistRepository,
     private val sortPreferenceManager: SortPreferences,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     mediaImportObserver: SongImportStateProvider,
@@ -73,13 +90,15 @@ class SongListViewModel @Inject constructor(
         mediaImportObserver.songImportState,
         selectionState.selectedItems,
         _sortOrder,
-    ) { songs, songImportState, selectedSongs, sortOrder ->
+        playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)),
+    ) { songs, songImportState, selectedSongs, sortOrder, playlists ->
         if (songImportState is SongImportState.ImportProgress) {
             SongListUiState(
                 loadingState = SongListUiState.LoadingState.Scanning,
                 scanProgress = songImportState.progress,
                 sortOrder = sortOrder,
                 selectedSongs = selectedSongs,
+                playlists = playlists,
             )
         } else {
             val sortedSongs = songs.sortedWith(sortOrder.comparator)
@@ -87,6 +106,7 @@ class SongListViewModel @Inject constructor(
                 songs = sortedSongs,
                 selectedSongs = selectedSongs,
                 sortOrder = sortOrder,
+                playlists = playlists,
                 loadingState = if (sortedSongs.isEmpty()) {
                     SongListUiState.LoadingState.Empty
                 } else {
@@ -194,4 +214,28 @@ class SongListViewModel @Inject constructor(
     }
 
     fun selectedSongs(): List<Song> = selectionState.selectedItems.value.toList()
+
+    fun addToPlaylist(playlist: Playlist, playlistData: PlaylistData, ignoreDuplicates: Boolean = false) {
+        viewModelScope.launch {
+            when (val result = addToPlaylistUseCase(playlist, playlistData, ignoreDuplicates)) {
+                is AddToPlaylist.Result.Success ->
+                    _events.emit(SongListUiEvent.AddedToPlaylist(result.playlist, result.playlistData))
+                is AddToPlaylist.Result.DuplicatesFound ->
+                    _events.emit(
+                        SongListUiEvent.PlaylistDuplicatesFound(
+                            result.playlist, result.playlistData, result.deduplicatedSongs, result.duplicates
+                        )
+                    )
+                is AddToPlaylist.Result.Failure ->
+                    _events.emit(SongListUiEvent.PlaylistAddFailed(result.message))
+            }
+        }
+    }
+
+    fun createPlaylist(name: String, playlistData: PlaylistData) {
+        viewModelScope.launch {
+            val songs = addToPlaylistUseCase.resolveSongs(playlistData)
+            playlistRepository.createPlaylist(name, MediaProviderType.Shuttle, songs, null)
+        }
+    }
 }
