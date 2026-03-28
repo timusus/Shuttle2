@@ -188,11 +188,7 @@ private fun AlbumArtistListView(
         FastScroller(
             modifier = Modifier.fillMaxSize().padding(vertical = 8.dp),
             state = state,
-            getPopupText = { index ->
-                albumArtists[index].name?.firstOrNull()?.toString()
-                    ?: albumArtists[index].friendlyArtistName?.firstOrNull()?.toString()
-                    ?: ""
-            },
+            getPopupText = { index -> getArtistPopupText(albumArtists, index) },
         )
     }
 }
@@ -262,13 +258,14 @@ private fun AlbumArtistGridView(
         FastScroller(
             modifier = Modifier.fillMaxSize().padding(vertical = 8.dp),
             scrollableState = rememberFastScrollableState(gridState),
-            getPopupText = { index ->
-                if (index < albumArtists.size) {
-                    albumArtists[index].name?.firstOrNull()?.toString()
-                        ?: albumArtists[index].friendlyArtistName?.firstOrNull()?.toString()
-                        ?: ""
-                } else ""
-            },
+            getPopupText = { index -> getArtistPopupText(albumArtists, index) },
         )
     }
+}
+
+private fun getArtistPopupText(albumArtists: List<AlbumArtist>, index: Int): String {
+    if (index !in albumArtists.indices) return ""
+    return albumArtists[index].name?.firstOrNull()?.toString()
+        ?: albumArtists[index].friendlyArtistName?.firstOrNull()?.toString()
+        ?: ""
 }

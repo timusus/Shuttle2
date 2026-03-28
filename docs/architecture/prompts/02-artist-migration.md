@@ -66,7 +66,7 @@ Events — typed by what happened, Fragment resolves strings (principle #4, #8a)
 
 ```kotlin
 sealed interface AlbumArtistListUiEvent {
-    data class AddedToQueue(val artistName: String) : AlbumArtistListUiEvent
+    data class AddedToQueue(val artistCount: Int) : AlbumArtistListUiEvent
     data class PlaybackFailed(val errorMessage: String?) : AlbumArtistListUiEvent
     data class EditTags(val songs: List<Song>) : AlbumArtistListUiEvent
 }
@@ -113,6 +113,8 @@ Test cases to write (based on studying the old screen):
 - Context menu shows correct items (Play, Add to Queue, Play Next, Add to Playlist, Exclude, Edit Tags)
 - Context menu items invoke correct callbacks
 - Selection mark displayed when artist is selected
+- Grid mode renders grid layout
+- List mode renders list layout
 
 Run the tests — they should fail (empty Composable).
 
@@ -200,8 +202,8 @@ Follow `SongListFragment.kt` as the template.
 ## Step 8: Clean up
 
 - Delete `AlbumArtistListPresenter.kt` (includes the Contract)
-- Delete `AlbumArtistBinder.kt`, `ListAlbumArtistBinder.kt`, `GridAlbumArtistBinder.kt`
-- Delete XML layouts: `list_item_album_artist.xml`, `grid_item_album_artist.xml`
+- Delete `ListAlbumArtistBinder.kt` (only used by the old list Fragment)
+- Keep `AlbumArtistBinder.kt`, `GridAlbumArtistBinder.kt`, `list_item_album_artist.xml`, `grid_item_album_artist.xml` — still used by Home and Search screens
 - Update `fragment_album_artists.xml` to use ComposeView (match `fragment_songs.xml` / `fragment_genres.xml`)
 - Remove any unused imports or resources
 

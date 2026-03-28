@@ -140,9 +140,7 @@ private fun SongList(
         ) { item: Song, requestBuilder: RequestBuilder<Drawable> ->
             requestBuilder
                 .diskCacheStrategy(DiskCacheStrategy.ALL)
-                .transform(CenterCrop())
-                .transform(RoundedCorners(8.dpToInt))
-                // Glide ignores this in Compose for now, but not a big deal
+                .transform(CenterCrop(), RoundedCorners(8.dpToInt))
                 .transition(withCrossFade(200))
                 .load(item)
         }

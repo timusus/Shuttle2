@@ -160,7 +160,7 @@ class AlbumArtistListFragment :
                     uiState = uiState,
                     playlists = playlists.toImmutableList(),
                     onArtistClick = { albumArtist ->
-                        if (!viewModel.uiState.value.isSelecting) {
+                        if (!uiState.isSelecting) {
                             navigateToDetail(albumArtist)
                         } else {
                             viewModel.onArtistClick(albumArtist)

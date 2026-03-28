@@ -176,6 +176,8 @@ fun setViewMode(mode: ViewMode) {
 
 The UiState includes the current view mode. The Compose screen renders `LazyColumn` or `LazyVerticalGrid` based on it. The Fragment handles the toolbar menu toggle.
 
+Inject `preferenceManager` as an interface (e.g. `ArtistListPreferences`) rather than the concrete `GeneralPreferenceManager`, so the ViewModel is testable with a fake. Follow the `SortPreferences` / `FakeSortPreferences` pattern.
+
 **Why:** Same as principle #2 — the combine lambda is the single place where state is assembled. View mode is just another input.
 
 ### 12. No Fragment base class

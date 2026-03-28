@@ -3,13 +3,9 @@ package com.simplecityapps.shuttle.ui.screens.library.songs
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.graphics.drawable.Drawable
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -20,11 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -41,6 +33,7 @@ import com.simplecityapps.core.R
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.ui.common.components.SelectionMark
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
 import com.simplecityapps.shuttle.ui.common.utils.dp as dpToInt
@@ -97,9 +90,7 @@ fun SongListItem(
                 //  to `it`. Maybe wait for the Compose API to stabilize first.
                 it
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
-                    .transform(CenterCrop())
-                    .transform(RoundedCorners(8.dpToInt))
-                    // Glide ignores this in Compose for now, but not a big deal
+                    .transform(CenterCrop(), RoundedCorners(8.dpToInt))
                     .transition(withCrossFade(200))
                     .thumbnail(artworkPreloadRequestBuilder)
             }
@@ -148,45 +139,7 @@ fun SongListItem(
     }
 }
 
-@OptIn(
-    ExperimentalFoundationApi::class,
-    ExperimentalGlideComposeApi::class,
-)
-@Composable
-private fun SelectionMark(
-    isSelected: Boolean,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = modifier,
-    ) {
-        content()
 
-        if (isSelected) {
-            SelectionMarkOverlay()
-        }
-    }
-}
-
-@Composable
-private fun SelectionMarkOverlay() {
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .fillMaxSize()
-            .clip(RoundedCornerShape(8.dp))
-            .background(Color(0, 0, 0, 112))
-            .padding(8.dp),
-    ) {
-        Image(
-            painter = painterResource(com.simplecityapps.shuttle.R.drawable.ic_baseline_check_24),
-            contentDescription = stringResource(com.simplecityapps.shuttle.R.string.selection_mark),
-            colorFilter = ColorFilter.tint(Color.White),
-        )
-    }
-}
 
 @Preview(showBackground = true)
 @Preview(showBackground = true, uiMode = UI_MODE_NIGHT_YES)
