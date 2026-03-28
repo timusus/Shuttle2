@@ -151,7 +151,10 @@ class GenreListViewModel @Inject constructor(
                 is AddToPlaylist.Result.DuplicatesFound ->
                     _events.emit(
                         GenreListUiEvent.PlaylistDuplicatesFound(
-                            result.playlist, result.playlistData, result.deduplicatedSongs, result.duplicates
+                            result.playlist,
+                            result.playlistData,
+                            result.deduplicatedSongs,
+                            result.duplicates
                         )
                     )
                 is AddToPlaylist.Result.Failure ->

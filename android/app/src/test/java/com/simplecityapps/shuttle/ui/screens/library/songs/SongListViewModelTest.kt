@@ -8,10 +8,10 @@ import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.FakeSortPreferences
 import com.simplecityapps.fakes.importComplete
+import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
 import com.simplecityapps.shuttle.ui.common.playback.ShuffleSongs
 import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
-import com.simplecityapps.shuttle.sorting.SongSortOrder
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -71,7 +71,10 @@ class SongListViewModelTest {
         playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
         shuffleSongs = ShuffleSongs(FakePlaybackManager()),
         addToPlaylistUseCase = AddToPlaylist(
-            fakePlaylistRepository, fakeSongRepository, FakeGenreRepository(), FakeQueueManager(),
+            fakePlaylistRepository,
+            fakeSongRepository,
+            FakeGenreRepository(),
+            FakeQueueManager(),
             ignorePlaylistDuplicates = { false },
         ),
         playlistRepository = fakePlaylistRepository,

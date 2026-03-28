@@ -10,13 +10,13 @@ import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.FakeSortPreferences
 import com.simplecityapps.fakes.importComplete
-import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
-import com.simplecityapps.shuttle.ui.common.playback.ShuffleSongs
-import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.sorting.SongSortOrder
+import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
+import com.simplecityapps.shuttle.ui.common.playback.ShuffleSongs
+import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
 import com.simplecityapps.testing.MainDispatcherRule
 import org.junit.Rule
 import org.junit.Test
@@ -164,7 +164,10 @@ class SongListIntegrationTest {
         playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
         shuffleSongs = ShuffleSongs(FakePlaybackManager()),
         addToPlaylistUseCase = AddToPlaylist(
-            fakePlaylistRepository, songRepository, FakeGenreRepository(), FakeQueueManager(),
+            fakePlaylistRepository,
+            songRepository,
+            FakeGenreRepository(),
+            FakeQueueManager(),
             ignorePlaylistDuplicates = { false },
         ),
         playlistRepository = fakePlaylistRepository,

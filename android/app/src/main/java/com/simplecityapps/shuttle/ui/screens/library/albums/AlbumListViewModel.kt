@@ -201,7 +201,10 @@ class AlbumListViewModel @Inject constructor(
                 is AddToPlaylist.Result.DuplicatesFound ->
                     _events.emit(
                         AlbumListUiEvent.PlaylistDuplicatesFound(
-                            result.playlist, result.playlistData, result.deduplicatedSongs, result.duplicates
+                            result.playlist,
+                            result.playlistData,
+                            result.deduplicatedSongs,
+                            result.duplicates
                         )
                     )
                 is AddToPlaylist.Result.Failure ->

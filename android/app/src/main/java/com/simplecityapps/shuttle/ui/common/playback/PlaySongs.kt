@@ -4,8 +4,8 @@ import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.model.Song
 import javax.inject.Inject
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
+import kotlinx.coroutines.suspendCancellableCoroutine
 
 class PlaySongs @Inject constructor(
     private val queueManager: QueueOperations,

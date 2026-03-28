@@ -11,11 +11,11 @@ import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.importComplete
-import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
-import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
+import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
 import com.simplecityapps.shuttle.ui.screens.library.ViewMode
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
@@ -157,7 +157,10 @@ class AlbumArtistListIntegrationTest {
         playbackManager = FakePlaybackManager(),
         playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
         addToPlaylistUseCase = AddToPlaylist(
-            fakePlaylistRepository, fakeSongRepository, FakeGenreRepository(), FakeQueueManager(),
+            fakePlaylistRepository,
+            fakeSongRepository,
+            FakeGenreRepository(),
+            FakeQueueManager(),
             ignorePlaylistDuplicates = { false },
         ),
         playlistRepository = fakePlaylistRepository,

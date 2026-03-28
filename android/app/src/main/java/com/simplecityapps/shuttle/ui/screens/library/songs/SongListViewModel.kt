@@ -15,14 +15,14 @@ import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
-import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.shuttle.ui.common.SelectionState
 import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
 import com.simplecityapps.shuttle.ui.common.playback.ShuffleSongs
+import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferences
+import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
@@ -223,7 +223,10 @@ class SongListViewModel @Inject constructor(
                 is AddToPlaylist.Result.DuplicatesFound ->
                     _events.emit(
                         SongListUiEvent.PlaylistDuplicatesFound(
-                            result.playlist, result.playlistData, result.deduplicatedSongs, result.duplicates
+                            result.playlist,
+                            result.playlistData,
+                            result.deduplicatedSongs,
+                            result.duplicates
                         )
                     )
                 is AddToPlaylist.Result.Failure ->

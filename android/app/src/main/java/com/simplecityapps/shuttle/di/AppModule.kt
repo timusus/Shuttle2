@@ -4,20 +4,20 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.util.LruCache
+import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
+import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
+import com.simplecityapps.mediaprovider.repository.songs.SongRepository
+import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.debug.DebugLoggingTree
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.ThemeManager
+import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferences
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.ArtistListPreferenceManager
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.ArtistListPreferences
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListPreferenceManager
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListPreferences
-import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
-import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
-import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.playback.queue.QueueOperations
-import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -75,7 +75,10 @@ class AppModule {
         queueManager: QueueOperations,
         preferenceManager: GeneralPreferenceManager,
     ): AddToPlaylist = AddToPlaylist(
-        playlistRepository, songRepository, genreRepository, queueManager,
+        playlistRepository,
+        songRepository,
+        genreRepository,
+        queueManager,
         ignorePlaylistDuplicates = { preferenceManager.ignorePlaylistDuplicates },
     )
 }

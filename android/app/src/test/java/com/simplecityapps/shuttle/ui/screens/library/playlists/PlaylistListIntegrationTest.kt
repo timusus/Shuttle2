@@ -8,10 +8,10 @@ import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.importComplete
-import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
 import com.simplecityapps.testing.MainDispatcherRule
 import org.junit.Rule
 import org.junit.Test

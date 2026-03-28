@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.ui.screens.library.playlists
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
