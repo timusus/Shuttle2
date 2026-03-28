@@ -11,6 +11,8 @@ import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferences
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.ArtistListPreferenceManager
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.ArtistListPreferences
+import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListPreferenceManager
+import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListPreferences
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -46,6 +48,10 @@ class AppModule {
     @Singleton
     @Provides
     fun provideArtistListPreferences(preferenceManager: GeneralPreferenceManager): ArtistListPreferences = ArtistListPreferenceManager(preferenceManager)
+
+    @Singleton
+    @Provides
+    fun provideAlbumListPreferences(preferenceManager: GeneralPreferenceManager): AlbumListPreferences = AlbumListPreferenceManager(preferenceManager)
 
     @Singleton
     @Provides
