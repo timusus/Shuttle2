@@ -9,6 +9,8 @@ import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.ThemeManager
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferences
+import com.simplecityapps.shuttle.ui.screens.library.albumartists.ArtistListPreferenceManager
+import com.simplecityapps.shuttle.ui.screens.library.albumartists.ArtistListPreferences
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -40,6 +42,10 @@ class AppModule {
     @Singleton
     @Provides
     fun provideSortPreferences(preference: SharedPreferences): SortPreferences = SortPreferenceManager(preference)
+
+    @Singleton
+    @Provides
+    fun provideArtistListPreferences(preferenceManager: GeneralPreferenceManager): ArtistListPreferences = ArtistListPreferenceManager(preferenceManager)
 
     @Singleton
     @Provides

@@ -78,6 +78,33 @@ class AlbumArtistListRobot(private val rule: ComposeContentTestRule) {
         }
     }
 
+    /** Render with a real [AlbumArtistListViewModel] (for integration tests). */
+    fun setContentWithViewModel(
+        viewModel: AlbumArtistListViewModel,
+        playlists: List<Playlist> = emptyList(),
+    ) {
+        resetCallbacks()
+        val cb = callbacks()
+        rule.setContent {
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            AppTheme {
+                AlbumArtistList(
+                    uiState = uiState,
+                    playlists = playlists.toImmutableList(),
+                    onArtistClick = { viewModel.onArtistClick(it) },
+                    onArtistLongClick = { viewModel.onArtistLongClick(it) },
+                    onPlay = cb.onPlay,
+                    onAddToQueue = cb.onAddToQueue,
+                    onPlayNext = cb.onPlayNext,
+                    onExclude = cb.onExclude,
+                    onEditTags = cb.onEditTags,
+                    onAddToPlaylist = cb.onAddToPlaylist,
+                    onShowCreatePlaylistDialog = cb.onShowCreatePlaylistDialog,
+                )
+            }
+        }
+    }
+
     /** Render a single [AlbumArtistListItem] (for context menu tests). */
     fun setItemContent(
         albumArtist: AlbumArtist,
