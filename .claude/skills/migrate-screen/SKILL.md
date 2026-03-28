@@ -36,6 +36,7 @@ These are non-negotiable. Violating any of these is a bug in the migration:
 - **Typed events** — `UiEvent` sealed interface, Fragment resolves strings
 - **`WhileSubscribed(5_000)`** — not Eagerly, not Lazily
 - **Single data class UiState** — `LoadingState` enum inside, not a sealed interface
+- **Use cases for non-trivial actions** — extract when >5 lines, branching, or error handling; leave one-liners inline (see principle #8a)
 
 ---
 
@@ -169,7 +170,47 @@ Look at already-migrated screens for UI patterns this screen shares:
 
 **Principle:** Only extract a shared component if it's already duplicated across 2+ screens. Don't pre-extract on speculation. If this is the first screen with a pattern, implement it inline. If it's the second, consider extraction. If it's the third, extract.
 
-**Commit** (if any interfaces were extracted): "Extract <Interface> for <Screen> testability"
+### 2e. Identify use cases to extract
+
+Review the old Presenter's action methods. For each one, decide whether to keep it inline in the ViewModel or extract it into a use case class (see `compose-viewmodel-udf.md` principle #8a).
+
+**Extract when:**
+- The method body has branching, error handling, or callback coordination (e.g., the "set queue → load → play → handle error" sequence)
+- The logic coordinates 3+ dependencies
+- The same logic is already duplicated in other ViewModels
+
+**Leave inline when:**
+- One-liner: `playbackManager.addToQueue(songs)` + emit event
+- Simple sequential calls: `repository.setExcluded(songs, true)`
+- Preference writes, state mutations, selection toggles
+
+**Check for existing use cases first.** As migrations progress, use cases accumulate. Common ones:
+- `PlaySongs` — set queue, load, play, handle errors (shared across most screens)
+- `ShuffleSongs` — shuffle, load, play (shared across most screens)
+
+If a use case already exists for the action, the ViewModel just injects and calls it. If it doesn't, create it in the same package as the ViewModel. If a second ViewModel needs it later, promote it to a shared package.
+
+**Use case shape:**
+```kotlin
+class PlaySongs @Inject constructor(
+    private val queueManager: QueueOperations,
+    private val playbackManager: PlaybackOperations,
+) {
+    sealed interface Result {
+        data object Success : Result
+        data class Failure(val message: String?) : Result
+    }
+
+    suspend operator fun invoke(songs: List<Song>, position: Int = 0): Result { ... }
+}
+```
+
+- Single `operator fun invoke` — `suspend` for one-shot, `Flow` for observable
+- Stateless, no scope annotation — Hilt creates a new instance each time
+- Nested `Result` sealed interface for operations that can fail
+- Named as a verb phrase: `PlaySongs`, `ShuffleAlbums`, `ResolveSongsForAlbum`
+
+**Commit** (if any interfaces or use cases were extracted): "Extract <Interface/UseCase> for <Screen>"
 
 ---
 
@@ -264,9 +305,32 @@ Add `setContentWithViewModel()` to the Robot. Write integration tests that:
 
 These test the full `combine().stateIn()` chain through the UI.
 
-### 4c. Implement the ViewModel
+### 4c. Implement use cases and ViewModel
 
-Follow `combine().stateIn()` pattern. All state derived, imperative changes are combine inputs. Use fakes from Phase 2.
+**Use cases first** (identified in Phase 2e):
+- Implement each use case class with its `operator fun invoke`
+- Write unit tests for use cases with real logic (branching, error handling)
+- Trivial use cases are tested through the integration tests
+
+**Then the ViewModel:**
+- `combine().stateIn()` for state derivation
+- Imperative changes are combine inputs
+- Action methods delegate to use cases — the ViewModel becomes a thin dispatch layer
+- Inject use cases via constructor alongside repositories and preferences
+
+```kotlin
+@HiltViewModel
+class <Screen>ViewModel @Inject constructor(
+    private val repository: <Entity>Repository,
+    private val playSongs: PlaySongs,          // use case
+    private val shuffleSongs: ShuffleSongs,    // use case
+    sortPreferenceManager: SortPreferences,
+    mediaImportObserver: SongImportStateProvider,
+) : ViewModel() {
+    // combine().stateIn() for state
+    // Action methods delegate to use cases
+}
+```
 
 **Run all tests:**
 ```bash

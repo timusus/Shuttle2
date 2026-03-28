@@ -113,7 +113,67 @@ Methods launch coroutines, perform side effects, and emit events. They don't ret
 
 **Why:** If a ViewModel method returns a value, the UI has to store it, react to it, pass it somewhere — that breaks unidirectional flow. The UI's job is to render state and forward user intent. The ViewModel's job is to process intent, update sources (which re-derive state), and emit events.
 
-## 8a. No Android framework dependencies in ViewModels
+## 8a. Extract use cases for non-trivial action logic
+
+When a ViewModel action method has more than ~5 lines, branching, error handling, or coordinates multiple dependencies, extract it into a **use case** — a class with a single `operator fun invoke`. The ViewModel becomes a thin dispatch layer: state derivation in `combine`, action forwarding to use cases.
+
+```kotlin
+// Use case — lives in the same package as the ViewModel
+class PlaySongs @Inject constructor(
+    private val queueManager: QueueOperations,
+    private val playbackManager: PlaybackOperations,
+) {
+    sealed interface Result {
+        data object Success : Result
+        data class Failure(val message: String?) : Result
+    }
+
+    suspend operator fun invoke(songs: List<Song>, position: Int = 0): Result {
+        if (!queueManager.setQueue(songs, position)) return Result.Failure(null)
+        return suspendCancellableCoroutine { cont ->
+            playbackManager.load { result ->
+                result.onSuccess {
+                    playbackManager.play()
+                    cont.resume(Result.Success)
+                }
+                result.onFailure { error ->
+                    cont.resume(Result.Failure(error.message))
+                }
+            }
+        }
+    }
+}
+
+// ViewModel — thin dispatch
+fun onPlay(album: Album) {
+    viewModelScope.launch {
+        val songs = getSongsForAlbum(album)
+        when (val result = playSongs(songs)) {
+            is PlaySongs.Result.Failure -> _events.emit(UiEvent.PlaybackFailed(result.message))
+            is PlaySongs.Result.Success -> {}
+        }
+    }
+}
+```
+
+**When to extract:**
+- Method body has branching, error handling, or callback coordination (like the play sequence)
+- Logic is duplicated across 2+ ViewModels (like "resolve entity to songs, then play")
+- The method coordinates 3+ dependencies
+
+**When to leave inline:**
+- One-liners: `playbackManager.addToQueue(songs)` + emit event
+- Simple sequential calls: `repository.setExcluded(songs, true)`
+- Preference writes: `preferenceManager.sortOrder = order`
+- State mutations: `selectionState.toggle(item)`
+
+Use cases are stateless — `@Inject constructor`, no scope annotation, Hilt creates a new instance each time. They can be `suspend` (one-shot operations) or return `Flow` (observable operations). They get their own unit tests when they contain real logic.
+
+If a use case is shared across ViewModels, great. If it has only one consumer, that's fine too — the value is keeping the ViewModel readable and the logic independently testable.
+
+**Why:** ViewModels with 10+ action methods become hard to scan. The combine lambda is the interesting part — it's the single place where state is assembled. Action methods are mechanical plumbing. Extracting them into focused classes means when you open the ViewModel, you see *what it does* (state derivation + dispatching intent) without wading through *how* each action executes. The use case is also easier to test in isolation — simple inputs and outputs, no ViewModel lifecycle or coroutine scope to manage.
+
+## 8b. No Android framework dependencies in ViewModels
 
 ViewModels extend `ViewModel()`, never `AndroidViewModel`. They have no `Application`, `Context`, or Android resource access. All dependencies are injected as interfaces.
 
@@ -123,6 +183,15 @@ Things that need `Context` belong in the Fragment:
 - System services
 
 **Why:** Android dependencies make ViewModels hard to test — you need `ApplicationProvider`, `mockk<Application>()`, or Robolectric shadows just to construct one. With pure Kotlin dependencies and injected interfaces, a ViewModel test is just `createViewModel()` with fakes. No test runners, no framework scaffolding.
+
+### 8c. Use case conventions
+
+- **Naming:** Verb phrase describing the action — `PlaySongs`, `ShuffleAlbums`, `ResolveSongsForAlbum`. Not `PlaySongsUseCase` — the suffix adds nothing.
+- **Location:** Same package as the ViewModel that uses them. If shared, promote to a common package.
+- **Single `operator fun invoke`:** Either `suspend` for one-shot work, or returning `Flow` for observable work.
+- **Result types:** Use a sealed interface nested in the use case for operations that can fail. For infallible operations, return `Unit` or the data directly.
+- **Dependencies:** Injected via `@Inject constructor`. Same fakes-not-mocks rule as ViewModels.
+- **Testing:** Use cases with real logic (branching, error handling, multi-step coordination) get their own unit tests. Trivial use cases are tested through the ViewModel or UI integration tests.
 
 ---
 

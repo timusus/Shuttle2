@@ -52,7 +52,7 @@ All commands run from the repository root.
 
 ### UI Patterns
 
-Legacy screens use **MVP (Model-View-Presenter)** with Fragments, custom `ViewBinder` pattern for RecyclerView items, `BasePresenter<T : View>`, and `BaseContract`. New and migrated screens use **Compose + ViewModel** with unidirectional data flow — see [`docs/architecture/compose-viewmodel-udf.md`](docs/architecture/compose-viewmodel-udf.md) for the canonical patterns and principles. Navigation uses Android Navigation Component with Safe Args.
+Legacy screens use **MVP (Model-View-Presenter)** with Fragments, custom `ViewBinder` pattern for RecyclerView items, `BasePresenter<T : View>`, and `BaseContract`. New and migrated screens use **Compose + ViewModel** with unidirectional data flow — see [`docs/architecture/compose-viewmodel-udf.md`](docs/architecture/compose-viewmodel-udf.md) for the canonical patterns and principles. Non-trivial ViewModel action logic is extracted into **use cases** — classes with a single `operator fun invoke`, injected via Hilt (see principle #8a in the UDF doc). Navigation uses Android Navigation Component with Safe Args.
 
 ### Playback Flow
 

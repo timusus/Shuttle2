@@ -191,6 +191,29 @@ When migrating a screen from MVP to Compose/ViewModel:
 
 This replaces step 5 ("Write ViewModel unit tests") and step 6 ("Implement the ViewModel") from [compose-viewmodel-udf.md](compose-viewmodel-udf.md) principle #13, refining them with the fake-based approach.
 
+## Testing Use Cases
+
+Use cases (see [compose-viewmodel-udf.md](compose-viewmodel-udf.md) principle #8a) are plain Kotlin classes with `operator fun invoke`. They get their own unit tests when they contain real logic — branching, error handling, multi-step coordination.
+
+```kotlin
+class PlaySongsTest {
+    private val fakeQueueManager = FakeQueueManager()
+    private val fakePlaybackManager = FakePlaybackManager()
+    private val playSongs = PlaySongs(fakeQueueManager, fakePlaybackManager)
+
+    @Test
+    fun `returns failure when setQueue fails`() = runTest {
+        fakeQueueManager.setQueueResult = false
+        val result = playSongs(listOf(createSong()))
+        result shouldBe PlaySongs.Result.Failure(null)
+    }
+}
+```
+
+**Don't test trivial use cases separately** — if a use case is a one-liner or simple sequential calls, it's covered by the ViewModel or UI integration tests that exercise it.
+
+**Use the same fakes** as ViewModel tests. Use cases depend on the same boundary interfaces (`PlaybackOperations`, `QueueOperations`, repositories).
+
 ## What Not to Test at the ViewModel Level
 
 - **Mock interaction verification** — don't write `coVerify { mockPlaybackManager.play() }`. The ViewModel's fire-and-forget actions cross the playback boundary. If they break, you'll know from manual testing or integration tests at a higher level.
