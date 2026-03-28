@@ -8,6 +8,8 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.launchActivity
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.action.ViewActions.closeSoftKeyboard
+import androidx.test.espresso.action.ViewActions.typeText
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.contrib.RecyclerViewActions
 import androidx.test.espresso.matcher.ViewMatchers.hasDescendant
@@ -25,6 +27,7 @@ import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import javax.inject.Inject
 import org.hamcrest.CoreMatchers.allOf
+import androidx.test.espresso.matcher.ViewMatchers.isAssignableFrom
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -242,6 +245,81 @@ class SmokeTestSuite {
         onView(allOf(withId(R.id.shuffleButton), isDescendantOfA(withId(R.id.appBarLayout))))
             .check(matches(isDisplayed()))
         onView(allOf(withId(R.id.historyButton), isDescendantOfA(withId(R.id.appBarLayout))))
+            .check(matches(isDisplayed()))
+    }
+
+    @Test
+    fun shuffleAll_startsPlayback() {
+        scenario = launchActivity()
+
+        // Navigate to Home tab
+        onView(withId(R.id.homeFragment))
+            .perform(click())
+
+        // Tap shuffle button (scoped to appBarLayout to avoid playback ambiguity)
+        onView(allOf(withId(R.id.shuffleButton), isDescendantOfA(withId(R.id.appBarLayout))))
+            .perform(click())
+
+        Thread.sleep(500)
+
+        // Verify mini player shows a song title
+        onView(allOf(withId(R.id.titleTextView), isDescendantOfA(withId(R.id.sheet1PeekView))))
+            .check(matches(isDisplayed()))
+    }
+
+    @Test
+    fun search_typingQuery_showsResults() {
+        scenario = launchActivity()
+
+        // Navigate to Search
+        onView(withId(R.id.searchFragment))
+            .perform(click())
+
+        // Click the SearchView to activate it, then type into the inner EditText
+        onView(withId(R.id.searchView))
+            .perform(click())
+        onView(isAssignableFrom(android.widget.EditText::class.java))
+            .perform(typeText("Queen"), closeSoftKeyboard())
+
+        // Wait for debounce + query time
+        Thread.sleep(1500)
+
+        // Verify results contain "Queen"
+        onView(allOf(withId(R.id.recyclerView), isDisplayed()))
+            .check(matches(hasDescendant(withText("Queen"))))
+    }
+
+    @Test
+    fun playlistsTab_isAccessible() {
+        scenario = launchActivity()
+
+        // Navigate to Library
+        onView(withId(R.id.libraryFragment))
+            .perform(click())
+
+        // Click Playlists tab
+        onView(withText("Playlists"))
+            .perform(click())
+
+        Thread.sleep(500)
+
+        // Verify the fragment loaded — the recyclerView should exist even if empty
+        onView(allOf(withId(R.id.recyclerView), isDisplayed()))
+            .check(matches(isDisplayed()))
+    }
+
+    @Test
+    fun settings_isAccessible() {
+        scenario = launchActivity()
+
+        // Tap the settings/menu bottom nav item
+        onView(withId(R.id.bottomSheetFragment))
+            .perform(click())
+
+        Thread.sleep(300)
+
+        // Verify the bottom drawer is showing by checking for a known menu item
+        onView(withText("Settings"))
             .check(matches(isDisplayed()))
     }
 }
