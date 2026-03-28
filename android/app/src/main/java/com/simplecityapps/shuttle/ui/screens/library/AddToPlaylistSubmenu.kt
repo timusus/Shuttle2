@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.screens.library.genres
+package com.simplecityapps.shuttle.ui.screens.library
 
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -7,22 +7,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import kotlinx.collections.immutable.ImmutableList
 
 @Composable
-fun AddToPlaylistSubmenu(
-    genre: Genre,
+fun <T, R : PlaylistData> AddToPlaylistSubmenu(
+    playableItem: T,
     playlists: ImmutableList<Playlist>,
     onAddToPlaylist: (playlist: Playlist, playlistData: PlaylistData) -> Unit,
+    playlistDataCreator: (playableItem: T) -> R,
     modifier: Modifier = Modifier,
     expanded: Boolean = false,
     onDismiss: () -> Unit = {},
-    onShowCreatePlaylistDialog: (genre: Genre) -> Unit
+    onShowCreatePlaylistDialog: (playableItem: T) -> Unit,
 ) {
-    val playlistData = PlaylistData.Genres(genre)
+    val playlistData = playlistDataCreator(playableItem)
 
     DropdownMenu(
         modifier = modifier,
@@ -32,7 +32,7 @@ fun AddToPlaylistSubmenu(
         DropdownMenuItem(
             text = { Text(stringResource(id = R.string.playlist_menu_create_playlist)) },
             onClick = {
-                onShowCreatePlaylistDialog(genre)
+                onShowCreatePlaylistDialog(playableItem)
                 onDismiss()
             }
         )

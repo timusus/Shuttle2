@@ -1,4 +1,4 @@
-package com.simplecityapps.shuttle.ui.screens.library.genres
+package com.simplecityapps.shuttle.ui.screens.library.songs
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -19,24 +19,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Playlist
+import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.screens.library.AddToPlaylistSubmenu
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import kotlinx.collections.immutable.ImmutableList
 
 @Composable
-fun GenreMenu(
-    genre: Genre,
+fun SongMenu(
+    song: Song,
     playlists: ImmutableList<Playlist>,
-    onPlayGenre: (Genre) -> Unit,
-    onAddToQueue: (Genre) -> Unit,
-    onPlayNext: (Genre) -> Unit,
-    onExclude: (Genre) -> Unit,
-    onEditTags: (Genre) -> Unit,
+    onAddToQueue: (Song) -> Unit,
+    onPlayNext: (Song) -> Unit,
+    onSongInfo: (Song) -> Unit,
+    onExclude: (Song) -> Unit,
+    onEditTags: (Song) -> Unit,
+    onDelete: (Song) -> Unit,
     onAddToPlaylist: (playlist: Playlist, playlistData: PlaylistData) -> Unit,
+    onShowCreatePlaylistDialog: (song: Song) -> Unit,
     modifier: Modifier = Modifier,
-    onShowCreatePlaylistDialog: (genre: Genre) -> Unit
 ) {
     var isMenuOpened by remember { mutableStateOf(false) }
     var isAddToPlaylistSubmenuOpen by remember { mutableStateOf(false) }
@@ -48,7 +49,7 @@ fun GenreMenu(
         Icon(
             modifier = Modifier.size(16.dp),
             imageVector = Icons.Default.MoreVert,
-            contentDescription = "Genre menu",
+            contentDescription = stringResource(R.string.song_context_menu),
             tint = MaterialTheme.colorScheme.onBackground
         )
         DropdownMenu(
@@ -56,16 +57,9 @@ fun GenreMenu(
             onDismissRequest = { isMenuOpened = false }
         ) {
             DropdownMenuItem(
-                text = { Text(stringResource(id = R.string.menu_title_play)) },
-                onClick = {
-                    onPlayGenre(genre)
-                    isMenuOpened = false
-                }
-            )
-            DropdownMenuItem(
                 text = { Text(stringResource(id = R.string.menu_title_add_to_queue)) },
                 onClick = {
-                    onAddToQueue(genre)
+                    onAddToQueue(song)
                     isMenuOpened = false
                 }
             )
@@ -82,39 +76,52 @@ fun GenreMenu(
             DropdownMenuItem(
                 text = { Text(stringResource(id = R.string.menu_title_play_next)) },
                 onClick = {
-                    onPlayNext(genre)
+                    onPlayNext(song)
                     isMenuOpened = false
                 }
             )
             DropdownMenuItem(
+                text = { Text(stringResource(id = R.string.menu_title_song_info)) },
+                onClick = {
+                    onSongInfo(song)
+                    isMenuOpened = false
+                },
+            )
+            DropdownMenuItem(
                 text = { Text(stringResource(id = R.string.menu_title_exclude)) },
                 onClick = {
-                    onExclude(genre)
+                    onExclude(song)
                     isMenuOpened = false
-                }
+                },
             )
 
-            val supportsTagEditing = genre.mediaProviders.all { mediaProvider ->
-                mediaProvider.supportsTagEditing
-            }
-
-            if (supportsTagEditing) {
+            if (song.mediaProvider.supportsTagEditing) {
                 DropdownMenuItem(
                     text = { Text(stringResource(id = R.string.menu_title_edit_tags)) },
                     onClick = {
-                        onEditTags(genre)
+                        onEditTags(song)
+                        isMenuOpened = false
+                    },
+                )
+            }
+
+            if (song.canBeDeleted()) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(id = R.string.menu_title_delete)) },
+                    onClick = {
+                        onDelete(song)
                         isMenuOpened = false
                     }
                 )
             }
         }
         AddToPlaylistSubmenu(
-            playableItem = genre,
+            playableItem = song,
             expanded = isAddToPlaylistSubmenuOpen,
             onDismiss = { isAddToPlaylistSubmenuOpen = false },
             playlists = playlists,
             onAddToPlaylist = onAddToPlaylist,
-            playlistDataCreator = { genre -> PlaylistData.Genres(genre) },
+            playlistDataCreator = { song -> PlaylistData.Songs(song) },
             onShowCreatePlaylistDialog = onShowCreatePlaylistDialog
         )
     }

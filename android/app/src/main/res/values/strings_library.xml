@@ -28,4 +28,10 @@
     </plurals>
     <!-- Shown on the library screen, if the user has manually deselected all the library tabs in appearance settings-->
     <string name="library_tabs_empty">No library tabs visible</string>
+    <!-- Content description the song context menu icon -->
+    <string name="song_context_menu">Song context menu</string>
+    <!-- Content description for an artwork image. -->
+    <string name="artwork">Artwork</string>
+    <!-- Content description the selection mark image in a list. -->
+    <string name="selection_mark">Selection mark</string>
 </resources>

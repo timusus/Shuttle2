@@ -172,6 +172,11 @@ class QueueManager(
         }
     }
 
+    fun remove(song: Song) {
+        val songQueueItem = getQueue().filter { it.song.id == song.id }
+        remove(songQueueItem)
+    }
+
     fun clear() {
         Timber.v("clear()")
         queue.clear()
