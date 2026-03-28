@@ -3,6 +3,10 @@ package com.simplecityapps.shuttle.smoke
 import android.Manifest
 import android.content.SharedPreferences
 import android.os.Build
+import androidx.compose.ui.test.junit4.createEmptyComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.recyclerview.widget.RecyclerView
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.launchActivity
@@ -37,10 +41,13 @@ import org.junit.Test
 class SmokeTestSuite {
 
     @get:Rule(order = 0)
-    var hiltRule = HiltAndroidRule(this)
+    val hiltRule = HiltAndroidRule(this)
 
     @get:Rule(order = 1)
-    var permissionRule: GrantPermissionRule = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+    val composeRule = createEmptyComposeRule()
+
+    @get:Rule(order = 2)
+    val permissionRule: GrantPermissionRule = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         GrantPermissionRule.grant(Manifest.permission.READ_MEDIA_AUDIO)
     } else {
         GrantPermissionRule.grant(Manifest.permission.READ_EXTERNAL_STORAGE)
@@ -97,8 +104,10 @@ class SmokeTestSuite {
         onView(withText("Songs"))
             .perform(click())
 
-        // Wait for Flow to emit data, then verify a song from our test data is visible
-        waitForView(allOf(withId(R.id.recyclerView), hasDescendant(withText("Highway to Hell"))))
+        // Songs tab is Compose — use compose rule to find text
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("Highway to Hell").fetchSemanticsNodes().isNotEmpty()
+        }
     }
 
     @Test
@@ -111,10 +120,11 @@ class SmokeTestSuite {
         onView(withText("Songs"))
             .perform(click())
 
-        // Wait for Flow to emit data, then tap the first song in the list
-        waitForView(allOf(withId(R.id.recyclerView), hasDescendant(isDisplayed())))
-        onView(allOf(withId(R.id.recyclerView), isDisplayed()))
-            .perform(RecyclerViewActions.actionOnItemAtPosition<RecyclerView.ViewHolder>(0, click()))
+        // Songs tab is Compose — wait then tap
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("Highway to Hell").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Highway to Hell").performClick()
 
         // Mini player should show a song title
         waitForView(allOf(withId(R.id.titleTextView), isDescendantOfA(withId(R.id.sheet1PeekView))))
@@ -162,10 +172,11 @@ class SmokeTestSuite {
         onView(withText("Songs"))
             .perform(click())
 
-        // Wait for Flow to emit data, then tap the first song
-        waitForView(allOf(withId(R.id.recyclerView), hasDescendant(isDisplayed())))
-        onView(allOf(withId(R.id.recyclerView), isDisplayed()))
-            .perform(RecyclerViewActions.actionOnItemAtPosition<RecyclerView.ViewHolder>(0, click()))
+        // Songs tab is Compose — wait then tap
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("Highway to Hell").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Highway to Hell").performClick()
 
         // Wait for mini player, then expand to full playback
         waitForView(allOf(withId(R.id.sheet1PeekView), isDisplayed()))
@@ -190,10 +201,11 @@ class SmokeTestSuite {
         onView(withText("Songs"))
             .perform(click())
 
-        // Wait for Flow to emit data, then tap the first song
-        waitForView(allOf(withId(R.id.recyclerView), hasDescendant(isDisplayed())))
-        onView(allOf(withId(R.id.recyclerView), isDisplayed()))
-            .perform(RecyclerViewActions.actionOnItemAtPosition<RecyclerView.ViewHolder>(0, click()))
+        // Songs tab is Compose — wait then tap
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("Highway to Hell").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Highway to Hell").performClick()
 
         // Wait for mini player to appear before expanding to queue
         waitForView(allOf(withId(R.id.titleTextView), isDescendantOfA(withId(R.id.sheet1PeekView))))

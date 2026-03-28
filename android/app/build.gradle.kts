@@ -292,6 +292,7 @@ android {
         testImplementation(libs.robolectric)
         testImplementation("androidx.compose.ui:ui-test-junit4")
         debugImplementation("androidx.compose.ui:ui-test-manifest")
+        androidTestImplementation("androidx.compose.ui:ui-test-junit4")
         androidTestImplementation(libs.androidx.runner)
         androidTestImplementation(libs.androidx.rules)
         androidTestImplementation(libs.androidx.core.ktx)
