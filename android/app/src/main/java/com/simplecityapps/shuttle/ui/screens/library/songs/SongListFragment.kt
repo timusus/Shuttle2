@@ -25,7 +25,6 @@ import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.dialog.showDeleteDialog
-import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
@@ -33,6 +32,7 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
 import com.simplecityapps.shuttle.ui.theme.AppTheme
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -47,11 +47,14 @@ class SongListFragment :
     @Inject
     lateinit var playlistMenuPresenter: PlaylistMenuPresenter
 
+    @Inject
+    lateinit var preferenceManager: GeneralPreferenceManager
+
     private var composeView: ComposeView by autoCleared()
 
     private val viewModel: SongListViewModel by viewModels()
 
-    private var contextualToolbarHelper: ComposeContextualToolbarHelper<Song> by autoCleared()
+    private var contextualToolbarHelper: ComposeContextualToolbarHelper by autoCleared()
 
     private lateinit var playlistMenuView: PlaylistMenuView
 
@@ -82,74 +85,77 @@ class SongListFragment :
 
         composeView = view.findViewById(R.id.composeView)
 
-        contextualToolbarHelper = ComposeContextualToolbarHelper(viewModel.selectionState)
+        contextualToolbarHelper = ComposeContextualToolbarHelper(viewModel::clearSelection)
 
         updateContextualToolbar()
 
         viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.selectionState.selectedCount
-                .collect { count ->
-                    if (count == 0) {
-                        contextualToolbarHelper.hide()
-                    } else {
-                        contextualToolbarHelper.show()
-
-                        contextualToolbarHelper.contextualToolbar?.title =
-                            Phrase.fromPlural(requireContext(), R.plurals.multi_select_items_selected, count)
-                                .put("count", count)
-                                .format()
-                        contextualToolbarHelper.contextualToolbar?.menu?.let { menu ->
-                            TagEditorMenuSanitiser.sanitise(
-                                menu,
-                                viewModel.selectionState.selectedItems.value
-                                    .map { it.mediaProvider }
-                                    .distinct(),
-                            )
-                        }
-                    }
-                }
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.selectedSortOrder
-                    .collect { sortOrder ->
-                        updateToolbarMenuSortOrder(sortOrder)
+                viewModel.uiState
+                    .collect { state ->
+                        val count = state.selectedSongs.size
+                        if (count == 0) {
+                            contextualToolbarHelper.hide()
+                        } else {
+                            contextualToolbarHelper.show()
+
+                            contextualToolbarHelper.contextualToolbar?.title =
+                                Phrase.fromPlural(requireContext(), R.plurals.multi_select_items_selected, count)
+                                    .put("count", count)
+                                    .format()
+                            contextualToolbarHelper.contextualToolbar?.menu?.let { menu ->
+                                TagEditorMenuSanitiser.sanitise(
+                                    menu,
+                                    state.selectedSongs
+                                        .map { it.mediaProvider }
+                                        .distinct(),
+                                )
+                            }
+                        }
+
+                        updateToolbarMenuSortOrder(state.sortOrder)
                     }
             }
         }
 
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.events.collect { event ->
+                    when (event) {
+                        is SongListUiEvent.AddedToQueue -> {
+                            Toast.makeText(
+                                context,
+                                Phrase.fromPlural(resources, R.plurals.queue_songs_added, event.songCount)
+                                    .put("count", event.songCount)
+                                    .format(),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                        is SongListUiEvent.Error -> {
+                            Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }
+            }
+        }
+
         composeView.setContent {
-            val viewState by viewModel.viewState.collectAsState()
+            val uiState by viewModel.uiState.collectAsState()
             val playlists by playlistMenuPresenter.playlistsState.collectAsState()
 
-            val theme by viewModel.theme.collectAsStateWithLifecycle()
-            val accent by viewModel.accent.collectAsStateWithLifecycle()
+            val theme by preferenceManager.theme(viewLifecycleOwner.lifecycleScope).collectAsStateWithLifecycle()
+            val accent by preferenceManager.accent(viewLifecycleOwner.lifecycleScope).collectAsStateWithLifecycle()
 
             AppTheme(
                 theme = theme,
                 accent = accent,
             ) {
                 SongList(
-                    viewState = viewState,
+                    uiState = uiState,
                     playlists = playlists.toImmutableList(),
-                    onSongClick = { song ->
-                        viewModel.onSongClick(song) { result ->
-                            result.onFailure { error ->
-                                showLoadError(error)
-                            }
-                        }
-                    },
-                    onSongLongClick = { song ->
-                        viewModel.onSongLongClick(song)
-                    },
-                    onAddToQueue = { song ->
-                        viewModel.addToQueue(song) { result ->
-                            result.onSuccess { song ->
-                                onAddedToQueue(listOf(song))
-                            }
-                        }
-                    },
+                    onSongClick = { song -> viewModel.onSongClick(song) },
+                    onSongLongClick = { song -> viewModel.onSongLongClick(song) },
+                    onAddToQueue = { song -> viewModel.onAddToQueue(song) },
                     onAddToPlaylist = { playlist, playlistData ->
                         playlistMenuPresenter.addToPlaylist(playlist, playlistData)
                     },
@@ -159,36 +165,20 @@ class SongListFragment :
                             context?.getString(R.string.playlist_create_dialog_playlist_name_hint)
                         ).show(childFragmentManager)
                     },
-                    onPlayNext = { song ->
-                        viewModel.playNext(song) { result ->
-                            result.onSuccess { song ->
-                                onAddedToQueue(listOf(song))
-                            }
-                        }
-                    },
+                    onPlayNext = { song -> viewModel.onPlayNext(song) },
                     onSongInfo = { song ->
                         SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
                     },
-                    onExclude = { song ->
-                        viewModel.exclude(song)
-                    },
+                    onExclude = { song -> viewModel.onExclude(song) },
                     onEditTags = { song ->
                         showTagEditor(song)
                     },
                     onDelete = { song ->
                         showDeleteDialog(requireContext(), song.name) {
-                            viewModel.delete(song).onFailure { error ->
-                                showDeleteError(error)
-                            }
+                            viewModel.onDelete(song)
                         }
                     },
-                    onShuffle = {
-                        viewModel.shuffle { result ->
-                            result.onFailure { error ->
-                                showLoadError(error)
-                            }
-                        }
-                    }
+                    onShuffle = { viewModel.onShuffle() }
                 )
             }
         }
@@ -201,7 +191,7 @@ class SongListFragment :
         super.onCreateOptionsMenu(menu, inflater)
 
         inflater.inflate(R.menu.menu_song_list, menu)
-        updateToolbarMenuSortOrder(viewModel.selectedSortOrder.value)
+        updateToolbarMenuSortOrder(viewModel.uiState.value.sortOrder)
     }
 
     override fun onResume() {
@@ -263,20 +253,20 @@ class SongListFragment :
                 ctxToolbar.inflateMenu(R.menu.menu_multi_select)
                 TagEditorMenuSanitiser.sanitise(
                     ctxToolbar.menu,
-                    viewModel.selectionState.selectedItems.value
+                    viewModel.uiState.value.selectedSongs
                         .map { it.mediaProvider }
                         .distinct(),
                 )
                 ctxToolbar.setOnMenuItemClickListener { menuItem ->
                     playlistMenuView.createPlaylistMenu(ctxToolbar.menu)
-                    val selectedSongs = viewModel.selectionState.selectedItems.value.toList()
+                    val selectedSongs = viewModel.selectedSongs()
                     if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Songs(selectedSongs))) {
                         contextualToolbarHelper.hide()
                         return@setOnMenuItemClickListener true
                     }
                     when (menuItem.itemId) {
                         R.id.queue -> {
-                            viewModel.addSelectedToQueue()
+                            viewModel.onAddSelectedToQueue()
                             true
                         }
                         R.id.editTags -> {
@@ -292,7 +282,7 @@ class SongListFragment :
             contextualToolbarHelper.contextualToolbar = contextualToolbar
             contextualToolbarHelper.toolbar = toolbar
 
-            if (viewModel.selectionState.isActive()) {
+            if (viewModel.uiState.value.isSelecting) {
                 contextualToolbarHelper.show()
             }
         }
@@ -314,32 +304,8 @@ class SongListFragment :
         }
     }
 
-    fun showLoadError(error: Throwable) {
-        val message = (error as? Error)?.userDescription(resources)
-            ?: error.message
-            ?: resources.getString(R.string.error_unknown)
-        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-    }
-
     fun showTagEditor(song: Song) {
         TagEditorAlertDialog.newInstance(listOf(song)).show(childFragmentManager)
-    }
-
-    fun onAddedToQueue(songs: List<Song>) {
-        Toast.makeText(
-            context,
-            Phrase.fromPlural(resources, R.plurals.queue_songs_added, songs.size)
-                .put("count", songs.size)
-                .format(),
-            Toast.LENGTH_SHORT
-        ).show()
-    }
-
-    fun showDeleteError(error: Throwable) {
-        val message = (error as? Error)?.userDescription(resources)
-            ?: error.message
-            ?: resources.getString(R.string.error_unknown)
-        Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
     }
 
     // CreatePlaylistDialogFragment.Listener Implementation

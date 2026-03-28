@@ -11,12 +11,8 @@ import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
-import io.kotest.matchers.booleans.shouldBeFalse
-import io.kotest.matchers.booleans.shouldBeTrue
-import io.kotest.matchers.equality.shouldBeEqualUsingFields
 import io.kotest.matchers.shouldBe
 import io.mockk.Runs
 import io.mockk.coEvery
@@ -28,6 +24,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
@@ -43,7 +40,6 @@ class SongListViewModelTest {
     val mockPlaybackManager: PlaybackManager = mockk()
     val mockQueueManager: QueueManager = mockk()
     val mockSortPreferenceManager: SortPreferenceManager = mockk()
-    val mockPreferenceManager: GeneralPreferenceManager = mockk(relaxed = true)
     val mockMediaImportObserver: MediaImportObserver = mockk()
     val mockApplication: Application = mockk()
 
@@ -66,7 +62,7 @@ class SongListViewModelTest {
     }
 
     @Test
-    fun `viewState initially emits Loading while songs are loading`() = runTest {
+    fun `uiState initially emits Loading while songs are loading`() = runTest {
         // Arrange
         every { mockSongRepository.getSongs(any()) } returns
             neverEmittingFlow()
@@ -75,29 +71,29 @@ class SongListViewModelTest {
         viewModel = createViewModel()
 
         // Assert: before the flows are consumed
-        viewModel.viewState.value shouldBe SongListViewModel.ViewState.Loading
+        viewModel.uiState.value.loadingState shouldBe SongListUiState.LoadingState.Loading
 
         // Act: Wait for the flows
         advanceUntilIdle()
 
         // Assert: after the flows are consumed
-        viewModel.viewState.value shouldBe SongListViewModel.ViewState.Loading
+        viewModel.uiState.value.loadingState shouldBe SongListUiState.LoadingState.Loading
     }
 
     @Test
-    fun `viewState emits Scanning while media importer is scanning songs`() = runTest {
+    fun `uiState emits Scanning while media importer is scanning songs`() = runTest {
         mockSongs(emptyList())
         mockSongImportStateAsImportProgress(IMPORT_PROGRESS)
 
         viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.viewState.value shouldBe
-            SongListViewModel.ViewState.Scanning(IMPORT_PROGRESS)
+        viewModel.uiState.value.loadingState shouldBe SongListUiState.LoadingState.Scanning
+        viewModel.uiState.value.scanProgress shouldBe IMPORT_PROGRESS
     }
 
     @Test
-    fun `viewState emits Ready with the list of songs, empty selection and sort order`() = runTest {
+    fun `uiState emits Ready with the list of songs, empty selection and sort order`() = runTest {
         mockSongs(listOf(SONG))
         mockSortOrderPreference(SongSortOrder.Default)
         mockSongImportStateAsImportComplete()
@@ -105,12 +101,11 @@ class SongListViewModelTest {
         viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.viewState.value shouldBe
-            SongListViewModel.ViewState.Ready(
-                listOf(SONG),
-                emptySet(),
-                SongSortOrder.Default
-            )
+        val state = viewModel.uiState.value
+        state.loadingState shouldBe SongListUiState.LoadingState.Ready
+        state.songs shouldBe listOf(SONG)
+        state.selectedSongs shouldBe emptySet()
+        state.sortOrder shouldBe SongSortOrder.Default
     }
 
     @Test
@@ -120,7 +115,6 @@ class SongListViewModelTest {
         mockSongImportStateAsImportComplete()
         coEvery { mockQueueManager.setQueue(allAny()) } returns
             true
-        // FIXME: This is too fragile. Implement PlaybackManager.loadAndPlay?
         coEvery { mockPlaybackManager.load(seekPosition = null, completion = any()) } answers {
             (arg(1) as (Result<Boolean>) -> Unit).invoke(Result.success(true))
         }
@@ -128,7 +122,7 @@ class SongListViewModelTest {
         viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.onSongClick(SONG2) {}
+        viewModel.onSongClick(SONG2)
         advanceUntilIdle()
 
         coVerify(exactly = 1) {
@@ -145,7 +139,6 @@ class SongListViewModelTest {
         mockSongImportStateAsImportProgress()
         coEvery { mockQueueManager.setQueue(allAny()) } returns
             true
-        // FIXME: This is too fragile. Implement PlaybackManager.loadAndPlay?
         coEvery { mockPlaybackManager.load(seekPosition = null, completion = any()) } answers {
             (arg(1) as (Result<Boolean>) -> Unit).invoke(Result.success(true))
         }
@@ -153,7 +146,7 @@ class SongListViewModelTest {
         viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.onSongClick(SONG2) {}
+        viewModel.onSongClick(SONG2)
         advanceUntilIdle()
 
         coVerify(exactly = 1) {
@@ -166,83 +159,93 @@ class SongListViewModelTest {
     @Test
     fun `starts selection on song long click`() = runTest {
         mockSongs(listOf(SONG))
+        mockSongImportStateAsImportComplete()
         viewModel = createViewModel()
         advanceUntilIdle()
-        viewModel.selectionState.isActive().shouldBeFalse()
+        viewModel.uiState.value.isSelecting shouldBe false
 
         viewModel.onSongLongClick(SONG)
+        advanceUntilIdle()
 
-        viewModel.selectionState.isActive().shouldBeTrue()
-        viewModel.selectionState.selectedItems.value
-            .shouldBe(listOf(SONG))
+        viewModel.uiState.value.isSelecting shouldBe true
+        viewModel.uiState.value.selectedSongs shouldBe setOf(SONG)
     }
 
     @Test
     fun `adds song to selection when clicking it in selection mode`() = runTest {
         val songs = listOf(SONG1, SONG2)
         mockSongs(songs)
+        mockSongImportStateAsImportComplete()
         viewModel = createViewModel()
         advanceUntilIdle()
         viewModel.onSongLongClick(SONG1)
+        advanceUntilIdle()
 
-        viewModel.onSongClick(SONG2) {}
+        viewModel.onSongClick(SONG2)
+        advanceUntilIdle()
 
-        viewModel.selectionState.isActive().shouldBeTrue()
-        viewModel.selectionState.selectedItems.value
-            .shouldBe(songs)
+        viewModel.uiState.value.isSelecting shouldBe true
+        viewModel.uiState.value.selectedSongs shouldBe setOf(SONG1, SONG2)
     }
 
     @Test
     fun `removes selected song from selection`() = runTest {
         val songs = listOf(SONG1, SONG2)
         mockSongs(songs)
+        mockSongImportStateAsImportComplete()
         viewModel = createViewModel()
         advanceUntilIdle()
         viewModel.onSongLongClick(SONG1)
-        viewModel.onSongClick(SONG2) {}
+        advanceUntilIdle()
+        viewModel.onSongClick(SONG2)
+        advanceUntilIdle()
 
-        viewModel.onSongClick(SONG1) {}
+        viewModel.onSongClick(SONG1)
+        advanceUntilIdle()
 
-        viewModel.selectionState.isActive().shouldBeTrue()
-        viewModel.selectionState.selectedItems.value
-            .shouldBe(listOf(SONG2))
+        viewModel.uiState.value.isSelecting shouldBe true
+        viewModel.uiState.value.selectedSongs shouldBe setOf(SONG2)
     }
 
     @Test
-    fun `exists selection mode when last selected song is clicked`() = runTest {
+    fun `exits selection mode when last selected song is clicked`() = runTest {
         mockSongs(listOf(SONG))
+        mockSongImportStateAsImportComplete()
         viewModel = createViewModel()
         advanceUntilIdle()
-        viewModel.selectionState.isActive().shouldBeFalse()
+        viewModel.uiState.value.isSelecting shouldBe false
         viewModel.onSongLongClick(SONG)
+        advanceUntilIdle()
 
-        viewModel.onSongClick(SONG) {}
+        viewModel.onSongClick(SONG)
+        advanceUntilIdle()
 
-        viewModel.selectionState.isActive().shouldBeFalse()
-        viewModel.selectionState.selectedItems.value
-            .shouldBe(emptyList())
+        viewModel.uiState.value.isSelecting shouldBe false
+        viewModel.uiState.value.selectedSongs shouldBe emptySet()
     }
 
     @Test
     fun `adds selected songs to queue`() = runTest {
         val songs = listOf(SONG1, SONG2)
         mockSongs(songs)
+        mockSongImportStateAsImportComplete()
         coEvery { mockPlaybackManager.addToQueue(allAny()) } just Runs
         viewModel = createViewModel()
         advanceUntilIdle()
         viewModel.onSongLongClick(SONG2)
+        advanceUntilIdle()
 
-        viewModel.addSelectedToQueue()
+        viewModel.onAddSelectedToQueue()
         advanceUntilIdle()
 
         coVerify(exactly = 1) { mockPlaybackManager.addToQueue(listOf(SONG2)) }
-        viewModel.selectionState.isActive().shouldBeFalse()
+        viewModel.uiState.value.isSelecting shouldBe false
     }
 
     @Test
     fun `shuffles songs`() = runTest {
         mockSongs(listOf(SONG))
-        // FIXME: This is too fragile. Implement PlaybackManager.shuffleAndPlay?
+        mockSongImportStateAsImportComplete()
         coEvery { mockPlaybackManager.shuffle(songs = any(), completion = any()) } answers {
             (arg(1) as (Result<Boolean>) -> Unit).invoke(Result.success(true))
         }
@@ -250,7 +253,7 @@ class SongListViewModelTest {
         viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.shuffle {}
+        viewModel.onShuffle()
         advanceUntilIdle()
 
         coVerify(exactly = 1) {
@@ -260,25 +263,27 @@ class SongListViewModelTest {
     }
 
     @Test
-    fun `fails to shuffle when there aren't any songs`() = runTest {
-        var shuffleFailure = false
+    fun `shuffle emits error event when library is empty`() = runTest {
         mockSongs(emptyList())
-        // FIXME: This is too fragile. Implement PlaybackManager.shuffleAndPlay?
-        coEvery { mockPlaybackManager.shuffle(songs = any(), completion = any()) } answers {
-            (arg(1) as (Result<Boolean>) -> Unit).invoke(Result.success(true))
-        }
-        every { mockPlaybackManager.play() } just Runs
+        mockSongImportStateAsImportComplete()
         viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.shuffle { shuffleFailure = true }
+        val events = mutableListOf<SongListUiEvent>()
+        val job = launch { viewModel.events.collect { events.add(it) } }
+
+        viewModel.onShuffle()
         advanceUntilIdle()
 
-        shuffleFailure.shouldBeTrue()
+        events.size shouldBe 1
+        (events.first() as SongListUiEvent.Error).message shouldBe "Your library is empty"
+
         coVerify(exactly = 0) {
             mockPlaybackManager.shuffle(songs = any(), any())
             mockPlaybackManager.play()
         }
+
+        job.cancel()
     }
 
     @Test
@@ -288,21 +293,19 @@ class SongListViewModelTest {
         val songs = listOf(song2, song1)
         mockSongs(songs)
         mockSortOrderPreference(SongSortOrder.SongName)
+        mockSongImportStateAsImportComplete()
 
         viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.selectedSortOrder.value.shouldBe(SongSortOrder.SongName)
-        viewModel.viewState.value shouldBeEqualUsingFields
-            SongListViewModel.ViewState.Ready(
-                songs.reversed(),
-                emptySet(),
-                SongSortOrder.SongName,
-            )
+        val state = viewModel.uiState.value
+        state.sortOrder shouldBe SongSortOrder.SongName
+        state.songs shouldBe songs.reversed()
     }
 
     @Test
     fun `sets the sort order`() = runTest {
+        mockSongImportStateAsImportComplete()
         every { mockSortPreferenceManager.sortOrderSongList = any() } just Runs
         viewModel = createViewModel()
         advanceUntilIdle()
@@ -310,12 +313,12 @@ class SongListViewModelTest {
         viewModel.setSortOrder(SongSortOrder.ArtistGroupKey)
         advanceUntilIdle()
 
-        viewModel.selectedSortOrder.value.shouldBe(SongSortOrder.ArtistGroupKey)
+        viewModel.uiState.value.sortOrder shouldBe SongSortOrder.ArtistGroupKey
         io.mockk.verify { mockSortPreferenceManager.sortOrderSongList = SongSortOrder.ArtistGroupKey }
     }
 
     @Test
-    fun `reports play failure via completion callback`() = runTest {
+    fun `reports play failure via error event`() = runTest {
         val playError = Error("playback failed")
         mockSongs(listOf(SONG))
         mockSongImportStateAsImportComplete()
@@ -326,13 +329,16 @@ class SongListViewModelTest {
         viewModel = createViewModel()
         advanceUntilIdle()
 
-        var receivedError: Throwable? = null
-        viewModel.onSongClick(SONG) { result ->
-            result.onFailure { receivedError = it }
-        }
+        val events = mutableListOf<SongListUiEvent>()
+        val job = launch { viewModel.events.collect { events.add(it) } }
+
+        viewModel.onSongClick(SONG)
         advanceUntilIdle()
 
-        receivedError.shouldBe(playError)
+        events.size shouldBe 1
+        (events.first() as SongListUiEvent.Error).message shouldBe "playback failed"
+
+        job.cancel()
     }
 
     fun createViewModel(): SongListViewModel = SongListViewModel(
@@ -341,7 +347,6 @@ class SongListViewModelTest {
         queueManager = mockQueueManager,
         sortPreferenceManager = mockSortPreferenceManager,
         ioDispatcher = testDispatcher,
-        preferenceManager = mockPreferenceManager,
         mediaImportObserver = mockMediaImportObserver,
         application = mockApplication,
     )

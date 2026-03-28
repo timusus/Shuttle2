@@ -4,8 +4,8 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
 import timber.log.Timber
 
-class ComposeContextualToolbarHelper<T>(
-    private val selectionState: SelectionState<T>,
+class ComposeContextualToolbarHelper(
+    private val clearSelection: () -> Unit,
 ) {
 
     var toolbar: Toolbar? = null
@@ -25,6 +25,6 @@ class ComposeContextualToolbarHelper<T>(
         toolbar?.isVisible = true
         contextualToolbar?.isVisible = false
         contextualToolbar?.setNavigationOnClickListener(null)
-        selectionState.clear()
+        clearSelection()
     }
 }
