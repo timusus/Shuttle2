@@ -79,8 +79,7 @@ fun AlbumArtistListItem(
             ) {
                 val builder = it
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
-                    .transform(CenterCrop())
-                    .transform(RoundedCorners(8.dpToInt))
+                    .transform(CenterCrop(), RoundedCorners(8.dpToInt))
                     .transition(withCrossFade(200))
                 if (artworkPreloadRequestBuilder != null) {
                     builder.thumbnail(artworkPreloadRequestBuilder)

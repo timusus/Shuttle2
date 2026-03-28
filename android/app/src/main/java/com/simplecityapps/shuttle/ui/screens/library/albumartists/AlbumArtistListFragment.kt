@@ -124,8 +124,8 @@ class AlbumArtistListFragment :
                         is AlbumArtistListUiEvent.AddedToQueue -> {
                             Toast.makeText(
                                 context,
-                                Phrase.from(requireContext(), R.string.queue_item_added)
-                                    .put("item_name", event.artistName)
+                                Phrase.fromPlural(resources, R.plurals.queue_artists_added, event.artistCount)
+                                    .put("count", event.artistCount)
                                     .format(),
                                 Toast.LENGTH_SHORT
                             ).show()

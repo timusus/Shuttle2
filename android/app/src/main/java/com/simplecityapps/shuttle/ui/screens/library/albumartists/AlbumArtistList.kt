@@ -129,8 +129,7 @@ private fun AlbumArtistList(
         ) { item: AlbumArtist, requestBuilder: RequestBuilder<Drawable> ->
             requestBuilder
                 .diskCacheStrategy(DiskCacheStrategy.ALL)
-                .transform(CenterCrop())
-                .transform(RoundedCorners(8.dpToInt))
+                .transform(CenterCrop(), RoundedCorners(8.dpToInt))
                 .transition(withCrossFade(200))
                 .load(item)
         }

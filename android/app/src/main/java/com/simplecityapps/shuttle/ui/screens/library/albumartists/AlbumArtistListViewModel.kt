@@ -41,7 +41,7 @@ data class AlbumArtistListUiState(
 }
 
 sealed interface AlbumArtistListUiEvent {
-    data class AddedToQueue(val artistName: String) : AlbumArtistListUiEvent
+    data class AddedToQueue(val artistCount: Int) : AlbumArtistListUiEvent
     data class PlaybackFailed(val errorMessage: String?) : AlbumArtistListUiEvent
     data class EditTags(val songs: List<Song>) : AlbumArtistListUiEvent
 }
@@ -95,10 +95,7 @@ class AlbumArtistListViewModel @Inject constructor(
     val events: SharedFlow<AlbumArtistListUiEvent> = _events.asSharedFlow()
 
     fun onArtistClick(albumArtist: AlbumArtist) {
-        if (selectionState.isActive()) {
-            selectionState.toggle(albumArtist)
-        }
-        // Navigation is handled by the Fragment when not in selection mode
+        selectionState.toggle(albumArtist)
     }
 
     fun onArtistLongClick(albumArtist: AlbumArtist) {
@@ -125,7 +122,7 @@ class AlbumArtistListViewModel @Inject constructor(
         viewModelScope.launch {
             val songs = getSongsForArtist(albumArtist)
             playbackManager.addToQueue(songs)
-            _events.emit(AlbumArtistListUiEvent.AddedToQueue(albumArtist.name ?: albumArtist.friendlyArtistName ?: ""))
+            _events.emit(AlbumArtistListUiEvent.AddedToQueue(1))
         }
     }
 
@@ -134,7 +131,7 @@ class AlbumArtistListViewModel @Inject constructor(
             val selected = selectionState.selectedItems.value.toList()
             val songs = getSongsForArtists(selected)
             playbackManager.addToQueue(songs)
-            _events.emit(AlbumArtistListUiEvent.AddedToQueue("${selected.size} artists"))
+            _events.emit(AlbumArtistListUiEvent.AddedToQueue(selected.size))
             selectionState.clear()
         }
     }
@@ -143,7 +140,7 @@ class AlbumArtistListViewModel @Inject constructor(
         viewModelScope.launch {
             val songs = getSongsForArtist(albumArtist)
             playbackManager.playNext(songs)
-            _events.emit(AlbumArtistListUiEvent.AddedToQueue(albumArtist.name ?: albumArtist.friendlyArtistName ?: ""))
+            _events.emit(AlbumArtistListUiEvent.AddedToQueue(1))
         }
     }
 
