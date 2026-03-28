@@ -22,7 +22,7 @@ Render the Composable with a real ViewModel. Fakes provide data. The robot verif
 @Test
 fun `songs are displayed when repository emits`() {
     fakeSongRepository.setSongs(listOf(createSong(name = "Alpha")))
-    fakeMediaImportObserver.setState(SongImportState.ImportComplete(...))
+    fakeImportStateProvider.setState(SongImportState.ImportComplete(...))
 
     robot.setContent() // renders with real ViewModel
 
@@ -48,7 +48,7 @@ For behaviour that's hard to observe through the UI, test the ViewModel directly
 @Test
 fun `sort order persists to preferences`() {
     viewModel.setSortOrder(SongSortOrder.SongName)
-    fakeSortPreferenceManager.sortOrderSongList shouldBe SongSortOrder.SongName
+    fakeSortPreferences.sortOrderSongList shouldBe SongSortOrder.SongName
 }
 ```
 
@@ -62,15 +62,17 @@ Mocks verify *how* code calls its dependencies. Fakes verify *what* the code pro
 
 These are the system edges — interfaces or simple state holders where we substitute a test implementation:
 
-| Boundary | Interface? | Fake | What It Does |
+| Boundary | Interface | Fake | What It Does |
 |----------|-----------|------|-------------|
-| `SongRepository` | Yes | `FakeSongRepository` | In-memory song list, emits via `MutableStateFlow` |
-| `GenreRepository` | Yes | `FakeGenreRepository` | In-memory genre list, emits via `MutableStateFlow` |
-| `AlbumArtistRepository` | Yes | `FakeAlbumArtistRepository` | In-memory artist list |
-| `AlbumRepository` | Yes | `FakeAlbumRepository` | In-memory album list |
-| `PlaylistRepository` | Yes | `FakePlaylistRepository` | In-memory playlist list |
-| `MediaImportObserver` | No (concrete) | `FakeMediaImportObserver` | Exposes `MutableStateFlow<SongImportState>` |
-| `SortPreferenceManager` | No (concrete) | `FakeSortPreferenceManager` | In-memory property map |
+| `SongRepository` | `SongRepository` | `FakeSongRepository` | In-memory song list, emits via `MutableStateFlow` |
+| `GenreRepository` | `GenreRepository` | `FakeGenreRepository` | In-memory genre list, emits via `MutableStateFlow` |
+| `AlbumArtistRepository` | `AlbumArtistRepository` | `FakeAlbumArtistRepository` | In-memory artist list |
+| `AlbumRepository` | `AlbumRepository` | `FakeAlbumRepository` | In-memory album list |
+| `PlaylistRepository` | `PlaylistRepository` | `FakePlaylistRepository` | In-memory playlist list |
+| `MediaImportObserver` | `SongImportStateProvider` | `FakeSongImportStateProvider` | Wraps `MutableStateFlow<SongImportState>` |
+| `SortPreferenceManager` | `SortPreferences` | `FakeSortPreferences` | In-memory sort order properties |
+
+ViewModels depend on the interfaces, not the concrete classes. The interfaces were extracted specifically for testability — `SongImportStateProvider` and `SortPreferences` are in production code, with Hilt bindings in `AppModule`/`AppModuleBinds`.
 
 ### The Playback Boundary
 
@@ -96,8 +98,8 @@ android/app/src/test/java/com/simplecityapps/
 ├── fakes/                            # Reusable fake implementations
 │   ├── FakeSongRepository.kt
 │   ├── FakeGenreRepository.kt
-│   ├── FakeMediaImportObserver.kt
-│   └── FakeSortPreferenceManager.kt
+│   ├── FakeSongImportStateProvider.kt
+│   └── FakeSortPreferences.kt
 ├── shuttle/ui/screens/library/
 │   ├── songs/
 │   │   ├── SongListRobot.kt          # UI selectors and interaction helpers
@@ -134,18 +136,20 @@ class FakeSongRepository : SongRepository {
 ```
 
 ```kotlin
-// FakeMediaImportObserver.kt
-class FakeMediaImportObserver {
-    val songImportState = MutableStateFlow<SongImportState>(SongImportState.Idle)
+// FakeSongImportStateProvider.kt
+class FakeSongImportStateProvider : SongImportStateProvider {
+    private val _songImportState = MutableStateFlow<SongImportState>(SongImportState.Idle)
+    override val songImportState: StateFlow<SongImportState> = _songImportState
+
+    fun setState(state: SongImportState) { _songImportState.value = state }
 }
 ```
 
 ```kotlin
-// FakeSortPreferenceManager.kt
-class FakeSortPreferenceManager {
-    var sortOrderSongList: SongSortOrder = SongSortOrder.Default
-    var sortOrderAlbumList: AlbumSortOrder = AlbumSortOrder.Default
-    // ... other sort preferences
+// FakeSortPreferences.kt
+class FakeSortPreferences : SortPreferences {
+    override var sortOrderSongList: SongSortOrder = SongSortOrder.Default
+    override var sortOrderAlbumList: AlbumSortOrder = AlbumSortOrder.Default
 }
 ```
 
@@ -197,8 +201,8 @@ This replaces step 5 ("Write ViewModel unit tests") and step 6 ("Implement the V
 
 Don't build all fakes upfront. Build them as screens are migrated:
 
-1. **Song list migration** → `FakeSongRepository`, `FakeMediaImportObserver`, `FakeSortPreferenceManager`
-2. **Genre list migration** → `FakeGenreRepository` (reuse `FakeMediaImportObserver`)
+1. **Song list** (canonical) → `FakeSongRepository`, `FakeSongImportStateProvider`, `FakeSortPreferences` *(done)*
+2. **Genre list migration** → `FakeGenreRepository` (reuse existing fakes)
 3. **Album artist migration** → `FakeAlbumArtistRepository` (reuse existing fakes)
 4. Each migration reuses existing fakes and only builds what's new
 
