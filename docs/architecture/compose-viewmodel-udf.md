@@ -48,7 +48,19 @@ private val _events = MutableSharedFlow<UiEvent>()
 val events: SharedFlow<UiEvent> = _events.asSharedFlow()
 ```
 
-Toasts, snackbars, error messages — collected with `repeatOnLifecycle(STARTED)` in the Fragment.
+Toasts, snackbars, navigation triggers — collected with `repeatOnLifecycle(STARTED)` in the Fragment.
+
+Events are **typed by what happened**, not by what the UI should display:
+
+```kotlin
+sealed interface SongListUiEvent {
+    data class AddedToQueue(val songCount: Int) : SongListUiEvent
+    data class PlaybackFailed(val errorMessage: String?) : SongListUiEvent
+    data object LibraryEmpty : SongListUiEvent
+}
+```
+
+The Fragment maps events to user-facing text using string resources. The ViewModel never resolves string resources — it doesn't have a `Context`.
 
 **Why:** Google recommends reducing events to state to guarantee delivery across config changes. But in this app, all events are user-triggered button taps — they can only happen when the UI is STARTED, so there's no window where an event fires and nobody's listening. Reducing to state would add a `userMessage` field, an `onMessageShown()` callback, and a `LaunchedEffect` per screen — real boilerplate for zero practical benefit. Revisit if we move to full Compose navigation where config change timing is different.
 
@@ -101,6 +113,17 @@ Methods launch coroutines, perform side effects, and emit events. They don't ret
 
 **Why:** If a ViewModel method returns a value, the UI has to store it, react to it, pass it somewhere — that breaks unidirectional flow. The UI's job is to render state and forward user intent. The ViewModel's job is to process intent, update sources (which re-derive state), and emit events.
 
+## 8a. No Android framework dependencies in ViewModels
+
+ViewModels extend `ViewModel()`, never `AndroidViewModel`. They have no `Application`, `Context`, or Android resource access. All dependencies are injected as interfaces.
+
+Things that need `Context` belong in the Fragment:
+- String resource resolution (the Fragment maps typed events to user-facing text)
+- File system operations (`DocumentFile`, `ContentResolver`)
+- System services
+
+**Why:** Android dependencies make ViewModels hard to test — you need `ApplicationProvider`, `mockk<Application>()`, or Robolectric shadows just to construct one. With pure Kotlin dependencies and injected interfaces, a ViewModel test is just `createViewModel()` with fakes. No test runners, no framework scaffolding.
+
 ---
 
 ## MVP → Compose Migration Principles
@@ -109,14 +132,15 @@ Apply these when migrating a screen from the legacy MVP/Presenter/ViewBinder arc
 
 ### 9. Fragment stays as a thin lifecycle host
 
-The Fragment wrapper remains. It does five things that aren't trivially replaceable in Compose:
+The Fragment wrapper remains. It does six things that aren't trivially replaceable in Compose:
 - Toolbar and contextual toolbar integration (`findToolbarHost()`)
 - Fragment-based dialogs (`TagEditorAlertDialog`, `CreatePlaylistDialogFragment`, `SongInfoDialogFragment`)
 - Navigation (`findNavController()` with Safe Args)
 - `PlaylistMenuPresenter` lifecycle (`bindView`/`unbindView`)
 - Options menus (`onCreateOptionsMenu`, `onOptionsItemSelected`)
+- Context-dependent operations (file deletion via `DocumentFile`, string resource resolution for events)
 
-**The boundary:** ViewModel owns all business logic and state derivation. Fragment wires Compose content, collects events, and delegates to Fragment-only APIs. The ViewModel never calls Fragment APIs — it emits events, and the Fragment reacts.
+**The boundary:** ViewModel owns all business logic and state derivation. Fragment wires Compose content, collects events, resolves strings from resources, and delegates to Fragment-only APIs. The ViewModel never calls Fragment APIs and never holds a `Context` — it emits typed events, and the Fragment reacts.
 
 **Why:** Replacing all of these at once is a rewrite, not a migration. The Fragment layer is thin and mechanical — it's the last thing to remove, when the app moves to Compose navigation.
 
@@ -206,7 +230,20 @@ fun `songs from repository are displayed sorted`() {
     robot.assertTextDisplayed("Alpha")
     robot.assertTextDisplayed("Beta")
 }
+
+// Focused ViewModel unit test — no UI, no Android framework, just fakes
+@Test
+fun `setSortOrder persists to preferences`() = runTest {
+    fakeSongRepository.setSongs(emptyList())
+    fakeImportState.setState(importComplete())
+    val viewModel = createViewModel()
+    // ...
+    viewModel.setSortOrder(SongSortOrder.ArtistGroupKey)
+    fakeSortPreferences.sortOrderSongList shouldBe SongSortOrder.ArtistGroupKey
+}
 ```
+
+All test layers use fakes for `PlaybackOperations`, `QueueOperations`, and repositories. No mockk in ViewModel or integration tests — the ViewModel has no Android dependencies, so construction is just `SongListViewModel(fakeRepo, fakePlayback, fakeQueue, ...)`.
 
 The Fragment is thin enough (~50 lines of callback wiring and event collection) that it doesn't need its own tests.
 
