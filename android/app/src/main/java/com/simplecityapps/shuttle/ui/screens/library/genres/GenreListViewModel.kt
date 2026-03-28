@@ -13,6 +13,7 @@ import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
+import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -45,6 +46,7 @@ class GenreListViewModel @Inject constructor(
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackOperations,
     private val queueManager: QueueOperations,
+    private val playSongs: PlaySongs,
     mediaImportObserver: SongImportStateProvider
 ) : ViewModel() {
 
@@ -79,15 +81,9 @@ class GenreListViewModel @Inject constructor(
     fun onPlay(genre: Genre) {
         viewModelScope.launch {
             val songs = getSongsForGenreOrEmpty(genre)
-            if (queueManager.setQueue(songs)) {
-                playbackManager.load { result ->
-                    result.onSuccess { playbackManager.play() }
-                    result.onFailure { error ->
-                        viewModelScope.launch {
-                            _events.emit(GenreListUiEvent.PlaybackFailed(error.message))
-                        }
-                    }
-                }
+            val result = playSongs(songs)
+            if (result is PlaySongs.Result.Failure) {
+                _events.emit(GenreListUiEvent.PlaybackFailed(result.message))
             }
         }
     }
