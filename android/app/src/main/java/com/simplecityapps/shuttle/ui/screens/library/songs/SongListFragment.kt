@@ -131,7 +131,7 @@ class SongListFragment :
                     onSongClick = { song ->
                         viewModel.onSongClick(song) { result ->
                             result.onFailure { error ->
-                                showLoadError(error as Error)
+                                showLoadError(error)
                             }
                         }
                     },
@@ -182,7 +182,7 @@ class SongListFragment :
                     onShuffle = {
                         viewModel.shuffle { result ->
                             result.onFailure { error ->
-                                showLoadError(error as Error)
+                                showLoadError(error)
                             }
                         }
                     }
@@ -309,8 +309,11 @@ class SongListFragment :
         }
     }
 
-    fun showLoadError(error: Error) {
-        Toast.makeText(context, error.userDescription(resources), Toast.LENGTH_LONG).show()
+    fun showLoadError(error: Throwable) {
+        val message = (error as? Error)?.userDescription(resources)
+            ?: error.message
+            ?: resources.getString(R.string.error_unknown)
+        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
     }
 
     fun showTagEditor(song: Song) {
