@@ -287,6 +287,7 @@ android {
         androidTestImplementation(libs.androidx.core.ktx)
         androidTestImplementation(libs.hamcrest.library)
         androidTestImplementation(libs.androidx.espresso.core)
+        androidTestImplementation(libs.androidx.espresso.contrib)
         androidTestImplementation(libs.androidx.junit)
         androidTestImplementation(libs.androidx.ui.test.junit4)
         debugImplementation(libs.androidx.ui.test.manifest)
