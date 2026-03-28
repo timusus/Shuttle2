@@ -20,11 +20,11 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.sorting.SongSortOrder
+import com.simplecityapps.shuttle.ui.common.ComposeContextualToolbarHelper
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.dialog.showDeleteDialog
-import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
@@ -50,6 +50,8 @@ class SongListFragment :
     private var composeView: ComposeView by autoCleared()
 
     private val viewModel: SongListViewModel by viewModels()
+
+    private var contextualToolbarHelper: ComposeContextualToolbarHelper<Song> by autoCleared()
 
     private lateinit var playlistMenuView: PlaylistMenuView
 
@@ -80,25 +82,28 @@ class SongListFragment :
 
         composeView = view.findViewById(R.id.composeView)
 
+        contextualToolbarHelper = ComposeContextualToolbarHelper(viewModel.selectionState)
+
         updateContextualToolbar()
 
         viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.contextualToolbarHelper.selectedSongCountState
+            viewModel.selectionState.selectedCount
                 .collect { count ->
                     if (count == 0) {
-                        viewModel.contextualToolbarHelper.hide()
+                        contextualToolbarHelper.hide()
                     } else {
-                        viewModel.contextualToolbarHelper.show()
+                        contextualToolbarHelper.show()
 
-                        viewModel.contextualToolbarHelper.contextualToolbar?.title =
+                        contextualToolbarHelper.contextualToolbar?.title =
                             Phrase.fromPlural(requireContext(), R.plurals.multi_select_items_selected, count)
                                 .put("count", count)
                                 .format()
-                        viewModel.contextualToolbarHelper.contextualToolbar?.menu?.let { menu ->
+                        contextualToolbarHelper.contextualToolbar?.menu?.let { menu ->
                             TagEditorMenuSanitiser.sanitise(
                                 menu,
-                                viewModel.contextualToolbarHelper
-                                    .selectedSongsMediaProviders()
+                                viewModel.selectionState.selectedItems.value
+                                    .map { it.mediaProvider }
+                                    .distinct(),
                             )
                         }
                     }
@@ -131,7 +136,7 @@ class SongListFragment :
                     onSongClick = { song ->
                         viewModel.onSongClick(song) { result ->
                             result.onFailure { error ->
-                                showLoadError(error as Error)
+                                showLoadError(error)
                             }
                         }
                     },
@@ -172,17 +177,15 @@ class SongListFragment :
                     },
                     onDelete = { song ->
                         showDeleteDialog(requireContext(), song.name) {
-                            try {
-                                viewModel.delete(song)
-                            } catch (e: UserFriendlyError) {
-                                showDeleteError(e)
+                            viewModel.delete(song).onFailure { error ->
+                                showDeleteError(error)
                             }
                         }
                     },
                     onShuffle = {
                         viewModel.shuffle { result ->
                             result.onFailure { error ->
-                                showLoadError(error as Error)
+                                showLoadError(error)
                             }
                         }
                     }
@@ -255,18 +258,20 @@ class SongListFragment :
 
     private fun updateContextualToolbar() {
         findToolbarHost()?.apply {
-            contextualToolbar?.let { contextualToolbar ->
-                contextualToolbar.menu.clear()
-                contextualToolbar.inflateMenu(R.menu.menu_multi_select)
+            contextualToolbar?.let { ctxToolbar ->
+                ctxToolbar.menu.clear()
+                ctxToolbar.inflateMenu(R.menu.menu_multi_select)
                 TagEditorMenuSanitiser.sanitise(
-                    contextualToolbar.menu,
-                    viewModel.contextualToolbarHelper.selectedSongsMediaProviders(),
+                    ctxToolbar.menu,
+                    viewModel.selectionState.selectedItems.value
+                        .map { it.mediaProvider }
+                        .distinct(),
                 )
-                contextualToolbar.setOnMenuItemClickListener { menuItem ->
-                    playlistMenuView.createPlaylistMenu(contextualToolbar.menu)
-                    val selectedSongs = viewModel.contextualToolbarHelper.selectedSongsState.value.toList()
+                ctxToolbar.setOnMenuItemClickListener { menuItem ->
+                    playlistMenuView.createPlaylistMenu(ctxToolbar.menu)
+                    val selectedSongs = viewModel.selectionState.selectedItems.value.toList()
                     if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Songs(selectedSongs))) {
-                        viewModel.contextualToolbarHelper.hide()
+                        contextualToolbarHelper.hide()
                         return@setOnMenuItemClickListener true
                     }
                     when (menuItem.itemId) {
@@ -277,18 +282,18 @@ class SongListFragment :
                         R.id.editTags -> {
                             TagEditorAlertDialog.newInstance(selectedSongs)
                                 .show(childFragmentManager)
-                            viewModel.contextualToolbarHelper.hide()
+                            contextualToolbarHelper.hide()
                             true
                         }
                         else -> false
                     }
                 }
             }
-            viewModel.contextualToolbarHelper.contextualToolbar = contextualToolbar
-            viewModel.contextualToolbarHelper.toolbar = toolbar
+            contextualToolbarHelper.contextualToolbar = contextualToolbar
+            contextualToolbarHelper.toolbar = toolbar
 
-            if (viewModel.contextualToolbarHelper.isSelecting()) {
-                viewModel.contextualToolbarHelper.show()
+            if (viewModel.selectionState.isActive()) {
+                contextualToolbarHelper.show()
             }
         }
     }
@@ -309,8 +314,11 @@ class SongListFragment :
         }
     }
 
-    fun showLoadError(error: Error) {
-        Toast.makeText(context, error.userDescription(resources), Toast.LENGTH_LONG).show()
+    fun showLoadError(error: Throwable) {
+        val message = (error as? Error)?.userDescription(resources)
+            ?: error.message
+            ?: resources.getString(R.string.error_unknown)
+        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
     }
 
     fun showTagEditor(song: Song) {
@@ -327,8 +335,11 @@ class SongListFragment :
         ).show()
     }
 
-    fun showDeleteError(error: Error) {
-        Toast.makeText(requireContext(), error.userDescription(resources), Toast.LENGTH_LONG).show()
+    fun showDeleteError(error: Throwable) {
+        val message = (error as? Error)?.userDescription(resources)
+            ?: error.message
+            ?: resources.getString(R.string.error_unknown)
+        Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
     }
 
     // CreatePlaylistDialogFragment.Listener Implementation

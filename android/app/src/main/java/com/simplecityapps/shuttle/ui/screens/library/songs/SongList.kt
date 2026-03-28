@@ -151,7 +151,7 @@ private fun SongList(
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .testTag("genres-list-lazy-column"),
+                .testTag("songs-list-lazy-column"),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = PaddingValues(vertical = 16.dp, horizontal = 8.dp),
             state = state,

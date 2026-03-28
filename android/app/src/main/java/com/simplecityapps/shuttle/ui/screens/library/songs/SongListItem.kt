@@ -115,7 +115,7 @@ fun SongListItem(
         ) {
             Text(
                 modifier = Modifier.fillMaxWidth(),
-                text = song.name ?: "no name", // FIXME
+                text = song.name ?: stringResource(R.string.unknown),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onBackground,
             )

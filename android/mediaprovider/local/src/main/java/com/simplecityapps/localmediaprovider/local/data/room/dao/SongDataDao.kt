@@ -29,7 +29,6 @@ abstract class SongDataDao {
     abstract fun getAllSongData(): Flow<List<SongData>>
 
     fun getAll(): Flow<List<Song>> = getAllSongData().map { list ->
-        Timber.i("getAll() ${list.size}")
         list.map { songData ->
             songData.toSong()
         }

@@ -1,7 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library.songs
 
 import android.app.Application
-import androidx.annotation.OpenForTesting
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.AndroidViewModel
@@ -18,12 +17,13 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.sorting.SongSortOrder
-import com.simplecityapps.shuttle.ui.common.ComposeContextualToolbarHelper
+import com.simplecityapps.shuttle.di.IoDispatcher
+import com.simplecityapps.shuttle.ui.common.SelectionState
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
@@ -33,13 +33,13 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-@OpenForTesting
 @HiltViewModel
 class SongListViewModel @Inject constructor(
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackManager,
     private val queueManager: QueueManager,
     private val sortPreferenceManager: SortPreferenceManager,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     preferenceManager: GeneralPreferenceManager,
     mediaImportObserver: MediaImportObserver,
     application: Application,
@@ -50,7 +50,7 @@ class SongListViewModel @Inject constructor(
     private val _selectedSortOrder = MutableStateFlow(sortPreferenceManager.sortOrderSongList)
     val selectedSortOrder = _selectedSortOrder.asStateFlow()
 
-    val contextualToolbarHelper = ComposeContextualToolbarHelper()
+    val selectionState = SelectionState<Song>()
 
     val theme = preferenceManager.theme(viewModelScope)
     val accent = preferenceManager.accent(viewModelScope)
@@ -61,7 +61,7 @@ class SongListViewModel @Inject constructor(
                 .getSongs(SongQuery.All(sortOrder = sortPreferenceManager.sortOrderSongList))
                 .filterNotNull(),
             mediaImportObserver.songImportState,
-            contextualToolbarHelper.selectedSongsState,
+            selectionState.selectedItems,
             _selectedSortOrder,
         ) { songs, songImportState, selectedSongs, __selectedSortOrder ->
             if (songImportState is SongImportState.ImportProgress) {
@@ -78,8 +78,8 @@ class SongListViewModel @Inject constructor(
     }
 
     fun onSongClick(song: Song, completion: (Result<Boolean>) -> Unit) {
-        if (contextualToolbarHelper.isSelecting()) {
-            contextualToolbarHelper.toggleSongSelection(song)
+        if (selectionState.isActive()) {
+            selectionState.toggle(song)
             completion(Result.success(true))
         } else {
             play(song, completion)
@@ -87,7 +87,7 @@ class SongListViewModel @Inject constructor(
     }
 
     fun onSongLongClick(song: Song) {
-        contextualToolbarHelper.toggleSongSelection(song)
+        selectionState.toggle(song)
     }
 
     private fun play(song: Song, completion: (Result<Boolean>) -> Unit) {
@@ -114,8 +114,8 @@ class SongListViewModel @Inject constructor(
 
     fun addSelectedToQueue() {
         viewModelScope.launch {
-            playbackManager.addToQueue(contextualToolbarHelper.selectedSongsState.value.toList())
-            contextualToolbarHelper.clearSelection()
+            playbackManager.addToQueue(selectionState.selectedItems.value.toList())
+            selectionState.clear()
         }
     }
 
@@ -133,18 +133,19 @@ class SongListViewModel @Inject constructor(
         }
     }
 
-    fun delete(song: Song) {
+    fun delete(song: Song): Result<Unit> {
         val context = getApplication<Application>().applicationContext
         val documentFile = DocumentFile.fromSingleUri(context, song.path.toUri())
 
         if (documentFile?.delete() == false) {
-            throw UserFriendlyError(context.getString(R.string.delete_song_failed))
+            return Result.failure(UserFriendlyError(context.getString(R.string.delete_song_failed)))
         }
 
         viewModelScope.launch {
             songRepository.remove(song)
             queueManager.remove(song)
         }
+        return Result.success(Unit)
     }
 
     fun shuffle(completion: (Result<Any?>) -> Unit) {
@@ -173,7 +174,7 @@ class SongListViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            withContext(Dispatchers.IO) {
+            withContext(ioDispatcher) {
                 sortPreferenceManager.sortOrderSongList = sortOrder
                 _selectedSortOrder.value = sortOrder
             }
