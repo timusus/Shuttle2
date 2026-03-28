@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library.albums.detail
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
@@ -19,10 +20,8 @@ import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
 import com.simplecityapps.shuttle.ui.common.playback.ShuffleSongs
 import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedFactory
-import dagger.assisted.AssistedInject
 import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -60,8 +59,9 @@ sealed interface AlbumDetailUiEvent {
     data class PlaylistAddFailed(val message: String?) : AlbumDetailUiEvent
 }
 
-@HiltViewModel(assistedFactory = AlbumDetailViewModel.Factory::class)
-class AlbumDetailViewModel @AssistedInject constructor(
+@HiltViewModel
+class AlbumDetailViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
     private val songRepository: SongRepository,
     private val albumRepository: AlbumRepository,
     private val playbackManager: PlaybackOperations,
@@ -71,13 +71,9 @@ class AlbumDetailViewModel @AssistedInject constructor(
     private val addToPlaylistUseCase: AddToPlaylist,
     private val playlistRepository: PlaylistRepository,
     queueWatcher: QueueWatcher,
-    @Assisted val album: Album,
 ) : ViewModel() {
 
-    @AssistedFactory
-    interface Factory {
-        fun create(album: Album): AlbumDetailViewModel
-    }
+    val album: Album = AlbumDetailFragmentArgs.fromSavedStateHandle(savedStateHandle).album
 
     private val currentSong: Flow<Song?> = callbackFlow {
         val callback = object : QueueChangeCallback {
