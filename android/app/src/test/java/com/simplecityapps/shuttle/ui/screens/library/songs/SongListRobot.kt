@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library.songs
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
@@ -51,26 +52,12 @@ class SongListRobot(private val rule: ComposeContentTestRule) {
         uiState: SongListUiState,
         playlists: List<Playlist> = emptyList(),
     ) {
-        resetCallbacks()
-        rule.setContent {
-            AppTheme {
-                SongList(
-                    uiState = uiState,
-                    playlists = playlists.toImmutableList(),
-                    onSongClick = { lastSongClicked = it },
-                    onSongLongClick = { lastSongLongClicked = it },
-                    onAddToQueue = { lastAddedToQueue = it },
-                    onAddToPlaylist = { playlist, data -> lastAddToPlaylist = playlist to data },
-                    onShowCreatePlaylistDialog = { lastCreatePlaylistDialog = it },
-                    onPlayNext = { lastPlayNext = it },
-                    onSongInfo = { lastSongInfo = it },
-                    onExclude = { lastExcluded = it },
-                    onEditTags = { lastEditTags = it },
-                    onDelete = { lastDeleted = it },
-                    onShuffle = { shuffleClicked = true },
-                )
-            }
-        }
+        renderSongList(
+            uiState = uiState,
+            playlists = playlists,
+            onSongClick = { lastSongClicked = it },
+            onSongLongClick = { lastSongLongClicked = it },
+        )
     }
 
     fun setContentWithViewModel(
@@ -80,23 +67,50 @@ class SongListRobot(private val rule: ComposeContentTestRule) {
         resetCallbacks()
         rule.setContent {
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-            AppTheme {
-                SongList(
-                    uiState = uiState,
-                    playlists = playlists.toImmutableList(),
-                    onSongClick = { viewModel.onSongClick(it) },
-                    onSongLongClick = { viewModel.onSongLongClick(it) },
-                    onAddToQueue = { lastAddedToQueue = it },
-                    onAddToPlaylist = { playlist, data -> lastAddToPlaylist = playlist to data },
-                    onShowCreatePlaylistDialog = { lastCreatePlaylistDialog = it },
-                    onPlayNext = { lastPlayNext = it },
-                    onSongInfo = { lastSongInfo = it },
-                    onExclude = { lastExcluded = it },
-                    onEditTags = { lastEditTags = it },
-                    onDelete = { lastDeleted = it },
-                    onShuffle = { shuffleClicked = true },
-                )
-            }
+            renderSongListContent(
+                uiState = uiState,
+                playlists = playlists,
+                onSongClick = { viewModel.onSongClick(it) },
+                onSongLongClick = { viewModel.onSongLongClick(it) },
+            )
+        }
+    }
+
+    private fun renderSongList(
+        uiState: SongListUiState,
+        playlists: List<Playlist>,
+        onSongClick: (Song) -> Unit,
+        onSongLongClick: (Song) -> Unit,
+    ) {
+        resetCallbacks()
+        rule.setContent {
+            renderSongListContent(uiState, playlists, onSongClick, onSongLongClick)
+        }
+    }
+
+    @Composable
+    private fun renderSongListContent(
+        uiState: SongListUiState,
+        playlists: List<Playlist>,
+        onSongClick: (Song) -> Unit,
+        onSongLongClick: (Song) -> Unit,
+    ) {
+        AppTheme {
+            SongList(
+                uiState = uiState,
+                playlists = playlists.toImmutableList(),
+                onSongClick = onSongClick,
+                onSongLongClick = onSongLongClick,
+                onAddToQueue = { lastAddedToQueue = it },
+                onAddToPlaylist = { playlist, data -> lastAddToPlaylist = playlist to data },
+                onShowCreatePlaylistDialog = { lastCreatePlaylistDialog = it },
+                onPlayNext = { lastPlayNext = it },
+                onSongInfo = { lastSongInfo = it },
+                onExclude = { lastExcluded = it },
+                onEditTags = { lastEditTags = it },
+                onDelete = { lastDeleted = it },
+                onShuffle = { shuffleClicked = true },
+            )
         }
     }
 

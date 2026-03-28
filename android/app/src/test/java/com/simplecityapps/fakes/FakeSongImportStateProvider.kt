@@ -2,6 +2,7 @@ package com.simplecityapps.fakes
 
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
+import com.simplecityapps.shuttle.model.MediaProviderType
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -13,3 +14,7 @@ class FakeSongImportStateProvider : SongImportStateProvider {
         _songImportState.value = state
     }
 }
+
+fun importComplete(
+    providerType: MediaProviderType = MediaProviderType.Shuttle,
+) = SongImportState.ImportComplete(providerType, null)

@@ -16,18 +16,8 @@ class FakeSongRepository : SongRepository {
 
     override fun getSongs(query: SongQuery): Flow<List<Song>?> = songs
 
-    val excludedSongs = mutableListOf<Pair<List<Song>, Boolean>>()
-
-    override suspend fun setExcluded(songs: List<Song>, excluded: Boolean) {
-        excludedSongs.add(songs to excluded)
-    }
-
-    val removedSongs = mutableListOf<Song>()
-
-    override suspend fun remove(song: Song) {
-        removedSongs.add(song)
-    }
-
+    override suspend fun setExcluded(songs: List<Song>, excluded: Boolean) {}
+    override suspend fun remove(song: Song) {}
     override suspend fun insert(songs: List<Song>, mediaProviderType: MediaProviderType) {}
     override suspend fun update(song: Song): Int = 0
     override suspend fun update(songs: List<Song>) {}

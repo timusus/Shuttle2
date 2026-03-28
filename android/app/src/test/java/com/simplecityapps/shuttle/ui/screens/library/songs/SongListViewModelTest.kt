@@ -3,8 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.library.songs
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.FakeSortPreferences
-import com.simplecityapps.mediaprovider.SongImportState
-import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.fakes.importComplete
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import io.kotest.matchers.shouldBe
 import io.mockk.mockk
@@ -47,9 +46,7 @@ class SongListViewModelTest {
     @Test
     fun `setSortOrder persists to preferences`() = runTest {
         fakeSongRepository.setSongs(emptyList())
-        fakeImportState.setState(
-            SongImportState.ImportComplete(MediaProviderType.Shuttle, null)
-        )
+        fakeImportState.setState(importComplete())
         val viewModel = createViewModel()
         backgroundScope.launch { viewModel.uiState.collect {} }
         advanceUntilIdle()

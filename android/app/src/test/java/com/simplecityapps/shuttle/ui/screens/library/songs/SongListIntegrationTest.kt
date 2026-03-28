@@ -7,6 +7,7 @@ import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.FakeSortPreferences
+import com.simplecityapps.fakes.importComplete
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -106,9 +107,6 @@ class SongListIntegrationTest {
 
         robot.setContentWithViewModel(createViewModel())
 
-        // Apple should appear before Zebra when sorted by name.
-        // assertTextDisplayed doesn't check order, but we verify both are present
-        // and the sort order is applied (the ViewModel sorts via comparator).
         robot.assertTextDisplayed("Apple")
         robot.assertTextDisplayed("Zebra")
     }
@@ -164,5 +162,3 @@ class SongListIntegrationTest {
         application = ApplicationProvider.getApplicationContext<Application>(),
     )
 }
-
-private fun importComplete() = SongImportState.ImportComplete(MediaProviderType.Shuttle, null)

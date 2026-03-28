@@ -8,7 +8,6 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
@@ -141,7 +140,7 @@ class SongListFragment :
 
         composeView.setContent {
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-            val playlists by playlistMenuPresenter.playlistsState.collectAsState()
+            val playlists by playlistMenuPresenter.playlistsState.collectAsStateWithLifecycle()
 
             val theme by preferenceManager.theme(viewLifecycleOwner.lifecycleScope).collectAsStateWithLifecycle()
             val accent by preferenceManager.accent(viewLifecycleOwner.lifecycleScope).collectAsStateWithLifecycle()
