@@ -1,7 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library.albums
 
 import android.os.Bundle
-import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
@@ -9,34 +8,22 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.appcompat.widget.PopupMenu
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.fragment.FragmentNavigatorExtras
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import au.com.simplecityapps.shuttle.imageloading.glide.GlideImageLoader
-import com.bumptech.glide.integration.recyclerview.RecyclerViewPreloader
-import com.bumptech.glide.util.ViewPreloadSizeProvider
-import com.simplecityapps.adapter.RecyclerAdapter
-import com.simplecityapps.adapter.SpanSizeLookup
-import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.model.Album
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.sorting.AlbumSortOrder
-import com.simplecityapps.shuttle.ui.common.ContextualToolbarHelper
+import com.simplecityapps.shuttle.ui.common.ComposeContextualToolbarHelper
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
-import com.simplecityapps.shuttle.ui.common.dialog.showExcludeDialog
-import com.simplecityapps.shuttle.ui.common.error.userDescription
-import com.simplecityapps.shuttle.ui.common.recyclerview.GlidePreloadModelProvider
-import com.simplecityapps.shuttle.ui.common.recyclerview.GridSpacingItemDecoration
-import com.simplecityapps.shuttle.ui.common.recyclerview.SectionedAdapter
-import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
-import com.simplecityapps.shuttle.ui.common.view.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
 import com.simplecityapps.shuttle.ui.screens.library.ViewMode
 import com.simplecityapps.shuttle.ui.screens.library.albums.detail.AlbumDetailFragmentArgs
@@ -44,45 +31,32 @@ import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFr
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
+import com.simplecityapps.shuttle.ui.theme.AppTheme
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.launch
+import timber.log.Timber
 
 @AndroidEntryPoint
 class AlbumListFragment :
     Fragment(),
-    AlbumBinder.Listener,
-    AlbumListContract.View,
     CreatePlaylistDialogFragment.Listener {
-    private var adapter: RecyclerAdapter by autoCleared()
-
-    lateinit var imageLoader: GlideImageLoader
-
-    private var recyclerView: RecyclerView by autoCleared()
-    private var circularLoadingView: CircularLoadingView by autoCleared()
-    private var horizontalLoadingView: HorizontalLoadingView by autoCleared()
-
-    @Inject
-    lateinit var presenter: AlbumListPresenter
 
     @Inject
     lateinit var playlistMenuPresenter: PlaylistMenuPresenter
 
+    @Inject
+    lateinit var preferenceManager: GeneralPreferenceManager
+
+    private var composeView: ComposeView by autoCleared()
+
+    private val viewModel: AlbumListViewModel by viewModels()
+
+    private var contextualToolbarHelper: ComposeContextualToolbarHelper by autoCleared()
+
     private lateinit var playlistMenuView: PlaylistMenuView
-
-    private var recyclerViewState: Parcelable? = null
-
-    private lateinit var shuffleBinder: ShuffleBinder
-
-    private var contextualToolbarHelper: ContextualToolbarHelper<Album> by autoCleared()
-
-    private val viewPreloadSizeProvider by lazy { ViewPreloadSizeProvider<Album>() }
-    private val preloadModelProvider by lazy {
-        GlidePreloadModelProvider<Album>(
-            imageLoader,
-            listOf(ArtworkImageLoader.Options.CacheDecodedResource)
-        )
-    }
 
     // Lifecycle
 
@@ -104,50 +78,118 @@ class AlbumListFragment :
     ) {
         super.onViewCreated(view, savedInstanceState)
 
-        imageLoader = GlideImageLoader(this)
+        setHasOptionsMenu(true)
 
         playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
+        playlistMenuPresenter.bindView(playlistMenuView)
 
-        adapter =
-            object : SectionedAdapter(viewLifecycleOwner.lifecycleScope) {
-                override fun getSectionName(viewBinder: ViewBinder?): String? = (viewBinder as? AlbumBinder)?.album?.let { album ->
-                    presenter.getFastscrollPrefix(album)
-                }
-            }
-        recyclerView = view.findViewById(R.id.recyclerView)
-        recyclerView.adapter = adapter
-        recyclerView.setItemViewCacheSize(0)
-        recyclerView.setHasFixedSize(true)
-        val preloader: RecyclerViewPreloader<Album> =
-            RecyclerViewPreloader(
-                imageLoader.requestManager,
-                preloadModelProvider,
-                viewPreloadSizeProvider,
-                12
-            )
-        recyclerView.addOnScrollListener(preloader)
+        composeView = view.findViewById(R.id.composeView)
 
-        circularLoadingView = view.findViewById(R.id.circularLoadingView)
-        horizontalLoadingView = view.findViewById(R.id.horizontalLoadingView)
-
-        shuffleBinder =
-            ShuffleBinder(
-                R.string.button_album_shuffle,
-                object : ShuffleBinder.Listener {
-                    override fun onClicked() {
-                        presenter.albumShuffle()
-                    }
-                }
-            )
-
-        savedInstanceState?.getParcelable<Parcelable>(ARG_RECYCLER_STATE)?.let { recyclerViewState = it }
-
-        contextualToolbarHelper = ContextualToolbarHelper()
+        contextualToolbarHelper = ComposeContextualToolbarHelper(viewModel::clearSelection)
 
         updateContextualToolbar()
 
-        presenter.bindView(this)
-        playlistMenuPresenter.bindView(playlistMenuView)
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState
+                    .collect { state ->
+                        val count = state.selectedAlbums.size
+                        if (count == 0) {
+                            contextualToolbarHelper.hide()
+                        } else {
+                            contextualToolbarHelper.show()
+
+                            contextualToolbarHelper.contextualToolbar?.title =
+                                Phrase.fromPlural(requireContext(), R.plurals.multi_select_items_selected, count)
+                                    .put("count", count)
+                                    .format()
+                            contextualToolbarHelper.contextualToolbar?.menu?.let { menu ->
+                                TagEditorMenuSanitiser.sanitise(
+                                    menu,
+                                    state.selectedAlbums
+                                        .flatMap { it.mediaProviders }
+                                        .distinct(),
+                                )
+                            }
+                        }
+
+                        updateToolbarMenuViewMode(state.viewMode)
+                        updateToolbarMenuSortOrder(state.sortOrder)
+                    }
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.events.collect { event ->
+                    when (event) {
+                        is AlbumListUiEvent.AddedToQueue -> {
+                            Toast.makeText(
+                                context,
+                                Phrase.fromPlural(resources, R.plurals.queue_albums_added, event.albumCount)
+                                    .put("count", event.albumCount)
+                                    .format(),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                        is AlbumListUiEvent.PlaybackFailed -> {
+                            Toast.makeText(
+                                context,
+                                event.errorMessage ?: getString(R.string.error_unknown),
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                        is AlbumListUiEvent.EditTags -> {
+                            TagEditorAlertDialog.newInstance(event.songs).show(childFragmentManager)
+                        }
+                        is AlbumListUiEvent.LibraryEmpty -> {
+                            // No-op — handled by UI state
+                        }
+                    }
+                }
+            }
+        }
+
+        composeView.setContent {
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            val playlists by playlistMenuPresenter.playlistsState.collectAsStateWithLifecycle()
+
+            val theme by preferenceManager.theme(viewLifecycleOwner.lifecycleScope).collectAsStateWithLifecycle()
+            val accent by preferenceManager.accent(viewLifecycleOwner.lifecycleScope).collectAsStateWithLifecycle()
+
+            AppTheme(
+                theme = theme,
+                accent = accent,
+            ) {
+                AlbumList(
+                    uiState = uiState,
+                    playlists = playlists.toImmutableList(),
+                    onAlbumClick = { album ->
+                        if (!uiState.isSelecting) {
+                            navigateToDetail(album)
+                        } else {
+                            viewModel.onAlbumClick(album)
+                        }
+                    },
+                    onAlbumLongClick = { album -> viewModel.onAlbumLongClick(album) },
+                    onPlay = { album -> viewModel.onPlay(album) },
+                    onAddToQueue = { album -> viewModel.onAddToQueue(album) },
+                    onPlayNext = { album -> viewModel.onPlayNext(album) },
+                    onExclude = { album -> viewModel.onExclude(album) },
+                    onEditTags = { album -> viewModel.onEditTags(album) },
+                    onAddToPlaylist = { playlist, playlistData ->
+                        playlistMenuPresenter.addToPlaylist(playlist, playlistData)
+                    },
+                    onShowCreatePlaylistDialog = { album ->
+                        CreatePlaylistDialogFragment.newInstance(
+                            PlaylistData.Albums(album),
+                            context?.getString(R.string.playlist_create_dialog_playlist_name_hint)
+                        ).show(childFragmentManager)
+                    },
+                    onShuffle = { viewModel.onShuffle() },
+                )
+            }
+        }
     }
 
     override fun onCreateOptionsMenu(
@@ -157,18 +199,14 @@ class AlbumListFragment :
         super.onCreateOptionsMenu(menu, inflater)
 
         inflater.inflate(R.menu.menu_album_list, menu)
-
-        presenter.updateToolbarMenu()
+        updateToolbarMenuViewMode(viewModel.uiState.value.viewMode)
+        updateToolbarMenuSortOrder(viewModel.uiState.value.sortOrder)
     }
 
     override fun onResume() {
         super.onResume()
 
-        presenter.loadAlbums(false)
-
         updateContextualToolbar()
-
-        presenter.updateToolbarMenu()
     }
 
     override fun onPause() {
@@ -177,17 +215,9 @@ class AlbumListFragment :
         findToolbarHost()?.apply {
             contextualToolbar?.setOnMenuItemClickListener(null)
         }
-
-        recyclerViewState = recyclerView.layoutManager?.onSaveInstanceState()
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        outState.putParcelable(ARG_RECYCLER_STATE, recyclerViewState)
-        super.onSaveInstanceState(outState)
     }
 
     override fun onDestroyView() {
-        presenter.unbindView()
         playlistMenuPresenter.unbindView()
 
         super.onDestroyView()
@@ -196,26 +226,24 @@ class AlbumListFragment :
     // Toolbar item selection
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
-        R.id.listViewMode -> {
-            adapter.clear()
-            presenter.setViewMode(ViewMode.List)
+        R.id.gridViewMode -> {
+            viewModel.setViewMode(ViewMode.Grid)
             true
         }
-        R.id.gridViewMode -> {
-            adapter.clear()
-            presenter.setViewMode(ViewMode.Grid)
+        R.id.listViewMode -> {
+            viewModel.setViewMode(ViewMode.List)
             true
         }
         R.id.sortAlbumName -> {
-            presenter.setSortOrder(AlbumSortOrder.AlbumName)
+            viewModel.setSortOrder(AlbumSortOrder.AlbumName)
             true
         }
         R.id.sortArtistName -> {
-            presenter.setSortOrder(AlbumSortOrder.ArtistGroupKey)
+            viewModel.setSortOrder(AlbumSortOrder.ArtistGroupKey)
             true
         }
         R.id.sortAlbumYear -> {
-            presenter.setSortOrder(AlbumSortOrder.Year)
+            viewModel.setSortOrder(AlbumSortOrder.Year)
             true
         }
         else -> false
@@ -223,26 +251,44 @@ class AlbumListFragment :
 
     // Private
 
+    private fun navigateToDetail(album: com.simplecityapps.shuttle.model.Album) {
+        if (findNavController().currentDestination?.id == R.id.libraryFragment) {
+            try {
+                findNavController().navigate(
+                    R.id.action_libraryFragment_to_albumDetailFragment,
+                    AlbumDetailFragmentArgs(album).toBundle(),
+                )
+            } catch (e: IllegalArgumentException) {
+                Timber.e(e, "Failed to navigate to album detail")
+            }
+        }
+    }
+
     private fun updateContextualToolbar() {
         findToolbarHost()?.apply {
-            contextualToolbar?.let { contextualToolbar ->
-                contextualToolbar.menu.clear()
-                contextualToolbar.inflateMenu(R.menu.menu_multi_select)
-                TagEditorMenuSanitiser.sanitise(contextualToolbar.menu, contextualToolbarHelper.selectedItems.flatMap { it.mediaProviders }.distinct())
-                contextualToolbar.setOnMenuItemClickListener { menuItem ->
-                    playlistMenuView.createPlaylistMenu(contextualToolbar.menu)
-                    if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Albums(contextualToolbarHelper.selectedItems.toList()))) {
+            contextualToolbar?.let { ctxToolbar ->
+                ctxToolbar.menu.clear()
+                ctxToolbar.inflateMenu(R.menu.menu_multi_select)
+                TagEditorMenuSanitiser.sanitise(
+                    ctxToolbar.menu,
+                    viewModel.uiState.value.selectedAlbums
+                        .flatMap { it.mediaProviders }
+                        .distinct(),
+                )
+                ctxToolbar.setOnMenuItemClickListener { menuItem ->
+                    playlistMenuView.createPlaylistMenu(ctxToolbar.menu)
+                    val selectedAlbums = viewModel.selectedAlbums()
+                    if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Albums(selectedAlbums))) {
                         contextualToolbarHelper.hide()
                         return@setOnMenuItemClickListener true
                     }
                     when (menuItem.itemId) {
                         R.id.queue -> {
-                            presenter.addToQueue(contextualToolbarHelper.selectedItems.toList())
-                            contextualToolbarHelper.hide()
+                            viewModel.onAddSelectedToQueue()
                             true
                         }
                         R.id.editTags -> {
-                            presenter.editTags(contextualToolbarHelper.selectedItems.toList())
+                            viewModel.onEditTagsSelected()
                             contextualToolbarHelper.hide()
                             true
                         }
@@ -250,57 +296,25 @@ class AlbumListFragment :
                     }
                 }
             }
-
             contextualToolbarHelper.contextualToolbar = contextualToolbar
             contextualToolbarHelper.toolbar = toolbar
-            contextualToolbarHelper.callback = contextualToolbarCallback
 
-            if (contextualToolbarHelper.selectedItems.isNotEmpty()) {
+            if (viewModel.uiState.value.isSelecting) {
                 contextualToolbarHelper.show()
             }
         }
     }
 
-    // AlbumListContract.View Implementation
-
-    override fun setAlbums(
-        albums: List<Album>,
-        viewMode: ViewMode,
-        resetPosition: Boolean
-    ) {
-        preloadModelProvider.items = albums
-
-        if (resetPosition) {
-            adapter.clear()
-        }
-
-        val data =
-            albums.map { album ->
-                when (viewMode) {
-                    ViewMode.Grid -> {
-                        GridAlbumBinder(album, imageLoader, this)
-                            .apply { selected = contextualToolbarHelper.selectedItems.contains(album) }
-                    }
-                    ViewMode.List -> {
-                        ListAlbumBinder(album, imageLoader, this)
-                            .apply { selected = contextualToolbarHelper.selectedItems.contains(album) }
-                    }
-                }
-            }.toMutableList<ViewBinder>()
-
-        if (albums.isNotEmpty()) {
-            data.add(0, shuffleBinder)
-        }
-
-        adapter.update(data) {
-            recyclerViewState?.let {
-                recyclerView.layoutManager?.onRestoreInstanceState(recyclerViewState)
-                recyclerViewState = null
+    private fun updateToolbarMenuViewMode(viewMode: ViewMode) {
+        findToolbarHost()?.toolbar?.menu?.let { menu ->
+            when (viewMode) {
+                ViewMode.List -> menu.findItem(R.id.listViewMode)?.isChecked = true
+                ViewMode.Grid -> menu.findItem(R.id.gridViewMode)?.isChecked = true
             }
         }
     }
 
-    override fun updateToolbarMenuSortOrder(sortOrder: AlbumSortOrder) {
+    private fun updateToolbarMenuSortOrder(sortOrder: AlbumSortOrder) {
         findToolbarHost()?.toolbar?.menu?.let { menu ->
             when (sortOrder) {
                 AlbumSortOrder.AlbumName -> menu.findItem(R.id.sortAlbumName)?.isChecked = true
@@ -313,190 +327,19 @@ class AlbumListFragment :
         }
     }
 
-    override fun updateToolbarMenuViewMode(viewMode: ViewMode) {
-        when (viewMode) {
-            ViewMode.List -> findToolbarHost()?.toolbar?.menu?.findItem(R.id.listViewMode)?.isChecked = true
-            ViewMode.Grid -> findToolbarHost()?.toolbar?.menu?.findItem(R.id.gridViewMode)?.isChecked = true
-        }
-    }
-
-    override fun onAddedToQueue(albums: List<Album>) {
-        Toast.makeText(
-            context,
-            Phrase.fromPlural(resources, R.plurals.queue_albums_added, albums.size)
-                .put("count", albums.size)
-                .format(),
-            Toast.LENGTH_SHORT
-        ).show()
-    }
-
-    override fun setLoadingState(state: AlbumListContract.LoadingState) {
-        when (state) {
-            is AlbumListContract.LoadingState.Scanning -> {
-                horizontalLoadingView.setState(HorizontalLoadingView.State.Loading(getString(R.string.library_scan_in_progress)))
-                circularLoadingView.setState(CircularLoadingView.State.None)
-            }
-            is AlbumListContract.LoadingState.Loading -> {
-                horizontalLoadingView.setState(HorizontalLoadingView.State.None)
-                circularLoadingView.setState(CircularLoadingView.State.Loading(getString(R.string.loading)))
-            }
-            is AlbumListContract.LoadingState.Empty -> {
-                horizontalLoadingView.setState(HorizontalLoadingView.State.None)
-                circularLoadingView.setState(CircularLoadingView.State.Empty(getString(R.string.album_list_empty)))
-            }
-            is AlbumListContract.LoadingState.None -> {
-                horizontalLoadingView.setState(HorizontalLoadingView.State.None)
-                circularLoadingView.setState(CircularLoadingView.State.None)
-            }
-        }
-    }
-
-    override fun setLoadingProgress(progress: Float) {
-        horizontalLoadingView.setProgress(progress)
-    }
-
-    override fun showLoadError(error: Error) {
-        Toast.makeText(context, error.userDescription(resources), Toast.LENGTH_LONG).show()
-    }
-
-    override fun setViewMode(viewMode: ViewMode) {
-        when (viewMode) {
-            ViewMode.List -> {
-                (recyclerView.layoutManager as GridLayoutManager).spanSizeLookup = SpanSizeLookup(adapter, 1)
-                (recyclerView.layoutManager as GridLayoutManager).spanCount = 1
-                if (recyclerView.itemDecorationCount != 0) {
-                    recyclerView.removeItemDecorationAt(0)
-                }
-            }
-            ViewMode.Grid -> {
-                (recyclerView.layoutManager as GridLayoutManager).spanCount = 3
-                (recyclerView.layoutManager as GridLayoutManager).spanSizeLookup = SpanSizeLookup(adapter, 3)
-                if (recyclerView.itemDecorationCount == 0) {
-                    recyclerView.addItemDecoration(GridSpacingItemDecoration(8, true, 1))
-                }
-            }
-        }
-    }
-
-    override fun showTagEditor(songs: List<com.simplecityapps.shuttle.model.Song>) {
-        TagEditorAlertDialog.newInstance(songs).show(childFragmentManager)
-    }
-
-    // AlbumBinder.Listener Implementation
-
-    override fun onAlbumClicked(
-        album: Album,
-        viewHolder: AlbumBinder.ViewHolder
-    ) {
-        if (!contextualToolbarHelper.handleClick(album)) {
-            if (findNavController().currentDestination?.id != R.id.albumDetailFragment) {
-                findNavController().navigate(
-                    R.id.action_libraryFragment_to_albumDetailFragment,
-                    AlbumDetailFragmentArgs(album).toBundle(),
-                    null,
-                    FragmentNavigatorExtras(viewHolder.imageView to viewHolder.imageView.transitionName)
-                )
-            }
-        }
-    }
-
-    override fun onAlbumLongClicked(
-        album: Album,
-        viewHolder: AlbumBinder.ViewHolder
-    ) {
-        contextualToolbarHelper.handleLongClick(album)
-    }
-
-    override fun onOverflowClicked(
-        view: View,
-        album: Album
-    ) {
-        val popupMenu = PopupMenu(requireContext(), view)
-        popupMenu.inflate(R.menu.menu_popup)
-        TagEditorMenuSanitiser.sanitise(popupMenu.menu, album.mediaProviders)
-
-        playlistMenuView.createPlaylistMenu(popupMenu.menu)
-
-        popupMenu.setOnMenuItemClickListener { menuItem ->
-            if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Albums(album))) {
-                return@setOnMenuItemClickListener true
-            } else {
-                when (menuItem.itemId) {
-                    R.id.play -> {
-                        presenter.play(album)
-                        return@setOnMenuItemClickListener true
-                    }
-                    R.id.queue -> {
-                        presenter.addToQueue(listOf(album))
-                        return@setOnMenuItemClickListener true
-                    }
-                    R.id.playNext -> {
-                        presenter.playNext(album)
-                        return@setOnMenuItemClickListener true
-                    }
-                    R.id.exclude -> {
-                        showExcludeDialog(requireContext(), album.name) {
-                            presenter.exclude(album)
-                        }
-                        return@setOnMenuItemClickListener true
-                    }
-                    R.id.editTags -> {
-                        presenter.editTags(listOf(album))
-                        return@setOnMenuItemClickListener true
-                    }
-                }
-            }
-            false
-        }
-        popupMenu.show()
-    }
-
-    override fun onViewHolderCreated(holder: AlbumBinder.ViewHolder) {
-        viewPreloadSizeProvider.setView(holder.imageView)
-    }
-
     // CreatePlaylistDialogFragment.Listener Implementation
 
     override fun onSave(
         text: String,
         playlistData: PlaylistData
     ) {
-        playlistMenuView.onSave(text, playlistData)
+        playlistMenuPresenter.createPlaylist(text, playlistData)
     }
-
-    // ContextualToolbarHelper.Callback Implementation
-
-    private val contextualToolbarCallback =
-        object : ContextualToolbarHelper.Callback<Album> {
-            override fun onCountChanged(count: Int) {
-                contextualToolbarHelper.contextualToolbar?.title =
-                    Phrase.fromPlural(requireContext(), R.plurals.multi_select_items_selected, count)
-                        .put("count", count).format()
-                contextualToolbarHelper.contextualToolbar?.menu?.let { menu ->
-                    TagEditorMenuSanitiser.sanitise(menu, contextualToolbarHelper.selectedItems.flatMap { it.mediaProviders }.distinct())
-                }
-            }
-
-            override fun onItemUpdated(
-                item: Album,
-                isSelected: Boolean
-            ) {
-                adapter.items
-                    .filterIsInstance<AlbumBinder>()
-                    .firstOrNull { it.album.groupKey == item.groupKey }
-                    ?.let { viewBinder ->
-                        viewBinder.selected = isSelected
-                        adapter.notifyItemChanged(adapter.items.indexOf(viewBinder))
-                    }
-            }
-        }
 
     // Static
 
     companion object {
         const val TAG = "AlbumListFragment"
-
-        const val ARG_RECYCLER_STATE = "recycler_state"
 
         fun newInstance() = AlbumListFragment()
     }
