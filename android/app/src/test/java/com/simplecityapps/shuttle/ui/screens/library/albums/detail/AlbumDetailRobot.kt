@@ -1,12 +1,14 @@
 package com.simplecityapps.shuttle.ui.screens.library.albums.detail
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
@@ -47,6 +49,21 @@ class AlbumDetailRobot(private val rule: ComposeContentTestRule) {
             playlists = playlists,
             onSongClick = { lastSongClicked = it },
         )
+    }
+
+    fun setContentWithViewModel(
+        viewModel: AlbumDetailViewModel,
+        playlists: List<Playlist> = emptyList(),
+    ) {
+        resetCallbacks()
+        rule.setContent {
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            renderAlbumDetailContent(
+                uiState = uiState,
+                playlists = playlists,
+                onSongClick = { viewModel.onSongClick(it) },
+            )
+        }
     }
 
     private fun renderAlbumDetail(
