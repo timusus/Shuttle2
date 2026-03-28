@@ -50,8 +50,8 @@ class AlbumArtistDetailTest {
                 albumArtist = createAlbumArtist(name = "The Beatles", albumCount = 3, songCount = 40),
             )
         )
-        robot.assertSubtextDisplayed("3 Albums")
-        robot.assertSubtextDisplayed("40 Songs")
+        robot.assertSubtextDisplayed("3 albums")
+        robot.assertSubtextDisplayed("40 songs")
     }
 
     @Test
@@ -72,7 +72,7 @@ class AlbumArtistDetailTest {
             )
         )
         robot.assertSubtextDisplayed("1969")
-        robot.assertSubtextDisplayed("17 Songs")
+        robot.assertSubtextDisplayed("17 songs")
     }
 
     @Test
