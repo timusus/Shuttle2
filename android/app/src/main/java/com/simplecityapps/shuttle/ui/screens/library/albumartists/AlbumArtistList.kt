@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -31,6 +33,7 @@ import com.simplecityapps.shuttle.ui.common.components.FastScroller
 import com.simplecityapps.shuttle.ui.common.components.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.common.components.LoadingStatusIndicator
 import com.simplecityapps.shuttle.ui.common.utils.dp as dpToInt
+import com.simplecityapps.shuttle.ui.screens.library.ViewMode
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableSet
@@ -84,28 +87,45 @@ fun AlbumArtistList(
         }
 
         AlbumArtistListUiState.LoadingState.Ready -> {
-            AlbumArtistList(
-                albumArtists = uiState.albumArtists.toImmutableList(),
-                selectedArtists = uiState.selectedArtists.toImmutableSet(),
-                playlists = playlists,
-                onArtistClick = onArtistClick,
-                onArtistLongClick = onArtistLongClick,
-                onPlay = onPlay,
-                onAddToQueue = onAddToQueue,
-                onPlayNext = onPlayNext,
-                onExclude = onExclude,
-                onEditTags = onEditTags,
-                onAddToPlaylist = onAddToPlaylist,
-                onShowCreatePlaylistDialog = onShowCreatePlaylistDialog,
-                modifier = modifier,
-            )
+            when (uiState.viewMode) {
+                ViewMode.List -> AlbumArtistListView(
+                    albumArtists = uiState.albumArtists.toImmutableList(),
+                    selectedArtists = uiState.selectedArtists.toImmutableSet(),
+                    playlists = playlists,
+                    onArtistClick = onArtistClick,
+                    onArtistLongClick = onArtistLongClick,
+                    onPlay = onPlay,
+                    onAddToQueue = onAddToQueue,
+                    onPlayNext = onPlayNext,
+                    onExclude = onExclude,
+                    onEditTags = onEditTags,
+                    onAddToPlaylist = onAddToPlaylist,
+                    onShowCreatePlaylistDialog = onShowCreatePlaylistDialog,
+                    modifier = modifier,
+                )
+                ViewMode.Grid -> AlbumArtistGridView(
+                    albumArtists = uiState.albumArtists.toImmutableList(),
+                    selectedArtists = uiState.selectedArtists.toImmutableSet(),
+                    playlists = playlists,
+                    onArtistClick = onArtistClick,
+                    onArtistLongClick = onArtistLongClick,
+                    onPlay = onPlay,
+                    onAddToQueue = onAddToQueue,
+                    onPlayNext = onPlayNext,
+                    onExclude = onExclude,
+                    onEditTags = onEditTags,
+                    onAddToPlaylist = onAddToPlaylist,
+                    onShowCreatePlaylistDialog = onShowCreatePlaylistDialog,
+                    modifier = modifier,
+                )
+            }
         }
     }
 }
 
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
-private fun AlbumArtistList(
+private fun AlbumArtistListView(
     albumArtists: ImmutableList<AlbumArtist>,
     selectedArtists: ImmutableSet<AlbumArtist>,
     playlists: ImmutableList<Playlist>,
@@ -138,7 +158,7 @@ private fun AlbumArtistList(
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
-                .testTag("album-artists-list-lazy-column"),
+                .testTag("album-artists-list"),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = PaddingValues(vertical = 16.dp, horizontal = 8.dp),
             state = state,
@@ -172,5 +192,65 @@ private fun AlbumArtistList(
                     ?: ""
             },
         )
+    }
+}
+
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+private fun AlbumArtistGridView(
+    albumArtists: ImmutableList<AlbumArtist>,
+    selectedArtists: ImmutableSet<AlbumArtist>,
+    playlists: ImmutableList<Playlist>,
+    onArtistClick: (AlbumArtist) -> Unit,
+    onArtistLongClick: (AlbumArtist) -> Unit,
+    onPlay: (AlbumArtist) -> Unit,
+    onAddToQueue: (AlbumArtist) -> Unit,
+    onPlayNext: (AlbumArtist) -> Unit,
+    onExclude: (AlbumArtist) -> Unit,
+    onEditTags: (AlbumArtist) -> Unit,
+    onAddToPlaylist: (playlist: Playlist, playlistData: PlaylistData) -> Unit,
+    onShowCreatePlaylistDialog: (AlbumArtist) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val preloadingData =
+        rememberGlidePreloadingData(
+            data = albumArtists,
+            preloadImageSize = Size(120.dpToInt.toFloat(), 120.dpToInt.toFloat()),
+        ) { item: AlbumArtist, requestBuilder: RequestBuilder<Drawable> ->
+            requestBuilder
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .transform(CenterCrop())
+                .transition(withCrossFade(200))
+                .load(item)
+        }
+
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(3),
+        modifier = modifier
+            .fillMaxSize()
+            .testTag("album-artists-grid"),
+        contentPadding = PaddingValues(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        items(preloadingData.size) { index ->
+            val (albumArtist, artworkPreloadRequestBuilder) = preloadingData[index]
+
+            AlbumArtistGridItem(
+                albumArtist = albumArtist,
+                isSelected = selectedArtists.contains(albumArtist),
+                playlists = playlists,
+                artworkPreloadRequestBuilder = artworkPreloadRequestBuilder,
+                onClick = onArtistClick,
+                onLongClick = onArtistLongClick,
+                onPlay = onPlay,
+                onAddToQueue = onAddToQueue,
+                onPlayNext = onPlayNext,
+                onExclude = onExclude,
+                onEditTags = onEditTags,
+                onAddToPlaylist = onAddToPlaylist,
+                onShowCreatePlaylistDialog = onShowCreatePlaylistDialog,
+            )
+        }
     }
 }

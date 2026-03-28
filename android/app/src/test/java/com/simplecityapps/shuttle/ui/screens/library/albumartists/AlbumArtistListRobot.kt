@@ -170,6 +170,14 @@ class AlbumArtistListRobot(private val rule: ComposeContentTestRule) {
         rule.onNode(hasText(text, substring = true)).assertIsDisplayed()
     }
 
+    fun assertGridLayout() {
+        rule.onNodeWithTag("album-artists-grid").assertIsDisplayed()
+    }
+
+    fun assertListLayout() {
+        rule.onNodeWithTag("album-artists-list").assertIsDisplayed()
+    }
+
     fun assertSelectionMarkDisplayed() {
         rule.onNodeWithContentDescription("Selection mark").assertIsDisplayed()
     }

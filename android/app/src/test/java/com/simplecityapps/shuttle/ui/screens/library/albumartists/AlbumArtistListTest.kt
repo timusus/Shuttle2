@@ -4,6 +4,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import com.simplecityapps.createAlbumArtist
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.ui.screens.library.ViewMode
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
 import org.junit.Test
@@ -75,6 +76,30 @@ class AlbumArtistListTest {
         robot.assertTextDisplayed("Pink Floyd")
         robot.assertTextDisplayed("Led Zeppelin")
         robot.assertTextDisplayed("The Beatles")
+    }
+
+    @Test
+    fun `grid mode renders grid layout`() {
+        robot.setContent(
+            readyAlbumArtistList(
+                albumArtists = listOf(createAlbumArtist(name = "Pink Floyd")),
+                viewMode = ViewMode.Grid,
+            )
+        )
+        robot.assertGridLayout()
+        robot.assertTextDisplayed("Pink Floyd")
+    }
+
+    @Test
+    fun `list mode renders list layout`() {
+        robot.setContent(
+            readyAlbumArtistList(
+                albumArtists = listOf(createAlbumArtist(name = "Pink Floyd")),
+                viewMode = ViewMode.List,
+            )
+        )
+        robot.assertListLayout()
+        robot.assertTextDisplayed("Pink Floyd")
     }
 
     @Test
