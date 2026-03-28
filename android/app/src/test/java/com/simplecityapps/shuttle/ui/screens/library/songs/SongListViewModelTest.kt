@@ -2,6 +2,8 @@ package com.simplecityapps.shuttle.ui.screens.library.songs
 
 import com.simplecityapps.fakes.FakePlaybackManager
 import com.simplecityapps.fakes.FakeQueueManager
+import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
+import com.simplecityapps.shuttle.ui.common.playback.ShuffleSongs
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.FakeSortPreferences
@@ -62,6 +64,8 @@ class SongListViewModelTest {
         songRepository = fakeSongRepository,
         playbackManager = FakePlaybackManager(),
         queueManager = FakeQueueManager(),
+        playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
+        shuffleSongs = ShuffleSongs(FakePlaybackManager()),
         sortPreferenceManager = fakeSortPreferences,
         ioDispatcher = testDispatcher,
         mediaImportObserver = fakeImportState,

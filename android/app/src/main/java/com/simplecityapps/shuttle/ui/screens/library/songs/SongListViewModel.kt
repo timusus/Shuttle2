@@ -14,6 +14,8 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.shuttle.ui.common.SelectionState
+import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
+import com.simplecityapps.shuttle.ui.common.playback.ShuffleSongs
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferences
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -53,6 +55,8 @@ class SongListViewModel @Inject constructor(
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackOperations,
     private val queueManager: QueueOperations,
+    private val playSongs: PlaySongs,
+    private val shuffleSongs: ShuffleSongs,
     private val sortPreferenceManager: SortPreferences,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     mediaImportObserver: SongImportStateProvider,
@@ -114,16 +118,9 @@ class SongListViewModel @Inject constructor(
     private fun play(song: Song) {
         viewModelScope.launch {
             val songs = uiState.value.songs.ifEmpty { listOf(song) }
-
-            if (queueManager.setQueue(songs = songs, position = songs.indexOf(song))) {
-                playbackManager.load { result ->
-                    result.onSuccess { playbackManager.play() }
-                    result.onFailure { error ->
-                        viewModelScope.launch {
-                            _events.emit(SongListUiEvent.PlaybackFailed(error.message))
-                        }
-                    }
-                }
+            val result = playSongs(songs, position = songs.indexOf(song))
+            if (result is PlaySongs.Result.Failure) {
+                _events.emit(SongListUiEvent.PlaybackFailed(result.message))
             }
         }
     }
@@ -167,22 +164,14 @@ class SongListViewModel @Inject constructor(
 
     fun onShuffle() {
         val songs = uiState.value.songs
-
         if (songs.isEmpty()) {
-            viewModelScope.launch {
-                _events.emit(SongListUiEvent.LibraryEmpty)
-            }
+            viewModelScope.launch { _events.emit(SongListUiEvent.LibraryEmpty) }
             return
         }
-
         viewModelScope.launch {
-            playbackManager.shuffle(songs) { result ->
-                result.onSuccess { playbackManager.play() }
-                result.onFailure { error ->
-                    viewModelScope.launch {
-                        _events.emit(SongListUiEvent.PlaybackFailed(error.message))
-                    }
-                }
+            val result = shuffleSongs(songs)
+            if (result is ShuffleSongs.Result.Failure) {
+                _events.emit(SongListUiEvent.PlaybackFailed(result.message))
             }
         }
     }
