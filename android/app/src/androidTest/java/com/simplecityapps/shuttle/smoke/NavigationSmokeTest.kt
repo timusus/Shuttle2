@@ -3,6 +3,10 @@ package com.simplecityapps.shuttle.smoke
 import android.Manifest
 import android.content.SharedPreferences
 import android.os.Build
+import androidx.compose.ui.test.junit4.createEmptyComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.recyclerview.widget.RecyclerView
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.launchActivity
@@ -34,10 +38,13 @@ import org.junit.Test
 class NavigationSmokeTest {
 
     @get:Rule(order = 0)
-    var hiltRule = HiltAndroidRule(this)
+    val hiltRule = HiltAndroidRule(this)
 
     @get:Rule(order = 1)
-    var permissionRule: GrantPermissionRule = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+    val composeRule = createEmptyComposeRule()
+
+    @get:Rule(order = 2)
+    val permissionRule: GrantPermissionRule = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         GrantPermissionRule.grant(Manifest.permission.READ_MEDIA_AUDIO)
     } else {
         GrantPermissionRule.grant(Manifest.permission.READ_EXTERNAL_STORAGE)
@@ -93,7 +100,9 @@ class NavigationSmokeTest {
         onView(withId(R.id.libraryFragment)).perform(click())
 
         onView(withText("Songs")).perform(click())
-        waitForView(allOf(withId(R.id.recyclerView), hasDescendant(withText("Highway to Hell"))))
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("Highway to Hell").fetchSemanticsNodes().isNotEmpty()
+        }
 
         onView(withText("Albums")).perform(click())
         waitForView(allOf(withId(R.id.recyclerView), hasDescendant(isDisplayed())))
@@ -102,8 +111,10 @@ class NavigationSmokeTest {
         waitForView(allOf(withId(R.id.recyclerView), hasDescendant(isDisplayed())))
 
         onView(withText("Genres")).perform(click())
-        // Genres uses Compose — just verify the tab didn't crash
-        waitForView(allOf(withId(R.id.tabLayout), isDescendantOfA(withId(R.id.constraintLayout))))
+        // Genres uses Compose with a FastScroller delay that keeps the Compose
+        // idling resource busy. Advance the clock past it before Espresso tries
+        // to click the Playlists tab.
+        composeRule.mainClock.advanceTimeBy(2000)
 
         onView(withText("Playlists")).perform(click())
         waitForView(allOf(withId(R.id.recyclerView), isDisplayed()))
@@ -141,12 +152,13 @@ class NavigationSmokeTest {
     fun playbackScreens() {
         scenario = launchActivity()
 
-        // Play a song
+        // Play a song (Songs tab is Compose)
         onView(withId(R.id.libraryFragment)).perform(click())
         onView(withText("Songs")).perform(click())
-        waitForView(allOf(withId(R.id.recyclerView), hasDescendant(isDisplayed())))
-        onView(allOf(withId(R.id.recyclerView), isDisplayed()))
-            .perform(RecyclerViewActions.actionOnItemAtPosition<RecyclerView.ViewHolder>(0, click()))
+        composeRule.waitUntil(5_000) {
+            composeRule.onAllNodesWithText("Highway to Hell").fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNodeWithText("Highway to Hell").performClick()
 
         // Mini player
         waitForView(allOf(withId(R.id.titleTextView), isDescendantOfA(withId(R.id.sheet1PeekView))))
