@@ -4,11 +4,13 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import com.simplecityapps.createGenre
 import com.simplecityapps.fakes.FakeGenreRepository
 import com.simplecityapps.fakes.FakePlaybackManager
+import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.importComplete
 import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
+import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -38,6 +40,8 @@ class GenreListIntegrationTest {
     val composeTestRule = createComposeRule()
 
     private val fakeGenreRepository = FakeGenreRepository()
+    private val fakeSongRepository = FakeSongRepository()
+    private val fakePlaylistRepository = FakePlaylistRepository()
     private val fakeImportState = FakeSongImportStateProvider()
 
     private val robot = GenreListRobot(composeTestRule)
@@ -85,10 +89,15 @@ class GenreListIntegrationTest {
 
     private fun createViewModel(): GenreListViewModel = GenreListViewModel(
         genreRepository = fakeGenreRepository,
-        songRepository = FakeSongRepository(),
+        songRepository = fakeSongRepository,
         playbackManager = FakePlaybackManager(),
         queueManager = FakeQueueManager(),
         playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
+        addToPlaylistUseCase = AddToPlaylist(
+            fakePlaylistRepository, fakeSongRepository, fakeGenreRepository, FakeQueueManager(),
+            ignorePlaylistDuplicates = { false },
+        ),
+        playlistRepository = fakePlaylistRepository,
         mediaImportObserver = fakeImportState,
     )
 }
