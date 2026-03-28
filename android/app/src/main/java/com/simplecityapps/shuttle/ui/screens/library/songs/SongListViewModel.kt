@@ -17,7 +17,7 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.sorting.SongSortOrder
-import com.simplecityapps.shuttle.ui.common.ComposeContextualToolbarHelper
+import com.simplecityapps.shuttle.ui.common.SelectionState
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -48,7 +48,7 @@ class SongListViewModel @Inject constructor(
     private val _selectedSortOrder = MutableStateFlow(sortPreferenceManager.sortOrderSongList)
     val selectedSortOrder = _selectedSortOrder.asStateFlow()
 
-    val contextualToolbarHelper = ComposeContextualToolbarHelper()
+    val selectionState = SelectionState<Song>()
 
     val theme = preferenceManager.theme(viewModelScope)
     val accent = preferenceManager.accent(viewModelScope)
@@ -59,7 +59,7 @@ class SongListViewModel @Inject constructor(
                 .getSongs(SongQuery.All(sortOrder = sortPreferenceManager.sortOrderSongList))
                 .filterNotNull(),
             mediaImportObserver.songImportState,
-            contextualToolbarHelper.selectedSongsState,
+            selectionState.selectedItems,
             _selectedSortOrder,
         ) { songs, songImportState, selectedSongs, __selectedSortOrder ->
             if (songImportState is SongImportState.ImportProgress) {
@@ -76,8 +76,8 @@ class SongListViewModel @Inject constructor(
     }
 
     fun onSongClick(song: Song, completion: (Result<Boolean>) -> Unit) {
-        if (contextualToolbarHelper.isSelecting()) {
-            contextualToolbarHelper.toggleSongSelection(song)
+        if (selectionState.isActive()) {
+            selectionState.toggle(song)
             completion(Result.success(true))
         } else {
             play(song, completion)
@@ -85,7 +85,7 @@ class SongListViewModel @Inject constructor(
     }
 
     fun onSongLongClick(song: Song) {
-        contextualToolbarHelper.toggleSongSelection(song)
+        selectionState.toggle(song)
     }
 
     private fun play(song: Song, completion: (Result<Boolean>) -> Unit) {
@@ -112,8 +112,8 @@ class SongListViewModel @Inject constructor(
 
     fun addSelectedToQueue() {
         viewModelScope.launch {
-            playbackManager.addToQueue(contextualToolbarHelper.selectedSongsState.value.toList())
-            contextualToolbarHelper.clearSelection()
+            playbackManager.addToQueue(selectionState.selectedItems.value.toList())
+            selectionState.clear()
         }
     }
 

@@ -170,12 +170,12 @@ class SongListViewModelTest {
         mockSongs(listOf(SONG))
         viewModel = createViewModel()
         advanceUntilIdle()
-        viewModel.contextualToolbarHelper.isSelecting().shouldBeFalse()
+        viewModel.selectionState.isActive().shouldBeFalse()
 
         viewModel.onSongLongClick(SONG)
 
-        viewModel.contextualToolbarHelper.isSelecting().shouldBeTrue()
-        viewModel.contextualToolbarHelper.selectedSongsState.value
+        viewModel.selectionState.isActive().shouldBeTrue()
+        viewModel.selectionState.selectedItems.value
             .shouldBe(listOf(SONG))
     }
 
@@ -189,8 +189,8 @@ class SongListViewModelTest {
 
         viewModel.onSongClick(SONG2) {}
 
-        viewModel.contextualToolbarHelper.isSelecting().shouldBeTrue()
-        viewModel.contextualToolbarHelper.selectedSongsState.value
+        viewModel.selectionState.isActive().shouldBeTrue()
+        viewModel.selectionState.selectedItems.value
             .shouldBe(songs)
     }
 
@@ -205,8 +205,8 @@ class SongListViewModelTest {
 
         viewModel.onSongClick(SONG1) {}
 
-        viewModel.contextualToolbarHelper.isSelecting().shouldBeTrue()
-        viewModel.contextualToolbarHelper.selectedSongsState.value
+        viewModel.selectionState.isActive().shouldBeTrue()
+        viewModel.selectionState.selectedItems.value
             .shouldBe(listOf(SONG2))
     }
 
@@ -215,13 +215,13 @@ class SongListViewModelTest {
         mockSongs(listOf(SONG))
         viewModel = createViewModel()
         advanceUntilIdle()
-        viewModel.contextualToolbarHelper.isSelecting().shouldBeFalse()
+        viewModel.selectionState.isActive().shouldBeFalse()
         viewModel.onSongLongClick(SONG)
 
         viewModel.onSongClick(SONG) {}
 
-        viewModel.contextualToolbarHelper.isSelecting().shouldBeFalse()
-        viewModel.contextualToolbarHelper.selectedSongsState.value
+        viewModel.selectionState.isActive().shouldBeFalse()
+        viewModel.selectionState.selectedItems.value
             .shouldBe(emptyList())
     }
 
@@ -238,7 +238,7 @@ class SongListViewModelTest {
         advanceUntilIdle()
 
         coVerify(exactly = 1) { mockPlaybackManager.addToQueue(listOf(SONG2)) }
-        viewModel.contextualToolbarHelper.isSelecting().shouldBeFalse()
+        viewModel.selectionState.isActive().shouldBeFalse()
     }
 
     @Test
