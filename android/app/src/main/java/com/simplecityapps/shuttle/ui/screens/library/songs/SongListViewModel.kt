@@ -13,12 +13,11 @@ import com.simplecityapps.mediaprovider.repository.songs.comparator
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.sorting.SongSortOrder
-import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.ui.common.SelectionState
-import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject

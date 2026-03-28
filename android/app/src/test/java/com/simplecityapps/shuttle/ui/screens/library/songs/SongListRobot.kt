@@ -20,17 +20,28 @@ class SongListRobot(private val rule: ComposeContentTestRule) {
 
     // -- Callback captures (populated by setContent) --
 
-    var lastSongClicked: Song? = null; private set
-    var lastSongLongClicked: Song? = null; private set
-    var lastAddedToQueue: Song? = null; private set
-    var lastPlayNext: Song? = null; private set
-    var lastSongInfo: Song? = null; private set
-    var lastExcluded: Song? = null; private set
-    var lastEditTags: Song? = null; private set
-    var lastDeleted: Song? = null; private set
-    var lastAddToPlaylist: Pair<Playlist, PlaylistData>? = null; private set
-    var lastCreatePlaylistDialog: Song? = null; private set
-    var shuffleClicked = false; private set
+    var lastSongClicked: Song? = null
+        private set
+    var lastSongLongClicked: Song? = null
+        private set
+    var lastAddedToQueue: Song? = null
+        private set
+    var lastPlayNext: Song? = null
+        private set
+    var lastSongInfo: Song? = null
+        private set
+    var lastExcluded: Song? = null
+        private set
+    var lastEditTags: Song? = null
+        private set
+    var lastDeleted: Song? = null
+        private set
+    var lastAddToPlaylist: Pair<Playlist, PlaylistData>? = null
+        private set
+    var lastCreatePlaylistDialog: Song? = null
+        private set
+    var shuffleClicked = false
+        private set
 
     // -- Content setup --
 

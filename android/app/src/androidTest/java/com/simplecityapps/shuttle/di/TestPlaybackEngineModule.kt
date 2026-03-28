@@ -43,18 +43,15 @@ class TestPlaybackEngineModule {
 
     @Singleton
     @Provides
-    fun provideEqualizerAudioProcessor(): EqualizerAudioProcessor =
-        EqualizerAudioProcessor(false)
+    fun provideEqualizerAudioProcessor(): EqualizerAudioProcessor = EqualizerAudioProcessor(false)
 
     @Singleton
     @Provides
-    fun provideReplayGainAudioProcessor(): ReplayGainAudioProcessor =
-        ReplayGainAudioProcessor(ReplayGainMode.Off, 0.0)
+    fun provideReplayGainAudioProcessor(): ReplayGainAudioProcessor = ReplayGainAudioProcessor(ReplayGainMode.Off, 0.0)
 
     @Singleton
     @Provides
-    fun provideAggregateMediaInfoProvider(): AggregateMediaInfoProvider =
-        AggregateMediaInfoProvider(mutableSetOf())
+    fun provideAggregateMediaInfoProvider(): AggregateMediaInfoProvider = AggregateMediaInfoProvider(mutableSetOf())
 
     @Provides
     fun provideExoPlayerPlayback(

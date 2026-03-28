@@ -16,11 +16,10 @@ fun readySongList(
     loadingState = if (songs.isEmpty()) SongListUiState.LoadingState.Empty else SongListUiState.LoadingState.Ready,
 )
 
-fun scanningSongList(progress: Progress? = null) =
-    SongListUiState(
-        loadingState = SongListUiState.LoadingState.Scanning,
-        scanProgress = progress,
-    )
+fun scanningSongList(progress: Progress? = null) = SongListUiState(
+    loadingState = SongListUiState.LoadingState.Scanning,
+    scanProgress = progress,
+)
 
 fun emptySongList() = readySongList(songs = emptyList())
 

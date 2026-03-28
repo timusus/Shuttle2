@@ -84,14 +84,22 @@ Hilt with `@HiltAndroidApp`, `@AndroidEntryPoint`. DI modules in `app/di/`: AppM
 
 - KTLint with `android_studio` style (`.editorconfig`)
 - Composable functions exempt from naming rules
-- Property naming, filename, and package-name rules disabled
-- Git hooks available in `support/scripts/git/` for pre-commit lint and pre-push tests
+- Property naming, filename, package-name, wildcard-imports, and backing-property-naming rules disabled
+- A Claude Code hook auto-formats Kotlin files on every edit (`support/scripts/lint -F`)
+
+```bash
+# Check lint
+support/scripts/lint
+
+# Auto-fix lint
+support/scripts/lint -F
+```
 
 ## Branch Conventions
 
-- Base branch: `dev`
-- Branch prefixes: `feature/`, `fix/`, `tech/`, `doc/`
-- All changes via PR to `main`; pushes to `main` trigger deployment to Google Play (internal track)
+- Trunk-based: commit and push directly to `main`
+- Tag `v*` (e.g. `git tag v1.0.10 && git push origin v1.0.10`) triggers build + deploy to Google Play (internal track)
+- External contributors use PRs to `main` (CI runs lint, unit tests, snapshot tests, instrumented tests)
 
 ## Testing
 

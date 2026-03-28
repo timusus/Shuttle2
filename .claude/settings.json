@@ -1,0 +1,10 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "command": "file=\"$(echo \"$CLAUDE_TOOL_INPUT\" | python3 -c 'import sys,json; print(json.load(sys.stdin).get(\"file_path\",\"\"))' 2>/dev/null)\"; if echo \"$file\" | grep -qE '\\.kts?$'; then support/scripts/lint -F \"$file\" 2>/dev/null; fi; exit 0"
+      }
+    ]
+  }
+}

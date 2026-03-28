@@ -1,12 +1,13 @@
 package com.simplecityapps.playback.di
 
 import android.content.Context
+import android.media.AudioManager
 import android.os.Build
 import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
+import com.simplecityapps.playback.AudioEffectSessionManager
 import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackWatcher
-import com.simplecityapps.playback.AudioEffectSessionManager
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi21
 import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi26
@@ -28,7 +29,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
-import android.media.AudioManager
 
 @InstallIn(SingletonComponent::class)
 @Module

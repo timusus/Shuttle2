@@ -48,11 +48,19 @@ class FakePlayback : Playback {
     }
 
     override fun playBackState(): PlaybackState = state
-    override fun seek(position: Int) { progress = position }
+    override fun seek(position: Int) {
+        progress = position
+    }
     override fun getProgress(): Int = progress
     override fun getDuration(): Int = duration
-    override fun setVolume(volume: Float) { this.volume = volume }
-    override fun setRepeatMode(repeatMode: QueueManager.RepeatMode) { this.repeatMode = repeatMode }
-    override fun setPlaybackSpeed(multiplier: Float) { speed = multiplier }
+    override fun setVolume(volume: Float) {
+        this.volume = volume
+    }
+    override fun setRepeatMode(repeatMode: QueueManager.RepeatMode) {
+        this.repeatMode = repeatMode
+    }
+    override fun setPlaybackSpeed(multiplier: Float) {
+        speed = multiplier
+    }
     override fun getPlaybackSpeed(): Float = speed
 }

@@ -20,14 +20,22 @@ class GenreListRobot(private val rule: ComposeContentTestRule) {
 
     // -- Callback captures --
 
-    var lastSelectedGenre: Genre? = null; private set
-    var lastPlayedGenre: Genre? = null; private set
-    var lastAddedToQueue: Genre? = null; private set
-    var lastPlayNext: Genre? = null; private set
-    var lastExcluded: Genre? = null; private set
-    var lastEditTags: Genre? = null; private set
-    var lastAddToPlaylist: Pair<Playlist, PlaylistData>? = null; private set
-    var lastCreatePlaylistDialog: Genre? = null; private set
+    var lastSelectedGenre: Genre? = null
+        private set
+    var lastPlayedGenre: Genre? = null
+        private set
+    var lastAddedToQueue: Genre? = null
+        private set
+    var lastPlayNext: Genre? = null
+        private set
+    var lastExcluded: Genre? = null
+        private set
+    var lastEditTags: Genre? = null
+        private set
+    var lastAddToPlaylist: Pair<Playlist, PlaylistData>? = null
+        private set
+    var lastCreatePlaylistDialog: Genre? = null
+        private set
 
     private fun callbacks() = Callbacks(
         onSelectGenre = { lastSelectedGenre = it },

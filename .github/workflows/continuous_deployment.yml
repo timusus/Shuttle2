@@ -2,7 +2,8 @@ name: CD
 
 on:
   push:
-    branches: [main]
+    tags:
+      - 'v*'
 
 permissions:
   contents: read
@@ -15,8 +16,8 @@ env:
   GRADLE_OPTS: -Dorg.gradle.daemon=false -Dorg.gradle.jvmargs="-XX:+HeapDumpOnOutOfMemoryError"
 
 jobs:
-  unit_tests:
-    name: "Unit Tests"
+  build:
+    name: "Build"
     runs-on: ubuntu-latest
     timeout-minutes: 60
 
@@ -43,20 +44,6 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: "Lint Project"
-        run: "support/scripts/lint"
-
-      - name: "Build and Run Unit Tests"
-        run: "support/scripts/unit-test"
-
-      - name: "Unit Test Results"
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: test-results
-          path: |
-            **/build/reports/**/*
-
       - name: "Archive App Bundle"
         run: "support/scripts/ci/archive"
         env:
@@ -76,7 +63,7 @@ jobs:
   deploy:
     name: "Deploy"
     runs-on: ubuntu-latest
-    needs: unit_tests
+    needs: build
     timeout-minutes: 10
 
     steps:

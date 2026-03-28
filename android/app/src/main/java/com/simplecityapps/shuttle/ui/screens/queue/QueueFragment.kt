@@ -27,7 +27,6 @@ import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
-import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.autoClearedNullable
 import com.simplecityapps.shuttle.ui.common.dialog.EditTextAlertDialog
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog

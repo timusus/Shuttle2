@@ -11,11 +11,10 @@ fun readyGenreList(
     loadingState = GenreListUiState.LoadingState.Ready,
 )
 
-fun scanningGenreList(progress: Progress? = null) =
-    GenreListUiState(
-        loadingState = GenreListUiState.LoadingState.Scanning,
-        scanProgress = progress,
-    )
+fun scanningGenreList(progress: Progress? = null) = GenreListUiState(
+    loadingState = GenreListUiState.LoadingState.Scanning,
+    scanProgress = progress,
+)
 
 fun emptyGenreList() = GenreListUiState(
     loadingState = GenreListUiState.LoadingState.Empty,
