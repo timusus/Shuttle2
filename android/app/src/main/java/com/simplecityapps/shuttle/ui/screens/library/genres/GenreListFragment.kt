@@ -10,14 +10,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.model.Genre
-import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
-import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.screens.library.genres.detail.GenreDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
@@ -28,6 +29,7 @@ import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class GenreListFragment :
@@ -39,6 +41,9 @@ class GenreListFragment :
 
     @Inject
     lateinit var playlistMenuPresenter: PlaylistMenuPresenter
+
+    @Inject
+    lateinit var preferenceManager: GeneralPreferenceManager
 
     private lateinit var playlistMenuView: PlaylistMenuView
 
@@ -61,50 +66,60 @@ class GenreListFragment :
 
         composeView = view.findViewById(R.id.composeView)
 
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.events.collect { event ->
+                    when (event) {
+                        is GenreListUiEvent.AddedToQueue -> {
+                            Toast.makeText(
+                                context,
+                                Phrase.from(requireContext(), R.string.queue_item_added)
+                                    .put("item_name", event.genreName)
+                                    .format(),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                        is GenreListUiEvent.Error -> {
+                            Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
+                        }
+                        is GenreListUiEvent.EditTags -> {
+                            TagEditorAlertDialog.newInstance(event.songs).show(childFragmentManager)
+                        }
+                    }
+                }
+            }
+        }
+
         composeView.setContent {
-            val viewState by viewModel.viewState.collectAsState()
+            val uiState by viewModel.uiState.collectAsState()
             val playlists by playlistMenuPresenter.playlistsState.collectAsState()
-            val theme by viewModel.theme.collectAsStateWithLifecycle()
-            val accent by viewModel.accent.collectAsStateWithLifecycle()
+            val theme by preferenceManager.theme(viewLifecycleOwner.lifecycleScope).collectAsStateWithLifecycle()
+            val accent by preferenceManager.accent(viewLifecycleOwner.lifecycleScope).collectAsStateWithLifecycle()
 
             AppTheme(
                 theme = theme,
                 accent = accent
             ) {
                 GenreList(
-                    viewState = viewState,
+                    uiState = uiState,
                     playlists = playlists.toImmutableList(),
-                    onSelectGenre = {
-                        onGenreSelected(it)
+                    onSelectGenre = { genre ->
+                        onGenreSelected(genre)
                     },
                     onPlayGenre = { genre ->
-                        viewModel.play(genre) { result ->
-                            result.onFailure { error -> showLoadError(error as Error) }
-                        }
+                        viewModel.onPlay(genre)
                     },
                     onAddToQueue = { genre ->
-                        viewModel.addToQueue(genre) { result ->
-                            result.onSuccess { genre ->
-                                onAddedToQueue(genre)
-                            }
-                        }
+                        viewModel.onAddToQueue(genre)
                     },
                     onPlayNext = { genre ->
-                        viewModel.playNext(genre) { result ->
-                            result.onSuccess { genre ->
-                                onAddedToQueue(genre)
-                            }
-                        }
+                        viewModel.onPlayNext(genre)
                     },
                     onExclude = { genre ->
-                        viewModel.exclude(genre)
+                        viewModel.onExclude(genre)
                     },
                     onEditTags = { genre ->
-                        viewModel.editTags(genre) { result ->
-                            result.onSuccess { songs ->
-                                showTagEditor(songs)
-                            }
-                        }
+                        viewModel.onEditTags(genre)
                     },
                     onAddToPlaylist = { playlist, playlistData ->
                         playlistMenuPresenter.addToPlaylist(playlist, playlistData)
@@ -126,19 +141,7 @@ class GenreListFragment :
         super.onDestroyView()
     }
 
-    fun onAddedToQueue(genre: Genre) {
-        Toast.makeText(context, Phrase.from(requireContext(), R.string.queue_item_added).put("item_name", genre.name).format(), Toast.LENGTH_SHORT).show()
-    }
-
-    fun showLoadError(error: Error) {
-        Toast.makeText(context, error.userDescription(resources), Toast.LENGTH_LONG).show()
-    }
-
-    fun showTagEditor(songs: List<Song>) {
-        TagEditorAlertDialog.newInstance(songs).show(childFragmentManager)
-    }
-
-    private fun onGenreSelected(genre: Genre) {
+    private fun onGenreSelected(genre: com.simplecityapps.shuttle.model.Genre) {
         if (findNavController().currentDestination?.id != R.id.genreDetailFragment) {
             findNavController().navigate(
                 R.id.action_libraryFragment_to_genreDetailFragment,
@@ -163,10 +166,4 @@ class GenreListFragment :
 
         fun newInstance() = GenreListFragment()
     }
-
-//    sealed class LoadingState {
-//        data object Scanning : LoadingState()
-//        data object Loading : LoadingState()
-//        data object Empty : LoadingState()
-//    }
 }

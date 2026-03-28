@@ -13,17 +13,34 @@ import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.query.SongQuery
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
+
+data class GenreListUiState(
+    val genres: List<Genre> = emptyList(),
+    val loadingState: LoadingState = LoadingState.Loading,
+    val scanProgress: Progress? = null,
+) {
+    enum class LoadingState { Loading, Scanning, Ready, Empty }
+}
+
+sealed interface GenreListUiEvent {
+    data class AddedToQueue(val genreName: String) : GenreListUiEvent
+    data class Error(val message: String) : GenreListUiEvent
+    data class EditTags(val songs: List<Song>) : GenreListUiEvent
+}
 
 @OpenForTesting
 @HiltViewModel
@@ -32,11 +49,14 @@ class GenreListViewModel @Inject constructor(
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackManager,
     private val queueManager: QueueManager,
-    preferenceManager: GeneralPreferenceManager,
     mediaImportObserver: MediaImportObserver
 ) : ViewModel() {
-    private val _viewState = MutableStateFlow<ViewState>(ViewState.Loading)
-    val viewState = _viewState.asStateFlow()
+
+    private val _uiState = MutableStateFlow(GenreListUiState())
+    val uiState: StateFlow<GenreListUiState> = _uiState.asStateFlow()
+
+    private val _events = MutableSharedFlow<GenreListUiEvent>()
+    val events: SharedFlow<GenreListUiEvent> = _events.asSharedFlow()
 
     init {
         combine(
@@ -44,49 +64,64 @@ class GenreListViewModel @Inject constructor(
             mediaImportObserver.songImportState
         ) { genres, songImportState ->
             if (songImportState is SongImportState.ImportProgress) {
-                _viewState.emit(ViewState.Scanning(songImportState.progress))
+                _uiState.emit(
+                    GenreListUiState(
+                        loadingState = GenreListUiState.LoadingState.Scanning,
+                        scanProgress = songImportState.progress,
+                    )
+                )
             } else {
-                _viewState.emit(ViewState.Ready(genres))
+                _uiState.emit(
+                    GenreListUiState(
+                        genres = genres,
+                        loadingState = if (genres.isEmpty()) {
+                            GenreListUiState.LoadingState.Empty
+                        } else {
+                            GenreListUiState.LoadingState.Ready
+                        },
+                    )
+                )
             }
         }
             .onStart {
-                _viewState.emit(ViewState.Loading)
+                _uiState.emit(GenreListUiState(loadingState = GenreListUiState.LoadingState.Loading))
             }
             .launchIn(viewModelScope)
     }
 
-    val theme = preferenceManager.theme(viewModelScope)
-    val accent = preferenceManager.accent(viewModelScope)
-
-    fun play(genre: Genre, completion: (Result<Boolean>) -> Unit) {
+    fun onPlay(genre: Genre) {
         viewModelScope.launch {
             val songs = getSongsForGenreOrEmpty(genre)
             if (queueManager.setQueue(songs)) {
                 playbackManager.load { result ->
                     result.onSuccess { playbackManager.play() }
-                    completion(result)
+                    result.onFailure { error ->
+                        viewModelScope.launch {
+                            _events.emit(GenreListUiEvent.Error(error.message ?: "Unknown error"))
+                        }
+                    }
                 }
             }
         }
     }
 
-    fun addToQueue(genre: Genre, completion: (Result<Genre>) -> Unit) {
+    fun onAddToQueue(genre: Genre) {
         viewModelScope.launch {
             val songs = getSongsForGenreOrEmpty(genre)
             playbackManager.addToQueue(songs)
-            completion(Result.success(genre))
+            _events.emit(GenreListUiEvent.AddedToQueue(genre.name))
         }
     }
 
-    fun playNext(genre: Genre, completion: (Result<Genre>) -> Unit) {
+    fun onPlayNext(genre: Genre) {
         viewModelScope.launch {
             val songs = getSongsForGenreOrEmpty(genre)
             playbackManager.playNext(songs)
-            completion(Result.success(genre))
+            _events.emit(GenreListUiEvent.AddedToQueue(genre.name))
         }
     }
 
-    fun exclude(genre: Genre) {
+    fun onExclude(genre: Genre) {
         viewModelScope.launch {
             val songs = getSongsForGenreOrEmpty(genre)
             songRepository.setExcluded(songs, true)
@@ -98,20 +133,14 @@ class GenreListViewModel @Inject constructor(
         }
     }
 
-    fun editTags(genre: Genre, completion: (Result<List<Song>>) -> Unit) {
+    fun onEditTags(genre: Genre) {
         viewModelScope.launch {
             val songs = getSongsForGenreOrEmpty(genre)
-            completion(Result.success(songs))
+            _events.emit(GenreListUiEvent.EditTags(songs))
         }
     }
 
     private suspend fun getSongsForGenreOrEmpty(genre: Genre) = genreRepository.getSongsForGenre(genre.name, SongQuery.All())
         .firstOrNull()
         .orEmpty()
-
-    sealed class ViewState {
-        data class Scanning(val progress: Progress?) : ViewState()
-        data object Loading : ViewState()
-        data class Ready(val genres: List<Genre>) : ViewState()
-    }
 }

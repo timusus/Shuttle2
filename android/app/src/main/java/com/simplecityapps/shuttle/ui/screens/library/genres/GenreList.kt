@@ -35,7 +35,7 @@ import kotlinx.collections.immutable.toImmutableList
 
 @Composable
 fun GenreList(
-    viewState: GenreListViewModel.ViewState,
+    uiState: GenreListUiState,
     playlists: ImmutableList<Playlist>,
     modifier: Modifier = Modifier,
     onSelectGenre: (genre: Genre) -> Unit = {},
@@ -47,19 +47,19 @@ fun GenreList(
     onAddToPlaylist: (playlist: Playlist, playlistData: PlaylistData) -> Unit = { _, _ -> },
     onShowCreatePlaylistDialog: (genre: Genre) -> Unit = {}
 ) {
-    when (viewState) {
-        is GenreListViewModel.ViewState.Scanning -> {
+    when (uiState.loadingState) {
+        GenreListUiState.LoadingState.Scanning -> {
             HorizontalLoadingView(
                 modifier = modifier
                     .fillMaxSize()
                     .wrapContentSize()
                     .padding(16.dp),
                 message = stringResource(R.string.library_scan_in_progress),
-                progress = viewState.progress?.asFloat() ?: 0f
+                progress = uiState.scanProgress?.asFloat() ?: 0f
             )
         }
 
-        is GenreListViewModel.ViewState.Loading -> {
+        GenreListUiState.LoadingState.Loading -> {
             LoadingStatusIndicator(
                 modifier = modifier
                     .fillMaxSize()
@@ -68,30 +68,30 @@ fun GenreList(
             )
         }
 
-        is GenreListViewModel.ViewState.Ready -> {
-            if (viewState.genres.isEmpty()) {
-                LoadingStatusIndicator(
-                    modifier = modifier
-                        .fillMaxSize()
-                        .wrapContentSize()
-                        .padding(16.dp),
-                    state = CircularLoadingState.Empty(stringResource(R.string.genre_list_empty))
-                )
-            } else {
-                GenreList(
-                    modifier = modifier,
-                    genres = viewState.genres.toImmutableList(),
-                    playlists = playlists,
-                    onSelectGenre = onSelectGenre,
-                    onPlayGenre = onPlayGenre,
-                    onAddToQueue = onAddToQueue,
-                    onPlayNext = onPlayNext,
-                    onExclude = onExclude,
-                    onEditTags = onEditTags,
-                    onAddToPlaylist = onAddToPlaylist,
-                    onShowCreatePlaylistDialog = onShowCreatePlaylistDialog
-                )
-            }
+        GenreListUiState.LoadingState.Empty -> {
+            LoadingStatusIndicator(
+                modifier = modifier
+                    .fillMaxSize()
+                    .wrapContentSize()
+                    .padding(16.dp),
+                state = CircularLoadingState.Empty(stringResource(R.string.genre_list_empty))
+            )
+        }
+
+        GenreListUiState.LoadingState.Ready -> {
+            GenreList(
+                modifier = modifier,
+                genres = uiState.genres.toImmutableList(),
+                playlists = playlists,
+                onSelectGenre = onSelectGenre,
+                onPlayGenre = onPlayGenre,
+                onAddToQueue = onAddToQueue,
+                onPlayNext = onPlayNext,
+                onExclude = onExclude,
+                onEditTags = onEditTags,
+                onAddToPlaylist = onAddToPlaylist,
+                onShowCreatePlaylistDialog = onShowCreatePlaylistDialog
+            )
         }
     }
 }
@@ -158,7 +158,7 @@ private fun GenreListLoadingPreview() {
                 .background(MaterialTheme.colorScheme.background)
         ) {
             GenreList(
-                viewState = GenreListViewModel.ViewState.Loading,
+                uiState = GenreListUiState(loadingState = GenreListUiState.LoadingState.Loading),
                 playlists = samplePlaylists
             )
         }
@@ -175,7 +175,10 @@ private fun GenreListScanningPreview() {
                 .background(MaterialTheme.colorScheme.background)
         ) {
             GenreList(
-                viewState = GenreListViewModel.ViewState.Scanning(progress = Progress(20, 205)),
+                uiState = GenreListUiState(
+                    loadingState = GenreListUiState.LoadingState.Scanning,
+                    scanProgress = Progress(20, 205)
+                ),
                 playlists = samplePlaylists
             )
         }
@@ -192,7 +195,7 @@ private fun GenreListEmptyPreview() {
                 .background(MaterialTheme.colorScheme.background)
         ) {
             GenreList(
-                viewState = GenreListViewModel.ViewState.Ready(genres = emptyList()),
+                uiState = GenreListUiState(loadingState = GenreListUiState.LoadingState.Empty),
                 playlists = samplePlaylists
             )
         }
@@ -209,8 +212,9 @@ private fun GenreListPreview() {
                 .background(MaterialTheme.colorScheme.background)
         ) {
             GenreList(
-                viewState = GenreListViewModel.ViewState.Ready(
-                    genres = sampleGenres
+                uiState = GenreListUiState(
+                    genres = sampleGenres,
+                    loadingState = GenreListUiState.LoadingState.Ready
                 ),
                 playlists = samplePlaylists
             )

@@ -6,11 +6,21 @@ import com.simplecityapps.shuttle.model.Genre
 
 fun readyGenreList(
     genres: List<Genre> = listOf(createGenre()),
-) = GenreListViewModel.ViewState.Ready(genres)
+) = GenreListUiState(
+    genres = genres,
+    loadingState = GenreListUiState.LoadingState.Ready,
+)
 
 fun scanningGenreList(progress: Progress? = null) =
-    GenreListViewModel.ViewState.Scanning(progress)
+    GenreListUiState(
+        loadingState = GenreListUiState.LoadingState.Scanning,
+        scanProgress = progress,
+    )
 
-fun emptyGenreList() = readyGenreList(genres = emptyList())
+fun emptyGenreList() = GenreListUiState(
+    loadingState = GenreListUiState.LoadingState.Empty,
+)
 
-val loadingGenreList = GenreListViewModel.ViewState.Loading
+val loadingGenreList = GenreListUiState(
+    loadingState = GenreListUiState.LoadingState.Loading,
+)

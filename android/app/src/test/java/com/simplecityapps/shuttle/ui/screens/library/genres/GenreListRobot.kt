@@ -55,7 +55,7 @@ class GenreListRobot(private val rule: ComposeContentTestRule) {
 
     /** Render the full [GenreList] composable (for view state tests). */
     fun setContent(
-        viewState: GenreListViewModel.ViewState,
+        uiState: GenreListUiState,
         playlists: List<Playlist> = emptyList(),
     ) {
         resetCallbacks()
@@ -63,7 +63,7 @@ class GenreListRobot(private val rule: ComposeContentTestRule) {
         rule.setContent {
             AppTheme {
                 GenreList(
-                    viewState = viewState,
+                    uiState = uiState,
                     playlists = playlists.toImmutableList(),
                     onSelectGenre = cb.onSelectGenre,
                     onPlayGenre = cb.onPlayGenre,
