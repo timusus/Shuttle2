@@ -11,7 +11,7 @@ import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
-import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.PlaybackWatcherCallback
@@ -32,7 +32,7 @@ class QueueBinder(
     var playbackState: PlaybackState,
     var progress: Float,
     val imageLoader: ArtworkImageLoader,
-    val playbackManager: PlaybackManager,
+    val playbackManager: PlaybackOperations,
     val playbackWatcher: PlaybackWatcher,
     val listener: Listener
 ) : ViewBinder,

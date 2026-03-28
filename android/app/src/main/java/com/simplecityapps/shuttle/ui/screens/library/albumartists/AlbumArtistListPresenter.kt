@@ -5,8 +5,8 @@ import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.playback.PlaybackManager
-import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.PlaybackOperations
+import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.query.SongQuery
@@ -77,10 +77,10 @@ class AlbumArtistListPresenter
 constructor(
     private val albumArtistRepository: AlbumArtistRepository,
     private val songRepository: SongRepository,
-    private val playbackManager: PlaybackManager,
+    private val playbackManager: PlaybackOperations,
     private val mediaImporter: MediaImporter,
     private val preferenceManager: GeneralPreferenceManager,
-    private val queueManager: QueueManager
+    private val queueManager: QueueOperations
 ) : BasePresenter<AlbumArtistListContract.View>(),
     AlbumArtistListContract.Presenter {
     private var albumArtists: List<com.simplecityapps.shuttle.model.AlbumArtist> = emptyList()

@@ -9,7 +9,7 @@ import android.os.Build
 import androidx.core.content.ContextCompat
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.NoiseManager
-import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackService
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.PlaybackWatcher
@@ -19,6 +19,7 @@ import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.model.Song
@@ -41,9 +42,9 @@ class PlaybackInitializer
 constructor(
     @ApplicationContext private val context: Context,
     private val songRepository: SongRepository,
-    private val playbackManager: PlaybackManager,
+    private val playbackManager: PlaybackOperations,
     private val playbackWatcher: PlaybackWatcher,
-    private val queueManager: QueueManager,
+    private val queueManager: QueueOperations,
     private val queueWatcher: QueueWatcher,
     private val playbackPreferenceManager: PlaybackPreferenceManager,
     @Suppress("unused") private val castSessionManager: CastSessionManager,

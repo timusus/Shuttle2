@@ -8,8 +8,8 @@ import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.genres.GenreQuery
 import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.playback.PlaybackManager
-import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.PlaybackOperations
+import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.Genre
@@ -88,8 +88,8 @@ constructor(
     private val genreRepository: GenreRepository,
     private val songRepository: SongRepository,
     private val albumsRepository: AlbumRepository,
-    private val playbackManager: PlaybackManager,
-    private val queueManager: QueueManager,
+    private val playbackManager: PlaybackOperations,
+    private val queueManager: QueueOperations,
     @Assisted private val genre: Genre
 ) : BasePresenter<GenreDetailContract.View>(),
     GenreDetailContract.Presenter {

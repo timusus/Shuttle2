@@ -6,9 +6,9 @@ import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.MediaProvider
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
-import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.provider.emby.EmbyMediaProvider
 import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
 import com.simplecityapps.provider.plex.PlexMediaProvider
@@ -49,8 +49,8 @@ constructor(
     private val plexMediaProvider: PlexMediaProvider,
     private val songRepository: SongRepository,
     private val playlistRepository: PlaylistRepository,
-    private val queueManager: QueueManager,
-    private val playbackManager: PlaybackManager,
+    private val queueManager: QueueOperations,
+    private val playbackManager: PlaybackOperations,
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope,
     @Assisted private val isOnboarding: Boolean
 ) : BasePresenter<MediaProviderSelectionContract.View>(),

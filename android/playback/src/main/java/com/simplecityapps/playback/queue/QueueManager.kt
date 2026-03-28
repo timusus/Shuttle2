@@ -9,7 +9,7 @@ import timber.log.Timber
 class QueueManager(
     private val queueWatcher: QueueWatcher,
     private val preferenceManager: GeneralPreferenceManager
-) {
+) : QueueOperations {
     enum class ShuffleMode {
         Off,
         On
@@ -48,7 +48,7 @@ class QueueManager(
 
     private var currentItem: QueueItem? = null
 
-    var hasRestoredQueue = false
+    override var hasRestoredQueue = false
         set(value) {
             field = value
             if (value) {
@@ -65,10 +65,10 @@ class QueueManager(
      *
      * @return true if the queue was successfully set, and is not empty.
      */
-    suspend fun setQueue(
+    override suspend fun setQueue(
         songs: List<Song>,
-        shuffleSongs: List<Song>? = null,
-        position: Int = 0
+        shuffleSongs: List<Song>?,
+        position: Int
     ): Boolean {
         if (position < 0 || position >= songs.size) {
             Timber.e("Invalid queue position: $position (songs.size: ${songs.size})")
@@ -130,7 +130,7 @@ class QueueManager(
         return queue.size() != 0
     }
 
-    fun setCurrentItem(currentItem: QueueItem) {
+    override fun setCurrentItem(currentItem: QueueItem) {
         Timber.v("setCurrentItem(currentItem: ${currentItem.song.name}|${currentItem.song.mimeType}), previous item: ${this.currentItem?.song?.name}|${this.currentItem?.song?.mimeType}")
         val oldPosition = getCurrentPosition()
         if (this.currentItem != currentItem) {
@@ -150,9 +150,9 @@ class QueueManager(
         }
     }
 
-    fun getCurrentItem(): QueueItem? = currentItem
+    override fun getCurrentItem(): QueueItem? = currentItem
 
-    fun getCurrentPosition(): Int? {
+    override fun getCurrentPosition(): Int? {
         val index = queue.get(shuffleMode).indexOf(currentItem)
         if (index != -1) {
             return index
@@ -161,9 +161,9 @@ class QueueManager(
         return null
     }
 
-    fun getSize(): Int = queue.size()
+    override fun getSize(): Int = queue.size()
 
-    fun remove(items: List<QueueItem>) {
+    override fun remove(items: List<QueueItem>) {
         val oldPosition = getCurrentPosition()
         queue.remove(items)
         queueWatcher.onQueueChanged()
@@ -172,12 +172,12 @@ class QueueManager(
         }
     }
 
-    fun remove(song: Song) {
+    override fun remove(song: Song) {
         val songQueueItem = getQueue().filter { it.song.id == song.id }
         remove(songQueueItem)
     }
 
-    fun clear() {
+    override fun clear() {
         Timber.v("clear()")
         queue.clear()
         queueWatcher.onQueueChanged()
@@ -189,7 +189,7 @@ class QueueManager(
      *
      * @param ignoreRepeat whether to ignore the current repeat mode, and return the next item as if repeat mode is 'all'
      */
-    fun getNext(ignoreRepeat: Boolean = false): QueueItem? = if (ignoreRepeat) {
+    override fun getNext(ignoreRepeat: Boolean): QueueItem? = if (ignoreRepeat) {
         getNext(RepeatMode.All)
     } else {
         getNext(repeatMode)
@@ -216,14 +216,14 @@ class QueueManager(
         }
     }
 
-    fun getPrevious(): QueueItem? {
+    override fun getPrevious(): QueueItem? {
         val currentQueue = queue.get(shuffleMode)
         return currentQueue.getOrNull(currentQueue.indexOf(currentItem) - 1)
     }
 
-    fun getQueue(): List<QueueItem> = queue.get(shuffleMode)
+    override fun getQueue(): List<QueueItem> = queue.get(shuffleMode)
 
-    fun getQueue(shuffleMode: ShuffleMode): List<QueueItem> = queue.get(shuffleMode)
+    override fun getQueue(shuffleMode: ShuffleMode): List<QueueItem> = queue.get(shuffleMode)
 
     /**
      * Sets the shuffle mode
@@ -231,7 +231,7 @@ class QueueManager(
      * @param shuffleMode [ShuffleMode]
      * @param reshuffle if true, re-shuffle the shuffle-queue when the [shuffleMode] is [ShuffleMode.On].
      */
-    suspend fun setShuffleMode(
+    override suspend fun setShuffleMode(
         shuffleMode: ShuffleMode,
         reshuffle: Boolean
     ) {
@@ -258,25 +258,25 @@ class QueueManager(
         }
     }
 
-    fun getShuffleMode(): ShuffleMode = shuffleMode
+    override fun getShuffleMode(): ShuffleMode = shuffleMode
 
-    suspend fun toggleShuffleMode() {
+    override suspend fun toggleShuffleMode() {
         when (shuffleMode) {
             ShuffleMode.Off -> setShuffleMode(ShuffleMode.On, reshuffle = true)
             ShuffleMode.On -> setShuffleMode(ShuffleMode.Off, reshuffle = false)
         }
     }
 
-    fun setRepeatMode(repeatMode: RepeatMode) {
+    override fun setRepeatMode(repeatMode: RepeatMode) {
         if (this.repeatMode != repeatMode) {
             this.repeatMode = repeatMode
             queueWatcher.onRepeatChanged(repeatMode)
         }
     }
 
-    fun getRepeatMode(): RepeatMode = repeatMode
+    override fun getRepeatMode(): RepeatMode = repeatMode
 
-    fun toggleRepeatMode() {
+    override fun toggleRepeatMode() {
         when (repeatMode) {
             RepeatMode.Off -> setRepeatMode(RepeatMode.All)
             RepeatMode.All -> setRepeatMode(RepeatMode.One)
@@ -284,7 +284,7 @@ class QueueManager(
         }
     }
 
-    fun skipToNext(ignoreRepeat: Boolean = false): Boolean {
+    override fun skipToNext(ignoreRepeat: Boolean): Boolean {
         Timber.v("skipToNext()")
         getNext(ignoreRepeat)?.let { nextItem ->
             setCurrentItem(nextItem)
@@ -295,14 +295,14 @@ class QueueManager(
         }
     }
 
-    fun skipToPrevious() {
+    override fun skipToPrevious() {
         Timber.v("skipToPrevious()")
         getPrevious()?.let { previousItem ->
             setCurrentItem(previousItem)
         } ?: Timber.v("No next track to skip-previous to")
     }
 
-    fun skipTo(position: Int) {
+    override fun skipTo(position: Int) {
         val currentQueue = queue.get(shuffleMode)
         currentQueue.getOrNull(position)?.let { queueItem ->
             setCurrentItem(queueItem)
@@ -311,12 +311,12 @@ class QueueManager(
         }
     }
 
-    fun addToQueue(songs: List<Song>) {
+    override fun addToQueue(songs: List<Song>) {
         queue.add(songs.map { song -> song.toQueueItem(false) })
         queueWatcher.onQueueChanged()
     }
 
-    fun move(
+    override fun move(
         from: Int,
         to: Int
     ) {
@@ -329,7 +329,7 @@ class QueueManager(
         }
     }
 
-    fun addToNext(songs: List<Song>) {
+    override fun addToNext(songs: List<Song>) {
         queue.insert((getCurrentPosition() ?: -1) + 1, songs.map { song -> song.toQueueItem(false) })
         queueWatcher.onQueueChanged()
     }

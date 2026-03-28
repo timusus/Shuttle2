@@ -3,6 +3,8 @@ package com.simplecityapps.shuttle.ui.screens.library.genres
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.simplecityapps.createGenre
 import com.simplecityapps.fakes.FakeGenreRepository
+import com.simplecityapps.fakes.FakePlaybackManager
+import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.importComplete
@@ -10,7 +12,6 @@ import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.testing.MainDispatcherRule
-import io.mockk.mockk
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -84,8 +85,8 @@ class GenreListIntegrationTest {
     private fun createViewModel(): GenreListViewModel = GenreListViewModel(
         genreRepository = fakeGenreRepository,
         songRepository = FakeSongRepository(),
-        playbackManager = mockk(relaxed = true),
-        queueManager = mockk(relaxed = true),
+        playbackManager = FakePlaybackManager(),
+        queueManager = FakeQueueManager(),
         mediaImportObserver = fakeImportState,
     )
 }

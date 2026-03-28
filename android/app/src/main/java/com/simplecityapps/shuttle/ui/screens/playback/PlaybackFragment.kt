@@ -23,6 +23,7 @@ import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.chromecast.CastSessionManager
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
@@ -63,7 +64,7 @@ class PlaybackFragment :
     lateinit var imageLoader: ArtworkImageLoader
 
     @Inject
-    lateinit var queueManager: QueueManager
+    lateinit var queueManager: QueueOperations
 
     @Inject
     lateinit var castSessionManager: CastSessionManager

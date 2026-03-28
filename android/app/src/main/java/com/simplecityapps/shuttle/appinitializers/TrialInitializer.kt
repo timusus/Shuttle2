@@ -1,7 +1,7 @@
 package com.simplecityapps.shuttle.appinitializers
 
 import android.app.Application
-import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.trial.BillingManager
 import com.simplecityapps.trial.TrialManager
@@ -16,7 +16,7 @@ class TrialInitializer
 @Inject
 constructor(
     private val trialManager: TrialManager,
-    private val playbackManager: PlaybackManager,
+    private val playbackManager: PlaybackOperations,
     private val billingManager: BillingManager,
     @AppCoroutineScope private val coroutineScope: CoroutineScope
 ) : AppInitializer {

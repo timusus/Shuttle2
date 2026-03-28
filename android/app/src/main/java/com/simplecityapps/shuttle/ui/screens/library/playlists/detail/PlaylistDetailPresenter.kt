@@ -6,8 +6,8 @@ import androidx.documentfile.provider.DocumentFile
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.playback.PlaybackManager
-import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.PlaybackOperations
+import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.PlaylistSong
@@ -104,8 +104,8 @@ constructor(
     @ApplicationContext private val context: Context,
     private val playlistRepository: PlaylistRepository,
     private val songRepository: SongRepository,
-    private val playbackManager: PlaybackManager,
-    private val queueManager: QueueManager,
+    private val playbackManager: PlaybackOperations,
+    private val queueManager: QueueOperations,
     @Assisted playlist: Playlist
 ) : BasePresenter<PlaylistDetailContract.View>(),
     PlaylistDetailContract.Presenter {

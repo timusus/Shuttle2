@@ -7,6 +7,7 @@ import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
 import com.simplecityapps.playback.AudioEffectSessionManager
 import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi21
@@ -104,4 +105,7 @@ class PlaybackEngineModule {
         queueWatcher: QueueWatcher,
         audioManager: AudioManager?
     ): PlaybackManager = PlaybackManager(queueManager, playbackWatcher, audioFocusHelper, playbackPreferenceManager, audioEffectSessionManager, coroutineScope, playback, queueWatcher, audioManager)
+
+    @Provides
+    fun providePlaybackOperations(playbackManager: PlaybackManager): PlaybackOperations = playbackManager
 }

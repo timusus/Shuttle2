@@ -20,7 +20,7 @@ import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.networking.retrofit.NetworkResult
-import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.queue.QueueItem
@@ -80,7 +80,7 @@ class QueueFragment :
     lateinit var playbackWatcher: PlaybackWatcher
 
     @Inject
-    lateinit var playbackManager: PlaybackManager
+    lateinit var playbackManager: PlaybackOperations
 
     @Inject
     lateinit var trialManager: TrialManager

@@ -21,6 +21,7 @@ import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.shuttle.di.AppCoroutineScope
@@ -47,6 +48,9 @@ class PlaybackModule {
         queueWatcher: QueueWatcher,
         preferenceManager: GeneralPreferenceManager
     ): QueueManager = QueueManager(queueWatcher, preferenceManager)
+
+    @Provides
+    fun provideQueueOperations(queueManager: QueueManager): QueueOperations = queueManager
 
     @Singleton
     @Provides

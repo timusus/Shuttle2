@@ -20,8 +20,8 @@ import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.genres.GenreQuery
 import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackNotificationManager
+import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.PlaybackWatcherCallback
@@ -30,6 +30,7 @@ import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.getArtworkCacheKey
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.model.Song
@@ -51,8 +52,8 @@ class MediaSessionManager
 constructor(
     private val context: Context,
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope,
-    private val playbackManager: PlaybackManager,
-    private val queueManager: QueueManager,
+    private val playbackManager: PlaybackOperations,
+    private val queueManager: QueueOperations,
     private val mediaIdHelper: MediaIdHelper,
     private val artistRepository: AlbumArtistRepository,
     private val albumRepository: AlbumRepository,

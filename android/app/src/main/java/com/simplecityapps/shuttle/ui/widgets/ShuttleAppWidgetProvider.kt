@@ -11,10 +11,10 @@ import android.util.LruCache
 import android.widget.RemoteViews
 import androidx.annotation.LayoutRes
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackService
 import com.simplecityapps.playback.PlaybackState
-import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.pendingintent.PendingIntentCompat
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
@@ -25,10 +25,10 @@ import javax.inject.Inject
 @AndroidEntryPoint
 abstract class ShuttleAppWidgetProvider : AppWidgetProvider() {
     @Inject
-    lateinit var playbackManager: PlaybackManager
+    lateinit var playbackManager: PlaybackOperations
 
     @Inject
-    lateinit var queueManager: QueueManager
+    lateinit var queueManager: QueueOperations
 
     @Inject
     lateinit var artworkCache: LruCache<String, Bitmap?>

@@ -6,9 +6,9 @@ import androidx.documentfile.provider.DocumentFile
 import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
 import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.queue.QueueChangeCallback
-import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Song
@@ -75,8 +75,8 @@ constructor(
     @ApplicationContext private val context: Context,
     private val albumRepository: AlbumRepository,
     private val songRepository: SongRepository,
-    private val playbackManager: PlaybackManager,
-    private val queueManager: QueueManager,
+    private val playbackManager: PlaybackOperations,
+    private val queueManager: QueueOperations,
     private val queueWatcher: QueueWatcher,
     @Assisted private val album: com.simplecityapps.shuttle.model.Album
 ) : BasePresenter<AlbumDetailContract.View>(),

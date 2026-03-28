@@ -2,8 +2,8 @@ package com.simplecityapps.shuttle.ui.screens.library.playlists
 
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
-import com.simplecityapps.playback.PlaybackManager
-import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.PlaybackOperations
+import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import javax.inject.Inject
@@ -64,8 +64,8 @@ class PlaylistListPresenter
 @Inject
 constructor(
     private val playlistRepository: PlaylistRepository,
-    private val playbackManager: PlaybackManager,
-    private val queueManager: QueueManager
+    private val playbackManager: PlaybackOperations,
+    private val queueManager: QueueOperations
 ) : BasePresenter<PlaylistListContract.View>(),
     PlaylistListContract.Presenter {
     override fun loadPlaylists() {

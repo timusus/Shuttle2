@@ -1,5 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.library.songs
 
+import com.simplecityapps.fakes.FakePlaybackManager
+import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.FakeSortPreferences
@@ -59,8 +61,8 @@ class SongListViewModelTest {
 
     private fun createViewModel(): SongListViewModel = SongListViewModel(
         songRepository = fakeSongRepository,
-        playbackManager = mockk(relaxed = true),
-        queueManager = mockk(relaxed = true),
+        playbackManager = FakePlaybackManager(),
+        queueManager = FakeQueueManager(),
         sortPreferenceManager = fakeSortPreferences,
         ioDispatcher = testDispatcher,
         mediaImportObserver = fakeImportState,

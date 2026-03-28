@@ -2,7 +2,7 @@ package com.simplecityapps.shuttle.ui
 
 import android.content.Context
 import android.os.Build
-import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.PlaybackWatcherCallback
@@ -16,7 +16,7 @@ class ShortcutManager
 constructor(
     @ApplicationContext private val context: Context,
     private val playbackWatcher: PlaybackWatcher,
-    private val playbackManager: PlaybackManager,
+    private val playbackManager: PlaybackOperations,
     private val shortcutHelper: ShortcutHelper
 ) : PlaybackWatcherCallback {
 

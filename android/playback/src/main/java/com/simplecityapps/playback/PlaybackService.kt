@@ -19,7 +19,7 @@ import com.simplecityapps.playback.androidauto.PackageValidator
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
-import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueWatcher
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -35,13 +35,13 @@ class PlaybackService :
     PlaybackWatcherCallback,
     QueueChangeCallback {
     @Inject
-    lateinit var playbackManager: PlaybackManager
+    lateinit var playbackManager: PlaybackOperations
 
     @Inject
     lateinit var playbackWatcher: PlaybackWatcher
 
     @Inject
-    lateinit var queueManager: QueueManager
+    lateinit var queueManager: QueueOperations
 
     @Inject
     lateinit var queueWatcher: QueueWatcher

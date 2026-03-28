@@ -3,7 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.settings
 import android.annotation.SuppressLint
 import androidx.annotation.NavigationRes
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
@@ -35,7 +35,7 @@ class BottomDrawerSettingsPresenter
 @Inject
 constructor(
     private val songRepository: SongRepository,
-    private val playbackManager: PlaybackManager,
+    private val playbackManager: PlaybackOperations,
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope
 ) : BasePresenter<BottomDrawerSettingsContract.View>(),
     BottomDrawerSettingsContract.Presenter {

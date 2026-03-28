@@ -1,7 +1,7 @@
 package com.simplecityapps.playback.sleeptimer
 
 import android.os.Handler
-import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.PlaybackWatcherCallback
 import com.simplecityapps.shuttle.model.Song
@@ -10,7 +10,7 @@ import kotlin.math.max
 import timber.log.Timber
 
 class SleepTimer(
-    private val playbackManager: PlaybackManager,
+    private val playbackManager: PlaybackOperations,
     private val playbackWatcher: PlaybackWatcher
 ) : PlaybackWatcherCallback {
     private var handler: Handler? = null

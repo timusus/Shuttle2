@@ -4,7 +4,7 @@ import android.content.Context
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.chromecast.CastService
 import com.simplecityapps.playback.chromecast.CastSessionManager
 import com.simplecityapps.playback.chromecast.HttpServer
@@ -40,7 +40,7 @@ class TestCastModule {
     @Provides
     fun provideCastSessionManager(
         @ApplicationContext context: Context,
-        playbackManager: PlaybackManager,
+        playbackManager: PlaybackOperations,
         httpServer: HttpServer,
         exoPlayerPlayback: ExoPlayerPlayback,
         mediaInfoProvider: AggregateMediaInfoProvider

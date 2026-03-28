@@ -5,8 +5,8 @@ import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.mediaprovider.repository.songs.comparator
-import com.simplecityapps.playback.PlaybackManager
-import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.PlaybackOperations
+import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
@@ -59,8 +59,8 @@ class SmartPlaylistDetailPresenter
 constructor(
     @ApplicationContext private val context: Context,
     private val songRepository: SongRepository,
-    private val playbackManager: PlaybackManager,
-    private val queueManager: QueueManager,
+    private val playbackManager: PlaybackOperations,
+    private val queueManager: QueueOperations,
     @Assisted private val playlist: com.simplecityapps.shuttle.model.SmartPlaylist
 ) : BasePresenter<SmartPlaylistDetailContract.View>(),
     SmartPlaylistDetailContract.Presenter {

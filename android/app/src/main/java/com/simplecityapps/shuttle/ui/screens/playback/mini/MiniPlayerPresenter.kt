@@ -1,11 +1,11 @@
 package com.simplecityapps.shuttle.ui.screens.playback.mini
 
-import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.PlaybackWatcherCallback
 import com.simplecityapps.playback.queue.QueueChangeCallback
-import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import javax.inject.Inject
@@ -14,9 +14,9 @@ import timber.log.Timber
 class MiniPlayerPresenter
 @Inject
 constructor(
-    private val playbackManager: PlaybackManager,
+    private val playbackManager: PlaybackOperations,
     private val playbackWatcher: PlaybackWatcher,
-    private val queueManager: QueueManager,
+    private val queueManager: QueueOperations,
     private val queueWatcher: QueueWatcher
 ) : BasePresenter<MiniPlayerContract.View>(),
     MiniPlayerContract.Presenter,

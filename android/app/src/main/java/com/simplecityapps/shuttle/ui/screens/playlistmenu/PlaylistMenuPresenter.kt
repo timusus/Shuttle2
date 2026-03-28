@@ -6,7 +6,7 @@ import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.mediaprovider.repository.songs.comparator
-import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
@@ -72,7 +72,7 @@ constructor(
     private val playlistRepository: PlaylistRepository,
     private val songRepository: SongRepository,
     private val genreRepository: GenreRepository,
-    private val queueManager: QueueManager,
+    private val queueManager: QueueOperations,
     private val preferenceManager: GeneralPreferenceManager
 ) : BasePresenter<PlaylistMenuContract.View>(),
     PlaylistMenuContract.Presenter {

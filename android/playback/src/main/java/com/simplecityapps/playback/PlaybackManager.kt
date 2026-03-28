@@ -26,7 +26,8 @@ class PlaybackManager(
     exoplayerPlayback: Playback,
     queueWatcher: QueueWatcher,
     audioManager: AudioManager?
-) : Playback.Callback,
+) : PlaybackOperations,
+    Playback.Callback,
     AudioFocusHelper.Listener,
     QueueChangeCallback {
     private var progressHandler: ProgressHandler = ProgressHandler()
@@ -50,7 +51,7 @@ class PlaybackManager(
         audioEffectSessionManager.openAudioEffectSession()
     }
 
-    fun togglePlayback() {
+    override fun togglePlayback() {
         when (playbackState()) {
             is PlaybackState.Loading, PlaybackState.Playing -> {
                 playback.pause()
@@ -65,8 +66,8 @@ class PlaybackManager(
      * Loads the current queue. The boolean in [Result] indicates whether the current queue item successfully loaded.
      * Note: If the current queue item fails to load, the next item in the queue is attempted
      */
-    fun load(
-        seekPosition: Int? = null,
+    override fun load(
+        seekPosition: Int?,
         completion: (Result<Boolean>) -> Unit
     ) {
         Timber.v("load(seekPosition: $seekPosition)")
@@ -119,7 +120,7 @@ class PlaybackManager(
             }
     }
 
-    suspend fun shuffle(
+    override suspend fun shuffle(
         songs: List<Song>,
         completion: (Result<Any?>) -> Unit
     ) {
@@ -134,7 +135,7 @@ class PlaybackManager(
      *
      * @param attempt used internally to prevent infinite attempts
      */
-    fun play(attempt: Int = 1) {
+    override fun play(attempt: Int) {
         Timber.v("play() called (attempt: $attempt)")
         if (queueManager.getQueue().isEmpty()) {
             Timber.w("Failed to play: Queue empty.")
@@ -166,9 +167,9 @@ class PlaybackManager(
         }
     }
 
-    fun skipToNext(
-        ignoreRepeat: Boolean = false,
-        completion: ((Result<Any?>) -> Unit)? = null
+    override fun skipToNext(
+        ignoreRepeat: Boolean,
+        completion: ((Result<Any?>) -> Unit)?
     ) {
         if (queueManager.skipToNext(ignoreRepeat)) {
             queueManager.getCurrentItem()?.let { currentQueueItem ->
@@ -183,9 +184,9 @@ class PlaybackManager(
         }
     }
 
-    fun skipToPrev(
-        force: Boolean = false,
-        completion: ((Result<Any?>) -> Unit)? = null
+    override fun skipToPrev(
+        force: Boolean,
+        completion: ((Result<Any?>) -> Unit)?
     ) {
         if (force || playback.getProgress() ?: 0 < 2000) {
             queueManager.skipToPrevious()
@@ -203,7 +204,7 @@ class PlaybackManager(
         }
     }
 
-    fun skipTo(position: Int) {
+    override fun skipTo(position: Int) {
         if (queueManager.getCurrentPosition() != position) {
             queueManager.skipTo(position)
             queueManager.getCurrentItem()?.let { currentQueueItem ->
@@ -217,27 +218,27 @@ class PlaybackManager(
         }
     }
 
-    fun playbackState(): PlaybackState = playback.playBackState()
+    override fun playbackState(): PlaybackState = playback.playBackState()
 
     /**
      * @return the current seek position, in milliseconds
      */
-    fun getProgress(): Int? = playback.getProgress()
+    override fun getProgress(): Int? = playback.getProgress()
 
     /**
      * @return the track duration, in milliseconds
      */
-    fun getDuration(): Int? = playback.getDuration()
+    override fun getDuration(): Int? = playback.getDuration()
 
     /**
      * The position to seek to, in milliseconds
      */
-    fun seekTo(position: Int) {
+    override fun seekTo(position: Int) {
         playback.seek(position)
         updateProgress(fromUser = true)
     }
 
-    suspend fun addToQueue(songs: List<Song>) {
+    override suspend fun addToQueue(songs: List<Song>) {
         if (queueManager.getQueue().isEmpty()) {
             if (queueManager.setQueue(songs)) {
                 load { result ->
@@ -250,7 +251,7 @@ class PlaybackManager(
         }
     }
 
-    fun moveQueueItem(
+    override fun moveQueueItem(
         from: Int,
         to: Int
     ) {
@@ -260,7 +261,7 @@ class PlaybackManager(
         }
     }
 
-    fun removeQueueItem(queueItem: QueueItem) {
+    override fun removeQueueItem(queueItem: QueueItem) {
         if (queueManager.getCurrentItem() == queueItem) {
             playback.pause()
             queueManager.skipToNext(true)
@@ -268,7 +269,7 @@ class PlaybackManager(
         queueManager.remove(listOf(queueItem))
     }
 
-    fun clearQueue() {
+    override fun clearQueue() {
         if (playback.playBackState() == PlaybackState.Playing) {
             queueManager.getCurrentItem()?.let { currentItem ->
                 queueManager.remove(queueManager.getQueue() - currentItem)
@@ -281,7 +282,7 @@ class PlaybackManager(
         }
     }
 
-    suspend fun playNext(songs: List<Song>) {
+    override suspend fun playNext(songs: List<Song>) {
         if (queueManager.getQueue().isEmpty()) {
             if (queueManager.setQueue(songs)) {
                 load { result ->
@@ -295,9 +296,9 @@ class PlaybackManager(
         }
     }
 
-    fun getPlayback(): Playback = playback
+    override fun getPlayback(): Playback = playback
 
-    fun switchToPlayback(playback: Playback) {
+    override fun switchToPlayback(playback: Playback) {
         Timber.v("switchToPlayback(playback: ${playback.javaClass.simpleName})")
 
         val oldPlayback = this.playback
@@ -329,11 +330,11 @@ class PlaybackManager(
         }
     }
 
-    fun setPlaybackSpeed(multiplier: Float) {
+    override fun setPlaybackSpeed(multiplier: Float) {
         playback.setPlaybackSpeed(multiplier)
     }
 
-    fun getPlaybackSpeed(): Float = playback.getPlaybackSpeed()
+    override fun getPlaybackSpeed(): Float = playback.getPlaybackSpeed()
 
     // Private
 

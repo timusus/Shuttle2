@@ -1,11 +1,11 @@
 package com.simplecityapps.shuttle.ui.screens.queue
 
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueItem
-import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
@@ -69,8 +69,8 @@ interface QueueContract {
 class QueuePresenter
 @Inject
 constructor(
-    private val queueManager: QueueManager,
-    private val playbackManager: PlaybackManager,
+    private val queueManager: QueueOperations,
+    private val playbackManager: PlaybackOperations,
     private val queueWatcher: QueueWatcher,
     private val songRepository: SongRepository
 ) : BasePresenter<QueueContract.View>(),

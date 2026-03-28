@@ -8,7 +8,7 @@ import android.media.AudioManager
 
 class NoiseManager(
     private val context: Context,
-    playbackManager: PlaybackManager,
+    playbackManager: PlaybackOperations,
     playbackWatcher: PlaybackWatcher
 ) : PlaybackWatcherCallback {
     init {
@@ -31,7 +31,7 @@ class NoiseManager(
     }
 }
 
-class NoisyReceiver(val playbackManager: PlaybackManager) : BroadcastReceiver() {
+class NoisyReceiver(val playbackManager: PlaybackOperations) : BroadcastReceiver() {
     override fun onReceive(
         context: Context?,
         intent: Intent?

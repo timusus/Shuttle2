@@ -3,7 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.main
 import com.google.firebase.Firebase
 import com.google.firebase.crashlytics.crashlytics
 import com.simplecityapps.playback.queue.QueueChangeCallback
-import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
@@ -39,7 +39,7 @@ interface MainContract {
 class MainPresenter
 @Inject
 constructor(
-    private val queueManager: QueueManager,
+    private val queueManager: QueueOperations,
     private val queueWatcher: QueueWatcher,
     private val preferenceManager: GeneralPreferenceManager,
     private val trialManager: TrialManager

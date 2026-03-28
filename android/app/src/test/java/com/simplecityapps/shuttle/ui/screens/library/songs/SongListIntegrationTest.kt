@@ -4,6 +4,8 @@ import android.app.Application
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.test.core.app.ApplicationProvider
 import com.simplecityapps.createSong
+import com.simplecityapps.fakes.FakePlaybackManager
+import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.FakeSortPreferences
@@ -13,7 +15,6 @@ import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.testing.MainDispatcherRule
-import io.mockk.mockk
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -154,8 +155,8 @@ class SongListIntegrationTest {
         songRepository: FakeSongRepository = fakeSongRepository,
     ): SongListViewModel = SongListViewModel(
         songRepository = songRepository,
-        playbackManager = mockk(relaxed = true),
-        queueManager = mockk(relaxed = true),
+        playbackManager = FakePlaybackManager(),
+        queueManager = FakeQueueManager(),
         sortPreferenceManager = fakeSortPreferences,
         ioDispatcher = mainDispatcherRule.testDispatcher,
         mediaImportObserver = fakeImportState,

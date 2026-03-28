@@ -10,8 +10,8 @@ import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.mediaprovider.repository.songs.comparator
-import com.simplecityapps.playback.PlaybackManager
-import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.PlaybackOperations
+import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.Song
@@ -54,8 +54,8 @@ sealed interface SongListUiEvent {
 @HiltViewModel
 class SongListViewModel @Inject constructor(
     private val songRepository: SongRepository,
-    private val playbackManager: PlaybackManager,
-    private val queueManager: QueueManager,
+    private val playbackManager: PlaybackOperations,
+    private val queueManager: QueueOperations,
     private val sortPreferenceManager: SortPreferences,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     mediaImportObserver: SongImportStateProvider,

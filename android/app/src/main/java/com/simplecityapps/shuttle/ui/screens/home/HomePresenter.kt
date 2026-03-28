@@ -5,8 +5,8 @@ import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.playback.PlaybackManager
-import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.PlaybackOperations
+import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.query.SongQuery
@@ -77,8 +77,8 @@ constructor(
     private val songRepository: SongRepository,
     private val albumRepository: AlbumRepository,
     private val albumArtistRepository: AlbumArtistRepository,
-    private val playbackManager: PlaybackManager,
-    private val queueManager: QueueManager,
+    private val playbackManager: PlaybackOperations,
+    private val queueManager: QueueOperations,
     @Named("randomSeed") private val seed: Long
 ) : BasePresenter<HomeContract.View>(),
     HomeContract.Presenter {

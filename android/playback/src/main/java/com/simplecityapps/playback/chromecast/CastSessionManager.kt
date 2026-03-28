@@ -5,7 +5,7 @@ import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.CastSession
 import com.google.android.gms.cast.framework.SessionManagerListener
 import com.simplecityapps.mediaprovider.MediaInfoProvider
-import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.exoplayer.ExoPlayerPlayback
 import javax.inject.Inject
 import timber.log.Timber
@@ -13,7 +13,7 @@ import timber.log.Timber
 class CastSessionManager
 @Inject
 constructor(
-    private val playbackManager: PlaybackManager,
+    private val playbackManager: PlaybackOperations,
     private val applicationContext: Context,
     private val httpServer: HttpServer,
     private val exoPlayerPlayback: ExoPlayerPlayback,
