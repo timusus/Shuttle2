@@ -13,6 +13,11 @@ import com.simplecityapps.shuttle.ui.screens.library.albumartists.ArtistListPref
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.ArtistListPreferences
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListPreferenceManager
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListPreferences
+import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
+import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
+import com.simplecityapps.mediaprovider.repository.songs.SongRepository
+import com.simplecityapps.playback.queue.QueueOperations
+import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -61,4 +66,16 @@ class AppModule {
     @Provides
     @Named("randomSeed")
     fun provideRandomSeed(): Long = Random().nextLong()
+
+    @Provides
+    fun provideAddToPlaylist(
+        playlistRepository: PlaylistRepository,
+        songRepository: SongRepository,
+        genreRepository: GenreRepository,
+        queueManager: QueueOperations,
+        preferenceManager: GeneralPreferenceManager,
+    ): AddToPlaylist = AddToPlaylist(
+        playlistRepository, songRepository, genreRepository, queueManager,
+        ignorePlaylistDuplicates = { preferenceManager.ignorePlaylistDuplicates },
+    )
 }

@@ -14,6 +14,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 class FakePlaylistRepository : PlaylistRepository {
     private val playlists = MutableStateFlow<List<Playlist>>(emptyList())
     private val smartPlaylists = MutableStateFlow<List<SmartPlaylist>>(emptyList())
+    private val playlistSongs = mutableMapOf<Long, List<Song>>()
+
+    fun setSongsForPlaylist(playlist: Playlist, songs: List<Song>) {
+        playlistSongs[playlist.id] = songs
+    }
 
     fun setPlaylists(value: List<Playlist>) {
         playlists.value = value
@@ -37,7 +42,12 @@ class FakePlaylistRepository : PlaylistRepository {
 
     override suspend fun removeSongsFromPlaylist(playlist: Playlist, songs: List<Song>) {}
 
-    override fun getSongsForPlaylist(playlist: Playlist): Flow<List<PlaylistSong>> = MutableStateFlow(emptyList())
+    override fun getSongsForPlaylist(playlist: Playlist): Flow<List<PlaylistSong>> {
+        val songs = playlistSongs[playlist.id].orEmpty().mapIndexed { index, song ->
+            PlaylistSong(id = index.toLong(), sortOrder = index.toLong(), song = song)
+        }
+        return MutableStateFlow(songs)
+    }
 
     override suspend fun deletePlaylist(playlist: Playlist) {}
 
