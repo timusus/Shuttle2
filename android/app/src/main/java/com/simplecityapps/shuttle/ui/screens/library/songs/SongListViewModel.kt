@@ -1,9 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library.songs
 
-import android.app.Application
-import androidx.core.net.toUri
-import androidx.documentfile.provider.DocumentFile
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
@@ -12,7 +9,6 @@ import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.mediaprovider.repository.songs.comparator
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.queue.QueueOperations
-import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
@@ -48,7 +44,8 @@ data class SongListUiState(
 
 sealed interface SongListUiEvent {
     data class AddedToQueue(val songCount: Int) : SongListUiEvent
-    data class Error(val message: String) : SongListUiEvent
+    data class PlaybackFailed(val errorMessage: String?) : SongListUiEvent
+    data object LibraryEmpty : SongListUiEvent
 }
 
 @HiltViewModel
@@ -59,8 +56,7 @@ class SongListViewModel @Inject constructor(
     private val sortPreferenceManager: SortPreferences,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     mediaImportObserver: SongImportStateProvider,
-    application: Application,
-) : AndroidViewModel(application) {
+) : ViewModel() {
 
     private val selectionState = SelectionState<Song>()
 
@@ -124,11 +120,7 @@ class SongListViewModel @Inject constructor(
                     result.onSuccess { playbackManager.play() }
                     result.onFailure { error ->
                         viewModelScope.launch {
-                            _events.emit(
-                                SongListUiEvent.Error(
-                                    error.message ?: getApplication<Application>().getString(R.string.error_unknown)
-                                )
-                            )
+                            _events.emit(SongListUiEvent.PlaybackFailed(error.message))
                         }
                     }
                 }
@@ -166,19 +158,7 @@ class SongListViewModel @Inject constructor(
         }
     }
 
-    fun onDelete(song: Song) {
-        val context = getApplication<Application>().applicationContext
-        val documentFile = DocumentFile.fromSingleUri(context, song.path.toUri())
-
-        if (documentFile?.delete() == false) {
-            viewModelScope.launch {
-                _events.emit(
-                    SongListUiEvent.Error(context.getString(R.string.delete_song_failed))
-                )
-            }
-            return
-        }
-
+    fun onSongDeleted(song: Song) {
         viewModelScope.launch {
             songRepository.remove(song)
             queueManager.remove(song)
@@ -190,7 +170,7 @@ class SongListViewModel @Inject constructor(
 
         if (songs.isEmpty()) {
             viewModelScope.launch {
-                _events.emit(SongListUiEvent.Error("Your library is empty"))
+                _events.emit(SongListUiEvent.LibraryEmpty)
             }
             return
         }
@@ -200,11 +180,7 @@ class SongListViewModel @Inject constructor(
                 result.onSuccess { playbackManager.play() }
                 result.onFailure { error ->
                     viewModelScope.launch {
-                        _events.emit(
-                            SongListUiEvent.Error(
-                                error.message ?: getApplication<Application>().getString(R.string.error_unknown)
-                            )
-                        )
+                        _events.emit(SongListUiEvent.PlaybackFailed(error.message))
                     }
                 }
             }

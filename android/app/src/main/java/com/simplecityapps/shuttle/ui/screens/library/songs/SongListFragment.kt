@@ -10,6 +10,8 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
+import androidx.core.net.toUri
+import androidx.documentfile.provider.DocumentFile
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
@@ -130,8 +132,15 @@ class SongListFragment :
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
-                        is SongListUiEvent.Error -> {
-                            Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
+                        is SongListUiEvent.PlaybackFailed -> {
+                            Toast.makeText(
+                                context,
+                                event.errorMessage ?: getString(R.string.error_unknown),
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                        is SongListUiEvent.LibraryEmpty -> {
+                            Toast.makeText(context, R.string.library_empty, Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
@@ -174,7 +183,7 @@ class SongListFragment :
                     },
                     onDelete = { song ->
                         showDeleteDialog(requireContext(), song.name) {
-                            viewModel.onDelete(song)
+                            deleteSong(song)
                         }
                     },
                     onShuffle = { viewModel.onShuffle() }
@@ -301,6 +310,15 @@ class SongListFragment :
                 }
             }
         }
+    }
+
+    private fun deleteSong(song: Song) {
+        val documentFile = DocumentFile.fromSingleUri(requireContext(), song.path.toUri())
+        if (documentFile?.delete() == false) {
+            Toast.makeText(context, R.string.delete_song_failed, Toast.LENGTH_LONG).show()
+            return
+        }
+        viewModel.onSongDeleted(song)
     }
 
     fun showTagEditor(song: Song) {

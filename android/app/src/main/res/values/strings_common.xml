@@ -6,6 +6,8 @@
     <string name="error_unexpected">An unexpected error occurred</string>
     <!-- Shown when an unknown error occurs -->
     <string name="error_unknown">An unknown error occurred</string>
+    <!-- Shown when attempting to shuffle an empty library -->
+    <string name="library_empty">Your library is empty</string>
     <!-- Shown when items (an album, artist or song) are added to the queue -->
     <string name="queue_item_added"><xliff:g example="Lateralus" id="item_name">{item_name}</xliff:g> added to queue</string>
     <!-- Shown when songs are added to the queue -->

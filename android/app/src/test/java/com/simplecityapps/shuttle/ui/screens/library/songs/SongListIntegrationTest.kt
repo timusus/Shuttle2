@@ -1,8 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library.songs
 
-import android.app.Application
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.test.core.app.ApplicationProvider
 import com.simplecityapps.createSong
 import com.simplecityapps.fakes.FakePlaybackManager
 import com.simplecityapps.fakes.FakeQueueManager
@@ -160,6 +158,5 @@ class SongListIntegrationTest {
         sortPreferenceManager = fakeSortPreferences,
         ioDispatcher = mainDispatcherRule.testDispatcher,
         mediaImportObserver = fakeImportState,
-        application = ApplicationProvider.getApplicationContext<Application>(),
     )
 }

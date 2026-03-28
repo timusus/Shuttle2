@@ -8,7 +8,6 @@ import com.simplecityapps.fakes.FakeSortPreferences
 import com.simplecityapps.fakes.importComplete
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import io.kotest.matchers.shouldBe
-import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -66,6 +65,5 @@ class SongListViewModelTest {
         sortPreferenceManager = fakeSortPreferences,
         ioDispatcher = testDispatcher,
         mediaImportObserver = fakeImportState,
-        application = mockk(),
     )
 }
