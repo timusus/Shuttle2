@@ -127,3 +127,11 @@ fun createPlaylist(
     mediaProvider = mediaProvider,
     externalId = externalId,
 )
+
+fun createSmartPlaylist(
+    nameResId: Int = com.simplecityapps.mediaprovider.R.string.playlist_title_recently_added,
+    songQuery: com.simplecityapps.shuttle.query.SongQuery = com.simplecityapps.shuttle.query.SongQuery.RecentlyAdded(),
+) = com.simplecityapps.shuttle.model.SmartPlaylist(
+    nameResId = nameResId,
+    songQuery = songQuery,
+)
