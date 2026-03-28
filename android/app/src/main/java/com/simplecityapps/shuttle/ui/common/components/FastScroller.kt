@@ -55,11 +55,41 @@ import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+/**
+ * Convenience overload that accepts [LazyListState] directly.
+ */
 @Composable
 fun FastScroller(
     getPopupText: (index: Int) -> String?,
     modifier: Modifier = Modifier,
     state: LazyListState = rememberLazyListState(),
+    track: @Composable BoxScope.() -> Unit = {
+        DefaultTrack(modifier = Modifier.fillMaxHeight())
+    },
+    thumb: @Composable () -> Unit = {
+        DefaultThumb()
+    },
+    popup: @Composable ((index: Int) -> Unit)? = null
+) {
+    FastScroller(
+        getPopupText = getPopupText,
+        modifier = modifier,
+        scrollableState = rememberFastScrollableState(state),
+        track = track,
+        thumb = thumb,
+        popup = popup,
+    )
+}
+
+/**
+ * Fast scroller overlay that works with any [FastScrollableState] —
+ * either [LazyListState] or [LazyGridState][androidx.compose.foundation.lazy.grid.LazyGridState].
+ */
+@Composable
+fun FastScroller(
+    getPopupText: (index: Int) -> String?,
+    scrollableState: FastScrollableState,
+    modifier: Modifier = Modifier,
     track: @Composable BoxScope.() -> Unit = {
         DefaultTrack(modifier = Modifier.fillMaxHeight())
     },
@@ -81,10 +111,10 @@ fun FastScroller(
     var isVisible by remember { mutableStateOf(true) }
 
     // Auto-hide the scroller when not scrolling or dragging.
-    LaunchedEffect(state.isScrollInProgress, isDragging) {
-        if (!state.isScrollInProgress && !isDragging) {
+    LaunchedEffect(scrollableState.isScrollInProgress, isDragging) {
+        if (!scrollableState.isScrollInProgress && !isDragging) {
             delay(1500)
-            if (!state.isScrollInProgress && !isDragging) {
+            if (!scrollableState.isScrollInProgress && !isDragging) {
                 isVisible = false
             }
         } else {
@@ -103,12 +133,12 @@ fun FastScroller(
             // Use the available maxHeight as the viewport height.
             val viewportHeightPx = with(density) { maxHeight.toPx() }
             val totalItemsCount by remember {
-                derivedStateOf { state.layoutInfo.totalItemsCount }
+                derivedStateOf { scrollableState.totalItemsCount }
             }
 
             // Compute the thumb scroll state using an average item height.
             val thumbScrollState = computeThumbScrollState(
-                state = state,
+                state = scrollableState,
                 totalItemsCount = totalItemsCount,
                 viewportHeightPx = viewportHeightPx,
                 thumbHeight = measuredThumbSize.height
@@ -161,7 +191,7 @@ fun FastScroller(
                                 )
                                 dragThumbOffsetPx = newDragOffset
                                 coroutineScope.launch {
-                                    state.scrollToItem(scrollTarget.first, scrollTarget.second)
+                                    scrollableState.scrollToItem(scrollTarget.first, scrollTarget.second)
                                 }
                             },
                             onDragEnd = { isDragging = false },
@@ -279,18 +309,16 @@ private data class ThumbScrollState(
 
 /**
  * Computes the thumb scroll state using the average height of visible items.
- *
- * This makes the fast scroller agnostic to fixed item heights.
  */
 private fun computeThumbScrollState(
-    state: LazyListState,
+    state: FastScrollableState,
     totalItemsCount: Int,
     viewportHeightPx: Float,
     thumbHeight: Int
 ): ThumbScrollState {
-    val visibleItems = state.layoutInfo.visibleItemsInfo
-    val averageItemHeight = if (visibleItems.isNotEmpty()) {
-        visibleItems.sumOf { it.size.toLong() }.toFloat() / visibleItems.size
+    val visibleItemSizes = state.visibleItemMainAxisSizes
+    val averageItemHeight = if (visibleItemSizes.isNotEmpty()) {
+        visibleItemSizes.sumOf { it.toLong() }.toFloat() / visibleItemSizes.size
     } else {
         1f
     }

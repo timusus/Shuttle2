@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -30,6 +31,7 @@ import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.ui.common.components.CircularLoadingState
 import com.simplecityapps.shuttle.ui.common.components.FastScroller
+import com.simplecityapps.shuttle.ui.common.components.rememberFastScrollableState
 import com.simplecityapps.shuttle.ui.common.components.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.common.components.LoadingStatusIndicator
 import com.simplecityapps.shuttle.ui.common.utils.dp as dpToInt
@@ -212,6 +214,8 @@ private fun AlbumArtistGridView(
     onShowCreatePlaylistDialog: (AlbumArtist) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val gridState = rememberLazyGridState()
+
     val preloadingData =
         rememberGlidePreloadingData(
             data = albumArtists,
@@ -224,33 +228,47 @@ private fun AlbumArtistGridView(
                 .load(item)
         }
 
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(3),
-        modifier = modifier
-            .fillMaxSize()
-            .testTag("album-artists-grid"),
-        contentPadding = PaddingValues(8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        items(preloadingData.size) { index ->
-            val (albumArtist, artworkPreloadRequestBuilder) = preloadingData[index]
+    Box(modifier = modifier.fillMaxSize()) {
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(3),
+            modifier = Modifier
+                .fillMaxSize()
+                .testTag("album-artists-grid"),
+            contentPadding = PaddingValues(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            state = gridState,
+        ) {
+            items(preloadingData.size) { index ->
+                val (albumArtist, artworkPreloadRequestBuilder) = preloadingData[index]
 
-            AlbumArtistGridItem(
-                albumArtist = albumArtist,
-                isSelected = selectedArtists.contains(albumArtist),
-                playlists = playlists,
-                artworkPreloadRequestBuilder = artworkPreloadRequestBuilder,
-                onClick = onArtistClick,
-                onLongClick = onArtistLongClick,
-                onPlay = onPlay,
-                onAddToQueue = onAddToQueue,
-                onPlayNext = onPlayNext,
-                onExclude = onExclude,
-                onEditTags = onEditTags,
-                onAddToPlaylist = onAddToPlaylist,
-                onShowCreatePlaylistDialog = onShowCreatePlaylistDialog,
-            )
+                AlbumArtistGridItem(
+                    albumArtist = albumArtist,
+                    isSelected = selectedArtists.contains(albumArtist),
+                    playlists = playlists,
+                    artworkPreloadRequestBuilder = artworkPreloadRequestBuilder,
+                    onClick = onArtistClick,
+                    onLongClick = onArtistLongClick,
+                    onPlay = onPlay,
+                    onAddToQueue = onAddToQueue,
+                    onPlayNext = onPlayNext,
+                    onExclude = onExclude,
+                    onEditTags = onEditTags,
+                    onAddToPlaylist = onAddToPlaylist,
+                    onShowCreatePlaylistDialog = onShowCreatePlaylistDialog,
+                )
+            }
         }
+        FastScroller(
+            modifier = Modifier.fillMaxSize().padding(vertical = 8.dp),
+            scrollableState = rememberFastScrollableState(gridState),
+            getPopupText = { index ->
+                if (index < albumArtists.size) {
+                    albumArtists[index].name?.firstOrNull()?.toString()
+                        ?: albumArtists[index].friendlyArtistName?.firstOrNull()?.toString()
+                        ?: ""
+                } else ""
+            },
+        )
     }
 }
