@@ -20,7 +20,7 @@ import androidx.test.rule.GrantPermissionRule
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.MainActivity
-
+import com.simplecityapps.shuttle.ui.common.view.multisheet.MultiSheetView
 import dagger.hilt.android.testing.HiltAndroidRule
 import dagger.hilt.android.testing.HiltAndroidTest
 import javax.inject.Inject
@@ -155,8 +155,11 @@ class NavigationSmokeTest {
         onView(withId(R.id.sheet1PeekView)).perform(click())
         waitForView(allOf(withId(R.id.playPauseButton), isDescendantOfA(withId(R.id.sheet1Container)), isClickable()))
 
-        // Queue — skipped here due to QueueFragment.onSlide auto-cleared-value crash
-        // when goToSheet(SECOND) is called in this specific test sequence.
-        // Queue navigation is covered by playingSong_queueShowsItems in SmokeTestSuite.
+        // Queue
+        scenario.onActivity { activity ->
+            val multiSheetView = activity.findViewById<MultiSheetView>(R.id.multiSheetView)
+            multiSheetView.goToSheet(MultiSheetView.Sheet.SECOND)
+        }
+        waitForView(allOf(withId(R.id.toolbarTitleTextView), withText("Up Next")))
     }
 }
