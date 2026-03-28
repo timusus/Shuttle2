@@ -14,7 +14,6 @@ import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Song
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.shuttle.di.IoDispatcher
@@ -24,7 +23,11 @@ import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
@@ -33,6 +36,23 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+data class SongListUiState(
+    val songs: List<Song> = emptyList(),
+    val selectedSongs: Set<Song> = emptySet(),
+    val sortOrder: SongSortOrder = SongSortOrder.Default,
+    val loadingState: LoadingState = LoadingState.Loading,
+    val scanProgress: Progress? = null,
+) {
+    enum class LoadingState { Loading, Scanning, Ready, Empty }
+
+    val isSelecting: Boolean get() = selectedSongs.isNotEmpty()
+}
+
+sealed interface SongListUiEvent {
+    data class AddedToQueue(val songCount: Int) : SongListUiEvent
+    data class Error(val message: String) : SongListUiEvent
+}
+
 @HiltViewModel
 class SongListViewModel @Inject constructor(
     private val songRepository: SongRepository,
@@ -40,20 +60,19 @@ class SongListViewModel @Inject constructor(
     private val queueManager: QueueManager,
     private val sortPreferenceManager: SortPreferenceManager,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
-    preferenceManager: GeneralPreferenceManager,
     mediaImportObserver: MediaImportObserver,
     application: Application,
 ) : AndroidViewModel(application) {
-    private val _viewState = MutableStateFlow<ViewState>(ViewState.Loading)
-    val viewState = _viewState.asStateFlow()
 
-    private val _selectedSortOrder = MutableStateFlow(sortPreferenceManager.sortOrderSongList)
-    val selectedSortOrder = _selectedSortOrder.asStateFlow()
+    private val selectionState = SelectionState<Song>()
 
-    val selectionState = SelectionState<Song>()
+    private val _sortOrder = MutableStateFlow(sortPreferenceManager.sortOrderSongList)
 
-    val theme = preferenceManager.theme(viewModelScope)
-    val accent = preferenceManager.accent(viewModelScope)
+    private val _uiState = MutableStateFlow(SongListUiState())
+    val uiState: StateFlow<SongListUiState> = _uiState.asStateFlow()
+
+    private val _events = MutableSharedFlow<SongListUiEvent>()
+    val events: SharedFlow<SongListUiEvent> = _events.asSharedFlow()
 
     init {
         combine(
@@ -62,27 +81,44 @@ class SongListViewModel @Inject constructor(
                 .filterNotNull(),
             mediaImportObserver.songImportState,
             selectionState.selectedItems,
-            _selectedSortOrder,
-        ) { songs, songImportState, selectedSongs, __selectedSortOrder ->
+            _sortOrder,
+        ) { songs, songImportState, selectedSongs, sortOrder ->
             if (songImportState is SongImportState.ImportProgress) {
-                _viewState.emit(ViewState.Scanning(songImportState.progress))
+                _uiState.emit(
+                    SongListUiState(
+                        loadingState = SongListUiState.LoadingState.Scanning,
+                        scanProgress = songImportState.progress,
+                        sortOrder = sortOrder,
+                        selectedSongs = selectedSongs,
+                    )
+                )
             } else {
-                val sortedSongs = songs.sortedWith(__selectedSortOrder.comparator)
-                _viewState.emit(ViewState.Ready(sortedSongs, selectedSongs, __selectedSortOrder))
+                val sortedSongs = songs.sortedWith(sortOrder.comparator)
+                _uiState.emit(
+                    SongListUiState(
+                        songs = sortedSongs,
+                        selectedSongs = selectedSongs,
+                        sortOrder = sortOrder,
+                        loadingState = if (sortedSongs.isEmpty()) {
+                            SongListUiState.LoadingState.Empty
+                        } else {
+                            SongListUiState.LoadingState.Ready
+                        },
+                    )
+                )
             }
         }
             .onStart {
-                _viewState.emit(ViewState.Loading)
+                _uiState.emit(SongListUiState(loadingState = SongListUiState.LoadingState.Loading))
             }
             .launchIn(viewModelScope)
     }
 
-    fun onSongClick(song: Song, completion: (Result<Boolean>) -> Unit) {
+    fun onSongClick(song: Song) {
         if (selectionState.isActive()) {
             selectionState.toggle(song)
-            completion(Result.success(true))
         } else {
-            play(song, completion)
+            play(song)
         }
     }
 
@@ -90,82 +126,100 @@ class SongListViewModel @Inject constructor(
         selectionState.toggle(song)
     }
 
-    private fun play(song: Song, completion: (Result<Boolean>) -> Unit) {
+    private fun play(song: Song) {
         viewModelScope.launch {
-            val songs = viewState.value.let {
-                if (it is ViewState.Ready) it.songs else listOf(song)
-            }
+            val songs = uiState.value.songs.ifEmpty { listOf(song) }
 
             if (queueManager.setQueue(songs = songs, position = songs.indexOf(song))) {
                 playbackManager.load { result ->
                     result.onSuccess { playbackManager.play() }
-                    completion(result)
+                    result.onFailure { error ->
+                        viewModelScope.launch {
+                            _events.emit(
+                                SongListUiEvent.Error(
+                                    error.message ?: getApplication<Application>().getString(R.string.error_unknown)
+                                )
+                            )
+                        }
+                    }
                 }
             }
         }
     }
 
-    fun addToQueue(song: Song, completion: (Result<Song>) -> Unit) {
+    fun onAddToQueue(song: Song) {
         viewModelScope.launch {
             playbackManager.addToQueue(listOf(song))
-            completion(Result.success(song))
+            _events.emit(SongListUiEvent.AddedToQueue(1))
         }
     }
 
-    fun addSelectedToQueue() {
+    fun onAddSelectedToQueue() {
         viewModelScope.launch {
-            playbackManager.addToQueue(selectionState.selectedItems.value.toList())
+            val selected = selectionState.selectedItems.value.toList()
+            playbackManager.addToQueue(selected)
+            _events.emit(SongListUiEvent.AddedToQueue(selected.size))
             selectionState.clear()
         }
     }
 
-    fun playNext(song: Song, completion: (Result<Song>) -> Unit) {
+    fun onPlayNext(song: Song) {
         viewModelScope.launch {
             playbackManager.playNext(listOf(song))
-            completion(Result.success(song))
+            _events.emit(SongListUiEvent.AddedToQueue(1))
         }
     }
 
-    fun exclude(song: Song) {
+    fun onExclude(song: Song) {
         viewModelScope.launch {
             songRepository.setExcluded(listOf(song), true)
             queueManager.remove(song)
         }
     }
 
-    fun delete(song: Song): Result<Unit> {
+    fun onDelete(song: Song) {
         val context = getApplication<Application>().applicationContext
         val documentFile = DocumentFile.fromSingleUri(context, song.path.toUri())
 
         if (documentFile?.delete() == false) {
-            return Result.failure(UserFriendlyError(context.getString(R.string.delete_song_failed)))
+            viewModelScope.launch {
+                _events.emit(
+                    SongListUiEvent.Error(context.getString(R.string.delete_song_failed))
+                )
+            }
+            return
         }
 
         viewModelScope.launch {
             songRepository.remove(song)
             queueManager.remove(song)
         }
-        return Result.success(Unit)
     }
 
-    fun shuffle(completion: (Result<Any?>) -> Unit) {
-        val songs = getSongs()
+    fun onShuffle() {
+        val songs = uiState.value.songs
 
         if (songs.isEmpty()) {
-            completion(Result.failure(UserFriendlyError("Your library is empty")))
+            viewModelScope.launch {
+                _events.emit(SongListUiEvent.Error("Your library is empty"))
+            }
             return
         }
 
         viewModelScope.launch {
             playbackManager.shuffle(songs) { result ->
                 result.onSuccess { playbackManager.play() }
-                completion(result)
+                result.onFailure { error ->
+                    viewModelScope.launch {
+                        _events.emit(
+                            SongListUiEvent.Error(
+                                error.message ?: getApplication<Application>().getString(R.string.error_unknown)
+                            )
+                        )
+                    }
+                }
             }
         }
-    }
-
-    private fun getSongs(): List<Song> = viewState.value.let {
-        if (it is ViewState.Ready) it.songs else emptyList()
     }
 
     fun setSortOrder(sortOrder: SongSortOrder) {
@@ -176,18 +230,14 @@ class SongListViewModel @Inject constructor(
         viewModelScope.launch {
             withContext(ioDispatcher) {
                 sortPreferenceManager.sortOrderSongList = sortOrder
-                _selectedSortOrder.value = sortOrder
+                _sortOrder.value = sortOrder
             }
         }
     }
 
-    sealed class ViewState {
-        data class Scanning(val progress: Progress?) : ViewState()
-        data object Loading : ViewState()
-        data class Ready(
-            val songs: List<Song>,
-            val selectedSongs: Set<Song>,
-            val sortOrder: SongSortOrder,
-        ) : ViewState()
+    fun clearSelection() {
+        selectionState.clear()
     }
+
+    fun selectedSongs(): List<Song> = selectionState.selectedItems.value.toList()
 }

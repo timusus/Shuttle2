@@ -9,11 +9,19 @@ fun readySongList(
     songs: List<Song> = listOf(createSong()),
     selectedSongs: Set<Song> = emptySet(),
     sortOrder: SongSortOrder = SongSortOrder.Default,
-) = SongListViewModel.ViewState.Ready(songs, selectedSongs, sortOrder)
+) = SongListUiState(
+    songs = songs,
+    selectedSongs = selectedSongs,
+    sortOrder = sortOrder,
+    loadingState = if (songs.isEmpty()) SongListUiState.LoadingState.Empty else SongListUiState.LoadingState.Ready,
+)
 
 fun scanningSongList(progress: Progress? = null) =
-    SongListViewModel.ViewState.Scanning(progress)
+    SongListUiState(
+        loadingState = SongListUiState.LoadingState.Scanning,
+        scanProgress = progress,
+    )
 
 fun emptySongList() = readySongList(songs = emptyList())
 
-val loadingSongList = SongListViewModel.ViewState.Loading
+val loadingSongList = SongListUiState(loadingState = SongListUiState.LoadingState.Loading)

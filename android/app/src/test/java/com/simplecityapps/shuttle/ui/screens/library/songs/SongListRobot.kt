@@ -35,14 +35,14 @@ class SongListRobot(private val rule: ComposeContentTestRule) {
     // -- Content setup --
 
     fun setContent(
-        viewState: SongListViewModel.ViewState,
+        uiState: SongListUiState,
         playlists: List<Playlist> = emptyList(),
     ) {
         resetCallbacks()
         rule.setContent {
             AppTheme {
                 SongList(
-                    viewState = viewState,
+                    uiState = uiState,
                     playlists = playlists.toImmutableList(),
                     onSongClick = { lastSongClicked = it },
                     onSongLongClick = { lastSongLongClicked = it },

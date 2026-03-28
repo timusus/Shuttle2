@@ -42,7 +42,7 @@ import kotlinx.collections.immutable.toImmutableSet
 
 @Composable
 fun SongList(
-    viewState: SongListViewModel.ViewState,
+    uiState: SongListUiState,
     playlists: ImmutableList<Playlist>,
     onSongClick: (Song) -> Unit,
     onSongLongClick: (Song) -> Unit,
@@ -57,19 +57,19 @@ fun SongList(
     onShuffle: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    when (viewState) {
-        is SongListViewModel.ViewState.Scanning -> {
+    when (uiState.loadingState) {
+        SongListUiState.LoadingState.Scanning -> {
             HorizontalLoadingView(
                 modifier = modifier
                     .fillMaxSize()
                     .wrapContentSize()
                     .padding(16.dp),
                 message = stringResource(R.string.library_scan_in_progress),
-                progress = viewState.progress?.asFloat() ?: 0f
+                progress = uiState.scanProgress?.asFloat() ?: 0f
             )
         }
 
-        is SongListViewModel.ViewState.Loading -> {
+        SongListUiState.LoadingState.Loading -> {
             LoadingStatusIndicator(
                 modifier = modifier
                     .fillMaxSize()
@@ -78,35 +78,35 @@ fun SongList(
             )
         }
 
-        is SongListViewModel.ViewState.Ready -> {
-            if (viewState.songs.isEmpty()) {
-                LoadingStatusIndicator(
-                    modifier = modifier
-                        .fillMaxSize()
-                        .wrapContentSize()
-                        .padding(16.dp),
-                    state = CircularLoadingState.Empty(stringResource(R.string.song_list_empty))
-                )
-            } else {
-                SongList(
-                    songs = viewState.songs.toImmutableList(),
-                    selectedSongs = viewState.selectedSongs.toImmutableSet(),
-                    sortOrder = viewState.sortOrder,
-                    playlists = playlists,
-                    onSongClick = onSongClick,
-                    onSongLongClick = onSongLongClick,
-                    onAddToQueue = onAddToQueue,
-                    onAddToPlaylist = onAddToPlaylist,
-                    onShowCreatePlaylistDialog = onShowCreatePlaylistDialog,
-                    onPlayNext = onPlayNext,
-                    onSongInfo = onSongInfo,
-                    onExclude = onExclude,
-                    onEditTags = onEditTags,
-                    onDelete = onDelete,
-                    onShuffle = onShuffle,
-                    modifier = modifier,
-                )
-            }
+        SongListUiState.LoadingState.Empty -> {
+            LoadingStatusIndicator(
+                modifier = modifier
+                    .fillMaxSize()
+                    .wrapContentSize()
+                    .padding(16.dp),
+                state = CircularLoadingState.Empty(stringResource(R.string.song_list_empty))
+            )
+        }
+
+        SongListUiState.LoadingState.Ready -> {
+            SongList(
+                songs = uiState.songs.toImmutableList(),
+                selectedSongs = uiState.selectedSongs.toImmutableSet(),
+                sortOrder = uiState.sortOrder,
+                playlists = playlists,
+                onSongClick = onSongClick,
+                onSongLongClick = onSongLongClick,
+                onAddToQueue = onAddToQueue,
+                onAddToPlaylist = onAddToPlaylist,
+                onShowCreatePlaylistDialog = onShowCreatePlaylistDialog,
+                onPlayNext = onPlayNext,
+                onSongInfo = onSongInfo,
+                onExclude = onExclude,
+                onEditTags = onEditTags,
+                onDelete = onDelete,
+                onShuffle = onShuffle,
+                modifier = modifier,
+            )
         }
     }
 }

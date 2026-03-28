@@ -22,8 +22,10 @@ All commands run from the repository root.
 # Run a single module's tests
 ./gradlew :android:playback:testDebugUnitTest
 
-# Run instrumented tests (requires device/emulator)
-./gradlew :android:app:connectedCheck
+# Run instrumented tests (Gradle Managed Device — auto-provisions emulator)
+./gradlew :android:app:pixel6Api34AtdDebugAndroidTest
+# Or via the "smoke" device group:
+./gradlew :android:app:smokeGroupDebugAndroidTest
 
 # Lint (KTLint)
 ./support/scripts/lint
