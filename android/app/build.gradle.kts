@@ -94,6 +94,25 @@ android {
         checkReleaseBuilds = false
     }
 
+    testOptions {
+        managedDevices {
+            localDevices {
+                create("pixel6Api34Atd") {
+                    device = "Pixel 6"
+                    apiLevel = 34
+                    systemImageSource = "aosp-atd"
+                }
+            }
+            groups {
+                create("smoke") {
+                    targetDevices.add(devices["pixel6Api34Atd"])
+                }
+            }
+        }
+        execution = "ANDROIDX_TEST_ORCHESTRATOR"
+        animationsDisabled = true
+    }
+
     buildFeatures {
         compose = true
     }
@@ -267,6 +286,11 @@ android {
         androidTestImplementation(libs.androidx.rules)
         androidTestImplementation(libs.androidx.core.ktx)
         androidTestImplementation(libs.hamcrest.library)
+        androidTestImplementation(libs.androidx.espresso.core)
+        androidTestImplementation(libs.androidx.junit)
+        androidTestImplementation(libs.androidx.ui.test.junit4)
+        debugImplementation(libs.androidx.ui.test.manifest)
+        androidTestUtil("androidx.test:orchestrator:1.5.1")
 
         // Remote config
         implementation(project(":android:remote-config"))
