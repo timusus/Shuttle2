@@ -24,7 +24,6 @@ import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.just
 import io.mockk.mockk
-import io.mockk.spyk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,7 +35,6 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Test
 
 @ExperimentalCoroutinesApi
@@ -304,30 +302,16 @@ class SongListViewModelTest {
     }
 
     @Test
-    @Ignore(
-        """Fails due to running in IO dispatcher. Fix by injecting
-        StandardTestDispatcher when creating the view model."""
-    )
     fun `sets the sort order`() = runTest {
-        val spiedSortPreferenceManager = spyk(
-            SortPreferenceManager(mockk(relaxed = true))
-        )
-        viewModel = SongListViewModel(
-            songRepository = mockSongRepository,
-            playbackManager = mockPlaybackManager,
-            queueManager = mockQueueManager,
-            sortPreferenceManager = spiedSortPreferenceManager,
-            preferenceManager = mockPreferenceManager,
-            mediaImportObserver = mockMediaImportObserver,
-            application = mockApplication,
-        )
+        every { mockSortPreferenceManager.sortOrderSongList = any() } just Runs
+        viewModel = createViewModel()
         advanceUntilIdle()
 
         viewModel.setSortOrder(SongSortOrder.ArtistGroupKey)
         advanceUntilIdle()
 
         viewModel.selectedSortOrder.value.shouldBe(SongSortOrder.ArtistGroupKey)
-        io.mockk.verify { spiedSortPreferenceManager.sortOrderSongList = SongSortOrder.ArtistGroupKey }
+        io.mockk.verify { mockSortPreferenceManager.sortOrderSongList = SongSortOrder.ArtistGroupKey }
     }
 
     @Test
@@ -356,6 +340,7 @@ class SongListViewModelTest {
         playbackManager = mockPlaybackManager,
         queueManager = mockQueueManager,
         sortPreferenceManager = mockSortPreferenceManager,
+        ioDispatcher = testDispatcher,
         preferenceManager = mockPreferenceManager,
         mediaImportObserver = mockMediaImportObserver,
         application = mockApplication,

@@ -6,6 +6,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Qualifier
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,6 +35,10 @@ class CoroutineModule {
         @AppSupervisorJob job: Job,
         coroutineExceptionHandler: CoroutineExceptionHandler
     ): CoroutineScope = CoroutineScope(Dispatchers.Main + job + coroutineExceptionHandler)
+
+    @Provides
+    @IoDispatcher
+    fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
 }
 
 @Retention(AnnotationRetention.BINARY)
@@ -43,3 +48,7 @@ annotation class AppCoroutineScope
 @Retention(AnnotationRetention.BINARY)
 @Qualifier
 annotation class AppSupervisorJob
+
+@Retention(AnnotationRetention.BINARY)
+@Qualifier
+annotation class IoDispatcher

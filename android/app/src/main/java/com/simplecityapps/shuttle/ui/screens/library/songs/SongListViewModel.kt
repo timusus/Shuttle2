@@ -17,12 +17,13 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.sorting.SongSortOrder
+import com.simplecityapps.shuttle.di.IoDispatcher
 import com.simplecityapps.shuttle.ui.common.SelectionState
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
@@ -38,6 +39,7 @@ class SongListViewModel @Inject constructor(
     private val playbackManager: PlaybackManager,
     private val queueManager: QueueManager,
     private val sortPreferenceManager: SortPreferenceManager,
+    @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     preferenceManager: GeneralPreferenceManager,
     mediaImportObserver: MediaImportObserver,
     application: Application,
@@ -172,7 +174,7 @@ class SongListViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            withContext(Dispatchers.IO) {
+            withContext(ioDispatcher) {
                 sortPreferenceManager.sortOrderSongList = sortOrder
                 _selectedSortOrder.value = sortOrder
             }
