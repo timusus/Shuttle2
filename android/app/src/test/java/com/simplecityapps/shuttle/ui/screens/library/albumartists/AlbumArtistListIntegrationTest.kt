@@ -4,12 +4,15 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import com.simplecityapps.createAlbumArtist
 import com.simplecityapps.fakes.FakeAlbumArtistRepository
 import com.simplecityapps.fakes.FakeArtistListPreferences
+import com.simplecityapps.fakes.FakeGenreRepository
 import com.simplecityapps.fakes.FakePlaybackManager
+import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.fakes.FakeSongImportStateProvider
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.fakes.importComplete
 import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
+import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.shuttle.model.MediaProviderType
@@ -40,6 +43,7 @@ class AlbumArtistListIntegrationTest {
 
     private val fakeAlbumArtistRepository = FakeAlbumArtistRepository()
     private val fakeSongRepository = FakeSongRepository()
+    private val fakePlaylistRepository = FakePlaylistRepository()
     private val fakeImportState = FakeSongImportStateProvider()
     private val fakePreferences = FakeArtistListPreferences()
 
@@ -152,6 +156,11 @@ class AlbumArtistListIntegrationTest {
         songRepository = fakeSongRepository,
         playbackManager = FakePlaybackManager(),
         playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
+        addToPlaylistUseCase = AddToPlaylist(
+            fakePlaylistRepository, fakeSongRepository, FakeGenreRepository(), FakeQueueManager(),
+            ignorePlaylistDuplicates = { false },
+        ),
+        playlistRepository = fakePlaylistRepository,
         preferenceManager = fakePreferences,
         mediaImportObserver = fakeImportState,
     )

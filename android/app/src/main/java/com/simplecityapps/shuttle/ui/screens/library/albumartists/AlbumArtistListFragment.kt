@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library.albumartists
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
@@ -7,7 +8,9 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.widget.SwitchCompat
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
@@ -17,7 +20,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.model.Playlist
+import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.ComposeContextualToolbarHelper
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
@@ -140,6 +146,19 @@ class AlbumArtistListFragment :
                         is AlbumArtistListUiEvent.EditTags -> {
                             TagEditorAlertDialog.newInstance(event.songs).show(childFragmentManager)
                         }
+                        is AlbumArtistListUiEvent.AddedToPlaylist -> {
+                            Toast.makeText(
+                                context,
+                                event.playlistData.getPlaylistSavedMessage(resources, event.playlist.name),
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                        is AlbumArtistListUiEvent.PlaylistDuplicatesFound -> {
+                            showPlaylistDuplicatesDialog(event.playlist, event.playlistData, event.deduplicatedSongs, event.duplicates)
+                        }
+                        is AlbumArtistListUiEvent.PlaylistAddFailed -> {
+                            Toast.makeText(context, event.message ?: getString(R.string.error_unknown), Toast.LENGTH_LONG).show()
+                        }
                     }
                 }
             }
@@ -147,7 +166,6 @@ class AlbumArtistListFragment :
 
         composeView.setContent {
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-            val playlists by playlistMenuPresenter.playlistsState.collectAsStateWithLifecycle()
 
             val theme by preferenceManager.theme(viewLifecycleOwner.lifecycleScope).collectAsStateWithLifecycle()
             val accent by preferenceManager.accent(viewLifecycleOwner.lifecycleScope).collectAsStateWithLifecycle()
@@ -158,7 +176,7 @@ class AlbumArtistListFragment :
             ) {
                 AlbumArtistList(
                     uiState = uiState,
-                    playlists = playlists.toImmutableList(),
+                    playlists = uiState.playlists.toImmutableList(),
                     onArtistClick = { albumArtist ->
                         if (!uiState.isSelecting) {
                             navigateToDetail(albumArtist)
@@ -173,7 +191,7 @@ class AlbumArtistListFragment :
                     onExclude = { albumArtist -> viewModel.onExclude(albumArtist) },
                     onEditTags = { albumArtist -> viewModel.onEditTags(albumArtist) },
                     onAddToPlaylist = { playlist, playlistData ->
-                        playlistMenuPresenter.addToPlaylist(playlist, playlistData)
+                        viewModel.addToPlaylist(playlist, playlistData)
                     },
                     onShowCreatePlaylistDialog = { albumArtist ->
                         CreatePlaylistDialogFragment.newInstance(
@@ -295,13 +313,45 @@ class AlbumArtistListFragment :
         }
     }
 
+    @SuppressLint("InflateParams")
+    private fun showPlaylistDuplicatesDialog(
+        playlist: Playlist,
+        playlistData: PlaylistData,
+        deduplicatedSongs: PlaylistData.Songs,
+        duplicates: List<Song>,
+    ) {
+        val dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_playlist_duplicate, null)
+        val subtitle: TextView = dialogView.findViewById(R.id.title)
+        val alwaysAddSwitch: SwitchCompat = dialogView.findViewById(R.id.alwaysAddSwitch)
+
+        subtitle.text = Phrase.fromPlural(requireContext(), R.plurals.playlist_menu_duplicates_dialog_subtitle, duplicates.size)
+            .putOptional("count", duplicates.size)
+            .put("playlist_name", playlist.name)
+            .format()
+
+        alwaysAddSwitch.setOnCheckedChangeListener { _, isChecked ->
+            preferenceManager.ignorePlaylistDuplicates = isChecked
+        }
+
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(getString(R.string.playlist_menu_duplicates_dialog_title))
+            .setView(dialogView)
+            .setNegativeButton(getString(R.string.playlist_menu_duplicates_dialog_button_skip)) { _, _ ->
+                viewModel.addToPlaylist(playlist, deduplicatedSongs, ignoreDuplicates = true)
+            }
+            .setPositiveButton(getString(R.string.playlist_menu_duplicates_dialog_button_add)) { _, _ ->
+                viewModel.addToPlaylist(playlist, playlistData, ignoreDuplicates = true)
+            }
+            .show()
+    }
+
     // CreatePlaylistDialogFragment.Listener Implementation
 
     override fun onSave(
         text: String,
         playlistData: PlaylistData
     ) {
-        playlistMenuPresenter.createPlaylist(text, playlistData)
+        viewModel.createPlaylist(text, playlistData)
     }
 
     // Static

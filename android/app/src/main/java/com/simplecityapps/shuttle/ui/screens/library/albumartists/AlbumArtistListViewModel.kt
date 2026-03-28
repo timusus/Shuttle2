@@ -7,14 +7,20 @@ import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistQuery
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
+import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
+import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.shuttle.model.AlbumArtist
+import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.common.SelectionState
 import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
+import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
 import com.simplecityapps.shuttle.ui.screens.library.ViewMode
+import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -30,6 +36,7 @@ import kotlinx.coroutines.launch
 
 data class AlbumArtistListUiState(
     val albumArtists: List<AlbumArtist> = emptyList(),
+    val playlists: List<Playlist> = emptyList(),
     val selectedArtists: Set<AlbumArtist> = emptySet(),
     val viewMode: ViewMode = ViewMode.List,
     val loadingState: LoadingState = LoadingState.Loading,
@@ -44,6 +51,14 @@ sealed interface AlbumArtistListUiEvent {
     data class AddedToQueue(val artistCount: Int) : AlbumArtistListUiEvent
     data class PlaybackFailed(val errorMessage: String?) : AlbumArtistListUiEvent
     data class EditTags(val songs: List<Song>) : AlbumArtistListUiEvent
+    data class AddedToPlaylist(val playlist: Playlist, val playlistData: PlaylistData) : AlbumArtistListUiEvent
+    data class PlaylistDuplicatesFound(
+        val playlist: Playlist,
+        val playlistData: PlaylistData,
+        val deduplicatedSongs: PlaylistData.Songs,
+        val duplicates: List<Song>,
+    ) : AlbumArtistListUiEvent
+    data class PlaylistAddFailed(val message: String?) : AlbumArtistListUiEvent
 }
 
 @HiltViewModel
@@ -52,6 +67,8 @@ class AlbumArtistListViewModel @Inject constructor(
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackOperations,
     private val playSongs: PlaySongs,
+    private val addToPlaylistUseCase: AddToPlaylist,
+    private val playlistRepository: PlaylistRepository,
     private val preferenceManager: ArtistListPreferences,
     mediaImportObserver: SongImportStateProvider,
 ) : ViewModel() {
@@ -64,20 +81,22 @@ class AlbumArtistListViewModel @Inject constructor(
         albumArtistRepository.getAlbumArtists(AlbumArtistQuery.All()),
         mediaImportObserver.songImportState,
         selectionState.selectedItems,
-        _viewMode,
-    ) { albumArtists, songImportState, selectedArtists, viewMode ->
+        combine(_viewMode, playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null))) { a, b -> a to b },
+    ) { albumArtists, songImportState, selectedArtists, (viewMode, playlists) ->
         if (songImportState is SongImportState.ImportProgress) {
             AlbumArtistListUiState(
                 loadingState = AlbumArtistListUiState.LoadingState.Scanning,
                 scanProgress = songImportState.progress,
                 viewMode = viewMode,
                 selectedArtists = selectedArtists,
+                playlists = playlists,
             )
         } else {
             AlbumArtistListUiState(
                 albumArtists = albumArtists,
                 selectedArtists = selectedArtists,
                 viewMode = viewMode,
+                playlists = playlists,
                 loadingState = if (albumArtists.isEmpty()) {
                     AlbumArtistListUiState.LoadingState.Empty
                 } else {
@@ -171,6 +190,30 @@ class AlbumArtistListViewModel @Inject constructor(
     }
 
     fun selectedArtists(): List<AlbumArtist> = selectionState.selectedItems.value.toList()
+
+    fun addToPlaylist(playlist: Playlist, playlistData: PlaylistData, ignoreDuplicates: Boolean = false) {
+        viewModelScope.launch {
+            when (val result = addToPlaylistUseCase(playlist, playlistData, ignoreDuplicates)) {
+                is AddToPlaylist.Result.Success ->
+                    _events.emit(AlbumArtistListUiEvent.AddedToPlaylist(result.playlist, result.playlistData))
+                is AddToPlaylist.Result.DuplicatesFound ->
+                    _events.emit(
+                        AlbumArtistListUiEvent.PlaylistDuplicatesFound(
+                            result.playlist, result.playlistData, result.deduplicatedSongs, result.duplicates
+                        )
+                    )
+                is AddToPlaylist.Result.Failure ->
+                    _events.emit(AlbumArtistListUiEvent.PlaylistAddFailed(result.message))
+            }
+        }
+    }
+
+    fun createPlaylist(name: String, playlistData: PlaylistData) {
+        viewModelScope.launch {
+            val songs = addToPlaylistUseCase.resolveSongs(playlistData)
+            playlistRepository.createPlaylist(name, MediaProviderType.Shuttle, songs, null)
+        }
+    }
 
     private suspend fun getSongsForArtist(albumArtist: AlbumArtist): List<Song> = songRepository
         .getSongs(SongQuery.ArtistGroupKeys(listOf(SongQuery.ArtistGroupKey(key = albumArtist.groupKey))))
