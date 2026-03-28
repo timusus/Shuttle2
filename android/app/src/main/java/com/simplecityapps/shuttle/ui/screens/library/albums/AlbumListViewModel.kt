@@ -9,12 +9,13 @@ import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.albums.comparator
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackOperations
-import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.sorting.AlbumSortOrder
 import com.simplecityapps.shuttle.ui.common.SelectionState
+import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
+import com.simplecityapps.shuttle.ui.common.playback.ShuffleSongs
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferences
 import com.simplecityapps.shuttle.ui.screens.library.ViewMode
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -35,7 +36,8 @@ class AlbumListViewModel @Inject constructor(
     private val albumRepository: AlbumRepository,
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackOperations,
-    private val queueManager: QueueOperations,
+    private val playSongs: PlaySongs,
+    private val shuffleSongs: ShuffleSongs,
     private val sortPreferenceManager: SortPreferences,
     private val viewModePreferenceManager: AlbumListPreferences,
     mediaImportObserver: SongImportStateProvider,
@@ -95,15 +97,9 @@ class AlbumListViewModel @Inject constructor(
     fun onPlay(album: Album) {
         viewModelScope.launch {
             val songs = getSongsForAlbum(album)
-            if (queueManager.setQueue(songs)) {
-                playbackManager.load { result ->
-                    result.onSuccess { playbackManager.play() }
-                    result.onFailure { error ->
-                        viewModelScope.launch {
-                            _events.emit(AlbumListUiEvent.PlaybackFailed(error.message))
-                        }
-                    }
-                }
+            val result = playSongs(songs)
+            if (result is PlaySongs.Result.Failure) {
+                _events.emit(AlbumListUiEvent.PlaybackFailed(result.message))
             }
         }
     }
@@ -164,7 +160,10 @@ class AlbumListViewModel @Inject constructor(
                 .groupBy { it.album }
                 .keys.shuffled()
                 .flatMap { albumName -> allSongs.filter { it.album == albumName } }
-            playbackManager.shuffle(shuffledByAlbum) {}
+            val result = shuffleSongs(shuffledByAlbum)
+            if (result is ShuffleSongs.Result.Failure) {
+                _events.emit(AlbumListUiEvent.PlaybackFailed(result.message))
+            }
         }
     }
 
