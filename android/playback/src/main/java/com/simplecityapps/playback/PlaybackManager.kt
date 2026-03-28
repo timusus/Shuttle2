@@ -4,7 +4,6 @@ import android.media.AudioManager
 import android.os.Handler
 import android.os.Looper
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
-import com.simplecityapps.playback.exoplayer.ExoPlayerPlayback
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueItem
@@ -24,7 +23,7 @@ class PlaybackManager(
     private val playbackPreferenceManager: PlaybackPreferenceManager,
     private val audioEffectSessionManager: AudioEffectSessionManager,
     private val appCoroutineScope: CoroutineScope,
-    exoplayerPlayback: ExoPlayerPlayback,
+    exoplayerPlayback: Playback,
     queueWatcher: QueueWatcher,
     audioManager: AudioManager?
 ) : Playback.Callback,

@@ -1,7 +1,6 @@
 package com.simplecityapps.shuttle.di
 
 import android.content.Context
-import com.simplecityapps.localmediaprovider.local.data.room.DatabaseProvider
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
 import com.simplecityapps.localmediaprovider.local.repository.LocalAlbumArtistRepository
 import com.simplecityapps.localmediaprovider.local.repository.LocalAlbumRepository
@@ -26,12 +25,6 @@ import kotlinx.coroutines.CoroutineScope
 @InstallIn(SingletonComponent::class)
 @Module
 class RepositoryModule {
-    @Provides
-    @Singleton
-    fun provideMediaDatabase(
-        @ApplicationContext context: Context
-    ): MediaDatabase = DatabaseProvider(context).database
-
     @Provides
     @Singleton
     fun provideSongRepository(
