@@ -9,8 +9,8 @@ import com.simplecityapps.fakes.FakeGenreRepository
 import com.simplecityapps.fakes.FakePlaybackManager
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueManager
-import com.simplecityapps.fakes.createTestQueueWatcher
 import com.simplecityapps.fakes.FakeSongRepository
+import com.simplecityapps.fakes.createTestQueueWatcher
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
 import com.simplecityapps.shuttle.ui.common.playback.ShuffleSongs
