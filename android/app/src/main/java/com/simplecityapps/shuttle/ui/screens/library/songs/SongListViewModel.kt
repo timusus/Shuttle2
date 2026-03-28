@@ -25,13 +25,12 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -67,51 +66,42 @@ class SongListViewModel @Inject constructor(
 
     private val _sortOrder = MutableStateFlow(sortPreferenceManager.sortOrderSongList)
 
-    private val _uiState = MutableStateFlow(SongListUiState())
-    val uiState: StateFlow<SongListUiState> = _uiState.asStateFlow()
+    val uiState: StateFlow<SongListUiState> = combine(
+        songRepository
+            .getSongs(SongQuery.All(sortOrder = sortPreferenceManager.sortOrderSongList))
+            .filterNotNull(),
+        mediaImportObserver.songImportState,
+        selectionState.selectedItems,
+        _sortOrder,
+    ) { songs, songImportState, selectedSongs, sortOrder ->
+        if (songImportState is SongImportState.ImportProgress) {
+            SongListUiState(
+                loadingState = SongListUiState.LoadingState.Scanning,
+                scanProgress = songImportState.progress,
+                sortOrder = sortOrder,
+                selectedSongs = selectedSongs,
+            )
+        } else {
+            val sortedSongs = songs.sortedWith(sortOrder.comparator)
+            SongListUiState(
+                songs = sortedSongs,
+                selectedSongs = selectedSongs,
+                sortOrder = sortOrder,
+                loadingState = if (sortedSongs.isEmpty()) {
+                    SongListUiState.LoadingState.Empty
+                } else {
+                    SongListUiState.LoadingState.Ready
+                },
+            )
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = SongListUiState(),
+    )
 
     private val _events = MutableSharedFlow<SongListUiEvent>()
     val events: SharedFlow<SongListUiEvent> = _events.asSharedFlow()
-
-    init {
-        combine(
-            songRepository
-                .getSongs(SongQuery.All(sortOrder = sortPreferenceManager.sortOrderSongList))
-                .filterNotNull(),
-            mediaImportObserver.songImportState,
-            selectionState.selectedItems,
-            _sortOrder,
-        ) { songs, songImportState, selectedSongs, sortOrder ->
-            if (songImportState is SongImportState.ImportProgress) {
-                _uiState.emit(
-                    SongListUiState(
-                        loadingState = SongListUiState.LoadingState.Scanning,
-                        scanProgress = songImportState.progress,
-                        sortOrder = sortOrder,
-                        selectedSongs = selectedSongs,
-                    )
-                )
-            } else {
-                val sortedSongs = songs.sortedWith(sortOrder.comparator)
-                _uiState.emit(
-                    SongListUiState(
-                        songs = sortedSongs,
-                        selectedSongs = selectedSongs,
-                        sortOrder = sortOrder,
-                        loadingState = if (sortedSongs.isEmpty()) {
-                            SongListUiState.LoadingState.Empty
-                        } else {
-                            SongListUiState.LoadingState.Ready
-                        },
-                    )
-                )
-            }
-        }
-            .onStart {
-                _uiState.emit(SongListUiState(loadingState = SongListUiState.LoadingState.Loading))
-            }
-            .launchIn(viewModelScope)
-    }
 
     fun onSongClick(song: Song) {
         if (selectionState.isActive()) {

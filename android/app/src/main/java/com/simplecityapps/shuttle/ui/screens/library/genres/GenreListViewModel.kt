@@ -17,15 +17,13 @@ import com.simplecityapps.shuttle.query.SongQuery
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 data class GenreListUiState(
@@ -52,42 +50,33 @@ class GenreListViewModel @Inject constructor(
     mediaImportObserver: MediaImportObserver
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(GenreListUiState())
-    val uiState: StateFlow<GenreListUiState> = _uiState.asStateFlow()
+    val uiState: StateFlow<GenreListUiState> = combine(
+        genreRepository.getGenres(GenreQuery.All()),
+        mediaImportObserver.songImportState
+    ) { genres, songImportState ->
+        if (songImportState is SongImportState.ImportProgress) {
+            GenreListUiState(
+                loadingState = GenreListUiState.LoadingState.Scanning,
+                scanProgress = songImportState.progress,
+            )
+        } else {
+            GenreListUiState(
+                genres = genres,
+                loadingState = if (genres.isEmpty()) {
+                    GenreListUiState.LoadingState.Empty
+                } else {
+                    GenreListUiState.LoadingState.Ready
+                },
+            )
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = GenreListUiState(),
+    )
 
     private val _events = MutableSharedFlow<GenreListUiEvent>()
     val events: SharedFlow<GenreListUiEvent> = _events.asSharedFlow()
-
-    init {
-        combine(
-            genreRepository.getGenres(GenreQuery.All()),
-            mediaImportObserver.songImportState
-        ) { genres, songImportState ->
-            if (songImportState is SongImportState.ImportProgress) {
-                _uiState.emit(
-                    GenreListUiState(
-                        loadingState = GenreListUiState.LoadingState.Scanning,
-                        scanProgress = songImportState.progress,
-                    )
-                )
-            } else {
-                _uiState.emit(
-                    GenreListUiState(
-                        genres = genres,
-                        loadingState = if (genres.isEmpty()) {
-                            GenreListUiState.LoadingState.Empty
-                        } else {
-                            GenreListUiState.LoadingState.Ready
-                        },
-                    )
-                )
-            }
-        }
-            .onStart {
-                _uiState.emit(GenreListUiState(loadingState = GenreListUiState.LoadingState.Loading))
-            }
-            .launchIn(viewModelScope)
-    }
 
     fun onPlay(genre: Genre) {
         viewModelScope.launch {

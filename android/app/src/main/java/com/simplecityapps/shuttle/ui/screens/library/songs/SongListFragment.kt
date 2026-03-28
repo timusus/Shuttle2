@@ -140,7 +140,7 @@ class SongListFragment :
         }
 
         composeView.setContent {
-            val uiState by viewModel.uiState.collectAsState()
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             val playlists by playlistMenuPresenter.playlistsState.collectAsState()
 
             val theme by preferenceManager.theme(viewLifecycleOwner.lifecycleScope).collectAsStateWithLifecycle()
