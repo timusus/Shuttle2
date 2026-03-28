@@ -8,6 +8,7 @@ import com.simplecityapps.shuttle.debug.DebugLoggingTree
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.ThemeManager
 import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
+import com.simplecityapps.shuttle.ui.screens.library.SortPreferences
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -38,7 +39,7 @@ class AppModule {
 
     @Singleton
     @Provides
-    fun provideSortPreferenceManager(preference: SharedPreferences): SortPreferenceManager = SortPreferenceManager(preference)
+    fun provideSortPreferences(preference: SharedPreferences): SortPreferences = SortPreferenceManager(preference)
 
     @Singleton
     @Provides

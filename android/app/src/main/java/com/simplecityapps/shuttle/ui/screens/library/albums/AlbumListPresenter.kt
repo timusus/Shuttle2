@@ -15,7 +15,7 @@ import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.sorting.AlbumSortOrder
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
-import com.simplecityapps.shuttle.ui.screens.library.SortPreferenceManager
+import com.simplecityapps.shuttle.ui.screens.library.SortPreferences
 import com.simplecityapps.shuttle.ui.screens.library.ViewMode
 import com.simplecityapps.shuttle.ui.screens.library.toViewMode
 import java.util.*
@@ -97,7 +97,7 @@ constructor(
     private val playbackManager: PlaybackManager,
     private val mediaImporter: MediaImporter,
     private val preferenceManager: GeneralPreferenceManager,
-    private val sortPreferenceManager: SortPreferenceManager,
+    private val sortPreferenceManager: SortPreferences,
     private val queueManager: QueueManager
 ) : BasePresenter<AlbumListContract.View>(),
     AlbumListContract.Presenter {

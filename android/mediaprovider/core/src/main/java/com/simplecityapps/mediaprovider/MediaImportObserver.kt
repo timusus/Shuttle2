@@ -10,14 +10,15 @@ import kotlinx.coroutines.flow.asStateFlow
 @Singleton
 class MediaImportObserver @Inject constructor(
     mediaImporter: MediaImporter
-) : MediaImporter.Listener {
+) : MediaImporter.Listener,
+    SongImportStateProvider {
 
     init {
         mediaImporter.listeners.add(this)
     }
 
     private val _songImportState = MutableStateFlow<SongImportState>(SongImportState.Idle)
-    val songImportState: StateFlow<SongImportState> = _songImportState.asStateFlow()
+    override val songImportState: StateFlow<SongImportState> = _songImportState.asStateFlow()
 
     private val _playlistImportState = MutableStateFlow<PlaylistImportState>(PlaylistImportState.Idle)
     val playlistImportState: StateFlow<PlaylistImportState> = _playlistImportState.asStateFlow()

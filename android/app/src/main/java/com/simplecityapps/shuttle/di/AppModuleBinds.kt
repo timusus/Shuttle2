@@ -1,5 +1,7 @@
 package com.simplecityapps.shuttle.di
 
+import com.simplecityapps.mediaprovider.MediaImportObserver
+import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.shuttle.appinitializers.AppInitializer
 import com.simplecityapps.shuttle.appinitializers.CrashReportingInitializer
 import com.simplecityapps.shuttle.appinitializers.MediaProviderInitializer
@@ -18,6 +20,9 @@ import dagger.multibindings.IntoSet
 @InstallIn(SingletonComponent::class)
 @Module
 abstract class AppModuleBinds {
+    @Binds
+    abstract fun bindSongImportStateProvider(impl: MediaImportObserver): SongImportStateProvider
+
     @Binds
     @IntoSet
     abstract fun provideCrashReportingInitializer(bind: CrashReportingInitializer): AppInitializer

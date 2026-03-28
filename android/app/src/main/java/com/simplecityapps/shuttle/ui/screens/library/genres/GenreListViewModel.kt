@@ -3,9 +3,9 @@ package com.simplecityapps.shuttle.ui.screens.library.genres
 import androidx.annotation.OpenForTesting
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.simplecityapps.mediaprovider.MediaImportObserver
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
+import com.simplecityapps.mediaprovider.SongImportStateProvider
 import com.simplecityapps.mediaprovider.repository.genres.GenreQuery
 import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
@@ -47,7 +47,7 @@ class GenreListViewModel @Inject constructor(
     private val songRepository: SongRepository,
     private val playbackManager: PlaybackManager,
     private val queueManager: QueueManager,
-    mediaImportObserver: MediaImportObserver
+    mediaImportObserver: SongImportStateProvider
 ) : ViewModel() {
 
     val uiState: StateFlow<GenreListUiState> = combine(

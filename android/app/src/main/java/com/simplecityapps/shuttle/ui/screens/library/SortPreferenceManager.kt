@@ -7,8 +7,8 @@ import com.simplecityapps.shuttle.sorting.AlbumSortOrder
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import timber.log.Timber
 
-class SortPreferenceManager(private val sharedPreferences: SharedPreferences) {
-    var sortOrderSongList: SongSortOrder
+class SortPreferenceManager(private val sharedPreferences: SharedPreferences) : SortPreferences {
+    override var sortOrderSongList: SongSortOrder
         set(value) {
             sharedPreferences.put("sort_order_song_list", value.name)
         }
@@ -20,7 +20,7 @@ class SortPreferenceManager(private val sharedPreferences: SharedPreferences) {
             }
         }
 
-    var sortOrderAlbumList: AlbumSortOrder
+    override var sortOrderAlbumList: AlbumSortOrder
         set(value) {
             sharedPreferences.put("sort_order_album_list", value.name)
         }
