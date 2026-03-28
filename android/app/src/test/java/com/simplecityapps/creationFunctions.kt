@@ -1,7 +1,9 @@
 package com.simplecityapps
 
+import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
+import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
@@ -68,6 +70,30 @@ fun createAlbumArtist(
     albumCount = albumCount,
     songCount = songCount,
     playCount = playCount,
+    groupKey = groupKey,
+    mediaProviders = mediaProviders,
+)
+
+fun createAlbum(
+    name: String = "album-name",
+    albumArtist: String? = "album-artist",
+    artists: List<String> = listOf(albumArtist ?: "album-artist"),
+    songCount: Int = 10,
+    duration: Int = 600,
+    year: Int? = 2024,
+    playCount: Int = 0,
+    groupKey: AlbumGroupKey? = AlbumGroupKey(name, AlbumArtistGroupKey(albumArtist)),
+    mediaProviders: List<MediaProviderType> = listOf(MediaProviderType.Shuttle),
+) = Album(
+    name = name,
+    albumArtist = albumArtist,
+    artists = artists,
+    songCount = songCount,
+    duration = duration,
+    year = year,
+    playCount = playCount,
+    lastSongPlayed = null,
+    lastSongCompleted = null,
     groupKey = groupKey,
     mediaProviders = mediaProviders,
 )
