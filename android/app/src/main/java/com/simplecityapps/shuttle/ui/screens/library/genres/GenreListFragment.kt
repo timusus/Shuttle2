@@ -78,8 +78,12 @@ class GenreListFragment :
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
-                        is GenreListUiEvent.Error -> {
-                            Toast.makeText(context, event.message, Toast.LENGTH_LONG).show()
+                        is GenreListUiEvent.PlaybackFailed -> {
+                            Toast.makeText(
+                                context,
+                                event.errorMessage ?: getString(R.string.error_unknown),
+                                Toast.LENGTH_LONG
+                            ).show()
                         }
                         is GenreListUiEvent.EditTags -> {
                             TagEditorAlertDialog.newInstance(event.songs).show(childFragmentManager)

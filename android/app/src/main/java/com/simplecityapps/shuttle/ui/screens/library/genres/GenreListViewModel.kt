@@ -35,7 +35,7 @@ data class GenreListUiState(
 
 sealed interface GenreListUiEvent {
     data class AddedToQueue(val genreName: String) : GenreListUiEvent
-    data class Error(val message: String) : GenreListUiEvent
+    data class PlaybackFailed(val errorMessage: String?) : GenreListUiEvent
     data class EditTags(val songs: List<Song>) : GenreListUiEvent
 }
 
@@ -84,7 +84,7 @@ class GenreListViewModel @Inject constructor(
                     result.onSuccess { playbackManager.play() }
                     result.onFailure { error ->
                         viewModelScope.launch {
-                            _events.emit(GenreListUiEvent.Error(error.message ?: "Unknown error"))
+                            _events.emit(GenreListUiEvent.PlaybackFailed(error.message))
                         }
                     }
                 }
