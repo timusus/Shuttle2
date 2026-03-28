@@ -66,10 +66,10 @@ class QueueFragment :
     private var recyclerView: FastScrollRecyclerView? = null
 
     private var toolbar: Toolbar? by autoClearedNullable()
-    private var toolbarTitleTextView: TextView by autoCleared()
-    private var toolbarSubtitleTextView: TextView by autoCleared()
-    private var progressBar: ProgressBar by autoCleared()
-    private var emptyLabel: TextView by autoCleared()
+    private var toolbarTitleTextView: TextView? by autoClearedNullable()
+    private var toolbarSubtitleTextView: TextView? by autoClearedNullable()
+    private var progressBar: ProgressBar? by autoClearedNullable()
+    private var emptyLabel: TextView? by autoClearedNullable()
 
     @Inject
     lateinit var presenter: QueuePresenter
@@ -269,11 +269,11 @@ class QueueFragment :
     }
 
     override fun toggleEmptyView(empty: Boolean) {
-        emptyLabel.isVisible = empty
+        emptyLabel?.isVisible = empty
     }
 
     override fun toggleLoadingView(loading: Boolean) {
-        progressBar.isVisible = loading
+        progressBar?.isVisible = loading
     }
 
     override fun setQueuePosition(
@@ -281,7 +281,7 @@ class QueueFragment :
         total: Int
     ) {
         position?.let {
-            toolbarSubtitleTextView.text =
+            toolbarSubtitleTextView?.text =
                 Phrase.from(requireContext(), R.string.queue_position)
                     .put("position", (position + 1).toString())
                     .put("total", total.toString())
@@ -402,7 +402,7 @@ class QueueFragment :
                 slideOffset: Float
             ) {
                 if (sheet == MultiSheetView.Sheet.SECOND) {
-                    toolbarTitleTextView.textSize = 15 + (5 * slideOffset)
+                    toolbarTitleTextView?.textSize = 15 + (5 * slideOffset)
                 }
             }
         }
