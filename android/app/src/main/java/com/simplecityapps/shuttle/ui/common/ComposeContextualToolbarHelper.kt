@@ -22,7 +22,6 @@ class ComposeContextualToolbarHelper {
         .map { selectedSongs -> selectedSongs.size }
 
     fun toggleSongSelection(song: Song) {
-        Timber.d("foo: toggleSongSelection: ${hashCode()}")
         _selectedSongsState.value = if (_selectedSongsState.value.contains(song)) {
             _selectedSongsState.value - song
         } else {
