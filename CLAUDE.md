@@ -52,11 +52,7 @@ All commands run from the repository root.
 
 ### UI Patterns
 
-The app uses **MVP (Model-View-Presenter)** with Fragments. Most screens are Fragment-based with custom `ViewBinder` pattern for RecyclerView items. Compose is used in newer screens (onboarding, genre list, shared components). Navigation uses Android Navigation Component with Safe Args.
-
-Key MVP base classes:
-- `BasePresenter<T : View>` — coroutine-scoped presenter with SupervisorJob
-- `BaseContract` — defines View/Presenter interfaces per screen
+Legacy screens use **MVP (Model-View-Presenter)** with Fragments, custom `ViewBinder` pattern for RecyclerView items, `BasePresenter<T : View>`, and `BaseContract`. New and migrated screens use **Compose + ViewModel** with unidirectional data flow — see [`docs/architecture/compose-viewmodel-udf.md`](docs/architecture/compose-viewmodel-udf.md) for the canonical patterns and principles. Navigation uses Android Navigation Component with Safe Args.
 
 ### Playback Flow
 
