@@ -45,8 +45,9 @@ class TrialDialogFragment : DialogFragment() {
         var touchTime = 0L
         icon.setOnTouchListener { v, event ->
             if (event.action == MotionEvent.ACTION_UP) {
-                if (touchTime == 0L || System.currentTimeMillis() - touchTime > 2000) {
-                    touchTime = System.currentTimeMillis()
+                val now = System.currentTimeMillis()
+                if (touchTime == 0L || now - touchTime > 2000) {
+                    touchTime = now
                     touchCount = 1
                 } else {
                     touchCount++
@@ -60,7 +61,8 @@ class TrialDialogFragment : DialogFragment() {
                     dismiss()
                 }
             }
-            true
+            // Only consume if we're in an active tap sequence
+            touchCount > 0 && System.currentTimeMillis() - touchTime <= 2000
         }
 
         val upgradeButton: Button = view.findViewById(R.id.upgradeButton)

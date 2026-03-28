@@ -167,7 +167,9 @@ class TagEditorAlertDialog :
     }
 
     fun show(manager: FragmentManager) {
-        super.show(manager, TAG)
+        if (!manager.isStateSaved) {
+            super.show(manager, TAG)
+        }
     }
 
     // Private

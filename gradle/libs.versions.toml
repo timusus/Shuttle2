@@ -20,7 +20,7 @@ desugar-jdk-libs = "2.1.5"
 documentfile = "1.1.0"
 drawerlayout = "1.2.0"
 espresso-core = "3.7.0"
-exoplayer-shuttle = "2.14.2-shuttle-16-5"
+exoplayer-shuttle = "2.14.2-shuttle-16kb"
 firebase-bom = "34.5.0"
 firebase-crashlytics = "3.0.6"
 fluent-system-icons = "1.1.311"
@@ -159,6 +159,7 @@ kotlinx-coroutinesTest = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-te
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanary-android" }
 mikepenz-aboutlibrariesCore = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutlibraries" }
+mikepenz-aboutlibraries = { module = "com.mikepenz:aboutlibraries", version.ref = "aboutlibraries" }
 moshi = { module = "com.squareup.moshi:moshi", version.ref = "moshi" }
 moshi-adapters = { module = "com.squareup.moshi:moshi-adapters", version.ref = "moshi-adapters" }
 moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "moshi-kotlin" }
@@ -183,6 +184,7 @@ vdurmont-semver4j = { module = "com.vdurmont:semver4j", version.ref = "semver4j"
 [plugins]
 
 aboutlibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutlibraries" }
+aboutlibraries-android = { id = "com.mikepenz.aboutlibraries.plugin.android", version.ref = "aboutlibraries" }
 android-application = { id = "com.android.application", version.ref = "agp" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }

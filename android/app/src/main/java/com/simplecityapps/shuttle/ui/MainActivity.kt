@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui
 
 import android.Manifest
+import android.app.ForegroundServiceStartNotAllowedException
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -22,6 +23,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeout
+import timber.log.Timber
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -41,7 +43,7 @@ class MainActivity : AppCompatActivity() {
     @AppCoroutineScope
     lateinit var scope: CoroutineScope
 
-    lateinit var snowfallView: SnowfallView
+    var snowfallView: SnowfallView? = null
 
     // Lifecycle
 
@@ -76,7 +78,7 @@ class MainActivity : AppCompatActivity() {
             withTimeout(5000) {
                 remoteConfig.fetchAndActivate().await()
             }
-            snowfallView.setForecast(remoteConfig.getDouble("snow_forecast"))
+            snowfallView?.setForecast(remoteConfig.getDouble("snow_forecast"))
         }
     }
 
@@ -104,15 +106,23 @@ class MainActivity : AppCompatActivity() {
 
     private fun handleSearchQuery(intent: Intent?) {
         if (intent?.action == MediaStore.INTENT_ACTION_MEDIA_PLAY_FROM_SEARCH) {
-            ContextCompat.startForegroundService(
-                this,
-                Intent(this, PlaybackService::class.java).apply {
-                    action = PlaybackService.ACTION_SEARCH
-                    intent.extras?.let { extras ->
-                        putExtras(extras)
+            try {
+                ContextCompat.startForegroundService(
+                    this,
+                    Intent(this, PlaybackService::class.java).apply {
+                        action = PlaybackService.ACTION_SEARCH
+                        intent.extras?.let { extras ->
+                            putExtras(extras)
+                        }
                     }
+                )
+            } catch (e: IllegalStateException) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && e is ForegroundServiceStartNotAllowedException) {
+                    Timber.w(e, "Cannot start foreground service from search query - app may be in restricted state")
+                } else {
+                    throw e
                 }
-            )
+            }
         }
     }
 }

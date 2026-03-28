@@ -4,7 +4,7 @@ plugins {
     id("com.android.application")
     id("kotlin-android")
     id("androidx.navigation.safeargs.kotlin")
-    id("com.mikepenz.aboutlibraries.plugin")
+    id("com.mikepenz.aboutlibraries.plugin.android")
     id("kotlin-parcelize")
     id("dagger.hilt.android.plugin")
     id("com.google.firebase.crashlytics")
@@ -28,6 +28,7 @@ android {
         testInstrumentationRunner = "com.simplecityapps.shuttle.CustomTestRunner"
         ndk {
             debugSymbolLevel = "FULL"
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
         }
     }
 
@@ -220,6 +221,9 @@ android {
         // ExoPlayer
         implementation(libs.exoplayer.core)
         implementation(libs.exoplayer.hls)
+        // Local AARs with 16KB-aligned native libs (for Android page size compatibility)
+        implementation(files("libs/extension-flac.aar"))
+        implementation(files("libs/extension-opus.aar"))
 
         implementation(libs.androidx.drawerlayout)
 
@@ -236,7 +240,7 @@ android {
         implementation(libs.glide.compose)
 
         // About Libraries
-        implementation(libs.mikepenz.aboutlibrariesCore)
+        implementation(libs.mikepenz.aboutlibraries)
 
         // Billing
         implementation(libs.billingclient.billingKtx)

@@ -55,11 +55,8 @@ dependencies {
     implementation libs.nanohttpd.webserver
 
     // ExoPlayer
-
     implementation(libs.exoplayer.core)
     implementation(libs.exoplayer.hls)
-    implementation(libs.exoplayer.extensionFlac)
-    implementation(libs.exoplayer.extensionOpus)
 
     // Moshi
     implementation libs.moshi.kotlin

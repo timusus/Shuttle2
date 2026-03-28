@@ -19,14 +19,25 @@ constructor(
     private val exoPlayerPlayback: ExoPlayerPlayback,
     private val mediaInfoProvider: MediaInfoProvider
 ) : SessionManagerListener<CastSession> {
+    var isAvailable: Boolean = false
+        private set
+
     init {
-        val sessionManager = CastContext.getSharedInstance(applicationContext).sessionManager
-        sessionManager.addSessionManagerListener(this, CastSession::class.java)
+        try {
+            val sessionManager = CastContext.getSharedInstance(applicationContext).sessionManager
+            sessionManager.addSessionManagerListener(this, CastSession::class.java)
+            isAvailable = true
+        } catch (e: Exception) {
+            // Cast framework unavailable on this device (e.g., no Google Play Services)
+            Timber.w(e, "Failed to initialize Cast framework - Chromecast will be unavailable")
+        }
     }
 
     override fun onSessionStarting(castSession: CastSession) {
         Timber.d("onSessionStarting")
-        httpServer.start()
+        if (!httpServer.isAlive) {
+            httpServer.start()
+        }
     }
 
     override fun onSessionStarted(
@@ -44,6 +55,7 @@ constructor(
         i: Int
     ) {
         Timber.e("onSessionStartFailed")
+        httpServer.stop()
     }
 
     override fun onSessionResuming(
@@ -51,7 +63,7 @@ constructor(
         s: String
     ) {
         Timber.d("onSessionResuming")
-        if (!httpServer.wasStarted()) {
+        if (!httpServer.isAlive) {
             httpServer.start()
         }
     }
@@ -74,6 +86,7 @@ constructor(
         i: Int
     ) {
         Timber.e("onSessionResumeFailed ($i)")
+        httpServer.stop()
     }
 
     override fun onSessionSuspended(

@@ -36,16 +36,16 @@ class PlaybackWatcher : PlaybackWatcherCallback {
         duration: Int,
         fromUser: Boolean
     ) {
-        callbacks.forEach { callback -> callback.onProgressChanged(position, duration, fromUser) }
+        callbacks.toList().forEach { callback -> callback.onProgressChanged(position, duration, fromUser) }
     }
 
     override fun onPlaybackStateChanged(playbackState: PlaybackState) {
         Timber.v("onPlaybackStateChanged(playbackState: $playbackState)")
-        callbacks.forEach { callback -> callback.onPlaybackStateChanged(playbackState) }
+        callbacks.toList().forEach { callback -> callback.onPlaybackStateChanged(playbackState) }
     }
 
     override fun onTrackEnded(song: Song) {
         Timber.v("onTrackEnded(song: ${song.name})")
-        callbacks.forEach { callback -> callback.onTrackEnded(song) }
+        callbacks.toList().forEach { callback -> callback.onTrackEnded(song) }
     }
 }

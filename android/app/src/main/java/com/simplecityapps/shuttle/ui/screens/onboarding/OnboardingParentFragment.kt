@@ -196,7 +196,10 @@ class OnboardingParentFragment :
         generalPreferenceManager.hasOnboarded = true
 
         if (args.isOnboarding) {
-            findNavController().navigate(R.id.action_onboardingFragment_to_mainFragment)
+            // Guard against double-tap or race conditions where navigation already occurred
+            if (findNavController().currentDestination?.id == R.id.onboardingFragment) {
+                findNavController().navigate(R.id.action_onboardingFragment_to_mainFragment)
+            }
         } else {
             findNavController().popBackStack()
         }

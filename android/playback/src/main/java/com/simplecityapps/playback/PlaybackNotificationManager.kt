@@ -183,6 +183,10 @@ constructor(
         notificationManager.cancel(NOTIFICATION_ID)
     }
 
+    fun notify(notification: Notification) {
+        notificationManager.notify(NOTIFICATION_ID, notification)
+    }
+
     private val playbackAction: NotificationCompat.Action
         get() {
             val intent =

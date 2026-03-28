@@ -64,13 +64,13 @@ fun KTagLib.getAudioFile(
     size: Long,
     mimeType: String?
 ): AudioFile {
-    val metadata = getMetadata(fileDescriptor)
+    val metadata = getMetadata(fileDescriptor, fileName)
     return AudioFile(
         path = filePath,
         size = size,
         lastModified = lastModified,
         mimeType = mimeType ?: "audio/*",
-        title = metadata?.propertyMap?.get(TagLibProperty.Title.key)?.firstOrNull() ?: fileName,
+        title = metadata?.propertyMap?.get(TagLibProperty.Title.key)?.firstOrNull() ?: fileName.substringBeforeLast("."),
         albumArtist = metadata?.propertyMap?.get(TagLibProperty.AlbumArtist.key)?.firstOrNull(),
         artists =
         metadata?.propertyMap?.get(TagLibProperty.Artist.key).orEmpty().flatMap { artist ->

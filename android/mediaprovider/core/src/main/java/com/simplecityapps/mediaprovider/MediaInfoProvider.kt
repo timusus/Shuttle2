@@ -2,6 +2,7 @@ package com.simplecityapps.mediaprovider
 
 import android.net.Uri
 import com.simplecityapps.shuttle.model.Song
+import java.io.File
 
 data class MediaInfo(val path: Uri, val mimeType: String, val isRemote: Boolean)
 
@@ -30,7 +31,12 @@ class AggregateMediaInfoProvider(val providers: MutableSet<MediaInfoProvider> = 
         song: Song,
         castCompatibilityMode: Boolean
     ): MediaInfo {
-        val uri = Uri.parse(song.path)
+        val uri: Uri =
+            if (song.path.startsWith("content://")) {
+                Uri.parse(song.path)
+            } else {
+                Uri.fromFile(File(song.path))
+            }
         return providers.firstOrNull { it.handles(uri) }?.getMediaInfo(song, castCompatibilityMode)
             ?: MediaInfo(path = uri, mimeType = song.mimeType, isRemote = false)
     }
