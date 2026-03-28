@@ -95,6 +95,9 @@ android {
     }
 
     testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+        }
         managedDevices {
             localDevices {
                 create("pixel6Api34Atd") {
@@ -286,6 +289,9 @@ android {
         testImplementation(libs.kotest)
         testImplementation(libs.mockk)
         testImplementation(libs.kotlinx.coroutinesTest)
+        testImplementation(libs.robolectric)
+        testImplementation("androidx.compose.ui:ui-test-junit4")
+        debugImplementation("androidx.compose.ui:ui-test-manifest")
         androidTestImplementation(libs.androidx.runner)
         androidTestImplementation(libs.androidx.rules)
         androidTestImplementation(libs.androidx.core.ktx)
