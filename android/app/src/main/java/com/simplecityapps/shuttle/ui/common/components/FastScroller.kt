@@ -27,7 +27,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -130,29 +129,26 @@ fun FastScroller(
             modifier = modifier.wrapContentWidth(Alignment.End),
             contentAlignment = Alignment.TopEnd
         ) {
-            // Use the available maxHeight as the viewport height.
             val viewportHeightPx = with(density) { maxHeight.toPx() }
-            val totalItemsCount by remember {
-                derivedStateOf { scrollableState.totalItemsCount }
-            }
 
-            // Compute the thumb scroll state using an average item height.
             val thumbScrollState = computeThumbScrollState(
                 state = scrollableState,
-                totalItemsCount = totalItemsCount,
                 viewportHeightPx = viewportHeightPx,
-                thumbHeight = measuredThumbSize.height
+                thumbHeightPx = measuredThumbSize.height,
             )
-            val computedThumbOffsetPx = thumbScrollState.computedThumbOffsetPx
+            val computedThumbOffsetPx = thumbScrollState.thumbOffsetPx
 
             // When dragging, use the user-controlled offset; otherwise, use the computed value.
             val thumbOffsetPx = if (isDragging) dragThumbOffsetPx else computedThumbOffsetPx
 
             // Calculate the thumb center and current item index.
             val thumbCenter = thumbOffsetPx + measuredThumbSize.height / 2
-            val thumbCenterFraction = ((thumbCenter - measuredThumbSize.height / 2) / (viewportHeightPx - measuredThumbSize.height)).coerceIn(0f, 1f)
+            val trackRange = (viewportHeightPx - measuredThumbSize.height).coerceAtLeast(1f)
+            val thumbCenterFraction = ((thumbCenter - measuredThumbSize.height / 2) / trackRange).coerceIn(0f, 1f)
             val currentItemIndex = if (isDragging) {
-                (thumbCenterFraction * (totalItemsCount - 1)).roundToInt()
+                (thumbCenterFraction * (scrollableState.totalItemsCount - 1))
+                    .roundToInt()
+                    .coerceIn(0, (scrollableState.totalItemsCount - 1).coerceAtLeast(0))
             } else {
                 thumbScrollState.currentItemIndex
             }
@@ -180,18 +176,22 @@ fun FastScroller(
                             onVerticalDrag = { change, dragAmount ->
                                 change.consume()
                                 cumulativeDrag += dragAmount
-                                val (newDragOffset, scrollTarget) = computeDragScrollOffset(
-                                    initialThumbOffset = initialThumbOffset,
-                                    cumulativeDrag = cumulativeDrag,
-                                    viewportHeightPx = viewportHeightPx,
-                                    thumbHeight = measuredThumbSize.height,
-                                    totalScrollRangePx = thumbScrollState.totalScrollRangePx,
-                                    totalItemsCount = totalItemsCount,
-                                    averageItemHeight = thumbScrollState.averageItemHeight
-                                )
+                                val newDragOffset = (initialThumbOffset + cumulativeDrag)
+                                    .coerceIn(0f, viewportHeightPx - measuredThumbSize.height)
                                 dragThumbOffsetPx = newDragOffset
+
+                                val (targetIndex, targetOffset) = computeDragScrollTarget(
+                                    thumbOffsetPx = newDragOffset,
+                                    viewportHeightPx = viewportHeightPx,
+                                    thumbHeightPx = measuredThumbSize.height,
+                                    totalScrollRangePx = thumbScrollState.totalScrollRangePx,
+                                    estimatedStride = thumbScrollState.estimatedStride,
+                                    itemsPerRow = thumbScrollState.itemsPerRow,
+                                    totalItemsCount = scrollableState.totalItemsCount,
+                                    beforeContentPadding = scrollableState.beforeContentPadding,
+                                )
                                 coroutineScope.launch {
-                                    scrollableState.scrollToItem(scrollTarget.first, scrollTarget.second)
+                                    scrollableState.scrollToItem(targetIndex, targetOffset)
                                 }
                             },
                             onDragEnd = { isDragging = false },
@@ -203,8 +203,8 @@ fun FastScroller(
                 thumb()
             }
 
-            val resolvedPopup = popup ?: { currentItemIndex ->
-                DefaultPopup(text = getPopupText(currentItemIndex))
+            val resolvedPopup = popup ?: { idx ->
+                DefaultPopup(text = getPopupText(idx))
             }
             // Position the popup so its bottom aligns with the thumb center.
             var popupHeight by remember { mutableFloatStateOf(0f) }
@@ -296,67 +296,6 @@ fun DefaultPopup(
 /** Pass this to the popup composable in FastScroller to hide it. */
 @Composable
 fun NoPopup(index: Int) = Unit
-
-/**
- * Data class holding computed thumb scroll state, including an estimated average item height.
- */
-private data class ThumbScrollState(
-    val computedThumbOffsetPx: Float,
-    val currentItemIndex: Int,
-    val totalScrollRangePx: Float,
-    val averageItemHeight: Float
-)
-
-/**
- * Computes the thumb scroll state using the average height of visible items.
- */
-private fun computeThumbScrollState(
-    state: FastScrollableState,
-    totalItemsCount: Int,
-    viewportHeightPx: Float,
-    thumbHeight: Int
-): ThumbScrollState {
-    val visibleItemSizes = state.visibleItemMainAxisSizes
-    val averageItemHeight = if (visibleItemSizes.isNotEmpty()) {
-        visibleItemSizes.sumOf { it.toLong() }.toFloat() / visibleItemSizes.size
-    } else {
-        1f
-    }
-    val totalContentHeightPx = averageItemHeight * totalItemsCount
-    val totalScrollRangePx = (totalContentHeightPx - viewportHeightPx).coerceAtLeast(1f)
-    val currentScrollOffsetPx = state.firstVisibleItemIndex * averageItemHeight + state.firstVisibleItemScrollOffset
-    val scrollFraction = (currentScrollOffsetPx / totalScrollRangePx).coerceIn(0f, 1f)
-    val computedThumbOffsetPx = scrollFraction * (viewportHeightPx - thumbHeight)
-    val thumbCenter = computedThumbOffsetPx + thumbHeight / 2
-    val thumbCenterFraction = ((thumbCenter - thumbHeight / 2) / (viewportHeightPx - thumbHeight)).coerceIn(0f, 1f)
-    val currentItemIndex = (thumbCenterFraction * (totalItemsCount - 1)).roundToInt()
-    return ThumbScrollState(
-        computedThumbOffsetPx = computedThumbOffsetPx,
-        currentItemIndex = currentItemIndex,
-        totalScrollRangePx = totalScrollRangePx,
-        averageItemHeight = averageItemHeight
-    )
-}
-
-/**
- * Computes a new drag offset and corresponding target scroll position based on the average item height.
- */
-private fun computeDragScrollOffset(
-    initialThumbOffset: Float,
-    cumulativeDrag: Float,
-    viewportHeightPx: Float,
-    thumbHeight: Int,
-    totalScrollRangePx: Float,
-    totalItemsCount: Int,
-    averageItemHeight: Float
-): Pair<Float, Pair<Int, Int>> {
-    val newDragOffset = (initialThumbOffset + cumulativeDrag).coerceIn(0f, viewportHeightPx - thumbHeight)
-    val newFraction = newDragOffset / (viewportHeightPx - thumbHeight)
-    val newScrollOffsetPx = newFraction * totalScrollRangePx
-    val targetIndex = (newScrollOffsetPx / averageItemHeight).toInt().coerceIn(0, totalItemsCount - 1)
-    val targetItemOffset = (newScrollOffsetPx % averageItemHeight).toInt()
-    return newDragOffset to (targetIndex to targetItemOffset)
-}
 
 @Preview(showBackground = true)
 @Composable
