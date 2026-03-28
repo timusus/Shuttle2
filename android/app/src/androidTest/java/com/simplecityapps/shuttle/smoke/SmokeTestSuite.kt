@@ -97,12 +97,8 @@ class SmokeTestSuite {
         onView(withText("Songs"))
             .perform(click())
 
-        // Give the Flow time to emit data to the RecyclerView
-        Thread.sleep(1000)
-
-        // Verify a song from our test data is visible
-        onView(allOf(withId(R.id.recyclerView), isDisplayed()))
-            .check(matches(hasDescendant(withText("Highway to Hell"))))
+        // Wait for Flow to emit data, then verify a song from our test data is visible
+        waitForView(allOf(withId(R.id.recyclerView), hasDescendant(withText("Highway to Hell"))))
     }
 
     @Test
@@ -115,16 +111,13 @@ class SmokeTestSuite {
         onView(withText("Songs"))
             .perform(click())
 
-        Thread.sleep(1000)
-
-        // Tap the first song in the list
+        // Wait for Flow to emit data, then tap the first song in the list
+        waitForView(allOf(withId(R.id.recyclerView), hasDescendant(isDisplayed())))
         onView(allOf(withId(R.id.recyclerView), isDisplayed()))
             .perform(RecyclerViewActions.actionOnItemAtPosition<RecyclerView.ViewHolder>(0, click()))
 
         // Mini player should show a song title
-        Thread.sleep(500)
-        onView(allOf(withId(R.id.titleTextView), isDescendantOfA(withId(R.id.sheet1PeekView))))
-            .check(matches(isDisplayed()))
+        waitForView(allOf(withId(R.id.titleTextView), isDescendantOfA(withId(R.id.sheet1PeekView))))
     }
 
     @Test
@@ -150,19 +143,13 @@ class SmokeTestSuite {
         onView(withText("Artists"))
             .perform(click())
 
-        // Wait for Flow to emit data
-        Thread.sleep(1000)
-
-        // Tap the first artist in the list
+        // Wait for Flow to emit data, then tap the first artist
+        waitForView(allOf(withId(R.id.recyclerView), hasDescendant(isDisplayed())))
         onView(allOf(withId(R.id.recyclerView), isDisplayed()))
             .perform(RecyclerViewActions.actionOnItemAtPosition<RecyclerView.ViewHolder>(0, click()))
 
-        // Wait for navigation
-        Thread.sleep(500)
-
         // Verify artist detail screen shows toolbar (scoped to CollapsingToolbarLayout to avoid ambiguity)
-        onView(allOf(withId(R.id.toolbar), isDescendantOfA(withId(R.id.collapsingToolbarLayout))))
-            .check(matches(isDisplayed()))
+        waitForView(allOf(withId(R.id.toolbar), isDescendantOfA(withId(R.id.collapsingToolbarLayout))))
     }
 
     @Test
@@ -175,23 +162,18 @@ class SmokeTestSuite {
         onView(withText("Songs"))
             .perform(click())
 
-        Thread.sleep(1000)
-
-        // Tap the first song
+        // Wait for Flow to emit data, then tap the first song
+        waitForView(allOf(withId(R.id.recyclerView), hasDescendant(isDisplayed())))
         onView(allOf(withId(R.id.recyclerView), isDisplayed()))
             .perform(RecyclerViewActions.actionOnItemAtPosition<RecyclerView.ViewHolder>(0, click()))
 
-        Thread.sleep(500)
-
-        // Expand to full playback by clicking the mini player peek view
+        // Wait for mini player, then expand to full playback
+        waitForView(allOf(withId(R.id.sheet1PeekView), isDisplayed()))
         onView(withId(R.id.sheet1PeekView))
             .perform(click())
 
-        Thread.sleep(500)
-
         // Verify full playback controls are visible (scoped to sheet1Container, isClickable to avoid child view ambiguity)
-        onView(allOf(withId(R.id.playPauseButton), isDescendantOfA(withId(R.id.sheet1Container)), isClickable()))
-            .check(matches(isDisplayed()))
+        waitForView(allOf(withId(R.id.playPauseButton), isDescendantOfA(withId(R.id.sheet1Container)), isClickable()))
         onView(allOf(withId(R.id.seekBar), isDescendantOfA(withId(R.id.sheet1Container))))
             .check(matches(isDisplayed()))
         onView(allOf(withId(R.id.shuffleButton), isDescendantOfA(withId(R.id.sheet1Container))))
@@ -208,13 +190,13 @@ class SmokeTestSuite {
         onView(withText("Songs"))
             .perform(click())
 
-        Thread.sleep(1000)
-
-        // Tap the first song
+        // Wait for Flow to emit data, then tap the first song
+        waitForView(allOf(withId(R.id.recyclerView), hasDescendant(isDisplayed())))
         onView(allOf(withId(R.id.recyclerView), isDisplayed()))
             .perform(RecyclerViewActions.actionOnItemAtPosition<RecyclerView.ViewHolder>(0, click()))
 
-        Thread.sleep(500)
+        // Wait for mini player to appear before expanding to queue
+        waitForView(allOf(withId(R.id.titleTextView), isDescendantOfA(withId(R.id.sheet1PeekView))))
 
         // Programmatically expand to sheet 2 (queue) via MultiSheetView
         scenario.onActivity { activity ->
@@ -222,11 +204,8 @@ class SmokeTestSuite {
             multiSheetView.goToSheet(MultiSheetView.Sheet.SECOND)
         }
 
-        Thread.sleep(500)
-
         // Verify queue toolbar shows "Up Next"
-        onView(withId(R.id.toolbarTitleTextView))
-            .check(matches(allOf(isDisplayed(), withText("Up Next"))))
+        waitForView(allOf(withId(R.id.toolbarTitleTextView), withText("Up Next")))
 
         // Verify queue recyclerView is displayed (has items)
         onView(allOf(withId(R.id.recyclerView), isDescendantOfA(withId(R.id.sheet2Container))))
@@ -260,11 +239,8 @@ class SmokeTestSuite {
         onView(allOf(withId(R.id.shuffleButton), isDescendantOfA(withId(R.id.appBarLayout))))
             .perform(click())
 
-        Thread.sleep(500)
-
         // Verify mini player shows a song title
-        onView(allOf(withId(R.id.titleTextView), isDescendantOfA(withId(R.id.sheet1PeekView))))
-            .check(matches(isDisplayed()))
+        waitForView(allOf(withId(R.id.titleTextView), isDescendantOfA(withId(R.id.sheet1PeekView))))
     }
 
     @Test
@@ -281,12 +257,8 @@ class SmokeTestSuite {
         onView(isAssignableFrom(android.widget.EditText::class.java))
             .perform(typeText("Queen"), closeSoftKeyboard())
 
-        // Wait for debounce + query time
-        Thread.sleep(1500)
-
-        // Verify results contain "Queen"
-        onView(allOf(withId(R.id.recyclerView), isDisplayed()))
-            .check(matches(hasDescendant(withText("Queen"))))
+        // Wait for debounce + query results
+        waitForView(allOf(withId(R.id.recyclerView), hasDescendant(withText("Queen"))))
     }
 
     @Test
@@ -301,11 +273,8 @@ class SmokeTestSuite {
         onView(withText("Playlists"))
             .perform(click())
 
-        Thread.sleep(500)
-
         // Verify the fragment loaded — the recyclerView should exist even if empty
-        onView(allOf(withId(R.id.recyclerView), isDisplayed()))
-            .check(matches(isDisplayed()))
+        waitForView(allOf(withId(R.id.recyclerView), isDisplayed()))
     }
 
     @Test
@@ -316,10 +285,7 @@ class SmokeTestSuite {
         onView(withId(R.id.bottomSheetFragment))
             .perform(click())
 
-        Thread.sleep(300)
-
         // Verify the bottom drawer is showing by checking for a known menu item
-        onView(withText("Settings"))
-            .check(matches(isDisplayed()))
+        waitForView(withText("Settings"))
     }
 }
