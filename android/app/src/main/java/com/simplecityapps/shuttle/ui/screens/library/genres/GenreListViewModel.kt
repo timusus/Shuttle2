@@ -1,6 +1,5 @@
 package com.simplecityapps.shuttle.ui.screens.library.genres
 
-import androidx.annotation.OpenForTesting
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.Progress
@@ -17,6 +16,7 @@ import com.simplecityapps.shuttle.query.SongQuery
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableSharedFlow
+
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -40,7 +40,6 @@ sealed interface GenreListUiEvent {
     data class EditTags(val songs: List<Song>) : GenreListUiEvent
 }
 
-@OpenForTesting
 @HiltViewModel
 class GenreListViewModel @Inject constructor(
     private val genreRepository: GenreRepository,

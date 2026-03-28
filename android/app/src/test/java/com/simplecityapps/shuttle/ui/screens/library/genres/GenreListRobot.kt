@@ -1,7 +1,10 @@
 package com.simplecityapps.shuttle.ui.screens.library.genres
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.simplecityapps.shuttle.model.Genre
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
@@ -67,22 +70,20 @@ class GenreListRobot(private val rule: ComposeContentTestRule) {
         playlists: List<Playlist> = emptyList(),
     ) {
         resetCallbacks()
-        val cb = callbacks()
         rule.setContent {
-            AppTheme {
-                GenreList(
-                    uiState = uiState,
-                    playlists = playlists.toImmutableList(),
-                    onSelectGenre = cb.onSelectGenre,
-                    onPlayGenre = cb.onPlayGenre,
-                    onAddToQueue = cb.onAddToQueue,
-                    onPlayNext = cb.onPlayNext,
-                    onExclude = cb.onExclude,
-                    onEditTags = cb.onEditTags,
-                    onAddToPlaylist = cb.onAddToPlaylist,
-                    onShowCreatePlaylistDialog = cb.onShowCreatePlaylistDialog,
-                )
-            }
+            renderGenreListContent(uiState, playlists)
+        }
+    }
+
+    /** Render with a real [GenreListViewModel] (for integration tests). */
+    fun setContentWithViewModel(
+        viewModel: GenreListViewModel,
+        playlists: List<Playlist> = emptyList(),
+    ) {
+        resetCallbacks()
+        rule.setContent {
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            renderGenreListContent(uiState, playlists)
         }
     }
 
@@ -108,6 +109,28 @@ class GenreListRobot(private val rule: ComposeContentTestRule) {
                     onShowCreatePlaylistDialog = cb.onShowCreatePlaylistDialog,
                 )
             }
+        }
+    }
+
+    @Composable
+    private fun renderGenreListContent(
+        uiState: GenreListUiState,
+        playlists: List<Playlist>,
+    ) {
+        val cb = callbacks()
+        AppTheme {
+            GenreList(
+                uiState = uiState,
+                playlists = playlists.toImmutableList(),
+                onSelectGenre = cb.onSelectGenre,
+                onPlayGenre = cb.onPlayGenre,
+                onAddToQueue = cb.onAddToQueue,
+                onPlayNext = cb.onPlayNext,
+                onExclude = cb.onExclude,
+                onEditTags = cb.onEditTags,
+                onAddToPlaylist = cb.onAddToPlaylist,
+                onShowCreatePlaylistDialog = cb.onShowCreatePlaylistDialog,
+            )
         }
     }
 

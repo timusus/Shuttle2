@@ -155,7 +155,7 @@ class GenreListFragment :
         text: String,
         playlistData: PlaylistData
     ) {
-        playlistMenuView.onSave(text, playlistData)
+        playlistMenuPresenter.createPlaylist(text, playlistData)
     }
 
     // Static
