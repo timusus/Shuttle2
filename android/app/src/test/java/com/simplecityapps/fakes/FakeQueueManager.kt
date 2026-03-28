@@ -8,7 +8,9 @@ import com.simplecityapps.shuttle.model.Song
 class FakeQueueManager : QueueOperations {
     override var hasRestoredQueue: Boolean = false
 
-    override suspend fun setQueue(songs: List<Song>, shuffleSongs: List<Song>?, position: Int): Boolean = true
+    var setQueueResult: Boolean = true
+
+    override suspend fun setQueue(songs: List<Song>, shuffleSongs: List<Song>?, position: Int): Boolean = setQueueResult
     override fun getQueue(): List<QueueItem> = emptyList()
     override fun getQueue(shuffleMode: QueueManager.ShuffleMode): List<QueueItem> = emptyList()
     override fun getCurrentItem(): QueueItem? = null

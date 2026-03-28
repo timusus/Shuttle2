@@ -11,8 +11,10 @@ class FakePlaybackManager : PlaybackOperations {
     var playedNext = mutableListOf<Song>()
     var shuffled = mutableListOf<Song>()
 
+    var loadResult: Result<Boolean> = Result.success(true)
+
     override fun load(seekPosition: Int?, completion: (Result<Boolean>) -> Unit) {
-        completion(Result.success(true))
+        completion(loadResult)
     }
 
     override fun pause() {}
