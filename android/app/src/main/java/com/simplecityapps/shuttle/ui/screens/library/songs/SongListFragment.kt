@@ -24,7 +24,6 @@ import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.dialog.showDeleteDialog
-import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.error.userDescription
 import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
@@ -172,10 +171,8 @@ class SongListFragment :
                     },
                     onDelete = { song ->
                         showDeleteDialog(requireContext(), song.name) {
-                            try {
-                                viewModel.delete(song)
-                            } catch (e: UserFriendlyError) {
-                                showDeleteError(e)
+                            viewModel.delete(song).onFailure { error ->
+                                showDeleteError(error)
                             }
                         }
                     },
@@ -330,8 +327,11 @@ class SongListFragment :
         ).show()
     }
 
-    fun showDeleteError(error: Error) {
-        Toast.makeText(requireContext(), error.userDescription(resources), Toast.LENGTH_LONG).show()
+    fun showDeleteError(error: Throwable) {
+        val message = (error as? Error)?.userDescription(resources)
+            ?: error.message
+            ?: resources.getString(R.string.error_unknown)
+        Toast.makeText(requireContext(), message, Toast.LENGTH_LONG).show()
     }
 
     // CreatePlaylistDialogFragment.Listener Implementation

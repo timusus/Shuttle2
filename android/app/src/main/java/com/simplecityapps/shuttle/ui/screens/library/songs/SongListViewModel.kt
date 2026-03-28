@@ -1,7 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library.songs
 
 import android.app.Application
-import androidx.annotation.OpenForTesting
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.AndroidViewModel
@@ -33,7 +32,6 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-@OpenForTesting
 @HiltViewModel
 class SongListViewModel @Inject constructor(
     private val songRepository: SongRepository,
@@ -133,18 +131,19 @@ class SongListViewModel @Inject constructor(
         }
     }
 
-    fun delete(song: Song) {
+    fun delete(song: Song): Result<Unit> {
         val context = getApplication<Application>().applicationContext
         val documentFile = DocumentFile.fromSingleUri(context, song.path.toUri())
 
         if (documentFile?.delete() == false) {
-            throw UserFriendlyError(context.getString(R.string.delete_song_failed))
+            return Result.failure(UserFriendlyError(context.getString(R.string.delete_song_failed)))
         }
 
         viewModelScope.launch {
             songRepository.remove(song)
             queueManager.remove(song)
         }
+        return Result.success(Unit)
     }
 
     fun shuffle(completion: (Result<Any?>) -> Unit) {
