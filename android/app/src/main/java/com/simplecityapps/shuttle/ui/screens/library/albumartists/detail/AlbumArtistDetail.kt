@@ -5,11 +5,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -47,7 +47,7 @@ import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.common.components.CircularLoadingState
-import com.simplecityapps.shuttle.ui.common.components.CollapsingHeroScaffold
+import com.simplecityapps.shuttle.ui.common.components.DetailScaffold
 import com.simplecityapps.shuttle.ui.common.components.LoadingStatusIndicator
 import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
 import com.simplecityapps.shuttle.ui.common.utils.dp as dpToInt
@@ -115,37 +115,8 @@ fun AlbumArtistDetail(
         AlbumArtistDetailUiState.LoadingState.Ready -> {
             val context = LocalContext.current
             val albumArtist = uiState.albumArtist
-            val toolbarTitle = albumArtist?.name ?: albumArtist?.friendlyArtistName ?: ""
-            val albumQuantity = albumArtist?.let {
-                Phrase.fromPlural(context.resources, R.plurals.albumsPlural, it.albumCount)
-                    .put("count", it.albumCount)
-                    .format()
-            }
-            val songQuantity = albumArtist?.let {
-                Phrase.fromPlural(context.resources, R.plurals.songsPlural, it.songCount)
-                    .put("count", it.songCount)
-                    .format()
-            }
-            val toolbarSubtitle = ListPhrase.from(" \u00B7 ").joinSafely(
-                listOf(albumQuantity, songQuantity)
-            )?.toString()
 
-            CollapsingHeroScaffold(
-                heroContent = { _ ->
-                    GlideImage(
-                        model = albumArtist,
-                        contentDescription = stringResource(R.string.artwork),
-                        contentScale = ContentScale.Crop,
-                        loading = placeholder(com.simplecityapps.core.R.drawable.ic_placeholder_artist),
-                        modifier = Modifier.fillMaxSize(),
-                    ) {
-                        it
-                            .diskCacheStrategy(DiskCacheStrategy.ALL)
-                            .transition(withCrossFade(200))
-                    }
-                },
-                title = toolbarTitle,
-                subtitle = toolbarSubtitle,
+            DetailScaffold(
                 onNavigateUp = onNavigateUp,
                 actions = {
                     ArtistOverflowMenu(
@@ -161,6 +132,65 @@ fun AlbumArtistDetail(
                 },
                 modifier = modifier,
             ) {
+                // Artwork
+                if (albumArtist != null) {
+                    item {
+                        GlideImage(
+                            model = albumArtist,
+                            contentDescription = stringResource(R.string.artwork),
+                            contentScale = ContentScale.Crop,
+                            loading = placeholder(com.simplecityapps.core.R.drawable.ic_placeholder_artist),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(16f / 9f),
+                        ) {
+                            it
+                                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                                .transition(withCrossFade(200))
+                        }
+                    }
+
+                    // Metadata
+                    item {
+                        val albumQuantity = Phrase.fromPlural(
+                            context.resources,
+                            R.plurals.albumsPlural,
+                            albumArtist.albumCount
+                        )
+                            .put("count", albumArtist.albumCount)
+                            .format()
+                        val songQuantity = Phrase.fromPlural(
+                            context.resources,
+                            R.plurals.songsPlural,
+                            albumArtist.songCount
+                        )
+                            .put("count", albumArtist.songCount)
+                            .format()
+                        val subtitle = ListPhrase.from(" \u00B7 ")
+                            .joinSafely(listOf(albumQuantity, songQuantity))
+
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                        ) {
+                            Text(
+                                text = albumArtist.name ?: albumArtist.friendlyArtistName
+                                    ?: stringResource(com.simplecityapps.core.R.string.unknown),
+                                style = MaterialTheme.typography.headlineSmall,
+                                color = MaterialTheme.colorScheme.onBackground,
+                            )
+                            if (subtitle != null) {
+                                Text(
+                                    text = subtitle.toString(),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                    }
+                }
+
                 // Albums section
                 val albums = uiState.albums
                 if (albums.isNotEmpty()) {
@@ -357,10 +387,7 @@ private fun AlbumArtistDetailAlbumItem(
                 .put("count", album.songCount)
                 .format()
             val subtitle = ListPhrase.from(" \u00B7 ").joinSafely(
-                listOf(
-                    album.year?.toString(),
-                    songsQuantity,
-                )
+                listOf(album.year?.toString(), songsQuantity)
             )
             if (subtitle != null) {
                 Text(
@@ -420,7 +447,6 @@ private fun AlbumArtistDetailSongItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        // Artwork
         GlideImage(
             model = song,
             contentDescription = stringResource(R.string.artwork),
@@ -435,7 +461,6 @@ private fun AlbumArtistDetailSongItem(
                 .transition(withCrossFade(200))
         }
 
-        // Song title and artist/album subtitle
         Column(
             modifier = Modifier.weight(1f),
         ) {
@@ -449,10 +474,7 @@ private fun AlbumArtistDetailSongItem(
                 },
             )
             val subtitle = ListPhrase.from(" \u00B7 ").joinSafely(
-                listOf(
-                    song.friendlyArtistName ?: song.albumArtist,
-                    song.album,
-                )
+                listOf(song.friendlyArtistName ?: song.albumArtist, song.album)
             )
             if (subtitle != null) {
                 Text(
@@ -463,14 +485,12 @@ private fun AlbumArtistDetailSongItem(
             }
         }
 
-        // Duration
         Text(
             text = song.duration.toHms("--:--"),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        // Context menu
         SongMenu(
             song = song,
             playlists = playlists.toImmutableList(),

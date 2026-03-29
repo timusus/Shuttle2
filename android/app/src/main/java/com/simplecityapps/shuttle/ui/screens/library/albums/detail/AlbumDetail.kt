@@ -3,7 +3,9 @@ package com.simplecityapps.shuttle.ui.screens.library.albums.detail
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -42,7 +44,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.common.components.CircularLoadingState
-import com.simplecityapps.shuttle.ui.common.components.CollapsingHeroScaffold
+import com.simplecityapps.shuttle.ui.common.components.DetailScaffold
 import com.simplecityapps.shuttle.ui.common.components.LoadingStatusIndicator
 import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
 import com.simplecityapps.shuttle.ui.common.utils.toHms
@@ -98,34 +100,8 @@ fun AlbumDetail(
         AlbumDetailUiState.LoadingState.Ready -> {
             val context = LocalContext.current
             val album = uiState.album
-            val toolbarTitle = album?.name ?: ""
-            val songsQuantity = album?.let {
-                Phrase.fromPlural(context.resources, R.plurals.songsPlural, it.songCount)
-                    .put("count", it.songCount)
-                    .format()
-            }
-            val toolbarSubtitle = album?.let {
-                ListPhrase.from(" \u00B7 ").joinSafely(
-                    listOf(it.year?.toString(), songsQuantity, it.duration.toHms())
-                )?.toString()
-            }
 
-            CollapsingHeroScaffold(
-                heroContent = { _ ->
-                    GlideImage(
-                        model = album,
-                        contentDescription = stringResource(R.string.artwork),
-                        contentScale = ContentScale.Crop,
-                        loading = placeholder(com.simplecityapps.core.R.drawable.ic_placeholder_album),
-                        modifier = Modifier.fillMaxSize(),
-                    ) {
-                        it
-                            .diskCacheStrategy(DiskCacheStrategy.ALL)
-                            .transition(withCrossFade(200))
-                    }
-                },
-                title = toolbarTitle,
-                subtitle = toolbarSubtitle,
+            DetailScaffold(
                 onNavigateUp = onNavigateUp,
                 actions = {
                     AlbumDetailOverflowMenu(
@@ -139,6 +115,31 @@ fun AlbumDetail(
                 },
                 modifier = modifier,
             ) {
+                // Artwork
+                if (album != null) {
+                    item {
+                        GlideImage(
+                            model = album,
+                            contentDescription = stringResource(R.string.artwork),
+                            contentScale = ContentScale.Crop,
+                            loading = placeholder(com.simplecityapps.core.R.drawable.ic_placeholder_album),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .aspectRatio(1f),
+                        ) {
+                            it
+                                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                                .transition(withCrossFade(200))
+                        }
+                    }
+
+                    // Metadata
+                    item {
+                        AlbumMetadataHeader(album = album)
+                    }
+                }
+
+                // Songs
                 val songs = uiState.songs
                 val discGroupingSongs = songs
                     .groupBy { it.disc ?: 1 }
@@ -187,6 +188,44 @@ fun AlbumDetail(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun AlbumMetadataHeader(
+    album: com.simplecityapps.shuttle.model.Album,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+    ) {
+        Text(
+            text = album.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onBackground,
+        )
+        val songsQuantity = Phrase.fromPlural(context.resources, R.plurals.songsPlural, album.songCount)
+            .put("count", album.songCount)
+            .format()
+        val subtitle = ListPhrase
+            .from(" \u00B7 ")
+            .joinSafely(
+                listOf(
+                    album.year?.toString(),
+                    songsQuantity,
+                    album.duration.toHms(),
+                )
+            )
+        if (subtitle != null) {
+            Text(
+                text = subtitle.toString(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
@@ -316,7 +355,6 @@ private fun AlbumDetailSongItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        // Track number
         Text(
             text = song.track?.toString() ?: "",
             style = MaterialTheme.typography.bodyMedium,
@@ -329,7 +367,6 @@ private fun AlbumDetailSongItem(
             modifier = Modifier.width(36.dp),
         )
 
-        // Song title
         Text(
             text = song.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
             style = MaterialTheme.typography.bodyMedium,
@@ -341,14 +378,12 @@ private fun AlbumDetailSongItem(
             modifier = Modifier.weight(1f),
         )
 
-        // Duration
         Text(
             text = song.duration.toHms("--:--"),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
 
-        // Context menu
         SongMenu(
             song = song,
             playlists = playlists.toImmutableList(),
