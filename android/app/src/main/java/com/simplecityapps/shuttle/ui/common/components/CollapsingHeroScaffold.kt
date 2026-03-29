@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -15,7 +14,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -25,7 +23,6 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -33,6 +30,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -52,8 +50,6 @@ fun CollapsingHeroScaffold(
     heroHeight: Dp = 300.dp,
     content: LazyListScope.() -> Unit,
 ) {
-    // Read the actual window background from the Android theme so the toolbar
-    // matches regardless of light/dark/black theme.
     val context = LocalContext.current
     val windowBackground = remember(context) {
         val typedArray = context.obtainStyledAttributes(intArrayOf(android.R.attr.windowBackground))
@@ -65,7 +61,6 @@ fun CollapsingHeroScaffold(
     val density = LocalDensity.current
     val heroHeightPx = with(density) { heroHeight.toPx() }
     val toolbarHeightPx = with(density) { ToolbarHeight.toPx() }
-    // Hero collapses down to the toolbar height, not to zero
     val maxCollapsePx = heroHeightPx - toolbarHeightPx
 
     var heroOffset by remember { mutableFloatStateOf(0f) }
@@ -88,6 +83,9 @@ fun CollapsingHeroScaffold(
         0f
     }
 
+    // Dynamic top padding: shrinks from heroHeight to toolbarHeight as hero collapses
+    val currentTopPadding = with(density) { (heroHeightPx + heroOffset).toDp() }
+
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -104,7 +102,6 @@ fun CollapsingHeroScaffold(
                 },
         ) {
             heroContent(collapseProgress)
-            // Gradient scrim at top for toolbar icon visibility
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -120,13 +117,10 @@ fun CollapsingHeroScaffold(
             )
         }
 
-        // 2. Content — padded below hero, offset up as hero collapses
-        val contentOffsetDp = with(density) { heroOffset.toDp() }
+        // 2. Content — stays in place, top padding shrinks as hero collapses
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .offset(y = contentOffsetDp),
-            contentPadding = PaddingValues(top = heroHeight),
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(top = currentTopPadding),
         ) {
             content()
         }
