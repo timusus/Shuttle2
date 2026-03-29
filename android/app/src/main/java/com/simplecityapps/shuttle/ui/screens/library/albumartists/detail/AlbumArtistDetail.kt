@@ -416,9 +416,9 @@ private fun AlbumArtistDetailSongItem(
             .fillMaxWidth()
             .then(highlightModifier)
             .clickable { onClick(song) }
-            .padding(horizontal = 8.dp, vertical = 8.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         // Artwork
         GlideImage(
