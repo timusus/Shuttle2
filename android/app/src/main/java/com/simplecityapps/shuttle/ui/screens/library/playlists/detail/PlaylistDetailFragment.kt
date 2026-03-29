@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.res.ResourcesCompat
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.NavHostFragment
@@ -22,6 +23,7 @@ import com.simplecityapps.adapter.RecyclerAdapter
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.PlaylistSong
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
+import com.simplecityapps.shuttle.ui.common.ContextualToolbarHelper
 import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.EditTextAlertDialog
@@ -67,9 +69,13 @@ class PlaylistDetailFragment :
 
     private var toolbar: Toolbar? = null
 
+    private var contextualToolbar: Toolbar? = null
+
     private var recyclerView: RecyclerView by autoCleared()
 
     private var heroImage: ImageView by autoCleared()
+
+    private var contextualToolbarHelper: ContextualToolbarHelper<PlaylistSong> by autoCleared()
 
     // Lifecycle
 
@@ -94,8 +100,16 @@ class PlaylistDetailFragment :
 
         recyclerView = view.findViewById(R.id.recyclerView)
         toolbar = view.findViewById(R.id.toolbar)
+        contextualToolbar = view.findViewById(R.id.contextualToolbar)
 
         playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
+
+        contextualToolbarHelper = ContextualToolbarHelper()
+        contextualToolbarHelper.toolbar = toolbar
+        contextualToolbarHelper.contextualToolbar = contextualToolbar
+        contextualToolbarHelper.callback = contextualToolbarCallback
+
+        setupContextualToolbar()
 
         adapter = RecyclerAdapter(viewLifecycleOwner.lifecycleScope)
 
@@ -221,6 +235,59 @@ class PlaylistDetailFragment :
             ) {}
         ) {}
 
+    private fun setupContextualToolbar() {
+        contextualToolbar?.let { contextualToolbar ->
+            contextualToolbar.menu.clear()
+            contextualToolbar.inflateMenu(R.menu.menu_multi_select)
+            contextualToolbar.setOnMenuItemClickListener { menuItem ->
+                playlistMenuView.createPlaylistMenu(contextualToolbar.menu)
+                if (playlistMenuView.handleMenuItem(menuItem, PlaylistData.Songs(contextualToolbarHelper.selectedItems.map { it.song }.toList()))) {
+                    contextualToolbarHelper.hide()
+                    return@setOnMenuItemClickListener true
+                }
+                when (menuItem.itemId) {
+                    R.id.queue -> {
+                        presenter.addToQueue(contextualToolbarHelper.selectedItems.toList())
+                        contextualToolbarHelper.hide()
+                        true
+                    }
+                    R.id.editTags -> {
+                        presenter.editTags(contextualToolbarHelper.selectedItems.toList())
+                        contextualToolbarHelper.hide()
+                        true
+                    }
+                    else -> false
+                }
+            }
+        }
+    }
+
+    private val contextualToolbarCallback =
+        object : ContextualToolbarHelper.Callback<PlaylistSong> {
+            override fun onCountChanged(count: Int) {
+                contextualToolbarHelper.contextualToolbar?.title =
+                    Phrase.fromPlural(requireContext(), R.plurals.multi_select_items_selected, count)
+                        .put("count", count)
+                        .format()
+                contextualToolbarHelper.contextualToolbar?.menu?.let { menu ->
+                    TagEditorMenuSanitiser.sanitise(menu, contextualToolbarHelper.selectedItems.map { it.song.mediaProvider }.distinct())
+                }
+            }
+
+            override fun onItemUpdated(
+                item: PlaylistSong,
+                isSelected: Boolean
+            ) {
+                adapter.items
+                    .filterIsInstance<PlaylistSongBinder>()
+                    .firstOrNull { it.playlistSong.id == item.id }
+                    ?.let { viewBinder ->
+                        viewBinder.selected = isSelected
+                        adapter.notifyItemChanged(adapter.items.indexOf(viewBinder))
+                    }
+            }
+        }
+
     // PlaylistDetailContract.View Implementation
 
     override fun setPlaylist(playlist: com.simplecityapps.shuttle.model.Playlist) {
@@ -266,7 +333,9 @@ class PlaylistDetailFragment :
                     imageLoader = imageLoader,
                     listener = songBinderListener,
                     showDragHandle = showDragHandle
-                )
+                ).apply {
+                    selected = contextualToolbarHelper.selectedItems.any { it.id == playlistSong.id }
+                }
             }
         )
     }
@@ -320,13 +389,20 @@ class PlaylistDetailFragment :
                 index: Int,
                 playlistSong: PlaylistSong
             ) {
-                presenter.onSongClicked(playlistSong, index)
+                if (!contextualToolbarHelper.handleClick(playlistSong)) {
+                    presenter.onSongClicked(playlistSong, index)
+                }
             }
 
             override fun onPlaylistSongLongClicked(
                 holder: PlaylistSongBinder.ViewHolder,
                 playlistSong: PlaylistSong
             ) {
+                if (contextualToolbarHelper.handleLongClick(playlistSong)) {
+                    // Multi-select mode activated
+                    return
+                }
+
                 val popupMenu = PopupMenu(requireContext(), holder.itemView)
                 popupMenu.inflate(R.menu.menu_popup_playlist_song)
                 TagEditorMenuSanitiser.sanitise(popupMenu.menu, listOf(playlistSong.song.mediaProvider))

@@ -40,21 +40,36 @@
                 app:layout_collapseParallaxMultiplier="0.5"
                 tools:srcCompat="@drawable/ic_placeholder_playlist" />
 
-            <androidx.appcompat.widget.Toolbar
-                android:id="@+id/toolbar"
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom"
-                android:background="@drawable/rounded_background"
-                android:minHeight="?attr/actionBarSize"
-                android:paddingTop="8dp"
-                android:paddingBottom="8dp"
-                app:layout_collapseMode="pin"
-                app:navigationIcon="?attr/homeAsUpIndicator"
-                tools:subtitle="32 songs | 2:08:15"
-                tools:title="Favourites">
+                app:layout_collapseMode="pin">
 
-            </androidx.appcompat.widget.Toolbar>
+                <androidx.appcompat.widget.Toolbar
+                    android:id="@+id/toolbar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/rounded_background"
+                    android:minHeight="?attr/actionBarSize"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
+                    app:navigationIcon="?attr/homeAsUpIndicator"
+                    tools:subtitle="32 songs | 2:08:15"
+                    tools:title="Favourites" />
+
+                <androidx.appcompat.widget.Toolbar
+                    android:id="@+id/contextualToolbar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/rounded_background"
+                    android:minHeight="?attr/actionBarSize"
+                    android:paddingTop="8dp"
+                    android:paddingBottom="8dp"
+                    android:visibility="gone"
+                    app:navigationIcon="?attr/homeAsUpIndicator" />
+
+            </FrameLayout>
 
         </com.google.android.material.appbar.CollapsingToolbarLayout>
 
