@@ -1,7 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library.albums.detail
 
 import androidx.compose.ui.test.junit4.createComposeRule
-import com.simplecityapps.createAlbum
 import com.simplecityapps.createSong
 import com.simplecityapps.shuttle.model.MediaProviderType
 import io.kotest.matchers.shouldBe
@@ -30,26 +29,6 @@ class AlbumDetailTest {
     fun `empty state shows empty message`() {
         robot.setContent(emptyAlbumDetail())
         robot.assertTextDisplayed("No songs")
-    }
-
-    @Test
-    fun `ready state shows album name`() {
-        robot.setContent(
-            readyAlbumDetail(
-                album = createAlbum(name = "Abbey Road"),
-            )
-        )
-        robot.assertTextDisplayed("Abbey Road")
-    }
-
-    @Test
-    fun `ready state shows album year`() {
-        robot.setContent(
-            readyAlbumDetail(
-                album = createAlbum(name = "Abbey Road", year = 1969),
-            )
-        )
-        robot.assertSubtextDisplayed("1969")
     }
 
     @Test

@@ -7,7 +7,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.widget.Toolbar
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.net.toUri
@@ -24,20 +23,16 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
-import com.simplecityapps.shuttle.ui.common.TagEditorMenuSanitiser
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
 import com.simplecityapps.shuttle.ui.common.dialog.showDeleteDialog
 import com.simplecityapps.shuttle.ui.common.dialog.showExcludeDialog
-import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
-import com.simplecityapps.shuttle.ui.common.utils.toHms
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuPresenter
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistMenuView
 import com.simplecityapps.shuttle.ui.screens.songinfo.SongInfoDialogFragment
 import com.simplecityapps.shuttle.ui.theme.AppTheme
-import com.squareup.phrase.ListPhrase
 import com.squareup.phrase.Phrase
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -60,7 +55,6 @@ class AlbumDetailFragment :
     private val viewModel: AlbumDetailViewModel by viewModels()
 
     private var composeView: ComposeView by autoCleared()
-    private var toolbar: Toolbar by autoCleared()
     private lateinit var playlistMenuView: PlaylistMenuView
 
     // Lifecycle
@@ -85,64 +79,6 @@ class AlbumDetailFragment :
 
         playlistMenuView = PlaylistMenuView(requireContext(), playlistMenuPresenter, childFragmentManager)
         playlistMenuPresenter.bindView(playlistMenuView)
-
-        toolbar = view.findViewById(R.id.toolbar)
-        toolbar.setNavigationOnClickListener {
-            NavHostFragment.findNavController(this).popBackStack()
-        }
-        toolbar.inflateMenu(R.menu.menu_album_detail)
-        TagEditorMenuSanitiser.sanitise(toolbar.menu, album.mediaProviders)
-
-        toolbar.setOnMenuItemClickListener { menuItem ->
-            when (menuItem.itemId) {
-                R.id.shuffle -> {
-                    viewModel.onShuffle()
-                    true
-                }
-                R.id.queue -> {
-                    viewModel.onAddAlbumToQueue()
-                    true
-                }
-                R.id.playNext -> {
-                    viewModel.onPlayAlbumNext()
-                    true
-                }
-                R.id.editTags -> {
-                    viewModel.onEditAlbumTags()
-                    true
-                }
-                R.id.playlist -> {
-                    playlistMenuView.createPlaylistMenu(toolbar.menu)
-                    true
-                }
-                else -> {
-                    playlistMenuView.handleMenuItem(menuItem, PlaylistData.Albums(album))
-                }
-            }
-        }
-
-        // Collect uiState for toolbar title/subtitle
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collect { state ->
-                    state.album?.let { albumData ->
-                        toolbar.title = albumData.name
-                        val songsQuantity = Phrase.fromPlural(resources, R.plurals.songsPlural, albumData.songCount)
-                            .put("count", albumData.songCount)
-                            .format()
-                        toolbar.subtitle = ListPhrase
-                            .from(" · ")
-                            .joinSafely(
-                                listOf(
-                                    albumData.year?.toString(),
-                                    songsQuantity,
-                                    albumData.duration.toHms()
-                                )
-                            )
-                    }
-                }
-            }
-        }
 
         // Collect events
         viewLifecycleOwner.lifecycleScope.launch {
@@ -204,6 +140,17 @@ class AlbumDetailFragment :
                 AlbumDetail(
                     uiState = uiState,
                     playlists = uiState.playlists.toImmutableList(),
+                    onNavigateUp = { NavHostFragment.findNavController(this@AlbumDetailFragment).popBackStack() },
+                    onShuffle = { viewModel.onShuffle() },
+                    onAddAlbumToQueue = { viewModel.onAddAlbumToQueue() },
+                    onPlayAlbumNext = { viewModel.onPlayAlbumNext() },
+                    onEditAlbumTags = { viewModel.onEditAlbumTags() },
+                    onAddAlbumToPlaylist = {
+                        CreatePlaylistDialogFragment.newInstance(
+                            PlaylistData.Albums(album),
+                            context?.getString(R.string.playlist_create_dialog_playlist_name_hint)
+                        ).show(childFragmentManager)
+                    },
                     onSongClick = { song -> viewModel.onSongClick(song) },
                     onAddToQueue = { song -> viewModel.onAddToQueue(song) },
                     onAddToPlaylist = { playlist, playlistData ->
@@ -284,8 +231,7 @@ class AlbumDetailFragment :
         text: String,
         playlistData: PlaylistData
     ) {
-        // Playlist creation via the ViewModel is not yet implemented for album detail.
-        // The playlist menu handles this through PlaylistMenuPresenter for now.
+        // Playlist creation handled through PlaylistMenuPresenter for now.
     }
 
     companion object {

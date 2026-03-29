@@ -3,33 +3,46 @@ package com.simplecityapps.shuttle.ui.screens.library.albums.detail
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
+import com.bumptech.glide.integration.compose.placeholder
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
 import com.simplecityapps.shuttle.R
-import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.common.components.CircularLoadingState
+import com.simplecityapps.shuttle.ui.common.components.CollapsingHeroScaffold
 import com.simplecityapps.shuttle.ui.common.components.LoadingStatusIndicator
 import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
 import com.simplecityapps.shuttle.ui.common.utils.toHms
@@ -40,10 +53,17 @@ import com.squareup.phrase.Phrase
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
+@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun AlbumDetail(
     uiState: AlbumDetailUiState,
     playlists: ImmutableList<Playlist>,
+    onNavigateUp: () -> Unit,
+    onShuffle: () -> Unit,
+    onAddAlbumToQueue: () -> Unit,
+    onPlayAlbumNext: () -> Unit,
+    onEditAlbumTags: () -> Unit,
+    onAddAlbumToPlaylist: () -> Unit,
     onSongClick: (Song) -> Unit,
     onAddToQueue: (Song) -> Unit,
     onAddToPlaylist: (playlist: Playlist, playlistData: PlaylistData) -> Unit,
@@ -76,139 +96,158 @@ fun AlbumDetail(
         }
 
         AlbumDetailUiState.LoadingState.Ready -> {
-            AlbumDetailContent(
-                album = uiState.album,
-                songs = uiState.songs,
-                currentSong = uiState.currentSong,
-                playlists = playlists,
-                onSongClick = onSongClick,
-                onAddToQueue = onAddToQueue,
-                onAddToPlaylist = onAddToPlaylist,
-                onShowCreatePlaylistDialog = onShowCreatePlaylistDialog,
-                onPlayNext = onPlayNext,
-                onSongInfo = onSongInfo,
-                onExclude = onExclude,
-                onEditTags = onEditTags,
-                onDelete = onDelete,
-                modifier = modifier,
-            )
-        }
-    }
-}
-
-@Composable
-private fun AlbumDetailContent(
-    album: Album?,
-    songs: List<Song>,
-    currentSong: Song?,
-    playlists: ImmutableList<Playlist>,
-    onSongClick: (Song) -> Unit,
-    onAddToQueue: (Song) -> Unit,
-    onAddToPlaylist: (playlist: Playlist, playlistData: PlaylistData) -> Unit,
-    onShowCreatePlaylistDialog: (song: Song) -> Unit,
-    onPlayNext: (Song) -> Unit,
-    onSongInfo: (Song) -> Unit,
-    onExclude: (Song) -> Unit,
-    onEditTags: (Song) -> Unit,
-    onDelete: (Song) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val context = LocalContext.current
-    val discGroupingSongs = songs
-        .groupBy { it.disc ?: 1 }
-        .toSortedMap()
-        .mapValues { entry ->
-            entry.value.groupBy { it.grouping ?: "" }
-        }
-    val hasMultipleDiscs = discGroupingSongs.size > 1
-
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(vertical = 8.dp),
-    ) {
-        // Album metadata header
-        if (album != null) {
-            item {
-                AlbumMetadataHeader(album = album)
+            val context = LocalContext.current
+            val album = uiState.album
+            val toolbarTitle = album?.name ?: ""
+            val songsQuantity = album?.let {
+                Phrase.fromPlural(context.resources, R.plurals.songsPlural, it.songCount)
+                    .put("count", it.songCount)
+                    .format()
             }
-        }
+            val toolbarSubtitle = album?.let {
+                ListPhrase.from(" \u00B7 ").joinSafely(
+                    listOf(it.year?.toString(), songsQuantity, it.duration.toHms())
+                )?.toString()
+            }
 
-        // Songs grouped by disc and grouping
-        discGroupingSongs.forEach { (discNumber, groupingMap) ->
-            if (hasMultipleDiscs) {
-                item {
-                    DiscNumberHeader(
-                        text = Phrase.from(context, R.string.disc_number)
-                            .put("disc_number", discNumber)
-                            .format()
-                            .toString()
+            CollapsingHeroScaffold(
+                heroContent = { _ ->
+                    GlideImage(
+                        model = album,
+                        contentDescription = stringResource(R.string.artwork),
+                        contentScale = ContentScale.Crop,
+                        loading = placeholder(com.simplecityapps.core.R.drawable.ic_placeholder_album),
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
+                        it
+                            .diskCacheStrategy(DiskCacheStrategy.ALL)
+                            .transition(withCrossFade(200))
+                    }
+                },
+                title = toolbarTitle,
+                subtitle = toolbarSubtitle,
+                onNavigateUp = onNavigateUp,
+                actions = {
+                    AlbumDetailOverflowMenu(
+                        onShuffle = onShuffle,
+                        onAddToQueue = onAddAlbumToQueue,
+                        onPlayNext = onPlayAlbumNext,
+                        onAddToPlaylist = onAddAlbumToPlaylist,
+                        onEditTags = onEditAlbumTags,
+                        showEditTags = album?.mediaProviders?.all { it.supportsTagEditing } == true,
                     )
-                }
-            }
+                },
+                modifier = modifier,
+            ) {
+                val songs = uiState.songs
+                val discGroupingSongs = songs
+                    .groupBy { it.disc ?: 1 }
+                    .toSortedMap()
+                    .mapValues { entry ->
+                        entry.value.groupBy { it.grouping ?: "" }
+                    }
+                val hasMultipleDiscs = discGroupingSongs.size > 1
 
-            groupingMap.forEach { (grouping, groupSongs) ->
-                if (grouping.isNotEmpty()) {
-                    item {
-                        GroupingHeader(text = grouping)
+                discGroupingSongs.forEach { (discNumber, groupingMap) ->
+                    if (hasMultipleDiscs) {
+                        item {
+                            DiscNumberHeader(
+                                text = Phrase.from(context, R.string.disc_number)
+                                    .put("disc_number", discNumber)
+                                    .format()
+                                    .toString()
+                            )
+                        }
+                    }
+
+                    groupingMap.forEach { (grouping, groupSongs) ->
+                        if (grouping.isNotEmpty()) {
+                            item {
+                                GroupingHeader(text = grouping)
+                            }
+                        }
+
+                        items(groupSongs.size) { index ->
+                            val song = groupSongs[index]
+                            AlbumDetailSongItem(
+                                song = song,
+                                isCurrent = song.id == uiState.currentSong?.id,
+                                playlists = playlists,
+                                onClick = onSongClick,
+                                onAddToQueue = onAddToQueue,
+                                onAddToPlaylist = onAddToPlaylist,
+                                onShowCreatePlaylistDialog = onShowCreatePlaylistDialog,
+                                onPlayNext = onPlayNext,
+                                onSongInfo = onSongInfo,
+                                onExclude = onExclude,
+                                onEditTags = onEditTags,
+                                onDelete = onDelete,
+                            )
+                        }
                     }
                 }
-
-                items(groupSongs.size) { index ->
-                    val song = groupSongs[index]
-                    AlbumDetailSongItem(
-                        song = song,
-                        isCurrent = song.id == currentSong?.id,
-                        playlists = playlists,
-                        onClick = onSongClick,
-                        onAddToQueue = onAddToQueue,
-                        onAddToPlaylist = onAddToPlaylist,
-                        onShowCreatePlaylistDialog = onShowCreatePlaylistDialog,
-                        onPlayNext = onPlayNext,
-                        onSongInfo = onSongInfo,
-                        onExclude = onExclude,
-                        onEditTags = onEditTags,
-                        onDelete = onDelete,
-                    )
-                }
             }
         }
     }
 }
 
 @Composable
-private fun AlbumMetadataHeader(
-    album: Album,
-    modifier: Modifier = Modifier,
+private fun AlbumDetailOverflowMenu(
+    onShuffle: () -> Unit,
+    onAddToQueue: () -> Unit,
+    onPlayNext: () -> Unit,
+    onAddToPlaylist: () -> Unit,
+    onEditTags: () -> Unit,
+    showEditTags: Boolean,
 ) {
-    val context = LocalContext.current
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-    ) {
-        Text(
-            text = album.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onBackground,
+    var expanded by remember { mutableStateOf(false) }
+
+    IconButton(onClick = { expanded = true }) {
+        Icon(
+            imageVector = Icons.Default.MoreVert,
+            contentDescription = "More options",
         )
-        val songsQuantity = Phrase.fromPlural(context.resources, R.plurals.songsPlural, album.songCount)
-            .put("count", album.songCount)
-            .format()
-        val subtitle = ListPhrase
-            .from(" · ")
-            .joinSafely(
-                listOf(
-                    album.year?.toString(),
-                    songsQuantity,
-                    album.duration.toHms(),
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.menu_title_shuffle)) },
+                onClick = {
+                    onShuffle()
+                    expanded = false
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.menu_title_add_to_queue)) },
+                onClick = {
+                    onAddToQueue()
+                    expanded = false
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.menu_title_add_to_playlist)) },
+                onClick = {
+                    onAddToPlaylist()
+                    expanded = false
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.menu_title_play_next)) },
+                onClick = {
+                    onPlayNext()
+                    expanded = false
+                },
+            )
+            if (showEditTags) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.menu_title_edit_tags)) },
+                    onClick = {
+                        onEditTags()
+                        expanded = false
+                    },
                 )
-            )
-        if (subtitle != null) {
-            Text(
-                text = subtitle.toString(),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            }
         }
     }
 }
@@ -273,7 +312,7 @@ private fun AlbumDetailSongItem(
             .fillMaxWidth()
             .then(highlightModifier)
             .clickable { onClick(song) }
-            .padding(horizontal = 8.dp, vertical = 8.dp),
+            .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {

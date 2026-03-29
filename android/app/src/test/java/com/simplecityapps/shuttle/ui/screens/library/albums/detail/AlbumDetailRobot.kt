@@ -87,6 +87,12 @@ class AlbumDetailRobot(private val rule: ComposeContentTestRule) {
             AlbumDetail(
                 uiState = uiState,
                 playlists = playlists.toImmutableList(),
+                onNavigateUp = {},
+                onShuffle = {},
+                onAddAlbumToQueue = {},
+                onPlayAlbumNext = {},
+                onEditAlbumTags = {},
+                onAddAlbumToPlaylist = {},
                 onSongClick = onSongClick,
                 onAddToQueue = { lastAddedToQueue = it },
                 onAddToPlaylist = { playlist, data -> lastAddToPlaylist = playlist to data },

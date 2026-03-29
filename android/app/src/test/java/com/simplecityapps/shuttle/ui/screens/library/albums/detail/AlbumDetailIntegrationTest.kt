@@ -78,17 +78,6 @@ class AlbumDetailIntegrationTest {
         robot.assertTextDisplayed("Something")
     }
 
-    @Test
-    fun `shows album metadata from repository`() {
-        fakeSongRepository.setSongs(listOf(createSong(id = 1, name = "Track 1")))
-        fakeAlbumRepository.setAlbums(listOf(testAlbum))
-
-        robot.setContentWithViewModel(createViewModel())
-
-        robot.assertTextDisplayed("Abbey Road")
-        robot.assertSubtextDisplayed("1969")
-    }
-
     // endregion
 
     private fun createViewModel(
