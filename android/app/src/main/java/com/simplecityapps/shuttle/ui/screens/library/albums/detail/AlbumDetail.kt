@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.screens.library.albums.detail
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -139,6 +140,13 @@ fun AlbumDetail(
                 },
                 modifier = modifier,
             ) {
+                // Album metadata
+                if (album != null) {
+                    item {
+                        AlbumMetadataHeader(album = album)
+                    }
+                }
+
                 val songs = uiState.songs
                 val discGroupingSongs = songs
                     .groupBy { it.disc ?: 1 }
@@ -253,6 +261,44 @@ private fun AlbumDetailOverflowMenu(
 }
 
 @Composable
+private fun AlbumMetadataHeader(
+    album: com.simplecityapps.shuttle.model.Album,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+    ) {
+        Text(
+            text = album.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onBackground,
+        )
+        val songsQuantity = Phrase.fromPlural(context.resources, R.plurals.songsPlural, album.songCount)
+            .put("count", album.songCount)
+            .format()
+        val subtitle = ListPhrase
+            .from(" \u00B7 ")
+            .joinSafely(
+                listOf(
+                    album.year?.toString(),
+                    songsQuantity,
+                    album.duration.toHms(),
+                )
+            )
+        if (subtitle != null) {
+            Text(
+                text = subtitle.toString(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
 private fun DiscNumberHeader(
     text: String,
     modifier: Modifier = Modifier,
@@ -325,8 +371,8 @@ private fun AlbumDetailSongItem(
             } else {
                 MaterialTheme.colorScheme.onSurfaceVariant
             },
-            textAlign = TextAlign.End,
-            modifier = Modifier.width(32.dp),
+            textAlign = TextAlign.Center,
+            modifier = Modifier.width(36.dp),
         )
 
         // Song title

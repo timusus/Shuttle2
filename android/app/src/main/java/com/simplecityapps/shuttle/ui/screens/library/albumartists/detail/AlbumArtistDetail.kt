@@ -161,6 +161,17 @@ fun AlbumArtistDetail(
                 },
                 modifier = modifier,
             ) {
+                // Artist metadata
+                if (albumArtist != null) {
+                    item {
+                        ArtistMetadataHeader(
+                            albumArtist = albumArtist,
+                            albumCount = albumQuantity,
+                            songCount = songQuantity,
+                        )
+                    }
+                }
+
                 // Albums section
                 val albums = uiState.albums
                 if (albums.isNotEmpty()) {
@@ -288,6 +299,35 @@ private fun ArtistOverflowMenu(
                     },
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun ArtistMetadataHeader(
+    albumArtist: com.simplecityapps.shuttle.model.AlbumArtist,
+    albumCount: CharSequence?,
+    songCount: CharSequence?,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+    ) {
+        Text(
+            text = albumArtist.name ?: albumArtist.friendlyArtistName
+                ?: stringResource(com.simplecityapps.core.R.string.unknown),
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onBackground,
+        )
+        val subtitle = ListPhrase.from(" \u00B7 ").joinSafely(listOf(albumCount, songCount))
+        if (subtitle != null) {
+            Text(
+                text = subtitle.toString(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
