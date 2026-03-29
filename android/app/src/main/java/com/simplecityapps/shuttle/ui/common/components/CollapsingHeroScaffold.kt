@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -119,15 +120,13 @@ fun CollapsingHeroScaffold(
             )
         }
 
-        // 2. Content — padded below hero + toolbar, moves up with hero
+        // 2. Content — padded below hero, offset up as hero collapses
+        val contentOffsetDp = with(density) { heroOffset.toDp() }
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .graphicsLayer { translationY = heroOffset },
-            contentPadding = PaddingValues(
-                top = heroHeight,
-                bottom = heroHeight - ToolbarHeight,
-            ),
+                .offset(y = contentOffsetDp),
+            contentPadding = PaddingValues(top = heroHeight),
         ) {
             content()
         }
