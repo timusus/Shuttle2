@@ -140,11 +140,11 @@ fun CollapsingHeroScaffold(
             actions = actions,
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = if (collapseProgress > 0.9f) {
-                    MaterialTheme.colorScheme.surface
+                    MaterialTheme.colorScheme.background
                 } else {
                     Color.Transparent
                 },
-                scrolledContainerColor = MaterialTheme.colorScheme.surface,
+                scrolledContainerColor = MaterialTheme.colorScheme.background,
                 navigationIconContentColor = Color.White,
                 actionIconContentColor = Color.White,
             ),
