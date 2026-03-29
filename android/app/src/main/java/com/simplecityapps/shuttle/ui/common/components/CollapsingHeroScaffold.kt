@@ -144,6 +144,7 @@ fun CollapsingHeroScaffold(
                 } else {
                     Color.Transparent
                 },
+                scrolledContainerColor = MaterialTheme.colorScheme.surface,
                 navigationIconContentColor = Color.White,
                 actionIconContentColor = Color.White,
             ),
