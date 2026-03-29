@@ -69,6 +69,7 @@ class MainActivity : AppCompatActivity() {
         navController.graph = graph
 
         handleSearchQuery(intent)
+        handleViewIntent(intent)
 
         billingManager.queryPurchases()
 
@@ -92,6 +93,7 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
 
         handleSearchQuery(intent)
+        handleViewIntent(intent)
     }
 
     // Private
@@ -122,6 +124,28 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     throw e
                 }
+            }
+        }
+    }
+
+    private fun handleViewIntent(intent: Intent?) {
+        if (intent?.action == Intent.ACTION_VIEW && intent.data != null) {
+            val uri = intent.data
+            val mimeType = intent.type
+
+            // Check if this is an audio file
+            if (mimeType?.startsWith("audio/") == true ||
+                mimeType == "application/ogg" ||
+                mimeType == "application/x-ogg" ||
+                mimeType == "application/itunes") {
+                ContextCompat.startForegroundService(
+                    this,
+                    Intent(this, PlaybackService::class.java).apply {
+                        action = Intent.ACTION_VIEW
+                        data = uri
+                        type = mimeType
+                    }
+                )
             }
         }
     }
