@@ -24,6 +24,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -50,6 +51,16 @@ fun CollapsingHeroScaffold(
     heroHeight: Dp = 300.dp,
     content: LazyListScope.() -> Unit,
 ) {
+    // Read the actual window background from the Android theme so the toolbar
+    // matches regardless of light/dark/black theme.
+    val context = LocalContext.current
+    val windowBackground = remember(context) {
+        val typedArray = context.obtainStyledAttributes(intArrayOf(android.R.attr.windowBackground))
+        val color = typedArray.getColor(0, android.graphics.Color.BLACK)
+        typedArray.recycle()
+        Color(color)
+    }
+
     val density = LocalDensity.current
     val heroHeightPx = with(density) { heroHeight.toPx() }
     val toolbarHeightPx = with(density) { ToolbarHeight.toPx() }
@@ -113,7 +124,10 @@ fun CollapsingHeroScaffold(
             modifier = Modifier
                 .fillMaxSize()
                 .graphicsLayer { translationY = heroOffset },
-            contentPadding = PaddingValues(top = heroHeight),
+            contentPadding = PaddingValues(
+                top = heroHeight,
+                bottom = heroHeight - ToolbarHeight,
+            ),
         ) {
             content()
         }
@@ -140,11 +154,11 @@ fun CollapsingHeroScaffold(
             actions = actions,
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = if (collapseProgress > 0.9f) {
-                    MaterialTheme.colorScheme.background
+                    windowBackground
                 } else {
                     Color.Transparent
                 },
-                scrolledContainerColor = MaterialTheme.colorScheme.background,
+                scrolledContainerColor = windowBackground,
                 navigationIconContentColor = Color.White,
                 actionIconContentColor = Color.White,
             ),
