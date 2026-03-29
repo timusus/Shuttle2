@@ -91,7 +91,15 @@ fun CollapsingHeroScaffold(
             .fillMaxSize()
             .nestedScroll(nestedScrollConnection),
     ) {
-        // 1. Hero image — parallax and fade
+        // 1. Content (bottom z-layer) — scrolls behind the hero
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(top = currentTopPadding),
+        ) {
+            content()
+        }
+
+        // 2. Hero image (middle z-layer) — parallax and fade, covers scrolling content
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -117,15 +125,7 @@ fun CollapsingHeroScaffold(
             )
         }
 
-        // 2. Content — stays in place, top padding shrinks as hero collapses
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(top = currentTopPadding),
-        ) {
-            content()
-        }
-
-        // 3. Pinned toolbar — background fades in
+        // 3. Pinned toolbar (top z-layer) — background fades in
         TopAppBar(
             title = {
                 Text(
