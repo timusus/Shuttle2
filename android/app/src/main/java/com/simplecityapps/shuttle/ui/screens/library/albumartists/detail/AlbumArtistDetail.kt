@@ -8,8 +8,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
@@ -24,16 +24,22 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
+import com.bumptech.glide.integration.compose.GlideImage
+import com.bumptech.glide.integration.compose.placeholder
+import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.load.resource.bitmap.CenterCrop
+import com.bumptech.glide.load.resource.bitmap.RoundedCorners
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Album
-import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.common.components.CircularLoadingState
 import com.simplecityapps.shuttle.ui.common.components.LoadingStatusIndicator
 import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
+import com.simplecityapps.shuttle.ui.common.utils.dp as dpToInt
 import com.simplecityapps.shuttle.ui.common.utils.toHms
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumMenu
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongMenu
@@ -88,7 +94,6 @@ fun AlbumArtistDetail(
 
         AlbumArtistDetailUiState.LoadingState.Ready -> {
             AlbumArtistDetailContent(
-                albumArtist = uiState.albumArtist,
                 albums = uiState.albums,
                 songs = uiState.songs,
                 currentSong = uiState.currentSong,
@@ -118,7 +123,6 @@ fun AlbumArtistDetail(
 
 @Composable
 private fun AlbumArtistDetailContent(
-    albumArtist: AlbumArtist?,
     albums: List<Album>,
     songs: List<Song>,
     currentSong: Song?,
@@ -146,13 +150,6 @@ private fun AlbumArtistDetailContent(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(vertical = 8.dp),
     ) {
-        // Artist metadata header
-        if (albumArtist != null) {
-            item {
-                ArtistMetadataHeader(albumArtist = albumArtist)
-            }
-        }
-
         // Albums section
         if (albums.isNotEmpty()) {
             item {
@@ -204,39 +201,6 @@ private fun AlbumArtistDetailContent(
 }
 
 @Composable
-private fun ArtistMetadataHeader(
-    albumArtist: AlbumArtist,
-    modifier: Modifier = Modifier,
-) {
-    val context = LocalContext.current
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-    ) {
-        Text(
-            text = albumArtist.name ?: albumArtist.friendlyArtistName ?: stringResource(com.simplecityapps.core.R.string.unknown),
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onBackground,
-        )
-        val albumQuantity = Phrase.fromPlural(context.resources, R.plurals.albumsPlural, albumArtist.albumCount)
-            .put("count", albumArtist.albumCount)
-            .format()
-        val songQuantity = Phrase.fromPlural(context.resources, R.plurals.songsPlural, albumArtist.songCount)
-            .put("count", albumArtist.songCount)
-            .format()
-        val subtitle = ListPhrase.from(" \u00B7 ").joinSafely(listOf(albumQuantity, songQuantity))
-        if (subtitle != null) {
-            Text(
-                text = subtitle.toString(),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
-
-@Composable
 private fun SectionHeader(
     text: String,
     modifier: Modifier = Modifier,
@@ -251,6 +215,7 @@ private fun SectionHeader(
     )
 }
 
+@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 private fun AlbumArtistDetailAlbumItem(
     album: Album,
@@ -274,6 +239,20 @@ private fun AlbumArtistDetailAlbumItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        GlideImage(
+            model = album,
+            contentDescription = stringResource(R.string.artwork),
+            loading = placeholder(com.simplecityapps.core.R.drawable.ic_placeholder_album_rounded),
+            modifier = Modifier
+                .width(40.dp)
+                .height(40.dp),
+        ) {
+            it
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .transform(CenterCrop(), RoundedCorners(8.dpToInt))
+                .transition(withCrossFade(200))
+        }
+
         Column(
             modifier = Modifier.weight(1f),
         ) {
@@ -314,6 +293,7 @@ private fun AlbumArtistDetailAlbumItem(
     }
 }
 
+@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 private fun AlbumArtistDetailSongItem(
     song: Song,
@@ -348,20 +328,22 @@ private fun AlbumArtistDetailSongItem(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        // Track number
-        Text(
-            text = song.track?.toString() ?: "",
-            style = MaterialTheme.typography.bodyMedium,
-            color = if (isCurrent) {
-                MaterialTheme.colorScheme.primary
-            } else {
-                MaterialTheme.colorScheme.onSurfaceVariant
-            },
-            textAlign = TextAlign.End,
-            modifier = Modifier.width(32.dp),
-        )
+        // Artwork
+        GlideImage(
+            model = song,
+            contentDescription = stringResource(R.string.artwork),
+            loading = placeholder(com.simplecityapps.core.R.drawable.ic_placeholder_song_rounded),
+            modifier = Modifier
+                .width(40.dp)
+                .height(40.dp),
+        ) {
+            it
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .transform(CenterCrop(), RoundedCorners(8.dpToInt))
+                .transition(withCrossFade(200))
+        }
 
-        // Song title and album subtitle
+        // Song title and artist/album subtitle
         Column(
             modifier = Modifier.weight(1f),
         ) {
@@ -374,11 +356,19 @@ private fun AlbumArtistDetailSongItem(
                     MaterialTheme.colorScheme.onBackground
                 },
             )
-            Text(
-                text = song.album ?: "",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            val subtitle = ListPhrase.from(" \u00B7 ").joinSafely(
+                listOf(
+                    song.friendlyArtistName ?: song.albumArtist,
+                    song.album,
+                )
             )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle.toString(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
 
         // Duration

@@ -100,17 +100,6 @@ class AlbumArtistDetailIntegrationTest {
     }
 
     @Test
-    fun `shows artist metadata from repository`() {
-        fakeAlbumArtistRepository.setAlbumArtists(listOf(testArtist))
-        fakeAlbumRepository.setAlbums(listOf(createAlbum()))
-        fakeSongRepository.setSongs(listOf(createSong()))
-
-        robot.setContentWithViewModel(createViewModel())
-
-        robot.assertTextDisplayed("The Beatles")
-    }
-
-    @Test
     fun `albums sorted by year descending`() {
         fakeAlbumArtistRepository.setAlbumArtists(listOf(testArtist))
         fakeAlbumRepository.setAlbums(

@@ -2,7 +2,6 @@ package com.simplecityapps.shuttle.ui.screens.library.albumartists.detail
 
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.simplecityapps.createAlbum
-import com.simplecityapps.createAlbumArtist
 import com.simplecityapps.createSong
 import com.simplecityapps.shuttle.model.MediaProviderType
 import io.kotest.matchers.shouldBe
@@ -31,27 +30,6 @@ class AlbumArtistDetailTest {
     fun `empty state shows empty message`() {
         robot.setContent(emptyAlbumArtistDetail())
         robot.assertTextDisplayed("No songs")
-    }
-
-    @Test
-    fun `ready state shows artist name`() {
-        robot.setContent(
-            readyAlbumArtistDetail(
-                albumArtist = createAlbumArtist(name = "The Beatles"),
-            )
-        )
-        robot.assertTextDisplayed("The Beatles")
-    }
-
-    @Test
-    fun `ready state shows album and song counts`() {
-        robot.setContent(
-            readyAlbumArtistDetail(
-                albumArtist = createAlbumArtist(name = "The Beatles", albumCount = 3, songCount = 40),
-            )
-        )
-        robot.assertSubtextDisplayed("3 albums")
-        robot.assertSubtextDisplayed("40 songs")
     }
 
     @Test
