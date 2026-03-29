@@ -1,11 +1,13 @@
 package com.simplecityapps.shuttle.ui.common.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -14,6 +16,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -21,8 +24,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
@@ -33,6 +36,16 @@ import androidx.compose.ui.unit.dp
 
 private val ToolbarHeight = 64.dp
 
+/**
+ * A scaffold with a collapsing hero image and a metadata bar.
+ *
+ * Layout (all items scroll in a single LazyColumn):
+ * 1. Hero image — full-width artwork with parallax
+ * 2. Metadata bar — back arrow, title, subtitle, overflow menu (like the old toolbar below the hero)
+ * 3. Content — songs, albums, etc.
+ *
+ * A pinned TopAppBar appears at the top only when the metadata bar scrolls off screen.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CollapsingHeroScaffold(
@@ -54,18 +67,26 @@ fun CollapsingHeroScaffold(
     }
 
     val density = LocalDensity.current
-    val maxCollapsePx = with(density) { (heroHeight - ToolbarHeight).toPx() }
+    val heroHeightPx = with(density) { heroHeight.toPx() }
 
     val lazyListState = rememberLazyListState()
 
-    // Derive collapse progress from how far the hero item has scrolled
+    // Hero collapse progress (for parallax/fade)
     val collapseProgress by remember {
         derivedStateOf {
             if (lazyListState.firstVisibleItemIndex > 0) {
                 1f
             } else {
-                (lazyListState.firstVisibleItemScrollOffset / maxCollapsePx).coerceIn(0f, 1f)
+                (lazyListState.firstVisibleItemScrollOffset / heroHeightPx).coerceIn(0f, 1f)
             }
+        }
+    }
+
+    // Metadata bar has scrolled off screen when firstVisibleItemIndex > 1
+    // (item 0 = hero, item 1 = metadata bar)
+    val showPinnedToolbar by remember {
+        derivedStateOf {
+            lazyListState.firstVisibleItemIndex > 1
         }
     }
 
@@ -74,7 +95,7 @@ fun CollapsingHeroScaffold(
             state = lazyListState,
             modifier = Modifier.fillMaxSize(),
         ) {
-            // Hero image as first item — scrolls naturally with parallax
+            // Item 0: Hero image with parallax
             item {
                 Box(
                     modifier = Modifier
@@ -82,64 +103,100 @@ fun CollapsingHeroScaffold(
                         .height(heroHeight)
                         .graphicsLayer {
                             alpha = 1f - collapseProgress
-                            // Parallax: content moves at half scroll speed
                             if (lazyListState.firstVisibleItemIndex == 0) {
                                 translationY = lazyListState.firstVisibleItemScrollOffset * 0.5f
                             }
                         },
                 ) {
                     heroContent(collapseProgress)
-                    // Gradient scrim for toolbar icon visibility
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(ToolbarHeight * 1.5f)
-                            .background(
-                                Brush.verticalGradient(
-                                    colors = listOf(
-                                        Color.Black.copy(alpha = 0.5f),
-                                        Color.Transparent,
-                                    ),
-                                ),
-                            ),
-                    )
                 }
             }
 
-            // Screen content
+            // Item 1: Metadata bar (back arrow, title/subtitle, overflow)
+            item {
+                MetadataBar(
+                    title = title,
+                    subtitle = subtitle,
+                    onNavigateUp = onNavigateUp,
+                    actions = actions,
+                )
+            }
+
+            // Remaining content
             content()
         }
 
-        // Pinned toolbar — always on top, background fades in as hero scrolls away
-        TopAppBar(
-            title = {
+        // Pinned toolbar — only visible when metadata bar has scrolled off
+        if (showPinnedToolbar) {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = title,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateUp) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Navigate up",
+                        )
+                    }
+                },
+                actions = actions,
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = windowBackground,
+                    scrolledContainerColor = windowBackground,
+                ),
+            )
+        }
+    }
+}
+
+@Composable
+private fun MetadataBar(
+    title: String,
+    subtitle: String?,
+    onNavigateUp: () -> Unit,
+    actions: @Composable RowScope.() -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(start = 4.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        IconButton(onClick = onNavigateUp) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = "Navigate up",
+            )
+        }
+
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 8.dp),
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            if (subtitle != null) {
                 Text(
-                    text = title,
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.graphicsLayer { alpha = collapseProgress },
                 )
-            },
-            navigationIcon = {
-                IconButton(onClick = onNavigateUp) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Navigate up",
-                        tint = Color.White,
-                    )
-                }
-            },
-            actions = actions,
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = if (collapseProgress > 0.9f) {
-                    windowBackground
-                } else {
-                    Color.Transparent
-                },
-                scrolledContainerColor = windowBackground,
-                navigationIconContentColor = Color.White,
-                actionIconContentColor = Color.White,
-            ),
-        )
+            }
+        }
+
+        actions()
     }
 }
