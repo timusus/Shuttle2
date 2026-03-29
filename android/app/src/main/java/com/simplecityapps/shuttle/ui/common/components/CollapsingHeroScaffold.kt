@@ -4,9 +4,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
@@ -64,6 +65,7 @@ fun CollapsingHeroScaffold(
     val maxCollapsePx = heroHeightPx - toolbarHeightPx
 
     var heroOffset by remember { mutableFloatStateOf(0f) }
+    var containerHeightPx by remember { mutableFloatStateOf(0f) }
 
     val nestedScrollConnection = remember(maxCollapsePx) {
         object : NestedScrollConnection {
@@ -83,23 +85,31 @@ fun CollapsingHeroScaffold(
         0f
     }
 
-    // Dynamic top padding: shrinks from heroHeight to toolbarHeight as hero collapses
-    val currentTopPadding = with(density) { (heroHeightPx + heroOffset).toDp() }
+    // The LazyColumn is translated up by heroOffset via graphicsLayer.
+    // To prevent bottom clipping, make it taller by maxCollapsePx so
+    // its bottom extends below the container when fully collapsed.
+    val extraHeight = with(density) { maxCollapsePx.toDp() }
+    val containerHeight = with(density) { containerHeightPx.toDp() }
 
     Box(
         modifier = modifier
-            .fillMaxSize()
+            .fillMaxWidth()
+            .heightIn(min = containerHeight)
+            .onSizeChanged { containerHeightPx = it.height.toFloat() }
             .nestedScroll(nestedScrollConnection),
     ) {
-        // 1. Content (bottom z-layer) — scrolls behind the hero
+        // 1. Content (bottom z-layer)
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(top = currentTopPadding),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(containerHeight + extraHeight)
+                .graphicsLayer { translationY = heroOffset },
+            contentPadding = PaddingValues(top = heroHeight),
         ) {
             content()
         }
 
-        // 2. Hero image (middle z-layer) — parallax and fade, covers scrolling content
+        // 2. Hero image (middle z-layer)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -125,7 +135,7 @@ fun CollapsingHeroScaffold(
             )
         }
 
-        // 3. Pinned toolbar (top z-layer) — background fades in
+        // 3. Pinned toolbar (top z-layer)
         TopAppBar(
             title = {
                 Text(
