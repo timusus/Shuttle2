@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.ui.common.components
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,19 +14,17 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
@@ -34,19 +33,19 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-private val ToolbarHeight = 64.dp
+private val ToolbarHeight = 56.dp
 
 /**
- * A scaffold with a collapsing hero image and a metadata bar.
+ * A scaffold that replicates the old CoordinatorLayout collapsing toolbar pattern.
  *
- * Layout (all items scroll in a single LazyColumn):
- * 1. Hero image — full-width artwork with parallax
- * 2. Metadata bar — back arrow, title, subtitle, overflow menu (like the old toolbar below the hero)
- * 3. Content — songs, albums, etc.
+ * Three overlay layers in a Box:
+ * 1. LazyColumn (bottom) — content with top padding = heroHeight + toolbarHeight
+ * 2. Hero image (middle) — fixed at y=0, parallax via graphicsLayer, fades out
+ * 3. Metadata toolbar (top) — starts at y=heroHeight, moves up with scroll, pins at y=0
  *
- * A pinned TopAppBar appears at the top only when the metadata bar scrolls off screen.
+ * The LazyColumn scrolls freely. No NestedScrollConnection. The hero and toolbar
+ * positions are derived from observing LazyListState.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CollapsingHeroScaffold(
     heroContent: @Composable (collapseProgress: Float) -> Unit,
@@ -68,89 +67,73 @@ fun CollapsingHeroScaffold(
 
     val density = LocalDensity.current
     val heroHeightPx = with(density) { heroHeight.toPx() }
+    val toolbarHeightPx = with(density) { ToolbarHeight.toPx() }
+    val totalHeaderPx = heroHeightPx + toolbarHeightPx
 
     val lazyListState = rememberLazyListState()
 
-    // Hero collapse progress (for parallax/fade)
-    val collapseProgress by remember {
+    // Total scroll in pixels, derived from the first visible item's offset.
+    // contentPadding puts item 0 at y=totalHeaderPx initially; as user scrolls,
+    // item 0 moves up and its offset decreases.
+    val scrollPx by remember {
         derivedStateOf {
-            if (lazyListState.firstVisibleItemIndex > 0) {
-                1f
+            val firstItem = lazyListState.layoutInfo.visibleItemsInfo.firstOrNull()
+            if (firstItem != null && firstItem.index == 0) {
+                (totalHeaderPx - firstItem.offset).coerceAtLeast(0f)
             } else {
-                (lazyListState.firstVisibleItemScrollOffset / heroHeightPx).coerceIn(0f, 1f)
+                // All content padding scrolled off — hero + toolbar fully collapsed
+                totalHeaderPx
             }
         }
     }
 
-    // Metadata bar has scrolled off screen when firstVisibleItemIndex > 1
-    // (item 0 = hero, item 1 = metadata bar)
-    val showPinnedToolbar by remember {
+    val collapseProgress by remember {
         derivedStateOf {
-            lazyListState.firstVisibleItemIndex > 1
+            (scrollPx / heroHeightPx).coerceIn(0f, 1f)
+        }
+    }
+
+    // Toolbar Y: starts at heroHeight, pins at 0
+    val toolbarYPx by remember {
+        derivedStateOf {
+            (heroHeightPx - scrollPx).coerceAtLeast(0f)
         }
     }
 
     Box(modifier = modifier.fillMaxSize()) {
+        // Layer 1: LazyColumn — content padded below hero + toolbar
         LazyColumn(
             state = lazyListState,
             modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(top = heroHeight + ToolbarHeight),
         ) {
-            // Item 0: Hero image with parallax
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(heroHeight)
-                        .graphicsLayer {
-                            alpha = 1f - collapseProgress
-                            if (lazyListState.firstVisibleItemIndex == 0) {
-                                translationY = lazyListState.firstVisibleItemScrollOffset * 0.5f
-                            }
-                        },
-                ) {
-                    heroContent(collapseProgress)
-                }
-            }
-
-            // Item 1: Metadata bar (back arrow, title/subtitle, overflow)
-            item {
-                MetadataBar(
-                    title = title,
-                    subtitle = subtitle,
-                    onNavigateUp = onNavigateUp,
-                    actions = actions,
-                )
-            }
-
-            // Remaining content
             content()
         }
 
-        // Pinned toolbar — only visible when metadata bar has scrolled off
-        if (showPinnedToolbar) {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = title,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+        // Layer 2: Hero image — fixed at top, parallax + fade
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(heroHeight)
+                .graphicsLayer {
+                    translationY = -scrollPx * 0.5f
+                    alpha = 1f - collapseProgress
                 },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateUp) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Navigate up",
-                        )
-                    }
-                },
-                actions = actions,
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = windowBackground,
-                    scrolledContainerColor = windowBackground,
-                ),
-            )
+        ) {
+            heroContent(collapseProgress)
         }
+
+        // Layer 3: Metadata toolbar — tracks bottom of hero, pins at y=0
+        MetadataBar(
+            title = title,
+            subtitle = subtitle,
+            onNavigateUp = onNavigateUp,
+            actions = actions,
+            backgroundColor = windowBackground,
+            modifier = Modifier.graphicsLayer {
+                translationY = toolbarYPx
+            },
+        )
     }
 }
 
@@ -160,12 +143,14 @@ private fun MetadataBar(
     subtitle: String?,
     onNavigateUp: () -> Unit,
     actions: @Composable RowScope.() -> Unit,
+    backgroundColor: Color,
     modifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(start = 4.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+            .height(ToolbarHeight)
+            .drawBehind { drawRect(backgroundColor) },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(onClick = onNavigateUp) {
@@ -178,7 +163,7 @@ private fun MetadataBar(
         Column(
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = 8.dp),
+                .padding(horizontal = 4.dp),
         ) {
             Text(
                 text = title,
