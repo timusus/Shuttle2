@@ -4,22 +4,32 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -37,6 +47,7 @@ import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.common.components.CircularLoadingState
+import com.simplecityapps.shuttle.ui.common.components.CollapsingHeroScaffold
 import com.simplecityapps.shuttle.ui.common.components.LoadingStatusIndicator
 import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
 import com.simplecityapps.shuttle.ui.common.utils.dp as dpToInt
@@ -49,10 +60,19 @@ import com.squareup.phrase.Phrase
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
+@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun AlbumArtistDetail(
     uiState: AlbumArtistDetailUiState,
     playlists: ImmutableList<Playlist>,
+    onNavigateUp: () -> Unit,
+    onPlay: () -> Unit,
+    onShuffle: () -> Unit,
+    onShuffleAlbums: () -> Unit,
+    onAddAllToQueue: () -> Unit,
+    onPlayAllNext: () -> Unit,
+    onEditArtistTags: () -> Unit,
+    onAddArtistToPlaylist: () -> Unit,
     onAlbumClick: (Album) -> Unit,
     onAlbumPlay: (Album) -> Unit,
     onAlbumAddToQueue: (Album) -> Unit,
@@ -93,107 +113,179 @@ fun AlbumArtistDetail(
         }
 
         AlbumArtistDetailUiState.LoadingState.Ready -> {
-            AlbumArtistDetailContent(
-                albums = uiState.albums,
-                songs = uiState.songs,
-                currentSong = uiState.currentSong,
-                playlists = playlists,
-                onAlbumClick = onAlbumClick,
-                onAlbumPlay = onAlbumPlay,
-                onAlbumAddToQueue = onAlbumAddToQueue,
-                onAlbumPlayNext = onAlbumPlayNext,
-                onAlbumExclude = onAlbumExclude,
-                onAlbumEditTags = onAlbumEditTags,
-                onAlbumAddToPlaylist = onAlbumAddToPlaylist,
-                onAlbumShowCreatePlaylistDialog = onAlbumShowCreatePlaylistDialog,
-                onSongClick = onSongClick,
-                onAddToQueue = onAddToQueue,
-                onAddToPlaylist = onAddToPlaylist,
-                onShowCreatePlaylistDialog = onShowCreatePlaylistDialog,
-                onPlayNext = onPlayNext,
-                onSongInfo = onSongInfo,
-                onExclude = onExclude,
-                onEditTags = onEditTags,
-                onDelete = onDelete,
+            val context = LocalContext.current
+            val albumArtist = uiState.albumArtist
+            val toolbarTitle = albumArtist?.name ?: albumArtist?.friendlyArtistName ?: ""
+            val albumQuantity = albumArtist?.let {
+                Phrase.fromPlural(context.resources, R.plurals.albumsPlural, it.albumCount)
+                    .put("count", it.albumCount)
+                    .format()
+            }
+            val songQuantity = albumArtist?.let {
+                Phrase.fromPlural(context.resources, R.plurals.songsPlural, it.songCount)
+                    .put("count", it.songCount)
+                    .format()
+            }
+            val toolbarSubtitle = ListPhrase.from(" \u00B7 ").joinSafely(
+                listOf(albumQuantity, songQuantity)
+            )?.toString()
+
+            CollapsingHeroScaffold(
+                heroContent = { _ ->
+                    GlideImage(
+                        model = albumArtist,
+                        contentDescription = stringResource(R.string.artwork),
+                        contentScale = ContentScale.Crop,
+                        loading = placeholder(com.simplecityapps.core.R.drawable.ic_placeholder_artist),
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
+                        it
+                            .diskCacheStrategy(DiskCacheStrategy.ALL)
+                            .transition(withCrossFade(200))
+                    }
+                },
+                title = toolbarTitle,
+                subtitle = toolbarSubtitle,
+                onNavigateUp = onNavigateUp,
+                actions = {
+                    ArtistOverflowMenu(
+                        onPlay = onPlay,
+                        onShuffle = onShuffle,
+                        onShuffleAlbums = onShuffleAlbums,
+                        onAddToQueue = onAddAllToQueue,
+                        onPlayNext = onPlayAllNext,
+                        onAddToPlaylist = onAddArtistToPlaylist,
+                        onEditTags = onEditArtistTags,
+                        showEditTags = albumArtist?.mediaProviders?.all { it.supportsTagEditing } == true,
+                    )
+                },
                 modifier = modifier,
-            )
+            ) {
+                // Albums section
+                val albums = uiState.albums
+                if (albums.isNotEmpty()) {
+                    item {
+                        SectionHeader(text = stringResource(R.string.albums))
+                    }
+
+                    items(albums.size) { index ->
+                        val album = albums[index]
+                        AlbumArtistDetailAlbumItem(
+                            album = album,
+                            playlists = playlists,
+                            onClick = onAlbumClick,
+                            onPlay = onAlbumPlay,
+                            onAddToQueue = onAlbumAddToQueue,
+                            onPlayNext = onAlbumPlayNext,
+                            onExclude = onAlbumExclude,
+                            onEditTags = onAlbumEditTags,
+                            onAddToPlaylist = onAlbumAddToPlaylist,
+                            onShowCreatePlaylistDialog = onAlbumShowCreatePlaylistDialog,
+                        )
+                    }
+                }
+
+                // Songs section
+                val songs = uiState.songs
+                if (songs.isNotEmpty()) {
+                    item {
+                        SectionHeader(text = stringResource(R.string.songs))
+                    }
+
+                    items(songs.size) { index ->
+                        val song = songs[index]
+                        AlbumArtistDetailSongItem(
+                            song = song,
+                            isCurrent = song.id == uiState.currentSong?.id,
+                            playlists = playlists,
+                            onClick = onSongClick,
+                            onAddToQueue = onAddToQueue,
+                            onAddToPlaylist = onAddToPlaylist,
+                            onShowCreatePlaylistDialog = onShowCreatePlaylistDialog,
+                            onPlayNext = onPlayNext,
+                            onSongInfo = onSongInfo,
+                            onExclude = onExclude,
+                            onEditTags = onEditTags,
+                            onDelete = onDelete,
+                        )
+                    }
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun AlbumArtistDetailContent(
-    albums: List<Album>,
-    songs: List<Song>,
-    currentSong: Song?,
-    playlists: ImmutableList<Playlist>,
-    onAlbumClick: (Album) -> Unit,
-    onAlbumPlay: (Album) -> Unit,
-    onAlbumAddToQueue: (Album) -> Unit,
-    onAlbumPlayNext: (Album) -> Unit,
-    onAlbumExclude: (Album) -> Unit,
-    onAlbumEditTags: (Album) -> Unit,
-    onAlbumAddToPlaylist: (playlist: Playlist, playlistData: PlaylistData) -> Unit,
-    onAlbumShowCreatePlaylistDialog: (Album) -> Unit,
-    onSongClick: (Song) -> Unit,
-    onAddToQueue: (Song) -> Unit,
-    onAddToPlaylist: (playlist: Playlist, playlistData: PlaylistData) -> Unit,
-    onShowCreatePlaylistDialog: (song: Song) -> Unit,
-    onPlayNext: (Song) -> Unit,
-    onSongInfo: (Song) -> Unit,
-    onExclude: (Song) -> Unit,
-    onEditTags: (Song) -> Unit,
-    onDelete: (Song) -> Unit,
-    modifier: Modifier = Modifier,
+private fun ArtistOverflowMenu(
+    onPlay: () -> Unit,
+    onShuffle: () -> Unit,
+    onShuffleAlbums: () -> Unit,
+    onAddToQueue: () -> Unit,
+    onPlayNext: () -> Unit,
+    onAddToPlaylist: () -> Unit,
+    onEditTags: () -> Unit,
+    showEditTags: Boolean,
 ) {
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(vertical = 8.dp),
-    ) {
-        // Albums section
-        if (albums.isNotEmpty()) {
-            item {
-                SectionHeader(text = stringResource(R.string.albums))
-            }
+    var expanded by remember { mutableStateOf(false) }
 
-            items(albums.size) { index ->
-                val album = albums[index]
-                AlbumArtistDetailAlbumItem(
-                    album = album,
-                    playlists = playlists,
-                    onClick = onAlbumClick,
-                    onPlay = onAlbumPlay,
-                    onAddToQueue = onAlbumAddToQueue,
-                    onPlayNext = onAlbumPlayNext,
-                    onExclude = onAlbumExclude,
-                    onEditTags = onAlbumEditTags,
-                    onAddToPlaylist = onAlbumAddToPlaylist,
-                    onShowCreatePlaylistDialog = onAlbumShowCreatePlaylistDialog,
-                )
-            }
-        }
-
-        // Songs section
-        if (songs.isNotEmpty()) {
-            item {
-                SectionHeader(text = stringResource(R.string.songs))
-            }
-
-            items(songs.size) { index ->
-                val song = songs[index]
-                AlbumArtistDetailSongItem(
-                    song = song,
-                    isCurrent = song.id == currentSong?.id,
-                    playlists = playlists,
-                    onClick = onSongClick,
-                    onAddToQueue = onAddToQueue,
-                    onAddToPlaylist = onAddToPlaylist,
-                    onShowCreatePlaylistDialog = onShowCreatePlaylistDialog,
-                    onPlayNext = onPlayNext,
-                    onSongInfo = onSongInfo,
-                    onExclude = onExclude,
-                    onEditTags = onEditTags,
-                    onDelete = onDelete,
+    IconButton(onClick = { expanded = true }) {
+        Icon(
+            imageVector = Icons.Default.MoreVert,
+            contentDescription = "More options",
+        )
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+        ) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.menu_title_play)) },
+                onClick = {
+                    onPlay()
+                    expanded = false
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.menu_title_shuffle)) },
+                onClick = {
+                    onShuffle()
+                    expanded = false
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.menu_title_album_shuffle)) },
+                onClick = {
+                    onShuffleAlbums()
+                    expanded = false
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.menu_title_add_to_queue)) },
+                onClick = {
+                    onAddToQueue()
+                    expanded = false
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.menu_title_add_to_playlist)) },
+                onClick = {
+                    onAddToPlaylist()
+                    expanded = false
+                },
+            )
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.menu_title_play_next)) },
+                onClick = {
+                    onPlayNext()
+                    expanded = false
+                },
+            )
+            if (showEditTags) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.menu_title_edit_tags)) },
+                    onClick = {
+                        onEditTags()
+                        expanded = false
+                    },
                 )
             }
         }

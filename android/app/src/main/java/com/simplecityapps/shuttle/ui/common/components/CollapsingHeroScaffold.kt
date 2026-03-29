@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.common.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
@@ -24,6 +25,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
@@ -34,19 +36,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-/**
- * A scaffold with a collapsing hero image area. As the user scrolls content up,
- * the hero image collapses with a parallax effect and fades out. A toolbar pins
- * at the top, with its title fading in as the hero collapses.
- *
- * @param heroContent Content rendered in the hero area. Receives collapse progress (0f = expanded, 1f = collapsed).
- * @param title Toolbar title — fades in as the hero collapses.
- * @param subtitle Optional toolbar subtitle — fades in with the title.
- * @param onNavigateUp Back button callback.
- * @param actions Toolbar action buttons (overflow menu, etc.).
- * @param heroHeight Expanded height of the hero area.
- * @param content LazyListScope for the scrollable body below the hero.
- */
+private val ToolbarHeight = 64.dp
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CollapsingHeroScaffold(
@@ -61,15 +52,17 @@ fun CollapsingHeroScaffold(
 ) {
     val density = LocalDensity.current
     val heroHeightPx = with(density) { heroHeight.toPx() }
+    val toolbarHeightPx = with(density) { ToolbarHeight.toPx() }
+    // Hero collapses down to the toolbar height, not to zero
+    val maxCollapsePx = heroHeightPx - toolbarHeightPx
 
-    // How far the hero has collapsed. 0f = fully expanded, -heroHeightPx = fully collapsed.
     var heroOffset by remember { mutableFloatStateOf(0f) }
 
-    val nestedScrollConnection = remember(heroHeightPx) {
+    val nestedScrollConnection = remember(maxCollapsePx) {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
                 val delta = available.y
-                val newOffset = (heroOffset + delta).coerceIn(-heroHeightPx, 0f)
+                val newOffset = (heroOffset + delta).coerceIn(-maxCollapsePx, 0f)
                 val consumed = newOffset - heroOffset
                 heroOffset = newOffset
                 return Offset(0f, consumed)
@@ -77,8 +70,8 @@ fun CollapsingHeroScaffold(
         }
     }
 
-    val collapseProgress = if (heroHeightPx > 0f) {
-        (-heroOffset / heroHeightPx).coerceIn(0f, 1f)
+    val collapseProgress = if (maxCollapsePx > 0f) {
+        (-heroOffset / maxCollapsePx).coerceIn(0f, 1f)
     } else {
         0f
     }
@@ -88,7 +81,7 @@ fun CollapsingHeroScaffold(
             .fillMaxSize()
             .nestedScroll(nestedScrollConnection),
     ) {
-        // 1. Hero image — parallax (scrolls at half speed) and fades out
+        // 1. Hero image — parallax and fade
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -99,54 +92,60 @@ fun CollapsingHeroScaffold(
                 },
         ) {
             heroContent(collapseProgress)
+            // Gradient scrim at top for toolbar icon visibility
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(ToolbarHeight * 1.5f)
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Black.copy(alpha = 0.5f),
+                                Color.Transparent,
+                            ),
+                        ),
+                    ),
+            )
         }
 
-        // 2. Scrollable content — padded below the hero
+        // 2. Content — padded below hero + toolbar, moves up with hero
         LazyColumn(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .graphicsLayer { translationY = heroOffset },
             contentPadding = PaddingValues(top = heroHeight),
         ) {
             content()
         }
 
-        // 3. Pinned toolbar — background fades in as hero collapses
+        // 3. Pinned toolbar — background fades in
         TopAppBar(
             title = {
-                if (subtitle != null) {
-                    // Two-line title + subtitle
-                    Box {
-                        Text(
-                            text = title,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            style = MaterialTheme.typography.titleMedium,
-                            modifier = Modifier.graphicsLayer { alpha = collapseProgress },
-                        )
-                    }
-                } else {
-                    Text(
-                        text = title,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.graphicsLayer { alpha = collapseProgress },
-                    )
-                }
+                Text(
+                    text = title,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.graphicsLayer { alpha = collapseProgress },
+                )
             },
             navigationIcon = {
                 IconButton(onClick = onNavigateUp) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Navigate up",
+                        tint = Color.White,
                     )
                 }
             },
             actions = actions,
             colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.surface.copy(
-                    alpha = collapseProgress,
-                ),
-                navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
-                actionIconContentColor = MaterialTheme.colorScheme.onSurface,
+                containerColor = if (collapseProgress > 0.9f) {
+                    MaterialTheme.colorScheme.surface
+                } else {
+                    Color.Transparent
+                },
+                navigationIconContentColor = Color.White,
+                actionIconContentColor = Color.White,
             ),
         )
     }
