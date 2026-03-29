@@ -2,13 +2,13 @@ package com.simplecityapps.shuttle.ui.common.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -18,19 +18,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
@@ -60,82 +54,63 @@ fun CollapsingHeroScaffold(
     }
 
     val density = LocalDensity.current
-    val heroHeightPx = with(density) { heroHeight.toPx() }
-    val toolbarHeightPx = with(density) { ToolbarHeight.toPx() }
-    val maxCollapsePx = heroHeightPx - toolbarHeightPx
+    val maxCollapsePx = with(density) { (heroHeight - ToolbarHeight).toPx() }
 
-    var heroOffset by remember { mutableFloatStateOf(0f) }
-    var containerHeightPx by remember { mutableFloatStateOf(0f) }
+    val lazyListState = rememberLazyListState()
 
-    val nestedScrollConnection = remember(maxCollapsePx) {
-        object : NestedScrollConnection {
-            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                val delta = available.y
-                val newOffset = (heroOffset + delta).coerceIn(-maxCollapsePx, 0f)
-                val consumed = newOffset - heroOffset
-                heroOffset = newOffset
-                return Offset(0f, consumed)
+    // Derive collapse progress from how far the hero item has scrolled
+    val collapseProgress by remember {
+        derivedStateOf {
+            if (lazyListState.firstVisibleItemIndex > 0) {
+                1f
+            } else {
+                (lazyListState.firstVisibleItemScrollOffset / maxCollapsePx).coerceIn(0f, 1f)
             }
         }
     }
 
-    val collapseProgress = if (maxCollapsePx > 0f) {
-        (-heroOffset / maxCollapsePx).coerceIn(0f, 1f)
-    } else {
-        0f
-    }
-
-    // The LazyColumn is translated up by heroOffset via graphicsLayer.
-    // To prevent bottom clipping, make it taller by maxCollapsePx so
-    // its bottom extends below the container when fully collapsed.
-    val extraHeight = with(density) { maxCollapsePx.toDp() }
-    val containerHeight = with(density) { containerHeightPx.toDp() }
-
-    Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(min = containerHeight)
-            .onSizeChanged { containerHeightPx = it.height.toFloat() }
-            .nestedScroll(nestedScrollConnection),
-    ) {
-        // 1. Content (bottom z-layer)
+    Box(modifier = modifier.fillMaxSize()) {
         LazyColumn(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(containerHeight + extraHeight)
-                .graphicsLayer { translationY = heroOffset },
-            contentPadding = PaddingValues(top = heroHeight),
+            state = lazyListState,
+            modifier = Modifier.fillMaxSize(),
         ) {
+            // Hero image as first item — scrolls naturally with parallax
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(heroHeight)
+                        .graphicsLayer {
+                            alpha = 1f - collapseProgress
+                            // Parallax: content moves at half scroll speed
+                            if (lazyListState.firstVisibleItemIndex == 0) {
+                                translationY = lazyListState.firstVisibleItemScrollOffset * 0.5f
+                            }
+                        },
+                ) {
+                    heroContent(collapseProgress)
+                    // Gradient scrim for toolbar icon visibility
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(ToolbarHeight * 1.5f)
+                            .background(
+                                Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.Black.copy(alpha = 0.5f),
+                                        Color.Transparent,
+                                    ),
+                                ),
+                            ),
+                    )
+                }
+            }
+
+            // Screen content
             content()
         }
 
-        // 2. Hero image (middle z-layer)
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(heroHeight)
-                .graphicsLayer {
-                    translationY = heroOffset * 0.5f
-                    alpha = 1f - collapseProgress
-                },
-        ) {
-            heroContent(collapseProgress)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(ToolbarHeight * 1.5f)
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(
-                                Color.Black.copy(alpha = 0.5f),
-                                Color.Transparent,
-                            ),
-                        ),
-                    ),
-            )
-        }
-
-        // 3. Pinned toolbar (top z-layer)
+        // Pinned toolbar — always on top, background fades in as hero scrolls away
         TopAppBar(
             title = {
                 Text(
