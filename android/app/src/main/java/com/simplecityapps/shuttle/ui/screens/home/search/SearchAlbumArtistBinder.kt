@@ -14,7 +14,6 @@ import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.isVisible
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
-import com.simplecityapps.mediaprovider.StringComparison
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.getAttrColor
 import com.simplecityapps.shuttle.ui.common.recyclerview.ViewTypes
@@ -103,9 +102,9 @@ class SearchAlbumArtistBinder(
         }
 
         private fun highlightMatchedStrings(viewBinder: SearchAlbumArtistBinder) {
-            viewBinder.albumArtist.name ?: viewBinder.albumArtist.friendlyArtistName?.let {
-                val nameStringBuilder = SpannableStringBuilder(viewBinder.albumArtist.name ?: viewBinder.albumArtist.friendlyArtistName)
-                if (viewBinder.jaroSimilarity.albumArtistNameJaroSimilarity.score >= StringComparison.threshold) {
+            (viewBinder.albumArtist.name ?: viewBinder.albumArtist.friendlyArtistName)?.let { artistName ->
+                val nameStringBuilder = SpannableStringBuilder(artistName)
+                if (viewBinder.jaroSimilarity.albumArtistNameJaroSimilarity.bMatchedIndices.isNotEmpty()) {
                     viewBinder.jaroSimilarity.albumArtistNameJaroSimilarity.bMatchedIndices.forEach { (index, score) ->
                         try {
                             nameStringBuilder.setSpan(
