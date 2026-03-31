@@ -138,6 +138,10 @@
     <string name="pref_disable_shuffle_on_queue_title">Keep shuffle mode</string>
     <!-- Settings: Description for the option to disable shuffle when starting a new queue -->
     <string name="pref_disable_shuffle_on_queue_subtitle">When a new queue is selected, shuffle mode won\'t be disabled</string>
+    <!-- Settings: Title for the bit-perfect audio option -->
+    <string name="pref_bit_perfect_title">Bit-perfect audio</string>
+    <!-- Settings: Description for the bit-perfect audio option -->
+    <string name="pref_bit_perfect_subtitle">Send audio directly to USB DACs without processing (Android 14+)</string>
     <!-- Settings title for the day/night theme option -->
     <string name="theme_entry_day_night">Day/Night</string>
     <!-- Settings title for the light theme option -->
