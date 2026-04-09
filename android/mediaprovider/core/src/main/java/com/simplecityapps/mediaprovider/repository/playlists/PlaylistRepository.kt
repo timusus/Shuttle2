@@ -70,6 +70,8 @@ interface PlaylistRepository {
         playlist: Playlist,
         externalId: String?
     )
+
+    suspend fun updateM3uFile(playlist: Playlist)
 }
 
 enum class PlaylistSortOrder : Serializable {

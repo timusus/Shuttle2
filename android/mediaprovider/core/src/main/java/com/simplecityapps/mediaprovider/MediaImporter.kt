@@ -81,7 +81,7 @@ class MediaImporter(
             return
         }
 
-        Timber.v("Starting import..")
+        Timber.v("Starting import...")
         val time = System.currentTimeMillis()
 
         isImporting = true
