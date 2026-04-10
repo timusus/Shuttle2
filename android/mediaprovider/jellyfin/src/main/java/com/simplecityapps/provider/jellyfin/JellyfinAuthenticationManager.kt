@@ -84,4 +84,23 @@ class JellyfinAuthenticationManager(
             "&AudioCodec=aac" +
             "&api_key=${authenticatedCredentials.accessToken}"
     }
+
+    /**
+     * Builds a direct download URL for offline playback (no transcoding)
+     */
+    fun buildJellyfinDownloadPath(
+        itemId: String,
+        authenticatedCredentials: AuthenticatedCredentials
+    ): String? {
+        if (credentialStore.address == null) {
+            Timber.w("Invalid jellyfin address (${credentialStore.address})")
+            return null
+        }
+
+        return "${credentialStore.address}" +
+            "/Audio/$itemId" +
+            "/stream" +
+            "?static=true" +
+            "&api_key=${authenticatedCredentials.accessToken}"
+    }
 }

@@ -1,6 +1,7 @@
 package com.simplecityapps.localmediaprovider.local.data.room
 
 import androidx.room.TypeConverter
+import com.simplecityapps.shuttle.model.DownloadState
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import java.util.Date
@@ -32,5 +33,15 @@ class Converters {
         SongSortOrder.valueOf(string)
     } catch (e: IllegalArgumentException) {
         SongSortOrder.Default
+    }
+
+    @TypeConverter
+    fun fromDownloadState(downloadState: DownloadState): String = downloadState.name
+
+    @TypeConverter
+    fun toDownloadState(string: String): DownloadState = try {
+        DownloadState.valueOf(string)
+    } catch (e: IllegalArgumentException) {
+        DownloadState.NONE
     }
 }

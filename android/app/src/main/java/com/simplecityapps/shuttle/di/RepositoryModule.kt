@@ -2,6 +2,7 @@ package com.simplecityapps.shuttle.di
 
 import android.content.Context
 import com.simplecityapps.localmediaprovider.local.data.room.database.MediaDatabase
+import com.simplecityapps.localmediaprovider.local.data.room.repository.DownloadRepositoryImpl
 import com.simplecityapps.localmediaprovider.local.repository.LocalAlbumArtistRepository
 import com.simplecityapps.localmediaprovider.local.repository.LocalAlbumRepository
 import com.simplecityapps.localmediaprovider.local.repository.LocalGenreRepository
@@ -10,6 +11,7 @@ import com.simplecityapps.localmediaprovider.local.repository.LocalSongRepositor
 import com.simplecityapps.mediaprovider.MediaImporter
 import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
+import com.simplecityapps.mediaprovider.repository.downloads.DownloadRepository
 import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
@@ -69,4 +71,10 @@ class RepositoryModule {
         songRepository: SongRepository,
         @AppCoroutineScope appCoroutineScope: CoroutineScope
     ): GenreRepository = LocalGenreRepository(appCoroutineScope, songRepository)
+
+    @Provides
+    @Singleton
+    fun provideDownloadRepository(
+        database: MediaDatabase
+    ): DownloadRepository = DownloadRepositoryImpl(database.downloadDao())
 }
