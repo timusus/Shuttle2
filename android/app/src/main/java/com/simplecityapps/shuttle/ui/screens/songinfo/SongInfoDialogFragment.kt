@@ -62,6 +62,7 @@ class SongInfoDialogFragment : BottomSheetDialogFragment() {
                 getString(R.string.song_info_year) to song.date?.year?.toString().orEmpty(),
                 getString(R.string.song_info_disc) to song.disc?.toString().orEmpty(),
                 getString(R.string.song_info_play_count) to song.playCount.toString(),
+                getString(R.string.song_info_rating) to if (song.rating > 0) "${"★".repeat(song.rating)}${"☆".repeat(5 - song.rating)} (${song.rating}/5)" else getString(R.string.song_info_not_rated),
                 getString(R.string.song_info_genres) to song.genres.joinToString(", "),
                 getString(R.string.song_info_path) to song.path.sanitise(),
                 getString(R.string.song_info_mime_type) to song.mimeType,

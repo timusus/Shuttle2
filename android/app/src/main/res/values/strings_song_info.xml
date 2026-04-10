@@ -20,6 +20,10 @@
     <string name="song_info_disc">Disc</string>
     <!-- Shown in the song info dialog. The song 'play count'-->
     <string name="song_info_play_count">Play count</string>
+    <!-- Shown in the song info dialog. The song 'rating' (0-5 stars)-->
+    <string name="song_info_rating">Rating</string>
+    <!-- Shown in the song info dialog when a song has not been rated-->
+    <string name="song_info_not_rated">Not rated</string>
     <!-- Shown in the song info dialog. The song 'genres'-->
     <string name="song_info_genres">Genres</string>
     <!-- Shown in the song info dialog. The song 'path'-->

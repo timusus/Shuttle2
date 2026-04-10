@@ -21,6 +21,7 @@ import com.simplecityapps.localmediaprovider.local.data.room.migrations.MIGRATIO
 import com.simplecityapps.localmediaprovider.local.data.room.migrations.MIGRATION_37_38
 import com.simplecityapps.localmediaprovider.local.data.room.migrations.MIGRATION_38_39
 import com.simplecityapps.localmediaprovider.local.data.room.migrations.MIGRATION_39_40
+import com.simplecityapps.localmediaprovider.local.data.room.migrations.MIGRATION_40_41
 
 class DatabaseProvider(
     private val context: Context
@@ -44,7 +45,8 @@ class DatabaseProvider(
                 MIGRATION_36_37,
                 MIGRATION_37_38,
                 MIGRATION_38_39,
-                MIGRATION_39_40
+                MIGRATION_39_40,
+                MIGRATION_40_41
             )
             .apply {
                 if (!BuildConfig.DEBUG) {

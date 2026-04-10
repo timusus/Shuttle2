@@ -51,7 +51,8 @@ class MediaStoreMediaProvider(
                     MediaStore.Audio.Media.IS_PODCAST,
                     MediaStore.Audio.Media.BOOKMARK,
                     MediaStore.Audio.Media.MIME_TYPE,
-                    "album_artist"
+                    "album_artist",
+                    "rating"
                 ),
                 "${MediaStore.Audio.Media.IS_MUSIC}=1 OR ${MediaStore.Audio.Media.IS_PODCAST}=1",
                 null,
@@ -116,6 +117,17 @@ class MediaStoreMediaProvider(
                         lastCompleted = null,
                         playCount = 0,
                         playbackPosition = 0,
+                        rating = songCursor.getIntOrNull(songCursor.getColumnIndex("rating"))?.let {
+                            // MediaStore ratings are 0-100, convert to 0-5 stars
+                            when {
+                                it == 0 -> 0
+                                it <= 20 -> 1
+                                it <= 40 -> 2
+                                it <= 60 -> 3
+                                it <= 80 -> 4
+                                else -> 5
+                            }
+                        } ?: 0,
                         blacklisted = false,
                         externalId =
                         songCursor.getLong(
