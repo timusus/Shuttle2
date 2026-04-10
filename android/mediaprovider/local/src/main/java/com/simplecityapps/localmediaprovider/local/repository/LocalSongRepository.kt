@@ -13,6 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -73,7 +74,15 @@ class LocalSongRepository(
         updates: List<Song>,
         deletes: List<Song>,
         mediaProviderType: MediaProviderType
-    ): Triple<Int, Int, Int> = songDataDao.insertUpdateAndDelete(inserts.toSongData(mediaProviderType), updates.toSongDataUpdate(), deletes.toSongData(mediaProviderType))
+    ): Triple<Int, Int, Int> {
+        val result = songDataDao.insertUpdateAndDelete(inserts.toSongData(mediaProviderType), updates.toSongDataUpdate(), deletes.toSongData(mediaProviderType))
+
+        // Wait for the StateFlow cache to synchronize with the database changes
+        // This ensures subsequent reads will see the updated data, preventing race conditions
+        songsRelay.first { it != null }
+
+        return result
+    }
 
     override suspend fun incrementPlayCount(song: Song) {
         Timber.v("Incrementing play count for song: ${song.name}")
