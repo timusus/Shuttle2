@@ -11,6 +11,7 @@ import com.simplecityapps.provider.jellyfin.JellyfinMediaProvider
 import com.simplecityapps.provider.jellyfin.http.ItemsService
 import com.simplecityapps.provider.jellyfin.http.JellyfinTranscodeService
 import com.simplecityapps.provider.jellyfin.http.LoginCredentials
+import com.simplecityapps.provider.jellyfin.http.PlaybackReportingService
 import com.simplecityapps.provider.jellyfin.http.UserService
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import com.squareup.moshi.Moshi
@@ -66,6 +67,12 @@ open class JellyfinMediaProviderModule {
     fun provideTranscodeService(
         @Named("JellyfinRetrofit") retrofit: Retrofit
     ): JellyfinTranscodeService = retrofit.create()
+
+    @Provides
+    @Singleton
+    fun providePlaybackReportingService(
+        @Named("JellyfinRetrofit") retrofit: Retrofit
+    ): PlaybackReportingService = retrofit.create()
 
     @Provides
     @Singleton

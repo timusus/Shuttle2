@@ -8,6 +8,7 @@ import com.simplecityapps.provider.plex.PlexAuthenticationManager
 import com.simplecityapps.provider.plex.PlexMediaInfoProvider
 import com.simplecityapps.provider.plex.PlexMediaProvider
 import com.simplecityapps.provider.plex.http.ItemsService
+import com.simplecityapps.provider.plex.http.PlaybackReportingService
 import com.simplecityapps.provider.plex.http.UserService
 import com.simplecityapps.shuttle.persistence.SecurePreferenceManager
 import com.squareup.moshi.Moshi
@@ -57,6 +58,12 @@ open class PlexMediaProviderModule {
     fun provideItemsService(
         @Named("PlexRetrofit") retrofit: Retrofit
     ): ItemsService = retrofit.create()
+
+    @Provides
+    @Singleton
+    fun providePlaybackReportingService(
+        @Named("PlexRetrofit") retrofit: Retrofit
+    ): PlaybackReportingService = retrofit.create()
 
     @Provides
     @Singleton
