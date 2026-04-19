@@ -182,7 +182,13 @@ private fun SongList(
             modifier = Modifier.fillMaxSize().padding(vertical = 8.dp),
             state = state,
             getPopupText = { index ->
-                getFastscrollPopupText(songs[index], sortOrder)
+                // Offset by 1 for the shuffle item
+                val songIndex = index - 1
+                if (songIndex in songs.indices) {
+                    getFastscrollPopupText(songs[songIndex], sortOrder)
+                } else {
+                    ""
+                }
             },
             popup = getFastscrollPopup(sortOrder)
         )
