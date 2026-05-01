@@ -19,6 +19,8 @@ import com.simplecityapps.shuttle.model.SmartPlaylist
 import com.simplecityapps.shuttle.ui.common.components.CircularLoadingState
 import com.simplecityapps.shuttle.ui.common.components.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.common.components.LoadingStatusIndicator
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.toImmutableList
 
 @Composable
 fun PlaylistList(
@@ -65,48 +67,77 @@ fun PlaylistList(
         }
 
         PlaylistListUiState.LoadingState.Ready -> {
-            LazyColumn(
-                modifier = modifier.fillMaxWidth(),
-                contentPadding = PaddingValues(vertical = 8.dp),
-            ) {
-                if (uiState.smartPlaylists.isNotEmpty()) {
-                    item {
-                        Text(
-                            text = stringResource(R.string.playlists_title_smart_playlists),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)
-                        )
-                    }
-                    items(uiState.smartPlaylists) { smartPlaylist ->
-                        SmartPlaylistListItem(
-                            smartPlaylist = smartPlaylist,
-                            onSmartPlaylistClick = onSmartPlaylistClick,
-                        )
-                    }
-                }
-                if (uiState.playlists.isNotEmpty()) {
-                    item {
-                        Text(
-                            text = stringResource(R.string.playlists_title_playlists),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onBackground,
-                            modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)
-                        )
-                    }
-                    items(uiState.playlists) { playlist ->
-                        PlaylistListItem(
-                            playlist = playlist,
-                            onPlaylistClick = onPlaylistClick,
-                            onPlay = onPlay,
-                            onAddToQueue = onAddToQueue,
-                            onPlayNext = onPlayNext,
-                            onDelete = onDelete,
-                            onClear = onClear,
-                            onRename = onRename,
-                        )
-                    }
-                }
+            PlaylistList(
+                smartPlaylists = uiState.smartPlaylists.toImmutableList(),
+                playlists = uiState.playlists.toImmutableList(),
+                onSmartPlaylistClick = onSmartPlaylistClick,
+                onPlaylistClick = onPlaylistClick,
+                onPlay = onPlay,
+                onAddToQueue = onAddToQueue,
+                onPlayNext = onPlayNext,
+                onDelete = onDelete,
+                onClear = onClear,
+                onRename = onRename,
+                modifier = modifier,
+            )
+        }
+    }
+}
+
+@Composable
+private fun PlaylistList(
+    smartPlaylists: ImmutableList<SmartPlaylist>,
+    playlists: ImmutableList<Playlist>,
+    onSmartPlaylistClick: (SmartPlaylist) -> Unit,
+    onPlaylistClick: (Playlist) -> Unit,
+    onPlay: (Playlist) -> Unit,
+    onAddToQueue: (Playlist) -> Unit,
+    onPlayNext: (Playlist) -> Unit,
+    onDelete: (Playlist) -> Unit,
+    onClear: (Playlist) -> Unit,
+    onRename: (Playlist) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LazyColumn(
+        modifier = modifier.fillMaxWidth(),
+        contentPadding = PaddingValues(vertical = 8.dp),
+    ) {
+        if (smartPlaylists.isNotEmpty()) {
+            item {
+                Text(
+                    text = stringResource(R.string.playlists_title_smart_playlists),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)
+                )
+            }
+            items(smartPlaylists) { smartPlaylist ->
+                SmartPlaylistListItem(
+                    smartPlaylist = smartPlaylist,
+                    onSmartPlaylistClick = onSmartPlaylistClick,
+                )
+            }
+        }
+        if (playlists.isNotEmpty()) {
+            item {
+                Text(
+                    text = stringResource(R.string.playlists_title_playlists),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp)
+                )
+            }
+            items(playlists) { playlist ->
+                PlaylistListItem(
+                    playlist = playlist,
+                    onPlaylistClick = onPlaylistClick,
+                    onPlay = onPlay,
+                    onAddToQueue = onAddToQueue,
+                    onPlayNext = onPlayNext,
+                    onDelete = onDelete,
+                    onClear = onClear,
+                    onRename = onRename,
+                )
             }
         }
     }
