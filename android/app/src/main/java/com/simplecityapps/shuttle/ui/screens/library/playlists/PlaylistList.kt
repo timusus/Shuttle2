@@ -23,6 +23,7 @@ import com.simplecityapps.shuttle.ui.common.components.FastScroller
 import com.simplecityapps.shuttle.ui.common.components.HorizontalLoadingView
 import com.simplecityapps.shuttle.ui.common.components.LoadingStatusIndicator
 import com.simplecityapps.shuttle.ui.common.components.NoPopup
+import com.simplecityapps.shuttle.ui.common.components.noPopupText
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
 
@@ -153,7 +154,7 @@ private fun PlaylistList(
             modifier = Modifier.fillMaxSize().padding(vertical = 8.dp),
             state = state,
             popup = ::NoPopup,
-            getPopupText = { null },
+            getPopupText = ::noPopupText,
         )
     }
 }
