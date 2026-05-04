@@ -79,7 +79,10 @@ class SongListViewModel @Inject constructor(
     mediaImportObserver: SongImportStateProvider,
 ) : ViewModel() {
 
-    private val selectionState = SelectionState<Song>()
+    // We need to store Song.id instead of Song. Otherwise, when a song is
+    // played/paused, it mutates so, when checking if it's contained in the
+    // set of selected songs with Song.equals, it returns false.
+    private val selectionState = SelectionState<Long>()
 
     private val _sortOrder = MutableStateFlow(sortPreferenceManager.sortOrderSongList)
 
@@ -91,7 +94,9 @@ class SongListViewModel @Inject constructor(
         selectionState.selectedItems,
         _sortOrder,
         playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)),
-    ) { songs, songImportState, selectedSongs, sortOrder, playlists ->
+    ) { songs, songImportState, selectedSongIds, sortOrder, playlists ->
+        val selectedSongs = songs.filter { it.id in selectedSongIds }.toSet()
+
         if (songImportState is SongImportState.ImportProgress) {
             SongListUiState(
                 loadingState = SongListUiState.LoadingState.Scanning,
@@ -125,14 +130,14 @@ class SongListViewModel @Inject constructor(
 
     fun onSongClick(song: Song) {
         if (selectionState.isActive()) {
-            selectionState.toggle(song)
+            selectionState.toggle(song.id)
         } else {
             play(song)
         }
     }
 
     fun onSongLongClick(song: Song) {
-        selectionState.toggle(song)
+        selectionState.toggle(song.id)
     }
 
     private fun play(song: Song) {
@@ -154,7 +159,7 @@ class SongListViewModel @Inject constructor(
 
     fun onAddSelectedToQueue() {
         viewModelScope.launch {
-            val selected = selectionState.selectedItems.value.toList()
+            val selected = selectedSongs()
             playbackManager.addToQueue(selected)
             _events.emit(SongListUiEvent.AddedToQueue(selected.size))
             selectionState.clear()
@@ -213,7 +218,7 @@ class SongListViewModel @Inject constructor(
         selectionState.clear()
     }
 
-    fun selectedSongs(): List<Song> = selectionState.selectedItems.value.toList()
+    fun selectedSongs(): List<Song> = uiState.value.selectedSongs.toList()
 
     fun addToPlaylist(playlist: Playlist, playlistData: PlaylistData, ignoreDuplicates: Boolean = false) {
         viewModelScope.launch {
