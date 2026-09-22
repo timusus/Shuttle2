@@ -152,6 +152,7 @@ fun AlbumArtistDetail(
                 } else {
                     null
                 },
+                heroBehindTopBar = true,
                 actions = {
                     ArtistOverflowMenu(
                         onPlay = onPlay,

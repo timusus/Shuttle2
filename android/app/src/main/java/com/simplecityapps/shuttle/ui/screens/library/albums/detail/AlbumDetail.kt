@@ -137,6 +137,7 @@ fun AlbumDetail(
                 } else {
                     null
                 },
+                heroBehindTopBar = true,
                 actions = {
                     AlbumDetailOverflowMenu(
                         onShuffle = onShuffle,
