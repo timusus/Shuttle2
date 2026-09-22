@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.ui.common.components
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,18 +27,24 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 
+/** Matches the shipped CollapsingToolbarLayout's `layout_collapseParallaxMultiplier`. */
+private const val ParallaxMultiplier = 0.5f
+
 /**
  * Simple detail screen scaffold with a pinned small top app bar.
  *
- * Content is a single LazyColumn. The hero image, metadata, action buttons,
- * and track list are all regular list items that scroll naturally.
+ * Content is a single LazyColumn. The [hero] image, metadata, action buttons,
+ * and track list are all regular list items that scroll naturally; the hero drifts at half the
+ * scroll speed as it leaves, like the shipped collapsing toolbar's parallax.
  * The top app bar stays pinned with back navigation and overflow actions, and shows [title] and
- * [subtitle] once the item at [headerItemIndex] (the one carrying the page title) has scrolled
- * under it.
+ * [subtitle] once the item at [headerItemIndex] within [content] (the one carrying the page
+ * title) has scrolled under it.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,12 +55,14 @@ fun DetailScaffold(
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
     headerItemIndex: Int = 0,
+    hero: (@Composable () -> Unit)? = null,
     actions: @Composable RowScope.() -> Unit = {},
     content: LazyListScope.() -> Unit,
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
-    val collapsed by remember(listState, headerItemIndex) {
-        derivedStateOf { listState.isScrolledPast(headerItemIndex) }
+    val headerListIndex = if (hero != null) headerItemIndex + 1 else headerItemIndex
+    val collapsed by remember(listState, headerListIndex) {
+        derivedStateOf { listState.isScrolledPast(headerListIndex) }
     }
 
     Scaffold(
@@ -86,6 +95,38 @@ fun DetailScaffold(
             modifier = Modifier.fillMaxSize(),
             state = listState,
             contentPadding = innerPadding,
+        ) {
+            if (hero != null) {
+                item(contentType = "hero") {
+                    ParallaxHero(listState = listState, content = hero)
+                }
+            }
+            content()
+        }
+    }
+}
+
+/**
+ * Translates [content] down by half of the list's scroll offset while it is the first visible
+ * item, clipped to its own bounds.
+ *
+ * The scroll offset is read inside the graphics layer block, so scrolling only re-runs the layer
+ * rather than recomposing the hero.
+ */
+@Composable
+private fun ParallaxHero(
+    listState: LazyListState,
+    content: @Composable () -> Unit,
+) {
+    Box(modifier = Modifier.clipToBounds()) {
+        Box(
+            modifier = Modifier.graphicsLayer {
+                translationY = if (listState.firstVisibleItemIndex == 0) {
+                    listState.firstVisibleItemScrollOffset * ParallaxMultiplier
+                } else {
+                    0f
+                }
+            },
         ) {
             content()
         }

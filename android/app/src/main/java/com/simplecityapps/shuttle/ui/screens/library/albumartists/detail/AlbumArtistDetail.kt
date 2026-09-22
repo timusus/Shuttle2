@@ -141,8 +141,17 @@ fun AlbumArtistDetail(
                     ?: stringResource(com.simplecityapps.core.R.string.unknown),
                 subtitle = albumArtist?.let { albumArtistSubtitle(context, it) },
                 onNavigateUp = onNavigateUp,
-                // The metadata header follows the hero artwork.
-                headerItemIndex = 1,
+                hero = if (albumArtist != null) {
+                    {
+                        DetailHeroImage(
+                            model = albumArtist,
+                            placeholderResId = com.simplecityapps.core.R.drawable.ic_placeholder_artist,
+                            aspectRatio = 16f / 9f,
+                        )
+                    }
+                } else {
+                    null
+                },
                 actions = {
                     ArtistOverflowMenu(
                         onPlay = onPlay,
@@ -157,17 +166,8 @@ fun AlbumArtistDetail(
                 },
                 modifier = modifier,
             ) {
-                // Artwork
+                // Metadata
                 if (albumArtist != null) {
-                    item {
-                        DetailHeroImage(
-                            model = albumArtist,
-                            placeholderResId = com.simplecityapps.core.R.drawable.ic_placeholder_artist,
-                            aspectRatio = 16f / 9f,
-                        )
-                    }
-
-                    // Metadata
                     item {
                         AlbumArtistMetadataHeader(albumArtist = albumArtist)
                     }

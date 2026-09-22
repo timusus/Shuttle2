@@ -126,8 +126,17 @@ fun AlbumDetail(
                 title = album?.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
                 subtitle = album?.let { albumSubtitle(context, it) },
                 onNavigateUp = onNavigateUp,
-                // The metadata header follows the hero artwork.
-                headerItemIndex = 1,
+                hero = if (album != null) {
+                    {
+                        DetailHeroImage(
+                            model = album,
+                            placeholderResId = com.simplecityapps.core.R.drawable.ic_placeholder_album,
+                            aspectRatio = 1f,
+                        )
+                    }
+                } else {
+                    null
+                },
                 actions = {
                     AlbumDetailOverflowMenu(
                         onShuffle = onShuffle,
@@ -140,17 +149,8 @@ fun AlbumDetail(
                 },
                 modifier = modifier,
             ) {
-                // Artwork
+                // Metadata
                 if (album != null) {
-                    item {
-                        DetailHeroImage(
-                            model = album,
-                            placeholderResId = com.simplecityapps.core.R.drawable.ic_placeholder_album,
-                            aspectRatio = 1f,
-                        )
-                    }
-
-                    // Metadata
                     item {
                         AlbumMetadataHeader(album = album)
                     }
