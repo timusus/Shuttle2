@@ -5,10 +5,10 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -46,11 +46,9 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.common.components.CircularLoadingState
 import com.simplecityapps.shuttle.ui.common.components.DetailScaffold
 import com.simplecityapps.shuttle.ui.common.components.LoadingStatusIndicator
-import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
 import com.simplecityapps.shuttle.ui.common.utils.toHms
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongMenu
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
-import com.squareup.phrase.ListPhrase
 import com.squareup.phrase.Phrase
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.toImmutableList
@@ -115,27 +113,59 @@ fun AlbumDetail(
                 },
                 modifier = modifier,
             ) {
-                // Artwork
+                // Header
                 if (album != null) {
                     item {
-                        GlideImage(
-                            model = album,
-                            contentDescription = stringResource(R.string.artwork),
-                            contentScale = ContentScale.Crop,
-                            loading = placeholder(com.simplecityapps.core.R.drawable.ic_placeholder_album),
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .aspectRatio(1f),
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
                         ) {
-                            it
-                                .diskCacheStrategy(DiskCacheStrategy.ALL)
-                                .transition(withCrossFade(200))
-                        }
-                    }
+                            GlideImage(
+                                model = album,
+                                contentDescription = stringResource(R.string.artwork),
+                                contentScale = ContentScale.Crop,
+                                loading = placeholder(com.simplecityapps.core.R.drawable.ic_placeholder_album),
+                                modifier = Modifier
+                                    .size(80.dp)
+                                    .clip(RoundedCornerShape(8.dp)),
+                            ) {
+                                it
+                                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                                    .transition(withCrossFade(200))
+                            }
 
-                    // Metadata
-                    item {
-                        AlbumMetadataHeader(album = album)
+                            Column {
+                                Text(
+                                    text = album.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                )
+                                val metadataStyle = MaterialTheme.typography.bodyMedium
+                                val metadataColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                album.year?.let { year ->
+                                    Text(
+                                        text = year.toString(),
+                                        style = metadataStyle,
+                                        color = metadataColor,
+                                    )
+                                }
+                                Text(
+                                    text = Phrase.fromPlural(context.resources, R.plurals.songsPlural, album.songCount)
+                                        .put("count", album.songCount)
+                                        .format()
+                                        .toString(),
+                                    style = metadataStyle,
+                                    color = metadataColor,
+                                )
+                                Text(
+                                    text = album.duration.toHms(),
+                                    style = metadataStyle,
+                                    color = metadataColor,
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -188,44 +218,6 @@ fun AlbumDetail(
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun AlbumMetadataHeader(
-    album: com.simplecityapps.shuttle.model.Album,
-    modifier: Modifier = Modifier,
-) {
-    val context = LocalContext.current
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-    ) {
-        Text(
-            text = album.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onBackground,
-        )
-        val songsQuantity = Phrase.fromPlural(context.resources, R.plurals.songsPlural, album.songCount)
-            .put("count", album.songCount)
-            .format()
-        val subtitle = ListPhrase
-            .from(" \u00B7 ")
-            .joinSafely(
-                listOf(
-                    album.year?.toString(),
-                    songsQuantity,
-                    album.duration.toHms(),
-                )
-            )
-        if (subtitle != null) {
-            Text(
-                text = subtitle.toString(),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
         }
     }
 }

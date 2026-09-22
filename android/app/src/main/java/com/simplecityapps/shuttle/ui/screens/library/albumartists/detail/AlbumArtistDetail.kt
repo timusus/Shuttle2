@@ -5,11 +5,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -132,59 +132,61 @@ fun AlbumArtistDetail(
                 },
                 modifier = modifier,
             ) {
-                // Artwork
+                // Header
                 if (albumArtist != null) {
                     item {
-                        GlideImage(
-                            model = albumArtist,
-                            contentDescription = stringResource(R.string.artwork),
-                            contentScale = ContentScale.Crop,
-                            loading = placeholder(com.simplecityapps.core.R.drawable.ic_placeholder_artist),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .aspectRatio(16f / 9f),
-                        ) {
-                            it
-                                .diskCacheStrategy(DiskCacheStrategy.ALL)
-                                .transition(withCrossFade(200))
-                        }
-                    }
-
-                    // Metadata
-                    item {
-                        val albumQuantity = Phrase.fromPlural(
-                            context.resources,
-                            R.plurals.albumsPlural,
-                            albumArtist.albumCount
-                        )
-                            .put("count", albumArtist.albumCount)
-                            .format()
-                        val songQuantity = Phrase.fromPlural(
-                            context.resources,
-                            R.plurals.songsPlural,
-                            albumArtist.songCount
-                        )
-                            .put("count", albumArtist.songCount)
-                            .format()
-                        val subtitle = ListPhrase.from(" \u00B7 ")
-                            .joinSafely(listOf(albumQuantity, songQuantity))
-
-                        Column(
+                        Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
                         ) {
-                            Text(
-                                text = albumArtist.name ?: albumArtist.friendlyArtistName
-                                    ?: stringResource(com.simplecityapps.core.R.string.unknown),
-                                style = MaterialTheme.typography.headlineSmall,
-                                color = MaterialTheme.colorScheme.onBackground,
-                            )
-                            if (subtitle != null) {
+                            GlideImage(
+                                model = albumArtist,
+                                contentDescription = stringResource(R.string.artwork),
+                                contentScale = ContentScale.Crop,
+                                loading = placeholder(com.simplecityapps.core.R.drawable.ic_placeholder_artist),
+                                modifier = Modifier
+                                    .size(80.dp)
+                                    .clip(RoundedCornerShape(8.dp)),
+                            ) {
+                                it
+                                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                                    .transition(withCrossFade(200))
+                            }
+
+                            Column {
                                 Text(
-                                    text = subtitle.toString(),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    text = albumArtist.name ?: albumArtist.friendlyArtistName
+                                        ?: stringResource(com.simplecityapps.core.R.string.unknown),
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    color = MaterialTheme.colorScheme.onBackground,
+                                )
+                                val metadataStyle = MaterialTheme.typography.bodyMedium
+                                val metadataColor = MaterialTheme.colorScheme.onSurfaceVariant
+                                Text(
+                                    text = Phrase.fromPlural(
+                                        context.resources,
+                                        R.plurals.albumsPlural,
+                                        albumArtist.albumCount
+                                    )
+                                        .put("count", albumArtist.albumCount)
+                                        .format()
+                                        .toString(),
+                                    style = metadataStyle,
+                                    color = metadataColor,
+                                )
+                                Text(
+                                    text = Phrase.fromPlural(
+                                        context.resources,
+                                        R.plurals.songsPlural,
+                                        albumArtist.songCount
+                                    )
+                                        .put("count", albumArtist.songCount)
+                                        .format()
+                                        .toString(),
+                                    style = metadataStyle,
+                                    color = metadataColor,
                                 )
                             }
                         }

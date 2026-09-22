@@ -80,10 +80,12 @@ class AlbumArtistDetailViewModel @Inject constructor(
     ) { artists, albums, songs, playlists, currentSong ->
         val latestArtist = artists.firstOrNull() ?: albumArtist
         val sortedAlbums = albums.sortedByDescending { it.year ?: 0 }
+        val albumOrder = sortedAlbums.withIndex().associate { (index, album) -> album.groupKey to index }
+        val sortedSongs = songs.sortedWith(compareBy({ albumOrder[it.albumGroupKey] ?: Int.MAX_VALUE }, { it.track }))
         AlbumArtistDetailUiState(
             albumArtist = latestArtist,
             albums = sortedAlbums,
-            songs = songs,
+            songs = sortedSongs,
             playlists = playlists,
             currentSong = currentSong,
             loadingState = if (albums.isEmpty() && songs.isEmpty()) {
