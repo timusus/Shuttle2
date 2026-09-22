@@ -1,0 +1,2 @@
+# Gitignored files to copy into new worktrees (one path per line, relative to repo root).
+local.properties

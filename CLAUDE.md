@@ -93,7 +93,8 @@ support/scripts/lint -F
 
 ## Branch Conventions
 
-- Trunk-based: commit and push directly to `main`
+- Trunk-based on `main`, but never commit on the primary checkout: work on a worktree branch (`claude -w <name>`, or `git worktree add .claude/worktrees/<name> -b worktree-<name>`) and land it with `git push origin HEAD:main`. A pre-commit hook (`.githooks/pre-commit`, activated by the SessionStart hook) refuses commits on `main`; `ALLOW_MAIN_COMMIT=1` is the deliberate override. After a push to main, a PostToolUse hook fast-forwards the primary checkout.
+- Use `/commit` to group working-tree changes into conventional commits with module scopes.
 - Tag `vYYMMDDNN` (e.g. `git tag v26032801 && git push origin v26032801`) triggers build + deploy to Google Play (internal track)
 - External contributors use PRs to `main` (CI runs lint, unit tests, snapshot tests, instrumented tests)
 

@@ -1,0 +1,30 @@
+#!/bin/bash
+# Refuse commits made directly on main.
+#
+# Only `main` exists in this repo, and work lands on it by fast-forward: a session commits on a
+# worktree branch and pushes `HEAD:main`. A commit made straight onto the primary checkout's
+# `main` (by a session launched there, or a headless worker pointed at it) diverges local main
+# from origin the moment another worktree lands, which is the stranded-index failure mode from
+# 2026-08-18. This hook makes that impossible by accident.
+#
+# Activated per clone by `git config core.hooksPath .githooks`; the Claude SessionStart hook
+# `.claude/hooks/ensure-githooks.sh` sets that automatically. Fast-forward merges (`git pull
+# --ff-only`, `.claude/hooks/sync-main.sh`) create no commit and are unaffected.
+#
+# Deliberate exception:  ALLOW_MAIN_COMMIT=1 git commit ...
+set -uo pipefail
+
+branch="$(git symbolic-ref --quiet --short HEAD 2>/dev/null)"
+if [ "$branch" = "main" ] && [ "${ALLOW_MAIN_COMMIT:-}" != "1" ]; then
+  cat >&2 <<'EOF'
+pre-commit: refusing to commit directly on main.
+
+  Work happens on a worktree branch and lands with:  git push origin HEAD:main
+  Start one with:  claude -w <name>
+             or:   git worktree add .claude/worktrees/<name> -b worktree-<name>
+
+  Deliberate exception:  ALLOW_MAIN_COMMIT=1 git commit ...
+EOF
+  exit 1
+fi
+exit 0
