@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library.albums.detail
 
+import android.content.Context
 import android.graphics.drawable.Drawable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -122,7 +123,11 @@ fun AlbumDetail(
             val album = uiState.album
 
             DetailScaffold(
+                title = album?.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
+                subtitle = album?.let { albumSubtitle(context, it) },
                 onNavigateUp = onNavigateUp,
+                // The metadata header follows the hero artwork.
+                headerItemIndex = 1,
                 actions = {
                     AlbumDetailOverflowMenu(
                         onShuffle = onShuffle,
@@ -290,26 +295,35 @@ private fun AlbumMetadataHeader(
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onBackground,
         )
-        val songsQuantity = Phrase.fromPlural(context.resources, R.plurals.songsPlural, album.songCount)
-            .put("count", album.songCount)
-            .format()
-        val subtitle = ListPhrase
-            .from(" · ")
-            .joinSafely(
-                listOf(
-                    album.year?.toString(),
-                    songsQuantity,
-                    album.duration.toHms(),
-                )
-            )
+        val subtitle = albumSubtitle(context, album)
         if (subtitle != null) {
             Text(
-                text = subtitle.toString(),
+                text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
+}
+
+/** Year, song count and duration, shared by the metadata header and the collapsed top bar. */
+private fun albumSubtitle(
+    context: Context,
+    album: Album,
+): String? {
+    val songsQuantity = Phrase.fromPlural(context.resources, R.plurals.songsPlural, album.songCount)
+        .put("count", album.songCount)
+        .format()
+    return ListPhrase
+        .from(" · ")
+        .joinSafely(
+            listOf(
+                album.year?.toString(),
+                songsQuantity,
+                album.duration.toHms(),
+            )
+        )
+        ?.toString()
 }
 
 @Composable

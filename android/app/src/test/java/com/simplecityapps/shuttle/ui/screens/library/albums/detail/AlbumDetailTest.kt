@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.library.albums.detail
 
 import androidx.compose.ui.test.junit4.createComposeRule
+import com.simplecityapps.createAlbum
 import com.simplecityapps.createSong
 import com.simplecityapps.shuttle.model.MediaProviderType
 import io.kotest.matchers.shouldBe
@@ -227,6 +228,29 @@ class AlbumDetailTest {
         robot.openContextMenu()
         robot.clickMenuItem("Delete")
         robot.lastDeleted shouldBe song
+    }
+
+    // endregion
+
+    // region Top bar title
+
+    @Test
+    fun `top bar does not show album title while the header is visible`() {
+        robot.setContent(readyAlbumDetail(album = createAlbum(name = "Abbey Road"), songs = manySongs()))
+        robot.assertTopBarTitleNotDisplayed("Abbey Road")
+    }
+
+    @Test
+    fun `top bar shows album title and subtitle once the header scrolls away`() {
+        robot.setContent(
+            readyAlbumDetail(
+                album = createAlbum(name = "Abbey Road", year = 1969, songCount = 30),
+                songs = manySongs(),
+            )
+        )
+        robot.scrollPastHeader()
+        robot.assertTopBarTitleDisplayed("Abbey Road")
+        robot.assertTopBarTitleDisplayed("1969 · 30 songs", substring = true)
     }
 
     // endregion

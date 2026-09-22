@@ -21,3 +21,6 @@ fun emptyAlbumDetail(
 ) = readyAlbumDetail(album = album, songs = emptyList())
 
 val loadingAlbumDetail = AlbumDetailUiState(loadingState = AlbumDetailUiState.LoadingState.Loading)
+
+/** Enough songs that the list scrolls well past the hero artwork and metadata header. */
+fun manySongs(count: Int = 30) = (1..count).map { createSong(id = it.toLong(), name = "Song $it", track = it) }

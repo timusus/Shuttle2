@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library.albumartists.detail
 
+import android.content.Context
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -132,10 +133,16 @@ fun AlbumArtistDetail(
         }
 
         AlbumArtistDetailUiState.LoadingState.Ready -> {
+            val context = LocalContext.current
             val albumArtist = uiState.albumArtist
 
             DetailScaffold(
+                title = albumArtist?.let { it.name ?: it.friendlyArtistName }
+                    ?: stringResource(com.simplecityapps.core.R.string.unknown),
+                subtitle = albumArtist?.let { albumArtistSubtitle(context, it) },
                 onNavigateUp = onNavigateUp,
+                // The metadata header follows the hero artwork.
+                headerItemIndex = 1,
                 actions = {
                     ArtistOverflowMenu(
                         onPlay = onPlay,
@@ -250,23 +257,32 @@ private fun AlbumArtistMetadataHeader(
             style = MaterialTheme.typography.headlineSmall,
             color = MaterialTheme.colorScheme.onBackground,
         )
-        val albumQuantity = Phrase.fromPlural(context.resources, R.plurals.albumsPlural, albumArtist.albumCount)
-            .put("count", albumArtist.albumCount)
-            .format()
-        val songQuantity = Phrase.fromPlural(context.resources, R.plurals.songsPlural, albumArtist.songCount)
-            .put("count", albumArtist.songCount)
-            .format()
-        val subtitle = ListPhrase
-            .from(" · ")
-            .joinSafely(listOf(albumQuantity, songQuantity))
+        val subtitle = albumArtistSubtitle(context, albumArtist)
         if (subtitle != null) {
             Text(
-                text = subtitle.toString(),
+                text = subtitle,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
+}
+
+/** Album and song counts, shared by the metadata header and the collapsed top bar. */
+private fun albumArtistSubtitle(
+    context: Context,
+    albumArtist: AlbumArtist,
+): String? {
+    val albumQuantity = Phrase.fromPlural(context.resources, R.plurals.albumsPlural, albumArtist.albumCount)
+        .put("count", albumArtist.albumCount)
+        .format()
+    val songQuantity = Phrase.fromPlural(context.resources, R.plurals.songsPlural, albumArtist.songCount)
+        .put("count", albumArtist.songCount)
+        .format()
+    return ListPhrase
+        .from(" · ")
+        .joinSafely(listOf(albumQuantity, songQuantity))
+        ?.toString()
 }
 
 @Composable

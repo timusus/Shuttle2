@@ -2,8 +2,10 @@ package com.simplecityapps.shuttle.ui.screens.library.albumartists.detail
 
 import androidx.compose.ui.test.junit4.createComposeRule
 import com.simplecityapps.createAlbum
+import com.simplecityapps.createAlbumArtist
 import com.simplecityapps.createSong
 import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.ui.screens.library.albums.detail.manySongs
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
 import org.junit.Test
@@ -431,6 +433,29 @@ class AlbumArtistDetailTest {
         robot.openAlbumContextMenu()
         robot.clickMenuItem("Edit Tags")
         robot.lastAlbumEditTags shouldBe album
+    }
+
+    // endregion
+
+    // region Top bar title
+
+    @Test
+    fun `top bar does not show artist name while the header is visible`() {
+        robot.setContent(readyAlbumArtistDetail(albumArtist = createAlbumArtist(name = "The Beatles"), songs = manySongs()))
+        robot.assertTopBarTitleNotDisplayed("The Beatles")
+    }
+
+    @Test
+    fun `top bar shows artist name and subtitle once the header scrolls away`() {
+        robot.setContent(
+            readyAlbumArtistDetail(
+                albumArtist = createAlbumArtist(name = "The Beatles", albumCount = 2, songCount = 30),
+                songs = manySongs(),
+            )
+        )
+        robot.scrollPastHeader()
+        robot.assertTopBarTitleDisplayed("The Beatles")
+        robot.assertTopBarTitleDisplayed("2 albums · 30 songs")
     }
 
     // endregion

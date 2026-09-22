@@ -3,6 +3,8 @@ package com.simplecityapps.shuttle.ui.screens.library.albumartists.detail
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
@@ -12,6 +14,7 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.Playlist
@@ -188,7 +191,19 @@ class AlbumArtistDetailRobot(private val rule: ComposeContentTestRule) {
         rule.onNodeWithContentDescription("Now playing").assertDoesNotExist()
     }
 
+    fun assertTopBarTitleDisplayed(text: String, substring: Boolean = false) {
+        rule.onNode(hasText(text, substring = substring) and hasAnyAncestor(hasTestTag("detail-top-bar-title"))).assertIsDisplayed()
+    }
+
+    fun assertTopBarTitleNotDisplayed(text: String) {
+        rule.onNode(hasText(text) and hasAnyAncestor(hasTestTag("detail-top-bar-title"))).assertDoesNotExist()
+    }
+
     // -- Interactions --
+    /** Scrolls the list so the hero artwork and metadata header sit above the top bar. */
+    fun scrollPastHeader() {
+        rule.onNode(hasScrollToIndexAction()).performScrollToIndex(3)
+    }
 
     fun clickText(text: String) {
         rule.onNodeWithText(text).performClick()
