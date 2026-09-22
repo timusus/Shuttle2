@@ -9,7 +9,7 @@ user_invocable: true
 Build, install, and launch the debug app on a connected device.
 
 ```bash
-./gradlew :android:app:assembleDebug && ./gradlew :android:app:installDebug && adb shell monkey -p com.simplecityapps.shuttle.dev -c android.intent.category.LAUNCHER 1
+./gradlew :android:app:assembleDebug && ./gradlew :android:app:installDebug && adb shell am start -n com.simplecityapps.shuttle.dev/com.simplecityapps.shuttle.ui.MainActivity
 ```
 
 If no device is connected, check with `adb devices` and report the issue.

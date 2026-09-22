@@ -70,3 +70,9 @@ vcs.xml
 
 # Temp translation files
 /.translations/temp/
+
+# Claude Code session scratch — worktrees, ADB captures, handover notes
+.claude/worktrees/
+.claude/WHERE-WE-LEFT-OFF.md
+.adb-screenshots/
+tmp/
