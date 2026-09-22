@@ -143,8 +143,8 @@ Replace CoordinatorLayout layout with simple LinearLayout (Toolbar + ComposeView
 
 ## Decisions
 
-- **No expandable albums in Compose** — albums are simple list items; click navigates to album detail
-- **No hero image** — per migration prompt, skip collapsing toolbar; use simple toolbar
+- **Expandable albums** — tapping an album row unfolds its track list in place, matching the shipped app; the artwork (and the row's "View Album" overflow item) navigates to album detail instead
+- **Hero image** — full-width artwork as the first list item, with a pinned M3 top app bar; no collapsing toolbar and no parallax, the hero simply scrolls away
 - **No shared element transitions** — skip for now per migration prompt
 - **Current song highlighting** — include it (consistent with album detail, low effort)
 - **Album overflow menu** — rendered as a Compose `AlbumMenu` component within the composable

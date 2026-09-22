@@ -3,9 +3,11 @@ package com.simplecityapps.shuttle.ui.screens.library.albumartists.detail
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeContentTestRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -23,6 +25,10 @@ class AlbumArtistDetailRobot(private val rule: ComposeContentTestRule) {
     // -- Callback captures --
 
     var lastAlbumClicked: Album? = null
+        private set
+    var lastAlbumOpened: Album? = null
+        private set
+    var lastAlbumSongClicked: Pair<Song, List<Song>>? = null
         private set
     var lastAlbumPlay: Album? = null
         private set
@@ -106,6 +112,7 @@ class AlbumArtistDetailRobot(private val rule: ComposeContentTestRule) {
                 onEditArtistTags = {},
                 onAddArtistToPlaylist = {},
                 onAlbumClick = { lastAlbumClicked = it },
+                onOpenAlbum = { lastAlbumOpened = it },
                 onAlbumPlay = { lastAlbumPlay = it },
                 onAlbumAddToQueue = { lastAlbumAddedToQueue = it },
                 onAlbumPlayNext = { lastAlbumPlayNext = it },
@@ -114,6 +121,7 @@ class AlbumArtistDetailRobot(private val rule: ComposeContentTestRule) {
                 onAlbumAddToPlaylist = { playlist, data -> lastAlbumAddToPlaylist = playlist to data },
                 onAlbumShowCreatePlaylistDialog = { lastAlbumCreatePlaylistDialog = it },
                 onSongClick = { lastSongClicked = it },
+                onAlbumSongClick = { song, songs -> lastAlbumSongClicked = song to songs },
                 onAddToQueue = { lastAddedToQueue = it },
                 onAddToPlaylist = { playlist, data -> lastAddToPlaylist = playlist to data },
                 onShowCreatePlaylistDialog = { lastCreatePlaylistDialog = it },
@@ -128,6 +136,8 @@ class AlbumArtistDetailRobot(private val rule: ComposeContentTestRule) {
 
     private fun resetCallbacks() {
         lastAlbumClicked = null
+        lastAlbumOpened = null
+        lastAlbumSongClicked = null
         lastAlbumPlay = null
         lastAlbumAddedToQueue = null
         lastAlbumPlayNext = null
@@ -160,6 +170,15 @@ class AlbumArtistDetailRobot(private val rule: ComposeContentTestRule) {
         rule.onNode(hasText(text, substring = true)).assertIsDisplayed()
     }
 
+    /** A track rendered inside an expanded album, as opposed to the artist-wide Songs section. */
+    fun assertAlbumTrackDisplayed(songName: String) {
+        albumTrack(songName).assertIsDisplayed()
+    }
+
+    fun assertAlbumTrackNotDisplayed(songName: String) {
+        albumTrack(songName).assertDoesNotExist()
+    }
+
     fun assertCurrentSongHighlighted(songName: String) {
         rule.onNode(hasText(songName)).assertIsDisplayed()
         rule.onNodeWithContentDescription("Now playing").assertIsDisplayed()
@@ -177,6 +196,17 @@ class AlbumArtistDetailRobot(private val rule: ComposeContentTestRule) {
 
     fun openSongContextMenu() {
         rule.onNodeWithContentDescription("Song context menu").performClick()
+    }
+
+    fun clickAlbumTrack(songName: String) {
+        albumTrack(songName).performClick()
+    }
+
+    // The row is clickable, so its text is merged into the row node rather than left on descendants.
+    private fun albumTrack(songName: String) = rule.onNode(hasTestTag("detail-song-row") and hasText(songName))
+
+    fun clickAlbumArtwork() {
+        rule.onAllNodesWithTag("album-artwork").onFirst().performClick()
     }
 
     fun openAlbumContextMenu() {

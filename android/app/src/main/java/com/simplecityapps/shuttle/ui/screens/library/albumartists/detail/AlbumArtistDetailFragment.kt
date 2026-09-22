@@ -155,7 +155,8 @@ class AlbumArtistDetailFragment :
                             context?.getString(R.string.playlist_create_dialog_playlist_name_hint)
                         ).show(childFragmentManager)
                     },
-                    onAlbumClick = { album ->
+                    onAlbumClick = { album -> viewModel.onAlbumClick(album) },
+                    onOpenAlbum = { album ->
                         view.findNavController().navigate(
                             R.id.action_albumArtistDetailFragment_to_albumDetailFragment,
                             AlbumDetailFragmentArgs(album).toBundle(),
@@ -176,6 +177,7 @@ class AlbumArtistDetailFragment :
                         ).show(childFragmentManager)
                     },
                     onSongClick = { song -> viewModel.onSongClick(song) },
+                    onAlbumSongClick = { song, songs -> viewModel.onAlbumSongClick(song, songs) },
                     onAddToQueue = { song -> viewModel.onAddToQueue(song) },
                     onAddToPlaylist = { playlist, playlistData ->
                         viewModel.addToPlaylist(playlist, playlistData)

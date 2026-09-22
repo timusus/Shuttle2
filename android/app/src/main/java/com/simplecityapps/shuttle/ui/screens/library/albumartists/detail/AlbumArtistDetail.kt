@@ -1,5 +1,6 @@
 package com.simplecityapps.shuttle.ui.screens.library.albumartists.detail
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -22,6 +25,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,21 +33,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
-import com.bumptech.glide.integration.compose.GlideImage
-import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Album
+import com.simplecityapps.shuttle.model.AlbumArtist
+import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.common.components.CircularLoadingState
@@ -53,14 +59,25 @@ import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
 import com.simplecityapps.shuttle.ui.common.utils.dp as dpToInt
 import com.simplecityapps.shuttle.ui.common.utils.toHms
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumMenu
+import com.simplecityapps.shuttle.ui.screens.library.albums.detail.DetailArtwork
+import com.simplecityapps.shuttle.ui.screens.library.albums.detail.DetailHeroImage
+import com.simplecityapps.shuttle.ui.screens.library.albums.detail.DetailSongRow
+import com.simplecityapps.shuttle.ui.screens.library.albums.detail.DiscNumberHeader
+import com.simplecityapps.shuttle.ui.screens.library.albums.detail.GroupingHeader
+import com.simplecityapps.shuttle.ui.screens.library.albums.detail.previewAlbumArtist
+import com.simplecityapps.shuttle.ui.screens.library.albums.detail.previewArtistAlbums
+import com.simplecityapps.shuttle.ui.screens.library.albums.detail.previewArtistSongs
+import com.simplecityapps.shuttle.ui.screens.library.albums.detail.previewLiveAlbum
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongMenu
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
+import com.simplecityapps.shuttle.ui.snapshot.Snapshot
+import com.simplecityapps.shuttle.ui.theme.ColorSchemePreviewParameterProvider
 import com.squareup.phrase.ListPhrase
 import com.squareup.phrase.Phrase
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 
-@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun AlbumArtistDetail(
     uiState: AlbumArtistDetailUiState,
@@ -74,6 +91,7 @@ fun AlbumArtistDetail(
     onEditArtistTags: () -> Unit,
     onAddArtistToPlaylist: () -> Unit,
     onAlbumClick: (Album) -> Unit,
+    onOpenAlbum: (Album) -> Unit,
     onAlbumPlay: (Album) -> Unit,
     onAlbumAddToQueue: (Album) -> Unit,
     onAlbumPlayNext: (Album) -> Unit,
@@ -82,6 +100,7 @@ fun AlbumArtistDetail(
     onAlbumAddToPlaylist: (playlist: Playlist, playlistData: PlaylistData) -> Unit,
     onAlbumShowCreatePlaylistDialog: (Album) -> Unit,
     onSongClick: (Song) -> Unit,
+    onAlbumSongClick: (song: Song, songs: List<Song>) -> Unit,
     onAddToQueue: (Song) -> Unit,
     onAddToPlaylist: (playlist: Playlist, playlistData: PlaylistData) -> Unit,
     onShowCreatePlaylistDialog: (song: Song) -> Unit,
@@ -113,7 +132,6 @@ fun AlbumArtistDetail(
         }
 
         AlbumArtistDetailUiState.LoadingState.Ready -> {
-            val context = LocalContext.current
             val albumArtist = uiState.albumArtist
 
             DetailScaffold(
@@ -132,64 +150,19 @@ fun AlbumArtistDetail(
                 },
                 modifier = modifier,
             ) {
-                // Header
+                // Artwork
                 if (albumArtist != null) {
                     item {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        ) {
-                            GlideImage(
-                                model = albumArtist,
-                                contentDescription = stringResource(R.string.artwork),
-                                contentScale = ContentScale.Crop,
-                                loading = placeholder(com.simplecityapps.core.R.drawable.ic_placeholder_artist),
-                                modifier = Modifier
-                                    .size(80.dp)
-                                    .clip(RoundedCornerShape(8.dp)),
-                            ) {
-                                it
-                                    .diskCacheStrategy(DiskCacheStrategy.ALL)
-                                    .transition(withCrossFade(200))
-                            }
+                        DetailHeroImage(
+                            model = albumArtist,
+                            placeholderResId = com.simplecityapps.core.R.drawable.ic_placeholder_artist,
+                            aspectRatio = 16f / 9f,
+                        )
+                    }
 
-                            Column {
-                                Text(
-                                    text = albumArtist.name ?: albumArtist.friendlyArtistName
-                                        ?: stringResource(com.simplecityapps.core.R.string.unknown),
-                                    style = MaterialTheme.typography.headlineSmall,
-                                    color = MaterialTheme.colorScheme.onBackground,
-                                )
-                                val metadataStyle = MaterialTheme.typography.bodyMedium
-                                val metadataColor = MaterialTheme.colorScheme.onSurfaceVariant
-                                Text(
-                                    text = Phrase.fromPlural(
-                                        context.resources,
-                                        R.plurals.albumsPlural,
-                                        albumArtist.albumCount
-                                    )
-                                        .put("count", albumArtist.albumCount)
-                                        .format()
-                                        .toString(),
-                                    style = metadataStyle,
-                                    color = metadataColor,
-                                )
-                                Text(
-                                    text = Phrase.fromPlural(
-                                        context.resources,
-                                        R.plurals.songsPlural,
-                                        albumArtist.songCount
-                                    )
-                                        .put("count", albumArtist.songCount)
-                                        .format()
-                                        .toString(),
-                                    style = metadataStyle,
-                                    color = metadataColor,
-                                )
-                            }
-                        }
+                    // Metadata
+                    item {
+                        AlbumArtistMetadataHeader(albumArtist = albumArtist)
                     }
                 }
 
@@ -200,12 +173,16 @@ fun AlbumArtistDetail(
                         SectionHeader(text = stringResource(R.string.albums))
                     }
 
-                    items(albums.size) { index ->
+                    items(albums.size, key = { albums[it].groupKey ?: it }) { index ->
                         val album = albums[index]
-                        AlbumArtistDetailAlbumItem(
+                        ExpandableAlbumItem(
                             album = album,
+                            songs = uiState.songsForAlbum(album),
+                            expanded = album.groupKey != null && album.groupKey in uiState.expandedAlbums,
+                            currentSong = uiState.currentSong,
                             playlists = playlists,
                             onClick = onAlbumClick,
+                            onOpenAlbum = onOpenAlbum,
                             onPlay = onAlbumPlay,
                             onAddToQueue = onAlbumAddToQueue,
                             onPlayNext = onAlbumPlayNext,
@@ -213,6 +190,15 @@ fun AlbumArtistDetail(
                             onEditTags = onAlbumEditTags,
                             onAddToPlaylist = onAlbumAddToPlaylist,
                             onShowCreatePlaylistDialog = onAlbumShowCreatePlaylistDialog,
+                            onSongClick = onAlbumSongClick,
+                            onSongAddToQueue = onAddToQueue,
+                            onSongAddToPlaylist = onAddToPlaylist,
+                            onSongShowCreatePlaylistDialog = onShowCreatePlaylistDialog,
+                            onSongPlayNext = onPlayNext,
+                            onSongInfo = onSongInfo,
+                            onSongExclude = onExclude,
+                            onSongEditTags = onEditTags,
+                            onSongDelete = onDelete,
                         )
                     }
                 }
@@ -243,6 +229,42 @@ fun AlbumArtistDetail(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun AlbumArtistMetadataHeader(
+    albumArtist: AlbumArtist,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+    ) {
+        Text(
+            text = albumArtist.name ?: albumArtist.friendlyArtistName
+                ?: stringResource(com.simplecityapps.core.R.string.unknown),
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onBackground,
+        )
+        val albumQuantity = Phrase.fromPlural(context.resources, R.plurals.albumsPlural, albumArtist.albumCount)
+            .put("count", albumArtist.albumCount)
+            .format()
+        val songQuantity = Phrase.fromPlural(context.resources, R.plurals.songsPlural, albumArtist.songCount)
+            .put("count", albumArtist.songCount)
+            .format()
+        val subtitle = ListPhrase
+            .from(" · ")
+            .joinSafely(listOf(albumQuantity, songQuantity))
+        if (subtitle != null) {
+            Text(
+                text = subtitle.toString(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
@@ -339,12 +361,21 @@ private fun SectionHeader(
     )
 }
 
-@OptIn(ExperimentalGlideComposeApi::class)
+/**
+ * Album row that unfolds its own track list in place, as the shipped `ExpandableAlbumBinder` does.
+ *
+ * Tapping the row toggles the tracks; tapping the artwork (or the overflow menu's "View Album")
+ * opens the album's own detail screen.
+ */
 @Composable
-private fun AlbumArtistDetailAlbumItem(
+private fun ExpandableAlbumItem(
     album: Album,
+    songs: List<Song>,
+    expanded: Boolean,
+    currentSong: Song?,
     playlists: ImmutableList<Playlist>,
     onClick: (Album) -> Unit,
+    onOpenAlbum: (Album) -> Unit,
     onPlay: (Album) -> Unit,
     onAddToQueue: (Album) -> Unit,
     onPlayNext: (Album) -> Unit,
@@ -352,69 +383,128 @@ private fun AlbumArtistDetailAlbumItem(
     onEditTags: (Album) -> Unit,
     onAddToPlaylist: (playlist: Playlist, playlistData: PlaylistData) -> Unit,
     onShowCreatePlaylistDialog: (Album) -> Unit,
+    onSongClick: (song: Song, songs: List<Song>) -> Unit,
+    onSongAddToQueue: (Song) -> Unit,
+    onSongAddToPlaylist: (playlist: Playlist, playlistData: PlaylistData) -> Unit,
+    onSongShowCreatePlaylistDialog: (song: Song) -> Unit,
+    onSongPlayNext: (Song) -> Unit,
+    onSongInfo: (Song) -> Unit,
+    onSongExclude: (Song) -> Unit,
+    onSongEditTags: (Song) -> Unit,
+    onSongDelete: (Song) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable { onClick(album) }
-            .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-    ) {
-        GlideImage(
-            model = album,
-            contentDescription = stringResource(R.string.artwork),
-            loading = placeholder(com.simplecityapps.core.R.drawable.ic_placeholder_album_rounded),
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(
             modifier = Modifier
-                .width(40.dp)
-                .height(40.dp),
+                .fillMaxWidth()
+                .clickable { onClick(album) }
+                .heightIn(min = 56.dp)
+                .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            it
-                .diskCacheStrategy(DiskCacheStrategy.ALL)
-                .transform(CenterCrop(), RoundedCorners(8.dpToInt))
-                .transition(withCrossFade(200))
+            DetailArtwork(
+                model = album,
+                placeholderResId = com.simplecityapps.core.R.drawable.ic_placeholder_album_rounded,
+                modifier = Modifier
+                    .testTag("album-artwork")
+                    .width(40.dp)
+                    .height(40.dp)
+                    .clickable { onOpenAlbum(album) },
+                shape = RoundedCornerShape(8.dp),
+            ) {
+                it
+                    .diskCacheStrategy(DiskCacheStrategy.ALL)
+                    .transform(CenterCrop(), RoundedCorners(8.dpToInt))
+                    .transition(withCrossFade(200))
+            }
+
+            Column(
+                modifier = Modifier.weight(1f),
+            ) {
+                Text(
+                    text = album.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onBackground,
+                )
+                val songsQuantity = Phrase.fromPlural(context, R.plurals.songsPlural, album.songCount)
+                    .put("count", album.songCount)
+                    .format()
+                val subtitle = ListPhrase.from(" · ").joinSafely(
+                    listOf(album.year?.toString(), songsQuantity)
+                )
+                if (subtitle != null) {
+                    Text(
+                        text = subtitle.toString(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+
+            AlbumMenu(
+                album = album,
+                playlists = playlists,
+                onPlay = onPlay,
+                onAddToQueue = onAddToQueue,
+                onPlayNext = onPlayNext,
+                onExclude = onExclude,
+                onEditTags = onEditTags,
+                onAddToPlaylist = onAddToPlaylist,
+                onShowCreatePlaylistDialog = onShowCreatePlaylistDialog,
+                onViewAlbum = onOpenAlbum,
+                modifier = Modifier.size(40.dp),
+            )
         }
 
-        Column(
-            modifier = Modifier.weight(1f),
-        ) {
-            Text(
-                text = album.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-            )
-            val songsQuantity = Phrase.fromPlural(context, R.plurals.songsPlural, album.songCount)
-                .put("count", album.songCount)
-                .format()
-            val subtitle = ListPhrase.from(" \u00B7 ").joinSafely(
-                listOf(album.year?.toString(), songsQuantity)
-            )
-            if (subtitle != null) {
-                Text(
-                    text = subtitle.toString(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+        AnimatedVisibility(visible = expanded) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                val discGroupingSongs = songs
+                    .groupBy { it.disc ?: 1 }
+                    .toSortedMap()
+                    .mapValues { entry -> entry.value.groupBy { it.grouping ?: "" } }
+                val hasMultipleDiscs = discGroupingSongs.size > 1
+
+                discGroupingSongs.forEach { (discNumber, groupingMap) ->
+                    if (hasMultipleDiscs) {
+                        DiscNumberHeader(
+                            text = Phrase.from(context, R.string.disc_number)
+                                .put("disc_number", discNumber)
+                                .format()
+                                .toString()
+                        )
+                    }
+
+                    groupingMap.forEach { (grouping, groupSongs) ->
+                        if (grouping.isNotEmpty()) {
+                            GroupingHeader(text = grouping)
+                        }
+
+                        groupSongs.forEach { song ->
+                            DetailSongRow(
+                                song = song,
+                                isCurrent = song.id == currentSong?.id,
+                                playlists = playlists,
+                                onClick = { onSongClick(it, songs) },
+                                onAddToQueue = onSongAddToQueue,
+                                onAddToPlaylist = onSongAddToPlaylist,
+                                onShowCreatePlaylistDialog = onSongShowCreatePlaylistDialog,
+                                onPlayNext = onSongPlayNext,
+                                onSongInfo = onSongInfo,
+                                onExclude = onSongExclude,
+                                onEditTags = onSongEditTags,
+                                onDelete = onSongDelete,
+                            )
+                        }
+                    }
+                }
             }
         }
-
-        AlbumMenu(
-            album = album,
-            playlists = playlists,
-            onPlay = onPlay,
-            onAddToQueue = onAddToQueue,
-            onPlayNext = onPlayNext,
-            onExclude = onExclude,
-            onEditTags = onEditTags,
-            onAddToPlaylist = onAddToPlaylist,
-            onShowCreatePlaylistDialog = onShowCreatePlaylistDialog,
-        )
     }
 }
 
-@OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 private fun AlbumArtistDetailSongItem(
     song: Song,
@@ -445,17 +535,18 @@ private fun AlbumArtistDetailSongItem(
             .fillMaxWidth()
             .then(highlightModifier)
             .clickable { onClick(song) }
+            .heightIn(min = 56.dp)
             .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        GlideImage(
+        DetailArtwork(
             model = song,
-            contentDescription = stringResource(R.string.artwork),
-            loading = placeholder(com.simplecityapps.core.R.drawable.ic_placeholder_song_rounded),
+            placeholderResId = com.simplecityapps.core.R.drawable.ic_placeholder_song_rounded,
             modifier = Modifier
                 .width(40.dp)
                 .height(40.dp),
+            shape = RoundedCornerShape(8.dp),
         ) {
             it
                 .diskCacheStrategy(DiskCacheStrategy.ALL)
@@ -475,7 +566,7 @@ private fun AlbumArtistDetailSongItem(
                     MaterialTheme.colorScheme.onBackground
                 },
             )
-            val subtitle = ListPhrase.from(" \u00B7 ").joinSafely(
+            val subtitle = ListPhrase.from(" · ").joinSafely(
                 listOf(song.friendlyArtistName ?: song.albumArtist, song.album)
             )
             if (subtitle != null) {
@@ -504,6 +595,55 @@ private fun AlbumArtistDetailSongItem(
             onExclude = onExclude,
             onEditTags = onEditTags,
             onDelete = onDelete,
+            modifier = Modifier.size(40.dp),
         )
+    }
+}
+
+@Snapshot
+@Preview
+@Composable
+private fun ReadyWithExpandedAlbum(@PreviewParameter(ColorSchemePreviewParameterProvider::class) colorScheme: ColorScheme) {
+    MaterialTheme(colorScheme = colorScheme) {
+        // Inspection mode swaps artwork for a flat surface, so the snapshot never depends on image loading.
+        CompositionLocalProvider(LocalInspectionMode provides true) {
+            AlbumArtistDetail(
+                uiState = AlbumArtistDetailUiState(
+                    albumArtist = previewAlbumArtist,
+                    albums = previewArtistAlbums,
+                    songs = previewArtistSongs,
+                    expandedAlbums = setOfNotNull<AlbumGroupKey>(previewLiveAlbum.groupKey),
+                    loadingState = AlbumArtistDetailUiState.LoadingState.Ready,
+                ),
+                playlists = persistentListOf(),
+                onNavigateUp = {},
+                onPlay = {},
+                onShuffle = {},
+                onShuffleAlbums = {},
+                onAddAllToQueue = {},
+                onPlayAllNext = {},
+                onEditArtistTags = {},
+                onAddArtistToPlaylist = {},
+                onAlbumClick = {},
+                onOpenAlbum = {},
+                onAlbumPlay = {},
+                onAlbumAddToQueue = {},
+                onAlbumPlayNext = {},
+                onAlbumExclude = {},
+                onAlbumEditTags = {},
+                onAlbumAddToPlaylist = { _, _ -> },
+                onAlbumShowCreatePlaylistDialog = {},
+                onSongClick = {},
+                onAlbumSongClick = { _, _ -> },
+                onAddToQueue = {},
+                onAddToPlaylist = { _, _ -> },
+                onShowCreatePlaylistDialog = {},
+                onPlayNext = {},
+                onSongInfo = {},
+                onExclude = {},
+                onEditTags = {},
+                onDelete = {},
+            )
+        }
     }
 }

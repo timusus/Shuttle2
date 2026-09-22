@@ -37,6 +37,7 @@ fun AlbumMenu(
     onAddToPlaylist: (playlist: Playlist, playlistData: PlaylistData) -> Unit,
     modifier: Modifier = Modifier,
     onShowCreatePlaylistDialog: (Album) -> Unit,
+    onViewAlbum: ((Album) -> Unit)? = null,
 ) {
     var isMenuOpened by remember { mutableStateOf(false) }
     var isAddToPlaylistSubmenuOpen by remember { mutableStateOf(false) }
@@ -55,6 +56,15 @@ fun AlbumMenu(
             expanded = isMenuOpened,
             onDismissRequest = { isMenuOpened = false }
         ) {
+            if (onViewAlbum != null) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(id = R.string.menu_title_view_album)) },
+                    onClick = {
+                        onViewAlbum(album)
+                        isMenuOpened = false
+                    }
+                )
+            }
             DropdownMenuItem(
                 text = { Text(stringResource(id = R.string.menu_title_play)) },
                 onClick = {

@@ -164,6 +164,89 @@ class AlbumArtistDetailTest {
         robot.lastAlbumClicked shouldBe album
     }
 
+    @Test
+    fun `album artwork click invokes onOpenAlbum`() {
+        val album = createAlbum(name = "Open Album")
+        robot.setContent(readyAlbumArtistDetail(albums = listOf(album)))
+        robot.clickAlbumArtwork()
+        robot.lastAlbumOpened shouldBe album
+    }
+
+    // endregion
+
+    // region Album expansion
+
+    @Test
+    fun `collapsed album does not show its tracks`() {
+        val songs = listOf(createSong(id = 1, name = "Come Together", album = "Abbey Road"))
+        robot.setContent(
+            readyAlbumArtistDetail(albums = listOf(albumFor(songs)), songs = songs)
+        )
+        robot.assertAlbumTrackNotDisplayed("Come Together")
+    }
+
+    @Test
+    fun `expanded album shows its tracks`() {
+        val songs = listOf(
+            createSong(id = 1, name = "Come Together", album = "Abbey Road"),
+            createSong(id = 2, name = "Something", album = "Abbey Road"),
+        )
+        val album = albumFor(songs)
+        robot.setContent(
+            readyAlbumArtistDetail(
+                albums = listOf(album),
+                songs = songs,
+                expandedAlbums = setOfNotNull(album.groupKey),
+            )
+        )
+        robot.assertAlbumTrackDisplayed("Come Together")
+        robot.assertAlbumTrackDisplayed("Something")
+    }
+
+    @Test
+    fun `expanded album only shows its own tracks`() {
+        val abbeyRoadSongs = listOf(createSong(id = 1, name = "Come Together", album = "Abbey Road"))
+        val letItBeSongs = listOf(createSong(id = 2, name = "Get Back", album = "Let It Be"))
+        val abbeyRoad = albumFor(abbeyRoadSongs)
+        robot.setContent(
+            readyAlbumArtistDetail(
+                albums = listOf(abbeyRoad, albumFor(letItBeSongs)),
+                songs = abbeyRoadSongs + letItBeSongs,
+                expandedAlbums = setOfNotNull(abbeyRoad.groupKey),
+            )
+        )
+        robot.assertAlbumTrackDisplayed("Come Together")
+        robot.assertAlbumTrackNotDisplayed("Get Back")
+    }
+
+    @Test
+    fun `album row click invokes onAlbumClick to toggle expansion`() {
+        val songs = listOf(createSong(id = 1, name = "Come Together", album = "Abbey Road"))
+        val album = albumFor(songs)
+        robot.setContent(readyAlbumArtistDetail(albums = listOf(album), songs = songs))
+        robot.clickText("Abbey Road")
+        robot.lastAlbumClicked shouldBe album
+    }
+
+    @Test
+    fun `track inside an expanded album plays that album's songs`() {
+        val abbeyRoadSongs = listOf(
+            createSong(id = 1, name = "Come Together", album = "Abbey Road"),
+            createSong(id = 2, name = "Something", album = "Abbey Road"),
+        )
+        val letItBeSongs = listOf(createSong(id = 3, name = "Get Back", album = "Let It Be"))
+        val abbeyRoad = albumFor(abbeyRoadSongs)
+        robot.setContent(
+            readyAlbumArtistDetail(
+                albums = listOf(abbeyRoad, albumFor(letItBeSongs)),
+                songs = abbeyRoadSongs + letItBeSongs,
+                expandedAlbums = setOfNotNull(abbeyRoad.groupKey),
+            )
+        )
+        robot.clickAlbumTrack("Something")
+        robot.lastAlbumSongClicked shouldBe (abbeyRoadSongs[1] to abbeyRoadSongs)
+    }
+
     // endregion
 
     // region Song callbacks
@@ -276,6 +359,7 @@ class AlbumArtistDetailTest {
         )
         robot.openAlbumContextMenu()
 
+        robot.assertTextDisplayed("View Album")
         robot.assertTextDisplayed("Play")
         robot.assertTextDisplayed("Add to Queue")
         robot.assertTextDisplayed("Add to Playlist")
@@ -293,6 +377,15 @@ class AlbumArtistDetailTest {
         )
         robot.openAlbumContextMenu()
         robot.assertTextNotDisplayed("Edit Tags")
+    }
+
+    @Test
+    fun `album context menu invokes onOpenAlbum for View Album`() {
+        val album = createAlbum(name = "View Album Target")
+        robot.setContent(readyAlbumArtistDetail(albums = listOf(album)))
+        robot.openAlbumContextMenu()
+        robot.clickMenuItem("View Album")
+        robot.lastAlbumOpened shouldBe album
     }
 
     @Test

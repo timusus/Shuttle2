@@ -1,12 +1,16 @@
 package com.simplecityapps.shuttle.ui.screens.library.albums.detail
 
+import android.graphics.drawable.Drawable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -14,6 +18,7 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -21,6 +26,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -28,32 +34,48 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
+import com.bumptech.glide.integration.compose.RequestBuilderTransform
 import com.bumptech.glide.integration.compose.placeholder
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.common.components.CircularLoadingState
 import com.simplecityapps.shuttle.ui.common.components.DetailScaffold
 import com.simplecityapps.shuttle.ui.common.components.LoadingStatusIndicator
+import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
 import com.simplecityapps.shuttle.ui.common.utils.toHms
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongMenu
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
+import com.simplecityapps.shuttle.ui.snapshot.Snapshot
+import com.simplecityapps.shuttle.ui.theme.ColorSchemePreviewParameterProvider
+import com.squareup.phrase.ListPhrase
 import com.squareup.phrase.Phrase
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 
-@OptIn(ExperimentalGlideComposeApi::class)
+/** Largest hero edge we allow once the window is wide or short, so tablets and landscape don't get one giant image. */
+private val HeroMaxHeight = 360.dp
+
 @Composable
 fun AlbumDetail(
     uiState: AlbumDetailUiState,
@@ -113,59 +135,19 @@ fun AlbumDetail(
                 },
                 modifier = modifier,
             ) {
-                // Header
+                // Artwork
                 if (album != null) {
                     item {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        ) {
-                            GlideImage(
-                                model = album,
-                                contentDescription = stringResource(R.string.artwork),
-                                contentScale = ContentScale.Crop,
-                                loading = placeholder(com.simplecityapps.core.R.drawable.ic_placeholder_album),
-                                modifier = Modifier
-                                    .size(80.dp)
-                                    .clip(RoundedCornerShape(8.dp)),
-                            ) {
-                                it
-                                    .diskCacheStrategy(DiskCacheStrategy.ALL)
-                                    .transition(withCrossFade(200))
-                            }
+                        DetailHeroImage(
+                            model = album,
+                            placeholderResId = com.simplecityapps.core.R.drawable.ic_placeholder_album,
+                            aspectRatio = 1f,
+                        )
+                    }
 
-                            Column {
-                                Text(
-                                    text = album.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
-                                    style = MaterialTheme.typography.headlineSmall,
-                                    color = MaterialTheme.colorScheme.onBackground,
-                                )
-                                val metadataStyle = MaterialTheme.typography.bodyMedium
-                                val metadataColor = MaterialTheme.colorScheme.onSurfaceVariant
-                                album.year?.let { year ->
-                                    Text(
-                                        text = year.toString(),
-                                        style = metadataStyle,
-                                        color = metadataColor,
-                                    )
-                                }
-                                Text(
-                                    text = Phrase.fromPlural(context.resources, R.plurals.songsPlural, album.songCount)
-                                        .put("count", album.songCount)
-                                        .format()
-                                        .toString(),
-                                    style = metadataStyle,
-                                    color = metadataColor,
-                                )
-                                Text(
-                                    text = album.duration.toHms(),
-                                    style = metadataStyle,
-                                    color = metadataColor,
-                                )
-                            }
-                        }
+                    // Metadata
+                    item {
+                        AlbumMetadataHeader(album = album)
                     }
                 }
 
@@ -200,7 +182,7 @@ fun AlbumDetail(
 
                         items(groupSongs.size) { index ->
                             val song = groupSongs[index]
-                            AlbumDetailSongItem(
+                            DetailSongRow(
                                 song = song,
                                 isCurrent = song.id == uiState.currentSong?.id,
                                 playlists = playlists,
@@ -218,6 +200,114 @@ fun AlbumDetail(
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Full-width artwork, rendered as a plain list item so it scrolls away with the content.
+ *
+ * On a phone in portrait the image runs edge to edge; on a wide or short window it is capped at
+ * [HeroMaxHeight] and centred, rather than filling the entire viewport.
+ */
+@Composable
+internal fun DetailHeroImage(
+    model: Any?,
+    placeholderResId: Int,
+    aspectRatio: Float,
+    modifier: Modifier = Modifier,
+) {
+    val configuration = LocalConfiguration.current
+    val isWideOrShort = configuration.screenWidthDp >= 600 || configuration.screenHeightDp < 600
+
+    Box(
+        modifier = modifier.fillMaxWidth(),
+        contentAlignment = Alignment.Center,
+    ) {
+        DetailArtwork(
+            model = model,
+            placeholderResId = placeholderResId,
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(if (isWideOrShort) Modifier.heightIn(max = HeroMaxHeight) else Modifier)
+                .aspectRatio(aspectRatio),
+        ) {
+            it
+                .diskCacheStrategy(DiskCacheStrategy.ALL)
+                .transition(withCrossFade(200))
+        }
+    }
+}
+
+/**
+ * Artwork loaded through Glide, with a flat surface standing in under inspection mode.
+ *
+ * Previews and Paparazzi snapshots never load an image, and Glide's placeholder drawables resolve a
+ * theme attribute that layoutlib cannot inflate, so the request is skipped entirely there.
+ */
+@OptIn(ExperimentalGlideComposeApi::class)
+@Composable
+internal fun DetailArtwork(
+    model: Any?,
+    placeholderResId: Int,
+    modifier: Modifier = Modifier,
+    shape: Shape = RectangleShape,
+    requestBuilderTransform: RequestBuilderTransform<Drawable> = { it },
+) {
+    val artworkDescription = stringResource(R.string.artwork)
+    if (LocalInspectionMode.current) {
+        Box(
+            modifier = modifier
+                .clip(shape)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .semantics { contentDescription = artworkDescription },
+        )
+        return
+    }
+    GlideImage(
+        model = model,
+        contentDescription = artworkDescription,
+        contentScale = ContentScale.Crop,
+        loading = placeholder(placeholderResId),
+        modifier = modifier,
+        requestBuilderTransform = requestBuilderTransform,
+    )
+}
+
+@Composable
+private fun AlbumMetadataHeader(
+    album: Album,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+    ) {
+        Text(
+            text = album.name ?: stringResource(com.simplecityapps.core.R.string.unknown),
+            style = MaterialTheme.typography.headlineSmall,
+            color = MaterialTheme.colorScheme.onBackground,
+        )
+        val songsQuantity = Phrase.fromPlural(context.resources, R.plurals.songsPlural, album.songCount)
+            .put("count", album.songCount)
+            .format()
+        val subtitle = ListPhrase
+            .from(" · ")
+            .joinSafely(
+                listOf(
+                    album.year?.toString(),
+                    songsQuantity,
+                    album.duration.toHms(),
+                )
+            )
+        if (subtitle != null) {
+            Text(
+                text = subtitle.toString(),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }
@@ -284,7 +374,7 @@ private fun AlbumDetailOverflowMenu(
 }
 
 @Composable
-private fun DiscNumberHeader(
+internal fun DiscNumberHeader(
     text: String,
     modifier: Modifier = Modifier,
 ) {
@@ -299,7 +389,7 @@ private fun DiscNumberHeader(
 }
 
 @Composable
-private fun GroupingHeader(
+internal fun GroupingHeader(
     text: String,
     modifier: Modifier = Modifier,
 ) {
@@ -313,8 +403,14 @@ private fun GroupingHeader(
     )
 }
 
+/**
+ * Track-number / title / duration / overflow row, matching the density of the shipped
+ * `list_item_detail_song` layout (48dp minimum height, 16dp leading inset).
+ *
+ * Shared with the expanded albums on the album artist detail screen.
+ */
 @Composable
-private fun AlbumDetailSongItem(
+internal fun DetailSongRow(
     song: Song,
     isCurrent: Boolean,
     playlists: ImmutableList<Playlist>,
@@ -341,9 +437,11 @@ private fun AlbumDetailSongItem(
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .testTag("detail-song-row")
             .then(highlightModifier)
             .clickable { onClick(song) }
-            .padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
+            .heightIn(min = 48.dp)
+            .padding(start = 16.dp, end = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -387,6 +485,42 @@ private fun AlbumDetailSongItem(
             onExclude = onExclude,
             onEditTags = onEditTags,
             onDelete = onDelete,
+            modifier = Modifier.size(40.dp),
         )
+    }
+}
+
+@Snapshot
+@Preview
+@Composable
+private fun Ready(@PreviewParameter(ColorSchemePreviewParameterProvider::class) colorScheme: ColorScheme) {
+    MaterialTheme(colorScheme = colorScheme) {
+        // Inspection mode swaps artwork for a flat surface, so the snapshot never depends on image loading.
+        CompositionLocalProvider(LocalInspectionMode provides true) {
+            AlbumDetail(
+                uiState = AlbumDetailUiState(
+                    album = previewAlbum,
+                    songs = previewAlbumSongs,
+                    currentSong = previewAlbumSongs[1],
+                    loadingState = AlbumDetailUiState.LoadingState.Ready,
+                ),
+                playlists = persistentListOf(),
+                onNavigateUp = {},
+                onShuffle = {},
+                onAddAlbumToQueue = {},
+                onPlayAlbumNext = {},
+                onEditAlbumTags = {},
+                onAddAlbumToPlaylist = {},
+                onSongClick = {},
+                onAddToQueue = {},
+                onAddToPlaylist = { _, _ -> },
+                onShowCreatePlaylistDialog = {},
+                onPlayNext = {},
+                onSongInfo = {},
+                onExclude = {},
+                onEditTags = {},
+                onDelete = {},
+            )
+        }
     }
 }

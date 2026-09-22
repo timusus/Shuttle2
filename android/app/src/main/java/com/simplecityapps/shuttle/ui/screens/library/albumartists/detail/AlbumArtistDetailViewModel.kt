@@ -16,6 +16,7 @@ import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
+import com.simplecityapps.shuttle.model.AlbumGroupKey
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
@@ -29,6 +30,7 @@ import javax.inject.Inject
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -38,6 +40,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @HiltViewModel
@@ -69,6 +72,8 @@ class AlbumArtistDetailViewModel @Inject constructor(
         awaitClose { queueWatcher.removeCallback(callback) }
     }
 
+    private val expandedAlbums = MutableStateFlow<Set<AlbumGroupKey>>(emptySet())
+
     val uiState: StateFlow<AlbumArtistDetailUiState> = combine(
         albumArtistRepository.getAlbumArtists(AlbumArtistQuery.AlbumArtistGroupKey(key = albumArtist.groupKey)),
         albumRepository.getAlbums(AlbumQuery.ArtistGroupKey(albumArtist.groupKey)),
@@ -81,7 +86,7 @@ class AlbumArtistDetailViewModel @Inject constructor(
         val latestArtist = artists.firstOrNull() ?: albumArtist
         val sortedAlbums = albums.sortedByDescending { it.year ?: 0 }
         val albumOrder = sortedAlbums.withIndex().associate { (index, album) -> album.groupKey to index }
-        val sortedSongs = songs.sortedWith(compareBy({ albumOrder[it.albumGroupKey] ?: Int.MAX_VALUE }, { it.track }))
+        val sortedSongs = songs.sortedWith(compareBy({ albumOrder[it.albumGroupKey] ?: Int.MAX_VALUE }, { it.disc }, { it.track }))
         AlbumArtistDetailUiState(
             albumArtist = latestArtist,
             albums = sortedAlbums,
@@ -94,6 +99,8 @@ class AlbumArtistDetailViewModel @Inject constructor(
                 AlbumArtistDetailUiState.LoadingState.Ready
             },
         )
+    }.combine(expandedAlbums) { state, expanded ->
+        state.copy(expandedAlbums = expanded)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
@@ -150,6 +157,24 @@ class AlbumArtistDetailViewModel @Inject constructor(
     }
 
     // Album actions
+
+    /** Unfolds (or folds) the album's track list in place, rather than navigating away. */
+    fun onAlbumClick(album: Album) {
+        val key = album.groupKey ?: return
+        expandedAlbums.update { expanded ->
+            if (key in expanded) expanded - key else expanded + key
+        }
+    }
+
+    /** Plays a song from within an expanded album, queueing that album's songs rather than the artist's. */
+    fun onAlbumSongClick(song: Song, songs: List<Song>) {
+        viewModelScope.launch {
+            val result = playSongs(songs, position = songs.indexOf(song))
+            if (result is PlaySongs.Result.Failure) {
+                _events.emit(AlbumArtistDetailUiEvent.PlaybackFailed(result.message))
+            }
+        }
+    }
 
     fun onPlayAlbum(album: Album) {
         viewModelScope.launch {
