@@ -80,7 +80,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cmd=$(jq -r '.tool_input.command // empty'); if printf '%s' \"$cmd\" | grep -qE 'git push(\\s+\\S+)*\\s+(origin\\s+)?(HEAD:main|main)(\\s|$)'; then s=\"$(git rev-parse --show-toplevel 2>/dev/null)/.claude/hooks/sync-main.sh\"; [ -x \"$s\" ] && \"$s\"; fi; exit 0",
+            "command": "cmd=$(jq -r '.tool_input.command // empty'); if printf '%s' \"$cmd\" | grep -qE 'git(\\s+-C\\s+\\S+)?\\s+push(\\s+\\S+)*\\s+(origin\\s+)?(HEAD:main|main)(\\s|$)'; then s=\"$(git rev-parse --show-toplevel 2>/dev/null)/.claude/hooks/sync-main.sh\"; [ -x \"$s\" ] && \"$s\"; fi; exit 0",
             "timeout": 30,
             "statusMessage": "Fast-forwarding primary main..."
           }
