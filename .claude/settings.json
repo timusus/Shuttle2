@@ -59,7 +59,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "inp=$(cat); cmd=$(printf '%s' \"$inp\" | jq -r '.tool_input.command // empty'); cwd=$(printf '%s' \"$inp\" | jq -r '.cwd // empty'); if printf '%s' \"$cmd\" | grep -qE '(^|[;&|]\\s*)git(\\s+-C\\s+\\S+)?\\s+(commit|rebase|cherry-pick|merge)\\b' && ! printf '%s' \"$cmd\" | grep -q -- '--ff-only'; then b=$(git -C \"${cwd:-.}\" symbolic-ref --quiet --short HEAD 2>/dev/null); if [ \"$b\" = main ]; then echo 'BLOCK: this checkout is on main. Do not commit here: move to a worktree branch (EnterWorktree, or restart with claude -w <name>) and land it with git push origin HEAD:main.' >&2; exit 2; fi; fi; exit 0",
+            "command": "inp=$(cat); cmd=$(printf '%s' \"$inp\" | jq -r '.tool_input.command // empty'); cwd=$(printf '%s' \"$inp\" | jq -r '.cwd // empty'); if printf '%s' \"$cmd\" | grep -qE '(^|[;&|]\\s*)git(\\s+-C\\s+\\S+)?\\s+(commit|rebase|cherry-pick|merge)\\b' && ! printf '%s' \"$cmd\" | grep -q -- '--ff-only'; then tgt=$(printf '%s' \"$cmd\" | grep -oE 'git\\s+-C\\s+\\S+' | head -1 | awk '{print $3}'); [ -n \"$tgt\" ] || tgt=\"${cwd:-.}\"; b=$(git -C \"$tgt\" symbolic-ref --quiet --short HEAD 2>/dev/null); if [ \"$b\" = main ]; then echo \"BLOCK: $tgt is on main. Do not commit there: use a worktree branch (EnterWorktree, or claude -w <name>) and land it with git push origin HEAD:main.\" >&2; exit 2; fi; fi; exit 0",
             "timeout": 10
           }
         ]
