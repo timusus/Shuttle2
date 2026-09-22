@@ -42,10 +42,13 @@ class ReplayGainAudioProcessor(var mode: ReplayGainMode, var preAmpGain: Double 
     }
 
     override fun queueInput(inputBuffer: ByteBuffer) {
-        if (gain != 0.0) {
+        // Read the gain once per buffer - it aggregates three synchronized properties, and the
+        // track can change underneath us mid-buffer.
+        val currentGain = gain
+        if (currentGain != 0.0) {
             val size = inputBuffer.remaining()
             val buffer = replaceOutputBuffer(size)
-            val delta = gain.fromDb()
+            val delta = currentGain.fromDb()
             when (outputAudioFormat.encoding) {
                 C.ENCODING_PCM_16BIT -> {
                     while (inputBuffer.hasRemaining()) {

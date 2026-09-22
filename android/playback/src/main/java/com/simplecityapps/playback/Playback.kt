@@ -1,5 +1,6 @@
 package com.simplecityapps.playback
 
+import com.google.android.exoplayer2.C
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.model.Song
 
@@ -50,6 +51,12 @@ interface Playback {
 
     fun setAudioSessionId(id: Int) {
     }
+
+    /**
+     * @return the audio session id this playback is actually using, or [C.AUDIO_SESSION_ID_UNSET]
+     * if it doesn't have one. May differ from the id passed to [setAudioSessionId].
+     */
+    fun getAudioSessionId(): Int = C.AUDIO_SESSION_ID_UNSET
 
     fun setReplayGain(
         trackGain: Double?,

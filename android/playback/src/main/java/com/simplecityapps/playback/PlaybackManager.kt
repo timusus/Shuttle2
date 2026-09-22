@@ -320,6 +320,7 @@ class PlaybackManager(
 
         load(seekPosition ?: 0) { result ->
             result.onSuccess {
+                rebindAudioEffectSession(playback)
                 playbackPreferenceManager.playbackPosition?.let { playbackPosition ->
                     seekTo(playbackPosition)
                 }
@@ -328,6 +329,21 @@ class PlaybackManager(
                 }
             }
         }
+    }
+
+    /**
+     * Re-broadcasts the audio effect control session when [playback] has ended up on a different
+     * session id to the one we're advertising - which happens when it couldn't honour the id we
+     * asked for. Without this, system and OEM effects stay bound to a session nothing is playing on.
+     */
+    private fun rebindAudioEffectSession(playback: Playback) {
+        val sessionId = playback.getAudioSessionId()
+        if (sessionId <= 0 || sessionId == audioEffectSessionManager.sessionId) {
+            return
+        }
+        audioEffectSessionManager.closeAudioEffectSession()
+        audioEffectSessionManager.sessionId = sessionId
+        audioEffectSessionManager.openAudioEffectSession()
     }
 
     override fun setPlaybackSpeed(multiplier: Float) {

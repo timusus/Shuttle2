@@ -63,4 +63,8 @@ dependencies {
     ksp libs.moshi.kotlinCodegen
 
     implementation(project(':android:data'))
+
+    // Testing
+    testImplementation libs.junit
+    testImplementation libs.kotest
 }

@@ -4,6 +4,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.pow
+import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.math.tan
 import timber.log.Timber
@@ -25,6 +26,9 @@ class BandProcessor(val band: NyquistBand, val sampleRate: Int, val channelCount
     private val b1 = -2.0 * G0 * cos(band.centerFrequency * PI / (sampleRate / 2.0)) / (1.0 + beta)
     private val b2 = (G0 - (G1 * beta)) / (1.0 + beta)
 
+    /** True when [processSample] passes the signal through untouched - the filter coefficients are undefined in this case. */
+    private val isBypassed = band.bandwidthGain == 0.0 && band.gain == 0.0
+
     init {
         if (band.gain > 0) {
             // Boost
@@ -39,11 +43,41 @@ class BandProcessor(val band: NyquistBand, val sampleRate: Int, val channelCount
         }
     }
 
+    /**
+     * The magnitude of this band's frequency response at the normalised angular frequency [omega]
+     * (radians per sample, i.e. `2 * PI * frequency / sampleRate`).
+     *
+     * Evaluates `|H(z)|` for the biquad `(b0 + b1.z⁻¹ + b2.z⁻²) / (1 + a1.z⁻¹ + a2.z⁻²)` at
+     * `z = e^(j.omega)`, which is what [processSample] implements.
+     */
+    fun magnitudeAt(omega: Double): Double {
+        if (isBypassed) {
+            return 1.0
+        }
+
+        val cos1 = cos(omega)
+        val cos2 = cos(2.0 * omega)
+        val sin1 = sin(omega)
+        val sin2 = sin(2.0 * omega)
+
+        val numeratorReal = b0 + (b1 * cos1) + (b2 * cos2)
+        val numeratorImaginary = -((b1 * sin1) + (b2 * sin2))
+        val denominatorReal = 1.0 + (a1 * cos1) + (a2 * cos2)
+        val denominatorImaginary = -((a1 * sin1) + (a2 * sin2))
+
+        val denominator = sqrt((denominatorReal * denominatorReal) + (denominatorImaginary * denominatorImaginary))
+        if (denominator == 0.0) {
+            return 1.0
+        }
+
+        return sqrt((numeratorReal * numeratorReal) + (numeratorImaginary * numeratorImaginary)) / denominator
+    }
+
     fun processSample(
         sample: Float,
         channelIndex: Int
     ): Float {
-        if (band.bandwidthGain == 0.0 && band.gain == 0.0) {
+        if (isBypassed) {
             return sample
         }
 

@@ -127,7 +127,21 @@ class ExoPlayerPlayback(
         }
     }
 
-    private var player: SimpleExoPlayer = SimpleExoPlayer.Builder(context, renderersFactory).build()
+    /**
+     * The audio session id [PlaybackManager] wants us to use. Remembered rather than applied once,
+     * because the player is released whenever playback switches to another [Playback] (Chromecast,
+     * for example) and rebuilt on the next [load] - a rebuilt player allocates its own session id,
+     * which would leave system and OEM audio effects attached to a session that no longer exists.
+     */
+    private var requestedAudioSessionId: Int = C.AUDIO_SESSION_ID_UNSET
+
+    private var player: SimpleExoPlayer = createPlayer()
+
+    private fun createPlayer(): SimpleExoPlayer = SimpleExoPlayer.Builder(context, renderersFactory).build().also { player ->
+        if (requestedAudioSessionId != C.AUDIO_SESSION_ID_UNSET) {
+            player.audioSessionId = requestedAudioSessionId
+        }
+    }
 
     override suspend fun load(
         current: Song,
@@ -138,7 +152,7 @@ class ExoPlayerPlayback(
         Timber.v("load(current: ${current.name}|${current.mimeType}, seekPosition: $seekPosition)")
 
         if (isReleased) {
-            player = SimpleExoPlayer.Builder(context, renderersFactory).build()
+            player = createPlayer()
             isReleased = false
         }
 
@@ -239,12 +253,15 @@ class ExoPlayerPlayback(
     }
 
     override fun setAudioSessionId(id: Int) {
-        if (id != -1) {
+        if (id != -1 && id != C.AUDIO_SESSION_ID_UNSET) {
+            requestedAudioSessionId = id
             player.audioSessionId = id
         } else {
-            Timber.e("Failed to set audio session id (sessionId: -1)")
+            Timber.e("Failed to set audio session id (sessionId: $id)")
         }
     }
+
+    override fun getAudioSessionId(): Int = if (isReleased) requestedAudioSessionId else player.audioSessionId
 
     override fun setReplayGain(
         trackGain: Double?,
