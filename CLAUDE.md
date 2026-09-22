@@ -6,6 +6,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 S2 Music Player — an Android app for local music playback and streaming via Jellyfin, Emby, and Plex. Features Android Auto, Chromecast, custom EQ, replay gain, sleep timer, batch tag editing, and Material 3 theming.
 
+## Working in This Repo
+
+- Launch Claude from the repo root (`claude`, or `claude -w <name>` for a worktree), never from a module
+  directory — auto-memory is keyed by launch directory.
+- The orchestrator plans; workers implement. Writing code, running test suites and builds, and multi-file
+  refactors go to a worker via `/brief`. The tier table and `glm-agent`/`glm-brief` invocation live in the
+  user's global `~/.claude/CLAUDE.md`, which is authoritative.
+- **Briefs must demand foreground builds.** A headless `claude -p` worker that backgrounds a Gradle build
+  or emulator run ends its run there — no commit, no report — because there is no next turn to receive the
+  notification. Every brief involving a build or test run says: run it in the FOREGROUND with a generous
+  timeout; never background it and end your turn. A worker whose last line reads like "waiting on the
+  build" is a failed run: check `git status` before re-briefing.
+- **Never chain briefs in one job.** Launch the next worker only after reviewing and committing the
+  previous one's tree.
+- Anything Sonnet or GLM wrote gets a fresh-context `reviewer` pass before it lands.
+- Use `/delegate-verbose` before a Gradle test sweep, instrumented run or lint sweep, so the raw output
+  never enters the orchestrator's context.
+- `/note` a finding the moment it appears so it survives `/clear` and compaction. Then, if context is
+  comfortably under ~150k, the fix is small and verifiable, and it does not touch files a running worker
+  owns, fix it in the same session and close the issue in the landing commit.
+
 ## Build Commands
 
 All commands run from the repository root.
@@ -94,7 +115,9 @@ support/scripts/lint -F
 ## Branch Conventions
 
 - Trunk-based on `main`, but never commit on the primary checkout: work on a worktree branch (`claude -w <name>`, or `git worktree add .claude/worktrees/<name> -b worktree-<name>`) and land it with `git push origin HEAD:main`. A pre-commit hook (`.githooks/pre-commit`, activated by the SessionStart hook) refuses commits on `main`; `ALLOW_MAIN_COMMIT=1` is the deliberate override. After a push to main, a PostToolUse hook fast-forwards the primary checkout.
-- Use `/commit` to group working-tree changes into conventional commits with module scopes.
+- Use `/commit` to group working-tree changes into conventional commits with module scopes; prefer it
+  over a manual `git commit`. Use `/check` after making changes, and `/verify-ui` after Compose UI
+  changes to keep the characterisation tests honest.
 - Tag `vYYMMDDNN` (e.g. `git tag v26032801 && git push origin v26032801`) triggers build + deploy to Google Play (internal track)
 - External contributors use PRs to `main` (CI runs lint, unit tests, snapshot tests, instrumented tests)
 
