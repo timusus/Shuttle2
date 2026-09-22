@@ -172,9 +172,16 @@ private fun ParallaxHero(
             content()
         }
         if (showScrim) {
+            // Held at the top of the viewport, behind the pinned bar icons, until the hero scrolls out.
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .graphicsLayer {
+                        translationY = if (listState.firstVisibleItemIndex == 0) {
+                            listState.firstVisibleItemScrollOffset.toFloat()
+                        } else {
+                            0f
+                        }
+                    }.fillMaxWidth()
                     .height(HeroScrimHeight)
                     .background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.5f), Color.Transparent))),
             )
