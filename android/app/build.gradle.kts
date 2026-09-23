@@ -190,9 +190,6 @@ android {
         // Constraint Layout
         implementation(libs.androidx.constraintlayout)
 
-        // Android Arch
-        implementation(libs.androidx.lifecycle.extensions)
-
         // AndroidX Navigation
         implementation(libs.androidx.navigation.fragment.ktx)
         implementation(libs.androidx.navigation.ui.ktx)
