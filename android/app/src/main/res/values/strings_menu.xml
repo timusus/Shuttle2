@@ -54,6 +54,12 @@
     <string name="menu_title_sort_date_modified">Last modified</string>
     <!-- Menu option to sort playlists by a custom sort order (user-defined sort order) -->
     <string name="menu_title_sort_custom">Custom</string>
+    <!-- Menu option to sort albums in a random order, reshuffled each time it's selected -->
+    <string name="menu_title_sort_random">Random</string>
+    <!-- Menu option to sort playlists alphabetically by name -->
+    <string name="menu_title_sort_playlist_name">Name</string>
+    <!-- Menu option to sort playlists by the date they were created -->
+    <string name="menu_title_sort_date_created">Date Created</string>
     <!-- Menu option to scroll to the current playing track in the queue -->
     <string name="menu_title_scroll_to_current">Scroll to Current</string>
     <!-- Menu option to rename a playlist-->

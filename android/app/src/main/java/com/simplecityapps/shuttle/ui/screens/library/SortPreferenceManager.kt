@@ -1,6 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.library
 
 import android.content.SharedPreferences
+import com.simplecityapps.mediaprovider.repository.playlists.PlaylistSortOrder
 import com.simplecityapps.shuttle.persistence.get
 import com.simplecityapps.shuttle.persistence.put
 import com.simplecityapps.shuttle.sorting.AlbumSortOrder
@@ -30,6 +31,19 @@ class SortPreferenceManager(private val sharedPreferences: SharedPreferences) : 
             } catch (e: IllegalArgumentException) {
                 Timber.e(e, "Failed to retrieve sort order")
                 AlbumSortOrder.AlbumName
+            }
+        }
+
+    override var sortOrderPlaylistList: PlaylistSortOrder
+        set(value) {
+            sharedPreferences.put("sort_order_playlist_list", value.name)
+        }
+        get() {
+            return try {
+                PlaylistSortOrder.valueOf(sharedPreferences.get("sort_order_playlist_list", PlaylistSortOrder.Default.name))
+            } catch (e: IllegalArgumentException) {
+                Timber.e(e, "Failed to retrieve sort order")
+                PlaylistSortOrder.Default
             }
         }
 }

@@ -4,6 +4,14 @@
     {
       "text": "Browse your music by folder in a new Folders library tab, which you can turn on in Appearance settings",
       "commits": []
+    },
+    {
+      "text": "Sort your playlists list by name",
+      "commits": []
+    },
+    {
+      "text": "Sort your albums list randomly, to help you pick something to listen to",
+      "commits": []
     }
   ],
   "improvements": [

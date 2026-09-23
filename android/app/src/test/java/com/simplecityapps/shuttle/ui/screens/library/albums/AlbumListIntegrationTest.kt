@@ -23,6 +23,7 @@ import com.simplecityapps.shuttle.ui.screens.library.ViewMode
 import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -146,6 +147,40 @@ class AlbumListIntegrationTest {
         viewModel.setSortOrder(AlbumSortOrder.Year)
 
         fakeSortPreferences.sortOrderAlbumList shouldBe AlbumSortOrder.Year
+    }
+
+    @Test
+    fun `random order is stable across re-emission of the same albums`() {
+        val albums = (1..8).map { createAlbum(name = "Album $it", albumArtist = "Artist $it") }
+        fakeAlbumRepository.setAlbums(albums)
+        fakeImportState.setState(importComplete())
+        val viewModel = createViewModel()
+        robot.setContentWithViewModel(viewModel)
+
+        viewModel.setSortOrder(AlbumSortOrder.Random)
+        val orderBeforeReEmission = viewModel.uiState.value.albums.map { it.name }
+
+        fakeAlbumRepository.setAlbums(albums.reversed())
+        val orderAfterReEmission = viewModel.uiState.value.albums.map { it.name }
+
+        orderAfterReEmission shouldBe orderBeforeReEmission
+    }
+
+    @Test
+    fun `reselecting random sort order reshuffles`() {
+        val albums = (1..8).map { createAlbum(name = "Album $it", albumArtist = "Artist $it") }
+        fakeAlbumRepository.setAlbums(albums)
+        fakeImportState.setState(importComplete())
+        val viewModel = createViewModel()
+        robot.setContentWithViewModel(viewModel)
+
+        viewModel.setSortOrder(AlbumSortOrder.Random)
+        val firstShuffle = viewModel.uiState.value.albums.map { it.name }
+
+        viewModel.setSortOrder(AlbumSortOrder.Random)
+        val secondShuffle = viewModel.uiState.value.albums.map { it.name }
+
+        secondShuffle shouldNotBe firstShuffle
     }
 
     // endregion

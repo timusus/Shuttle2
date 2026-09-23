@@ -6,5 +6,6 @@ enum class AlbumSortOrder {
     ArtistGroupKey,
     Year,
     PlayCount,
-    RecentlyPlayed
+    RecentlyPlayed,
+    Random
 }

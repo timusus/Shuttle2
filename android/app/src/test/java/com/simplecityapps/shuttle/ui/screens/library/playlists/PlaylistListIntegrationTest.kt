@@ -7,12 +7,15 @@ import com.simplecityapps.fakes.FakePlaybackManager
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.fakes.FakeSongImportStateProvider
+import com.simplecityapps.fakes.FakeSortPreferences
 import com.simplecityapps.fakes.importComplete
 import com.simplecityapps.mediaprovider.Progress
 import com.simplecityapps.mediaprovider.SongImportState
+import com.simplecityapps.mediaprovider.repository.playlists.PlaylistSortOrder
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
 import com.simplecityapps.testing.MainDispatcherRule
+import io.kotest.matchers.shouldBe
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -39,6 +42,7 @@ class PlaylistListIntegrationTest {
 
     private val fakePlaylistRepository = FakePlaylistRepository()
     private val fakeImportState = FakeSongImportStateProvider()
+    private val fakeSortPreferences = FakeSortPreferences()
 
     private val robot = PlaylistListRobot(composeTestRule)
 
@@ -110,10 +114,43 @@ class PlaylistListIntegrationTest {
 
     // endregion
 
+    // region Sort order
+
+    @Test
+    fun `sorts playlists by name case-insensitively when Name sort order is selected`() {
+        fakePlaylistRepository.setPlaylists(
+            listOf(
+                createPlaylist(name = "zebra"),
+                createPlaylist(name = "Apple"),
+                createPlaylist(name = "banana"),
+            )
+        )
+        fakeImportState.setState(importComplete())
+        val viewModel = createViewModel()
+        robot.setContentWithViewModel(viewModel)
+
+        viewModel.setSortOrder(PlaylistSortOrder.Name)
+
+        viewModel.uiState.value.playlists.map { it.name } shouldBe listOf("Apple", "banana", "zebra")
+    }
+
+    @Test
+    fun `setSortOrder persists to preferences`() {
+        fakeImportState.setState(importComplete())
+        val viewModel = createViewModel()
+
+        viewModel.setSortOrder(PlaylistSortOrder.Name)
+
+        fakeSortPreferences.sortOrderPlaylistList shouldBe PlaylistSortOrder.Name
+    }
+
+    // endregion
+
     private fun createViewModel(): PlaylistListViewModel = PlaylistListViewModel(
         playlistRepository = fakePlaylistRepository,
         playbackManager = FakePlaybackManager(),
         playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
+        sortPreferenceManager = fakeSortPreferences,
         mediaImportObserver = fakeImportState,
     )
 }

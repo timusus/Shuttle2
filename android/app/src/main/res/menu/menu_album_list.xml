@@ -35,6 +35,9 @@
                 <item
                     android:id="@+id/sortAlbumYear"
                     android:title="@string/menu_title_sort_year" />
+                <item
+                    android:id="@+id/sortAlbumRandom"
+                    android:title="@string/menu_title_sort_random" />
             </group>
         </menu>
     </item>

@@ -264,6 +264,10 @@ class AlbumListFragment :
             viewModel.setSortOrder(AlbumSortOrder.Year)
             true
         }
+        R.id.sortAlbumRandom -> {
+            viewModel.setSortOrder(AlbumSortOrder.Random)
+            true
+        }
         else -> false
     }
 
@@ -338,6 +342,7 @@ class AlbumListFragment :
                 AlbumSortOrder.AlbumName -> menu.findItem(R.id.sortAlbumName)?.isChecked = true
                 AlbumSortOrder.ArtistGroupKey -> menu.findItem(R.id.sortArtistName)?.isChecked = true
                 AlbumSortOrder.Year -> menu.findItem(R.id.sortAlbumYear)?.isChecked = true
+                AlbumSortOrder.Random -> menu.findItem(R.id.sortAlbumRandom)?.isChecked = true
                 else -> {
                     // Nothing to do
                 }

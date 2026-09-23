@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
+import com.simplecityapps.mediaprovider.repository.albums.AlbumComparator
 import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
 import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.albums.comparator
@@ -26,6 +27,7 @@ import com.simplecityapps.shuttle.ui.screens.library.ViewMode
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
+import kotlin.random.Random
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -56,13 +58,22 @@ class AlbumListViewModel @Inject constructor(
     private val _sortOrder = MutableStateFlow(sortPreferenceManager.sortOrderAlbumList)
     private val _viewMode = MutableStateFlow(viewModePreferenceManager.albumListViewMode)
 
+    // Not persisted: a fresh app process starts with a new shuffle even if Random remains the
+    // selected sort order. Only reassigned when the user (re)selects Random, so library
+    // re-emissions (scans, play counts) while on this screen don't reshuffle the list.
+    private val _randomSeed = MutableStateFlow(Random.nextLong())
+
     val uiState: StateFlow<AlbumListUiState> = combine(
         albumRepository.getAlbums(AlbumQuery.All()),
         mediaImportObserver.songImportState,
         selectionState.selectedItems,
         _sortOrder,
-        combine(_viewMode, playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null))) { a, b -> a to b },
-    ) { albums, songImportState, selectedAlbums, sortOrder, (viewMode, playlists) ->
+        combine(
+            _viewMode,
+            playlistRepository.getPlaylists(PlaylistQuery.All(mediaProviderType = null)),
+            _randomSeed,
+        ) { viewMode, playlists, randomSeed -> Triple(viewMode, playlists, randomSeed) },
+    ) { albums, songImportState, selectedAlbums, sortOrder, (viewMode, playlists, randomSeed) ->
         if (songImportState is SongImportState.ImportProgress) {
             AlbumListUiState(
                 loadingState = AlbumListUiState.LoadingState.Scanning,
@@ -73,7 +84,11 @@ class AlbumListViewModel @Inject constructor(
                 playlists = playlists,
             )
         } else {
-            val sortedAlbums = albums.sortedWith(sortOrder.comparator)
+            val sortedAlbums = if (sortOrder == AlbumSortOrder.Random) {
+                albums.sortedWith(AlbumComparator.random(randomSeed))
+            } else {
+                albums.sortedWith(sortOrder.comparator)
+            }
             AlbumListUiState(
                 albums = sortedAlbums,
                 selectedAlbums = selectedAlbums,
@@ -179,6 +194,9 @@ class AlbumListViewModel @Inject constructor(
 
     fun setSortOrder(sortOrder: AlbumSortOrder) {
         sortPreferenceManager.sortOrderAlbumList = sortOrder
+        if (sortOrder == AlbumSortOrder.Random) {
+            _randomSeed.value = Random.nextLong()
+        }
         _sortOrder.value = sortOrder
     }
 

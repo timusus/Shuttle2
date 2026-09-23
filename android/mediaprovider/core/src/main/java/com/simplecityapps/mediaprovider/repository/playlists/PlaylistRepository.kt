@@ -7,6 +7,7 @@ import com.simplecityapps.shuttle.model.SmartPlaylist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
 import java.io.Serializable
+import java.text.Collator
 import kotlinx.coroutines.flow.Flow
 
 interface PlaylistRepository {
@@ -73,17 +74,24 @@ interface PlaylistRepository {
 }
 
 enum class PlaylistSortOrder : Serializable {
-    Default
+    Default,
+    Name
     ;
 
     val comparator: Comparator<Playlist>
         get() {
             return when (this) {
                 Default -> defaultComparator
+                Name -> nameComparator
             }
         }
 
     companion object {
+        private val collator by lazy { Collator.getInstance().apply { strength = Collator.TERTIARY } }
         val defaultComparator: Comparator<Playlist> by lazy { compareBy { playlist -> playlist.id } }
+        val nameComparator: Comparator<Playlist> by lazy {
+            Comparator<Playlist> { a, b -> collator.compare(a.name, b.name) }
+                .then(defaultComparator)
+        }
     }
 }

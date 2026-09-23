@@ -3,6 +3,7 @@ package com.simplecityapps.mediaprovider.repository.albums
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.sorting.AlbumSortOrder
 import java.text.Collator
+import kotlin.random.Random
 
 val AlbumSortOrder.comparator: Comparator<Album>
     get() {
@@ -13,6 +14,9 @@ val AlbumSortOrder.comparator: Comparator<Album>
             AlbumSortOrder.PlayCount -> AlbumComparator.playCountComparator
             AlbumSortOrder.Year -> AlbumComparator.yearComparator
             AlbumSortOrder.RecentlyPlayed -> AlbumComparator.recentlyPlayedComparator
+            // Random needs a per-session seed, so it can't be exposed as a stateless comparator here.
+            // Callers sort with AlbumComparator.random(seed) instead.
+            AlbumSortOrder.Random -> error("Random sort order requires a seed; use AlbumComparator.random(seed)")
         }
     }
 
@@ -50,4 +54,8 @@ object AlbumComparator {
         compareByDescending<Album> { album -> album.lastSongCompleted }
             .then(defaultComparator)
     }
+
+    // Keyed off groupKey rather than list index, so re-emissions of the same albums
+    // (in whatever order the upstream flow produces) sort identically for a given seed.
+    fun random(seed: Long): Comparator<Album> = compareBy { album -> Random(album.groupKey.hashCode().toLong() xor seed).nextLong() }
 }

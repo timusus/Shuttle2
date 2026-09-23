@@ -3,6 +3,9 @@ package com.simplecityapps.shuttle.ui.screens.library.playlists
 import android.os.Bundle
 import android.os.Parcelable
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
@@ -16,11 +19,13 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.fragment.findNavController
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.simplecityapps.mediaprovider.repository.playlists.PlaylistSortOrder
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.EditTextAlertDialog
+import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
 import com.simplecityapps.shuttle.ui.screens.library.playlists.detail.PlaylistDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.library.playlists.smart.SmartPlaylistDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.theme.AppTheme
@@ -43,6 +48,12 @@ class PlaylistListFragment :
 
     // Lifecycle
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        setHasOptionsMenu(true)
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -56,6 +67,14 @@ class PlaylistListFragment :
         super.onViewCreated(view, savedInstanceState)
 
         composeView = view.findViewById(R.id.composeView)
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
+                    updateToolbarMenuSortOrder(state.sortOrder)
+                }
+            }
+        }
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -125,6 +144,37 @@ class PlaylistListFragment :
                             .show(childFragmentManager)
                     }
                 )
+            }
+        }
+    }
+
+    override fun onCreateOptionsMenu(
+        menu: Menu,
+        inflater: MenuInflater
+    ) {
+        super.onCreateOptionsMenu(menu, inflater)
+
+        inflater.inflate(R.menu.menu_playlist_list, menu)
+        updateToolbarMenuSortOrder(viewModel.uiState.value.sortOrder)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+        R.id.sortPlaylistName -> {
+            viewModel.setSortOrder(PlaylistSortOrder.Name)
+            true
+        }
+        R.id.sortPlaylistDateCreated -> {
+            viewModel.setSortOrder(PlaylistSortOrder.Default)
+            true
+        }
+        else -> false
+    }
+
+    private fun updateToolbarMenuSortOrder(sortOrder: PlaylistSortOrder) {
+        findToolbarHost()?.toolbar?.menu?.let { menu ->
+            when (sortOrder) {
+                PlaylistSortOrder.Name -> menu.findItem(R.id.sortPlaylistName)?.isChecked = true
+                PlaylistSortOrder.Default -> menu.findItem(R.id.sortPlaylistDateCreated)?.isChecked = true
             }
         }
     }
