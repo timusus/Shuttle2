@@ -68,7 +68,6 @@ class ExoPlayerPlaybackTest {
         player.commands shouldBe
             listOf(
                 "repeatMode ${Player.REPEAT_MODE_OFF}",
-                "setVolume 1.0",
                 "removeListener",
                 "pause",
                 "seekTo 0",
@@ -108,28 +107,40 @@ class ExoPlayerPlaybackTest {
     }
 
     @Test
-    fun `volume is re-applied to a player rebuilt after release`() = runTest {
+    fun `a player rebuilt after a duck starts at full volume`() = runTest {
+        // The duck must not outlive the player: switching to Cast disables audio focus, so the focus
+        // gain that would restore the volume never reaches a player rebuilt on the way back.
         load(songA)
         playback.setVolume(0.2f)
+        player.volume shouldBe 0.2f
         playback.release()
 
         load(songA)
 
         player.isReleased shouldBe false
-        player.volume shouldBe 0.2f
+        player.volume shouldBe 1f
+        player.commands.filter { it.startsWith("setVolume") }.shouldBeEmpty()
+    }
+
+    @Test
+    fun `a volume set before the first load is not applied to the loaded player`() = runTest {
+        playback.setVolume(0.2f)
+
+        load(songA)
+
+        player.volume shouldBe 1f
+        player.commands.filter { it.startsWith("setVolume") }.shouldBeEmpty()
     }
 
     @Test
     fun `settings requested before the first load reach the loaded player`() = runTest {
         playback.setAudioSessionId(42)
         playback.setRepeatMode(QueueManager.RepeatMode.All)
-        playback.setVolume(0.2f)
 
         load(songA)
 
         player.audioSessionId shouldBe 42
         player.repeatMode shouldBe Player.REPEAT_MODE_ALL
-        player.volume shouldBe 0.2f
     }
 
     @Test
@@ -139,6 +150,9 @@ class ExoPlayerPlaybackTest {
         load(songA)
         playback.setPlaybackSpeed(0.8f)
         playback.release()
+
+        // A released player still reports the speed it held, as it did before the player was lazy.
+        playback.getPlaybackSpeed() shouldBe 0.8f
 
         load(songA)
 
@@ -172,12 +186,17 @@ class ExoPlayerPlaybackTest {
         playback.getProgress() shouldBe 0
         playback.getDuration() shouldBe null
         playback.getAudioSessionId() shouldBe 42
-        playback.getPlaybackSpeed() shouldBe 1f
+        // Pins pre-lazy-player behaviour (#232): the requested speed is reported until the first load
+        // builds a player, which starts at normal speed. The trial speed ramp is set at startup, before
+        // any load, and the media session and a switch to Cast read it back.
+        playback.getPlaybackSpeed() shouldBe 1.5f
 
         load(songA)
 
         playerFactory.players.size shouldBe 1
         playback.isReleased shouldBe false
+        player.commands.filter { it.startsWith("setPlaybackParameters") }.shouldBeEmpty()
+        playback.getPlaybackSpeed() shouldBe 1f
     }
 
     @Test

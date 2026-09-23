@@ -1,7 +1,12 @@
 package com.simplecityapps.playback
 
+import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
+import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
+import com.simplecityapps.playback.exoplayer.ExoPlayerPlayback
+import com.simplecityapps.playback.exoplayer.ResolvedMedia
 import com.simplecityapps.playback.fakes.FakeAudioFocusHelper
 import com.simplecityapps.playback.fakes.FakePlayback
+import com.simplecityapps.playback.fakes.FakePlayerFactory
 import com.simplecityapps.playback.fakes.FakeSharedPreferences
 import com.simplecityapps.playback.fakes.testPlaybackManager
 import com.simplecityapps.playback.queue.QueueManager
@@ -64,6 +69,41 @@ class PlaybackManagerAudioFocusTest {
         audioFocusHelper.listener!!.restoreVolumeAndPlay()
 
         events shouldBe listOf("A setVolume 1.0", "A play")
+    }
+
+    @Test
+    fun `a duck does not outlive a switch away from local playback and back`() {
+        // With Cast active the audio focus helper is disabled, so the focus gain that would restore
+        // the volume is dropped; the player rebuilt on the way back must start at full volume.
+        val playerFactory = FakePlayerFactory()
+        val localPlayback =
+            ExoPlayerPlayback(
+                playerFactory = playerFactory,
+                replayGainAudioProcessor = ReplayGainAudioProcessor(ReplayGainMode.Off, 0.0),
+                mediaResolver = { song -> ResolvedMedia(uri = song.path, mimeType = song.mimeType, isRemote = false) }
+            )
+        val remotePlayback = FakePlayback("Remote", events = events)
+        val localQueueWatcher = QueueWatcher()
+        val localQueueManager = QueueManager(localQueueWatcher, GeneralPreferenceManager(FakeSharedPreferences()))
+        val localFocusHelper = FakeAudioFocusHelper()
+        val manager =
+            testPlaybackManager(
+                exoplayerPlayback = localPlayback,
+                queueWatcher = localQueueWatcher,
+                queueManager = localQueueManager,
+                audioFocusHelper = localFocusHelper
+            )
+        runBlocking { localQueueManager.setQueue(listOf(createSong())) }
+        manager.load(0) {}
+        localFocusHelper.listener!!.duck()
+        playerFactory.latest.volume shouldBe 0.2f
+
+        manager.switchToPlayback(remotePlayback)
+        remotePlayback.completeLoad()
+        manager.switchToPlayback(localPlayback)
+
+        playerFactory.players.size shouldBe 2
+        playerFactory.latest.volume shouldBe 1f
     }
 
     private fun createSong() = Song(

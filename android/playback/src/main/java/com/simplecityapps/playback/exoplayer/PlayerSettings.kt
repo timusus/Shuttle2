@@ -7,10 +7,14 @@ import com.google.android.exoplayer2.Player
  * The player settings [PlaybackManager] asks [ExoPlayerPlayback] for, remembered rather than applied
  * once, because the player is released whenever playback switches to another [Playback] (Chromecast,
  * for example) and rebuilt on the next load. A rebuilt player starts from ExoPlayer's defaults - its
- * own audio session id, no repeat, full volume - so [applyTo] hands it everything it must keep.
+ * own audio session id, no repeat - so [applyTo] hands it everything it must keep.
  *
- * Playback speed is deliberately absent: it only carries the expired-trial speed ramp, and a rebuilt
- * player has never picked it up. That ramp is being replaced (#232).
+ * Volume is deliberately absent: it only carries the audio focus duck, and a rebuilt player starts at
+ * full volume. Re-applying it would leave local audio ducked after a Cast round trip, since Cast
+ * disables the audio focus helper and the focus gain that would restore the volume never arrives.
+ *
+ * Playback speed is deliberately absent too: it only carries the expired-trial speed ramp, and a
+ * rebuilt player has never picked it up. That ramp is being replaced (#232).
  */
 internal data class PlayerSettings(
     /**
@@ -20,14 +24,12 @@ internal data class PlayerSettings(
      */
     val audioSessionId: Int = C.AUDIO_SESSION_ID_UNSET,
     /** One of ExoPlayer's `Player.REPEAT_MODE_*` constants. */
-    val repeatMode: Int = Player.REPEAT_MODE_OFF,
-    val volume: Float = 1f
+    val repeatMode: Int = Player.REPEAT_MODE_OFF
 ) {
     fun applyTo(player: AudioPlayer) {
         if (audioSessionId != C.AUDIO_SESSION_ID_UNSET) {
             player.audioSessionId = audioSessionId
         }
         player.repeatMode = repeatMode
-        player.setVolume(volume)
     }
 }

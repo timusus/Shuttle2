@@ -207,6 +207,7 @@ class ExoPlayerPlayback(
     }
 
     override fun release() {
+        player?.let { player -> speedWithoutPlayer = player.playbackSpeed }
         player?.release()
         player = null
         isReleased = true
@@ -226,8 +227,8 @@ class ExoPlayerPlayback(
 
     override fun getDuration(): Int? = player?.duration?.takeIf { duration -> duration != C.TIME_UNSET }?.toInt()
 
+    /** Not part of [settings]: a volume set with no live player is dropped, and a rebuilt player starts at full volume. */
     override fun setVolume(volume: Float) {
-        settings = settings.copy(volume = volume)
         player?.setVolume(volume)
     }
 
@@ -251,14 +252,26 @@ class ExoPlayerPlayback(
     override fun getAudioSessionId(): Int = player?.takeUnless { isReleased }?.audioSessionId ?: settings.audioSessionId
 
     /**
-     * Not part of [settings]: a speed set with no live player is dropped, and a rebuilt player starts
-     * at normal speed (see [PlayerSettings]).
+     * The speed [getPlaybackSpeed] reports while there is no player: the last speed requested or held
+     * by a released player. Before the player became lazy, the player held a requested speed until
+     * the next load replaced it, and callers (the media session, a switch to Cast) still read it.
+     */
+    private var speedWithoutPlayer = 1f
+
+    /**
+     * Not part of [settings]: a speed set with no live player is only reported, never applied, and a
+     * rebuilt player starts at normal speed (see [PlayerSettings]).
      */
     override fun setPlaybackSpeed(multiplier: Float) {
-        player?.setPlaybackParameters(multiplier, multiplier)
+        val player = player
+        if (player == null) {
+            speedWithoutPlayer = multiplier
+        } else {
+            player.setPlaybackParameters(multiplier, multiplier)
+        }
     }
 
-    override fun getPlaybackSpeed(): Float = player?.playbackSpeed ?: 1f
+    override fun getPlaybackSpeed(): Float = player?.playbackSpeed ?: speedWithoutPlayer
 
     enum class ExoPlaybackState {
         Idle,
