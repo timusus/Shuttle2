@@ -144,12 +144,16 @@ class ExoPlayerPlayback(
      */
     private var requestedAudioSessionId: Int = C.AUDIO_SESSION_ID_UNSET
 
+    /** The [Player] repeat mode [PlaybackManager] wants. Remembered for the same reason as [requestedAudioSessionId]. */
+    private var requestedRepeatMode: Int = Player.REPEAT_MODE_OFF
+
     private var player: SimpleExoPlayer = createPlayer()
 
     private fun createPlayer(): SimpleExoPlayer = SimpleExoPlayer.Builder(context, renderersFactory).build().also { player ->
         if (requestedAudioSessionId != C.AUDIO_SESSION_ID_UNSET) {
             player.audioSessionId = requestedAudioSessionId
         }
+        player.repeatMode = requestedRepeatMode
     }
 
     override suspend fun load(
@@ -275,8 +279,9 @@ class ExoPlayerPlayback(
     override fun getResumeWhenSwitched(oldPlayback: Playback): Boolean = oldPlayback !is CastPlayback
 
     override fun setRepeatMode(repeatMode: QueueManager.RepeatMode) {
-        player.repeatMode = repeatMode.toRepeatMode()
-        replayGainTracker.setRepeatMode(player.repeatMode)
+        requestedRepeatMode = repeatMode.toRepeatMode()
+        player.repeatMode = requestedRepeatMode
+        replayGainTracker.setRepeatMode(requestedRepeatMode)
     }
 
     override fun setAudioSessionId(id: Int) {
