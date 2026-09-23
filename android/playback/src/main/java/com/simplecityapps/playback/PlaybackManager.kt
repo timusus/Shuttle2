@@ -39,8 +39,8 @@ class PlaybackManager(
     /**
      * The last playback state the active [Playback] reported, set just before
      * [PlaybackWatcherCallback.onPlaybackStateChanged] is dispatched. Starts at the initial
-     * playback's state. Unlike [playbackState], it doesn't change on [switchToPlayback] until the
-     * new playback reports a state.
+     * playback's state, and is reset to the new playback's state on [switchToPlayback], without a
+     * callback, so it never holds a state reported by a playback that is no longer active.
      */
     override val playbackStateFlow: StateFlow<PlaybackState> = _playbackStateFlow.asStateFlow()
 
@@ -335,6 +335,9 @@ class PlaybackManager(
 
         oldPlayback.pause()
         oldPlayback.release()
+        // A released playback can still report (e.g. a load it started before the switch), which
+        // would overwrite the new playback's state.
+        oldPlayback.callback = null
 
         this.playback = playback
         playback.setRepeatMode(queueManager.getRepeatMode())
@@ -343,6 +346,7 @@ class PlaybackManager(
         playback.setPlaybackSpeed(playbackSpeed)
         audioFocusHelper.enabled = playback.respondsToAudioFocus()
         rebindAudioEffectSession(playback)
+        publishSwitchedPlaybackState()
 
         val generation = ++switchGeneration
 
@@ -364,6 +368,18 @@ class PlaybackManager(
                 }
             }
         }
+    }
+
+    /**
+     * Publishes the newly active playback's state, which it may never report itself (a fresh
+     * playback starts paused without saying so), and starts or stops the progress ticker to match.
+     * Progress is left alone: the old playback's last position is still the best known one until
+     * the new playback loads at it, and it's what gets persisted as the position to resume from.
+     */
+    private fun publishSwitchedPlaybackState() {
+        val playbackState = playback.playBackState()
+        _playbackStateFlow.value = playbackState
+        monitorProgress(playbackState is PlaybackState.Loading || playbackState is PlaybackState.Playing)
     }
 
     /**

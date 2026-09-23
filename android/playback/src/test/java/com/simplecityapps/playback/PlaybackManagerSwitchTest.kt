@@ -118,6 +118,49 @@ class PlaybackManagerSwitchTest {
         events shouldBe listOf("B seek $SAVED_POSITION")
     }
 
+    @Test
+    fun `switch publishes the new playback's state`() {
+        playbackA.callback!!.onPlaybackStateChanged(PlaybackState.Playing)
+
+        playbackManager.switchToPlayback(playbackB)
+
+        playbackManager.playbackStateFlow.value shouldBe PlaybackState.Paused
+        playbackManager.playbackStateFlow.value shouldBe playbackManager.playbackState()
+    }
+
+    @Test
+    fun `switch to a playback that is already playing publishes playing`() {
+        playbackA.state = PlaybackState.Paused
+        playbackA.callback!!.onPlaybackStateChanged(PlaybackState.Paused)
+        playbackB.state = PlaybackState.Playing
+
+        playbackManager.switchToPlayback(playbackB)
+
+        playbackManager.playbackStateFlow.value shouldBe PlaybackState.Playing
+    }
+
+    @Test
+    fun `superseded switch leaves the latest playback's state published`() {
+        playbackC.state = PlaybackState.Loading
+        playbackManager.switchToPlayback(playbackB)
+        playbackManager.switchToPlayback(playbackC)
+
+        playbackB.completeLoad()
+
+        playbackManager.playbackStateFlow.value shouldBe PlaybackState.Loading
+        playbackManager.playbackStateFlow.value shouldBe playbackManager.playbackState()
+    }
+
+    @Test
+    fun `a playback switched away from no longer reports to the manager`() {
+        playbackManager.switchToPlayback(playbackB)
+        playbackManager.switchToPlayback(playbackC)
+
+        playbackB.callback shouldBe null
+        playbackC.callback shouldBe playbackManager
+        playbackManager.playbackStateFlow.value shouldBe playbackC.state
+    }
+
     private fun createSong() = Song(
         id = 1,
         name = "Song",
