@@ -34,6 +34,9 @@ via the Robot pattern) or "I want to see the real app".
 
 - **Implementation changes require test updates.** If you change behaviour, update tests to match.
 - **Bug fixes start with a failing test.** Reproduce the bug in a test before fixing it.
+- **Room version bumps commit the new schema JSON and extend the migration tests** in
+  `android/mediaprovider/local/src/test/.../data/room/migrations/` (`MigrationTestHelper` under
+  Robolectric) — add the new migration to `ALL_MIGRATIONS` and let the full-chain test cover it.
 
 ## Git Conventions
 

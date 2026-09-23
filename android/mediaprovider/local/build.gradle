@@ -32,6 +32,18 @@ android {
     namespace 'com.simplecityapps.localmediaprovider'
 
     buildFeatures.buildConfig true
+
+    sourceSets {
+        test {
+            assets.srcDirs += files("$projectDir/schemas".toString())
+        }
+    }
+
+    testOptions {
+        unitTests {
+            includeAndroidResources = true
+        }
+    }
 }
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask.class).configureEach {
@@ -64,6 +76,10 @@ dependencies {
     // Testing
     testImplementation libs.junit
     testImplementation libs.kotest
+    testImplementation libs.robolectric
+    testImplementation libs.androidx.junit
+    testImplementation libs.androidx.core.ktx
+    testImplementation libs.androidx.room.testing
     androidTestImplementation libs.androidx.runner
     androidTestImplementation libs.androidx.espresso.core
 
