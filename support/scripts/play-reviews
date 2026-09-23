@@ -19,6 +19,40 @@ SCOPES = ["https://www.googleapis.com/auth/androidpublisher"]
 API_BASE = "https://androidpublisher.googleapis.com/androidpublisher/v3"
 MAX_REPLY_CHARS = 350
 
+# Replies go out under the owner's name, so anything that reads as machine-written is refused.
+BANNED_CHARS = {"\u2014": "em dash", "\u2013": "en dash"}
+BANNED_PHRASES = [
+    "thank you for your feedback",
+    "thanks for your feedback",
+    "we appreciate",
+    "i appreciate your",
+    "i completely understand",
+    "i totally understand",
+    "i hear you",
+    "rest assured",
+    "any inconvenience",
+    "sorry for the inconvenience",
+    "fair feedback",
+    "valid point",
+    "real gap",
+    "great question",
+    "stay tuned",
+    "don't hesitate",
+    "feel free to reach out",
+    "delve",
+    "journey",
+    "seamless",
+]
+
+
+def style_problems(text: str) -> list[str]:
+    problems = [name for ch, name in BANNED_CHARS.items() if ch in text]
+    lowered = text.lower()
+    problems += [f'"{phrase}"' for phrase in BANNED_PHRASES if phrase in lowered]
+    if len(text) > MAX_REPLY_CHARS:
+        problems.append(f"{len(text)} chars, over {MAX_REPLY_CHARS}")
+    return problems
+
 
 def key_path() -> str:
     return os.environ.get("PLAY_REVIEWS_KEY", DEFAULT_KEY_PATH)
@@ -118,8 +152,9 @@ def cmd_list(args):
 
 
 def post_reply(creds, review_id: str, text: str):
-    if len(text) > MAX_REPLY_CHARS:
-        sys.exit(f"error: reply text is {len(text)} chars, over the {MAX_REPLY_CHARS} char limit")
+    problems = style_problems(text)
+    if problems:
+        sys.exit(f"error: reply to {review_id} fails the style check: {', '.join(problems)}")
     url = f"{API_BASE}/applications/{PACKAGE_NAME}/reviews/{review_id}:reply"
     result = api_request(creds, "POST", url, {"replyText": text})
     return result
@@ -128,8 +163,6 @@ def post_reply(creds, review_id: str, text: str):
 def cmd_reply(args):
     with open(args.text_file, "r", encoding="utf-8") as f:
         text = f.read().strip()
-    if len(text) > MAX_REPLY_CHARS:
-        sys.exit(f"error: reply text is {len(text)} chars, over the {MAX_REPLY_CHARS} char limit")
     creds = load_credentials()
     post_reply(creds, args.review_id, text)
     print(f"Posted reply to review {args.review_id}.")
@@ -148,8 +181,9 @@ def cmd_post_approved(args):
 
     for d in to_post:
         text = d.get("replyText", "")
-        if len(text) > MAX_REPLY_CHARS:
-            print(f"skip reviewId {d.get('reviewId')}: reply is {len(text)} chars, over {MAX_REPLY_CHARS}")
+        problems = style_problems(text)
+        if problems:
+            print(f"skip reviewId {d.get('reviewId')}: {', '.join(problems)}")
             continue
         if args.dry_run:
             print(f"[dry-run] would post reply to reviewId {d.get('reviewId')} ({len(text)} chars)")
@@ -168,6 +202,20 @@ def write_drafts(path, drafts):
         json.dump(drafts, f, indent=2)
         f.write("\n")
     os.replace(tmp, path)
+
+
+def cmd_lint(args):
+    with open(args.drafts_file, "r", encoding="utf-8") as f:
+        drafts = json.load(f)
+    failed = False
+    for d in drafts:
+        problems = style_problems(d.get("replyText", ""))
+        if problems:
+            failed = True
+            print(f"reviewId {d.get('reviewId')}: {', '.join(problems)}")
+    if failed:
+        sys.exit(1)
+    print(f"{len(drafts)} drafts pass the style check.")
 
 
 def main():
@@ -191,6 +239,10 @@ def main():
     p_post.add_argument("drafts_file", help="Path to a drafts JSON file (list of {reviewId, replyText, approved, posted})")
     p_post.add_argument("--dry-run", action="store_true", help="Print what would be posted without calling the API")
     p_post.set_defaults(func=cmd_post_approved)
+
+    p_lint = sub.add_parser("lint", help="Check every draft reply against the style rules")
+    p_lint.add_argument("drafts_file", help="Path to a drafts JSON file")
+    p_lint.set_defaults(func=cmd_lint)
 
     args = parser.parse_args()
     args.func(args)

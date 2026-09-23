@@ -1,6 +1,6 @@
 ---
 name: reply-reviews
-description: Weekly Play Store review flow for S2 — fetch new reviews, draft replies, get owner approval, then post. Use when asked to check Play reviews, draft review replies, or reply to app store reviews.
+description: Weekly Play Store review flow for S2: fetch new reviews, draft replies, get owner approval, then post. Use when asked to check Play reviews, draft review replies, or reply to app store reviews.
 user_invocable: true
 ---
 
@@ -10,7 +10,7 @@ Fetch recent Google Play reviews for S2, draft a reply for each unanswered one, 
 owner's approval. Never post a reply without explicit approval.
 
 **API window:** the Play Developer API `reviews.list` endpoint only returns reviews with text from
-roughly the **last 7 days**. Reviews older than that are invisible to this tool — the owner must
+roughly the **last 7 days**. Reviews older than that are invisible to this tool: the owner must
 answer them manually in [Play Console](https://play.google.com/console).
 
 ## Steps
@@ -22,7 +22,7 @@ answer them manually in [Play Console](https://play.google.com/console).
    ```
 
    If this fails with a 401/403, the `reviews-reader` service account's grant may still be
-   propagating (can take up to 24h) — report that and stop, don't retry in a loop.
+   propagating (can take up to 24h): report that and stop, don't retry in a loop.
 
 2. **Draft one reply per review.** Write them to `support/reviews/drafts-YYYY-MM-DD.json` (today's
    date; this directory is gitignored) as a JSON array, one object per review:
@@ -38,7 +38,7 @@ answer them manually in [Play Console](https://play.google.com/console).
    ```
 
    **Reply guidelines:**
-   - Vary the sign-off so replies don't read as a bot: some end "Tim" or "– Tim", many have no
+   - Vary the sign-off so replies don't read as a bot: some end "Tim" or "Cheers, Tim", many have no
      sign-off at all. Vary openings too.
    - Don't repeat the complaint back to them, and don't placate ("that's a real gap", "that's fair
      feedback", "I know it hurt"). Answer plainly with what's true or what's happening.
@@ -47,13 +47,14 @@ answer them manually in [Play Console](https://play.google.com/console).
      when it explains slow updates, but don't overuse it.
    - Specific to the review, but short. Only reference what they said when it adds something.
    - Under 350 characters.
-   - No em dashes.
-   - No promises of dates ("next release", "next week", etc.) — commit to nothing time-bound.
+   - No em or en dashes, and none of the stock phrases `play-reviews` bans (see `BANNED_PHRASES`).
+     Run `support/scripts/play-reviews lint <drafts file>` and fix every hit before showing drafts.
+   - No promises of dates ("next release", "next week", etc.): commit to nothing time-bound.
    - Thank the reviewer for praise in positive reviews.
    - For bug reports, ask them to email developer@simplecityapps.com with details (device, steps to
-     reproduce) so it can be investigated — don't try to diagnose or fix in the reply.
+     reproduce) so it can be investigated: don't try to diagnose or fix in the reply.
    - For widget complaints specifically, say widget improvements are being worked on. Only say this
-     because it is currently true — check before reusing this line if that ever changes.
+     because it is currently true: check before reusing this line if that ever changes.
    - Never argue with a reviewer, even an unfair one. Acknowledge and move on.
 
 3. **Show the drafts to the owner and stop.** Do not run `reply` or `post-approved` yet. Wait for the
