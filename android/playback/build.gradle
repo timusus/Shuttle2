@@ -54,9 +54,9 @@ dependencies {
     // NanoHttp
     implementation libs.nanohttpd.webserver
 
-    // ExoPlayer
-    implementation(libs.exoplayer.core)
-    implementation(libs.exoplayer.hls)
+    // Media3 ExoPlayer
+    implementation(libs.media3.exoplayer)
+    implementation(libs.media3.exoplayerHls)
 
     // Moshi
     implementation libs.moshi.kotlin

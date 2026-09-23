@@ -1,16 +1,16 @@
 package com.simplecityapps.playback.exoplayer
 
 import android.content.Context
-import com.google.android.exoplayer2.DefaultRenderersFactory
-import com.google.android.exoplayer2.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON
-import com.google.android.exoplayer2.ExoPlaybackException
-import com.google.android.exoplayer2.MediaItem
-import com.google.android.exoplayer2.PlaybackParameters
-import com.google.android.exoplayer2.Player
-import com.google.android.exoplayer2.SimpleExoPlayer
-import com.google.android.exoplayer2.audio.AudioCapabilities
-import com.google.android.exoplayer2.audio.AudioSink
-import com.google.android.exoplayer2.audio.DefaultAudioSink
+import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.PlaybackParameters
+import androidx.media3.common.Player
+import androidx.media3.exoplayer.DefaultRenderersFactory
+import androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.audio.AudioCapabilities
+import androidx.media3.exoplayer.audio.AudioSink
+import androidx.media3.exoplayer.audio.DefaultAudioSink
 import com.simplecityapps.playback.dsp.replaygain.ReplayGain
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 
@@ -31,16 +31,16 @@ class ExoPlayerFactory(
             override fun buildAudioSink(
                 context: Context,
                 enableFloatOutput: Boolean,
-                enableAudioTrackPlaybackParams: Boolean,
-                enableOffload: Boolean
+                enableAudioOutputPlaybackParams: Boolean
             ): AudioSink = ReplayGainAudioSink(
-                DefaultAudioSink(
-                    AudioCapabilities.DEFAULT_AUDIO_CAPABILITIES,
-                    DefaultAudioSink.DefaultAudioProcessorChain(
-                        equalizerAudioProcessor,
-                        replayGainAudioProcessor
-                    ).audioProcessors
-                ),
+                @Suppress("DEPRECATION")
+                DefaultAudioSink.Builder(context)
+                    // PCM output only, never passthrough, so every stream runs through the processors.
+                    .setAudioCapabilities(AudioCapabilities.DEFAULT_AUDIO_CAPABILITIES)
+                    .setEnableFloatOutput(enableFloatOutput)
+                    .setEnableAudioOutputPlaybackParameters(enableAudioOutputPlaybackParams)
+                    .setAudioProcessors(arrayOf(equalizerAudioProcessor, replayGainAudioProcessor))
+                    .build(),
                 replayGainTracker
             )
         }.apply {
@@ -48,11 +48,11 @@ class ExoPlayerFactory(
         }
     }
 
-    override fun create(): AudioPlayer = ExoAudioPlayer(SimpleExoPlayer.Builder(context, renderersFactory).build())
+    override fun create(): AudioPlayer = ExoAudioPlayer(ExoPlayer.Builder(context, renderersFactory).build())
 }
 
 /** Forwards each [AudioPlayer] call to [player], mapping [PlayerItem]s to and from [MediaItem]s. */
-class ExoAudioPlayer(private val player: SimpleExoPlayer) : AudioPlayer {
+class ExoAudioPlayer(private val player: ExoPlayer) : AudioPlayer {
     private val exoListeners = mutableMapOf<AudioPlayer.Listener, Player.Listener>()
 
     override var playWhenReady: Boolean
@@ -77,7 +77,7 @@ class ExoAudioPlayer(private val player: SimpleExoPlayer) : AudioPlayer {
 
     override val mediaItemCount: Int get() = player.mediaItemCount
 
-    override val currentWindowIndex: Int get() = player.currentWindowIndex
+    override val currentWindowIndex: Int get() = player.currentMediaItemIndex
 
     override val contentPosition: Long get() = player.contentPosition
 
@@ -125,7 +125,7 @@ class ExoAudioPlayer(private val player: SimpleExoPlayer) : AudioPlayer {
                 listener.onPositionDiscontinuity(reason)
             }
 
-            override fun onPlayerError(error: ExoPlaybackException) {
+            override fun onPlayerError(error: PlaybackException) {
                 super.onPlayerError(error)
                 listener.onPlayerError(error)
             }
@@ -166,7 +166,7 @@ class ExoAudioPlayer(private val player: SimpleExoPlayer) : AudioPlayer {
     }
 
     override fun setVolume(volume: Float) {
-        player.audioComponent?.volume = volume
+        player.volume = volume
     }
 
     override fun setPlaybackParameters(
@@ -186,9 +186,9 @@ class ExoAudioPlayer(private val player: SimpleExoPlayer) : AudioPlayer {
         .setTag(replayGain)
         .build()
 
-    /** Every item in the playlist was built by [toMediaItem], so it always has playback properties. */
+    /** Every item in the playlist was built by [toMediaItem], so it always has a local configuration. */
     private fun MediaItem.toPlayerItem(): PlayerItem {
-        val properties = checkNotNull(playbackProperties) { "MediaItem has no playback properties" }
+        val properties = checkNotNull(localConfiguration) { "MediaItem has no local configuration" }
         return PlayerItem(
             uri = properties.uri.toString(),
             mimeType = properties.mimeType,

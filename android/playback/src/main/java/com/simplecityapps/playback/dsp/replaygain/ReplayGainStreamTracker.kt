@@ -1,6 +1,6 @@
 package com.simplecityapps.playback.dsp.replaygain
 
-import com.google.android.exoplayer2.Player
+import androidx.media3.common.Player
 
 /**
  * Works out which playlist item the audio flowing through [ReplayGainAudioProcessor] belongs to,

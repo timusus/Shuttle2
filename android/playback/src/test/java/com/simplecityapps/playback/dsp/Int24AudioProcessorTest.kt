@@ -1,7 +1,7 @@
 package com.simplecityapps.playback.dsp
 
-import com.google.android.exoplayer2.C
-import com.google.android.exoplayer2.audio.AudioProcessor
+import androidx.media3.common.C
+import androidx.media3.common.audio.AudioProcessor
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.dsp.replaygain.ReplayGain
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
@@ -32,7 +32,7 @@ class Int24AudioProcessorTest {
                 preset = Equalizer.Presets.flat
             }
         processor.configure(AudioProcessor.AudioFormat(SAMPLE_RATE, CHANNEL_COUNT, C.ENCODING_PCM_24BIT))
-        processor.flush()
+        processor.flush(AudioProcessor.StreamMetadata.DEFAULT)
 
         val input = random24BitPcm()
         processor.queueInput(input.duplicate())
@@ -46,7 +46,7 @@ class Int24AudioProcessorTest {
         val processor = ReplayGainAudioProcessor(mode = ReplayGainMode.Track, preAmpGain = 6.0)
         processor.streamTracker.setPlaylist(listOf(ReplayGain(trackGain = -3.0, albumGain = null)))
         processor.configure(AudioProcessor.AudioFormat(SAMPLE_RATE, CHANNEL_COUNT, C.ENCODING_PCM_24BIT))
-        processor.flush()
+        processor.flush(AudioProcessor.StreamMetadata.DEFAULT)
 
         val input = random24BitPcm()
         processor.queueInput(input.duplicate())

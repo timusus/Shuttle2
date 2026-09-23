@@ -19,7 +19,6 @@ desugar-jdk-libs = "2.1.5"
 documentfile = "1.1.0"
 drawerlayout = "1.2.0"
 espresso-core = "3.7.0"
-exoplayer-shuttle = "2.14.2-shuttle-16kb"
 firebase-bom = "34.5.0"
 firebase-crashlytics = "3.0.6"
 fluent-system-icons = "1.1.311"
@@ -133,10 +132,6 @@ cashapp-paparazzi = { module = "app.cash.paparazzi:paparazzi", version.ref = "pa
 compose-lint-checks = { module = "com.slack.lint.compose:compose-lint-checks", version.ref = "compose-lint-checks" }
 compose-preview-scanner = { module = "io.github.sergio-sastre.ComposablePreviewScanner:android", version.ref = "composable-preview-scanner" }
 design-fluentSystemIcons = { module = "com.microsoft.design:fluent-system-icons", version.ref = "fluent-system-icons" }
-exoplayer-core = { module = "com.github.timusus.exoplayer:exoplayer-core", version.ref = "exoplayer-shuttle" }
-exoplayer-extensionFlac = { module = "com.github.timusus.exoplayer:extension-flac", version.ref = "exoplayer-shuttle" }
-exoplayer-extensionOpus = { module = "com.github.timusus.exoplayer:extension-opus", version.ref = "exoplayer-shuttle" }
-exoplayer-hls = { module = "com.github.timusus.exoplayer:exoplayer-hls", version.ref = "exoplayer-shuttle" }
 firebase-analytics-ktx = { module = "com.google.firebase:firebase-analytics" }
 firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebase-bom" }
 firebase-config-ktx = { module = "com.google.firebase:firebase-config" }
@@ -165,6 +160,8 @@ kotlinx-coroutinesPlayServices = { module = "org.jetbrains.kotlinx:kotlinx-corou
 kotlinx-coroutinesTest = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref ="kotlinx-coroutines-test"}
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", version.ref = "leakcanary-android" }
+media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3" }
+media3-exoplayerHls = { module = "androidx.media3:media3-exoplayer-hls", version.ref = "media3" }
 mikepenz-aboutlibrariesCore = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutlibraries" }
 mikepenz-aboutlibraries = { module = "com.mikepenz:aboutlibraries", version.ref = "aboutlibraries" }
 moshi = { module = "com.squareup.moshi:moshi", version.ref = "moshi" }

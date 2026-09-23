@@ -1,7 +1,7 @@
 package com.simplecityapps.playback.exoplayer
 
-import com.google.android.exoplayer2.C
-import com.google.android.exoplayer2.Player
+import androidx.media3.common.C
+import androidx.media3.common.Player
 
 /**
  * The player settings [PlaybackManager] asks [ExoPlayerPlayback] for, remembered rather than applied

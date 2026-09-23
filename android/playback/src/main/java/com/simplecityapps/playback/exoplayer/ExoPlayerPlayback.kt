@@ -1,7 +1,7 @@
 package com.simplecityapps.playback.exoplayer
 
-import com.google.android.exoplayer2.C
-import com.google.android.exoplayer2.Player
+import androidx.media3.common.C
+import androidx.media3.common.Player
 import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.chromecast.CastPlayback

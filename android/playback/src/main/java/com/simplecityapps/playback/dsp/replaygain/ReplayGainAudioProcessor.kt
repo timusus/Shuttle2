@@ -1,10 +1,10 @@
 package com.simplecityapps.playback.dsp.replaygain
 
 import androidx.core.math.MathUtils.clamp
-import com.google.android.exoplayer2.C
-import com.google.android.exoplayer2.audio.AudioProcessor
-import com.google.android.exoplayer2.audio.AudioProcessor.UnhandledAudioFormatException
-import com.google.android.exoplayer2.audio.BaseAudioProcessor
+import androidx.media3.common.C
+import androidx.media3.common.audio.AudioProcessor
+import androidx.media3.common.audio.AudioProcessor.UnhandledAudioFormatException
+import androidx.media3.common.audio.BaseAudioProcessor
 import com.simplecityapps.playback.dsp.equalizer.fromDb
 import com.simplecityapps.playback.exoplayer.ByteUtils.Int24_MAX_VALUE
 import com.simplecityapps.playback.exoplayer.ByteUtils.Int24_MIN_VALUE
@@ -75,7 +75,7 @@ class ReplayGainAudioProcessor(
         }
     }
 
-    override fun onFlush() {
+    override fun onFlush(streamMetadata: AudioProcessor.StreamMetadata) {
         // The sink flushes its processors between one stream and the next, after the old stream
         // has drained and before the new stream's first buffer is queued.
         streamTracker.onProcessorFlushed()

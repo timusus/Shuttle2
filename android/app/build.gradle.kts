@@ -241,12 +241,13 @@ android {
         // AndroidX Lifecycle
         implementation(libs.androidx.lifecycle.runtime.ktx)
 
-        // ExoPlayer
-        implementation(libs.exoplayer.core)
-        implementation(libs.exoplayer.hls)
-        // Local AARs with 16KB-aligned native libs (for Android page size compatibility)
-        implementation(files("libs/extension-flac.aar"))
-        implementation(files("libs/extension-opus.aar"))
+        // Media3 ExoPlayer
+        implementation(libs.media3.exoplayer)
+        implementation(libs.media3.exoplayerHls)
+        // Media3 doesn't publish its FLAC and Opus decoders; support/scripts/build-media3-decoders.sh
+        // builds these (16 KB page-aligned) from androidx/media at the catalog's media3 version.
+        implementation(files("libs/media3-decoder-flac-1.11.1.aar"))
+        implementation(files("libs/media3-decoder-opus-1.11.1.aar"))
 
         implementation(libs.androidx.drawerlayout)
 

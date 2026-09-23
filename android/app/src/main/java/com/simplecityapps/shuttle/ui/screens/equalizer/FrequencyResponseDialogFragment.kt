@@ -5,6 +5,7 @@ import android.app.Dialog
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.View
+import androidx.annotation.OptIn
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.use
 import androidx.core.math.MathUtils
@@ -12,14 +13,15 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
 import androidx.lifecycle.lifecycleScope
+import androidx.media3.common.C
+import androidx.media3.common.audio.AudioProcessor
+import androidx.media3.common.util.UnstableApi
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
 import com.github.mikephil.charting.data.LineData
 import com.github.mikephil.charting.data.LineDataSet
 import com.github.mikephil.charting.formatter.ValueFormatter
-import com.google.android.exoplayer2.C
-import com.google.android.exoplayer2.audio.AudioProcessor
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.paramsen.noise.Noise
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
@@ -142,10 +144,11 @@ class FrequencyResponseDialogFragment : DialogFragment() {
         lineChart.invalidate()
     }
 
+    @OptIn(UnstableApi::class)
     private suspend fun calculateFft(): Map<Float, Float> = withContext(Dispatchers.IO) {
         val audioProcessor = EqualizerAudioProcessor(true)
         audioProcessor.configure(AudioProcessor.AudioFormat(44100, 1, C.ENCODING_PCM_16BIT))
-        audioProcessor.flush()
+        audioProcessor.flush(AudioProcessor.StreamMetadata.DEFAULT)
         audioProcessor.preset = preset
 
         val size = 2.0.pow(14).toInt()

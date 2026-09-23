@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- The playback engine is built on Media3's unstable APIs (audio sinks and processors, renderers
+         factory), so opt in for the whole module rather than annotating every class. -->
+    <issue id="UnsafeOptInUsageError">
+        <ignore regexp="\(markerClass=androidx\.media3\.common\.util\.UnstableApi\.class\)" />
+    </issue>
+</lint>

@@ -1,7 +1,7 @@
 package com.simplecityapps.playback.fakes
 
-import com.google.android.exoplayer2.C
-import com.google.android.exoplayer2.Player
+import androidx.media3.common.C
+import androidx.media3.common.Player
 import com.simplecityapps.playback.exoplayer.AudioPlayer
 import com.simplecityapps.playback.exoplayer.PlayerFactory
 import com.simplecityapps.playback.exoplayer.PlayerItem

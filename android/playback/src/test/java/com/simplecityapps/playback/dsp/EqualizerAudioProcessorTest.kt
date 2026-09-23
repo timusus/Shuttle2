@@ -1,7 +1,7 @@
 package com.simplecityapps.playback.dsp
 
-import com.google.android.exoplayer2.C
-import com.google.android.exoplayer2.audio.AudioProcessor
+import androidx.media3.common.C
+import androidx.media3.common.audio.AudioProcessor
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import io.kotest.matchers.comparables.shouldBeGreaterThan
@@ -120,7 +120,7 @@ class EqualizerAudioProcessorTest {
         equalizer.attenuation shouldBeLessThan 1f
 
         equalizer.preset = Equalizer.Presets.flat
-        equalizer.flush()
+        equalizer.flush(AudioProcessor.StreamMetadata.DEFAULT)
 
         val input = whiteNoise(44100)
         val output = equalizer.process(input)

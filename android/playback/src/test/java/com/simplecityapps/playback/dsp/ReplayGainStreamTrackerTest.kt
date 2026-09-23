@@ -1,6 +1,6 @@
 package com.simplecityapps.playback.dsp
 
-import com.google.android.exoplayer2.Player
+import androidx.media3.common.Player
 import com.simplecityapps.playback.dsp.replaygain.ReplayGain
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainStreamTracker
 import io.kotest.matchers.shouldBe

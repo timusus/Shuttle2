@@ -1,6 +1,6 @@
 package com.simplecityapps.playback
 
-import com.google.android.exoplayer2.C
+import androidx.media3.common.C
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.model.Song
 

@@ -1,7 +1,7 @@
 package com.simplecityapps.playback.dsp
 
-import com.google.android.exoplayer2.C
-import com.google.android.exoplayer2.audio.AudioProcessor
+import androidx.media3.common.C
+import androidx.media3.common.audio.AudioProcessor
 import com.simplecityapps.playback.dsp.replaygain.ReplayGain
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
@@ -48,7 +48,7 @@ class ReplayGainAudioProcessorTest {
         tracker.onSinkConfigured()
         processor.configure(pcm16Stereo)
         tracker.onSinkBufferHandled()
-        processor.flush()
+        processor.flush(AudioProcessor.StreamMetadata.DEFAULT)
         processor.process(SAMPLE) shouldBe scaled(SAMPLE, -6.0)
 
         // The renderer reaches song B: the sink reconfigures, drains A, then flushes before B.
@@ -56,7 +56,7 @@ class ReplayGainAudioProcessorTest {
         processor.configure(pcm16Stereo)
         tracker.onSinkBufferHandled()
         processor.process(SAMPLE) shouldBe scaled(SAMPLE, -6.0)
-        processor.flush()
+        processor.flush(AudioProcessor.StreamMetadata.DEFAULT)
 
         processor.process(SAMPLE) shouldBe scaled(SAMPLE, 6.0)
     }
@@ -66,7 +66,7 @@ class ReplayGainAudioProcessorTest {
         val processor = ReplayGainAudioProcessor(ReplayGainMode.Off, preAmpGain = 0.0)
         processor.streamTracker.setPlaylist(listOf(ReplayGain(trackGain = -6.0, albumGain = null)))
         processor.configure(pcm16Stereo)
-        processor.flush()
+        processor.flush(AudioProcessor.StreamMetadata.DEFAULT)
         processor.process(SAMPLE) shouldBe SAMPLE
 
         processor.mode = ReplayGainMode.Track

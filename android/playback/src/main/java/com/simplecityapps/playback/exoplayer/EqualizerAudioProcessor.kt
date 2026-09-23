@@ -1,10 +1,10 @@
 package com.simplecityapps.playback.exoplayer
 
 import androidx.core.math.MathUtils.clamp
-import com.google.android.exoplayer2.C
-import com.google.android.exoplayer2.audio.AudioProcessor
-import com.google.android.exoplayer2.audio.AudioProcessor.UnhandledAudioFormatException
-import com.google.android.exoplayer2.audio.BaseAudioProcessor
+import androidx.media3.common.C
+import androidx.media3.common.audio.AudioProcessor
+import androidx.media3.common.audio.AudioProcessor.UnhandledAudioFormatException
+import androidx.media3.common.audio.BaseAudioProcessor
 import com.simplecityapps.playback.dsp.equalizer.BandProcessor
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.dsp.equalizer.toNyquistBand
@@ -114,8 +114,8 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
         return inputAudioFormat
     }
 
-    override fun onFlush() {
-        super.onFlush()
+    override fun onFlush(streamMetadata: AudioProcessor.StreamMetadata) {
+        super.onFlush(streamMetadata)
 
         Timber.v("onFlush() called")
         updateBandProcessors()
