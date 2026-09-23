@@ -229,7 +229,15 @@ class PlaybackManager(
                     Timber.e("play() failed. Exceeded max number of attempts (2)")
                 }
             } else {
-                if (getProgress() ?: 0 > (getDuration() ?: Int.MAX_VALUE) - 200) {
+                val loadingPositionMs = loadCoordinator.loadingPositionMs
+                if (loadingPositionMs != null) {
+                    // The playback still reports the item it's replacing, so check where the load will
+                    // start against the item it's loading, and restart the load rather than the old item.
+                    val duration = queueManager.getCurrentItem()?.song?.duration?.takeIf { it > 0 }
+                    if (loadingPositionMs > (duration ?: Int.MAX_VALUE) - 200) {
+                        seekTo(0)
+                    }
+                } else if (playback.getProgress() ?: 0 > (playback.getDuration() ?: Int.MAX_VALUE) - 200) {
                     playback.seek(0)
                 }
                 playback.play()
@@ -289,9 +297,10 @@ class PlaybackManager(
     override fun playbackState(): PlaybackState = playback.playBackState()
 
     /**
-     * @return the current seek position, in milliseconds
+     * @return the current seek position, in milliseconds. While a load is pending, the position it will
+     * start at, since the playback still reports the item it's replacing.
      */
-    override fun getProgress(): Int? = playback.getProgress()
+    override fun getProgress(): Int? = loadCoordinator.loadingPositionMs ?: playback.getProgress()
 
     /**
      * @return the track duration, in milliseconds

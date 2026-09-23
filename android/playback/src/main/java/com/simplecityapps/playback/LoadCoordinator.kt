@@ -65,6 +65,13 @@ class LoadCoordinator(
     var pendingLoad: PendingLoad? = null
         private set
 
+    /**
+     * The position the pending load will start at, or null if no load is pending or the pending one is
+     * completing (its playback has loaded, so reports its own position).
+     */
+    val loadingPositionMs: Int?
+        get() = loadingPendingLoad()?.positionMs
+
     /** Follows [pendingLoad], updated after [onPendingLoadChanged], so the next-item consumer resumes last. */
     private val isLoading = MutableStateFlow(false)
 
@@ -160,7 +167,7 @@ class LoadCoordinator(
      * to seek), so the caller should seek the playback itself
      */
     fun seek(positionMs: Int): Boolean {
-        val pending = pendingLoad?.takeIf { it.token != completingToken } ?: return false
+        val pending = loadingPendingLoad() ?: return false
         setPendingLoad(PendingLoad(pending.token, positionMs, seeked = true))
         return true
     }
@@ -177,6 +184,8 @@ class LoadCoordinator(
     fun requestNext() {
         nextRequests.trySend(Unit)
     }
+
+    private fun loadingPendingLoad(): PendingLoad? = pendingLoad?.takeIf { it.token != completingToken }
 
     private fun setPendingLoad(pendingLoad: PendingLoad?) {
         if (this.pendingLoad !== pendingLoad) {
