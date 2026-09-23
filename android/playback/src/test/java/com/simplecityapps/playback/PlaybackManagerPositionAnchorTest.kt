@@ -297,6 +297,37 @@ class PlaybackManagerPositionAnchorTest {
     }
 
     @Test
+    fun `a seek into a load that fails gives way to the retry's start position`() = runTest {
+        queueManager.setQueue(listOf(testSong(1), testSong(2), testSong(3)))
+        playback.progressMs = 170_000
+        createPlaybackManager()
+        playbackManager.load(null) {}
+        playbackManager.seekTo(30_000)
+        playbackManager.progressFlow.value shouldBe PlaybackProgress(position = 30_000, duration = 180_000)
+
+        playback.failLoad()
+
+        queueManager.getCurrentItem()!!.song.id shouldBe 2L
+        playbackManager.progressFlow.value shouldBe PlaybackProgress(position = 0, duration = 180_000)
+    }
+
+    @Test
+    fun `a seek into a load that completes is republished from the playback`() = runTest {
+        queueManager.setQueue(listOf(testSong(1), testSong(2)))
+        playback.progressMs = 170_000
+        createPlaybackManager()
+        enter(PlaybackState.Playing)
+        playbackManager.skipToNext()
+        playbackManager.seekTo(30_000)
+
+        playback.progressMs = 0
+        playback.durationMs = 179_500
+        playback.completeLoad()
+
+        playbackManager.progressFlow.value shouldBe PlaybackProgress(position = 30_000, duration = 179_500)
+    }
+
+    @Test
     fun `an unknown position is anchored as null`() = runTest {
         playback.progressMs = null
         createPlaybackManager()

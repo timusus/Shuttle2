@@ -197,6 +197,48 @@ class LoadCoordinatorTest {
         events shouldBe listOf("A load Song1 seek 3000", "A load Song2 seek 0")
     }
 
+    /** Delegates to [fake], except that a load's completion is kept in [reportedCompletions] for the test to call. */
+    private val reportedCompletions = mutableListOf<(Result<Any?>) -> Unit>()
+
+    private val reportingPlayback =
+        object : Playback by fake {
+            override suspend fun load(
+                current: Song,
+                next: Song?,
+                seekPosition: Int,
+                completion: (Result<Any?>) -> Unit
+            ) {
+                reportedCompletions += completion
+            }
+        }
+
+    @Test
+    fun `a load reported successful twice completes once`() = runTest {
+        val coordinator = coordinator()
+        coordinator.load(reportingPlayback, testSong(1), null, 0) { results += "Song1 loaded" }
+        runCurrent()
+        coordinator.seek(42_000)
+
+        reportedCompletions.single()(Result.success(null))
+        reportedCompletions.single()(Result.success(null))
+
+        results shouldBe listOf("Song1 loaded")
+        events shouldBe listOf("A seek 42000")
+    }
+
+    @Test
+    fun `a load reported failed twice completes once`() = runTest {
+        val coordinator = coordinator()
+        coordinator.load(reportingPlayback, testSong(1), null, 0) { results += "Song1 failed" }
+        runCurrent()
+
+        reportedCompletions.single()(Result.failure(RuntimeException("load failed")))
+        reportedCompletions.single()(Result.failure(RuntimeException("load failed")))
+
+        results shouldBe listOf("Song1 failed")
+        coordinator.pendingLoad shouldBe null
+    }
+
     @Test
     fun `cancel abandons the load in progress`() = runTest {
         // Clearing the queue, or removing its only item, mid-load.

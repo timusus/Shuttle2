@@ -26,6 +26,15 @@ import timber.log.Timber
  * calls never overlap or finish out of order.
  *
  * Emits on [parentScope]'s dispatcher, which the load and next-item coroutines run on.
+ *
+ * Not thread-safe: its state is plain vars, so every call and every load completion must arrive on
+ * that dispatcher (Main in production). Both engines honour this. ExoPlayerPlayback calls its
+ * completion inline from its suspending load, after resolving the media, and a coroutine on Main
+ * resumes on Main even when a remote provider resolves the stream URL on another dispatcher.
+ * CastPlayback completes from the Cast SDK's PendingResult callback, which is delivered on the
+ * main thread.
+ *
+ * A load's completion runs at most once, even if a [Playback] reports the same load more than once.
  */
 class LoadCoordinator(
     parentScope: CoroutineScope,
@@ -96,17 +105,23 @@ class LoadCoordinator(
         loadJob =
             scope.launch {
                 var delivered = false
-                try {
-                    playback.load(current, next, positionMs) { result ->
-                        delivered = true
-                        complete(token, playback, result, completion)
+
+                fun deliver(result: Result<Any?>) {
+                    if (delivered) {
+                        Timber.w("Load $token reported completion more than once; ignoring")
+                        return
                     }
+                    delivered = true
+                    complete(token, playback, result, completion)
+                }
+                try {
+                    playback.load(current, next, positionMs, ::deliver)
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
                     // An exception thrown by the completion itself isn't a load failure.
                     if (delivered) throw e
-                    complete(token, playback, Result.failure(e), completion)
+                    deliver(Result.failure(e))
                 }
             }
     }

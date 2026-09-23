@@ -64,8 +64,15 @@ class PlaybackManager(
             parentScope = appCoroutineScope,
             activePlayback = { playback },
             nextSong = { queueManager.getNext()?.song },
-            onPendingLoadChanged = ::reanchor
+            onPendingLoadChanged = ::onPendingLoadChanged
         )
+
+    /**
+     * The pending load a seek was deferred into, whose position [progressFlow] now shows. Once that load
+     * is no longer pending, progress is republished from where playback actually is: the seek is lost if
+     * the load fails, and a retry starts the next item from its own position.
+     */
+    private var seekedLoad: LoadCoordinator.PendingLoad? = null
 
     private val _positionAnchorFlow = MutableStateFlow(positionAnchor())
 
@@ -284,6 +291,7 @@ class PlaybackManager(
         // A seek while a track loads becomes the load's start position (and re-anchors), rather than
         // seeking the track being replaced.
         if (loadCoordinator.seek(position)) {
+            seekedLoad = loadCoordinator.pendingLoad
             queueManager.getCurrentItem()?.song?.duration?.let { duration ->
                 _progressFlow.value = PlaybackProgress(position, duration)
                 playbackWatcher.onProgressChanged(position, duration, fromUser = true)
@@ -478,6 +486,22 @@ class PlaybackManager(
 
     private fun reanchor() {
         _positionAnchorFlow.value = positionAnchor()
+    }
+
+    private fun onPendingLoadChanged() {
+        reanchor()
+        val seeked = seekedLoad ?: return
+        val pending = loadCoordinator.pendingLoad
+        if (pending?.token == seeked.token) return
+        seekedLoad = null
+        if (pending == null) {
+            updateProgress()
+        } else {
+            queueManager.getCurrentItem()?.song?.duration?.let { duration ->
+                _progressFlow.value = PlaybackProgress(pending.positionMs, duration)
+                playbackWatcher.onProgressChanged(pending.positionMs, duration, fromUser = false)
+            }
+        }
     }
 
     // PlaybackWatcherCallback Implementation
