@@ -10,7 +10,6 @@ plugins {
     id("com.google.firebase.crashlytics")
     id("com.google.devtools.ksp")
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.detekt)
     alias(libs.plugins.paparazzi)
 }
 
@@ -316,8 +315,6 @@ android {
         implementation(libs.androidx.work.runtime.ktx)
         implementation(libs.androidx.hilt.work)
         ksp(libs.androidx.hilt.compiler)
-
-        detektPlugins(libs.detekt.formatting)
 
         lintChecks(libs.compose.lint.checks)
     }

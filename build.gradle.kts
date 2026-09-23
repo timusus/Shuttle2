@@ -7,7 +7,6 @@ plugins {
     alias(libs.plugins.google.services) apply false
     alias(libs.plugins.firebase.crashlytics) apply false
     alias(libs.plugins.aboutlibraries) apply false
-    alias(libs.plugins.detekt) apply false
     alias(libs.plugins.paparazzi) apply false
 }
 
