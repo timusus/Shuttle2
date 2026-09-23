@@ -2,7 +2,6 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("com.android.application")
-    id("kotlin-android")
     id("androidx.navigation.safeargs.kotlin")
     id("com.mikepenz.aboutlibraries.plugin.android")
     id("kotlin-parcelize")
@@ -80,14 +79,6 @@ android {
         isCoreLibraryDesugaringEnabled = true
     }
 
-    kotlin.compilerOptions {
-        jvmTarget.set(JvmTarget.JVM_17)
-        freeCompilerArgs.addAll(
-            "-Xopt-in=kotlin.RequiresOptIn",
-            "-Xopt-in=kotlin.time.ExperimentalTime"
-        )
-    }
-
     lint {
         abortOnError = false
         checkReleaseBuilds = false
@@ -107,7 +98,7 @@ android {
             }
             groups {
                 create("smoke") {
-                    targetDevices.add(devices["pixel6Api34Atd"])
+                    targetDevices.add(localDevices["pixel6Api34Atd"])
                 }
             }
         }
@@ -254,7 +245,7 @@ android {
         implementation(libs.glide.compose)
 
         // About Libraries
-        implementation(libs.mikepenz.aboutlibraries)
+        implementation(libs.mikepenz.aboutlibrariesCore)
 
         // Billing
         implementation(libs.billingclient.billingKtx)
@@ -310,6 +301,16 @@ android {
     }
 
     buildFeatures.buildConfig = true
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
+        freeCompilerArgs.addAll(
+            "-Xopt-in=kotlin.RequiresOptIn",
+            "-Xopt-in=kotlin.time.ExperimentalTime"
+        )
+    }
 }
 
 apply(plugin = "com.google.gms.google-services")

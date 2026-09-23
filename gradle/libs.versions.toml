@@ -1,17 +1,17 @@
 [versions]
 activity = "1.13.0"
-aboutlibraries = "13.1.0"
+aboutlibraries = "14.2.1"
 composable-preview-scanner = "0.9.3"
 android-device-names = "2.1.1"
 annotation = "1.10.0"
 appcompat = "1.8.0"
-agp = "8.13.0"
+agp = "9.4.1"
 billing-ktx = "8.0.0"
 circleindicator = "2.1.6"
 compose = "2026.06.01"
 compose-lint-checks = "1.6.0"
 kotlinx-collections-immutable = "0.5.2"
-ksp = "2.2.20-2.0.3"
+ksp = "2.3.12"
 constraintlayout = "2.2.2"
 converter-moshi = "3.0.0"
 core-ktx-version = "1.7.0"
@@ -28,7 +28,7 @@ glide = "5.0.7"
 glide-compose = "1.0.0-beta09"
 google-services = "4.5.0"
 hamcrest-library = "3.0"
-hilt-android = "2.58"
+hilt-android = "2.60.1"
 hilt-compiler = "1.3.0"
 hilt-work = "1.3.0"
 junit = "4.13.2"
@@ -60,7 +60,7 @@ navigation-ui-ktx = "2.9.8"
 okhttp = "5.4.0"
 okhttp3-integration = "5.0.7"
 palette-ktx = "1.0.0"
-paparazzi = "2.0.0-alpha02"
+paparazzi = "2.0.0-alpha05"
 phrase = "1.2.0"
 play-services-cast-framework = "22.3.1"
 preference-ktx = "1.2.1"
@@ -159,7 +159,6 @@ leakcanary-android = { module = "com.squareup.leakcanary:leakcanary-android", ve
 media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3" }
 media3-exoplayerHls = { module = "androidx.media3:media3-exoplayer-hls", version.ref = "media3" }
 mikepenz-aboutlibrariesCore = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutlibraries" }
-mikepenz-aboutlibraries = { module = "com.mikepenz:aboutlibraries", version.ref = "aboutlibraries" }
 moshi = { module = "com.squareup.moshi:moshi", version.ref = "moshi" }
 moshi-adapters = { module = "com.squareup.moshi:moshi-adapters", version.ref = "moshi-adapters" }
 moshi-kotlin = { module = "com.squareup.moshi:moshi-kotlin", version.ref = "moshi-kotlin" }
@@ -189,6 +188,5 @@ compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "
 firebase-crashlytics = { id = "com.google.firebase.crashlytics", version.ref = "firebase-crashlytics" }
 google-services = { id = "com.google.gms.google-services", version.ref = "google-services" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt-android" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 paparazzi = { id = "app.cash.paparazzi", version.ref = "paparazzi" }

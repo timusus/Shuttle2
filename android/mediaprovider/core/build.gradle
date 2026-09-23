@@ -1,5 +1,6 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-parcelize'
 apply plugin: 'dagger.hilt.android.plugin'
 apply plugin: 'com.google.devtools.ksp'
@@ -21,9 +22,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_11.toString()
-    }
 
     lint {
         abortOnError false
@@ -31,8 +29,9 @@ android {
     namespace 'com.simplecityapps.mediaprovider'
 }
 
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask.class).configureEach {
+kotlin {
     compilerOptions {
+        jvmTarget = JvmTarget.JVM_11
         optIn.add('kotlin.time.ExperimentalTime')
     }
 }
