@@ -64,7 +64,7 @@ okhttp = "5.3.0"
 okhttp3-integration = "5.0.5"
 palette-ktx = "1.0.0"
 paparazzi = "2.0.0-alpha02"
-phrase = "master-SNAPSHOT"
+phrase = "1.2.0"
 play-services-cast-framework = "22.2.0"
 preference-ktx = "1.2.1"
 recyclerview = "1.4.0"
@@ -180,7 +180,7 @@ relex-circleindicator = { module = "me.relex:circleindicator", version.ref = "ci
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 retrofit2-converterMoshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "converter-moshi" }
 retrofit2-retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "converter-moshi" }
-square-phrase = { module = "com.github.square:phrase", version.ref = "phrase" }
+square-phrase = { module = "com.squareup.phrase:phrase", version.ref = "phrase" }
 test-parameter-injector = { module = "com.google.testparameterinjector:test-parameter-injector", version.ref = "test-parameter-injector" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 timusus-ktaglib = { module = "com.github.timusus:ktaglib", version.ref = "ktaglib" }
