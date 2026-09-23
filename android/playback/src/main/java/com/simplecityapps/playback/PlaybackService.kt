@@ -210,6 +210,8 @@ class PlaybackService :
             ACTION_TOGGLE_PLAYBACK -> playbackManager.togglePlayback()
             ACTION_SKIP_PREV -> playbackManager.skipToPrev()
             ACTION_SKIP_NEXT -> playbackManager.skipToNext(ignoreRepeat = true)
+            ACTION_TOGGLE_SHUFFLE -> coroutineScope.launch { queueManager.toggleShuffleMode() }
+            ACTION_TOGGLE_REPEAT -> queueManager.toggleRepeatMode()
             ACTION_SEARCH -> mediaSessionManager.mediaSession.controller?.transportControls?.playFromSearch(intent.extras?.getString(SearchManager.QUERY), Bundle())
         }
     }
@@ -323,6 +325,8 @@ class PlaybackService :
         const val ACTION_TOGGLE_PLAYBACK: String = "com.simplecityapps.playback.toggle"
         const val ACTION_SKIP_PREV: String = "com.simplecityapps.playback.prev"
         const val ACTION_SKIP_NEXT: String = "com.simplecityapps.playback.next"
+        const val ACTION_TOGGLE_SHUFFLE: String = "com.simplecityapps.playback.shuffle"
+        const val ACTION_TOGGLE_REPEAT: String = "com.simplecityapps.playback.repeat"
         const val ACTION_SEARCH: String = "com.simplecityapps.playback.search"
         const val ACTION_NOTIFICATION_DISMISS: String = "com.simplecityapps.playback.notification.dismiss"
     }
