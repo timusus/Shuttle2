@@ -1,7 +1,7 @@
 [versions]
 activity = "1.11.0"
 aboutlibraries = "13.1.0"
-android = "0.7.1"
+composable-preview-scanner = "0.9.3"
 android-device-names = "2.1.1"
 annotation = "1.9.1"
 appcompat = "1.7.1"
@@ -9,7 +9,7 @@ agp = "8.13.0"
 billing-ktx = "8.0.0"
 circleindicator = "2.1.6"
 compose = "2025.10.01"
-compose-lint-checks = "1.4.2"
+compose-lint-checks = "1.6.0"
 kotlinx-collections-immutable = "0.4.0"
 ksp = "2.2.20-2.0.3"
 constraintlayout = "2.2.1"
@@ -34,7 +34,7 @@ hilt-compiler = "1.3.0"
 hilt-work = "1.3.0"
 junit = "4.13.2"
 junit-version = "1.3.0"
-kotest = "6.0.7"
+kotest = "6.2.5"
 kotlin = "2.2.21"
 kotlinx-coroutines-android = "1.10.2"
 kotlinx-coroutines-core = "1.10.2"
@@ -50,7 +50,7 @@ lifecycle-viewmodel-compose = "2.9.4"
 logging-interceptor = "5.3.0"
 material = "1.13.0"
 media = "1.7.1"
-mockk = "1.14.7"
+mockk = "1.14.11"
 moshi = "1.15.2"
 moshi-adapters = "1.15.2"
 moshi-kotlin = "1.15.2"
@@ -71,11 +71,11 @@ recyclerview = "1.4.0"
 recyclerview-fastscroll = "2.0.1"
 review = "2.0.2"
 room-compiler = "2.8.3"
-robolectric = "4.14.1"
+robolectric = "4.17"
 runner = "1.7.0"
 security-crypto = "1.1.0"
 semver4j = "3.1.0"
-test-parameter-injector = "1.19"
+test-parameter-injector = "1.23"
 timber = "5.0.1"
 viewpager2 = "1.1.0"
 work-runtime-ktx = "2.11.0"
@@ -130,7 +130,7 @@ androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version
 billingclient-billingKtx = { module = "com.android.billingclient:billing-ktx", version.ref = "billing-ktx" }
 cashapp-paparazzi = { module = "app.cash.paparazzi:paparazzi", version.ref = "paparazzi" }
 compose-lint-checks = { module = "com.slack.lint.compose:compose-lint-checks", version.ref = "compose-lint-checks" }
-compose-preview-scanner = { module = "io.github.sergio-sastre.ComposablePreviewScanner:android", version.ref = "android" }
+compose-preview-scanner = { module = "io.github.sergio-sastre.ComposablePreviewScanner:android", version.ref = "composable-preview-scanner" }
 design-fluentSystemIcons = { module = "com.microsoft.design:fluent-system-icons", version.ref = "fluent-system-icons" }
 exoplayer-core = { module = "com.github.timusus.exoplayer:exoplayer-core", version.ref = "exoplayer-shuttle" }
 exoplayer-extensionFlac = { module = "com.github.timusus.exoplayer:extension-flac", version.ref = "exoplayer-shuttle" }
