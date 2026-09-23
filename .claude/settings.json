@@ -40,6 +40,11 @@
             "command": "s=\"$(git rev-parse --show-toplevel 2>/dev/null)/.claude/hooks/ensure-githooks.sh\"; [ -x \"$s\" ] && \"$s\" || true",
             "timeout": 15,
             "statusMessage": "Activating git hooks..."
+          },
+          {
+            "type": "command",
+            "command": "s=\"$(git rev-parse --show-toplevel 2>/dev/null)/.claude/hooks/review-reminder.sh\"; [ -x \"$s\" ] && \"$s\" || true",
+            "timeout": 5
           }
         ]
       }

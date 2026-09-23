@@ -18,6 +18,8 @@ DEFAULT_KEY_PATH = (
 SCOPES = ["https://www.googleapis.com/auth/androidpublisher"]
 API_BASE = "https://androidpublisher.googleapis.com/androidpublisher/v3"
 MAX_REPLY_CHARS = 350
+# Touched on every successful fetch; .claude/hooks/review-reminder.sh reads it.
+LAST_RUN_STAMP = os.path.expanduser("~/.local/state/s2-play-reviews/last-run")
 
 # Replies go out under the owner's name, so anything that reads as machine-written is refused.
 BANNED_CHARS = {"\u2014": "em dash", "\u2013": "en dash"}
@@ -129,6 +131,9 @@ def format_review(r: dict) -> dict:
 def cmd_list(args):
     creds = load_credentials()
     reviews = [format_review(r) for r in fetch_reviews(creds)]
+    os.makedirs(os.path.dirname(LAST_RUN_STAMP), exist_ok=True)
+    with open(LAST_RUN_STAMP, "w", encoding="utf-8"):
+        pass
     if args.unreplied:
         reviews = [r for r in reviews if not r["reply"]]
 
