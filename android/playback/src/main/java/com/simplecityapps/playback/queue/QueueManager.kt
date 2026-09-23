@@ -85,6 +85,8 @@ class QueueManager(
 
     private val _queueState = MutableStateFlow(QueueState.Empty)
 
+    private var queueStateVersion = 0L
+
     /**
      * The queue as the active shuffle mode presents it, with the current item and position.
      * Republished just before every [QueueChangeCallback.onQueueChanged] and
@@ -404,9 +406,17 @@ class QueueManager(
 
     /**
      * The single update site for [queueStateFlow]. Copies the list, since [Queue] mutates its lists in place.
+     * Bumps [QueueState.version] so every publish is a distinct value, even if the items, current item
+     * and position are unchanged (e.g. a song's metadata was edited without moving it in the queue).
      */
     private fun publishQueueState() {
-        _queueState.value = QueueState(items = getQueue().toList(), currentItem = currentItem, currentPosition = getCurrentPosition())
+        queueStateVersion++
+        _queueState.value = QueueState(
+            items = getQueue().toList(),
+            currentItem = currentItem,
+            currentPosition = getCurrentPosition(),
+            version = queueStateVersion
+        )
     }
 
     /**

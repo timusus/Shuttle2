@@ -4,6 +4,7 @@ import com.simplecityapps.playback.fakes.FakeSharedPreferences
 import com.simplecityapps.playback.fakes.testSong
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -50,7 +51,13 @@ class QueueManagerStateFlowTest {
     }
 
     private fun checkFlowMatchesGetters(callback: String) {
-        val expected = QueueState(queueManager.getQueue().toList(), queueManager.getCurrentItem(), queueManager.getCurrentPosition())
+        val expected =
+            QueueState(
+                items = queueManager.getQueue().toList(),
+                currentItem = queueManager.getCurrentItem(),
+                currentPosition = queueManager.getCurrentPosition(),
+                version = queueManager.queueStateFlow.value.version
+            )
         if (queueManager.queueStateFlow.value != expected) mismatches += callback
     }
 
@@ -132,7 +139,9 @@ class QueueManagerStateFlowTest {
 
         queueManager.clear()
 
-        queueManager.queueStateFlow.value shouldBe QueueState.Empty
+        queueManager.queueStateFlow.value.items shouldBe QueueState.Empty.items
+        queueManager.queueStateFlow.value.currentItem shouldBe QueueState.Empty.currentItem
+        queueManager.queueStateFlow.value.currentPosition shouldBe QueueState.Empty.currentPosition
         events shouldBe listOf("queueChanged Unknown")
     }
 
@@ -144,6 +153,23 @@ class QueueManagerStateFlowTest {
         queueManager.addToQueue(listOf(testSong(3)))
 
         published.items.map { it.song.id } shouldBe listOf(1L, 2L)
+    }
+
+    @Test
+    fun `a queue change that leaves items, current item and position unchanged still emits a new snapshot`() = runTest {
+        setQueueOf(1, 2, 3)
+        val before = queueManager.queueStateFlow.value
+
+        // Moving an item to its own position: the callback fires, but the resulting items, uids,
+        // current item and position all match the previous snapshot exactly.
+        queueManager.move(0, 0)
+        val after = queueManager.queueStateFlow.value
+
+        after shouldNotBe before
+        after.items.map { it.uid } shouldBe before.items.map { it.uid }
+        after.currentItem shouldBe before.currentItem
+        after.currentPosition shouldBe before.currentPosition
+        events shouldBe listOf("queueChanged Move")
     }
 
     @Test
