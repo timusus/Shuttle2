@@ -409,9 +409,15 @@ private fun TrackText(
     // Beside art that fills the height the text centres on it; everywhere else it starts at the top.
     val alignment = if (layout.mode == WidgetMode.Row) Alignment.CenterVertically else Alignment.Top
     Column(modifier = modifier, verticalAlignment = alignment) {
-        Text(text = state.title, maxLines = layout.titleLines, style = titleStyle(layout.largeText, colors.title))
-        if (state.artist.isNotEmpty()) {
-            Text(text = state.artist, maxLines = 1, style = subtitleStyle(layout.largeText, colors.subtitle))
+        if (layout.textLines == 1) {
+            // A compact card too short for two lines runs the artist on after the title.
+            val text = if (state.artist.isNotEmpty()) "${state.title} · ${state.artist}" else state.title
+            Text(text = text, maxLines = 1, style = titleStyle(layout.largeText, colors.title))
+        } else {
+            Text(text = state.title, maxLines = layout.titleLines, style = titleStyle(layout.largeText, colors.title))
+            if (state.artist.isNotEmpty()) {
+                Text(text = state.artist, maxLines = 1, style = subtitleStyle(layout.largeText, colors.subtitle))
+            }
         }
         if (layout.textLines >= 3 && state.album.isNotEmpty()) {
             Text(text = state.album, maxLines = 1, style = subtitleStyle(layout.largeText, colors.subtitle))
@@ -601,6 +607,7 @@ private fun ControlButton(
                 backgroundColor = colors.playBackground,
                 contentColor = colors.playContent
             )
+
         WidgetButton.Previous ->
             CircleIconButton(
                 imageProvider = ImageProvider(PlaybackR.drawable.ic_skip_previous_black_24dp),
@@ -609,6 +616,7 @@ private fun ControlButton(
                 backgroundColor = null,
                 contentColor = colors.icon
             )
+
         WidgetButton.Next ->
             CircleIconButton(
                 imageProvider = ImageProvider(PlaybackR.drawable.ic_skip_next_black_24dp),
@@ -617,6 +625,7 @@ private fun ControlButton(
                 backgroundColor = null,
                 contentColor = colors.icon
             )
+
         WidgetButton.Shuffle ->
             ToggleButton(
                 icon = PlaybackR.drawable.ic_shuffle_black_24dp,
@@ -625,6 +634,7 @@ private fun ControlButton(
                 on = state.shuffleOn,
                 colors = colors
             )
+
         WidgetButton.Repeat ->
             ToggleButton(
                 icon = if (state.repeatMode == WidgetRepeatMode.One) R.drawable.ic_repeat_one_black_24dp else R.drawable.ic_repeat_black_24dp,

@@ -38,7 +38,10 @@ data class WidgetLayout(
     val padding: Dp,
     /** The artwork's size, or [DpSize.Unspecified] when there's no room for art. Square except in [WidgetMode.Hero]. */
     val art: DpSize,
-    /** Lines of track text: title and artist, plus the album when it's 3. 0 when only the buttons fit. */
+    /**
+     * Lines of track text: title and artist, plus the album when it's 3. 1 runs the title and artist together
+     * on one line, for a [compact] card too short for two. 0 when only the buttons fit.
+     */
     val textLines: Int,
     /** How many lines the title may wrap to. */
     val titleLines: Int = 1,
@@ -54,7 +57,7 @@ data class WidgetLayout(
     val showArt: Boolean get() = art != DpSize.Unspecified
 
     /** The container's inset at the bottom: [padding], less what a [compact] button row reaches into it. */
-    val bottomPadding: Dp get() = if (compact) padding - (WidgetDimens.buttonSize - WidgetDimens.compactPlay) / 2 else padding
+    val bottomPadding: Dp get() = if (compact) padding - WidgetDimens.compactPlaySlack else padding
 }
 
 object WidgetDimens {
@@ -90,12 +93,16 @@ object WidgetDimens {
     /** The play button's circle in a [WidgetLayout.compact] card. Its touch target stays [buttonSize]. */
     val compactPlay = 40.dp
 
+    /** How far a [WidgetLayout.compact] card's button row reaches into the bottom padding: the play circle's slack. */
+    val compactPlaySlack = (buttonSize - compactPlay) / 2
+
     /**
      * From this height, a one-row widget wide enough for every button beside the art stacks text over them as
-     * a [WidgetLayout.compact] card: the same [cardMinHeight] the text and button row need in the regular
-     * card, less the bottom padding the compact play circle's smaller target gives back.
+     * a [WidgetLayout.compact] card: the top padding, one line of title and artist, the 48dp button row, and
+     * the bottom padding less the play circle's slack. 12 + 20 + 48 + 8 = 88dp, so a 4x1 launcher row of
+     * 96-100dp gets it. The artist gets its own line once there's another [subtitleLineHeight] to spare.
      */
-    val compactCardMinHeight = cardMinHeight - (buttonSize - compactPlay) / 2
+    val compactCardMinHeight = padding + titleLineHeight + buttonSize + padding - compactPlaySlack
 
     /** From this height, the art sits above a full-width button row. */
     val splitMinHeight = 160.dp
@@ -196,11 +203,13 @@ private fun compactCardLayout(size: DpSize): WidgetLayout? {
     if (size.width < compactCardMinWidth(size.height)) return null
     val padding = WidgetDimens.padding
     val art = size.height - padding * 2
+    // What's left above the button row, between the top padding and the button row's reduced bottom padding.
+    val text = size.height - padding * 2 + WidgetDimens.compactPlaySlack - WidgetDimens.buttonSize
     return WidgetLayout(
         mode = WidgetMode.Card,
         padding = padding,
         art = DpSize(art, art),
-        textLines = 2,
+        textLines = if (text >= WidgetDimens.titleLineHeight + WidgetDimens.subtitleLineHeight) 2 else 1,
         buttons = buttonSets.first(),
         compact = true
     )
