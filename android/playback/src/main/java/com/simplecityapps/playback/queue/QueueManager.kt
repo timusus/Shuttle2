@@ -330,7 +330,11 @@ class QueueManager(
     }
 
     override fun addToNext(songs: List<Song>) {
-        queue.insert((getCurrentPosition() ?: -1) + 1, songs.map { song -> song.toQueueItem(false) })
+        val items = songs.map { song -> song.toQueueItem(false) }
+        val current = currentItem
+        val baseIndex = current?.let { queue.get(ShuffleMode.Off).indexOf(it) } ?: -1
+        val shuffleIndex = current?.let { queue.get(ShuffleMode.On).indexOf(it) } ?: -1
+        queue.insert(baseIndex + 1, shuffleIndex + 1, items)
         queueWatcher.onQueueChanged()
     }
 
@@ -377,15 +381,16 @@ class QueueManager(
 
         fun add(items: List<QueueItem>) {
             baseList.addAll(items)
-            shuffleList.addAll(items.shuffled())
+            shuffleList.addAll(items)
         }
 
         fun insert(
-            position: Int,
+            baseIndex: Int,
+            shuffleIndex: Int,
             items: List<QueueItem>
         ) {
-            baseList.addAll(position, items)
-            shuffleList.addAll(position, items)
+            baseList.addAll(baseIndex, items)
+            shuffleList.addAll(shuffleIndex, items)
         }
 
         fun remove(items: List<QueueItem>) {

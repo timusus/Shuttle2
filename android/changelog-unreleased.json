@@ -17,6 +17,10 @@
     {
       "text": "Fixed your phone's own sound effects staying attached to the app after switching to Chromecast",
       "commits": []
+    },
+    {
+      "text": "Songs added to the queue while shuffle is on now play in the order you picked them, and Play Next keeps its place when you turn shuffle off",
+      "commits": []
     }
   ]
 }
