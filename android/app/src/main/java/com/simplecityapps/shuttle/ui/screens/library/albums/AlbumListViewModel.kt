@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.simplecityapps.mediaprovider.SongImportState
 import com.simplecityapps.mediaprovider.SongImportStateProvider
-import com.simplecityapps.mediaprovider.repository.albums.AlbumComparator
 import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
 import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.albums.comparator
@@ -84,11 +83,7 @@ class AlbumListViewModel @Inject constructor(
                 playlists = playlists,
             )
         } else {
-            val sortedAlbums = if (sortOrder == AlbumSortOrder.Random) {
-                albums.sortedWith(AlbumComparator.random(randomSeed))
-            } else {
-                albums.sortedWith(sortOrder.comparator)
-            }
+            val sortedAlbums = albums.sortedWith(sortOrder.comparator(randomSeed))
             AlbumListUiState(
                 albums = sortedAlbums,
                 selectedAlbums = selectedAlbums,

@@ -3,22 +3,21 @@ package com.simplecityapps.mediaprovider.repository.albums
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.sorting.AlbumSortOrder
 import java.text.Collator
+import java.util.Collections
 import kotlin.random.Random
 
-val AlbumSortOrder.comparator: Comparator<Album>
-    get() {
-        return when (this) {
-            AlbumSortOrder.Default -> AlbumComparator.defaultComparator
-            AlbumSortOrder.AlbumName -> AlbumComparator.albumNameComparator
-            AlbumSortOrder.ArtistGroupKey -> AlbumComparator.artistGroupKeyComparator
-            AlbumSortOrder.PlayCount -> AlbumComparator.playCountComparator
-            AlbumSortOrder.Year -> AlbumComparator.yearComparator
-            AlbumSortOrder.RecentlyPlayed -> AlbumComparator.recentlyPlayedComparator
-            // Random needs a per-session seed, so it can't be exposed as a stateless comparator here.
-            // Callers sort with AlbumComparator.random(seed) instead.
-            AlbumSortOrder.Random -> error("Random sort order requires a seed; use AlbumComparator.random(seed)")
-        }
-    }
+// Takes a seed so Random can't be forgotten: every caller must supply one, even though only
+// Random uses it. Callers that reshuffle on reselect (rather than every re-emission) generate
+// the seed once at selection time and pass the same value back in on each call.
+fun AlbumSortOrder.comparator(seed: Long): Comparator<Album> = when (this) {
+    AlbumSortOrder.Default -> AlbumComparator.defaultComparator
+    AlbumSortOrder.AlbumName -> AlbumComparator.albumNameComparator
+    AlbumSortOrder.ArtistGroupKey -> AlbumComparator.artistGroupKeyComparator
+    AlbumSortOrder.PlayCount -> AlbumComparator.playCountComparator
+    AlbumSortOrder.Year -> AlbumComparator.yearComparator
+    AlbumSortOrder.RecentlyPlayed -> AlbumComparator.recentlyPlayedComparator
+    AlbumSortOrder.Random -> AlbumComparator.random(seed)
+}
 
 object AlbumComparator {
     private val collator by lazy {
@@ -57,5 +56,11 @@ object AlbumComparator {
 
     // Keyed off groupKey rather than list index, so re-emissions of the same albums
     // (in whatever order the upstream flow produces) sort identically for a given seed.
-    fun random(seed: Long): Comparator<Album> = compareBy { album -> Random(album.groupKey.hashCode().toLong() xor seed).nextLong() }
+    // Each key is computed once and memoized, rather than reconstructing a Random per comparison.
+    fun random(seed: Long): Comparator<Album> {
+        // Synchronized: the comparator may outlive one sort and be shared by concurrent flow collectors.
+        val keysByGroupKey = Collections.synchronizedMap(HashMap<Any?, Long>())
+        fun keyFor(album: Album): Long = keysByGroupKey.getOrPut(album.groupKey) { Random(album.groupKey.hashCode().toLong() xor seed).nextLong() }
+        return compareBy(::keyFor)
+    }
 }

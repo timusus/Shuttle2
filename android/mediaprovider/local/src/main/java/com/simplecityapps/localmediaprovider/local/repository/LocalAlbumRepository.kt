@@ -5,6 +5,7 @@ import com.simplecityapps.mediaprovider.repository.albums.AlbumQuery
 import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.albums.comparator
 import com.simplecityapps.shuttle.model.Album
+import kotlin.random.Random
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -45,11 +46,16 @@ class LocalAlbumRepository(
             .stateIn(scope, SharingStarted.Lazily, null)
     }
 
-    override fun getAlbums(query: AlbumQuery): Flow<List<Album>> = albumsRelay
-        .filterNotNull()
-        .map { albums ->
-            albums
-                .filter(query.predicate)
-                .sortedWith(query.sortOrder.comparator)
-        }
+    override fun getAlbums(query: AlbumQuery): Flow<List<Album>> {
+        // Random needs a seed; generate it once per getAlbums() call so the same collector sees
+        // a stable order across re-emissions of albumsRelay, and reshuffles on the next call.
+        val comparator = query.sortOrder.comparator(seed = Random.nextLong())
+        return albumsRelay
+            .filterNotNull()
+            .map { albums ->
+                albums
+                    .filter(query.predicate)
+                    .sortedWith(comparator)
+            }
+    }
 }
