@@ -45,8 +45,9 @@ constructor(
     override fun bindView(view: MainContract.View) {
         super.bindView(view)
 
-        view.toggleSheet(visible = queueManager.getSize() != 0)
-        collectChanges(queueManager.queueStateFlow) { previous, current ->
+        val queueState = queueManager.queueStateFlow.value
+        view.toggleSheet(visible = queueState.items.isNotEmpty())
+        collectChanges(queueManager.queueStateFlow, queueState) { previous, current ->
             if (current.contentVersion != previous.contentVersion) {
                 this.view?.toggleSheet(visible = current.items.isNotEmpty())
             }

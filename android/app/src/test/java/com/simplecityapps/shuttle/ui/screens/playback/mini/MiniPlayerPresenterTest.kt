@@ -9,7 +9,11 @@ import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.toQueueItem
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.testing.MainDispatcherRule
+import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.setMain
 import org.junit.Rule
 import org.junit.Test
 
@@ -63,6 +67,24 @@ class MiniPlayerPresenterTest {
         queueManager.queueStateFlow.value = state.copy(items = state.items + createSong(id = 2).toQueueItem(false), contentVersion = 1)
 
         view.events shouldBe listOf("song Come Together")
+    }
+
+    @Test
+    fun `changes made after the initial draw but before collection starts still reach the view`() {
+        val dispatcher = StandardTestDispatcher()
+        Dispatchers.setMain(dispatcher)
+        setCurrent(song)
+
+        presenter.bindView(view)
+        view.events.clear()
+
+        // Collection is launched but hasn't run yet, so these land between the draw and its first read.
+        playbackManager.playbackStateFlow.value = PlaybackState.Playing
+        playbackManager.progressFlow.value = PlaybackProgress(position = 5_000, duration = 200_000)
+        setCurrent(createSong(id = 2, name = "Something"))
+        dispatcher.scheduler.advanceUntilIdle()
+
+        view.events shouldContainExactlyInAnyOrder listOf("state Playing", "progress 5000/200000", "song Something")
     }
 
     @Test

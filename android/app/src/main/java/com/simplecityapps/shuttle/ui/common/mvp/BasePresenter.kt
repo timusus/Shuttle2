@@ -3,7 +3,6 @@ package com.simplecityapps.shuttle.ui.common.mvp
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.StateFlow
@@ -37,29 +36,28 @@ abstract class BasePresenter<T : Any> :
     }
 
     /**
-     * Collects [flow] on the main thread until [unbindView], passing [onChange] each new value with the
-     * one before it.
+     * Collects [flow] on the main thread until [unbindView], passing [onChange] each value that differs
+     * from the last one rendered, with that last one.
      *
-     * The value current at the call isn't passed on: a StateFlow replays it to every new collector, and
-     * [bindView] renders the initial state itself. Collection starts undispatched, so the first value
-     * compared against is exactly the one current when this is called.
+     * [rendered] is the snapshot of [flow] that [bindView] drew the screen from (or, where the screen is
+     * drawn from a live read instead, a snapshot taken before that read). The first comparison is against
+     * it rather than whatever [flow] holds when collection starts, so a change made between the draw and
+     * the start of collection is still delivered, however the two are ordered.
      *
      * A StateFlow keeps only its latest value, so values set in quick succession can arrive as one change.
      */
     protected fun <V> collectChanges(
         flow: StateFlow<V>,
+        rendered: V,
         onChange: (previous: V, current: V) -> Unit
     ) {
-        launch(start = CoroutineStart.UNDISPATCHED) {
-            var previous = flow.value
-            var isInitialValue = true
+        launch {
+            var previous = rendered
             flow.collect { current ->
-                if (isInitialValue) {
-                    isInitialValue = false
-                } else {
+                if (current != previous) {
                     onChange(previous, current)
+                    previous = current
                 }
-                previous = current
             }
         }
     }

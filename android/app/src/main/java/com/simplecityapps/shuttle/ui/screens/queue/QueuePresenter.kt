@@ -3,7 +3,6 @@ package com.simplecityapps.shuttle.ui.screens.queue
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackState
-import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueState
@@ -77,25 +76,32 @@ constructor(
     override fun bindView(view: QueueContract.View) {
         super.bindView(view)
 
-        updateQueue(true)
-        updateQueuePosition(true)
-        collectChanges(queueManager.queueStateFlow, ::onQueueStateChanged)
+        val queueState = queueManager.queueStateFlow.value
+        updateQueue(queueState, forceClear = true)
+        updateQueuePosition(queueState, forceScrollUpdate = true)
+        collectChanges(queueManager.queueStateFlow, queueState, ::onQueueStateChanged)
     }
 
-    private fun updateQueue(forceClear: Boolean) {
+    private fun updateQueue(
+        queueState: QueueState,
+        forceClear: Boolean
+    ) {
         if (forceClear) {
             view?.clearData()
         }
         view?.setData(
-            queue = queueManager.getQueue(),
-            progress = (playbackManager.getProgress() ?: 0) / (queueManager.getCurrentItem()?.song?.duration?.toFloat() ?: Float.MAX_VALUE),
+            queue = queueState.items,
+            progress = (playbackManager.getProgress() ?: 0) / (queueState.currentItem?.song?.duration?.toFloat() ?: Float.MAX_VALUE),
             playbackState = playbackManager.playbackState()
         )
     }
 
-    private fun updateQueuePosition(forceScrollUpdate: Boolean) {
-        view?.setQueuePosition(queueManager.getCurrentPosition(), queueManager.getSize())
-        view?.scrollToPosition(queueManager.getCurrentPosition(), forceScrollUpdate)
+    private fun updateQueuePosition(
+        queueState: QueueState,
+        forceScrollUpdate: Boolean
+    ) {
+        view?.setQueuePosition(queueState.currentPosition, queueState.items.size)
+        view?.scrollToPosition(queueState.currentPosition, forceScrollUpdate)
     }
 
     private fun updateMiniPlayerVisibility(visible: Boolean) {
@@ -164,6 +170,8 @@ constructor(
     /**
      * A restore or a queue change rebuilds the list and scrolls to the current item, unless the change
      * was a user's drag, which the list already shows. A position change only refreshes the current item.
+     * Whether anything but a drag happened is read from [QueueState.nonMoveContentVersion], so a change
+     * merged with a later drag into one emission still rebuilds the list.
      */
     private fun onQueueStateChanged(
         previous: QueueState,
@@ -171,13 +179,13 @@ constructor(
     ) {
         val restored = current.isRestored && !previous.isRestored
         if (restored || current.contentVersion != previous.contentVersion) {
-            val force = restored || current.lastChangeReason != QueueChangeCallback.QueueChangeReason.Move
-            updateQueue(force)
-            updateQueuePosition(force)
+            val force = restored || current.nonMoveContentVersion != previous.nonMoveContentVersion
+            updateQueue(current, force)
+            updateQueuePosition(current, force)
             updateMiniPlayerVisibility(current.items.isEmpty())
         } else if (current.currentItem != previous.currentItem || current.currentPosition != previous.currentPosition) {
-            updateQueue(false) // Currently required in order to update current item
-            updateQueuePosition(false)
+            updateQueue(current, forceClear = false) // Currently required in order to update current item
+            updateQueuePosition(current, forceScrollUpdate = false)
         }
     }
 }

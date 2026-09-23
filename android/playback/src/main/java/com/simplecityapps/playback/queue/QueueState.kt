@@ -12,11 +12,14 @@ package com.simplecityapps.playback.queue
  *
  * A collector can miss intermediate snapshots (a StateFlow keeps only the latest), so what changed
  * between two snapshots it did see is recorded as state rather than implied by each emission:
- * [contentVersion] tells a queue change from a position-only one, and [isRestored] marks the restore.
+ * [contentVersion] tells a queue change from a position-only one, [nonMoveContentVersion] tells whether
+ * any of those changes was something other than a move, and [isRestored] marks the restore. The versions
+ * are counters rather than a record of the last change, so they stay correct when changes are merged.
  *
  * @param contentVersion bumped on every [QueueChangeCallback.onQueueChanged] dispatch, so it moves
  * whenever the items were added, removed, moved or replaced, but not when only the position did.
- * @param lastChangeReason the reason given for the most recent [QueueChangeCallback.onQueueChanged].
+ * @param nonMoveContentVersion bumped on every [QueueChangeCallback.onQueueChanged] dispatch whose reason
+ * isn't [QueueChangeCallback.QueueChangeReason.Move], so it moves unless every change since was a move.
  * @param isRestored mirrors [QueueOperations.hasRestoredQueue]; its switch to true is
  * [QueueChangeCallback.onQueueRestored].
  */
@@ -26,7 +29,7 @@ data class QueueState(
     val currentPosition: Int?,
     val version: Long = 0,
     val contentVersion: Long = 0,
-    val lastChangeReason: QueueChangeCallback.QueueChangeReason = QueueChangeCallback.QueueChangeReason.Unknown,
+    val nonMoveContentVersion: Long = 0,
     val isRestored: Boolean = false
 ) {
     companion object {

@@ -217,23 +217,24 @@ class QueueManagerStateFlowTest {
     }
 
     @Test
-    fun `a queue change bumps the content version and records its reason, a position change does not`() = runTest {
+    fun `a queue change bumps the content version, a non-move one bumps the non-move version, a position change bumps neither`() = runTest {
         setQueueOf(1, 2, 3)
         val afterSet = queueManager.queueStateFlow.value
 
         queueManager.skipTo(1)
         val afterSkip = queueManager.queueStateFlow.value
         afterSkip.contentVersion shouldBe afterSet.contentVersion
+        afterSkip.nonMoveContentVersion shouldBe afterSet.nonMoveContentVersion
 
         queueManager.move(2, 0)
         val afterMove = queueManager.queueStateFlow.value
         afterMove.contentVersion shouldBe afterSet.contentVersion + 1
-        afterMove.lastChangeReason shouldBe QueueChangeCallback.QueueChangeReason.Move
+        afterMove.nonMoveContentVersion shouldBe afterSet.nonMoveContentVersion
 
         queueManager.addToQueue(listOf(testSong(4)))
         val afterAdd = queueManager.queueStateFlow.value
         afterAdd.contentVersion shouldBe afterMove.contentVersion + 1
-        afterAdd.lastChangeReason shouldBe QueueChangeCallback.QueueChangeReason.Unknown
+        afterAdd.nonMoveContentVersion shouldBe afterMove.nonMoveContentVersion + 1
     }
 
     @Test

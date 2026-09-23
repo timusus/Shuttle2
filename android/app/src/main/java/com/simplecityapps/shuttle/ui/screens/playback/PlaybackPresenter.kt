@@ -36,23 +36,31 @@ constructor(
     override fun bindView(view: PlaybackContract.View) {
         super.bindView(view)
 
+        // Progress and playback state are drawn from live reads, which are at least as new as the flows'
+        // values, so the flows are snapshotted before those reads and a change after it is still delivered.
+        val queueState = queueManager.queueStateFlow.value
+        val initialShuffleMode = queueManager.shuffleModeFlow.value
+        val initialRepeatMode = queueManager.repeatModeFlow.value
+        val initialPlaybackState = playbackManager.playbackStateFlow.value
+        val initialProgress = playbackManager.progressFlow.value
+
         // One time update of all UI components
-        updateProgress()
-        updateShuffleMode(queueManager.getShuffleMode())
-        updateRepeatMode(queueManager.getRepeatMode())
-        updateQueue(queueManager.getQueue())
-        updateQueuePosition(queueManager.getCurrentPosition(), queueManager.getSize())
-        updateCurrentSong(queueManager.getCurrentItem()?.song)
+        updateProgress(queueState)
+        updateShuffleMode(initialShuffleMode)
+        updateRepeatMode(initialRepeatMode)
+        updateQueue(queueState.items)
+        updateQueuePosition(queueState.currentPosition, queueState.items.size)
+        updateCurrentSong(queueState.currentItem?.song)
         updatePlaybackState(playbackManager.playbackState())
         updateFavorite()
 
-        collectChanges(playbackManager.playbackStateFlow) { _, playbackState -> updatePlaybackState(playbackState) }
-        collectChanges(playbackManager.progressFlow) { _, progress ->
+        collectChanges(playbackManager.playbackStateFlow, initialPlaybackState) { _, playbackState -> updatePlaybackState(playbackState) }
+        collectChanges(playbackManager.progressFlow, initialProgress) { _, progress ->
             progress?.let { view?.setProgress(progress.position, progress.duration) }
         }
-        collectChanges(queueManager.queueStateFlow, ::onQueueStateChanged)
-        collectChanges(queueManager.shuffleModeFlow) { _, shuffleMode -> updateShuffleMode(shuffleMode) }
-        collectChanges(queueManager.repeatModeFlow) { _, repeatMode -> updateRepeatMode(repeatMode) }
+        collectChanges(queueManager.queueStateFlow, queueState, ::onQueueStateChanged)
+        collectChanges(queueManager.shuffleModeFlow, initialShuffleMode) { _, shuffleMode -> updateShuffleMode(shuffleMode) }
+        collectChanges(queueManager.repeatModeFlow, initialRepeatMode) { _, repeatMode -> updateRepeatMode(repeatMode) }
     }
 
     override fun unbindView() {
@@ -63,8 +71,8 @@ constructor(
 
     // Private
 
-    private fun updateProgress() {
-        queueManager.getCurrentItem()?.song?.let { currentSong ->
+    private fun updateProgress(queueState: QueueState) {
+        queueState.currentItem?.song?.let { currentSong ->
             view?.setProgress(
                 playbackManager.getProgress() ?: 0,
                 playbackManager.getDuration() ?: currentSong.duration

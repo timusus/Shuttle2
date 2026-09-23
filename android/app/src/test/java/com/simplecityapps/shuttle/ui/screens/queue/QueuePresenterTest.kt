@@ -12,6 +12,9 @@ import com.simplecityapps.playback.queue.toQueueItem
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.setMain
 import org.junit.Rule
 import org.junit.Test
 
@@ -73,6 +76,23 @@ class QueuePresenterTest {
         view.events shouldBe listOf("clear", "data 3", "position 0/3", "scroll 0 forced", "empty false")
     }
 
+    @Test
+    fun `a queue change merged with a later move into one emission still rebuilds the list and forces the scroll`() {
+        val dispatcher = StandardTestDispatcher()
+        Dispatchers.setMain(dispatcher)
+        bindWithQueue()
+        dispatcher.scheduler.advanceUntilIdle()
+        view.events.clear()
+
+        // The collector doesn't run between these, so it sees only the last: a state whose last change was a move.
+        val added = items + createSong(id = 4).toQueueItem(false)
+        publish(added, contentChange = QueueChangeReason.Unknown)
+        publish(listOf(added[0], added[3], added[1], added[2]), contentChange = QueueChangeReason.Move)
+        dispatcher.scheduler.advanceUntilIdle()
+
+        view.events shouldBe listOf("clear", "data 4", "position 0/4", "scroll 0 forced", "empty false")
+    }
+
     private fun bindWithQueue() {
         queueManager.queueStateFlow.value = QueueState(items, currentItem = items[0], currentPosition = 0, isRestored = true)
         presenter.bindView(view)
@@ -84,7 +104,12 @@ class QueuePresenterTest {
         contentChange: QueueChangeReason
     ) {
         val state = queueManager.queueStateFlow.value
-        queueManager.queueStateFlow.value = state.copy(items = newItems, contentVersion = state.contentVersion + 1, lastChangeReason = contentChange)
+        queueManager.queueStateFlow.value =
+            state.copy(
+                items = newItems,
+                contentVersion = state.contentVersion + 1,
+                nonMoveContentVersion = if (contentChange == QueueChangeReason.Move) state.nonMoveContentVersion else state.nonMoveContentVersion + 1
+            )
     }
 
     private class RecordingView : QueueContract.View {

@@ -89,7 +89,7 @@ class QueueManager(
 
     private var queueContentVersion = 0L
 
-    private var lastQueueChangeReason = QueueChangeCallback.QueueChangeReason.Unknown
+    private var queueNonMoveContentVersion = 0L
 
     /**
      * The queue as the active shuffle mode presents it, with the current item and position.
@@ -398,7 +398,9 @@ class QueueManager(
 
     private fun notifyQueueChanged(reason: QueueChangeCallback.QueueChangeReason = QueueChangeCallback.QueueChangeReason.Unknown) {
         queueContentVersion++
-        lastQueueChangeReason = reason
+        if (reason != QueueChangeCallback.QueueChangeReason.Move) {
+            queueNonMoveContentVersion++
+        }
         publishQueueState()
         queueWatcher.onQueueChanged(reason)
     }
@@ -424,7 +426,7 @@ class QueueManager(
             currentPosition = getCurrentPosition(),
             version = queueStateVersion,
             contentVersion = queueContentVersion,
-            lastChangeReason = lastQueueChangeReason,
+            nonMoveContentVersion = queueNonMoveContentVersion,
             isRestored = hasRestoredQueue
         )
     }

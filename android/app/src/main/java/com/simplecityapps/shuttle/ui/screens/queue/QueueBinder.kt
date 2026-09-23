@@ -14,6 +14,7 @@ import androidx.lifecycle.lifecycleScope
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.playback.PlaybackOperations
+import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.shuttle.R
@@ -28,8 +29,7 @@ import com.simplecityapps.shuttle.ui.common.view.increaseTouchableArea
 import com.squareup.phrase.ListPhrase
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.dropWhile
 import kotlinx.coroutines.launch
 
 class QueueBinder(
@@ -87,6 +87,10 @@ class QueueBinder(
 
         private var playbackJob: Job? = null
 
+        private var renderedProgress: PlaybackProgress? = null
+
+        private var renderedPlaybackState: PlaybackState? = null
+
         init {
             itemView.setOnClickListener {
                 viewBinder?.listener?.onQueueItemClicked(viewBinder!!.queueItem)
@@ -136,6 +140,11 @@ class QueueBinder(
                 )
             )
 
+            // Snapshotted before the live reads below, which are at least as new, so observePlayback()
+            // applies any change made after this point.
+            renderedProgress = viewBinder.playbackManager.progressFlow.value
+            renderedPlaybackState = viewBinder.playbackManager.playbackStateFlow.value
+
             progressView.isVisible = viewBinder.queueItem.isCurrent
             progressView.setProgress((viewBinder.playbackManager.getProgress()?.toFloat() ?: 0f) / viewBinder.queueItem.song.duration.toFloat())
             playStateImageButton.state = viewBinder.playbackManager.playbackState()
@@ -169,10 +178,10 @@ class QueueBinder(
         }
 
         /**
-         * Follows playback progress and state while the current item is attached. [bind] has already
-         * rendered the values current now, so only later changes are applied (the flows replay their
-         * value on collection). Until the view is attached there's no lifecycle to scope to; [onAttach]
-         * starts it then.
+         * Follows playback progress and state while the current item is attached. Each flow's replayed
+         * value is skipped if it's the one last rendered ([bind]'s snapshot, or the last applied), so a
+         * change made since then (including while detached) is still applied. Until the view is attached
+         * there's no lifecycle to scope to; [onAttach] starts it then.
          */
         private fun observePlayback() {
             val viewBinder = viewBinder ?: return
@@ -181,11 +190,13 @@ class QueueBinder(
             playbackJob =
                 lifecycleOwner.lifecycleScope.launch(start = CoroutineStart.UNDISPATCHED) {
                     launch(start = CoroutineStart.UNDISPATCHED) {
-                        viewBinder.playbackManager.progressFlow.drop(1).filterNotNull().collect { progress ->
-                            progressView.setProgress((progress.position / progress.duration.toFloat()))
+                        viewBinder.playbackManager.progressFlow.dropWhile { it == renderedProgress }.collect { progress ->
+                            renderedProgress = progress
+                            progress?.let { progressView.setProgress((progress.position / progress.duration.toFloat())) }
                         }
                     }
-                    viewBinder.playbackManager.playbackStateFlow.drop(1).collect { playbackState ->
+                    viewBinder.playbackManager.playbackStateFlow.dropWhile { it == renderedPlaybackState }.collect { playbackState ->
+                        renderedPlaybackState = playbackState
                         playStateImageButton.state = playbackState
                     }
                 }
