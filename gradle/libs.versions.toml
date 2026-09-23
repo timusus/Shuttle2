@@ -55,11 +55,9 @@ moshi = "1.15.2"
 moshi-adapters = "1.15.2"
 moshi-kotlin = "1.15.2"
 moshi-kotlin-codegen = "1.15.2"
-mpandroidchart = "3.1.0"
 nanohttpd-webserver = "2.3.1"
 navigation-safe-args-gradle-plugin = "2.9.5"
 navigation-ui-ktx = "2.9.5"
-noise = "3.0.3"
 okhttp = "5.3.0"
 okhttp3-integration = "5.0.5"
 palette-ktx = "1.0.0"
@@ -172,8 +170,6 @@ mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 nanohttpd-webserver = { module = "org.nanohttpd:nanohttpd-webserver", version.ref = "nanohttpd-webserver" }
 okhttp3-loggingInterceptor = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "logging-interceptor" }
 okhttp3-okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
-paramsen-noise = { module = "com.github.timusus:noise", version.ref = "noise" }
-philjay-mpAndroidChart = { module = "com.github.PhilJay:MPAndroidChart", version.ref = "mpandroidchart" }
 relex-circleindicator = { module = "me.relex:circleindicator", version.ref = "circleindicator" }
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 retrofit2-converterMoshi = { module = "com.squareup.retrofit2:converter-moshi", version.ref = "converter-moshi" }

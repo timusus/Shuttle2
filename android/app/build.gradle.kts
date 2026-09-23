@@ -187,7 +187,6 @@ android {
         // Material
         implementation(libs.google.material)
 
-
         // Constraint Layout
         implementation(libs.androidx.constraintlayout)
 
@@ -231,12 +230,6 @@ android {
 
         // AndroidX Lifecycle
         implementation(libs.androidx.lifecycle.common.java8)
-
-        // Noise
-        implementation(libs.paramsen.noise)
-
-        // MpAndroidChart
-        implementation(libs.philjay.mpAndroidChart)
 
         // AndroidX Lifecycle
         implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -309,7 +302,6 @@ android {
         // Remote config
         implementation(project(":android:remote-config"))
 
-
         testImplementation(libs.junit)
 
         // WorkManager
@@ -328,26 +320,20 @@ apply(plugin = "com.google.gms.google-services")
 /**
  * Retrieves an Environment Variable, or throws [MissingEnvVarException]
  */
-fun getEnv(name: String): String {
-    return System.getenv(name) ?: throw MissingEnvVarException(name)
+fun getEnv(name: String): String = System.getenv(name) ?: throw MissingEnvVarException(name)
+
+fun isCiBuild(): Boolean = try {
+    getEnv("CI").toBoolean()
+} catch (e: MissingEnvVarException) {
+    println("'CI' Environment Variable not found. This build is presumed to be a non-CI build.")
+    false
 }
 
-fun isCiBuild(): Boolean {
-    return try {
-        getEnv("CI").toBoolean()
-    } catch (e: MissingEnvVarException) {
-        println("'CI' Environment Variable not found. This build is presumed to be a non-CI build.")
-        false
-    }
-}
-
-fun isReleaseBuild(): Boolean {
-    return try {
-        getEnv("CONFIGURATION") == "Release"
-    } catch (e: MissingEnvVarException) {
-        println("'CONFIGURATION' Environment Variable not found. This build is presumed to be a Debug build.")
-        false
-    }
+fun isReleaseBuild(): Boolean = try {
+    getEnv("CONFIGURATION") == "Release"
+} catch (e: MissingEnvVarException) {
+    println("'CONFIGURATION' Environment Variable not found. This build is presumed to be a Debug build.")
+    false
 }
 
 // Tag format: vYYMMDDNN (e.g., v26032801 -> versionCode 26032801, versionName 2026.03.28)
@@ -373,13 +359,9 @@ fun getVersionFromGitTag(): Pair<Int, String> {
     return code to name
 }
 
-fun versionName(): String {
-    return findProperty("versionName")?.toString() ?: getVersionFromGitTag().second
-}
+fun versionName(): String = findProperty("versionName")?.toString() ?: getVersionFromGitTag().second
 
-fun versionCode(): Int {
-    return findProperty("versionCode")?.toString()?.toIntOrNull() ?: getVersionFromGitTag().first
-}
+fun versionCode(): Int = findProperty("versionCode")?.toString()?.toIntOrNull() ?: getVersionFromGitTag().first
 
 class MissingEnvVarException(private val name: String) : Exception() {
     override val message: String

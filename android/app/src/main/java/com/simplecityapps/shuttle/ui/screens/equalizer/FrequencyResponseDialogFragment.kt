@@ -3,84 +3,90 @@ package com.simplecityapps.shuttle.ui.screens.equalizer
 import android.annotation.SuppressLint
 import android.app.Dialog
 import android.os.Bundle
-import android.util.TypedValue
 import android.view.View
-import androidx.annotation.OptIn
-import androidx.core.content.ContextCompat
-import androidx.core.content.res.use
-import androidx.core.math.MathUtils
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.unit.dp
 import androidx.core.view.isVisible
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.FragmentManager
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.media3.common.C
-import androidx.media3.common.audio.AudioProcessor
-import androidx.media3.common.util.UnstableApi
-import com.github.mikephil.charting.charts.LineChart
-import com.github.mikephil.charting.components.XAxis
-import com.github.mikephil.charting.data.Entry
-import com.github.mikephil.charting.data.LineData
-import com.github.mikephil.charting.data.LineDataSet
-import com.github.mikephil.charting.formatter.ValueFormatter
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.paramsen.noise.Noise
+import com.simplecityapps.playback.dsp.equalizer.BandProcessor
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
-import com.simplecityapps.playback.dsp.equalizer.fromDb
-import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
+import com.simplecityapps.playback.dsp.equalizer.frequencyResponseDb
+import com.simplecityapps.playback.dsp.equalizer.toNyquistBand
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.shuttle.R
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.view.CircularLoadingView
+import com.simplecityapps.shuttle.ui.theme.AppTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
-import kotlin.math.log10
 import kotlin.math.pow
-import kotlin.math.sqrt
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+/** Nominal sample rate the response is evaluated at - the analytical magnitude response is independent of it, provided every band's centre frequency stays below Nyquist. */
+private const val ANALYSIS_SAMPLE_RATE = 44100
+
+/** Number of log-spaced points plotted between 20 Hz and 20.5 kHz - enough to draw a smooth curve. */
+private const val ANALYSIS_POINT_COUNT = 300
+private const val ANALYSIS_MIN_FREQUENCY = 20.0
+private const val ANALYSIS_MAX_FREQUENCY = 20_500.0
+
 @AndroidEntryPoint
 class FrequencyResponseDialogFragment : DialogFragment() {
-    private var lineChart: LineChart by autoCleared()
+    private var composeView: ComposeView by autoCleared()
     private var loadingView: CircularLoadingView by autoCleared()
 
     @Inject
     lateinit var playbackPreferenceManager: PlaybackPreferenceManager
 
-    private lateinit var preset: Equalizer.Presets.Preset
+    @Inject
+    lateinit var generalPreferenceManager: GeneralPreferenceManager
 
-    private var textColor: Int = 0
-    private var lineColor: Int = 0
+    private lateinit var preset: Equalizer.Presets.Preset
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         preset = playbackPreferenceManager.preset
-
-        TypedValue().apply {
-            requireContext().theme.resolveAttribute(android.R.attr.textColorSecondary, this, true)
-            textColor = ContextCompat.getColor(requireContext(), resourceId)
-            requireContext().obtainStyledAttributes(data, intArrayOf(androidx.appcompat.R.attr.colorPrimary)).use { typedArray ->
-                lineColor = typedArray.getColor(0, ContextCompat.getColor(requireContext(), R.color.colorPrimary))
-            }
-        }
     }
 
     @SuppressLint("InflateParams")
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val view = View.inflate(requireContext(), R.layout.fragment_frequency_response_dialog, null)
 
-        lineChart = view.findViewById(R.id.lineChart)
+        composeView = view.findViewById(R.id.composeView)
 
         loadingView = view.findViewById(R.id.loadingView)
         loadingView.setState(CircularLoadingView.State.Loading(getString(R.string.loading)))
 
         lifecycleScope.launch {
-            val fft = calculateFft()
-            setData(fft)
+            val points = withContext(Dispatchers.Default) { calculateFrequencyResponse() }
+
+            composeView.setContent {
+                val theme by generalPreferenceManager.theme(lifecycleScope).collectAsStateWithLifecycle()
+                val accent by generalPreferenceManager.accent(lifecycleScope).collectAsStateWithLifecycle()
+
+                AppTheme(theme = theme, accent = accent) {
+                    FrequencyResponseChart(
+                        points = points.toImmutableList(),
+                        modifier = Modifier.fillMaxWidth().height(280.dp)
+                    )
+                }
+            }
+
             loadingView.setState(CircularLoadingView.State.None)
-            lineChart.isVisible = true
+            composeView.isVisible = true
         }
 
         return MaterialAlertDialogBuilder(requireContext())
@@ -90,99 +96,23 @@ class FrequencyResponseDialogFragment : DialogFragment() {
             .show()
     }
 
-    fun setData(data: Map<Float, Float>) {
-        val entries = data.map { Entry(log10(it.key), it.value) }
+    /**
+     * Evaluates the preset's frequency response analytically at log-spaced points, rather than
+     * measuring an FFT of an impulse response: exact rather than approximate, and it needs neither
+     * an FFT library nor a real [androidx.media3.common.audio.AudioProcessor].
+     */
+    private fun calculateFrequencyResponse(): List<FrequencyResponsePoint> {
+        val bandProcessors = preset.bands.map { band ->
+            BandProcessor(band.toNyquistBand(), sampleRate = ANALYSIS_SAMPLE_RATE, channelCount = 1, referenceGain = 0.0)
+        }
+        val preAmpGainDb = playbackPreferenceManager.preAmpGain
 
-        val dataset = LineDataSet(entries, getString(R.string.dsp_dialog_frequency_response_title))
-        dataset.mode = LineDataSet.Mode.HORIZONTAL_BEZIER
-        dataset.lineWidth = 1f
-        dataset.setDrawCircles(false)
-        dataset.setDrawHorizontalHighlightIndicator(false)
-        dataset.setDrawVerticalHighlightIndicator(false)
-        dataset.color = lineColor
-
-        val chartData = LineData(dataset)
-        chartData.setDrawValues(false)
-        lineChart.data = chartData
-
-        lineChart.axisLeft.textColor = textColor
-        lineChart.axisLeft.axisMinimum = -20f
-        lineChart.axisLeft.axisMaximum = 20f
-        lineChart.axisLeft.labelCount = 10
-        lineChart.axisLeft.valueFormatter =
-            object : ValueFormatter() {
-                override fun getFormattedValue(value: Float): String = "%.1f".format(value) + "dB"
-            }
-        lineChart.axisRight.isEnabled = false
-
-        lineChart.xAxis.textColor = textColor
-        lineChart.xAxis.axisMinimum = 1f
-        lineChart.xAxis.axisMaximum = log10(20500f)
-        lineChart.xAxis.position = XAxis.XAxisPosition.BOTTOM
-        lineChart.xAxis.setDrawAxisLine(false)
-        lineChart.xAxis.setLabelCount(8, true)
-        lineChart.xAxis.valueFormatter =
-            object : ValueFormatter() {
-                override fun getFormattedValue(value: Float): String {
-                    val unscaled = 10f.pow(value)
-                    return if (unscaled >= 1000) {
-                        "%.0f".format(unscaled / 1000) + " kHz"
-                    } else {
-                        "%.0f".format(unscaled) + " Hz"
-                    }
-                }
-            }
-
-        lineChart.description.isEnabled = false
-        lineChart.setScaleEnabled(true)
-        lineChart.isDragEnabled = true
-        lineChart.legend.isEnabled = false
-        lineChart.setNoDataText("")
-
-        lineChart.notifyDataSetChanged()
-
-        lineChart.invalidate()
-    }
-
-    @OptIn(UnstableApi::class)
-    private suspend fun calculateFft(): Map<Float, Float> = withContext(Dispatchers.IO) {
-        val audioProcessor = EqualizerAudioProcessor(true)
-        audioProcessor.configure(AudioProcessor.AudioFormat(44100, 1, C.ENCODING_PCM_16BIT))
-        audioProcessor.flush(AudioProcessor.StreamMetadata.DEFAULT)
-        audioProcessor.preset = preset
-
-        val size = 2.0.pow(14).toInt()
-
-        val noise = Noise.real(size)
-
-        var src = FloatArray(size)
-        src[0] = 1f
-
-        val gain = playbackPreferenceManager.preAmpGain
-        val delta = gain.fromDb()
-
-        src =
-            src.map { value ->
-                var newValue = value
-
-                if (gain != 0.0) {
-                    newValue = MathUtils.clamp((newValue * delta), Short.MIN_VALUE.toDouble(), Short.MAX_VALUE.toDouble()).toFloat()
-                }
-
-                for (band in audioProcessor.bandProcessors) {
-                    newValue = band.processSample(newValue, 0)
-                }
-                newValue
-            }.toFloatArray()
-
-        val dst = FloatArray(size + 2)
-
-        noise.fft(src, dst)
-
-        (0 until size / 2).associateBy(
-            { index -> ((index / (size / 2f)) * (44100 / 2f)) },
-            { index -> (20f * log10(sqrt(((dst[index * 2]).pow(2)) + ((dst[index * 2 + 1]).pow(2))))) }
-        )
+        val logSpan = ANALYSIS_MAX_FREQUENCY / ANALYSIS_MIN_FREQUENCY
+        return (0 until ANALYSIS_POINT_COUNT).map { index ->
+            val frequency = ANALYSIS_MIN_FREQUENCY * logSpan.pow(index.toDouble() / (ANALYSIS_POINT_COUNT - 1))
+            val gainDb = frequencyResponseDb(bandProcessors, preAmpGainDb, frequency, ANALYSIS_SAMPLE_RATE)
+            FrequencyResponsePoint(frequency.toFloat(), gainDb.toFloat())
+        }
     }
 
     fun show(fragmentManager: FragmentManager) {
