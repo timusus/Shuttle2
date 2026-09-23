@@ -70,6 +70,10 @@
     {
       "text": "The resume position after the app is closed is now correct after seeking back or restarting a track",
       "commits": []
+    },
+    {
+      "text": "Fixed signing in to and playing music from Jellyfin 12 servers",
+      "commits": []
     }
   ]
 }

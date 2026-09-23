@@ -28,7 +28,7 @@ constructor(
         val result: NetworkResult<Item> =
             itemsService.item(
                 address,
-                authenticatedCredentials.accessToken,
+                jellyfinAuthenticationManager.authorizationHeader(authenticatedCredentials),
                 authenticatedCredentials.userId,
                 itemId
             )
@@ -49,7 +49,7 @@ constructor(
         val result: NetworkResult<Item> =
             itemsService.item(
                 address,
-                authenticatedCredentials.accessToken,
+                jellyfinAuthenticationManager.authorizationHeader(authenticatedCredentials),
                 authenticatedCredentials.userId,
                 itemId
             )

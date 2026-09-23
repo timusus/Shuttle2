@@ -8,6 +8,7 @@ import com.simplecityapps.provider.jellyfin.http.AuthenticationResult
 import com.simplecityapps.provider.jellyfin.http.LoginCredentials
 import com.simplecityapps.provider.jellyfin.http.UserService
 import com.simplecityapps.provider.jellyfin.http.authenticate
+import com.simplecityapps.provider.jellyfin.http.mediaBrowserAuthorization
 import java.util.UUID
 import timber.log.Timber
 
@@ -30,6 +31,9 @@ class JellyfinAuthenticationManager(
     }
 
     fun getAddress(): String? = credentialStore.address
+
+    /** The `Authorization` header value for requests made with [authenticatedCredentials]. */
+    fun authorizationHeader(authenticatedCredentials: AuthenticatedCredentials): String = mediaBrowserAuthorization(deviceId, authenticatedCredentials.accessToken)
 
     suspend fun authenticate(
         address: String,
@@ -83,6 +87,6 @@ class JellyfinAuthenticationManager(
             "&EnableRedirection=true" +
             "&EnableRemoteMedia=true" +
             "&AudioCodec=aac" +
-            "&api_key=${authenticatedCredentials.accessToken}"
+            "&ApiKey=${authenticatedCredentials.accessToken}"
     }
 }

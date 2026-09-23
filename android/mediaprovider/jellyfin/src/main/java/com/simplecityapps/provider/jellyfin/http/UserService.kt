@@ -1,6 +1,5 @@
 package com.simplecityapps.provider.jellyfin.http
 
-import com.jaredrummler.android.device.DeviceName
 import com.simplecityapps.networking.retrofit.NetworkResult
 import retrofit2.http.Body
 import retrofit2.http.Header
@@ -25,19 +24,12 @@ suspend fun UserService.authenticate(
     url: String,
     username: String,
     password: String,
-    deviceId: String,
-    deviceName: String =
-        try {
-            DeviceName.getDeviceName()
-        } catch (e: Exception) {
-            "Unknown"
-        },
-    version: String = "1.0"
+    deviceId: String
 ): NetworkResult<AuthenticationResult> = authenticateImpl(
     "$url/Users/AuthenticateByName",
     mapOf(
         "username" to username,
         "pw" to password
     ),
-    "MediaBrowser Client=\"Shuttle2.0\", Device=\"$deviceName\", DeviceId=\"$deviceId\", Version=\"$version\""
+    mediaBrowserAuthorization(deviceId)
 )
