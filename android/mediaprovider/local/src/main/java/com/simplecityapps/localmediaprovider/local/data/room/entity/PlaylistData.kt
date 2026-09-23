@@ -13,6 +13,7 @@ data class PlaylistData(
     @PrimaryKey(autoGenerate = true) var id: Long = 0,
     @ColumnInfo(name = "name") val name: String,
     @ColumnInfo(name = "sortOrder") val sortOrder: PlaylistSongSortOrder,
+    @ColumnInfo(name = "sortDescending", defaultValue = "0") val sortDescending: Boolean = false,
     @ColumnInfo(name = "mediaProvider") var mediaProviderType: MediaProviderType = MediaProviderType.Shuttle,
     @ColumnInfo(name = "externalId") val externalId: String? = null
 )

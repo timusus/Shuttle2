@@ -21,10 +21,10 @@ abstract class PlaylistDataDao {
 
     @Query(
         """
-            SELECT playlists.*, count(songs.id) as songCount, sum(songs.duration) as duration, playlists.sortOrder as sortOrder, playlists.mediaProvider, playlists.externalId
-            FROM playlists 
-            LEFT JOIN playlist_song_join ON playlists.id = playlist_song_join.playlistId 
-            LEFT JOIN songs ON songs.id = playlist_song_join.songId AND songs.blacklisted == 0 
+            SELECT playlists.*, count(songs.id) as songCount, sum(songs.duration) as duration, playlists.sortOrder as sortOrder, playlists.sortDescending as sortDescending, playlists.mediaProvider, playlists.externalId
+            FROM playlists
+            LEFT JOIN playlist_song_join ON playlists.id = playlist_song_join.playlistId
+            LEFT JOIN songs ON songs.id = playlist_song_join.songId AND songs.blacklisted == 0
             GROUP BY playlists.id
             ORDER BY playlists.name;
             """
@@ -39,11 +39,11 @@ abstract class PlaylistDataDao {
 
     @Query(
         """
-            SELECT playlists.*, count(songs.id) as songCount, sum(songs.duration) as duration, playlists.sortOrder as sortOrder, playlists.mediaProvider, playlists.externalId
-            FROM playlists 
-            LEFT JOIN playlist_song_join ON playlists.id = playlist_song_join.playlistId 
-            LEFT JOIN songs ON songs.id = playlist_song_join.songId AND songs.blacklisted == 0 
-            WHERE playlists.id = :playlistId 
+            SELECT playlists.*, count(songs.id) as songCount, sum(songs.duration) as duration, playlists.sortOrder as sortOrder, playlists.sortDescending as sortDescending, playlists.mediaProvider, playlists.externalId
+            FROM playlists
+            LEFT JOIN playlist_song_join ON playlists.id = playlist_song_join.playlistId
+            LEFT JOIN songs ON songs.id = playlist_song_join.songId AND songs.blacklisted == 0
+            WHERE playlists.id = :playlistId
             GROUP BY playlists.id 
             ORDER BY playlists.name
             """
@@ -68,6 +68,7 @@ data class PlaylistEntity(
     val songCount: Int,
     val duration: Int?,
     val sortOrder: PlaylistSongSortOrder,
+    val sortDescending: Boolean,
     val mediaProvider: MediaProviderType,
     val externalId: String?
 )
@@ -78,6 +79,7 @@ fun PlaylistEntity.toPlaylist(): Playlist = Playlist(
     songCount = songCount,
     duration = duration ?: 0,
     sortOrder = sortOrder,
+    sortDescending = sortDescending,
     mediaProvider = mediaProvider,
     externalId = externalId
 )

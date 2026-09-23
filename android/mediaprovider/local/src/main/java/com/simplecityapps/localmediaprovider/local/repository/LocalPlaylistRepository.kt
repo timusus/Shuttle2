@@ -137,7 +137,8 @@ class LocalPlaylistRepository(
 
     override fun getSongsForPlaylist(playlist: Playlist): Flow<List<PlaylistSong>> = playlistSongJoinDao.getSongsForPlaylist(playlist.id)
         .map { playlistSong ->
-            playlistSong.sortedWith(playlist.sortOrder.comparator)
+            val comparator = playlist.sortOrder.comparator
+            playlistSong.sortedWith(if (playlist.sortDescending) comparator.reversed() else comparator)
         }
 
     override suspend fun deletePlaylist(playlist: Playlist) = playlistDataDao.delete(playlist.id)
@@ -155,13 +156,15 @@ class LocalPlaylistRepository(
             name = name,
             externalId = playlist.externalId,
             mediaProviderType = playlist.mediaProvider,
-            sortOrder = playlist.sortOrder
+            sortOrder = playlist.sortOrder,
+            sortDescending = playlist.sortDescending
         )
     )
 
     override suspend fun updatePlaylistSortOder(
         playlist: Playlist,
-        sortOrder: PlaylistSongSortOrder
+        sortOrder: PlaylistSongSortOrder,
+        sortDescending: Boolean
     ) {
         playlistDataDao.update(
             PlaylistData(
@@ -169,7 +172,8 @@ class LocalPlaylistRepository(
                 name = playlist.name,
                 externalId = playlist.externalId,
                 mediaProviderType = playlist.mediaProvider,
-                sortOrder = sortOrder
+                sortOrder = sortOrder,
+                sortDescending = sortDescending
             )
         )
     }
@@ -200,6 +204,7 @@ class LocalPlaylistRepository(
                 id = playlist.id,
                 name = playlist.name,
                 sortOrder = playlist.sortOrder,
+                sortDescending = playlist.sortDescending,
                 mediaProviderType = mediaProviderType,
                 externalId = playlist.externalId
             )
@@ -215,6 +220,7 @@ class LocalPlaylistRepository(
                 id = playlist.id,
                 name = playlist.name,
                 sortOrder = playlist.sortOrder,
+                sortDescending = playlist.sortDescending,
                 mediaProviderType = playlist.mediaProvider,
                 externalId = externalId
             )
