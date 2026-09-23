@@ -31,11 +31,14 @@ class AggregateMediaInfoProvider(val providers: MutableSet<MediaInfoProvider> = 
         song: Song,
         castCompatibilityMode: Boolean
     ): MediaInfo {
+        // MediaStore songs carry raw file paths, which may contain '#' or '?', so they're built as
+        // file URIs rather than parsed. Everything else (content://, emby://, jellyfin://, plex://)
+        // is already a URI, and parsing keeps its scheme so the matching provider handles it.
         val uri: Uri =
-            if (song.path.startsWith("content://")) {
-                Uri.parse(song.path)
-            } else {
+            if (song.path.startsWith("/")) {
                 Uri.fromFile(File(song.path))
+            } else {
+                Uri.parse(song.path)
             }
         return providers.firstOrNull { it.handles(uri) }?.getMediaInfo(song, castCompatibilityMode)
             ?: MediaInfo(path = uri, mimeType = song.mimeType, isRemote = false)

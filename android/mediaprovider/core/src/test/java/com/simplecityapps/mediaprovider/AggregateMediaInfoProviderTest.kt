@@ -1,0 +1,82 @@
+package com.simplecityapps.mediaprovider
+
+import android.net.Uri
+import com.simplecityapps.shuttle.model.MediaProviderType
+import com.simplecityapps.shuttle.model.Song
+import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.test.runTest
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+
+@RunWith(RobolectricTestRunner::class)
+class AggregateMediaInfoProviderTest {
+    /** Stands in for a remote provider: claims its scheme and returns a stream URL. */
+    private class SchemeProvider(private val scheme: String) : MediaInfoProvider {
+        override fun handles(uri: Uri): Boolean = uri.scheme == scheme
+
+        override suspend fun getMediaInfo(
+            song: Song,
+            castCompatibilityMode: Boolean
+        ): MediaInfo = MediaInfo(Uri.parse("https://$scheme.example/stream"), song.mimeType, isRemote = true)
+    }
+
+    private val provider = AggregateMediaInfoProvider(
+        mutableSetOf(SchemeProvider("emby"), SchemeProvider("jellyfin"), SchemeProvider("plex"))
+    )
+
+    @Test
+    fun `remote song paths reach the provider for their scheme`() = runTest {
+        for (scheme in listOf("emby", "jellyfin", "plex")) {
+            val info = provider.getMediaInfo(createSong("$scheme://item/107898"))
+
+            info.path.toString() shouldBe "https://$scheme.example/stream"
+            info.isRemote shouldBe true
+        }
+    }
+
+    @Test
+    fun `media store file paths with a hash stay file uris`() = runTest {
+        val info = provider.getMediaInfo(createSong("/storage/emulated/0/Music/Track #1.mp3"))
+
+        info.path.scheme shouldBe "file"
+        info.path.path shouldBe "/storage/emulated/0/Music/Track #1.mp3"
+        info.isRemote shouldBe false
+    }
+
+    @Test
+    fun `content uris are parsed as they are`() = runTest {
+        val path = "content://com.android.externalstorage.documents/document/primary%3AMusic%2Fa.flac"
+
+        provider.getMediaInfo(createSong(path)).path.toString() shouldBe path
+    }
+
+    private fun createSong(path: String) = Song(
+        id = 0,
+        name = "Song",
+        albumArtist = "Artist",
+        artists = listOf("Artist"),
+        album = "Album",
+        track = null,
+        disc = null,
+        duration = 180_000,
+        date = null,
+        genres = emptyList(),
+        path = path,
+        size = 0,
+        mimeType = "audio/mpeg",
+        lastModified = null,
+        lastPlayed = null,
+        lastCompleted = null,
+        playCount = 0,
+        playbackPosition = 0,
+        blacklisted = false,
+        mediaProvider = MediaProviderType.Shuttle,
+        lyrics = null,
+        grouping = null,
+        bitRate = null,
+        bitDepth = null,
+        sampleRate = null,
+        channelCount = null
+    )
+}

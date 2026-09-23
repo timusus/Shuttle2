@@ -72,4 +72,6 @@ dependencies {
     // Testing
     testImplementation libs.junit
     testImplementation libs.kotest
+    testImplementation libs.robolectric
+    testImplementation(libs.kotlinx.coroutinesTest)
 }
