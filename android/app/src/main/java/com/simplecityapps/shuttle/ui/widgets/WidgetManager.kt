@@ -1,6 +1,8 @@
 package com.simplecityapps.shuttle.ui.widgets
 
+import android.content.ComponentCallbacks
 import android.content.Context
+import android.content.res.Configuration
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.updateAll
 import com.simplecityapps.playback.PlaybackOperations
@@ -13,6 +15,7 @@ import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -45,6 +48,7 @@ constructor(
     private val playbackManager: PlaybackOperations,
     private val queueManager: QueueOperations,
     private val artworkStore: WidgetArtworkStore,
+    private val preferenceManager: GeneralPreferenceManager,
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope
 ) : PlaybackWatcherCallback,
     QueueChangeCallback {
@@ -52,9 +56,39 @@ constructor(
 
     private var updateJob: Job? = null
 
+    private var lastConfiguration: Configuration? = null
+
+    /**
+     * Redraws the widgets when the system switches between light and dark, or its palette changes.
+     *
+     * On API 31+ this is belt and braces: the widget hands the launcher both the light and dark background
+     * (see `NowPlayingWidget.backgroundColor`), and the launcher picks. Below API 31 colours are resolved when
+     * the widget is drawn, so a switch needs a redraw. If the app isn't running, the next update catches up.
+     */
+    private val configurationCallbacks =
+        object : ComponentCallbacks {
+            override fun onConfigurationChanged(newConfig: Configuration) {
+                val previous = lastConfiguration
+                lastConfiguration = Configuration(newConfig)
+                if (previous == null) return
+                val nightChanged = (previous.uiMode xor newConfig.uiMode) and Configuration.UI_MODE_NIGHT_MASK != 0
+                val paletteChanged = previous.diff(newConfig) and CONFIG_ASSETS_PATHS != 0
+                if (nightChanged || paletteChanged) {
+                    appCoroutineScope.launch { NowPlayingWidget().updateAll(context) }
+                }
+            }
+
+            @Deprecated("Deprecated in Java")
+            override fun onLowMemory() {}
+        }
+
     fun registerCallbacks() {
         playbackWatcher.addCallback(this)
         queueWatcher.addCallback(this)
+        if (lastConfiguration == null) {
+            lastConfiguration = Configuration(context.resources.configuration)
+            context.registerComponentCallbacks(configurationCallbacks)
+        }
         if (updateJob == null) {
             updateJob =
                 appCoroutineScope.launch {
@@ -71,12 +105,23 @@ constructor(
     fun removeCallbacks() {
         playbackWatcher.removeCallback(this)
         queueWatcher.removeCallback(this)
+        context.unregisterComponentCallbacks(configurationCallbacks)
+        lastConfiguration = null
         updateJob?.cancel()
         updateJob = null
     }
 
     fun requestUpdate() {
         updateRequests.trySend(Unit)
+    }
+
+    /** Applies a new background opacity, a percentage, to every widget straight away. */
+    fun onBackgroundOpacityChanged(opacityPercent: Int) {
+        appCoroutineScope.launch {
+            val store = NowPlayingWidgetStateDefinition.getDataStore(context, "")
+            store.updateData { it.copy(backgroundOpacity = opacityPercent) }
+            NowPlayingWidget().updateAll(context)
+        }
     }
 
     private suspend fun updateWidgets() {
@@ -86,7 +131,7 @@ constructor(
 
         val song = queueManager.getCurrentItem()?.song
         if (song == null) {
-            publish(NowPlayingWidgetState.Idle)
+            publish(NowPlayingWidgetState.Idle.copy(backgroundOpacity = preferenceManager.widgetBackgroundOpacity))
             artworkStore.prune(emptyList())
             return
         }
@@ -118,7 +163,8 @@ constructor(
         playbackState = playbackManager.playbackState(),
         shuffleMode = queueManager.getShuffleMode(),
         repeatMode = queueManager.getRepeatMode(),
-        artworkPath = artworkPath
+        artworkPath = artworkPath,
+        backgroundOpacity = preferenceManager.widgetBackgroundOpacity
     )
 
     private suspend fun publish(state: NowPlayingWidgetState) {
@@ -163,6 +209,9 @@ constructor(
         private const val UPDATE_DEBOUNCE_MS = 150L
         private const val ARTWORK_WAIT_MS = 1000L
         private const val ARTWORK_MAX_WAIT_MS = 10_000L
+
+        /** `ActivityInfo.CONFIG_ASSETS_PATHS`, hidden: set when a theme overlay such as the system palette changes. */
+        private const val CONFIG_ASSETS_PATHS = 0x80000000.toInt()
     }
 }
 

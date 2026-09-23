@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Widget corner radii. API 31+ uses the launcher's own values. -->
+    <!-- The widget corner radius. API 31+ uses the launcher's own value. -->
     <dimen name="widget_background_radius">20dp</dimen>
-    <dimen name="widget_inner_radius">10dp</dimen>
+    <!-- Shapes inside the widget below API 31: the background radius less the 12dp padding, so the curves are
+         concentric. The widget computes the same from the launcher's radius on API 31+. -->
+    <dimen name="widget_inner_radius">8dp</dimen>
 </resources>

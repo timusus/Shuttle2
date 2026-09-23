@@ -9,4 +9,6 @@
     <color name="widget_preview_on_primary_container">#FFFFFFFF</color>
     <color name="widget_preview_secondary_container">#FFC0DCFF</color>
     <color name="widget_preview_on_secondary_container">#FF224565</color>
+    <!-- Behind white text over artwork: over pure white art, white text still gets about 5.7:1. -->
+    <color name="widget_scrim">#99000000</color>
 </resources>

@@ -6,6 +6,7 @@ import com.simplecityapps.playback.queue.QueueManager
 import io.kotest.matchers.shouldBe
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.io.DataOutputStream
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -60,11 +61,46 @@ class NowPlayingWidgetStateTest {
     fun `state survives a round trip through the serializer`() = runTest {
         listOf(
             NowPlayingWidgetState.Idle,
+            NowPlayingWidgetState.Idle.copy(backgroundOpacity = 40),
             stateFor(shuffleMode = QueueManager.ShuffleMode.On, repeatMode = QueueManager.RepeatMode.One, artworkPath = "/art.jpg")
         ).forEach { state ->
             val output = ByteArrayOutputStream()
             NowPlayingWidgetStateSerializer.writeTo(state, output)
             NowPlayingWidgetStateSerializer.readFrom(ByteArrayInputStream(output.toByteArray())) shouldBe state
         }
+    }
+
+    @Test
+    fun `state saved before the opacity setting reads as fully opaque`() = runTest {
+        val output = ByteArrayOutputStream()
+        DataOutputStream(output).apply {
+            writeInt(1)
+            writeBoolean(true)
+            writeUTF("Title")
+            writeUTF("Artist")
+            writeUTF("Album")
+            writeBoolean(true)
+            writeBoolean(false)
+            writeInt(WidgetRepeatMode.All.ordinal)
+            writeUTF("/art.jpg")
+            flush()
+        }
+        NowPlayingWidgetStateSerializer.readFrom(ByteArrayInputStream(output.toByteArray())) shouldBe
+            NowPlayingWidgetState(
+                hasTrack = true,
+                title = "Title",
+                artist = "Artist",
+                album = "Album",
+                isPlaying = true,
+                repeatMode = WidgetRepeatMode.All,
+                artworkPath = "/art.jpg",
+                backgroundOpacity = 100
+            )
+    }
+
+    @Test
+    fun `the opacity setting carries into the idle state`() {
+        nowPlayingWidgetState(null, PlaybackState.Playing, QueueManager.ShuffleMode.Off, QueueManager.RepeatMode.Off, null, backgroundOpacity = 60)
+            .backgroundOpacity shouldBe 60
     }
 }

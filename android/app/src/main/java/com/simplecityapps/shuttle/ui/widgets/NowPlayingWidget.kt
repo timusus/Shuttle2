@@ -2,11 +2,14 @@ package com.simplecityapps.shuttle.ui.widgets
 
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
+import android.graphics.Bitmap
 import android.os.Build
 import androidx.annotation.DrawableRes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
@@ -29,6 +32,7 @@ import androidx.glance.appwidget.components.CircleIconButton
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
 import androidx.glance.background
+import androidx.glance.color.ColorProvider
 import androidx.glance.currentState
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
@@ -60,7 +64,9 @@ import com.simplecityapps.shuttle.ui.theme.ShuttleTheme
  * [NowPlayingWidgetState]; [WidgetManager] writes that state and asks for a redraw.
  */
 class NowPlayingWidget : GlanceAppWidget() {
-    override val sizeMode = SizeMode.Responsive(widgetBreakpoints)
+    // Exact rather than responsive: the artwork is sized to fill the space up to the padding, which only
+    // works when the layout knows the widget's real size rather than the nearest breakpoint below it.
+    override val sizeMode = SizeMode.Exact
 
     override val stateDefinition = NowPlayingWidgetStateDefinition
 
@@ -95,35 +101,37 @@ private fun NowPlayingContent(
     state: NowPlayingWidgetState,
     layout: WidgetLayout
 ) {
-    WidgetContainer(padding = layout.padding) {
+    WidgetContainer(padding = layout.padding, opacity = state.backgroundOpacity) {
         if (!state.hasTrack) {
             IdleContent(layout)
         } else {
             when (layout.mode) {
                 WidgetMode.Row -> RowContent(state, layout)
                 WidgetMode.Card -> CardContent(state, layout)
-                WidgetMode.Large -> LargeContent(state, layout)
-                WidgetMode.Tile -> TileContent(state, layout)
+                WidgetMode.Split -> SplitContent(state, layout)
+                WidgetMode.Hero -> HeroContent(state, layout)
             }
         }
     }
 }
 
+/**
+ * The widget's background, rounded to the launcher's radius, with [padding] on every side of [content]. The
+ * content starts at the top left, so nothing is centred away from the edge it's anchored to.
+ */
 @Composable
 private fun WidgetContainer(
     padding: Dp,
+    opacity: Int,
     content: @Composable () -> Unit
 ) {
     val background =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             GlanceModifier
-                .background(GlanceTheme.colors.widgetBackground)
+                .background(backgroundColor(opacity))
                 .cornerRadius(android.R.dimen.system_app_widget_background_radius)
         } else {
-            GlanceModifier.background(
-                imageProvider = ImageProvider(R.drawable.widget_background),
-                colorFilter = ColorFilter.tint(GlanceTheme.colors.widgetBackground)
-            )
+            GlanceModifier
         }
     Box(
         modifier =
@@ -132,11 +140,47 @@ private fun WidgetContainer(
             .appWidgetBackground()
             .then(background)
             .clickable(actionStartActivity<MainActivity>())
-            .padding(padding),
-        contentAlignment = Alignment.CenterStart
     ) {
-        content()
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            // Views can't be clipped below API 31, so the rounded background is a drawable. A background
+            // modifier can't be translucent, but an image can.
+            Image(
+                provider = ImageProvider(R.drawable.widget_background),
+                contentDescription = null,
+                alpha = widgetBackgroundAlpha(opacity),
+                modifier = GlanceModifier.fillMaxSize(),
+                contentScale = ContentScale.FillBounds,
+                colorFilter = ColorFilter.tint(GlanceTheme.colors.widgetBackground)
+            )
+        }
+        Box(modifier = GlanceModifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopStart) {
+            content()
+        }
     }
+}
+
+/**
+ * The theme's widget background at the opacity setting. Glance can't add alpha to a theme colour, so below
+ * full opacity the theme colour is resolved here for light and dark, and the launcher picks between them as
+ * the system switches, just as it does for the theme colour itself.
+ */
+@Composable
+private fun backgroundColor(opacity: Int): ColorProvider {
+    val base = GlanceTheme.colors.widgetBackground
+    val alpha = widgetBackgroundAlpha(opacity)
+    if (alpha >= 1f) return base
+    val context = LocalContext.current
+    return ColorProvider(
+        day = base.getColor(context.withNightMode(false)).copy(alpha = alpha),
+        night = base.getColor(context.withNightMode(true)).copy(alpha = alpha)
+    )
+}
+
+private fun Context.withNightMode(night: Boolean): Context {
+    val configuration = Configuration(resources.configuration)
+    configuration.uiMode = configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK.inv() or
+        if (night) Configuration.UI_MODE_NIGHT_YES else Configuration.UI_MODE_NIGHT_NO
+    return createConfigurationContext(configuration)
 }
 
 // Layouts
@@ -148,13 +192,13 @@ private fun RowContent(
 ) {
     Row(modifier = GlanceModifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
         if (layout.showArt) {
-            Artwork(state.artworkPath, layout.artSize)
-            Spacer(GlanceModifier.width(WidgetDimens.gap))
+            Artwork(state.artworkPath, layout.art, layout.padding)
+            Spacer(GlanceModifier.width(layout.padding))
         }
         if (layout.textLines == 0) {
             ButtonRow(layout.buttons, state)
         } else {
-            TrackText(state, lines = layout.textLines, large = false, modifier = GlanceModifier.defaultWeight())
+            TrackText(state, layout, modifier = GlanceModifier.defaultWeight())
             layout.buttons.forEach { ControlButton(it, state) }
         }
     }
@@ -165,52 +209,80 @@ private fun CardContent(
     state: NowPlayingWidgetState,
     layout: WidgetLayout
 ) {
-    Row(modifier = GlanceModifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier = GlanceModifier.fillMaxSize()) {
         if (layout.showArt) {
-            Artwork(state.artworkPath, layout.artSize)
-            Spacer(GlanceModifier.width(WidgetDimens.gap))
+            Artwork(state.artworkPath, layout.art, layout.padding)
+            Spacer(GlanceModifier.width(layout.padding))
         }
         Column(modifier = GlanceModifier.defaultWeight().fillMaxHeight()) {
-            TrackText(
-                state,
-                lines = layout.textLines,
-                large = false,
-                modifier = GlanceModifier.fillMaxWidth().defaultWeight().padding(start = 4.dp, end = 4.dp)
-            )
+            TrackText(state, layout, modifier = GlanceModifier.fillMaxWidth().defaultWeight())
             ButtonRow(layout.buttons, state)
         }
     }
 }
 
 @Composable
-private fun LargeContent(
+private fun SplitContent(
     state: NowPlayingWidgetState,
     layout: WidgetLayout
 ) {
     Column(modifier = GlanceModifier.fillMaxSize()) {
-        Row(modifier = GlanceModifier.fillMaxWidth().defaultWeight(), verticalAlignment = Alignment.CenterVertically) {
-            Artwork(state.artworkPath, layout.artSize)
-            Spacer(GlanceModifier.width(WidgetDimens.gap + 4.dp))
-            TrackText(state, lines = layout.textLines, large = layout.textLines >= 3, modifier = GlanceModifier.defaultWeight())
+        Row(modifier = GlanceModifier.fillMaxWidth().defaultWeight()) {
+            Artwork(state.artworkPath, layout.art, layout.padding)
+            Spacer(GlanceModifier.width(layout.padding))
+            TrackText(state, layout, modifier = GlanceModifier.defaultWeight())
         }
         Spacer(GlanceModifier.height(WidgetDimens.gap))
         ButtonRow(layout.buttons, state)
     }
 }
 
+/**
+ * The artwork fills the widget, with the text and buttons along its bottom. Over artwork they sit on a dark
+ * scrim in white, so they read over any picture; over the placeholder they use its theme colours instead.
+ */
 @Composable
-private fun TileContent(
+private fun HeroContent(
     state: NowPlayingWidgetState,
     layout: WidgetLayout
 ) {
-    Column(modifier = GlanceModifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(modifier = GlanceModifier.fillMaxWidth().defaultWeight(), contentAlignment = Alignment.Center) {
-            Artwork(state.artworkPath, layout.artSize)
+    val bitmap = artworkBitmap(state.artworkPath, layout.art, layout.padding)
+    val colors = if (bitmap != null) ContentColors.onArt() else ContentColors.onPlaceholder()
+    val radius = innerRadius(layout.padding)
+    val clip = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) GlanceModifier.cornerRadius(radius) else GlanceModifier
+    Box(modifier = GlanceModifier.fillMaxSize().then(clip)) {
+        if (bitmap != null) {
+            Image(
+                provider = ImageProvider(bitmap),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = GlanceModifier.fillMaxSize()
+            )
+        } else {
+            ArtworkPlaceholder(layout.art, layout.padding, noteAlignment = Alignment.TopCenter)
         }
-        Spacer(GlanceModifier.height(WidgetDimens.gap))
-        TrackText(state, lines = layout.textLines, large = false, modifier = GlanceModifier.fillMaxWidth().padding(horizontal = 4.dp))
-        Spacer(GlanceModifier.height(WidgetDimens.gap))
-        ButtonRow(layout.buttons, state)
+        Column(modifier = GlanceModifier.fillMaxSize(), verticalAlignment = Alignment.Bottom) {
+            val scrim = bitmap != null
+            if (scrim) {
+                Spacer(GlanceModifier.fillMaxWidth().height(WidgetDimens.scrimFade).background(ImageProvider(R.drawable.widget_scrim_fade)))
+            }
+            Column(
+                modifier =
+                GlanceModifier
+                    .fillMaxWidth()
+                    .then(if (scrim) GlanceModifier.background(ImageProvider(R.drawable.widget_scrim)) else GlanceModifier)
+                    .padding(bottom = WidgetDimens.gap)
+            ) {
+                TrackText(
+                    state,
+                    layout,
+                    colors = colors,
+                    modifier = GlanceModifier.fillMaxWidth().padding(start = layout.padding, end = layout.padding)
+                )
+                Spacer(GlanceModifier.height(WidgetDimens.gap / 2))
+                ButtonRow(layout.buttons, state, colors)
+            }
+        }
     }
 }
 
@@ -231,7 +303,7 @@ private fun IdleContent(layout: WidgetLayout) {
             Text(
                 text = context.getString(R.string.app_name),
                 maxLines = 1,
-                style = titleStyle(large = !compact)
+                style = titleStyle(large = !compact, color = GlanceTheme.colors.onSurface)
             )
             Text(
                 text = context.getString(R.string.widget_idle_action),
@@ -240,7 +312,7 @@ private fun IdleContent(layout: WidgetLayout) {
             )
         }
     }
-    if (layout.mode == WidgetMode.Tile || layout.mode == WidgetMode.Large && layout.buttons.size < 5) {
+    if (layout.mode == WidgetMode.Hero) {
         Column(modifier = GlanceModifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically, horizontalAlignment = Alignment.CenterHorizontally) {
             content()
             Spacer(GlanceModifier.height(WidgetDimens.gap))
@@ -249,7 +321,7 @@ private fun IdleContent(layout: WidgetLayout) {
     } else {
         Row(modifier = GlanceModifier.fillMaxSize(), verticalAlignment = Alignment.CenterVertically) {
             content()
-            Spacer(GlanceModifier.width(WidgetDimens.gap + 4.dp))
+            Spacer(GlanceModifier.width(layout.padding))
             text(GlanceModifier.defaultWeight(), false)
         }
     }
@@ -257,101 +329,196 @@ private fun IdleContent(layout: WidgetLayout) {
 
 // Pieces
 
-@Composable
-private fun TrackText(
-    state: NowPlayingWidgetState,
-    lines: Int,
-    large: Boolean,
-    modifier: GlanceModifier
+/** Colours for text and controls, which change when they're drawn over artwork. */
+private data class ContentColors(
+    val title: ColorProvider,
+    val subtitle: ColorProvider,
+    val icon: ColorProvider,
+    val toggleOff: ColorProvider,
+    val toggleOn: ColorProvider,
+    val playBackground: ColorProvider,
+    val playContent: ColorProvider
 ) {
-    Column(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
-        Text(text = state.title, maxLines = 1, style = titleStyle(large))
-        if (state.artist.isNotEmpty()) {
-            Text(text = state.artist, maxLines = 1, style = subtitleStyle(large))
+    companion object {
+        @Composable
+        fun default() = GlanceTheme.colors.let {
+            ContentColors(
+                title = it.onSurface,
+                subtitle = it.onSurfaceVariant,
+                icon = it.onSurfaceVariant,
+                toggleOff = it.onSurfaceVariant,
+                toggleOn = it.primary,
+                playBackground = it.primaryContainer,
+                playContent = it.onPrimaryContainer
+            )
         }
-        if (lines >= 3 && state.album.isNotEmpty()) {
-            Text(text = state.album, maxLines = 1, style = subtitleStyle(large))
+
+        /** Over the scrim: white, with toggles that are off dimmed, so the dot isn't the only cue. */
+        @Composable
+        fun onArt() = GlanceTheme.colors.let {
+            ContentColors(
+                title = ColorProvider(Color.White),
+                subtitle = ColorProvider(Color.White.copy(alpha = 0.85f)),
+                icon = ColorProvider(Color.White),
+                toggleOff = ColorProvider(Color.White.copy(alpha = 0.7f)),
+                toggleOn = ColorProvider(Color.White),
+                playBackground = it.primaryContainer,
+                playContent = it.onPrimaryContainer
+            )
+        }
+
+        @Composable
+        fun onPlaceholder() = GlanceTheme.colors.let {
+            ContentColors(
+                title = it.onSecondaryContainer,
+                subtitle = it.onSecondaryContainer,
+                icon = it.onSecondaryContainer,
+                toggleOff = it.onSecondaryContainer,
+                toggleOn = it.primary,
+                // primaryContainer is too close to the placeholder's secondaryContainer to read as a button.
+                playBackground = it.primary,
+                playContent = it.onPrimary
+            )
         }
     }
 }
 
 @Composable
-private fun titleStyle(large: Boolean) = TextStyle(
-    color = GlanceTheme.colors.onSurface,
+private fun TrackText(
+    state: NowPlayingWidgetState,
+    layout: WidgetLayout,
+    modifier: GlanceModifier,
+    colors: ContentColors = ContentColors.default()
+) {
+    // Beside art that fills the height the text centres on it; everywhere else it starts at the top.
+    val alignment = if (layout.mode == WidgetMode.Row) Alignment.CenterVertically else Alignment.Top
+    Column(modifier = modifier, verticalAlignment = alignment) {
+        Text(text = state.title, maxLines = layout.titleLines, style = titleStyle(layout.largeText, colors.title))
+        if (state.artist.isNotEmpty()) {
+            Text(text = state.artist, maxLines = 1, style = subtitleStyle(layout.largeText, colors.subtitle))
+        }
+        if (layout.textLines >= 3 && state.album.isNotEmpty()) {
+            Text(text = state.album, maxLines = 1, style = subtitleStyle(layout.largeText, colors.subtitle))
+        }
+    }
+}
+
+private fun titleStyle(
+    large: Boolean,
+    color: ColorProvider
+) = TextStyle(
+    color = color,
     fontSize = if (large) 16.sp else 14.sp,
     fontWeight = FontWeight.Medium
 )
 
-@Composable
 private fun subtitleStyle(
     large: Boolean,
-    color: ColorProvider = GlanceTheme.colors.onSurfaceVariant
+    color: ColorProvider
 ) = TextStyle(
     color = color,
     fontSize = if (large) 14.sp else 12.sp
 )
 
+/** The artwork's corner radius, concentric with the widget's for the given [padding]. */
+@Composable
+private fun innerRadius(padding: Dp): Dp {
+    val resources = LocalContext.current.resources
+    val outer = (resources.getDimension(R.dimen.widget_background_radius) / resources.displayMetrics.density).dp
+    return innerCornerRadius(outer, padding)
+}
+
+/**
+ * The artwork decoded for [size]. Below API 31 its corners are drawn into the bitmap, since the widget can't
+ * clip them; above, the widget does.
+ */
+@Composable
+private fun artworkBitmap(
+    path: String?,
+    size: DpSize,
+    padding: Dp
+): Bitmap? {
+    path ?: return null
+    val context = LocalContext.current
+    val density = context.resources.displayMetrics.density
+    val widthPx = (size.width.value * density).toInt()
+    val heightPx = (size.height.value * density).toInt()
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        WidgetArtworkBitmaps.sized(path, widthPx, heightPx)
+    } else {
+        WidgetArtworkBitmaps.rounded(path, widthPx, heightPx, innerRadius(padding).value * density)
+    }
+}
+
 @Composable
 private fun Artwork(
     path: String?,
-    size: Dp
+    size: DpSize,
+    padding: Dp
 ) {
-    val context = LocalContext.current
-    val bitmap =
-        path?.let {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                WidgetArtworkBitmaps.full(it)
-            } else {
-                val density = context.resources.displayMetrics.density
-                WidgetArtworkBitmaps.rounded(it, (size.value * density).toInt(), context.resources.getDimension(R.dimen.widget_inner_radius))
-            }
-        }
+    val bitmap = artworkBitmap(path, size, padding)
     if (bitmap != null) {
         Image(
             provider = ImageProvider(bitmap),
             contentDescription = null,
             contentScale = ContentScale.Crop,
-            modifier = GlanceModifier.size(size).innerCornerRadius()
+            modifier = GlanceModifier.size(size.width, size.height).innerCornerRadius(padding)
         )
     } else {
-        ArtworkPlaceholder(size)
+        ArtworkPlaceholder(size, padding)
     }
 }
 
 /** Missing artwork: a music note on the theme's secondary container, shaped like the artwork it stands in for. */
 @Composable
-private fun ArtworkPlaceholder(size: Dp) {
+private fun ArtworkPlaceholder(
+    size: DpSize,
+    padding: Dp,
+    noteAlignment: Alignment = Alignment.Center
+) {
     val background =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            GlanceModifier.background(GlanceTheme.colors.secondaryContainer).innerCornerRadius()
+            GlanceModifier.background(GlanceTheme.colors.secondaryContainer).innerCornerRadius(padding)
         } else {
             GlanceModifier.background(
                 imageProvider = ImageProvider(R.drawable.widget_inner_background),
                 colorFilter = ColorFilter.tint(GlanceTheme.colors.secondaryContainer)
             )
         }
-    Box(modifier = GlanceModifier.size(size).then(background), contentAlignment = Alignment.Center) {
-        Image(
-            provider = ImageProvider(R.drawable.widget_music_note),
-            contentDescription = null,
-            colorFilter = ColorFilter.tint(GlanceTheme.colors.onSecondaryContainer),
-            modifier = GlanceModifier.size(min(size * 0.4f, 64.dp))
-        )
+    val noteSize = min(min(size.width, size.height) * 0.4f, 64.dp)
+    // In the hero the text covers the bottom, so the note centres in what's left above it. The offset is a
+    // spacer rather than padding, which in a widget eats into the image's own size.
+    val noteOffset = if (noteAlignment == Alignment.TopCenter) ((size.height - HERO_TEXT_HEIGHT - noteSize) / 2).coerceAtLeast(0.dp) else 0.dp
+    Box(modifier = GlanceModifier.size(size.width, size.height).then(background), contentAlignment = noteAlignment) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            if (noteOffset > 0.dp) Spacer(GlanceModifier.height(noteOffset))
+            Image(
+                provider = ImageProvider(R.drawable.widget_music_note),
+                contentDescription = null,
+                colorFilter = ColorFilter.tint(GlanceTheme.colors.onSecondaryContainer),
+                modifier = GlanceModifier.size(noteSize)
+            )
+        }
     }
 }
 
-private fun GlanceModifier.innerCornerRadius(): GlanceModifier = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) cornerRadius(R.dimen.widget_inner_radius) else this
+/** The text and buttons along the bottom of the hero, so its placeholder note can centre above them. */
+private val HERO_TEXT_HEIGHT = WidgetDimens.titleLineHeight + WidgetDimens.subtitleLineHeight + WidgetDimens.buttonSize + WidgetDimens.gap * 3 / 2
+
+@Composable
+private fun GlanceModifier.innerCornerRadius(padding: Dp): GlanceModifier = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) cornerRadius(innerRadius(padding)) else this
 
 /** Buttons spread evenly across the available width, so play/pause sits in the middle. */
 @Composable
 private fun ButtonRow(
     buttons: List<WidgetButton>,
-    state: NowPlayingWidgetState
+    state: NowPlayingWidgetState,
+    colors: ContentColors = ContentColors.default()
 ) {
     Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         buttons.forEach { button ->
             Box(modifier = GlanceModifier.defaultWeight(), contentAlignment = Alignment.Center) {
-                ControlButton(button, state)
+                ControlButton(button, state, colors)
             }
         }
     }
@@ -360,18 +527,18 @@ private fun ButtonRow(
 @Composable
 private fun ControlButton(
     button: WidgetButton,
-    state: NowPlayingWidgetState
+    state: NowPlayingWidgetState,
+    colors: ContentColors = ContentColors.default()
 ) {
     val context = LocalContext.current
-    val colors = GlanceTheme.colors
     when (button) {
         WidgetButton.PlayPause ->
             CircleIconButton(
                 imageProvider = ImageProvider(if (state.isPlaying) PlaybackR.drawable.ic_pause_black_24dp else PlaybackR.drawable.ic_play_arrow_black_24dp),
                 contentDescription = context.getString(if (state.isPlaying) R.string.widget_pause else R.string.widget_play),
                 onClick = playbackAction(context, PlaybackService.ACTION_TOGGLE_PLAYBACK),
-                backgroundColor = colors.primaryContainer,
-                contentColor = colors.onPrimaryContainer
+                backgroundColor = colors.playBackground,
+                contentColor = colors.playContent
             )
         WidgetButton.Previous ->
             CircleIconButton(
@@ -379,7 +546,7 @@ private fun ControlButton(
                 contentDescription = context.getString(R.string.button_skip_previous),
                 onClick = playbackAction(context, PlaybackService.ACTION_SKIP_PREV),
                 backgroundColor = null,
-                contentColor = colors.onSurfaceVariant
+                contentColor = colors.icon
             )
         WidgetButton.Next ->
             CircleIconButton(
@@ -387,14 +554,15 @@ private fun ControlButton(
                 contentDescription = context.getString(R.string.button_skip_next),
                 onClick = playbackAction(context, PlaybackService.ACTION_SKIP_NEXT),
                 backgroundColor = null,
-                contentColor = colors.onSurfaceVariant
+                contentColor = colors.icon
             )
         WidgetButton.Shuffle ->
             ToggleButton(
                 icon = PlaybackR.drawable.ic_shuffle_black_24dp,
                 contentDescription = context.getString(if (state.shuffleOn) CoreR.string.shuffle_on else CoreR.string.shuffle_off),
                 onClick = playbackAction(context, PlaybackService.ACTION_TOGGLE_SHUFFLE),
-                on = state.shuffleOn
+                on = state.shuffleOn,
+                colors = colors
             )
         WidgetButton.Repeat ->
             ToggleButton(
@@ -408,7 +576,8 @@ private fun ControlButton(
                     }
                 ),
                 onClick = playbackAction(context, PlaybackService.ACTION_TOGGLE_REPEAT),
-                on = state.repeatMode != WidgetRepeatMode.Off
+                on = state.repeatMode != WidgetRepeatMode.Off,
+                colors = colors
             )
     }
 }
@@ -422,23 +591,23 @@ private fun ToggleButton(
     @DrawableRes icon: Int,
     contentDescription: String,
     onClick: Action,
-    on: Boolean
+    on: Boolean,
+    colors: ContentColors
 ) {
-    val colors = GlanceTheme.colors
     Box(modifier = GlanceModifier.size(WidgetDimens.buttonSize), contentAlignment = Alignment.BottomCenter) {
         CircleIconButton(
             imageProvider = ImageProvider(icon),
             contentDescription = contentDescription,
             onClick = onClick,
             backgroundColor = null,
-            contentColor = if (on) colors.primary else colors.onSurfaceVariant
+            contentColor = if (on) colors.toggleOn else colors.toggleOff
         )
         if (on) {
             Box(modifier = GlanceModifier.padding(bottom = 5.dp)) {
                 Image(
                     provider = ImageProvider(R.drawable.widget_toggle_dot),
                     contentDescription = null,
-                    colorFilter = ColorFilter.tint(colors.primary),
+                    colorFilter = ColorFilter.tint(colors.toggleOn),
                     modifier = GlanceModifier.size(4.dp)
                 )
             }

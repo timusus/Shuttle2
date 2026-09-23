@@ -44,6 +44,10 @@ class SettingsFragment : PreferenceFragmentCompat() {
             findNavController().navigate(R.id.artworkPreferenceFragment)
             true
         }
+        preferenceScreen.findPreference<Preference>("pref_screen_widget")?.setOnPreferenceClickListener {
+            findNavController().navigate(R.id.widgetPreferenceManager)
+            true
+        }
         preferenceScreen.findPreference<Preference>("pref_screen_playlist")?.setOnPreferenceClickListener {
             findNavController().navigate(R.id.playlistPreferenceFragment)
             true

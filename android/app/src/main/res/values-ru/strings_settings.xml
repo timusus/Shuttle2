@@ -45,6 +45,8 @@
     <!-- Settings: Title for 'playback' settings -->
     <!-- Settings: Title for artwork related settings (artist/album images) -->
     <string name="pref_category_title_artwork">Обложка</string>
+    <!-- Settings: Title for widget related settings  -->
+    <string name="pref_category_title_widgets">Виджеты</string>
     <!-- Settings: Title for playlist related settings  -->
     <string name="pref_category_title_playlists">Плейлисты</string>
     <!-- Settings: Title for shangelog related settings -->
@@ -99,6 +101,8 @@
     <string name="pref_clear_artwork_subtitle">Удаляет все кешированные обложки</string>
     <!-- Settings: Title for the option to download all artwork (artist/album images) -->
     <string name="pref_download_artwork_title">Скачать все обложки</string>
+    <!-- Settings: Title for the option to change opacity of the widget background -->
+    <string name="pref_widget_opacity_title">Прозрачность фона</string>
     <!-- Settings: Title for the option to ignore duplicates when adding songs to a playlist -->
     <string name="pref_ignore_duplicates_title">Игнорировать дубликаты</string>
     <!-- Settings: Description for the option to ignore duplicates when adding songs to a playlist -->

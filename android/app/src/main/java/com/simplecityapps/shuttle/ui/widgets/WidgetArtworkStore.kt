@@ -23,8 +23,8 @@ import timber.log.Timber
 /**
  * Widget artwork lives on disk, one file per song artwork shared by every widget, so the widget state only
  * carries a path. Files are rendered once at the largest size any widget layout draws, so they're sharp at
- * every breakpoint. [WidgetManager] calls it from one coroutine at a time, but the bookkeeping is a concurrent
- * set so a stray caller can't corrupt it.
+ * every layout, capped so a tablet doesn't send the launcher a huge bitmap. [WidgetManager] calls it from one
+ * coroutine at a time, but the bookkeeping is a concurrent set so a stray caller can't corrupt it.
  */
 @Singleton
 class WidgetArtworkStore
@@ -36,7 +36,7 @@ constructor(
     private val directory: File get() = File(context.filesDir, "widget_artwork")
 
     private val sizePx: Int
-        get() = (maxWidgetArtSize.value * context.resources.displayMetrics.density).toInt()
+        get() = (maxWidgetArtSize.value * context.resources.displayMetrics.density).toInt().coerceAtMost(MAX_SIZE_PX)
 
     fun file(song: Song): File {
         val digest = MessageDigest.getInstance("SHA-1").digest(song.getArtworkCacheKey(sizePx, sizePx).toByteArray())
@@ -97,5 +97,10 @@ constructor(
         } finally {
             temp.delete()
         }
+    }
+
+    private companion object {
+        /** [maxWidgetArtSize] at 3x. Denser screens upscale a little rather than send the launcher a bigger bitmap. */
+        const val MAX_SIZE_PX = 1260
     }
 }

@@ -8,7 +8,7 @@
   ],
   "improvements": [
     {
-      "text": "Rebuilt the home screen widgets. They resize freely, follow your system theme and wallpaper colours, and add previous, shuffle and repeat buttons. The old widget dark mode and opacity settings are no longer needed",
+      "text": "Rebuilt the home screen widgets. They resize freely, show bigger artwork on larger sizes, follow your system theme and wallpaper colours, and add previous, shuffle and repeat buttons. The background opacity is adjustable in Settings, Widgets",
       "commits": []
     }
   ],

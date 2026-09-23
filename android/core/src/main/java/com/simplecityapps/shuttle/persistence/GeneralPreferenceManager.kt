@@ -220,6 +220,14 @@ class GeneralPreferenceManager(
             return sharedPreferences.getBoolean("media_session_artwork", true)
         }
 
+    // Widgets
+
+    /** The widget background opacity, a percentage. The key predates the Glance widgets, so old values carry over. */
+    val widgetBackgroundOpacity: Int
+        get() {
+            return sharedPreferences.getInt("widget_background_opacity", 100)
+        }
+
     // Debugging
 
     var debugFileLogging: Boolean

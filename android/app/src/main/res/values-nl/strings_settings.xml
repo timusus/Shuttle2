@@ -46,6 +46,8 @@
     <string name="pref_category_title_playback">Afspelen</string>
     <!-- Settings: Title for artwork related settings (artist/album images) -->
     <string name="pref_category_title_artwork">Illustraties</string>
+    <!-- Settings: Title for widget related settings  -->
+    <string name="pref_category_title_widgets">Widgets</string>
     <!-- Settings: Title for playlist related settings  -->
     <string name="pref_category_title_playlists">Afspeellijsten</string>
     <!-- Settings: Title for shangelog related settings -->
@@ -104,6 +106,8 @@
     <string name="pref_clear_artwork_subtitle">Verwijdert alle in het cachegeheugen opgeslagen illustraties</string>
     <!-- Settings: Title for the option to download all artwork (artist/album images) -->
     <string name="pref_download_artwork_title">Download alle illustraties</string>
+    <!-- Settings: Title for the option to change opacity of the widget background -->
+    <string name="pref_widget_opacity_title">Achtergronddekking</string>
     <!-- Settings: Title for the option to ignore duplicates when adding songs to a playlist -->
     <string name="pref_ignore_duplicates_title">Negeer duplicaten</string>
     <!-- Settings: Description for the option to ignore duplicates when adding songs to a playlist -->

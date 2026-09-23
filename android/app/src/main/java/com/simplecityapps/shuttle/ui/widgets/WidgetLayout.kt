@@ -4,7 +4,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.max
-import androidx.compose.ui.unit.min
 
 enum class WidgetButton {
     Shuffle,
@@ -15,55 +14,79 @@ enum class WidgetButton {
 }
 
 /**
- * How the now playing widget arranges itself at a given size.
+ * How the now playing widget arranges itself at a given size. Every layout insets its content by the same
+ * padding on all four sides, and wherever the artwork sits against an edge it fills the space up to that
+ * padding, so the gap to the top, side and bottom edges is always the same.
  *
- * - [Row]: a single line, used when the widget is one short row: art, text, buttons.
- * - [Card]: art on the left filling the height, text above the buttons on the right.
- * - [Large]: art beside three lines of text, with the button row along the bottom.
- * - [Tile]: tall but narrow: art on top, text beneath, then the buttons.
+ * - [Row]: one short row: art filling the height, then text, then buttons.
+ * - [Card]: art filling the height on the left; text above the buttons on the right.
+ * - [Split]: two rows: art in the top left filling the height above a full-width button row, text beside it.
+ * - [Hero]: three rows or more, or two rows too narrow for [Split]: the art fills the widget, with the text
+ *   and buttons along its bottom on a scrim.
  */
 enum class WidgetMode {
     Row,
     Card,
-    Large,
-    Tile
+    Split,
+    Hero
 }
 
 data class WidgetLayout(
     val mode: WidgetMode,
+    /** The inset on every side of the widget, and the gap between the artwork and the text. */
     val padding: Dp,
-    /** Edge length of the square artwork, or [Dp.Unspecified] when there's no room for art. */
-    val artSize: Dp,
-    /** Lines of track text; 0 when only the buttons fit. */
+    /** The artwork's size, or [DpSize.Unspecified] when there's no room for art. Square except in [WidgetMode.Hero]. */
+    val art: DpSize,
+    /** Lines of track text: title and artist, plus the album when it's 3. 0 when only the buttons fit. */
     val textLines: Int,
+    /** How many lines the title may wrap to. */
+    val titleLines: Int = 1,
+    val largeText: Boolean = false,
     val buttons: List<WidgetButton>
 ) {
-    val showArt: Boolean get() = artSize != Dp.Unspecified
+    val showArt: Boolean get() = art != DpSize.Unspecified
 }
 
 object WidgetDimens {
     val buttonSize = 48.dp
-    val iconSize = 24.dp
     val gap = 8.dp
-    val compactPadding = 8.dp
+
+    /** The one padding token, used on every side of every layout. */
     val padding = 12.dp
+
+    /** The padding on launchers whose single row is too short for [padding] around a 48dp button. */
+    val minPadding = 8.dp
     val minArt = 48.dp
-    val maxArt = 160.dp
     val minRowText = 64.dp
     val minColumnText = 96.dp
 
-    /** The narrowest text column beside large art, so a 2x2 widget still shows its artwork. */
-    val minLargeText = 80.dp
-    val minLargeArt = 56.dp
+    /** The narrowest text column beside the artwork in [WidgetMode.Split]; narrower widgets use [WidgetMode.Hero]. */
+    val minSplitText = 112.dp
+
+    /** From this text width, [WidgetMode.Split] has room for the album. */
+    val splitAlbumText = 120.dp
     val titleLineHeight = 20.dp
     val subtitleLineHeight = 18.dp
+    val minInnerRadius = 6.dp
 
-    /** Below this height the widget is a single short row. */
-    val cardMinHeight = 96.dp
+    /** The fade from clear into the scrim above text over artwork. */
+    val scrimFade = 32.dp
 
-    /** From this height the buttons get their own row along the bottom. */
-    val largeMinHeight = 160.dp
+    /** From this height, text stacked over buttons fits beside the art. */
+    val cardMinHeight = padding * 2 + titleLineHeight + subtitleLineHeight + buttonSize
+
+    /** From this height, the art sits above a full-width button row. */
+    val splitMinHeight = 160.dp
+
+    /** From this height (about three launcher rows), the art fills the widget. */
+    val heroMinHeight = 250.dp
 }
+
+/**
+ * The largest artwork edge any layout draws on a phone, so one saved file stays sharp at every size: a
+ * four-by-four [WidgetMode.Hero] is about 364 by 406dp, cropped from the square file.
+ */
+val maxWidgetArtSize: Dp = 420.dp
 
 /**
  * Button sets in the order they're given up as the widget narrows: shuffle and repeat go first, then previous.
@@ -82,101 +105,91 @@ private fun List<WidgetButton>.width(): Dp = WidgetDimens.buttonSize * size
 fun buttonsFor(width: Dp): List<WidgetButton> = buttonSets.firstOrNull { it.width() <= width } ?: buttonSets.last()
 
 /**
- * The widget sizes we lay out for. Glance renders each one and the launcher shows the largest that fits,
- * so these are the thresholds where the layout changes: two cells wide up to full width, one row up to
- * roughly three rows tall. Measured on a Pixel 9 Pro's launcher, a cell is about 97dp wide and a row about
- * 106dp tall; launchers with denser grids come in lower, hence a single row starting at 64dp.
+ * The padding for a widget [height]: [WidgetDimens.padding], unless the launcher's rows are too short to fit
+ * that around a button, when it shrinks towards [WidgetDimens.minPadding]. Either way it's the same on all sides.
  */
-val widgetBreakpoints: Set<DpSize> =
-    listOf(120.dp, 180.dp, 250.dp, 340.dp)
-        .flatMap { width -> listOf(64.dp, 96.dp, 170.dp, 250.dp).map { height -> DpSize(width, height) } }
-        .toSet()
+fun widgetPadding(height: Dp): Dp = ((height - WidgetDimens.buttonSize) / 2).coerceIn(WidgetDimens.minPadding, WidgetDimens.padding)
 
-/** The largest artwork edge any breakpoint renders, so one bitmap stays sharp at every size. */
-val maxWidgetArtSize: Dp = widgetBreakpoints.maxOf { widgetLayoutFor(it).artSize.takeIf { size -> size != Dp.Unspecified } ?: 0.dp }
+/**
+ * The artwork's corner radius, concentric with the widget's: the widget's radius less the padding between
+ * them, so the two curves stay parallel. Clamped so small launcher radii don't square the art off.
+ */
+fun innerCornerRadius(
+    outerRadius: Dp,
+    padding: Dp
+): Dp = max(outerRadius - padding, WidgetDimens.minInnerRadius)
+
+/** Maps the widget background opacity setting, a percentage, to an alpha. */
+fun widgetBackgroundAlpha(opacityPercent: Int): Float = opacityPercent.coerceIn(0, 100) / 100f
 
 fun widgetLayoutFor(size: DpSize): WidgetLayout = when {
     size.height < WidgetDimens.cardMinHeight -> rowLayout(size)
-    size.height < WidgetDimens.largeMinHeight -> cardLayout(size)
-    // Whichever of art beside the text or art above it draws the bigger picture.
-    else -> listOfNotNull(largeLayout(size), tileLayout(size)).maxByOrNull { it.artSize.value } ?: cardLayout(size)
+    size.height < WidgetDimens.splitMinHeight -> cardLayout(size)
+    size.height < WidgetDimens.heroMinHeight -> splitLayout(size) ?: heroLayout(size)
+    else -> heroLayout(size)
 }
 
 private fun rowLayout(size: DpSize): WidgetLayout {
-    val padding = WidgetDimens.compactPadding
+    val padding = widgetPadding(size.height)
     val inner = size.width - padding * 2
     val art = max(size.height - padding * 2, 0.dp)
     val fewestButtons = buttonSets.last().width()
     // Art first, then text, then as many buttons as the rest allows. Play/pause and next always stay.
-    val showArt = art >= WidgetDimens.minArt / 2 && inner - art - WidgetDimens.gap - WidgetDimens.minRowText >= fewestButtons
+    val showArt = art >= WidgetDimens.minArt / 2 && inner - art - padding - WidgetDimens.minRowText >= fewestButtons
     val showText = showArt || inner - WidgetDimens.minRowText >= fewestButtons
-    val textSpace = if (showArt) art + WidgetDimens.gap + WidgetDimens.minRowText else WidgetDimens.minRowText
+    val textSpace = if (showArt) art + padding + WidgetDimens.minRowText else WidgetDimens.minRowText
     return WidgetLayout(
         mode = WidgetMode.Row,
         padding = padding,
-        artSize = if (showArt) art else Dp.Unspecified,
+        art = if (showArt) DpSize(art, art) else DpSize.Unspecified,
         textLines = if (showText) 2 else 0,
         buttons = if (showText) buttonsFor(inner - textSpace) else buttonsFor(inner)
     )
 }
 
 private fun cardLayout(size: DpSize): WidgetLayout {
-    val padding = if (size.height < WidgetDimens.largeMinHeight) WidgetDimens.compactPadding else WidgetDimens.padding
+    val padding = WidgetDimens.padding
     val inner = size.width - padding * 2
-    val maxArt = min(size.height - padding * 2, WidgetDimens.maxArt)
-    // Prefer more buttons over a bigger picture, as long as the art stays a reasonable size; art beats buttons.
-    val withArt =
-        buttonSets.firstNotNullOfOrNull { buttons ->
-            val column = max(buttons.width(), WidgetDimens.minColumnText)
-            val art = min(maxArt, inner - WidgetDimens.gap - column)
-            if (art >= WidgetDimens.minLargeArt) buttons to art else null
-        }
+    // The art always fills the height, so it meets the top and bottom padding; if the column beside it would
+    // be too narrow, the art goes rather than shrinking away from the edges.
+    val art = size.height - padding * 2
+    val column = inner - art - padding
+    val showArt = column >= WidgetDimens.minColumnText
     return WidgetLayout(
         mode = WidgetMode.Card,
         padding = padding,
-        artSize = withArt?.second ?: Dp.Unspecified,
-        textLines = if (size.height >= WidgetDimens.largeMinHeight) 3 else 2,
-        buttons = withArt?.first ?: buttonsFor(inner)
-    )
-}
-
-private fun largeLayout(size: DpSize): WidgetLayout? {
-    val padding = WidgetDimens.padding
-    val inner = size.width - padding * 2
-    val art =
-        minOf(
-            size.height - padding * 2 - WidgetDimens.buttonSize - WidgetDimens.gap,
-            inner - WidgetDimens.gap - WidgetDimens.minLargeText,
-            WidgetDimens.maxArt
-        )
-    if (art < WidgetDimens.minLargeArt) return null
-    val textWidth = inner - WidgetDimens.gap - art
-    return WidgetLayout(
-        mode = WidgetMode.Large,
-        padding = padding,
-        artSize = art,
-        // The album only earns its line when there's room to read it.
-        textLines = if (textWidth >= WidgetDimens.minColumnText + 24.dp) 3 else 2,
-        buttons = buttonsFor(inner)
-    )
-}
-
-private fun tileLayout(size: DpSize): WidgetLayout? {
-    val padding = WidgetDimens.padding
-    val inner = size.width - padding * 2
-    val text = WidgetDimens.titleLineHeight + WidgetDimens.subtitleLineHeight
-    val art =
-        minOf(
-            size.height - padding * 2 - text - WidgetDimens.buttonSize - WidgetDimens.gap * 2,
-            inner,
-            WidgetDimens.maxArt
-        )
-    if (art < 72.dp) return null
-    return WidgetLayout(
-        mode = WidgetMode.Tile,
-        padding = padding,
-        artSize = art,
+        art = if (showArt) DpSize(art, art) else DpSize.Unspecified,
         textLines = 2,
+        buttons = buttonsFor(if (showArt) column else inner)
+    )
+}
+
+private fun splitLayout(size: DpSize): WidgetLayout? {
+    val padding = WidgetDimens.padding
+    val inner = size.width - padding * 2
+    val art = size.height - padding * 2 - WidgetDimens.buttonSize - WidgetDimens.gap
+    val text = inner - art - padding
+    if (text < WidgetDimens.minSplitText) return null
+    return WidgetLayout(
+        mode = WidgetMode.Split,
+        padding = padding,
+        art = DpSize(art, art),
+        textLines = if (text >= WidgetDimens.splitAlbumText) 3 else 2,
+        titleLines = 2,
+        largeText = true,
         buttons = buttonsFor(inner)
+    )
+}
+
+private fun heroLayout(size: DpSize): WidgetLayout {
+    val padding = WidgetDimens.padding
+    val inner = DpSize(size.width - padding * 2, size.height - padding * 2)
+    return WidgetLayout(
+        mode = WidgetMode.Hero,
+        padding = padding,
+        art = inner,
+        textLines = 2,
+        largeText = true,
+        buttons = buttonsFor(inner.width)
     )
 }

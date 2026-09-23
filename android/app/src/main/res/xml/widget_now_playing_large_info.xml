@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Resize limits follow the layout breakpoints in WidgetLayout.kt: two cells wide at the narrowest, where
-     play/pause and next remain, up to full width with every control. -->
+     play/pause and next remain, up to full width with every control; from one row up to four or more, where
+     the artwork fills the widget. -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:description="@string/widget_description_large"
     android:initialLayout="@layout/glance_default_loading_layout"
@@ -8,7 +9,7 @@
     android:minHeight="110dp"
     android:minResizeWidth="120dp"
     android:minResizeHeight="96dp"
-    android:maxResizeHeight="400dp"
+    android:maxResizeHeight="600dp"
     android:previewImage="@drawable/widget_preview_large_image"
     android:previewLayout="@layout/widget_preview_large"
     android:resizeMode="horizontal|vertical"

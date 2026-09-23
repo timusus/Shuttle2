@@ -46,6 +46,8 @@
     <string name="pref_category_title_playback">Geri çalma</string>
     <!-- Settings: Title for artwork related settings (artist/album images) -->
     <string name="pref_category_title_artwork">Sanatçı/albüm görselleri</string>
+    <!-- Settings: Title for widget related settings  -->
+    <string name="pref_category_title_widgets">Widgets</string>
     <!-- Settings: Title for playlist related settings  -->
     <string name="pref_category_title_playlists">Çalma listeleri</string>
     <!-- Settings: Title for shangelog related settings -->
@@ -105,6 +107,8 @@
     <string name="pref_clear_artwork_subtitle">Önbelleğe alınmış tüm resimleri kaldırır</string>
     <!-- Settings: Title for the option to download all artwork (artist/album images) -->
     <string name="pref_download_artwork_title">Tüm resimleri indir</string>
+    <!-- Settings: Title for the option to change opacity of the widget background -->
+    <string name="pref_widget_opacity_title">Arka Plan Opaklığı</string>
     <!-- Settings: Title for the option to ignore duplicates when adding songs to a playlist -->
     <string name="pref_ignore_duplicates_title">Çiftleri yoksay</string>
     <!-- Settings: Description for the option to ignore duplicates when adding songs to a playlist -->

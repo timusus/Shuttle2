@@ -59,14 +59,18 @@ object NowPlayingWidgetStateDefinition : GlanceStateDefinition<NowPlayingWidgetS
 }
 
 internal object NowPlayingWidgetStateSerializer : Serializer<NowPlayingWidgetState> {
-    private const val VERSION = 1
+    private const val VERSION = 2
+
+    /** Version 1 had no background opacity; it reads as fully opaque. */
+    private const val VERSION_WITHOUT_OPACITY = 1
 
     override val defaultValue: NowPlayingWidgetState = NowPlayingWidgetState.Idle
 
     override suspend fun readFrom(input: InputStream): NowPlayingWidgetState {
         try {
             val data = DataInputStream(input)
-            if (data.readInt() != VERSION) return defaultValue
+            val version = data.readInt()
+            if (version != VERSION && version != VERSION_WITHOUT_OPACITY) return defaultValue
             return NowPlayingWidgetState(
                 hasTrack = data.readBoolean(),
                 title = data.readUTF(),
@@ -75,7 +79,8 @@ internal object NowPlayingWidgetStateSerializer : Serializer<NowPlayingWidgetSta
                 isPlaying = data.readBoolean(),
                 shuffleOn = data.readBoolean(),
                 repeatMode = WidgetRepeatMode.entries.getOrElse(data.readInt()) { WidgetRepeatMode.Off },
-                artworkPath = data.readUTF().takeIf { it.isNotEmpty() }
+                artworkPath = data.readUTF().takeIf { it.isNotEmpty() },
+                backgroundOpacity = if (version >= VERSION) data.readInt() else 100
             )
         } catch (e: IOException) {
             throw CorruptionException("Unreadable now playing widget state", e)
@@ -96,6 +101,7 @@ internal object NowPlayingWidgetStateSerializer : Serializer<NowPlayingWidgetSta
             writeBoolean(t.shuffleOn)
             writeInt(t.repeatMode.ordinal)
             writeUTF(t.artworkPath.orEmpty())
+            writeInt(t.backgroundOpacity)
             flush()
         }
     }

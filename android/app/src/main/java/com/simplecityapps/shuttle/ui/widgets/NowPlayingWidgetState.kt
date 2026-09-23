@@ -22,7 +22,9 @@ data class NowPlayingWidgetState(
     val isPlaying: Boolean = false,
     val shuffleOn: Boolean = false,
     val repeatMode: WidgetRepeatMode = WidgetRepeatMode.Off,
-    val artworkPath: String? = null
+    val artworkPath: String? = null,
+    /** The widget background opacity setting, a percentage. */
+    val backgroundOpacity: Int = 100
 ) {
     companion object {
         val Idle = NowPlayingWidgetState()
@@ -34,9 +36,10 @@ fun nowPlayingWidgetState(
     playbackState: PlaybackState,
     shuffleMode: QueueManager.ShuffleMode,
     repeatMode: QueueManager.RepeatMode,
-    artworkPath: String?
+    artworkPath: String?,
+    backgroundOpacity: Int = 100
 ): NowPlayingWidgetState {
-    if (song == null) return NowPlayingWidgetState.Idle
+    if (song == null) return NowPlayingWidgetState.Idle.copy(backgroundOpacity = backgroundOpacity)
     return NowPlayingWidgetState(
         hasTrack = true,
         title = song.name.orEmpty(),
@@ -51,6 +54,7 @@ fun nowPlayingWidgetState(
             QueueManager.RepeatMode.All -> WidgetRepeatMode.All
             QueueManager.RepeatMode.One -> WidgetRepeatMode.One
         },
-        artworkPath = artworkPath
+        artworkPath = artworkPath,
+        backgroundOpacity = backgroundOpacity
     )
 }
