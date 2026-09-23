@@ -26,17 +26,20 @@ import com.simplecityapps.playback.PositionAnchor
 import com.simplecityapps.playback.R
 import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.getArtworkCacheKey
-import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueOperations
-import com.simplecityapps.playback.queue.QueueWatcher
+import com.simplecityapps.playback.queue.QueueState
+import com.simplecityapps.shuttle.coroutines.launchCollectingChanges
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.pendingintent.PendingIntentCompat
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.query.SongQuery
 import javax.inject.Inject
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapConcat
@@ -58,9 +61,8 @@ constructor(
     private val genreRepository: GenreRepository,
     private val artworkImageLoader: ArtworkImageLoader,
     private val artworkCache: LruCache<String, Bitmap?>,
-    private val preferenceManager: GeneralPreferenceManager,
-    queueWatcher: QueueWatcher
-) : QueueChangeCallback {
+    private val preferenceManager: GeneralPreferenceManager
+) {
     private val placeholder: Bitmap? by lazy {
         PlaybackNotificationManager.drawableToBitmap(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_music_note_black_24dp, context.theme)!!)
     }
@@ -270,8 +272,6 @@ constructor(
             )
         mediaSession.setMediaButtonReceiver(mediaButtonReceiverIntent)
 
-        queueWatcher.addCallback(this)
-
         playbackStateBuilder.setActions(
             PlaybackStateCompat.ACTION_PLAY
                 or PlaybackStateCompat.ACTION_PAUSE
@@ -287,9 +287,28 @@ constructor(
                 or PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID
         )
 
+        val shuffleMode = queueManager.getShuffleMode()
+        val repeatMode = queueManager.getRepeatMode()
+        val queueState = queueManager.queueStateFlow.value
+
         updateShuffleAction()
 
         mediaSession.setPlaybackState(playbackStateBuilder.build())
+
+        // Changes from the state read above, so a change made in between isn't missed.
+        appCoroutineScope.launchCollectingChanges(queueManager.shuffleModeFlow, shuffleMode, Dispatchers.Main.immediate) { _, current ->
+            onShuffleChanged(current)
+        }
+        appCoroutineScope.launchCollectingChanges(queueManager.repeatModeFlow, repeatMode, Dispatchers.Main.immediate) { _, current ->
+            mediaSession.setRepeatMode(current.toRepeatMode())
+        }
+        appCoroutineScope.launchSessionQueueUpdates(
+            queueStateFlow = queueManager.queueStateFlow,
+            baseline = queueState,
+            context = Dispatchers.Main.immediate,
+            onQueueChanged = ::updateQueue,
+            onCurrentItemChanged = ::updateCurrentQueueItem
+        )
 
         // Main.immediate, so the current anchor is applied straight away when constructed on the main thread.
         appCoroutineScope.launch(Dispatchers.Main.immediate) {
@@ -405,32 +424,10 @@ constructor(
         }
     }
 
-    // QueueChangeCallback Implementation
-
-    override fun onQueueRestored() {
-        updateQueue()
-        updateCurrentQueueItem()
-    }
-
-    override fun onQueueChanged(reason: QueueChangeCallback.QueueChangeReason) {
-        updateQueue()
-    }
-
-    override fun onQueuePositionChanged(
-        oldPosition: Int?,
-        newPosition: Int?
-    ) {
-        updateCurrentQueueItem()
-    }
-
-    override fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
+    private fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
         mediaSession.setShuffleMode(shuffleMode.toShuffleMode())
         updateShuffleAction()
         updatePlaybackState()
-    }
-
-    override fun onRepeatChanged(repeatMode: QueueManager.RepeatMode) {
-        mediaSession.setRepeatMode(repeatMode.toRepeatMode())
     }
 
     fun PlaybackStateCompat.Builder.copyWithoutCustomActions(): PlaybackStateCompat.Builder {
@@ -443,5 +440,27 @@ constructor(
 
     companion object {
         const val ACTION_SHUFFLE = "com.simplecityapps.shuttle.shuffle"
+    }
+}
+
+/**
+ * Collects [queueStateFlow], comparing each state with the last one handled, starting from [baseline].
+ *
+ * [onQueueChanged] runs when the queue's contents change, and [onCurrentItemChanged] when the current item or
+ * position does; both run, in that order, when the queue is restored.
+ */
+internal fun CoroutineScope.launchSessionQueueUpdates(
+    queueStateFlow: StateFlow<QueueState>,
+    baseline: QueueState,
+    context: CoroutineContext,
+    onQueueChanged: () -> Unit,
+    onCurrentItemChanged: () -> Unit
+): Job = launchCollectingChanges(queueStateFlow, baseline, context) { previous, current ->
+    val restored = current.isRestored && !previous.isRestored
+    if (restored || current.contentVersion != previous.contentVersion) {
+        onQueueChanged()
+    }
+    if (restored || current.currentItem != previous.currentItem || current.currentPosition != previous.currentPosition) {
+        onCurrentItemChanged()
     }
 }

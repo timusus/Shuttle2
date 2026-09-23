@@ -15,13 +15,19 @@ import android.util.LruCache
 import androidx.core.app.NotificationCompat
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.playback.mediasession.MediaSessionManager
-import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueOperations
-import com.simplecityapps.playback.queue.QueueWatcher
+import com.simplecityapps.playback.queue.QueueState
+import com.simplecityapps.shuttle.coroutines.launchCollectingChanges
 import com.simplecityapps.shuttle.pendingintent.PendingIntentCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
+import kotlin.coroutines.CoroutineContext
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import timber.log.Timber
 
 class PlaybackNotificationManager
@@ -32,27 +38,27 @@ constructor(
     private val playbackManager: PlaybackOperations,
     private val queueManager: QueueOperations,
     private val mediaSessionManager: MediaSessionManager,
-    private val playbackWatcher: PlaybackWatcher,
-    private val queueWatcher: QueueWatcher,
     private val artworkCache: LruCache<String, Bitmap>,
     private val artworkImageLoader: ArtworkImageLoader
-) : PlaybackWatcherCallback,
-    QueueChangeCallback {
+) {
     private val placeholder: Bitmap? by lazy {
         drawableToBitmap(context.resources.getDrawable(com.simplecityapps.playback.R.drawable.ic_music_note_black_24dp, context.theme))
     }
 
     private var hasDisplayedNotification = false
 
-    fun registerCallbacks() {
-        playbackWatcher.addCallback(this)
-        queueWatcher.addCallback(this)
-    }
-
-    fun removeCallbacks() {
-        playbackWatcher.removeCallback(this)
-        queueWatcher.removeCallback(this)
-    }
+    /**
+     * Keeps the playback notification up to date with the playback state, the current item, the queue and the
+     * shuffle and repeat modes, until the returned job (or [scope]) is cancelled.
+     */
+    fun launchUpdates(scope: CoroutineScope): Job = scope.launchPlaybackNotificationUpdates(
+        playbackStateFlow = playbackManager.playbackStateFlow,
+        queueStateFlow = queueManager.queueStateFlow,
+        shuffleModeFlow = queueManager.shuffleModeFlow,
+        repeatModeFlow = queueManager.repeatModeFlow,
+        context = Dispatchers.Main.immediate,
+        displayPlaybackNotification = { displayPlaybackNotification() }
+    )
 
     fun displayPlaybackNotification(): Notification {
         Timber.v("displayPlaybackNotification")
@@ -240,41 +246,6 @@ constructor(
         }
     }
 
-    // PlaybackWatcherCallback Implementation
-
-    override fun onPlaybackStateChanged(playbackState: PlaybackState) {
-        displayPlaybackNotification()
-    }
-
-    // QueueChangeCallback Implementation
-
-    override fun onQueueChanged(reason: QueueChangeCallback.QueueChangeReason) {
-        if (queueManager.getQueue().isNotEmpty()) {
-            displayPlaybackNotification()
-        }
-    }
-
-    override fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
-        if (queueManager.getQueue().isNotEmpty()) {
-            displayPlaybackNotification()
-        }
-    }
-
-    override fun onRepeatChanged(repeatMode: QueueManager.RepeatMode) {
-        if (queueManager.getQueue().isNotEmpty()) {
-            displayPlaybackNotification()
-        }
-    }
-
-    override fun onQueuePositionChanged(
-        oldPosition: Int?,
-        newPosition: Int?
-    ) {
-        if (queueManager.getQueue().isNotEmpty()) {
-            displayPlaybackNotification()
-        }
-    }
-
     companion object {
         const val NOTIFICATION_CHANNEL_ID = "2"
         const val NOTIFICATION_ID = 1
@@ -297,6 +268,44 @@ constructor(
             drawable.setBounds(0, 0, canvas.width, canvas.height)
             drawable.draw(canvas)
             return bitmap
+        }
+    }
+}
+
+/**
+ * Calls [displayPlaybackNotification] on every change after launch: to the playback state, and, while the
+ * queue isn't empty, to its contents, the current item or position, or the shuffle or repeat mode. A change to
+ * the queue's restored flag alone isn't one.
+ */
+internal fun CoroutineScope.launchPlaybackNotificationUpdates(
+    playbackStateFlow: StateFlow<PlaybackState>,
+    queueStateFlow: StateFlow<QueueState>,
+    shuffleModeFlow: StateFlow<QueueManager.ShuffleMode>,
+    repeatModeFlow: StateFlow<QueueManager.RepeatMode>,
+    context: CoroutineContext,
+    displayPlaybackNotification: () -> Unit
+): Job {
+    val playbackState = playbackStateFlow.value
+    val queueState = queueStateFlow.value
+    val shuffleMode = shuffleModeFlow.value
+    val repeatMode = repeatModeFlow.value
+    return launch(context) {
+        launchCollectingChanges(playbackStateFlow, playbackState) { _, _ ->
+            displayPlaybackNotification()
+        }
+        launchCollectingChanges(queueStateFlow, queueState) { previous, current ->
+            val changed = current.contentVersion != previous.contentVersion ||
+                current.currentItem != previous.currentItem ||
+                current.currentPosition != previous.currentPosition
+            if (changed && current.items.isNotEmpty()) {
+                displayPlaybackNotification()
+            }
+        }
+        launchCollectingChanges(shuffleModeFlow, shuffleMode) { _, _ ->
+            if (queueStateFlow.value.items.isNotEmpty()) displayPlaybackNotification()
+        }
+        launchCollectingChanges(repeatModeFlow, repeatMode) { _, _ ->
+            if (queueStateFlow.value.items.isNotEmpty()) displayPlaybackNotification()
         }
     }
 }

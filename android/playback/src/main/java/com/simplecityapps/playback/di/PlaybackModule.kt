@@ -95,7 +95,6 @@ class PlaybackModule {
         artworkImageLoader: ArtworkImageLoader,
         artworkCache: LruCache<String, Bitmap?>,
         preferenceManager: GeneralPreferenceManager,
-        queueWatcher: QueueWatcher,
         mediaIdHelper: MediaIdHelper
     ): MediaSessionManager = MediaSessionManager(
         context,
@@ -109,8 +108,7 @@ class PlaybackModule {
         genreRepository,
         artworkImageLoader,
         artworkCache,
-        preferenceManager,
-        queueWatcher
+        preferenceManager
     )
 
     @Singleton
@@ -118,8 +116,8 @@ class PlaybackModule {
     fun provideNoiseManager(
         @ApplicationContext context: Context,
         playbackManager: PlaybackManager,
-        playbackWatcher: PlaybackWatcher
-    ): NoiseManager = NoiseManager(context, playbackManager, playbackWatcher)
+        @AppCoroutineScope appCoroutineScope: CoroutineScope
+    ): NoiseManager = NoiseManager(context, playbackManager, appCoroutineScope)
 
     @Singleton
     @Provides
@@ -128,8 +126,6 @@ class PlaybackModule {
         playbackManager: PlaybackManager,
         queueManager: QueueManager,
         mediaSessionManager: MediaSessionManager,
-        playbackWatcher: PlaybackWatcher,
-        queueWatcher: QueueWatcher,
         lruCache: LruCache<String, Bitmap>,
         artworkImageLoader: ArtworkImageLoader
     ): PlaybackNotificationManager = PlaybackNotificationManager(
@@ -138,8 +134,6 @@ class PlaybackModule {
         playbackManager,
         queueManager,
         mediaSessionManager,
-        playbackWatcher,
-        queueWatcher,
         lruCache,
         artworkImageLoader
     )

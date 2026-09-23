@@ -18,33 +18,27 @@ import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.androidauto.PackageValidator
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.mediasession.MediaSessionManager
-import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueOperations
-import com.simplecityapps.playback.queue.QueueWatcher
+import com.simplecityapps.playback.queue.QueueState
+import com.simplecityapps.shuttle.coroutines.launchCollectingChanges
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
 @AndroidEntryPoint
-class PlaybackService :
-    MediaBrowserServiceCompat(),
-    PlaybackWatcherCallback,
-    QueueChangeCallback {
+class PlaybackService : MediaBrowserServiceCompat() {
     @Inject
     lateinit var playbackManager: PlaybackOperations
 
     @Inject
-    lateinit var playbackWatcher: PlaybackWatcher
-
-    @Inject
     lateinit var queueManager: QueueOperations
-
-    @Inject
-    lateinit var queueWatcher: QueueWatcher
 
     @Inject
     lateinit var mediaSessionManager: MediaSessionManager
@@ -68,18 +62,29 @@ class PlaybackService :
 
     private var pendingStartCommands = mutableListOf<Intent>()
 
+    private var stateUpdates: Job? = null
+
+    private var notificationUpdates: Job? = null
+
     override fun onCreate() {
         super.onCreate()
 
         Timber.v("onCreate()")
 
-        playbackWatcher.addCallback(this)
-        queueWatcher.addCallback(this)
-
         foregroundNotificationHandler = Handler(Looper.getMainLooper())
         delayedShutdownHandler = Handler(Looper.getMainLooper())
 
-        notificationManager.registerCallbacks()
+        // Main.immediate, so a change made on the main thread is handled before the call that made it returns,
+        // as the callbacks these replaced were. The service reacts to a change before the notification does.
+        stateUpdates = coroutineScope.launchServiceStateUpdates(
+            playbackStateFlow = playbackManager.playbackStateFlow,
+            queueStateFlow = queueManager.queueStateFlow,
+            context = Dispatchers.Main.immediate,
+            onPlaybackStateChanged = ::onPlaybackStateChanged,
+            onQueueCleared = ::onQueueCleared,
+            onQueueRestored = ::onQueueRestored
+        )
+        notificationUpdates = notificationManager.launchUpdates(coroutineScope)
 
         sessionToken = mediaSessionManager.mediaSession.sessionToken
     }
@@ -171,11 +176,11 @@ class PlaybackService :
     override fun onDestroy() {
         Timber.v("onDestroy()")
 
-        playbackWatcher.removeCallback(this)
-        queueWatcher.removeCallback(this)
+        stateUpdates?.cancel()
         playbackManager.pause()
 
-        notificationManager.removeCallbacks()
+        // Cancelled after pausing, so the notification shows playback as paused.
+        notificationUpdates?.cancel()
 
         foregroundNotificationHandler?.removeCallbacksAndMessages(null)
         delayedShutdownHandler?.removeCallbacksAndMessages(null)
@@ -230,9 +235,9 @@ class PlaybackService :
         }, delay)
     }
 
-    // PlaybackWatcherCallback Implementation
+    // State Changes
 
-    override fun onPlaybackStateChanged(playbackState: PlaybackState) {
+    private fun onPlaybackStateChanged(playbackState: PlaybackState) {
         // We use the foreground notification handler here to slightly delay the call to stopForeground().
         // This appears to be necessary in order to allow our notification to become dismissable if pause() is called via onStartCommand() to this service.
         // Presumably, there is an issue in calling stopForeground() too soon after startForeground() which causes the notification to be stuck in the 'ongoing' state and not able to be dismissed.
@@ -263,9 +268,7 @@ class PlaybackService :
         }
     }
 
-    override fun onQueueRestored() {
-        super.onQueueRestored()
-
+    private fun onQueueRestored() {
         if (pendingStartCommands.isNotEmpty()) {
             if (queueManager.getQueue().isEmpty()) {
                 Timber.v("Queue empty")
@@ -281,14 +284,12 @@ class PlaybackService :
         }
     }
 
-    override fun onQueueChanged(reason: QueueChangeCallback.QueueChangeReason) {
-        if (queueManager.getQueue().isEmpty()) {
-            Timber.v("Queue cleared, stopForeground() called")
-            // This should only occur if the user manually clears their queue, while playback is paused
-            stopForeground(true)
-            notificationManager.removeNotification()
-            stopSelf()
-        }
+    private fun onQueueCleared() {
+        Timber.v("Queue cleared, stopForeground() called")
+        // This should only occur if the user manually clears their queue, while playback is paused
+        stopForeground(true)
+        notificationManager.removeNotification()
+        stopSelf()
     }
 
     // MediaBrowserService Implementation
@@ -329,5 +330,35 @@ class PlaybackService :
         const val ACTION_TOGGLE_REPEAT: String = "com.simplecityapps.playback.repeat"
         const val ACTION_SEARCH: String = "com.simplecityapps.playback.search"
         const val ACTION_NOTIFICATION_DISMISS: String = "com.simplecityapps.playback.notification.dismiss"
+    }
+}
+
+/**
+ * Reports each change after launch to the playback state, the queue's contents leaving it empty, and the queue
+ * being restored, in that order when one change covers more than one. The queue is restored after it's set,
+ * so a merged change reports the queue before the restore, as the callbacks these replaced did.
+ */
+internal fun CoroutineScope.launchServiceStateUpdates(
+    playbackStateFlow: StateFlow<PlaybackState>,
+    queueStateFlow: StateFlow<QueueState>,
+    context: CoroutineContext,
+    onPlaybackStateChanged: (PlaybackState) -> Unit,
+    onQueueCleared: () -> Unit,
+    onQueueRestored: () -> Unit
+): Job {
+    val playbackState = playbackStateFlow.value
+    val queueState = queueStateFlow.value
+    return launch(context) {
+        launchCollectingChanges(playbackStateFlow, playbackState) { _, current ->
+            onPlaybackStateChanged(current)
+        }
+        launchCollectingChanges(queueStateFlow, queueState) { previous, current ->
+            if (current.contentVersion != previous.contentVersion && current.items.isEmpty()) {
+                onQueueCleared()
+            }
+            if (current.isRestored && !previous.isRestored) {
+                onQueueRestored()
+            }
+        }
     }
 }
