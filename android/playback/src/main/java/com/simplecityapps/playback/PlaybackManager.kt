@@ -320,7 +320,11 @@ class PlaybackManager(
 
         load(seekPosition ?: 0) { result ->
             result.onSuccess {
-                rebindAudioEffectSession(playback)
+                // A superseded switch (e.g. a fast local -> Cast -> local toggle) can still complete its
+                // load; rebinding to its playback would move the effect session off the active one.
+                if (playback === this.playback) {
+                    rebindAudioEffectSession(playback)
+                }
                 playbackPreferenceManager.playbackPosition?.let { playbackPosition ->
                     seekTo(playbackPosition)
                 }
@@ -335,7 +339,9 @@ class PlaybackManager(
      * Moves the audio effect control session to whatever session [playback] is actually rendering
      * on. Called on switch, so a playback with no local audio session (Chromecast) closes the
      * session rather than leaving system and OEM effects bound to a now-silent one, and again once
-     * loaded, in case the player couldn't honour the id we asked for.
+     * loaded, in case the player couldn't honour the id we asked for. The first call closes the
+     * old session straight away, even if the load later fails; the second is the only one that sees
+     * the id the loaded player actually rendered on, so both are needed.
      */
     private fun rebindAudioEffectSession(playback: Playback) {
         audioEffectSessionManager.bindTo(playback.getAudioSessionId())

@@ -7,6 +7,10 @@ import android.media.audiofx.AudioEffect
 /**
  * Advertises the audio session the active [Playback] is rendering on, so system and OEM audio
  * effects can attach to it. At most one effect control session is open at a time.
+ *
+ * Thread-safe: [PlaybackManager] binds both on the caller's thread and from a playback load
+ * callback, so binds are serialised. Each bind closes exactly the session the previous bind
+ * opened, so no session is closed twice, left open, or closed after a newer one was opened.
  */
 class AudioEffectSessionManager(
     private val openSession: (sessionId: Int) -> Unit,
@@ -21,6 +25,7 @@ class AudioEffectSessionManager(
      * The session id the effect control session is currently open on, or null if none is open.
      */
     var sessionId: Int? = null
+        @Synchronized get
         private set
 
     /**
@@ -28,6 +33,7 @@ class AudioEffectSessionManager(
      * and opens one on [sessionId] if it's a real session. A [sessionId] of zero or less (e.g. a
      * Chromecast playback, which has no local audio session) just closes. No-op if already bound.
      */
+    @Synchronized
     fun bindTo(sessionId: Int) {
         val newSessionId = sessionId.takeIf { it > 0 }
         if (newSessionId == this.sessionId) {
