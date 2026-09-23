@@ -12,9 +12,9 @@ import com.simplecityapps.localmediaprovider.local.data.room.entity.SongDataUpda
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import java.util.*
+import kotlin.time.Instant
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import timber.log.Timber
 
