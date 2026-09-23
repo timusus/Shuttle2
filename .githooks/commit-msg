@@ -1,0 +1,34 @@
+#!/bin/bash
+# Require changelog upkeep on user-facing commits.
+#
+# A feat/fix/perf commit changes what a user sees, so the unreleased fragment
+# (android/changelog-unreleased.json, rules in .claude/rules/changelog.md) must be updated in the
+# same commit, or the commit must declare itself internal with a `Changelog: none` trailer.
+# Release-time changelog generation cannot recover this from commit messages alone: commit
+# messages describe deltas between commits, not between what users of the last shipped build
+# actually had and what they are getting.
+#
+# Activated per clone by `git config core.hooksPath .githooks`; the Claude SessionStart hook
+# `.claude/hooks/ensure-githooks.sh` sets that automatically.
+#
+# Deliberate exception:  SKIP_CHANGELOG_CHECK=1 git commit ...
+set -uo pipefail
+
+subject="$(head -n 1 "$1")"
+[ "${SKIP_CHANGELOG_CHECK:-}" = "1" ] && exit 0
+case "$subject" in
+  "fixup!"*|"squash!"*|"Merge "*) exit 0 ;;
+esac
+grep -Eq '^(feat|fix|perf)(\([a-z-]+\))?:' <<<"$subject" || exit 0
+git diff --cached --name-only | grep -Fxq "android/changelog-unreleased.json" && exit 0
+grep -q "^Changelog: none" "$1" && exit 0
+cat >&2 <<'EOF'
+commit-msg: user-facing commit without changelog upkeep.
+
+  Either stage the unreleased fragment:  git add android/changelog-unreleased.json
+  (what belongs in it: .claude/rules/changelog.md)
+  Or mark the commit internal with a trailer in the message:  Changelog: none
+
+  Deliberate exception:  SKIP_CHANGELOG_CHECK=1 git commit ...
+EOF
+exit 1

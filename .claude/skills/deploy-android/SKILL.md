@@ -83,7 +83,26 @@ TAG="v${VERSION_CODE}"
 
 Tell the user: "Version: **$VERSION_NAME** (code: `$VERSION_CODE`, tag: `$TAG`)"
 
-### 5. Create and push tag
+### 5. Generate changelog
+
+Invoke `/generate-changelog` with VERSION_NAME and TAG from step 4.
+
+This builds the entry from `android/changelog-unreleased.json` (audited against commits since its
+`since`), updates `android/app/src/main/assets/changelog.json` (in-app changelog), and resets the
+fragment to `since: $TAG` with empty arrays.
+
+Before generating, check the fragment's `since` names the tag this release **replaces** (the last
+tag that actually shipped to users). If it disagrees with `git describe`, the fragment wins — a tag
+can point at a build that was withdrawn.
+
+**The changelog and fragment reset must be committed together before creating the tag**, so the
+tagged commit includes them:
+```bash
+git add android/app/src/main/assets/changelog.json android/changelog-unreleased.json
+git commit -m "docs(app): update changelog for $VERSION_NAME"
+```
+
+### 6. Create and push tag
 
 Confirm with the user before pushing: "Ready to push tag `$TAG` to trigger deployment?"
 
@@ -92,7 +111,7 @@ git tag "$TAG"
 git push origin main && git push origin "$TAG"
 ```
 
-### 6. Monitor deployment
+### 7. Monitor deployment
 
 ```bash
 gh run watch
@@ -113,3 +132,4 @@ The pipeline will:
 - **Test failures:** Investigate and report — never skip tests
 - **Tag already exists:** Increment the revision number (NN) and retry
 - **Push rejected:** Check if main is behind remote (`git pull origin main`)
+- **Changelog JSON invalid:** Show the error, help fix the JSON syntax
