@@ -6,10 +6,9 @@ import android.media.AudioAttributes
 import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.os.Build
-import com.simplecityapps.playback.PlaybackWatcher
 
 @TargetApi(Build.VERSION_CODES.O)
-class AudioFocusHelperApi26(context: Context, playbackWatcher: PlaybackWatcher) : AudioFocusHelperBase(context, playbackWatcher) {
+class AudioFocusHelperApi26(context: Context) : AudioFocusHelperBase(context) {
     private val focusRequest: AudioFocusRequest =
         AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
             .setAudioAttributes(

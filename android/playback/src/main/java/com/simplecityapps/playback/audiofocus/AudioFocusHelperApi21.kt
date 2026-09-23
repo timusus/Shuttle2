@@ -2,10 +2,9 @@ package com.simplecityapps.playback.audiofocus
 
 import android.content.Context
 import android.media.AudioManager
-import com.simplecityapps.playback.PlaybackWatcher
 
 @Suppress("DEPRECATION")
-class AudioFocusHelperApi21(context: Context, playbackWatcher: PlaybackWatcher) : AudioFocusHelperBase(context, playbackWatcher) {
+class AudioFocusHelperApi21(context: Context) : AudioFocusHelperBase(context) {
     override fun requestAudioFocus(): Boolean {
         if (!enabled) return true
 

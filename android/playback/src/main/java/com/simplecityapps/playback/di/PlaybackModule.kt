@@ -142,6 +142,7 @@ class PlaybackModule {
     @Provides
     fun provideSleepTimer(
         playbackManager: PlaybackManager,
-        playbackWatcher: PlaybackWatcher
-    ): SleepTimer = SleepTimer(playbackManager, playbackWatcher)
+        playbackWatcher: PlaybackWatcher,
+        @AppCoroutineScope appCoroutineScope: CoroutineScope
+    ): SleepTimer = SleepTimer(playbackManager, playbackWatcher, appCoroutineScope)
 }

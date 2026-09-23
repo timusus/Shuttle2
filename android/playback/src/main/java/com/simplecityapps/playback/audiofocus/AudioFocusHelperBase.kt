@@ -4,22 +4,26 @@ import android.content.Context
 import android.media.AudioManager
 import androidx.core.content.getSystemService
 import com.simplecityapps.playback.PlaybackState
-import com.simplecityapps.playback.PlaybackWatcher
-import com.simplecityapps.playback.PlaybackWatcherCallback
 
+/**
+ * Turns audio focus changes into [AudioFocusHelper.Listener] calls. Whether playback should resume
+ * after a transient loss is decided from the listener's playback state at the moment focus is lost.
+ */
 abstract class AudioFocusHelperBase(
-    private val context: Context,
-    playbackWatcher: PlaybackWatcher
+    audioManager: Lazy<AudioManager?>
 ) : AudioFocusHelper,
-    AudioManager.OnAudioFocusChangeListener,
-    PlaybackWatcherCallback {
-    internal val audioManager: AudioManager? by lazy {
-        context.getSystemService()
-    }
+    AudioManager.OnAudioFocusChangeListener {
+    constructor(context: Context) : this(lazy { context.getSystemService<AudioManager>() })
+
+    internal val audioManager: AudioManager? by audioManager
 
     override var resumeOnFocusGain: Boolean = false
 
-    private var isPlaying: Boolean = false
+    private val isPlaying: Boolean
+        get() = when (listener?.playbackStateFlow?.value) {
+            PlaybackState.Loading, PlaybackState.Playing -> true
+            else -> false
+        }
 
     internal val focusLock = Any()
 
@@ -30,10 +34,6 @@ abstract class AudioFocusHelperBase(
     override var listener: AudioFocusHelper.Listener? = null
 
     override var enabled: Boolean = true
-
-    init {
-        playbackWatcher.addCallback(this)
-    }
 
     override fun onAudioFocusChange(focusChange: Int) {
         if (!enabled) return
@@ -86,11 +86,5 @@ abstract class AudioFocusHelperBase(
         if (enabled) {
             listener?.pause()
         }
-    }
-
-    // PlaybackWatcherCallback Implementation
-
-    override fun onPlaybackStateChanged(playbackState: PlaybackState) {
-        this.isPlaying = playbackState == PlaybackState.Loading || playbackState == PlaybackState.Playing
     }
 }

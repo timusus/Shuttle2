@@ -95,13 +95,12 @@ class PlaybackEngineModule {
     @Singleton
     @Provides
     fun provideAudioFocusHelper(
-        @ApplicationContext context: Context,
-        playbackWatcher: PlaybackWatcher
+        @ApplicationContext context: Context
     ): AudioFocusHelper {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            return AudioFocusHelperApi26(context, playbackWatcher)
+            return AudioFocusHelperApi26(context)
         } else {
-            return AudioFocusHelperApi21(context, playbackWatcher)
+            return AudioFocusHelperApi21(context)
         }
     }
 

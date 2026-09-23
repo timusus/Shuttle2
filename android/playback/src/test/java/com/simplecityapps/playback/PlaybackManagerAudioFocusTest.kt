@@ -51,6 +51,37 @@ class PlaybackManagerAudioFocusTest {
     }
 
     @Test
+    fun `PlaybackManager shares its playback state with the audio focus helper`() {
+        audioFocusHelper.listener!!.playbackStateFlow shouldBe playbackManager.playbackStateFlow
+    }
+
+    @Test
+    fun `play requests audio focus before playing`() {
+        playbackManager.play()
+
+        audioFocusHelper.requests shouldBe 1
+        events shouldBe listOf("A play")
+    }
+
+    @Test
+    fun `play does nothing when the focus request is denied`() {
+        audioFocusHelper.grantFocus = false
+
+        playbackManager.play()
+
+        audioFocusHelper.requests shouldBe 1
+        events shouldBe emptyList()
+    }
+
+    @Test
+    fun `pausing keeps audio focus`() {
+        playbackManager.play()
+        playbackManager.pause()
+
+        audioFocusHelper.abandons shouldBe 0
+    }
+
+    @Test
     fun `a transient focus loss ducks the volume without pausing`() {
         audioFocusHelper.listener!!.duck()
 

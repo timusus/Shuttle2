@@ -2,10 +2,24 @@ package com.simplecityapps.playback.fakes
 
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 
-class FakeAudioFocusHelper : AudioFocusHelper {
-    override fun requestAudioFocus(): Boolean = true
+/** Grants focus unless [grantFocus] is false, counting requests and abandons. */
+class FakeAudioFocusHelper(
+    var grantFocus: Boolean = true
+) : AudioFocusHelper {
+    var requests = 0
+        private set
 
-    override fun abandonAudioFocus() {}
+    var abandons = 0
+        private set
+
+    override fun requestAudioFocus(): Boolean {
+        requests++
+        return grantFocus
+    }
+
+    override fun abandonAudioFocus() {
+        abandons++
+    }
 
     override var listener: AudioFocusHelper.Listener? = null
     override var enabled: Boolean = true
