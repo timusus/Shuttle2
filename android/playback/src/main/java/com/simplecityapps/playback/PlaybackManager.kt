@@ -1,6 +1,7 @@
 package com.simplecityapps.playback
 
 import android.media.AudioManager
+import android.os.SystemClock
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
@@ -27,7 +28,9 @@ class PlaybackManager(
     private val progressTicker: ProgressTicker,
     exoplayerPlayback: Playback,
     queueWatcher: QueueWatcher,
-    audioManager: AudioManager?
+    audioManager: AudioManager?,
+    /** The anchor clock, on the `SystemClock.elapsedRealtime` timebase media controllers expect. */
+    private val elapsedRealtime: () -> Long = SystemClock::elapsedRealtime
 ) : PlaybackOperations,
     Playback.Callback,
     AudioFocusHelper.Listener,
@@ -52,6 +55,15 @@ class PlaybackManager(
      * it stays on the callback.
      */
     override val progressFlow: StateFlow<PlaybackProgress?> = _progressFlow.asStateFlow()
+
+    private val _positionAnchorFlow = MutableStateFlow(positionAnchor())
+
+    /**
+     * Republished on every discontinuity: a reported state (even a repeated one), a seek, a speed
+     * change, a track change, a playback switch, or a jump the playback reports itself. Never on a
+     * progress tick.
+     */
+    override val positionAnchorFlow: StateFlow<PositionAnchor> = _positionAnchorFlow.asStateFlow()
 
     private val audioSessionId = audioManager?.generateAudioSessionId() ?: -1
 
@@ -260,6 +272,7 @@ class PlaybackManager(
      */
     override fun seekTo(position: Int) {
         playback.seek(position)
+        reanchor()
         updateProgress(fromUser = true)
     }
 
@@ -371,7 +384,7 @@ class PlaybackManager(
     }
 
     /**
-     * Publishes the newly active playback's state, which it may never report itself (a fresh
+     * Publishes the newly active playback's state and position anchor, which it may never report itself (a fresh
      * playback starts paused without saying so), and starts or stops the progress ticker to match.
      * Progress is left alone: the old playback's last position is still the best known one until
      * the new playback loads at it, and it's what gets persisted as the position to resume from.
@@ -379,6 +392,7 @@ class PlaybackManager(
     private fun publishSwitchedPlaybackState() {
         val playbackState = playback.playBackState()
         _playbackStateFlow.value = playbackState
+        reanchor()
         monitorProgress(playbackState is PlaybackState.Loading || playbackState is PlaybackState.Playing)
     }
 
@@ -396,6 +410,7 @@ class PlaybackManager(
 
     override fun setPlaybackSpeed(multiplier: Float) {
         playback.setPlaybackSpeed(multiplier)
+        reanchor()
     }
 
     override fun getPlaybackSpeed(): Float = playback.getPlaybackSpeed()
@@ -419,11 +434,23 @@ class PlaybackManager(
         }
     }
 
+    private fun positionAnchor() = PositionAnchor(
+        state = _playbackStateFlow.value,
+        positionMs = playback.getProgress(),
+        elapsedRealtimeMs = elapsedRealtime(),
+        speed = playback.getPlaybackSpeed()
+    )
+
+    private fun reanchor() {
+        _positionAnchorFlow.value = positionAnchor()
+    }
+
     // PlaybackWatcherCallback Implementation
 
     override fun onPlaybackStateChanged(playbackState: PlaybackState) {
         Timber.v("onPlaybackStateChanged(playbackState: $playbackState)")
         _playbackStateFlow.value = playbackState
+        reanchor()
         playbackWatcher.onPlaybackStateChanged(playbackState)
 
         when (playbackState) {
@@ -453,7 +480,12 @@ class PlaybackManager(
             skipToNext(false)
         }
 
+        reanchor()
         updateProgress()
+    }
+
+    override fun onPositionDiscontinuity() {
+        reanchor()
     }
 
     // QueueChangeCallback Implementation

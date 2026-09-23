@@ -87,6 +87,11 @@ class ExoPlayerPlayback(
                 }
             }
 
+            override fun onPositionDiscontinuity(reason: Int) {
+                Timber.v("onPositionDiscontinuity(reason: $reason)")
+                callback?.onPositionDiscontinuity()
+            }
+
             override fun onPlayerError(error: Exception) {
                 Timber.e(error, "onPlayerError()")
                 callback?.onPlaybackStateChanged(PlaybackState.Paused)

@@ -41,6 +41,10 @@ class ExoPlayerPlaybackTest {
                     override fun onTrackEnded(trackWentToNext: Boolean) {
                         callbackEvents += "trackEnded $trackWentToNext"
                     }
+
+                    override fun onPositionDiscontinuity() {
+                        callbackEvents += "discontinuity ${this@apply.getProgress()}"
+                    }
                 }
         }
 
@@ -353,6 +357,16 @@ class ExoPlayerPlaybackTest {
         player.transitionTo(1, Player.MEDIA_ITEM_TRANSITION_REASON_REPEAT)
 
         callbackEvents.filter { it.startsWith("trackEnded") } shouldBe listOf("trackEnded true", "trackEnded true")
+    }
+
+    @Test
+    fun `a position discontinuity is reported with the new position readable`() = runTest {
+        load(songA)
+        callbackEvents.clear()
+
+        player.emitPositionDiscontinuity(42_000, Player.DISCONTINUITY_REASON_SEEK_ADJUSTMENT)
+
+        callbackEvents shouldBe listOf("discontinuity 42000")
     }
 
     @Test

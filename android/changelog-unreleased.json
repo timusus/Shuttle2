@@ -50,6 +50,10 @@
     {
       "text": "Tracks on multi-disc albums now play in the right order when using the Android media scanner",
       "commits": []
+    },
+    {
+      "text": "Fixed the progress bar on the lock screen, in the car and on other media controls jumping back after turning shuffle on or off",
+      "commits": []
     }
   ]
 }

@@ -116,6 +116,15 @@ class ExoAudioPlayer(private val player: SimpleExoPlayer) : AudioPlayer {
                 listener.onMediaItemTransition(reason)
             }
 
+            override fun onPositionDiscontinuity(
+                oldPosition: Player.PositionInfo,
+                newPosition: Player.PositionInfo,
+                reason: Int
+            ) {
+                super.onPositionDiscontinuity(oldPosition, newPosition, reason)
+                listener.onPositionDiscontinuity(reason)
+            }
+
             override fun onPlayerError(error: ExoPlaybackException) {
                 super.onPlayerError(error)
                 listener.onPlayerError(error)

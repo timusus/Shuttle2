@@ -20,6 +20,9 @@ interface AudioPlayer {
         /** [reason] is one of ExoPlayer's `Player.MEDIA_ITEM_TRANSITION_REASON_*` constants. */
         fun onMediaItemTransition(reason: Int)
 
+        /** [reason] is one of ExoPlayer's `Player.DISCONTINUITY_REASON_*` constants. */
+        fun onPositionDiscontinuity(reason: Int)
+
         fun onPlayerError(error: Exception)
     }
 

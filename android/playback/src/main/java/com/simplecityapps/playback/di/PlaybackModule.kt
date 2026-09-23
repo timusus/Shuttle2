@@ -95,7 +95,6 @@ class PlaybackModule {
         artworkImageLoader: ArtworkImageLoader,
         artworkCache: LruCache<String, Bitmap?>,
         preferenceManager: GeneralPreferenceManager,
-        playbackWatcher: PlaybackWatcher,
         queueWatcher: QueueWatcher,
         mediaIdHelper: MediaIdHelper
     ): MediaSessionManager = MediaSessionManager(
@@ -111,7 +110,6 @@ class PlaybackModule {
         artworkImageLoader,
         artworkCache,
         preferenceManager,
-        playbackWatcher,
         queueWatcher
     )
 

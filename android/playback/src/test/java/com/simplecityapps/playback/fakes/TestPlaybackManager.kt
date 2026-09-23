@@ -29,7 +29,8 @@ fun testPlaybackManager(
     audioEffectSessionManager: AudioEffectSessionManager = AudioEffectSessionManager(openSession = {}, closeSession = {}),
     appCoroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Unconfined),
     // A dispatcher nothing advances, so progress never ticks unless a test supplies its own ticker.
-    progressTicker: ProgressTicker = ProgressTicker(CoroutineScope(StandardTestDispatcher()))
+    progressTicker: ProgressTicker = ProgressTicker(CoroutineScope(StandardTestDispatcher())),
+    elapsedRealtime: () -> Long = { 0L }
 ): PlaybackManager = PlaybackManager(
     queueManager = queueManager,
     playbackWatcher = playbackWatcher,
@@ -40,5 +41,6 @@ fun testPlaybackManager(
     progressTicker = progressTicker,
     exoplayerPlayback = exoplayerPlayback,
     queueWatcher = queueWatcher,
-    audioManager = null
+    audioManager = null,
+    elapsedRealtime = elapsedRealtime
 )

@@ -133,6 +133,15 @@ class FakePlayer(generatedAudioSessionId: Int) : AudioPlayer {
         listeners.toList().forEach { it.onPlayWhenReadyChanged(playWhenReady) }
     }
 
+    /** Moves to [positionMs] and reports it with a `Player.DISCONTINUITY_REASON_*` [reason]. */
+    fun emitPositionDiscontinuity(
+        positionMs: Long,
+        reason: Int
+    ) {
+        contentPosition = positionMs
+        listeners.toList().forEach { it.onPositionDiscontinuity(reason) }
+    }
+
     fun emitError(error: Exception) {
         listeners.toList().forEach { it.onPlayerError(error) }
     }

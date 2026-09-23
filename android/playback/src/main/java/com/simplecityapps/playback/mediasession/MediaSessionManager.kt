@@ -23,8 +23,7 @@ import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackNotificationManager
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackState
-import com.simplecityapps.playback.PlaybackWatcher
-import com.simplecityapps.playback.PlaybackWatcherCallback
+import com.simplecityapps.playback.PositionAnchor
 import com.simplecityapps.playback.R
 import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.getArtworkCacheKey
@@ -33,7 +32,6 @@ import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.di.AppCoroutineScope
-import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.pendingintent.PendingIntentCompat
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.query.SongQuery
@@ -62,10 +60,8 @@ constructor(
     private val artworkImageLoader: ArtworkImageLoader,
     private val artworkCache: LruCache<String, Bitmap?>,
     private val preferenceManager: GeneralPreferenceManager,
-    playbackWatcher: PlaybackWatcher,
     queueWatcher: QueueWatcher
-) : PlaybackWatcherCallback,
-    QueueChangeCallback {
+) : QueueChangeCallback {
     private val placeholder: Bitmap? by lazy {
         PlaybackNotificationManager.drawableToBitmap(ResourcesCompat.getDrawable(context.resources, R.drawable.ic_music_note_black_24dp, context.theme)!!)
     }
@@ -275,7 +271,6 @@ constructor(
             )
         mediaSession.setMediaButtonReceiver(mediaButtonReceiverIntent)
 
-        playbackWatcher.addCallback(this)
         queueWatcher.addCallback(this)
 
         playbackStateBuilder.setActions(
@@ -295,13 +290,12 @@ constructor(
 
         updateShuffleAction()
 
-//        playbackStateBuilder.setState(
-//            getPlaybackState(),
-//            playbackManager.getProgress()?.toLong() ?: PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN,
-//            playbackManager.getPlaybackSpeed()
-//        )
-
         mediaSession.setPlaybackState(playbackStateBuilder.build())
+
+        // Main.immediate, so the current anchor is applied straight away when constructed on the main thread.
+        appCoroutineScope.launch(Dispatchers.Main.immediate) {
+            playbackManager.positionAnchorFlow.collect { anchor -> onPositionAnchorChanged(anchor) }
+        }
     }
 
     private fun updateShuffleAction() {
@@ -321,10 +315,25 @@ constructor(
         }
     }
 
-    private fun getPlaybackState() = when (playbackManager.playbackState()) {
+    private fun PlaybackState.toPlaybackStateCompatState() = when (this) {
         is PlaybackState.Loading -> PlaybackStateCompat.STATE_BUFFERING
         is PlaybackState.Playing -> PlaybackStateCompat.STATE_PLAYING
         else -> PlaybackStateCompat.STATE_PAUSED
+    }
+
+    /**
+     * Publishes the anchor as-is, with its own update time, so controllers extrapolate the position
+     * from when it was actually read rather than from when it reached the session.
+     */
+    private fun onPositionAnchorChanged(anchor: PositionAnchor) {
+        mediaSession.isActive = anchor.state == PlaybackState.Loading || anchor.state == PlaybackState.Playing
+        playbackStateBuilder.setState(
+            anchor.state.toPlaybackStateCompatState(),
+            anchor.positionMs?.toLong() ?: PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN,
+            anchor.speed,
+            anchor.elapsedRealtimeMs
+        )
+        updatePlaybackState()
     }
 
     private fun updatePlaybackState() {
@@ -398,38 +407,12 @@ constructor(
             val activeQueueItemId = currentItem.toQueueItem().queueId
             if (activeQueueItemId != this.activeQueueItemId) {
                 updateQueue()
+                // The position follows in the anchor published once the new track loads.
                 playbackStateBuilder.setActiveQueueItemId(activeQueueItemId)
-                playbackStateBuilder.setState(getPlaybackState(), 0L, playbackManager.getPlaybackSpeed())
                 updatePlaybackState()
                 updateMetadata()
             }
         }
-    }
-
-    // PlaybackWatcherCallback Implementation
-
-    override fun onPlaybackStateChanged(playbackState: PlaybackState) {
-        mediaSession.isActive = playbackState == PlaybackState.Loading || playbackState == PlaybackState.Playing
-        playbackStateBuilder.setState(getPlaybackState(), playbackManager.getProgress()?.toLong() ?: PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, playbackManager.getPlaybackSpeed())
-        updatePlaybackState()
-    }
-
-    override fun onProgressChanged(
-        position: Int,
-        duration: Int,
-        fromUser: Boolean
-    ) {
-        if (fromUser) {
-            playbackStateBuilder.setState(getPlaybackState(), position.toLong(), playbackManager.getPlaybackSpeed())
-            updatePlaybackState()
-        }
-    }
-
-    override fun onTrackEnded(song: Song) {
-        super.onTrackEnded(song)
-
-        playbackStateBuilder.setState(getPlaybackState(), playbackManager.getProgress()?.toLong() ?: PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, playbackManager.getPlaybackSpeed())
-        updatePlaybackState()
     }
 
     // QueueChangeCallback Implementation
@@ -463,7 +446,7 @@ constructor(
     fun PlaybackStateCompat.Builder.copyWithoutCustomActions(): PlaybackStateCompat.Builder {
         val thing = this.build()
         return PlaybackStateCompat.Builder()
-            .setState(thing.state, thing.position, thing.playbackSpeed)
+            .setState(thing.state, thing.position, thing.playbackSpeed, thing.lastPositionUpdateTime)
             .setActions(thing.actions)
             .setActiveQueueItemId(thing.activeQueueItemId)
     }

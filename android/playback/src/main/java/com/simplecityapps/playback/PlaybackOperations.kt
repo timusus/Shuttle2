@@ -11,6 +11,9 @@ interface PlaybackOperations {
     /** The last published progress; null until the first. Whether a change came from a user seek stays on the callback. */
     val progressFlow: StateFlow<PlaybackProgress?>
 
+    /** Where playback was at the last discontinuity, for consumers that extrapolate position between anchors. */
+    val positionAnchorFlow: StateFlow<PositionAnchor>
+
     fun load(seekPosition: Int? = null, completion: (Result<Boolean>) -> Unit)
     fun play(attempt: Int = 1)
     fun pause()

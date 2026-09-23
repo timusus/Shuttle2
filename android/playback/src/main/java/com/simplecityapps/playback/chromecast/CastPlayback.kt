@@ -252,6 +252,9 @@ class CastPlayback(
         override fun onStatusUpdated() {
             Timber.v("RemoteMediaClient.onStatusUpdated: ${castSession.remoteMediaClient?.playerState?.playerStateToString()}")
             updatePlaybackState()
+            // Each status carries a fresh position and rate, which may have jumped without a call
+            // to seek() or setPlaybackSpeed() here (another sender, or a rate change taking effect).
+            callback?.onPositionDiscontinuity()
         }
     }
 }
