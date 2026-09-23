@@ -179,6 +179,10 @@ class PlaylistDetailFragment :
                         presenter.setSortOrder(PlaylistSongSortOrder.LastModified)
                         true
                     }
+                    R.id.sortDescending -> {
+                        presenter.setSortDescending(!menuItem.isChecked)
+                        true
+                    }
                     else -> {
                         false
                     }
@@ -271,7 +275,10 @@ class PlaylistDetailFragment :
         )
     }
 
-    override fun updateToolbarMenuSortOrder(sortOrder: PlaylistSongSortOrder) {
+    override fun updateToolbarMenuSortOrder(
+        sortOrder: PlaylistSongSortOrder,
+        sortDescending: Boolean
+    ) {
         toolbar?.menu?.let { menu ->
             when (sortOrder) {
                 PlaylistSongSortOrder.Position -> menu.findItem(R.id.sortCustom)?.isChecked = true
@@ -285,6 +292,7 @@ class PlaylistDetailFragment :
                     // Nothing to do
                 }
             }
+            menu.findItem(R.id.sortDescending)?.isChecked = sortDescending
         }
     }
 

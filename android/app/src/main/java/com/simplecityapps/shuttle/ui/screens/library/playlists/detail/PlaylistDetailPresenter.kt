@@ -39,7 +39,10 @@ interface PlaylistDetailContract {
             showDragHandle: Boolean
         )
 
-        fun updateToolbarMenuSortOrder(sortOrder: PlaylistSongSortOrder)
+        fun updateToolbarMenuSortOrder(
+            sortOrder: PlaylistSongSortOrder,
+            sortDescending: Boolean
+        )
 
         fun showLoadError(error: Error)
 
@@ -88,6 +91,8 @@ interface PlaylistDetailContract {
         )
 
         fun setSortOrder(sortOrder: PlaylistSongSortOrder)
+
+        fun setSortDescending(sortDescending: Boolean)
 
         fun updateToolbarMenu()
 
@@ -150,7 +155,7 @@ constructor(
             .onEach { playlistSongs ->
                 this@PlaylistDetailPresenter.view?.setData(
                     playlistSongs = playlistSongs,
-                    showDragHandle = playlist.value.sortOrder == PlaylistSongSortOrder.Position
+                    showDragHandle = playlist.value.sortOrder == PlaylistSongSortOrder.Position && !playlist.value.sortDescending
                 )
             }.launchIn(this)
     }
@@ -259,15 +264,26 @@ constructor(
         if (playlist.value.sortOrder != sortOrder) {
             launch {
                 withContext(Dispatchers.IO) {
-                    playlistRepository.updatePlaylistSortOder(playlist.value, sortOrder)
+                    playlistRepository.updatePlaylistSortOder(playlist.value, sortOrder, playlist.value.sortDescending)
                 }
-                view?.updateToolbarMenuSortOrder(sortOrder)
+                view?.updateToolbarMenuSortOrder(sortOrder, playlist.value.sortDescending)
+            }
+        }
+    }
+
+    override fun setSortDescending(sortDescending: Boolean) {
+        if (playlist.value.sortDescending != sortDescending) {
+            launch {
+                withContext(Dispatchers.IO) {
+                    playlistRepository.updatePlaylistSortOder(playlist.value, playlist.value.sortOrder, sortDescending)
+                }
+                view?.updateToolbarMenuSortOrder(playlist.value.sortOrder, sortDescending)
             }
         }
     }
 
     override fun updateToolbarMenu() {
-        view?.updateToolbarMenuSortOrder(playlist.value.sortOrder)
+        view?.updateToolbarMenuSortOrder(playlist.value.sortOrder, playlist.value.sortDescending)
     }
 
     override fun movePlaylistItem(

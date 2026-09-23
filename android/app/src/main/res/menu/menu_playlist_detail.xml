@@ -32,6 +32,10 @@
                     android:id="@+id/sortSongDateModified"
                     android:title="@string/menu_title_sort_date_modified" />
             </group>
+            <item
+                android:id="@+id/sortDescending"
+                android:checkable="true"
+                android:title="@string/menu_title_sort_descending" />
         </menu>
     </item>
     <item

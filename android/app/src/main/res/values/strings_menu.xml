@@ -54,6 +54,8 @@
     <string name="menu_title_sort_date_modified">Last modified</string>
     <!-- Menu option to sort playlists by a custom sort order (user-defined sort order) -->
     <string name="menu_title_sort_custom">Custom</string>
+    <!-- Menu option to reverse the current playlist sort order -->
+    <string name="menu_title_sort_descending">Descending</string>
     <!-- Menu option to sort albums in a random order, reshuffled each time it's selected -->
     <string name="menu_title_sort_random">Random</string>
     <!-- Menu option to sort playlists alphabetically by name -->

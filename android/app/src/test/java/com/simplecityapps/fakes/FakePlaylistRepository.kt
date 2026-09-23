@@ -2,6 +2,7 @@ package com.simplecityapps.fakes
 
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
+import com.simplecityapps.mediaprovider.repository.playlists.comparator
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.PlaylistSong
@@ -46,7 +47,8 @@ class FakePlaylistRepository : PlaylistRepository {
         val songs = playlistSongs[playlist.id].orEmpty().mapIndexed { index, song ->
             PlaylistSong(id = index.toLong(), sortOrder = index.toLong(), song = song)
         }
-        return MutableStateFlow(songs)
+        val comparator = playlist.sortOrder.comparator
+        return MutableStateFlow(songs.sortedWith(if (playlist.sortDescending) comparator.reversed() else comparator))
     }
 
     override suspend fun deletePlaylist(playlist: Playlist) {}
@@ -57,7 +59,11 @@ class FakePlaylistRepository : PlaylistRepository {
 
     override suspend fun renamePlaylist(playlist: Playlist, name: String) {}
 
-    override suspend fun updatePlaylistSortOder(playlist: Playlist, sortOrder: PlaylistSongSortOrder) {}
+    override suspend fun updatePlaylistSortOder(playlist: Playlist, sortOrder: PlaylistSongSortOrder, sortDescending: Boolean) {
+        playlists.value = playlists.value.map { existing ->
+            if (existing.id == playlist.id) existing.copy(sortOrder = sortOrder, sortDescending = sortDescending) else existing
+        }
+    }
 
     override suspend fun updatePlaylistSongsSortOder(playlist: Playlist, playlistSongs: List<PlaylistSong>) {}
 

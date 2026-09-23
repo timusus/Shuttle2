@@ -12,6 +12,10 @@
     {
       "text": "Sort your albums list randomly, to help you pick something to listen to",
       "commits": []
+    },
+    {
+      "text": "Reverse a playlist's sort order from the sort menu",
+      "commits": []
     }
   ],
   "improvements": [

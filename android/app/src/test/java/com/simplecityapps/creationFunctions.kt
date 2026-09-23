@@ -119,6 +119,7 @@ fun createPlaylist(
     songCount: Int = 5,
     duration: Int = 300,
     sortOrder: PlaylistSongSortOrder = PlaylistSongSortOrder.Position,
+    sortDescending: Boolean = false,
     mediaProvider: MediaProviderType = MediaProviderType.Shuttle,
     externalId: String? = null,
 ) = Playlist(
@@ -127,6 +128,7 @@ fun createPlaylist(
     songCount = songCount,
     duration = duration,
     sortOrder = sortOrder,
+    sortDescending = sortDescending,
     mediaProvider = mediaProvider,
     externalId = externalId,
 )
