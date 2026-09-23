@@ -157,12 +157,17 @@ def cmd_post_approved(args):
 
         post_reply(creds, d["reviewId"], text)
         d["posted"] = True
+        # Persist after every post so a later failure can't cause a re-post on rerun.
+        write_drafts(args.drafts_file, drafts)
         print(f"Posted reply to reviewId {d['reviewId']}.")
 
-    if not args.dry_run:
-        with open(args.drafts_file, "w", encoding="utf-8") as f:
-            json.dump(drafts, f, indent=2)
-            f.write("\n")
+
+def write_drafts(path, drafts):
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(drafts, f, indent=2)
+        f.write("\n")
+    os.replace(tmp, path)
 
 
 def main():
