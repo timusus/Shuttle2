@@ -51,7 +51,35 @@ Commit message format, module scopes and changelog upkeep are in the root `CLAUD
 
 Prefer a headless Pixel 9 Pro AVD on the owner's desktop (WSL2, KVM) over a local AVD: the 32 GB
 Mac starves a local emulator whenever it's loaded (Xcode, other sessions). Launcher:
-`support/scripts/remote-emu.sh` (`status` / `start [N]` / `env` / `install` / `stop [N|--all]`).
+`support/scripts/remote-emu.sh` (`status` / `start [N]` / `env` / `install` / `reset [N]` /
+`stop [N|--all]`).
+
+**Standard start state for validation:** a lane that's been reused inherits stale app data and
+media from a previous run. Before validating a UI or playback change, reset the lane and reseed
+known media instead of hand-rolling ffmpeg + adb push + a manual onboarding pass:
+
+```bash
+support/scripts/remote-emu.sh reset               # pm clear the debug app, drop /sdcard/Music/s2-seed
+support/scripts/remote-emu.sh install
+support/scripts/seed-test-media.sh two-disc --skip-onboarding
+adb shell am start -n com.simplecityapps.shuttle.dev/com.simplecityapps.shuttle.ui.MainActivity
+```
+
+- `remote-emu.sh reset [N]` clears the debug app's data (`pm clear`) and removes
+  `/sdcard/Music/s2-seed` on the lane's serial. Run it before reseeding to avoid mixing fixtures
+  from a previous validation run into the new one.
+- `seed-test-media.sh <fixture> [--skip-onboarding]` generates short, tagged mp3/FLAC files with
+  ffmpeg (cached under `build/test-media/<fixture>`), pushes them to
+  `/sdcard/Music/s2-seed/<fixture>` on the current lane, and triggers a MediaStore scan. Fixtures:
+  `two-disc` (one album, 2 discs x 3 tracks, one FLAC), `many-tracks` (3 artists x 2 albums x 8
+  tracks), `playlist-basic` (5 songs + an `.m3u`). `--skip-onboarding` writes the debug app's
+  SharedPreferences directly via `run-as` so it opens straight to the library with the local
+  provider selected, then broadcasts to a debug-only receiver (`android/app/src/debug`) that calls
+  `MediaImporter.import()` directly — the app's real `MediaStore` `ContentObserver` import path is
+  dead code (never wired into the `AppInitializer` set), so nothing else triggers a library import
+  once onboarding's Scanner page is skipped. Run it only after `install`, before the first launch.
+- Respects `ANDROID_SERIAL` / `ANDROID_ADB_SERVER_PORT` the same way `remote-emu.sh env` sets
+  them — `eval` that first in any shell that calls either script.
 
 - The box is shared with the owner's podcasts repo and CI runners — sessions may run concurrently,
   **one lane each, up to 3** (lane N = `emulator-555{4,6,8}`, local adb port `5038..5040`, lease

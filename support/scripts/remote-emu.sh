@@ -16,6 +16,7 @@
 #   remote-emu.sh start [N]       lease the lowest free lane (or lane N), boot it, open its tunnel
 #   remote-emu.sh env [N]         print the two exports for this session's lane (eval it)
 #   remote-emu.sh install [N]     assembleDebug locally and adb install it on the lane
+#   remote-emu.sh reset [N]       clear the debug app's data and the seeded test media on the lane
 #   remote-emu.sh stop [N|--all]  kill the lane's emulator and tunnel, drop its lease (idempotent)
 #
 # Typical run, from the repo root:
@@ -289,6 +290,17 @@ cmd_env() {
     echo "export ANDROID_SERIAL=$(serial_of "$LANE")"
 }
 
+# Debug app id: applicationId + the debug build type's ".dev" suffix (android/app/build.gradle.kts).
+DEBUG_APP_ID="com.simplecityapps.shuttle.dev"
+
+cmd_reset() {
+    LANE="$(resolve_lane "${1:-}")"
+    tunnel_pid "$LANE" >/dev/null || { echo "remote-emu: no tunnel for lane $LANE; run start first" >&2; exit 1; }
+    radb shell pm clear "$DEBUG_APP_ID" >/dev/null 2>&1 || true # not installed yet on a fresh lane
+    radb shell rm -rf /sdcard/Music/s2-seed
+    echo "remote-emu: lane $LANE reset -- ${DEBUG_APP_ID} data cleared, /sdcard/Music/s2-seed removed"
+}
+
 stop_lane() {
     local lane="$1" serial pattern; serial="$(serial_of "$lane")"; pattern="$(emu_pattern "$lane")"
     kill_tunnel "$lane"
@@ -337,6 +349,7 @@ case "${1:-}" in
     start) cmd_start "${2:-}" ;;
     install) cmd_install "${2:-}" ;;
     env) cmd_env "${2:-}" ;;
+    reset) cmd_reset "${2:-}" ;;
     stop) cmd_stop "${2:-}" ;;
     *) sed -n '2,25p' "$0" >&2; exit 2 ;;
 esac

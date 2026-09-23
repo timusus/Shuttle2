@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+
+        <!-- seed-test-media.sh's skip-onboarding flow triggers this to import the seeded
+             MediaStore tracks without walking through onboarding's Scanner page. DUMP is held by adb shell but not by third-party apps,
+             so only adb can trigger it. -->
+        <receiver
+            android:name=".debug.DebugMediaImportReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP">
+            <intent-filter>
+                <action android:name="com.simplecityapps.shuttle.debug.ACTION_IMPORT_MEDIA" />
+            </intent-filter>
+        </receiver>
+
+    </application>
+
+</manifest>
