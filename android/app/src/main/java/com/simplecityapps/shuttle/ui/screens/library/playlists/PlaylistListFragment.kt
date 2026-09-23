@@ -89,6 +89,7 @@ class PlaylistListFragment :
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
+
                         is PlaylistListUiEvent.PlaybackFailed -> {
                             Toast.makeText(
                                 context,
@@ -163,10 +164,12 @@ class PlaylistListFragment :
             viewModel.setSortOrder(PlaylistSortOrder.Name)
             true
         }
+
         R.id.sortPlaylistDateCreated -> {
             viewModel.setSortOrder(PlaylistSortOrder.Default)
             true
         }
+
         else -> false
     }
 

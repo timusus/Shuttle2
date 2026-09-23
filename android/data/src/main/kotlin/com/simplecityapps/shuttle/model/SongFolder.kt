@@ -106,6 +106,7 @@ object SongFolder {
         return when (volume) {
             // The "home" root is primary:Documents
             "home" -> Location(listOf(PRIMARY_VOLUME, "Documents") + segments.dropLast(1), segments.last())
+
             else -> Location(listOf(volume) + segments.dropLast(1), segments.last())
         }
     }
@@ -117,14 +118,19 @@ object SongFolder {
         val (volume, relative) = when {
             // /storage/emulated/0/…
             segments.size >= 3 && segments[0] == "storage" && segments[1] == "emulated" -> PRIMARY_VOLUME to segments.drop(3)
+
             // /storage/self/primary/…
             segments.size >= 3 && segments[0] == "storage" && segments[1] == "self" -> PRIMARY_VOLUME to segments.drop(3)
+
             // /storage/1234-5678/…
             segments.size >= 2 && segments[0] == "storage" -> segments[1] to segments.drop(2)
+
             // /sdcard/…
             segments[0] == "sdcard" -> PRIMARY_VOLUME to segments.drop(1)
+
             // /mnt/media_rw/1234-5678/…
             segments.size >= 3 && segments[0] == "mnt" && segments[1] == "media_rw" -> segments[2] to segments.drop(3)
+
             else -> FILESYSTEM_ROOT to segments
         }
         if (relative.isEmpty()) return null

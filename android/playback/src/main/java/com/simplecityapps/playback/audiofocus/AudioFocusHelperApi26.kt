@@ -30,14 +30,17 @@ class AudioFocusHelperApi26(context: Context, playbackWatcher: PlaybackWatcher) 
         synchronized(focusLock) {
             when (result) {
                 AudioManager.AUDIOFOCUS_REQUEST_FAILED -> playbackNowAuthorized = false
+
                 AudioManager.AUDIOFOCUS_REQUEST_GRANTED -> {
                     playbackNowAuthorized = true
                     return true
                 }
+
                 AudioManager.AUDIOFOCUS_REQUEST_DELAYED -> {
                     playbackDelayed = true
                     playbackNowAuthorized = false
                 }
+
                 else -> playbackNowAuthorized = false
             }
             return false

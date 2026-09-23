@@ -15,9 +15,11 @@ fun Error.userDescription(): String = when (this) {
             else -> "An error occurred. (${httpStatusCode.code})"
         }
     }
+
     is RemoteServiceError -> {
         "An unknown service error occurred."
     }
+
     is NetworkError -> {
         if (hasInternetConnectivity) {
             "The server could not be reached."
@@ -25,12 +27,15 @@ fun Error.userDescription(): String = when (this) {
             "You are not connected to the internet."
         }
     }
+
     is UnexpectedError -> {
         "An unexpected error occurred."
     }
+
     is UserFriendlyError -> {
         message
     }
+
     else -> {
         "An unknown error occurred."
     }

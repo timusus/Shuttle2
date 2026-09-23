@@ -96,6 +96,7 @@ class AlbumArtistDetailFragment :
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
+
                         is AlbumArtistDetailUiEvent.PlaybackFailed -> {
                             Toast.makeText(
                                 context,
@@ -103,9 +104,11 @@ class AlbumArtistDetailFragment :
                                 Toast.LENGTH_LONG
                             ).show()
                         }
+
                         is AlbumArtistDetailUiEvent.EditTags -> {
                             TagEditorAlertDialog.newInstance(event.songs).show(childFragmentManager)
                         }
+
                         is AlbumArtistDetailUiEvent.AddedToPlaylist -> {
                             Toast.makeText(
                                 context,
@@ -113,6 +116,7 @@ class AlbumArtistDetailFragment :
                                 Toast.LENGTH_LONG
                             ).show()
                         }
+
                         is AlbumArtistDetailUiEvent.PlaylistDuplicatesFound -> {
                             showPlaylistDuplicatesDialog(
                                 event.playlist,
@@ -121,6 +125,7 @@ class AlbumArtistDetailFragment :
                                 event.duplicates,
                             )
                         }
+
                         is AlbumArtistDetailUiEvent.PlaylistAddFailed -> {
                             Toast.makeText(context, event.message ?: getString(R.string.error_unknown), Toast.LENGTH_LONG).show()
                         }

@@ -148,6 +148,7 @@ class GenreListViewModel @Inject constructor(
             when (val result = addToPlaylistUseCase(playlist, playlistData, ignoreDuplicates)) {
                 is AddToPlaylist.Result.Success ->
                     _events.emit(GenreListUiEvent.AddedToPlaylist(result.playlist, result.playlistData))
+
                 is AddToPlaylist.Result.DuplicatesFound ->
                     _events.emit(
                         GenreListUiEvent.PlaylistDuplicatesFound(
@@ -157,6 +158,7 @@ class GenreListViewModel @Inject constructor(
                             result.duplicates
                         )
                     )
+
                 is AddToPlaylist.Result.Failure ->
                     _events.emit(GenreListUiEvent.PlaylistAddFailed(result.message))
             }

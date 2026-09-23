@@ -133,11 +133,11 @@ class QueueBinder(
                 imageView = artworkImageView,
                 data = viewBinder.queueItem.song,
                 options =
-                listOf(
-                    ArtworkImageLoader.Options.RoundedCorners(8.dp),
-                    ArtworkImageLoader.Options.Crossfade(200),
-                    ArtworkImageLoader.Options.Placeholder(ResourcesCompat.getDrawable(itemView.resources, com.simplecityapps.core.R.drawable.ic_placeholder_song_rounded, itemView.context.theme)!!)
-                )
+                    listOf(
+                        ArtworkImageLoader.Options.RoundedCorners(8.dp),
+                        ArtworkImageLoader.Options.Crossfade(200),
+                        ArtworkImageLoader.Options.Placeholder(ResourcesCompat.getDrawable(itemView.resources, com.simplecityapps.core.R.drawable.ic_placeholder_song_rounded, itemView.context.theme)!!)
+                    )
             )
 
             // Snapshotted before the live reads below, which are at least as new, so observePlayback()

@@ -49,11 +49,11 @@ fun nowPlayingWidgetState(
         isPlaying = playbackState != PlaybackState.Paused,
         shuffleOn = shuffleMode == QueueManager.ShuffleMode.On,
         repeatMode =
-        when (repeatMode) {
-            QueueManager.RepeatMode.Off -> WidgetRepeatMode.Off
-            QueueManager.RepeatMode.All -> WidgetRepeatMode.All
-            QueueManager.RepeatMode.One -> WidgetRepeatMode.One
-        },
+            when (repeatMode) {
+                QueueManager.RepeatMode.Off -> WidgetRepeatMode.Off
+                QueueManager.RepeatMode.All -> WidgetRepeatMode.All
+                QueueManager.RepeatMode.One -> WidgetRepeatMode.One
+            },
         artworkPath = artworkPath,
         backgroundOpacity = backgroundOpacity
     )

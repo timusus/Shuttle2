@@ -64,22 +64,27 @@ class AddToPlaylist(
 
     suspend fun resolveSongs(playlistData: PlaylistData): List<Song> = when (playlistData) {
         is PlaylistData.Songs -> playlistData.data
+
         is PlaylistData.Albums ->
             songRepository
                 .getSongs(SongQuery.AlbumGroupKeys(playlistData.data.map { SongQuery.AlbumGroupKey(it.groupKey) }))
                 .firstOrNull().orEmpty()
                 .sortedWith(SongSortOrder.Default.comparator)
+
         is PlaylistData.AlbumArtists ->
             songRepository
                 .getSongs(SongQuery.ArtistGroupKeys(playlistData.data.map { SongQuery.ArtistGroupKey(it.groupKey) }))
                 .firstOrNull().orEmpty()
                 .sortedWith(SongSortOrder.Default.comparator)
+
         is PlaylistData.Genres ->
             genreRepository
                 .getSongsForGenres(playlistData.data.map { it.name }, SongQuery.All())
                 .firstOrNull().orEmpty()
                 .sortedWith(SongSortOrder.Default.comparator)
+
         is PlaylistData.Folders -> resolveFolderSongs(playlistData.data)
+
         is PlaylistData.Queue -> queueManager.getQueue().map { it.song }
     }
 }

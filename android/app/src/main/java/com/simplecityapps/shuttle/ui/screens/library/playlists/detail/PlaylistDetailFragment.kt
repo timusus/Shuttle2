@@ -110,10 +110,12 @@ class PlaylistDetailFragment :
                         presenter.shuffle()
                         true
                     }
+
                     R.id.queue -> {
                         presenter.addToQueue(playlist)
                         true
                     }
+
                     R.id.rename -> {
                         EditTextAlertDialog
                             .newInstance(
@@ -125,6 +127,7 @@ class PlaylistDetailFragment :
                             .show(childFragmentManager)
                         true
                     }
+
                     R.id.clear -> {
                         MaterialAlertDialogBuilder(requireContext())
                             .setTitle(getString(R.string.playlist_dialog_title_clear))
@@ -138,6 +141,7 @@ class PlaylistDetailFragment :
                             .show()
                         true
                     }
+
                     R.id.delete -> {
                         MaterialAlertDialogBuilder(requireContext())
                             .setTitle(getString(R.string.playlist_dialog_title_delete))
@@ -151,38 +155,47 @@ class PlaylistDetailFragment :
                             .show()
                         true
                     }
+
                     R.id.sortCustom -> {
                         presenter.setSortOrder(PlaylistSongSortOrder.Position)
                         true
                     }
+
                     R.id.sortSongName -> {
                         presenter.setSortOrder(PlaylistSongSortOrder.SongName)
                         true
                     }
+
                     R.id.sortArtistName -> {
                         presenter.setSortOrder(PlaylistSongSortOrder.ArtistGroupKey)
                         true
                     }
+
                     R.id.sortAlbumName -> {
                         presenter.setSortOrder(PlaylistSongSortOrder.AlbumGroupKey)
                         true
                     }
+
                     R.id.sortSongYear -> {
                         presenter.setSortOrder(PlaylistSongSortOrder.Year)
                         true
                     }
+
                     R.id.sortSongDuration -> {
                         presenter.setSortOrder(PlaylistSongSortOrder.Duration)
                         true
                     }
+
                     R.id.sortSongDateModified -> {
                         presenter.setSortOrder(PlaylistSongSortOrder.LastModified)
                         true
                     }
+
                     R.id.sortDescending -> {
                         presenter.setSortDescending(!menuItem.isChecked)
                         true
                     }
+
                     else -> {
                         false
                     }
@@ -282,12 +295,19 @@ class PlaylistDetailFragment :
         toolbar?.menu?.let { menu ->
             when (sortOrder) {
                 PlaylistSongSortOrder.Position -> menu.findItem(R.id.sortCustom)?.isChecked = true
+
                 PlaylistSongSortOrder.SongName -> menu.findItem(R.id.sortSongName)?.isChecked = true
+
                 PlaylistSongSortOrder.ArtistGroupKey -> menu.findItem(R.id.sortArtistName)?.isChecked = true
+
                 PlaylistSongSortOrder.AlbumGroupKey -> menu.findItem(R.id.sortAlbumName)?.isChecked = true
+
                 PlaylistSongSortOrder.Year -> menu.findItem(R.id.sortSongYear)?.isChecked = true
+
                 PlaylistSongSortOrder.Duration -> menu.findItem(R.id.sortSongDuration)?.isChecked = true
+
                 PlaylistSongSortOrder.LastModified -> menu.findItem(R.id.sortSongDateModified)?.isChecked = true
+
                 else -> {
                     // Nothing to do
                 }
@@ -354,28 +374,34 @@ class PlaylistDetailFragment :
                                 presenter.addToQueue(playlistSong)
                                 return@setOnMenuItemClickListener true
                             }
+
                             R.id.playNext -> {
                                 presenter.playNext(playlistSong)
                                 return@setOnMenuItemClickListener true
                             }
+
                             R.id.songInfo -> {
                                 SongInfoDialogFragment.newInstance(playlistSong.song).show(childFragmentManager)
                                 return@setOnMenuItemClickListener true
                             }
+
                             R.id.exclude -> {
                                 showExcludeDialog(requireContext(), playlistSong.song.name) {
                                     presenter.exclude(playlistSong)
                                 }
                                 return@setOnMenuItemClickListener true
                             }
+
                             R.id.editTags -> {
                                 presenter.editTags(playlistSong)
                                 return@setOnMenuItemClickListener true
                             }
+
                             R.id.remove -> {
                                 presenter.remove(playlistSong)
                                 return@setOnMenuItemClickListener true
                             }
+
                             R.id.delete -> {
                                 showDeleteDialog(requireContext(), playlistSong.song.name) {
                                     presenter.delete(playlistSong)

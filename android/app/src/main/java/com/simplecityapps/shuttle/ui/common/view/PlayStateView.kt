@@ -67,12 +67,14 @@ constructor(
                         progressBar.fadeIn()
                     }
             }
+
             PlaybackState.Paused -> {
                 animator?.cancel()
                 progressBar.fadeOut {
                     playPauseAnimationView.fadeIn()
                 }
             }
+
             PlaybackState.Playing -> {
                 animator?.cancel()
                 progressBar.fadeOut {

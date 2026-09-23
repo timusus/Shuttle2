@@ -80,6 +80,7 @@ class PlexMediaProvider(
                                             )
                                         )
                                     }
+
                                     is NetworkResult.Failure -> {
                                         Timber.e(queryResult.error, queryResult.error.userDescription())
                                         emit(FlowEvent.Failure(queryResult.error.userDescription()))
@@ -90,6 +91,7 @@ class PlexMediaProvider(
                                 emit(FlowEvent.Failure("Failed to find Plex 'music' library"))
                             }
                         }
+
                         is NetworkResult.Failure -> {
                             Timber.e(result.error, result.error.userDescription())
                             emit(FlowEvent.Failure(result.error.userDescription()))

@@ -120,28 +120,34 @@ class PackageValidator(
             when {
                 // If it's our own app making the call, allow it.
                 callingUid == Process.myUid() -> true
+
                 // If it's one of the apps on the whitelist, allow it.
                 isPackageInWhitelist -> true
+
                 // If the system is making the call, allow it.
                 callingUid == Process.SYSTEM_UID -> true
+
                 // If the app was signed by the same certificate as the platform itself, also allow it.
                 callerSignature == platformSignature -> true
-                /**
-                 * [MEDIA_CONTENT_CONTROL] permission is only available to system applications, and
+
+                /*
+                 * MEDIA_CONTENT_CONTROL permission is only available to system applications, and
                  * while it isn't required to allow these apps to connect to a
-                 * [MediaBrowserServiceCompat], allowing this ensures optimal compatability with apps
+                 * MediaBrowserServiceCompat, allowing this ensures optimal compatability with apps
                  * such as Android TV and the Google Assistant.
                  */
                 callerPackageInfo.permissions.contains(MEDIA_CONTENT_CONTROL) -> true
-                /**
+
+                /*
                  * This last permission can be specifically granted to apps, and, in addition to
                  * allowing them to retrieve notifications, it also allows them to connect to an
-                 * active [MediaSessionCompat].
+                 * active MediaSessionCompat.
                  * As with the above, it's not required to allow apps holding this permission to
-                 * connect to your [MediaBrowserServiceCompat], but it does allow easy comparability
+                 * connect to your MediaBrowserServiceCompat, but it does allow easy comparability
                  * with apps such as Wear OS.
                  */
                 callerPackageInfo.permissions.contains(BIND_NOTIFICATION_LISTENER_SERVICE) -> true
+
                 // If none of the pervious checks succeeded, then the caller is unrecognized.
                 else -> false
             }

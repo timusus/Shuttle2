@@ -41,6 +41,7 @@ constructor(
                     is TrialState.Expired -> {
                         playbackManager.setPlaybackSpeed(trialState.multiplier())
                     }
+
                     TrialState.Paid, is TrialState.Pretrial, is TrialState.Trial, TrialState.Unknown -> {
                         playbackManager.setPlaybackSpeed(1.0f)
                     }

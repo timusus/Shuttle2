@@ -72,6 +72,7 @@ class ScanProgressBinder(
                     songImportProgressMessage.isVisible = false
                     songImportSuccessImage.isVisible = false
                 }
+
                 is ImportProgressState.InProgress -> {
                     songImportTitle.isVisible = true
                     songImportTitle.text = "Importing songs..."
@@ -83,6 +84,7 @@ class ScanProgressBinder(
                     songImportProgressMessage.gravity = GravityCompat.END
                     songImportSuccessImage.isVisible = false
                 }
+
                 is ImportProgressState.Complete -> {
                     songImportTitle.text = "Song import complete"
                     songImportTitle.isVisible = true
@@ -90,6 +92,7 @@ class ScanProgressBinder(
                     songImportProgressMessage.isVisible = false
                     songProgressBar.isVisible = false
                 }
+
                 is ImportProgressState.Failed -> {
                     songImportTitle.text = "Song import failed"
                     songProgressBar.isVisible = false
@@ -111,6 +114,7 @@ class ScanProgressBinder(
                     playlistImportSuccessImage.isVisible = false
                     playlistProgressBar.isVisible = false
                 }
+
                 is ImportProgressState.InProgress -> {
                     playlistImportTitle.isVisible = true
                     playlistImportTitle.text = "Importing playlists..."
@@ -122,6 +126,7 @@ class ScanProgressBinder(
                     playlistImportProgressMessage.text = viewBinder.playlistImportProgressState.message
                     playlistImportSuccessImage.isVisible = false
                 }
+
                 is ImportProgressState.Complete -> {
                     playlistImportTitle.text = "Playlist import complete"
                     playlistImportTitle.isVisible = true
@@ -129,6 +134,7 @@ class ScanProgressBinder(
                     playlistImportProgressMessage.isVisible = false
                     playlistProgressBar.isVisible = false
                 }
+
                 is ImportProgressState.Failed -> {
                     playlistImportTitle.text = "Playlist import failed"
                     playlistProgressBar.isVisible = false

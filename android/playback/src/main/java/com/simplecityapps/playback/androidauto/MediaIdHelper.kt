@@ -96,10 +96,10 @@ constructor(
                             listOf(
                                 SongQuery.AlbumGroupKey(
                                     key =
-                                    AlbumGroupKey(
-                                        key = mediaIdWrapper.albumGroupKey,
-                                        albumArtistGroupKey = AlbumArtistGroupKey(mediaIdWrapper.albumArtistGroupKey)
-                                    )
+                                        AlbumGroupKey(
+                                            key = mediaIdWrapper.albumGroupKey,
+                                            albumArtistGroupKey = AlbumArtistGroupKey(mediaIdWrapper.albumArtistGroupKey)
+                                        )
                                 )
                             )
                         )
@@ -187,10 +187,15 @@ constructor(
 
     private fun parsePathSegments(pathSegments: List<String>): MediaIdWrapper? = when (pathSegments.last()) {
         "root" -> MediaIdWrapper.Directory.Root
+
         "artist_root" -> MediaIdWrapper.Directory.Artists
+
         "album_root" -> MediaIdWrapper.Directory.Albums.All
+
         "playlist_root" -> MediaIdWrapper.Directory.Playlists
+
         "shuffle_all" -> MediaIdWrapper.ShuffleAll
+
         "albums" -> {
             if (pathSegments.contains("artist")) {
                 MediaIdWrapper.Directory.Albums.Artist(pathSegments.getNextSegment("artist")!!)
@@ -209,6 +214,7 @@ constructor(
                 }
 
                 pathSegments.contains("playlist") -> MediaIdWrapper.Directory.Songs.Playlist(pathSegments.getNextSegment("playlist")!!.toLong())
+
                 else -> throw IllegalStateException()
             }
         }

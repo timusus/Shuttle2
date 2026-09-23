@@ -98,10 +98,12 @@ class SmartPlaylistDetailFragment :
                         presenter.shuffle()
                         true
                     }
+
                     R.id.queue -> {
                         presenter.addToQueue(playlist)
                         true
                     }
+
                     else -> {
                         false
                     }
@@ -204,26 +206,31 @@ class SmartPlaylistDetailFragment :
                                 presenter.addToQueue(song)
                                 return@setOnMenuItemClickListener true
                             }
+
                             R.id.playNext -> {
                                 presenter.playNext(song)
                                 return@setOnMenuItemClickListener true
                             }
+
                             R.id.songInfo -> {
                                 SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
                                 return@setOnMenuItemClickListener true
                             }
+
                             R.id.exclude -> {
                                 showExcludeDialog(requireContext(), song.name) {
                                     presenter.exclude(song)
                                 }
                                 return@setOnMenuItemClickListener true
                             }
+
                             R.id.delete -> {
                                 showDeleteDialog(requireContext(), song.name) {
                                     presenter.delete(song)
                                 }
                                 return@setOnMenuItemClickListener true
                             }
+
                             R.id.editTags -> {
                                 TagEditorAlertDialog.newInstance(listOf(song)).show(childFragmentManager)
                                 return@setOnMenuItemClickListener true

@@ -44,6 +44,7 @@ object SafDirectoryHelper {
         for (documentNode in documentNodes) {
             when (documentNode) {
                 is DocumentNodeTree -> traverseDocumentNodes(parent.addTreeNode(documentNode), contentResolver, rootUri)
+
                 else -> {
                     if (documentNode.mimeType.startsWith("audio")) {
                         // Add files with mimetype "audio/*"

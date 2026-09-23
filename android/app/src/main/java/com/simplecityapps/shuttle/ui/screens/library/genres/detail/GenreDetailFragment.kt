@@ -101,22 +101,27 @@ class GenreDetailFragment :
                         presenter.shuffle()
                         true
                     }
+
                     R.id.queue -> {
                         presenter.addToQueue(genre)
                         true
                     }
+
                     R.id.playNext -> {
                         presenter.playNext(genre)
                         true
                     }
+
                     R.id.editTags -> {
                         presenter.editTags(genre)
                         true
                     }
+
                     R.id.playlist -> {
                         playlistMenuView.createPlaylistMenu(toolbar.menu)
                         true
                     }
+
                     else -> {
                         playlistMenuView.handleMenuItem(menuItem, PlaylistData.Genres(genre))
                     }
@@ -216,24 +221,29 @@ class GenreDetailFragment :
                                 presenter.addToQueue(song)
                                 return@setOnMenuItemClickListener true
                             }
+
                             R.id.playNext -> {
                                 presenter.playNext(song)
                                 return@setOnMenuItemClickListener true
                             }
+
                             R.id.songInfo -> {
                                 SongInfoDialogFragment.newInstance(song).show(childFragmentManager)
                                 return@setOnMenuItemClickListener true
                             }
+
                             R.id.exclude -> {
                                 showExcludeDialog(requireContext(), song.name) {
                                     presenter.exclude(song)
                                 }
                                 return@setOnMenuItemClickListener true
                             }
+
                             R.id.editTags -> {
                                 presenter.editTags(song)
                                 return@setOnMenuItemClickListener true
                             }
+
                             R.id.delete -> {
                                 showDeleteDialog(requireContext(), song.name) {
                                     presenter.delete(song)
@@ -286,18 +296,22 @@ class GenreDetailFragment :
                                 presenter.play(album)
                                 return@setOnMenuItemClickListener true
                             }
+
                             R.id.queue -> {
                                 presenter.addToQueue(album)
                                 return@setOnMenuItemClickListener true
                             }
+
                             R.id.playNext -> {
                                 presenter.playNext(album)
                                 return@setOnMenuItemClickListener true
                             }
+
                             R.id.exclude -> {
                                 presenter.exclude(album)
                                 return@setOnMenuItemClickListener true
                             }
+
                             R.id.editTags -> {
                                 presenter.editTags(album)
                                 return@setOnMenuItemClickListener true

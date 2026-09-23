@@ -173,62 +173,62 @@ constructor(
             view?.setData(
                 TagEditorContract.Data(
                     titleField =
-                    TagEditorContract.Field(
-                        initialValue = if (titles.size > 1) null else titles.firstOrNull(),
-                        hasMultipleValues = titles.size > 1,
-                        visible = editables.size <= 1
-                    ),
+                        TagEditorContract.Field(
+                            initialValue = if (titles.size > 1) null else titles.firstOrNull(),
+                            hasMultipleValues = titles.size > 1,
+                            visible = editables.size <= 1
+                        ),
                     artistField =
-                    TagEditorContract.Field(
-                        initialValue = if (artists.size > 1) null else artists.flatMap { artists -> artists.orEmpty() }.distinct().joinToString(", "),
-                        hasMultipleValues = artists.size > 1
-                    ),
+                        TagEditorContract.Field(
+                            initialValue = if (artists.size > 1) null else artists.flatMap { artists -> artists.orEmpty() }.distinct().joinToString(", "),
+                            hasMultipleValues = artists.size > 1
+                        ),
                     albumField =
-                    TagEditorContract.Field(
-                        initialValue = if (albums.size > 1) null else albums.firstOrNull(),
-                        hasMultipleValues = albums.size > 1
-                    ),
+                        TagEditorContract.Field(
+                            initialValue = if (albums.size > 1) null else albums.firstOrNull(),
+                            hasMultipleValues = albums.size > 1
+                        ),
                     albumArtistField =
-                    TagEditorContract.Field(
-                        initialValue = if (albumArtists.size > 1) null else albumArtists.firstOrNull(),
-                        hasMultipleValues = albumArtists.size > 1
-                    ),
+                        TagEditorContract.Field(
+                            initialValue = if (albumArtists.size > 1) null else albumArtists.firstOrNull(),
+                            hasMultipleValues = albumArtists.size > 1
+                        ),
                     dateField =
-                    TagEditorContract.Field(
-                        initialValue = if (dates.size > 1) null else dates.firstOrNull(),
-                        hasMultipleValues = dates.size > 1
-                    ),
+                        TagEditorContract.Field(
+                            initialValue = if (dates.size > 1) null else dates.firstOrNull(),
+                            hasMultipleValues = dates.size > 1
+                        ),
                     trackField =
-                    TagEditorContract.Field(
-                        initialValue = if (tracks.size > 1) null else tracks.firstOrNull()?.toString(),
-                        hasMultipleValues = tracks.size > 1,
-                        visible = editables.size <= 1
-                    ),
+                        TagEditorContract.Field(
+                            initialValue = if (tracks.size > 1) null else tracks.firstOrNull()?.toString(),
+                            hasMultipleValues = tracks.size > 1,
+                            visible = editables.size <= 1
+                        ),
                     trackTotalField =
-                    TagEditorContract.Field(
-                        initialValue = if (trackTotals.size > 1) null else trackTotals.firstOrNull()?.toString(),
-                        hasMultipleValues = trackTotals.size > 1
-                    ),
+                        TagEditorContract.Field(
+                            initialValue = if (trackTotals.size > 1) null else trackTotals.firstOrNull()?.toString(),
+                            hasMultipleValues = trackTotals.size > 1
+                        ),
                     discField =
-                    TagEditorContract.Field(
-                        initialValue = if (discs.size > 1) null else discs.firstOrNull()?.toString(),
-                        hasMultipleValues = discs.size > 1
-                    ),
+                        TagEditorContract.Field(
+                            initialValue = if (discs.size > 1) null else discs.firstOrNull()?.toString(),
+                            hasMultipleValues = discs.size > 1
+                        ),
                     discTotalField =
-                    TagEditorContract.Field(
-                        initialValue = if (discTotals.size > 1) null else discTotals.firstOrNull()?.toString(),
-                        hasMultipleValues = discTotals.size > 1
-                    ),
+                        TagEditorContract.Field(
+                            initialValue = if (discTotals.size > 1) null else discTotals.firstOrNull()?.toString(),
+                            hasMultipleValues = discTotals.size > 1
+                        ),
                     genreField =
-                    TagEditorContract.Field(
-                        initialValue = if (genres.size > 1) null else genres.flatMap { genres -> genres.orEmpty() }.distinct().joinToString(", "),
-                        hasMultipleValues = genres.size > 1
-                    ),
+                        TagEditorContract.Field(
+                            initialValue = if (genres.size > 1) null else genres.flatMap { genres -> genres.orEmpty() }.distinct().joinToString(", "),
+                            hasMultipleValues = genres.size > 1
+                        ),
                     lyricsField =
-                    TagEditorContract.Field(
-                        initialValue = if (lyrics.size > 1) null else lyrics.firstOrNull(),
-                        hasMultipleValues = lyrics.size > 1
-                    )
+                        TagEditorContract.Field(
+                            initialValue = if (lyrics.size > 1) null else lyrics.firstOrNull(),
+                            hasMultipleValues = lyrics.size > 1
+                        )
                 )
             )
         }

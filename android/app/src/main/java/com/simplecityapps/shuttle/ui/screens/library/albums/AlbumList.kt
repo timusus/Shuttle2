@@ -112,6 +112,7 @@ fun AlbumList(
                     onShuffle = onShuffle,
                     modifier = modifier,
                 )
+
                 ViewMode.Grid -> AlbumGridView(
                     albums = uiState.albums.toImmutableList(),
                     selectedAlbums = uiState.selectedAlbums.toImmutableSet(),
@@ -298,8 +299,11 @@ private fun AlbumGridView(
 fun getAlbumPopupText(album: Album, sortOrder: AlbumSortOrder): String = when (sortOrder) {
     AlbumSortOrder.AlbumName,
     AlbumSortOrder.Default -> album.groupKey?.key?.firstOrNull()?.toString()?.uppercase(Locale.getDefault())
+
     AlbumSortOrder.ArtistGroupKey -> album.groupKey?.albumArtistGroupKey?.key?.firstOrNull()?.toString()?.uppercase(Locale.getDefault())
+
     AlbumSortOrder.Year -> album.year?.toString()
+
     else -> null
 } ?: ""
 
@@ -308,5 +312,6 @@ fun getAlbumFastscrollPopup(sortOrder: AlbumSortOrder): @Composable ((Int) -> Un
     AlbumSortOrder.ArtistGroupKey,
     AlbumSortOrder.Year,
     AlbumSortOrder.Default -> null
+
     else -> ::NoPopup
 }

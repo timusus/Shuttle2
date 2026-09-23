@@ -95,9 +95,11 @@ class FolderListFragment :
                         is FolderListUiEvent.FolderAddedToQueue -> {
                             showAddedToQueueToast(event.folder.displayName(resources))
                         }
+
                         is FolderListUiEvent.SongAddedToQueue -> {
                             showAddedToQueueToast(event.song.name ?: getString(com.simplecityapps.core.R.string.unknown))
                         }
+
                         is FolderListUiEvent.PlaybackFailed -> {
                             Toast.makeText(
                                 context,
@@ -105,6 +107,7 @@ class FolderListFragment :
                                 Toast.LENGTH_LONG
                             ).show()
                         }
+
                         is FolderListUiEvent.AddedToPlaylist -> {
                             Toast.makeText(
                                 context,
@@ -112,9 +115,11 @@ class FolderListFragment :
                                 Toast.LENGTH_LONG
                             ).show()
                         }
+
                         is FolderListUiEvent.PlaylistDuplicatesFound -> {
                             showPlaylistDuplicatesDialog(event.playlist, event.playlistData, event.deduplicatedSongs, event.duplicates)
                         }
+
                         is FolderListUiEvent.PlaylistAddFailed -> {
                             Toast.makeText(context, event.message ?: getString(R.string.error_unknown), Toast.LENGTH_LONG).show()
                         }

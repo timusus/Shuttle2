@@ -114,11 +114,14 @@ class FolderListViewModel @Inject constructor(
                 scanProgress = songImportState.progress,
                 playlists = playlists,
             )
+
             tree == null -> FolderListUiState(playlists = playlists)
+
             tree.isEmpty -> FolderListUiState(
                 playlists = playlists,
                 loadingState = FolderListUiState.LoadingState.Empty,
             )
+
             else -> {
                 // A folder can disappear after a rescan; fall back to its nearest remaining ancestor
                 val node = path
@@ -236,6 +239,7 @@ class FolderListViewModel @Inject constructor(
             when (val result = addToPlaylistUseCase(playlist, playlistData, ignoreDuplicates)) {
                 is AddToPlaylist.Result.Success ->
                     _events.emit(FolderListUiEvent.AddedToPlaylist(result.playlist, result.playlistData))
+
                 is AddToPlaylist.Result.DuplicatesFound ->
                     _events.emit(
                         FolderListUiEvent.PlaylistDuplicatesFound(
@@ -245,6 +249,7 @@ class FolderListViewModel @Inject constructor(
                             result.duplicates
                         )
                     )
+
                 is AddToPlaylist.Result.Failure ->
                     _events.emit(FolderListUiEvent.PlaylistAddFailed(result.message))
             }

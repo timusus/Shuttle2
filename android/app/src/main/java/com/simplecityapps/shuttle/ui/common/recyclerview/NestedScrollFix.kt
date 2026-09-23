@@ -38,12 +38,14 @@ private class SingleScrollDirectionEnforcer :
                 initialTouchX = (e.x + 0.5f).toInt()
                 initialTouchY = (e.y + 0.5f).toInt()
             }
+
             MotionEvent.ACTION_POINTER_DOWN -> {
                 val actionIndex = e.actionIndex
                 scrollPointerId = e.getPointerId(actionIndex)
                 initialTouchX = (e.getX(actionIndex) + 0.5f).toInt()
                 initialTouchY = (e.getY(actionIndex) + 0.5f).toInt()
             }
+
             MotionEvent.ACTION_MOVE -> {
                 val index = e.findPointerIndex(scrollPointerId)
                 if (index >= 0 && scrollState != RecyclerView.SCROLL_STATE_DRAGGING) {

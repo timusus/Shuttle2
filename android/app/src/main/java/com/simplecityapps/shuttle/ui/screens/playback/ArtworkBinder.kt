@@ -47,10 +47,10 @@ class ArtworkBinder(
                     imageView = imageView,
                     data = viewBinder.queueItem.song,
                     options =
-                    listOf(
-                        ArtworkImageLoader.Options.RoundedCorners(16.dp),
-                        ArtworkImageLoader.Options.Placeholder(ResourcesCompat.getDrawable(itemView.resources, com.simplecityapps.core.R.drawable.ic_placeholder_song, itemView.context.theme)!!)
-                    )
+                        listOf(
+                            ArtworkImageLoader.Options.RoundedCorners(16.dp),
+                            ArtworkImageLoader.Options.Placeholder(ResourcesCompat.getDrawable(itemView.resources, com.simplecityapps.core.R.drawable.ic_placeholder_song, itemView.context.theme)!!)
+                        )
                 )
             }
         }

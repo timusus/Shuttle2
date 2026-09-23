@@ -40,9 +40,11 @@ class TrialManager(
         billingManager.billingState.map { billingState ->
             when (billingState) {
                 BillingState.Unknown -> TrialState.Unknown
+
                 BillingState.Paid -> {
                     TrialState.Paid
                 }
+
                 BillingState.Unpaid -> {
                     getTrialState()
                 }
@@ -56,6 +58,7 @@ class TrialManager(
                             preferenceManager.appPurchasedDate = Date()
                         }
                     }
+
                     else -> {
                         // Nothing to do
                     }
@@ -124,6 +127,7 @@ class TrialManager(
             Timber.i("Retrieved remote device")
             result.body
         }
+
         is NetworkResult.Failure -> {
             Timber.e("Failed to retrieve remote device: ${result.error}")
             null

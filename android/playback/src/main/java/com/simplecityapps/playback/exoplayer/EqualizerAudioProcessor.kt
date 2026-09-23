@@ -144,6 +144,7 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
                         }
                     }
                 }
+
                 C.ENCODING_PCM_24BIT -> {
                     while (inputBuffer.hasRemaining()) {
                         for (channelIndex in 0 until outputAudioFormat.channelCount) {
@@ -160,6 +161,7 @@ class EqualizerAudioProcessor(enabled: Boolean) : BaseAudioProcessor() {
                         }
                     }
                 }
+
                 else -> {
                     // No op
                 }

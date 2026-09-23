@@ -52,12 +52,16 @@ open class RecyclerAdapter(scope: CoroutineScope, val skipIntermediateUpdates: B
                                 updateInternal(operation.newItems, operation.callback)
                             }
                     }
+
                     is AdapterOperation.Add -> addInternal(operation.index, operation.newItem)
+
                     is AdapterOperation.Remove -> removeInternal(operation.index)
+
                     is AdapterOperation.Clear -> {
                         updateJob?.cancel() // If there's a pending update we may as well cancel it
                         clearInternal()
                     }
+
                     is AdapterOperation.Move -> moveInternal(operation.fromPosition, operation.toPosition)
                 }
             }

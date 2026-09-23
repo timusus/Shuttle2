@@ -138,6 +138,7 @@ class AlbumListFragment :
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
+
                         is AlbumListUiEvent.PlaybackFailed -> {
                             Toast.makeText(
                                 context,
@@ -145,12 +146,15 @@ class AlbumListFragment :
                                 Toast.LENGTH_LONG
                             ).show()
                         }
+
                         is AlbumListUiEvent.EditTags -> {
                             TagEditorAlertDialog.newInstance(event.songs).show(childFragmentManager)
                         }
+
                         is AlbumListUiEvent.LibraryEmpty -> {
                             // No-op — handled by UI state
                         }
+
                         is AlbumListUiEvent.AddedToPlaylist -> {
                             Toast.makeText(
                                 context,
@@ -158,9 +162,11 @@ class AlbumListFragment :
                                 Toast.LENGTH_LONG
                             ).show()
                         }
+
                         is AlbumListUiEvent.PlaylistDuplicatesFound -> {
                             showPlaylistDuplicatesDialog(event.playlist, event.playlistData, event.deduplicatedSongs, event.duplicates)
                         }
+
                         is AlbumListUiEvent.PlaylistAddFailed -> {
                             Toast.makeText(context, event.message ?: getString(R.string.error_unknown), Toast.LENGTH_LONG).show()
                         }
@@ -248,26 +254,32 @@ class AlbumListFragment :
             viewModel.setViewMode(ViewMode.Grid)
             true
         }
+
         R.id.listViewMode -> {
             viewModel.setViewMode(ViewMode.List)
             true
         }
+
         R.id.sortAlbumName -> {
             viewModel.setSortOrder(AlbumSortOrder.AlbumName)
             true
         }
+
         R.id.sortArtistName -> {
             viewModel.setSortOrder(AlbumSortOrder.ArtistGroupKey)
             true
         }
+
         R.id.sortAlbumYear -> {
             viewModel.setSortOrder(AlbumSortOrder.Year)
             true
         }
+
         R.id.sortAlbumRandom -> {
             viewModel.setSortOrder(AlbumSortOrder.Random)
             true
         }
+
         else -> false
     }
 
@@ -309,11 +321,13 @@ class AlbumListFragment :
                             viewModel.onAddSelectedToQueue()
                             true
                         }
+
                         R.id.editTags -> {
                             viewModel.onEditTagsSelected()
                             contextualToolbarHelper.hide()
                             true
                         }
+
                         else -> false
                     }
                 }
@@ -340,9 +354,13 @@ class AlbumListFragment :
         findToolbarHost()?.toolbar?.menu?.let { menu ->
             when (sortOrder) {
                 AlbumSortOrder.AlbumName -> menu.findItem(R.id.sortAlbumName)?.isChecked = true
+
                 AlbumSortOrder.ArtistGroupKey -> menu.findItem(R.id.sortArtistName)?.isChecked = true
+
                 AlbumSortOrder.Year -> menu.findItem(R.id.sortAlbumYear)?.isChecked = true
+
                 AlbumSortOrder.Random -> menu.findItem(R.id.sortAlbumRandom)?.isChecked = true
+
                 else -> {
                     // Nothing to do
                 }

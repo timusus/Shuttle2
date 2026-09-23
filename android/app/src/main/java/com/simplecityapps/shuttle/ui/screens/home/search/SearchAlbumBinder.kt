@@ -81,10 +81,10 @@ class SearchAlbumBinder(
                     .from(" • ")
                     .joinSafely(
                         items =
-                        listOf(
-                            viewBinder.album.albumArtist ?: viewBinder.album.friendlyArtistName,
-                            songQuantity
-                        ),
+                            listOf(
+                                viewBinder.album.albumArtist ?: viewBinder.album.friendlyArtistName,
+                                songQuantity
+                            ),
                         defaultValue = itemView.resources.getString(com.simplecityapps.core.R.string.unknown)
                     )
 
@@ -92,12 +92,12 @@ class SearchAlbumBinder(
                 imageView = imageView,
                 data = viewBinder.album,
                 options =
-                listOf(
-                    ArtworkImageLoader.Options.RoundedCorners(8.dp),
-                    ArtworkImageLoader.Options.Crossfade(200),
-                    ArtworkImageLoader.Options.Placeholder(ResourcesCompat.getDrawable(itemView.resources, com.simplecityapps.core.R.drawable.ic_placeholder_album_rounded, itemView.context.theme)!!),
-                    ArtworkImageLoader.Options.CacheDecodedResource
-                )
+                    listOf(
+                        ArtworkImageLoader.Options.RoundedCorners(8.dp),
+                        ArtworkImageLoader.Options.Crossfade(200),
+                        ArtworkImageLoader.Options.Placeholder(ResourcesCompat.getDrawable(itemView.resources, com.simplecityapps.core.R.drawable.ic_placeholder_album_rounded, itemView.context.theme)!!),
+                        ArtworkImageLoader.Options.CacheDecodedResource
+                    )
             )
 
             imageView.transitionName = "album_${viewBinder.album.name}"

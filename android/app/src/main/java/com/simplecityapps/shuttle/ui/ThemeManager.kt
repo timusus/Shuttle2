@@ -27,6 +27,7 @@ class ThemeManager(
                         GeneralPreferenceManager.Accent.Amber -> if (extraDark) R.style.AppTheme_DayNight_ExtraDark_Amber else R.style.AppTheme_DayNight_Amber
                     }
                 }
+
                 GeneralPreferenceManager.Theme.Light -> {
                     when (accent) {
                         GeneralPreferenceManager.Accent.Default -> R.style.AppTheme_Light
@@ -37,6 +38,7 @@ class ThemeManager(
                         GeneralPreferenceManager.Accent.Amber -> R.style.AppTheme_Light_Amber
                     }
                 }
+
                 GeneralPreferenceManager.Theme.Dark -> {
                     when (accent) {
                         GeneralPreferenceManager.Accent.Default -> if (extraDark) R.style.AppTheme_Dark_ExtraDark else R.style.AppTheme_Dark

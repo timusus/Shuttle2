@@ -84,24 +84,24 @@ class MediaStoreMediaProvider(
                     Song(
                         id = 0,
                         name =
-                        songCursor.getStringOrNull(
-                            songCursor.getColumnIndexOrThrow(
-                                MediaStore.Audio.Media.TITLE
-                            )
-                        ),
+                            songCursor.getStringOrNull(
+                                songCursor.getColumnIndexOrThrow(
+                                    MediaStore.Audio.Media.TITLE
+                                )
+                            ),
                         artists =
-                        songCursor.getStringOrNull(
-                            songCursor.getColumnIndexOrThrow(
-                                MediaStore.Audio.Media.ARTIST
-                            )
-                        )?.let { listOf(it) } ?: emptyList(),
+                            songCursor.getStringOrNull(
+                                songCursor.getColumnIndexOrThrow(
+                                    MediaStore.Audio.Media.ARTIST
+                                )
+                            )?.let { listOf(it) } ?: emptyList(),
                         albumArtist = songCursor.getStringOrNull(songCursor.getColumnIndex("album_artist")),
                         album =
-                        songCursor.getStringOrNull(
-                            songCursor.getColumnIndexOrThrow(
-                                MediaStore.Audio.Media.ALBUM
-                            )
-                        ),
+                            songCursor.getStringOrNull(
+                                songCursor.getColumnIndexOrThrow(
+                                    MediaStore.Audio.Media.ALBUM
+                                )
+                            ),
                         track = track,
                         disc = disc,
                         duration = songCursor.getInt(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)),
@@ -111,24 +111,24 @@ class MediaStoreMediaProvider(
                         size = songCursor.getLong(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.SIZE)),
                         mimeType = songCursor.getString(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.MIME_TYPE)),
                         lastModified =
-                        Instant.fromEpochMilliseconds(
-                            songCursor.getLong(
-                                songCursor.getColumnIndexOrThrow(
-                                    MediaStore.Audio.Media.DATE_MODIFIED
-                                )
-                            ) * 1000
-                        ),
+                            Instant.fromEpochMilliseconds(
+                                songCursor.getLong(
+                                    songCursor.getColumnIndexOrThrow(
+                                        MediaStore.Audio.Media.DATE_MODIFIED
+                                    )
+                                ) * 1000
+                            ),
                         lastPlayed = null,
                         lastCompleted = null,
                         playCount = 0,
                         playbackPosition = 0,
                         blacklisted = false,
                         externalId =
-                        songCursor.getLong(
-                            songCursor.getColumnIndexOrThrow(
-                                MediaStore.Audio.Media._ID
-                            )
-                        ).toString(),
+                            songCursor.getLong(
+                                songCursor.getColumnIndexOrThrow(
+                                    MediaStore.Audio.Media._ID
+                                )
+                            ).toString(),
                         mediaProvider = type,
                         lyrics = null,
                         grouping = null,
@@ -143,10 +143,10 @@ class MediaStoreMediaProvider(
                     FlowEvent.Progress(
                         MessageProgress(
                             message =
-                            listOf(
-                                song.friendlyArtistName ?: song.albumArtist,
-                                song.name
-                            ).joinToString(" • "),
+                                listOf(
+                                    song.friendlyArtistName ?: song.albumArtist,
+                                    song.name
+                                ).joinToString(" • "),
                             progress = Progress(progress, size)
                         )
                     )

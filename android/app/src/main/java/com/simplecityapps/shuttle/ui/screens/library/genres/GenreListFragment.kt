@@ -84,6 +84,7 @@ class GenreListFragment :
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
+
                         is GenreListUiEvent.PlaybackFailed -> {
                             Toast.makeText(
                                 context,
@@ -91,9 +92,11 @@ class GenreListFragment :
                                 Toast.LENGTH_LONG
                             ).show()
                         }
+
                         is GenreListUiEvent.EditTags -> {
                             TagEditorAlertDialog.newInstance(event.songs).show(childFragmentManager)
                         }
+
                         is GenreListUiEvent.AddedToPlaylist -> {
                             Toast.makeText(
                                 context,
@@ -101,9 +104,11 @@ class GenreListFragment :
                                 Toast.LENGTH_LONG
                             ).show()
                         }
+
                         is GenreListUiEvent.PlaylistDuplicatesFound -> {
                             showPlaylistDuplicatesDialog(event.playlist, event.playlistData, event.deduplicatedSongs, event.duplicates)
                         }
+
                         is GenreListUiEvent.PlaylistAddFailed -> {
                             Toast.makeText(context, event.message ?: getString(R.string.error_unknown), Toast.LENGTH_LONG).show()
                         }

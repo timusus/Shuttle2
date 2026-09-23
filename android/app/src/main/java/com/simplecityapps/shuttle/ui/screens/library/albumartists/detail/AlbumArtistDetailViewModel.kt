@@ -270,6 +270,7 @@ class AlbumArtistDetailViewModel @Inject constructor(
             when (val result = addToPlaylistUseCase(playlist, playlistData, ignoreDuplicates)) {
                 is AddToPlaylist.Result.Success ->
                     _events.emit(AlbumArtistDetailUiEvent.AddedToPlaylist(result.playlist, result.playlistData))
+
                 is AddToPlaylist.Result.DuplicatesFound ->
                     _events.emit(
                         AlbumArtistDetailUiEvent.PlaylistDuplicatesFound(
@@ -279,6 +280,7 @@ class AlbumArtistDetailViewModel @Inject constructor(
                             result.duplicates,
                         )
                     )
+
                 is AddToPlaylist.Result.Failure ->
                     _events.emit(AlbumArtistDetailUiEvent.PlaylistAddFailed(result.message))
             }

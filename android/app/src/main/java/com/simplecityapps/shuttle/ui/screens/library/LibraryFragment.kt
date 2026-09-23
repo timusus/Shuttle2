@@ -160,6 +160,7 @@ class LibraryFragment :
             is TrialState.Unknown, is TrialState.Paid -> {
                 trialMenuItem.isVisible = false
             }
+
             is TrialState.Trial -> {
                 trialMenuItem.isVisible = true
                 val daysRemainingText: TextView = trialMenuItem.actionView!!.findViewById(R.id.daysRemaining)
@@ -167,6 +168,7 @@ class LibraryFragment :
                 val progress: CircularProgressView = trialMenuItem.actionView!!.findViewById(R.id.progress)
                 progress.setProgress((trialState.timeRemaining / trialManager.trialLength.toDouble()).toFloat())
             }
+
             is TrialState.Expired -> {
                 trialMenuItem.isVisible = true
                 val daysRemainingText: TextView = trialMenuItem.actionView!!.findViewById(R.id.daysRemaining)
@@ -174,6 +176,7 @@ class LibraryFragment :
                 val progress: CircularProgressView = trialMenuItem.actionView!!.findViewById(R.id.progress)
                 progress.setProgress(0f)
             }
+
             is TrialState.Pretrial -> {
                 // Nothing to do
             }
@@ -213,6 +216,7 @@ class LibraryFragment :
                 is NetworkResult.Success -> {
                     PromoCodeDialogFragment.newInstance(result.body.promoCode).show(childFragmentManager)
                 }
+
                 is NetworkResult.Failure -> {
                     Toast.makeText(requireContext(), "Failed to retrieve promo code", Toast.LENGTH_LONG).show()
                 }

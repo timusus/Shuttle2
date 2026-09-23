@@ -145,11 +145,11 @@ private fun WidgetContainer(
         }
     Box(
         modifier =
-        GlanceModifier
-            .fillMaxSize()
-            .appWidgetBackground()
-            .then(background)
-            .clickable(actionStartActivity<MainActivity>())
+            GlanceModifier
+                .fillMaxSize()
+                .appWidgetBackground()
+                .then(background)
+                .clickable(actionStartActivity<MainActivity>())
     ) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
             // Views can't be clipped below API 31, so the rounded background is a drawable. A background
@@ -289,10 +289,10 @@ private fun HeroContent(
             }
             Column(
                 modifier =
-                GlanceModifier
-                    .fillMaxWidth()
-                    .then(if (scrim) GlanceModifier.background(ImageProvider(R.drawable.widget_scrim)) else GlanceModifier)
-                    .padding(start = layout.padding, end = layout.padding, bottom = layout.padding)
+                    GlanceModifier
+                        .fillMaxWidth()
+                        .then(if (scrim) GlanceModifier.background(ImageProvider(R.drawable.widget_scrim)) else GlanceModifier)
+                        .padding(start = layout.padding, end = layout.padding, bottom = layout.padding)
             ) {
                 TrackText(state, layout, colors = colors, modifier = GlanceModifier.fillMaxWidth())
                 Spacer(GlanceModifier.height(WidgetDimens.gap / 2))
@@ -569,11 +569,11 @@ private fun CompactPlayButton(
     val round = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) GlanceModifier.cornerRadius(WidgetDimens.buttonSize / 2) else GlanceModifier
     Box(
         modifier =
-        GlanceModifier
-            .size(WidgetDimens.buttonSize)
-            .then(round)
-            .clickable(playbackAction(context, PlaybackService.ACTION_TOGGLE_PLAYBACK))
-            .semantics { contentDescription = description },
+            GlanceModifier
+                .size(WidgetDimens.buttonSize)
+                .then(round)
+                .clickable(playbackAction(context, PlaybackService.ACTION_TOGGLE_PLAYBACK))
+                .semantics { contentDescription = description },
         contentAlignment = Alignment.Center
     ) {
         Image(
@@ -639,13 +639,13 @@ private fun ControlButton(
             ToggleButton(
                 icon = if (state.repeatMode == WidgetRepeatMode.One) R.drawable.ic_repeat_one_black_24dp else R.drawable.ic_repeat_black_24dp,
                 contentDescription =
-                context.getString(
-                    when (state.repeatMode) {
-                        WidgetRepeatMode.Off -> R.string.widget_repeat_off
-                        WidgetRepeatMode.All -> R.string.widget_repeat_all
-                        WidgetRepeatMode.One -> R.string.widget_repeat_one
-                    }
-                ),
+                    context.getString(
+                        when (state.repeatMode) {
+                            WidgetRepeatMode.Off -> R.string.widget_repeat_off
+                            WidgetRepeatMode.All -> R.string.widget_repeat_all
+                            WidgetRepeatMode.One -> R.string.widget_repeat_one
+                        }
+                    ),
                 onClick = playbackAction(context, PlaybackService.ACTION_TOGGLE_REPEAT),
                 on = state.repeatMode != WidgetRepeatMode.Off,
                 colors = colors

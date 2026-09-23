@@ -155,6 +155,7 @@ class AlbumDetailRobot(private val rule: ComposeContentTestRule) {
     }
 
     // -- Interactions --
+
     /** Scrolls the list so the hero artwork and metadata header sit above the top bar. */
     fun scrollPastHeader() {
         rule.onNode(hasScrollToIndexAction()).performScrollToIndex(3)

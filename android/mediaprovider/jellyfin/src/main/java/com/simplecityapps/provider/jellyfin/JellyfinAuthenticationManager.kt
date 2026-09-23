@@ -50,6 +50,7 @@ class JellyfinAuthenticationManager(
                 credentialStore.authenticatedCredentials = authenticatedCredentials
                 Result.success(authenticatedCredentials)
             }
+
             is NetworkResult.Failure -> {
                 (authenticationResult.error as? RemoteServiceHttpError)?.let { error ->
                     if (error.httpStatusCode == HttpStatusCode.Unauthorized) {

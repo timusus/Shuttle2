@@ -105,6 +105,7 @@ fun AlbumArtistList(
                     onShowCreatePlaylistDialog = onShowCreatePlaylistDialog,
                     modifier = modifier,
                 )
+
                 ViewMode.Grid -> AlbumArtistGridView(
                     albumArtists = uiState.albumArtists.toImmutableList(),
                     selectedArtists = uiState.selectedArtists.toImmutableSet(),

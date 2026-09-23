@@ -22,6 +22,7 @@ class M3uParser {
                 when {
                     line.isBlank() -> {
                     }
+
                     line.startsWith("#") -> {
                         if (line.startsWith("#EXTINF:")) {
                             duration = line.substringAfter("#EXTINF:").substringBefore(',').toIntOrNull()
@@ -30,6 +31,7 @@ class M3uParser {
                             track = remainder.substringAfter('-').trim()
                         }
                     }
+
                     else -> {
                         entries.add(Entry(line.sanitise(), duration, artist, track))
                         duration = null

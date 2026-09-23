@@ -37,11 +37,11 @@ object NowPlayingWidgetStateDefinition : GlanceStateDefinition<NowPlayingWidgetS
             .create(
                 serializer = NowPlayingWidgetStateSerializer,
                 corruptionHandler =
-                ReplaceFileCorruptionHandler { e ->
-                    // The next playback change rewrites the state, so show the idle widget until then.
-                    Timber.w(e, "Discarding unreadable now playing widget state")
-                    NowPlayingWidgetState.Idle
-                }
+                    ReplaceFileCorruptionHandler { e ->
+                        // The next playback change rewrites the state, so show the idle widget until then.
+                        Timber.w(e, "Discarding unreadable now playing widget state")
+                        NowPlayingWidgetState.Idle
+                    }
             ) { stateFile(context) }
             .also { dataStore = it }
     }

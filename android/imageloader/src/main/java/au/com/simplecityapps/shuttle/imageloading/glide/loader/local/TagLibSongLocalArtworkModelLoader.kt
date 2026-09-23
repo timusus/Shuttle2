@@ -26,11 +26,11 @@ class TagLibSongLocalArtworkModelLoader(
         options: Options
     ): ModelLoader.LoadData<InputStream>? = localArtworkModelLoader.buildLoadData(
         model =
-        TagLibSongLocalArtworkProvider(
-            context = context,
-            kTagLib = kTagLib,
-            song = model
-        ),
+            TagLibSongLocalArtworkProvider(
+                context = context,
+                kTagLib = kTagLib,
+                song = model
+            ),
         width = width,
         height = height,
         options = options

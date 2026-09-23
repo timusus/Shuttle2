@@ -211,6 +211,7 @@ class AlbumListViewModel @Inject constructor(
             when (val result = addToPlaylistUseCase(playlist, playlistData, ignoreDuplicates)) {
                 is AddToPlaylist.Result.Success ->
                     _events.emit(AlbumListUiEvent.AddedToPlaylist(result.playlist, result.playlistData))
+
                 is AddToPlaylist.Result.DuplicatesFound ->
                     _events.emit(
                         AlbumListUiEvent.PlaylistDuplicatesFound(
@@ -220,6 +221,7 @@ class AlbumListViewModel @Inject constructor(
                             result.duplicates
                         )
                     )
+
                 is AddToPlaylist.Result.Failure ->
                     _events.emit(AlbumListUiEvent.PlaylistAddFailed(result.message))
             }

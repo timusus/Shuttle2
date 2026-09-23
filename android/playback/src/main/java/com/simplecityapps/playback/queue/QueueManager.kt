@@ -168,6 +168,7 @@ class QueueManager(
                 if (existingQueueChanged) {
                     notifyQueueChanged()
                 }
+
             ShuffleMode.On ->
                 if (shuffleQueueChanged) {
                     notifyQueueChanged()
@@ -258,6 +259,7 @@ class QueueManager(
             RepeatMode.Off -> {
                 currentQueue.getOrNull(currentIndex + 1)
             }
+
             RepeatMode.All -> {
                 if (currentIndex == queue.size() - 1) {
                     currentQueue.getOrNull(0)
@@ -265,6 +267,7 @@ class QueueManager(
                     currentQueue.getOrNull(currentIndex + 1)
                 }
             }
+
             RepeatMode.One -> {
                 currentItem
             }

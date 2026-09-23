@@ -191,6 +191,7 @@ class JellyfinMediaProvider(
                         }
 
                         is FlowEvent.Failure -> null
+
                         is FlowEvent.Progress -> null
                     }
                 }

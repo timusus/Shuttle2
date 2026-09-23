@@ -192,6 +192,7 @@ class EmbyMediaProvider(
                         }
 
                         is FlowEvent.Failure -> null
+
                         is FlowEvent.Progress -> null
                     }
                 }

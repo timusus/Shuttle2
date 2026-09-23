@@ -257,10 +257,12 @@ constructor(
                 collapseSheet(Sheet.FIRST)
                 collapseSheet(Sheet.SECOND)
             }
+
             Sheet.FIRST -> {
                 collapseSheet(Sheet.SECOND)
                 expandSheet(Sheet.FIRST)
             }
+
             Sheet.SECOND -> {
                 expandSheet(Sheet.FIRST)
                 expandSheet(Sheet.SECOND)
@@ -290,6 +292,7 @@ constructor(
                 collapseSheet(Sheet.SECOND)
                 return true
             }
+
             Sheet.FIRST -> {
                 collapseSheet(Sheet.FIRST)
                 return true

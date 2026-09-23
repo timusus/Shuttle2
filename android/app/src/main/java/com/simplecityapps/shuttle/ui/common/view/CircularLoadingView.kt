@@ -85,6 +85,7 @@ constructor(
                             })
                     }
                 }
+
                 is State.Error -> {
                     animation?.cancel()
                     animation =
@@ -96,6 +97,7 @@ constructor(
                             animation = fadeIn()
                         })
                 }
+
                 is State.Empty -> {
                     animation?.cancel()
                     animation =
@@ -107,6 +109,7 @@ constructor(
                             animation = fadeIn()
                         })
                 }
+
                 is State.Retry -> {
                     animation?.cancel()
                     animation =
@@ -118,6 +121,7 @@ constructor(
                             animation = fadeIn()
                         })
                 }
+
                 is State.None -> {
                     animation?.cancel()
                     animation = fadeOut()

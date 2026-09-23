@@ -24,6 +24,7 @@ class NoiseManager(
             is PlaybackState.Loading, PlaybackState.Playing -> {
                 context.registerReceiver(broadcastReceiver, IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY))
             }
+
             else -> {
                 context.safelyUnregisterReceiver(broadcastReceiver)
             }

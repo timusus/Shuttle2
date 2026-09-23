@@ -58,11 +58,13 @@ constructor(
                     toggleAnimation()
                 }
             }
+
             PlaybackState.Paused -> {
                 if (!animationDrawable.isPlay) {
                     toggleAnimation()
                 }
             }
+
             PlaybackState.Loading -> {
             }
         }

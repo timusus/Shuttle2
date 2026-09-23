@@ -225,7 +225,9 @@ class CastPlayback(
                 }
 
                 MediaStatus.PLAYER_STATE_BUFFERING -> Timber.v("onRemoteMediaPlayerStatusUpdated ${playerState.playerStateToString()}")
+
                 MediaStatus.PLAYER_STATE_UNKNOWN -> Timber.v("onRemoteMediaPlayerStatusUpdated ${playerState.playerStateToString()}")
+
                 else -> Timber.v("onRemoteMediaPlayerStatusUpdated State default $playerState")
             }
         }

@@ -88,12 +88,12 @@ class SearchAlbumArtistBinder(
                 imageView = imageView,
                 data = viewBinder.albumArtist,
                 options =
-                listOf(
-                    ArtworkImageLoader.Options.RoundedCorners(8.dp),
-                    ArtworkImageLoader.Options.Crossfade(200),
-                    ArtworkImageLoader.Options.Placeholder(ResourcesCompat.getDrawable(itemView.resources, com.simplecityapps.core.R.drawable.ic_placeholder_artist_rounded, itemView.context.theme)!!),
-                    ArtworkImageLoader.Options.CacheDecodedResource
-                )
+                    listOf(
+                        ArtworkImageLoader.Options.RoundedCorners(8.dp),
+                        ArtworkImageLoader.Options.Crossfade(200),
+                        ArtworkImageLoader.Options.Placeholder(ResourcesCompat.getDrawable(itemView.resources, com.simplecityapps.core.R.drawable.ic_placeholder_artist_rounded, itemView.context.theme)!!),
+                        ArtworkImageLoader.Options.CacheDecodedResource
+                    )
             )
             imageView.transitionName = "album_artist_${viewBinder.albumArtist.name ?: viewBinder.albumArtist.friendlyArtistName}"
 

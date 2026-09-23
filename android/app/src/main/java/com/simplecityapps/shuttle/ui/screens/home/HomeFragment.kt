@@ -298,20 +298,24 @@ class HomeFragment :
                                 presenter.play(albumArtist)
                                 return@setOnMenuItemClickListener true
                             }
+
                             R.id.queue -> {
                                 presenter.addToQueue(albumArtist)
                                 return@setOnMenuItemClickListener true
                             }
+
                             R.id.playNext -> {
                                 presenter.playNext(albumArtist)
                                 return@setOnMenuItemClickListener true
                             }
+
                             R.id.exclude -> {
                                 showExcludeDialog(requireContext(), albumArtist.name ?: albumArtist.friendlyArtistName) {
                                     presenter.exclude(albumArtist)
                                 }
                                 return@setOnMenuItemClickListener true
                             }
+
                             R.id.editTags -> {
                                 presenter.editTags(albumArtist)
                                 return@setOnMenuItemClickListener true
@@ -366,18 +370,22 @@ class HomeFragment :
                                 presenter.play(album)
                                 return@setOnMenuItemClickListener true
                             }
+
                             R.id.queue -> {
                                 presenter.addToQueue(album)
                                 return@setOnMenuItemClickListener true
                             }
+
                             R.id.playNext -> {
                                 presenter.playNext(album)
                                 return@setOnMenuItemClickListener true
                             }
+
                             R.id.exclude -> {
                                 presenter.exclude(album)
                                 return@setOnMenuItemClickListener true
                             }
+
                             R.id.editTags -> {
                                 presenter.editTags(album)
                                 return@setOnMenuItemClickListener true

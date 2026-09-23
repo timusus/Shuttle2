@@ -49,6 +49,7 @@ constructor(
 
                     textView.text = state.message
                 }
+
                 is State.None -> {
                     animation?.cancel()
                     animation = fadeOut()

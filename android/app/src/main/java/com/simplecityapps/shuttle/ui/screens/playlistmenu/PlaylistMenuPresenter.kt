@@ -170,18 +170,21 @@ constructor(
     private suspend fun PlaylistData.getSongs(): List<com.simplecityapps.shuttle.model.Song> {
         return when (this) {
             is PlaylistData.Songs -> return data
+
             is PlaylistData.Albums -> {
                 songRepository.getSongs(SongQuery.AlbumGroupKeys(data.map { album -> SongQuery.AlbumGroupKey(key = album.groupKey) }))
                     .firstOrNull()
                     .orEmpty()
                     .sortedWith(SongSortOrder.Default.comparator)
             }
+
             is PlaylistData.AlbumArtists -> {
                 songRepository.getSongs(SongQuery.ArtistGroupKeys(data.map { albumArtist -> SongQuery.ArtistGroupKey(key = albumArtist.groupKey) }))
                     .firstOrNull()
                     .orEmpty()
                     .sortedWith(SongSortOrder.Default.comparator)
             }
+
             is PlaylistData.Genres -> {
                 genreRepository.getSongsForGenres(
                     genres = data.map { it.name },
@@ -190,7 +193,9 @@ constructor(
                     .orEmpty()
                     .sortedWith(SongSortOrder.Default.comparator)
             }
+
             is PlaylistData.Folders -> resolveFolderSongs(data)
+
             is PlaylistData.Queue -> queueManager.getQueue().map { queueItem -> queueItem.song }
         }
     }

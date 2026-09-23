@@ -47,6 +47,7 @@ abstract class AudioFocusHelperBase(
                     }
                     restoreVolumeAndPlay()
                 }
+
             AudioManager.AUDIOFOCUS_LOSS -> {
                 synchronized(focusLock) {
                     resumeOnFocusGain = false
@@ -54,6 +55,7 @@ abstract class AudioFocusHelperBase(
                 }
                 pause()
             }
+
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
                 synchronized(focusLock) {
                     resumeOnFocusGain = isPlaying
@@ -61,6 +63,7 @@ abstract class AudioFocusHelperBase(
                 }
                 pause()
             }
+
             AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK -> {
                 duck()
             }

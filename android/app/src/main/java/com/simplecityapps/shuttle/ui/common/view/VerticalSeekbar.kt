@@ -97,6 +97,7 @@ constructor(
                         return@setOnTouchListener false
                     }
                 }
+
                 MotionEvent.ACTION_MOVE -> {
 
                     progress = mRound(clamp(event.y / height, 0f, 1f), 1f / numLines)
@@ -110,6 +111,7 @@ constructor(
 
                     listener?.onProgressChanged(progress)
                 }
+
                 MotionEvent.ACTION_UP -> {
                     listener?.onStopTracking(progress)
                 }

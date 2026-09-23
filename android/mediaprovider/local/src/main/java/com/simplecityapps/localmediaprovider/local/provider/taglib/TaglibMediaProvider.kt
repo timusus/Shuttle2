@@ -48,10 +48,10 @@ class TaglibMediaProvider(
                         FlowEvent.Progress(
                             MessageProgress(
                                 message =
-                                listOf(
-                                    song.friendlyArtistName ?: song.albumArtist,
-                                    song.name
-                                ).joinToString(" • "),
+                                    listOf(
+                                        song.friendlyArtistName ?: song.albumArtist,
+                                        song.name
+                                    ).joinToString(" • "),
                                 progress = Progress(index, nodes.size)
                             )
                         )

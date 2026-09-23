@@ -137,6 +137,7 @@ class SongListFragment :
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
+
                         is SongListUiEvent.PlaybackFailed -> {
                             Toast.makeText(
                                 context,
@@ -144,9 +145,11 @@ class SongListFragment :
                                 Toast.LENGTH_LONG
                             ).show()
                         }
+
                         is SongListUiEvent.LibraryEmpty -> {
                             Toast.makeText(context, R.string.library_empty, Toast.LENGTH_SHORT).show()
                         }
+
                         is SongListUiEvent.AddedToPlaylist -> {
                             Toast.makeText(
                                 context,
@@ -154,9 +157,11 @@ class SongListFragment :
                                 Toast.LENGTH_LONG
                             ).show()
                         }
+
                         is SongListUiEvent.PlaylistDuplicatesFound -> {
                             showPlaylistDuplicatesDialog(event.playlist, event.playlistData, event.deduplicatedSongs, event.duplicates)
                         }
+
                         is SongListUiEvent.PlaylistAddFailed -> {
                             Toast.makeText(context, event.message ?: getString(R.string.error_unknown), Toast.LENGTH_LONG).show()
                         }
@@ -246,26 +251,32 @@ class SongListFragment :
             viewModel.setSortOrder(SongSortOrder.SongName)
             true
         }
+
         R.id.sortArtistName -> {
             viewModel.setSortOrder(SongSortOrder.ArtistGroupKey)
             true
         }
+
         R.id.sortAlbumName -> {
             viewModel.setSortOrder(SongSortOrder.AlbumGroupKey)
             true
         }
+
         R.id.sortSongYear -> {
             viewModel.setSortOrder(SongSortOrder.Year)
             true
         }
+
         R.id.sortSongDuration -> {
             viewModel.setSortOrder(SongSortOrder.Duration)
             true
         }
+
         R.id.sortSongDateModified -> {
             viewModel.setSortOrder(SongSortOrder.LastModified)
             true
         }
+
         else -> false
     }
 
@@ -294,12 +305,14 @@ class SongListFragment :
                             viewModel.onAddSelectedToQueue()
                             true
                         }
+
                         R.id.editTags -> {
                             TagEditorAlertDialog.newInstance(selectedSongs)
                                 .show(childFragmentManager)
                             contextualToolbarHelper.hide()
                             true
                         }
+
                         else -> false
                     }
                 }
@@ -317,11 +330,17 @@ class SongListFragment :
         findToolbarHost()?.toolbar?.menu?.let { menu ->
             when (sortOrder) {
                 SongSortOrder.SongName -> menu.findItem(R.id.sortSongName)?.isChecked = true
+
                 SongSortOrder.ArtistGroupKey -> menu.findItem(R.id.sortArtistName)?.isChecked = true
+
                 SongSortOrder.AlbumGroupKey -> menu.findItem(R.id.sortAlbumName)?.isChecked = true
+
                 SongSortOrder.Year -> menu.findItem(R.id.sortSongYear)?.isChecked = true
+
                 SongSortOrder.Duration -> menu.findItem(R.id.sortSongDuration)?.isChecked = true
+
                 SongSortOrder.LastModified -> menu.findItem(R.id.sortSongDateModified)?.isChecked = true
+
                 else -> {
                     // Nothing to do
                 }

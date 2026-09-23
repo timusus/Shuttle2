@@ -24,6 +24,7 @@ class HttpServer(private val castService: CastService) : NanoHTTPD(5000) {
                         } ?: newFixedLengthResponse(Response.Status.NOT_FOUND, "text/html", "File not found")
                     }
                 }
+
                 "artwork" -> {
                     return runBlocking {
                         castService.getArtwork(songId)?.let { byteArray ->

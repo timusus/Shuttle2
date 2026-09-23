@@ -113,10 +113,10 @@ open class SearchSongBinder(
                     .from(" • ")
                     .joinSafely(
                         items =
-                        listOf(
-                            viewBinder.song.friendlyArtistName ?: viewBinder.song.albumArtist,
-                            viewBinder.song.album
-                        ),
+                            listOf(
+                                viewBinder.song.friendlyArtistName ?: viewBinder.song.albumArtist,
+                                viewBinder.song.album
+                            ),
                         defaultValue = itemView.resources.getString(com.simplecityapps.core.R.string.unknown)
                     )
 

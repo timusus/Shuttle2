@@ -330,6 +330,7 @@ class TagEditorAlertDialog :
             is TagEditorContract.LoadingState.None -> {
                 loadingView.setState(CircularLoadingView.State.None)
             }
+
             is TagEditorContract.LoadingState.ReadingTags -> {
                 loadingView.setState(
                     CircularLoadingView.State.Loading(
@@ -341,6 +342,7 @@ class TagEditorAlertDialog :
                     )
                 )
             }
+
             is TagEditorContract.LoadingState.WritingTags -> {
                 loadingView.setState(
                     CircularLoadingView.State.Loading(

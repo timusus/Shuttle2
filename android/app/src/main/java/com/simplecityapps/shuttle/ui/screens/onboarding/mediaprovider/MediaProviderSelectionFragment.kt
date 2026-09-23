@@ -184,18 +184,22 @@ class MediaProviderSelectionFragment :
             MediaProviderType.MediaStore -> {
                 presenter.addMediaProviderType(providerType)
             }
+
             MediaProviderType.Shuttle -> {
                 presenter.addMediaProviderType(providerType)
                 DirectorySelectionFragment.newInstance().show(childFragmentManager)
             }
+
             MediaProviderType.Emby -> {
                 presenter.addMediaProviderType(providerType)
                 EmbyConfigurationFragment.newInstance().show(childFragmentManager)
             }
+
             MediaProviderType.Jellyfin -> {
                 presenter.addMediaProviderType(providerType)
                 JellyfinConfigurationFragment.newInstance().show(childFragmentManager)
             }
+
             MediaProviderType.Plex -> {
                 presenter.addMediaProviderType(providerType)
                 PlexConfigurationFragment.newInstance().show(childFragmentManager)
@@ -219,14 +223,19 @@ class MediaProviderSelectionFragment :
                         R.id.configure -> {
                             when (providerType) {
                                 MediaProviderType.Shuttle -> DirectorySelectionFragment.newInstance().show(childFragmentManager)
+
                                 MediaProviderType.Emby -> EmbyConfigurationFragment.newInstance().show(childFragmentManager)
+
                                 MediaProviderType.Jellyfin -> JellyfinConfigurationFragment.newInstance().show(childFragmentManager)
+
                                 MediaProviderType.Plex -> PlexConfigurationFragment.newInstance().show(childFragmentManager)
+
                                 MediaProviderType.MediaStore -> {
                                     // Nothing to do
                                 }
                             }
                         }
+
                         R.id.remove -> {
                             if (isOnboarding) {
                                 presenter.removeMediaProviderType(providerType)

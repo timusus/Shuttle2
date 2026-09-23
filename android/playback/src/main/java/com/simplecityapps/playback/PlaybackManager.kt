@@ -81,6 +81,7 @@ class PlaybackManager(
             is PlaybackState.Loading, PlaybackState.Playing -> {
                 playback.pause()
             }
+
             else -> {
                 play()
             }
@@ -413,6 +414,7 @@ class PlaybackManager(
             is PlaybackState.Loading, PlaybackState.Playing -> {
                 monitorProgress(true)
             }
+
             else -> {
                 monitorProgress(false)
             }

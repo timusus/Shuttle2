@@ -136,6 +136,7 @@ class AlbumArtistListFragment :
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
+
                         is AlbumArtistListUiEvent.PlaybackFailed -> {
                             Toast.makeText(
                                 context,
@@ -143,9 +144,11 @@ class AlbumArtistListFragment :
                                 Toast.LENGTH_LONG
                             ).show()
                         }
+
                         is AlbumArtistListUiEvent.EditTags -> {
                             TagEditorAlertDialog.newInstance(event.songs).show(childFragmentManager)
                         }
+
                         is AlbumArtistListUiEvent.AddedToPlaylist -> {
                             Toast.makeText(
                                 context,
@@ -153,9 +156,11 @@ class AlbumArtistListFragment :
                                 Toast.LENGTH_LONG
                             ).show()
                         }
+
                         is AlbumArtistListUiEvent.PlaylistDuplicatesFound -> {
                             showPlaylistDuplicatesDialog(event.playlist, event.playlistData, event.deduplicatedSongs, event.duplicates)
                         }
+
                         is AlbumArtistListUiEvent.PlaylistAddFailed -> {
                             Toast.makeText(context, event.message ?: getString(R.string.error_unknown), Toast.LENGTH_LONG).show()
                         }
@@ -241,10 +246,12 @@ class AlbumArtistListFragment :
             viewModel.setViewMode(ViewMode.Grid)
             true
         }
+
         R.id.listViewMode -> {
             viewModel.setViewMode(ViewMode.List)
             true
         }
+
         else -> false
     }
 
@@ -286,11 +293,13 @@ class AlbumArtistListFragment :
                             viewModel.onAddSelectedToQueue()
                             true
                         }
+
                         R.id.editTags -> {
                             viewModel.onEditTagsSelected()
                             contextualToolbarHelper.hide()
                             true
                         }
+
                         else -> false
                     }
                 }

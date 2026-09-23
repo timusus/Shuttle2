@@ -40,8 +40,10 @@ class ExoPlayerPlayback(
                 when (playbackState) {
                     ExoPlaybackState.Idle -> {
                     }
+
                     ExoPlaybackState.Buffering -> {
                     }
+
                     ExoPlaybackState.Ready -> {
                         isPlaybackReady = true
                         if (player?.playWhenReady == true) {
@@ -50,6 +52,7 @@ class ExoPlayerPlayback(
                             callback?.onPlaybackStateChanged(PlaybackState.Paused)
                         }
                     }
+
                     ExoPlaybackState.Ended -> {
                         if (isPlaybackReady) {
                             player?.playWhenReady = false
@@ -58,6 +61,7 @@ class ExoPlayerPlayback(
                             isPlaybackReady = false
                         }
                     }
+
                     ExoPlaybackState.Unknown -> {
                     }
                 }
@@ -71,7 +75,9 @@ class ExoPlayerPlayback(
 
                 when (transitionReason) {
                     TransitionReason.Repeat -> callback?.onTrackEnded(true)
+
                     TransitionReason.Auto -> callback?.onTrackEnded(true)
+
                     TransitionReason.Seek,
                     TransitionReason.PlaylistChanged,
                     TransitionReason.Unknown

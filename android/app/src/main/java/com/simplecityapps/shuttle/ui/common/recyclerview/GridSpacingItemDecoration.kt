@@ -38,9 +38,11 @@ class GridSpacingItemDecoration(
                 0 -> {
                     outRect.left = space * 2
                 }
+
                 spanCount - 1 -> {
                     outRect.right = space * 2
                 }
+
                 else -> {
                     outRect.left = (space - column * space / spanCount) + (space / spanCount)
                     outRect.right = ((column + 1) * space / spanCount) + (space / spanCount)
