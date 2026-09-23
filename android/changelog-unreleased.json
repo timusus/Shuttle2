@@ -2,5 +2,10 @@
   "since": "v26092301",
   "features": [],
   "improvements": [],
-  "fixes": []
+  "fixes": [
+    {
+      "text": "Fixed audio glitches and possible crashes when playing 24-bit files with the equaliser or ReplayGain on",
+      "commits": []
+    }
+  ]
 }
