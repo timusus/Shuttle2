@@ -48,6 +48,8 @@ import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.width
 import androidx.glance.material3.ColorProviders
+import androidx.glance.semantics.contentDescription
+import androidx.glance.semantics.semantics
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
@@ -101,7 +103,13 @@ private fun NowPlayingContent(
     state: NowPlayingWidgetState,
     layout: WidgetLayout
 ) {
-    WidgetContainer(padding = layout.padding, opacity = state.backgroundOpacity) {
+    // The hero's art fills the widget to its edges, so it insets its own text and buttons instead.
+    val fullBleed = state.hasTrack && layout.mode == WidgetMode.Hero
+    WidgetContainer(
+        padding = if (fullBleed) 0.dp else layout.padding,
+        bottomPadding = if (fullBleed) 0.dp else layout.bottomPadding,
+        opacity = state.backgroundOpacity
+    ) {
         if (!state.hasTrack) {
             IdleContent(layout)
         } else {
@@ -116,12 +124,14 @@ private fun NowPlayingContent(
 }
 
 /**
- * The widget's background, rounded to the launcher's radius, with [padding] on every side of [content]. The
- * content starts at the top left, so nothing is centred away from the edge it's anchored to.
+ * The widget's background, rounded to the launcher's radius, with [padding] on every side of [content] but the
+ * bottom, which has [bottomPadding]. The content starts at the top left, so nothing is centred away from the
+ * edge it's anchored to.
  */
 @Composable
 private fun WidgetContainer(
     padding: Dp,
+    bottomPadding: Dp,
     opacity: Int,
     content: @Composable () -> Unit
 ) {
@@ -153,7 +163,10 @@ private fun WidgetContainer(
                 colorFilter = ColorFilter.tint(GlanceTheme.colors.widgetBackground)
             )
         }
-        Box(modifier = GlanceModifier.fillMaxSize().padding(padding), contentAlignment = Alignment.TopStart) {
+        Box(
+            modifier = GlanceModifier.fillMaxSize().padding(start = padding, top = padding, end = padding, bottom = bottomPadding),
+            contentAlignment = Alignment.TopStart
+        ) {
             content()
         }
     }
@@ -199,6 +212,8 @@ private fun RowContent(
             ButtonRow(layout.buttons, state)
         } else {
             TrackText(state, layout, modifier = GlanceModifier.defaultWeight())
+            // Keeps an ellipsised title off the play button's circle.
+            Spacer(GlanceModifier.width(WidgetDimens.gap))
             layout.buttons.forEach { ControlButton(it, state) }
         }
     }
@@ -214,9 +229,20 @@ private fun CardContent(
             Artwork(state.artworkPath, layout.art, layout.padding)
             Spacer(GlanceModifier.width(layout.padding))
         }
-        Column(modifier = GlanceModifier.defaultWeight().fillMaxHeight()) {
-            TrackText(state, layout, modifier = GlanceModifier.fillMaxWidth().defaultWeight())
-            ButtonRow(layout.buttons, state)
+        if (layout.compact) {
+            // The text may run into the top of the buttons' 48dp targets, where only their slack is, so it's
+            // stacked under the button row rather than handed a share of the height it would be clipped to.
+            Box(modifier = GlanceModifier.defaultWeight().fillMaxHeight()) {
+                TrackText(state, layout, modifier = GlanceModifier.fillMaxWidth())
+                Column(modifier = GlanceModifier.fillMaxSize(), verticalAlignment = Alignment.Bottom) {
+                    ButtonRow(layout.buttons, state, compact = true)
+                }
+            }
+        } else {
+            Column(modifier = GlanceModifier.defaultWeight().fillMaxHeight()) {
+                TrackText(state, layout, modifier = GlanceModifier.fillMaxWidth().defaultWeight())
+                ButtonRow(layout.buttons, state)
+            }
         }
     }
 }
@@ -238,18 +264,22 @@ private fun SplitContent(
 }
 
 /**
- * The artwork fills the widget, with the text and buttons along its bottom. Over artwork they sit on a dark
- * scrim in white, so they read over any picture; over the placeholder they use its theme colours instead.
+ * The artwork fills the whole widget, clipped to its rounded corners, with the text and buttons along its
+ * bottom, inset by the padding like every other layout's content. Over artwork they sit on a dark scrim in
+ * white, so they read over any picture; over the placeholder they use its theme colours instead.
+ *
+ * The art and its placeholder stay opaque whatever the background opacity setting: they're content rather
+ * than background, fading them would muddy the picture and the scrim's contrast, and with them covering the
+ * widget there's no background left to show.
  */
 @Composable
 private fun HeroContent(
     state: NowPlayingWidgetState,
     layout: WidgetLayout
 ) {
-    val bitmap = artworkBitmap(state.artworkPath, layout.art, layout.padding)
+    val bitmap = artworkBitmap(state.artworkPath, layout.art, padding = 0.dp)
     val colors = if (bitmap != null) ContentColors.onArt() else ContentColors.onPlaceholder()
-    val radius = innerRadius(layout.padding)
-    val clip = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) GlanceModifier.cornerRadius(radius) else GlanceModifier
+    val clip = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) GlanceModifier.cornerRadius(android.R.dimen.system_app_widget_background_radius) else GlanceModifier
     Box(modifier = GlanceModifier.fillMaxSize().then(clip)) {
         if (bitmap != null) {
             Image(
@@ -259,7 +289,7 @@ private fun HeroContent(
                 modifier = GlanceModifier.fillMaxSize()
             )
         } else {
-            ArtworkPlaceholder(layout.art, layout.padding, noteAlignment = Alignment.TopCenter)
+            ArtworkPlaceholder(layout.art, padding = 0.dp, noteAlignment = Alignment.TopCenter)
         }
         Column(modifier = GlanceModifier.fillMaxSize(), verticalAlignment = Alignment.Bottom) {
             val scrim = bitmap != null
@@ -271,14 +301,9 @@ private fun HeroContent(
                 GlanceModifier
                     .fillMaxWidth()
                     .then(if (scrim) GlanceModifier.background(ImageProvider(R.drawable.widget_scrim)) else GlanceModifier)
-                    .padding(bottom = WidgetDimens.gap)
+                    .padding(start = layout.padding, end = layout.padding, bottom = layout.padding)
             ) {
-                TrackText(
-                    state,
-                    layout,
-                    colors = colors,
-                    modifier = GlanceModifier.fillMaxWidth().padding(start = layout.padding, end = layout.padding)
-                )
+                TrackText(state, layout, colors = colors, modifier = GlanceModifier.fillMaxWidth())
                 Spacer(GlanceModifier.height(WidgetDimens.gap / 2))
                 ButtonRow(layout.buttons, state, colors)
             }
@@ -469,7 +494,10 @@ private fun Artwork(
     }
 }
 
-/** Missing artwork: a music note on the theme's secondary container, shaped like the artwork it stands in for. */
+/**
+ * Missing artwork: a music note on the theme's secondary container, shaped like the artwork it stands in for.
+ * A [padding] of zero means it fills the widget, so it takes the widget's own corners.
+ */
 @Composable
 private fun ArtworkPlaceholder(
     size: DpSize,
@@ -481,7 +509,7 @@ private fun ArtworkPlaceholder(
             GlanceModifier.background(GlanceTheme.colors.secondaryContainer).innerCornerRadius(padding)
         } else {
             GlanceModifier.background(
-                imageProvider = ImageProvider(R.drawable.widget_inner_background),
+                imageProvider = ImageProvider(if (padding == 0.dp) R.drawable.widget_background else R.drawable.widget_inner_background),
                 colorFilter = ColorFilter.tint(GlanceTheme.colors.secondaryContainer)
             )
         }
@@ -502,25 +530,67 @@ private fun ArtworkPlaceholder(
     }
 }
 
-/** The text and buttons along the bottom of the hero, so its placeholder note can centre above them. */
-private val HERO_TEXT_HEIGHT = WidgetDimens.titleLineHeight + WidgetDimens.subtitleLineHeight + WidgetDimens.buttonSize + WidgetDimens.gap * 3 / 2
+/** The text and buttons along the bottom of the hero, with their padding, so its placeholder note can centre above them. */
+private val HERO_TEXT_HEIGHT = WidgetDimens.titleLineHeight + WidgetDimens.subtitleLineHeight + WidgetDimens.gap / 2 + WidgetDimens.buttonSize + WidgetDimens.padding
 
 @Composable
 private fun GlanceModifier.innerCornerRadius(padding: Dp): GlanceModifier = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) cornerRadius(innerRadius(padding)) else this
 
-/** Buttons spread evenly across the available width, so play/pause sits in the middle. */
+/**
+ * Buttons spread evenly across the available width, so play/pause sits in the middle. When [compact], the play
+ * button's circle is [WidgetDimens.compactPlay] inside its full-size target.
+ */
 @Composable
 private fun ButtonRow(
     buttons: List<WidgetButton>,
     state: NowPlayingWidgetState,
-    colors: ContentColors = ContentColors.default()
+    colors: ContentColors = ContentColors.default(),
+    compact: Boolean = false
 ) {
     Row(modifier = GlanceModifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         buttons.forEach { button ->
             Box(modifier = GlanceModifier.defaultWeight(), contentAlignment = Alignment.Center) {
-                ControlButton(button, state, colors)
+                if (compact && button == WidgetButton.PlayPause) {
+                    CompactPlayButton(state, colors)
+                } else {
+                    ControlButton(button, state, colors)
+                }
             }
         }
+    }
+}
+
+/** Play/pause with a smaller circle than [CircleIconButton] draws, in the same 48dp touch target. */
+@Composable
+private fun CompactPlayButton(
+    state: NowPlayingWidgetState,
+    colors: ContentColors
+) {
+    val context = LocalContext.current
+    val description = context.getString(if (state.isPlaying) R.string.widget_pause else R.string.widget_play)
+    // Rounding the target keeps its ripple a circle rather than a square around the smaller one.
+    val round = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) GlanceModifier.cornerRadius(WidgetDimens.buttonSize / 2) else GlanceModifier
+    Box(
+        modifier =
+        GlanceModifier
+            .size(WidgetDimens.buttonSize)
+            .then(round)
+            .clickable(playbackAction(context, PlaybackService.ACTION_TOGGLE_PLAYBACK))
+            .semantics { contentDescription = description },
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            provider = ImageProvider(R.drawable.widget_toggle_dot),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(colors.playBackground),
+            modifier = GlanceModifier.size(WidgetDimens.compactPlay)
+        )
+        Image(
+            provider = ImageProvider(if (state.isPlaying) PlaybackR.drawable.ic_pause_black_24dp else PlaybackR.drawable.ic_play_arrow_black_24dp),
+            contentDescription = null,
+            colorFilter = ColorFilter.tint(colors.playContent),
+            modifier = GlanceModifier.size(24.dp)
+        )
     }
 }
 

@@ -19,10 +19,11 @@ enum class WidgetButton {
  * padding, so the gap to the top, side and bottom edges is always the same.
  *
  * - [Row]: one short row: art filling the height, then text, then buttons.
- * - [Card]: art filling the height on the left; text above the buttons on the right.
+ * - [Card]: art filling the height on the left; text above the buttons on the right. One row tall and wide
+ *   enough for every button beside the art, it's [WidgetLayout.compact].
  * - [Split]: two rows: art in the top left filling the height above a full-width button row, text beside it.
- * - [Hero]: three rows or more, or two rows too narrow for [Split]: the art fills the widget, with the text
- *   and buttons along its bottom on a scrim.
+ * - [Hero]: three rows or more, or two rows too narrow for [Split]: the art fills the whole widget to its
+ *   rounded edges, with the text and buttons along its bottom on a scrim, inset by the padding.
  */
 enum class WidgetMode {
     Row,
@@ -42,9 +43,18 @@ data class WidgetLayout(
     /** How many lines the title may wrap to. */
     val titleLines: Int = 1,
     val largeText: Boolean = false,
-    val buttons: List<WidgetButton>
+    val buttons: List<WidgetButton>,
+    /**
+     * A [WidgetMode.Card] one row tall: the play button's circle shrinks to [WidgetDimens.compactPlay] inside its
+     * 48dp target, and the button row reaches into the bottom padding by the difference, so the circle still
+     * stops at the padding, level with the art, and the text above gets the room it needs.
+     */
+    val compact: Boolean = false
 ) {
     val showArt: Boolean get() = art != DpSize.Unspecified
+
+    /** The container's inset at the bottom: [padding], less what a [compact] button row reaches into it. */
+    val bottomPadding: Dp get() = if (compact) padding - (WidgetDimens.buttonSize - WidgetDimens.compactPlay) / 2 else padding
 }
 
 object WidgetDimens {
@@ -57,6 +67,8 @@ object WidgetDimens {
     /** The padding on launchers whose single row is too short for [padding] around a 48dp button. */
     val minPadding = 8.dp
     val minArt = 48.dp
+
+    /** The narrowest text in a [WidgetMode.Row], including the [gap] between it and the buttons. */
     val minRowText = 64.dp
     val minColumnText = 96.dp
 
@@ -75,6 +87,16 @@ object WidgetDimens {
     /** From this height, text stacked over buttons fits beside the art. */
     val cardMinHeight = padding * 2 + titleLineHeight + subtitleLineHeight + buttonSize
 
+    /** The play button's circle in a [WidgetLayout.compact] card. Its touch target stays [buttonSize]. */
+    val compactPlay = 40.dp
+
+    /**
+     * From this height, a one-row widget wide enough for every button beside the art stacks text over them as
+     * a [WidgetLayout.compact] card. The small text's two lines measure about 35dp, which with the 40dp play
+     * circle fits between the paddings of a typical 100dp launcher row.
+     */
+    val compactCardMinHeight = 96.dp
+
     /** From this height, the art sits above a full-width button row. */
     val splitMinHeight = 160.dp
 
@@ -84,9 +106,9 @@ object WidgetDimens {
 
 /**
  * The largest artwork edge any layout draws on a phone, so one saved file stays sharp at every size: a
- * four-by-four [WidgetMode.Hero] is about 364 by 406dp, cropped from the square file.
+ * four-by-four [WidgetMode.Hero] fills the widget, about 388 by 430dp, cropped from the square file.
  */
-val maxWidgetArtSize: Dp = 420.dp
+val maxWidgetArtSize: Dp = 440.dp
 
 /**
  * Button sets in the order they're given up as the widget narrows: shuffle and repeat go first, then previous.
@@ -130,6 +152,7 @@ fun widgetLayoutFor(size: DpSize): WidgetLayout = when {
 }
 
 private fun rowLayout(size: DpSize): WidgetLayout {
+    compactCardLayout(size)?.let { return it }
     val padding = widgetPadding(size.height)
     val inner = size.width - padding * 2
     val art = max(size.height - padding * 2, 0.dp)
@@ -164,6 +187,28 @@ private fun cardLayout(size: DpSize): WidgetLayout {
     )
 }
 
+/**
+ * The card's arrangement in one row, when the column beside the art has room for every button: shuffle and
+ * repeat stay rather than the row dropping to three buttons. Null when it's too short or too narrow.
+ */
+private fun compactCardLayout(size: DpSize): WidgetLayout? {
+    if (size.height < WidgetDimens.compactCardMinHeight) return null
+    if (size.width < compactCardMinWidth(size.height)) return null
+    val padding = WidgetDimens.padding
+    val art = size.height - padding * 2
+    return WidgetLayout(
+        mode = WidgetMode.Card,
+        padding = padding,
+        art = DpSize(art, art),
+        textLines = 2,
+        buttons = buttonSets.first(),
+        compact = true
+    )
+}
+
+/** The narrowest widget of [height] that a [WidgetLayout.compact] card fits: the art, then every button beside it. */
+fun compactCardMinWidth(height: Dp): Dp = WidgetDimens.padding * 3 + (height - WidgetDimens.padding * 2) + buttonSets.first().width()
+
 private fun splitLayout(size: DpSize): WidgetLayout? {
     val padding = WidgetDimens.padding
     val inner = size.width - padding * 2
@@ -183,13 +228,12 @@ private fun splitLayout(size: DpSize): WidgetLayout? {
 
 private fun heroLayout(size: DpSize): WidgetLayout {
     val padding = WidgetDimens.padding
-    val inner = DpSize(size.width - padding * 2, size.height - padding * 2)
     return WidgetLayout(
         mode = WidgetMode.Hero,
         padding = padding,
-        art = inner,
+        art = size,
         textLines = 2,
         largeText = true,
-        buttons = buttonsFor(inner.width)
+        buttons = buttonsFor(size.width - padding * 2)
     )
 }

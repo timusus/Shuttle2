@@ -52,10 +52,10 @@ class WidgetLayoutTest {
     }
 
     @Test
-    fun `artwork always fits inside the padding`() {
+    fun `artwork always fits inside the padding, except the hero's, which fills the widget`() {
         sampleSizes.forEach { size ->
             val layout = widgetLayoutFor(size)
-            if (layout.showArt) {
+            if (layout.showArt && layout.mode != WidgetMode.Hero) {
                 (layout.art.height <= size.height - layout.padding * 2) shouldBe true
                 (layout.art.width <= size.width - layout.padding * 2) shouldBe true
             }
@@ -79,11 +79,18 @@ class WidgetLayoutTest {
     }
 
     @Test
-    fun `hero artwork fills the widget inside the padding`() {
+    fun `hero artwork fills the whole widget, edge to edge`() {
         val size = DpSize(388.dp, 318.dp)
         val layout = widgetLayoutFor(size)
         layout.mode shouldBe WidgetMode.Hero
-        layout.art shouldBe DpSize(size.width - layout.padding * 2, size.height - layout.padding * 2)
+        layout.art shouldBe size
+        layout.padding shouldBe WidgetDimens.padding
+    }
+
+    @Test
+    fun `hero buttons fit inside the padding the scrim content is inset by`() {
+        widgetLayoutFor(DpSize(264.dp, 318.dp)).buttons shouldBe allButtons
+        widgetLayoutFor(DpSize(263.dp, 318.dp)).buttons shouldBe listOf(Previous, PlayPause, Next)
     }
 
     @Test
@@ -132,6 +139,46 @@ class WidgetLayoutTest {
         layout.art shouldBe DpSize(56.dp, 56.dp)
         layout.textLines shouldBe 2
         layout.buttons shouldBe listOf(Previous, PlayPause, Next)
+    }
+
+    @Test
+    fun `a four by one widget keeps every button, beneath the text beside the art`() {
+        val size = DpSize(388.dp, 100.dp)
+        val layout = widgetLayoutFor(size)
+        layout.mode shouldBe WidgetMode.Card
+        layout.compact shouldBe true
+        layout.art shouldBe DpSize(76.dp, 76.dp)
+        layout.textLines shouldBe 2
+        layout.buttons shouldBe allButtons
+    }
+
+    @Test
+    fun `a compact card needs the art plus every button across its width`() {
+        compactCardMinWidth(100.dp) shouldBe 352.dp
+        widgetLayoutFor(DpSize(352.dp, 100.dp)).compact shouldBe true
+        val narrower = widgetLayoutFor(DpSize(351.dp, 100.dp))
+        narrower.mode shouldBe WidgetMode.Row
+        narrower.buttons shouldBe listOf(Previous, PlayPause, Next)
+    }
+
+    @Test
+    fun `a row too short for text over buttons stays a single line however wide`() {
+        val layout = widgetLayoutFor(DpSize(430.dp, WidgetDimens.compactCardMinHeight - 1.dp))
+        layout.mode shouldBe WidgetMode.Row
+        layout.compact shouldBe false
+    }
+
+    @Test
+    fun `a compact card's button row reaches into the bottom padding by the play circle's slack`() {
+        val layout = widgetLayoutFor(DpSize(388.dp, 100.dp))
+        layout.bottomPadding shouldBe WidgetDimens.padding - (WidgetDimens.buttonSize - WidgetDimens.compactPlay) / 2
+        // The circle, centred in its target, then stops at the same padding as the art.
+        (layout.bottomPadding + (WidgetDimens.buttonSize - WidgetDimens.compactPlay) / 2) shouldBe layout.padding
+    }
+
+    @Test
+    fun `every other layout has the same padding at the bottom as the other sides`() {
+        sampleSizes.map { widgetLayoutFor(it) }.filter { !it.compact }.forEach { it.bottomPadding shouldBe it.padding }
     }
 
     @Test
