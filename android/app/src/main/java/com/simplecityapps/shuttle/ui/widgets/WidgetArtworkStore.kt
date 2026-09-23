@@ -10,6 +10,8 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import java.io.IOException
 import java.security.MessageDigest
+import java.util.Collections
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.resume
@@ -21,7 +23,8 @@ import timber.log.Timber
 /**
  * Widget artwork lives on disk, one file per song artwork shared by every widget, so the widget state only
  * carries a path. Files are rendered once at the largest size any widget layout draws, so they're sharp at
- * every breakpoint. Not thread safe: [WidgetManager] calls it from a single coroutine.
+ * every breakpoint. [WidgetManager] calls it from one coroutine at a time, but the bookkeeping is a concurrent
+ * set so a stray caller can't corrupt it.
  */
 @Singleton
 class WidgetArtworkStore
@@ -41,7 +44,7 @@ constructor(
     }
 
     /** Songs whose artwork failed to load, so play/pause updates don't retry them. Reset by [prune]. */
-    private val missing = mutableSetOf<String>()
+    private val missing: MutableSet<String> = Collections.newSetFromMap(ConcurrentHashMap())
 
     /** The saved artwork for [song], loading and saving it first if needed. Null when the song has no art. */
     suspend fun artworkPath(song: Song): String? {

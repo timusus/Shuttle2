@@ -98,13 +98,15 @@ constructor(
             val artworkPath = withTimeoutOrNull(ARTWORK_WAIT_MS) { artwork.await() }
             publish(stateFor(song, artworkPath))
             if (artworkPath == null) {
-                artwork.await()?.let { publish(stateFor(song, it)) }
+                // A load that never calls back mustn't hold up every later update, so give up eventually.
+                withTimeoutOrNull(ARTWORK_MAX_WAIT_MS) { artwork.await() }?.let { publish(stateFor(song, it)) }
+                artwork.cancel()
             }
         }
 
         // Have the next track's artwork ready, so skipping shows it straight away.
         val next = queueManager.getNext(ignoreRepeat = true)?.song
-        next?.let { artworkStore.artworkPath(it) }
+        next?.let { withTimeoutOrNull(ARTWORK_MAX_WAIT_MS) { artworkStore.artworkPath(it) } }
         artworkStore.prune(listOfNotNull(song, next))
     }
 
@@ -160,6 +162,7 @@ constructor(
     companion object {
         private const val UPDATE_DEBOUNCE_MS = 150L
         private const val ARTWORK_WAIT_MS = 1000L
+        private const val ARTWORK_MAX_WAIT_MS = 10_000L
     }
 }
 
