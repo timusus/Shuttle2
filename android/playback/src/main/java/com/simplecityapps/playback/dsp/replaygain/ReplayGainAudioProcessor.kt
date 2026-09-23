@@ -15,10 +15,13 @@ import java.nio.ByteBuffer
 /**
  * Applies ReplayGain. The gain follows [streamTracker], which switches it at the boundary between
  * one track's audio and the next, so each track plays at its own level from the first sample.
+ *
+ * [mode] and [preAmpGain] are set from the main thread (settings) and read on the playback thread,
+ * so they're volatile: a change reaches the audio on the next buffer.
  */
 class ReplayGainAudioProcessor(
-    var mode: ReplayGainMode,
-    var preAmpGain: Double = 0.0,
+    @Volatile var mode: ReplayGainMode,
+    @Volatile var preAmpGain: Double = 0.0,
     val streamTracker: ReplayGainStreamTracker = ReplayGainStreamTracker()
 ) : BaseAudioProcessor() {
     private val gain: Double
