@@ -66,6 +66,10 @@
     {
       "text": "Removing the playing song from the queue now moves playback on to the next song, and a song removed from the queue no longer plays anyway when the current one ends",
       "commits": []
+    },
+    {
+      "text": "The resume position after the app is closed is now correct after seeking back or restarting a track",
+      "commits": []
     }
   ]
 }

@@ -10,6 +10,7 @@ import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackService
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.PlaybackWatcher
+import com.simplecityapps.playback.PositionAnchor
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueState
@@ -38,6 +39,7 @@ class PlaybackInitializerTest {
     private val application: Application = RuntimeEnvironment.getApplication()
     private val playbackManager = FakePlaybackManager()
     private val queueManager = FakeQueueManager()
+    private val playbackWatcher = PlaybackWatcher()
     private val preferences = PlaybackPreferenceManager(
         application.getSharedPreferences("playback_initializer_test", Context.MODE_PRIVATE),
         Moshi.Builder().build()
@@ -48,7 +50,7 @@ class PlaybackInitializerTest {
         context = application,
         songRepository = FakeSongRepository(),
         playbackManager = playbackManager,
-        playbackWatcher = PlaybackWatcher(),
+        playbackWatcher = playbackWatcher,
         queueManager = queueManager,
         playbackPreferenceManager = preferences,
         castSessionManager = mockk(relaxed = true),
@@ -125,15 +127,92 @@ class PlaybackInitializerTest {
     }
 
     @Test
-    fun `progress is saved once it has moved on by more than a second`() {
+    fun `progress is saved immediately, then throttled to once it has moved by more than a second`() {
         initializer.init(application)
 
+        // The first observed progress is the initial anchor: no prior save to compare against, so it
+        // writes straight away rather than waiting for a second tick to establish a baseline.
         playbackManager.progressFlow.value = PlaybackProgress(position = 5_000, duration = 200_000)
+        preferences.playbackPosition shouldBe 5_000
+
         playbackManager.progressFlow.value = PlaybackProgress(position = 5_900, duration = 200_000)
-        preferences.playbackPosition shouldBe null
+        preferences.playbackPosition shouldBe 5_000
 
         playbackManager.progressFlow.value = PlaybackProgress(position = 6_500, duration = 200_000)
         preferences.playbackPosition shouldBe 6_500
+    }
+
+    @Test
+    fun `sub-second progress ticks in either direction do not write to preferences`() {
+        initializer.init(application)
+        playbackManager.progressFlow.value = PlaybackProgress(position = 65_000, duration = 200_000)
+        preferences.playbackPosition shouldBe 65_000
+
+        // Small forward and backward ticks stay under the throttle: no further writes.
+        playbackManager.progressFlow.value = PlaybackProgress(position = 65_400, duration = 200_000)
+        playbackManager.progressFlow.value = PlaybackProgress(position = 65_100, duration = 200_000)
+        playbackManager.progressFlow.value = PlaybackProgress(position = 65_700, duration = 200_000)
+        preferences.playbackPosition shouldBe 65_000
+    }
+
+    @Test
+    fun `restarting a track saves the reset position, so a force-stop restores from 0`() {
+        initializer.init(application)
+
+        playbackManager.progressFlow.value = PlaybackProgress(position = 65_000, duration = 200_000)
+        preferences.playbackPosition shouldBe 65_000
+
+        // Restarting the track seeks back to 0 - a discontinuity, so it's saved immediately, rather
+        // than being masked by the old (higher) high-water mark. A restore after a force-stop reads
+        // this value straight back as the seek position.
+        playbackManager.positionAnchorFlow.value = PositionAnchor(PlaybackState.Playing, positionMs = 0, elapsedRealtimeMs = 1_000, speed = 1f)
+
+        preferences.playbackPosition shouldBe 0
+    }
+
+    @Test
+    fun `seeking backwards saves the earlier position immediately`() {
+        initializer.init(application)
+
+        playbackManager.progressFlow.value = PlaybackProgress(position = 90_000, duration = 200_000)
+        preferences.playbackPosition shouldBe 90_000
+
+        playbackManager.positionAnchorFlow.value = PositionAnchor(PlaybackState.Playing, positionMs = 30_000, elapsedRealtimeMs = 1_000, speed = 1f)
+
+        preferences.playbackPosition shouldBe 30_000
+    }
+
+    @Test
+    fun `a track change saves the new track's position immediately, even under the throttle`() {
+        initializer.init(application)
+
+        playbackManager.progressFlow.value = PlaybackProgress(position = 65_000, duration = 200_000)
+        preferences.playbackPosition shouldBe 65_000
+
+        // The new track starts close to the old saved position - under the throttle, but a track
+        // change is a discontinuity, so it's still saved immediately.
+        playbackManager.positionAnchorFlow.value = PositionAnchor(PlaybackState.Playing, positionMs = 65_200, elapsedRealtimeMs = 1_000, speed = 1f)
+
+        preferences.playbackPosition shouldBe 65_200
+    }
+
+    @Test
+    fun `onTrackEnded saves 0 only when the queue has a next item to move to`() {
+        initializer.init(application)
+        playbackManager.progressFlow.value = PlaybackProgress(position = 195_000, duration = 200_000)
+        preferences.playbackPosition shouldBe 195_000
+
+        val endedSong = songs[0]
+        queueManager.nextItem = null
+        playbackWatcher.onTrackEnded(endedSong)
+
+        // No next item to move to - the position of the song that just finished is left alone.
+        preferences.playbackPosition shouldBe 195_000
+
+        queueManager.nextItem = songs[1].toQueueItem(isCurrent = false)
+        playbackWatcher.onTrackEnded(endedSong)
+
+        preferences.playbackPosition shouldBe 0
     }
 
     private fun publishQueue(

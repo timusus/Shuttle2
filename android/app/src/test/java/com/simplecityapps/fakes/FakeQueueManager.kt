@@ -21,6 +21,8 @@ class FakeQueueManager : QueueOperations {
     var lastSetQueuePosition: Int? = null
         private set
 
+    var nextItem: QueueItem? = null
+
     override suspend fun setQueue(songs: List<Song>, shuffleSongs: List<Song>?, position: Int): Boolean {
         lastSetQueue = songs
         lastSetQueuePosition = position
@@ -32,7 +34,7 @@ class FakeQueueManager : QueueOperations {
     override fun getCurrentPosition(): Int? = queueStateFlow.value.currentPosition
     override fun getSize(): Int = queueStateFlow.value.items.size
     override fun setCurrentItem(currentItem: QueueItem) {}
-    override fun getNext(ignoreRepeat: Boolean): QueueItem? = null
+    override fun getNext(ignoreRepeat: Boolean): QueueItem? = nextItem
     override fun getPrevious(): QueueItem? = null
     override fun skipToNext(ignoreRepeat: Boolean): Boolean = false
     override fun skipToPrevious() {}

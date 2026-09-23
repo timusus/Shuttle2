@@ -26,6 +26,7 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
+import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.filterNotNull
@@ -61,7 +62,8 @@ constructor(
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope
 ) : AppInitializer,
     PlaybackWatcherCallback {
-    private var progress = 0
+    /** The last position saved to preferences, so a save can be throttled by how far it's drifted. */
+    private var lastSavedPosition: Int? = null
 
     private var initTime = 0L
 
@@ -145,6 +147,7 @@ constructor(
         val repeatMode = queueManager.repeatModeFlow.value
         val playbackState = playbackManager.playbackStateFlow.value
         val progress = playbackManager.progressFlow.value
+        val positionAnchor = playbackManager.positionAnchorFlow.value
 
         appCoroutineScope.launchCollectingChanges(queueManager.queueStateFlow, queueState, Dispatchers.Main.immediate) { previous, current ->
             onQueueStateChanged(previous, current)
@@ -161,7 +164,13 @@ constructor(
             }
         }
         appCoroutineScope.launchCollectingChanges(playbackManager.progressFlow, progress, Dispatchers.Main.immediate) { _, current ->
-            current?.let { saveProgress(current.position) }
+            current?.let { saveProgress(it.position, force = false) }
+        }
+        // positionAnchorFlow republishes only on discontinuities (state changes, seeks, track changes,
+        // speed changes, playback switches), so every emission is worth an immediate save - that's what
+        // keeps the saved position current after a restart or a seek backwards, without a high-water mark.
+        appCoroutineScope.launchCollectingChanges(playbackManager.positionAnchorFlow, positionAnchor, Dispatchers.Main.immediate) { _, current ->
+            current.positionMs?.let { saveProgress(it, force = true) }
         }
     }
 
@@ -198,15 +207,20 @@ constructor(
         }
     }
 
-    private fun saveProgress(position: Int) {
-        if (progress == 0) {
-            progress = position
-        }
-
-        // Saves the playback progress to shared prefs if it has changed by at least 1 second
-        if (position - progress > 1000) {
+    /**
+     * Saves the playback position to preferences. A [force]d save (a discontinuity from
+     * [PlaybackOperations.positionAnchorFlow], a pause, or a track change) always writes; otherwise the
+     * write is throttled to once the position has drifted at least a second in either direction, so a
+     * seek backwards or a restart is caught as readily as normal forward playback.
+     */
+    private fun saveProgress(
+        position: Int,
+        force: Boolean
+    ) {
+        val last = lastSavedPosition
+        if (force || last == null || abs(position - last) >= 1000) {
             playbackPreferenceManager.playbackPosition = position
-            progress = position
+            lastSavedPosition = position
         }
     }
 
@@ -217,10 +231,15 @@ constructor(
         // live, so it must run before the call that reported it moves on (e.g. switchToPlayback() pauses the
         // old playback, then replaces it and reads the saved position back).
         if (playbackState is PlaybackState.Paused) {
-            playbackPreferenceManager.playbackPosition = playbackManager.getProgress()
+            val position = playbackManager.getProgress()
+            if (position != null) {
+                saveProgress(position, force = true)
+            } else {
+                playbackPreferenceManager.playbackPosition = null
+            }
 
             queueManager.getCurrentItem()?.song?.let { song ->
-                val playbackPosition = playbackManager.getProgress() ?: 0
+                val playbackPosition = position ?: 0
                 appCoroutineScope.launch {
                     withContext(Dispatchers.IO) {
                         songRepository.setPlaybackPosition(song, playbackPosition)
@@ -232,7 +251,13 @@ constructor(
 
     @SuppressLint("CheckResult")
     override fun onTrackEnded(song: Song) {
-        playbackPreferenceManager.playbackPosition = 0
+        // The queue hasn't advanced yet at this point, so getNext() predicts whether it's about to -
+        // matching the check PlaybackManager itself makes before it moves on. Only then is 0 the right
+        // position for what's now the current item; otherwise (e.g. the last track with repeat off) the
+        // queue stays on the song that just finished, and its saved position should stay too.
+        if (queueManager.getNext() != null) {
+            saveProgress(0, force = true)
+        }
 
         appCoroutineScope.launch {
             withContext(Dispatchers.IO) {
