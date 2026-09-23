@@ -22,11 +22,11 @@ data class SessionPlaybackState(
 
 fun PositionAnchor.toSessionPlaybackState() = SessionPlaybackState(
     state =
-    when (state) {
-        is PlaybackState.Loading -> PlaybackStateCompat.STATE_BUFFERING
-        is PlaybackState.Playing -> PlaybackStateCompat.STATE_PLAYING
-        else -> PlaybackStateCompat.STATE_PAUSED
-    },
+        when (state) {
+            is PlaybackState.Loading -> PlaybackStateCompat.STATE_BUFFERING
+            is PlaybackState.Playing -> PlaybackStateCompat.STATE_PLAYING
+            else -> PlaybackStateCompat.STATE_PAUSED
+        },
     positionMs = positionMs?.toLong() ?: PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN,
     speed = speed,
     updateTimeMs = elapsedRealtimeMs,
