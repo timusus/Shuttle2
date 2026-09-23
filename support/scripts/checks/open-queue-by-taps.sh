@@ -10,6 +10,6 @@ s2 PAUSE >/dev/null
 out="${CHECKS_ROOT}/tmp/maestro"
 mkdir -p "$out"
 MAESTRO_CLI_NO_ANALYTICS=1 MAESTRO_CLI_ANALYSIS_NOTIFICATION_DISABLED=true \
-    "${MAESTRO:-$HOME/.maestro/bin/maestro}" --device "$device" test --test-output-dir "$out" \
+    "${MAESTRO:-$(command -v maestro || echo "$HOME/.maestro/bin/maestro")}" --device "$device" test --test-output-dir "$out" \
     "${CHECKS_ROOT}/support/maestro/open-queue-by-taps.yaml" || fail "the Maestro flow failed (output in ${out})"
 pass

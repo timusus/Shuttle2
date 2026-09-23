@@ -33,7 +33,7 @@ support/scripts/checks/run-all.sh
 support/scripts/remote-emu.sh stop
 ```
 
-Maestro (`curl -fsSL https://get.maestro.mobile.dev | bash`, then `~/.maestro/bin/maestro`) only
+Maestro (`brew install mobile-dev-inc/tap/maestro`; plain `brew install maestro` is an unrelated app) only
 talks to the Mac's own adb server on 5037, not the lane's tunnelled one. `remote-emu.sh start`
 also tunnels the emulator's adbd and `adb connect`s it there; `remote-emu.sh serial` prints that
 serial (`localhost:1560N`), which the wrapper passes as `--device`. Set `MAESTRO_DEVICE` to run
