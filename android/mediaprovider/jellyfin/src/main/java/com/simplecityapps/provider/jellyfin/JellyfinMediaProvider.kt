@@ -90,7 +90,7 @@ class JellyfinMediaProvider(
                     val queryResult =
                         itemsService.playlists(
                             url = address,
-                            token = credentials.accessToken,
+                            authorization = authenticationManager.authorizationHeader(credentials),
                             userId = credentials.userId
                         )
                 ) {
@@ -133,7 +133,7 @@ class JellyfinMediaProvider(
             val queryResult =
                 itemsService.audioItems(
                     url = address,
-                    token = credentials.accessToken,
+                    authorization = authenticationManager.authorizationHeader(credentials),
                     userId = credentials.userId,
                     limit = pageSize,
                     startIndex = startIndex
@@ -209,7 +209,7 @@ class JellyfinMediaProvider(
             val queryResult =
                 itemsService.playlistItems(
                     url = address,
-                    token = credentials.accessToken,
+                    authorization = authenticationManager.authorizationHeader(credentials),
                     playlistId = playlistId,
                     limit = pageSize,
                     startIndex = startIndex,

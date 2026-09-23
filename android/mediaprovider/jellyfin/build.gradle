@@ -51,4 +51,8 @@ dependencies {
     implementation project(':android:data')
 
     implementation libs.kotlinx.datetime
+
+    // Testing
+    testImplementation libs.junit
+    testImplementation libs.kotest
 }

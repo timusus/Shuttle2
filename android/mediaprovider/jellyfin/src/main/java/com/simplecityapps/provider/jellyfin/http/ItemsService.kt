@@ -15,7 +15,7 @@ interface ItemsService {
     )
     suspend fun itemsImpl(
         @Url url: String,
-        @Header("X-Emby-Token") token: String,
+        @Header("Authorization") authorization: String,
         @Query("recursive") recursive: Boolean = true,
         @Query("includeItemTypes") itemTypes: String,
         @Query("fields") fields: String?,
@@ -31,35 +31,35 @@ interface ItemsService {
     )
     suspend fun itemImpl(
         @Url url: String,
-        @Header("X-Emby-Token") token: String
+        @Header("Authorization") authorization: String
     ): NetworkResult<Item>
 }
 
 suspend fun ItemsService.audioItems(
     url: String,
-    token: String,
+    authorization: String,
     userId: String,
     recursive: Boolean = true,
     itemTypes: String = "Audio",
     fields: String? = "Genres",
     limit: Int = 2500,
     startIndex: Int = 0
-): NetworkResult<QueryResult> = itemsImpl("$url/Users/$userId/Items", token, recursive, itemTypes, fields, limit, startIndex)
+): NetworkResult<QueryResult> = itemsImpl("$url/Users/$userId/Items", authorization, recursive, itemTypes, fields, limit, startIndex)
 
 suspend fun ItemsService.playlists(
     url: String,
-    token: String,
+    authorization: String,
     userId: String,
     recursive: Boolean = true,
     itemTypes: String = "Playlist",
     fields: String? = null,
     limit: Int = 2500,
     startIndex: Int = 0
-): NetworkResult<QueryResult> = itemsImpl("$url/Users/$userId/Items", token, recursive, itemTypes, fields, limit, startIndex)
+): NetworkResult<QueryResult> = itemsImpl("$url/Users/$userId/Items", authorization, recursive, itemTypes, fields, limit, startIndex)
 
 suspend fun ItemsService.playlistItems(
     url: String,
-    token: String,
+    authorization: String,
     playlistId: String,
     recursive: Boolean = true,
     itemTypes: String = "Audio",
@@ -67,11 +67,11 @@ suspend fun ItemsService.playlistItems(
     limit: Int = 2500,
     startIndex: Int = 0,
     userId: String
-): NetworkResult<QueryResult> = itemsImpl("$url/Playlists/$playlistId/Items", token, recursive, itemTypes, fields, limit, startIndex, userId)
+): NetworkResult<QueryResult> = itemsImpl("$url/Playlists/$playlistId/Items", authorization, recursive, itemTypes, fields, limit, startIndex, userId)
 
 suspend fun ItemsService.item(
     url: String,
-    token: String,
+    authorization: String,
     userId: String,
     itemId: String
-): NetworkResult<Item> = itemImpl("$url/Users/$userId/Items/$itemId", token)
+): NetworkResult<Item> = itemImpl("$url/Users/$userId/Items/$itemId", authorization)
