@@ -54,7 +54,8 @@ interface PlaylistRepository {
 
     suspend fun updatePlaylistSortOder(
         playlist: Playlist,
-        sortOrder: PlaylistSongSortOrder
+        sortOrder: PlaylistSongSortOrder,
+        sortDescending: Boolean
     )
 
     suspend fun updatePlaylistSongsSortOder(
