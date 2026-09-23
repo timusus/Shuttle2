@@ -68,6 +68,7 @@ class ExoPlayerPlaybackTest {
         player.commands shouldBe
             listOf(
                 "repeatMode ${Player.REPEAT_MODE_OFF}",
+                "setVolume 1.0",
                 "removeListener",
                 "pause",
                 "seekTo 0",
@@ -104,6 +105,45 @@ class ExoPlayerPlaybackTest {
 
         player.audioSessionId shouldBe 42
         playback.getAudioSessionId() shouldBe 42
+    }
+
+    @Test
+    fun `volume is re-applied to a player rebuilt after release`() = runTest {
+        load(songA)
+        playback.setVolume(0.2f)
+        playback.release()
+
+        load(songA)
+
+        player.isReleased shouldBe false
+        player.volume shouldBe 0.2f
+    }
+
+    @Test
+    fun `settings requested before the first load reach the loaded player`() = runTest {
+        playback.setAudioSessionId(42)
+        playback.setRepeatMode(QueueManager.RepeatMode.All)
+        playback.setVolume(0.2f)
+
+        load(songA)
+
+        player.audioSessionId shouldBe 42
+        player.repeatMode shouldBe Player.REPEAT_MODE_ALL
+        player.volume shouldBe 0.2f
+    }
+
+    @Test
+    fun `playback speed is not re-applied to a player rebuilt after release`() = runTest {
+        // Pins today's behaviour on purpose: speed only carries the expired-trial speed ramp, which
+        // #232 replaces. Until then a rebuilt player starts at normal speed.
+        load(songA)
+        playback.setPlaybackSpeed(0.8f)
+        playback.release()
+
+        load(songA)
+
+        player.commands.filter { it.startsWith("setPlaybackParameters") }.shouldBeEmpty()
+        playback.getPlaybackSpeed() shouldBe 1f
     }
 
     @Test

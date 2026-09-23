@@ -88,25 +88,11 @@ class ExoPlayerPlayback(
         }
     }
 
-    /**
-     * The audio session id [PlaybackManager] wants us to use. Remembered rather than applied once,
-     * because the player is released whenever playback switches to another [Playback] (Chromecast,
-     * for example) and rebuilt on the next [load] - a rebuilt player allocates its own session id,
-     * which would leave system and OEM audio effects attached to a session that no longer exists.
-     */
-    private var requestedAudioSessionId: Int = C.AUDIO_SESSION_ID_UNSET
-
-    /** The [Player] repeat mode [PlaybackManager] wants. Remembered for the same reason as [requestedAudioSessionId]. */
-    private var requestedRepeatMode: Int = Player.REPEAT_MODE_OFF
+    private var settings = PlayerSettings()
 
     private var player: AudioPlayer = createPlayer()
 
-    private fun createPlayer(): AudioPlayer = playerFactory.create().also { player ->
-        if (requestedAudioSessionId != C.AUDIO_SESSION_ID_UNSET) {
-            player.audioSessionId = requestedAudioSessionId
-        }
-        player.repeatMode = requestedRepeatMode
-    }
+    private fun createPlayer(): AudioPlayer = playerFactory.create().also { player -> settings.applyTo(player) }
 
     override suspend fun load(
         current: Song,
@@ -225,28 +211,30 @@ class ExoPlayerPlayback(
     override fun getDuration(): Int? = player.duration.takeIf { duration -> duration != C.TIME_UNSET }?.toInt()
 
     override fun setVolume(volume: Float) {
+        settings = settings.copy(volume = volume)
         player.setVolume(volume)
     }
 
     override fun getResumeWhenSwitched(oldPlayback: Playback): Boolean = oldPlayback !is CastPlayback
 
     override fun setRepeatMode(repeatMode: QueueManager.RepeatMode) {
-        requestedRepeatMode = repeatMode.toRepeatMode()
-        player.repeatMode = requestedRepeatMode
-        replayGainTracker.setRepeatMode(requestedRepeatMode)
+        settings = settings.copy(repeatMode = repeatMode.toRepeatMode())
+        player.repeatMode = settings.repeatMode
+        replayGainTracker.setRepeatMode(settings.repeatMode)
     }
 
     override fun setAudioSessionId(id: Int) {
         if (id != -1 && id != C.AUDIO_SESSION_ID_UNSET) {
-            requestedAudioSessionId = id
+            settings = settings.copy(audioSessionId = id)
             player.audioSessionId = id
         } else {
             Timber.e("Failed to set audio session id (sessionId: $id)")
         }
     }
 
-    override fun getAudioSessionId(): Int = if (isReleased) requestedAudioSessionId else player.audioSessionId
+    override fun getAudioSessionId(): Int = if (isReleased) settings.audioSessionId else player.audioSessionId
 
+    /** Not part of [settings]: a rebuilt player starts at normal speed (see [PlayerSettings]). */
     override fun setPlaybackSpeed(multiplier: Float) {
         player.setPlaybackParameters(multiplier, multiplier)
     }
