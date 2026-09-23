@@ -57,26 +57,8 @@ All commands run from the repository root.
 
 ## Desktop Emulator (WSL Box)
 
-Prefer a headless Pixel 9 Pro AVD on the owner's desktop (WSL2, KVM) over a local AVD: the 32 GB
-Mac starves a local emulator whenever it's loaded (Xcode, other sessions). Launcher:
-`support/scripts/remote-emu.sh` (`status` / `start [N]` / `env` / `install` / `stop [N|--all]`).
-
-- The box is shared with the owner's podcasts repo and CI runners — sessions may run concurrently,
-  **one lane each, up to 3** (lane N = `emulator-555{4,6,8}`, local adb port `5038..5040`, lease
-  `/home/tim/.emu-leases/lane-N` on the box). Run `status` before assuming a lane is free; `start`
-  leases the lowest free one and refuses a held lane.
-- `remote-emu.sh start` then `eval "$(support/scripts/remote-emu.sh env)"` in every shell that runs
-  `adb` or a build against the box (it sets `ANDROID_ADB_SERVER_PORT` + `ANDROID_SERIAL`; the Mac's
-  adb keeps 5037; the exports don't persist across tool calls, so re-eval per shell). `install`
-  runs `:android:app:assembleDebug` and installs over the tunnel (`:android:app:installDebug`
-  ignores the port).
-- If `status` exits non-zero, the box is unreachable: fall back to the local AVD.
-- **Always `remote-emu.sh stop` when done**, including after failures: it kills only your lane.
-  Never `stop N`/`--all` on a lane you did not lease unless `status` shows its qemu dead. Never
-  touch `gh-runner*`, `segment-acquisition*`, or `acq-vpn-tunnel-us` on the box. A stray emulator
-  can hijack a CI instrumentation job.
-- Setup, lanes, gotchas and reversal: on the box at `/home/tim/gh-runner-image/EMULATOR-SETUP.md`
-  (box setup is shared infra written up from the podcasts repo, not duplicated here).
+Lane protocol, launcher commands and stop discipline are in `.claude/rules/android.md`'s Desktop
+Emulator section — that's the single source of truth, kept in sync with `support/scripts/remote-emu.sh`.
 
 ## Architecture
 
