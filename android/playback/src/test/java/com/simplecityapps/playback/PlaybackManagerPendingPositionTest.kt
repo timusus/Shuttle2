@@ -9,6 +9,7 @@ import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldEndWith
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
@@ -16,7 +17,7 @@ import org.junit.Test
 /**
  * While a load is pending the playback still reports the item it's replacing, so the position is the
  * one the load will start at, and play()'s near-end check reads that position against the item being
- * loaded (#300). Once the load has completed, the playback reports its own position again.
+ * loaded (#300). A switch made while it loads carries that position to the new playback. Once the load has completed, the playback reports its own position again.
  */
 class PlaybackManagerPendingPositionTest {
     private val events = mutableListOf<String>()
@@ -64,6 +65,17 @@ class PlaybackManagerPendingPositionTest {
         playback.completeLoad()
 
         playbackManager.getProgress() shouldBe 1_234
+    }
+
+    @Test
+    fun `switch while a load is pending loads the new playback at the pending load's position`() {
+        val cast = FakePlayback("Cast", events = events)
+        playbackManager.skipToNext()
+        events.clear()
+
+        playbackManager.switchToPlayback(cast)
+
+        events.filter { it.startsWith("Cast load") }.single() shouldEndWith " seek 0"
     }
 
     @Test

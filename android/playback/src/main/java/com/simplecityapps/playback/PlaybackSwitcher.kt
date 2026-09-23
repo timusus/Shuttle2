@@ -9,7 +9,7 @@ import timber.log.Timber
  *
  * A switch carries the old playback's settings over (repeat mode, audio session id, playback speed),
  * detaches, pauses and releases the old playback, points audio focus and the audio effect session at
- * the new one, then loads the current item into it at the old playback's position. Once that load
+ * the new one, then loads the current item into it at the current position. Once that load
  * succeeds, the effect session is rebound to whatever session the loaded player actually rendered on,
  * the saved position is restored, and playback resumes if the old playback was playing and the new
  * one wants to resume after a switch.
@@ -30,6 +30,11 @@ class PlaybackSwitcher(
     private val audioFocusHelper: AudioFocusHelper,
     private val audioEffectSessionManager: AudioEffectSessionManager,
     private val repeatMode: () -> QueueManager.RepeatMode,
+    /**
+     * The position a switch loads the new playback at. While a load is pending this is the load's
+     * position, not the old playback's, which still reports the item being replaced.
+     */
+    private val currentProgress: () -> Int?,
     /** The position to restore once a switch has loaded, or null to stay where the load started. */
     private val savedPosition: () -> Int?,
     /** Called once the new playback is active and attached, before its load starts. */
@@ -63,7 +68,7 @@ class PlaybackSwitcher(
 
         val oldPlayback = playback
         val wasPlaying = oldPlayback.playBackState() is PlaybackState.Playing
-        val seekPosition = oldPlayback.getProgress()
+        val seekPosition = currentProgress()
         val playbackSpeed = oldPlayback.getPlaybackSpeed()
 
         oldPlayback.pause()

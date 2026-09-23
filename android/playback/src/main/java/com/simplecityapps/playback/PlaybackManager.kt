@@ -44,6 +44,7 @@ class PlaybackManager(
             audioFocusHelper = audioFocusHelper,
             audioEffectSessionManager = audioEffectSessionManager,
             repeatMode = { queueManager.getRepeatMode() },
+            currentProgress = ::getProgress,
             savedPosition = { playbackPreferenceManager.playbackPosition },
             onSwitched = ::publishSwitchedPlaybackState,
             load = ::loadForSwitch,

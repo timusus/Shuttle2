@@ -10,7 +10,7 @@ import org.junit.Test
 
 /**
  * [PlaybackSwitcher] carries settings from the old playback to the new one, loads the new one at the
- * old one's position, and once that load succeeds rebinds the effect session, restores the saved
+ * current position (a pending load's, else the old playback's), and once that load succeeds rebinds the effect session, restores the saved
  * position and resumes. Loads here complete only when a test says so, in any order, so a superseded
  * switch's completion can be delivered after a later switch without a [LoadCoordinator] filtering it.
  */
@@ -31,6 +31,9 @@ class PlaybackSwitcherTest {
     private var repeatMode = QueueManager.RepeatMode.Off
     private var savedPosition: Int? = SAVED_POSITION
 
+    /** The position a pending non-switch load will start at, or null when none is pending. */
+    private var pendingLoadPosition: Int? = null
+
     /** Load completions in the order the loads were requested, keyed by the position each started at. */
     private val loads = mutableListOf<Pair<Int, (Result<Boolean>) -> Unit>>()
 
@@ -44,6 +47,7 @@ class PlaybackSwitcherTest {
             audioFocusHelper = audioFocusHelper,
             audioEffectSessionManager = audioEffectSessionManager,
             repeatMode = { repeatMode },
+            currentProgress = { pendingLoadPosition ?: switcher.playback.getProgress() },
             savedPosition = { savedPosition },
             onSwitched = {
                 switchedTo = switcher.playback
@@ -118,6 +122,17 @@ class PlaybackSwitcherTest {
         playbackA.callback shouldBe null
         switchedTo shouldBe playbackB
         events shouldBe listOf("A pause", "B setRepeatMode Off", "B setPlaybackSpeed 1.0", "switched", "load 42000")
+    }
+
+    @Test
+    fun `switch while a load is pending loads at the pending load's position, not the old playback's`() {
+        switcher.attachInitialPlayback()
+        playbackA.progressMs = 42_000
+        pendingLoadPosition = 0
+
+        switcher.switchTo(playbackB)
+
+        loads.single().first shouldBe 0
     }
 
     @Test
