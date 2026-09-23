@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Widget corner radii. API 31+ uses the launcher's own values. -->
+    <dimen name="widget_background_radius">20dp</dimen>
+    <dimen name="widget_inner_radius">10dp</dimen>
+</resources>

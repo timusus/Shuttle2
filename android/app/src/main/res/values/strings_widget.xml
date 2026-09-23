@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Widget picker: name of the one-row now playing widget -->
+    <string name="widget_label_small">Now playing (small)</string>
+    <!-- Widget picker: name of the two-row now playing widget -->
+    <string name="widget_label_large">Now playing (large)</string>
+    <!-- Widget picker: description of the one-row now playing widget -->
+    <string name="widget_description_small">What\'s playing and the playback controls, in a single row.</string>
+    <!-- Widget picker: description of the two-row now playing widget -->
+    <string name="widget_description_large">Album art and what\'s playing, with shuffle, repeat and playback controls.</string>
+    <!-- Widget: shown under the app name when nothing is queued. Tapping the widget opens the app -->
+    <string name="widget_idle_action">Tap to choose some music</string>
+    <!-- Widget: accessibility label for the play button -->
+    <string name="widget_play">Play</string>
+    <!-- Widget: accessibility label for the pause button -->
+    <string name="widget_pause">Pause</string>
+    <!-- Widget: accessibility label for the repeat button while repeat is off -->
+    <string name="widget_repeat_off">Repeat off</string>
+    <!-- Widget: accessibility label for the repeat button while the whole queue repeats -->
+    <string name="widget_repeat_all">Repeat all</string>
+    <!-- Widget: accessibility label for the repeat button while the current song repeats -->
+    <string name="widget_repeat_one">Repeat one</string>
+    <!-- Widget picker preview: example song title -->
+    <string name="widget_preview_title">Song title</string>
+    <!-- Widget picker preview: example artist name -->
+    <string name="widget_preview_artist">Artist</string>
+</resources>

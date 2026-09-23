@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Widget picker preview colours. The preview layout is only shown on API 31+, where these follow the
+         system palette (values-v31); these defaults keep the resources resolvable everywhere. -->
+    <color name="widget_preview_background">#FFE3F0FF</color>
+    <color name="widget_preview_on_surface">#FF181C21</color>
+    <color name="widget_preview_on_surface_variant">#FF3F4752</color>
+    <color name="widget_preview_primary_container">#FF0079C3</color>
+    <color name="widget_preview_on_primary_container">#FFFFFFFF</color>
+    <color name="widget_preview_secondary_container">#FFC0DCFF</color>
+    <color name="widget_preview_on_secondary_container">#FF224565</color>
+</resources>

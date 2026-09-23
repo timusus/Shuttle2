@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="widget_preview_background">@android:color/system_neutral1_900</color>
+    <color name="widget_preview_on_surface">@android:color/system_neutral1_100</color>
+    <color name="widget_preview_on_surface_variant">@android:color/system_neutral2_200</color>
+    <color name="widget_preview_primary_container">@android:color/system_accent1_700</color>
+    <color name="widget_preview_on_primary_container">@android:color/system_accent1_100</color>
+    <color name="widget_preview_secondary_container">@android:color/system_accent2_700</color>
+    <color name="widget_preview_on_secondary_container">@android:color/system_accent2_100</color>
+</resources>

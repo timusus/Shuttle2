@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget picker preview for the large now playing widget (API 31+). Mirrors the widget's large layout. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_preview_background"
+    android:orientation="vertical"
+    android:padding="12dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <FrameLayout
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:background="@drawable/widget_preview_art">
+            <ImageView
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_gravity="center"
+                android:src="@drawable/widget_music_note"
+                android:tint="@color/widget_preview_on_secondary_container"
+                android:importantForAccessibility="no" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/widget_preview_title"
+                android:textColor="@color/widget_preview_on_surface"
+                android:textSize="16sp"
+                android:fontFamily="sans-serif-medium" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="@string/widget_preview_artist"
+                android:textColor="@color/widget_preview_on_surface_variant"
+                android:textSize="14sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal">
+
+    <FrameLayout
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_weight="1">
+
+        <ImageView
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:scaleType="center"
+            android:src="@drawable/ic_shuffle_black_24dp"
+            android:tint="@color/widget_preview_on_surface_variant"
+            android:importantForAccessibility="no" />
+    </FrameLayout>
+
+    <FrameLayout
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_weight="1">
+
+        <ImageView
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:scaleType="center"
+            android:src="@drawable/ic_skip_previous_black_24dp"
+            android:tint="@color/widget_preview_on_surface_variant"
+            android:importantForAccessibility="no" />
+    </FrameLayout>
+
+    <FrameLayout
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_weight="1">
+
+        <ImageView
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:scaleType="center"
+            android:background="@drawable/widget_preview_play"
+            android:src="@drawable/ic_play_arrow_black_24dp"
+            android:tint="@color/widget_preview_on_primary_container"
+            android:importantForAccessibility="no" />
+    </FrameLayout>
+
+    <FrameLayout
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_weight="1">
+
+        <ImageView
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:scaleType="center"
+            android:src="@drawable/ic_skip_next_black_24dp"
+            android:tint="@color/widget_preview_on_surface_variant"
+            android:importantForAccessibility="no" />
+    </FrameLayout>
+
+    <FrameLayout
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_weight="1">
+
+        <ImageView
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:scaleType="center"
+            android:src="@drawable/ic_repeat_black_24dp"
+            android:tint="@color/widget_preview_on_surface_variant"
+            android:importantForAccessibility="no" />
+    </FrameLayout>
+
+    </LinearLayout>
+</LinearLayout>

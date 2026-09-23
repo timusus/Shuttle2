@@ -27,12 +27,6 @@
         app:key="pref_screen_artwork" />
 
     <Preference
-        android:title="@string/pref_category_title_widgets"
-        app:icon="@drawable/ic_outline_widgets_24"
-        app:iconSpaceReserved="false"
-        app:key="pref_screen_widget" />
-
-    <Preference
         android:title="@string/pref_category_title_playlists"
         app:icon="@drawable/ic_outline_queue_music_24"
         app:iconSpaceReserved="false"

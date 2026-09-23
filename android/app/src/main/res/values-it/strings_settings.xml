@@ -46,8 +46,6 @@
     <string name="pref_category_title_playback">Riproduzione</string>
     <!-- Settings: Title for artwork related settings (artist/album images) -->
     <string name="pref_category_title_artwork">Illustrazioni</string>
-    <!-- Settings: Title for widget related settings  -->
-    <string name="pref_category_title_widgets">Widget</string>
     <!-- Settings: Title for playlist related settings  -->
     <string name="pref_category_title_playlists">Playlist</string>
     <!-- Settings: Title for shangelog related settings -->
@@ -106,10 +104,6 @@
     <string name="pref_clear_artwork_subtitle">Rimuove tutte le immagini memorizzate nella cache</string>
     <!-- Settings: Title for the option to download all artwork (artist/album images) -->
     <string name="pref_download_artwork_title">Scarica tutte le illustrazioni</string>
-    <!-- Settings: Title for the option to use dark mode for widgets -->
-    <string name="pref_widget_dark_mode_title">Modalità scura</string>
-    <!-- Settings: Title for the option to change opacity of the widget background -->
-    <string name="pref_widget_opacity_title">Opacità sfondo</string>
     <!-- Settings: Title for the option to ignore duplicates when adding songs to a playlist -->
     <string name="pref_ignore_duplicates_title">Ignora i duplicati</string>
     <!-- Settings: Description for the option to ignore duplicates when adding songs to a playlist -->

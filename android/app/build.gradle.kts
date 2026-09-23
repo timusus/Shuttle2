@@ -137,6 +137,8 @@ android {
         implementation(libs.kotlinx.collections.immutable)
         implementation(libs.kotlinx.datetime)
         implementation(libs.androidx.material3)
+        implementation(libs.androidx.glance.appwidget)
+        implementation(libs.androidx.glance.material3)
         implementation("androidx.compose.material:material-icons-extended")
 
         // Android Studio Preview support

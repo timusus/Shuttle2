@@ -46,8 +46,6 @@
     <string name="pref_category_title_playback">再生</string>
     <!-- Settings: Title for artwork related settings (artist/album images) -->
     <string name="pref_category_title_artwork">アートワーク</string>
-    <!-- Settings: Title for widget related settings  -->
-    <string name="pref_category_title_widgets">ウィジェット</string>
     <!-- Settings: Title for playlist related settings  -->
     <string name="pref_category_title_playlists">プレイリスト</string>
     <!-- Settings: Title for shangelog related settings -->
@@ -106,10 +104,6 @@
     <string name="pref_clear_artwork_subtitle">キャッシュされたアートワークをすべて削除します</string>
     <!-- Settings: Title for the option to download all artwork (artist/album images) -->
     <string name="pref_download_artwork_title">すべてのアートワークをダウンロード</string>
-    <!-- Settings: Title for the option to use dark mode for widgets -->
-    <string name="pref_widget_dark_mode_title">ダークモード</string>
-    <!-- Settings: Title for the option to change opacity of the widget background -->
-    <string name="pref_widget_opacity_title">背景の不透明度</string>
     <!-- Settings: Title for the option to ignore duplicates when adding songs to a playlist -->
     <string name="pref_ignore_duplicates_title">重複を無視</string>
     <!-- Settings: Description for the option to ignore duplicates when adding songs to a playlist -->

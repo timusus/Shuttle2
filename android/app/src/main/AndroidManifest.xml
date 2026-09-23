@@ -68,25 +68,25 @@
         <receiver
             android:name=".ui.widgets.WidgetProvider41"
             android:exported="true"
-            android:label="Shuttle 4x1">
+            android:label="@string/widget_label_small">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/appwidget_info_41" />
+                android:resource="@xml/widget_now_playing_small_info" />
         </receiver>
 
         <receiver
             android:name=".ui.widgets.WidgetProvider42"
             android:exported="true"
-            android:label="Shuttle 4x2">
+            android:label="@string/widget_label_large">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data
                 android:name="android.appwidget.provider"
-                android:resource="@xml/appwidget_info_42" />
+                android:resource="@xml/widget_now_playing_large_info" />
         </receiver>
 
         <!-- Crashlytics -->

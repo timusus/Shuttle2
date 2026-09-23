@@ -77,12 +77,6 @@
         tools:layout="@layout/fragment_settings" />
 
     <fragment
-        android:id="@+id/widgetPreferenceManager"
-        android:name="com.simplecityapps.shuttle.ui.screens.settings.screens.WidgetPreferenceFragment"
-        android:label="SettingsFragment"
-        tools:layout="@layout/fragment_settings" />
-
-    <fragment
         android:id="@+id/playlistPreferenceFragment"
         android:name="com.simplecityapps.shuttle.ui.screens.settings.screens.PlaylistPreferenceFragment"
         android:label="SettingsFragment"

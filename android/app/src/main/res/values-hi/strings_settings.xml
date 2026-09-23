@@ -45,8 +45,6 @@
     <!-- Settings: Title for 'playback' settings -->
     <!-- Settings: Title for artwork related settings (artist/album images) -->
     <string name="pref_category_title_artwork">कलाकृति</string>
-    <!-- Settings: Title for widget related settings  -->
-    <string name="pref_category_title_widgets">विजेट</string>
     <!-- Settings: Title for playlist related settings  -->
     <string name="pref_category_title_playlists">प्लेलिस्ट</string>
     <!-- Settings: Title for shangelog related settings -->
@@ -101,10 +99,6 @@
     <string name="pref_clear_artwork_subtitle">सभी कैश्ड कलाकृति को हटाता है</string>
     <!-- Settings: Title for the option to download all artwork (artist/album images) -->
     <string name="pref_download_artwork_title">सभी कलाकृति डाउनलोड करें</string>
-    <!-- Settings: Title for the option to use dark mode for widgets -->
-    <string name="pref_widget_dark_mode_title">डार्क मोड</string>
-    <!-- Settings: Title for the option to change opacity of the widget background -->
-    <string name="pref_widget_opacity_title">पृष्ठभूमि की अस्पष्टता</string>
     <!-- Settings: Title for the option to ignore duplicates when adding songs to a playlist -->
     <string name="pref_ignore_duplicates_title">डुप्लिकेट को अनदेखा करें</string>
     <!-- Settings: Description for the option to ignore duplicates when adding songs to a playlist -->

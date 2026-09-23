@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Resize limits follow the layout breakpoints in WidgetLayout.kt: two cells wide at the narrowest, where
+     play/pause and next remain, up to full width with every control. -->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/widget_description_small"
+    android:initialLayout="@layout/glance_default_loading_layout"
+    android:minWidth="250dp"
+    android:minHeight="40dp"
+    android:minResizeWidth="120dp"
+    android:minResizeHeight="40dp"
+    android:maxResizeHeight="200dp"
+    android:previewImage="@drawable/widget_preview_small_image"
+    android:previewLayout="@layout/widget_preview_small"
+    android:resizeMode="horizontal|vertical"
+    android:targetCellWidth="4"
+    android:targetCellHeight="1"
+    android:updatePeriodMillis="0"
+    android:widgetCategory="home_screen" />

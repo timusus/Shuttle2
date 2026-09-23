@@ -6,7 +6,12 @@
       "commits": []
     }
   ],
-  "improvements": [],
+  "improvements": [
+    {
+      "text": "Rebuilt the home screen widgets. They resize freely, follow your system theme and wallpaper colours, and add previous, shuffle and repeat buttons. The old widget dark mode and opacity settings are no longer needed",
+      "commits": []
+    }
+  ],
   "fixes": [
     {
       "text": "Fixed audio glitches and possible crashes when playing 24-bit files with the equaliser or ReplayGain on",

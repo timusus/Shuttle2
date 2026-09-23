@@ -220,24 +220,6 @@ class GeneralPreferenceManager(
             return sharedPreferences.getBoolean("media_session_artwork", true)
         }
 
-    // Widgets
-
-    var widgetDarkMode: Boolean
-        set(value) {
-            sharedPreferences.put("widget_dark_mode", value)
-        }
-        get() {
-            return sharedPreferences.getBoolean("widget_dark_mode", false)
-        }
-
-    var widgetBackgroundTransparency: Int
-        set(value) {
-            sharedPreferences.put("widget_background_opacity", value)
-        }
-        get() {
-            return sharedPreferences.getInt("widget_background_opacity", 100)
-        }
-
     // Debugging
 
     var debugFileLogging: Boolean
