@@ -16,13 +16,14 @@ interface ArtworkImageLoader {
         onColorSetGenerated: ((ColorSet) -> Unit)? = null
     )
 
+    /** Loads [data] as a bitmap. The returned request cancels the load, after which [onCompletion] isn't called. */
     fun loadBitmap(
         data: Any,
         width: Int,
         height: Int,
         options: List<Options> = emptyList(),
         onCompletion: (Bitmap?) -> Unit
-    )
+    ): Request
 
     fun loadColorSet(
         data: Any,
@@ -35,6 +36,10 @@ interface ArtworkImageLoader {
     fun clear(imageView: ImageView)
 
     suspend fun clearCache(context: Context?)
+
+    fun interface Request {
+        fun cancel()
+    }
 
     sealed class Options {
         /**

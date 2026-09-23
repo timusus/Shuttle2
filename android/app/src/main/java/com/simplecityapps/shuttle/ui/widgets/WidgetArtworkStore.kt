@@ -69,9 +69,12 @@ constructor(
     }
 
     private suspend fun loadBitmap(song: Song): Bitmap? = suspendCancellableCoroutine { continuation ->
-        imageLoader.loadBitmap(song, sizePx, sizePx, listOf(ArtworkImageLoader.Options.CenterCrop)) { bitmap ->
-            if (continuation.isActive) continuation.resume(bitmap)
-        }
+        val request =
+            imageLoader.loadBitmap(song, sizePx, sizePx, listOf(ArtworkImageLoader.Options.CenterCrop)) { bitmap ->
+                if (continuation.isActive) continuation.resume(bitmap)
+            }
+        // When WidgetManager stops waiting, stop the load too rather than leave it running unobserved.
+        continuation.invokeOnCancellation { request.cancel() }
     }
 
     private fun save(

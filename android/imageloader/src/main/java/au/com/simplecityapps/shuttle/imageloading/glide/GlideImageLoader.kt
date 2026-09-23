@@ -84,9 +84,11 @@ class GlideImageLoader : ArtworkImageLoader {
         height: Int,
         options: List<ArtworkImageLoader.Options>,
         onCompletion: (Bitmap?) -> Unit
-    ) {
-        loadBitmapTarget(data, options, completionHandler = onCompletion)
-            .submit(width, height)
+    ): ArtworkImageLoader.Request {
+        val target =
+            loadBitmapTarget(data, options, completionHandler = onCompletion)
+                .submit(width, height)
+        return ArtworkImageLoader.Request { target.cancel(true) }
     }
 
     override fun loadBitmap(data: Any): ByteArray? {
