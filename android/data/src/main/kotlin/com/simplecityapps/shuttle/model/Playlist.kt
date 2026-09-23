@@ -11,6 +11,7 @@ data class Playlist(
     val songCount: Int,
     val duration: Int,
     val sortOrder: PlaylistSongSortOrder,
+    val sortDescending: Boolean = false,
     val mediaProvider: MediaProviderType,
     val externalId: String?
 ) : Parcelable
