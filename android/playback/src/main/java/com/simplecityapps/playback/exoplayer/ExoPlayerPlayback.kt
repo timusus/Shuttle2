@@ -210,17 +210,17 @@ class ExoPlayerPlayback(
         val count = player.mediaItemCount
         val currentIndex = player.currentWindowIndex
 
-        // Shortcut if the track is already next in the queue
+        // Shortcut if the track is already next, and last, in the playlist
         val nextIndex = currentIndex + 1
-        if (count > nextIndex) {
-            if (player.getMediaItemAt(nextIndex) == nextMediaItem) {
-                return
-            }
+        if (count == nextIndex + 1 && player.getMediaItemAt(nextIndex) == nextMediaItem) {
+            return
         }
 
-        // Remove any songs after the current media item
-        if (currentIndex < count - 1) {
-            player.removeMediaItems(count - 1, count)
+        // Remove every item after the current one. Normally there's at most one, but when ExoPlayer
+        // wraps around under REPEAT_MODE_ALL (the next item wasn't queued in time), the current index
+        // drops back to 0 and every earlier item is after it again.
+        if (nextIndex < count) {
+            player.removeMediaItems(nextIndex, count)
         }
 
         // Now insert our new next track
