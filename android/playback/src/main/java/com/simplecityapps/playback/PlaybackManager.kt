@@ -56,6 +56,13 @@ class PlaybackManager(
      */
     override val progressFlow: StateFlow<PlaybackProgress?> = _progressFlow.asStateFlow()
 
+    /**
+     * The load the active playback is running, from the moment it's requested until it completes.
+     * Until then the playback may still report the item it's replacing (the old player's position,
+     * a Cast status update for the previous item), so anchors use the load's start position instead.
+     */
+    private var pendingLoad: PendingLoad? = null
+
     private val _positionAnchorFlow = MutableStateFlow(positionAnchor())
 
     /**
@@ -131,30 +138,56 @@ class PlaybackManager(
 
         loadJob?.cancel()
         loadJob =
-            appCoroutineScope.launch {
-                playback.load(current, next, seekPosition) { result ->
-                    result.onSuccess {
-                        completion(Result.success(attempt == 1))
-                    }
-                    result.onFailure { error ->
-                        // Attempt to load the next item in the queue. If there is no next item, or we're on repeat, or we've made 15 previous attempts, call completion(error).
-                        if (queueManager.getCurrentPosition() != queueManager.getSize() - 1 && attempt < 15) {
-                            queueManager.getNext()?.let { nextQueueItem ->
-                                if (nextQueueItem != queueManager.getCurrentItem()) {
-                                    queueManager.skipToNext(true)
-                                    attemptLoad(nextQueueItem.song, queueManager.getNext()?.song, 0, attempt + 1, completion)
-                                } else {
-                                    completion(Result.failure(error))
-                                }
-                            } ?: run {
+            loadPlayback(current, next, seekPosition) { result ->
+                result.onSuccess {
+                    completion(Result.success(attempt == 1))
+                }
+                result.onFailure { error ->
+                    // Attempt to load the next item in the queue. If there is no next item, or we're on repeat, or we've made 15 previous attempts, call completion(error).
+                    if (queueManager.getCurrentPosition() != queueManager.getSize() - 1 && attempt < 15) {
+                        queueManager.getNext()?.let { nextQueueItem ->
+                            if (nextQueueItem != queueManager.getCurrentItem()) {
+                                queueManager.skipToNext(true)
+                                attemptLoad(nextQueueItem.song, queueManager.getNext()?.song, 0, attempt + 1, completion)
+                            } else {
                                 completion(Result.failure(error))
                             }
-                        } else {
+                        } ?: run {
                             completion(Result.failure(error))
                         }
+                    } else {
+                        completion(Result.failure(error))
                     }
                 }
             }
+    }
+
+    /**
+     * Loads [current] into the active playback, re-anchoring at [seekPosition] straight away rather
+     * than when the playback first reports, which for a remote provider or Cast can take seconds.
+     * The anchor holds that position until this load completes, unless a later load supersedes it,
+     * so a late report about the item being replaced can't move it.
+     */
+    private fun loadPlayback(
+        current: Song,
+        next: Song?,
+        seekPosition: Int,
+        completion: (Result<Any?>) -> Unit
+    ): Job {
+        val load = PendingLoad(seekPosition)
+        pendingLoad = load
+        reanchor()
+        return appCoroutineScope.launch {
+            playback.load(current, next, seekPosition) { result ->
+                completion(result)
+                // Checked after the completion, so a retry it starts keeps its own anchor rather than
+                // briefly publishing the failed load's position.
+                if (pendingLoad === load) {
+                    pendingLoad = null
+                    reanchor()
+                }
+            }
+        }
     }
 
     override suspend fun shuffle(
@@ -210,12 +243,10 @@ class PlaybackManager(
     ) {
         if (queueManager.skipToNext(ignoreRepeat)) {
             queueManager.getCurrentItem()?.let { currentQueueItem ->
-                appCoroutineScope.launch {
-                    playback.load(currentQueueItem.song, queueManager.getNext()?.song, 0) { result ->
-                        result.onSuccess { play() }
-                        result.onFailure { error -> Timber.w("load() failed. Error: $error") }
-                        completion?.invoke(result)
-                    }
+                loadPlayback(currentQueueItem.song, queueManager.getNext()?.song, 0) { result ->
+                    result.onSuccess { play() }
+                    result.onFailure { error -> Timber.w("load() failed. Error: $error") }
+                    completion?.invoke(result)
                 }
             }
         }
@@ -228,12 +259,10 @@ class PlaybackManager(
         if (force || playback.getProgress() ?: 0 < 2000) {
             queueManager.skipToPrevious()
             queueManager.getCurrentItem()?.let { currentQueueItem ->
-                appCoroutineScope.launch {
-                    playback.load(currentQueueItem.song, queueManager.getNext()?.song, 0) { result ->
-                        result.onSuccess { play() }
-                        result.onFailure { error -> Timber.w("load() failed. Error: $error") }
-                        completion?.invoke(result)
-                    }
+                loadPlayback(currentQueueItem.song, queueManager.getNext()?.song, 0) { result ->
+                    result.onSuccess { play() }
+                    result.onFailure { error -> Timber.w("load() failed. Error: $error") }
+                    completion?.invoke(result)
                 }
             }
         } else {
@@ -245,11 +274,9 @@ class PlaybackManager(
         if (queueManager.getCurrentPosition() != position) {
             queueManager.skipTo(position)
             queueManager.getCurrentItem()?.let { currentQueueItem ->
-                appCoroutineScope.launch {
-                    playback.load(currentQueueItem.song, queueManager.getNext()?.song, 0) { result ->
-                        result.onSuccess { play() }
-                        result.onFailure { error -> Timber.w("load() failed. Error: $error") }
-                    }
+                loadPlayback(currentQueueItem.song, queueManager.getNext()?.song, 0) { result ->
+                    result.onSuccess { play() }
+                    result.onFailure { error -> Timber.w("load() failed. Error: $error") }
                 }
             }
         }
@@ -434,12 +461,20 @@ class PlaybackManager(
         }
     }
 
-    private fun positionAnchor() = PositionAnchor(
-        state = _playbackStateFlow.value,
-        positionMs = playback.getProgress(),
-        elapsedRealtimeMs = elapsedRealtime(),
-        speed = playback.getPlaybackSpeed()
-    )
+    /**
+     * While a load is pending, a playing state is anchored as loading, so controllers hold the new
+     * item's start position instead of advancing it through a load that plays nothing.
+     */
+    private fun positionAnchor(): PositionAnchor {
+        val pendingLoad = pendingLoad
+        val playbackState = _playbackStateFlow.value
+        return PositionAnchor(
+            state = if (pendingLoad != null && playbackState == PlaybackState.Playing) PlaybackState.Loading else playbackState,
+            positionMs = pendingLoad?.positionMs ?: playback.getProgress(),
+            elapsedRealtimeMs = elapsedRealtime(),
+            speed = playback.getPlaybackSpeed()
+        )
+    }
 
     private fun reanchor() {
         _positionAnchorFlow.value = positionAnchor()
@@ -476,11 +511,13 @@ class PlaybackManager(
             appCoroutineScope.launch {
                 playback.loadNext(queueManager.getNext()?.song)
             }
+            // The playback is already on the new track, so its own position is the one to anchor.
+            reanchor()
         } else {
+            // The skip anchors at the new track's start while it loads.
             skipToNext(false)
         }
 
-        reanchor()
         updateProgress()
     }
 
@@ -521,5 +558,7 @@ class PlaybackManager(
         playback.setVolume(0.2f)
     }
 }
+
+private class PendingLoad(val positionMs: Int)
 
 private fun Song.getStartPosition(): Int? = if (type == Song.Type.Podcast || type == Song.Type.Audiobook) max(0, playbackPosition - 5000) else null

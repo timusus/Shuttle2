@@ -154,7 +154,7 @@ class PlaybackManagerPositionAnchorTest {
     }
 
     @Test
-    fun `a playback switch re-anchors on the new playback`() = runTest {
+    fun `a playback switch anchors the new playback at the position it loads at`() = runTest {
         queueManager.setQueue(listOf(testSong(1)))
         createPlaybackManager()
         enter(PlaybackState.Playing)
@@ -166,7 +166,109 @@ class PlaybackManagerPositionAnchorTest {
 
         playbackManager.switchToPlayback(newPlayback)
 
-        playbackManager.positionAnchorFlow.value shouldBe anchor(PlaybackState.Paused, positionMs = 0, elapsedRealtimeMs = 14_000)
+        playbackManager.positionAnchorFlow.value shouldBe anchor(PlaybackState.Paused, positionMs = 1_000, elapsedRealtimeMs = 14_000)
+    }
+
+    @Test
+    fun `skipToNext anchors at the new track's start before it loads`() = runTest {
+        queueManager.setQueue(listOf(testSong(1), testSong(2)))
+        playback.progressMs = 170_000
+        createPlaybackManager()
+        enter(PlaybackState.Playing)
+        now = 20_000
+
+        playbackManager.skipToNext()
+
+        queueManager.getCurrentItem()!!.song.id shouldBe 2L
+        playbackManager.positionAnchorFlow.value shouldBe anchor(PlaybackState.Loading, positionMs = 0, elapsedRealtimeMs = 20_000)
+    }
+
+    @Test
+    fun `skipTo anchors at the new track's start before it loads`() = runTest {
+        queueManager.setQueue(listOf(testSong(1), testSong(2), testSong(3)))
+        playback.progressMs = 170_000
+        createPlaybackManager()
+        enter(PlaybackState.Playing)
+        now = 20_000
+
+        playbackManager.skipTo(2)
+
+        queueManager.getCurrentItem()!!.song.id shouldBe 3L
+        playbackManager.positionAnchorFlow.value shouldBe anchor(PlaybackState.Loading, positionMs = 0, elapsedRealtimeMs = 20_000)
+    }
+
+    @Test
+    fun `a track that ends without advancing anchors at the next track's start before it loads`() = runTest {
+        queueManager.setQueue(listOf(testSong(1), testSong(2)))
+        createPlaybackManager()
+        enter(PlaybackState.Playing)
+        playback.progressMs = 180_000
+        // ExoPlayer reports the end of a track as a pause, then the track end.
+        enter(PlaybackState.Paused)
+        val anchorsBeforeTrackEnd = anchors.size
+        now = 20_000
+
+        playback.callback!!.onTrackEnded(trackWentToNext = false)
+
+        queueManager.getCurrentItem()!!.song.id shouldBe 2L
+        anchors.drop(anchorsBeforeTrackEnd) shouldBe listOf(anchor(PlaybackState.Paused, positionMs = 0, elapsedRealtimeMs = 20_000))
+    }
+
+    @Test
+    fun `a skip keeps a paused state while the new track loads`() = runTest {
+        queueManager.setQueue(listOf(testSong(1), testSong(2)))
+        createPlaybackManager()
+        now = 20_000
+
+        playbackManager.skipToNext()
+
+        playbackManager.positionAnchorFlow.value shouldBe anchor(PlaybackState.Paused, positionMs = 0, elapsedRealtimeMs = 20_000)
+    }
+
+    @Test
+    fun `a late report from the track being replaced keeps the new track's start position`() = runTest {
+        queueManager.setQueue(listOf(testSong(1), testSong(2)))
+        playback.progressMs = 170_000
+        createPlaybackManager()
+        enter(PlaybackState.Playing)
+        playbackManager.skipToNext()
+        now = 21_000
+
+        playback.callback!!.onPositionDiscontinuity()
+
+        playbackManager.positionAnchorFlow.value shouldBe anchor(PlaybackState.Loading, positionMs = 0, elapsedRealtimeMs = 21_000)
+    }
+
+    @Test
+    fun `completing the load re-anchors at the playback's position`() = runTest {
+        queueManager.setQueue(listOf(testSong(1), testSong(2)))
+        playback.progressMs = 170_000
+        createPlaybackManager()
+        enter(PlaybackState.Playing)
+        playbackManager.skipToNext()
+        playback.progressMs = 250
+        now = 22_000
+
+        playback.completeLoad()
+
+        playbackManager.positionAnchorFlow.value shouldBe anchor(PlaybackState.Playing, positionMs = 250, elapsedRealtimeMs = 22_000)
+    }
+
+    @Test
+    fun `a superseded load's completion keeps the later track's start position`() = runTest {
+        queueManager.setQueue(listOf(testSong(1), testSong(2), testSong(3)))
+        playback.progressMs = 170_000
+        createPlaybackManager()
+        enter(PlaybackState.Playing)
+        playbackManager.skipToNext()
+        now = 21_000
+        playbackManager.skipToNext()
+        now = 22_000
+
+        playback.completeLoad()
+
+        queueManager.getCurrentItem()!!.song.id shouldBe 3L
+        playbackManager.positionAnchorFlow.value shouldBe anchor(PlaybackState.Loading, positionMs = 0, elapsedRealtimeMs = 21_000)
     }
 
     @Test

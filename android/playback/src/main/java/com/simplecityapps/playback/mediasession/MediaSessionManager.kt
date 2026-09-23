@@ -22,7 +22,6 @@ import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackNotificationManager
 import com.simplecityapps.playback.PlaybackOperations
-import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.PositionAnchor
 import com.simplecityapps.playback.R
 import com.simplecityapps.playback.androidauto.MediaIdHelper
@@ -315,23 +314,14 @@ constructor(
         }
     }
 
-    private fun PlaybackState.toPlaybackStateCompatState() = when (this) {
-        is PlaybackState.Loading -> PlaybackStateCompat.STATE_BUFFERING
-        is PlaybackState.Playing -> PlaybackStateCompat.STATE_PLAYING
-        else -> PlaybackStateCompat.STATE_PAUSED
-    }
-
-    /**
-     * Publishes the anchor as-is, with its own update time, so controllers extrapolate the position
-     * from when it was actually read rather than from when it reached the session.
-     */
     private fun onPositionAnchorChanged(anchor: PositionAnchor) {
-        mediaSession.isActive = anchor.state == PlaybackState.Loading || anchor.state == PlaybackState.Playing
+        val sessionPlaybackState = anchor.toSessionPlaybackState()
+        mediaSession.isActive = sessionPlaybackState.isActive
         playbackStateBuilder.setState(
-            anchor.state.toPlaybackStateCompatState(),
-            anchor.positionMs?.toLong() ?: PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN,
-            anchor.speed,
-            anchor.elapsedRealtimeMs
+            sessionPlaybackState.state,
+            sessionPlaybackState.positionMs,
+            sessionPlaybackState.speed,
+            sessionPlaybackState.updateTimeMs
         )
         updatePlaybackState()
     }
@@ -407,7 +397,7 @@ constructor(
             val activeQueueItemId = currentItem.toQueueItem().queueId
             if (activeQueueItemId != this.activeQueueItemId) {
                 updateQueue()
-                // The position follows in the anchor published once the new track loads.
+                // PlaybackManager re-anchors at the new track's start position as it starts loading it.
                 playbackStateBuilder.setActiveQueueItemId(activeQueueItemId)
                 updatePlaybackState()
                 updateMetadata()
