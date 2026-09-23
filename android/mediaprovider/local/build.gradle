@@ -2,6 +2,10 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'com.google.devtools.ksp'
 
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas".toString())
+}
+
 android {
     compileSdk 36
 
@@ -11,11 +15,6 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
-        javaCompileOptions {
-            annotationProcessorOptions {
-                arguments += ["room.schemaLocation": "$projectDir/schemas".toString()]
-            }
-        }
         consumerProguardFiles "consumer-rules.pro"
     }
     compileOptions {
