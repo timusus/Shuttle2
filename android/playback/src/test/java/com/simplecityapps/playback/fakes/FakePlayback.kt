@@ -12,10 +12,13 @@ import com.simplecityapps.shuttle.model.Song
  */
 class FakePlayback(
     private val name: String,
-    val sessionId: Int = 0,
+    /** The session id this playback reports rendering on; a test may change it, e.g. once loaded. */
+    var sessionId: Int = 0,
     private val events: MutableList<String> = mutableListOf(),
     /** When false, a successful [completeLoad] leaves [isReleased] as the test set it, instead of clearing it. */
-    private val resetReleasedOnLoad: Boolean = true
+    private val resetReleasedOnLoad: Boolean = true,
+    private val resumeWhenSwitched: Boolean = true,
+    private val respondsToAudioFocus: Boolean = true
 ) : Playback {
     override var callback: Playback.Callback? = null
     override var isReleased: Boolean = false
@@ -23,6 +26,10 @@ class FakePlayback(
     var progressMs: Int? = null
     var durationMs: Int? = null
     var volume: Float = 1f
+        private set
+
+    /** The session id last passed to [setAudioSessionId], or null if it was never called. */
+    var requestedAudioSessionId: Int? = null
         private set
     private var repeatMode: QueueManager.RepeatMode = QueueManager.RepeatMode.Off
     private var playbackSpeed: Float = 1f
@@ -86,7 +93,13 @@ class FakePlayback(
         this.volume = volume
     }
 
-    override fun getResumeWhenSwitched(oldPlayback: Playback): Boolean = true
+    override fun getResumeWhenSwitched(oldPlayback: Playback): Boolean = resumeWhenSwitched
+
+    override fun respondsToAudioFocus(): Boolean = respondsToAudioFocus
+
+    override fun setAudioSessionId(id: Int) {
+        requestedAudioSessionId = id
+    }
 
     override fun setRepeatMode(repeatMode: QueueManager.RepeatMode) {
         events += "$name setRepeatMode $repeatMode"

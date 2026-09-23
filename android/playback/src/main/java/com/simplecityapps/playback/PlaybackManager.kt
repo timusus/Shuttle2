@@ -33,7 +33,28 @@ class PlaybackManager(
     Playback.Callback,
     AudioFocusHelper.Listener,
     QueueChangeCallback {
-    private var playback: Playback = exoplayerPlayback
+    private val audioSessionId = audioManager?.generateAudioSessionId() ?: -1
+
+    /** Owns the active playback, and moves playback between engines (e.g. local <-> Cast). */
+    private val playbackSwitcher =
+        PlaybackSwitcher(
+            initialPlayback = exoplayerPlayback,
+            callback = this,
+            audioSessionId = audioSessionId,
+            audioFocusHelper = audioFocusHelper,
+            audioEffectSessionManager = audioEffectSessionManager,
+            repeatMode = { queueManager.getRepeatMode() },
+            savedPosition = { playbackPreferenceManager.playbackPosition },
+            onSwitched = ::publishSwitchedPlaybackState,
+            load = ::loadForSwitch,
+            seekTo = ::seekTo,
+            play = { play() }
+        )
+
+    // Renamed on the JVM, where the getter would clash with getPlayback().
+    @get:JvmName("activePlayback")
+    private val playback: Playback
+        get() = playbackSwitcher.playback
 
     private val _playbackStateFlow = MutableStateFlow(playback.playBackState())
 
@@ -83,18 +104,11 @@ class PlaybackManager(
      */
     override val positionAnchorFlow: StateFlow<PositionAnchor> = _positionAnchorFlow.asStateFlow()
 
-    private val audioSessionId = audioManager?.generateAudioSessionId() ?: -1
-
     init {
-        playback.setRepeatMode(queueManager.getRepeatMode())
-        playback.callback = this
-        playback.setAudioSessionId(audioSessionId)
         audioFocusHelper.listener = this
-        audioFocusHelper.enabled = playback.respondsToAudioFocus()
+        playbackSwitcher.attachInitialPlayback()
 
         queueWatcher.addCallback(this)
-
-        audioEffectSessionManager.bindTo(audioSessionId)
     }
 
     override fun togglePlayback() {
@@ -378,49 +392,21 @@ class PlaybackManager(
     override fun getPlayback(): Playback = playback
 
     override fun switchToPlayback(playback: Playback) {
-        Timber.v("switchToPlayback(playback: ${playback.javaClass.simpleName})")
+        playbackSwitcher.switchTo(playback)
+    }
 
-        val oldPlayback = this.playback
-        val wasPlaying = oldPlayback.playBackState() is PlaybackState.Playing
-
-        val seekPosition = oldPlayback.getProgress()
-
-        val playbackSpeed = oldPlayback.getPlaybackSpeed()
-
-        oldPlayback.pause()
-        oldPlayback.release()
-        // A released playback can still report (e.g. a load it started before the switch), which
-        // would overwrite the new playback's state.
-        oldPlayback.callback = null
-
-        this.playback = playback
-        playback.setRepeatMode(queueManager.getRepeatMode())
-        playback.callback = this
-        playback.setAudioSessionId(audioSessionId)
-        playback.setPlaybackSpeed(playbackSpeed)
-        audioFocusHelper.enabled = playback.respondsToAudioFocus()
-        rebindAudioEffectSession(playback)
-        publishSwitchedPlaybackState()
-
-        // The load re-anchors at the position it loads at, which the new playback can't report until it
-        // has loaded (an unloaded ExoPlayerPlayback reports 0), so the switch doesn't anchor it before
-        // then. With nothing to load, the new playback is anchored as it is.
+    /**
+     * Loads the current item into the playback just switched to. The load re-anchors at the position
+     * it loads at, which the new playback can't report until it has loaded (an unloaded
+     * ExoPlayerPlayback reports 0), so the switch doesn't anchor it before then. With nothing to load,
+     * the new playback is anchored as it is.
+     */
+    private fun loadForSwitch(
+        seekPosition: Int,
+        completion: (Result<Boolean>) -> Unit
+    ) {
         val pendingLoadBeforeSwitch = loadCoordinator.pendingLoad
-
-        // A superseded switch (e.g. a fast local -> Cast -> local toggle) can still complete its load,
-        // but only the latest load's completion is delivered, so its rebind, seek and play can't act
-        // on whichever playback is active by then.
-        load(seekPosition ?: 0) { result ->
-            result.onSuccess {
-                rebindAudioEffectSession(playback)
-                playbackPreferenceManager.playbackPosition?.let { playbackPosition ->
-                    seekTo(playbackPosition)
-                }
-                if (wasPlaying && playback.getResumeWhenSwitched(oldPlayback)) {
-                    play()
-                }
-            }
-        }
+        load(seekPosition, completion)
         if (loadCoordinator.pendingLoad === pendingLoadBeforeSwitch) {
             reanchor()
         }
@@ -437,18 +423,6 @@ class PlaybackManager(
         val playbackState = playback.playBackState()
         _playbackStateFlow.value = playbackState
         monitorProgress(playbackState is PlaybackState.Loading || playbackState is PlaybackState.Playing)
-    }
-
-    /**
-     * Moves the audio effect control session to whatever session [playback] is actually rendering
-     * on. Called on switch, so a playback with no local audio session (Chromecast) closes the
-     * session rather than leaving system and OEM effects bound to a now-silent one, and again once
-     * loaded, in case the player couldn't honour the id we asked for. The first call closes the
-     * old session straight away, even if the load later fails; the second is the only one that sees
-     * the id the loaded player actually rendered on, so both are needed.
-     */
-    private fun rebindAudioEffectSession(playback: Playback) {
-        audioEffectSessionManager.bindTo(playback.getAudioSessionId())
     }
 
     override fun setPlaybackSpeed(multiplier: Float) {
