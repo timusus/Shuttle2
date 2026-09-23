@@ -34,6 +34,10 @@
     {
       "text": "Songs added to the queue while shuffle is on now play in the order you picked them, and Play Next keeps its place when you turn shuffle off",
       "commits": []
+    },
+    {
+      "text": "Swiping over the lyrics view no longer accidentally skips to the next or previous song, and lyrics now scroll back to the top when the song changes",
+      "commits": []
     }
   ]
 }

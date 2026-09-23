@@ -10,6 +10,7 @@ import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
+import androidx.core.widget.NestedScrollView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -89,6 +90,7 @@ class PlaybackFragment :
     private var toolbar: Toolbar by autoCleared()
     private var favoriteButton: FavoriteButton by autoCleared()
     private var lyricsView: View by autoCleared()
+    private var lyricsScrollView: NestedScrollView by autoCleared()
     private var lyricsText: TextView by autoCleared()
     private var closeLyricsButton: Button by autoCleared()
 
@@ -173,6 +175,7 @@ class PlaybackFragment :
         }
 
         lyricsView = view.findViewById(R.id.lyricsView)
+        lyricsScrollView = view.findViewById(R.id.scrollView)
         lyricsText = view.findViewById(R.id.lyricsTextView)
         closeLyricsButton = view.findViewById(R.id.closeLyricsButton)
         closeLyricsButton.setOnClickListener { lyricsView.fadeOut() }
@@ -294,6 +297,7 @@ class PlaybackFragment :
 
             if (lyricsView.isVisible) {
                 lyricsText.text = song.lyrics
+                lyricsScrollView.scrollTo(0, 0)
                 if (song.lyrics == null) {
                     lyricsView.fadeOut()
                 }
@@ -391,6 +395,7 @@ class PlaybackFragment :
 
     override fun displayLyrics(lyrics: String) {
         lyricsText.text = lyrics
+        lyricsScrollView.scrollTo(0, 0)
         lyricsView.fadeIn()
     }
 
