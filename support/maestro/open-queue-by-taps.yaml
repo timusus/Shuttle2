@@ -1,0 +1,13 @@
+# Open the queue from the mini player by taps alone: mini player -> full player -> "Up Next".
+# Setup (support/scripts/checks/open-queue-by-taps.sh): the `playback` fixture queued with
+# PLAY_ALL and paused. The cold launch restores that queue, so the app opens on the library with
+# the mini player showing "Playback One", whatever screen an earlier run left it on.
+appId: com.simplecityapps.shuttle.dev
+---
+- launchApp:
+    stopApp: true
+- assertVisible: "Playback One"
+- tapOn: "Playback One"
+- tapOn: "Up Next"
+- assertVisible: "Playback Five"
+- takeScreenshot: open-queue-by-taps
