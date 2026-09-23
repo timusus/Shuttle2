@@ -67,4 +67,5 @@ dependencies {
     // Testing
     testImplementation libs.junit
     testImplementation libs.kotest
+    testImplementation(libs.kotlinx.datetime)
 }

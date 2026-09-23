@@ -30,13 +30,21 @@ class PlaybackManager(
     Playback.Callback,
     AudioFocusHelper.Listener,
     QueueChangeCallback {
-    private var progressHandler: ProgressHandler = ProgressHandler()
+    // Lazy so the main looper isn't touched until progress is first monitored.
+    private val progressHandler: ProgressHandler by lazy { ProgressHandler() }
 
     private var playback: Playback = exoplayerPlayback
 
     private val audioSessionId = audioManager?.generateAudioSessionId() ?: -1
 
     private var loadJob: Job? = null
+
+    /**
+     * Incremented on every [switchToPlayback], so a switch's load callback can tell whether a later
+     * switch has superseded it. Identity alone can't: after an A -> B -> A toggle, the first
+     * switch's playback is the active one again.
+     */
+    private var switchGeneration = 0
 
     init {
         playback.setRepeatMode(queueManager.getRepeatMode())
@@ -318,13 +326,18 @@ class PlaybackManager(
         audioFocusHelper.enabled = playback.respondsToAudioFocus()
         rebindAudioEffectSession(playback)
 
+        val generation = ++switchGeneration
+
         load(seekPosition ?: 0) { result ->
             result.onSuccess {
                 // A superseded switch (e.g. a fast local -> Cast -> local toggle) can still complete its
-                // load; rebinding to its playback would move the effect session off the active one.
-                if (playback === this.playback) {
-                    rebindAudioEffectSession(playback)
+                // load, since cancelling the load job doesn't stop the callback. Its rebind, seek and
+                // play would act on whichever playback is now active, so the latest switch owns them.
+                if (generation != switchGeneration) {
+                    Timber.v("switchToPlayback() load completed for a superseded switch; ignoring")
+                    return@onSuccess
                 }
+                rebindAudioEffectSession(playback)
                 playbackPreferenceManager.playbackPosition?.let { playbackPosition ->
                     seekTo(playbackPosition)
                 }
