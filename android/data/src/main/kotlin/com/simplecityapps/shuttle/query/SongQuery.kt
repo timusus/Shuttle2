@@ -10,7 +10,7 @@ import com.simplecityapps.shuttle.sorting.SongSortOrder
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.ExperimentalTime
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlinx.parcelize.Parcelize
 import kotlinx.parcelize.TypeParceler
 

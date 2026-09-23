@@ -3,7 +3,7 @@ package com.simplecityapps.shuttle.model
 import android.os.Parcelable
 import com.simplecityapps.shuttle.parcel.InstantParceler
 import com.simplecityapps.shuttle.parcel.LocalDateParceler
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize

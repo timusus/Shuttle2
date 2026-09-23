@@ -14,7 +14,7 @@ import com.simplecityapps.shuttle.model.Song
 import java.util.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlinx.datetime.LocalDate
 import timber.log.Timber
 
