@@ -12,7 +12,8 @@
 #                     remove the current item) to finish before a track ends on its own
 #
 #     --skip-onboarding   also write the debug app's prefs so it opens straight to the library
-#                         with the local (MediaStore) provider selected, skipping onboarding.
+#                         with the local (MediaStore) provider selected, skipping onboarding
+#                         and the launch changelog sheet (which would cover the UI under test).
 #                         Requires the debug APK already installed (run-as needs it resolvable).
 #
 # Respects ANDROID_SERIAL / ANDROID_ADB_SERVER_PORT the way `remote-emu.sh env` sets them --
@@ -165,6 +166,7 @@ if [ "$SKIP_ONBOARDING" = "1" ]; then
 <map>
     <boolean name="has_onboarded" value="true" />
     <string name="media_providers">1</string>
+    <boolean name="changelog_show_on_launch" value="false" />
 </map>
 EOF
     echo "seed-test-media: launching the app past onboarding ..."

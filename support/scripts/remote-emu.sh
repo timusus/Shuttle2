@@ -15,7 +15,10 @@
 #   remote-emu.sh status           all lanes: owner, age, qemu alive; box load and free memory
 #   remote-emu.sh start [N]        lease the lowest free lane (or lane N), boot it, open its tunnel
 #   remote-emu.sh env [N]          print the two exports for this session's lane (eval it)
-#   remote-emu.sh install [N]      assembleDebug locally and adb install it on the lane
+#   remote-emu.sh install [N] [apk]  assembleDebug locally and adb install it on the lane; given an
+#                                  APK, install that without building (build once, install per lane)
+#   remote-emu.sh serial [N]       print the lane's serial on the Mac's own adb server
+#                                  (localhost:1560N), for Maestro, installDebug and ~/.claude/scripts/adb
 #   remote-emu.sh reset [N]        clear the debug app's data and the seeded test media on the lane
 #   remote-emu.sh ui-prep [N]      disable window/transition/animator animations on the lane
 #   remote-emu.sh tap-text <text> [--desc] [--index N]
@@ -79,6 +82,15 @@ local_port() { echo $((REMOTE_ADB_PORT + $1)); }
 lease_of() { echo "${LEASE_ROOT}/lane-$1"; }
 log_of() { echo "/home/tim/remote-emu-lane$1.log"; }
 tunnel_pid_file() { echo "${STATE_DIR}/tunnel-$1.pid"; }
+# The second tunnel goes straight to the emulator's adbd (console port + 1 on the box; the image has
+# ro.adb.secure=0, so no key is needed), and the Mac's OWN adb server `adb connect`s it. Tools that
+# only talk to the default adb server on 5037 -- Maestro, Gradle's installDebug, Android Studio --
+# then see the lane as `localhost:<direct port>`. Kept above 5585 so the Mac's adb server, which
+# probes 5555..5585 for local emulators, never mistakes it for one.
+direct_port() { echo $((15600 + $1)); }
+direct_serial() { echo "localhost:$(direct_port "$1")"; }
+direct_pid_file() { echo "${STATE_DIR}/tunnel-$1-adbd.pid"; }
+local_adb() { env -u ANDROID_ADB_SERVER_PORT adb "$@"; }
 # pgrep pattern with a bracketed first char, so pgrep's own shell command line does not match.
 emu_pattern() { echo "[-]port $(console_port "$1") "; }
 
@@ -127,7 +139,7 @@ resolve_lane() {
 # ---- tunnel (local) ----------------------------------------------------------------------
 
 tunnel_pid() {
-    local f; f="$(tunnel_pid_file "$1")"
+    local f; f="${2:-$(tunnel_pid_file "$1")}"
     [ -f "$f" ] || return 1
     local pid; pid="$(cat "$f")"
     kill -0 "$pid" 2>/dev/null || return 1
@@ -140,11 +152,19 @@ kill_tunnel() {
     rm -f "$(tunnel_pid_file "$1")"
     # A tunnel from an earlier session whose pid file is gone would keep the local port busy.
     pkill -f "ssh -N -L $(local_port "$1"):localhost:${REMOTE_ADB_PORT}" 2>/dev/null || true
+    local_adb disconnect "$(direct_serial "$1")" >/dev/null 2>&1 || true
+    if pid="$(tunnel_pid "$1" "$(direct_pid_file "$1")")"; then kill "$pid" 2>/dev/null || true; fi
+    rm -f "$(direct_pid_file "$1")"
+    pkill -f "ssh -N -L $(direct_port "$1"):localhost:" 2>/dev/null || true
 }
 
 open_tunnel() {
     local lane="$1" port; port="$(local_port "$lane")"
     kill_tunnel "$lane"
+    # Any `adb` run with this port while the tunnel was down auto-started a LOCAL adb server on it,
+    # which would shadow the new forward (ssh still binds ::1, so the forward doesn't fail) and
+    # list no devices. With the tunnel killed above, whatever answers on the port is that server.
+    ANDROID_ADB_SERVER_PORT="$port" adb kill-server >/dev/null 2>&1 || true
     mkdir -p "$STATE_DIR"
     # ExitOnForwardFailure so a busy port surfaces as a dead tunnel, not a silent one.
     ssh -N -L "${port}:localhost:${REMOTE_ADB_PORT}" \
@@ -154,6 +174,24 @@ open_tunnel() {
     sleep 2
     tunnel_pid "$lane" >/dev/null \
         || { cat "${STATE_DIR}/tunnel-${lane}.log" >&2; echo "remote-emu: tunnel for lane $lane died" >&2; exit 1; }
+    open_direct_tunnel "$lane"
+}
+
+# Best effort: the lane works through the server tunnel without it; only tools that ignore
+# ANDROID_ADB_SERVER_PORT (Maestro, installDebug) need it.
+open_direct_tunnel() {
+    local lane="$1" port; port="$(direct_port "$lane")"
+    ssh -N -L "${port}:localhost:$(($(console_port "$lane") + 1))" \
+        -o ExitOnForwardFailure=yes -o ServerAliveInterval=15 -o BatchMode=yes "$BOX" \
+        >"${STATE_DIR}/tunnel-${lane}-adbd.log" 2>&1 &
+    echo $! > "$(direct_pid_file "$lane")"
+    sleep 2
+    if tunnel_pid "$lane" "$(direct_pid_file "$lane")" >/dev/null \
+        && local_adb connect "$(direct_serial "$lane")" 2>&1 | grep -q "connected to"; then
+        echo "remote-emu: lane $lane also on the Mac's adb server as $(direct_serial "$lane") (for Maestro/Gradle)"
+    else
+        echo "remote-emu: warning: direct adbd tunnel for lane $lane failed; Maestro/installDebug can't reach it (see ${STATE_DIR}/tunnel-${lane}-adbd.log)" >&2
+    fi
 }
 
 # ---- leases (on the box, one ssh round trip each) ------------------------------------------
@@ -286,14 +324,30 @@ cmd_start() {
 }
 
 cmd_install() {
-    LANE="$(resolve_lane "${1:-}")"
+    local lane_arg="" apk=""
+    for arg in "$@"; do
+        case "$arg" in
+            *.apk) apk="$arg" ;;
+            *) lane_arg="$arg" ;;
+        esac
+    done
+    LANE="$(resolve_lane "$lane_arg")"
     tunnel_pid "$LANE" >/dev/null || { echo "remote-emu: no tunnel for lane $LANE; run start first" >&2; exit 1; }
     # assembleDebug + adb install, not :android:app:installDebug: Gradle's install task talks to
-    # its own adb server and does not honour ANDROID_ADB_SERVER_PORT.
-    local apk="android/app/build/outputs/apk/debug/app-debug.apk"
-    [ -f gradlew ] || { echo "remote-emu: run from the repo root" >&2; exit 2; }
-    ./gradlew :android:app:assembleDebug -q
+    # its own adb server and does not honour ANDROID_ADB_SERVER_PORT. Given an APK, install that
+    # as is: build once, then `install <apk>` from each worker's lane without another Gradle run.
+    if [ -z "$apk" ]; then
+        apk="android/app/build/outputs/apk/debug/app-debug.apk"
+        [ -f gradlew ] || { echo "remote-emu: run from the repo root" >&2; exit 2; }
+        ./gradlew :android:app:assembleDebug -q
+    fi
+    [ -f "$apk" ] || { echo "remote-emu: no APK at $apk" >&2; exit 1; }
     radb install -r "$apk"
+}
+
+cmd_serial() {
+    LANE="$(resolve_lane "${1:-}")"
+    direct_serial "$LANE"
 }
 
 cmd_env() {
@@ -340,6 +394,12 @@ dump_xml_to() {
         out="$(radb shell uiautomator dump --compressed "$remote" 2>&1 | tr -d '\r')"
         if ! echo "$out" | grep -qi error && radb pull "$remote" "$out_file" >/dev/null 2>&1 && [ -s "$out_file" ]; then
             return 0
+        fi
+        # Each idle-state failure costs ~10 s, and a screen that keeps updating (the mini player's
+        # progress while music plays) never goes idle: give up after two rather than eight.
+        if echo "$out" | grep -q "could not get idle state" && [ "$n" -ge 2 ]; then
+            echo "remote-emu: the UI never went idle (music playing?): pause with support/scripts/s2-debug.sh PAUSE, or use a Maestro flow" >&2
+            return 1
         fi
         sleep 1
     done
@@ -517,7 +577,8 @@ cmd_stop() {
 case "${1:-}" in
     status) cmd_status ;;
     start) cmd_start "${2:-}" ;;
-    install) cmd_install "${2:-}" ;;
+    install) shift; cmd_install "$@" ;;
+    serial) cmd_serial "${2:-}" ;;
     env) cmd_env "${2:-}" ;;
     reset) cmd_reset "${2:-}" ;;
     ui-prep) cmd_ui_prep "${2:-}" ;;
