@@ -44,7 +44,7 @@ class ExoPlayerPlayback(
                     }
                     ExoPlaybackState.Ready -> {
                         isPlaybackReady = true
-                        if (player.playWhenReady) {
+                        if (player?.playWhenReady == true) {
                             callback?.onPlaybackStateChanged(PlaybackState.Playing)
                         } else {
                             callback?.onPlaybackStateChanged(PlaybackState.Paused)
@@ -52,7 +52,7 @@ class ExoPlayerPlayback(
                     }
                     ExoPlaybackState.Ended -> {
                         if (isPlaybackReady) {
-                            player.playWhenReady = false
+                            player?.playWhenReady = false
                             callback?.onPlaybackStateChanged(PlaybackState.Paused)
                             callback?.onTrackEnded(false)
                             isPlaybackReady = false
@@ -67,7 +67,7 @@ class ExoPlayerPlayback(
                 val transitionReason = reason.toTransitionReason()
                 Timber.v("onMediaItemTransition(reason: ${reason.toTransitionReason()})")
 
-                replayGainTracker.setPlayingIndex(player.currentWindowIndex)
+                player?.let { player -> replayGainTracker.setPlayingIndex(player.currentWindowIndex) }
 
                 when (transitionReason) {
                     TransitionReason.Repeat -> callback?.onTrackEnded(true)
@@ -90,9 +90,24 @@ class ExoPlayerPlayback(
 
     private var settings = PlayerSettings()
 
-    private var player: AudioPlayer = createPlayer()
+    /**
+     * The live player, or null before the first [load] and after [release]. Built on demand, since
+     * each player owns a playback thread.
+     */
+    private var player: AudioPlayer? = null
 
-    private fun createPlayer(): AudioPlayer = playerFactory.create().also { player -> settings.applyTo(player) }
+    /**
+     * Builds a new player in place of the current one, releasing the current one first:
+     * [isReleased] can be set from outside, so a live player may still be here.
+     */
+    private fun replacePlayer(): AudioPlayer {
+        player?.release()
+        return playerFactory.create().also { newPlayer ->
+            settings.applyTo(newPlayer)
+            player = newPlayer
+            isReleased = false
+        }
+    }
 
     override suspend fun load(
         current: Song,
@@ -102,10 +117,7 @@ class ExoPlayerPlayback(
     ) {
         Timber.v("load(current: ${current.name}|${current.mimeType}, seekPosition: $seekPosition)")
 
-        if (isReleased) {
-            player = createPlayer()
-            isReleased = false
-        }
+        val player = player?.takeUnless { isReleased } ?: replacePlayer()
 
         player.removeListener(eventListener)
         player.pause()
@@ -135,6 +147,9 @@ class ExoPlayerPlayback(
 
     override suspend fun loadNext(song: Song?) {
         Timber.v("loadNext(song: ${song?.name}|${song?.mimeType})")
+
+        // Nothing is queued before the first load, and load() replaces the playlist anyway.
+        val player = player ?: return
 
         if (player.repeatMode == Player.REPEAT_MODE_ONE) {
             return
@@ -166,14 +181,14 @@ class ExoPlayerPlayback(
             player.addMediaItem(nextItem)
         }
 
-        syncReplayGainPlaylist()
+        syncReplayGainPlaylist(player)
     }
 
     /**
      * Mirrors the player's playlist into the ReplayGain tracker, so the gain for the pre-buffered
      * next item is known before its audio reaches the processor.
      */
-    private fun syncReplayGainPlaylist() {
+    private fun syncReplayGainPlaylist(player: AudioPlayer) {
         replayGainTracker.setPlaylist(
             (0 until player.mediaItemCount).map { index ->
                 player.getMediaItemAt(index).replayGain
@@ -183,63 +198,67 @@ class ExoPlayerPlayback(
 
     override fun play() {
         Timber.v("play()")
-        player.playWhenReady = true
+        player?.playWhenReady = true
     }
 
     override fun pause() {
         Timber.v("pause()")
-        player.playWhenReady = false
+        player?.playWhenReady = false
     }
 
     override fun release() {
-        player.release()
+        player?.release()
+        player = null
         isReleased = true
     }
 
-    override fun playBackState(): PlaybackState = if (player.isPlaying || player.playWhenReady) {
+    override fun playBackState(): PlaybackState = if (player?.isPlaying == true || player?.playWhenReady == true) {
         PlaybackState.Playing
     } else {
         PlaybackState.Paused
     }
 
     override fun seek(position: Int) {
-        player.seekTo(position.toLong())
+        player?.seekTo(position.toLong())
     }
 
-    override fun getProgress(): Int = player.contentPosition.toInt()
+    override fun getProgress(): Int = player?.contentPosition?.toInt() ?: 0
 
-    override fun getDuration(): Int? = player.duration.takeIf { duration -> duration != C.TIME_UNSET }?.toInt()
+    override fun getDuration(): Int? = player?.duration?.takeIf { duration -> duration != C.TIME_UNSET }?.toInt()
 
     override fun setVolume(volume: Float) {
         settings = settings.copy(volume = volume)
-        player.setVolume(volume)
+        player?.setVolume(volume)
     }
 
     override fun getResumeWhenSwitched(oldPlayback: Playback): Boolean = oldPlayback !is CastPlayback
 
     override fun setRepeatMode(repeatMode: QueueManager.RepeatMode) {
         settings = settings.copy(repeatMode = repeatMode.toRepeatMode())
-        player.repeatMode = settings.repeatMode
+        player?.repeatMode = settings.repeatMode
         replayGainTracker.setRepeatMode(settings.repeatMode)
     }
 
     override fun setAudioSessionId(id: Int) {
         if (id != -1 && id != C.AUDIO_SESSION_ID_UNSET) {
             settings = settings.copy(audioSessionId = id)
-            player.audioSessionId = id
+            player?.audioSessionId = id
         } else {
             Timber.e("Failed to set audio session id (sessionId: $id)")
         }
     }
 
-    override fun getAudioSessionId(): Int = if (isReleased) settings.audioSessionId else player.audioSessionId
+    override fun getAudioSessionId(): Int = player?.takeUnless { isReleased }?.audioSessionId ?: settings.audioSessionId
 
-    /** Not part of [settings]: a rebuilt player starts at normal speed (see [PlayerSettings]). */
+    /**
+     * Not part of [settings]: a speed set with no live player is dropped, and a rebuilt player starts
+     * at normal speed (see [PlayerSettings]).
+     */
     override fun setPlaybackSpeed(multiplier: Float) {
-        player.setPlaybackParameters(multiplier, multiplier)
+        player?.setPlaybackParameters(multiplier, multiplier)
     }
 
-    override fun getPlaybackSpeed(): Float = player.playbackSpeed
+    override fun getPlaybackSpeed(): Float = player?.playbackSpeed ?: 1f
 
     enum class ExoPlaybackState {
         Idle,

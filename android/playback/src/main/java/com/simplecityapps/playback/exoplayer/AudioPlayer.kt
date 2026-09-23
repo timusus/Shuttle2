@@ -80,7 +80,7 @@ data class PlayerItem(
     val replayGain: ReplayGain?
 )
 
-/** Builds a new [AudioPlayer]; [ExoPlayerPlayback] asks for one each time it is (re)created or reloaded after a release. */
+/** Builds a new [AudioPlayer]; [ExoPlayerPlayback] asks for one on its first load and on each load after a release. */
 fun interface PlayerFactory {
     fun create(): AudioPlayer
 }

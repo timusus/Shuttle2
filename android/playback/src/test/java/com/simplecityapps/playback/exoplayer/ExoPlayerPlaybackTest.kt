@@ -156,12 +156,62 @@ class ExoPlayerPlaybackTest {
     }
 
     @Test
-    fun `the first load builds a new player without releasing the one built by the constructor`() = runTest {
-        // Pins today's behaviour; see #262.
+    fun `no player is built until the first load`() = runTest {
+        playback.setAudioSessionId(42)
+        playback.setRepeatMode(QueueManager.RepeatMode.All)
+        playback.setVolume(0.5f)
+        playback.setPlaybackSpeed(1.5f)
+        playback.loadNext(songB)
+        playback.play()
+        playback.pause()
+        playback.seek(1_000)
+
+        playerFactory.players.shouldBeEmpty()
+        playback.isReleased shouldBe true
+        playback.playBackState() shouldBe PlaybackState.Paused
+        playback.getProgress() shouldBe 0
+        playback.getDuration() shouldBe null
+        playback.getAudioSessionId() shouldBe 42
+        playback.getPlaybackSpeed() shouldBe 1f
+
         load(songA)
 
+        playerFactory.players.size shouldBe 1
+        playback.isReleased shouldBe false
+    }
+
+    @Test
+    fun `a load after release builds one new player and leaves the old one released`() = runTest {
+        load(songA)
+        playback.release()
+
+        load(songB)
+
         playerFactory.players.size shouldBe 2
-        playerFactory.players.first().isReleased shouldBe false
+        playerFactory.players.first().isReleased shouldBe true
+        player.isReleased shouldBe false
+    }
+
+    @Test
+    fun `a player replaced while still live is released`() = runTest {
+        load(songA)
+        // isReleased is settable from outside the playback, without releasing its player.
+        playback.isReleased = true
+
+        load(songB)
+
+        playerFactory.players.size shouldBe 2
+        playerFactory.players.first().isReleased shouldBe true
+        player.isReleased shouldBe false
+    }
+
+    @Test
+    fun `a load while loaded reuses the player`() = runTest {
+        load(songA)
+
+        load(songB)
+
+        playerFactory.players.size shouldBe 1
     }
 
     @Test
