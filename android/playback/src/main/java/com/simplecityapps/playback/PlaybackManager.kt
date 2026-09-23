@@ -11,6 +11,9 @@ import com.simplecityapps.shuttle.model.Song
 import kotlin.math.max
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 
@@ -30,6 +33,25 @@ class PlaybackManager(
     AudioFocusHelper.Listener,
     QueueChangeCallback {
     private var playback: Playback = exoplayerPlayback
+
+    private val _playbackStateFlow = MutableStateFlow(playback.playBackState())
+
+    /**
+     * The last playback state the active [Playback] reported, set just before
+     * [PlaybackWatcherCallback.onPlaybackStateChanged] is dispatched. Starts at the initial
+     * playback's state. Unlike [playbackState], it doesn't change on [switchToPlayback] until the
+     * new playback reports a state.
+     */
+    val playbackStateFlow: StateFlow<PlaybackState> = _playbackStateFlow.asStateFlow()
+
+    private val _progressFlow = MutableStateFlow<PlaybackProgress?>(null)
+
+    /**
+     * The last published progress, set just before [PlaybackWatcherCallback.onProgressChanged] is
+     * dispatched; null until the first one. Whether a change came from a user seek is an event, so
+     * it stays on the callback.
+     */
+    val progressFlow: StateFlow<PlaybackProgress?> = _progressFlow.asStateFlow()
 
     private val audioSessionId = audioManager?.generateAudioSessionId() ?: -1
 
@@ -374,6 +396,7 @@ class PlaybackManager(
     private fun updateProgress(fromUser: Boolean = false) {
         playback.getProgress()?.let { position ->
             (playback.getDuration() ?: queueManager.getCurrentItem()?.song?.duration)?.let { duration ->
+                _progressFlow.value = PlaybackProgress(position, duration)
                 playbackWatcher.onProgressChanged(position, duration, fromUser)
             }
         }
@@ -383,6 +406,7 @@ class PlaybackManager(
 
     override fun onPlaybackStateChanged(playbackState: PlaybackState) {
         Timber.v("onPlaybackStateChanged(playbackState: $playbackState)")
+        _playbackStateFlow.value = playbackState
         playbackWatcher.onPlaybackStateChanged(playbackState)
 
         when (playbackState) {

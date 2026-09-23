@@ -3,6 +3,9 @@ package com.simplecityapps.playback.queue
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
@@ -40,13 +43,55 @@ class QueueManager(
         }
     }
 
-    private var shuffleMode: ShuffleMode = ShuffleMode.Off
+    private val _shuffleModeFlow = MutableStateFlow(ShuffleMode.Off)
 
-    private var repeatMode: RepeatMode = RepeatMode.Off
+    /**
+     * The shuffle mode. Backs [getShuffleMode] directly, so the two can't disagree; it changes just
+     * before [QueueChangeCallback.onShuffleChanged] is dispatched.
+     */
+    val shuffleModeFlow: StateFlow<ShuffleMode> = _shuffleModeFlow.asStateFlow()
+
+    // Renamed accessors: the defaults would clash with getShuffleMode()/setShuffleMode() on the JVM.
+    private var shuffleMode: ShuffleMode
+        @JvmName("currentShuffleMode")
+        get() = _shuffleModeFlow.value
+
+        @JvmName("updateShuffleMode")
+        set(value) {
+            _shuffleModeFlow.value = value
+        }
+
+    private val _repeatModeFlow = MutableStateFlow(RepeatMode.Off)
+
+    /**
+     * The repeat mode. Backs [getRepeatMode] directly, so the two can't disagree; it changes just
+     * before [QueueChangeCallback.onRepeatChanged] is dispatched.
+     */
+    val repeatModeFlow: StateFlow<RepeatMode> = _repeatModeFlow.asStateFlow()
+
+    // Renamed accessors: the defaults would clash with getRepeatMode()/setRepeatMode() on the JVM.
+    private var repeatMode: RepeatMode
+        @JvmName("currentRepeatMode")
+        get() = _repeatModeFlow.value
+
+        @JvmName("updateRepeatMode")
+        set(value) {
+            _repeatModeFlow.value = value
+        }
 
     private val queue = Queue()
 
     private var currentItem: QueueItem? = null
+
+    private val _queueState = MutableStateFlow(QueueState.Empty)
+
+    /**
+     * The queue as the active shuffle mode presents it, with the current item and position.
+     * Republished just before every [QueueChangeCallback.onQueueChanged] and
+     * [QueueChangeCallback.onQueuePositionChanged] dispatch, and whenever the shuffle mode or
+     * [clear] changes what [getQueue] or [getCurrentItem] return.
+     */
+    val queueStateFlow: StateFlow<QueueState> = _queueState.asStateFlow()
 
     override var hasRestoredQueue = false
         set(value) {
@@ -114,11 +159,11 @@ class QueueManager(
         when (shuffleMode) {
             ShuffleMode.Off ->
                 if (existingQueueChanged) {
-                    queueWatcher.onQueueChanged()
+                    notifyQueueChanged()
                 }
             ShuffleMode.On ->
                 if (shuffleQueueChanged) {
-                    queueWatcher.onQueueChanged()
+                    notifyQueueChanged()
                 }
         }
 
@@ -144,7 +189,7 @@ class QueueManager(
                 }
             }
 
-            queueWatcher.onQueuePositionChanged(oldPosition, getCurrentPosition())
+            notifyQueuePositionChanged(oldPosition, getCurrentPosition())
         } else {
             Timber.v("setCurrentItem(): Item already current")
         }
@@ -166,9 +211,9 @@ class QueueManager(
     override fun remove(items: List<QueueItem>) {
         val oldPosition = getCurrentPosition()
         queue.remove(items)
-        queueWatcher.onQueueChanged()
+        notifyQueueChanged()
         if (getCurrentPosition() != oldPosition) {
-            queueWatcher.onQueuePositionChanged(oldPosition, getCurrentPosition())
+            notifyQueuePositionChanged(oldPosition, getCurrentPosition())
         }
     }
 
@@ -180,8 +225,11 @@ class QueueManager(
     override fun clear() {
         Timber.v("clear()")
         queue.clear()
-        queueWatcher.onQueueChanged()
+        notifyQueueChanged()
         currentItem = null
+        // The callback above fires while the cleared item is still current (as it always has); the
+        // flow follows up with the settled state.
+        publishQueueState()
     }
 
     /**
@@ -246,13 +294,16 @@ class QueueManager(
                 }
             }
 
+            // getQueue() now presents the other list, even before the queue is restored, when no
+            // onQueueChanged follows.
+            publishQueueState()
             queueWatcher.onShuffleChanged(shuffleMode)
 
             if (hasRestoredQueue) {
-                queueWatcher.onQueueChanged() // The queue has been reshuffled, and shuffle is on, so the queue has changed
+                notifyQueueChanged() // The queue has been reshuffled, and shuffle is on, so the queue has changed
 
                 if (previousPosition != getCurrentPosition()) {
-                    queueWatcher.onQueuePositionChanged(previousPosition, getCurrentPosition())
+                    notifyQueuePositionChanged(previousPosition, getCurrentPosition())
                 }
             }
         }
@@ -313,7 +364,7 @@ class QueueManager(
 
     override fun addToQueue(songs: List<Song>) {
         queue.add(songs.map { song -> song.toQueueItem(false) })
-        queueWatcher.onQueueChanged()
+        notifyQueueChanged()
     }
 
     override fun move(
@@ -323,9 +374,9 @@ class QueueManager(
         val oldPosition = getCurrentPosition()
         queue.move(from, to, shuffleMode)
         val currentPosition = getCurrentPosition()
-        queueWatcher.onQueueChanged(QueueChangeCallback.QueueChangeReason.Move)
+        notifyQueueChanged(QueueChangeCallback.QueueChangeReason.Move)
         if (currentPosition != oldPosition) {
-            queueWatcher.onQueuePositionChanged(oldPosition, currentPosition)
+            notifyQueuePositionChanged(oldPosition, currentPosition)
         }
     }
 
@@ -335,7 +386,27 @@ class QueueManager(
         val baseIndex = current?.let { queue.get(ShuffleMode.Off).indexOf(it) } ?: -1
         val shuffleIndex = current?.let { queue.get(ShuffleMode.On).indexOf(it) } ?: -1
         queue.insert(baseIndex + 1, shuffleIndex + 1, items)
-        queueWatcher.onQueueChanged()
+        notifyQueueChanged()
+    }
+
+    private fun notifyQueueChanged(reason: QueueChangeCallback.QueueChangeReason = QueueChangeCallback.QueueChangeReason.Unknown) {
+        publishQueueState()
+        queueWatcher.onQueueChanged(reason)
+    }
+
+    private fun notifyQueuePositionChanged(
+        oldPosition: Int?,
+        newPosition: Int?
+    ) {
+        publishQueueState()
+        queueWatcher.onQueuePositionChanged(oldPosition, newPosition)
+    }
+
+    /**
+     * The single update site for [queueStateFlow]. Copies the list, since [Queue] mutates its lists in place.
+     */
+    private fun publishQueueState() {
+        _queueState.value = QueueState(items = getQueue().toList(), currentItem = currentItem, currentPosition = getCurrentPosition())
     }
 
     /**
