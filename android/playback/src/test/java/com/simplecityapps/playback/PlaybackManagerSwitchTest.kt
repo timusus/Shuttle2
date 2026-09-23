@@ -1,7 +1,8 @@
 package com.simplecityapps.playback
 
-import com.simplecityapps.playback.audiofocus.AudioFocusHelper
+import com.simplecityapps.playback.fakes.FakePlayback
 import com.simplecityapps.playback.fakes.FakeSharedPreferences
+import com.simplecityapps.playback.fakes.testPlaybackManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
@@ -11,8 +12,6 @@ import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.squareup.moshi.Moshi
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
@@ -40,16 +39,12 @@ class PlaybackManagerSwitchTest {
     @Before
     fun setUp() {
         playbackManager =
-            PlaybackManager(
+            testPlaybackManager(
                 queueManager = queueManager,
-                playbackWatcher = PlaybackWatcher(),
-                audioFocusHelper = FakeAudioFocusHelper(),
+                queueWatcher = queueWatcher,
                 playbackPreferenceManager = playbackPreferenceManager,
                 audioEffectSessionManager = audioEffectSessionManager,
-                appCoroutineScope = CoroutineScope(Dispatchers.Unconfined),
-                exoplayerPlayback = playbackA,
-                queueWatcher = queueWatcher,
-                audioManager = null
+                exoplayerPlayback = playbackA
             )
         runBlocking { queueManager.setQueue(listOf(createSong())) }
         playbackPreferenceManager.playbackPosition = SAVED_POSITION
@@ -151,80 +146,6 @@ class PlaybackManagerSwitchTest {
         sampleRate = null,
         channelCount = null
     )
-
-    private class FakePlayback(
-        private val name: String,
-        val sessionId: Int,
-        private val events: MutableList<String>
-    ) : Playback {
-        override var callback: Playback.Callback? = null
-        override var isReleased: Boolean = false
-        var state: PlaybackState = PlaybackState.Paused
-
-        private val pendingLoads = mutableListOf<(Result<Any?>) -> Unit>()
-
-        /** Completes the oldest load requested of this playback that hasn't completed yet. */
-        fun completeLoad() {
-            isReleased = false
-            pendingLoads.removeAt(0)(Result.success(null))
-        }
-
-        override suspend fun load(
-            current: Song,
-            next: Song?,
-            seekPosition: Int,
-            completion: (Result<Any?>) -> Unit
-        ) {
-            pendingLoads += completion
-        }
-
-        override suspend fun loadNext(song: Song?) {}
-
-        override fun play() {
-            events += "$name play"
-            state = PlaybackState.Playing
-        }
-
-        override fun pause() {
-            state = PlaybackState.Paused
-        }
-
-        override fun release() {
-            isReleased = true
-        }
-
-        override fun playBackState(): PlaybackState = state
-
-        override fun seek(position: Int) {
-            events += "$name seek $position"
-        }
-
-        override fun getProgress(): Int? = null
-
-        override fun getDuration(): Int? = null
-
-        override fun setVolume(volume: Float) {}
-
-        override fun getResumeWhenSwitched(oldPlayback: Playback): Boolean = true
-
-        override fun setRepeatMode(repeatMode: QueueManager.RepeatMode) {}
-
-        override fun getAudioSessionId(): Int = sessionId
-
-        override fun setPlaybackSpeed(multiplier: Float) {}
-
-        override fun getPlaybackSpeed(): Float = 1f
-    }
-
-    private class FakeAudioFocusHelper : AudioFocusHelper {
-        override fun requestAudioFocus(): Boolean = true
-
-        override fun abandonAudioFocus() {}
-
-        override var listener: AudioFocusHelper.Listener? = null
-        override var enabled: Boolean = true
-        override var resumeOnFocusGain: Boolean = false
-    }
 
     private companion object {
         const val SAVED_POSITION = 5_000
