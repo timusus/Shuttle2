@@ -52,6 +52,7 @@ Commit message format, module scopes and changelog upkeep are in the root `CLAUD
 Prefer a headless Pixel 9 Pro AVD on the owner's desktop (WSL2, KVM) over a local AVD: the 32 GB
 Mac starves a local emulator whenever it's loaded (Xcode, other sessions). Launcher:
 `support/scripts/remote-emu.sh` (`status` / `start [N]` / `env` / `install` / `reset [N]` /
+`ui-prep [N]` / `tap-text` / `dump-texts` / `seed-music [dir]` / `lockscreen on|off` /
 `stop [N|--all]`).
 
 **Standard start state for validation:** a lane that's been reused inherits stale app data and
@@ -80,6 +81,44 @@ adb shell am start -n com.simplecityapps.shuttle.dev/com.simplecityapps.shuttle.
   once onboarding's Scanner page is skipped. Run it only after `install`, before the first launch.
 - Respects `ANDROID_SERIAL` / `ANDROID_ADB_SERVER_PORT` the same way `remote-emu.sh env` sets
   them — `eval` that first in any shell that calls either script.
+
+**UI checks are scriptable — tap by text, never by screenshot coordinate.** Screenshots handed to
+a model are downscaled (device is 1280x2856, scale ~1.4286), so a tap computed from a screenshot's
+coordinates lands in the wrong place on the real device. `remote-emu.sh tap-text <text> [--desc]
+[--index N]` dumps the UI hierarchy via `uiautomator`, finds the node by visible text or
+content-description, and taps the centre of its bounds in real device pixels; it exits non-zero
+with a list of visible text/desc when nothing matches. `dump-texts` lists every visible
+text/content-desc with its bounds, for exploring a screen before scripting a tap. **Never swipe
+near the bottom edge** — it triggers the system home gesture; every screen in this app is reachable
+by tap.
+
+- `remote-emu.sh ui-prep [N]` sets `window_animation_scale`/`transition_animation_scale`/
+  `animator_duration_scale` to 0 on the lane. Run it once per lane after `start`, before the first
+  `tap-text`/`dump-texts` call. Even with animations off, `uiautomator dump` can still fail with
+  "could not get idle state" while music plays — the playback screen's progress bar keeps ticking —
+  so `tap-text`/`dump-texts` retry the dump (`--compressed`, several attempts with a short sleep)
+  internally; callers don't need their own retry loop, but **never background that retry loop and
+  end the turn** — run `tap-text`/`dump-texts` in the foreground like any other emulator command.
+- `remote-emu.sh seed-music [dir]` generates ~6 short mp3s plus one 6-minute track (ffmpeg,
+  distinct title/artist/album tags across 2 albums), pushes them to `/sdcard/Music/emu-seed`, and
+  scans each file into MediaStore. The app's own library still needs a manual Settings -> Media ->
+  Rescan to import them (same `MediaImporter` reimport gap noted above for `seed-test-media.sh`).
+- `remote-emu.sh lockscreen on|off` runs `locksettings set-disabled false|true` on the lane.
+- Navigation recipes (tap-text only, no swipes):
+  - Full player: `tap-text` the mini player's title text (dynamic — the currently playing track's
+    title, e.g. a seeded track name from `seed-music`).
+  - Queue sheet: open the full player, then `tap-text "Up Next"` (`QueueFragment.kt` ~146, which
+    calls `expandSheet(SECOND)`) — never swipe up for this.
+  - Full player overflow menu: `menu_playback.xml` puts `sleepTimer` as `ifRoom` and
+    `lyrics`/`songInfo`/`editTags`/`clearQueue` as `never`, so most of it lives behind the overflow
+    icon (AppCompat's default content-desc is "More options"; confirm with `dump-texts` first).
+  - Sleep timer: `tap-text "Sleep Timer"` if visible directly on the toolbar, else open the
+    overflow menu first, then `tap-text "Sleep Timer"`.
+  - Queue item actions (remove, play next, add to playlist, exclude): the queue has no per-row
+    overflow icon — long-press the row (`adb shell input swipe <cx> <cy> <cx> <cy> 800`, bounds
+    from `dump-texts`) to open its popup menu, then `tap-text "Remove from Queue"` (or the other
+    item titles from `menu_queue_item.xml`). This is a long-press in the middle of the screen, not
+    a bottom-edge swipe, so it's safe.
 
 - The box is shared with the owner's podcasts repo and CI runners — sessions may run concurrently,
   **one lane each, up to 3** (lane N = `emulator-555{4,6,8}`, local adb port `5038..5040`, lease

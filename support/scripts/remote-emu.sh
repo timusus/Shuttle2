@@ -12,18 +12,30 @@
 #   2     5556     emulator-5556  5039             /home/tim/.emu-leases/lane-2
 #   3     5558     emulator-5558  5040             /home/tim/.emu-leases/lane-3
 #
-#   remote-emu.sh status          all lanes: owner, age, qemu alive; box load and free memory
-#   remote-emu.sh start [N]       lease the lowest free lane (or lane N), boot it, open its tunnel
-#   remote-emu.sh env [N]         print the two exports for this session's lane (eval it)
-#   remote-emu.sh install [N]     assembleDebug locally and adb install it on the lane
-#   remote-emu.sh reset [N]       clear the debug app's data and the seeded test media on the lane
+#   remote-emu.sh status           all lanes: owner, age, qemu alive; box load and free memory
+#   remote-emu.sh start [N]        lease the lowest free lane (or lane N), boot it, open its tunnel
+#   remote-emu.sh env [N]          print the two exports for this session's lane (eval it)
+#   remote-emu.sh install [N]      assembleDebug locally and adb install it on the lane
+#   remote-emu.sh reset [N]        clear the debug app's data and the seeded test media on the lane
+#   remote-emu.sh ui-prep [N]      disable window/transition/animator animations on the lane
+#   remote-emu.sh tap-text <text> [--desc] [--index N]
+#                                  dump the UI hierarchy, tap the centre of the matching node
+#   remote-emu.sh dump-texts       list every visible text/content-desc, with bounds
+#   remote-emu.sh seed-music [dir] generate + push ~7 tagged mp3s (2 albums) to /sdcard/Music, scan them
+#   remote-emu.sh lockscreen on|off   toggle the lane's lockscreen
 #   remote-emu.sh stop [N|--all]  kill the lane's emulator and tunnel, drop its lease (idempotent)
 #
 # Typical run, from the repo root:
 #   support/scripts/remote-emu.sh start && eval "$(support/scripts/remote-emu.sh env)"
 #   support/scripts/remote-emu.sh install
+#   support/scripts/remote-emu.sh ui-prep
 #   adb shell am start -n com.simplecityapps.shuttle.dev/com.simplecityapps.shuttle.ui.MainActivity
+#   support/scripts/remote-emu.sh tap-text "Up Next"
 #   support/scripts/remote-emu.sh stop
+#
+# UI automation is by text, never by screenshot coordinate: screenshots handed to a model are
+# downscaled (device 1280x2856, scale ~1.4286), so a tap computed from one lands in the wrong
+# place. `tap-text`/`dump-texts` read real device-pixel bounds from a `uiautomator` dump instead.
 #
 # How it plugs in: the box runs one adb server on 5037 that sees every lane; `start` forwards it
 # to the lane's LOCAL port (the Mac's own adb server keeps 5037), and every `adb` invoked with
@@ -301,6 +313,164 @@ cmd_reset() {
     echo "remote-emu: lane $LANE reset -- ${DEBUG_APP_ID} data cleared, /sdcard/Music/s2-seed removed"
 }
 
+cmd_ui_prep() {
+    LANE="$(resolve_lane "${1:-}")"
+    tunnel_pid "$LANE" >/dev/null || { echo "remote-emu: no tunnel for lane $LANE; run start first" >&2; exit 1; }
+    local s
+    for s in window_animation_scale transition_animation_scale animator_duration_scale; do
+        radb shell settings put global "$s" 0
+    done
+    echo "remote-emu: lane $LANE animations disabled (window/transition/animator scale = 0)"
+}
+
+# ---- UI automation (uiautomator XML dump, text/desc lookup) ------------------------------
+
+xml_unescape() {
+    local s="$1"
+    s="${s//&lt;/<}"; s="${s//&gt;/>}"; s="${s//&quot;/\"}"; s="${s//&apos;/\'}"; s="${s//&amp;/&}"
+    echo "$s"
+}
+
+# dump_xml_to <local-file>: uiautomator dump (compressed, retried) saved to <local-file>. Retries
+# because "could not get idle state" is common while music plays -- the playback screen's progress
+# bar keeps ticking even with `ui-prep`'s animation scales at 0. Assumes $LANE is set.
+dump_xml_to() {
+    local out_file="$1" remote="/sdcard/s2-dump.xml" tries=8 n out
+    for n in $(seq 1 "$tries"); do
+        out="$(radb shell uiautomator dump --compressed "$remote" 2>&1 | tr -d '\r')"
+        if ! echo "$out" | grep -qi error && radb pull "$remote" "$out_file" >/dev/null 2>&1 && [ -s "$out_file" ]; then
+            return 0
+        fi
+        sleep 1
+    done
+    echo "remote-emu: uiautomator dump failed after ${tries} attempts (last: ${out})" >&2
+    return 1
+}
+
+# Field separator for list_nodes' output. Not a tab/space: bash `read` and `cut` treat IFS
+# whitespace specially (leading/trailing separators are stripped, runs of them collapse), which
+# silently shifts columns whenever the first field (text) is empty -- as it usually is for a
+# content-desc-only node. \x1f (unit separator) never appears in UI text.
+NODE_SEP=$'\x1f'
+
+# list_nodes <xml-file>: one line per node with a text or content-desc: "text<NODE_SEP>desc<NODE_SEP>bounds".
+list_nodes() {
+    local node text desc bounds
+    while IFS= read -r node; do
+        text="$(grep -oE ' text="[^"]*"' <<<"$node" | head -1 | sed -E 's/ text="(.*)"/\1/')"
+        desc="$(grep -oE ' content-desc="[^"]*"' <<<"$node" | head -1 | sed -E 's/ content-desc="(.*)"/\1/')"
+        bounds="$(grep -oE ' bounds="[^"]*"' <<<"$node" | head -1 | sed -E 's/ bounds="(.*)"/\1/')"
+        [ -z "$text" ] && [ -z "$desc" ] && continue
+        printf '%s%s%s%s%s\n' "$(xml_unescape "$text")" "$NODE_SEP" "$(xml_unescape "$desc")" "$NODE_SEP" "$bounds"
+    done < <(grep -oE '<node[^>]*>' "$1")
+}
+
+cmd_dump_texts() {
+    LANE="$(resolve_lane)"
+    tunnel_pid "$LANE" >/dev/null || { echo "remote-emu: no tunnel for lane $LANE; run start first" >&2; exit 1; }
+    local tmp; tmp="$(mktemp)"
+    if ! dump_xml_to "$tmp"; then rm -f "$tmp"; exit 1; fi
+    while IFS="$NODE_SEP" read -r text desc bounds; do
+        [ -n "$text" ] && echo "text=\"${text}\" bounds=${bounds}"
+        [ -n "$desc" ] && echo "desc=\"${desc}\" bounds=${bounds}"
+    done < <(list_nodes "$tmp")
+    rm -f "$tmp"
+}
+
+cmd_tap_text() {
+    LANE="$(resolve_lane)"
+    tunnel_pid "$LANE" >/dev/null || { echo "remote-emu: no tunnel for lane $LANE; run start first" >&2; exit 1; }
+    local field=text index=0 target=""
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --desc) field=desc; shift ;;
+            --index) index="${2:?remote-emu: --index needs a value}"; shift 2 ;;
+            *) target="$1"; shift ;;
+        esac
+    done
+    [ -n "$target" ] || { echo "remote-emu: usage: tap-text <text> [--desc] [--index N]" >&2; exit 2; }
+
+    local tmp; tmp="$(mktemp)"
+    if ! dump_xml_to "$tmp"; then rm -f "$tmp"; exit 1; fi
+
+    local col=1; [ "$field" = "desc" ] && col=2
+    local matches; matches="$(list_nodes "$tmp" | awk -F"$NODE_SEP" -v c="$col" -v t="$target" '$c == t')"
+    if [ -z "$matches" ]; then
+        echo "remote-emu: no node with ${field}=\"${target}\" -- visible text/desc:" >&2
+        list_nodes "$tmp" | cut -d "$NODE_SEP" -f1,2 | tr "$NODE_SEP" '\n' | grep -v '^$' | sort -u >&2
+        rm -f "$tmp"
+        exit 1
+    fi
+    local chosen; chosen="$(echo "$matches" | sed -n "$((index + 1))p")"
+    rm -f "$tmp"
+    if [ -z "$chosen" ]; then
+        echo "remote-emu: only $(echo "$matches" | wc -l | tr -d ' ') match(es) for ${field}=\"${target}\"; index ${index} out of range" >&2
+        exit 1
+    fi
+    local bounds x1 y1 x2 y2 cx cy
+    bounds="$(echo "$chosen" | cut -d "$NODE_SEP" -f3)"
+    read -r x1 y1 x2 y2 <<<"$(echo "$bounds" | sed -E 's/\[([0-9]+),([0-9]+)\]\[([0-9]+),([0-9]+)\]/\1 \2 \3 \4/')"
+    cx=$(( (x1 + x2) / 2 )); cy=$(( (y1 + y2) / 2 ))
+    echo "remote-emu: tapping ${field}=\"${target}\" at (${cx},${cy}) bounds=${bounds}"
+    radb shell input tap "$cx" "$cy"
+}
+
+cmd_seed_music() {
+    LANE="$(resolve_lane)"
+    tunnel_pid "$LANE" >/dev/null || { echo "remote-emu: no tunnel for lane $LANE; run start first" >&2; exit 1; }
+    command -v ffmpeg >/dev/null 2>&1 || { echo "remote-emu: ffmpeg not found on PATH" >&2; exit 1; }
+    [ -f gradlew ] || { echo "remote-emu: run from the repo root" >&2; exit 2; }
+
+    local dir="${1:-build/test-media/ui-seed}"
+    mkdir -p "$dir"
+    echo "remote-emu: generating seed tracks in ${dir} (cached files reused) ..."
+
+    _seed_gen() {
+        local out="$1" dur="$2" title="$3" artist="$4" album="$5" track="$6"
+        [ -f "$out" ] && return 0
+        ffmpeg -nostdin -loglevel error -f lavfi -i "anullsrc=r=44100:cl=mono" -t "$dur" \
+            -metadata title="$title" -metadata artist="$artist" -metadata album_artist="$artist" \
+            -metadata album="$album" -metadata track="$track" \
+            -c:a libmp3lame -b:a 32k -y "$out" >/dev/null
+    }
+    _seed_gen "${dir}/a1_t1.mp3" 2   "Seed Song One"    "Seed Artist One" "Seed Album One" 1
+    _seed_gen "${dir}/a1_t2.mp3" 2   "Seed Song Two"    "Seed Artist One" "Seed Album One" 2
+    _seed_gen "${dir}/a1_t3.mp3" 2   "Seed Song Three"  "Seed Artist One" "Seed Album One" 3
+    _seed_gen "${dir}/a2_t1.mp3" 2   "Seed Track Alpha" "Seed Artist Two" "Seed Album Two" 1
+    _seed_gen "${dir}/a2_t2.mp3" 2   "Seed Track Beta"  "Seed Artist Two" "Seed Album Two" 2
+    _seed_gen "${dir}/a2_t3.mp3" 2   "Seed Track Gamma" "Seed Artist Two" "Seed Album Two" 3
+    _seed_gen "${dir}/a2_t4.mp3" 360 "Seed Long Player" "Seed Artist Two" "Seed Album Two" 4
+
+    local remote_dir="/sdcard/Music/emu-seed" f pushed=0
+    radb shell mkdir -p "$remote_dir"
+    for f in "$dir"/*.mp3; do
+        radb push "$f" "${remote_dir}/$(basename "$f")" >/dev/null
+        pushed=$((pushed + 1))
+    done
+    echo "remote-emu: pushed ${pushed} track(s) to ${remote_dir}"
+
+    # scan_volume only registers placeholder rows for new files -- scan_file is what actually runs
+    # the metadata extractor per file (same finding as seed-test-media.sh).
+    echo "remote-emu: scanning each file so MediaStore extracts tags ..."
+    for f in "$dir"/*.mp3; do
+        radb shell content call --uri content://media/ --method scan_file \
+            --arg "${remote_dir}/$(basename "$f")" >/dev/null 2>&1 || true
+    done
+    radb shell content call --uri content://media --method scan_volume --arg external_primary >/dev/null 2>&1 || true
+
+    echo "remote-emu: MediaStore updated -- the app itself still needs Settings -> Media -> Rescan to import these tracks into its library"
+}
+
+cmd_lockscreen() {
+    LANE="$(resolve_lane)"
+    tunnel_pid "$LANE" >/dev/null || { echo "remote-emu: no tunnel for lane $LANE; run start first" >&2; exit 1; }
+    case "${1:-}" in
+        on) radb shell locksettings set-disabled false >/dev/null; echo "remote-emu: lane $LANE lockscreen enabled" ;;
+        off) radb shell locksettings set-disabled true >/dev/null; echo "remote-emu: lane $LANE lockscreen disabled" ;;
+        *) echo "remote-emu: usage: lockscreen on|off" >&2; exit 2 ;;
+    esac
+}
+
 stop_lane() {
     local lane="$1" serial pattern; serial="$(serial_of "$lane")"; pattern="$(emu_pattern "$lane")"
     kill_tunnel "$lane"
@@ -350,6 +520,11 @@ case "${1:-}" in
     install) cmd_install "${2:-}" ;;
     env) cmd_env "${2:-}" ;;
     reset) cmd_reset "${2:-}" ;;
+    ui-prep) cmd_ui_prep "${2:-}" ;;
+    tap-text) shift; cmd_tap_text "$@" ;;
+    dump-texts) cmd_dump_texts ;;
+    seed-music) cmd_seed_music "${2:-}" ;;
+    lockscreen) cmd_lockscreen "${2:-}" ;;
     stop) cmd_stop "${2:-}" ;;
     *) sed -n '2,25p' "$0" >&2; exit 2 ;;
 esac
