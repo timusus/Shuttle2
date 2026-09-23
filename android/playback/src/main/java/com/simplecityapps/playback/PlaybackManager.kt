@@ -42,13 +42,12 @@ class PlaybackManager(
         playback.setRepeatMode(queueManager.getRepeatMode())
         playback.callback = this
         playback.setAudioSessionId(audioSessionId)
-        audioEffectSessionManager.sessionId = audioSessionId
         audioFocusHelper.listener = this
         audioFocusHelper.enabled = playback.respondsToAudioFocus()
 
         queueWatcher.addCallback(this)
 
-        audioEffectSessionManager.openAudioEffectSession()
+        audioEffectSessionManager.bindTo(audioSessionId)
     }
 
     override fun togglePlayback() {
@@ -317,6 +316,7 @@ class PlaybackManager(
         playback.setAudioSessionId(audioSessionId)
         playback.setPlaybackSpeed(playbackSpeed)
         audioFocusHelper.enabled = playback.respondsToAudioFocus()
+        rebindAudioEffectSession(playback)
 
         load(seekPosition ?: 0) { result ->
             result.onSuccess {
@@ -332,18 +332,13 @@ class PlaybackManager(
     }
 
     /**
-     * Re-broadcasts the audio effect control session when [playback] has ended up on a different
-     * session id to the one we're advertising - which happens when it couldn't honour the id we
-     * asked for. Without this, system and OEM effects stay bound to a session nothing is playing on.
+     * Moves the audio effect control session to whatever session [playback] is actually rendering
+     * on. Called on switch, so a playback with no local audio session (Chromecast) closes the
+     * session rather than leaving system and OEM effects bound to a now-silent one, and again once
+     * loaded, in case the player couldn't honour the id we asked for.
      */
     private fun rebindAudioEffectSession(playback: Playback) {
-        val sessionId = playback.getAudioSessionId()
-        if (sessionId <= 0 || sessionId == audioEffectSessionManager.sessionId) {
-            return
-        }
-        audioEffectSessionManager.closeAudioEffectSession()
-        audioEffectSessionManager.sessionId = sessionId
-        audioEffectSessionManager.openAudioEffectSession()
+        audioEffectSessionManager.bindTo(playback.getAudioSessionId())
     }
 
     override fun setPlaybackSpeed(multiplier: Float) {
