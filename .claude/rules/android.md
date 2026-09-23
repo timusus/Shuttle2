@@ -82,6 +82,14 @@ adb shell am start -n com.simplecityapps.shuttle.dev/com.simplecityapps.shuttle.
   once onboarding's Scanner page is skipped. Run it only after `install`, before the first launch.
 - Respects `ANDROID_SERIAL` / `ANDROID_ADB_SERVER_PORT` the same way `remote-emu.sh env` sets
   them — `eval` that first in any shell that calls either script.
+- **Remote providers (Jellyfin/Emby):** `support/scripts/seed-remote-provider.sh jellyfin|emby`
+  signs the debug app in without a password. It reads `~/.config/s2-test/<server>.env` (`URL=`,
+  `API_KEY=`), looks up the `shuttle-test` user's Id through the API, broadcasts the address, user
+  Id and API key (as the access token) to the debug-only `DebugRemoteProviderReceiver` (DUMP-guarded,
+  `android/app/src/debug`), which enables the provider and marks onboarding done, then triggers an
+  import and launches the app. Run it after `reset` + `install`, one server per reset (both servers
+  carry the same "S2 Transcode Test" album). The key never reaches a command line or the output.
+  `support/scripts/media-server-stream-probe.sh` checks the same servers at the HTTP level.
 
 **Playback checks don't need the UI.** The debug build's `DebugPlaybackReceiver` plays the
 library, skips, seeks, removes queue items and dumps playback state as JSON over `adb` broadcasts:
