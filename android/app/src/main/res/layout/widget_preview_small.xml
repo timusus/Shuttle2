@@ -1,40 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Widget picker preview for the small now playing widget (API 31+). Mirrors the widget's card layout. -->
+<!-- Widget picker preview for the small now playing widget (API 31+), at its four by one target size. Mirrors
+     the compact card: art filling the height inside the 12dp padding, the text above every button, and a 40dp
+     play circle whose 48dp row reaches 4dp into the bottom padding, so the circle and the art both stop 12dp
+     from the bottom edge. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_preview_background"
-    android:gravity="center_vertical"
     android:orientation="horizontal"
-    android:padding="8dp">
+    android:paddingStart="12dp"
+    android:paddingTop="12dp"
+    android:paddingEnd="12dp"
+    android:paddingBottom="8dp">
 
     <FrameLayout
-        android:layout_width="64dp"
-        android:layout_height="64dp"
+        android:layout_width="76dp"
+        android:layout_height="match_parent"
+    android:layout_marginBottom="4dp"
         android:background="@drawable/widget_preview_art">
 
         <ImageView
-            android:layout_width="28dp"
-            android:layout_height="28dp"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
             android:layout_gravity="center"
             android:src="@drawable/widget_music_note"
             android:tint="@color/widget_preview_on_secondary_container"
             android:importantForAccessibility="no" />
     </FrameLayout>
 
-    <LinearLayout
+    <FrameLayout
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_weight="1"
-        android:orientation="vertical">
+        android:layout_height="match_parent"
+        android:layout_marginStart="12dp"
+        android:layout_weight="1">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingStart="4dp"
-            android:paddingEnd="4dp">
+            android:orientation="vertical">
 
             <TextView
                 android:layout_width="match_parent"
@@ -58,7 +61,23 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
             android:orientation="horizontal">
+
+            <FrameLayout
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1">
+
+                <ImageView
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_gravity="center"
+                    android:scaleType="center"
+                    android:src="@drawable/ic_shuffle_black_24dp"
+                    android:tint="@color/widget_preview_on_surface_variant"
+                    android:importantForAccessibility="no" />
+            </FrameLayout>
 
             <FrameLayout
                 android:layout_width="0dp"
@@ -81,8 +100,8 @@
                 android:layout_weight="1">
 
                 <ImageView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
                     android:layout_gravity="center"
                     android:scaleType="center"
                     android:background="@drawable/widget_preview_play"
@@ -106,6 +125,21 @@
                     android:importantForAccessibility="no" />
             </FrameLayout>
 
+            <FrameLayout
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="1">
+
+                <ImageView
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_gravity="center"
+                    android:scaleType="center"
+                    android:src="@drawable/ic_repeat_black_24dp"
+                    android:tint="@color/widget_preview_on_surface_variant"
+                    android:importantForAccessibility="no" />
+            </FrameLayout>
+
         </LinearLayout>
-    </LinearLayout>
+    </FrameLayout>
 </LinearLayout>
