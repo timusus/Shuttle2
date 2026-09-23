@@ -42,6 +42,9 @@ answer them manually in [Play Console](https://play.google.com/console).
      sign-off at all. Vary openings too.
    - Don't repeat the complaint back to them, and don't placate ("that's a real gap", "that's fair
      feedback", "I know it hurt"). Answer plainly with what's true or what's happening.
+   - Never invent facts about the owner or the project ("S2 is where all my work goes", "actively
+     updated"). The owner is a solo indie dev with three young kids; it's fine to say that plainly
+     when it explains slow updates, but don't overuse it.
    - Specific to the review, but short. Only reference what they said when it adds something.
    - Under 350 characters.
    - No em dashes.
