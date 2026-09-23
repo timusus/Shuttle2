@@ -229,20 +229,11 @@ private fun CardContent(
             Artwork(state.artworkPath, layout.art, layout.padding)
             Spacer(GlanceModifier.width(layout.padding))
         }
-        if (layout.compact) {
-            // The text may run into the top of the buttons' 48dp targets, where only their slack is, so it's
-            // stacked under the button row rather than handed a share of the height it would be clipped to.
-            Box(modifier = GlanceModifier.defaultWeight().fillMaxHeight()) {
-                TrackText(state, layout, modifier = GlanceModifier.fillMaxWidth())
-                Column(modifier = GlanceModifier.fillMaxSize(), verticalAlignment = Alignment.Bottom) {
-                    ButtonRow(layout.buttons, state, compact = true)
-                }
-            }
-        } else {
-            Column(modifier = GlanceModifier.defaultWeight().fillMaxHeight()) {
-                TrackText(state, layout, modifier = GlanceModifier.fillMaxWidth().defaultWeight())
-                ButtonRow(layout.buttons, state)
-            }
+        // Text above the button row, never stacked with it, so the two can't overlap; compactCardMinHeight
+        // guarantees there's room for both.
+        Column(modifier = GlanceModifier.defaultWeight().fillMaxHeight()) {
+            TrackText(state, layout, modifier = GlanceModifier.fillMaxWidth().defaultWeight())
+            ButtonRow(layout.buttons, state, compact = layout.compact)
         }
     }
 }

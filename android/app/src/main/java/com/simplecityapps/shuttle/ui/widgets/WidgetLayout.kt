@@ -92,10 +92,10 @@ object WidgetDimens {
 
     /**
      * From this height, a one-row widget wide enough for every button beside the art stacks text over them as
-     * a [WidgetLayout.compact] card. The small text's two lines measure about 35dp, which with the 40dp play
-     * circle fits between the paddings of a typical 100dp launcher row.
+     * a [WidgetLayout.compact] card: the same [cardMinHeight] the text and button row need in the regular
+     * card, less the bottom padding the compact play circle's smaller target gives back.
      */
-    val compactCardMinHeight = 96.dp
+    val compactCardMinHeight = cardMinHeight - (buttonSize - compactPlay) / 2
 
     /** From this height, the art sits above a full-width button row. */
     val splitMinHeight = 160.dp

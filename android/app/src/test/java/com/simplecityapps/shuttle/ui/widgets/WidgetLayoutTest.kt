@@ -143,20 +143,21 @@ class WidgetLayoutTest {
 
     @Test
     fun `a four by one widget keeps every button, beneath the text beside the art`() {
-        val size = DpSize(388.dp, 100.dp)
+        val size = DpSize(388.dp, WidgetDimens.compactCardMinHeight)
         val layout = widgetLayoutFor(size)
         layout.mode shouldBe WidgetMode.Card
         layout.compact shouldBe true
-        layout.art shouldBe DpSize(76.dp, 76.dp)
+        layout.art shouldBe DpSize(82.dp, 82.dp)
         layout.textLines shouldBe 2
         layout.buttons shouldBe allButtons
     }
 
     @Test
     fun `a compact card needs the art plus every button across its width`() {
-        compactCardMinWidth(100.dp) shouldBe 352.dp
-        widgetLayoutFor(DpSize(352.dp, 100.dp)).compact shouldBe true
-        val narrower = widgetLayoutFor(DpSize(351.dp, 100.dp))
+        val height = WidgetDimens.compactCardMinHeight
+        compactCardMinWidth(height) shouldBe 358.dp
+        widgetLayoutFor(DpSize(358.dp, height)).compact shouldBe true
+        val narrower = widgetLayoutFor(DpSize(357.dp, height))
         narrower.mode shouldBe WidgetMode.Row
         narrower.buttons shouldBe listOf(Previous, PlayPause, Next)
     }
@@ -169,8 +170,29 @@ class WidgetLayoutTest {
     }
 
     @Test
+    fun `a widget just short of the compact card's height falls back to a single row, not an overlapping card`() {
+        // The 96-99dp band a launcher row can land on: too short for the compact card's text and buttons to
+        // both fit, so it must not be offered a card that would stack them on top of each other.
+        listOf(96.dp, 97.dp, 98.dp, 99.dp).forEach { height ->
+            (height < WidgetDimens.compactCardMinHeight) shouldBe true
+            val layout = widgetLayoutFor(DpSize(388.dp, height))
+            layout.mode shouldBe WidgetMode.Row
+            layout.compact shouldBe false
+        }
+    }
+
+    @Test
+    fun `the compact card's text and button row fit inside its content height without overlapping`() {
+        val layout = widgetLayoutFor(DpSize(388.dp, WidgetDimens.compactCardMinHeight))
+        layout.compact shouldBe true
+        val contentHeight = WidgetDimens.compactCardMinHeight - layout.padding - layout.bottomPadding
+        val textAndButtonsHeight = WidgetDimens.titleLineHeight + WidgetDimens.subtitleLineHeight + WidgetDimens.buttonSize
+        (textAndButtonsHeight <= contentHeight) shouldBe true
+    }
+
+    @Test
     fun `a compact card's button row reaches into the bottom padding by the play circle's slack`() {
-        val layout = widgetLayoutFor(DpSize(388.dp, 100.dp))
+        val layout = widgetLayoutFor(DpSize(388.dp, WidgetDimens.compactCardMinHeight))
         layout.bottomPadding shouldBe WidgetDimens.padding - (WidgetDimens.buttonSize - WidgetDimens.compactPlay) / 2
         // The circle, centred in its target, then stops at the same padding as the art.
         (layout.bottomPadding + (WidgetDimens.buttonSize - WidgetDimens.compactPlay) / 2) shouldBe layout.padding
