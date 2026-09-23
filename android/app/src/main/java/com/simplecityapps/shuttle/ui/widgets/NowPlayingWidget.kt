@@ -411,7 +411,7 @@ private fun TrackText(
     Column(modifier = modifier, verticalAlignment = alignment) {
         if (layout.textLines == 1) {
             // A compact card too short for two lines runs the artist on after the title.
-            val text = if (state.artist.isNotEmpty()) "${state.title} · ${state.artist}" else state.title
+            val text = listOf(state.title, state.artist).filter { it.isNotEmpty() }.joinToString(" · ")
             Text(text = text, maxLines = 1, style = titleStyle(layout.largeText, colors.title))
         } else {
             Text(text = state.title, maxLines = layout.titleLines, style = titleStyle(layout.largeText, colors.title))
