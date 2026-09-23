@@ -57,6 +57,13 @@ answer them manually in [Play Console](https://play.google.com/console).
      because it is currently true: check before reusing this line if that ever changes.
    - Never argue with a reviewer, even an unfair one. Acknowledge and move on.
 
+3a. **File what the reviews report.** For every bug or feature request in a review, search first
+   (`gh issue list --search "<two key words>" --state all --limit 5`). If an issue exists, comment
+   with the review's date and star rating; otherwise `gh issue create` with an `android:` title,
+   label `bug` or `story`, and the date and star rating as the source. Leave out reviewer names and
+   devices; the repo is public. If a draft reply promises something ("it's on the list"), the issue
+   must exist before the reply is posted. List the issue numbers alongside the drafts.
+
 3. **Show the drafts to the owner and stop.** Do not run `reply` or `post-approved` yet. Wait for the
    owner to review the drafts file and flip `approved` to `true` on the ones they want sent (editing
    `replyText` first if they want changes).
