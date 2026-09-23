@@ -224,6 +224,12 @@ constructor(
         }
     }
 
+    /** Clears the saved position, and the throttle's baseline with it, so the next position is saved straight away. */
+    private fun clearProgress() {
+        playbackPreferenceManager.playbackPosition = null
+        lastSavedPosition = null
+    }
+
     // PlaybackWatcherCallback Implementation
 
     override fun onPlaybackStateChanged(playbackState: PlaybackState) {
@@ -235,7 +241,7 @@ constructor(
             if (position != null) {
                 saveProgress(position, force = true)
             } else {
-                playbackPreferenceManager.playbackPosition = null
+                clearProgress()
             }
 
             queueManager.getCurrentItem()?.song?.let { song ->

@@ -197,6 +197,21 @@ class PlaybackInitializerTest {
     }
 
     @Test
+    fun `pausing with no position clears the saved one, so the next progress is saved straight away`() {
+        initializer.init(application)
+        playbackManager.progressFlow.value = PlaybackProgress(position = 65_000, duration = 200_000)
+        preferences.playbackPosition shouldBe 65_000
+
+        // The fake playback manager reports no position.
+        playbackWatcher.onPlaybackStateChanged(PlaybackState.Paused)
+        preferences.playbackPosition shouldBe null
+
+        // Under a second from the cleared position: with no saved position there's nothing to throttle against.
+        playbackManager.progressFlow.value = PlaybackProgress(position = 65_500, duration = 200_000)
+        preferences.playbackPosition shouldBe 65_500
+    }
+
+    @Test
     fun `onTrackEnded saves 0 only when the queue has a next item to move to`() {
         initializer.init(application)
         playbackManager.progressFlow.value = PlaybackProgress(position = 195_000, duration = 200_000)

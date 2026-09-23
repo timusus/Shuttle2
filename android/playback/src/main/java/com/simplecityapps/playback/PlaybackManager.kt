@@ -402,6 +402,11 @@ class PlaybackManager(
         rebindAudioEffectSession(playback)
         publishSwitchedPlaybackState()
 
+        // The load re-anchors at the position it loads at, which the new playback can't report until it
+        // has loaded (an unloaded ExoPlayerPlayback reports 0), so the switch doesn't anchor it before
+        // then. With nothing to load, the new playback is anchored as it is.
+        val pendingLoadBeforeSwitch = loadCoordinator.pendingLoad
+
         // A superseded switch (e.g. a fast local -> Cast -> local toggle) can still complete its load,
         // but only the latest load's completion is delivered, so its rebind, seek and play can't act
         // on whichever playback is active by then.
@@ -416,18 +421,21 @@ class PlaybackManager(
                 }
             }
         }
+        if (loadCoordinator.pendingLoad === pendingLoadBeforeSwitch) {
+            reanchor()
+        }
     }
 
     /**
-     * Publishes the newly active playback's state and position anchor, which it may never report itself (a fresh
-     * playback starts paused without saying so), and starts or stops the progress ticker to match.
-     * Progress is left alone: the old playback's last position is still the best known one until
-     * the new playback loads at it, and it's what gets persisted as the position to resume from.
+     * Publishes the newly active playback's state, which it may never report itself (a fresh playback
+     * starts paused without saying so), and starts or stops the progress ticker to match. Neither the
+     * position anchor nor progress moves here: the old playback's last position is still the best known
+     * one until the new playback loads at it, and it's what gets persisted as the position to resume
+     * from. The switch's load re-anchors, at that position.
      */
     private fun publishSwitchedPlaybackState() {
         val playbackState = playback.playBackState()
         _playbackStateFlow.value = playbackState
-        reanchor()
         monitorProgress(playbackState is PlaybackState.Loading || playbackState is PlaybackState.Playing)
     }
 

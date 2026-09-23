@@ -170,6 +170,38 @@ class PlaybackManagerPositionAnchorTest {
     }
 
     @Test
+    fun `a playback switch never anchors at the unloaded playback's position`() = runTest {
+        queueManager.setQueue(listOf(testSong(1)))
+        createPlaybackManager()
+        enter(PlaybackState.Playing)
+        // An unloaded ExoPlayerPlayback reports 0 until it has loaded at the switch's position.
+        val newPlayback =
+            FakePlayback("B").apply {
+                progressMs = 0
+            }
+        anchors.clear()
+
+        playbackManager.switchToPlayback(newPlayback)
+
+        anchors.map { it.positionMs } shouldBe listOf(1_000)
+    }
+
+    @Test
+    fun `a playback switch with nothing to load anchors the new playback as it is`() = runTest {
+        createPlaybackManager()
+        enter(PlaybackState.Playing)
+        val newPlayback =
+            FakePlayback("B").apply {
+                progressMs = 0
+            }
+        now = 14_000
+
+        playbackManager.switchToPlayback(newPlayback)
+
+        playbackManager.positionAnchorFlow.value shouldBe anchor(PlaybackState.Paused, positionMs = 0, elapsedRealtimeMs = 14_000)
+    }
+
+    @Test
     fun `skipToNext anchors at the new track's start before it loads`() = runTest {
         queueManager.setQueue(listOf(testSong(1), testSong(2)))
         playback.progressMs = 170_000
