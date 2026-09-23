@@ -42,7 +42,7 @@ class PlaybackManager(
      * playback's state. Unlike [playbackState], it doesn't change on [switchToPlayback] until the
      * new playback reports a state.
      */
-    val playbackStateFlow: StateFlow<PlaybackState> = _playbackStateFlow.asStateFlow()
+    override val playbackStateFlow: StateFlow<PlaybackState> = _playbackStateFlow.asStateFlow()
 
     private val _progressFlow = MutableStateFlow<PlaybackProgress?>(null)
 
@@ -51,7 +51,7 @@ class PlaybackManager(
      * dispatched; null until the first one. Whether a change came from a user seek is an event, so
      * it stays on the callback.
      */
-    val progressFlow: StateFlow<PlaybackProgress?> = _progressFlow.asStateFlow()
+    override val progressFlow: StateFlow<PlaybackProgress?> = _progressFlow.asStateFlow()
 
     private val audioSessionId = audioManager?.generateAudioSessionId() ?: -1
 

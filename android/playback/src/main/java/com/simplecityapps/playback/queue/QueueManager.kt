@@ -49,7 +49,7 @@ class QueueManager(
      * The shuffle mode. Backs [getShuffleMode] directly, so the two can't disagree; it changes just
      * before [QueueChangeCallback.onShuffleChanged] is dispatched.
      */
-    val shuffleModeFlow: StateFlow<ShuffleMode> = _shuffleModeFlow.asStateFlow()
+    override val shuffleModeFlow: StateFlow<ShuffleMode> = _shuffleModeFlow.asStateFlow()
 
     // Renamed accessors: the defaults would clash with getShuffleMode()/setShuffleMode() on the JVM.
     private var shuffleMode: ShuffleMode
@@ -67,7 +67,7 @@ class QueueManager(
      * The repeat mode. Backs [getRepeatMode] directly, so the two can't disagree; it changes just
      * before [QueueChangeCallback.onRepeatChanged] is dispatched.
      */
-    val repeatModeFlow: StateFlow<RepeatMode> = _repeatModeFlow.asStateFlow()
+    override val repeatModeFlow: StateFlow<RepeatMode> = _repeatModeFlow.asStateFlow()
 
     // Renamed accessors: the defaults would clash with getRepeatMode()/setRepeatMode() on the JVM.
     private var repeatMode: RepeatMode
@@ -87,17 +87,22 @@ class QueueManager(
 
     private var queueStateVersion = 0L
 
+    private var queueContentVersion = 0L
+
+    private var lastQueueChangeReason = QueueChangeCallback.QueueChangeReason.Unknown
+
     /**
      * The queue as the active shuffle mode presents it, with the current item and position.
      * Republished just before every [QueueChangeCallback.onQueueChanged] and
      * [QueueChangeCallback.onQueuePositionChanged] dispatch, and whenever the shuffle mode or
-     * [clear] changes what [getQueue] or [getCurrentItem] return.
+     * [clear] changes what [getQueue] or [getCurrentItem] return, and when [hasRestoredQueue] is set.
      */
-    val queueStateFlow: StateFlow<QueueState> = _queueState.asStateFlow()
+    override val queueStateFlow: StateFlow<QueueState> = _queueState.asStateFlow()
 
     override var hasRestoredQueue = false
         set(value) {
             field = value
+            publishQueueState()
             if (value) {
                 queueWatcher.onQueueRestored()
             }
@@ -392,6 +397,8 @@ class QueueManager(
     }
 
     private fun notifyQueueChanged(reason: QueueChangeCallback.QueueChangeReason = QueueChangeCallback.QueueChangeReason.Unknown) {
+        queueContentVersion++
+        lastQueueChangeReason = reason
         publishQueueState()
         queueWatcher.onQueueChanged(reason)
     }
@@ -415,7 +422,10 @@ class QueueManager(
             items = getQueue().toList(),
             currentItem = currentItem,
             currentPosition = getCurrentPosition(),
-            version = queueStateVersion
+            version = queueStateVersion,
+            contentVersion = queueContentVersion,
+            lastChangeReason = lastQueueChangeReason,
+            isRestored = hasRestoredQueue
         )
     }
 

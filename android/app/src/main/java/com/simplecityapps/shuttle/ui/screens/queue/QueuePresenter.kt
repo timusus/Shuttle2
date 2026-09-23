@@ -6,7 +6,7 @@ import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueOperations
-import com.simplecityapps.playback.queue.QueueWatcher
+import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
@@ -71,23 +71,15 @@ class QueuePresenter
 constructor(
     private val queueManager: QueueOperations,
     private val playbackManager: PlaybackOperations,
-    private val queueWatcher: QueueWatcher,
     private val songRepository: SongRepository
 ) : BasePresenter<QueueContract.View>(),
-    QueueContract.Presenter,
-    QueueChangeCallback {
+    QueueContract.Presenter {
     override fun bindView(view: QueueContract.View) {
         super.bindView(view)
 
-        queueWatcher.addCallback(this)
         updateQueue(true)
         updateQueuePosition(true)
-    }
-
-    override fun unbindView() {
-        queueWatcher.removeCallback(this)
-
-        super.unbindView()
+        collectChanges(queueManager.queueStateFlow, ::onQueueStateChanged)
     }
 
     private fun updateQueue(forceClear: Boolean) {
@@ -167,25 +159,25 @@ constructor(
         }
     }
 
-    // QueueChangeCallback Implementation
+    // Queue state
 
-    override fun onQueueRestored() {
-        updateQueue(true)
-        updateQueuePosition(true)
-        updateMiniPlayerVisibility(queueManager.getQueue().isEmpty())
-    }
-
-    override fun onQueueChanged(reason: QueueChangeCallback.QueueChangeReason) {
-        updateQueue(reason != QueueChangeCallback.QueueChangeReason.Move)
-        updateQueuePosition(reason != QueueChangeCallback.QueueChangeReason.Move)
-        updateMiniPlayerVisibility(queueManager.getQueue().isEmpty())
-    }
-
-    override fun onQueuePositionChanged(
-        oldPosition: Int?,
-        newPosition: Int?
+    /**
+     * A restore or a queue change rebuilds the list and scrolls to the current item, unless the change
+     * was a user's drag, which the list already shows. A position change only refreshes the current item.
+     */
+    private fun onQueueStateChanged(
+        previous: QueueState,
+        current: QueueState
     ) {
-        updateQueue(false) // Currently required in order to update current item
-        updateQueuePosition(false)
+        val restored = current.isRestored && !previous.isRestored
+        if (restored || current.contentVersion != previous.contentVersion) {
+            val force = restored || current.lastChangeReason != QueueChangeCallback.QueueChangeReason.Move
+            updateQueue(force)
+            updateQueuePosition(force)
+            updateMiniPlayerVisibility(current.items.isEmpty())
+        } else if (current.currentItem != previous.currentItem || current.currentPosition != previous.currentPosition) {
+            updateQueue(false) // Currently required in order to update current item
+            updateQueuePosition(false)
+        }
     }
 }

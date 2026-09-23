@@ -12,7 +12,6 @@ import com.simplecityapps.fakes.FakePlaybackManager
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.fakes.FakeSongRepository
-import com.simplecityapps.fakes.createTestQueueWatcher
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
 import com.simplecityapps.shuttle.ui.common.playback.ShuffleAlbums
@@ -38,7 +37,7 @@ class AlbumArtistDetailIntegrationTest {
     private val fakeAlbumRepository = FakeAlbumRepository()
     private val fakeSongRepository = FakeSongRepository()
     private val fakePlaylistRepository = FakePlaylistRepository()
-    private val testQueueWatcher = createTestQueueWatcher()
+    private val fakeQueueManager = FakeQueueManager()
 
     private val robot = AlbumArtistDetailRobot(composeTestRule)
 
@@ -131,7 +130,7 @@ class AlbumArtistDetailIntegrationTest {
         albumRepository = fakeAlbumRepository,
         songRepository = songRepository,
         playbackManager = FakePlaybackManager(),
-        queueManager = FakeQueueManager(),
+        queueManager = fakeQueueManager,
         playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
         shuffleSongs = ShuffleSongs(FakePlaybackManager()),
         shuffleAlbums = ShuffleAlbums(FakeQueueManager(), FakePlaybackManager()),
@@ -144,6 +143,5 @@ class AlbumArtistDetailIntegrationTest {
             ignorePlaylistDuplicates = { false },
         ),
         playlistRepository = fakePlaylistRepository,
-        queueWatcher = testQueueWatcher,
     )
 }

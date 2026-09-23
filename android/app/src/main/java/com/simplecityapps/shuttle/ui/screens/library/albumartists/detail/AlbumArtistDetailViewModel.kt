@@ -11,9 +11,7 @@ import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackOperations
-import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueOperations
-import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.model.AlbumGroupKey
@@ -27,7 +25,6 @@ import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
-import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,10 +32,11 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -56,21 +54,13 @@ class AlbumArtistDetailViewModel @Inject constructor(
     private val shuffleAlbums: ShuffleAlbums,
     private val addToPlaylistUseCase: AddToPlaylist,
     private val playlistRepository: PlaylistRepository,
-    queueWatcher: QueueWatcher,
 ) : ViewModel() {
 
     val albumArtist: AlbumArtist = AlbumArtistDetailFragmentArgs.fromSavedStateHandle(savedStateHandle).albumArtist
 
-    private val currentSong: Flow<Song?> = callbackFlow {
-        val callback = object : QueueChangeCallback {
-            override fun onQueuePositionChanged(oldPosition: Int?, newPosition: Int?) {
-                trySend(queueManager.getCurrentItem()?.song)
-            }
-        }
-        trySend(queueManager.getCurrentItem()?.song)
-        queueWatcher.addCallback(callback)
-        awaitClose { queueWatcher.removeCallback(callback) }
-    }
+    private val currentSong: Flow<Song?> = queueManager.queueStateFlow
+        .map { queueState -> queueState.currentItem?.song }
+        .distinctUntilChanged()
 
     private val expandedAlbums = MutableStateFlow<Set<AlbumGroupKey>>(emptySet())
 

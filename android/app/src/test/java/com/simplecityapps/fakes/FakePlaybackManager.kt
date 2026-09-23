@@ -2,11 +2,16 @@ package com.simplecityapps.fakes
 
 import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.PlaybackOperations
+import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.shuttle.model.Song
+import kotlinx.coroutines.flow.MutableStateFlow
 
 class FakePlaybackManager : PlaybackOperations {
+    override val playbackStateFlow = MutableStateFlow<PlaybackState>(PlaybackState.Paused)
+    override val progressFlow = MutableStateFlow<PlaybackProgress?>(null)
+
     var addedToQueue = mutableListOf<Song>()
     var playedNext = mutableListOf<Song>()
     var shuffled = mutableListOf<Song>()
@@ -39,7 +44,7 @@ class FakePlaybackManager : PlaybackOperations {
     }
 
     override fun seekTo(position: Int) {}
-    override fun playbackState(): PlaybackState = PlaybackState.Paused
+    override fun playbackState(): PlaybackState = playbackStateFlow.value
     override fun getProgress(): Int? = null
     override fun getDuration(): Int? = null
     override fun getPlaybackSpeed(): Float = 1.0f

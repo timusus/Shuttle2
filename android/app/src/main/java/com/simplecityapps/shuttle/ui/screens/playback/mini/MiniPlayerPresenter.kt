@@ -1,12 +1,7 @@
 package com.simplecityapps.shuttle.ui.screens.playback.mini
 
 import com.simplecityapps.playback.PlaybackOperations
-import com.simplecityapps.playback.PlaybackState
-import com.simplecityapps.playback.PlaybackWatcher
-import com.simplecityapps.playback.PlaybackWatcherCallback
-import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueOperations
-import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import javax.inject.Inject
 import timber.log.Timber
@@ -15,33 +10,26 @@ class MiniPlayerPresenter
 @Inject
 constructor(
     private val playbackManager: PlaybackOperations,
-    private val playbackWatcher: PlaybackWatcher,
-    private val queueManager: QueueOperations,
-    private val queueWatcher: QueueWatcher
+    private val queueManager: QueueOperations
 ) : BasePresenter<MiniPlayerContract.View>(),
-    MiniPlayerContract.Presenter,
-    PlaybackWatcherCallback,
-    QueueChangeCallback {
+    MiniPlayerContract.Presenter {
     override fun bindView(view: MiniPlayerContract.View) {
         super.bindView(view)
 
-        playbackWatcher.addCallback(this)
-        queueWatcher.addCallback(this)
-
         // One time update of all UI components
         updateProgress()
-        onQueueChanged()
-        onQueuePositionChanged(null, queueManager.getCurrentPosition())
-        onPlaybackStateChanged(playbackManager.playbackState())
-        onShuffleChanged(queueManager.getShuffleMode())
-        onRepeatChanged(queueManager.getRepeatMode())
-    }
+        view.setCurrentSong(queueManager.getCurrentItem()?.song)
+        view.setPlaybackState(playbackManager.playbackState())
 
-    override fun unbindView() {
-        playbackWatcher.removeCallback(this)
-        queueWatcher.removeCallback(this)
-
-        super.unbindView()
+        collectChanges(playbackManager.playbackStateFlow) { _, playbackState -> this.view?.setPlaybackState(playbackState) }
+        collectChanges(playbackManager.progressFlow) { _, progress ->
+            progress?.let { this.view?.setProgress(progress.position, progress.duration) }
+        }
+        collectChanges(queueManager.queueStateFlow) { previous, current ->
+            if (current.currentItem != previous.currentItem || current.currentPosition != previous.currentPosition) {
+                this.view?.setCurrentSong(current.currentItem?.song)
+            }
+        }
     }
 
     override fun togglePlayback() {
@@ -57,31 +45,6 @@ constructor(
         playbackManager.getProgress()?.let { position ->
             playbackManager.seekTo(position + seconds * 1000)
         }
-    }
-
-    // PlaybackWatcherCallback Implementation
-
-    override fun onPlaybackStateChanged(playbackState: PlaybackState) {
-        view?.setPlaybackState(playbackState)
-    }
-
-    // PlaybackManager.ProgressCallback
-
-    override fun onProgressChanged(
-        position: Int,
-        duration: Int,
-        fromUser: Boolean
-    ) {
-        view?.setProgress(position, duration)
-    }
-
-    // QueueChangeCallback Implementation
-
-    override fun onQueuePositionChanged(
-        oldPosition: Int?,
-        newPosition: Int?
-    ) {
-        view?.setCurrentSong(queueManager.getCurrentItem()?.song)
     }
 
     // Private

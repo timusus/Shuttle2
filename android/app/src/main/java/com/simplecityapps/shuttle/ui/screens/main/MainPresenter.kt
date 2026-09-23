@@ -2,9 +2,7 @@ package com.simplecityapps.shuttle.ui.screens.main
 
 import com.google.firebase.Firebase
 import com.google.firebase.crashlytics.crashlytics
-import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueOperations
-import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.BuildConfig
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
@@ -40,18 +38,19 @@ class MainPresenter
 @Inject
 constructor(
     private val queueManager: QueueOperations,
-    private val queueWatcher: QueueWatcher,
     private val preferenceManager: GeneralPreferenceManager,
     private val trialManager: TrialManager
 ) : BasePresenter<MainContract.View>(),
-    MainContract.Presenter,
-    QueueChangeCallback {
+    MainContract.Presenter {
     override fun bindView(view: MainContract.View) {
         super.bindView(view)
 
-        queueWatcher.addCallback(this)
-
         view.toggleSheet(visible = queueManager.getSize() != 0)
+        collectChanges(queueManager.queueStateFlow) { previous, current ->
+            if (current.contentVersion != previous.contentVersion) {
+                this.view?.toggleSheet(visible = current.items.isNotEmpty())
+            }
+        }
 
         if (preferenceManager.lastViewedChangelogVersion != BuildConfig.VERSION_NAME && preferenceManager.showChangelogOnLaunch) {
             view.showChangelog()
@@ -100,18 +99,6 @@ constructor(
                 this.view?.launchReviewFlow()
             }
         }
-    }
-
-    override fun unbindView() {
-        super.unbindView()
-
-        queueWatcher.removeCallback(this)
-    }
-
-    // QueueChangeCallback Implementation
-
-    override fun onQueueChanged(reason: QueueChangeCallback.QueueChangeReason) {
-        view?.toggleSheet(visible = queueManager.getSize() != 0)
     }
 
     override fun onCrashReportingToggled(enabled: Boolean) {

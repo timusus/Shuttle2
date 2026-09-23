@@ -8,13 +8,10 @@ import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackState
-import com.simplecityapps.playback.PlaybackWatcher
-import com.simplecityapps.playback.PlaybackWatcherCallback
-import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueOperations
-import com.simplecityapps.playback.queue.QueueWatcher
+import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
@@ -27,40 +24,38 @@ class PlaybackPresenter
 @Inject
 constructor(
     private val playbackManager: PlaybackOperations,
-    private val playbackWatcher: PlaybackWatcher,
     private val queueManager: QueueOperations,
-    private val queueWatcher: QueueWatcher,
     private val playlistRepository: PlaylistRepository,
     private val albumRepository: AlbumRepository,
     private val albumArtistRepository: AlbumArtistRepository,
     @ApplicationContext private val context: Context
 ) : BasePresenter<PlaybackContract.View>(),
-    PlaybackContract.Presenter,
-    QueueChangeCallback,
-    PlaybackWatcherCallback {
+    PlaybackContract.Presenter {
     private var favoriteUpdater: Job? = null
 
     override fun bindView(view: PlaybackContract.View) {
         super.bindView(view)
-
-        playbackWatcher.addCallback(this)
-        queueWatcher.addCallback(this)
 
         // One time update of all UI components
         updateProgress()
         updateShuffleMode(queueManager.getShuffleMode())
         updateRepeatMode(queueManager.getRepeatMode())
         updateQueue(queueManager.getQueue())
-        updateQueuePosition(queueManager.getCurrentPosition())
+        updateQueuePosition(queueManager.getCurrentPosition(), queueManager.getSize())
         updateCurrentSong(queueManager.getCurrentItem()?.song)
         updatePlaybackState(playbackManager.playbackState())
         updateFavorite()
+
+        collectChanges(playbackManager.playbackStateFlow) { _, playbackState -> updatePlaybackState(playbackState) }
+        collectChanges(playbackManager.progressFlow) { _, progress ->
+            progress?.let { view?.setProgress(progress.position, progress.duration) }
+        }
+        collectChanges(queueManager.queueStateFlow, ::onQueueStateChanged)
+        collectChanges(queueManager.shuffleModeFlow) { _, shuffleMode -> updateShuffleMode(shuffleMode) }
+        collectChanges(queueManager.repeatModeFlow) { _, repeatMode -> updateRepeatMode(repeatMode) }
     }
 
     override fun unbindView() {
-        playbackWatcher.removeCallback(this)
-        queueWatcher.removeCallback(this)
-
         updateFavorite()
 
         super.unbindView()
@@ -70,11 +65,28 @@ constructor(
 
     private fun updateProgress() {
         queueManager.getCurrentItem()?.song?.let { currentSong ->
-            onProgressChanged(
-                position = playbackManager.getProgress() ?: 0,
-                duration = playbackManager.getDuration() ?: currentSong.duration,
-                fromUser = false
+            view?.setProgress(
+                playbackManager.getProgress() ?: 0,
+                playbackManager.getDuration() ?: currentSong.duration
             )
+        }
+    }
+
+    private fun onQueueStateChanged(
+        previous: QueueState,
+        current: QueueState
+    ) {
+        val restored = current.isRestored && !previous.isRestored
+        if (restored || current.contentVersion != previous.contentVersion) {
+            updateQueue(current.items)
+        }
+        val positionChanged = current.currentItem != previous.currentItem || current.currentPosition != previous.currentPosition
+        if (restored || positionChanged) {
+            updateCurrentSong(current.currentItem?.song)
+            updateQueuePosition(current.currentPosition, current.items.size)
+        }
+        if (positionChanged) {
+            updateFavorite()
         }
     }
 
@@ -100,8 +112,11 @@ constructor(
         view?.setQueue(queue)
     }
 
-    private fun updateQueuePosition(newPosition: Int?) {
-        view?.setQueuePosition(newPosition, queueManager.getSize())
+    private fun updateQueuePosition(
+        newPosition: Int?,
+        size: Int
+    ) {
+        view?.setQueuePosition(newPosition, size)
     }
 
     private fun updateCurrentSong(song: com.simplecityapps.shuttle.model.Song?) {
@@ -229,50 +244,5 @@ constructor(
 
     override fun clearQueue() {
         playbackManager.clearQueue()
-    }
-
-    // PlaybackWatcherCallback Implementation
-
-    override fun onPlaybackStateChanged(playbackState: PlaybackState) {
-        updatePlaybackState(playbackState)
-    }
-
-    // PlaybackManager.ProgressCallback
-
-    override fun onProgressChanged(
-        position: Int,
-        duration: Int,
-        fromUser: Boolean
-    ) {
-        view?.setProgress(position, duration)
-    }
-
-    // QueueChangeCallback Implementation
-
-    override fun onQueueRestored() {
-        updateQueue(queueManager.getQueue())
-        updateCurrentSong(queueManager.getCurrentItem()?.song)
-        updateQueuePosition(queueManager.getCurrentPosition())
-    }
-
-    override fun onQueueChanged(reason: QueueChangeCallback.QueueChangeReason) {
-        updateQueue(queueManager.getQueue())
-    }
-
-    override fun onQueuePositionChanged(
-        oldPosition: Int?,
-        newPosition: Int?
-    ) {
-        updateCurrentSong(queueManager.getCurrentItem()?.song)
-        updateQueuePosition(newPosition)
-        updateFavorite()
-    }
-
-    override fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
-        updateShuffleMode(shuffleMode)
-    }
-
-    override fun onRepeatChanged(repeatMode: QueueManager.RepeatMode) {
-        updateRepeatMode(repeatMode)
     }
 }

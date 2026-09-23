@@ -52,11 +52,11 @@ class QueueManagerStateFlowTest {
 
     private fun checkFlowMatchesGetters(callback: String) {
         val expected =
-            QueueState(
+            queueManager.queueStateFlow.value.copy(
                 items = queueManager.getQueue().toList(),
                 currentItem = queueManager.getCurrentItem(),
                 currentPosition = queueManager.getCurrentPosition(),
-                version = queueManager.queueStateFlow.value.version
+                isRestored = queueManager.hasRestoredQueue
             )
         if (queueManager.queueStateFlow.value != expected) mismatches += callback
     }
@@ -213,6 +213,45 @@ class QueueManagerStateFlowTest {
         queueManager.setRepeatMode(QueueManager.RepeatMode.One)
 
         events shouldBe listOf("repeatChanged All", "repeatChanged One")
+        mismatches shouldBe emptyList()
+    }
+
+    @Test
+    fun `a queue change bumps the content version and records its reason, a position change does not`() = runTest {
+        setQueueOf(1, 2, 3)
+        val afterSet = queueManager.queueStateFlow.value
+
+        queueManager.skipTo(1)
+        val afterSkip = queueManager.queueStateFlow.value
+        afterSkip.contentVersion shouldBe afterSet.contentVersion
+
+        queueManager.move(2, 0)
+        val afterMove = queueManager.queueStateFlow.value
+        afterMove.contentVersion shouldBe afterSet.contentVersion + 1
+        afterMove.lastChangeReason shouldBe QueueChangeCallback.QueueChangeReason.Move
+
+        queueManager.addToQueue(listOf(testSong(4)))
+        val afterAdd = queueManager.queueStateFlow.value
+        afterAdd.contentVersion shouldBe afterMove.contentVersion + 1
+        afterAdd.lastChangeReason shouldBe QueueChangeCallback.QueueChangeReason.Unknown
+    }
+
+    @Test
+    fun `restoring the queue publishes it as restored before the callback fires`() = runTest {
+        var restoredWhenNotified: Boolean? = null
+        queueWatcher.addCallback(
+            object : QueueChangeCallback {
+                override fun onQueueRestored() {
+                    restoredWhenNotified = queueManager.queueStateFlow.value.isRestored
+                }
+            }
+        )
+        setQueueOf(1, 2)
+        queueManager.queueStateFlow.value.isRestored shouldBe false
+
+        queueManager.hasRestoredQueue = true
+
+        restoredWhenNotified shouldBe true
         mismatches shouldBe emptyList()
     }
 }

@@ -10,13 +10,15 @@ import com.simplecityapps.fakes.FakePlaybackManager
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.fakes.FakeSongRepository
-import com.simplecityapps.fakes.createTestQueueWatcher
+import com.simplecityapps.playback.queue.QueueState
+import com.simplecityapps.playback.queue.toQueueItem
 import com.simplecityapps.shuttle.model.Album
 import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
 import com.simplecityapps.shuttle.ui.common.playback.ShuffleSongs
 import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
 import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
 import com.simplecityapps.testing.MainDispatcherRule
+import io.kotest.matchers.shouldBe
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -34,7 +36,7 @@ class AlbumDetailIntegrationTest {
     private val fakeSongRepository = FakeSongRepository()
     private val fakeAlbumRepository = FakeAlbumRepository()
     private val fakePlaylistRepository = FakePlaylistRepository()
-    private val testQueueWatcher = createTestQueueWatcher()
+    private val fakeQueueManager = FakeQueueManager()
 
     private val robot = AlbumDetailRobot(composeTestRule)
 
@@ -81,6 +83,27 @@ class AlbumDetailIntegrationTest {
 
     // endregion
 
+    // region Current song
+
+    @Test
+    fun `current song follows the queue's current item`() {
+        val song = createSong(id = 1, name = "Come Together")
+        fakeSongRepository.setSongs(listOf(song, createSong(id = 2, name = "Something")))
+        fakeAlbumRepository.setAlbums(listOf(testAlbum))
+        val viewModel = createViewModel()
+        robot.setContentWithViewModel(viewModel)
+        composeTestRule.waitForIdle()
+        viewModel.uiState.value.currentSong shouldBe null
+
+        val queueItem = song.toQueueItem(isCurrent = true)
+        fakeQueueManager.queueStateFlow.value = QueueState(items = listOf(queueItem), currentItem = queueItem, currentPosition = 0)
+        composeTestRule.waitForIdle()
+
+        viewModel.uiState.value.currentSong shouldBe song
+    }
+
+    // endregion
+
     private fun createViewModel(
         album: Album = testAlbum,
         songRepository: FakeSongRepository = fakeSongRepository,
@@ -89,7 +112,7 @@ class AlbumDetailIntegrationTest {
         songRepository = songRepository,
         albumRepository = fakeAlbumRepository,
         playbackManager = FakePlaybackManager(),
-        queueManager = FakeQueueManager(),
+        queueManager = fakeQueueManager,
         playSongs = PlaySongs(FakeQueueManager(), FakePlaybackManager()),
         shuffleSongs = ShuffleSongs(FakePlaybackManager()),
         addToPlaylistUseCase = AddToPlaylist(
@@ -101,6 +124,5 @@ class AlbumDetailIntegrationTest {
             ignorePlaylistDuplicates = { false },
         ),
         playlistRepository = fakePlaylistRepository,
-        queueWatcher = testQueueWatcher,
     )
 }

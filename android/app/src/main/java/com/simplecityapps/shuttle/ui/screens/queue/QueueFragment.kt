@@ -10,7 +10,6 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.Toolbar
-import androidx.core.view.children
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -22,7 +21,6 @@ import com.simplecityapps.adapter.RecyclerListener
 import com.simplecityapps.networking.retrofit.NetworkResult
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackState
-import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.recyclerview_fastscroll.views.FastScrollRecyclerView
 import com.simplecityapps.shuttle.R
@@ -75,9 +73,6 @@ class QueueFragment :
 
     @Inject
     lateinit var playlistMenuPresenter: PlaylistMenuPresenter
-
-    @Inject
-    lateinit var playbackWatcher: PlaybackWatcher
 
     @Inject
     lateinit var playbackManager: PlaybackOperations
@@ -213,13 +208,6 @@ class QueueFragment :
         itemTouchHelper.attachToRecyclerView(null)
         view.findParentMultiSheetView()?.removeSheetStateChangeListener(sheetStateChangeListener)
 
-        recyclerView?.children
-            ?.map { child -> recyclerView?.getChildViewHolder(child) }
-            ?.filterIsInstance<QueueBinder.ViewHolder>()
-            ?.forEach { viewHolder ->
-                playbackWatcher.removeCallback(viewHolder)
-            }
-
         adapter = null
         recyclerView = null
 
@@ -247,7 +235,7 @@ class QueueFragment :
         progress: Float,
         playbackState: PlaybackState
     ) {
-        val queueItems = queue.map { queueItem -> QueueBinder(queueItem, playbackState, progress, imageLoader, playbackManager, playbackWatcher, queueBinderListener) }
+        val queueItems = queue.map { queueItem -> QueueBinder(queueItem, playbackState, progress, imageLoader, playbackManager, queueBinderListener) }
         adapter?.update(
             newList = queueItems
         ) {

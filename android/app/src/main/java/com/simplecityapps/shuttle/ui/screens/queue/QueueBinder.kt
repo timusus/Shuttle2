@@ -9,12 +9,12 @@ import android.widget.TextView
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
+import androidx.lifecycle.findViewTreeLifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.adapter.ViewBinder
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackState
-import com.simplecityapps.playback.PlaybackWatcher
-import com.simplecityapps.playback.PlaybackWatcherCallback
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.ui.common.phrase.joinSafely
@@ -26,6 +26,11 @@ import com.simplecityapps.shuttle.ui.common.view.PlayStateImageButton
 import com.simplecityapps.shuttle.ui.common.view.ProgressView
 import com.simplecityapps.shuttle.ui.common.view.increaseTouchableArea
 import com.squareup.phrase.ListPhrase
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.launch
 
 class QueueBinder(
     val queueItem: QueueItem,
@@ -33,7 +38,6 @@ class QueueBinder(
     var progress: Float,
     val imageLoader: ArtworkImageLoader,
     val playbackManager: PlaybackOperations,
-    val playbackWatcher: PlaybackWatcher,
     val listener: Listener
 ) : ViewBinder,
     SectionViewBinder {
@@ -72,9 +76,7 @@ class QueueBinder(
         return true
     }
 
-    class ViewHolder(itemView: View) :
-        ViewBinder.ViewHolder<QueueBinder>(itemView),
-        PlaybackWatcherCallback {
+    class ViewHolder(itemView: View) : ViewBinder.ViewHolder<QueueBinder>(itemView) {
         private val title: TextView = itemView.findViewById(R.id.title)
         private val subtitle: TextView = itemView.findViewById(R.id.subtitle)
         private val tertiary: TextView = itemView.findViewById(R.id.tertiary)
@@ -82,6 +84,8 @@ class QueueBinder(
         private val progressView: ProgressView = itemView.findViewById(R.id.progressView)
         private val playStateImageButton: PlayStateImageButton = itemView.findViewById(R.id.playPauseButton)
         private val dragHandle: ImageView = itemView.findViewById(R.id.dragHandle)
+
+        private var playbackJob: Job? = null
 
         init {
             itemView.setOnClickListener {
@@ -136,10 +140,10 @@ class QueueBinder(
             progressView.setProgress((viewBinder.playbackManager.getProgress()?.toFloat() ?: 0f) / viewBinder.queueItem.song.duration.toFloat())
             playStateImageButton.state = viewBinder.playbackManager.playbackState()
 
-            viewBinder.playbackWatcher.removeCallback(this)
+            stopObservingPlayback()
 
             if (viewBinder.queueItem.isCurrent) {
-                viewBinder.playbackWatcher.addCallback(this)
+                observePlayback()
                 itemView.isActivated = true
                 artworkImageView.isInvisible = true
                 playStateImageButton.isVisible = true
@@ -156,24 +160,40 @@ class QueueBinder(
 
         override fun onAttach() {
             if (viewBinder?.queueItem?.isCurrent == true) {
-                viewBinder?.playbackWatcher?.addCallback(this)
+                observePlayback()
             }
         }
 
         override fun onDetach() {
-            viewBinder?.playbackWatcher?.removeCallback(this)
+            stopObservingPlayback()
         }
 
-        override fun onProgressChanged(
-            position: Int,
-            duration: Int,
-            fromUser: Boolean
-        ) {
-            progressView.setProgress((position / duration.toFloat()))
+        /**
+         * Follows playback progress and state while the current item is attached. [bind] has already
+         * rendered the values current now, so only later changes are applied (the flows replay their
+         * value on collection). Until the view is attached there's no lifecycle to scope to; [onAttach]
+         * starts it then.
+         */
+        private fun observePlayback() {
+            val viewBinder = viewBinder ?: return
+            val lifecycleOwner = itemView.findViewTreeLifecycleOwner() ?: return
+            stopObservingPlayback()
+            playbackJob =
+                lifecycleOwner.lifecycleScope.launch(start = CoroutineStart.UNDISPATCHED) {
+                    launch(start = CoroutineStart.UNDISPATCHED) {
+                        viewBinder.playbackManager.progressFlow.drop(1).filterNotNull().collect { progress ->
+                            progressView.setProgress((progress.position / progress.duration.toFloat()))
+                        }
+                    }
+                    viewBinder.playbackManager.playbackStateFlow.drop(1).collect { playbackState ->
+                        playStateImageButton.state = playbackState
+                    }
+                }
         }
 
-        override fun onPlaybackStateChanged(playbackState: PlaybackState) {
-            playStateImageButton.state = playbackState
+        private fun stopObservingPlayback() {
+            playbackJob?.cancel()
+            playbackJob = null
         }
     }
 }

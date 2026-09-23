@@ -2,8 +2,15 @@ package com.simplecityapps.playback
 
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.shuttle.model.Song
+import kotlinx.coroutines.flow.StateFlow
 
 interface PlaybackOperations {
+    /** The last playback state the active [Playback] reported. */
+    val playbackStateFlow: StateFlow<PlaybackState>
+
+    /** The last published progress; null until the first. Whether a change came from a user seek stays on the callback. */
+    val progressFlow: StateFlow<PlaybackProgress?>
+
     fun load(seekPosition: Int? = null, completion: (Result<Boolean>) -> Unit)
     fun play(attempt: Int = 1)
     fun pause()

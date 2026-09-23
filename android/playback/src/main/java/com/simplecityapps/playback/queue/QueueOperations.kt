@@ -1,8 +1,14 @@
 package com.simplecityapps.playback.queue
 
 import com.simplecityapps.shuttle.model.Song
+import kotlinx.coroutines.flow.StateFlow
 
 interface QueueOperations {
+    /** The queue as the active shuffle mode presents it, with the current item and position. */
+    val queueStateFlow: StateFlow<QueueState>
+    val shuffleModeFlow: StateFlow<QueueManager.ShuffleMode>
+    val repeatModeFlow: StateFlow<QueueManager.RepeatMode>
+
     suspend fun setQueue(songs: List<Song>, shuffleSongs: List<Song>? = null, position: Int = 0): Boolean
     fun getQueue(): List<QueueItem>
     fun getQueue(shuffleMode: QueueManager.ShuffleMode): List<QueueItem>
