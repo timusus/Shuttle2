@@ -47,7 +47,7 @@ answer them manually in [Play Console](https://play.google.com/console).
    - No em dashes.
    - No promises of dates ("next release", "next week", etc.) — commit to nothing time-bound.
    - Thank the reviewer for praise in positive reviews.
-   - For bug reports, ask them to email tim@shuttlemusicplayer.app with details (device, steps to
+   - For bug reports, ask them to email developer@simplecityapps.com with details (device, steps to
      reproduce) so it can be investigated — don't try to diagnose or fix in the reply.
    - For widget complaints specifically, say widget improvements are being worked on. Only say this
      because it is currently true — check before reusing this line if that ever changes.
