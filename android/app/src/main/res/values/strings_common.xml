@@ -47,6 +47,11 @@
         <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> genre added to <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
         <item quantity="other"><xliff:g example="30" id="count">{count}</xliff:g> genre added to <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
     </plurals>
+    <!-- Shown when one or more folders (and their subfolders) have been added to a playlist -->
+    <plurals name="playlist_folders_added">
+        <item quantity="one"><xliff:g example="1" id="count">{count}</xliff:g> folder added to <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+        <item quantity="other"><xliff:g example="3" id="count">{count}</xliff:g> folders added to <xliff:g example="Favourites" id="playlist_name">{playlist_name}</xliff:g></item>
+    </plurals>
     <!-- Shown when a song fails to be deleted -->
     <string name="delete_song_failed">The song couldn\'t be deleted</string>
     <!-- The disc number for this album-->

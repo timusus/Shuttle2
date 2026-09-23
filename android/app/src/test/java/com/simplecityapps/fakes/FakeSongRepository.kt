@@ -6,6 +6,7 @@ import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.map
 
 class FakeSongRepository : SongRepository {
     private val songs = MutableStateFlow<List<Song>?>(null)
@@ -14,7 +15,14 @@ class FakeSongRepository : SongRepository {
         songs.value = value
     }
 
-    override fun getSongs(query: SongQuery): Flow<List<Song>?> = songs
+    /** When true, [getSongs] applies the query's predicate, like the real repository. Off by default: most tests ignore queries. */
+    var applyQueryPredicates: Boolean = false
+
+    override fun getSongs(query: SongQuery): Flow<List<Song>?> = if (applyQueryPredicates) {
+        songs.map { songs -> songs?.filter(query.predicate) }
+    } else {
+        songs
+    }
 
     override suspend fun setExcluded(songs: List<Song>, excluded: Boolean) {}
     override suspend fun remove(song: Song) {}

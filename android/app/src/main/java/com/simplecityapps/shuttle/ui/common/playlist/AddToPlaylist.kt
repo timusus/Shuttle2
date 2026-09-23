@@ -9,6 +9,7 @@ import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.sorting.SongSortOrder
+import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import kotlinx.coroutines.flow.firstOrNull
 
@@ -17,6 +18,7 @@ class AddToPlaylist(
     private val songRepository: SongRepository,
     private val genreRepository: GenreRepository,
     private val queueManager: QueueOperations,
+    private val resolveFolderSongs: ResolveFolderSongs,
     private val ignorePlaylistDuplicates: () -> Boolean,
 ) {
     sealed interface Result {
@@ -77,6 +79,7 @@ class AddToPlaylist(
                 .getSongsForGenres(playlistData.data.map { it.name }, SongQuery.All())
                 .firstOrNull().orEmpty()
                 .sortedWith(SongSortOrder.Default.comparator)
+        is PlaylistData.Folders -> resolveFolderSongs(playlistData.data)
         is PlaylistData.Queue -> queueManager.getQueue().map { it.song }
     }
 }

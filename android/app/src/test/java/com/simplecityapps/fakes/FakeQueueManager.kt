@@ -10,7 +10,16 @@ class FakeQueueManager : QueueOperations {
 
     var setQueueResult: Boolean = true
 
-    override suspend fun setQueue(songs: List<Song>, shuffleSongs: List<Song>?, position: Int): Boolean = setQueueResult
+    var lastSetQueue: List<Song>? = null
+        private set
+    var lastSetQueuePosition: Int? = null
+        private set
+
+    override suspend fun setQueue(songs: List<Song>, shuffleSongs: List<Song>?, position: Int): Boolean {
+        lastSetQueue = songs
+        lastSetQueuePosition = position
+        return setQueueResult
+    }
     override fun getQueue(): List<QueueItem> = emptyList()
     override fun getQueue(shuffleMode: QueueManager.ShuffleMode): List<QueueItem> = emptyList()
     override fun getCurrentItem(): QueueItem? = null

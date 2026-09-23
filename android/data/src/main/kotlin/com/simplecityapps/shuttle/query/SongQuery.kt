@@ -4,6 +4,7 @@ import android.os.Parcelable
 import com.simplecityapps.shuttle.model.AlbumArtistGroupKey
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
+import com.simplecityapps.shuttle.model.SongFolder
 import com.simplecityapps.shuttle.parcel.InstantParceler
 import com.simplecityapps.shuttle.sorting.SongSortOrder
 import kotlin.time.Clock
@@ -66,6 +67,14 @@ sealed class SongQuery(
         val songIds: List<Long>
     ) : SongQuery(
         predicate = { song -> songIds.contains(song.id) }
+    )
+
+    /** Local songs in the folder at [path] (see [SongFolder]) or any of its subfolders. */
+    @Parcelize
+    data class Folder(
+        val path: List<String>
+    ) : SongQuery(
+        predicate = { song -> !song.mediaProvider.remote && SongFolder.isUnder(song.path, path) }
     )
 
     @Parcelize

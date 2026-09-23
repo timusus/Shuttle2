@@ -26,6 +26,7 @@ fun createSong(
     lastCompleted: Instant? = Instant.fromEpochSeconds(1),
     mediaProvider: MediaProviderType = MediaProviderType.Shuttle,
     grouping: String? = null,
+    path: String = "/path/to/song",
 ) = Song(
     id = id,
     name = name,
@@ -37,7 +38,7 @@ fun createSong(
     duration = duration,
     date = date,
     genres = emptyList(),
-    path = "/path/to/song",
+    path = path,
     size = 1,
     mimeType = "ogg",
     lastModified = Instant.fromEpochSeconds(1),

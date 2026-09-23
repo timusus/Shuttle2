@@ -72,6 +72,19 @@ sealed class PlaylistData : Parcelable {
             .toString()
     }
 
+    /** Local library folders, each identified by its [com.simplecityapps.shuttle.model.SongFolder] path. */
+    @Parcelize
+    class Folders(val data: List<List<String>>) : PlaylistData() {
+        override fun getPlaylistSavedMessage(
+            resources: Resources,
+            playlistName: String
+        ): String = Phrase.fromPlural(resources, R.plurals.playlist_folders_added, data.size)
+            .put("count", data.size)
+            .put("playlist_name", playlistName)
+            .format()
+            .toString()
+    }
+
     @Parcelize
     object Queue : PlaylistData() {
         override fun getPlaylistSavedMessage(

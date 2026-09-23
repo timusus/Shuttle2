@@ -78,4 +78,5 @@ private fun LibraryTab.name(resources: Resources): String = when (this) {
     LibraryTab.Artists -> resources.getString(R.string.artists)
     LibraryTab.Albums -> resources.getString(R.string.albums)
     LibraryTab.Songs -> resources.getString(R.string.songs)
+    LibraryTab.Folders -> resources.getString(R.string.library_folders)
 }

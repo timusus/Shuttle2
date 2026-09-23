@@ -18,6 +18,7 @@ import com.simplecityapps.shuttle.ui.screens.library.albumartists.ArtistListPref
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.ArtistListPreferences
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListPreferenceManager
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListPreferences
+import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -73,12 +74,14 @@ class AppModule {
         songRepository: SongRepository,
         genreRepository: GenreRepository,
         queueManager: QueueOperations,
+        resolveFolderSongs: ResolveFolderSongs,
         preferenceManager: GeneralPreferenceManager,
     ): AddToPlaylist = AddToPlaylist(
         playlistRepository,
         songRepository,
         genreRepository,
         queueManager,
+        resolveFolderSongs,
         ignorePlaylistDuplicates = { preferenceManager.ignorePlaylistDuplicates },
     )
 }

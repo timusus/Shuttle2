@@ -18,6 +18,7 @@ import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
 import com.simplecityapps.shuttle.ui.common.playback.ShuffleAlbums
 import com.simplecityapps.shuttle.ui.common.playback.ShuffleSongs
 import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
+import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
 import com.simplecityapps.testing.MainDispatcherRule
 import org.junit.Rule
 import org.junit.Test
@@ -139,6 +140,7 @@ class AlbumArtistDetailIntegrationTest {
             songRepository,
             FakeGenreRepository(),
             FakeQueueManager(),
+            ResolveFolderSongs(songRepository),
             ignorePlaylistDuplicates = { false },
         ),
         playlistRepository = fakePlaylistRepository,

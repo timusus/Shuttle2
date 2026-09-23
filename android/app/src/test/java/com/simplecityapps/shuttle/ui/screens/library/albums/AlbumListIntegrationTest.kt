@@ -20,6 +20,7 @@ import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
 import com.simplecityapps.shuttle.ui.common.playback.ShuffleSongs
 import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
 import com.simplecityapps.shuttle.ui.screens.library.ViewMode
+import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
 import com.simplecityapps.testing.MainDispatcherRule
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
@@ -174,6 +175,7 @@ class AlbumListIntegrationTest {
             fakeSongRepository,
             FakeGenreRepository(),
             FakeQueueManager(),
+            ResolveFolderSongs(fakeSongRepository),
             ignorePlaylistDuplicates = { false },
         ),
         playlistRepository = fakePlaylistRepository,

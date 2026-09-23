@@ -12,6 +12,7 @@ import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
 import com.simplecityapps.shuttle.ui.common.playback.ShuffleSongs
 import com.simplecityapps.shuttle.ui.common.playlist.AddToPlaylist
+import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -75,6 +76,7 @@ class SongListViewModelTest {
             fakeSongRepository,
             FakeGenreRepository(),
             FakeQueueManager(),
+            ResolveFolderSongs(fakeSongRepository),
             ignorePlaylistDuplicates = { false },
         ),
         playlistRepository = fakePlaylistRepository,

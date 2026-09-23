@@ -17,6 +17,18 @@
     </plurals>
     <!-- Title for the list of genres -->
     <string name="genres">Genres</string>
+    <!-- Title for the list of folders, for browsing the library by where the music files are stored -->
+    <string name="library_folders">Folders</string>
+    <!-- Shown when the folder list finishes loading, and there are no songs on the device -->
+    <string name="folder_list_empty">No folders</string>
+    <!-- Name of the device's internal storage, shown as a top level folder -->
+    <string name="folders_internal_storage">Internal storage</string>
+    <!-- Name of the folder holding songs whose location on the device is unknown -->
+    <string name="folders_other">Other locations</string>
+    <!-- Name of the device's root filesystem, shown as a top level folder when a song's storage volume can't be determined -->
+    <string name="folders_root">Root</string>
+    <!-- Content description for the button that goes up to the parent folder -->
+    <string name="folders_navigate_up">Up one folder</string>
     <!-- Title for the list of playlists -->
     <string name="library_playlists">Playlists</string>
     <!-- Shown when the app is scanning for songs in the library -->

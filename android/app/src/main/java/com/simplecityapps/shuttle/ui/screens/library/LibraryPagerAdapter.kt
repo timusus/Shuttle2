@@ -10,6 +10,7 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.persistence.LibraryTab
 import com.simplecityapps.shuttle.ui.screens.library.albumartists.AlbumArtistListFragment
 import com.simplecityapps.shuttle.ui.screens.library.albums.AlbumListFragment
+import com.simplecityapps.shuttle.ui.screens.library.folders.FolderListFragment
 import com.simplecityapps.shuttle.ui.screens.library.genres.GenreListFragment
 import com.simplecityapps.shuttle.ui.screens.library.playlists.PlaylistListFragment
 import com.simplecityapps.shuttle.ui.screens.library.songs.SongListFragment
@@ -34,6 +35,7 @@ class LibraryPagerAdapter(
         LibraryTab.Artists -> context.getString(R.string.artists)
         LibraryTab.Albums -> context.getString(R.string.albums)
         LibraryTab.Songs -> context.getString(R.string.songs)
+        LibraryTab.Folders -> context.getString(R.string.library_folders)
     }
 
     override fun getItemCount(): Int = items.size
@@ -44,6 +46,7 @@ class LibraryPagerAdapter(
         LibraryTab.Artists -> AlbumArtistListFragment.newInstance()
         LibraryTab.Albums -> AlbumListFragment.newInstance()
         LibraryTab.Songs -> SongListFragment.newInstance()
+        LibraryTab.Folders -> FolderListFragment.newInstance()
     }
 
     override fun containsItem(itemId: Long): Boolean = items.map { it.ordinal.toLong() }.contains(itemId)

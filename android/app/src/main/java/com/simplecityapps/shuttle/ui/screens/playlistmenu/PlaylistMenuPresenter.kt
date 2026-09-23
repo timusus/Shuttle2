@@ -16,6 +16,7 @@ import com.simplecityapps.shuttle.sorting.SongSortOrder
 import com.simplecityapps.shuttle.ui.common.error.UserFriendlyError
 import com.simplecityapps.shuttle.ui.common.mvp.BaseContract
 import com.simplecityapps.shuttle.ui.common.mvp.BasePresenter
+import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -73,7 +74,8 @@ constructor(
     private val songRepository: SongRepository,
     private val genreRepository: GenreRepository,
     private val queueManager: QueueOperations,
-    private val preferenceManager: GeneralPreferenceManager
+    private val preferenceManager: GeneralPreferenceManager,
+    private val resolveFolderSongs: ResolveFolderSongs
 ) : BasePresenter<PlaylistMenuContract.View>(),
     PlaylistMenuContract.Presenter {
     override var playlists: List<Playlist> = emptyList()
@@ -188,6 +190,7 @@ constructor(
                     .orEmpty()
                     .sortedWith(SongSortOrder.Default.comparator)
             }
+            is PlaylistData.Folders -> resolveFolderSongs(data)
             is PlaylistData.Queue -> queueManager.getQueue().map { queueItem -> queueItem.song }
         }
     }

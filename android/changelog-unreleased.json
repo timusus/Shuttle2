@@ -1,6 +1,11 @@
 {
   "since": "v26092301",
-  "features": [],
+  "features": [
+    {
+      "text": "Browse your music by folder in a new Folders library tab, which you can turn on in Appearance settings",
+      "commits": []
+    }
+  ],
   "improvements": [],
   "fixes": [
     {

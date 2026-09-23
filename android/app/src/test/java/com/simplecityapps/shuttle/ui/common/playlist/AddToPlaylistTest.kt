@@ -6,6 +6,7 @@ import com.simplecityapps.fakes.FakeGenreRepository
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.fakes.FakeSongRepository
+import com.simplecityapps.shuttle.ui.screens.library.folders.ResolveFolderSongs
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.types.shouldBeInstanceOf
@@ -25,6 +26,7 @@ class AddToPlaylistTest {
         songRepository = fakeSongRepository,
         genreRepository = fakeGenreRepository,
         queueManager = fakeQueueManager,
+        resolveFolderSongs = ResolveFolderSongs(fakeSongRepository),
         ignorePlaylistDuplicates = { fakeIgnoreDuplicatesPref },
     )
 

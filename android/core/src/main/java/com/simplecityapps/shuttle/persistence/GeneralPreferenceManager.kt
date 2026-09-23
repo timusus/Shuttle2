@@ -312,6 +312,8 @@ class GeneralPreferenceManager(
             return sharedPreferences.getString("pref_library_tabs_all", null)
                 ?.split(",")
                 ?.map { LibraryTab.valueOf(it) }
+                // Tabs added since the user last reordered go at the end
+                ?.let { stored -> stored + (LibraryTab.entries - stored.toSet()) }
                 ?: LibraryTab.entries.toList()
         }
 
@@ -320,7 +322,7 @@ class GeneralPreferenceManager(
             sharedPreferences.put("pref_library_tabs_enabled", value.joinToString(","))
         }
         get() {
-            return sharedPreferences.getString("pref_library_tabs_enabled", LibraryTab.entries.joinToString(","))
+            return sharedPreferences.getString("pref_library_tabs_enabled", LibraryTab.defaultEnabled.joinToString(","))
                 ?.split(",")
                 ?.mapNotNull {
                     try {
@@ -359,5 +361,11 @@ enum class LibraryTab {
     Playlists,
     Artists,
     Albums,
-    Songs
+    Songs,
+    Folders;
+
+    companion object {
+        /** Folders is opt-in: most people browse by tag, and it adds a sixth tab. */
+        val defaultEnabled: List<LibraryTab> get() = entries - Folders
+    }
 }
