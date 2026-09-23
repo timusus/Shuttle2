@@ -15,3 +15,10 @@ buildscript {
         classpath(libs.androidx.navigation.safe.args.gradle.plugin)
     }
 }
+
+subprojects {
+    tasks.withType<Test>().configureEach {
+        // Robolectric's NATIVE graphics/sqlite modes need more than the 512m default heap.
+        maxHeapSize = "2g"
+    }
+}
