@@ -40,7 +40,7 @@ kotlinx-coroutines-core = "1.10.2"
 kotlinx-coroutines-play-services = "1.10.2"
 kotlinx-coroutines-test = "1.10.2"
 kotlinx-datetime = "0.7.1"
-ktaglib = "1.6.1"
+ktaglib = "1.6.2"
 leakcanary-android = "2.14"
 lifecycle-common-java8 = "2.9.4"
 lifecycle-extensions = "2.2.0"
@@ -181,7 +181,7 @@ retrofit2-retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref =
 square-phrase = { module = "com.squareup.phrase:phrase", version.ref = "phrase" }
 test-parameter-injector = { module = "com.google.testparameterinjector:test-parameter-injector", version.ref = "test-parameter-injector" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
-timusus-ktaglib = { module = "com.github.timusus:ktaglib", version.ref = "ktaglib" }
+timusus-ktaglib = { module = "com.simplecityapps:ktaglib", version.ref = "ktaglib" }
 timusus-recyclerViewFastScroll = { module = "com.simplecityapps:recyclerview-fastscroll", version.ref = "recyclerview-fastscroll" }
 tools-desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar-jdk-libs" }
 vdurmont-semver4j = { module = "com.vdurmont:semver4j", version.ref = "semver4j" }
