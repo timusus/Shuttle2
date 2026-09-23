@@ -1,16 +1,19 @@
 #!/usr/bin/env bash
 
-set -xeu
+set -eu
 set -o pipefail
+
+if [ "${VERBOSE:-0}" = "1" ]; then
+  set -x
+fi
 
 # Overridable Environment
 BUILD_PATH=${BUILD_PATH:-build}
 CONFIGURATION=${CONFIGURATION:-Debug}
 RESULT_PATH=${RESULT_PATH:-${BUILD_PATH}/Artifacts}
 
-# Other variables
-# eg: JUNIT_PATH="${RESULT_PATH}/test-results.xml"
-#SUPPORT_DIR="${BASH_SOURCE[0]%/*}/.."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
 function finish() {
   # Do any work necessary even if script this fails
@@ -19,5 +22,140 @@ function finish() {
 
 trap finish EXIT
 
-# Perform Unit Tests
-./gradlew testDebugUnitTest
+usage() {
+  cat <<'EOF'
+Usage: support/scripts/unit-test [module ...] [--tests <filter>]
+
+  (no args)              Run testDebugUnitTest across the whole project.
+  <module> [module ...]  Run testDebugUnitTest for one or more modules only.
+                          A module may be a short name (e.g. "playback",
+                          "core", "app") or a full Gradle path (e.g.
+                          ":android:playback"). Short names are resolved by
+                          reading settings.gradle(.kts) for the last path
+                          segment.
+  --tests <filter>        Passed through to Gradle's --tests filter.
+
+Examples:
+  support/scripts/unit-test
+  support/scripts/unit-test playback
+  support/scripts/unit-test playback app --tests '*QueueManager*'
+
+Set VERBOSE=1 to print each command as it runs.
+EOF
+}
+
+# Find all Gradle module paths declared via `include '...'` / `include(...)`
+# in settings.gradle or settings.gradle.kts.
+find_settings_file() {
+  if [ -f "${REPO_ROOT}/settings.gradle.kts" ]; then
+    echo "${REPO_ROOT}/settings.gradle.kts"
+  elif [ -f "${REPO_ROOT}/settings.gradle" ]; then
+    echo "${REPO_ROOT}/settings.gradle"
+  else
+    echo "error: no settings.gradle(.kts) found in ${REPO_ROOT}" >&2
+    exit 1
+  fi
+}
+
+all_module_paths() {
+  local settings_file
+  settings_file="$(find_settings_file)"
+  grep -Eo "include[[:space:]]*\(?[\"']:[^\"']+[\"']" "${settings_file}" \
+    | sed -E "s/^include[[:space:]]*\(?[\"']//; s/[\"']$//"
+}
+
+# Resolve a module argument (short name or Gradle path) to a Gradle path.
+# Prints the resolved path to stdout, or prints candidates to stderr and
+# returns 1 if ambiguous/unknown.
+resolve_module() {
+  local input="$1"
+  local all_paths
+  all_paths="$(all_module_paths)"
+
+  # Already a full Gradle path.
+  if [ "${input#:}" != "${input}" ]; then
+    if printf '%s\n' "${all_paths}" | grep -Fxq -- "${input}"; then
+      echo "${input}"
+      return 0
+    else
+      echo "error: unknown module path '${input}'" >&2
+      return 1
+    fi
+  fi
+
+  # Short name: prefer an exact ":android:<name>" (top-level module) match,
+  # since that's unambiguous by construction; otherwise fall back to
+  # matching on the last path segment across all modules.
+  local direct_match=":android:${input}"
+  if printf '%s\n' "${all_paths}" | grep -Fxq -- "${direct_match}"; then
+    echo "${direct_match}"
+    return 0
+  fi
+
+  local matches
+  matches="$(printf '%s\n' "${all_paths}" | awk -F: -v n="${input}" '$NF == n')"
+
+  local count
+  count="$(printf '%s\n' "${matches}" | grep -c . || true)"
+
+  if [ "${count}" -eq 1 ]; then
+    echo "${matches}"
+    return 0
+  elif [ "${count}" -gt 1 ]; then
+    echo "error: module name '${input}' is ambiguous, candidates:" >&2
+    printf '%s\n' "${matches}" | sed 's/^/  /' >&2
+    return 1
+  else
+    echo "error: unknown module '${input}', available modules:" >&2
+    printf '%s\n' "${all_paths}" | sed 's/^/  /' >&2
+    return 1
+  fi
+}
+
+if [ "$#" -eq 0 ]; then
+  ./gradlew testDebugUnitTest
+  exit 0
+fi
+
+modules=()
+tests_filter=""
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    -h|--help)
+      usage
+      exit 0
+      ;;
+    --tests)
+      shift
+      if [ "$#" -eq 0 ]; then
+        echo "error: --tests requires an argument" >&2
+        exit 2
+      fi
+      tests_filter="$1"
+      shift
+      ;;
+    *)
+      modules+=("$1")
+      shift
+      ;;
+  esac
+done
+
+if [ "${#modules[@]}" -eq 0 ]; then
+  ./gradlew testDebugUnitTest ${tests_filter:+--tests "${tests_filter}"}
+  exit 0
+fi
+
+tasks=()
+for module in "${modules[@]}"; do
+  resolved="$(resolve_module "${module}")" || exit 2
+  tasks+=("${resolved}:testDebugUnitTest")
+done
+
+gradle_args=("${tasks[@]}")
+if [ -n "${tests_filter}" ]; then
+  gradle_args+=(--tests "${tests_filter}")
+fi
+
+./gradlew "${gradle_args[@]}"

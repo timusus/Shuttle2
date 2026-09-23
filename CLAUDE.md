@@ -42,6 +42,10 @@ All commands run from the repository root.
 
 # Run a single module's tests
 ./gradlew :android:playback:testDebugUnitTest
+# Or via script, using a short module name or Gradle path (multiple modules
+# and --tests <filter> are supported too):
+./support/scripts/unit-test playback
+./support/scripts/unit-test playback --tests '*QueueManager*'
 
 # Run instrumented tests (Gradle Managed Device — auto-provisions emulator)
 ./gradlew :android:app:pixel6Api34AtdDebugAndroidTest
