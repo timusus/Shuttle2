@@ -13,13 +13,17 @@ import com.simplecityapps.shuttle.model.Song
 class FakePlayback(
     private val name: String,
     val sessionId: Int = 0,
-    private val events: MutableList<String> = mutableListOf()
+    private val events: MutableList<String> = mutableListOf(),
+    /** When false, a successful [completeLoad] leaves [isReleased] as the test set it, instead of clearing it. */
+    private val resetReleasedOnLoad: Boolean = true
 ) : Playback {
     override var callback: Playback.Callback? = null
     override var isReleased: Boolean = false
     var state: PlaybackState = PlaybackState.Paused
     var progressMs: Int? = null
     var durationMs: Int? = null
+    var volume: Float = 1f
+        private set
     private var repeatMode: QueueManager.RepeatMode = QueueManager.RepeatMode.Off
     private var playbackSpeed: Float = 1f
 
@@ -27,8 +31,15 @@ class FakePlayback(
 
     /** Completes the oldest load requested of this playback that hasn't completed yet. */
     fun completeLoad() {
-        isReleased = false
+        if (resetReleasedOnLoad) {
+            isReleased = false
+        }
         pendingLoads.removeAt(0)(Result.success(null))
+    }
+
+    /** Fails the oldest load requested of this playback that hasn't completed yet. */
+    fun failLoad(error: Throwable = RuntimeException("load failed")) {
+        pendingLoads.removeAt(0)(Result.failure(error))
     }
 
     override suspend fun load(
@@ -69,7 +80,10 @@ class FakePlayback(
 
     override fun getDuration(): Int? = durationMs
 
-    override fun setVolume(volume: Float) {}
+    override fun setVolume(volume: Float) {
+        events += "$name setVolume $volume"
+        this.volume = volume
+    }
 
     override fun getResumeWhenSwitched(oldPlayback: Playback): Boolean = true
 
