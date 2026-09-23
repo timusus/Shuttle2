@@ -260,6 +260,8 @@ cmd_start() {
         fi
     done
     echo "remote-emu: booted after ~${waited}s"
+    # Keep ANR/crash dialogs from covering the UI that tests read.
+    box_adb "-s ${serial} shell settings put global hide_error_dialogs 1" >/dev/null || true
     open_tunnel "$LANE"
     if ! ANDROID_ADB_SERVER_PORT="$(local_port "$LANE")" adb devices | grep -q "^${serial}[[:space:]]*device"; then
         echo "remote-emu: ${serial} not listed through the tunnel:" >&2
