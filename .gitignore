@@ -76,3 +76,5 @@ vcs.xml
 .claude/WHERE-WE-LEFT-OFF.md
 .adb-screenshots/
 tmp/
+support/reviews/
+__pycache__/

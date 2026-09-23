@@ -1,0 +1,195 @@
+#!/usr/bin/env python3
+"""Fetch and reply to Google Play reviews for S2 via the Android Publisher API."""
+
+import argparse
+import json
+import os
+import sys
+import urllib.error
+import urllib.request
+
+from google.auth.transport.requests import Request
+from google.oauth2 import service_account
+
+PACKAGE_NAME = "com.simplecityapps.shuttle"
+DEFAULT_KEY_PATH = (
+    "/Users/tim/projects/simplecity-apps/podcasts/main/mobile/android/app/play-credentials.json"
+)
+SCOPES = ["https://www.googleapis.com/auth/androidpublisher"]
+API_BASE = "https://androidpublisher.googleapis.com/androidpublisher/v3"
+MAX_REPLY_CHARS = 350
+
+
+def key_path() -> str:
+    return os.environ.get("PLAY_REVIEWS_KEY", DEFAULT_KEY_PATH)
+
+
+def load_credentials():
+    path = key_path()
+    if not os.path.isfile(path):
+        sys.exit(
+            f"error: service account key not found at {path}\n"
+            "Set PLAY_REVIEWS_KEY to point at the key file, or check the default path."
+        )
+    creds = service_account.Credentials.from_service_account_file(path, scopes=SCOPES)
+    creds.refresh(Request())
+    return creds
+
+
+def api_request(creds, method: str, url: str, body: dict | None = None) -> dict:
+    data = json.dumps(body).encode("utf-8") if body is not None else None
+    req = urllib.request.Request(url, data=data, method=method)
+    req.add_header("Authorization", f"Bearer {creds.token}")
+    if data is not None:
+        req.add_header("Content-Type", "application/json")
+    try:
+        with urllib.request.urlopen(req) as resp:
+            return json.loads(resp.read().decode("utf-8") or "{}")
+    except urllib.error.HTTPError as e:
+        body_text = e.read().decode("utf-8", errors="replace")
+        if e.code in (401, 403):
+            sys.exit(
+                f"error: HTTP {e.code} from Play API — the service account grant may still be "
+                f"propagating (can take up to 24h after being added in Play Console).\n{body_text}"
+            )
+        sys.exit(f"error: HTTP {e.code} from Play API\n{body_text}")
+
+
+def fetch_reviews(creds, translation_language: str | None = "en") -> list[dict]:
+    reviews = []
+    token = None
+    while True:
+        url = f"{API_BASE}/applications/{PACKAGE_NAME}/reviews?maxResults=100"
+        if translation_language:
+            url += f"&translationLanguage={translation_language}"
+        if token:
+            url += f"&token={token}"
+        data = api_request(creds, "GET", url)
+        reviews.extend(data.get("reviews", []))
+        token = data.get("tokenPagination", {}).get("nextPageToken")
+        if not token:
+            break
+    return reviews
+
+
+def format_review(r: dict) -> dict:
+    comment = r.get("comments", [{}])[0].get("userComment", {})
+    reply = None
+    for c in r.get("comments", []):
+        if "developerComment" in c:
+            reply = c["developerComment"]
+            break
+    return {
+        "reviewId": r.get("reviewId"),
+        "authorName": r.get("authorName"),
+        "lastEdited": comment.get("lastModified", {}).get("seconds"),
+        "starRating": comment.get("starRating"),
+        "device": comment.get("device"),
+        "appVersionName": comment.get("appVersionName"),
+        "appVersionCode": comment.get("appVersionCode"),
+        "text": comment.get("text", ""),
+        "reply": reply.get("text") if reply else None,
+    }
+
+
+def cmd_list(args):
+    creds = load_credentials()
+    reviews = [format_review(r) for r in fetch_reviews(creds)]
+    if args.unreplied:
+        reviews = [r for r in reviews if not r["reply"]]
+
+    if args.json:
+        print(json.dumps(reviews, indent=2))
+        return
+
+    if not reviews:
+        print("No reviews found.")
+        return
+
+    for r in reviews:
+        print(f"reviewId: {r['reviewId']}")
+        print(f"  stars: {r['starRating']}  device: {r['device']}  app version: {r['appVersionName']}")
+        print(f"  text: {r['text']}")
+        if r["reply"]:
+            print(f"  existing reply: {r['reply']}")
+        else:
+            print("  existing reply: (none)")
+        print()
+
+
+def post_reply(creds, review_id: str, text: str):
+    if len(text) > MAX_REPLY_CHARS:
+        sys.exit(f"error: reply text is {len(text)} chars, over the {MAX_REPLY_CHARS} char limit")
+    url = f"{API_BASE}/applications/{PACKAGE_NAME}/reviews/{review_id}:reply"
+    result = api_request(creds, "POST", url, {"replyText": text})
+    return result
+
+
+def cmd_reply(args):
+    with open(args.text_file, "r", encoding="utf-8") as f:
+        text = f.read().strip()
+    if len(text) > MAX_REPLY_CHARS:
+        sys.exit(f"error: reply text is {len(text)} chars, over the {MAX_REPLY_CHARS} char limit")
+    creds = load_credentials()
+    post_reply(creds, args.review_id, text)
+    print(f"Posted reply to review {args.review_id}.")
+
+
+def cmd_post_approved(args):
+    with open(args.drafts_file, "r", encoding="utf-8") as f:
+        drafts = json.load(f)
+
+    to_post = [d for d in drafts if d.get("approved") and not d.get("posted")]
+    if not to_post:
+        print("No approved, unposted drafts found.")
+        return
+
+    creds = None if args.dry_run else load_credentials()
+
+    for d in to_post:
+        text = d.get("replyText", "")
+        if len(text) > MAX_REPLY_CHARS:
+            print(f"skip reviewId {d.get('reviewId')}: reply is {len(text)} chars, over {MAX_REPLY_CHARS}")
+            continue
+        if args.dry_run:
+            print(f"[dry-run] would post reply to reviewId {d.get('reviewId')} ({len(text)} chars)")
+            continue
+
+        post_reply(creds, d["reviewId"], text)
+        d["posted"] = True
+        print(f"Posted reply to reviewId {d['reviewId']}.")
+
+    if not args.dry_run:
+        with open(args.drafts_file, "w", encoding="utf-8") as f:
+            json.dump(drafts, f, indent=2)
+            f.write("\n")
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        prog="play-reviews",
+        description="Fetch and reply to Google Play reviews for S2 via the Android Publisher API.",
+    )
+    sub = parser.add_subparsers(dest="command", required=True)
+
+    p_list = sub.add_parser("list", help="List reviews from the last 7 days")
+    p_list.add_argument("--unreplied", action="store_true", help="Only show reviews without a developer reply")
+    p_list.add_argument("--json", action="store_true", help="Print raw JSON instead of formatted text")
+    p_list.set_defaults(func=cmd_list)
+
+    p_reply = sub.add_parser("reply", help="Post a reply to a single review")
+    p_reply.add_argument("review_id", help="The reviewId to reply to")
+    p_reply.add_argument("--text-file", required=True, help="Path to a file containing the reply text")
+    p_reply.set_defaults(func=cmd_reply)
+
+    p_post = sub.add_parser("post-approved", help="Post all approved, unposted replies from a drafts JSON file")
+    p_post.add_argument("drafts_file", help="Path to a drafts JSON file (list of {reviewId, replyText, approved, posted})")
+    p_post.add_argument("--dry-run", action="store_true", help="Print what would be posted without calling the API")
+    p_post.set_defaults(func=cmd_post_approved)
+
+    args = parser.parse_args()
+    args.func(args)
+
+
+if __name__ == "__main__":
+    main()
