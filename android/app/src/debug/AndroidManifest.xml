@@ -15,6 +15,26 @@
             </intent-filter>
         </receiver>
 
+        <!-- support/scripts/s2-debug.sh drives playback and the queue through this receiver
+             (see the debug-receivers skill). DUMP-protected like the import receiver above. -->
+        <receiver
+            android:name=".debug.DebugPlaybackReceiver"
+            android:exported="true"
+            android:permission="android.permission.DUMP">
+            <intent-filter>
+                <action android:name="com.simplecityapps.shuttle.debug.PLAY_ALL" />
+                <action android:name="com.simplecityapps.shuttle.debug.PLAY" />
+                <action android:name="com.simplecityapps.shuttle.debug.PAUSE" />
+                <action android:name="com.simplecityapps.shuttle.debug.NEXT" />
+                <action android:name="com.simplecityapps.shuttle.debug.PREV" />
+                <action android:name="com.simplecityapps.shuttle.debug.SEEK" />
+                <action android:name="com.simplecityapps.shuttle.debug.REMOVE_QUEUE_ITEM" />
+                <action android:name="com.simplecityapps.shuttle.debug.SHUFFLE" />
+                <action android:name="com.simplecityapps.shuttle.debug.REPEAT" />
+                <action android:name="com.simplecityapps.shuttle.debug.DUMP_STATE" />
+            </intent-filter>
+        </receiver>
+
     </application>
 
 </manifest>

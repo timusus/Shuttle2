@@ -73,7 +73,8 @@ adb shell am start -n com.simplecityapps.shuttle.dev/com.simplecityapps.shuttle.
   ffmpeg (cached under `build/test-media/<fixture>`), pushes them to
   `/sdcard/Music/s2-seed/<fixture>` on the current lane, and triggers a MediaStore scan. Fixtures:
   `two-disc` (one album, 2 discs x 3 tracks, one FLAC), `many-tracks` (3 artists x 2 albums x 8
-  tracks), `playlist-basic` (5 songs + an `.m3u`). `--skip-onboarding` writes the debug app's
+  tracks), `playlist-basic` (5 songs + an `.m3u`), `playback` (5 x 60 s tracks, for playback checks
+  that must finish before a track ends on its own). `--skip-onboarding` writes the debug app's
   SharedPreferences directly via `run-as` so it opens straight to the library with the local
   provider selected, then broadcasts to a debug-only receiver (`android/app/src/debug`) that calls
   `MediaImporter.import()` directly — the app's real `MediaStore` `ContentObserver` import path is
@@ -81,6 +82,11 @@ adb shell am start -n com.simplecityapps.shuttle.dev/com.simplecityapps.shuttle.
   once onboarding's Scanner page is skipped. Run it only after `install`, before the first launch.
 - Respects `ANDROID_SERIAL` / `ANDROID_ADB_SERVER_PORT` the same way `remote-emu.sh env` sets
   them — `eval` that first in any shell that calls either script.
+
+**Playback checks don't need the UI.** The debug build's `DebugPlaybackReceiver` plays the
+library, skips, seeks, removes queue items and dumps playback state as JSON over `adb` broadcasts:
+`support/scripts/s2-debug.sh <ACTION>`, documented in the `debug-receivers` skill. Set up state
+with it and tap only when the UI is the thing under test.
 
 **UI checks are scriptable — tap by text, never by screenshot coordinate.** Screenshots handed to
 a model are downscaled (device is 1280x2856, scale ~1.4286), so a tap computed from a screenshot's

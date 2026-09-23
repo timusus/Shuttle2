@@ -8,6 +8,8 @@
 #     two-disc        one album, 2 discs x 3 tracks (one track is FLAC), disc/track tags set
 #     many-tracks     3 artists x 2 albums x 8 tracks
 #     playlist-basic  5 songs plus an .m3u playlist referencing them
+#     playback        one album of 5 x 60 s tracks, long enough for playback checks (seek, skip,
+#                     remove the current item) to finish before a track ends on its own
 #
 #     --skip-onboarding   also write the debug app's prefs so it opens straight to the library
 #                         with the local (MediaStore) provider selected, skipping onboarding.
@@ -35,6 +37,8 @@ Usage: support/scripts/seed-test-media.sh <fixture> [--skip-onboarding]
   two-disc        one album, 2 discs x 3 tracks (one track is FLAC), disc/track tags set
   many-tracks     3 artists x 2 albums x 8 tracks
   playlist-basic  5 songs plus an .m3u playlist referencing them
+  playback        one album of 5 x 60 s tracks, long enough for playback checks (seek, skip,
+                  remove the current item) to finish before a track ends on its own
 
   --skip-onboarding   write debug-app prefs so it opens straight to the library with the local
                       provider selected (needs the debug APK already installed)
@@ -49,7 +53,7 @@ FIXTURE="${1:-}"
 case "$FIXTURE" in
     -h|--help) usage; exit 0 ;;
     "") usage >&2; exit 2 ;;
-    two-disc|many-tracks|playlist-basic) ;;
+    two-disc|many-tracks|playlist-basic|playback) ;;
     *) echo "seed-test-media: unknown fixture '$FIXTURE'" >&2; usage >&2; exit 2 ;;
 esac
 shift
@@ -68,10 +72,10 @@ command -v adb >/dev/null 2>&1 || { echo "seed-test-media: adb not found on PATH
 
 radb() { adb -s "$ANDROID_SERIAL" "$@"; }
 
-# generate_track <outfile> <ext> <title> <artist> <album_artist> <album> <track> <tracktotal> <disc> <disctotal> <date> <genre>
+# generate_track <outfile> <ext> <title> <artist> <album_artist> <album> <track> <tracktotal> <disc> <disctotal> <date> <genre> [seconds]
 generate_track() {
     local out="$1" ext="$2" title="$3" artist="$4" album_artist="$5" album="$6"
-    local track="$7" tracktotal="$8" disc="$9" disctotal="${10}" date="${11}" genre="${12}"
+    local track="$7" tracktotal="$8" disc="$9" disctotal="${10}" date="${11}" genre="${12}" seconds="${13:-1.5}"
     [ -f "$out" ] && return 0
     local codec_args
     if [ "$ext" = "flac" ]; then
@@ -79,7 +83,7 @@ generate_track() {
     else
         codec_args=(-c:a libmp3lame -b:a 32k)
     fi
-    ffmpeg -nostdin -loglevel error -f lavfi -i "anullsrc=r=44100:cl=mono" -t 1.5 \
+    ffmpeg -nostdin -loglevel error -f lavfi -i "anullsrc=r=44100:cl=mono" -t "$seconds" \
         -metadata title="$title" -metadata artist="$artist" -metadata album_artist="$album_artist" \
         -metadata album="$album" -metadata track="${track}/${tracktotal}" \
         -metadata disc="${disc}/${disctotal}" -metadata date="$date" -metadata genre="$genre" \
@@ -124,6 +128,16 @@ build_playlist_basic() {
     } > "${dir}/s2-seed.m3u"
 }
 
+build_playback() {
+    local dir="$1" i
+    mkdir -p "$dir"
+    local songs=("One" "Two" "Three" "Four" "Five")
+    for i in 1 2 3 4 5; do
+        generate_track "${dir}/playback${i}.mp3" mp3 "Playback ${songs[$((i - 1))]}" "Playback Artist" \
+            "Playback Artist" "Playback Album" "$i" 5 1 1 "2022" "Ambient" 60
+    done
+}
+
 FIXTURE_DIR="${CACHE_ROOT}/${FIXTURE}"
 mkdir -p "$FIXTURE_DIR"
 echo "seed-test-media: generating '${FIXTURE}' fixture in ${FIXTURE_DIR} (cached files reused) ..."
@@ -131,6 +145,7 @@ case "$FIXTURE" in
     two-disc) build_two_disc "$FIXTURE_DIR" ;;
     many-tracks) build_many_tracks "$FIXTURE_DIR" ;;
     playlist-basic) build_playlist_basic "$FIXTURE_DIR" ;;
+    playback) build_playback "$FIXTURE_DIR" ;;
 esac
 
 # The app only imports MediaStore tracks into its own library on: walking through onboarding's
