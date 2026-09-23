@@ -58,12 +58,6 @@ interface Playback {
      */
     fun getAudioSessionId(): Int = C.AUDIO_SESSION_ID_UNSET
 
-    fun setReplayGain(
-        trackGain: Double?,
-        albumGain: Double?
-    ) {
-    }
-
     fun setPlaybackSpeed(multiplier: Float)
 
     fun getPlaybackSpeed(): Float

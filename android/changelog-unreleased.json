@@ -38,6 +38,10 @@
     {
       "text": "Swiping over the lyrics view no longer accidentally skips to the next or previous song, and lyrics now scroll back to the top when the song changes",
       "commits": []
+    },
+    {
+      "text": "ReplayGain now sets each song's volume before it starts playing, so the level no longer jumps a moment into the song",
+      "commits": []
     }
   ]
 }

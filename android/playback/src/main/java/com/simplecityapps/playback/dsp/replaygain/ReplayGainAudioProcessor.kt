@@ -12,25 +12,17 @@ import com.simplecityapps.playback.exoplayer.ByteUtils.getInt24
 import com.simplecityapps.playback.exoplayer.ByteUtils.putInt24
 import java.nio.ByteBuffer
 
-class ReplayGainAudioProcessor(var mode: ReplayGainMode, var preAmpGain: Double = 0.0) : BaseAudioProcessor() {
-    var trackGain: Double? = null
-        @Synchronized get
-
-        @Synchronized set
-
-    var albumGain: Double? = null
-        @Synchronized get
-
-        @Synchronized set
-
+/**
+ * Applies ReplayGain. The gain follows [streamTracker], which switches it at the boundary between
+ * one track's audio and the next, so each track plays at its own level from the first sample.
+ */
+class ReplayGainAudioProcessor(
+    var mode: ReplayGainMode,
+    var preAmpGain: Double = 0.0,
+    val streamTracker: ReplayGainStreamTracker = ReplayGainStreamTracker()
+) : BaseAudioProcessor() {
     private val gain: Double
-        get() =
-            preAmpGain +
-                when (mode) {
-                    ReplayGainMode.Track -> trackGain ?: albumGain ?: 0.0
-                    ReplayGainMode.Album -> albumGain ?: trackGain ?: 0.0
-                    ReplayGainMode.Off -> 0.0
-                }
+        get() = replayGainDb(mode, preAmpGain, streamTracker.currentReplayGain())
 
     override fun onConfigure(inputAudioFormat: AudioProcessor.AudioFormat): AudioProcessor.AudioFormat {
         if (inputAudioFormat.encoding != C.ENCODING_PCM_16BIT &&
@@ -42,8 +34,7 @@ class ReplayGainAudioProcessor(var mode: ReplayGainMode, var preAmpGain: Double 
     }
 
     override fun queueInput(inputBuffer: ByteBuffer) {
-        // Read the gain once per buffer - it aggregates three synchronized properties, and the
-        // track can change underneath us mid-buffer.
+        // Read the gain once per buffer - the mode, pre-amp and stream can all change underneath us.
         val currentGain = gain
         if (currentGain != 0.0) {
             val size = inputBuffer.remaining()
@@ -79,6 +70,12 @@ class ReplayGainAudioProcessor(var mode: ReplayGainMode, var preAmpGain: Double 
             }
             replaceOutputBuffer(remaining).put(inputBuffer).flip()
         }
+    }
+
+    override fun onFlush() {
+        // The sink flushes its processors between one stream and the next, after the old stream
+        // has drained and before the new stream's first buffer is queued.
+        streamTracker.onProcessorFlushed()
     }
 
     companion object {
