@@ -1,12 +1,12 @@
 package com.simplecityapps.shuttle.ui.common.mvp
 
+import com.simplecityapps.shuttle.coroutines.launchCollectingChanges
 import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 import timber.log.Timber
 
 abstract class BasePresenter<T : Any> :
@@ -51,14 +51,6 @@ abstract class BasePresenter<T : Any> :
         rendered: V,
         onChange: (previous: V, current: V) -> Unit
     ) {
-        launch {
-            var previous = rendered
-            flow.collect { current ->
-                if (current != previous) {
-                    onChange(previous, current)
-                    previous = current
-                }
-            }
-        }
+        launchCollectingChanges(flow, rendered, onChange = onChange)
     }
 }

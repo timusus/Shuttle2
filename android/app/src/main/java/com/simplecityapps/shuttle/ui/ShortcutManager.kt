@@ -4,40 +4,39 @@ import android.content.Context
 import android.os.Build
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackState
-import com.simplecityapps.playback.PlaybackWatcher
-import com.simplecityapps.playback.PlaybackWatcherCallback
+import com.simplecityapps.shuttle.coroutines.launchCollectingChanges
+import com.simplecityapps.shuttle.di.AppCoroutineScope
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CoroutineScope
 
 @Singleton
 class ShortcutManager
 @Inject
 constructor(
     @ApplicationContext private val context: Context,
-    private val playbackWatcher: PlaybackWatcher,
     private val playbackManager: PlaybackOperations,
-    private val shortcutHelper: ShortcutHelper
-) : PlaybackWatcherCallback {
+    private val shortcutHelper: ShortcutHelper,
+    @AppCoroutineScope private val appCoroutineScope: CoroutineScope
+) {
 
     fun registerCallbacks() {
-        playbackWatcher.addCallback(this)
+        // The shortcut is created from a live read, which is at least as new as the flow's value, so the flow
+        // is snapshotted before that read and a change after it is still delivered.
+        val initialPlaybackState = playbackManager.playbackStateFlow.value
 
         // Initialize shortcut with current state
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
             val isPlaying = playbackManager.playbackState() == PlaybackState.Playing
             shortcutHelper.createPlaybackShortcut(context, isPlaying)
         }
-    }
 
-    // PlaybackWatcherCallback Implementation
-
-    override fun onPlaybackStateChanged(playbackState: PlaybackState) {
-        super.onPlaybackStateChanged(playbackState)
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
-            val isPlaying = playbackState == PlaybackState.Playing
-            shortcutHelper.updatePlaybackShortcut(context, isPlaying)
+        appCoroutineScope.launchCollectingChanges(playbackManager.playbackStateFlow, initialPlaybackState) { _, playbackState ->
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
+                val isPlaying = playbackState == PlaybackState.Playing
+                shortcutHelper.updatePlaybackShortcut(context, isPlaying)
+            }
         }
     }
 }
