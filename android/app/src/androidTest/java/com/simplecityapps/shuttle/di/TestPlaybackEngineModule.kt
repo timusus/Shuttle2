@@ -13,7 +13,10 @@ import com.simplecityapps.playback.di.PlaybackEngineModule
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
+import com.simplecityapps.playback.exoplayer.ExoPlayerFactory
 import com.simplecityapps.playback.exoplayer.ExoPlayerPlayback
+import com.simplecityapps.playback.exoplayer.MediaInfoMediaResolver
+import com.simplecityapps.playback.exoplayer.PlayerFactory
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
@@ -55,12 +58,18 @@ class TestPlaybackEngineModule {
     fun provideAggregateMediaInfoProvider(): AggregateMediaInfoProvider = AggregateMediaInfoProvider(mutableSetOf())
 
     @Provides
-    fun provideExoPlayerPlayback(
+    fun providePlayerFactory(
         @ApplicationContext context: Context,
         equalizerAudioProcessor: EqualizerAudioProcessor,
+        replayGainAudioProcessor: ReplayGainAudioProcessor
+    ): PlayerFactory = ExoPlayerFactory(context, equalizerAudioProcessor, replayGainAudioProcessor)
+
+    @Provides
+    fun provideExoPlayerPlayback(
+        playerFactory: PlayerFactory,
         replayGainAudioProcessor: ReplayGainAudioProcessor,
         mediaInfoProvider: AggregateMediaInfoProvider
-    ): ExoPlayerPlayback = ExoPlayerPlayback(context, equalizerAudioProcessor, replayGainAudioProcessor, mediaInfoProvider)
+    ): ExoPlayerPlayback = ExoPlayerPlayback(playerFactory, replayGainAudioProcessor, MediaInfoMediaResolver(mediaInfoProvider))
 
     @Singleton
     @Provides

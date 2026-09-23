@@ -1,19 +1,7 @@
 package com.simplecityapps.playback.exoplayer
 
-import android.content.Context
 import com.google.android.exoplayer2.C
-import com.google.android.exoplayer2.DefaultRenderersFactory
-import com.google.android.exoplayer2.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON
-import com.google.android.exoplayer2.ExoPlaybackException
-import com.google.android.exoplayer2.MediaItem
-import com.google.android.exoplayer2.PlaybackParameters
 import com.google.android.exoplayer2.Player
-import com.google.android.exoplayer2.SimpleExoPlayer
-import com.google.android.exoplayer2.audio.AudioCapabilities
-import com.google.android.exoplayer2.audio.AudioSink
-import com.google.android.exoplayer2.audio.DefaultAudioSink
-import com.simplecityapps.mediaprovider.MediaInfo
-import com.simplecityapps.mediaprovider.MediaInfoProvider
 import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.chromecast.CastPlayback
@@ -26,10 +14,9 @@ import com.simplecityapps.shuttle.model.Song
 import timber.log.Timber
 
 class ExoPlayerPlayback(
-    private val context: Context,
-    private val equalizerAudioProcessor: EqualizerAudioProcessor,
+    private val playerFactory: PlayerFactory,
     private val replayGainAudioProcessor: ReplayGainAudioProcessor,
-    private val mediaInfoProvider: MediaInfoProvider
+    private val mediaResolver: MediaResolver
 ) : Playback {
     override var callback: Playback.Callback? = null
 
@@ -40,19 +27,13 @@ class ExoPlayerPlayback(
     private val replayGainTracker get() = replayGainAudioProcessor.streamTracker
 
     private val eventListener by lazy {
-        object : Player.Listener {
-            override fun onPlayWhenReadyChanged(
-                playWhenReady: Boolean,
-                reason: Int
-            ) {
-                super.onPlayWhenReadyChanged(playWhenReady, reason)
+        object : AudioPlayer.Listener {
+            override fun onPlayWhenReadyChanged(playWhenReady: Boolean) {
                 Timber.v("onPlayWhenReadyChanged(playWhenReady: $playWhenReady)")
                 callback?.onPlaybackStateChanged(if (playWhenReady) PlaybackState.Playing else PlaybackState.Paused)
             }
 
             override fun onPlaybackStateChanged(state: Int) {
-                super.onPlaybackStateChanged(state)
-
                 val playbackState = state.toExoPlaybackState()
                 Timber.v("onPlaybackStateChanged(playbackState: $playbackState)")
 
@@ -82,12 +63,7 @@ class ExoPlayerPlayback(
                 }
             }
 
-            override fun onMediaItemTransition(
-                mediaItem: MediaItem?,
-                reason: Int
-            ) {
-                super.onMediaItemTransition(mediaItem, reason)
-
+            override fun onMediaItemTransition(reason: Int) {
                 val transitionReason = reason.toTransitionReason()
                 Timber.v("onMediaItemTransition(reason: ${reason.toTransitionReason()})")
 
@@ -105,34 +81,10 @@ class ExoPlayerPlayback(
                 }
             }
 
-            override fun onPlayerError(error: ExoPlaybackException) {
-                super.onPlayerError(error)
-
+            override fun onPlayerError(error: Exception) {
                 Timber.e(error, "onPlayerError()")
                 callback?.onPlaybackStateChanged(PlaybackState.Paused)
             }
-        }
-    }
-
-    private val renderersFactory by lazy {
-        object : DefaultRenderersFactory(context) {
-            override fun buildAudioSink(
-                context: Context,
-                enableFloatOutput: Boolean,
-                enableAudioTrackPlaybackParams: Boolean,
-                enableOffload: Boolean
-            ): AudioSink = ReplayGainAudioSink(
-                DefaultAudioSink(
-                    AudioCapabilities.DEFAULT_AUDIO_CAPABILITIES,
-                    DefaultAudioSink.DefaultAudioProcessorChain(
-                        equalizerAudioProcessor,
-                        replayGainAudioProcessor
-                    ).audioProcessors
-                ),
-                replayGainTracker
-            )
-        }.apply {
-            setExtensionRendererMode(EXTENSION_RENDERER_MODE_ON)
         }
     }
 
@@ -147,9 +99,9 @@ class ExoPlayerPlayback(
     /** The [Player] repeat mode [PlaybackManager] wants. Remembered for the same reason as [requestedAudioSessionId]. */
     private var requestedRepeatMode: Int = Player.REPEAT_MODE_OFF
 
-    private var player: SimpleExoPlayer = createPlayer()
+    private var player: AudioPlayer = createPlayer()
 
-    private fun createPlayer(): SimpleExoPlayer = SimpleExoPlayer.Builder(context, renderersFactory).build().also { player ->
+    private fun createPlayer(): AudioPlayer = playerFactory.create().also { player ->
         if (requestedAudioSessionId != C.AUDIO_SESSION_ID_UNSET) {
             player.audioSessionId = requestedAudioSessionId
         }
@@ -175,16 +127,16 @@ class ExoPlayerPlayback(
 
         callback?.onPlaybackStateChanged(PlaybackState.Loading)
 
-        val mediaInfo = mediaInfoProvider.getMediaInfo(current)
+        val media = mediaResolver.resolve(current)
         player.addListener(eventListener)
         // Tell the ReplayGain processor about the new item before the player starts decoding it.
         replayGainTracker.setPlaylist(listOf(current.replayGain))
         replayGainTracker.setPlayingIndex(0)
-        player.setMediaItem(getMediaItem(mediaInfo, current.replayGain))
+        player.setMediaItem(playerItem(media, current.replayGain))
         player.seekTo(seekPosition.toLong())
         player.prepare()
 
-        if (mediaInfo.isRemote) {
+        if (media.isRemote) {
             player.setWakeMode(C.WAKE_MODE_NETWORK)
         } else {
             player.setWakeMode(C.WAKE_MODE_LOCAL)
@@ -202,9 +154,9 @@ class ExoPlayerPlayback(
             return
         }
 
-        val nextMediaItem: MediaItem? =
+        val nextItem: PlayerItem? =
             song?.let {
-                getMediaItem(mediaInfoProvider.getMediaInfo(song), song.replayGain)
+                playerItem(mediaResolver.resolve(song), song.replayGain)
             }
 
         val count = player.mediaItemCount
@@ -212,7 +164,7 @@ class ExoPlayerPlayback(
 
         // Shortcut if the track is already next, and last, in the playlist
         val nextIndex = currentIndex + 1
-        if (count == nextIndex + 1 && player.getMediaItemAt(nextIndex) == nextMediaItem) {
+        if (count == nextIndex + 1 && player.getMediaItemAt(nextIndex) == nextItem) {
             return
         }
 
@@ -224,8 +176,8 @@ class ExoPlayerPlayback(
         }
 
         // Now insert our new next track
-        nextMediaItem?.let {
-            player.addMediaItem(nextMediaItem)
+        nextItem?.let {
+            player.addMediaItem(nextItem)
         }
 
         syncReplayGainPlaylist()
@@ -238,7 +190,7 @@ class ExoPlayerPlayback(
     private fun syncReplayGainPlaylist() {
         replayGainTracker.setPlaylist(
             (0 until player.mediaItemCount).map { index ->
-                player.getMediaItemAt(index).playbackProperties?.tag as? ReplayGain
+                player.getMediaItemAt(index).replayGain
             }
         )
     }
@@ -273,7 +225,7 @@ class ExoPlayerPlayback(
     override fun getDuration(): Int? = player.duration.takeIf { duration -> duration != C.TIME_UNSET }?.toInt()
 
     override fun setVolume(volume: Float) {
-        player.audioComponent?.volume = volume
+        player.setVolume(volume)
     }
 
     override fun getResumeWhenSwitched(oldPlayback: Playback): Boolean = oldPlayback !is CastPlayback
@@ -296,10 +248,10 @@ class ExoPlayerPlayback(
     override fun getAudioSessionId(): Int = if (isReleased) requestedAudioSessionId else player.audioSessionId
 
     override fun setPlaybackSpeed(multiplier: Float) {
-        player.setPlaybackParameters(PlaybackParameters(multiplier, multiplier))
+        player.setPlaybackParameters(multiplier, multiplier)
     }
 
-    override fun getPlaybackSpeed(): Float = player.playbackParameters.speed
+    override fun getPlaybackSpeed(): Float = player.playbackSpeed
 
     enum class ExoPlaybackState {
         Idle,
@@ -333,13 +285,12 @@ class ExoPlayerPlayback(
         else -> TransitionReason.Unknown
     }
 
-    @Throws(IllegalStateException::class)
-    fun getMediaItem(
-        mediaInfo: MediaInfo,
+    private fun playerItem(
+        media: ResolvedMedia,
         replayGain: ReplayGain
-    ): MediaItem = MediaItem.Builder()
-        .setMimeType(mediaInfo.mimeType)
-        .setUri(mediaInfo.path)
-        .setTag(replayGain)
-        .build()
+    ): PlayerItem = PlayerItem(
+        uri = media.uri,
+        mimeType = media.mimeType,
+        replayGain = replayGain
+    )
 }

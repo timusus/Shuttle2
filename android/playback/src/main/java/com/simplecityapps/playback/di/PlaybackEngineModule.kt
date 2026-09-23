@@ -16,7 +16,10 @@ import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi26
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
+import com.simplecityapps.playback.exoplayer.ExoPlayerFactory
 import com.simplecityapps.playback.exoplayer.ExoPlayerPlayback
+import com.simplecityapps.playback.exoplayer.MediaInfoMediaResolver
+import com.simplecityapps.playback.exoplayer.PlayerFactory
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueWatcher
@@ -70,12 +73,18 @@ class PlaybackEngineModule {
     )
 
     @Provides
-    fun provideExoPlayerPlayback(
+    fun providePlayerFactory(
         @ApplicationContext context: Context,
         equalizerAudioProcessor: EqualizerAudioProcessor,
+        replayGainAudioProcessor: ReplayGainAudioProcessor
+    ): PlayerFactory = ExoPlayerFactory(context, equalizerAudioProcessor, replayGainAudioProcessor)
+
+    @Provides
+    fun provideExoPlayerPlayback(
+        playerFactory: PlayerFactory,
         replayGainAudioProcessor: ReplayGainAudioProcessor,
         mediaPathProvider: AggregateMediaInfoProvider
-    ): ExoPlayerPlayback = ExoPlayerPlayback(context, equalizerAudioProcessor, replayGainAudioProcessor, mediaPathProvider)
+    ): ExoPlayerPlayback = ExoPlayerPlayback(playerFactory, replayGainAudioProcessor, MediaInfoMediaResolver(mediaPathProvider))
 
     @Provides
     fun providePlayback(exoPlayerPlayback: ExoPlayerPlayback): Playback = exoPlayerPlayback
