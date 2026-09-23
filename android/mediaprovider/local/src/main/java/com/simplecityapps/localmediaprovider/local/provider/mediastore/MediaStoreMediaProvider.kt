@@ -1,6 +1,7 @@
 package com.simplecityapps.localmediaprovider.local.provider.mediastore
 
 import android.content.Context
+import android.os.Build
 import android.provider.MediaStore
 import androidx.core.database.getIntOrNull
 import androidx.core.database.getStringOrNull
@@ -32,27 +33,32 @@ class MediaStoreMediaProvider(
 
     override fun findSongs(): Flow<FlowEvent<List<Song>, MessageProgress>> = flow {
         var songs = mutableListOf<Song>()
+        val projection =
+            mutableListOf(
+                MediaStore.Audio.Media._ID,
+                MediaStore.Audio.Media.DATA,
+                MediaStore.Audio.Media.TITLE,
+                MediaStore.Audio.Media.ARTIST_ID,
+                MediaStore.Audio.Media.ARTIST,
+                MediaStore.Audio.Media.ALBUM_ID,
+                MediaStore.Audio.Media.ALBUM,
+                MediaStore.Audio.Media.DURATION,
+                MediaStore.Audio.Media.SIZE,
+                MediaStore.Audio.Media.YEAR,
+                MediaStore.Audio.Media.TRACK,
+                MediaStore.Audio.Media.DATE_MODIFIED,
+                MediaStore.Audio.Media.IS_PODCAST,
+                MediaStore.Audio.Media.BOOKMARK,
+                MediaStore.Audio.Media.MIME_TYPE,
+                "album_artist"
+            )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            projection.add(MediaStore.Audio.Media.DISC_NUMBER)
+        }
         val songCursor =
             context.contentResolver.query(
                 MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
-                arrayOf(
-                    MediaStore.Audio.Media._ID,
-                    MediaStore.Audio.Media.DATA,
-                    MediaStore.Audio.Media.TITLE,
-                    MediaStore.Audio.Media.ARTIST_ID,
-                    MediaStore.Audio.Media.ARTIST,
-                    MediaStore.Audio.Media.ALBUM_ID,
-                    MediaStore.Audio.Media.ALBUM,
-                    MediaStore.Audio.Media.DURATION,
-                    MediaStore.Audio.Media.SIZE,
-                    MediaStore.Audio.Media.YEAR,
-                    MediaStore.Audio.Media.TRACK,
-                    MediaStore.Audio.Media.DATE_MODIFIED,
-                    MediaStore.Audio.Media.IS_PODCAST,
-                    MediaStore.Audio.Media.BOOKMARK,
-                    MediaStore.Audio.Media.MIME_TYPE,
-                    "album_artist"
-                ),
+                projection.toTypedArray(),
                 "${MediaStore.Audio.Media.IS_MUSIC}=1 OR ${MediaStore.Audio.Media.IS_PODCAST}=1",
                 null,
                 null
@@ -61,18 +67,18 @@ class MediaStoreMediaProvider(
         songCursor?.use {
             val size = songCursor.count
             var progress = 0
-            while (currentCoroutineContext().isActive && songCursor.moveToNext()) {
-                var track =
-                    songCursor.getInt(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK))
-                var disc = 1
-                if (track >= 1000) {
-                    track %= 1000
-
-                    disc = track / 1000
-                    if (disc == 0) {
-                        disc = 1
-                    }
+            val discNumberColumnIndex =
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    songCursor.getColumnIndex(MediaStore.Audio.Media.DISC_NUMBER)
+                } else {
+                    -1
                 }
+            while (currentCoroutineContext().isActive && songCursor.moveToNext()) {
+                val rawTrack =
+                    songCursor.getInt(songCursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK))
+                val discNumberColumnValue =
+                    if (discNumberColumnIndex != -1) songCursor.getStringOrNull(discNumberColumnIndex) else null
+                val (disc, track) = decodeDiscTrack(rawTrack, discNumberColumnValue)
 
                 val song =
                     Song(
@@ -268,11 +274,9 @@ class MediaStoreMediaProvider(
                         return@use
                     }
 
-                    var track =
+                    val rawTrack =
                         cursor.getInt(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.TRACK))
-                    if (track >= 1000) {
-                        track %= 1000
-                    }
+                    val track = decodeDiscTrack(rawTrack, discNumberColumnValue = null).track
 
                     songs.add(
                         MediaStoreSong(

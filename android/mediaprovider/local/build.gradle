@@ -64,6 +64,7 @@ dependencies {
 
     // Testing
     testImplementation libs.junit
+    testImplementation libs.kotest
     androidTestImplementation libs.androidx.runner
     androidTestImplementation libs.androidx.espresso.core
 

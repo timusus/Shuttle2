@@ -42,6 +42,10 @@
     {
       "text": "ReplayGain now sets each song's volume before it starts playing, so the level no longer jumps a moment into the song",
       "commits": []
+    },
+    {
+      "text": "Tracks on multi-disc albums now play in the right order when using the Android media scanner",
+      "commits": []
     }
   ]
 }
