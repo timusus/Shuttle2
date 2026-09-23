@@ -7,6 +7,7 @@ import com.simplecityapps.playback.AudioEffectSessionManager
 import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackWatcher
+import com.simplecityapps.playback.ProgressTicker
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.di.PlaybackEngineModule
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
@@ -80,6 +81,7 @@ class TestPlaybackEngineModule {
         playbackPreferenceManager,
         audioEffectSessionManager,
         coroutineScope,
+        ProgressTicker(coroutineScope),
         playback,
         queueWatcher,
         audioManager

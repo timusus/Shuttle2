@@ -18,6 +18,8 @@ class FakePlayback(
     override var callback: Playback.Callback? = null
     override var isReleased: Boolean = false
     var state: PlaybackState = PlaybackState.Paused
+    var progressMs: Int? = null
+    var durationMs: Int? = null
     private var repeatMode: QueueManager.RepeatMode = QueueManager.RepeatMode.Off
     private var playbackSpeed: Float = 1f
 
@@ -63,9 +65,9 @@ class FakePlayback(
         events += "$name seek $position"
     }
 
-    override fun getProgress(): Int? = null
+    override fun getProgress(): Int? = progressMs
 
-    override fun getDuration(): Int? = null
+    override fun getDuration(): Int? = durationMs
 
     override fun setVolume(volume: Float) {}
 

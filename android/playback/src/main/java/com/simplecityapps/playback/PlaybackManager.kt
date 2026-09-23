@@ -1,8 +1,6 @@
 package com.simplecityapps.playback
 
 import android.media.AudioManager
-import android.os.Handler
-import android.os.Looper
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueChangeCallback
@@ -23,6 +21,7 @@ class PlaybackManager(
     private val playbackPreferenceManager: PlaybackPreferenceManager,
     private val audioEffectSessionManager: AudioEffectSessionManager,
     private val appCoroutineScope: CoroutineScope,
+    private val progressTicker: ProgressTicker,
     exoplayerPlayback: Playback,
     queueWatcher: QueueWatcher,
     audioManager: AudioManager?
@@ -30,9 +29,6 @@ class PlaybackManager(
     Playback.Callback,
     AudioFocusHelper.Listener,
     QueueChangeCallback {
-    // Lazy so the main looper isn't touched until progress is first monitored.
-    private val progressHandler: ProgressHandler by lazy { ProgressHandler() }
-
     private var playback: Playback = exoplayerPlayback
 
     private val audioSessionId = audioManager?.generateAudioSessionId() ?: -1
@@ -369,9 +365,9 @@ class PlaybackManager(
 
     private fun monitorProgress(isPlaying: Boolean) {
         if (isPlaying) {
-            progressHandler.start { updateProgress() }
+            progressTicker.start { updateProgress() }
         } else {
-            progressHandler.stop()
+            progressTicker.stop()
         }
     }
 
@@ -449,33 +445,6 @@ class PlaybackManager(
 
     override fun duck() {
         playback.setVolume(0.2f)
-    }
-
-    /**
-     * A simple handler which executes continuously between start() and stop()
-     */
-    class ProgressHandler : Handler(Looper.getMainLooper()) {
-        var callback: (() -> Unit)? = null
-
-        private val runnable =
-            object : Runnable {
-                override fun run() {
-                    callback?.invoke()
-                    postDelayed(this, 100)
-                }
-            }
-
-        fun start(callback: () -> Unit) {
-            Timber.v("start()")
-            this.callback = callback
-            post(runnable)
-        }
-
-        fun stop() {
-            Timber.v("stop()")
-            this.callback = null
-            removeCallbacks(runnable)
-        }
     }
 }
 
