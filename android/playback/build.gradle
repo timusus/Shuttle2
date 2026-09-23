@@ -69,4 +69,5 @@ dependencies {
     testImplementation libs.kotest
     testImplementation(libs.kotlinx.datetime)
     testImplementation(libs.kotlinx.coroutinesTest)
+    testImplementation libs.robolectric
 }

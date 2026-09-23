@@ -5,6 +5,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
+import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON
 import androidx.media3.exoplayer.ExoPlayer
@@ -15,9 +16,9 @@ import com.simplecityapps.playback.dsp.replaygain.ReplayGain
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 
 /**
- * Builds [ExoAudioPlayer]s with the extension renderers (FLAC, Opus) enabled and the audio sink
- * chain: [ReplayGainAudioSink] around a [DefaultAudioSink] running the equalizer and ReplayGain
- * processors.
+ * Builds [ExoAudioPlayer]s with the extension renderers (FLAC, Opus) enabled, the audio sink
+ * chain ([ReplayGainAudioSink] around a [DefaultAudioSink] running the equalizer and ReplayGain
+ * processors), and a [StreamSniffingMediaSourceFactory] so extensionless HLS streams play.
  */
 class ExoPlayerFactory(
     private val context: Context,
@@ -48,7 +49,11 @@ class ExoPlayerFactory(
         }
     }
 
-    override fun create(): AudioPlayer = ExoAudioPlayer(ExoPlayer.Builder(context, renderersFactory).build())
+    override fun create(): AudioPlayer = ExoAudioPlayer(
+        ExoPlayer.Builder(context, renderersFactory)
+            .setMediaSourceFactory(StreamSniffingMediaSourceFactory(DefaultDataSource.Factory(context)))
+            .build()
+    )
 }
 
 /** Forwards each [AudioPlayer] call to [player], mapping [PlayerItem]s to and from [MediaItem]s. */
