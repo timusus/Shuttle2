@@ -38,13 +38,16 @@ answer them manually in [Play Console](https://play.google.com/console).
    ```
 
    **Reply guidelines:**
-   - Sign off as "Tim".
-   - Personal and specific to the review — reference what they actually said, don't template it.
+   - Vary the sign-off so replies don't read as a bot: some end "Tim" or "– Tim", many have no
+     sign-off at all. Vary openings too.
+   - Don't repeat the complaint back to them, and don't placate ("that's a real gap", "that's fair
+     feedback", "I know it hurt"). Answer plainly with what's true or what's happening.
+   - Specific to the review, but short. Only reference what they said when it adds something.
    - Under 350 characters.
    - No em dashes.
    - No promises of dates ("next release", "next week", etc.) — commit to nothing time-bound.
    - Thank the reviewer for praise in positive reviews.
-   - For bug reports, ask them to email support@simplecityapps.com with details (device, steps to
+   - For bug reports, ask them to email tim@shuttlemusicplayer.app with details (device, steps to
      reproduce) so it can be investigated — don't try to diagnose or fix in the reply.
    - For widget complaints specifically, say widget improvements are being worked on. Only say this
      because it is currently true — check before reusing this line if that ever changes.
