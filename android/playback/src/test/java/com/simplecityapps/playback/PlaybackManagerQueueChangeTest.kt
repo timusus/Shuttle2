@@ -17,8 +17,9 @@ import org.junit.Test
 /**
  * A repeat mode change tells the playback to pre-load the next item, except when switching to
  * Repeat One (there's no "next" to preload). Clearing the queue keeps the current item when
- * playback is active, otherwise clears everything. Removing the current item pauses and skips
- * forward before it's removed from the queue.
+ * playback is active, otherwise clears everything, abandoning any load in progress. Removing the
+ * current item loads the next one (carrying on if it was playing), and removing any item
+ * re-prepares the next one.
  */
 class PlaybackManagerQueueChangeTest {
     private val events = mutableListOf<String>()
@@ -85,15 +86,74 @@ class PlaybackManagerQueueChangeTest {
     }
 
     @Test
-    fun `removing the current item pauses playback and skips forward before removing it`() {
+    fun `clearQueue while a track loads abandons the load`() {
+        playbackManager.skipToNext()
+        events.clear()
+
+        playbackManager.clearQueue()
+        playback.completeLoad()
+
+        events shouldBe listOf("A loadNext null")
+        playbackManager.positionAnchorFlow.value.positionMs shouldBe null
+    }
+
+    @Test
+    fun `removing the current item while playing loads the next item and plays it`() {
+        // #292: the queue used to move on while the player stayed on the removed track.
         playback.state = PlaybackState.Playing
         val currentItem = queueManager.getCurrentItem()!!
 
         playbackManager.removeQueueItem(currentItem)
 
-        events shouldBe listOf("A pause")
+        events shouldBe listOf("A load Song2 seek 0")
         queueManager.getCurrentItem()!!.song.id shouldBe 2L
         queueManager.getQueue().map { it.song.id } shouldBe listOf(2L, 3L)
+
+        playback.completeLoad()
+
+        events shouldBe listOf("A load Song2 seek 0", "A play")
+    }
+
+    @Test
+    fun `removing the current item while paused loads the next item without playing it`() {
+        val currentItem = queueManager.getCurrentItem()!!
+
+        playbackManager.removeQueueItem(currentItem)
+        playback.completeLoad()
+
+        events shouldBe listOf("A load Song2 seek 0")
+        queueManager.getCurrentItem()!!.song.id shouldBe 2L
+    }
+
+    @Test
+    fun `removing the current item while it loads replaces the load`() {
+        playback.state = PlaybackState.Playing
+        playbackManager.skipToNext()
+        events.clear()
+
+        playbackManager.removeQueueItem(queueManager.getCurrentItem()!!)
+        // The superseded skip load completes first; it mustn't play the removed track.
+        playback.completeLoad()
+
+        events shouldBe listOf("A load Song3 seek 0")
+
+        playback.completeLoad()
+
+        events shouldBe listOf("A load Song3 seek 0", "A play")
+    }
+
+    @Test
+    fun `removing the only item pauses and abandons any load in progress`() {
+        runBlocking { queueManager.setQueue(listOf(createSong(1))) }
+        playback.state = PlaybackState.Playing
+        playbackManager.load { }
+        events.clear()
+
+        playbackManager.removeQueueItem(queueManager.getCurrentItem()!!)
+        playback.completeLoad()
+
+        events shouldBe listOf("A pause")
+        queueManager.getQueue().shouldBeEmpty()
     }
 
     @Test
@@ -103,9 +163,16 @@ class PlaybackManagerQueueChangeTest {
 
         playbackManager.removeQueueItem(nonCurrentItem)
 
-        events.shouldBeEmpty()
+        events shouldBe listOf("A loadNext Song2")
         queueManager.getCurrentItem()!!.song.id shouldBe 1L
         queueManager.getQueue().map { it.song.id } shouldBe listOf(1L, 2L)
+    }
+
+    @Test
+    fun `removing the next item prepares the one after it`() {
+        playbackManager.removeQueueItem(queueManager.getQueue()[1])
+
+        events shouldBe listOf("A loadNext Song3")
     }
 
     private fun createSong(id: Long) = Song(

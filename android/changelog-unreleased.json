@@ -54,6 +54,18 @@
     {
       "text": "Fixed the progress bar on the lock screen, in the car and on other media controls jumping back after turning shuffle on or off",
       "commits": []
+    },
+    {
+      "text": "Seeking while a song is still loading now starts it from the spot you picked, instead of the seek being lost",
+      "commits": []
+    },
+    {
+      "text": "Skipping quickly through several songs no longer briefly plays one you already skipped past",
+      "commits": []
+    },
+    {
+      "text": "Removing the playing song from the queue now moves playback on to the next song, and a song removed from the queue no longer plays anyway when the current one ends",
+      "commits": []
     }
   ]
 }

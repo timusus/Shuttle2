@@ -74,6 +74,7 @@ class FakePlayback(
 
     override fun seek(position: Int) {
         events += "$name seek $position"
+        progressMs = position
     }
 
     override fun getProgress(): Int? = progressMs

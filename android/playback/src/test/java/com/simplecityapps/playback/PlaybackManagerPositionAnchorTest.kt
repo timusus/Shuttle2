@@ -272,6 +272,31 @@ class PlaybackManagerPositionAnchorTest {
     }
 
     @Test
+    fun `a seek while a track loads anchors at the seek and is applied once it loads`() = runTest {
+        // #295: the seek went to the track being replaced, and the anchor kept the load's start.
+        queueManager.setQueue(listOf(testSong(1), testSong(2)))
+        playback.progressMs = 170_000
+        createPlaybackManager()
+        enter(PlaybackState.Playing)
+        playbackManager.skipToNext()
+        now = 21_000
+
+        playbackManager.seekTo(30_000)
+
+        playbackManager.positionAnchorFlow.value shouldBe anchor(PlaybackState.Loading, positionMs = 30_000, elapsedRealtimeMs = 21_000)
+        playbackManager.progressFlow.value shouldBe PlaybackProgress(position = 30_000, duration = 180_000)
+        playback.progressMs shouldBe 170_000
+
+        playback.progressMs = 0
+        playback.durationMs = 180_000
+        now = 22_000
+        playback.completeLoad()
+
+        playback.progressMs shouldBe 30_000
+        playbackManager.positionAnchorFlow.value shouldBe anchor(PlaybackState.Playing, positionMs = 30_000, elapsedRealtimeMs = 22_000)
+    }
+
+    @Test
     fun `an unknown position is anchored as null`() = runTest {
         playback.progressMs = null
         createPlaybackManager()

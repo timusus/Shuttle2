@@ -8,6 +8,7 @@ import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.runBlocking
 import org.junit.Before
@@ -77,6 +78,35 @@ class PlaybackManagerSkipTest {
 
         queueManager.getCurrentItem()!!.song.id shouldBe 1L
         events shouldBe listOf("A load Song1 seek 0")
+    }
+
+    @Test
+    fun `a skip superseded by a later one does not play when its load completes`() {
+        // #293: rapid skips on a slow provider.
+        playbackManager.skipToPrev(force = true)
+        playbackManager.skipToNext()
+        events.clear()
+
+        playback.completeLoad()
+
+        events.shouldBeEmpty()
+
+        playback.completeLoad()
+
+        events shouldBe listOf("A play")
+        queueManager.getCurrentItem()!!.song.id shouldBe 2L
+    }
+
+    @Test
+    fun `skipToPrev during a load goes by the loading track's position, not the old one's`() {
+        playback.progressMs = 170_000
+        playbackManager.skipToNext()
+        events.clear()
+
+        playbackManager.skipToPrev()
+
+        queueManager.getCurrentItem()!!.song.id shouldBe 2L
+        events shouldBe listOf("A load Song2 seek 0")
     }
 
     @Test
