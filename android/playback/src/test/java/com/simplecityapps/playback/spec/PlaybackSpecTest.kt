@@ -276,6 +276,38 @@ class PlaybackSpecTest {
         queue.queueStateFlow.value.items.map { it.song.id } shouldBe listOf(1L, 7L, 2L, 3L, 5L, 6L)
     }
 
+    @Test
+    fun `RS-22 removing the current last song doesn't report it as played through`() {
+        val first = song(1)
+        val last = song(2)
+        startPlaying(listOf(first, last))
+        playback.skipTo(1)
+        harness.runUntil { playback.playbackStateFlow.value == PlaybackState.Playing && playback.getProgress()!! > 0 }
+        val ended = harness.record(playback.trackEndedFlow)
+
+        queue.remove(listOf(queue.queueStateFlow.value.currentItem!!))
+        harness.idle()
+
+        ended.shouldBeEmpty()
+        queue.queueStateFlow.value.items.map { it.song } shouldBe listOf(first)
+        playback.playbackStateFlow.value shouldBe PlaybackState.Paused
+    }
+
+    private fun offMainThread(
+        errors: MutableList<Throwable>,
+        block: () -> Unit
+    ) {
+        val thread = Thread { runCatching(block).onFailure { errors += it } }
+        thread.start()
+        thread.join()
+    }
+
+    /** Sets [songs] as the queue and plays it from the first, once it's playing. */
+    private fun startPlaying(songs: List<Song>) {
+        harness.run { playback.addToQueue(songs) }
+        harness.runUntil { playback.playbackStateFlow.value == PlaybackState.Playing }
+    }
+
     /** Sets [songs] as the queue and loads the first, paused at [positionMs], as a restore does. */
     private fun loadPaused(
         songs: List<Song>,

@@ -65,6 +65,10 @@ volume, not stuck ducked) is device-only: *Cast* — duck, switch to Cast and ba
 **RS-14: every queue change is published.** Given a queue, when a song is moved, removed, added or played next, then
 each change publishes a new queue state, so the queue screen, notification and session all update. (fdec2b2c) — JVM.
 
+**RS-22: only a song that plays out counts as played through.** Given the last song in the queue playing, when the
+user removes it from the queue, then no track end is reported for it or for the song the queue falls back to (no
+play count, no saved position at its end); a song that plays to its end is reported (RS-01). (#345) — JVM.
+
 ## Audio output
 
 **RS-15: ReplayGain from the first sample.** Given ReplayGain on and a song with a track gain, when it starts, then

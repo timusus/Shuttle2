@@ -65,6 +65,12 @@ class PlaybackManager(
     /** Songs skipped in a row because their stream couldn't be resolved. */
     private var resolutionFailures = 0
 
+    /**
+     * Whether the playlist changed in the player events being delivered. The player ends when the current last
+     * item is removed as well as when it plays out, and only a play-out is a track end.
+     */
+    private var playlistChanged = false
+
     private var progressJob: Job? = null
 
     private val _playbackStateFlow = MutableStateFlow(derivedState())
@@ -117,6 +123,23 @@ class PlaybackManager(
         // published here is current by the time that call returns.
         player.addListener(
             object : Player.Listener {
+                override fun onTimelineChanged(
+                    timeline: Timeline,
+                    reason: Int
+                ) {
+                    if (reason == Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED) {
+                        playlistChanged = true
+                    }
+                }
+
+                override fun onEvents(
+                    player: Player,
+                    events: Player.Events
+                ) {
+                    // Delivered after every callback for the same change, before the next change's.
+                    playlistChanged = false
+                }
+
                 override fun onPlaybackStateChanged(playbackState: Int) {
                     onPlayerStateChanged(playbackState)
                 }
@@ -176,9 +199,11 @@ class PlaybackManager(
             Player.STATE_IDLE -> readyUid = null
 
             Player.STATE_ENDED -> {
-                // The last item played to its end, with nothing to repeat, or the queue was emptied.
+                // The last item played to its end, with nothing to repeat, or the current last item was removed.
                 completePendingLoad(Result.failure(IllegalStateException("Nothing to load")))
-                player.currentMediaItem?.let { item -> _trackEndedFlow.tryEmit(item.queueEntry.song) }
+                if (!playlistChanged) {
+                    player.currentMediaItem?.let { item -> _trackEndedFlow.tryEmit(item.queueEntry.song) }
+                }
                 if (player.playWhenReady) {
                     pause()
                 }
