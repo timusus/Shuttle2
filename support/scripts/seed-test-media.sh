@@ -13,6 +13,8 @@
 #     gapless         one album of 5 x 12 s sine tones played back to back: an MP3, two
 #                     FLAC-in-Matroska (.mka) tracks and two native FLACs, so gapless transitions
 #                     cross MP3 -> FLAC, Matroska -> Matroska and Matroska -> FLAC
+#     podcast         one 60 s track pushed under a path containing "podcast", so Song.type
+#                     resolves to Type.Podcast (Song.kt matches on path, not a MediaStore flag)
 #
 #     --skip-onboarding   also write the debug app's prefs so it opens straight to the library
 #                         with the local (MediaStore) provider selected, skipping onboarding
@@ -44,6 +46,7 @@ Usage: support/scripts/seed-test-media.sh <fixture> [--skip-onboarding]
   playback        one album of 5 x 60 s tracks, long enough for playback checks (seek, skip,
                   remove the current item) to finish before a track ends on its own
   gapless         one album of 5 x 12 s tones: MP3, two FLAC-in-Matroska, two native FLAC
+  podcast         one 60 s track under a "podcast" path, so it resolves to Song.Type.Podcast
 
   --skip-onboarding   write debug-app prefs so it opens straight to the library with the local
                       provider selected (needs the debug APK already installed)
@@ -58,7 +61,7 @@ FIXTURE="${1:-}"
 case "$FIXTURE" in
     -h|--help) usage; exit 0 ;;
     "") usage >&2; exit 2 ;;
-    two-disc|many-tracks|playlist-basic|playback|gapless) ;;
+    two-disc|many-tracks|playlist-basic|playback|gapless|podcast) ;;
     *) echo "seed-test-media: unknown fixture '$FIXTURE'" >&2; usage >&2; exit 2 ;;
 esac
 shift
@@ -170,6 +173,15 @@ build_playback() {
     done
 }
 
+# Pushed to .../s2-seed/podcast/..., so its MediaStore path contains "podcast" and Song.type
+# resolves to Type.Podcast (Song.kt matches on path, not a genre tag or MediaStore flag).
+build_podcast() {
+    local dir="$1"
+    mkdir -p "$dir"
+    generate_track "${dir}/spokenword1.mp3" mp3 "Spoken Word One" "Podcast Artist" \
+        "Podcast Artist" "Podcast Album" 1 1 1 1 "2022" "Spoken Word" 60
+}
+
 FIXTURE_DIR="${CACHE_ROOT}/${FIXTURE}"
 mkdir -p "$FIXTURE_DIR"
 echo "seed-test-media: generating '${FIXTURE}' fixture in ${FIXTURE_DIR} (cached files reused) ..."
@@ -179,6 +191,7 @@ case "$FIXTURE" in
     playlist-basic) build_playlist_basic "$FIXTURE_DIR" ;;
     playback) build_playback "$FIXTURE_DIR" ;;
     gapless) build_gapless "$FIXTURE_DIR" ;;
+    podcast) build_podcast "$FIXTURE_DIR" ;;
 esac
 
 # The app only imports MediaStore tracks into its own library on: walking through onboarding's
