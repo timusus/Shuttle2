@@ -80,3 +80,15 @@ build, tick them off, and file anything wrong with `/note`. Remove ticked items 
 ### Playback reporting (#191)
 - [ ] Play a Jellyfin song, then an Emby song. Each server's dashboard shows it as now playing with a moving position, and clears it on pause/stop.
 - [ ] Play a Plex song to the end. It shows in Plex's now playing and is marked played afterwards.
+
+## Behaviour spec, device-only rules
+
+The rules in `docs/testing/playback-behaviour-spec.md` the JVM can't run.
+
+- [ ] RS-17: with the EQ on (any non-flat preset) and ReplayGain on, a 24-bit FLAC plays to its end cleanly, with no noise or skip.
+- [ ] RS-18: with a system EQ app (e.g. Wavelet) attached, change a setting that rebuilds the player (turn USB DAC direct output on and off) and skip. The EQ app keeps applying.
+- [ ] RS-19: play a song from the "S2 Transcode Test" album on Jellyfin and then Emby with transcoding forced (a low streaming bitrate). Each plays, seeks, and advances to the next song.
+- [ ] RS-20: with USB DAC direct output on, seek to the last second of a track and change the output format (turn the setting off and on) just as it ends. The next track plays from its start, with no skip past it.
+- [ ] RS-21: while paused on Cast, seek from another sender (e.g. the Google Home app). S2's seekbar moves to the new position.
+- [ ] RS-21: on Cast, press Previous before the receiver has reported a position (straight after a skip). The song restarts rather than jumping two songs back.
+- [ ] RS-21: with a system EQ app attached, switch to Cast. The EQ app detaches; switch back and it reattaches.
