@@ -3,10 +3,10 @@ package com.simplecityapps.shuttle.appinitializers
 import android.app.Application
 import android.content.Context
 import com.simplecityapps.createSong
-import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.fakes.FakePlaybackManager
 import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.fakes.FakeSongRepository
+import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackProgress
 import com.simplecityapps.playback.PlaybackService
 import com.simplecityapps.playback.PlaybackState
