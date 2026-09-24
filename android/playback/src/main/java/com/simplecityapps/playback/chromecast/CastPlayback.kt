@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.net.wifi.WifiManager
+import android.os.SystemClock
 import com.google.android.gms.cast.MediaInfo
 import com.google.android.gms.cast.MediaLoadOptions
 import com.google.android.gms.cast.MediaMetadata
@@ -39,6 +40,8 @@ class CastPlayback(
 
     private val remoteMediaClientCallback = CastMediaClientCallback()
 
+    private val positionTracker = CastPositionTracker(SystemClock::elapsedRealtime)
+
     init {
         castSession.remoteMediaClient?.registerCallback(remoteMediaClientCallback)
     }
@@ -50,6 +53,7 @@ class CastPlayback(
     ) {
         Timber.v("load(current: ${current.name}|${current.mimeType})")
         isReleased = false
+        positionTracker.reset()
 
         callback?.onPlaybackStateChanged(PlaybackState.Loading)
 
@@ -145,6 +149,8 @@ class CastPlayback(
 
     override fun seek(position: Int) {
         currentPosition = position
+        // The remote position lags the seek until a status reports it, so re-anchor on that status.
+        positionTracker.reset()
         try {
             if (castSession.remoteMediaClient?.hasMediaSession() == true) {
                 castSession.remoteMediaClient?.seek(
@@ -251,9 +257,19 @@ class CastPlayback(
         override fun onStatusUpdated() {
             Timber.v("RemoteMediaClient.onStatusUpdated: ${castSession.remoteMediaClient?.playerState?.playerStateToString()}")
             updatePlaybackState()
-            // Each status carries a fresh position and rate, which may have jumped without a call
-            // to seek() or setPlaybackSpeed() here (another sender, or a rate change taking effect).
-            callback?.onPositionDiscontinuity()
+            // A status may carry a position or rate that jumped without a call to seek() or
+            // setPlaybackSpeed() here (another sender, or a rate change taking effect). Report only
+            // those, not the steady updates that agree with the position extrapolated so far.
+            val remoteMediaClient = castSession.remoteMediaClient ?: return
+            if (positionTracker.isDiscontinuity(
+                    positionMs = remoteMediaClient.approximateStreamPosition,
+                    rate = remoteMediaClient.mediaStatus?.playbackRate ?: 1.0,
+                    isPlaying = remoteMediaClient.playerState == MediaStatus.PLAYER_STATE_PLAYING,
+                    mediaId = remoteMediaClient.mediaInfo?.contentId
+                )
+            ) {
+                callback?.onPositionDiscontinuity()
+            }
         }
     }
 }

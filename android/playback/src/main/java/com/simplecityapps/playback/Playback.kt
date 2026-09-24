@@ -82,7 +82,8 @@ interface Playback {
         /**
          * The position jumped other than by playing through: a seek that didn't come from
          * [seek] on this device (e.g. another Cast sender), a seek adjustment, or a new status
-         * carrying a fresh position or speed. The new position is read with [getProgress].
+         * whose position or speed departs from the one extrapolated so far. The new position is
+         * read with [getProgress].
          */
         fun onPositionDiscontinuity() {
         }
