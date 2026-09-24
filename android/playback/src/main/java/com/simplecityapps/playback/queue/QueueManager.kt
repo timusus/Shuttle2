@@ -162,8 +162,9 @@ class QueueManager(
 
     /**
      * Replaces the playlist with [items] (built for [songs]), unless it already holds those songs, and moves to
-     * [position]: an index into [shuffleSongs] when given and shuffle is on, else into [songs]. Without
-     * [shuffleSongs], a new shuffled order starts at the current item.
+     * [position]: an index into [shuffleSongs] when given and shuffle is on, else into [songs]. When it already holds
+     * them, it keeps its items and takes [songs]' data. Without [shuffleSongs], a new shuffled order starts at the
+     * current item.
      */
     private fun applyQueue(
         songs: List<Song>,
@@ -191,6 +192,7 @@ class QueueManager(
             val index = if (shuffleSongs != null && player.shuffleModeEnabled) shuffleOrder.toList()[position] else position
 
             if (sameSongs) {
+                replaceChanged(songs)
                 if (index != player.currentMediaItemIndex) {
                     player.seekTo(index, 0)
                 }
@@ -298,19 +300,26 @@ class QueueManager(
         if (songsById.isEmpty()) return
         playerThread.run {
             batch {
-                val shuffled = shuffledIndices()
-                entries().forEachIndexed { index, entry ->
-                    val updated = songsById[entry.song.id]
-                    if (updated != null && updated != entry.song) {
-                        player.replaceMediaItem(index, songUriResolver.toMediaItem(QueueEntry(entry.uid, updated)))
-                    }
-                }
-                // An item whose file changed is replaced by removing and re-adding it, which moves it to the end of
-                // the shuffled order, so the order is put back.
-                if (shuffledIndices() != shuffled) {
-                    player.setShuffleOrder(S2ShuffleOrder(shuffled.toIntArray()))
-                }
+                replaceChanged(entries().map { entry -> songsById[entry.song.id] ?: entry.song })
             }
+        }
+    }
+
+    /**
+     * Gives each playlist item the song at its index in [songs], where that differs, keeping its uid and its place in
+     * both orders. Main thread only.
+     */
+    private fun replaceChanged(songs: List<Song>) {
+        val shuffled = shuffledIndices()
+        entries().zip(songs).forEachIndexed { index, (entry, song) ->
+            if (song != entry.song) {
+                player.replaceMediaItem(index, songUriResolver.toMediaItem(QueueEntry(entry.uid, song)))
+            }
+        }
+        // An item whose file changed is replaced by removing and re-adding it, which moves it to the end of the
+        // shuffled order, so the order is put back.
+        if (shuffledIndices() != shuffled) {
+            player.setShuffleOrder(S2ShuffleOrder(shuffled.toIntArray()))
         }
     }
 

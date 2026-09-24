@@ -384,6 +384,24 @@ class PlaybackSpecTest {
     }
 
     @Test
+    fun `RS-26 setting the same queue again with refreshed songs shows them without reloading`() {
+        val first = song(1)
+        val second = song(2)
+        loadPaused(listOf(first, second), positionMs = 1_200)
+        val states = harness.record(playback.playbackStateFlow)
+        val uids = queue.queueStateFlow.value.items.map { it.uid }
+
+        harness.run { queue.setQueue(listOf(first.copy(name = "Renamed"), second.copy(name = "Also renamed"))) }
+        harness.idle()
+
+        val items = queue.queueStateFlow.value.items
+        items.map { it.song.name } shouldBe listOf("Renamed", "Also renamed")
+        items.map { it.uid } shouldBe uids
+        states shouldNotContain PlaybackState.Loading
+        playback.getProgress() shouldBe 1_200
+    }
+
+    @Test
     fun `RS-29 playback and queue calls made off the main thread run on it`() {
         startPlaying(listOf(song(1), song(2), song(3)))
         val errors = mutableListOf<Throwable>()

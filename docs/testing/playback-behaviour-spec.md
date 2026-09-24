@@ -80,6 +80,10 @@ controller) and played, then it plays from its start, not from the other song's 
 **RS-25: a tag edit keeps the shuffled order.** Given shuffle on, when a tag edit changes queued songs (their tags,
 or the file a song plays from), then each song keeps its place in the shuffled and unshuffled queue. (#345) — JVM.
 
+**RS-26: setting the same queue again refreshes its songs.** Given a queue loaded, when the same songs are set as the
+queue again with changed data (a library refresh), then the queue shows the new data, and the current song keeps
+playing from where it was, without reloading. (#345) — JVM.
+
 **RS-29: playback and queue calls work from any thread.** Given a song playing, when a caller off the main thread
 reads the progress or duration, pauses, or removes a queue item, then the read returns the last published state and
 each change takes effect on the main thread, without an error. (#345) — JVM.
