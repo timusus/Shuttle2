@@ -3,6 +3,9 @@ package com.simplecityapps.shuttle.ui.screens.library.genres
 import android.annotation.SuppressLint
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.Menu
+import android.view.MenuInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
@@ -22,8 +25,10 @@ import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.Playlist
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import com.simplecityapps.shuttle.sorting.GenreSortOrder
 import com.simplecityapps.shuttle.ui.common.autoCleared
 import com.simplecityapps.shuttle.ui.common.dialog.TagEditorAlertDialog
+import com.simplecityapps.shuttle.ui.common.view.findToolbarHost
 import com.simplecityapps.shuttle.ui.screens.library.genres.detail.GenreDetailFragmentArgs
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.CreatePlaylistDialogFragment
 import com.simplecityapps.shuttle.ui.screens.playlistmenu.PlaylistData
@@ -53,6 +58,12 @@ class GenreListFragment :
     private lateinit var playlistMenuView: PlaylistMenuView
 
     // Lifecycle
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        setHasOptionsMenu(true)
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -117,6 +128,14 @@ class GenreListFragment :
             }
         }
 
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.uiState.collect { state ->
+                    updateToolbarMenuSortOrder(state.sortOrder)
+                }
+            }
+        }
+
         composeView.setContent {
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
             val theme by preferenceManager.theme(viewLifecycleOwner.lifecycleScope).collectAsStateWithLifecycle()
@@ -165,6 +184,39 @@ class GenreListFragment :
         playlistMenuPresenter.unbindView()
 
         super.onDestroyView()
+    }
+
+    override fun onCreateOptionsMenu(
+        menu: Menu,
+        inflater: MenuInflater
+    ) {
+        super.onCreateOptionsMenu(menu, inflater)
+
+        inflater.inflate(R.menu.menu_genre_list, menu)
+        updateToolbarMenuSortOrder(viewModel.uiState.value.sortOrder)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+        R.id.sortGenreName -> {
+            viewModel.setSortOrder(GenreSortOrder.Default)
+            true
+        }
+
+        R.id.sortSongCount -> {
+            viewModel.setSortOrder(GenreSortOrder.SongCount)
+            true
+        }
+
+        else -> false
+    }
+
+    private fun updateToolbarMenuSortOrder(sortOrder: GenreSortOrder) {
+        findToolbarHost()?.toolbar?.menu?.let { menu ->
+            when (sortOrder) {
+                GenreSortOrder.Default -> menu.findItem(R.id.sortGenreName)?.isChecked = true
+                GenreSortOrder.SongCount -> menu.findItem(R.id.sortSongCount)?.isChecked = true
+            }
+        }
     }
 
     private fun onGenreSelected(genre: com.simplecityapps.shuttle.model.Genre) {

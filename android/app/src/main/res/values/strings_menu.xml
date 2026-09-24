@@ -60,6 +60,10 @@
     <string name="menu_title_sort_random">Random</string>
     <!-- Menu option to sort playlists alphabetically by name -->
     <string name="menu_title_sort_playlist_name">Name</string>
+    <!-- Menu option to sort genres alphabetically by name -->
+    <string name="menu_title_sort_genre_name">Name</string>
+    <!-- Menu option to sort genres by how many songs they contain -->
+    <string name="menu_title_sort_song_count">Song Count</string>
     <!-- Menu option to sort playlists by the date they were created -->
     <string name="menu_title_sort_date_created">Date Created</string>
     <!-- Menu option to scroll to the current playing track in the queue -->
