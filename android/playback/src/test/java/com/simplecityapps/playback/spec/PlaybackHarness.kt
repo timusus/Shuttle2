@@ -69,7 +69,9 @@ class PlaybackHarness(
     replayGainMode: ReplayGainMode = ReplayGainMode.Off,
     equalizerEnabled: Boolean = false,
     /** Where queue entries are built. Inline by default, so a queue change completes within the call that makes it. */
-    buildContext: CoroutineContext = EmptyCoroutineContext
+    buildContext: CoroutineContext = EmptyCoroutineContext,
+    /** Whether the player prepares only the items around the current one, as production's does. Off only to measure the cost of preparing every item. */
+    lazyPreparation: Boolean = true
 ) {
     val context: Context = RuntimeEnvironment.getApplication()
 
@@ -144,8 +146,8 @@ class PlaybackHarness(
             ExoPlayerFactory(context, equalizer, replayGain, AudioTrackMonitor(), songUriResolver) { renderersFactory, mediaSourceFactory ->
                 TestExoPlayerBuilder(context)
                     .setClock(FakeClock(true))
-                    // As production's ExoPlayer.Builder does by default: only the items around the current one are prepared.
-                    .setUseLazyPreparation(true)
+                    // Production's ExoPlayer.Builder prepares lazily by default: only the items around the current one.
+                    .setUseLazyPreparation(lazyPreparation)
                     .setRenderersFactory(renderersFactory)
                     .setMediaSourceFactory(mediaSourceFactory)
                     .build()
