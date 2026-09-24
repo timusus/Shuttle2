@@ -1,11 +1,14 @@
 package com.simplecityapps.playback
 
 import com.simplecityapps.shuttle.model.Song
+import java.util.concurrent.TimeoutException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -36,13 +39,17 @@ import timber.log.Timber
  * main thread.
  *
  * A load's completion runs at most once, even if a [Playback] reports the same load more than once.
+ * A load that hasn't reported within [loadTimeoutMs] is failed and abandoned, so it can't hold up
+ * next-item preparation indefinitely; a completion it reports later is ignored.
  */
 class LoadCoordinator(
     parentScope: CoroutineScope,
     private val activePlayback: () -> Playback,
     private val nextSong: () -> Song?,
     /** Called whenever [pendingLoad] changes, so the position anchor can follow it. */
-    private val onPendingLoadChanged: () -> Unit
+    private val onPendingLoadChanged: () -> Unit,
+    /** How long a load may take to report its completion before it's failed. */
+    private val loadTimeoutMs: Long = DEFAULT_LOAD_TIMEOUT_MS
 ) {
     /** A load that has been requested and not yet completed. */
     class PendingLoad internal constructor(
@@ -119,15 +126,26 @@ class LoadCoordinator(
         loadJob =
             scope.launch {
                 var delivered = false
+                var timeout: Job? = null
 
                 fun deliver(result: Result<Any?>) {
                     if (delivered) {
-                        Timber.w("Load $token reported completion more than once; ignoring")
+                        Timber.w("Load $token reported completion more than once, or after timing out; ignoring")
                         return
                     }
                     delivered = true
+                    timeout?.cancel()
                     complete(token, playback, result, completion)
                 }
+                val load = this
+                timeout =
+                    launch {
+                        delay(loadTimeoutMs)
+                        Timber.w("Load $token didn't complete within $loadTimeoutMs ms; failing it")
+                        deliver(Result.failure(TimeoutException("Load didn't complete within $loadTimeoutMs ms")))
+                        // The playback may still be resolving it; it's no longer wanted.
+                        load.cancel()
+                    }
                 try {
                     playback.load(current, next, positionMs, ::deliver)
                 } catch (e: CancellationException) {
@@ -203,3 +221,6 @@ class LoadCoordinator(
         }
     }
 }
+
+/** Long enough for a remote provider to resolve a stream, or a Cast receiver to load it. */
+private const val DEFAULT_LOAD_TIMEOUT_MS = 30_000L

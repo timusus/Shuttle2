@@ -5,7 +5,9 @@ import com.simplecityapps.playback.fakes.testSong
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
@@ -46,7 +48,8 @@ class LoadCoordinatorTest {
         parentScope = backgroundScope,
         activePlayback = { playback },
         nextSong = { nextSong },
-        onPendingLoadChanged = { pendingLoadChanges++ }
+        onPendingLoadChanged = { pendingLoadChanges++ },
+        loadTimeoutMs = LOAD_TIMEOUT_MS
     )
 
     private fun LoadCoordinator.load(
@@ -361,6 +364,132 @@ class LoadCoordinatorTest {
     }
 
     @Test
+    fun `a load that never reports fails once it times out`() = runTest {
+        val coordinator = coordinator()
+        coordinator.load(1, positionMs = 3_000) { result -> results += "failed: ${result.exceptionOrNull()?.javaClass?.simpleName}" }
+        runCurrent()
+
+        advanceTimeBy(LOAD_TIMEOUT_MS - 1)
+        runCurrent()
+
+        results.shouldBeEmpty()
+        coordinator.pendingLoad!!.positionMs shouldBe 3_000
+
+        advanceTimeBy(1)
+        runCurrent()
+
+        results shouldBe listOf("failed: TimeoutException")
+        coordinator.pendingLoad shouldBe null
+    }
+
+    @Test
+    fun `a completion reported after the load timed out is ignored`() = runTest {
+        val coordinator = coordinator()
+        coordinator.load(1)
+        runCurrent()
+        advanceTimeBy(LOAD_TIMEOUT_MS)
+        runCurrent()
+
+        fake.completeLoad()
+
+        results shouldBe listOf("Song1 failed")
+    }
+
+    @Test
+    fun `a completion reported after a timed-out load's retry started is ignored`() = runTest {
+        val coordinator = coordinator()
+        coordinator.load(1) { result ->
+            results += "Song1 ${if (result.isSuccess) "loaded" else "failed"}"
+            coordinator.load(2)
+        }
+        runCurrent()
+        advanceTimeBy(LOAD_TIMEOUT_MS)
+        runCurrent()
+
+        fake.completeLoad()
+
+        results shouldBe listOf("Song1 failed")
+        events shouldBe listOf("A load Song1 seek 0", "A load Song2 seek 0")
+        coordinator.pendingLoad shouldNotBe null
+    }
+
+    @Test
+    fun `a load that reports in time never times out`() = runTest {
+        val coordinator = coordinator()
+        coordinator.load(1)
+        runCurrent()
+        fake.completeLoad()
+
+        advanceTimeBy(LOAD_TIMEOUT_MS * 2)
+        runCurrent()
+
+        results shouldBe listOf("Song1 loaded")
+    }
+
+    @Test
+    fun `a superseded load does not time out`() = runTest {
+        val coordinator = coordinator()
+        coordinator.load(1)
+        runCurrent()
+        advanceTimeBy(LOAD_TIMEOUT_MS / 2)
+        coordinator.load(2)
+        runCurrent()
+
+        advanceTimeBy(LOAD_TIMEOUT_MS / 2 + 1)
+        runCurrent()
+
+        results.shouldBeEmpty()
+
+        advanceTimeBy(LOAD_TIMEOUT_MS / 2)
+        runCurrent()
+
+        results shouldBe listOf("Song2 failed")
+    }
+
+    @Test
+    fun `a load still resolving when it times out is abandoned`() = runTest {
+        val hanging =
+            object : Playback by fake {
+                override suspend fun load(
+                    current: Song,
+                    next: Song?,
+                    seekPosition: Int,
+                    completion: (Result<Any?>) -> Unit
+                ) {
+                    try {
+                        awaitCancellation()
+                    } finally {
+                        events += "load abandoned"
+                    }
+                }
+            }
+        val coordinator = coordinator()
+        coordinator.load(hanging, testSong(1), null, 0) { results += "Song1 failed" }
+        runCurrent()
+
+        advanceTimeBy(LOAD_TIMEOUT_MS)
+        runCurrent()
+
+        results shouldBe listOf("Song1 failed")
+        events shouldBe listOf("load abandoned")
+    }
+
+    @Test
+    fun `a next-item request waiting on a load that never reports runs once it times out`() = runTest {
+        val coordinator = coordinator()
+        runCurrent()
+        coordinator.load(1)
+        nextSong = testSong(2)
+        coordinator.requestNext()
+        runCurrent()
+
+        advanceTimeBy(LOAD_TIMEOUT_MS)
+        runCurrent()
+
+        events shouldBe listOf("A load Song1 seek 0", "loadNext Song2 start", "loadNext Song2 end")
+    }
+
+    @Test
     fun `a next-item request resumes when the pending load is cancelled`() = runTest {
         val coordinator = coordinator()
         runCurrent()
@@ -374,3 +503,5 @@ class LoadCoordinatorTest {
         events shouldBe listOf("A load Song1 seek 0", "loadNext null start", "loadNext null end")
     }
 }
+
+private const val LOAD_TIMEOUT_MS = 30_000L

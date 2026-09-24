@@ -13,6 +13,7 @@ import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 
 /**
  * Builds a [PlaybackManager] wired with fakes, defaulting every collaborator so a test only needs
@@ -24,7 +25,9 @@ fun testPlaybackManager(
     audioFocusHelper: AudioFocusHelper = FakeAudioFocusHelper(),
     playbackPreferenceManager: PlaybackPreferenceManager = PlaybackPreferenceManager(FakeSharedPreferences(), Moshi.Builder().build()),
     audioEffectSessionManager: AudioEffectSessionManager = AudioEffectSessionManager(openSession = {}, closeSession = {}),
-    appCoroutineScope: CoroutineScope = CoroutineScope(Dispatchers.Unconfined),
+    // Runs inline like Dispatchers.Unconfined, but on virtual time, so a load's timeout only fires when
+    // a test advances the dispatcher's scheduler.
+    appCoroutineScope: CoroutineScope = CoroutineScope(UnconfinedTestDispatcher()),
     // A dispatcher nothing advances, so progress never ticks unless a test supplies its own ticker.
     progressTicker: ProgressTicker = ProgressTicker(CoroutineScope(StandardTestDispatcher())),
     elapsedRealtime: () -> Long = { 0L },
