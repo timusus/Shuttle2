@@ -16,6 +16,7 @@ import com.simplecityapps.shuttle.downloads.DownloadPreferences
 import com.simplecityapps.shuttle.downloads.SongDownloadManager
 import com.simplecityapps.shuttle.downloads.SongDownloadRepository
 import com.simplecityapps.shuttle.downloads.downloadRequirements
+import com.simplecityapps.shuttle.downloads.runOnMainThreadBlocking
 import com.simplecityapps.shuttle.downloads.service.SongDownloadService
 import dagger.Binds
 import dagger.Module
@@ -90,11 +91,18 @@ abstract class DownloadsModule {
                     .setConnectTimeoutMs(TIMEOUT_MS)
                     .setReadTimeoutMs(TIMEOUT_MS)
                     .setAllowCrossProtocolRedirects(true)
-            return DownloadManager(context, databaseProvider, cache, dataSourceFactory, Runnable::run).apply {
-                maxParallelDownloads = MAX_PARALLEL_DOWNLOADS
-                // Built with the preference as it stands, so DownloadRequirementsManager only has
-                // to push a change (each push starts the foreground service).
-                requirements = downloadRequirements(downloadPreferences.wifiOnly)
+            // Media3's DownloadManager binds to whatever thread's Looper is current when it's
+            // constructed (falling back to main only if the calling thread has none at all), and
+            // every later call must come from that same thread. Hilt resolves this singleton
+            // wherever it's first injected, which isn't guaranteed to be main, so force
+            // construction onto main here rather than depending on caller discipline.
+            return runOnMainThreadBlocking {
+                DownloadManager(context, databaseProvider, cache, dataSourceFactory, Runnable::run).apply {
+                    maxParallelDownloads = MAX_PARALLEL_DOWNLOADS
+                    // Built with the preference as it stands, so DownloadRequirementsManager only
+                    // has to push a change (each push starts the foreground service).
+                    requirements = downloadRequirements(downloadPreferences.wifiOnly)
+                }
             }
         }
 
