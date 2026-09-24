@@ -402,6 +402,26 @@ class PlaybackSpecTest {
     }
 
     @Test
+    fun `RS-27 a saved shuffle order holding a song no longer queued restores the saved current song`() {
+        val a = song(1)
+        val b = song(2)
+        val c = song(3)
+        val gone = song(9)
+        val shuffled = listOf(a, gone, c, b)
+
+        listOf(2 to c, 3 to b).forEach { (position, current) ->
+            harness.run {
+                queue.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = false)
+                queue.setQueue(listOf(a, b, c), shuffled, position).shouldBe(true)
+            }
+
+            queue.queueStateFlow.value.items.map { it.song } shouldBe listOf(a, c, b)
+            queue.queueStateFlow.value.currentItem?.song shouldBe current
+            harness.run { queue.setQueue(listOf(song(4))) }
+        }
+    }
+
+    @Test
     fun `RS-29 playback and queue calls made off the main thread run on it`() {
         startPlaying(listOf(song(1), song(2), song(3)))
         val errors = mutableListOf<Throwable>()

@@ -86,21 +86,33 @@ class S2ShuffleOrder(private val order: IntArray) : ShuffleOrder {
         /**
          * The order [shuffledIds] gives the playlist whose item ids are [playlistIds]: both hold the same ids, and an
          * id held more than once is matched occurrence by occurrence, so each copy gets its own index. A playlist
-         * item [shuffledIds] doesn't account for goes at the end.
+         * item [shuffledIds] doesn't account for goes at the end, and a shuffled id the playlist doesn't hold is
+         * dropped.
          */
         fun <T> matching(
             playlistIds: List<T>,
             shuffledIds: List<T>
         ): S2ShuffleOrder {
+            val order = matchedIndices(playlistIds, shuffledIds).filterNotNull()
+            val placed = order.toSet()
+            return S2ShuffleOrder((order + playlistIds.indices.filter { it !in placed }).toIntArray())
+        }
+
+        /**
+         * The playlist index [matching] gives each of [shuffledIds], or null for an id the playlist doesn't hold (or
+         * holds fewer times).
+         */
+        fun <T> matchedIndices(
+            playlistIds: List<T>,
+            shuffledIds: List<T>
+        ): List<Int?> {
             val indicesById = playlistIds.withIndex().groupBy(keySelector = { it.value }, valueTransform = { it.index })
             val taken = mutableMapOf<T, Int>()
-            val order = shuffledIds.mapNotNull { id ->
+            return shuffledIds.map { id ->
                 val occurrence = taken.getOrDefault(id, 0)
                 taken[id] = occurrence + 1
                 indicesById[id]?.getOrNull(occurrence)
             }
-            val placed = order.toSet()
-            return S2ShuffleOrder((order + playlistIds.indices.filter { it !in placed }).toIntArray())
         }
     }
 }

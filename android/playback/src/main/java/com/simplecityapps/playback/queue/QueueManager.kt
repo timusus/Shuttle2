@@ -172,8 +172,10 @@ class QueueManager(
         shuffleSongs: List<Song>?,
         position: Int
     ): Boolean {
-        if (position < 0 || position >= songs.size) {
-            Timber.e("Invalid queue position: $position (songs.size: ${songs.size})")
+        val savedShuffle = shuffleSongs?.takeIf { player.shuffleModeEnabled }
+        val size = savedShuffle?.size ?: songs.size
+        if (position < 0 || position >= size || songs.isEmpty()) {
+            Timber.e("Invalid queue position: $position (size: $size, songs.size: ${songs.size})")
             return false
         }
 
@@ -189,7 +191,16 @@ class QueueManager(
                 } else {
                     S2ShuffleOrder.shuffled(songs.size, firstIndex = position)
                 }
-            val index = if (shuffleSongs != null && player.shuffleModeEnabled) shuffleOrder.toList()[position] else position
+            // A saved shuffled song the queue no longer holds starts playback at the first copy of it, if any, else
+            // at the start of the shuffled order.
+            val index =
+                if (savedShuffle != null) {
+                    S2ShuffleOrder.matchedIndices(songs.map { it.id }, savedShuffle.map { it.id })[position]
+                        ?: songs.indexOfFirst { it.id == savedShuffle[position].id }.takeIf { it != -1 }
+                        ?: shuffleOrder.firstIndex
+                } else {
+                    position
+                }
 
             if (sameSongs) {
                 replaceChanged(songs)

@@ -84,6 +84,10 @@ or the file a song plays from), then each song keeps its place in the shuffled a
 queue again with changed data (a library refresh), then the queue shows the new data, and the current song keeps
 playing from where it was, without reloading. (#345) — JVM.
 
+**RS-27: a saved shuffle order survives songs leaving the library.** Given a saved shuffled queue holding a song the
+queue no longer has, when it's restored with shuffle on, then the other songs keep their saved order and the song
+that was current is current again. (#345) — JVM.
+
 **RS-29: playback and queue calls work from any thread.** Given a song playing, when a caller off the main thread
 reads the progress or duration, pauses, or removes a queue item, then the read returns the last published state and
 each change takes effect on the main thread, without an error. (#345) — JVM.
