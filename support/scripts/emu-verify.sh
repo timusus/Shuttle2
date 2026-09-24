@@ -29,7 +29,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 cd "$REPO_ROOT" || exit 1
 
-usage() { sed -n '2,20p' "$0"; }
+usage() { awk 'NR>1 && /^#/ {sub(/^# ?/, ""); print; next} NR>1 {exit}' "$0"; }
 
 CHECKS=()
 FLOWS=()
@@ -69,7 +69,10 @@ cleanup() {
             || echo "emu-verify: WARNING: remote-emu.sh stop failed, check the lane manually (see $LOG)" >&2
     fi
 }
-trap cleanup EXIT INT TERM
+trap cleanup EXIT
+# Ctrl-C / TERM abort the run; the EXIT trap then releases the lane.
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 # step <description> <command...>: runs the command with all output sent to the log, prints one
 # ok/FAILED line with elapsed time.
@@ -97,10 +100,16 @@ else
         echo "emu-verify: reusing cached APK for HEAD (${HEAD_SHA:0:12}) at $APK"
     else
         step "building assembleDebug" ./gradlew :android:app:assembleDebug -q || exit 1
-        mkdir -p /tmp/s2-apk
-        cp android/app/build/outputs/apk/debug/app-debug.apk "$CACHE_APK"
-        APK="$CACHE_APK"
-        echo "emu-verify: built and cached APK at $APK"
+        APK=android/app/build/outputs/apk/debug/app-debug.apk
+        if [ -z "$(git status --porcelain)" ]; then
+            # Only a clean tree may populate the cache: a dirty build is not what HEAD contains.
+            mkdir -p /tmp/s2-apk
+            cp "$APK" "$CACHE_APK"
+            APK="$CACHE_APK"
+            echo "emu-verify: built and cached APK at $APK"
+        else
+            echo "emu-verify: built $APK (dirty tree, not cached)"
+        fi
     fi
 fi
 
