@@ -4,7 +4,14 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
 import timber.log.Timber
 
-class ContextualToolbarHelper<T> {
+/**
+ * [keySelector] identifies an item across rebinds whose other fields may have changed (e.g. a
+ * reordered [T]) so selection isn't lost when list data updates mid-selection. Defaults to the
+ * item itself, preserving equals()-based identity for callers that don't need this.
+ */
+class ContextualToolbarHelper<T>(
+    private val keySelector: (T) -> Any? = { it }
+) {
     interface Callback<T> {
         fun onCountChanged(count: Int)
 
@@ -16,7 +23,10 @@ class ContextualToolbarHelper<T> {
 
     var isActive = false
 
-    val selectedItems: MutableSet<T> = mutableSetOf()
+    val selectedItems: List<T>
+        get() = selectedItemsByKey.values.toList()
+
+    private val selectedItemsByKey: LinkedHashMap<Any?, T> = LinkedHashMap()
 
     var callback: Callback<T>? = null
 
@@ -39,23 +49,24 @@ class ContextualToolbarHelper<T> {
         toolbar?.isVisible = true
         contextualToolbar?.isVisible = false
         contextualToolbar?.setNavigationOnClickListener(null)
-        selectedItems.forEach { item -> callback?.onItemUpdated(item = item, isSelected = false) }
-        selectedItems.clear()
+        selectedItemsByKey.values.toList().forEach { item -> callback?.onItemUpdated(item = item, isSelected = false) }
+        selectedItemsByKey.clear()
         isActive = false
     }
 
     private fun addOrRemoveItem(item: T) {
-        if (selectedItems.contains(item)) {
-            selectedItems.remove(item)
+        val key = keySelector(item)
+        if (selectedItemsByKey.containsKey(key)) {
+            selectedItemsByKey.remove(key)
             callback?.onItemUpdated(item = item, isSelected = false)
         } else {
-            selectedItems.add(item)
+            selectedItemsByKey[key] = item
             callback?.onItemUpdated(item = item, isSelected = true)
         }
 
         updateCount()
 
-        if (selectedItems.isEmpty()) {
+        if (selectedItemsByKey.isEmpty()) {
             hide()
         }
     }

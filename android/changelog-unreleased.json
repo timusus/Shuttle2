@@ -2,6 +2,10 @@
   "since": "v26092301",
   "features": [
     {
+      "text": "Select multiple songs in a playlist at once, to add them to the queue, a playlist or edit their tags together",
+      "commits": []
+    },
+    {
       "text": "Browse your music by folder in a new Folders library tab, which you can turn on in Appearance settings",
       "commits": []
     },
