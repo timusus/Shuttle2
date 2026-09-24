@@ -6,6 +6,7 @@ import android.graphics.Bitmap
 import android.media.AudioManager
 import android.util.LruCache
 import androidx.core.content.getSystemService
+import androidx.media3.exoplayer.ExoPlayer
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
 import com.simplecityapps.mediaprovider.repository.albums.AlbumRepository
 import com.simplecityapps.mediaprovider.repository.artists.AlbumArtistRepository
@@ -19,6 +20,7 @@ import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackNotificationManager
 import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
+import com.simplecityapps.playback.engine.SongUriResolver
 import com.simplecityapps.playback.exoplayer.AudioTrackMonitor
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.mediasession.MediaSessionManager
@@ -43,7 +45,11 @@ import kotlinx.coroutines.CoroutineScope
 class PlaybackModule {
     @Singleton
     @Provides
-    fun provideQueueManager(preferenceManager: GeneralPreferenceManager): QueueManager = QueueManager(preferenceManager)
+    fun provideQueueManager(
+        player: ExoPlayer,
+        preferenceManager: GeneralPreferenceManager,
+        songUriResolver: SongUriResolver
+    ): QueueManager = QueueManager(player, preferenceManager, songUriResolver)
 
     @Provides
     fun provideQueueOperations(queueManager: QueueManager): QueueOperations = queueManager

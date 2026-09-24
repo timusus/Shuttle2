@@ -6,9 +6,10 @@ import com.simplecityapps.playback.dsp.replaygain.ReplayGain
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
 import com.simplecityapps.playback.dsp.replaygain.replayGainDb
-import com.simplecityapps.playback.exoplayer.PlayerItem
-import com.simplecityapps.playback.exoplayer.toMediaItem
 import com.simplecityapps.playback.fakes.FakePlaylistTimeline
+import com.simplecityapps.playback.fakes.testSong
+import com.simplecityapps.playback.queue.QueueEntry
+import com.simplecityapps.playback.queue.toMediaItem
 import io.kotest.matchers.shouldBe
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -27,9 +28,9 @@ class ReplayGainAudioProcessorTest {
     private val timeline =
         FakePlaylistTimeline(
             listOf(
-                PlayerItem(uri = "/music/loud.flac", mimeType = null, replayGain = loud).toMediaItem(),
-                PlayerItem(uri = "/music/quiet.mp3", mimeType = null, replayGain = quiet).toMediaItem(),
-                PlayerItem(uri = "/music/untagged.mp3", mimeType = null, replayGain = null).toMediaItem()
+                QueueEntry(uid = 1, song = testSong(id = 1, path = "/music/loud.flac"), replayGain = loud).toMediaItem(),
+                QueueEntry(uid = 2, song = testSong(id = 2, path = "/music/quiet.mp3"), replayGain = quiet).toMediaItem(),
+                QueueEntry(uid = 3, song = testSong(id = 3, path = "/music/untagged.mp3"), replayGain = ReplayGain(trackGain = null, albumGain = null)).toMediaItem()
             )
         )
 

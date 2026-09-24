@@ -6,6 +6,7 @@ import androidx.media3.common.util.Util
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSourceUtil
 import androidx.media3.datasource.DataSpec
+import com.simplecityapps.playback.engine.SongUriResolver.Companion.isDirect
 import java.io.IOException
 
 /** How a stream has to be played: as an HLS playlist, or as a single progressive file. */
@@ -33,7 +34,7 @@ object StreamTypeProbe {
     private val UTF8_BOM = byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte())
 
     /**
-     * Only a network URL with neither a definite MIME type nor a file extension needs probing.
+     * Only a network URL (or a remote song's URI, which resolves to one) with neither a definite MIME type nor a file extension needs probing.
      * Local files, content URIs, known MIME types and URLs with an extension (`.m3u8`, `.flac`, ...)
      * go straight to Media3's own inference, with no extra request.
      */
@@ -42,7 +43,8 @@ object StreamTypeProbe {
         mimeType: String?
     ): Boolean {
         val scheme = uri.scheme?.lowercase()
-        if (scheme != "http" && scheme != "https") return false
+        // A remote song's own URI (jellyfin://, emby://, plex://) opens as its stream URL, so it's probed like one.
+        if (scheme != "http" && scheme != "https" && uri.isDirect()) return false
         if (mimeType != null && !mimeType.endsWith("/*")) return false
         if (Util.inferContentType(uri) != C.CONTENT_TYPE_OTHER) return false
         return uri.lastPathSegment?.contains('.') != true

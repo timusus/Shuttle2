@@ -2,13 +2,10 @@ package com.simplecityapps.playback.di
 
 import android.content.Context
 import au.com.simplecityapps.shuttle.imageloading.ArtworkImageLoader
-import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.chromecast.CastService
 import com.simplecityapps.playback.chromecast.CastSessionManager
 import com.simplecityapps.playback.chromecast.HttpServer
-import com.simplecityapps.playback.exoplayer.ExoPlayerPlayback
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -35,9 +32,6 @@ class CastModule {
     @Provides
     fun provideCastSessionManager(
         @ApplicationContext context: Context,
-        playbackManager: PlaybackManager,
-        httpServer: HttpServer,
-        exoPlayerPlayback: ExoPlayerPlayback,
-        mediaPathProvider: AggregateMediaInfoProvider
-    ): CastSessionManager = CastSessionManager(playbackManager, context, httpServer, exoPlayerPlayback, mediaPathProvider)
+        httpServer: HttpServer
+    ): CastSessionManager = CastSessionManager(context, httpServer)
 }

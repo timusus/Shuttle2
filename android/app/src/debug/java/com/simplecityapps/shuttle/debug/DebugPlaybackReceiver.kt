@@ -5,8 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
-import com.simplecityapps.playback.LoadCoordinator
 import com.simplecityapps.playback.PlaybackManager
+import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.query.SongQuery
@@ -148,19 +148,12 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
             put("title", currentSong?.name ?: JSONObject.NULL)
             put("shuffle", queueManager.getShuffleMode().name)
             put("repeat", queueManager.getRepeatMode().name)
-            put("pendingLoad", pendingLoad() ?: JSONObject.NULL)
+            put("pendingLoad", pendingLoad())
         }
     }
 
-    /**
-     * Whether a track load is in flight. [PlaybackManager] keeps its [LoadCoordinator] private, and
-     * this debug-only probe reads it reflectively rather than widening release code; null if the
-     * field moves.
-     */
-    private fun pendingLoad(): Boolean? = runCatching {
-        val field = PlaybackManager::class.java.getDeclaredField("loadCoordinator").apply { isAccessible = true }
-        (field.get(playbackManager) as LoadCoordinator).pendingLoad != null
-    }.getOrNull()
+    /** Whether a track load is in flight: the player hasn't made the current item ready yet. */
+    private fun pendingLoad(): Boolean = playbackManager.playbackState() is PlaybackState.Loading
 
     companion object {
         private const val TAG = "S2Debug"

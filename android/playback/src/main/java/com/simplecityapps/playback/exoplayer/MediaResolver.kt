@@ -10,7 +10,7 @@ data class ResolvedMedia(
     val isRemote: Boolean
 )
 
-/** Resolves a [Song] to the media [ExoPlayerPlayback] queues for it. */
+/** Resolves a [Song] to the media the player streams for it. */
 fun interface MediaResolver {
     suspend fun resolve(song: Song): ResolvedMedia
 }

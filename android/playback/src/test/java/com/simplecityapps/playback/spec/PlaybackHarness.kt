@@ -2,6 +2,7 @@ package com.simplecityapps.playback.spec
 
 import android.content.Context
 import android.media.AudioManager
+import android.media.AudioTrack
 import android.os.Looper
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.test.utils.FakeClock
@@ -10,14 +11,14 @@ import androidx.media3.test.utils.robolectric.RobolectricUtil
 import com.simplecityapps.playback.AudioEffectSessionManager
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackOperations
-import com.simplecityapps.playback.ProgressTicker
+import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi26
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
+import com.simplecityapps.playback.engine.SongUriResolver
 import com.simplecityapps.playback.exoplayer.AudioTrackMonitor
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.exoplayer.ExoPlayerFactory
-import com.simplecityapps.playback.exoplayer.ExoPlayerPlayback
 import com.simplecityapps.playback.exoplayer.MediaResolver
 import com.simplecityapps.playback.exoplayer.ResolvedMedia
 import com.simplecityapps.playback.fakes.FakeSharedPreferences
@@ -31,6 +32,7 @@ import com.squareup.moshi.Moshi
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
+import kotlin.coroutines.EmptyCoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -44,13 +46,14 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.shadows.ShadowAudioTrack
 
 /**
- * The real playback stack (PlaybackManager, QueueManager, ExoPlayerPlayback) on a real ExoPlayer, built by the
+ * The real playback stack (PlaybackManager and QueueManager over the ExoPlayer that owns the queue), built by the
  * production [ExoPlayerFactory] (its renderers, audio sink, EQ and ReplayGain processors and media source factory)
  * on a [FakeClock]. Media comes from WAV files in the test resources.
  *
  * Tests drive it only through [playbackOperations] and [queueOperations] and observe their flows, plus what the
  * platform sees: the audio written to the AudioTrack ([audioOutput]) and the audio focus requests on
- * [audioManager]. Nothing here reaches into the engine, so the tests hold across the Media3 refactor (#345).
+ * [audioManager] (and [audioFocus], which counts the focus calls). Nothing here reaches into the engine, so the
+ * tests hold across the Media3 refactor (#345).
  *
  * Everything runs on the Robolectric main looper, as it does on the main thread in production. [runUntil] turns
  * that looper (and so the player, whose clock advances whenever its threads are idle) until a condition holds.
@@ -65,11 +68,38 @@ class PlaybackHarness(
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
-    private val players = mutableListOf<ExoPlayer>()
+    /**
+     * Every write to an AudioTrack since the output was last cleared, in order, plus the audio the sink wrote ahead,
+     * before the clear, to a track that hadn't started yet (it pre-fills one while paused): that audio is heard once the
+     * track plays, unless it's dropped first, by a seek flushing the track or by the sink moving on to another track.
+     */
+    private val writes = mutableListOf<Write>()
 
-    private val output = ByteArrayOutputStream()
+    private class Write(val track: AudioTrack, val audio: ByteArray, val headPosition: Int, val whilePlaying: Boolean) {
+        /** Written before the output was cleared, to a track that hadn't started. */
+        var aheadOfClear = false
 
-    private val audioDataListener = ShadowAudioTrack.OnAudioDataWrittenListener { _, audioData, _ -> output.write(audioData) }
+        /** Flushed from its track, or left behind on a track that never played, before it was heard. */
+        var dropped = false
+
+        fun isHeard() = !aheadOfClear || (!dropped && track.state != AudioTrack.STATE_UNINITIALIZED)
+    }
+
+    private fun MutableList<Write>.hasPlayed(track: AudioTrack) = any { it.track === track && it.whilePlaying }
+
+    private val audioDataListener =
+        ShadowAudioTrack.OnAudioDataWrittenListener { track, audioData, _ ->
+            synchronized(writes) {
+                val write = Write(track, audioData.copyOf(), track.playbackHeadPosition, track.playState == AudioTrack.PLAYSTATE_PLAYING)
+                writes.forEach { earlier ->
+                    // A write only moves its track's head on, so a head behind an earlier write's means a flush.
+                    val flushed = earlier.track === track && earlier.headPosition > write.headPosition
+                    val leftBehind = earlier.track !== track && !writes.hasPlayed(earlier.track)
+                    if (flushed || leftBehind) earlier.dropped = true
+                }
+                writes += write
+            }
+        }
 
     val equalizer = EqualizerAudioProcessor(equalizerEnabled)
 
@@ -77,38 +107,45 @@ class PlaybackHarness(
 
     val playbackPreferenceManager = PlaybackPreferenceManager(FakeSharedPreferences(), Moshi.Builder().build())
 
-    private val queueManager = QueueManager(GeneralPreferenceManager(FakeSharedPreferences()))
+    /** The production focus helper, counting what it's asked to do. */
+    val audioFocus = CountingAudioFocusHelper(AudioFocusHelperApi26(context))
 
-    val queueOperations: QueueOperations = queueManager
+    // A song's path is the URI it plays from. An unresolvable one fails as a remote song does when its server can't be reached.
+    private val songUriResolver =
+        SongUriResolver(
+            MediaResolver { song ->
+                if (song.path.startsWith(UNRESOLVABLE_SCHEME)) throw IOException("Can't resolve ${song.path}")
+                ResolvedMedia(uri = song.path, mimeType = song.mimeType, isRemote = false)
+            }
+        )
+
+    private val player: ExoPlayer
+
+    val queueOperations: QueueOperations
 
     val playbackOperations: PlaybackOperations
 
     init {
         ShadowAudioTrack.addAudioDataListener(audioDataListener)
-        val playerFactory =
-            ExoPlayerFactory(context, equalizer, replayGain, AudioTrackMonitor()) { renderersFactory, mediaSourceFactory ->
+        player =
+            ExoPlayerFactory(context, equalizer, replayGain, AudioTrackMonitor(), songUriResolver) { renderersFactory, mediaSourceFactory ->
                 TestExoPlayerBuilder(context)
                     .setClock(FakeClock(true))
                     .setRenderersFactory(renderersFactory)
                     .setMediaSourceFactory(mediaSourceFactory)
                     .build()
-                    .also(players::add)
-            }
-        // A song's path is the URI it plays from. An unresolvable one fails as a remote song does when its server can't be reached.
-        val mediaResolver =
-            MediaResolver { song ->
-                if (song.path.startsWith(UNRESOLVABLE_SCHEME)) throw IOException("Can't resolve ${song.path}")
-                ResolvedMedia(uri = song.path, mimeType = song.mimeType, isRemote = false)
-            }
+            }.create()
+        // Entries are built inline, so a queue change completes within the call that makes it.
+        val queueManager = QueueManager(player, GeneralPreferenceManager(FakeSharedPreferences()), songUriResolver, buildContext = EmptyCoroutineContext)
+        queueOperations = queueManager
         playbackOperations =
             PlaybackManager(
                 queueManager = queueManager,
-                audioFocusHelper = AudioFocusHelperApi26(context),
+                player = player,
+                audioFocusHelper = audioFocus,
                 playbackPreferenceManager = playbackPreferenceManager,
                 audioEffectSessionManager = AudioEffectSessionManager(context),
                 appCoroutineScope = scope,
-                progressTicker = ProgressTicker(scope),
-                exoplayerPlayback = ExoPlayerPlayback(playerFactory, mediaResolver),
                 audioManager = audioManager
             )
     }
@@ -137,16 +174,24 @@ class PlaybackHarness(
     }
 
     /** The PCM written to AudioTracks so far, in the format the sink wrote it (16-bit mono for the test files). */
-    fun audioOutput(): ByteArray = output.toByteArray()
+    fun audioOutput(): ByteArray = synchronized(writes) {
+        val heard = ByteArrayOutputStream()
+        writes.filter(Write::isHeard).forEach { heard.write(it.audio) }
+        heard.toByteArray()
+    }
 
-    fun clearAudioOutput() {
-        output.reset()
+    /** Forgets the audio output so far, except what's been written ahead to a track that has yet to play it. */
+    fun clearAudioOutput() = synchronized(writes) {
+        writes.retainAll { write ->
+            !write.dropped && !writes.hasPlayed(write.track) && write.track.state != AudioTrack.STATE_UNINITIALIZED
+        }
+        writes.forEach { write -> write.aheadOfClear = true }
     }
 
     fun release() {
         ShadowAudioTrack.removeAudioDataListener(audioDataListener)
         scope.cancel()
-        players.forEach(ExoPlayer::release)
+        player.release()
         idle()
     }
 
@@ -182,5 +227,24 @@ class PlaybackHarness(
 
         /** A song whose stream can't be resolved, as when a remote song's server can't be reached. */
         fun unresolvableSong(id: Long): Song = testSong(id = id, path = "${UNRESOLVABLE_SCHEME}song$id", mimeType = "audio/wav", duration = TONE_2S_MS)
+    }
+}
+
+/** Forwards to [delegate], counting focus requests and abandons. */
+class CountingAudioFocusHelper(private val delegate: AudioFocusHelper) : AudioFocusHelper by delegate {
+    var requests = 0
+        private set
+
+    var abandons = 0
+        private set
+
+    override fun requestAudioFocus(): Boolean {
+        requests++
+        return delegate.requestAudioFocus()
+    }
+
+    override fun abandonAudioFocus() {
+        abandons++
+        delegate.abandonAudioFocus()
     }
 }

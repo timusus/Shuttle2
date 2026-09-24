@@ -1,9 +1,8 @@
 package com.simplecityapps.playback
 
-import com.simplecityapps.playback.fakes.FakeSharedPreferences
+import com.simplecityapps.playback.fakes.testQueueManager
 import com.simplecityapps.playback.fakes.testSong
 import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,12 +10,15 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
 /** [PlaybackNotificationManager] redisplays the playback notification as playback and the queue change. */
 @OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
 class PlaybackNotificationUpdatesTest {
     private val playbackState = MutableStateFlow<PlaybackState>(PlaybackState.Paused)
-    private val queueManager = QueueManager(GeneralPreferenceManager(FakeSharedPreferences()))
+    private val queueManager = testQueueManager()
 
     private var displays = 0
 

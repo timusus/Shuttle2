@@ -1,18 +1,39 @@
 package com.simplecityapps.playback.queue
 
+import android.os.Handler
+import android.os.Looper
+import androidx.media3.common.C
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+import androidx.media3.common.Timeline
+import androidx.media3.exoplayer.ExoPlayer
+import com.simplecityapps.playback.engine.S2ShuffleOrder
+import com.simplecityapps.playback.engine.SongUriResolver
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import timber.log.Timber
 
+/**
+ * The queue, as a thin layer over [player]'s playlist. The playlist holds the whole queue in its unshuffled order,
+ * each item tagged with its [QueueEntry]; its [S2ShuffleOrder] is the shuffled order, and its current item is the
+ * queue's current item. Nothing is stored here that the player doesn't hold: every flow is derived from player
+ * events.
+ *
+ * The player lives on the main thread. Calls that change the queue run there: a suspend call switches to it, and
+ * any other call made off it is posted to it. Reads are safe from any thread, and return the last published state.
+ */
 class QueueManager(
-    private val preferenceManager: GeneralPreferenceManager
+    private val player: ExoPlayer,
+    private val preferenceManager: GeneralPreferenceManager,
+    private val songUriResolver: SongUriResolver,
+    /** Where new queue entries are built: off the main thread, as a long queue takes a while. */
+    private val buildContext: CoroutineContext = Dispatchers.Default
 ) : QueueOperations {
     enum class ShuffleMode {
         Off,
@@ -44,108 +65,109 @@ class QueueManager(
         }
     }
 
-    private val _shuffleModeFlow = MutableStateFlow(ShuffleMode.Off)
+    private val mainHandler = Handler(player.applicationLooper)
 
-    /**
-     * The shuffle mode. Backs [getShuffleMode] directly, so the two can't disagree; it changes before
-     * a reshuffle generates the new order. [QueueState.shuffleMode] changes once that order is in place.
-     */
+    private val _shuffleModeFlow = MutableStateFlow(player.shuffleModeEnabled.toShuffleMode())
+
+    /** The player's shuffle mode. It changes before the reshuffled queue is published on [queueStateFlow]. */
     override val shuffleModeFlow: StateFlow<ShuffleMode> = _shuffleModeFlow.asStateFlow()
 
-    // Renamed accessors: the defaults would clash with getShuffleMode()/setShuffleMode() on the JVM.
-    private var shuffleMode: ShuffleMode
-        @JvmName("currentShuffleMode")
-        get() = _shuffleModeFlow.value
+    private val _repeatModeFlow = MutableStateFlow(player.repeatMode.toRepeatMode())
 
-        @JvmName("updateShuffleMode")
-        set(value) {
-            _shuffleModeFlow.value = value
-        }
-
-    private val _repeatModeFlow = MutableStateFlow(RepeatMode.Off)
-
-    /**
-     * The repeat mode. Backs [getRepeatMode] directly, so the two can't disagree.
-     */
+    /** The player's repeat mode. */
     override val repeatModeFlow: StateFlow<RepeatMode> = _repeatModeFlow.asStateFlow()
-
-    // Renamed accessors: the defaults would clash with getRepeatMode()/setRepeatMode() on the JVM.
-    private var repeatMode: RepeatMode
-        @JvmName("currentRepeatMode")
-        get() = _repeatModeFlow.value
-
-        @JvmName("updateRepeatMode")
-        set(value) {
-            _repeatModeFlow.value = value
-        }
-
-    private val queue = Queue()
-
-    /**
-     * Held by each mutation that suspends ([setQueue], [setShuffleMode]), so none starts until the one before has
-     * finished: each suspends into [Dispatchers.IO] partway through, where another could otherwise begin and be
-     * overwritten by the rest of the first. The mutations that don't suspend can't take it; they run on the main
-     * thread, as [setQueueIfContentVersion]'s check does, so they can't come between that check and the set it
-     * allows starting. Nothing that holds it calls out to code that could come back in and wait for it.
-     */
-    private val mutex = Mutex()
-
-    private var currentItem: QueueItem? = null
 
     private val _queueState = MutableStateFlow(QueueState.Empty)
 
-    private var queueStateVersion = 0L
-
-    private var queueContentVersion = 0L
-
-    private var queueNonMoveContentVersion = 0L
-
-    private var queueSongDataVersion = 0L
-
     /**
-     * The queue as the active shuffle mode presents it, with the current item and position.
-     * Republished whenever the items or the current position change, whenever the shuffle mode or
-     * [clear] changes what [getQueue] or [getCurrentItem] return, and when [hasRestoredQueue] is set.
+     * The queue as the active shuffle mode presents it, with the current item and position. Republished whenever
+     * the player's playlist, shuffle order, shuffle mode or current item change, and when [hasRestoredQueue] is set.
      */
     override val queueStateFlow: StateFlow<QueueState> = _queueState.asStateFlow()
+
+    /** The unshuffled and shuffled queue [queueStateFlow] last published. */
+    @Volatile
+    private var lists = Lists(emptyList(), emptyList())
+
+    /** While a change made of several player calls is underway, publishing waits for it to finish. */
+    private var batchDepth = 0
 
     override var hasRestoredQueue = false
         set(value) {
             field = value
-            publishQueueState()
+            onMain { publish() }
         }
 
-    /**
-     * Replaces the current queue.
-     *
-     * @param songs the songs to replace the current non-shuffle queue.
-     * @param shuffleSongs the songs to replace the shuffle queue. If null, shuffle mode may be disabled. Defaults to null.
-     * @param position the new queue position. Defaults to 0.
-     *
-     * @return true if the queue was successfully set, and is not empty.
-     */
+    init {
+        player.addListener(
+            object : Player.Listener {
+                override fun onTimelineChanged(
+                    timeline: Timeline,
+                    reason: Int
+                ) {
+                    publish()
+                }
+
+                override fun onMediaItemTransition(
+                    mediaItem: MediaItem?,
+                    reason: Int
+                ) {
+                    publish()
+                }
+
+                override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
+                    _shuffleModeFlow.value = shuffleModeEnabled.toShuffleMode()
+                    publish()
+                }
+
+                override fun onRepeatModeChanged(repeatMode: Int) {
+                    _repeatModeFlow.value = repeatMode.toRepeatMode()
+                }
+            }
+        )
+    }
+
     override suspend fun setQueue(
         songs: List<Song>,
         shuffleSongs: List<Song>?,
         position: Int
-    ): Boolean = mutex.withLock { setQueueLocked(songs, shuffleSongs, position) }
+    ): Boolean {
+        val items = buildItems(songs)
+        return withContext(Dispatchers.Main.immediate) {
+            applyQueue(songs, items, shuffleSongs, position)
+        }
+    }
 
     override suspend fun setQueueIfContentVersion(
         contentVersion: Long,
         songs: List<Song>,
         shuffleSongs: List<Song>?,
         position: Int
-    ): Long? = mutex.withLock {
-        if (queueContentVersion != contentVersion) {
-            return@withLock null
+    ): Long? {
+        val items = buildItems(songs)
+        // The check and the change run together on the main thread, so no other change can come between them.
+        return withContext(Dispatchers.Main.immediate) {
+            if (_queueState.value.contentVersion != contentVersion) {
+                return@withContext null
+            }
+            applyQueue(songs, items, shuffleSongs, position)
+            _queueState.value.contentVersion
         }
-        setQueueLocked(songs, shuffleSongs, position)
-        queueContentVersion
     }
 
-    /** [setQueue], with [mutex] held. */
-    private suspend fun setQueueLocked(
+    /** New queue entries for [songs], built off the main thread. */
+    private suspend fun buildItems(songs: List<Song>): List<MediaItem> = withContext(buildContext) {
+        songs.map { song -> songUriResolver.toMediaItem(song.toQueueEntry()) }
+    }
+
+    /**
+     * Replaces the playlist with [items] (built for [songs]), unless it already holds those songs, and moves to
+     * [position]: an index into [shuffleSongs] when given and shuffle is on, else into [songs]. Without
+     * [shuffleSongs], a new shuffled order starts at the current item.
+     */
+    private fun applyQueue(
         songs: List<Song>,
+        items: List<MediaItem>,
         shuffleSongs: List<Song>?,
         position: Int
     ): Boolean {
@@ -154,442 +176,301 @@ class QueueManager(
             return false
         }
 
-        if (shuffleSongs == null && !preferenceManager.retainShuffleOnNewQueue) {
-            setShuffleModeLocked(ShuffleMode.Off, reshuffle = false)
-        }
-
-        var existingQueueChanged = false
-        var shuffleQueueChanged = false
-
-        var currentItem = currentItem
-
-        withContext(Dispatchers.IO) {
-            var baseQueue = getQueue(ShuffleMode.Off)
-            if (baseQueue.size != songs.size || songs.map { it.id } != baseQueue.map { it.song.id }) {
-                baseQueue = songs.map { song -> song.toQueueItem(false) }
-                queue.setBaseQueue(baseQueue)
-                existingQueueChanged = true
+        batch {
+            if (shuffleSongs == null && !preferenceManager.retainShuffleOnNewQueue) {
+                player.shuffleModeEnabled = false
             }
 
-            currentItem = baseQueue[position]
-
-            if (shuffleSongs != null) {
-                var shuffleQueue = getQueue(ShuffleMode.On).toList()
-                if (existingQueueChanged || (shuffleQueue.size != shuffleSongs.size || shuffleSongs.map { it.id } != shuffleQueue.map { it.song.id })) {
-                    shuffleQueue = baseQueue.inOrderOf(shuffleSongs)
-                    queue.setShuffleQueue(shuffleQueue)
-                    shuffleQueueChanged = true
+            val sameSongs = songs.map { it.id } == entries().map { it.song.id }
+            val shuffleOrder =
+                if (shuffleSongs != null) {
+                    S2ShuffleOrder.matching(songs.map { it.id }, shuffleSongs.map { it.id })
+                } else {
+                    S2ShuffleOrder.shuffled(songs.size, firstIndex = position)
                 }
-                // With shuffle on, the position is in the shuffle queue.
-                if (shuffleMode == ShuffleMode.On) {
-                    currentItem = shuffleQueue[position]
+            val index = if (shuffleSongs != null && player.shuffleModeEnabled) shuffleOrder.toList()[position] else position
+
+            if (sameSongs) {
+                if (index != player.currentMediaItemIndex) {
+                    player.seekTo(index, 0)
                 }
             } else {
-                queue.generateShuffleQueue(currentItem)
-                shuffleQueueChanged = true
+                player.setMediaItems(items, index, 0)
+            }
+            player.setShuffleOrder(shuffleOrder)
+        }
+
+        return player.mediaItemCount != 0
+    }
+
+    override fun getQueue(): List<QueueItem> = _queueState.value.items
+
+    override fun getQueue(shuffleMode: ShuffleMode): List<QueueItem> = lists.get(shuffleMode)
+
+    override fun getCurrentItem(): QueueItem? = _queueState.value.currentItem
+
+    override fun getCurrentPosition(): Int? = _queueState.value.currentPosition
+
+    override fun getSize(): Int = lists.base.size
+
+    override fun setCurrentItem(currentItem: QueueItem) {
+        onMain {
+            val index = entries().indexOfFirst { it.uid == currentItem.uid }
+            if (index != -1 && index != player.currentMediaItemIndex) {
+                player.seekTo(index, 0)
             }
         }
-
-        when (shuffleMode) {
-            ShuffleMode.Off ->
-                if (existingQueueChanged) {
-                    notifyQueueChanged()
-                }
-
-            ShuffleMode.On ->
-                if (shuffleQueueChanged) {
-                    notifyQueueChanged()
-                }
-        }
-
-        currentItem?.let {
-            Timber.i("Current item is ${it.song.name}")
-            setCurrentItem(it)
-        }
-
-        return queue.size() != 0
     }
 
     /**
-     * These items in the order of [songs], which holds the same songs. A song queued more than once is matched
-     * occurrence by occurrence, so each copy takes its own place in that order.
+     * The item after the current one, as the player would play it. [ignoreRepeat] treats the repeat mode as
+     * [RepeatMode.All].
      */
-    private fun List<QueueItem>.inOrderOf(songs: List<Song>): List<QueueItem> {
-        val orderById = songs.withIndex().groupBy(keySelector = { (_, song) -> song.id }, valueTransform = { (index, _) -> index })
-        val occurrences = mutableMapOf<Long, Int>()
-        return map { queueItem ->
-            val occurrence = occurrences.getOrDefault(queueItem.song.id, 0)
-            occurrences[queueItem.song.id] = occurrence + 1
-            queueItem to orderById[queueItem.song.id]?.getOrNull(occurrence)
-        }
-            .sortedBy { (_, order) -> order }
-            .map { (queueItem, _) -> queueItem }
+    override fun getNext(ignoreRepeat: Boolean): QueueItem? = nextIndex(if (ignoreRepeat) RepeatMode.All else repeatModeFlow.value)?.let { lists.base.getOrNull(it) }
+
+    override fun getPrevious(): QueueItem? {
+        val state = _queueState.value
+        val position = state.currentPosition ?: return null
+        return state.items.getOrNull(position - 1)
     }
 
-    override fun setCurrentItem(currentItem: QueueItem) {
-        Timber.v("setCurrentItem(currentItem: ${currentItem.song.name}|${currentItem.song.mimeType}), previous item: ${this.currentItem?.song?.name}|${this.currentItem?.song?.mimeType}")
-        if (this.currentItem != currentItem) {
-            this.currentItem = currentItem.clone(isCurrent = true)
+    /** The playlist index of the item after the current one under [repeatMode], or null if there's none. */
+    private fun nextIndex(repeatMode: RepeatMode): Int? {
+        val lists = lists
+        val state = _queueState.value
+        val position = state.currentPosition ?: return null
+        val presented = lists.get(state.shuffleMode)
+        val next = when (repeatMode) {
+            RepeatMode.Off -> presented.getOrNull(position + 1)
+            RepeatMode.All -> presented.getOrNull(position + 1) ?: presented.firstOrNull()
+            RepeatMode.One -> state.currentItem
+        } ?: return null
+        return lists.base.indexOf(next).takeIf { it != -1 }
+    }
 
-            queue.get(shuffleMode).forEach { queueItem ->
-                if (queueItem == currentItem) {
-                    queue.replace(queueItem, this.currentItem!!)
-                } else if (queueItem.isCurrent) {
-                    queue.replace(queueItem, queueItem.clone(isCurrent = false))
+    override fun skipToNext(ignoreRepeat: Boolean): Boolean {
+        Timber.v("skipToNext()")
+        val next = nextIndex(if (ignoreRepeat) RepeatMode.All else repeatModeFlow.value)
+        if (next == null) {
+            Timber.v("No next track to skip to")
+            return false
+        }
+        onMain { player.seekTo(next, 0) }
+        return true
+    }
+
+    override fun skipToPrevious() {
+        Timber.v("skipToPrevious()")
+        getPrevious()?.let(::setCurrentItem) ?: Timber.v("No previous track to skip to")
+    }
+
+    override fun skipTo(position: Int) {
+        getQueue().getOrNull(position)?.let(::setCurrentItem) ?: Timber.e("Couldn't skip to position $position, no associated queue item found")
+    }
+
+    /** Adds [songs] to the end of the queue: the end of the unshuffled order, and the end of the shuffled order. */
+    override fun addToQueue(songs: List<Song>) {
+        val items = songs.map { song -> songUriResolver.toMediaItem(song.toQueueEntry()) }
+        onMain { player.addMediaItems(items) }
+    }
+
+    /** Adds [songs] after the current item, in both the unshuffled and the shuffled order. */
+    override fun addToNext(songs: List<Song>) {
+        val items = songs.map { song -> songUriResolver.toMediaItem(song.toQueueEntry()) }
+        onMain {
+            batch {
+                val current = player.currentMediaItemIndex.takeIf { player.mediaItemCount > 0 }
+                val insertAt = (current ?: -1) + 1
+                val shuffled = shuffledIndices()
+                player.addMediaItems(insertAt, items)
+                // The shuffled order places the new items right after the current one too.
+                val shifted = shuffled.map { index -> if (index >= insertAt) index + items.size else index }
+                val added = (insertAt until insertAt + items.size).toList()
+                val currentPosition = current?.let { shifted.indexOf(it) } ?: -1
+                val order = shifted.subList(0, currentPosition + 1) + added + shifted.subList(currentPosition + 1, shifted.size)
+                player.setShuffleOrder(S2ShuffleOrder(order.toIntArray()))
+            }
+        }
+    }
+
+    override fun updateSongs(songs: List<Song>) {
+        val songsById = songs.associateBy { it.id }
+        if (songsById.isEmpty()) return
+        onMain {
+            batch {
+                entries().forEachIndexed { index, entry ->
+                    val updated = songsById[entry.song.id]
+                    if (updated != null && updated != entry.song) {
+                        player.replaceMediaItem(index, songUriResolver.toMediaItem(QueueEntry(entry.uid, updated)))
+                    }
                 }
             }
-
-            publishQueueState()
-        } else {
-            Timber.v("setCurrentItem(): Item already current")
         }
     }
 
-    override fun getCurrentItem(): QueueItem? = currentItem
-
-    override fun getCurrentPosition(): Int? {
-        val index = queue.get(shuffleMode).indexOf(currentItem)
-        if (index != -1) {
-            return index
+    /** Moves an item within the queue as the shuffle mode presents it, leaving the other order as it is. */
+    override fun move(
+        from: Int,
+        to: Int
+    ) {
+        onMain {
+            if (player.shuffleModeEnabled) {
+                val order = shuffledIndices().toMutableList()
+                if (from !in order.indices || to !in order.indices) return@onMain
+                order.add(to, order.removeAt(from))
+                player.setShuffleOrder(S2ShuffleOrder(order.toIntArray()))
+            } else {
+                player.moveMediaItem(from, to)
+            }
         }
-
-        return null
     }
-
-    override fun getSize(): Int = queue.size()
 
     override fun remove(items: List<QueueItem>) {
-        queue.remove(items)
-        notifyQueueChanged()
+        val uids = items.map { it.uid }.toSet()
+        onMain {
+            batch {
+                entries().withIndex().reversed().filter { it.value.uid in uids }.forEach { player.removeMediaItem(it.index) }
+            }
+        }
     }
 
     override fun remove(song: Song) {
-        val songQueueItem = getQueue().filter { it.song.id == song.id }
-        remove(songQueueItem)
+        remove(getQueue().filter { it.song.id == song.id })
     }
 
     override fun clear() {
         Timber.v("clear()")
-        queue.clear()
-        notifyQueueChanged()
-        currentItem = null
-        // The change above is published while the cleared item is still current (as it always has
-        // been); this follows up with the settled state.
-        publishQueueState()
+        onMain { player.clearMediaItems() }
     }
+
+    override fun getShuffleMode(): ShuffleMode = shuffleModeFlow.value
 
     /**
-     * Retrieves the next queue item, accounting for the current repeat mode.
-     *
-     * @param ignoreRepeat whether to ignore the current repeat mode, and return the next item as if repeat mode is 'all'
-     */
-    override fun getNext(ignoreRepeat: Boolean): QueueItem? = if (ignoreRepeat) {
-        getNext(RepeatMode.All)
-    } else {
-        getNext(repeatMode)
-    }
-
-    private fun getNext(repeatMode: RepeatMode): QueueItem? {
-        val currentQueue = queue.get(shuffleMode)
-        val currentIndex = currentQueue.indexOf(currentItem)
-
-        return when (repeatMode) {
-            RepeatMode.Off -> {
-                currentQueue.getOrNull(currentIndex + 1)
-            }
-
-            RepeatMode.All -> {
-                if (currentIndex == queue.size() - 1) {
-                    currentQueue.getOrNull(0)
-                } else {
-                    currentQueue.getOrNull(currentIndex + 1)
-                }
-            }
-
-            RepeatMode.One -> {
-                currentItem
-            }
-        }
-    }
-
-    override fun getPrevious(): QueueItem? {
-        val currentQueue = queue.get(shuffleMode)
-        return currentQueue.getOrNull(currentQueue.indexOf(currentItem) - 1)
-    }
-
-    override fun getQueue(): List<QueueItem> = queue.get(shuffleMode)
-
-    override fun getQueue(shuffleMode: ShuffleMode): List<QueueItem> = queue.get(shuffleMode)
-
-    /**
-     * Sets the shuffle mode
-     *
-     * @param shuffleMode [ShuffleMode]
-     * @param reshuffle if true, re-shuffle the shuffle-queue when the [shuffleMode] is [ShuffleMode.On].
+     * Sets the shuffle mode. [reshuffle] generates a new shuffled order, starting at the current item, when turning
+     * shuffle on.
      */
     override suspend fun setShuffleMode(
         shuffleMode: ShuffleMode,
         reshuffle: Boolean
-    ) = mutex.withLock { setShuffleModeLocked(shuffleMode, reshuffle) }
-
-    /** [setShuffleMode], with [mutex] held. */
-    private suspend fun setShuffleModeLocked(
-        shuffleMode: ShuffleMode,
-        reshuffle: Boolean
-    ) {
-        if (this.shuffleMode != shuffleMode) {
-            this.shuffleMode = shuffleMode
-
+    ) = withContext(Dispatchers.Main.immediate) {
+        if (player.shuffleModeEnabled.toShuffleMode() == shuffleMode) return@withContext
+        batch {
             if (shuffleMode == ShuffleMode.On && reshuffle) {
-                withContext(Dispatchers.IO) {
-                    queue.generateShuffleQueue(currentItem)
-                }
+                val current = player.currentMediaItemIndex.takeIf { player.mediaItemCount > 0 } ?: C.INDEX_UNSET
+                player.setShuffleOrder(S2ShuffleOrder.shuffled(player.mediaItemCount, firstIndex = current))
             }
-
-            // getQueue() now presents the other list, even before the queue is restored, when no
-            // content change follows.
-            publishQueueState()
-
-            if (hasRestoredQueue) {
-                notifyQueueChanged() // The queue has been reshuffled, and shuffle is on, so the queue has changed
-            }
+            player.shuffleModeEnabled = shuffleMode == ShuffleMode.On
         }
     }
 
-    override fun getShuffleMode(): ShuffleMode = shuffleMode
-
-    override suspend fun toggleShuffleMode() = mutex.withLock {
-        when (shuffleMode) {
-            ShuffleMode.Off -> setShuffleModeLocked(ShuffleMode.On, reshuffle = true)
-            ShuffleMode.On -> setShuffleModeLocked(ShuffleMode.Off, reshuffle = false)
-        }
+    override suspend fun toggleShuffleMode() = when (getShuffleMode()) {
+        ShuffleMode.Off -> setShuffleMode(ShuffleMode.On, reshuffle = true)
+        ShuffleMode.On -> setShuffleMode(ShuffleMode.Off, reshuffle = false)
     }
+
+    override fun getRepeatMode(): RepeatMode = repeatModeFlow.value
 
     override fun setRepeatMode(repeatMode: RepeatMode) {
-        if (this.repeatMode != repeatMode) {
-            this.repeatMode = repeatMode
-        }
+        onMain { player.repeatMode = repeatMode.toPlayerRepeatMode() }
     }
 
-    override fun getRepeatMode(): RepeatMode = repeatMode
-
     override fun toggleRepeatMode() {
-        when (repeatMode) {
+        when (getRepeatMode()) {
             RepeatMode.Off -> setRepeatMode(RepeatMode.All)
             RepeatMode.All -> setRepeatMode(RepeatMode.One)
             RepeatMode.One -> setRepeatMode(RepeatMode.Off)
         }
     }
 
-    override fun skipToNext(ignoreRepeat: Boolean): Boolean {
-        Timber.v("skipToNext()")
-        getNext(ignoreRepeat)?.let { nextItem ->
-            setCurrentItem(nextItem)
-            return true
-        } ?: run {
-            Timber.v("No next track to skip to")
-            return false
+    /** The playlist's entries, in unshuffled order. Main thread only. */
+    private fun entries(): List<QueueEntry> = List(player.mediaItemCount) { index -> player.getMediaItemAt(index).queueEntry }
+
+    /** The playlist indices in shuffled order. Main thread only. */
+    private fun shuffledIndices(): List<Int> {
+        val timeline = player.currentTimeline
+        return generateSequence(timeline.getFirstWindowIndex(true).takeIf { it != C.INDEX_UNSET }) { index ->
+            timeline.getNextWindowIndex(index, Player.REPEAT_MODE_OFF, true).takeIf { it != C.INDEX_UNSET }
+        }.toList()
+    }
+
+    /** Runs [block] on the player's thread: now if already on it, else posted to it. */
+    private fun onMain(block: () -> Unit) {
+        if (Looper.myLooper() == player.applicationLooper) block() else mainHandler.post(block)
+    }
+
+    /** Runs [block], then publishes once, rather than once per player call it makes. Main thread only. */
+    private fun batch(block: () -> Unit) {
+        batchDepth++
+        try {
+            block()
+        } finally {
+            batchDepth--
         }
-    }
-
-    override fun skipToPrevious() {
-        Timber.v("skipToPrevious()")
-        getPrevious()?.let { previousItem ->
-            setCurrentItem(previousItem)
-        } ?: Timber.v("No next track to skip-previous to")
-    }
-
-    override fun skipTo(position: Int) {
-        val currentQueue = queue.get(shuffleMode)
-        currentQueue.getOrNull(position)?.let { queueItem ->
-            setCurrentItem(queueItem)
-        } ?: run {
-            Timber.e("Couldn't skip to position $position, no associated queue item found")
-        }
-    }
-
-    override fun addToQueue(songs: List<Song>) {
-        queue.add(songs.map { song -> song.toQueueItem(false) })
-        notifyQueueChanged()
-    }
-
-    override fun move(
-        from: Int,
-        to: Int
-    ) {
-        queue.move(from, to, shuffleMode)
-        notifyQueueChanged(isMove = true)
-    }
-
-    override fun addToNext(songs: List<Song>) {
-        val items = songs.map { song -> song.toQueueItem(false) }
-        val current = currentItem
-        val baseIndex = current?.let { queue.get(ShuffleMode.Off).indexOf(it) } ?: -1
-        val shuffleIndex = current?.let { queue.get(ShuffleMode.On).indexOf(it) } ?: -1
-        queue.insert(baseIndex + 1, shuffleIndex + 1, items)
-        notifyQueueChanged()
-    }
-
-    override fun updateSongs(songs: List<Song>) {
-        val songsById = songs.associateBy { it.id }
-        if (songsById.isEmpty()) return
-
-        val queueChanged = queue.updateSongs(songsById)
-
-        val current = currentItem
-        val updatedCurrentSong = current?.let { songsById[it.song.id] }
-        val currentChanged = updatedCurrentSong != null && updatedCurrentSong != current.song
-        if (currentChanged) {
-            currentItem = current.clone(song = updatedCurrentSong!!)
-        }
-
-        if (!queueChanged && !currentChanged) return
-
-        queueSongDataVersion++
-        publishQueueState()
-    }
-
-    /** Records that the items changed, and whether it was only a [move], then publishes the new state. */
-    private fun notifyQueueChanged(isMove: Boolean = false) {
-        queueContentVersion++
-        if (!isMove) {
-            queueNonMoveContentVersion++
-        }
-        publishQueueState()
+        publish()
     }
 
     /**
-     * The single update site for [queueStateFlow]. Copies the list, since [Queue] mutates its lists in place.
-     * Bumps [QueueState.version] so every publish is a distinct value, even if the items, current item
-     * and position are unchanged (e.g. a song's metadata was edited without moving it in the queue).
+     * Publishes the player's queue, if it differs from the last published. The versions record what changed
+     * since: the order or membership of the presented items ([QueueState.contentVersion]), anything but a
+     * reordering with the same items and shuffle mode ([QueueState.nonMoveContentVersion]), or only their song
+     * data ([QueueState.songDataVersion]).
      */
-    private fun publishQueueState() {
-        queueStateVersion++
+    private fun publish() {
+        if (batchDepth > 0) return
+        val entries = entries()
+        val current = player.currentMediaItemIndex.takeIf { entries.isNotEmpty() }
+        val base = entries.mapIndexed { index, entry -> entry.toQueueItem(isCurrent = index == current) }
+        val shuffled = shuffledIndices().map { base[it] }
+        val shuffleMode = player.shuffleModeEnabled.toShuffleMode()
+        val items = if (shuffleMode == ShuffleMode.On) shuffled else base
+        val currentItem = current?.let { base[it] }
+
+        val previous = _queueState.value
+        val uids = items.map { it.uid }
+        val previousUids = previous.items.map { it.uid }
+        val songsChanged = items.map { it.song } != previous.items.map { it.song }
+        val currentPosition = currentItem?.let { items.indexOf(it) }?.takeIf { it != -1 }
+        val unchanged = uids == previousUids && !songsChanged && currentItem?.uid == previous.currentItem?.uid &&
+            currentPosition == previous.currentPosition && shuffleMode == previous.shuffleMode && hasRestoredQueue == previous.isRestored
+        if (unchanged) return
+
+        val contentChanged = uids != previousUids
+        val moveOnly = contentChanged && shuffleMode == previous.shuffleMode && uids.sorted() == previousUids.sorted()
+        lists = Lists(base, shuffled)
         _queueState.value = QueueState(
-            items = getQueue().toList(),
+            items = items,
             currentItem = currentItem,
-            currentPosition = getCurrentPosition(),
-            version = queueStateVersion,
-            contentVersion = queueContentVersion,
-            nonMoveContentVersion = queueNonMoveContentVersion,
-            songDataVersion = queueSongDataVersion,
+            currentPosition = currentPosition,
+            version = previous.version + 1,
+            contentVersion = previous.contentVersion + if (contentChanged) 1 else 0,
+            nonMoveContentVersion = previous.nonMoveContentVersion + if (contentChanged && !moveOnly) 1 else 0,
+            songDataVersion = previous.songDataVersion + if (!contentChanged && songsChanged) 1 else 0,
             isRestored = hasRestoredQueue,
             shuffleMode = shuffleMode
         )
     }
 
-    /**
-     * Holds a pair of lists, one representing the 'base' queue, and the other representing the 'shuffle' queue.
-     */
-    class Queue {
-        private var baseList: MutableList<QueueItem> = mutableListOf()
-        private var shuffleList: MutableList<QueueItem> = mutableListOf()
-
-        fun get(shuffleMode: ShuffleMode): MutableList<QueueItem> = when (shuffleMode) {
-            ShuffleMode.Off -> baseList
-            ShuffleMode.On -> shuffleList
+    private class Lists(
+        val base: List<QueueItem>,
+        val shuffled: List<QueueItem>
+    ) {
+        fun get(shuffleMode: ShuffleMode): List<QueueItem> = when (shuffleMode) {
+            ShuffleMode.Off -> base
+            ShuffleMode.On -> shuffled
         }
-
-        fun getItem(
-            shuffleMode: ShuffleMode,
-            position: Int
-        ): QueueItem? = get(shuffleMode).getOrNull(position)
-
-        fun setBaseQueue(items: List<QueueItem>) {
-            baseList = items.toMutableList()
-        }
-
-        fun setShuffleQueue(items: List<QueueItem>) {
-            shuffleList = items.toMutableList()
-        }
-
-        fun generateShuffleQueue(selectedQueueItem: QueueItem?) {
-            if (baseList.isEmpty()) {
-                Timber.v("Cannot generate shuffle queue; base queue is empty")
-                shuffleList = mutableListOf()
-                return
-            }
-
-            shuffleList = baseList.shuffled().toMutableList()
-
-            // Move the current item to the top of the shuffle list
-            val currentIndex = shuffleList.indexOfFirst { it.uid == selectedQueueItem?.uid }
-            if (currentIndex != -1) {
-                shuffleList.add(0, shuffleList.removeAt(currentIndex))
-            }
-        }
-
-        fun add(items: List<QueueItem>) {
-            baseList.addAll(items)
-            shuffleList.addAll(items)
-        }
-
-        fun insert(
-            baseIndex: Int,
-            shuffleIndex: Int,
-            items: List<QueueItem>
-        ) {
-            baseList.addAll(baseIndex, items)
-            shuffleList.addAll(shuffleIndex, items)
-        }
-
-        fun remove(items: List<QueueItem>) {
-            baseList.removeAll(items)
-            shuffleList.removeAll(items)
-        }
-
-        fun clear() {
-            baseList.clear()
-            shuffleList.clear()
-        }
-
-        fun replace(
-            old: QueueItem,
-            new: QueueItem
-        ) {
-            if (baseList.isNotEmpty()) {
-                val baseIndex = baseList.indexOf(old)
-                if (baseIndex != -1) {
-                    baseList[baseIndex] = new
-                }
-            }
-            if (shuffleList.isNotEmpty()) {
-                val shuffleIndex = shuffleList.indexOf(old)
-                if (shuffleIndex != -1) {
-                    shuffleList[shuffleIndex] = new
-                }
-            }
-        }
-
-        fun move(
-            from: Int,
-            to: Int,
-            shuffleMode: ShuffleMode
-        ) {
-            val list = get(shuffleMode)
-            list.add(to, list.removeAt(from))
-        }
-
-        /** Replaces the song data of any item whose song id is in [songsById]. Returns true if any item changed. */
-        fun updateSongs(songsById: Map<Long, Song>): Boolean {
-            var changed = false
-
-            fun update(list: MutableList<QueueItem>) {
-                for (i in list.indices) {
-                    val item = list[i]
-                    val updatedSong = songsById[item.song.id] ?: continue
-                    if (updatedSong != item.song) {
-                        list[i] = item.clone(song = updatedSong)
-                        changed = true
-                    }
-                }
-            }
-
-            update(baseList)
-            update(shuffleList)
-            return changed
-        }
-
-        fun size(): Int = baseList.size
     }
+}
+
+private fun Boolean.toShuffleMode(): QueueManager.ShuffleMode = if (this) QueueManager.ShuffleMode.On else QueueManager.ShuffleMode.Off
+
+fun Int.toRepeatMode(): QueueManager.RepeatMode = when (this) {
+    Player.REPEAT_MODE_ALL -> QueueManager.RepeatMode.All
+    Player.REPEAT_MODE_ONE -> QueueManager.RepeatMode.One
+    else -> QueueManager.RepeatMode.Off
+}
+
+fun QueueManager.RepeatMode.toPlayerRepeatMode(): Int = when (this) {
+    QueueManager.RepeatMode.Off -> Player.REPEAT_MODE_OFF
+    QueueManager.RepeatMode.All -> Player.REPEAT_MODE_ALL
+    QueueManager.RepeatMode.One -> Player.REPEAT_MODE_ONE
 }

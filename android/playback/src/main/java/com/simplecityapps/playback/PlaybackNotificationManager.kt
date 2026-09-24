@@ -202,7 +202,7 @@ constructor(
                 }
             val pendingIntent = PendingIntent.getService(context, 1, intent, PendingIntentCompat.FLAG_IMMUTABLE)
 
-            return when (playbackManager.getPlayback().playBackState()) {
+            return when (playbackManager.playbackState()) {
                 is PlaybackState.Loading, PlaybackState.Playing -> {
                     NotificationCompat.Action(R.drawable.ic_pause_black_24dp, "Pause", pendingIntent)
                 }

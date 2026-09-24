@@ -1,9 +1,8 @@
 package com.simplecityapps.playback.mediasession
 
-import com.simplecityapps.playback.fakes.FakeSharedPreferences
+import com.simplecityapps.playback.fakes.testQueueManager
 import com.simplecityapps.playback.fakes.testSong
 import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -11,14 +10,17 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
 /**
  * [MediaSessionManager] republishes the session queue when the queue's contents change, and its active item and
  * metadata when the current item does.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
+@RunWith(RobolectricTestRunner::class)
 class SessionQueueUpdatesTest {
-    private val queueManager = QueueManager(GeneralPreferenceManager(FakeSharedPreferences()))
+    private val queueManager = testQueueManager()
 
     private val events = mutableListOf<String>()
 

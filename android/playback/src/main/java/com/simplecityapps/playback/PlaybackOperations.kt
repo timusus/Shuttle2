@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
 interface PlaybackOperations {
-    /** The last playback state the active [Playback] reported, or its state when it became active. */
+    /** The player's playback state: loading until the current item is ready, then playing or paused. */
     val playbackStateFlow: StateFlow<PlaybackState>
 
     /** The last published progress; null until the first. A seek is a discontinuity, observed on [positionAnchorFlow]. */
@@ -53,6 +53,4 @@ interface PlaybackOperations {
 
     /** Replaces the song data of any queue item whose song id matches one of [songs], without reloading playback. */
     fun updateQueueSongs(songs: List<Song>)
-    fun getPlayback(): Playback
-    fun switchToPlayback(playback: Playback)
 }

@@ -3,23 +3,21 @@ package com.simplecityapps.playback.di
 import android.content.Context
 import android.media.AudioManager
 import android.os.Build
+import androidx.media3.exoplayer.ExoPlayer
 import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
 import com.simplecityapps.playback.AudioEffectSessionManager
-import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackOperations
-import com.simplecityapps.playback.ProgressTicker
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi21
 import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi26
 import com.simplecityapps.playback.dsp.equalizer.Equalizer
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
+import com.simplecityapps.playback.engine.SongUriResolver
 import com.simplecityapps.playback.exoplayer.AudioTrackMonitor
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.exoplayer.ExoPlayerFactory
-import com.simplecityapps.playback.exoplayer.ExoPlayerPlayback
 import com.simplecityapps.playback.exoplayer.MediaInfoMediaResolver
-import com.simplecityapps.playback.exoplayer.PlayerFactory
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.provider.emby.EmbyMediaInfoProvider
@@ -75,25 +73,20 @@ class PlaybackEngineModule {
     @Provides
     fun provideAudioTrackMonitor(): AudioTrackMonitor = AudioTrackMonitor()
 
+    @Singleton
     @Provides
-    fun providePlayerFactory(
+    fun provideSongUriResolver(mediaInfoProvider: AggregateMediaInfoProvider): SongUriResolver = SongUriResolver(MediaInfoMediaResolver(mediaInfoProvider))
+
+    // The one player: it owns the queue and plays it. It lives on the main looper.
+    @Singleton
+    @Provides
+    fun provideExoPlayer(
         @ApplicationContext context: Context,
         equalizerAudioProcessor: EqualizerAudioProcessor,
         replayGainAudioProcessor: ReplayGainAudioProcessor,
-        audioTrackMonitor: AudioTrackMonitor
-    ): PlayerFactory = ExoPlayerFactory(context, equalizerAudioProcessor, replayGainAudioProcessor, audioTrackMonitor)
-
-    // One instance: PlaybackManager starts on it and CastSessionManager switches back to it when a
-    // Cast session ends, so its settings stay with a single owner.
-    @Singleton
-    @Provides
-    fun provideExoPlayerPlayback(
-        playerFactory: PlayerFactory,
-        mediaPathProvider: AggregateMediaInfoProvider
-    ): ExoPlayerPlayback = ExoPlayerPlayback(playerFactory, MediaInfoMediaResolver(mediaPathProvider))
-
-    @Provides
-    fun providePlayback(exoPlayerPlayback: ExoPlayerPlayback): Playback = exoPlayerPlayback
+        audioTrackMonitor: AudioTrackMonitor,
+        songUriResolver: SongUriResolver
+    ): ExoPlayer = ExoPlayerFactory(context, equalizerAudioProcessor, replayGainAudioProcessor, audioTrackMonitor, songUriResolver).create()
 
     @Singleton
     @Provides
@@ -111,13 +104,13 @@ class PlaybackEngineModule {
     @Provides
     fun providePlaybackManager(
         queueManager: QueueManager,
-        playback: Playback,
+        player: ExoPlayer,
         audioFocusHelper: AudioFocusHelper,
         playbackPreferenceManager: PlaybackPreferenceManager,
         audioEffectSessionManager: AudioEffectSessionManager,
         @AppCoroutineScope coroutineScope: CoroutineScope,
         audioManager: AudioManager?
-    ): PlaybackManager = PlaybackManager(queueManager, audioFocusHelper, playbackPreferenceManager, audioEffectSessionManager, coroutineScope, ProgressTicker(coroutineScope), playback, audioManager)
+    ): PlaybackManager = PlaybackManager(queueManager, player, audioFocusHelper, playbackPreferenceManager, audioEffectSessionManager, coroutineScope, audioManager)
 
     @Provides
     fun providePlaybackOperations(playbackManager: PlaybackManager): PlaybackOperations = playbackManager

@@ -1,4 +1,4 @@
-package com.simplecityapps.fakes
+package com.simplecityapps.playback.fakes
 
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackProgress
@@ -10,7 +10,8 @@ import com.simplecityapps.shuttle.model.Song
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 
-class FakePlaybackManager : PlaybackOperations {
+/** A [PlaybackOperations] that records what it's asked to do and emits only what a test sends it. */
+class FakePlaybackOperations : PlaybackOperations {
     override val playbackStateFlow = MutableStateFlow<PlaybackState>(PlaybackState.Paused)
     override val progressFlow = MutableStateFlow<PlaybackProgress?>(null)
     override val positionAnchorFlow = MutableStateFlow(PositionAnchor(PlaybackState.Paused, positionMs = null, elapsedRealtimeMs = 0, speed = 1f))
@@ -33,7 +34,12 @@ class FakePlaybackManager : PlaybackOperations {
         completion(loadResult)
     }
 
-    override fun pause() {}
+    var pauses = 0
+        private set
+
+    override fun pause() {
+        pauses++
+    }
     override fun play(attempt: Int) {}
     override fun togglePlayback() {}
     override fun skipToNext(ignoreRepeat: Boolean, completion: ((Result<Any?>) -> Unit)?) {}

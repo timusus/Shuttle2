@@ -8,12 +8,12 @@ import java.lang.reflect.Proxy
 import org.junit.Test
 
 /**
- * [ExoAudioPlayer.reopenAudioTrack] seeks, which only opens a new AudioTrack if ExoPlayer performs the seek: it
+ * [AudioTrackReopener.reopenAudioTrack] seeks, which only opens a new AudioTrack if ExoPlayer performs the seek: it
  * ignores one to the millisecond it's already at while ready or buffering.
  */
-class ExoAudioPlayerReopenTest {
+class AudioTrackReopenerTest {
     private val exoPlayer = RecordingExoPlayer()
-    private val player = ExoAudioPlayer(exoPlayer.proxy, AudioTrackMonitor())
+    private val player = AudioTrackReopener(exoPlayer.proxy)
 
     @Test
     fun `a paused player seeks straight away`() {

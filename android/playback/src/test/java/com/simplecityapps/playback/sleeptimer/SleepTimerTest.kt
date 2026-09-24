@@ -1,14 +1,9 @@
 package com.simplecityapps.playback.sleeptimer
 
-import com.simplecityapps.playback.fakes.FakePlayback
-import com.simplecityapps.playback.fakes.FakeSharedPreferences
-import com.simplecityapps.playback.fakes.testPlaybackManager
+import com.simplecityapps.playback.fakes.FakePlaybackOperations
 import com.simplecityapps.playback.fakes.testSong
-import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
@@ -22,21 +17,14 @@ import org.junit.Test
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class SleepTimerTest {
-    private val events = mutableListOf<String>()
-    private val queueManager = QueueManager(GeneralPreferenceManager(FakeSharedPreferences()))
-    private val playbackManager =
-        testPlaybackManager(exoplayerPlayback = FakePlayback("A", events = events), queueManager = queueManager)
+    private val playbackManager = FakePlaybackOperations()
 
-    init {
-        runBlocking { queueManager.setQueue((1L..5L).map { testSong(it) }) }
-    }
-
-    /** The pauses the timer asked for; a track end also moves the queue on, which records other calls. */
-    private fun pauses() = events.filter { it == "A pause" }
+    /** The number of pauses the timer asked for. */
+    private fun pauses() = playbackManager.pauses
 
     /** Ends the current track the way the playback reports it, and runs whatever it resumes. */
     private fun TestScope.endTrack() {
-        playbackManager.onTrackEnded(trackWentToNext = true)
+        playbackManager.trackEndedFlow.tryEmit(testSong(1))
         runCurrent()
     }
 
@@ -59,11 +47,11 @@ class SleepTimerTest {
         sleepTimer.startTimer(60_000, playToEnd = false)
 
         advance(59_999)
-        pauses() shouldBe emptyList()
+        pauses() shouldBe 0
         sleepTimer.timeRemaining() shouldBe 1L
 
         advance(1)
-        pauses() shouldBe listOf("A pause")
+        pauses() shouldBe 1
         sleepTimer.timeRemaining() shouldBe null
     }
 
@@ -76,7 +64,7 @@ class SleepTimerTest {
         sleepTimer.stopTimer()
         advance(60_000)
 
-        pauses() shouldBe emptyList()
+        pauses() shouldBe 0
         sleepTimer.timeRemaining() shouldBe null
     }
 
@@ -88,10 +76,10 @@ class SleepTimerTest {
 
         sleepTimer.startTimer(60_000, playToEnd = false)
         advance(59_999)
-        pauses() shouldBe emptyList()
+        pauses() shouldBe 0
 
         advance(1)
-        pauses() shouldBe listOf("A pause")
+        pauses() shouldBe 1
     }
 
     @Test
@@ -112,18 +100,18 @@ class SleepTimerTest {
 
         advance(30_000)
         endTrack()
-        pauses() shouldBe emptyList()
+        pauses() shouldBe 0
 
         advance(60_000)
-        pauses() shouldBe emptyList()
+        pauses() shouldBe 0
         sleepTimer.timeRemaining() shouldBe 0L
 
         endTrack()
-        pauses() shouldBe listOf("A pause")
+        pauses() shouldBe 1
         sleepTimer.timeRemaining() shouldBe null
 
         endTrack()
-        pauses() shouldBe listOf("A pause")
+        pauses() shouldBe 1
     }
 
     @Test
@@ -135,6 +123,6 @@ class SleepTimerTest {
         sleepTimer.stopTimer()
         endTrack()
 
-        pauses() shouldBe emptyList()
+        pauses() shouldBe 0
     }
 }

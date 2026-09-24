@@ -11,9 +11,10 @@ import androidx.media3.exoplayer.source.MediaSource.MediaPeriodId
 import com.simplecityapps.playback.dsp.replaygain.ReplayGain
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
-import com.simplecityapps.playback.exoplayer.PlayerItem
-import com.simplecityapps.playback.exoplayer.toMediaItem
 import com.simplecityapps.playback.fakes.FakePlaylistTimeline
+import com.simplecityapps.playback.fakes.testSong
+import com.simplecityapps.playback.queue.QueueEntry
+import com.simplecityapps.playback.queue.toMediaItem
 import io.kotest.matchers.shouldBe
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -45,9 +46,9 @@ class ReplayGainTransitionTest {
     private val timeline =
         FakePlaylistTimeline(
             listOf(
-                PlayerItem(uri = "/music/a.flac", mimeType = MimeTypes.AUDIO_FLAC, replayGain = flac).toMediaItem(),
-                PlayerItem(uri = "/music/b.mp3", mimeType = MimeTypes.AUDIO_MPEG, replayGain = mp3).toMediaItem(),
-                PlayerItem(uri = "/music/c.flac", mimeType = MimeTypes.AUDIO_FLAC, replayGain = flac).toMediaItem()
+                QueueEntry(uid = 1, song = testSong(id = 1, path = "/music/a.flac", mimeType = MimeTypes.AUDIO_FLAC), replayGain = flac).toMediaItem(),
+                QueueEntry(uid = 2, song = testSong(id = 2, path = "/music/b.mp3", mimeType = MimeTypes.AUDIO_MPEG), replayGain = mp3).toMediaItem(),
+                QueueEntry(uid = 3, song = testSong(id = 3, path = "/music/c.flac", mimeType = MimeTypes.AUDIO_FLAC), replayGain = flac).toMediaItem()
             )
         )
 

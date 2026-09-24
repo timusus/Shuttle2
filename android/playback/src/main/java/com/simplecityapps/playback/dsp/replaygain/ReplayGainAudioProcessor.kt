@@ -12,6 +12,7 @@ import com.simplecityapps.playback.exoplayer.ByteUtils.Int24_MAX_VALUE
 import com.simplecityapps.playback.exoplayer.ByteUtils.Int24_MIN_VALUE
 import com.simplecityapps.playback.exoplayer.ByteUtils.getInt24
 import com.simplecityapps.playback.exoplayer.ByteUtils.putInt24
+import com.simplecityapps.playback.queue.QueueEntry
 import java.nio.ByteBuffer
 import timber.log.Timber
 
@@ -93,7 +94,7 @@ class ReplayGainAudioProcessor(
         // restart, and at a gapless transition once the previous stream has drained. A flush that
         // doesn't identify an item (a bare flush()) keeps the current stream's gain.
         val item = streamMetadata.mediaItem() ?: return
-        streamReplayGain = item.localConfiguration?.tag as? ReplayGain
+        streamReplayGain = (item.localConfiguration?.tag as? QueueEntry)?.replayGain
         Timber.d("ReplayGain for ${item.localConfiguration?.uri?.lastPathSegment}: $streamReplayGain, ${gain}dB")
     }
 

@@ -2,120 +2,92 @@ package com.simplecityapps.playback
 
 import android.media.AudioManager
 import android.os.SystemClock
+import androidx.media3.common.C
+import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.PlaybackParameters
+import androidx.media3.common.Player
+import androidx.media3.common.Timeline
+import androidx.media3.exoplayer.ExoPlaybackException
+import androidx.media3.exoplayer.ExoPlayer
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
+import com.simplecityapps.playback.engine.SongUriResolver.Companion.isDirect
+import com.simplecityapps.playback.engine.isResolutionFailure
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
+import com.simplecityapps.playback.queue.QueueEntry
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.shuttle.coroutines.launchCollectingChanges
+import com.simplecityapps.playback.queue.queueEntry
 import com.simplecityapps.shuttle.model.Song
-import kotlin.coroutines.CoroutineContext
 import kotlin.math.max
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 
+/**
+ * Playback, as a thin layer over [player], whose playlist is the queue (see [QueueManager]). Every flow is derived
+ * from the player's events and state; nothing here keeps its own copy of the position, the current item or the
+ * queue. Adds what the player doesn't do itself: audio focus, the saved position to resume from, skipping past songs
+ * whose stream can't be resolved, and the events the app records (track ends, pauses, failures).
+ *
+ * Main thread only, like the player.
+ */
 class PlaybackManager(
     private val queueManager: QueueManager,
+    private val player: ExoPlayer,
     private val audioFocusHelper: AudioFocusHelper,
     private val playbackPreferenceManager: PlaybackPreferenceManager,
-    private val audioEffectSessionManager: AudioEffectSessionManager,
-    appCoroutineScope: CoroutineScope,
-    private val progressTicker: ProgressTicker,
-    exoplayerPlayback: Playback,
+    audioEffectSessionManager: AudioEffectSessionManager,
+    private val appCoroutineScope: CoroutineScope,
     audioManager: AudioManager?,
     /** The anchor clock, on the `SystemClock.elapsedRealtime` timebase media controllers expect. */
-    private val elapsedRealtime: () -> Long = SystemClock::elapsedRealtime,
-    /** Where queue changes are collected: on the main thread, and inline when the change is made there. */
-    queueChangeContext: CoroutineContext = Dispatchers.Main.immediate
+    private val elapsedRealtime: () -> Long = SystemClock::elapsedRealtime
 ) : PlaybackOperations,
-    Playback.Callback,
     AudioFocusHelper.Listener {
-    private val audioSessionId = audioManager?.generateAudioSessionId() ?: -1
+    /** The uid of the entry that last became ready to play; while the current one hasn't, it's loading. */
+    private var readyUid: Long? = null
 
-    /** Owns the active playback, and moves playback between engines (e.g. local <-> Cast). */
-    private val playbackSwitcher =
-        PlaybackSwitcher(
-            initialPlayback = exoplayerPlayback,
-            callback = this,
-            audioSessionId = audioSessionId,
-            audioFocusHelper = audioFocusHelper,
-            audioEffectSessionManager = audioEffectSessionManager,
-            repeatMode = { queueManager.getRepeatMode() },
-            currentProgress = ::getProgress,
-            savedPosition = { playbackPreferenceManager.playbackPosition },
-            onSwitched = ::publishSwitchedPlaybackState,
-            load = ::loadForSwitch,
-            seekTo = ::seekTo,
-            play = { play() }
-        )
+    /** The completion of the last [load] (or skip), called once the item is ready to play or has failed. */
+    private var pendingLoad: PendingLoad? = null
 
-    // Renamed on the JVM, where the getter would clash with getPlayback().
-    @get:JvmName("activePlayback")
-    private val playback: Playback
-        get() = playbackSwitcher.playback
+    /** Songs skipped in a row because their stream couldn't be resolved. */
+    private var resolutionFailures = 0
 
-    private val _playbackStateFlow = MutableStateFlow(playback.playBackState())
+    private var progressJob: Job? = null
 
-    /**
-     * The last playback state the active [Playback] reported. Starts at the initial playback's state,
-     * and is reset to the new playback's state on [switchToPlayback], so it never holds a state
-     * reported by a playback that is no longer active.
-     */
+    private val _playbackStateFlow = MutableStateFlow(derivedState())
+
+    /** The player's state: loading until the current item is first ready, then playing or paused. */
     override val playbackStateFlow: StateFlow<PlaybackState> = _playbackStateFlow.asStateFlow()
 
     private val _progressFlow = MutableStateFlow<PlaybackProgress?>(null)
 
-    /**
-     * The last published progress; null until the first one. Also republished on a position
-     * discontinuity, so it moves even while paused (e.g. a seek from another Cast sender).
-     */
+    /** The last published progress; null until the first. Ticks while playing, and is republished on every jump. */
     override val progressFlow: StateFlow<PlaybackProgress?> = _progressFlow.asStateFlow()
-
-    /**
-     * Every track load and next-item preparation goes through here. While a load is pending the
-     * playback may still report the item it's replacing (the old player's position, a Cast status
-     * update for the previous item), so anchors use the load's start position instead.
-     */
-    private val loadCoordinator =
-        LoadCoordinator(
-            parentScope = appCoroutineScope,
-            activePlayback = { playback },
-            nextSong = { queueManager.getNext()?.song },
-            onPendingLoadChanged = ::onPendingLoadChanged
-        )
-
-    /**
-     * The pending load a seek was deferred into, whose position [progressFlow] now shows. Once that load
-     * is no longer pending, progress is republished from where playback actually is: the seek is lost if
-     * the load fails, and a retry starts the next item from its own position.
-     */
-    private var seekedLoad: LoadCoordinator.PendingLoad? = null
-
-    /** How many [queueOperation]s are running. */
-    private var queueOperationDepth = 0
-
-    /** Whether the running [queueOperation] changed the queue since it last started a load. */
-    private var nextRequestDeferred = false
 
     private val _positionAnchorFlow = MutableStateFlow(positionAnchor())
 
     /**
-     * Republished on every discontinuity: a reported state (even a repeated one), a seek, a speed
-     * change, a track change, a playback switch, or a jump the playback reports itself. Never on a
-     * progress tick.
+     * Republished on every discontinuity: a state change (even a repeated one), a seek, a speed change, or a track
+     * change. Never on a progress tick.
      */
     override val positionAnchorFlow: StateFlow<PositionAnchor> = _positionAnchorFlow.asStateFlow()
 
     /**
-     * Buffered so an emit from the main thread never suspends or fails. Collectors run on the main thread
-     * too, so only one that has fallen [EVENT_BUFFER] events behind could lose the oldest.
+     * Buffered, so a collector on the main thread misses no track end even when two arrive before it resumes
+     * (e.g. a short track ending right after another).
      */
     private val _trackEndedFlow = MutableSharedFlow<Song>(extraBufferCapacity = EVENT_BUFFER, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
@@ -133,345 +105,408 @@ class PlaybackManager(
 
     init {
         audioFocusHelper.listener = this
-        playbackSwitcher.attachInitialPlayback()
+        audioFocusHelper.enabled = true
 
-        collectQueueChanges(appCoroutineScope, queueChangeContext)
+        val audioSessionId = audioManager?.generateAudioSessionId() ?: C.AUDIO_SESSION_ID_UNSET
+        if (audioSessionId > 0) {
+            player.audioSessionId = audioSessionId
+        }
+        audioEffectSessionManager.bindTo(player.audioSessionId)
+
+        // Individual callbacks, not onEvents: they arrive within the player call that caused them, so state
+        // published here is current by the time that call returns.
+        player.addListener(
+            object : Player.Listener {
+                override fun onPlaybackStateChanged(playbackState: Int) {
+                    onPlayerStateChanged(playbackState)
+                }
+
+                override fun onPlayWhenReadyChanged(
+                    playWhenReady: Boolean,
+                    reason: Int
+                ) {
+                    publishState()
+                }
+
+                override fun onMediaItemTransition(
+                    mediaItem: MediaItem?,
+                    reason: Int
+                ) {
+                    mediaItem?.let(::applyWakeMode)
+                    publishState()
+                    publishProgress()
+                }
+
+                override fun onPositionDiscontinuity(
+                    oldPosition: Player.PositionInfo,
+                    newPosition: Player.PositionInfo,
+                    reason: Int
+                ) {
+                    if (reason == Player.DISCONTINUITY_REASON_AUTO_TRANSITION) {
+                        oldPosition.mediaItem?.let(::onTrackEnded)
+                    }
+                    reanchor()
+                    publishProgress()
+                }
+
+                override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) {
+                    reanchor()
+                }
+
+                override fun onPlayerError(error: PlaybackException) {
+                    onError(error)
+                }
+            }
+        )
+    }
+
+    private val currentEntry: QueueEntry?
+        get() = player.currentMediaItem?.queueEntry
+
+    // Player events
+
+    private fun onPlayerStateChanged(playbackState: Int) {
+        when (playbackState) {
+            Player.STATE_READY -> {
+                readyUid = currentEntry?.uid
+                resolutionFailures = 0
+                completePendingLoad(Result.success(pendingLoad?.attempt == 1))
+            }
+
+            Player.STATE_IDLE -> readyUid = null
+
+            Player.STATE_ENDED -> {
+                // The last item played to its end, with nothing to repeat, or the queue was emptied.
+                completePendingLoad(Result.failure(IllegalStateException("Nothing to load")))
+                player.currentMediaItem?.let { item -> _trackEndedFlow.tryEmit(item.queueEntry.song) }
+                if (player.playWhenReady) {
+                    pause()
+                }
+            }
+        }
+        publishState()
+    }
+
+    /** An item played to its end and the player moved on (to the next item, or back to its start on repeat). */
+    private fun onTrackEnded(item: MediaItem) {
+        Timber.v("onTrackEnded(${item.queueEntry.song.name})")
+        playbackPreferenceManager.playbackPosition = 0
+        _trackEndedFlow.tryEmit(item.queueEntry.song)
     }
 
     /**
-     * Keeps the playback's repeat mode and next item in line with the queue's. Each flow is compared
-     * against a snapshot taken here, which [attachInitialPlayback][PlaybackSwitcher.attachInitialPlayback]
-     * has already applied, so only later changes are handled. Any change to the items, the current item
-     * or the shuffle mode re-prepares the next item. Shuffle is read from the queue state rather than
-     * [QueueManager.shuffleModeFlow], which changes before a reshuffle, so the next item is only prepared
-     * once the new order is in place.
+     * An item whose stream couldn't be resolved (its server can't be reached) is skipped for the next one, up to
+     * [MAX_ATTEMPTS] in a row and never past the end of the queue. Any other failure is reported for the item, and
+     * stops playback.
      */
-    private fun collectQueueChanges(
-        scope: CoroutineScope,
-        context: CoroutineContext
-    ) {
-        val repeatMode = queueManager.repeatModeFlow.value
-        val queueState = queueManager.queueStateFlow.value
+    private fun onError(error: PlaybackException) {
+        val failedIndex = error.failedIndex() ?: player.currentMediaItemIndex
+        val failedSong = player.currentTimeline.takeIf { failedIndex < it.windowCount }?.let { player.getMediaItemAt(failedIndex).queueEntry.song }
+        Timber.e(error, "Playback failed for ${failedSong?.name}")
 
-        scope.launchCollectingChanges(queueManager.repeatModeFlow, repeatMode, context) { _, current ->
-            onRepeatChanged(current)
-        }
-        scope.launchCollectingChanges(queueManager.queueStateFlow, queueState, context) { previous, current ->
-            if (current.contentVersion != previous.contentVersion ||
-                current.currentItem != previous.currentItem ||
-                current.currentPosition != previous.currentPosition ||
-                current.shuffleMode != previous.shuffleMode
-            ) {
-                onQueueChanged()
+        if (error.isResolutionFailure()) {
+            resolutionFailures++
+            val next = player.currentTimeline.getNextWindowIndex(failedIndex, Player.REPEAT_MODE_OFF, player.shuffleModeEnabled)
+            if (next != C.INDEX_UNSET && resolutionFailures < MAX_ATTEMPTS) {
+                pendingLoad = pendingLoad?.copy(attempt = resolutionFailures + 1)
+                player.seekTo(next, 0)
+                player.prepare()
+                return
             }
+        } else {
+            failedSong?.let(_playbackFailureFlow::tryEmit)
+        }
+        resolutionFailures = 0
+        completePendingLoad(Result.failure(error))
+        pause()
+    }
+
+    /** The playlist index of the item [this] failed on, if it says. */
+    private fun PlaybackException.failedIndex(): Int? {
+        val periodUid = (this as? ExoPlaybackException)?.mediaPeriodId?.periodUid ?: return null
+        val timeline = player.currentTimeline
+        val periodIndex = timeline.getIndexOfPeriod(periodUid).takeIf { it != C.INDEX_UNSET } ?: return null
+        return timeline.getPeriod(periodIndex, Timeline.Period()).windowIndex
+    }
+
+    private fun completePendingLoad(result: Result<Boolean>) {
+        val load = pendingLoad ?: return
+        pendingLoad = null
+        load.completion(result)
+    }
+
+    private fun applyWakeMode(item: MediaItem) {
+        val isRemote = item.localConfiguration?.uri?.let { !it.isDirect() || it.scheme == "http" || it.scheme == "https" } == true
+        player.setWakeMode(if (isRemote) C.WAKE_MODE_NETWORK else C.WAKE_MODE_LOCAL)
+    }
+
+    // Derived state
+
+    private fun derivedState(): PlaybackState = when {
+        pendingLoad != null -> PlaybackState.Loading
+        player.playbackState == Player.STATE_BUFFERING && readyUid != currentEntry?.uid -> PlaybackState.Loading
+        player.playWhenReady && (player.playbackState == Player.STATE_READY || player.playbackState == Player.STATE_BUFFERING) -> PlaybackState.Playing
+        else -> PlaybackState.Paused
+    }
+
+    private fun publishState() {
+        val state = derivedState()
+        val previous = _playbackStateFlow.value
+        _playbackStateFlow.value = state
+        reanchor()
+        if (state != previous && state is PlaybackState.Paused) {
+            savePausePosition()
+        }
+        monitorProgress(state is PlaybackState.Playing || state is PlaybackState.Loading)
+    }
+
+    private fun positionAnchor(): PositionAnchor = PositionAnchor(
+        state = derivedState(),
+        positionMs = getProgress(),
+        elapsedRealtimeMs = elapsedRealtime(),
+        speed = getPlaybackSpeed()
+    )
+
+    private fun reanchor() {
+        _positionAnchorFlow.value = positionAnchor()
+    }
+
+    private fun publishProgress() {
+        val position = getProgress() ?: return
+        val duration = getDuration() ?: currentEntry?.song?.duration ?: return
+        _progressFlow.value = PlaybackProgress(position, duration)
+    }
+
+    private fun monitorProgress(isPlaying: Boolean) {
+        if (!isPlaying) {
+            progressJob?.cancel()
+            progressJob = null
+        } else if (progressJob?.isActive != true) {
+            progressJob =
+                appCoroutineScope.launch {
+                    while (isActive) {
+                        publishProgress()
+                        delay(PROGRESS_INTERVAL_MS)
+                    }
+                }
         }
     }
 
     /**
-     * Runs a queue operation, re-preparing the next item once for every queue change it makes, when it
-     * finishes, rather than once per change. A load it starts prepares the next item once it succeeds,
-     * so changes made before that load need no preparation of their own. Queue changes are collected
-     * inline on the main thread, so they arrive while [block] runs. Operations may nest, and suspend; a
-     * change made elsewhere while one is suspended is deferred with it.
+     * Saves where playback paused as the position to resume from. With no position, the saved one is cleared, so
+     * the next position is saved straight away.
      */
-    private inline fun queueOperation(block: () -> Unit) {
-        queueOperationDepth++
-        try {
-            block()
-        } finally {
-            queueOperationDepth--
-            if (queueOperationDepth == 0 && nextRequestDeferred) {
-                nextRequestDeferred = false
-                loadCoordinator.requestNext()
-            }
+    private fun savePausePosition() {
+        val position = getProgress()
+        playbackPreferenceManager.playbackPosition = position
+        currentEntry?.song?.let { song ->
+            _pausePositionFlow.tryEmit(SongPosition(song, position ?: 0))
         }
     }
 
-    override fun togglePlayback() {
-        when (playbackState()) {
-            is PlaybackState.Loading, PlaybackState.Playing -> {
-                pause()
-            }
-
-            else -> {
-                play()
-            }
-        }
-    }
+    // PlaybackOperations
 
     /**
-     * Loads the current queue. The boolean in [Result] indicates whether the current queue item successfully loaded.
-     * Note: If the current queue item fails to load, the next item in the queue is attempted. If every attempt
-     * fails, the queue stays on the last item attempted and playback is left stopped.
+     * Loads the current item, paused, at [seekPosition] (or the song's own start position). [completion] gets
+     * whether it loaded at the first attempt once it's ready to play, or the failure if nothing could load. A
+     * later load or skip supersedes it, and it's never called.
      */
     override fun load(
         seekPosition: Int?,
         completion: (Result<Boolean>) -> Unit
     ) {
-        Timber.v("load(seekPosition: $seekPosition)")
-        // Some players (ExoPlayer/ChromeCast) like to be loaded on the main thread
-        queueManager.getCurrentItem()?.let { currentQueueItem ->
-            attemptLoad(currentQueueItem.song, seekPosition ?: currentQueueItem.song.getStartPosition() ?: 0) { result ->
-                result.onFailure { stopAfterFailure() }
-                completion(result)
-            }
-        } ?: Timber.e("Load failed - no current queue item")
+        val entry = currentEntry
+        if (entry == null) {
+            Timber.w("load() failed: queue empty")
+            completion(Result.failure(IllegalStateException("Queue empty")))
+            return
+        }
+        Timber.v("load(seekPosition: $seekPosition) ${entry.song.name}")
+        pendingLoad = PendingLoad(completion)
+        player.playWhenReady = false
+        loadCurrent(seekPosition ?: entry.song.getStartPosition() ?: 0, completion)
     }
 
-    private fun attemptLoad(
-        current: Song,
-        seekPosition: Int,
-        attempt: Int = 1,
+    /** Moves to the current item at [positionMs] and prepares it, calling [completion] once it's ready. */
+    private fun loadCurrent(
+        positionMs: Int,
         completion: (Result<Boolean>) -> Unit
     ) {
-        Timber.v("attemptLoad(current song: ${current.name}, seekPosition: $seekPosition, attempt: $attempt)")
-
-        loadPlayback(current, seekPosition) { result ->
-            result.onSuccess {
-                completion(Result.success(attempt == 1))
-            }
-            result.onFailure { error ->
-                // Attempt to load the next item in the queue. If there is no next item, or we're on repeat, or we've made 15 previous attempts, call completion(error).
-                if (queueManager.getCurrentPosition() != queueManager.getSize() - 1 && attempt < 15) {
-                    queueManager.getNext()?.let { nextQueueItem ->
-                        if (nextQueueItem != queueManager.getCurrentItem()) {
-                            queueOperation {
-                                queueManager.skipToNext(true)
-                                attemptLoad(nextQueueItem.song, 0, attempt + 1, completion)
-                            }
-                        } else {
-                            completion(Result.failure(error))
-                        }
-                    } ?: run {
-                        completion(Result.failure(error))
-                    }
-                } else {
-                    completion(Result.failure(error))
-                }
-            }
+        pendingLoad = PendingLoad(completion)
+        readyUid = null
+        resolutionFailures = 0
+        player.seekTo(player.currentMediaItemIndex, positionMs.toLong())
+        if (player.playbackState == Player.STATE_IDLE) {
+            player.prepare()
         }
+        publishState()
     }
 
     /**
-     * Loads [current] into the active playback, re-anchoring at [seekPosition] straight away rather
-     * than when the playback first reports, which for a remote provider or Cast can take seconds.
-     * The anchor holds that position until this load completes, unless a later load supersedes it,
-     * so a late report about the item being replaced can't move it. [completion] is only called if
-     * no later load supersedes this one.
-     */
-    private fun loadPlayback(
-        current: Song,
-        seekPosition: Int,
-        completion: (Result<Any?>) -> Unit
-    ) {
-        nextRequestDeferred = false
-        loadCoordinator.load(playback, current, seekPosition, completion)
-    }
-
-    override suspend fun shuffle(
-        songs: List<Song>,
-        completion: (Result<Any?>) -> Unit
-    ) = queueOperation {
-        queueManager.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = false)
-        if (queueManager.setQueue(songs, songs.shuffled(), 0)) {
-            load(0, completion)
-        }
-    }
-
-    /**
-     * Begin playback. If the Playback has been released, the current track will be reloaded, and we'll attempt to call play() again.
-     *
-     * @param attempt used internally to prevent infinite attempts
+     * Plays the current item. An unprepared player (nothing loaded yet) prepares it at the saved position; a
+     * position within the song's last moments restarts it.
      */
     override fun play(attempt: Int) {
-        Timber.v("play() called (attempt: $attempt)")
-        if (queueManager.getQueue().isEmpty()) {
+        Timber.v("play()")
+        if (player.mediaItemCount == 0) {
             Timber.w("Failed to play: Queue empty.")
             return
         }
-        if (audioFocusHelper.requestAudioFocus()) {
-            if (playback.isReleased) {
-                if (attempt <= 2) {
-                    Timber.v("Playback released.. reloading.")
-                    var startPosition = playbackPreferenceManager.playbackPosition ?: queueManager.getCurrentItem()?.song?.getStartPosition() ?: 0
-                    // The released playback may report the length of whatever it last held, so check
-                    // against the song being reloaded.
-                    if (isNearEndOfCurrentSong(startPosition)) {
-                        startPosition = 0
-                    }
-                    load(startPosition) { result ->
-                        result.onSuccess { play(attempt + 1) }
-                        result.onFailure { exception -> Timber.e(exception, "play() failed") }
-                    }
-                } else {
-                    Timber.w("play() failed: the playback is still released after 2 reloads")
-                    stopAfterFailure()
-                }
-            } else {
-                val loadingPositionMs = loadCoordinator.loadingPositionMs
-                if (loadingPositionMs != null) {
-                    // The playback still reports the item it's replacing, so check where the load will
-                    // start against the item it's loading, and restart the load rather than the old item.
-                    if (isNearEndOfCurrentSong(loadingPositionMs)) {
-                        seekTo(0)
-                    }
-                } else if (playback.getProgress() ?: 0 > (playback.getDuration() ?: Int.MAX_VALUE) - 200) {
-                    playback.seek(0)
-                }
-                playback.play()
-            }
-        } else {
+        if (!audioFocusHelper.requestAudioFocus()) {
             Timber.w("play() failed, audio focus request denied.")
+            return
         }
+        when {
+            player.playbackState == Player.STATE_IDLE -> {
+                var startPosition = playbackPreferenceManager.playbackPosition ?: currentEntry?.song?.getStartPosition() ?: 0
+                if (isNearEndOfCurrentSong(startPosition)) {
+                    startPosition = 0
+                }
+                player.seekTo(player.currentMediaItemIndex, startPosition.toLong())
+                player.prepare()
+            }
+
+            player.playbackState == Player.STATE_ENDED || isNearEndOfCurrentSong(player.currentPosition.toInt()) -> player.seekTo(player.currentMediaItemIndex, 0)
+        }
+        player.playWhenReady = true
     }
 
-    /**
-     * Leaves playback stopped after it failed to start, giving up the audio focus play() may have taken. A
-     * playback whose load failed may never report a state of its own (Cast reports Loading and nothing after),
-     * so the state it's left in is published here, and the UI doesn't go on showing it as playing.
-     */
-    private fun stopAfterFailure() {
-        pause()
-        onPlaybackStateChanged(playback.playBackState())
-    }
-
-    /** Whether [positionMs] is within 200ms of the end of the current queue item's song, if its length is known. */
     private fun isNearEndOfCurrentSong(positionMs: Int): Boolean {
-        val duration = queueManager.getCurrentItem()?.song?.duration?.takeIf { it > 0 } ?: return false
-        return positionMs > duration - 200
+        val duration = getDuration() ?: currentEntry?.song?.duration ?: return false
+        return positionMs > duration - NEAR_END_MS
+    }
+
+    /** A user- or system-driven pause, distinct from [pauseForFocusLoss]: this one gives up audio focus. */
+    override fun pause() {
+        Timber.v("pause()")
+        player.playWhenReady = false
+        audioFocusHelper.abandonAudioFocus()
+    }
+
+    override fun togglePlayback() {
+        when (playbackState()) {
+            is PlaybackState.Loading, PlaybackState.Playing -> pause()
+            else -> play()
+        }
     }
 
     override fun skipToNext(
         ignoreRepeat: Boolean,
         completion: ((Result<Any?>) -> Unit)?
-    ) = queueOperation {
+    ) {
+        Timber.v("skipToNext()")
         if (queueManager.skipToNext(ignoreRepeat)) {
-            queueManager.getCurrentItem()?.let { currentQueueItem ->
-                loadPlayback(currentQueueItem.song, 0) { result ->
-                    result.onSuccess { play() }
-                    result.onFailure { error -> Timber.w("load() failed. Error: $error") }
-                    completion?.invoke(result)
-                }
-            }
+            playFromStart(completion)
+        } else {
+            completion?.invoke(Result.failure(IllegalStateException("No next item")))
         }
     }
 
     override fun skipToPrev(
         force: Boolean,
         completion: ((Result<Any?>) -> Unit)?
-    ) = queueOperation {
-        // While a load is pending the playback still reports the track being replaced. An unknown position
-        // (a Cast playback whose session has no remote media client, e.g. while suspended) may be mid-track,
-        // so it restarts the current track rather than skipping.
-        val position = getProgress()
-        if (force || (position != null && position < 2000)) {
+    ) {
+        Timber.v("skipToPrev()")
+        if (force || (getProgress() ?: 0) < RESTART_THRESHOLD_MS) {
             queueManager.skipToPrevious()
-            queueManager.getCurrentItem()?.let { currentQueueItem ->
-                loadPlayback(currentQueueItem.song, 0) { result ->
-                    result.onSuccess { play() }
-                    result.onFailure { error -> Timber.w("load() failed. Error: $error") }
-                    completion?.invoke(result)
-                }
-            }
+            playFromStart(completion)
         } else {
             seekTo(0)
+            completion?.invoke(Result.success(null))
         }
     }
 
-    override fun skipTo(position: Int) = queueOperation {
-        if (queueManager.getCurrentPosition() != position) {
+    override fun skipTo(position: Int) {
+        if (position != queueManager.getCurrentPosition()) {
             queueManager.skipTo(position)
-            queueManager.getCurrentItem()?.let { currentQueueItem ->
-                loadPlayback(currentQueueItem.song, 0) { result ->
-                    result.onSuccess { play() }
-                    result.onFailure { error -> Timber.w("load() failed. Error: $error") }
-                }
-            }
+            playFromStart(null)
         }
     }
 
-    override fun playbackState(): PlaybackState = playback.playBackState()
-
-    /**
-     * @return the current seek position, in milliseconds. While a load is pending, the position it will
-     * start at, since the playback still reports the item it's replacing.
-     */
-    override fun getProgress(): Int? = loadCoordinator.loadingPositionMs ?: playback.getProgress()
-
-    /**
-     * @return the track duration, in milliseconds
-     */
-    override fun getDuration(): Int? = playback.getDuration()
-
-    /**
-     * The position to seek to, in milliseconds
-     */
-    override fun seekTo(position: Int) {
-        // A seek while a track loads becomes the load's start position (and re-anchors), rather than
-        // seeking the track being replaced.
-        if (loadCoordinator.seek(position)) {
-            seekedLoad = loadCoordinator.pendingLoad
-            queueManager.getCurrentItem()?.song?.duration?.let { duration ->
-                _progressFlow.value = PlaybackProgress(position, duration)
-            }
-            return
-        }
-        playback.seek(position)
-        reanchor()
-        updateProgress()
+    /** Plays the current item (just moved to) from its start. */
+    private fun playFromStart(completion: ((Result<Any?>) -> Unit)?) {
+        loadCurrent(0) { result -> completion?.invoke(result) }
+        play()
     }
 
-    override suspend fun addToQueue(songs: List<Song>) = queueOperation {
-        if (queueManager.getQueue().isEmpty()) {
-            if (queueManager.setQueue(songs)) {
-                load { result ->
-                    result.onSuccess { play() }
-                    result.onFailure { throwable -> Timber.e(throwable, "Failed to load songs (addToQueue())") }
-                }
-            }
+    override suspend fun addToQueue(songs: List<Song>) = withContext(Dispatchers.Main.immediate) {
+        if (player.mediaItemCount == 0) {
+            playNewQueue(songs)
         } else {
             queueManager.addToQueue(songs)
         }
     }
 
+    override suspend fun playNext(songs: List<Song>) = withContext(Dispatchers.Main.immediate) {
+        if (player.mediaItemCount == 0) {
+            playNewQueue(songs)
+        } else {
+            queueManager.addToNext(songs)
+        }
+    }
+
+    private suspend fun playNewQueue(songs: List<Song>) {
+        if (queueManager.setQueue(songs)) {
+            load { result -> result.onSuccess { play() } }
+        }
+    }
+
+    override suspend fun shuffle(
+        songs: List<Song>,
+        completion: (Result<Any?>) -> Unit
+    ) = withContext(Dispatchers.Main.immediate) {
+        queueManager.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = false)
+        queueManager.setQueue(songs, songs.shuffled(), 0)
+        load(0, completion)
+    }
+
+    override fun seekTo(position: Int) {
+        Timber.v("seekTo(position: $position)")
+        player.seekTo(position.toLong())
+    }
+
+    override fun playbackState(): PlaybackState = _playbackStateFlow.value
+
+    override fun getProgress(): Int? = player.currentPosition.toInt().takeIf { player.mediaItemCount > 0 }
+
+    override fun getDuration(): Int? = player.duration.takeIf { it != C.TIME_UNSET && player.mediaItemCount > 0 }?.toInt()
+
+    override fun getPlaybackSpeed(): Float = player.playbackParameters.speed
+
+    override fun setPlaybackSpeed(multiplier: Float) {
+        player.playbackParameters = PlaybackParameters(multiplier, multiplier)
+    }
+
     override fun moveQueueItem(
         from: Int,
         to: Int
-    ) = queueOperation {
+    ) {
         queueManager.move(from, to)
     }
 
-    override fun removeQueueItem(queueItem: QueueItem) = queueOperation {
-        if (queueManager.getCurrentItem() != queueItem) {
-            queueManager.remove(listOf(queueItem))
-            return@queueOperation
+    /**
+     * Removes [queueItem]. Removing the current item moves to the next one (wrapping to the start), which plays on
+     * if playback was playing; removing the last item left stops playback.
+     */
+    override fun removeQueueItem(queueItem: QueueItem) {
+        val entries = List(player.mediaItemCount) { player.getMediaItemAt(it).queueEntry }
+        val index = entries.indexOfFirst { it.uid == queueItem.uid }
+        if (index == -1) return
+        if (index == player.currentMediaItemIndex) {
+            if (entries.size == 1) {
+                pause()
+            } else {
+                player.seekTo(player.currentTimeline.getNextWindowIndex(index, Player.REPEAT_MODE_ALL, player.shuffleModeEnabled), 0)
+            }
         }
-        val wasPlaying = playbackState().let { it == PlaybackState.Playing || it == PlaybackState.Loading }
-        queueManager.skipToNext(true)
         queueManager.remove(listOf(queueItem))
-        val newCurrentItem = queueManager.getCurrentItem()?.takeIf { it != queueItem }
-        if (newCurrentItem == null) {
-            // The last item was removed: nothing to load, and nothing a pending load should play.
-            loadCoordinator.cancel()
-            pause()
-            nextRequestDeferred = false
-            return@queueOperation
-        }
-        // The player follows the queue onto the new current item, carrying on if it was playing.
-        loadPlayback(newCurrentItem.song, 0) { result ->
-            result.onSuccess { if (wasPlaying) play() }
-            result.onFailure { error -> Timber.w("load() failed. Error: $error") }
-        }
     }
 
-    override fun clearQueue() = queueOperation {
-        if (playback.playBackState() == PlaybackState.Playing) {
-            queueManager.getCurrentItem()?.let { currentItem ->
-                queueManager.remove(queueManager.getQueue() - currentItem)
-            }
+    /** Clears the queue; while playing, the current item stays and plays on. */
+    override fun clearQueue() {
+        if (playbackState() == PlaybackState.Playing) {
+            queueManager.remove(queueManager.getQueue().filterNot { it.isCurrent })
         } else {
-            // Nothing is left to play, so a load in progress mustn't start playing when it completes.
-            loadCoordinator.cancel()
             queueManager.clear()
         }
     }
@@ -480,241 +515,35 @@ class PlaybackManager(
         queueManager.updateSongs(songs)
     }
 
-    override suspend fun playNext(songs: List<Song>) = queueOperation {
-        if (queueManager.getQueue().isEmpty()) {
-            if (queueManager.setQueue(songs)) {
-                load { result ->
-                    result.onSuccess { play() }
-                    result.onFailure { throwable -> Timber.e(throwable, "Failed to load songs (playNext())") }
-                }
-            }
-        } else {
-            queueManager.addToNext(songs)
-        }
-    }
-
-    override fun getPlayback(): Playback = playback
-
-    override fun switchToPlayback(playback: Playback) {
-        playbackSwitcher.switchTo(playback)
-    }
-
-    /**
-     * Loads the current item into the playback just switched to. The load re-anchors at the position
-     * it loads at, which the new playback can't report until it has loaded (an unloaded
-     * ExoPlayerPlayback reports 0), so the switch doesn't anchor it before then. With nothing to load,
-     * the new playback is anchored as it is.
-     */
-    private fun loadForSwitch(
-        seekPosition: Int,
-        completion: (Result<Boolean>) -> Unit
-    ) {
-        val pendingLoadBeforeSwitch = loadCoordinator.pendingLoad
-        load(seekPosition, completion)
-        if (loadCoordinator.pendingLoad === pendingLoadBeforeSwitch) {
-            reanchor()
-        }
-    }
-
-    /**
-     * Publishes the newly active playback's state, which it may never report itself (a fresh playback
-     * starts paused without saying so), and starts or stops the progress ticker to match. Neither the
-     * position anchor nor progress moves here: the old playback's last position is still the best known
-     * one until the new playback loads at it, and it's what gets persisted as the position to resume
-     * from. The switch's load re-anchors, at that position.
-     */
-    private fun publishSwitchedPlaybackState() {
-        val playbackState = playback.playBackState()
-        _playbackStateFlow.value = playbackState
-        monitorProgress(playbackState is PlaybackState.Loading || playbackState is PlaybackState.Playing)
-    }
-
-    override fun setPlaybackSpeed(multiplier: Float) {
-        playback.setPlaybackSpeed(multiplier)
-        reanchor()
-    }
-
-    override fun getPlaybackSpeed(): Float = playback.getPlaybackSpeed()
-
-    // Private
-
-    private fun monitorProgress(isPlaying: Boolean) {
-        if (isPlaying) {
-            progressTicker.start { updateProgress() }
-        } else {
-            progressTicker.stop()
-        }
-    }
-
-    private fun updateProgress() {
-        val position = playback.getProgress()
-        val duration = playback.getDuration() ?: queueManager.getCurrentItem()?.song?.duration
-        if (position != null && duration != null) {
-            _progressFlow.value = PlaybackProgress(position, duration)
-        }
-    }
-
-    /**
-     * While a load is pending, a playing state is anchored as loading, so controllers hold the new
-     * item's start position instead of advancing it through a load that plays nothing. Once the load's
-     * completion is being delivered, the playback has loaded, so reports its own state and position.
-     */
-    private fun positionAnchor(): PositionAnchor {
-        val loadingPositionMs = loadCoordinator.loadingPositionMs
-        val playbackState = _playbackStateFlow.value
-        return PositionAnchor(
-            state = if (loadingPositionMs != null && playbackState == PlaybackState.Playing) PlaybackState.Loading else playbackState,
-            positionMs = loadingPositionMs ?: playback.getProgress(),
-            elapsedRealtimeMs = elapsedRealtime(),
-            speed = playback.getPlaybackSpeed()
-        )
-    }
-
-    private fun reanchor() {
-        _positionAnchorFlow.value = positionAnchor()
-    }
-
-    private fun onPendingLoadChanged() {
-        reanchor()
-        val seeked = seekedLoad ?: return
-        val pending = loadCoordinator.pendingLoad
-        if (pending?.token == seeked.token) return
-        seekedLoad = null
-        if (pending == null) {
-            updateProgress()
-        } else {
-            queueManager.getCurrentItem()?.song?.duration?.let { duration ->
-                _progressFlow.value = PlaybackProgress(pending.positionMs, duration)
-            }
-        }
-    }
-
-    // Playback.Callback Implementation
-
-    override fun onPlaybackStateChanged(playbackState: PlaybackState) {
-        Timber.v("onPlaybackStateChanged(playbackState: $playbackState)")
-        _playbackStateFlow.value = playbackState
-        reanchor()
-        if (playbackState is PlaybackState.Paused) {
-            savePausePosition()
-        }
-
-        when (playbackState) {
-            is PlaybackState.Loading, PlaybackState.Playing -> {
-                monitorProgress(true)
-            }
-
-            else -> {
-                monitorProgress(false)
-            }
-        }
-    }
-
-    /**
-     * Saves where playback paused as the position to resume from, before the call reporting the pause
-     * returns: a switch pauses the old playback, then reads the saved position back to resume the new one
-     * from. Mid-load, that's the position the load will start at. With no position, the saved one is
-     * cleared, so the next position is saved straight away.
-     */
-    private fun savePausePosition() {
-        val position = getProgress()
-        playbackPreferenceManager.playbackPosition = position
-        queueManager.getCurrentItem()?.song?.let { song ->
-            _pausePositionFlow.tryEmit(SongPosition(song, position ?: 0))
-        }
-    }
-
-    override fun onTrackEnded(trackWentToNext: Boolean) {
-        Timber.v("onTrackChanged(trackWentToNext: $trackWentToNext)")
-
-        // Only if the queue is about to move on is 0 the right position for what will be the current item;
-        // otherwise (e.g. the last track with repeat off) it stays on the song that just finished, and so
-        // does its saved position.
-        if (queueManager.getNext() != null) {
-            playbackPreferenceManager.playbackPosition = 0
-        }
-
-        queueManager.getCurrentItem()?.let { currentQueueItem ->
-            _trackEndedFlow.tryEmit(currentQueueItem.song)
-        } ?: Timber.e("onTrackChanged() called, but current queue item is null")
-
-        if (trackWentToNext) {
-            queueManager.skipToNext()
-            // The playback is already on the new track, so its own position is the one to anchor.
-            reanchor()
-            updateProgress()
-        } else {
-            // The skip anchors at the new track's start while it loads. updateProgress() would read the
-            // playback's own position, which still reports the old track until the load completes, so
-            // the new track's progress is published from the load-aware position instead.
-            skipToNext(false)
-            queueManager.getCurrentItem()?.song?.duration?.let { duration ->
-                _progressFlow.value = PlaybackProgress(getProgress() ?: 0, duration)
-            }
-        }
-    }
-
-    /**
-     * Republishes [progressFlow] too, whether playing or paused: a seek from another Cast sender
-     * moves the reported position without going through the ticker, which only runs while playing.
-     * Pairs the load-aware position with the queue item's duration, not the playback's, since mid-load
-     * the playback still reports the old track's duration.
-     */
-    override fun onPlaybackFailed(error: Exception) {
-        queueManager.getCurrentItem()?.song?.let { song ->
-            _playbackFailureFlow.tryEmit(song)
-        }
-    }
-
-    override fun onPositionDiscontinuity() {
-        reanchor()
-        queueManager.getCurrentItem()?.song?.duration?.let { duration ->
-            _progressFlow.value = PlaybackProgress(getProgress() ?: 0, duration)
-        }
-    }
-
-    // Queue changes
-
-    /** Re-applies the repeat mode only: the playback's speed and everything else it holds are left alone. */
-    private fun onRepeatChanged(repeatMode: QueueManager.RepeatMode) {
-        playback.setRepeatMode(repeatMode)
-        if (repeatMode != QueueManager.RepeatMode.One) {
-            loadCoordinator.requestNext()
-        }
-    }
-
-    /** Re-prepares the next item, once the running [queueOperation] finishes if there is one. */
-    private fun onQueueChanged() {
-        if (queueOperationDepth > 0) {
-            nextRequestDeferred = true
-        } else {
-            loadCoordinator.requestNext()
-        }
-    }
-
-    // PlaybackOperations Implementation
-
-    /** A user- or system-driven pause, distinct from [pauseForFocusLoss]: this one gives up audio focus. */
-    override fun pause() {
-        Timber.v("pause()")
-        playback.pause()
-        audioFocusHelper.abandonAudioFocus()
-    }
-
-    // AudioFocusHelper.Listener Implementation
+    // AudioFocusHelper.Listener
 
     override fun pauseForFocusLoss() {
         Timber.v("pauseForFocusLoss()")
-        playback.pause()
+        player.playWhenReady = false
     }
 
     override fun restoreVolumeAndPlay() {
-        playback.setVolume(1.0f)
+        player.volume = 1f
         play()
     }
 
     override fun duck() {
-        playback.setVolume(0.2f)
+        player.volume = DUCK_VOLUME
+    }
+
+    private data class PendingLoad(
+        val completion: (Result<Boolean>) -> Unit,
+        val attempt: Int = 1
+    )
+
+    companion object {
+        /** How many songs in a row a load tries before giving up on ones whose stream can't be resolved. */
+        const val MAX_ATTEMPTS = 15
+
+        private const val PROGRESS_INTERVAL_MS = 100L
+        private const val NEAR_END_MS = 200
+        private const val RESTART_THRESHOLD_MS = 2_000
+        private const val DUCK_VOLUME = 0.2f
     }
 }
 

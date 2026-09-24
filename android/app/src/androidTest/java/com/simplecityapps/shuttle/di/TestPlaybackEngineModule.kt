@@ -2,26 +2,23 @@ package com.simplecityapps.shuttle.di
 
 import android.content.Context
 import android.media.AudioManager
+import androidx.media3.exoplayer.ExoPlayer
 import com.simplecityapps.mediaprovider.AggregateMediaInfoProvider
 import com.simplecityapps.playback.AudioEffectSessionManager
-import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackOperations
-import com.simplecityapps.playback.ProgressTicker
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.di.PlaybackEngineModule
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainAudioProcessor
 import com.simplecityapps.playback.dsp.replaygain.ReplayGainMode
+import com.simplecityapps.playback.engine.SongUriResolver
 import com.simplecityapps.playback.exoplayer.AudioTrackMonitor
 import com.simplecityapps.playback.exoplayer.EqualizerAudioProcessor
 import com.simplecityapps.playback.exoplayer.ExoPlayerFactory
-import com.simplecityapps.playback.exoplayer.ExoPlayerPlayback
 import com.simplecityapps.playback.exoplayer.MediaInfoMediaResolver
-import com.simplecityapps.playback.exoplayer.PlayerFactory
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.shuttle.fake.FakeAudioFocusHelper
-import com.simplecityapps.shuttle.fake.FakePlayback
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -36,10 +33,6 @@ import kotlinx.coroutines.CoroutineScope
     replaces = [PlaybackEngineModule::class]
 )
 class TestPlaybackEngineModule {
-
-    @Singleton
-    @Provides
-    fun providePlayback(): Playback = FakePlayback()
 
     @Singleton
     @Provides
@@ -61,28 +54,25 @@ class TestPlaybackEngineModule {
     @Provides
     fun provideAudioTrackMonitor(): AudioTrackMonitor = AudioTrackMonitor()
 
+    @Singleton
     @Provides
-    fun providePlayerFactory(
+    fun provideSongUriResolver(mediaInfoProvider: AggregateMediaInfoProvider): SongUriResolver = SongUriResolver(MediaInfoMediaResolver(mediaInfoProvider))
+
+    @Singleton
+    @Provides
+    fun provideExoPlayer(
         @ApplicationContext context: Context,
         equalizerAudioProcessor: EqualizerAudioProcessor,
         replayGainAudioProcessor: ReplayGainAudioProcessor,
-        audioTrackMonitor: AudioTrackMonitor
-    ): PlayerFactory = ExoPlayerFactory(context, equalizerAudioProcessor, replayGainAudioProcessor, audioTrackMonitor)
-
-    // One instance: PlaybackManager starts on it and CastSessionManager switches back to it when a
-    // Cast session ends, so its settings stay with a single owner.
-    @Singleton
-    @Provides
-    fun provideExoPlayerPlayback(
-        playerFactory: PlayerFactory,
-        mediaInfoProvider: AggregateMediaInfoProvider
-    ): ExoPlayerPlayback = ExoPlayerPlayback(playerFactory, MediaInfoMediaResolver(mediaInfoProvider))
+        audioTrackMonitor: AudioTrackMonitor,
+        songUriResolver: SongUriResolver
+    ): ExoPlayer = ExoPlayerFactory(context, equalizerAudioProcessor, replayGainAudioProcessor, audioTrackMonitor, songUriResolver).create()
 
     @Singleton
     @Provides
     fun providePlaybackManager(
         queueManager: QueueManager,
-        playback: Playback,
+        player: ExoPlayer,
         audioFocusHelper: AudioFocusHelper,
         playbackPreferenceManager: PlaybackPreferenceManager,
         audioEffectSessionManager: AudioEffectSessionManager,
@@ -90,12 +80,11 @@ class TestPlaybackEngineModule {
         audioManager: AudioManager?
     ): PlaybackManager = PlaybackManager(
         queueManager,
+        player,
         audioFocusHelper,
         playbackPreferenceManager,
         audioEffectSessionManager,
         coroutineScope,
-        ProgressTicker(coroutineScope),
-        playback,
         audioManager
     )
 

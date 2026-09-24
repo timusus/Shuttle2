@@ -4,20 +4,20 @@ import android.content.Context
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.CastSession
 import com.google.android.gms.cast.framework.SessionManagerListener
-import com.simplecityapps.mediaprovider.MediaInfoProvider
-import com.simplecityapps.playback.PlaybackOperations
-import com.simplecityapps.playback.exoplayer.ExoPlayerPlayback
 import javax.inject.Inject
 import timber.log.Timber
 
+/**
+ * Keeps the local [HttpServer] a Cast receiver streams from running while a Cast session is up.
+ *
+ * Playback stays on the local player during a session for now: handing the queue to a Cast player comes back with
+ * the Media3 Cast player (#345).
+ */
 class CastSessionManager
 @Inject
 constructor(
-    private val playbackManager: PlaybackOperations,
-    private val applicationContext: Context,
-    private val httpServer: HttpServer,
-    private val exoPlayerPlayback: ExoPlayerPlayback,
-    private val mediaInfoProvider: MediaInfoProvider
+    applicationContext: Context,
+    private val httpServer: HttpServer
 ) : SessionManagerListener<CastSession> {
     var isAvailable: Boolean = false
         private set
@@ -35,9 +35,7 @@ constructor(
 
     override fun onSessionStarting(castSession: CastSession) {
         Timber.d("onSessionStarting")
-        if (!httpServer.isAlive) {
-            httpServer.start()
-        }
+        startHttpServer()
     }
 
     override fun onSessionStarted(
@@ -45,9 +43,6 @@ constructor(
         s: String
     ) {
         Timber.d("onSessionStarted")
-
-        val playback = CastPlayback(applicationContext, castSession, mediaInfoProvider)
-        playbackManager.switchToPlayback(playback)
     }
 
     override fun onSessionStartFailed(
@@ -63,9 +58,7 @@ constructor(
         s: String
     ) {
         Timber.d("onSessionResuming")
-        if (!httpServer.isAlive) {
-            httpServer.start()
-        }
+        startHttpServer()
     }
 
     override fun onSessionResumed(
@@ -73,12 +66,6 @@ constructor(
         b: Boolean
     ) {
         Timber.d("onSessionResumed")
-
-        // If we're not already playing via CastPlayback, switch
-        if (playbackManager.getPlayback() !is CastPlayback) {
-            val playback = CastPlayback(applicationContext, castSession, mediaInfoProvider)
-            playbackManager.switchToPlayback(playback)
-        }
     }
 
     override fun onSessionResumeFailed(
@@ -98,15 +85,7 @@ constructor(
     }
 
     override fun onSessionEnding(castSession: CastSession) {
-        Timber.d("onSessionEnding() playbackState: ${playbackManager.playbackState()}")
-
-        if (playbackManager.getPlayback() is CastPlayback) {
-            // This is our final chance to update the underlying stream position In onSessionEnded(), the underlying CastPlayback#mRemoteMediaClient
-            // is disconnected and hence we update our local value of stream position to the latest position.
-            playbackManager.getPlayback().updateLastKnownStreamPosition()
-
-            playbackManager.switchToPlayback(exoPlayerPlayback)
-        }
+        Timber.d("onSessionEnding")
     }
 
     override fun onSessionEnded(
@@ -115,5 +94,11 @@ constructor(
     ) {
         Timber.d("onSessionEnded")
         httpServer.stop()
+    }
+
+    private fun startHttpServer() {
+        if (!httpServer.isAlive) {
+            httpServer.start()
+        }
     }
 }
