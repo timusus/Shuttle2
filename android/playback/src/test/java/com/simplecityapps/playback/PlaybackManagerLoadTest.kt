@@ -18,8 +18,8 @@ import org.junit.Test
 /**
  * On load failure, PlaybackManager retries with the next queue item, up to 15 attempts, unless
  * the failed item was already the last one in the queue. If every attempt fails, the queue
- * position is reset to wherever it was when load() was first called. A load that never reports
- * fails once it times out, and is retried the same way.
+ * position is reset to wherever it was when load() was first called. A slow load that outlasts
+ * the load timeout is neither failed nor skipped: whatever it reports later is handled as usual.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class PlaybackManagerLoadTest {
@@ -53,9 +53,8 @@ class PlaybackManagerLoadTest {
         result!!.getOrThrow() shouldBe false
     }
 
-    @Test
-    fun `a load that never reports is retried with the next queue item once it times out`() {
-        // Its own queue and playback: the manager built in setUp would also follow them.
+    /** A manager on its own queue and playback, driven by [dispatcher] so the load timeout fires on virtual time. */
+    private inner class SlowLoadFixture {
         val events = mutableListOf<String>()
         val queueManager = QueueManager(GeneralPreferenceManager(FakeSharedPreferences()))
         val playback = FakePlayback("A", events = events)
@@ -65,21 +64,50 @@ class PlaybackManagerLoadTest {
             queueManager = queueManager,
             appCoroutineScope = CoroutineScope(dispatcher)
         )
-        runBlocking { queueManager.setQueue((1L..3L).map { createSong(it) }) }
-        events.clear()
 
+        init {
+            runBlocking { queueManager.setQueue((1L..3L).map { createSong(it) }) }
+            events.clear()
+        }
+
+        fun outlastLoadTimeout() {
+            dispatcher.scheduler.advanceTimeBy(60_000)
+            dispatcher.scheduler.runCurrent()
+        }
+    }
+
+    @Test
+    fun `a slow load that outlasts the timeout plays once it completes`() {
+        val fixture = SlowLoadFixture()
         var result: Result<Boolean>? = null
-        playbackManager.load { result = it }
-        dispatcher.scheduler.advanceTimeBy(30_000)
-        dispatcher.scheduler.runCurrent()
+        fixture.playbackManager.load { loaded ->
+            result = loaded
+            loaded.onSuccess { fixture.playbackManager.play() }
+        }
+        fixture.outlastLoadTimeout()
 
-        events shouldBe listOf("A load Song1 seek 0", "A load Song2 seek 0")
-        queueManager.getCurrentItem()!!.song.id shouldBe 2L
-
-        playback.completeLoad() // Song1, reported too late
         result shouldBe null
+        fixture.queueManager.getCurrentItem()!!.song.id shouldBe 1L
 
-        playback.completeLoad()
+        fixture.playback.completeLoad()
+
+        result!!.getOrThrow() shouldBe true
+        fixture.events.filter { it.startsWith("A load") || it == "A play" } shouldBe listOf("A load Song1 seek 0", "A play")
+    }
+
+    @Test
+    fun `a slow load that fails after the timeout is retried with the next queue item`() {
+        val fixture = SlowLoadFixture()
+        var result: Result<Boolean>? = null
+        fixture.playbackManager.load { result = it }
+        fixture.outlastLoadTimeout()
+
+        fixture.playback.failLoad()
+
+        fixture.events.filter { it.startsWith("A load") } shouldBe listOf("A load Song1 seek 0", "A load Song2 seek 0")
+        fixture.queueManager.getCurrentItem()!!.song.id shouldBe 2L
+
+        fixture.playback.completeLoad()
 
         result!!.getOrThrow() shouldBe false
     }

@@ -1,12 +1,10 @@
 package com.simplecityapps.playback
 
 import com.simplecityapps.shuttle.model.Song
-import java.util.concurrent.TimeoutException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,8 +37,10 @@ import timber.log.Timber
  * main thread.
  *
  * A load's completion runs at most once, even if a [Playback] reports the same load more than once.
- * A load that hasn't reported within [loadTimeoutMs] is failed and abandoned, so it can't hold up
- * next-item preparation indefinitely; a completion it reports later is ignored.
+ * A load that hasn't reported within [loadTimeoutMs] stops holding up next-item preparation, but
+ * stays pending: a slow load (a Cast receiver fetching a large file, a server starting a transcode)
+ * looks the same as a hung one, so it isn't failed. If it reports later, its completion is delivered
+ * as usual.
  */
 class LoadCoordinator(
     parentScope: CoroutineScope,
@@ -48,7 +48,7 @@ class LoadCoordinator(
     private val nextSong: () -> Song?,
     /** Called whenever [pendingLoad] changes, so the position anchor can follow it. */
     private val onPendingLoadChanged: () -> Unit,
-    /** How long a load may take to report its completion before it's failed. */
+    /** How long a load may take to report its completion before next-item preparation stops waiting on it. */
     private val loadTimeoutMs: Long = DEFAULT_LOAD_TIMEOUT_MS
 ) {
     /** A load that has been requested and not yet completed. */
@@ -80,7 +80,13 @@ class LoadCoordinator(
     val loadingPositionMs: Int?
         get() = loadingPendingLoad()?.positionMs
 
-    /** Follows [pendingLoad], updated after [onPendingLoadChanged], so the next-item consumer resumes last. */
+    /** A pending load that has timed out, so no longer holds up next-item preparation. */
+    private var timedOutToken: Long? = null
+
+    /**
+     * Whether a pending load holds up next-item preparation. Follows [pendingLoad], updated after
+     * [onPendingLoadChanged], so the next-item consumer resumes last.
+     */
     private val isLoading = MutableStateFlow(false)
 
     private val nextRequests = Channel<Unit>(Channel.CONFLATED)
@@ -126,25 +132,25 @@ class LoadCoordinator(
         loadJob =
             scope.launch {
                 var delivered = false
+                var timedOut = false
                 var timeout: Job? = null
 
                 fun deliver(result: Result<Any?>) {
                     if (delivered) {
-                        Timber.w("Load $token reported completion more than once, or after timing out; ignoring")
+                        Timber.w("Load $token reported completion more than once; ignoring")
                         return
                     }
                     delivered = true
                     timeout?.cancel()
                     complete(token, playback, result, completion)
                 }
-                val load = this
                 timeout =
                     launch {
                         delay(loadTimeoutMs)
-                        Timber.w("Load $token didn't complete within $loadTimeoutMs ms; failing it")
-                        deliver(Result.failure(TimeoutException("Load didn't complete within $loadTimeoutMs ms")))
-                        // The playback may still be resolving it; it's no longer wanted.
-                        load.cancel()
+                        Timber.w("Load $token didn't complete within $loadTimeoutMs ms; no longer holding up next-item preparation")
+                        timedOut = true
+                        timedOutToken = token
+                        updateIsLoading()
                     }
                 try {
                     playback.load(current, next, positionMs, ::deliver)
@@ -154,6 +160,11 @@ class LoadCoordinator(
                     // An exception thrown by the completion itself isn't a load failure.
                     if (delivered) throw e
                     deliver(Result.failure(e))
+                }
+                // A next item prepared while this load was timed out went into the playlist the load has
+                // since replaced, and the load queued the next item as it was when the load started.
+                if (timedOut && token == latestToken) {
+                    requestNext()
                 }
             }
     }
@@ -216,9 +227,14 @@ class LoadCoordinator(
     private fun setPendingLoad(pendingLoad: PendingLoad?) {
         if (this.pendingLoad !== pendingLoad) {
             this.pendingLoad = pendingLoad
+            if (pendingLoad == null) timedOutToken = null
             onPendingLoadChanged()
-            isLoading.value = pendingLoad != null
+            updateIsLoading()
         }
+    }
+
+    private fun updateIsLoading() {
+        isLoading.value = pendingLoad?.let { it.token != timedOutToken } ?: false
     }
 }
 
