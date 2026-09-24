@@ -17,6 +17,7 @@ class FakePlaybackManager : PlaybackOperations {
     override val positionAnchorFlow = MutableStateFlow(PositionAnchor(PlaybackState.Paused, positionMs = null, elapsedRealtimeMs = 0, speed = 1f))
     override val trackEndedFlow = MutableSharedFlow<Song>(extraBufferCapacity = 64)
     override val pausePositionFlow = MutableSharedFlow<SongPosition>(extraBufferCapacity = 64)
+    override val playbackFailureFlow = MutableSharedFlow<Song>(extraBufferCapacity = 64)
 
     var addedToQueue = mutableListOf<Song>()
     var playedNext = mutableListOf<Song>()

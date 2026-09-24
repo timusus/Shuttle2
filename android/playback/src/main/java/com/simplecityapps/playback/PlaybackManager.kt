@@ -126,6 +126,11 @@ class PlaybackManager(
 
     override val pausePositionFlow: SharedFlow<SongPosition> = _pausePositionFlow.asSharedFlow()
 
+    /** Buffered like [_trackEndedFlow]. */
+    private val _playbackFailureFlow = MutableSharedFlow<Song>(extraBufferCapacity = EVENT_BUFFER, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+    override val playbackFailureFlow: SharedFlow<Song> = _playbackFailureFlow.asSharedFlow()
+
     init {
         audioFocusHelper.listener = this
         playbackSwitcher.attachInitialPlayback()
@@ -655,6 +660,12 @@ class PlaybackManager(
      * Pairs the load-aware position with the queue item's duration, not the playback's, since mid-load
      * the playback still reports the old track's duration.
      */
+    override fun onPlaybackFailed(error: Exception) {
+        queueManager.getCurrentItem()?.song?.let { song ->
+            _playbackFailureFlow.tryEmit(song)
+        }
+    }
+
     override fun onPositionDiscontinuity() {
         reanchor()
         queueManager.getCurrentItem()?.song?.duration?.let { duration ->

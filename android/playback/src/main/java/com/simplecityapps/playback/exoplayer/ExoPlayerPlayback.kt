@@ -90,6 +90,7 @@ class ExoPlayerPlayback(
             override fun onPlayerError(error: Exception) {
                 Timber.e(error, "onPlayerError()")
                 callback?.onPlaybackStateChanged(PlaybackState.Paused)
+                callback?.onPlaybackFailed(error)
             }
         }
     }

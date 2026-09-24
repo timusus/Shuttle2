@@ -28,6 +28,9 @@ interface PlaybackOperations {
      */
     val pausePositionFlow: SharedFlow<SongPosition>
 
+    /** The current song, each time the playback fails to play it (e.g. its file can't be read). An event, like [trackEndedFlow]. */
+    val playbackFailureFlow: SharedFlow<Song>
+
     fun load(seekPosition: Int? = null, completion: (Result<Boolean>) -> Unit)
     fun play(attempt: Int = 1)
     fun pause()

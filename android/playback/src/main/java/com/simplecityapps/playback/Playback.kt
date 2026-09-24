@@ -87,5 +87,9 @@ interface Playback {
          */
         fun onPositionDiscontinuity() {
         }
+
+        /** Playback failed, and has stopped (reported to [onPlaybackStateChanged] first). */
+        fun onPlaybackFailed(error: Exception) {
+        }
     }
 }

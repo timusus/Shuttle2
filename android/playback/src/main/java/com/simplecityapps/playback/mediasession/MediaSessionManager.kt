@@ -340,6 +340,16 @@ constructor(
             onCurrentSongChanged = ::updateMetadata
         )
 
+        // A file opened from another app plays under the caller's URI grant, which lapses once the task that got it
+        // is gone, so a later reload can fail where the first load didn't.
+        appCoroutineScope.launch(Dispatchers.Main.immediate) {
+            playbackManager.playbackFailureFlow.collect { song ->
+                if (!song.isInLibrary) {
+                    Toast.makeText(context, com.simplecityapps.core.R.string.open_file_failed, Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+
         // The playback state is published from here alone, on Main.immediate so a change made on the main thread is applied
         // straight away.
         appCoroutineScope.launch(Dispatchers.Main.immediate) {
