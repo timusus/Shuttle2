@@ -11,7 +11,7 @@ S2 Music Player — an Android app for local music playback and streaming via Je
 - Launch Claude from the repo root (`claude`, or `claude -w <name>` for a worktree), never from a module
   directory — auto-memory is keyed by launch directory.
 - The orchestrator plans; workers implement. Writing code, running test suites and builds, and multi-file
-  refactors go to a worker via `/brief`. The tier table and `glm-agent`/`glm-brief` invocation live in the
+  refactors go to a worker via `/brief`. The tier table and `worker`/`worker-brief` invocation live in the
   user's global `~/.claude/CLAUDE.md`, which is authoritative.
 - **Briefs must demand foreground builds.** A headless `claude -p` worker that backgrounds a Gradle build
   or emulator run ends its run there — no commit, no report — because there is no next turn to receive the
