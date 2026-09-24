@@ -20,6 +20,10 @@
     {
       "text": "Open audio files from your file manager, downloads or messages in S2 to play them, and pick S2 as your default music app",
       "commits": []
+    },
+    {
+      "text": "On Android 14 and later, a new Bit-perfect USB audio option in Playback settings sends songs to a USB DAC at their own sample rate, without resampling or mixing in other sounds",
+      "commits": []
     }
   ],
   "improvements": [

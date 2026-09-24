@@ -12,6 +12,8 @@ import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import java.lang.reflect.Type
+import kotlinx.coroutines.flow.Flow
+import observeBoolean
 
 class PlaybackPreferenceManager(
     private val sharedPreferences: SharedPreferences,
@@ -96,6 +98,17 @@ class PlaybackPreferenceManager(
             return sharedPreferences.get("equalizer_enabled", false)
         }
 
+    /** Bit-perfect output to USB DACs (Android 14+), set from the playback settings screen. */
+    var bitPerfectEnabled: Boolean
+        set(value) {
+            sharedPreferences.put(KEY_BIT_PERFECT_ENABLED, value)
+        }
+        get() {
+            return sharedPreferences.get(KEY_BIT_PERFECT_ENABLED, false)
+        }
+
+    fun bitPerfectEnabledFlow(): Flow<Boolean> = sharedPreferences.observeBoolean(KEY_BIT_PERFECT_ENABLED, false)
+
     var replayGainMode: ReplayGainMode
         set(value) {
             sharedPreferences.put("replaygain_mode", value.ordinal)
@@ -132,4 +145,9 @@ class PlaybackPreferenceManager(
                 adapter.fromJson(json)
             }
         }
+
+    companion object {
+        /** Also the key of the switch in preferences_playback.xml. */
+        const val KEY_BIT_PERFECT_ENABLED = "pref_bit_perfect_usb"
+    }
 }

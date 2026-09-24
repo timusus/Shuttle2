@@ -136,6 +136,10 @@
     <string name="pref_disable_shuffle_on_queue_title">Keep shuffle mode</string>
     <!-- Settings: Description for the option to disable shuffle when starting a new queue -->
     <string name="pref_disable_shuffle_on_queue_subtitle">When a new queue is selected, shuffle mode won\'t be disabled</string>
+    <!-- Settings: Title for the option to send audio to USB DACs without resampling or mixing (Android 14+) -->
+    <string name="pref_bit_perfect_usb_title">Bit-perfect USB audio</string>
+    <!-- Settings: Description for the bit-perfect USB audio option -->
+    <string name="pref_bit_perfect_usb_subtitle">Send songs to a USB DAC at their own sample rate, without resampling or mixing in other sounds. Your phone\'s volume and audio effects no longer apply, so set the volume on the DAC. For untouched output, also turn off the equaliser and ReplayGain</string>
     <!-- Settings title for the day/night theme option -->
     <string name="theme_entry_day_night">Day/Night</string>
     <!-- Settings title for the light theme option -->

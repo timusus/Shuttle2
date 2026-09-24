@@ -13,6 +13,7 @@ import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.AudioEffectSessionManager
+import com.simplecityapps.playback.BitPerfectOutput
 import com.simplecityapps.playback.NoiseManager
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackNotificationManager
@@ -114,6 +115,16 @@ class PlaybackModule {
         playbackManager: PlaybackManager,
         @AppCoroutineScope appCoroutineScope: CoroutineScope
     ): NoiseManager = NoiseManager(context, playbackManager, appCoroutineScope)
+
+    @Singleton
+    @Provides
+    fun provideBitPerfectOutput(
+        @ApplicationContext context: Context,
+        audioManager: AudioManager?,
+        playbackPreferenceManager: PlaybackPreferenceManager,
+        queueManager: QueueManager,
+        @AppCoroutineScope appCoroutineScope: CoroutineScope
+    ): BitPerfectOutput = BitPerfectOutput(context, audioManager, playbackPreferenceManager, queueManager, appCoroutineScope)
 
     @Singleton
     @Provides

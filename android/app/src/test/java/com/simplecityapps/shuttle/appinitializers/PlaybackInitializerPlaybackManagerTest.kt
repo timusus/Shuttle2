@@ -76,6 +76,7 @@ class PlaybackInitializerPlaybackManagerTest {
             castSessionManager = { mockk(relaxed = true) },
             mediaSessionManager = { mockk(relaxed = true) },
             noiseManager = { mockk(relaxed = true) },
+            bitPerfectOutput = { mockk(relaxed = true) },
             appCoroutineScope = appCoroutineScope
         )
 

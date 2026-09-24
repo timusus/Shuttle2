@@ -8,6 +8,7 @@ import android.content.Intent
 import android.os.Build
 import androidx.core.content.ContextCompat
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
+import com.simplecityapps.playback.BitPerfectOutput
 import com.simplecityapps.playback.NoiseManager
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackService
@@ -48,7 +49,7 @@ import timber.log.Timber
  * position to resume from on both itself, since it must be saved before the call reporting them returns.
  *
  * Also starts the playback components that run for the life of the app: Cast session handling, the media
- * session and the noisy-audio receiver.
+ * session, the noisy-audio receiver and bit-perfect USB output.
  */
 class PlaybackInitializer
 @Inject
@@ -61,6 +62,7 @@ constructor(
     private val castSessionManager: Lazy<CastSessionManager>,
     private val mediaSessionManager: Lazy<MediaSessionManager>,
     private val noiseManager: Lazy<NoiseManager>,
+    private val bitPerfectOutput: Lazy<BitPerfectOutput>,
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope
 ) : AppInitializer {
     private var initTime = 0L
@@ -92,6 +94,7 @@ constructor(
         castSessionManager.get()
         mediaSessionManager.get()
         noiseManager.get()
+        bitPerfectOutput.get()
     }
 
     private suspend fun restoreQueue(

@@ -66,6 +66,10 @@ class PlaybackInitializerTest {
             startedComponents += "noise"
             mockk(relaxed = true)
         },
+        bitPerfectOutput = Lazy {
+            startedComponents += "bit-perfect"
+            mockk(relaxed = true)
+        },
         appCoroutineScope = appCoroutineScope
     )
 
@@ -212,7 +216,7 @@ class PlaybackInitializerTest {
 
         initializer.init(application)
 
-        startedComponents shouldBe listOf("cast", "media session", "noise")
+        startedComponents shouldBe listOf("cast", "media session", "noise", "bit-perfect")
     }
 
     @Test
