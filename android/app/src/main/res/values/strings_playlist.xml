@@ -51,4 +51,12 @@
     <string name="playlist_dialog_title_rename">Playlist Name</string>
     <!-- The 'hint' shown when renaming a playlist. This indicates the text field is for 'name' (playlist name)-->
     <string name="playlist_dialog_hint_rename">Name</string>
+    <!-- Menu option to export a playlist to an m3u file -->
+    <string name="playlist_menu_export">Export as m3u</string>
+    <!-- Shown when a playlist has no songs, and the user tries to export it -->
+    <string name="playlist_export_empty">This playlist has no songs to export</string>
+    <!-- Shown when a playlist is successfully exported to an m3u file -->
+    <string name="playlist_export_success">Playlist exported</string>
+    <!-- Shown when a playlist fails to export to an m3u file, due to an error -->
+    <string name="playlist_export_failed">Failed to export playlist: <xliff:g example="Permission denied" id="error_message">{error_message}</xliff:g></string>
 </resources>

@@ -7,6 +7,7 @@ import com.simplecityapps.fakes.FakePlaybackManager
 import com.simplecityapps.fakes.FakePlaylistRepository
 import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.fakes.FakeSongRepository
+import com.simplecityapps.shuttle.R
 import com.simplecityapps.shuttle.model.PlaylistSong
 import com.simplecityapps.shuttle.sorting.PlaylistSongSortOrder
 import com.simplecityapps.testing.MainDispatcherRule
@@ -31,6 +32,8 @@ class PlaylistDetailPresenterTest {
     private var lastPlaylistSongs: List<PlaylistSong> = emptyList()
     private var lastSortOrder: PlaylistSongSortOrder? = null
     private var lastSortDescending: Boolean? = null
+    private var lastExportError: String? = null
+    private var exportLocationPickerShown = false
 
     private val view =
         object : PlaylistDetailContract.View {
@@ -56,6 +59,16 @@ class PlaylistDetailPresenterTest {
             override fun showTagEditor(playlistSongs: List<PlaylistSong>) {}
 
             override fun dismiss() {}
+
+            override fun showExportSuccess() {}
+
+            override fun showExportError(error: String) {
+                lastExportError = error
+            }
+
+            override fun showExportLocationPicker() {
+                exportLocationPickerShown = true
+            }
         }
 
     private fun createPresenter(playlist: com.simplecityapps.shuttle.model.Playlist) = PlaylistDetailPresenter(
@@ -107,6 +120,40 @@ class PlaylistDetailPresenterTest {
 
         lastSortOrder shouldBe PlaylistSongSortOrder.SongName
         lastSortDescending shouldBe true
+
+        presenter.unbindView()
+    }
+
+    @Test
+    fun `exporting an empty playlist shows an error instead of a location picker`() = runTest {
+        val playlist = createPlaylist(id = 1L)
+        fakePlaylistRepository.setPlaylists(listOf(playlist))
+        fakePlaylistRepository.setSongsForPlaylist(playlist, emptyList())
+
+        val presenter = createPresenter(playlist)
+        presenter.bindView(view)
+
+        presenter.exportPlaylist()
+
+        exportLocationPickerShown shouldBe false
+        lastExportError shouldBe ApplicationProvider.getApplicationContext<android.content.Context>().getString(R.string.playlist_export_empty)
+
+        presenter.unbindView()
+    }
+
+    @Test
+    fun `exporting a non-empty playlist shows the location picker`() = runTest {
+        val playlist = createPlaylist(id = 1L)
+        fakePlaylistRepository.setPlaylists(listOf(playlist))
+        fakePlaylistRepository.setSongsForPlaylist(playlist, listOf(createSong(name = "First")))
+
+        val presenter = createPresenter(playlist)
+        presenter.bindView(view)
+
+        presenter.exportPlaylist()
+
+        exportLocationPickerShown shouldBe true
+        lastExportError shouldBe null
 
         presenter.unbindView()
     }

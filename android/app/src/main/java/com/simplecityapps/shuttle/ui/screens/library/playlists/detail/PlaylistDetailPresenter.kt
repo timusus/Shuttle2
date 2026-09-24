@@ -1,8 +1,10 @@
 package com.simplecityapps.shuttle.ui.screens.library.playlists.detail
 
 import android.content.Context
+import android.net.Uri
 import androidx.core.net.toUri
 import androidx.documentfile.provider.DocumentFile
+import com.simplecityapps.mediaprovider.PlaylistExporter
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistQuery
 import com.simplecityapps.mediaprovider.repository.playlists.PlaylistRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
@@ -57,6 +59,12 @@ interface PlaylistDetailContract {
         fun showTagEditor(playlistSongs: List<PlaylistSong>)
 
         fun dismiss()
+
+        fun showExportSuccess()
+
+        fun showExportError(error: String)
+
+        fun showExportLocationPicker()
     }
 
     interface Presenter : BaseContract.Presenter<View> {
@@ -104,6 +112,10 @@ interface PlaylistDetailContract {
             from: Int,
             to: Int
         )
+
+        fun exportPlaylist()
+
+        fun exportPlaylistToUri(uri: Uri)
     }
 }
 
@@ -122,6 +134,8 @@ constructor(
     interface Factory {
         fun create(playlist: Playlist): PlaylistDetailPresenter
     }
+
+    private val playlistExporter = PlaylistExporter(context)
 
     private val playlist =
         playlistRepository.getPlaylists(PlaylistQuery.PlaylistId(playlist.id))
@@ -309,6 +323,23 @@ constructor(
             newSongs.add(to, newSongs.removeAt(from))
             newSongs = newSongs.mapIndexed { index, playlistSong -> PlaylistSong(playlistSong.id, index.toLong(), playlistSong.song) }.toMutableList()
             playlistRepository.updatePlaylistSongsSortOder(playlist.value, newSongs)
+        }
+    }
+
+    override fun exportPlaylist() {
+        if (playlistSongs.value.orEmpty().isEmpty()) {
+            view?.showExportError(context.getString(R.string.playlist_export_empty))
+            return
+        }
+        view?.showExportLocationPicker()
+    }
+
+    override fun exportPlaylistToUri(uri: Uri) {
+        launch {
+            when (val result = playlistExporter.exportToUri(playlist.value.name, playlistSongs.value.orEmpty().map { it.song }, uri)) {
+                is PlaylistExporter.ExportResult.Success -> view?.showExportSuccess()
+                is PlaylistExporter.ExportResult.Failure -> view?.showExportError(result.error)
+            }
         }
     }
 }

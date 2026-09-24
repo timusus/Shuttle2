@@ -9,6 +9,7 @@ import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.addCallback
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.widget.PopupMenu
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.res.ResourcesCompat
@@ -78,6 +79,10 @@ class PlaylistDetailFragment :
 
     private var contextualToolbarHelper: ContextualToolbarHelper<PlaylistSong> by autoCleared()
 
+    private val createDocumentLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("audio/x-mpegurl")) { uri ->
+        uri?.let { presenter.exportPlaylistToUri(it) }
+    }
+
     // Lifecycle
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -130,6 +135,11 @@ class PlaylistDetailFragment :
 
                     R.id.queue -> {
                         presenter.addToQueue(playlist)
+                        true
+                    }
+
+                    R.id.export -> {
+                        presenter.exportPlaylist()
                         true
                     }
 
@@ -420,6 +430,24 @@ class PlaylistDetailFragment :
 
     override fun dismiss() {
         findNavController().popBackStack()
+    }
+
+    override fun showExportSuccess() {
+        Toast.makeText(requireContext(), getString(R.string.playlist_export_success), Toast.LENGTH_SHORT).show()
+    }
+
+    override fun showExportError(error: String) {
+        Toast.makeText(
+            requireContext(),
+            Phrase.from(requireContext(), R.string.playlist_export_failed)
+                .put("error_message", error)
+                .format(),
+            Toast.LENGTH_LONG
+        ).show()
+    }
+
+    override fun showExportLocationPicker() {
+        createDocumentLauncher.launch("${playlist.name}.m3u")
     }
 
     // SongBinder.Listener Implementation
