@@ -73,6 +73,10 @@ play count, no saved position at its end); a song that plays to its end is repor
 unsupported, a 404), when it is played, or reached by playing on, then a failure is reported for it and the next song
 that can load plays; up to 15 songs in a row are tried before playback stops, paused, on the 15th. (#345) — JVM.
 
+**RS-24: a saved position resumes only its own song.** Given a saved position for the current song and nothing
+loaded (after a failure, or a restore), when another song is made current (from the queue screen or a media
+controller) and played, then it plays from its start, not from the other song's position. (#345) — JVM.
+
 ## Audio output
 
 **RS-15: ReplayGain from the first sample.** Given ReplayGain on and a song with a track gain, when it starts, then

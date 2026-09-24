@@ -346,6 +346,21 @@ class PlaybackSpecTest {
         playback.playbackStateFlow.value shouldBe PlaybackState.Paused
     }
 
+    @Test
+    fun `RS-24 a saved position only resumes the song it was saved for`() {
+        val ended = harness.record(playback.trackEndedFlow)
+        harness.run { queue.setQueue(listOf(song(1), song(2))) }
+        harness.playbackPreferenceManager.playbackPosition = 1_000
+
+        queue.setCurrentItem(queue.queueStateFlow.value.items[1])
+        harness.idle()
+        playback.play()
+        harness.runUntil { ended.isNotEmpty() }
+
+        ended.first() shouldBe song(2)
+        harness.audioOutput().size.shouldBeBetween((TONE_2S_MS - 50) * BYTES_PER_MS, (TONE_2S_MS + 50) * BYTES_PER_MS)
+    }
+
     private fun offMainThread(
         errors: MutableList<Throwable>,
         block: () -> Unit

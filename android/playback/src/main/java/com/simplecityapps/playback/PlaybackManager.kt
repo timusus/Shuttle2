@@ -62,6 +62,9 @@ class PlaybackManager(
     /** The completion of the last [load] (or skip), called once the item is ready to play or has failed. */
     private var pendingLoad: PendingLoad? = null
 
+    /** The uid of the current entry, as of the last item transition. */
+    private var currentUid: Long? = null
+
     /** Songs skipped in a row because they failed to load. */
     private var loadFailures = 0
 
@@ -156,6 +159,7 @@ class PlaybackManager(
                     reason: Int
                 ) {
                     mediaItem?.let(::applyWakeMode)
+                    onCurrentItemChanged(mediaItem?.queueEntry?.uid, reason)
                     publishState()
                     publishProgress()
                 }
@@ -210,6 +214,21 @@ class PlaybackManager(
             }
         }
         publishState()
+    }
+
+    /**
+     * The saved position to resume from is the current item's, so it's dropped when another item becomes current by
+     * a skip or a queue change. Playing on to the next item saves its start position instead (see [onTrackEnded]).
+     */
+    private fun onCurrentItemChanged(
+        uid: Long?,
+        reason: Int
+    ) {
+        val previousUid = currentUid
+        currentUid = uid
+        if (uid != previousUid && previousUid != null && reason != Player.MEDIA_ITEM_TRANSITION_REASON_AUTO) {
+            playbackPreferenceManager.playbackPosition = null
+        }
     }
 
     /** An item played to its end and the player moved on (to the next item, or back to its start on repeat). */
