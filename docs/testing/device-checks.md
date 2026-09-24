@@ -123,6 +123,10 @@ notification is Media3's own, with shuffle and repeat as its extra buttons.
 - [ ] Widget: play/pause, next and previous work with the app open, and with the app force-stopped (the service starts in the foreground without a crash).
 - [ ] Resumption after reboot: after a reboot, the system's media resumption controls (quick settings) show the last song; play resumes the saved queue at that song (RS-44). The same with a headset's play button.
 - [ ] Assistant: "play <artist> on S2" and "play <song> on S2" play the right songs, with S2 closed and open.
+- [ ] Cold start from the widget, API 31+: play something, then force-stop S2 (Settings, Apps, S2, Force stop) so the app is dead. Press the widget's play button. A notification appears (a "Loading" one first on a large library, then the playing song's), the saved queue plays, and nothing crashes, even if the queue takes several seconds to restore (RS-48).
+- [ ] Cold start from a headset button, API 31+: the same, with the app force-stopped, pressing a Bluetooth or wired headset's play button. A notification appears, the saved queue plays, and nothing crashes; a double press still skips (RS-48).
+- [ ] A third-party controller app (e.g. "Media Controller Test" or any media remote app) connected to S2: it can play, pause and skip, but clearing, adding to or reordering the queue from it does nothing, and it can't browse S2's library (RS-47).
+- [ ] An app on the old session library (the same controller test app in its MediaControllerCompat mode) plays a song by its media id and plays a search, and an empty search plays every song (RS-46; Robolectric can't route a platform MediaController to the session).
 - [ ] A 10,000-song queue: the notification and lock screen stay responsive when the queue changes (docs/architecture/media3-playback-design.md, "10k queue spike").
 
 ## Behaviour spec, device-only rules
