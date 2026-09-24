@@ -1,0 +1,53 @@
+# Play "Playback One" (third of five, in title order) from Library > Songs and drive the full
+# player's controls by taps: the mini player shows the song, then pause, resume, skip next, skip
+# previous (which restarts the song, being past its first 2 s), and seek by tapping the middle of
+# the seek bar. The wrapper (support/scripts/checks/playback-controls.sh) asserts the resulting
+# playback state, going back a song, and the notification. Taps happen while music plays, so the
+# UI never idles: each tap waits at most briefly for the screen to settle.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow:
+    file: nav/open-library-tab.yaml
+    env:
+      TAB: Songs
+- scrollUntilVisible:
+    element:
+      text: "Playback One"
+    direction: DOWN
+- tapOn: "Playback One"
+- assertVisible:
+    id: ".*titleTextView"
+    text: "Playback One"
+- takeScreenshot: a-mini-player-playing
+- tapOn:
+    id: ".*titleTextView"
+    text: "Playback One"
+    waitToSettleTimeoutMs: 500
+- assertVisible: "Toggle Playback"
+- takeScreenshot: a-now-playing
+- tapOn:
+    text: "Toggle Playback"
+    waitToSettleTimeoutMs: 500
+- takeScreenshot: b-paused
+- tapOn:
+    text: "Toggle Playback"
+    waitToSettleTimeoutMs: 500
+- tapOn:
+    text: "Skip Next"
+    waitToSettleTimeoutMs: 500
+- assertVisible:
+    id: ".*titleTextView"
+    text: "Playback Three"
+- takeScreenshot: b-skipped-next
+# A Maestro tap takes ~3 s here, past the 2 s after which Skip Previous restarts the song rather
+# than going back one; the wrapper checks going back with a quick PREV broadcast instead.
+- tapOn:
+    text: "Skip Previous"
+    waitToSettleTimeoutMs: 500
+- assertVisible:
+    id: ".*titleTextView"
+    text: "Playback Three"
+- tapOn:
+    id: ".*seekBar"
+    waitToSettleTimeoutMs: 500
+- takeScreenshot: b-seeked-to-middle
