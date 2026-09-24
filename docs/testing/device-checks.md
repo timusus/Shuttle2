@@ -52,7 +52,7 @@ build, tick them off, and file anything wrong with `/note`. Remove ticked items 
 - [ ] Gapless playback across an album with no gaps between tracks.
 - [ ] EQ presets and custom bands apply, and survive a skip and a Cast round-trip.
 - [ ] 24-bit FLAC plays cleanly.
-- [ ] Jellyfin streaming: play, skip, seek and resume after a force-stop.
+- [x] Jellyfin streaming: play, skip, seek and resume after a force-stop. — automated: `emu-verify.sh --remote jellyfin --check remote-playback`
 
 ## Ported PRs (Sep 2026)
 
@@ -70,8 +70,8 @@ build, tick them off, and file anything wrong with `/note`. Remove ticked items 
 - [ ] With a Shuttle/Taglib folder containing an .m3u (including a line S2 can't resolve), remove a song from that playlist in-app. The .m3u loses only that song's entry; the unresolved line is still there.
 
 ### Playback reporting (#191)
-- [ ] Play a Jellyfin song, then an Emby song. Each server's dashboard shows it as now playing with a moving position, and clears it on pause/stop.
-- [ ] Play a Plex song to the end. It shows in Plex's now playing and is marked played afterwards.
+- [x] Play a Jellyfin song, then an Emby song. Each server's dashboard shows it as now playing with a moving position, and clears it on pause/stop. — automated: `emu-verify.sh --remote jellyfin --check remote-reporting` (and `--remote emby`)
+- [x] Play a Plex song to the end. It shows in Plex's now playing and is marked played afterwards. — automated: `emu-verify.sh --remote plex --check remote-reporting`
 
 ## Cast through Media3's Cast player (#345)
 

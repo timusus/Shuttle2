@@ -27,6 +27,16 @@ even on failure or Ctrl-C, unless `--keep`. Full command output goes to the log 
 stdout; stdout stays to one line per setup step plus one PASS/FAIL line per check/flow. `--help`
 for the rest of the flags (`--apk`, `--no-seed`, `--keep`).
 
+`--remote <jellyfin|emby|plex>` signs in and imports from a seeded server
+(`seed-remote-provider.sh`) instead of seeding local media, and exports `S2_REMOTE=<server>` so
+`remote-reporting` and `remote-playback` run instead of SKIPping. With `--remote` and no `--check`,
+only those two remote checks run, not the full local suite:
+
+```bash
+support/scripts/emu-verify.sh --remote jellyfin
+support/scripts/emu-verify.sh --remote plex --check remote-playback
+```
+
 - Run the whole script in the foreground. A headless worker that backgrounds it ends its run (#303).
 - Never start a local `emulator` or hand-roll `sleep`/`getprop sys.boot_completed` loops: `start`
   (which `emu-verify.sh` calls) already waits for boot (up to 300 s) and fails loudly. Those loops
