@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="download_notification_channel_name">Downloads</string>
+    <string name="download_notification_channel_description">Progress of songs downloading for offline playback</string>
+    <string name="download_notification_waiting_for_wifi">Waiting for Wi-Fi to download songs</string>
+    <string name="download_notification_waiting_for_network">Waiting for a network to download songs</string>
+    <plurals name="download_notification_downloading">
+        <item quantity="one">Downloading %d song</item>
+        <item quantity="other">Downloading %d songs</item>
+    </plurals>
+</resources>

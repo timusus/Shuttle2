@@ -1,0 +1,32 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Requirements (Wi-Fi only) watch the network through ConnectivityManager -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application>
+
+        <service
+            android:name=".service.SongDownloadService"
+            android:exported="false"
+            android:foregroundServiceType="dataSync">
+            <intent-filter>
+                <action android:name="androidx.media3.exoplayer.downloadService.action.RESTART" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </service>
+
+        <!-- SongDownloadService.getScheduler() resumes downloads waiting on their requirements
+             (Wi-Fi, or a reboot) through JobScheduler, which needs this JobService declared with
+             BIND_JOB_SERVICE; without it scheduling throws "No such service ComponentInfo{...}". -->
+        <service
+            android:name="androidx.media3.exoplayer.scheduler.PlatformScheduler$PlatformSchedulerService"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+
+    </application>
+
+</manifest>

@@ -24,6 +24,7 @@ rootProject.name = "shuttle"
 include ':android:app'
 include ':android:core'
 include ':android:data'
+include ':android:downloads'
 include ':android:imageloader'
 include ':android:mediaprovider:core'
 include ':android:mediaprovider:local'
