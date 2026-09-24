@@ -13,7 +13,10 @@
 #   3     5558     emulator-5558  5040             /home/tim/.emu-leases/lane-3
 #
 #   remote-emu.sh status           all lanes: owner, age, qemu alive; box load and free memory
-#   remote-emu.sh start [N]        lease the lowest free lane (or lane N), boot it, open its tunnel
+#   remote-emu.sh start [N] [--api 36|37]
+#                                  lease the lowest free lane (or lane N), boot it, open its tunnel,
+#                                  and run ui-prep once booted. Default is the API 36 ATD image;
+#                                  --api 37 opts into the full google_apis API 37 image instead.
 #   remote-emu.sh env [N]          print the two exports for this session's lane (eval it)
 #   remote-emu.sh install [N] [apk]  assembleDebug locally and adb install it on the lane; given an
 #                                  APK, install that without building (build once, install per lane)
@@ -23,6 +26,7 @@
 #                                  (no reboot, lease kept); no-op if the tunnel is already healthy
 #   remote-emu.sh reset [N]        clear the debug app's data and the seeded test media on the lane
 #   remote-emu.sh ui-prep [N]      disable window/transition/animator animations on the lane
+#                                  (start already runs this once booted; re-run by hand if needed)
 #   remote-emu.sh tap-text <text> [--desc] [--index N]
 #                                  dump the UI hierarchy, tap the centre of the matching node
 #   remote-emu.sh dump-texts       list every visible text/content-desc, with bounds
@@ -51,11 +55,19 @@
 # REMOTE_EMU_LANE=N overrides that file; REMOTE_EMU_OWNER labels the lease.
 #
 # Leases: mkdir on the box is the atomic claim. A lease whose console port has no listener and
-# whose `since` is older than the boot timeout is stale and gets reclaimed (with a message).
-# Nothing here kills another lane's emulator unless you say `stop N` or `stop --all`.
+# whose `since` is older than the boot timeout is stale and gets reclaimed (with a message). A
+# lease is also reclaimed, regardless of age or listener, when its recorded owner PID no longer
+# exists on this Mac (a headless worker that died mid-run leaves its qemu orphaned but running);
+# that check only applies to leases this Mac itself took, and kills the orphaned qemu before
+# reclaiming. Nothing here kills another lane's emulator unless you say `stop N`, `stop --all`,
+# or a dead-owner reclaim above.
 #
 # Every lane boots the same AVD with -read-only (emulator 30+: concurrent boots of one AVD, no
 # snapshot, disk writes discarded at exit) so the app must be `install`ed on each lane, each time.
+# Default AVD is the API 36 ATD image (android-36 google_atd x86_64; no ATD image exists for API
+# 37), right-sized to 2560 MB / 3 cores -- an idle ATD lane costs noticeably less CPU than the old
+# full google_apis image at 4096 MB / 4 cores. `start --api 37` boots the full google_apis API 37
+# image instead, for anything that needs Play services or system apps ATD strips out.
 #
 # ALWAYS `stop` when finished. The box also hosts the CI runner containers, and a stray emulator
 # there can be picked up by an instrumentation job instead of its managed device
@@ -67,12 +79,36 @@
 set -euo pipefail
 
 BOX="tim@192.168.50.131"
-AVD="pixel_9_pro_api37"
+AVD_ATD="pixel_9_pro_atd_api36"  # default lane image: android-36 google_atd x86_64, no Play services
+AVD_API37="pixel_9_pro_api37"    # opt-in full google_apis image: `start --api 37`
+LANE_MEMORY=2560                 # MB; lowest of 2048/2560/3072 that booted reliably and ran emu-verify
+LANE_CORES=3
 LANES=3
 REMOTE_ADB_PORT=5037
 LEASE_ROOT="/home/tim/.emu-leases"
 STATE_DIR="${TMPDIR:-/tmp}/remote-emu"
 BOOT_TIMEOUT=300 # cold boot, no snapshot, software GPU; also the lease grace
+MY_HOST="$(hostname -s)"
+
+# The lease's owner PID for the dead-owner reclaim check. Neither $$ (this script exits right
+# after `start` returns) nor $PPID (a Claude Code tool call runs each shell command in a fresh,
+# equally short-lived shell) survive long enough to check later -- the process that actually lives
+# for as long as the lane is wanted, and dies when a headless worker dies mid-run, is the `claude`
+# CLI itself a few levels up the ancestry. Walk up looking for it; fall back to the immediate
+# parent shell for a plain interactive/non-Claude invocation, which lives for the terminal session.
+owner_pid() {
+    local pid=$PPID depth
+    for depth in 1 2 3 4 5; do
+        case "$(ps -o command= -p "$pid" 2>/dev/null)" in
+            claude*) echo "$pid"; return ;;
+        esac
+        local next; next="$(ps -o ppid= -p "$pid" 2>/dev/null | tr -d ' ')"
+        [ -n "$next" ] && [ "$next" != "1" ] || break
+        pid="$next"
+    done
+    echo "$PPID"
+}
+MY_PID="$(owner_pid)"
 
 SESSION_KEY="${CLAUDE_SESSION_ID:-${CLAUDE_CODE_SESSION_ID:-default}}"
 LANE_FILE="${STATE_DIR}/lane.${SESSION_KEY}"
@@ -209,30 +245,56 @@ open_direct_tunnel() {
 
 # ---- leases (on the box, one ssh round trip each) ------------------------------------------
 
-# Prints one line per lane: "N owner since alive" (owner/since are "-" without a lease; alive
-# is 1 when something listens on the console port).
+# Prints one line per lane: "N owner since alive pid host" (owner/since/pid/host are "-" without
+# a lease; alive is 1 when something listens on the console port). pid/host identify the Mac
+# process that claimed the lease, for the dead-owner reclaim check below.
 lease_table() {
     box "for n in \$(seq 1 $LANES); do
             port=\$((5554 + 2 * (n - 1))); d=${LEASE_ROOT}/lane-\$n
             alive=0; ss -ltn 2>/dev/null | grep -q \":\$port \" && alive=1
-            if [ -d \$d ]; then echo \"\$n \$(cat \$d/owner 2>/dev/null || echo '?') \$(cat \$d/since 2>/dev/null || echo 0) \$alive\"
-            else echo \"\$n - - \$alive\"; fi
+            if [ -d \$d ]; then echo \"\$n \$(cat \$d/owner 2>/dev/null || echo '?') \$(cat \$d/since 2>/dev/null || echo 0) \$alive \$(cat \$d/pid 2>/dev/null || echo -) \$(cat \$d/host 2>/dev/null || echo -)\"
+            else echo \"\$n - - \$alive - -\"; fi
         done"
 }
 
+# Lane numbers whose lease was claimed by this Mac (host matches) but whose owning PID is gone
+# (kill -0 fails): a headless worker that died mid-run leaves such a lease behind with its qemu
+# still running. Can only be checked locally, hence the separate round trip from claim_lane.
+dead_owner_lanes() {
+    local n owner since alive pid host out=""
+    while read -r n owner since alive pid host; do
+        [ "$owner" = "-" ] && continue
+        [ "$host" = "$MY_HOST" ] || continue
+        [ -n "$pid" ] && [ "$pid" != "-" ] || continue
+        kill -0 "$pid" 2>/dev/null && continue
+        out="$out $n"
+    done < <(lease_table)
+    echo "$out"
+}
+
 # claim_lane [N]: mkdir-claims lane N, or the lowest free lane. Prints "TAKEN N" on success;
-# "STALE N owner" lines precede it when a dead lease was reclaimed. Exits 1 with the holder
-# otherwise. Runs as one remote script so the check-and-claim is a single round trip.
+# "STALE N owner" / "DEAD N owner" lines precede it when a lease was reclaimed (age-based, or a
+# dead owner PID on this Mac -- the latter also kills the orphaned qemu first). Exits 1 with the
+# holder otherwise.
 claim_lane() {
-    local want="${1:-}"
+    local want="${1:-}" forced; forced="$(dead_owner_lanes)"
     box "set -e; mkdir -p ${LEASE_ROOT}; now=\$(date +%s)
+        forced=' $forced '
         lanes=\"${want:-\$(seq 1 $LANES | tr '\n' ' ')}\"
         for n in \$lanes; do
             port=\$((5554 + 2 * (n - 1))); d=${LEASE_ROOT}/lane-\$n
             alive=0; ss -ltn 2>/dev/null | grep -q \":\$port \" && alive=1
+            is_dead=0; case \"\$forced\" in *\" \$n \"*) is_dead=1 ;; esac
             if [ -d \$d ]; then
                 owner=\$(cat \$d/owner 2>/dev/null || echo '?'); since=\$(cat \$d/since 2>/dev/null || echo 0)
-                if [ \$alive = 0 ] && [ \$((now - since)) -gt $BOOT_TIMEOUT ]; then
+                if [ \$is_dead = 1 ]; then
+                    echo \"DEAD \$n \$owner\"
+                    if [ \$alive = 1 ]; then
+                        pkill -f '[-]port '\$port' ' 2>/dev/null || true; sleep 2
+                        pkill -9 -f '[-]port '\$port' ' 2>/dev/null || true
+                    fi
+                    rm -rf \$d
+                elif [ \$alive = 0 ] && [ \$((now - since)) -gt $BOOT_TIMEOUT ]; then
                     echo \"STALE \$n \$owner\"; rm -rf \$d
                 else
                     [ -n '$want' ] && { echo \"HELD \$n \$owner \$((now - since))\"; exit 1; }
@@ -243,7 +305,9 @@ claim_lane() {
                 continue
             fi
             if mkdir \$d 2>/dev/null; then
-                echo '$OWNER' > \$d/owner; echo \$now > \$d/since; echo \"TAKEN \$n\"; exit 0
+                echo '$OWNER' > \$d/owner; echo \$now > \$d/since
+                echo '$MY_PID' > \$d/pid; echo '$MY_HOST' > \$d/host
+                echo \"TAKEN \$n\"; exit 0
             fi
         done
         echo NONE; exit 1"
@@ -259,11 +323,14 @@ cmd_status() {
     box "uptime | sed 's/.*load average/load average/'; free -m | awk '/^Mem:/{print \"free \" \$7 \" MB available of \" \$2}'" \
         | sed 's/^/remote-emu: box /'
     local now; now="$(date +%s)"
-    local n owner since alive
-    while read -r n owner since alive; do
+    local n owner since alive pid host
+    while read -r n owner since alive pid host; do
         local state="no lease" age=""
         if [ "$owner" != "-" ]; then
             state="leased by $owner"; age=", $(( (now - since) / 60 )) min"
+            if [ "$host" = "$MY_HOST" ] && [ -n "$pid" ] && [ "$pid" != "-" ] && ! kill -0 "$pid" 2>/dev/null; then
+                state="${state} (owner PID $pid dead -- will be reclaimed on next claim)"
+            fi
         fi
         local qemu="qemu down"; [ "$alive" = 1 ] && qemu="qemu ALIVE"
         local tun="no tunnel"; tunnel_pid "$n" >/dev/null && tun="tunnel localhost:$(local_port "$n")"
@@ -274,8 +341,20 @@ cmd_status() {
 
 cmd_start() {
     check_available
-    local want="${1:-}"
+    local want="" api="36"
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --api) api="${2:?remote-emu: --api needs 36 or 37}"; shift 2 ;;
+            *) want="$1"; shift ;;
+        esac
+    done
     [ -z "$want" ] || valid_lane "$want" || { echo "remote-emu: lane must be 1..$LANES" >&2; exit 2; }
+    local avd
+    case "$api" in
+        36) avd="$AVD_ATD" ;;
+        37) avd="$AVD_API37" ;;
+        *) echo "remote-emu: --api must be 36 or 37" >&2; exit 2 ;;
+    esac
     local mine; mine="$(own_lane)"
     if [ -n "$mine" ] && [ -z "$want" ] \
         && box "test -d $(lease_of "$mine") && ss -ltn | grep -q ':$(console_port "$mine") '"; then
@@ -296,14 +375,17 @@ cmd_start() {
         while read -r _ n owner; do
             echo "remote-emu: reclaiming stale lease on lane $n (was $owner, nothing listening)"
         done < <(echo "$out" | grep '^STALE' || true)
+        while read -r _ n owner; do
+            echo "remote-emu: reclaiming lease on lane $n (was $owner, owner PID dead on this Mac)"
+        done < <(echo "$out" | grep '^DEAD' || true)
         LANE="$(echo "$out" | awk '/^TAKEN/{print $2}')"
         remember_lane "$LANE"
         echo "remote-emu: leased lane $LANE ($(serial_of "$LANE")) as $OWNER"
         local port log; port="$(console_port "$LANE")"; log="$(log_of "$LANE")"
-        echo "remote-emu: booting $AVD headless on $BOX, console port $port ..."
+        echo "remote-emu: booting $avd headless on $BOX, console port $port (${LANE_MEMORY}MB, ${LANE_CORES} cores) ..."
         # setsid + nohup + closed stdio, or the emulator's inherited fds keep this ssh open forever.
-        box "setsid nohup emulator -avd ${AVD} -port ${port} -read-only -no-window -no-audio \
-            -no-boot-anim -gpu swiftshader_indirect -no-snapshot -memory 4096 \
+        box "setsid nohup emulator -avd ${avd} -port ${port} -read-only -no-window -no-audio \
+            -no-boot-anim -gpu swiftshader_indirect -no-snapshot -memory ${LANE_MEMORY} -cores ${LANE_CORES} \
             >${log} 2>&1 </dev/null &"
     fi
     local serial pattern log; serial="$(serial_of "$LANE")"; pattern="$(emu_pattern "$LANE")"; log="$(log_of "$LANE")"
@@ -332,6 +414,7 @@ cmd_start() {
         ANDROID_ADB_SERVER_PORT="$(local_port "$LANE")" adb devices >&2
         cmd_stop "$LANE"; exit 1
     fi
+    ui_prep_lane
     echo "remote-emu: lane $LANE ready. $(radb shell getprop ro.product.model | tr -d '\r'), sdk $(radb shell getprop ro.build.version.sdk | tr -d '\r'), $(radb shell wm size | tr -d '\r')"
     echo "remote-emu: now  eval \"\$($0 env)\""
 }
@@ -409,14 +492,20 @@ cmd_reset() {
     echo "remote-emu: lane $LANE reset -- ${DEBUG_APP_ID} data cleared, /sdcard/Music/s2-seed removed"
 }
 
-cmd_ui_prep() {
-    LANE="$(resolve_lane "${1:-}")"
-    tunnel_pid "$LANE" >/dev/null || { echo "remote-emu: no tunnel for lane $LANE; run start first" >&2; exit 1; }
+# Assumes $LANE is set and its tunnel is up; shared by cmd_ui_prep and cmd_start (which runs this
+# once the lane has booted, so a raw `start` gets it without a separate `ui-prep` call).
+ui_prep_lane() {
     local s
     for s in window_animation_scale transition_animation_scale animator_duration_scale; do
         radb shell settings put global "$s" 0
     done
     echo "remote-emu: lane $LANE animations disabled (window/transition/animator scale = 0)"
+}
+
+cmd_ui_prep() {
+    LANE="$(resolve_lane "${1:-}")"
+    tunnel_pid "$LANE" >/dev/null || { echo "remote-emu: no tunnel for lane $LANE; run start first" >&2; exit 1; }
+    ui_prep_lane
 }
 
 # ---- UI automation (uiautomator XML dump, text/desc lookup) ------------------------------
@@ -618,7 +707,7 @@ cmd_stop() {
 
 case "${1:-}" in
     status) cmd_status ;;
-    start) cmd_start "${2:-}" ;;
+    start) shift; cmd_start "$@" ;;
     install) shift; cmd_install "$@" ;;
     serial) cmd_serial "${2:-}" ;;
     env) cmd_env "${2:-}" ;;

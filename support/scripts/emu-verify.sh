@@ -136,7 +136,6 @@ echo "emu-verify: lane env exported"
 
 step "remote-emu: reset" support/scripts/remote-emu.sh reset || exit 1
 step "remote-emu: install" support/scripts/remote-emu.sh install "$APK" || exit 1
-step "remote-emu: ui-prep" support/scripts/remote-emu.sh ui-prep || exit 1
 
 if [ -n "$REMOTE" ]; then
     step "seed-remote-provider: $REMOTE" support/scripts/seed-remote-provider.sh "$REMOTE" || exit 1
