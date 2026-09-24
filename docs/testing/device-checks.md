@@ -61,3 +61,19 @@ build, tick them off, and file anything wrong with `/note`. Remove ticked items 
 - [ ] EQ presets and custom bands apply, and survive a skip and a Cast round-trip.
 - [ ] 24-bit FLAC plays cleanly.
 - [ ] Jellyfin streaming: play, skip, seek and resume after a force-stop.
+
+## Ported PRs (Sep 2026)
+
+### USB DAC direct output (#198), Android 14+ with a USB DAC
+- [ ] Turn on Settings → Playback → USB DAC direct output, plug in the DAC, play a 44.1 kHz and then a 48 kHz file. Both play at the right pitch and speed, with no glitch at the track change.
+- [ ] With it on, the equaliser and ReplayGain have no audible effect; turn it off and they apply again.
+- [ ] Toggle it while paused, then resume. Output switches without a restart of the track.
+- [ ] Unplug the DAC mid-track. Playback continues (or pauses) on the phone speaker with no crash; replug and it goes direct again.
+
+### Open audio files from other apps (#186)
+- [ ] Open an MP3 and a FLAC from a file manager and from a messaging app attachment. Each plays in S2.
+- [ ] After opening a file, force-stop and reopen S2. The queue restores without errors, and the opened file is skipped with a message if it can no longer be read.
+
+### Playback reporting (#191)
+- [ ] Play a Jellyfin song, then an Emby song. Each server's dashboard shows it as now playing with a moving position, and clears it on pause/stop.
+- [ ] Play a Plex song to the end. It shows in Plex's now playing and is marked played afterwards.
