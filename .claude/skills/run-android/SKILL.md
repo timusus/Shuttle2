@@ -13,7 +13,7 @@ Build, install, and launch the debug app. Pick the device in this order and say 
 A device listed as `device` (not `unauthorized`/`offline`) in `adb devices` beats every emulator.
 
 ```bash
-./gradlew :android:app:assembleDebug && ./gradlew :android:app:installDebug && adb shell am start -n com.simplecityapps.shuttle.dev/com.simplecityapps.shuttle.ui.MainActivity
+build-brief ./gradlew :android:app:installDebug && adb shell am start -n com.simplecityapps.shuttle.dev/com.simplecityapps.shuttle.ui.MainActivity
 ```
 
 ## 2. A lane on the WSL desktop box (the default when no device is attached)
@@ -33,7 +33,7 @@ in each command that uses `adb`. **`remote-emu.sh stop` when done**, including a
 ## 3. A local AVD, only if `status` says the box is unreachable or all three lanes are busy
 
 ```bash
-./gradlew :android:app:assembleDebug && ./gradlew :android:app:installDebug && adb shell am start -n com.simplecityapps.shuttle.dev/com.simplecityapps.shuttle.ui.MainActivity
+build-brief ./gradlew :android:app:installDebug && adb shell am start -n com.simplecityapps.shuttle.dev/com.simplecityapps.shuttle.ui.MainActivity
 ```
 
 Kill it afterwards; never leave a local AVD running, and never kill one you did not start.

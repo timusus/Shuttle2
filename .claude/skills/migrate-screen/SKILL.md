@@ -92,7 +92,7 @@ adb wait-for-device && adb shell getprop sys.boot_completed | grep -q 1
 
 Build and install the current app:
 ```bash
-./gradlew :android:app:assembleDebug && ./gradlew :android:app:installDebug
+build-brief ./gradlew :android:app:installDebug
 ```
 
 Launch the app and navigate to the screen. Take screenshots of every state you can reach:
