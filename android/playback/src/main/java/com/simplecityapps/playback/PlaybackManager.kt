@@ -40,7 +40,7 @@ import timber.log.Timber
  * Playback, as a thin layer over [player], whose playlist is the queue (see [QueueManager]). Every flow is derived
  * from the player's events and state; nothing here keeps its own copy of the position, the current item or the
  * queue. Adds what the player doesn't do itself: audio focus, the saved position to resume from, skipping past songs
- * whose stream can't be resolved, and the events the app records (track ends, pauses, failures).
+ * that fail to load, and the events the app records (track ends, pauses, failures).
  *
  * Main thread only, like the player.
  */
@@ -62,8 +62,8 @@ class PlaybackManager(
     /** The completion of the last [load] (or skip), called once the item is ready to play or has failed. */
     private var pendingLoad: PendingLoad? = null
 
-    /** Songs skipped in a row because their stream couldn't be resolved. */
-    private var resolutionFailures = 0
+    /** Songs skipped in a row because they failed to load. */
+    private var loadFailures = 0
 
     /**
      * Whether the playlist changed in the player events being delivered. The player ends when the current last
@@ -192,7 +192,7 @@ class PlaybackManager(
         when (playbackState) {
             Player.STATE_READY -> {
                 readyUid = currentEntry?.uid
-                resolutionFailures = 0
+                loadFailures = 0
                 completePendingLoad(Result.success(pendingLoad?.attempt == 1))
             }
 
@@ -220,28 +220,30 @@ class PlaybackManager(
     }
 
     /**
-     * An item whose stream couldn't be resolved (its server can't be reached) is skipped for the next one, up to
-     * [MAX_ATTEMPTS] in a row and never past the end of the queue. Any other failure is reported for the item, and
-     * stops playback.
+     * An item that fails to load (its file can't be read, its stream can't be resolved or fetched, its format isn't
+     * supported) is skipped for the next one, up to [MAX_ATTEMPTS] in a row and never past the end of the queue,
+     * whether it was loaded directly or reached by playing on. An item that fails once it's playing stops playback.
+     * Every failure but an unresolvable stream (a server that can't be reached) is reported for its song.
      */
     private fun onError(error: PlaybackException) {
         val failedIndex = error.failedIndex() ?: player.currentMediaItemIndex
-        val failedSong = player.currentTimeline.takeIf { failedIndex < it.windowCount }?.let { player.getMediaItemAt(failedIndex).queueEntry.song }
-        Timber.e(error, "Playback failed for ${failedSong?.name}")
+        val failedEntry = player.currentTimeline.takeIf { failedIndex < it.windowCount }?.let { player.getMediaItemAt(failedIndex).queueEntry }
+        Timber.e(error, "Playback failed for ${failedEntry?.song?.name}")
 
-        if (error.isResolutionFailure()) {
-            resolutionFailures++
+        if (!error.isResolutionFailure()) {
+            failedEntry?.song?.let(_playbackFailureFlow::tryEmit)
+        }
+        if (failedEntry != null && failedEntry.uid != readyUid) {
+            loadFailures++
             val next = player.currentTimeline.getNextWindowIndex(failedIndex, Player.REPEAT_MODE_OFF, player.shuffleModeEnabled)
-            if (next != C.INDEX_UNSET && resolutionFailures < MAX_ATTEMPTS) {
-                pendingLoad = pendingLoad?.copy(attempt = resolutionFailures + 1)
+            if (next != C.INDEX_UNSET && loadFailures < MAX_ATTEMPTS) {
+                pendingLoad = pendingLoad?.copy(attempt = loadFailures + 1)
                 player.seekTo(next, 0)
                 player.prepare()
                 return
             }
-        } else {
-            failedSong?.let(_playbackFailureFlow::tryEmit)
         }
-        resolutionFailures = 0
+        loadFailures = 0
         completePendingLoad(Result.failure(error))
         pause()
     }
@@ -359,7 +361,7 @@ class PlaybackManager(
     ) {
         pendingLoad = PendingLoad(completion)
         readyUid = null
-        resolutionFailures = 0
+        loadFailures = 0
         player.seekTo(player.currentMediaItemIndex, positionMs.toLong())
         if (player.playbackState == Player.STATE_IDLE) {
             player.prepare()
@@ -562,7 +564,7 @@ class PlaybackManager(
     )
 
     companion object {
-        /** How many songs in a row a load tries before giving up on ones whose stream can't be resolved. */
+        /** How many songs in a row a load tries before giving up on ones that fail to load. */
         const val MAX_ATTEMPTS = 15
 
         private const val PROGRESS_INTERVAL_MS = 100L

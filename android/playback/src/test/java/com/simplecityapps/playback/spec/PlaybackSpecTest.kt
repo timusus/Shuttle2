@@ -293,6 +293,59 @@ class PlaybackSpecTest {
         playback.playbackStateFlow.value shouldBe PlaybackState.Paused
     }
 
+    @Test
+    fun `RS-23 a song whose file can't be read is reported and skipped for the next one`() {
+        val unreadable = unreadableSong(1)
+        val playable = song(2)
+        val failures = harness.record(playback.playbackFailureFlow)
+
+        harness.run { playback.addToQueue(listOf(unreadable, playable)) }
+        harness.runUntil { playback.playbackStateFlow.value == PlaybackState.Playing }
+
+        queue.queueStateFlow.value.currentItem?.song shouldBe playable
+        failures shouldBe listOf(unreadable)
+    }
+
+    @Test
+    fun `RS-23 a song that can't be read is skipped when playback reaches it`() {
+        val first = song(1, file = TONE_1S)
+        val unreadable = unreadableSong(2)
+        val third = song(3, file = TONE_1S)
+        val failures = harness.record(playback.playbackFailureFlow)
+        val ended = harness.record(playback.trackEndedFlow)
+
+        harness.run { playback.addToQueue(listOf(first, unreadable, third)) }
+        harness.runUntil { ended.size == 2 }
+
+        ended shouldBe listOf(first, third)
+        failures shouldBe listOf(unreadable)
+    }
+
+    @Test
+    fun `RS-23 up to 15 songs in a row are tried before playback stops`() {
+        val fourteenFailures = (1L..14L).map { unreadableSong(it) } + song(15)
+        harness.run { playback.addToQueue(fourteenFailures) }
+        harness.runUntil { playback.playbackStateFlow.value == PlaybackState.Playing }
+        queue.queueStateFlow.value.currentItem?.song shouldBe fourteenFailures.last()
+    }
+
+    @Test
+    fun `RS-23 playback stops on the 15th song that can't be loaded`() {
+        val songs = (1L..15L).map { unreadableSong(it) } + song(16)
+        val failures = harness.record(playback.playbackFailureFlow)
+        var result: Result<Boolean>? = null
+        harness.run { queue.setQueue(songs) }
+
+        playback.load { result = it }
+        harness.runUntil { result != null }
+        harness.idle()
+
+        result!!.isFailure shouldBe true
+        failures shouldBe songs.take(15)
+        queue.queueStateFlow.value.currentItem?.song shouldBe songs[14]
+        playback.playbackStateFlow.value shouldBe PlaybackState.Paused
+    }
+
     private fun offMainThread(
         errors: MutableList<Throwable>,
         block: () -> Unit
