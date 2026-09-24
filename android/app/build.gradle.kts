@@ -304,6 +304,14 @@ android {
     buildFeatures.buildConfig = true
 }
 
+// Hilt's hiltJavaCompile<Variant> task runs javac over a processor path (hiltAnnotationProcessor<Variant>)
+// that extends the variant's ksp configuration. javac then discovers moshi-kotlin-codegen's legacy APT
+// processor and prints its "Kapt support ... is deprecated" warning. Moshi codegen already runs via KSP,
+// so drop it from that javac processor path only.
+configurations.matching { it.name.startsWith("hiltAnnotationProcessor") }.configureEach {
+    exclude(group = "com.squareup.moshi", module = "moshi-kotlin-codegen")
+}
+
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_17)
