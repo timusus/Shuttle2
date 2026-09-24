@@ -3,9 +3,8 @@ package com.simplecityapps.playback
 import com.simplecityapps.playback.fakes.FakePlayback
 import com.simplecityapps.playback.fakes.FakeSharedPreferences
 import com.simplecityapps.playback.fakes.testPlaybackManager
+import com.simplecityapps.playback.fakes.testSong
 import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
@@ -35,7 +34,7 @@ class PlaybackManagerQueueChangeTest {
             exoplayerPlayback = playback,
             queueManager = queueManager
         )
-        runBlocking { queueManager.setQueue((1L..3L).map { createSong(it) }) }
+        runBlocking { queueManager.setQueue((1L..3L).map { testSong(it) }) }
         events.clear()
     }
 
@@ -173,7 +172,7 @@ class PlaybackManagerQueueChangeTest {
 
     @Test
     fun `removing the only item pauses and abandons any load in progress`() {
-        runBlocking { queueManager.setQueue(listOf(createSong(1))) }
+        runBlocking { queueManager.setQueue(listOf(testSong(1))) }
         playback.state = PlaybackState.Playing
         playbackManager.load { }
         events.clear()
@@ -221,7 +220,7 @@ class PlaybackManagerQueueChangeTest {
 
     @Test
     fun `adding to the queue prepares the next item once`() {
-        runBlocking { playbackManager.playNext(listOf(createSong(4))) }
+        runBlocking { playbackManager.playNext(listOf(testSong(4))) }
 
         events shouldBe listOf("A loadNext Song4")
     }
@@ -263,33 +262,4 @@ class PlaybackManagerQueueChangeTest {
 
         events shouldBe listOf("A load Song2 seek 0", "A play", "A loadNext Song3")
     }
-
-    private fun createSong(id: Long) = Song(
-        id = id,
-        name = "Song$id",
-        albumArtist = null,
-        artists = emptyList(),
-        album = null,
-        track = null,
-        disc = null,
-        duration = 180_000,
-        date = null,
-        genres = emptyList(),
-        path = "/music/song$id.mp3",
-        size = 0,
-        mimeType = "audio/mpeg",
-        lastModified = null,
-        lastPlayed = null,
-        lastCompleted = null,
-        playCount = 0,
-        playbackPosition = 0,
-        blacklisted = false,
-        mediaProvider = MediaProviderType.Shuttle,
-        lyrics = null,
-        grouping = null,
-        bitRate = null,
-        bitDepth = null,
-        sampleRate = null,
-        channelCount = null
-    )
 }

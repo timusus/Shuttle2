@@ -3,9 +3,8 @@ package com.simplecityapps.playback
 import com.simplecityapps.playback.fakes.FakePlayback
 import com.simplecityapps.playback.fakes.FakeSharedPreferences
 import com.simplecityapps.playback.fakes.testPlaybackManager
+import com.simplecityapps.playback.fakes.testSong
 import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.CoroutineScope
@@ -39,7 +38,7 @@ class PlaybackManagerLoadTest {
 
     @Test
     fun `a single load failure advances to the next queue item and retries`() {
-        runBlocking { queueManager.setQueue((1L..3L).map { createSong(it) }) }
+        runBlocking { queueManager.setQueue((1L..3L).map { testSong(it) }) }
         events.clear()
 
         var result: Result<Boolean>? = null
@@ -66,7 +65,7 @@ class PlaybackManagerLoadTest {
         )
 
         init {
-            runBlocking { queueManager.setQueue((1L..3L).map { createSong(it) }) }
+            runBlocking { queueManager.setQueue((1L..3L).map { testSong(it) }) }
             events.clear()
         }
 
@@ -115,7 +114,7 @@ class PlaybackManagerLoadTest {
     @Test
     fun `load stops retrying after 15 attempts and reverts to the original queue position`() {
         // Pins current behaviour; see #250
-        runBlocking { queueManager.setQueue((1L..20L).map { createSong(it) }) }
+        runBlocking { queueManager.setQueue((1L..20L).map { testSong(it) }) }
         events.clear()
         val originalItem = queueManager.getCurrentItem()
 
@@ -132,7 +131,7 @@ class PlaybackManagerLoadTest {
 
     @Test
     fun `load does not retry when the failed item is already the last in the queue`() {
-        runBlocking { queueManager.setQueue((1L..3L).map { createSong(it) }) }
+        runBlocking { queueManager.setQueue((1L..3L).map { testSong(it) }) }
         queueManager.skipTo(2)
         events.clear()
 
@@ -144,33 +143,4 @@ class PlaybackManagerLoadTest {
         result!!.isFailure shouldBe true
         queueManager.getCurrentItem()!!.song.id shouldBe 3L
     }
-
-    private fun createSong(id: Long) = Song(
-        id = id,
-        name = "Song$id",
-        albumArtist = null,
-        artists = emptyList(),
-        album = null,
-        track = null,
-        disc = null,
-        duration = 180_000,
-        date = null,
-        genres = emptyList(),
-        path = "/music/song$id.mp3",
-        size = 0,
-        mimeType = "audio/mpeg",
-        lastModified = null,
-        lastPlayed = null,
-        lastCompleted = null,
-        playCount = 0,
-        playbackPosition = 0,
-        blacklisted = false,
-        mediaProvider = MediaProviderType.Shuttle,
-        lyrics = null,
-        grouping = null,
-        bitRate = null,
-        bitDepth = null,
-        sampleRate = null,
-        channelCount = null
-    )
 }

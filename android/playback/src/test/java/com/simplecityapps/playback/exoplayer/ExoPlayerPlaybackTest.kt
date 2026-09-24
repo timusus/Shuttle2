@@ -7,8 +7,8 @@ import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.dsp.replaygain.ReplayGain
 import com.simplecityapps.playback.fakes.FakePlayer
 import com.simplecityapps.playback.fakes.FakePlayerFactory
+import com.simplecityapps.playback.fakes.testSong
 import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
@@ -52,10 +52,10 @@ class ExoPlayerPlaybackTest {
                 }
         }
 
-    private val songA = createSong("a")
-    private val songB = createSong("b")
-    private val songC = createSong("c")
-    private val songD = createSong("d")
+    private val songA = testSong(id = "a".hashCode().toLong(), name = "a", path = "/music/a.flac", mimeType = "audio/flac")
+    private val songB = testSong(id = "b".hashCode().toLong(), name = "b", path = "/music/b.flac", mimeType = "audio/flac")
+    private val songC = testSong(id = "c".hashCode().toLong(), name = "c", path = "/music/c.flac", mimeType = "audio/flac")
+    private val songD = testSong(id = "d".hashCode().toLong(), name = "d", path = "/music/d.flac", mimeType = "audio/flac")
 
     private val player: FakePlayer get() = playerFactory.latest
 
@@ -352,7 +352,7 @@ class ExoPlayerPlaybackTest {
 
     @Test
     fun `loadNext recognises a queued next item whose mime type the player normalised`() = runTest {
-        val flac = createSong("x", mimeType = "audio/x-flac")
+        val flac = testSong(id = "x".hashCode().toLong(), name = "x", path = "/music/x.flac", mimeType = "audio/x-flac")
         load(songA, next = flac)
         player.commands.clear()
 
@@ -384,8 +384,24 @@ class ExoPlayerPlaybackTest {
 
     @Test
     fun `queued items carry each song's ReplayGain values`() = runTest {
-        val loud = createSong("loud", replayGainTrack = -8.5, replayGainAlbum = -7.0)
-        val quiet = createSong("quiet", replayGainTrack = 3.2, replayGainAlbum = null)
+        val loud =
+            testSong(
+                id = "loud".hashCode().toLong(),
+                name = "loud",
+                path = "/music/loud.flac",
+                mimeType = "audio/flac",
+                replayGainTrack = -8.5,
+                replayGainAlbum = -7.0
+            )
+        val quiet =
+            testSong(
+                id = "quiet".hashCode().toLong(),
+                name = "quiet",
+                path = "/music/quiet.flac",
+                mimeType = "audio/flac",
+                replayGainTrack = 3.2,
+                replayGainAlbum = null
+            )
 
         load(loud, next = quiet)
 
@@ -398,7 +414,14 @@ class ExoPlayerPlaybackTest {
 
     @Test
     fun `a remote song holds a network wake lock`() = runTest {
-        load(createSong("stream", path = "https://server/stream"))
+        load(
+            testSong(
+                id = "stream".hashCode().toLong(),
+                name = "stream",
+                path = "https://server/stream",
+                mimeType = "audio/flac"
+            )
+        )
 
         player.wakeMode shouldBe C.WAKE_MODE_NETWORK
     }
@@ -533,41 +556,4 @@ class ExoPlayerPlaybackTest {
         player.commands.last() shouldBe "setPlaybackParameters 1.5 1.5"
         playback.getPlaybackSpeed() shouldBe 1.5f
     }
-
-    private fun createSong(
-        name: String,
-        path: String = "/music/$name.flac",
-        mimeType: String = "audio/flac",
-        replayGainTrack: Double? = null,
-        replayGainAlbum: Double? = null
-    ) = Song(
-        id = name.hashCode().toLong(),
-        name = name,
-        albumArtist = null,
-        artists = emptyList(),
-        album = null,
-        track = null,
-        disc = null,
-        duration = 180_000,
-        date = null,
-        genres = emptyList(),
-        path = path,
-        size = 0,
-        mimeType = mimeType,
-        lastModified = null,
-        lastPlayed = null,
-        lastCompleted = null,
-        playCount = 0,
-        playbackPosition = 0,
-        blacklisted = false,
-        mediaProvider = MediaProviderType.Shuttle,
-        replayGainTrack = replayGainTrack,
-        replayGainAlbum = replayGainAlbum,
-        lyrics = null,
-        grouping = null,
-        bitRate = null,
-        bitDepth = null,
-        sampleRate = null,
-        channelCount = null
-    )
 }

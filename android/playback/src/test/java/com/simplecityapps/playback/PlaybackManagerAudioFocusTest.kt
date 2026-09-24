@@ -7,9 +7,8 @@ import com.simplecityapps.playback.fakes.FakePlayback
 import com.simplecityapps.playback.fakes.FakePlayerFactory
 import com.simplecityapps.playback.fakes.FakeSharedPreferences
 import com.simplecityapps.playback.fakes.testPlaybackManager
+import com.simplecityapps.playback.fakes.testSong
 import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
@@ -38,7 +37,7 @@ class PlaybackManagerAudioFocusTest {
             queueManager = queueManager,
             audioFocusHelper = audioFocusHelper
         )
-        runBlocking { queueManager.setQueue(listOf(createSong())) }
+        runBlocking { queueManager.setQueue(listOf(testSong(1))) }
         events.clear()
     }
 
@@ -131,7 +130,7 @@ class PlaybackManagerAudioFocusTest {
                 queueManager = localQueueManager,
                 audioFocusHelper = localFocusHelper
             )
-        runBlocking { localQueueManager.setQueue(listOf(createSong())) }
+        runBlocking { localQueueManager.setQueue(listOf(testSong(1))) }
         manager.load(0) {}
         localFocusHelper.listener!!.duck()
         playerFactory.latest.volume shouldBe 0.2f
@@ -143,33 +142,4 @@ class PlaybackManagerAudioFocusTest {
         playerFactory.players.size shouldBe 2
         playerFactory.latest.volume shouldBe 1f
     }
-
-    private fun createSong() = Song(
-        id = 1,
-        name = "Song",
-        albumArtist = null,
-        artists = emptyList(),
-        album = null,
-        track = null,
-        disc = null,
-        duration = 180_000,
-        date = null,
-        genres = emptyList(),
-        path = "/music/song.mp3",
-        size = 0,
-        mimeType = "audio/mpeg",
-        lastModified = null,
-        lastPlayed = null,
-        lastCompleted = null,
-        playCount = 0,
-        playbackPosition = 0,
-        blacklisted = false,
-        mediaProvider = MediaProviderType.Shuttle,
-        lyrics = null,
-        grouping = null,
-        bitRate = null,
-        bitDepth = null,
-        sampleRate = null,
-        channelCount = null
-    )
 }

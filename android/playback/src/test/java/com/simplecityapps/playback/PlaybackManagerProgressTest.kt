@@ -3,9 +3,8 @@ package com.simplecityapps.playback
 import com.simplecityapps.playback.fakes.FakePlayback
 import com.simplecityapps.playback.fakes.FakeSharedPreferences
 import com.simplecityapps.playback.fakes.testPlaybackManager
+import com.simplecityapps.playback.fakes.testSong
 import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.shuttle.model.MediaProviderType
-import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
@@ -122,7 +121,7 @@ class PlaybackManagerProgressTest {
     @Test
     fun `falls back to the current song's duration when the playback has none`() = runTest {
         playback.durationMs = null
-        queueManager.setQueue(listOf(createSong(duration = 7_000)))
+        queueManager.setQueue(listOf(testSong(1, duration = 7_000)))
         createPlaybackManager()
 
         enter(PlaybackState.Playing)
@@ -130,33 +129,4 @@ class PlaybackManagerProgressTest {
 
         progressEvents shouldBe listOf(PlaybackProgress(1_000, 7_000))
     }
-
-    private fun createSong(duration: Int) = Song(
-        id = 1,
-        name = "Song",
-        albumArtist = null,
-        artists = emptyList(),
-        album = null,
-        track = null,
-        disc = null,
-        duration = duration,
-        date = null,
-        genres = emptyList(),
-        path = "/music/song.mp3",
-        size = 0,
-        mimeType = "audio/mpeg",
-        lastModified = null,
-        lastPlayed = null,
-        lastCompleted = null,
-        playCount = 0,
-        playbackPosition = 0,
-        blacklisted = false,
-        mediaProvider = MediaProviderType.Shuttle,
-        lyrics = null,
-        grouping = null,
-        bitRate = null,
-        bitDepth = null,
-        sampleRate = null,
-        channelCount = null
-    )
 }
