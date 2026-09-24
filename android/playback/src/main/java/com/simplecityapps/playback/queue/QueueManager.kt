@@ -10,7 +10,6 @@ import kotlinx.coroutines.withContext
 import timber.log.Timber
 
 class QueueManager(
-    private val queueWatcher: QueueWatcher,
     private val preferenceManager: GeneralPreferenceManager
 ) : QueueOperations {
     enum class ShuffleMode {
@@ -64,8 +63,7 @@ class QueueManager(
     private val _repeatModeFlow = MutableStateFlow(RepeatMode.Off)
 
     /**
-     * The repeat mode. Backs [getRepeatMode] directly, so the two can't disagree; it changes just
-     * before [QueueChangeCallback.onRepeatChanged] is dispatched.
+     * The repeat mode. Backs [getRepeatMode] directly, so the two can't disagree.
      */
     override val repeatModeFlow: StateFlow<RepeatMode> = _repeatModeFlow.asStateFlow()
 
@@ -93,8 +91,7 @@ class QueueManager(
 
     /**
      * The queue as the active shuffle mode presents it, with the current item and position.
-     * Republished just before every [QueueChangeCallback.onQueueChanged] and
-     * [QueueChangeCallback.onQueuePositionChanged] dispatch, and whenever the shuffle mode or
+     * Republished whenever the items or the current position change, whenever the shuffle mode or
      * [clear] changes what [getQueue] or [getCurrentItem] return, and when [hasRestoredQueue] is set.
      */
     override val queueStateFlow: StateFlow<QueueState> = _queueState.asStateFlow()
@@ -103,9 +100,6 @@ class QueueManager(
         set(value) {
             field = value
             publishQueueState()
-            if (value) {
-                queueWatcher.onQueueRestored()
-            }
         }
 
     /**
@@ -185,7 +179,6 @@ class QueueManager(
 
     override fun setCurrentItem(currentItem: QueueItem) {
         Timber.v("setCurrentItem(currentItem: ${currentItem.song.name}|${currentItem.song.mimeType}), previous item: ${this.currentItem?.song?.name}|${this.currentItem?.song?.mimeType}")
-        val oldPosition = getCurrentPosition()
         if (this.currentItem != currentItem) {
             this.currentItem = currentItem.clone(isCurrent = true)
 
@@ -197,7 +190,7 @@ class QueueManager(
                 }
             }
 
-            notifyQueuePositionChanged(oldPosition, getCurrentPosition())
+            publishQueueState()
         } else {
             Timber.v("setCurrentItem(): Item already current")
         }
@@ -217,12 +210,8 @@ class QueueManager(
     override fun getSize(): Int = queue.size()
 
     override fun remove(items: List<QueueItem>) {
-        val oldPosition = getCurrentPosition()
         queue.remove(items)
         notifyQueueChanged()
-        if (getCurrentPosition() != oldPosition) {
-            notifyQueuePositionChanged(oldPosition, getCurrentPosition())
-        }
     }
 
     override fun remove(song: Song) {
@@ -235,8 +224,8 @@ class QueueManager(
         queue.clear()
         notifyQueueChanged()
         currentItem = null
-        // The callback above fires while the cleared item is still current (as it always has); the
-        // flow follows up with the settled state.
+        // The change above is published while the cleared item is still current (as it always has
+        // been); this follows up with the settled state.
         publishQueueState()
     }
 
@@ -294,8 +283,6 @@ class QueueManager(
         reshuffle: Boolean
     ) {
         if (this.shuffleMode != shuffleMode) {
-            val previousPosition = getCurrentPosition()
-
             this.shuffleMode = shuffleMode
 
             if (shuffleMode == ShuffleMode.On && reshuffle) {
@@ -305,16 +292,11 @@ class QueueManager(
             }
 
             // getQueue() now presents the other list, even before the queue is restored, when no
-            // onQueueChanged follows.
+            // content change follows.
             publishQueueState()
-            queueWatcher.onShuffleChanged(shuffleMode)
 
             if (hasRestoredQueue) {
                 notifyQueueChanged() // The queue has been reshuffled, and shuffle is on, so the queue has changed
-
-                if (previousPosition != getCurrentPosition()) {
-                    notifyQueuePositionChanged(previousPosition, getCurrentPosition())
-                }
             }
         }
     }
@@ -331,7 +313,6 @@ class QueueManager(
     override fun setRepeatMode(repeatMode: RepeatMode) {
         if (this.repeatMode != repeatMode) {
             this.repeatMode = repeatMode
-            queueWatcher.onRepeatChanged(repeatMode)
         }
     }
 
@@ -381,13 +362,8 @@ class QueueManager(
         from: Int,
         to: Int
     ) {
-        val oldPosition = getCurrentPosition()
         queue.move(from, to, shuffleMode)
-        val currentPosition = getCurrentPosition()
-        notifyQueueChanged(QueueChangeCallback.QueueChangeReason.Move)
-        if (currentPosition != oldPosition) {
-            notifyQueuePositionChanged(oldPosition, currentPosition)
-        }
+        notifyQueueChanged(isMove = true)
     }
 
     override fun addToNext(songs: List<Song>) {
@@ -399,21 +375,13 @@ class QueueManager(
         notifyQueueChanged()
     }
 
-    private fun notifyQueueChanged(reason: QueueChangeCallback.QueueChangeReason = QueueChangeCallback.QueueChangeReason.Unknown) {
+    /** Records that the items changed, and whether it was only a [move], then publishes the new state. */
+    private fun notifyQueueChanged(isMove: Boolean = false) {
         queueContentVersion++
-        if (reason != QueueChangeCallback.QueueChangeReason.Move) {
+        if (!isMove) {
             queueNonMoveContentVersion++
         }
         publishQueueState()
-        queueWatcher.onQueueChanged(reason)
-    }
-
-    private fun notifyQueuePositionChanged(
-        oldPosition: Int?,
-        newPosition: Int?
-    ) {
-        publishQueueState()
-        queueWatcher.onQueuePositionChanged(oldPosition, newPosition)
     }
 
     /**

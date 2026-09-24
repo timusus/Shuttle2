@@ -9,12 +9,10 @@ import com.simplecityapps.playback.AudioEffectSessionManager
 import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackState
-import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.ProgressTicker
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.simplecityapps.testing.MainDispatcherRule
@@ -48,10 +46,8 @@ class PlaybackInitializerPlaybackManagerTest {
     private val application: Application = RuntimeEnvironment.getApplication()
     private val sharedPreferences = application.getSharedPreferences("playback_initializer_playback_manager_test", Context.MODE_PRIVATE)
     private val preferences = PlaybackPreferenceManager(sharedPreferences, Moshi.Builder().build())
-    private val queueWatcher = QueueWatcher()
     private val queueManager =
-        QueueManager(queueWatcher, GeneralPreferenceManager(application.getSharedPreferences("general_test", Context.MODE_PRIVATE)))
-    private val playbackWatcher = PlaybackWatcher()
+        QueueManager(GeneralPreferenceManager(application.getSharedPreferences("general_test", Context.MODE_PRIVATE)))
     private val appCoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     private val localPlayback = FakePlayback()
@@ -60,7 +56,6 @@ class PlaybackInitializerPlaybackManagerTest {
     private val playbackManager =
         PlaybackManager(
             queueManager = queueManager,
-            playbackWatcher = playbackWatcher,
             audioFocusHelper = mockk<AudioFocusHelper>(relaxed = true) { every { requestAudioFocus() } returns true },
             playbackPreferenceManager = preferences,
             audioEffectSessionManager = AudioEffectSessionManager(openSession = {}, closeSession = {}),

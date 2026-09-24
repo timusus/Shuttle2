@@ -86,7 +86,7 @@ Legacy screens use **MVP (Model-View-Presenter)** with Fragments, custom `ViewBi
 
 ### Playback Flow
 
-PlaybackManager orchestrates playback. It coordinates QueueManager, ExoPlayerPlayback, AudioFocusHelper, and PlaybackService (foreground service with MediaBrowserServiceCompat). State changes propagate via PlaybackWatcher callbacks.
+PlaybackManager orchestrates playback. It coordinates QueueManager, ExoPlayerPlayback, AudioFocusHelper, and PlaybackService (foreground service with MediaBrowserServiceCompat). State is published as flows: PlaybackManager exposes `playbackStateFlow`, `progressFlow`, `positionAnchorFlow`, `trackEndedFlow` and `pausePositionFlow`; QueueManager exposes `queueStateFlow`, `shuffleModeFlow` and `repeatModeFlow`. Consumers collect them against a baseline snapshot (`launchCollectingChanges` in `:android:core`).
 
 ### Data Layer
 

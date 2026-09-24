@@ -5,7 +5,6 @@ import com.simplecityapps.playback.fakes.FakeSharedPreferences
 import com.simplecityapps.playback.fakes.testPlaybackManager
 import com.simplecityapps.playback.fakes.testSong
 import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import io.kotest.matchers.collections.shouldNotContain
 import io.kotest.matchers.shouldBe
@@ -21,8 +20,7 @@ import org.junit.Test
  */
 class PlaybackManagerPendingPositionTest {
     private val events = mutableListOf<String>()
-    private val queueWatcher = QueueWatcher()
-    private val queueManager = QueueManager(queueWatcher, GeneralPreferenceManager(FakeSharedPreferences()))
+    private val queueManager = QueueManager(GeneralPreferenceManager(FakeSharedPreferences()))
     private val playback = FakePlayback("A", events = events)
 
     private lateinit var playbackManager: PlaybackManager
@@ -32,7 +30,6 @@ class PlaybackManagerPendingPositionTest {
         playbackManager =
             testPlaybackManager(
                 exoplayerPlayback = playback,
-                queueWatcher = queueWatcher,
                 queueManager = queueManager
             )
         runBlocking { queueManager.setQueue(listOf(testSong(1, duration = 180_000), testSong(2, duration = 180_000))) }

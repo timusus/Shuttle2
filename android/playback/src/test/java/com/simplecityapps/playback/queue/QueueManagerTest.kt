@@ -16,8 +16,7 @@ import org.junit.Test
  * the order they were selected in.
  */
 class QueueManagerTest {
-    private val queueWatcher = QueueWatcher()
-    private val queueManager = QueueManager(queueWatcher, GeneralPreferenceManager(FakeSharedPreferences()))
+    private val queueManager = QueueManager(GeneralPreferenceManager(FakeSharedPreferences()))
 
     @Before
     fun setUp() {

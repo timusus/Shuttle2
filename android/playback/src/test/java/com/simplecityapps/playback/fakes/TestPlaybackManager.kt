@@ -3,12 +3,10 @@ package com.simplecityapps.playback.fakes
 import com.simplecityapps.playback.AudioEffectSessionManager
 import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.PlaybackManager
-import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.ProgressTicker
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.squareup.moshi.Moshi
 import kotlin.coroutines.CoroutineContext
@@ -22,9 +20,7 @@ import kotlinx.coroutines.test.StandardTestDispatcher
  */
 fun testPlaybackManager(
     exoplayerPlayback: Playback = FakePlayback("default"),
-    queueWatcher: QueueWatcher = QueueWatcher(),
-    queueManager: QueueManager = QueueManager(queueWatcher, GeneralPreferenceManager(FakeSharedPreferences())),
-    playbackWatcher: PlaybackWatcher = PlaybackWatcher(),
+    queueManager: QueueManager = QueueManager(GeneralPreferenceManager(FakeSharedPreferences())),
     audioFocusHelper: AudioFocusHelper = FakeAudioFocusHelper(),
     playbackPreferenceManager: PlaybackPreferenceManager = PlaybackPreferenceManager(FakeSharedPreferences(), Moshi.Builder().build()),
     audioEffectSessionManager: AudioEffectSessionManager = AudioEffectSessionManager(openSession = {}, closeSession = {}),
@@ -36,7 +32,6 @@ fun testPlaybackManager(
     queueChangeContext: CoroutineContext = Dispatchers.Unconfined
 ): PlaybackManager = PlaybackManager(
     queueManager = queueManager,
-    playbackWatcher = playbackWatcher,
     audioFocusHelper = audioFocusHelper,
     playbackPreferenceManager = playbackPreferenceManager,
     audioEffectSessionManager = audioEffectSessionManager,

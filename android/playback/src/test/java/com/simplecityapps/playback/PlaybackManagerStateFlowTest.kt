@@ -5,7 +5,6 @@ import com.simplecityapps.playback.fakes.FakeSharedPreferences
 import com.simplecityapps.playback.fakes.testPlaybackManager
 import com.simplecityapps.playback.fakes.testSong
 import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -18,42 +17,13 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 /**
- * PlaybackManager publishes playback state and progress as StateFlows, set at the same point the
- * matching [PlaybackWatcherCallback] is dispatched, while the callbacks keep firing as before.
+ * PlaybackManager publishes playback state and progress as StateFlows.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class PlaybackManagerStateFlowTest {
-    private val stateEvents = mutableListOf<PlaybackState>()
-    private val progressEvents = mutableListOf<Triple<Int, Int, Boolean>>()
-
-    /** The flow values each callback saw when it fired. */
-    private val stateFlowAtCallback = mutableListOf<PlaybackState>()
-    private val progressFlowAtCallback = mutableListOf<PlaybackProgress?>()
-
     private lateinit var playbackManager: PlaybackManager
 
-    private val playbackWatcher =
-        PlaybackWatcher().apply {
-            addCallback(
-                object : PlaybackWatcherCallback {
-                    override fun onPlaybackStateChanged(playbackState: PlaybackState) {
-                        stateEvents += playbackState
-                        stateFlowAtCallback += playbackManager.playbackStateFlow.value
-                    }
-
-                    override fun onProgressChanged(
-                        position: Int,
-                        duration: Int,
-                        fromUser: Boolean
-                    ) {
-                        progressEvents += Triple(position, duration, fromUser)
-                        progressFlowAtCallback += playbackManager.progressFlow.value
-                    }
-                }
-            )
-        }
-    private val queueWatcher = QueueWatcher()
-    private val queueManager = QueueManager(queueWatcher, GeneralPreferenceManager(FakeSharedPreferences()))
+    private val queueManager = QueueManager(GeneralPreferenceManager(FakeSharedPreferences()))
     private val playback =
         FakePlayback("A").apply {
             progressMs = 1_000
@@ -63,9 +33,7 @@ class PlaybackManagerStateFlowTest {
     private fun TestScope.createPlaybackManager() {
         playbackManager = testPlaybackManager(
             exoplayerPlayback = playback,
-            queueWatcher = queueWatcher,
             queueManager = queueManager,
-            playbackWatcher = playbackWatcher,
             progressTicker = ProgressTicker(backgroundScope)
         )
     }
@@ -84,7 +52,7 @@ class PlaybackManagerStateFlowTest {
     }
 
     @Test
-    fun `playback state follows the playback and the callback still fires`() = runTest {
+    fun `playback state follows the playback`() = runTest {
         createPlaybackManager()
         playbackManager.playbackStateFlow.value shouldBe PlaybackState.Paused
 
@@ -96,13 +64,10 @@ class PlaybackManagerStateFlowTest {
 
         enter(PlaybackState.Paused)
         playbackManager.playbackStateFlow.value shouldBe PlaybackState.Paused
-
-        stateEvents shouldBe listOf(PlaybackState.Loading, PlaybackState.Playing, PlaybackState.Paused)
-        stateFlowAtCallback shouldBe stateEvents
     }
 
     @Test
-    fun `a repeated state fires the callback twice but the flow emits once`() = runTest {
+    fun `a repeated state emits once`() = runTest {
         createPlaybackManager()
         val emitted = mutableListOf<PlaybackState>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
@@ -112,7 +77,6 @@ class PlaybackManagerStateFlowTest {
         enter(PlaybackState.Playing)
         enter(PlaybackState.Playing)
 
-        stateEvents shouldBe listOf(PlaybackState.Playing, PlaybackState.Playing)
         emitted shouldBe listOf(PlaybackState.Paused, PlaybackState.Playing)
     }
 
@@ -124,33 +88,30 @@ class PlaybackManagerStateFlowTest {
     }
 
     @Test
-    fun `progress follows each tick and the callback still fires`() = runTest {
+    fun `progress follows each tick`() = runTest {
         createPlaybackManager()
 
         enter(PlaybackState.Playing)
         runCurrent()
 
         playbackManager.progressFlow.value shouldBe PlaybackProgress(position = 1_000, duration = 5_000)
-        progressEvents shouldBe listOf(Triple(1_000, 5_000, false))
-        progressFlowAtCallback shouldBe listOf(PlaybackProgress(1_000, 5_000))
 
         playback.progressMs = 1_100
         testScheduler.advanceTimeBy(100)
         runCurrent()
 
         playbackManager.progressFlow.value shouldBe PlaybackProgress(position = 1_100, duration = 5_000)
-        progressEvents shouldBe listOf(Triple(1_000, 5_000, false), Triple(1_100, 5_000, false))
     }
 
     @Test
-    fun `a seek publishes progress and the callback reports it came from the user`() = runTest {
+    fun `a seek publishes progress and re-anchors the position`() = runTest {
         createPlaybackManager()
 
         playback.progressMs = 3_000
         playbackManager.seekTo(3_000)
 
         playbackManager.progressFlow.value shouldBe PlaybackProgress(position = 3_000, duration = 5_000)
-        progressEvents shouldBe listOf(Triple(3_000, 5_000, true))
+        playbackManager.positionAnchorFlow.value.positionMs shouldBe 3_000
     }
 
     @Test

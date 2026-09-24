@@ -4,14 +4,16 @@ import com.simplecityapps.playback.fakes.FakePlayback
 import com.simplecityapps.playback.fakes.FakeSharedPreferences
 import com.simplecityapps.playback.fakes.testPlaybackManager
 import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -23,36 +25,26 @@ import org.junit.Test
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class PlaybackManagerProgressTest {
-    private val progressEvents = mutableListOf<Triple<Int, Int, Boolean>>()
-    private val playbackWatcher =
-        PlaybackWatcher().apply {
-            addCallback(
-                object : PlaybackWatcherCallback {
-                    override fun onProgressChanged(
-                        position: Int,
-                        duration: Int,
-                        fromUser: Boolean
-                    ) {
-                        progressEvents += Triple(position, duration, fromUser)
-                    }
-                }
-            )
-        }
-    private val queueWatcher = QueueWatcher()
-    private val queueManager = QueueManager(queueWatcher, GeneralPreferenceManager(FakeSharedPreferences()))
+    /** Each progress published after the manager is created. Positions change per step, so each tick is a new value. */
+    private val progressEvents = mutableListOf<PlaybackProgress>()
+    private val queueManager = QueueManager(GeneralPreferenceManager(FakeSharedPreferences()))
     private val playback =
         FakePlayback("A").apply {
             progressMs = 1_000
             durationMs = 5_000
         }
 
-    private fun TestScope.createPlaybackManager() = testPlaybackManager(
-        exoplayerPlayback = playback,
-        queueWatcher = queueWatcher,
-        queueManager = queueManager,
-        playbackWatcher = playbackWatcher,
-        progressTicker = ProgressTicker(backgroundScope)
-    )
+    private fun TestScope.createPlaybackManager() {
+        val playbackManager =
+            testPlaybackManager(
+                exoplayerPlayback = playback,
+                queueManager = queueManager,
+                progressTicker = ProgressTicker(backgroundScope)
+            )
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            playbackManager.progressFlow.filterNotNull().collect { progressEvents += it }
+        }
+    }
 
     private fun TestScope.advanceBy(millis: Long) {
         advanceTimeBy(millis)
@@ -69,9 +61,12 @@ class PlaybackManagerProgressTest {
 
         enter(PlaybackState.Playing)
         runCurrent()
-        advanceBy(200)
+        playback.progressMs = 1_100
+        advanceBy(100)
+        playback.progressMs = 1_200
+        advanceBy(100)
 
-        progressEvents shouldBe List(3) { Triple(1_000, 5_000, false) }
+        progressEvents shouldBe listOf(1_000, 1_100, 1_200).map { PlaybackProgress(it, 5_000) }
     }
 
     @Test
@@ -81,7 +76,7 @@ class PlaybackManagerProgressTest {
         enter(PlaybackState.Loading)
         runCurrent()
 
-        progressEvents shouldBe listOf(Triple(1_000, 5_000, false))
+        progressEvents shouldBe listOf(PlaybackProgress(1_000, 5_000))
     }
 
     @Test
@@ -90,11 +85,14 @@ class PlaybackManagerProgressTest {
 
         enter(PlaybackState.Loading)
         runCurrent()
+        playback.progressMs = 1_100
         enter(PlaybackState.Playing)
         runCurrent()
+        playback.progressMs = 1_200
         advanceBy(100)
 
-        progressEvents.size shouldBe 2
+        // Entering Playing doesn't restart the ticker, so nothing is published at 1_100.
+        progressEvents shouldBe listOf(PlaybackProgress(1_000, 5_000), PlaybackProgress(1_200, 5_000))
     }
 
     @Test
@@ -105,6 +103,7 @@ class PlaybackManagerProgressTest {
         runCurrent()
         enter(PlaybackState.Paused)
         progressEvents.clear()
+        playback.progressMs = 2_000
         advanceBy(1_000)
 
         progressEvents.shouldBeEmpty()
@@ -114,6 +113,7 @@ class PlaybackManagerProgressTest {
     fun `no progress is published before playback starts`() = runTest {
         createPlaybackManager()
 
+        playback.progressMs = 2_000
         advanceBy(1_000)
 
         progressEvents.shouldBeEmpty()
@@ -128,7 +128,7 @@ class PlaybackManagerProgressTest {
         enter(PlaybackState.Playing)
         runCurrent()
 
-        progressEvents shouldBe listOf(Triple(1_000, 7_000, false))
+        progressEvents shouldBe listOf(PlaybackProgress(1_000, 7_000))
     }
 
     private fun createSong(duration: Int) = Song(

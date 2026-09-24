@@ -6,7 +6,6 @@ import com.simplecityapps.playback.fakes.testPlaybackManager
 import com.simplecityapps.playback.fakes.testSong
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.squareup.moshi.Moshi
@@ -18,21 +17,16 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 /**
- * A track playing to its end is published on [PlaybackManager.trackEndedFlow] (and still dispatched to
- * [PlaybackWatcher]) before the queue moves on, and the saved position is reset to 0 only if the queue is
+ * A track playing to its end is published on [PlaybackManager.trackEndedFlow] before the queue moves on, and the saved position is reset to 0 only if the queue is
  * about to move on to another item.
  */
 class PlaybackManagerTrackEndedTest {
-    private val queueWatcher = QueueWatcher()
-    private val queueManager = QueueManager(queueWatcher, GeneralPreferenceManager(FakeSharedPreferences()))
-    private val playbackWatcher = PlaybackWatcher()
+    private val queueManager = QueueManager(GeneralPreferenceManager(FakeSharedPreferences()))
     private val preferences = PlaybackPreferenceManager(FakeSharedPreferences(), Moshi.Builder().build())
     private val playbackManager =
         testPlaybackManager(
             exoplayerPlayback = FakePlayback("A"),
-            queueWatcher = queueWatcher,
             queueManager = queueManager,
-            playbackWatcher = playbackWatcher,
             playbackPreferenceManager = preferences
         )
 
@@ -53,23 +47,6 @@ class PlaybackManagerTrackEndedTest {
         ended.map { it.id } shouldBe listOf(1L)
         currentWhenEmitted shouldBe listOf(1L)
         queueManager.getCurrentItem()?.song?.id shouldBe 2L
-    }
-
-    @Test
-    fun `a track end still reaches the playback watcher`() {
-        runBlocking { queueManager.setQueue((1L..3L).map { testSong(it) }) }
-        val ended = mutableListOf<Long>()
-        playbackWatcher.addCallback(
-            object : PlaybackWatcherCallback {
-                override fun onTrackEnded(song: Song) {
-                    ended += song.id
-                }
-            }
-        )
-
-        playbackManager.onTrackEnded(trackWentToNext = true)
-
-        ended shouldBe listOf(1L)
     }
 
     @Test

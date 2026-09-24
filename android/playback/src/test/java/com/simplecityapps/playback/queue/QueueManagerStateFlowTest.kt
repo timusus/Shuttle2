@@ -2,66 +2,71 @@ package com.simplecityapps.playback.queue
 
 import com.simplecityapps.playback.fakes.FakeSharedPreferences
 import com.simplecityapps.playback.fakes.testSong
+import com.simplecityapps.shuttle.coroutines.launchCollectingChanges
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.runTest
+import org.junit.After
 import org.junit.Test
 
 /**
- * QueueManager publishes the queue, shuffle mode and repeat mode as StateFlows, set just before
- * the matching [QueueChangeCallback] is dispatched, while the callbacks keep firing as before.
+ * QueueManager publishes the queue, shuffle mode and repeat mode as StateFlows. Every published queue
+ * snapshot matches the getters at the moment it's published.
  */
 class QueueManagerStateFlowTest {
+    /** What changed in each published queue snapshot, and each repeat mode change, in order. */
     private val events = mutableListOf<String>()
 
-    /** The queue flow value each queue/position callback saw, compared against the getters. */
-    private val mismatches = mutableListOf<String>()
+    /** Snapshots that didn't match the getters when they were published. */
+    private val mismatches = mutableListOf<QueueState>()
+    private val queueManager = QueueManager(GeneralPreferenceManager(FakeSharedPreferences()))
 
-    private val queueWatcher = QueueWatcher()
-    private val queueManager = QueueManager(queueWatcher, GeneralPreferenceManager(FakeSharedPreferences()))
+    // Unconfined, so each value is recorded as it's published, while the getters still describe it.
+    private val collectionScope = CoroutineScope(Dispatchers.Unconfined)
 
     init {
-        queueWatcher.addCallback(
-            object : QueueChangeCallback {
-                override fun onQueueChanged(reason: QueueChangeCallback.QueueChangeReason) {
-                    events += "queueChanged $reason"
-                    checkFlowMatchesGetters("onQueueChanged")
-                }
-
-                override fun onQueuePositionChanged(
-                    oldPosition: Int?,
-                    newPosition: Int?
-                ) {
-                    events += "positionChanged $oldPosition -> $newPosition"
-                    checkFlowMatchesGetters("onQueuePositionChanged")
-                }
-
-                override fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
-                    events += "shuffleChanged $shuffleMode"
-                    if (queueManager.shuffleModeFlow.value != shuffleMode) mismatches += "onShuffleChanged"
-                }
-
-                override fun onRepeatChanged(repeatMode: QueueManager.RepeatMode) {
-                    events += "repeatChanged $repeatMode"
-                    if (queueManager.repeatModeFlow.value != repeatMode) mismatches += "onRepeatChanged"
-                }
-            }
-        )
+        collectionScope.launchCollectingChanges(queueManager.queueStateFlow, queueManager.queueStateFlow.value) { previous, current ->
+            events += describe(previous, current)
+            checkFlowMatchesGetters(current)
+        }
+        collectionScope.launchCollectingChanges(queueManager.repeatModeFlow, queueManager.repeatModeFlow.value) { _, current ->
+            events += "repeatChanged $current"
+        }
     }
 
-    private fun checkFlowMatchesGetters(callback: String) {
+    @After
+    fun tearDown() {
+        collectionScope.cancel()
+    }
+
+    private fun describe(
+        previous: QueueState,
+        current: QueueState
+    ): String = buildList {
+        if (current.shuffleMode != previous.shuffleMode) add("shuffleChanged ${current.shuffleMode}")
+        if (current.contentVersion != previous.contentVersion) {
+            add(if (current.nonMoveContentVersion == previous.nonMoveContentVersion) "queueChanged Move" else "queueChanged")
+        }
+        if (current.currentPosition != previous.currentPosition) add("positionChanged ${previous.currentPosition} -> ${current.currentPosition}")
+        if (current.isRestored != previous.isRestored) add("restored ${current.isRestored}")
+    }.joinToString(", ").ifEmpty { "republished" }
+
+    private fun checkFlowMatchesGetters(state: QueueState) {
         val expected =
-            queueManager.queueStateFlow.value.copy(
+            state.copy(
                 items = queueManager.getQueue().toList(),
                 currentItem = queueManager.getCurrentItem(),
                 currentPosition = queueManager.getCurrentPosition(),
                 isRestored = queueManager.hasRestoredQueue,
                 shuffleMode = queueManager.getShuffleMode()
             )
-        if (queueManager.queueStateFlow.value != expected) mismatches += callback
+        if (state != expected) mismatches += state
     }
 
     private fun ids() = queueManager.queueStateFlow.value.items.map { it.song.id }
@@ -79,13 +84,13 @@ class QueueManagerStateFlowTest {
     }
 
     @Test
-    fun `setting the queue publishes items and current item, and the callbacks still fire`() = runTest {
+    fun `setting the queue publishes items, then the current item`() = runTest {
         queueManager.setQueue(listOf(testSong(1), testSong(2), testSong(3)), position = 1)
 
         ids() shouldBe listOf(1L, 2L, 3L)
         queueManager.queueStateFlow.value.currentItem!!.song.id shouldBe 2L
         queueManager.queueStateFlow.value.currentPosition shouldBe 1
-        events shouldBe listOf("queueChanged Unknown", "positionChanged null -> 1")
+        events shouldBe listOf("queueChanged", "positionChanged null -> 1")
         mismatches shouldBe emptyList()
     }
 
@@ -97,7 +102,7 @@ class QueueManagerStateFlowTest {
 
         ids() shouldBe listOf(2L, 3L, 1L)
         queueManager.queueStateFlow.value.currentPosition shouldBe 2
-        events shouldBe listOf("queueChanged Move", "positionChanged 0 -> 2")
+        events shouldBe listOf("queueChanged Move, positionChanged 0 -> 2")
         mismatches shouldBe emptyList()
     }
 
@@ -108,7 +113,7 @@ class QueueManagerStateFlowTest {
         queueManager.remove(listOf(queueManager.getQueue()[2]))
 
         ids() shouldBe listOf(1L, 2L)
-        events shouldBe listOf("queueChanged Unknown")
+        events shouldBe listOf("queueChanged")
         mismatches shouldBe emptyList()
     }
 
@@ -132,7 +137,7 @@ class QueueManagerStateFlowTest {
         queueManager.addToNext(listOf(testSong(4)))
 
         ids() shouldBe listOf(1L, 4L, 2L, 3L)
-        events shouldBe listOf("queueChanged Unknown", "queueChanged Unknown")
+        events shouldBe listOf("queueChanged", "queueChanged")
         mismatches shouldBe emptyList()
     }
 
@@ -145,7 +150,9 @@ class QueueManagerStateFlowTest {
         queueManager.queueStateFlow.value.items shouldBe QueueState.Empty.items
         queueManager.queueStateFlow.value.currentItem shouldBe QueueState.Empty.currentItem
         queueManager.queueStateFlow.value.currentPosition shouldBe QueueState.Empty.currentPosition
-        events shouldBe listOf("queueChanged Unknown")
+        // The change is published while the cleared item is still current, then the settled state.
+        events shouldBe listOf("queueChanged, positionChanged 0 -> null", "republished")
+        mismatches shouldBe emptyList()
     }
 
     @Test
@@ -163,7 +170,7 @@ class QueueManagerStateFlowTest {
         setQueueOf(1, 2, 3)
         val before = queueManager.queueStateFlow.value
 
-        // Moving an item to its own position: the callback fires, but the resulting items, uids,
+        // Moving an item to its own position: a change is published, but the resulting items, uids,
         // current item and position all match the previous snapshot exactly.
         queueManager.move(0, 0)
         val after = queueManager.queueStateFlow.value
@@ -179,6 +186,7 @@ class QueueManagerStateFlowTest {
     fun `toggling shuffle publishes the mode and the shuffled queue`() = runTest {
         setQueueOf(1, 2, 3)
         queueManager.hasRestoredQueue = true
+        events.clear()
 
         queueManager.toggleShuffleMode()
 
@@ -186,7 +194,7 @@ class QueueManagerStateFlowTest {
         queueManager.queueStateFlow.value.items shouldBe queueManager.getQueue(QueueManager.ShuffleMode.On)
         queueManager.queueStateFlow.value.shuffleMode shouldBe QueueManager.ShuffleMode.On
         events.first() shouldBe "shuffleChanged On"
-        events[1] shouldBe "queueChanged Unknown"
+        events[1] shouldBe "queueChanged"
         mismatches shouldBe emptyList()
 
         queueManager.toggleShuffleMode()
@@ -219,12 +227,13 @@ class QueueManagerStateFlowTest {
         queueManager.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = true)
 
         events shouldBe listOf("shuffleChanged On")
+        mismatches shouldBe emptyList()
         queueManager.queueStateFlow.value.items shouldBe queueManager.getQueue(QueueManager.ShuffleMode.On)
         queueManager.queueStateFlow.value.currentPosition shouldBe queueManager.getCurrentPosition()
     }
 
     @Test
-    fun `changing repeat mode publishes it and the callback still fires`() {
+    fun `changing repeat mode publishes it, once per change`() {
         queueManager.toggleRepeatMode()
         queueManager.repeatModeFlow.value shouldBe QueueManager.RepeatMode.All
 
@@ -259,21 +268,14 @@ class QueueManagerStateFlowTest {
     }
 
     @Test
-    fun `restoring the queue publishes it as restored before the callback fires`() = runTest {
-        var restoredWhenNotified: Boolean? = null
-        queueWatcher.addCallback(
-            object : QueueChangeCallback {
-                override fun onQueueRestored() {
-                    restoredWhenNotified = queueManager.queueStateFlow.value.isRestored
-                }
-            }
-        )
+    fun `restoring the queue publishes it as restored`() = runTest {
         setQueueOf(1, 2)
         queueManager.queueStateFlow.value.isRestored shouldBe false
 
         queueManager.hasRestoredQueue = true
 
-        restoredWhenNotified shouldBe true
+        queueManager.queueStateFlow.value.isRestored shouldBe true
+        events shouldBe listOf("restored true")
         mismatches shouldBe emptyList()
     }
 }

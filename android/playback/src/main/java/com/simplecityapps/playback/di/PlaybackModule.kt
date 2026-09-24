@@ -16,13 +16,11 @@ import com.simplecityapps.playback.AudioEffectSessionManager
 import com.simplecityapps.playback.NoiseManager
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackNotificationManager
-import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.mediasession.MediaSessionManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueOperations
-import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
@@ -40,14 +38,7 @@ import kotlinx.coroutines.CoroutineScope
 class PlaybackModule {
     @Singleton
     @Provides
-    fun provideQueueWatcher(): QueueWatcher = QueueWatcher()
-
-    @Singleton
-    @Provides
-    fun provideQueueManager(
-        queueWatcher: QueueWatcher,
-        preferenceManager: GeneralPreferenceManager
-    ): QueueManager = QueueManager(queueWatcher, preferenceManager)
+    fun provideQueueManager(preferenceManager: GeneralPreferenceManager): QueueManager = QueueManager(preferenceManager)
 
     @Provides
     fun provideQueueOperations(queueManager: QueueManager): QueueOperations = queueManager
@@ -58,10 +49,6 @@ class PlaybackModule {
         sharedPreferences: SharedPreferences,
         moshi: Moshi
     ): PlaybackPreferenceManager = PlaybackPreferenceManager(sharedPreferences, moshi)
-
-    @Singleton
-    @Provides
-    fun providePlaybackWatcher(): PlaybackWatcher = PlaybackWatcher()
 
     @Provides
     fun provideMediaIdHelper(

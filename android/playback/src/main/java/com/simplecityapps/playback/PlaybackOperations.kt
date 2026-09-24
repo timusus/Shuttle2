@@ -9,7 +9,7 @@ interface PlaybackOperations {
     /** The last playback state the active [Playback] reported, or its state when it became active. */
     val playbackStateFlow: StateFlow<PlaybackState>
 
-    /** The last published progress; null until the first. Whether a change came from a user seek stays on the callback. */
+    /** The last published progress; null until the first. A seek is a discontinuity, observed on [positionAnchorFlow]. */
     val progressFlow: StateFlow<PlaybackProgress?>
 
     /** Where playback was at the last discontinuity, for consumers that extrapolate position between anchors. */

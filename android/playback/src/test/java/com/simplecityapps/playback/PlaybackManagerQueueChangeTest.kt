@@ -4,7 +4,6 @@ import com.simplecityapps.playback.fakes.FakePlayback
 import com.simplecityapps.playback.fakes.FakeSharedPreferences
 import com.simplecityapps.playback.fakes.testPlaybackManager
 import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
@@ -24,8 +23,7 @@ import org.junit.Test
  */
 class PlaybackManagerQueueChangeTest {
     private val events = mutableListOf<String>()
-    private val queueWatcher = QueueWatcher()
-    private val queueManager = QueueManager(queueWatcher, GeneralPreferenceManager(FakeSharedPreferences()))
+    private val queueManager = QueueManager(GeneralPreferenceManager(FakeSharedPreferences()))
     private val playback = FakePlayback("A", events = events)
 
     private lateinit var playbackManager: PlaybackManager
@@ -34,7 +32,6 @@ class PlaybackManagerQueueChangeTest {
     fun setUp() {
         playbackManager = testPlaybackManager(
             exoplayerPlayback = playback,
-            queueWatcher = queueWatcher,
             queueManager = queueManager
         )
         runBlocking { queueManager.setQueue((1L..3L).map { createSong(it) }) }
@@ -67,13 +64,12 @@ class PlaybackManagerQueueChangeTest {
 
     @Test
     fun `a repeat mode set before the manager is built is applied once, not handled as a change`() {
-        val queueWatcher = QueueWatcher()
-        val queueManager = QueueManager(queueWatcher, GeneralPreferenceManager(FakeSharedPreferences()))
+        val queueManager = QueueManager(GeneralPreferenceManager(FakeSharedPreferences()))
         queueManager.setRepeatMode(QueueManager.RepeatMode.All)
         runBlocking { queueManager.setShuffleMode(QueueManager.ShuffleMode.On, reshuffle = false) }
         val events = mutableListOf<String>()
 
-        testPlaybackManager(exoplayerPlayback = FakePlayback("B", events = events), queueWatcher = queueWatcher, queueManager = queueManager)
+        testPlaybackManager(exoplayerPlayback = FakePlayback("B", events = events), queueManager = queueManager)
 
         events shouldBe listOf("B setRepeatMode All")
     }

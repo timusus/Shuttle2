@@ -6,7 +6,6 @@ import com.simplecityapps.playback.fakes.testPlaybackManager
 import com.simplecityapps.playback.fakes.testSong
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import com.squareup.moshi.Moshi
 import io.kotest.matchers.shouldBe
@@ -23,17 +22,13 @@ import org.junit.Test
  * current song and that position are then published on [PlaybackManager.pausePositionFlow].
  */
 class PlaybackManagerPausePositionTest {
-    private val queueWatcher = QueueWatcher()
-    private val queueManager = QueueManager(queueWatcher, GeneralPreferenceManager(FakeSharedPreferences()))
-    private val playbackWatcher = PlaybackWatcher()
+    private val queueManager = QueueManager(GeneralPreferenceManager(FakeSharedPreferences()))
     private val preferences = PlaybackPreferenceManager(FakeSharedPreferences(), Moshi.Builder().build())
     private val playback = FakePlayback("A")
     private val playbackManager =
         testPlaybackManager(
             exoplayerPlayback = playback,
-            queueWatcher = queueWatcher,
             queueManager = queueManager,
-            playbackWatcher = playbackWatcher,
             playbackPreferenceManager = preferences
         )
 
@@ -71,23 +66,6 @@ class PlaybackManagerPausePositionTest {
         playbackManager.onPlaybackStateChanged(PlaybackState.Paused)
 
         preferences.playbackPosition shouldBe null
-    }
-
-    @Test
-    fun `the position is saved before the playback watcher hears of the pause`() {
-        playback.progressMs = 42_000
-        val savedWhenDispatched = mutableListOf<Int?>()
-        playbackWatcher.addCallback(
-            object : PlaybackWatcherCallback {
-                override fun onPlaybackStateChanged(playbackState: PlaybackState) {
-                    savedWhenDispatched += preferences.playbackPosition
-                }
-            }
-        )
-
-        playbackManager.onPlaybackStateChanged(PlaybackState.Paused)
-
-        savedWhenDispatched shouldBe listOf(42_000)
     }
 
     @Test

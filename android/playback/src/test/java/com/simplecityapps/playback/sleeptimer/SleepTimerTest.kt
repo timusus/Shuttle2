@@ -5,7 +5,6 @@ import com.simplecityapps.playback.fakes.FakeSharedPreferences
 import com.simplecityapps.playback.fakes.testPlaybackManager
 import com.simplecityapps.playback.fakes.testSong
 import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -24,10 +23,9 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class SleepTimerTest {
     private val events = mutableListOf<String>()
-    private val queueWatcher = QueueWatcher()
-    private val queueManager = QueueManager(queueWatcher, GeneralPreferenceManager(FakeSharedPreferences()))
+    private val queueManager = QueueManager(GeneralPreferenceManager(FakeSharedPreferences()))
     private val playbackManager =
-        testPlaybackManager(exoplayerPlayback = FakePlayback("A", events = events), queueWatcher = queueWatcher, queueManager = queueManager)
+        testPlaybackManager(exoplayerPlayback = FakePlayback("A", events = events), queueManager = queueManager)
 
     init {
         runBlocking { queueManager.setQueue((1L..5L).map { testSong(it) }) }

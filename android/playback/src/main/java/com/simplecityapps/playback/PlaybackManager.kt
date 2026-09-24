@@ -23,7 +23,6 @@ import timber.log.Timber
 
 class PlaybackManager(
     private val queueManager: QueueManager,
-    private val playbackWatcher: PlaybackWatcher,
     private val audioFocusHelper: AudioFocusHelper,
     private val playbackPreferenceManager: PlaybackPreferenceManager,
     private val audioEffectSessionManager: AudioEffectSessionManager,
@@ -65,19 +64,17 @@ class PlaybackManager(
     private val _playbackStateFlow = MutableStateFlow(playback.playBackState())
 
     /**
-     * The last playback state the active [Playback] reported, set just before
-     * [PlaybackWatcherCallback.onPlaybackStateChanged] is dispatched. Starts at the initial
-     * playback's state, and is reset to the new playback's state on [switchToPlayback], without a
-     * callback, so it never holds a state reported by a playback that is no longer active.
+     * The last playback state the active [Playback] reported. Starts at the initial playback's state,
+     * and is reset to the new playback's state on [switchToPlayback], so it never holds a state
+     * reported by a playback that is no longer active.
      */
     override val playbackStateFlow: StateFlow<PlaybackState> = _playbackStateFlow.asStateFlow()
 
     private val _progressFlow = MutableStateFlow<PlaybackProgress?>(null)
 
     /**
-     * The last published progress, set just before [PlaybackWatcherCallback.onProgressChanged] is
-     * dispatched; null until the first one. Whether a change came from a user seek is an event, so
-     * it stays on the callback.
+     * The last published progress; null until the first one. A seek also republishes
+     * [positionAnchorFlow], which is where a position discontinuity is observed.
      */
     override val progressFlow: StateFlow<PlaybackProgress?> = _progressFlow.asStateFlow()
 
@@ -360,13 +357,12 @@ class PlaybackManager(
             seekedLoad = loadCoordinator.pendingLoad
             queueManager.getCurrentItem()?.song?.duration?.let { duration ->
                 _progressFlow.value = PlaybackProgress(position, duration)
-                playbackWatcher.onProgressChanged(position, duration, fromUser = true)
             }
             return
         }
         playback.seek(position)
         reanchor()
-        updateProgress(fromUser = true)
+        updateProgress()
     }
 
     override suspend fun addToQueue(songs: List<Song>) {
@@ -494,11 +490,10 @@ class PlaybackManager(
         }
     }
 
-    private fun updateProgress(fromUser: Boolean = false) {
+    private fun updateProgress() {
         playback.getProgress()?.let { position ->
             (playback.getDuration() ?: queueManager.getCurrentItem()?.song?.duration)?.let { duration ->
                 _progressFlow.value = PlaybackProgress(position, duration)
-                playbackWatcher.onProgressChanged(position, duration, fromUser)
             }
         }
     }
@@ -533,12 +528,11 @@ class PlaybackManager(
         } else {
             queueManager.getCurrentItem()?.song?.duration?.let { duration ->
                 _progressFlow.value = PlaybackProgress(pending.positionMs, duration)
-                playbackWatcher.onProgressChanged(pending.positionMs, duration, fromUser = false)
             }
         }
     }
 
-    // PlaybackWatcherCallback Implementation
+    // Playback.Callback Implementation
 
     override fun onPlaybackStateChanged(playbackState: PlaybackState) {
         Timber.v("onPlaybackStateChanged(playbackState: $playbackState)")
@@ -547,7 +541,6 @@ class PlaybackManager(
         if (playbackState is PlaybackState.Paused) {
             savePausePosition()
         }
-        playbackWatcher.onPlaybackStateChanged(playbackState)
 
         when (playbackState) {
             is PlaybackState.Loading, PlaybackState.Playing -> {
@@ -585,7 +578,6 @@ class PlaybackManager(
         }
 
         queueManager.getCurrentItem()?.let { currentQueueItem ->
-            playbackWatcher.onTrackEnded(currentQueueItem.song)
             _trackEndedFlow.tryEmit(currentQueueItem.song)
         } ?: Timber.e("onTrackChanged() called, but current queue item is null")
 

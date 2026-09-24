@@ -5,7 +5,6 @@ import com.simplecityapps.fakes.FakePlaybackManager
 import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.fakes.FakeSongRepository
 import com.simplecityapps.playback.PlaybackState
-import com.simplecityapps.playback.queue.QueueChangeCallback.QueueChangeReason
 import com.simplecityapps.playback.queue.QueueItem
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.toQueueItem
@@ -41,7 +40,7 @@ class QueuePresenterTest {
     fun `a queue change rebuilds the list and forces the scroll`() {
         bindWithQueue()
 
-        publish(items + createSong(id = 4).toQueueItem(false), contentChange = QueueChangeReason.Unknown)
+        publish(items + createSong(id = 4).toQueueItem(false), isMove = false)
 
         view.events shouldBe listOf("clear", "data 4", "position 0/4", "scroll 0 forced", "empty false")
     }
@@ -50,7 +49,7 @@ class QueuePresenterTest {
     fun `a move updates the list in place without forcing the scroll`() {
         bindWithQueue()
 
-        publish(listOf(items[0], items[2], items[1]), contentChange = QueueChangeReason.Move)
+        publish(listOf(items[0], items[2], items[1]), isMove = true)
 
         view.events shouldBe listOf("data 3", "position 0/3", "scroll 0", "empty false")
     }
@@ -86,8 +85,8 @@ class QueuePresenterTest {
 
         // The collector doesn't run between these, so it sees only the last: a state whose last change was a move.
         val added = items + createSong(id = 4).toQueueItem(false)
-        publish(added, contentChange = QueueChangeReason.Unknown)
-        publish(listOf(added[0], added[3], added[1], added[2]), contentChange = QueueChangeReason.Move)
+        publish(added, isMove = false)
+        publish(listOf(added[0], added[3], added[1], added[2]), isMove = true)
         dispatcher.scheduler.advanceUntilIdle()
 
         view.events shouldBe listOf("clear", "data 4", "position 0/4", "scroll 0 forced", "empty false")
@@ -101,14 +100,14 @@ class QueuePresenterTest {
 
     private fun publish(
         newItems: List<QueueItem>,
-        contentChange: QueueChangeReason
+        isMove: Boolean
     ) {
         val state = queueManager.queueStateFlow.value
         queueManager.queueStateFlow.value =
             state.copy(
                 items = newItems,
                 contentVersion = state.contentVersion + 1,
-                nonMoveContentVersion = if (contentChange == QueueChangeReason.Move) state.nonMoveContentVersion else state.nonMoveContentVersion + 1
+                nonMoveContentVersion = if (isMove) state.nonMoveContentVersion else state.nonMoveContentVersion + 1
             )
     }
 

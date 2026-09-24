@@ -8,7 +8,6 @@ import com.simplecityapps.playback.AudioEffectSessionManager
 import com.simplecityapps.playback.Playback
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackOperations
-import com.simplecityapps.playback.PlaybackWatcher
 import com.simplecityapps.playback.ProgressTicker
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
 import com.simplecityapps.playback.audiofocus.AudioFocusHelperApi21
@@ -108,13 +107,12 @@ class PlaybackEngineModule {
     fun providePlaybackManager(
         queueManager: QueueManager,
         playback: Playback,
-        playbackWatcher: PlaybackWatcher,
         audioFocusHelper: AudioFocusHelper,
         playbackPreferenceManager: PlaybackPreferenceManager,
         audioEffectSessionManager: AudioEffectSessionManager,
         @AppCoroutineScope coroutineScope: CoroutineScope,
         audioManager: AudioManager?
-    ): PlaybackManager = PlaybackManager(queueManager, playbackWatcher, audioFocusHelper, playbackPreferenceManager, audioEffectSessionManager, coroutineScope, ProgressTicker(coroutineScope), playback, audioManager)
+    ): PlaybackManager = PlaybackManager(queueManager, audioFocusHelper, playbackPreferenceManager, audioEffectSessionManager, coroutineScope, ProgressTicker(coroutineScope), playback, audioManager)
 
     @Provides
     fun providePlaybackOperations(playbackManager: PlaybackManager): PlaybackOperations = playbackManager

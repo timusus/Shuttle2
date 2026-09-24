@@ -3,7 +3,6 @@ package com.simplecityapps.playback.mediasession
 import com.simplecityapps.playback.fakes.FakeSharedPreferences
 import com.simplecityapps.playback.fakes.testSong
 import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
@@ -19,7 +18,7 @@ import org.junit.Test
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class SessionQueueUpdatesTest {
-    private val queueManager = QueueManager(QueueWatcher(), GeneralPreferenceManager(FakeSharedPreferences()))
+    private val queueManager = QueueManager(GeneralPreferenceManager(FakeSharedPreferences()))
 
     private val events = mutableListOf<String>()
 

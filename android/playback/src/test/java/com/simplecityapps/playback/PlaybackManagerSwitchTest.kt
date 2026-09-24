@@ -5,7 +5,6 @@ import com.simplecityapps.playback.fakes.FakeSharedPreferences
 import com.simplecityapps.playback.fakes.testPlaybackManager
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
@@ -25,8 +24,7 @@ import org.junit.Test
 class PlaybackManagerSwitchTest {
     private val events = mutableListOf<String>()
     private val playbackPreferences = FakeSharedPreferences()
-    private val queueWatcher = QueueWatcher()
-    private val queueManager = QueueManager(queueWatcher, GeneralPreferenceManager(FakeSharedPreferences()))
+    private val queueManager = QueueManager(GeneralPreferenceManager(FakeSharedPreferences()))
     private val playbackPreferenceManager = PlaybackPreferenceManager(playbackPreferences, Moshi.Builder().build())
     private val audioEffectSessionManager = AudioEffectSessionManager(openSession = {}, closeSession = {})
 
@@ -41,7 +39,6 @@ class PlaybackManagerSwitchTest {
         playbackManager =
             testPlaybackManager(
                 queueManager = queueManager,
-                queueWatcher = queueWatcher,
                 playbackPreferenceManager = playbackPreferenceManager,
                 audioEffectSessionManager = audioEffectSessionManager,
                 exoplayerPlayback = playbackA

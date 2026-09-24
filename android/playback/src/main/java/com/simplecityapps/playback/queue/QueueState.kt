@@ -16,12 +16,11 @@ package com.simplecityapps.playback.queue
  * any of those changes was something other than a move, and [isRestored] marks the restore. The versions
  * are counters rather than a record of the last change, so they stay correct when changes are merged.
  *
- * @param contentVersion bumped on every [QueueChangeCallback.onQueueChanged] dispatch, so it moves
- * whenever the items were added, removed, moved or replaced, but not when only the position did.
- * @param nonMoveContentVersion bumped on every [QueueChangeCallback.onQueueChanged] dispatch whose reason
- * isn't [QueueChangeCallback.QueueChangeReason.Move], so it moves unless every change since was a move.
- * @param isRestored mirrors [QueueOperations.hasRestoredQueue]; its switch to true is
- * [QueueChangeCallback.onQueueRestored].
+ * @param contentVersion bumped on every change to the items, so it moves whenever they were added,
+ * removed, moved or replaced, but not when only the position did.
+ * @param nonMoveContentVersion bumped on every change to the items other than a [QueueManager.move],
+ * so it moves unless every change since was a move.
+ * @param isRestored mirrors [QueueOperations.hasRestoredQueue]; its switch to true is the restore.
  * @param shuffleMode the shuffle mode [items] are presented in. Unlike [QueueManager.shuffleModeFlow],
  * which changes before a reshuffle, a snapshot only carries a new shuffle mode once its list is ready,
  * so a collector acting on the order of the queue sees the two change together.

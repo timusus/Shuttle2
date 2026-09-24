@@ -10,7 +10,6 @@ import com.simplecityapps.playback.fakes.FakePlayerFactory
 import com.simplecityapps.playback.fakes.FakeSharedPreferences
 import com.simplecityapps.playback.fakes.testPlaybackManager
 import com.simplecityapps.playback.queue.QueueManager
-import com.simplecityapps.playback.queue.QueueWatcher
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
@@ -26,8 +25,7 @@ import org.junit.Test
  */
 class PlaybackManagerAudioFocusTest {
     private val events = mutableListOf<String>()
-    private val queueWatcher = QueueWatcher()
-    private val queueManager = QueueManager(queueWatcher, GeneralPreferenceManager(FakeSharedPreferences()))
+    private val queueManager = QueueManager(GeneralPreferenceManager(FakeSharedPreferences()))
     private val playback = FakePlayback("A", events = events)
     private val audioFocusHelper = FakeAudioFocusHelper()
 
@@ -37,7 +35,6 @@ class PlaybackManagerAudioFocusTest {
     fun setUp() {
         playbackManager = testPlaybackManager(
             exoplayerPlayback = playback,
-            queueWatcher = queueWatcher,
             queueManager = queueManager,
             audioFocusHelper = audioFocusHelper
         )
@@ -114,13 +111,11 @@ class PlaybackManagerAudioFocusTest {
                 mediaResolver = { song -> ResolvedMedia(uri = song.path, mimeType = song.mimeType, isRemote = false) }
             )
         val remotePlayback = FakePlayback("Remote", events = events)
-        val localQueueWatcher = QueueWatcher()
-        val localQueueManager = QueueManager(localQueueWatcher, GeneralPreferenceManager(FakeSharedPreferences()))
+        val localQueueManager = QueueManager(GeneralPreferenceManager(FakeSharedPreferences()))
         val localFocusHelper = FakeAudioFocusHelper()
         val manager =
             testPlaybackManager(
                 exoplayerPlayback = localPlayback,
-                queueWatcher = localQueueWatcher,
                 queueManager = localQueueManager,
                 audioFocusHelper = localFocusHelper
             )
