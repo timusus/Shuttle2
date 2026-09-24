@@ -16,6 +16,7 @@ class M3uWriter {
      * song (moved, unscanned, or a remote URL) and so aren't tracked as playlist songs - they're
      * reinserted verbatim, keyed by the id of the song they should follow (`null` = before the
      * first song), so `LocalPlaylistRepository.syncM3uFile` doesn't silently drop them on rewrite.
+     * Each anchor's entries are written once, after the first occurrence of that song.
      */
     fun write(
         songs: List<Song>,
@@ -25,8 +26,10 @@ class M3uWriter {
         builder.appendLine("#EXTM3U")
         builder.appendLine()
 
+        val remaining = preservedEntries.toMutableMap()
+
         fun appendPreserved(anchor: Long?) {
-            preservedEntries[anchor]?.forEach { entry ->
+            remaining.remove(anchor)?.forEach { entry ->
                 entry.rawLines.forEach { builder.appendLine(it) }
                 builder.appendLine()
             }

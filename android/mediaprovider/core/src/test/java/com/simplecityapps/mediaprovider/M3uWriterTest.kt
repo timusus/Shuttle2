@@ -1,5 +1,6 @@
 package com.simplecityapps.mediaprovider
 
+import com.simplecityapps.shuttle.model.Entry
 import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.shouldBe
@@ -55,6 +56,16 @@ class M3uWriterTest {
         )
 
         parsed.entries.map { it.location } shouldBe listOf("/music/song1.mp3", "/music/song2.mp3")
+    }
+
+    @Test
+    fun `preserved entries anchored to a repeated song are written once`() {
+        val song = createSong(name = "Test Song", artist = "Test Artist", duration = 180_000, path = "/music/test.mp3")
+        val unresolved = Entry(location = "/moved/gone.mp3", duration = null, artist = null, track = null, rawLines = listOf("/moved/gone.mp3"))
+
+        val result = m3uWriter.write(listOf(song, song), preservedEntries = mapOf(song.id to listOf(unresolved)))
+
+        result.split("/moved/gone.mp3").size - 1 shouldBe 1
     }
 
     private fun createSong(
