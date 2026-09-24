@@ -28,6 +28,10 @@
     {
       "text": "Songs you play from Jellyfin, Emby or Plex now show in your server's now playing and count towards its play history, so scrobbling plugins can pick them up. You can turn this off in Media settings",
       "commits": []
+    },
+    {
+      "text": "Added a fast scrollbar to the Playlists tab, matching the other library tabs",
+      "commits": []
     }
   ],
   "improvements": [

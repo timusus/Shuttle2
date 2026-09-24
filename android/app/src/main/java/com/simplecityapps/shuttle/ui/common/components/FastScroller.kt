@@ -297,6 +297,9 @@ fun DefaultPopup(
 @Composable
 fun NoPopup(index: Int) = Unit
 
+/** Pass this to the getPopupText parameter in FastScroller when using [NoPopup]. */
+fun noPopupText(index: Int): String? = null
+
 @Preview(showBackground = true)
 @Composable
 private fun FastScrollPreview() {
