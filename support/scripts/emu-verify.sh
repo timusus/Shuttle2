@@ -6,15 +6,20 @@
 # chance to skip a step or forget `stop`.
 #
 #   support/scripts/emu-verify.sh [--check <name>]... [--flow <path.yaml>]... [--apk <path>]
-#                                  [--no-seed] [--keep]
+#                                  [--no-seed] [--remote <jellyfin|emby|plex>] [--keep]
 #
 #     --check <name>   run support/scripts/checks/<name>.sh (repeatable)
 #     --flow <path>    run a Maestro flow directly via `maestro test` (repeatable)
 #     --apk <path>     install this APK instead of building/reusing the cached one
 #     --no-seed        skip seed-test-media.sh (media/app state already set up)
+#     --remote <server>  sign in and import from a seeded jellyfin/emby/plex server
+#                         (support/scripts/seed-remote-provider.sh) instead of seeding local
+#                         media, and export S2_REMOTE=<server> so remote checks run instead of
+#                         SKIPping
 #     --keep           leave the lane running instead of stopping it at the end
 #
-#   With neither --check nor --flow given, runs support/scripts/checks/run-all.sh (the full suite).
+#   With neither --check nor --flow given: runs support/scripts/checks/run-all.sh (the full local
+#   suite), or with --remote, just the remote checks (remote-reporting, remote-playback).
 #
 # APK: --apk wins; else /tmp/s2-apk/<HEAD sha>.apk is reused if present and the tree is clean;
 # else `assembleDebug` runs once (foreground, quiet) and the result is cached there.
@@ -35,6 +40,7 @@ CHECKS=()
 FLOWS=()
 APK=""
 NO_SEED=0
+REMOTE=""
 KEEP=0
 
 while [ $# -gt 0 ]; do
@@ -43,11 +49,17 @@ while [ $# -gt 0 ]; do
         --flow) FLOWS+=("${2:?emu-verify: --flow needs a path}"); shift 2 ;;
         --apk) APK="${2:?emu-verify: --apk needs a path}"; shift 2 ;;
         --no-seed) NO_SEED=1; shift ;;
+        --remote) REMOTE="${2:?emu-verify: --remote needs jellyfin, emby or plex}"; shift 2 ;;
         --keep) KEEP=1; shift ;;
         -h|--help) usage; exit 0 ;;
         *) echo "emu-verify: unknown argument '$1'" >&2; usage >&2; exit 2 ;;
     esac
 done
+
+case "$REMOTE" in
+    "" | jellyfin | emby | plex) ;;
+    *) echo "emu-verify: --remote must be jellyfin, emby or plex" >&2; exit 2 ;;
+esac
 
 mkdir -p tmp/emu-verify
 LOG="${REPO_ROOT}/tmp/emu-verify/run-$(date +%Y%m%d-%H%M%S)-$$.log"
@@ -126,7 +138,10 @@ step "remote-emu: reset" support/scripts/remote-emu.sh reset || exit 1
 step "remote-emu: install" support/scripts/remote-emu.sh install "$APK" || exit 1
 step "remote-emu: ui-prep" support/scripts/remote-emu.sh ui-prep || exit 1
 
-if [ "$NO_SEED" = "1" ]; then
+if [ -n "$REMOTE" ]; then
+    step "seed-remote-provider: $REMOTE" support/scripts/seed-remote-provider.sh "$REMOTE" || exit 1
+    export S2_REMOTE="$REMOTE"
+elif [ "$NO_SEED" = "1" ]; then
     echo "emu-verify: --no-seed set, skipping seed-test-media.sh"
 else
     step "seed-test-media: playback fixture" support/scripts/seed-test-media.sh playback --skip-onboarding || exit 1
@@ -166,7 +181,12 @@ run_flow() {
     fi
 }
 
-if [ "${#CHECKS[@]}" -eq 0 ] && [ "${#FLOWS[@]}" -eq 0 ]; then
+if [ "${#CHECKS[@]}" -eq 0 ] && [ "${#FLOWS[@]}" -eq 0 ] && [ -n "$REMOTE" ]; then
+    echo "emu-verify: --remote set, running remote checks only"
+    for name in remote-reporting remote-playback; do
+        run_check "$name"
+    done
+elif [ "${#CHECKS[@]}" -eq 0 ] && [ "${#FLOWS[@]}" -eq 0 ]; then
     echo "emu-verify: running support/scripts/checks/run-all.sh"
     if ! support/scripts/checks/run-all.sh 2>&1 | tee -a "$LOG"; then
         FAILED=$((FAILED + 1))

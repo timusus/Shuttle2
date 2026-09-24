@@ -5,7 +5,7 @@
 # SKIPs under run-all.sh; run it after `remote-emu.sh reset`, `install` and
 # `support/scripts/seed-remote-provider.sh <server>`:
 #
-#   support/scripts/checks/remote-reporting.sh jellyfin|emby|plex
+#   support/scripts/checks/remote-reporting.sh [jellyfin|emby|plex]   # or via emu-verify.sh --remote
 #
 # Plays only the seeded "S2 Transcode Test" album, never the rest of the server's library, and on
 # exit (pass or fail) pauses playback and marks every track on that album unplayed again, so the
@@ -13,9 +13,12 @@
 #
 # Jellyfin/Emby play counts aren't asserted: the seed signs in with the server's API key, which has
 # no user (#340), so its sessions never count towards a user's plays.
+#
+# With no argument, falls back to $S2_REMOTE -- set by `emu-verify.sh --remote <server>` -- so it
+# runs under that instead of SKIPping; a plain `run-all.sh` still SKIPs since S2_REMOTE is unset.
 source "$(dirname "$0")/_lib.sh"
 
-server="${1:-}"
+server="${1:-${S2_REMOTE:-}}"
 case "$server" in
     jellyfin | emby | plex) ;;
     "")
