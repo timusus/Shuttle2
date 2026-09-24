@@ -7,5 +7,11 @@ import java.io.Serializable
 @JsonClass(generateAdapter = true)
 data class User(
     @Json(name = "Id") val id: String,
-    @Json(name = "Name") val name: String
+    @Json(name = "Name") val name: String,
+    @Json(name = "Policy") val policy: Policy? = null
+) : Serializable
+
+@JsonClass(generateAdapter = true)
+data class Policy(
+    @Json(name = "EnableContentDownloading") val enableContentDownloading: Boolean = false
 ) : Serializable

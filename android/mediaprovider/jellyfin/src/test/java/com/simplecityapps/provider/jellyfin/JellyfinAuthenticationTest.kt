@@ -14,6 +14,7 @@ import org.junit.Test
 /** Jellyfin 12 only accepts the `MediaBrowser ... Token=` header and the `ApiKey=` query param (#308). */
 class JellyfinAuthenticationTest {
     private val credentials = AuthenticatedCredentials(accessToken = "token123", userId = "user456")
+    private val downloadableCredentials = AuthenticatedCredentials(accessToken = "token123", userId = "user456", canDownload = true)
 
     private val authenticationManager = JellyfinAuthenticationManager(
         userService = object : UserService {
@@ -51,5 +52,19 @@ class JellyfinAuthenticationTest {
         path shouldContain "&ApiKey=token123"
         path shouldNotContain "api_key"
         path shouldContain "http://jellyfin.local:8096/Audio/item789/universal?UserId=user456"
+    }
+
+    @Test
+    fun `download url prefers the Download endpoint when the user can download`() {
+        val path = authenticationManager.buildDownloadPath("item789", downloadableCredentials)!!
+
+        path shouldBe "http://jellyfin.local:8096/Items/item789/Download?ApiKey=token123"
+    }
+
+    @Test
+    fun `download url falls back to the static stream when the user can't download`() {
+        val path = authenticationManager.buildDownloadPath("item789", credentials)!!
+
+        path shouldBe "http://jellyfin.local:8096/Audio/item789/stream?static=true&ApiKey=token123"
     }
 }

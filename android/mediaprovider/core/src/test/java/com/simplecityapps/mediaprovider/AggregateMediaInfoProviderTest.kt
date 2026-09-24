@@ -19,6 +19,8 @@ class AggregateMediaInfoProviderTest {
             song: Song,
             castCompatibilityMode: Boolean
         ): MediaInfo = MediaInfo(Uri.parse("https://$scheme.example/stream"), song.mimeType, isRemote = true)
+
+        override suspend fun downloadUri(song: Song): Uri = Uri.parse("https://$scheme.example/download")
     }
 
     private val provider = AggregateMediaInfoProvider(
@@ -49,6 +51,16 @@ class AggregateMediaInfoProviderTest {
         val path = "content://com.android.externalstorage.documents/document/primary%3AMusic%2Fa.flac"
 
         provider.getMediaInfo(createSong(path)).path.toString() shouldBe path
+    }
+
+    @Test
+    fun `download uri reaches the provider for its scheme`() = runTest {
+        provider.downloadUri(createSong("jellyfin://item/107898")).toString() shouldBe "https://jellyfin.example/download"
+    }
+
+    @Test
+    fun `local songs have no download uri`() = runTest {
+        provider.downloadUri(createSong("/storage/emulated/0/Music/Track #1.mp3")) shouldBe null
     }
 
     private fun createSong(path: String) = Song(

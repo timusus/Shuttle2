@@ -22,13 +22,14 @@ class CredentialStore(private val securePreferenceManager: SecurePreferenceManag
         get() {
             return securePreferenceManager.jellyfinAccessToken?.let { accessToken ->
                 securePreferenceManager.jellyfinUserId?.let { userId ->
-                    AuthenticatedCredentials(accessToken, userId)
+                    AuthenticatedCredentials(accessToken, userId, securePreferenceManager.jellyfinCanDownload)
                 }
             }
         }
         set(value) {
             securePreferenceManager.jellyfinAccessToken = value?.accessToken
             securePreferenceManager.jellyfinUserId = value?.userId
+            securePreferenceManager.jellyfinCanDownload = value?.canDownload ?: false
         }
 
     var address: String?

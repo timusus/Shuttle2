@@ -81,5 +81,7 @@ class PlayerItemMappingTest {
             song: Song,
             castCompatibilityMode: Boolean
         ): MediaInfo = mediaInfo
+
+        override suspend fun downloadUri(song: Song): Uri? = mediaInfo.path
     }
 }

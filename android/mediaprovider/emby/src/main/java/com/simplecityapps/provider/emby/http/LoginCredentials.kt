@@ -14,5 +14,7 @@ data class LoginCredentials(
 
 class AuthenticatedCredentials(
     val accessToken: String,
-    val userId: String
+    val userId: String,
+    /** The user's `Policy.EnableContentDownloading`, captured at sign-in; chooses the download URL. */
+    val canDownload: Boolean = false
 )

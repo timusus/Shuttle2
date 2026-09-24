@@ -46,7 +46,11 @@ class EmbyAuthenticationManager(
 
         return when (authenticationResult) {
             is NetworkResult.Success<AuthenticationResult> -> {
-                val authenticatedCredentials = AuthenticatedCredentials(authenticationResult.body.accessToken, authenticationResult.body.user.id)
+                val authenticatedCredentials = AuthenticatedCredentials(
+                    accessToken = authenticationResult.body.accessToken,
+                    userId = authenticationResult.body.user.id,
+                    canDownload = authenticationResult.body.user.policy?.enableContentDownloading ?: false
+                )
                 credentialStore.authenticatedCredentials = authenticatedCredentials
                 Result.success(authenticatedCredentials)
             }
@@ -85,5 +89,27 @@ class EmbyAuthenticationManager(
             "&EnableRemoteMedia=true" +
             "&AudioCodec=aac" +
             "&api_key=${authenticatedCredentials.accessToken}"
+    }
+
+    /**
+     * The URL for the original, non-transcoded file, for offline download. Prefers
+     * `/Items/{id}/Download`, which needs the user's `EnableContentDownloading` permission
+     * (captured at sign-in); falls back to the static (untranscoded) `/Audio/{id}/stream` for
+     * users without it.
+     */
+    fun buildDownloadPath(
+        itemId: String,
+        authenticatedCredentials: AuthenticatedCredentials
+    ): String? {
+        if (credentialStore.address == null) {
+            Timber.w("Invalid emby address")
+            return null
+        }
+
+        return if (authenticatedCredentials.canDownload) {
+            "${credentialStore.address}/emby/Items/$itemId/Download?api_key=${authenticatedCredentials.accessToken}"
+        } else {
+            "${credentialStore.address}/emby/Audio/$itemId/stream?static=true&api_key=${authenticatedCredentials.accessToken}"
+        }
     }
 }

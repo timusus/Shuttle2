@@ -45,6 +45,14 @@ class SecurePreferenceManager(private val sharedPreferences: SharedPreferences) 
             return sharedPreferences.getString("emby_address", null)
         }
 
+    var embyCanDownload: Boolean
+        set(value) {
+            sharedPreferences.put("emby_can_download", value)
+        }
+        get() {
+            return sharedPreferences.getBoolean("emby_can_download", false)
+        }
+
     // Jellyfin
 
     var jellyfinUserName: String?
@@ -85,6 +93,14 @@ class SecurePreferenceManager(private val sharedPreferences: SharedPreferences) 
         }
         get() {
             return sharedPreferences.getString("jellyfin_address", null)
+        }
+
+    var jellyfinCanDownload: Boolean
+        set(value) {
+            sharedPreferences.put("jellyfin_can_download", value)
+        }
+        get() {
+            return sharedPreferences.getBoolean("jellyfin_can_download", false)
         }
 
     // Plex

@@ -22,13 +22,14 @@ class CredentialStore(private val securePreferenceManager: SecurePreferenceManag
         get() {
             return securePreferenceManager.embyAccessToken?.let { accessToken ->
                 securePreferenceManager.embyUserId?.let { userId ->
-                    AuthenticatedCredentials(accessToken, userId)
+                    AuthenticatedCredentials(accessToken, userId, securePreferenceManager.embyCanDownload)
                 }
             }
         }
         set(value) {
             securePreferenceManager.embyAccessToken = value?.accessToken
             securePreferenceManager.embyUserId = value?.userId
+            securePreferenceManager.embyCanDownload = value?.canDownload ?: false
         }
 
     var address: String?

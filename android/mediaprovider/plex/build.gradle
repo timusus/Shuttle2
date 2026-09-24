@@ -50,4 +50,6 @@ dependencies {
 
     testImplementation libs.junit
     testImplementation libs.kotest
+    testImplementation libs.kotlinx.coroutinesTest
+    testImplementation libs.robolectric
 }

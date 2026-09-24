@@ -51,4 +51,10 @@ constructor(
             defaultMimeType
         }
     }
+
+    override suspend fun downloadUri(song: Song): Uri? {
+        val authenticatedCredentials = embyAuthenticationManager.getAuthenticatedCredentials() ?: return null
+        val itemId = Uri.parse(song.path).pathSegments.last()
+        return embyAuthenticationManager.buildDownloadPath(itemId, authenticatedCredentials)?.toUri()
+    }
 }

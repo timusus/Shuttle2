@@ -37,4 +37,11 @@ constructor(
             isRemote = true
         )
     }
+
+    // Plex's part-file path (song.externalId) is already the original, untranscoded file, so the
+    // download URL is the same one used for streaming.
+    override suspend fun downloadUri(song: Song): Uri? {
+        val authenticatedCredentials = plexAuthenticationManager.getAuthenticatedCredentials() ?: return null
+        return plexAuthenticationManager.buildPlexPath(song = song, authenticatedCredentials = authenticatedCredentials)?.toUri()
+    }
 }

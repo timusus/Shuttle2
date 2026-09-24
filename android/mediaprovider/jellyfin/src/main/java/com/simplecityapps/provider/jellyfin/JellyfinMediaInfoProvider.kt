@@ -51,4 +51,10 @@ constructor(
             defaultMimeType
         }
     }
+
+    override suspend fun downloadUri(song: Song): Uri? {
+        val authenticatedCredentials = jellyfinAuthenticationManager.getAuthenticatedCredentials() ?: return null
+        val itemId = Uri.parse(song.path).pathSegments.last()
+        return jellyfinAuthenticationManager.buildDownloadPath(itemId, authenticatedCredentials)?.toUri()
+    }
 }
