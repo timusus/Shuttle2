@@ -7,12 +7,10 @@ import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.updateAll
 import com.simplecityapps.playback.PlaybackOperations
 import com.simplecityapps.playback.PlaybackState
-import com.simplecityapps.playback.PlaybackWatcher
-import com.simplecityapps.playback.PlaybackWatcherCallback
-import com.simplecityapps.playback.queue.QueueChangeCallback
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueOperations
-import com.simplecityapps.playback.queue.QueueWatcher
+import com.simplecityapps.playback.queue.QueueState
+import com.simplecityapps.shuttle.coroutines.launchCollectingChanges
 import com.simplecityapps.shuttle.di.AppCoroutineScope
 import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
@@ -22,12 +20,15 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -35,26 +36,25 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
- * The single path that keeps the home-screen widgets current. Playback and queue callbacks request an update;
- * requests are debounced, and each one writes the shared widget state once and redraws every widget.
+ * The single path that keeps the home-screen widgets current. Playback state, queue, shuffle and repeat changes
+ * request an update; requests are debounced, and each one writes the shared widget state once and redraws every widget.
  */
 @Singleton
 class WidgetManager
 @Inject
 constructor(
     @ApplicationContext private val context: Context,
-    private val playbackWatcher: PlaybackWatcher,
-    private val queueWatcher: QueueWatcher,
     private val playbackManager: PlaybackOperations,
     private val queueManager: QueueOperations,
     private val artworkStore: WidgetArtworkStore,
     private val preferenceManager: GeneralPreferenceManager,
     @AppCoroutineScope private val appCoroutineScope: CoroutineScope
-) : PlaybackWatcherCallback,
-    QueueChangeCallback {
+) {
     private val updateRequests = Channel<Unit>(Channel.CONFLATED)
 
     private var updateJob: Job? = null
+
+    private var changesJob: Job? = null
 
     private var lastConfiguration: Configuration? = null
 
@@ -83,8 +83,17 @@ constructor(
         }
 
     fun registerCallbacks() {
-        playbackWatcher.addCallback(this)
-        queueWatcher.addCallback(this)
+        if (changesJob == null) {
+            changesJob =
+                appCoroutineScope.launchWidgetUpdateRequests(
+                    playbackStateFlow = playbackManager.playbackStateFlow,
+                    queueStateFlow = queueManager.queueStateFlow,
+                    shuffleModeFlow = queueManager.shuffleModeFlow,
+                    repeatModeFlow = queueManager.repeatModeFlow,
+                    context = Dispatchers.Main.immediate,
+                    onChange = ::requestUpdate
+                )
+        }
         if (lastConfiguration == null) {
             lastConfiguration = Configuration(context.resources.configuration)
             context.registerComponentCallbacks(configurationCallbacks)
@@ -103,8 +112,8 @@ constructor(
     }
 
     fun removeCallbacks() {
-        playbackWatcher.removeCallback(this)
-        queueWatcher.removeCallback(this)
+        changesJob?.cancel()
+        changesJob = null
         context.unregisterComponentCallbacks(configurationCallbacks)
         lastConfiguration = null
         updateJob?.cancel()
@@ -174,37 +183,6 @@ constructor(
         NowPlayingWidget().updateAll(context)
     }
 
-    // PlaybackWatcherCallback Implementation
-
-    override fun onPlaybackStateChanged(playbackState: PlaybackState) {
-        requestUpdate()
-    }
-
-    // QueueChangeCallback Implementation
-
-    override fun onQueueChanged(reason: QueueChangeCallback.QueueChangeReason) {
-        requestUpdate()
-    }
-
-    override fun onQueuePositionChanged(
-        oldPosition: Int?,
-        newPosition: Int?
-    ) {
-        requestUpdate()
-    }
-
-    override fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
-        requestUpdate()
-    }
-
-    override fun onRepeatChanged(repeatMode: QueueManager.RepeatMode) {
-        requestUpdate()
-    }
-
-    override fun onQueueRestored() {
-        requestUpdate()
-    }
-
     companion object {
         private const val UPDATE_DEBOUNCE_MS = 150L
         private const val ARTWORK_WAIT_MS = 1000L
@@ -212,6 +190,34 @@ constructor(
 
         /** `ActivityInfo.CONFIG_ASSETS_PATHS`, hidden: set when a theme overlay such as the system palette changes. */
         private const val CONFIG_ASSETS_PATHS = 0x80000000.toInt()
+    }
+}
+
+/**
+ * Calls [onChange] for each change after launch to the playback state, the queue (its contents, current item,
+ * shuffle order or restore), the shuffle mode or the repeat mode. Progress ticks aren't watched: the widget
+ * doesn't show the position.
+ *
+ * Each flow is compared against its value when this is called, so the state the caller is about to draw
+ * from isn't reported as a change, and a change made before collection starts isn't missed.
+ */
+internal fun CoroutineScope.launchWidgetUpdateRequests(
+    playbackStateFlow: StateFlow<PlaybackState>,
+    queueStateFlow: StateFlow<QueueState>,
+    shuffleModeFlow: StateFlow<QueueManager.ShuffleMode>,
+    repeatModeFlow: StateFlow<QueueManager.RepeatMode>,
+    context: CoroutineContext,
+    onChange: () -> Unit
+): Job {
+    val playbackState = playbackStateFlow.value
+    val queueState = queueStateFlow.value
+    val shuffleMode = shuffleModeFlow.value
+    val repeatMode = repeatModeFlow.value
+    return launch(context) {
+        launchCollectingChanges(playbackStateFlow, playbackState) { _, _ -> onChange() }
+        launchCollectingChanges(queueStateFlow, queueState) { _, _ -> onChange() }
+        launchCollectingChanges(shuffleModeFlow, shuffleMode) { _, _ -> onChange() }
+        launchCollectingChanges(repeatModeFlow, repeatMode) { _, _ -> onChange() }
     }
 }
 
