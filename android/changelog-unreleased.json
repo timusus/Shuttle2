@@ -138,6 +138,10 @@
     {
       "text": "Offline downloads from Jellyfin/Emby no longer fail when the server admin disables downloading",
       "commits": []
+    },
+    {
+      "text": "A song no longer loses its selection mark in the Songs list when it starts or stops playing",
+      "commits": []
     }
   ]
 }

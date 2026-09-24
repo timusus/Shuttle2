@@ -154,6 +154,25 @@ class SongListIntegrationTest {
         robot.assertSelectionMarkNotDisplayed()
     }
 
+    @Test
+    fun `selection survives a song mutation like play count changing`() {
+        val song = createSong(id = 1, name = "Keep Selected", playCount = 0)
+        fakeSongRepository.setSongs(listOf(song))
+        fakeImportState.setState(importComplete())
+
+        val viewModel = createViewModel()
+        robot.setContentWithViewModel(viewModel)
+
+        robot.longClick("Keep Selected")
+        robot.assertSelectionMarkDisplayed()
+
+        // Simulate the repository re-emitting the same song with mutated playback metadata,
+        // as happens when it plays/pauses (#224).
+        fakeSongRepository.setSongs(listOf(song.copy(playCount = 1)))
+
+        robot.assertSelectionMarkDisplayed()
+    }
+
     // endregion
 
     private fun createViewModel(
