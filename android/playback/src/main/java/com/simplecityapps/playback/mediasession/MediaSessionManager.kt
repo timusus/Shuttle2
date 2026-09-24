@@ -50,6 +50,7 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import timber.log.Timber
 
 class MediaSessionManager
@@ -194,7 +195,7 @@ constructor(
                 playWhenReady: Boolean,
                 source: String
             ) {
-                queueManager.queueStateFlow.first { queueState -> queueState.isRestored }
+                queueManager.queueStateFlow.awaitRestored()
                 if (queueManager.setQueue(songs = songs, position = position)) {
                     playbackManager.load { result ->
                         result.onSuccess {
@@ -431,6 +432,20 @@ constructor(
 
         /** Optional [Bundle] extra for playFromUri: the MIME type the caller gave for the URI, used when its provider reports none. */
         const val EXTRA_MIME_TYPE = "com.simplecityapps.shuttle.mime_type"
+    }
+}
+
+/** How long a request to play something waits for the saved queue to be restored before going ahead anyway. */
+internal const val RESTORE_WAIT_MS = 10_000L
+
+/**
+ * Waits for the saved queue to be restored, so a request to play something made as the app starts isn't
+ * overwritten by the restore. The restore marks itself done however it ends, but the wait is bounded too, so a
+ * restore that never finishes can't hold every request (including Android Auto's) up for good.
+ */
+internal suspend fun StateFlow<QueueState>.awaitRestored(timeoutMs: Long = RESTORE_WAIT_MS) {
+    if (withTimeoutOrNull(timeoutMs) { first { queueState -> queueState.isRestored } } == null) {
+        Timber.w("The queue wasn't restored within ${timeoutMs}ms; going ahead without it")
     }
 }
 

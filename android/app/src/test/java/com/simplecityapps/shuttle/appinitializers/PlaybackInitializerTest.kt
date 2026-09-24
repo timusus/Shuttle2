@@ -3,6 +3,7 @@ package com.simplecityapps.shuttle.appinitializers
 import android.app.Application
 import android.content.Context
 import com.simplecityapps.createSong
+import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.fakes.FakePlaybackManager
 import com.simplecityapps.fakes.FakeQueueManager
 import com.simplecityapps.fakes.FakeSongRepository
@@ -15,11 +16,15 @@ import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.playback.queue.toQueueItem
+import com.simplecityapps.shuttle.model.Song
 import com.simplecityapps.testing.MainDispatcherRule
 import com.squareup.moshi.Moshi
 import dagger.Lazy
 import io.kotest.matchers.shouldBe
+import io.mockk.every
 import io.mockk.mockk
+import java.util.Collections
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -48,7 +53,12 @@ class PlaybackInitializerTest {
     )
     private val appCoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
-    private val initializer = PlaybackInitializer(
+    private val initializer = createInitializer(songRepository, appCoroutineScope)
+
+    private fun createInitializer(
+        songRepository: SongRepository,
+        appCoroutineScope: CoroutineScope
+    ) = PlaybackInitializer(
         context = application,
         songRepository = songRepository,
         playbackManager = playbackManager,
@@ -273,6 +283,107 @@ class PlaybackInitializerTest {
         songRepository.playCountIncrements.toList() shouldBe emptyList()
     }
 
+    @Test
+    fun `songs not in the library are left out of the saved queue, and the position is found among the rest`() {
+        initializer.init(application)
+
+        publishQueue(listOf(createSong(id = 1), createSong(id = -5), createSong(id = 2), createSong(id = 3)), currentPosition = 2, contentVersion = 1)
+
+        preferences.queueIds shouldBe "1,2,3"
+        preferences.shuffleQueueIds shouldBe "1,2,3"
+        preferences.queuePosition shouldBe 1
+        preferences.restoreQueuePositionFromStart shouldBe false
+    }
+
+    @Test
+    fun `while an opened file plays, the saved position is the library song after it, from the start`() {
+        initializer.init(application)
+
+        publishQueue(listOf(createSong(id = 1), createSong(id = -5), createSong(id = 2)), currentPosition = 1, contentVersion = 1)
+        preferences.queuePosition shouldBe 1
+        preferences.restoreQueuePositionFromStart shouldBe true
+
+        // With no library song after it, the one before.
+        publishQueue(listOf(createSong(id = 1), createSong(id = -5)), currentPosition = 1, contentVersion = 2)
+        preferences.queueIds shouldBe "1"
+        preferences.queuePosition shouldBe 0
+        preferences.restoreQueuePositionFromStart shouldBe true
+
+        // On its own, there's nothing to save.
+        publishQueue(listOf(createSong(id = -5)), currentPosition = 0, contentVersion = 3)
+        preferences.queueIds shouldBe null
+        preferences.queuePosition shouldBe null
+    }
+
+    @Test
+    fun `a restore drops songs no longer in the library and keeps the position on the saved song`() {
+        songRepository.applyQueryPredicates = true
+        songRepository.setSongs(listOf(createSong(id = 1), createSong(id = 3), createSong(id = 4)))
+        preferences.queueIds = "1,2,3,1,4"
+        preferences.queuePosition = 4
+        preferences.playbackPosition = 30_000
+
+        initializer.init(application)
+
+        awaitUntil { queueManager.hasRestoredQueue }
+        queueManager.lastSetQueue?.map { song -> song.id } shouldBe listOf(1L, 3L, 1L, 4L)
+        queueManager.lastSetQueuePosition shouldBe 3
+        playbackManager.loadedPositions shouldBe listOf(30_000)
+    }
+
+    @Test
+    fun `a restore whose saved song is gone starts the next one from the beginning`() {
+        songRepository.applyQueryPredicates = true
+        songRepository.setSongs(listOf(createSong(id = 1), createSong(id = 3)))
+        preferences.queueIds = "1,2,3"
+        preferences.queuePosition = 1
+        preferences.playbackPosition = 30_000
+
+        initializer.init(application)
+
+        awaitUntil { queueManager.hasRestoredQueue }
+        queueManager.lastSetQueuePosition shouldBe 1
+        playbackManager.loadedPositions shouldBe listOf(0)
+        preferences.playbackPosition shouldBe 0
+    }
+
+    @Test
+    fun `a restore saved while an opened file played starts the saved song from the beginning`() {
+        songRepository.applyQueryPredicates = true
+        songRepository.setSongs(songs)
+        preferences.queueIds = "1,2,3"
+        preferences.queuePosition = 1
+        preferences.restoreQueuePositionFromStart = true
+        preferences.playbackPosition = 30_000
+
+        initializer.init(application)
+
+        awaitUntil { queueManager.hasRestoredQueue }
+        queueManager.lastSetQueuePosition shouldBe 1
+        playbackManager.loadedPositions shouldBe listOf(0)
+    }
+
+    @Test
+    fun `a restore that throws still marks the queue restored, so requests waiting on it go ahead`() {
+        val failures = Collections.synchronizedList(mutableListOf<Throwable>())
+        val failingScope = CoroutineScope(SupervisorJob() + Dispatchers.Main + CoroutineExceptionHandler { _, error -> failures += error })
+        val failingRepository = mockk<SongRepository> {
+            every { getSongs(any()) } throws IllegalStateException("database unavailable")
+        }
+        preferences.queueIds = "1,2,3"
+        preferences.queuePosition = 0
+
+        try {
+            createInitializer(failingRepository, failingScope).init(application)
+
+            awaitUntil { queueManager.hasRestoredQueue }
+            awaitUntil { failures.isNotEmpty() }
+            failures.single().message shouldBe "database unavailable"
+        } finally {
+            failingScope.cancel()
+        }
+    }
+
     /** Waits for a write the initializer hands off to [kotlinx.coroutines.Dispatchers.IO]. */
     private fun awaitUntil(condition: () -> Boolean) {
         val deadline = System.currentTimeMillis() + 5_000
@@ -283,6 +394,12 @@ class PlaybackInitializerTest {
     }
 
     private fun publishQueue(
+        currentPosition: Int,
+        contentVersion: Long
+    ) = publishQueue(songs, currentPosition, contentVersion)
+
+    private fun publishQueue(
+        songs: List<Song>,
         currentPosition: Int,
         contentVersion: Long
     ) {

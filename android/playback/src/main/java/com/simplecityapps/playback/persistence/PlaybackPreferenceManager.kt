@@ -52,6 +52,19 @@ class PlaybackPreferenceManager(
             return if (queuePosition == -1) null else queuePosition
         }
 
+    /**
+     * True when the saved [queuePosition] doesn't name the song that was playing (a file opened from another
+     * app, which isn't saved with the queue), so [playbackPosition] isn't its position and a restore starts
+     * the song from the beginning.
+     */
+    var restoreQueuePositionFromStart: Boolean
+        set(value) {
+            sharedPreferences.put("restore_queue_position_from_start", value)
+        }
+        get() {
+            return sharedPreferences.get("restore_queue_position_from_start", false)
+        }
+
     var playbackPosition: Int?
         set(value) {
             sharedPreferences.put("playback_position", value ?: -1)
