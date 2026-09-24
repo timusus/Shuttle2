@@ -336,11 +336,13 @@ fun isReleaseBuild(): Boolean = try {
 
 // Tag format: vYYMMDDNN (e.g., v26032801 -> versionCode 26032801, versionName 2026.03.28)
 fun getVersionFromGitTag(): Pair<Int, String> {
+    // providers.exec (rather than ProcessBuilder) keeps the configuration cache valid: Gradle
+    // re-runs the command on each build and invalidates the cache when the tag changes.
     val tag = try {
-        val process = ProcessBuilder("git", "describe", "--tags", "--abbrev=0", "--match", "v[0-9]*")
-            .redirectErrorStream(true)
-            .start()
-        process.inputStream.bufferedReader().readText().trim().removePrefix("v")
+        providers.exec {
+            commandLine("git", "describe", "--tags", "--abbrev=0", "--match", "v[0-9]*")
+            isIgnoreExitValue = true
+        }.standardOutput.asText.get().trim().removePrefix("v")
     } catch (_: Exception) {
         null
     } ?: return 1 to "1.0.0"
