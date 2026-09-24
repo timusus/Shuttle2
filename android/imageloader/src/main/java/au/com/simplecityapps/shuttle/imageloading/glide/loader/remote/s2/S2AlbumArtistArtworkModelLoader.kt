@@ -6,21 +6,15 @@ import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.ModelLoader
 import com.bumptech.glide.load.model.ModelLoaderFactory
 import com.bumptech.glide.load.model.MultiModelLoaderFactory
-import com.bumptech.glide.load.model.stream.BaseGlideUrlLoader
 import com.simplecityapps.shuttle.model.AlbumArtist
 import com.simplecityapps.shuttle.persistence.GeneralPreferenceManager
 import java.io.InputStream
 
 class S2AlbumArtistArtworkModelLoader(
-    urlLoader: ModelLoader<GlideUrl, InputStream>,
+    private val urlLoader: ModelLoader<GlideUrl, InputStream>,
     private val preferenceManager: GeneralPreferenceManager
-) : BaseGlideUrlLoader<AlbumArtist>(urlLoader) {
-    override fun getUrl(
-        model: AlbumArtist,
-        width: Int,
-        height: Int,
-        options: Options?
-    ): String = "https://api.shuttlemusicplayer.app/v1/artwork?artist=${(model.name ?: model.friendlyArtistName)!!.urlEncode()}"
+) : ModelLoader<AlbumArtist, InputStream> {
+    private fun getUrl(model: AlbumArtist): String = "https://api.shuttlemusicplayer.app/v1/artwork?artist=${(model.name ?: model.friendlyArtistName)!!.urlEncode()}"
 
     override fun handles(model: AlbumArtist): Boolean = (model.name ?: model.friendlyArtistName) != null
 
@@ -33,7 +27,7 @@ class S2AlbumArtistArtworkModelLoader(
         if (preferenceManager.artworkLocalOnly) {
             return null
         }
-        return super.buildLoadData(model, width, height, options)
+        return urlLoader.buildLoadData(VersionedGlideUrl(getUrl(model), model.artworkVersion), width, height, options)
     }
 
     class Factory(

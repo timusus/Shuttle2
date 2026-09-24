@@ -68,4 +68,6 @@ dependencies {
     testImplementation libs.kotest
     // Song.date is a kotlinx.datetime.LocalDate
     testImplementation libs.kotlinx.datetime
+    // GlideUrl's static init touches android.* framework classes
+    testImplementation libs.robolectric
 }

@@ -92,7 +92,7 @@
   "commits": []
     },
     {
-      "text": "Song, album and artist artwork now updates after you change it, whether it's embedded in the file, a cover image in the folder or on your Jellyfin or Emby server, once the library rescans or syncs",
+      "text": "Song, album and artist artwork now updates after you change it, whether it's embedded in the file, a cover image in the folder or on your Jellyfin or Emby server, once the library rescans or syncs. Newly added local artwork now also replaces artwork that was previously shown from S2's online artwork lookup",
       "commits": []
     },
     {
