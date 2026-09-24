@@ -400,7 +400,7 @@ class PlaybackManager(
         if (newCurrentItem == null) {
             // The last item was removed: nothing to load, and nothing a pending load should play.
             loadCoordinator.cancel()
-            playback.pause()
+            pause()
             return
         }
         // The player follows the queue onto the new current item, carrying on if it was playing.
