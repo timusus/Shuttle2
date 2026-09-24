@@ -582,6 +582,20 @@ class PlaybackSpecTest {
         playback.playbackStateFlow.value shouldBe PlaybackState.Paused
     }
 
+    @Test
+    fun `RS-35 a song loaded paused shows its real length once it's ready`() {
+        val tagged = song(1, durationMs = 5_000)
+        harness.run { queue.setQueue(listOf(tagged)) }
+        var result: Result<Boolean>? = null
+
+        playback.load(0) { result = it }
+        harness.runUntil { result != null }
+        harness.idle()
+
+        playback.progressFlow.value shouldBe PlaybackProgress(0, TONE_2S_MS)
+        playback.playbackStateFlow.value shouldBe PlaybackState.Paused
+    }
+
     private fun offMainThread(
         errors: MutableList<Throwable>,
         block: () -> Unit

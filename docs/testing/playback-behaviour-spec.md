@@ -115,6 +115,10 @@ out the one before, when the user seeks in it (or it rebuffers), then it shows a
 fails once playing (its file deleted or its stream dropped), then playback stops on it, paused, rather than skipping
 ahead as if it had failed to load (RS-23). (#345) — JVM.
 
+**RS-35: a restored song shows its real length.** Given a song whose tags give the wrong length, when it's loaded
+paused (a restore), then the published progress carries its real length as soon as it's ready, not only after the
+next seek or play. (#345) — JVM.
+
 ## Audio output
 
 **RS-15: ReplayGain from the first sample.** Given ReplayGain on and a song with a track gain, when it starts, then

@@ -215,6 +215,8 @@ class PlaybackManager(
                 readyUid = currentEntry?.uid
                 loadFailures = 0
                 completePendingLoad(Result.success(pendingLoad?.attempt == 1))
+                // The item's real duration is known once it's ready; until then progress carries its tagged one.
+                publishProgress()
             }
 
             Player.STATE_IDLE -> readyUid = null
