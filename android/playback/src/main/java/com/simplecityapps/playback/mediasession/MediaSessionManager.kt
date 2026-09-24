@@ -8,7 +8,6 @@ import android.os.Bundle
 import android.provider.MediaStore
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
-import android.support.v4.media.session.PlaybackStateCompat
 import android.util.LruCache
 import androidx.core.content.res.ResourcesCompat
 import androidx.media.session.MediaButtonReceiver
@@ -22,11 +21,9 @@ import com.simplecityapps.mediaprovider.repository.genres.GenreRepository
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
 import com.simplecityapps.playback.PlaybackNotificationManager
 import com.simplecityapps.playback.PlaybackOperations
-import com.simplecityapps.playback.PositionAnchor
 import com.simplecityapps.playback.R
 import com.simplecityapps.playback.androidauto.MediaIdHelper
 import com.simplecityapps.playback.getArtworkCacheKey
-import com.simplecityapps.playback.queue.QueueManager
 import com.simplecityapps.playback.queue.QueueOperations
 import com.simplecityapps.playback.queue.QueueState
 import com.simplecityapps.shuttle.coroutines.launchCollectingChanges
@@ -39,7 +36,11 @@ import kotlin.coroutines.CoroutineContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.dropWhile
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flatMapConcat
@@ -69,9 +70,8 @@ constructor(
 
     val mediaSession: MediaSessionCompat = MediaSessionCompat(context, "ShuttleMediaSession")
 
-    private var activeQueueItemId = -1L
-
-    private var playbackStateBuilder = PlaybackStateCompat.Builder()
+    /** The current item's queue id, as last published; only changes to another item, never back to none. */
+    private val activeQueueItemId = MutableStateFlow(MediaSessionCompat.QueueItem.UNKNOWN_ID.toLong())
 
     private val mediaSessionCallback =
         object : MediaSessionCompat.Callback() {
@@ -272,32 +272,16 @@ constructor(
             )
         mediaSession.setMediaButtonReceiver(mediaButtonReceiverIntent)
 
-        playbackStateBuilder.setActions(
-            PlaybackStateCompat.ACTION_PLAY
-                or PlaybackStateCompat.ACTION_PAUSE
-                or PlaybackStateCompat.ACTION_SKIP_TO_NEXT
-                or PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS
-                or PlaybackStateCompat.ACTION_SKIP_TO_QUEUE_ITEM
-                or PlaybackStateCompat.ACTION_SEEK_TO
-                or PlaybackStateCompat.ACTION_SET_REPEAT_MODE
-                or PlaybackStateCompat.ACTION_SET_SHUFFLE_MODE
-                or PlaybackStateCompat.ACTION_PREPARE_FROM_SEARCH
-                or PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH
-                or PlaybackStateCompat.ACTION_PREPARE_FROM_MEDIA_ID
-                or PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID
-        )
-
         val shuffleMode = queueManager.getShuffleMode()
         val repeatMode = queueManager.getRepeatMode()
         val queueState = queueManager.queueStateFlow.value
+        val playbackState = MediaSessionPlaybackState(playbackManager.positionAnchorFlow.value, shuffleMode, activeQueueItemId.value)
 
-        updateShuffleAction()
-
-        mediaSession.setPlaybackState(playbackStateBuilder.build())
+        publishPlaybackState(playbackState)
 
         // Changes from the state read above, so a change made in between isn't missed.
         appCoroutineScope.launchCollectingChanges(queueManager.shuffleModeFlow, shuffleMode, Dispatchers.Main.immediate) { _, current ->
-            onShuffleChanged(current)
+            mediaSession.setShuffleMode(current.toShuffleMode())
         }
         appCoroutineScope.launchCollectingChanges(queueManager.repeatModeFlow, repeatMode, Dispatchers.Main.immediate) { _, current ->
             mediaSession.setRepeatMode(current.toRepeatMode())
@@ -311,46 +295,21 @@ constructor(
             onCurrentSongChanged = ::updateMetadata
         )
 
-        // Main.immediate, so the current anchor is applied straight away when constructed on the main thread.
+        // The playback state is published from here alone, on Main.immediate so a change made on the main thread is applied
+        // straight away.
         appCoroutineScope.launch(Dispatchers.Main.immediate) {
-            playbackManager.positionAnchorFlow.collect { anchor -> onPositionAnchorChanged(anchor) }
+            combine(playbackManager.positionAnchorFlow, queueManager.shuffleModeFlow, activeQueueItemId, ::MediaSessionPlaybackState)
+                .dropWhile { state -> state == playbackState }
+                .distinctUntilChanged()
+                .collect(::publishPlaybackState)
         }
     }
 
-    private fun updateShuffleAction() {
-        playbackStateBuilder = playbackStateBuilder.copyWithoutCustomActions()
-        when (queueManager.getShuffleMode()) {
-            QueueManager.ShuffleMode.Off -> {
-                playbackStateBuilder.addCustomAction(
-                    PlaybackStateCompat.CustomAction.Builder(ACTION_SHUFFLE, context.getString(com.simplecityapps.core.R.string.shuffle_on), R.drawable.ic_shuffle_off_black_24dp).build()
-                )
-            }
-
-            QueueManager.ShuffleMode.On -> {
-                playbackStateBuilder.addCustomAction(
-                    PlaybackStateCompat.CustomAction.Builder(ACTION_SHUFFLE, context.getString(com.simplecityapps.core.R.string.shuffle_off), R.drawable.ic_shuffle_black_24dp).build()
-                )
-            }
-        }
-    }
-
-    private fun onPositionAnchorChanged(anchor: PositionAnchor) {
-        val sessionPlaybackState = anchor.toSessionPlaybackState()
-        mediaSession.isActive = sessionPlaybackState.isActive
-        playbackStateBuilder.setState(
-            sessionPlaybackState.state,
-            sessionPlaybackState.positionMs,
-            sessionPlaybackState.speed,
-            sessionPlaybackState.updateTimeMs
-        )
-        updatePlaybackState()
-    }
-
-    private fun updatePlaybackState() {
-        Timber.v("updatePlaybackState()")
-        val playbackState = playbackStateBuilder.build()
-        activeQueueItemId = playbackState.activeQueueItemId
-        mediaSession.setPlaybackState(playbackState)
+    private fun publishPlaybackState(state: MediaSessionPlaybackState) {
+        Timber.v("publishPlaybackState()")
+        val publishedState = state.toPublishedPlaybackState()
+        mediaSession.isActive = publishedState.playback.isActive
+        mediaSession.setPlaybackState(publishedState.toPlaybackStateCompat(context::getString))
     }
 
     private fun updateMetadata() {
@@ -414,29 +373,13 @@ constructor(
     private fun updateCurrentQueueItem() {
         Timber.v("updateCurrentQueueItem()")
         queueManager.getCurrentItem()?.let { currentItem ->
-            val activeQueueItemId = currentItem.toQueueItem().queueId
-            if (activeQueueItemId != this.activeQueueItemId) {
+            if (currentItem.uid != activeQueueItemId.value) {
                 updateQueue()
                 // PlaybackManager re-anchors at the new track's start position as it starts loading it.
-                playbackStateBuilder.setActiveQueueItemId(activeQueueItemId)
-                updatePlaybackState()
+                activeQueueItemId.value = currentItem.uid
                 updateMetadata()
             }
         }
-    }
-
-    private fun onShuffleChanged(shuffleMode: QueueManager.ShuffleMode) {
-        mediaSession.setShuffleMode(shuffleMode.toShuffleMode())
-        updateShuffleAction()
-        updatePlaybackState()
-    }
-
-    fun PlaybackStateCompat.Builder.copyWithoutCustomActions(): PlaybackStateCompat.Builder {
-        val thing = this.build()
-        return PlaybackStateCompat.Builder()
-            .setState(thing.state, thing.position, thing.playbackSpeed, thing.lastPositionUpdateTime)
-            .setActions(thing.actions)
-            .setActiveQueueItemId(thing.activeQueueItemId)
     }
 
     companion object {
