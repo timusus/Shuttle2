@@ -411,7 +411,7 @@ class PlaybackManager(
      * Plays the current item. An unprepared player (nothing loaded yet) prepares it at the saved position; a
      * position within the song's last moments restarts it.
      */
-    override fun play(attempt: Int) = playerThread.run { playNow() }
+    override fun play() = playerThread.run { playNow() }
 
     private fun playNow() {
         Timber.v("play()")

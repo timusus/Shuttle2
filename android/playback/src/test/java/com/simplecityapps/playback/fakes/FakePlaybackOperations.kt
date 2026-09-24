@@ -40,7 +40,7 @@ class FakePlaybackOperations : PlaybackOperations {
     override fun pause() {
         pauses++
     }
-    override fun play(attempt: Int) {}
+    override fun play() {}
     override fun togglePlayback() {}
     override fun skipToNext(ignoreRepeat: Boolean, completion: ((Result<Any?>) -> Unit)?) {}
     override fun skipToPrev(force: Boolean, completion: ((Result<Any?>) -> Unit)?) {}

@@ -38,7 +38,7 @@ interface PlaybackOperations {
     val playbackFailureFlow: SharedFlow<Song>
 
     fun load(seekPosition: Int? = null, completion: (Result<Boolean>) -> Unit)
-    fun play(attempt: Int = 1)
+    fun play()
     fun pause()
     fun togglePlayback()
     fun skipToNext(ignoreRepeat: Boolean = false, completion: ((Result<Any?>) -> Unit)? = null)

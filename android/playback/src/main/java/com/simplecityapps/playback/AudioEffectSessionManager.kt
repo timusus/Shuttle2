@@ -5,12 +5,12 @@ import android.content.Intent
 import android.media.audiofx.AudioEffect
 
 /**
- * Advertises the audio session the active [Playback] is rendering on, so system and OEM audio
- * effects can attach to it. At most one effect control session is open at a time.
+ * Advertises the audio session the player renders on, so system and OEM audio effects can attach
+ * to it. [PlaybackManager] binds it to the player's session when it's created. At most one effect
+ * control session is open at a time.
  *
- * Thread-safe: [PlaybackManager] binds both on the caller's thread and from a playback load
- * callback, so binds are serialised. Each bind closes exactly the session the previous bind
- * opened, so no session is closed twice, left open, or closed after a newer one was opened.
+ * Thread-safe: binds are serialised, and each closes exactly the session the previous bind opened,
+ * so no session is closed twice, left open, or closed after a newer one was opened.
  */
 class AudioEffectSessionManager(
     private val openSession: (sessionId: Int) -> Unit,
