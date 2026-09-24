@@ -5,7 +5,7 @@
 #
 #   support/scripts/seed-test-media.sh <fixture> [--skip-onboarding]
 #
-#     two-disc        one album, 2 discs x 3 tracks (one track is FLAC), disc/track tags set
+#     two-disc        one album, 2 discs x 3 tracks (one track is FLAC), disc/track/ReplayGain tags set
 #     many-tracks     3 artists x 2 albums x 8 tracks
 #     playlist-basic  5 songs plus an .m3u playlist referencing them
 #     playback        one album of 5 x 60 s tracks, long enough for playback checks (seek, skip,
@@ -38,7 +38,7 @@ usage() {
     cat <<'EOF'
 Usage: support/scripts/seed-test-media.sh <fixture> [--skip-onboarding]
 
-  two-disc        one album, 2 discs x 3 tracks (one track is FLAC), disc/track tags set
+  two-disc        one album, 2 discs x 3 tracks (one track is FLAC), disc/track/ReplayGain tags set
   many-tracks     3 artists x 2 albums x 8 tracks
   playlist-basic  5 songs plus an .m3u playlist referencing them
   playback        one album of 5 x 60 s tracks, long enough for playback checks (seek, skip,
@@ -77,10 +77,11 @@ command -v adb >/dev/null 2>&1 || { echo "seed-test-media: adb not found on PATH
 
 radb() { adb -s "$ANDROID_SERIAL" "$@"; }
 
-# generate_track <outfile> <ext> <title> <artist> <album_artist> <album> <track> <tracktotal> <disc> <disctotal> <date> <genre> [seconds]
+# generate_track <outfile> <ext> <title> <artist> <album_artist> <album> <track> <tracktotal> <disc> <disctotal> <date> <genre> [seconds] [track_gain_db] [album_gain_db]
 generate_track() {
     local out="$1" ext="$2" title="$3" artist="$4" album_artist="$5" album="$6"
     local track="$7" tracktotal="$8" disc="$9" disctotal="${10}" date="${11}" genre="${12}" seconds="${13:-1.5}"
+    local track_gain="${14:-}" album_gain="${15:-}"
     [ -f "$out" ] && return 0
     local codec_args
     if [ "$ext" = "flac" ]; then
@@ -88,10 +89,14 @@ generate_track() {
     else
         codec_args=(-c:a libmp3lame -b:a 32k)
     fi
+    local rg_args=()
+    [ -n "$track_gain" ] && rg_args+=(-metadata "REPLAYGAIN_TRACK_GAIN=${track_gain} dB")
+    [ -n "$album_gain" ] && rg_args+=(-metadata "REPLAYGAIN_ALBUM_GAIN=${album_gain} dB")
     ffmpeg -nostdin -loglevel error -f lavfi -i "anullsrc=r=44100:cl=mono" -t "$seconds" \
         -metadata title="$title" -metadata artist="$artist" -metadata album_artist="$album_artist" \
         -metadata album="$album" -metadata track="${track}/${tracktotal}" \
         -metadata disc="${disc}/${disctotal}" -metadata date="$date" -metadata genre="$genre" \
+        "${rg_args[@]}" \
         "${codec_args[@]}" -y "$out" >/dev/null
 }
 
@@ -118,14 +123,14 @@ build_gapless() {
 }
 
 build_two_disc() {
-    local dir="$1" album="Two Disc Album" artist="Disc Artist" date="2019" genre="Rock"
+    local dir="$1" album="Two Disc Album" artist="Disc Artist" date="2019" genre="Rock" ag="-7.50"
     mkdir -p "$dir"
-    generate_track "${dir}/d1t1.mp3" mp3 "Opening Act" "$artist" "$artist" "$album" 1 3 1 2 "$date" "$genre"
-    generate_track "${dir}/d1t2.mp3" mp3 "Middle Ground" "$artist" "$artist" "$album" 2 3 1 2 "$date" "$genre"
-    generate_track "${dir}/d1t3.mp3" mp3 "Disc One Close" "$artist" "$artist" "$album" 3 3 1 2 "$date" "$genre"
-    generate_track "${dir}/d2t1.mp3" mp3 "Second Wind" "$artist" "$artist" "$album" 1 3 2 2 "$date" "$genre"
-    generate_track "${dir}/d2t2.mp3" mp3 "Penultimate" "$artist" "$artist" "$album" 2 3 2 2 "$date" "$genre"
-    generate_track "${dir}/d2t3.flac" flac "Disc Two Close" "$artist" "$artist" "$album" 3 3 2 2 "$date" "$genre"
+    generate_track "${dir}/d1t1.mp3" mp3 "Opening Act" "$artist" "$artist" "$album" 1 3 1 2 "$date" "$genre" 1.5 "-6.00" "$ag"
+    generate_track "${dir}/d1t2.mp3" mp3 "Middle Ground" "$artist" "$artist" "$album" 2 3 1 2 "$date" "$genre" 1.5 "-6.20" "$ag"
+    generate_track "${dir}/d1t3.mp3" mp3 "Disc One Close" "$artist" "$artist" "$album" 3 3 1 2 "$date" "$genre" 1.5 "-6.40" "$ag"
+    generate_track "${dir}/d2t1.mp3" mp3 "Second Wind" "$artist" "$artist" "$album" 1 3 2 2 "$date" "$genre" 1.5 "-6.60" "$ag"
+    generate_track "${dir}/d2t2.mp3" mp3 "Penultimate" "$artist" "$artist" "$album" 2 3 2 2 "$date" "$genre" 1.5 "-6.80" "$ag"
+    generate_track "${dir}/d2t3.flac" flac "Disc Two Close" "$artist" "$artist" "$album" 3 3 2 2 "$date" "$genre" 1.5 "-7.00" "$ag"
 }
 
 build_many_tracks() {
