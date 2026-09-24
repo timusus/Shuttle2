@@ -18,7 +18,7 @@ android {
         targetCompatibility JavaVersion.VERSION_11
     }
 
-    namespace 'au.com.simplecityapps'
+    namespace = 'au.com.simplecityapps'
 }
 
 kotlin {

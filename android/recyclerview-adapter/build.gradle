@@ -16,7 +16,7 @@ android {
     }
 
 
-    namespace 'com.simplecityapps.adapter'
+    namespace = 'com.simplecityapps.adapter'
 }
 
 kotlin {

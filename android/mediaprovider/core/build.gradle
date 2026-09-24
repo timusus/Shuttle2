@@ -13,7 +13,7 @@ android {
         targetSdkVersion 36
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        vectorDrawables.useSupportLibrary true
+        vectorDrawables.useSupportLibrary = true
         consumerProguardFiles "consumer-rules.pro"
     }
 
@@ -24,9 +24,9 @@ android {
 
 
     lint {
-        abortOnError false
+        abortOnError = false
     }
-    namespace 'com.simplecityapps.mediaprovider'
+    namespace = 'com.simplecityapps.mediaprovider'
 }
 
 kotlin {

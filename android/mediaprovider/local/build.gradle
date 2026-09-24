@@ -27,9 +27,9 @@ android {
             resources.excludes += ['META-INF/core_debug.kotlin_module']
         }
     }
-    namespace 'com.simplecityapps.localmediaprovider'
+    namespace = 'com.simplecityapps.localmediaprovider'
 
-    buildFeatures.buildConfig true
+    buildFeatures.buildConfig = true
 
     sourceSets {
         test {

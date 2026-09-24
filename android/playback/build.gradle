@@ -16,9 +16,9 @@ android {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
-    namespace 'com.simplecityapps.playback'
+    namespace = 'com.simplecityapps.playback'
 
-    buildFeatures.buildConfig true
+    buildFeatures.buildConfig = true
 }
 
 kotlin {

@@ -19,9 +19,9 @@ android {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
-    namespace 'com.simplecityapps.trial'
+    namespace = 'com.simplecityapps.trial'
 
-    buildFeatures.buildConfig true
+    buildFeatures.buildConfig = true
 }
 
 kotlin {

@@ -19,7 +19,7 @@ android {
     }
 
 
-    namespace 'com.simplecityapps.saf'
+    namespace = 'com.simplecityapps.saf'
 }
 
 kotlin {
