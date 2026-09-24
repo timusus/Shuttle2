@@ -277,6 +277,30 @@ class ExoPlayerPlaybackTest {
     }
 
     @Test
+    fun `a gapless session keeps only the playing and next items`() = runTest {
+        load(songA, next = songB)
+        player.playToEnd()
+        playback.loadNext(songC)
+        player.playToEnd()
+
+        playback.loadNext(songD)
+
+        queuedUris() shouldBe listOf("/music/c.flac", "/music/d.flac")
+        player.currentMediaItemIndex shouldBe 0
+    }
+
+    @Test
+    fun `dropping played items reports nothing to the callback`() = runTest {
+        load(songA, next = songB)
+        player.playToEnd()
+        callbackEvents.clear()
+
+        playback.loadNext(songC)
+
+        callbackEvents.shouldBeEmpty()
+    }
+
+    @Test
     fun `loadNext leaves the playlist alone when the song is already the single next item`() = runTest {
         load(songA, next = songB)
         player.commands.clear()
@@ -341,6 +365,31 @@ class ExoPlayerPlaybackTest {
         replayGainTracker.onProcessorFlushed()
 
         replayGainTracker.currentReplayGain() shouldBe ReplayGain(trackGain = 3.2, albumGain = null)
+    }
+
+    @Test
+    fun `the ReplayGain tracker stays on the playing item when played items are dropped`() = runTest {
+        val first = createSong("first", replayGainTrack = -1.0)
+        val second = createSong("second", replayGainTrack = -2.0)
+        val third = createSong("third", replayGainTrack = -3.0)
+        load(first, next = second)
+        replayGainTracker.onSinkRestarted()
+        replayGainTracker.onSinkConfigured()
+        replayGainTracker.onSinkBufferHandled()
+        replayGainTracker.onProcessorFlushed()
+        // The sink reaches the second item, then the player reports the transition.
+        replayGainTracker.onSinkConfigured()
+        replayGainTracker.onSinkBufferHandled()
+        replayGainTracker.onProcessorFlushed()
+        player.playToEnd()
+
+        playback.loadNext(third)
+
+        replayGainTracker.currentReplayGain() shouldBe ReplayGain(trackGain = -2.0, albumGain = null)
+        replayGainTracker.onSinkConfigured()
+        replayGainTracker.onSinkBufferHandled()
+        replayGainTracker.onProcessorFlushed()
+        replayGainTracker.currentReplayGain() shouldBe ReplayGain(trackGain = -3.0, albumGain = null)
     }
 
     @Test

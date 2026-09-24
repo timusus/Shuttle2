@@ -165,4 +165,46 @@ class ReplayGainStreamTrackerTest {
 
         tracker.currentReplayGain() shouldBe songC
     }
+
+    @Test
+    fun `dropping played items keeps the playing item's gain and the next boundary`() {
+        load(songA, songB)
+        gaplessTransition()
+        tracker.setPlayingIndex(1)
+
+        tracker.removeLeadingItems(1)
+        tracker.setPlaylist(listOf(songB, songC))
+
+        tracker.currentReplayGain() shouldBe songB
+        gaplessTransition()
+        tracker.currentReplayGain() shouldBe songC
+    }
+
+    @Test
+    fun `dropping played items keeps the gain of a next item the sink already reached`() {
+        load(songA, songB, songC)
+        gaplessTransition()
+        tracker.setPlayingIndex(1)
+        // The sink moves on to C before the player reports it.
+        gaplessTransition()
+
+        tracker.removeLeadingItems(1)
+
+        tracker.currentReplayGain() shouldBe songC
+    }
+
+    @Test
+    fun `dropping the item a repeat-all wrap fed falls back to the playing item`() {
+        tracker.setRepeatMode(Player.REPEAT_MODE_ALL)
+        load(songA, songB)
+        gaplessTransition()
+        tracker.setPlayingIndex(1)
+        // B is last, so the sink wraps around to A.
+        gaplessTransition()
+        tracker.currentReplayGain() shouldBe songA
+
+        tracker.removeLeadingItems(1)
+
+        tracker.currentReplayGain() shouldBe songB
+    }
 }

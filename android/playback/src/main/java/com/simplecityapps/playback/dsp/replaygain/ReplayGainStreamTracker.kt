@@ -52,6 +52,18 @@ class ReplayGainStreamTracker {
     }
 
     /**
+     * Called when the player drops the first [count] items of its playlist, all of them before the
+     * playing item. If the sink had already wrapped around to one of them (repeat-all), the player
+     * restarts the sink, which resynchronises it to the playing item anyway.
+     */
+    @Synchronized
+    fun removeLeadingItems(count: Int) {
+        playlist = playlist.drop(count)
+        playingIndex = (playingIndex - count).coerceAtLeast(0)
+        fedIndex = if (fedIndex >= count) fedIndex - count else playingIndex
+    }
+
+    /**
      * @param repeatMode one of the [Player] repeat modes
      */
     @Synchronized

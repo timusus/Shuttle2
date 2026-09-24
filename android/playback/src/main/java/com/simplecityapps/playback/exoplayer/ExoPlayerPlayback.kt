@@ -171,6 +171,14 @@ class ExoPlayerPlayback(
                 playerItem(mediaResolver.resolve(song), song.replayGain)
             }
 
+        // Drop the items already played, so a long gapless session doesn't keep every one of them.
+        // The current item stays put, so the player reports no transition or discontinuity for this.
+        val playedCount = player.currentMediaItemIndex
+        if (playedCount > 0) {
+            player.removeMediaItems(0, playedCount)
+            replayGainTracker.removeLeadingItems(playedCount)
+        }
+
         val count = player.mediaItemCount
         val currentIndex = player.currentMediaItemIndex
 
