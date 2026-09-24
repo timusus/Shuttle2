@@ -1,0 +1,28 @@
+# #225 regression check: long-press an item on Songs and Albums to enter multi-select, then
+# verify the system back button clears the selection instead of leaving the Library tab.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow:
+    file: nav/open-library-tab.yaml
+    env:
+      TAB: Songs
+- scrollUntilVisible:
+    element:
+      text: "Playback One"
+    direction: DOWN
+- longPressOn: "Playback One"
+- assertVisible: "1 selected"
+- back
+- assertNotVisible: "1 selected"
+- assertVisible: "Playback One"
+- tapOn: "Library"
+- tapOn: "Albums"
+- scrollUntilVisible:
+    element:
+      text: "Playback Album"
+    direction: DOWN
+- longPressOn: "Playback Album"
+- assertVisible: "1 selected"
+- back
+- assertNotVisible: "1 selected"
+- assertVisible: "Playback Album"

@@ -1,0 +1,15 @@
+# #222: dragging the fast scroller thumb to the bottom of a long Songs list doesn't crash. Needs
+# the many-tracks fixture (3 artists x 2 albums x 8 tracks = 48 songs) seeded so the list is long
+# enough to fast-scroll. Maestro's `swipe:` primitive doesn't reliably engage the thumb's
+# pointerInput drag gesture (confirmed: identical coordinates that scroll via raw `adb shell input
+# swipe` leave the list untouched under Maestro), so the drag itself is done by the wrapper script
+# (songs-fast-scroll-drag.sh) via raw adb swipes; this flow only handles navigation and the
+# before/after screenshots.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow:
+    file: nav/open-library-tab.yaml
+    env:
+      TAB: Songs
+- assertVisible: "Artist A Album 1 Track 1"
+- takeScreenshot: songs-fast-scroll-drag-before

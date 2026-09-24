@@ -1,0 +1,16 @@
+# #196: a playlist's overflow menu offers "Export as m3u", which launches the system
+# create-document picker pre-filled with "<playlist name>.m3u". Backs out without saving, so this
+# doesn't leave a file behind. Needs a "TestList" playlist (see playlists-multiselect-back.yaml's
+# comment for how it's created).
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow:
+    file: nav/open-library-tab.yaml
+    env:
+      TAB: Playlists
+- tapOn: "TestList"
+- tapOn: "More options"
+- tapOn: "Export as m3u"
+- assertVisible: "TestList.m3u"
+- assertVisible: "SAVE"
+- back

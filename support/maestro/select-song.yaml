@@ -1,0 +1,16 @@
+# #224 setup half: cold-launch onto the Songs tab and long-press a song to select it. The
+# wrapper (support/scripts/checks/song-selected-across-play-pause.sh) then drives play/pause via
+# the debug receivers and runs song-still-selected.yaml, without relaunching, to prove the
+# selection survives.
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow:
+    file: nav/open-library-tab.yaml
+    env:
+      TAB: Songs
+- scrollUntilVisible:
+    element:
+      text: "Playback One"
+    direction: DOWN
+- longPressOn: "Playback One"
+- assertVisible: "1 selected"

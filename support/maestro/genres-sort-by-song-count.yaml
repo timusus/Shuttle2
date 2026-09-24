@@ -1,0 +1,17 @@
+# #174: the Genres tab's sort menu offers "Song Count", and choosing it reorders the list (here,
+# from alphabetical Ambient/Pop/Rock to descending-count Pop/Rock/Ambient). Needs genres of
+# different sizes seeded, e.g. `playback` (Ambient, 5), `two-disc` (Rock, 6) and `many-tracks`
+# (Pop, 48).
+appId: com.simplecityapps.shuttle.dev
+---
+- runFlow:
+    file: nav/open-library-tab.yaml
+    env:
+      TAB: Genres
+- assertVisible: "Ambient"
+- tapOn: "More options"
+- tapOn: "Sort by"
+- assertVisible: "Song Count"
+- tapOn: "Song Count"
+- takeScreenshot: genres-sort-by-song-count
+- assertVisible: "Pop"

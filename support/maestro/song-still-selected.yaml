@@ -1,0 +1,6 @@
+# #224: asserts the selection from select-song.yaml is still shown, without relaunching the app
+# (a cold launch would itself reset the selection, which is not what's under test here).
+appId: com.simplecityapps.shuttle.dev
+---
+- assertVisible: "1 selected"
+- assertVisible: "Playback One"
