@@ -56,6 +56,45 @@ Consumers: 46 non-test files inject PlaybackOperations or QueueOperations. The o
 5. **Tags lost across the controller boundary.** localConfiguration and tag don't reach controllers (1.8 release note). onAddMediaItems/onSetMediaItems must rebuild items from mediaId for Auto and external requests.
 6. **API stability.** The facade keeps PlaybackOperations/QueueOperations. getPlayback()/switchToPlayback() (PlaybackOperations.kt) go away; only CastSessionManager uses them.
 
+### 10k queue spike (player only)
+
+`android/playback/src/test/.../spec/LargeQueueSpikeTest.kt` (`@Ignore`d, run manually) puts a real ExoPlayer
+(`TestExoPlayerBuilder`, `FakeClock`) under Robolectric with 10,000 `MediaItem`s (mediaId = song id, a fake
+per-item URI, tag = a `Song`-sized object) and times the operations a full-queue playlist needs, median of 5
+runs, plus a single 50,000-item run of build + `setMediaItems`/`prepare`:
+
+| Operation | 10k median | 50k median |
+|---|---|---|
+| Build the `MediaItem`s | 3.0 ms | 5.0 ms |
+| `setMediaItems` + `prepare` | 8.1 ms | 39.6 ms |
+| `addMediaItem` at the end | 1.8 ms | — |
+| `addMediaItem` at index 5,000 | 1.4 ms | — |
+| `removeMediaItem` in the middle | 1.0 ms | — |
+| `moveMediaItem` (first to last) | 1.0 ms | — |
+| `replaceMediaItem` in the middle | 6.0 ms | — |
+| `setShuffleOrder`, build + apply | 5.4 ms | — |
+| `seekTo(index 9,999)` | 0.3 ms | — |
+
+Heap delta per op stayed at 1-12 MB (dominated by the `MediaItem`/`Song`/URI allocations, not player-internal
+structures); the 50k build + `setMediaItems` pair moved ~116 MB. Nothing threw. Nothing showed O(n²) growth:
+`setMediaItems`+`prepare` scaled from 8.1 ms at 10k to 39.6 ms at 50k, under 5x for 5x the items. Every
+individual op stayed under 16 ms except the 50k `setMediaItems`+`prepare` pair, and only main-thread call
+latency was measured — actual media loading happens later on ExoPlayer's own playback thread, off the
+Robolectric main looper. One trap surfaced while writing the test: draining the Robolectric main looper
+(`shadowOf(Looper.getMainLooper()).idle()`) between iterations, combined with the auto-advancing `FakeClock`
+and the fake per-item URIs never resolving, spun forever — an artifact of the test harness, not evidence
+about the real player, and the fix (drop the `idle()` calls; playlist state reads back synchronously without
+draining the looper) is already in the committed test.
+
+**Conclusion.** Robolectric numbers are indicative of relative cost and scaling, not device-accurate
+wall-clock time, but nothing here rules out the whole queue living in ExoPlayer's playlist: building and
+editing a 10k-item playlist is single-digit milliseconds per op, well under a frame, and the growth to 50k
+items is sub-linear-to-linear rather than quadratic. `setMediaItems` is the one op worth being deliberate
+about — build the `MediaItem` list off the main thread (as the risk section above already calls for) and
+call `setMediaItems` once with the finished list; there is no sign that chunking it is necessary at these
+sizes, but it would be the first mitigation to reach for if a real device run (this spike is JVM/Robolectric
+only) shows it over 16 ms.
+
 ## 4. Routes compared
 
 **A: refactor in place.** Replace LoadCoordinator with a full playlist inside ExoPlayerPlayback, then fold QueueManager into it, then the session, then Cast. Each step ships, but every intermediate state keeps a Playback interface shaped around one next item and two queue owners. That is exactly the seam where the 44 fixes landed.
