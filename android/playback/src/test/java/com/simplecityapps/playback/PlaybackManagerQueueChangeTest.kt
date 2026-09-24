@@ -20,7 +20,7 @@ import org.junit.Test
  * playback is active, otherwise clears everything, abandoning any load in progress. Removing the
  * current item loads the next one (carrying on if it was playing), and removing any item
  * re-prepares the next one. Every queue change re-prepares the next item once, whether made through
- * the manager or on the queue directly, except where a load follows, since the load passes its own.
+ * the manager or on the queue directly, except where a load follows: the load prepares it once it succeeds.
  */
 class PlaybackManagerQueueChangeTest {
     private val events = mutableListOf<String>()
@@ -140,7 +140,7 @@ class PlaybackManagerQueueChangeTest {
 
         playback.completeLoad()
 
-        events shouldBe listOf("A load Song2 seek 0", "A play")
+        events shouldBe listOf("A load Song2 seek 0", "A play", "A loadNext Song3")
     }
 
     @Test
@@ -150,7 +150,7 @@ class PlaybackManagerQueueChangeTest {
         playbackManager.removeQueueItem(currentItem)
         playback.completeLoad()
 
-        events shouldBe listOf("A load Song2 seek 0")
+        events shouldBe listOf("A load Song2 seek 0", "A loadNext Song3")
         queueManager.getCurrentItem()!!.song.id shouldBe 2L
     }
 
@@ -168,7 +168,7 @@ class PlaybackManagerQueueChangeTest {
 
         playback.completeLoad()
 
-        events shouldBe listOf("A load Song3 seek 0", "A play")
+        events shouldBe listOf("A load Song3 seek 0", "A play", "A loadNext null")
     }
 
     @Test
@@ -227,20 +227,20 @@ class PlaybackManagerQueueChangeTest {
     }
 
     @Test
-    fun `a skip prepares the next item through its load alone`() {
+    fun `a skip prepares the next item once its load succeeds`() {
         playbackManager.skipToNext()
         playback.completeLoad()
 
-        events shouldBe listOf("A load Song2 seek 0", "A play")
+        events shouldBe listOf("A load Song2 seek 0", "A play", "A loadNext Song3")
     }
 
     @Test
-    fun `a retry after a failed load prepares the next item through its load alone`() {
+    fun `a retry after a failed load prepares the next item once the retry succeeds`() {
         playbackManager.load { }
         playback.failLoad()
         playback.completeLoad()
 
-        events shouldBe listOf("A load Song1 seek 0", "A load Song2 seek 0")
+        events shouldBe listOf("A load Song1 seek 0", "A load Song2 seek 0", "A loadNext Song3")
     }
 
     @Test

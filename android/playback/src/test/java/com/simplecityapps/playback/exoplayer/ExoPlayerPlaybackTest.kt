@@ -12,6 +12,9 @@ import com.simplecityapps.shuttle.model.MediaProviderType
 import com.simplecityapps.shuttle.model.Song
 import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
@@ -22,10 +25,16 @@ import org.junit.Test
 class ExoPlayerPlaybackTest {
     private val playerFactory = FakePlayerFactory()
     private val callbackEvents = mutableListOf<String>()
+
+    /** Resolving a song whose name has a gate here suspends until the gate is completed. */
+    private val gates = mutableMapOf<String, CompletableDeferred<Unit>>()
     private val playback =
         ExoPlayerPlayback(
             playerFactory = playerFactory,
-            mediaResolver = { song -> ResolvedMedia(uri = song.path, mimeType = song.mimeType, isRemote = song.path.startsWith("http")) }
+            mediaResolver = { song ->
+                gates[song.name]?.await()
+                ResolvedMedia(uri = song.path, mimeType = song.mimeType, isRemote = song.path.startsWith("http"))
+            }
         ).apply {
             callback =
                 object : Playback.Callback {
@@ -50,19 +59,55 @@ class ExoPlayerPlaybackTest {
 
     private val player: FakePlayer get() = playerFactory.latest
 
+    /** Loads [current], then prepares [next] the way LoadCoordinator does once a load succeeds. */
     private suspend fun load(
         current: Song,
         next: Song? = null,
         seekPosition: Int = 0
     ) {
-        playback.load(current, next, seekPosition) {}
+        playback.load(current, seekPosition) {}
+        if (next != null) {
+            playback.loadNext(next)
+        }
     }
 
     private fun queuedUris() = player.playlist.map { it.uri }
 
+    /** Holds [song]'s resolve until the returned gate is completed. */
+    private fun gate(song: Song) = CompletableDeferred<Unit>().also { gates[song.name!!] = it }
+
     @Test
-    fun `load drives the player in a fixed order`() = runTest {
-        load(songA, next = songB, seekPosition = 5_000)
+    fun `overlapping loadNext calls queue only the latest song`() = runTest {
+        // #315: a slow resolve finishing last must not replace the next item a later call queued.
+        load(songA)
+        val songBResolved = gate(songB)
+        launch { playback.loadNext(songB) }
+        runCurrent()
+
+        playback.loadNext(songC)
+        songBResolved.complete(Unit)
+        runCurrent()
+
+        queuedUris() shouldBe listOf("/music/a.flac", "/music/c.flac")
+    }
+
+    @Test
+    fun `a loadNext still resolving when a load replaces the playlist queues nothing`() = runTest {
+        load(songA)
+        val songBResolved = gate(songB)
+        launch { playback.loadNext(songB) }
+        runCurrent()
+
+        load(songC)
+        songBResolved.complete(Unit)
+        runCurrent()
+
+        queuedUris() shouldBe listOf("/music/c.flac")
+    }
+
+    @Test
+    fun `load drives the player in a fixed order and queues no next item`() = runTest {
+        load(songA, seekPosition = 5_000)
 
         player.commands shouldBe
             listOf(
@@ -74,8 +119,7 @@ class ExoPlayerPlaybackTest {
                 "setMediaItem /music/a.flac",
                 "seekTo 5000",
                 "prepare",
-                "setWakeMode ${C.WAKE_MODE_LOCAL}",
-                "addMediaItem /music/b.flac"
+                "setWakeMode ${C.WAKE_MODE_LOCAL}"
             )
     }
 

@@ -90,7 +90,7 @@ class PlaybackManagerSkipTest {
 
         playback.completeLoad()
 
-        events shouldBe listOf("A play")
+        events shouldBe listOf("A play", "A loadNext Song3")
         queueManager.getCurrentItem()!!.song.id shouldBe 2L
     }
 
@@ -117,7 +117,7 @@ class PlaybackManagerSkipTest {
         playback.completeLoad()
 
         queueManager.getCurrentItem()!!.song.id shouldBe 2L
-        events shouldBe listOf("A load Song2 seek 0", "A seek 10000", "A seek 0")
+        events shouldBe listOf("A load Song2 seek 0", "A seek 10000", "A seek 0", "A loadNext Song3")
     }
 
     @Test
@@ -137,7 +137,7 @@ class PlaybackManagerSkipTest {
 
         playback.completeLoad()
 
-        events shouldBe listOf("A load Song3 seek 0", "A play")
+        events shouldBe listOf("A load Song3 seek 0", "A play", "A loadNext null")
     }
 
     private fun createSong(id: Long) = Song(

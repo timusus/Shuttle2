@@ -97,6 +97,13 @@ class ExoPlayerPlayback(
     private var settings = PlayerSettings()
 
     /**
+     * Bumped by every [load], [loadNext] and [release]. A [loadNext] whose resolve returns after a
+     * later bump leaves the playlist alone, so a slow resolve can't replace a newer next item, or
+     * add to a playlist a load has since replaced.
+     */
+    private var playlistGeneration = 0L
+
+    /**
      * The live player, or null before the first [load] and after [release]. Built on demand, since
      * each player owns a playback thread.
      */
@@ -117,11 +124,13 @@ class ExoPlayerPlayback(
 
     override suspend fun load(
         current: Song,
-        next: Song?,
         seekPosition: Int,
         completion: (Result<Any?>) -> Unit
     ) {
         Timber.v("load(current: ${current.name}|${current.mimeType}, seekPosition: $seekPosition)")
+
+        // The playlist is about to be replaced, so a next item still resolving is stale.
+        playlistGeneration++
 
         val player = player?.takeUnless { isReleased } ?: replacePlayer()
 
@@ -144,12 +153,12 @@ class ExoPlayerPlayback(
         }
 
         completion(Result.success(null))
-
-        loadNext(next)
     }
 
     override suspend fun loadNext(song: Song?) {
         Timber.v("loadNext(song: ${song?.name}|${song?.mimeType})")
+
+        val generation = ++playlistGeneration
 
         // Nothing is queued before the first load, and load() replaces the playlist anyway.
         val player = player ?: return
@@ -162,6 +171,10 @@ class ExoPlayerPlayback(
             song?.let {
                 playerItem(mediaResolver.resolve(song), song.replayGain)
             }
+        if (generation != playlistGeneration) {
+            Timber.v("loadNext(song: ${song?.name}) superseded while resolving; ignoring")
+            return
+        }
 
         // Drop the items already played, so a long gapless session doesn't keep every one of them.
         // The current item stays put, so the player reports no transition or discontinuity for this.
@@ -203,6 +216,7 @@ class ExoPlayerPlayback(
     }
 
     override fun release() {
+        playlistGeneration++
         player?.let { player -> speedWithoutPlayer = player.playbackSpeed }
         player?.release()
         player = null

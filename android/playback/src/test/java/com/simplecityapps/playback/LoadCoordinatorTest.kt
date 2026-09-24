@@ -17,7 +17,7 @@ import org.junit.Test
 
 /**
  * [LoadCoordinator] delivers only the latest load's completion, holds a seek made during a load as
- * that load's start position, and runs next-item preparation one at a time, last request winning.
+ * that load's start position, and applies only the latest next-item request, preparing the next item once a load succeeds.
  * Runs on the test's virtual-time dispatcher, so every interleaving is explicit. The coordinator
  * runs in backgroundScope, which advanceUntilIdle ignores, so time is advanced explicitly.
  */
@@ -56,7 +56,7 @@ class LoadCoordinatorTest {
         id: Long,
         positionMs: Int = 0,
         completion: (Result<Any?>) -> Unit = { result -> results += "Song$id ${if (result.isSuccess) "loaded" else "failed"}" }
-    ) = load(playback, testSong(id), null, positionMs, completion)
+    ) = load(playback, testSong(id), positionMs, completion)
 
     @Test
     fun `a load's completion is delivered and clears the pending load`() = runTest {
@@ -207,7 +207,6 @@ class LoadCoordinatorTest {
         object : Playback by fake {
             override suspend fun load(
                 current: Song,
-                next: Song?,
                 seekPosition: Int,
                 completion: (Result<Any?>) -> Unit
             ) {
@@ -218,7 +217,7 @@ class LoadCoordinatorTest {
     @Test
     fun `a load reported successful twice completes once`() = runTest {
         val coordinator = coordinator()
-        coordinator.load(reportingPlayback, testSong(1), null, 0) { results += "Song1 loaded" }
+        coordinator.load(reportingPlayback, testSong(1), 0) { results += "Song1 loaded" }
         runCurrent()
         coordinator.seek(42_000)
 
@@ -232,7 +231,7 @@ class LoadCoordinatorTest {
     @Test
     fun `a load reported failed twice completes once`() = runTest {
         val coordinator = coordinator()
-        coordinator.load(reportingPlayback, testSong(1), null, 0) { results += "Song1 failed" }
+        coordinator.load(reportingPlayback, testSong(1), 0) { results += "Song1 failed" }
         runCurrent()
 
         reportedCompletions.single()(Result.failure(RuntimeException("load failed")))
@@ -263,13 +262,12 @@ class LoadCoordinatorTest {
             object : Playback by fake {
                 override suspend fun load(
                     current: Song,
-                    next: Song?,
                     seekPosition: Int,
                     completion: (Result<Any?>) -> Unit
                 ): Unit = throw IllegalStateException("boom")
             }
         val coordinator = coordinator()
-        coordinator.load(throwing, testSong(1), null, 0) { result -> results += "failed: ${result.exceptionOrNull()?.message}" }
+        coordinator.load(throwing, testSong(1), 0) { result -> results += "failed: ${result.exceptionOrNull()?.message}" }
         runCurrent()
 
         results shouldBe listOf("failed: boom")
@@ -277,8 +275,8 @@ class LoadCoordinatorTest {
     }
 
     @Test
-    fun `next-item requests run one at a time and the last one wins`() = runTest {
-        // #263: independent launches could finish out of order, leaving a stale next item queued.
+    fun `a next-item request supersedes one still in flight, so only the latest is applied`() = runTest {
+        // #263, #315: requests that finish out of order could leave a stale next item queued.
         val coordinator = coordinator()
         runCurrent()
         loadNextDelayMs["Song1"] = 1_000
@@ -293,11 +291,11 @@ class LoadCoordinatorTest {
         advanceTimeBy(2_000)
         runCurrent()
 
-        events shouldBe listOf("loadNext Song1 start", "loadNext Song1 end", "loadNext Song3 start", "loadNext Song3 end")
+        events shouldBe listOf("loadNext Song1 start", "loadNext Song3 start", "loadNext Song3 end")
     }
 
     @Test
-    fun `a slow next-item request finishes before a later fast one starts`() = runTest {
+    fun `a slow next-item request is abandoned for a later one`() = runTest {
         val coordinator = coordinator()
         runCurrent()
         loadNextDelayMs["Song1"] = 1_000
@@ -309,7 +307,7 @@ class LoadCoordinatorTest {
         advanceTimeBy(2_000)
         runCurrent()
 
-        events shouldBe listOf("loadNext Song1 start", "loadNext Song1 end", "loadNext Song2 start", "loadNext Song2 end")
+        events shouldBe listOf("loadNext Song1 start", "loadNext Song2 start", "loadNext Song2 end")
     }
 
     @Test
@@ -331,8 +329,8 @@ class LoadCoordinatorTest {
     }
 
     @Test
-    fun `a load satisfies a next-item request made before it`() = runTest {
-        // The load passes its own next item, so preparing it again afterwards is redundant.
+    fun `a load supersedes a next-item request made before it, then prepares the next item once it succeeds`() = runTest {
+        // The load replaces the playlist the request would have edited.
         val coordinator = coordinator()
         runCurrent()
         nextSong = testSong(2)
@@ -343,11 +341,25 @@ class LoadCoordinatorTest {
         fake.completeLoad()
         runCurrent()
 
+        events shouldBe listOf("A load Song1 seek 0", "loadNext Song2 start", "loadNext Song2 end")
+    }
+
+    @Test
+    fun `a failed load prepares no next item`() = runTest {
+        val coordinator = coordinator()
+        runCurrent()
+        nextSong = testSong(2)
+        coordinator.load(1)
+        runCurrent()
+
+        fake.failLoad()
+        runCurrent()
+
         events shouldBe listOf("A load Song1 seek 0")
     }
 
     @Test
-    fun `a load started while a next-item request waits satisfies it`() = runTest {
+    fun `a load started while a next-item request waits supersedes it`() = runTest {
         val coordinator = coordinator()
         runCurrent()
         coordinator.load(1)
@@ -356,11 +368,13 @@ class LoadCoordinatorTest {
 
         coordinator.load(2)
         runCurrent()
+        nextSong = testSong(3)
         fake.completeLoad()
         fake.completeLoad()
         runCurrent()
 
-        events shouldBe listOf("A load Song1 seek 0", "A load Song2 seek 0")
+        // Song1's load was superseded, so only Song2's success prepares the next item.
+        events shouldBe listOf("A load Song1 seek 0", "A load Song2 seek 0", "loadNext Song3 start", "loadNext Song3 end")
     }
 
     @Test
@@ -427,7 +441,6 @@ class LoadCoordinatorTest {
             object : Playback by fake {
                 override suspend fun load(
                     current: Song,
-                    next: Song?,
                     seekPosition: Int,
                     completion: (Result<Any?>) -> Unit
                 ) {
@@ -436,7 +449,7 @@ class LoadCoordinatorTest {
                 }
             }
         val coordinator = coordinator()
-        coordinator.load(slow, testSong(1), null, 0) { results += "Song1 loaded" }
+        coordinator.load(slow, testSong(1), 0) { results += "Song1 loaded" }
         runCurrent()
         advanceTimeBy(LOAD_TIMEOUT_MS)
         runCurrent()
@@ -459,7 +472,7 @@ class LoadCoordinatorTest {
         runCurrent()
 
         results shouldBe listOf("Song1 loaded")
-        events shouldBe listOf("A load Song1 seek 0")
+        events shouldBe listOf("A load Song1 seek 0", "loadNext null start", "loadNext null end")
     }
 
     @Test
@@ -500,26 +513,23 @@ class LoadCoordinatorTest {
     }
 
     @Test
-    fun `a load that timed out re-prepares the next item once it returns`() = runTest {
-        // Like ExoPlayerPlayback: the load reports and queues its own next item before returning, replacing
-        // any next item prepared while it was timed out.
+    fun `a load that timed out re-prepares the next item once it succeeds`() = runTest {
+        // A next item prepared while the load was timed out went into the playlist the load then replaced.
         val resolved = CompletableDeferred<Unit>()
         val slow =
             object : Playback by playback {
                 override suspend fun load(
                     current: Song,
-                    next: Song?,
                     seekPosition: Int,
                     completion: (Result<Any?>) -> Unit
                 ) {
                     resolved.await()
                     completion(Result.success(null))
-                    events += "load queued ${next?.name}"
                 }
             }
         val coordinator = coordinator()
         runCurrent()
-        coordinator.load(slow, testSong(1), testSong(2), 0) { results += "Song1 loaded" }
+        coordinator.load(slow, testSong(1), 0) { results += "Song1 loaded" }
         runCurrent()
         advanceTimeBy(LOAD_TIMEOUT_MS)
         runCurrent()
@@ -534,7 +544,6 @@ class LoadCoordinatorTest {
         events shouldBe listOf(
             "loadNext Song3 start",
             "loadNext Song3 end",
-            "load queued Song2",
             "loadNext Song3 start",
             "loadNext Song3 end"
         )

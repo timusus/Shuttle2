@@ -164,10 +164,10 @@ class PlaybackManager(
 
     /**
      * Runs a queue operation, re-preparing the next item once for every queue change it makes, when it
-     * finishes, rather than once per change. A load it starts passes its own next item, so changes made
-     * before that load need no preparation of their own. Queue changes are collected inline on the main
-     * thread, so they arrive while [block] runs. Operations may nest, and suspend; a change made elsewhere
-     * while one is suspended is deferred with it.
+     * finishes, rather than once per change. A load it starts prepares the next item once it succeeds,
+     * so changes made before that load need no preparation of their own. Queue changes are collected
+     * inline on the main thread, so they arrive while [block] runs. Operations may nest, and suspend; a
+     * change made elsewhere while one is suspended is deferred with it.
      */
     private inline fun queueOperation(block: () -> Unit) {
         queueOperationDepth++
@@ -205,7 +205,7 @@ class PlaybackManager(
         Timber.v("load(seekPosition: $seekPosition)")
         // Some players (ExoPlayer/ChromeCast) like to be loaded on the main thread
         queueManager.getCurrentItem()?.let { currentQueueItem ->
-            attemptLoad(currentQueueItem.song, queueManager.getNext()?.song, seekPosition ?: currentQueueItem.song.getStartPosition() ?: 0) { result ->
+            attemptLoad(currentQueueItem.song, seekPosition ?: currentQueueItem.song.getStartPosition() ?: 0) { result ->
                 result.onFailure {
                     queueManager.setCurrentItem(currentQueueItem)
                 }
@@ -216,14 +216,13 @@ class PlaybackManager(
 
     private fun attemptLoad(
         current: Song,
-        next: Song?,
         seekPosition: Int,
         attempt: Int = 1,
         completion: (Result<Boolean>) -> Unit
     ) {
         Timber.v("attemptLoad(current song: ${current.name}, seekPosition: $seekPosition, attempt: $attempt)")
 
-        loadPlayback(current, next, seekPosition) { result ->
+        loadPlayback(current, seekPosition) { result ->
             result.onSuccess {
                 completion(Result.success(attempt == 1))
             }
@@ -234,7 +233,7 @@ class PlaybackManager(
                         if (nextQueueItem != queueManager.getCurrentItem()) {
                             queueOperation {
                                 queueManager.skipToNext(true)
-                                attemptLoad(nextQueueItem.song, queueManager.getNext()?.song, 0, attempt + 1, completion)
+                                attemptLoad(nextQueueItem.song, 0, attempt + 1, completion)
                             }
                         } else {
                             completion(Result.failure(error))
@@ -258,12 +257,11 @@ class PlaybackManager(
      */
     private fun loadPlayback(
         current: Song,
-        next: Song?,
         seekPosition: Int,
         completion: (Result<Any?>) -> Unit
     ) {
         nextRequestDeferred = false
-        loadCoordinator.load(playback, current, next, seekPosition, completion)
+        loadCoordinator.load(playback, current, seekPosition, completion)
     }
 
     override suspend fun shuffle(
@@ -334,7 +332,7 @@ class PlaybackManager(
     ) = queueOperation {
         if (queueManager.skipToNext(ignoreRepeat)) {
             queueManager.getCurrentItem()?.let { currentQueueItem ->
-                loadPlayback(currentQueueItem.song, queueManager.getNext()?.song, 0) { result ->
+                loadPlayback(currentQueueItem.song, 0) { result ->
                     result.onSuccess { play() }
                     result.onFailure { error -> Timber.w("load() failed. Error: $error") }
                     completion?.invoke(result)
@@ -352,7 +350,7 @@ class PlaybackManager(
         if (force || position < 2000) {
             queueManager.skipToPrevious()
             queueManager.getCurrentItem()?.let { currentQueueItem ->
-                loadPlayback(currentQueueItem.song, queueManager.getNext()?.song, 0) { result ->
+                loadPlayback(currentQueueItem.song, 0) { result ->
                     result.onSuccess { play() }
                     result.onFailure { error -> Timber.w("load() failed. Error: $error") }
                     completion?.invoke(result)
@@ -367,7 +365,7 @@ class PlaybackManager(
         if (queueManager.getCurrentPosition() != position) {
             queueManager.skipTo(position)
             queueManager.getCurrentItem()?.let { currentQueueItem ->
-                loadPlayback(currentQueueItem.song, queueManager.getNext()?.song, 0) { result ->
+                loadPlayback(currentQueueItem.song, 0) { result ->
                     result.onSuccess { play() }
                     result.onFailure { error -> Timber.w("load() failed. Error: $error") }
                 }
@@ -443,7 +441,7 @@ class PlaybackManager(
             return@queueOperation
         }
         // The player follows the queue onto the new current item, carrying on if it was playing.
-        loadPlayback(newCurrentItem.song, queueManager.getNext()?.song, 0) { result ->
+        loadPlayback(newCurrentItem.song, 0) { result ->
             result.onSuccess { if (wasPlaying) play() }
             result.onFailure { error -> Timber.w("load() failed. Error: $error") }
         }

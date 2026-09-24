@@ -5,7 +5,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -21,11 +20,12 @@ import timber.log.Timber
  * load is pending, [pendingLoad] holds the position it will start at; a [seek] moves that position
  * rather than the engine, and is applied once the load completes.
  *
- * Next-item preparation is a request, not a command: [requestNext] signals a single consumer, which
- * waits for any pending load to finish, then reads the next song and the active playback at that
- * moment. Requests made while one is in flight are conflated, so the last one wins and loadNext
- * calls never overlap or finish out of order. A load passes its own next item, so it satisfies any
- * request made before it started.
+ * Next-item preparation is a request, not a command, and this is the only caller of
+ * [Playback.loadNext]. A [requestNext] waits for any pending load to finish, then reads the next
+ * song and the active playback at that moment. Each request supersedes the one before it, cancelling
+ * it even mid-resolve, so only the latest request's next item is ever applied. A load replaces the
+ * playlist a request would edit, so it supersedes any request made before it, and once it succeeds
+ * it requests the next item itself.
  *
  * Emits on [parentScope]'s dispatcher, which the load and next-item coroutines run on.
  *
@@ -40,7 +40,7 @@ import timber.log.Timber
  * A load that hasn't reported within [loadTimeoutMs] stops holding up next-item preparation, but
  * stays pending: a slow load (a Cast receiver fetching a large file, a server starting a transcode)
  * looks the same as a hung one, so it isn't failed. If it reports later, its completion is delivered
- * as usual.
+ * as usual, and a success prepares the next item afresh, replacing any prepared while it was pending.
  */
 class LoadCoordinator(
     parentScope: CoroutineScope,
@@ -89,28 +89,8 @@ class LoadCoordinator(
      */
     private val isLoading = MutableStateFlow(false)
 
-    private val nextRequests = Channel<Unit>(Channel.CONFLATED)
-
-    /** Whether a next-item request has been made since the last load started. */
-    private var nextRequested = false
-
-    init {
-        scope.launch {
-            for (request in nextRequests) {
-                // A pending load passes its own next item, and replaces the playlist this would edit.
-                isLoading.first { !it }
-                if (!nextRequested) continue
-                nextRequested = false
-                try {
-                    activePlayback().loadNext(nextSong())
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    Timber.e(e, "loadNext() failed")
-                }
-            }
-        }
-    }
+    /** The latest next-item request, waiting for a pending load or preparing the next item. */
+    private var nextJob: Job? = null
 
     /**
      * Loads [current] into [playback] at [positionMs], superseding any load in progress.
@@ -121,18 +101,16 @@ class LoadCoordinator(
     fun load(
         playback: Playback,
         current: Song,
-        next: Song?,
         positionMs: Int,
         completion: (Result<Any?>) -> Unit
     ) {
         val token = ++latestToken
-        nextRequested = false
+        cancelNextRequest()
         loadJob?.cancel()
         setPendingLoad(PendingLoad(token, positionMs))
         loadJob =
             scope.launch {
                 var delivered = false
-                var timedOut = false
                 var timeout: Job? = null
 
                 fun deliver(result: Result<Any?>) {
@@ -148,23 +126,17 @@ class LoadCoordinator(
                     launch {
                         delay(loadTimeoutMs)
                         Timber.w("Load $token didn't complete within $loadTimeoutMs ms; no longer holding up next-item preparation")
-                        timedOut = true
                         timedOutToken = token
                         updateIsLoading()
                     }
                 try {
-                    playback.load(current, next, positionMs, ::deliver)
+                    playback.load(current, positionMs, ::deliver)
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
                     // An exception thrown by the completion itself isn't a load failure.
                     if (delivered) throw e
                     deliver(Result.failure(e))
-                }
-                // A next item prepared while this load was timed out went into the playlist the load has
-                // since replaced, and the load queued the next item as it was when the load started.
-                if (timedOut && token == latestToken) {
-                    requestNext()
                 }
             }
     }
@@ -182,6 +154,12 @@ class LoadCoordinator(
         val pending = pendingLoad
         if (result.isSuccess && pending != null && pending.token == token && pending.seeked) {
             playback.seek(pending.positionMs)
+        }
+        // The load replaced the playlist, so the next item is prepared afresh, from the queue as it is
+        // once the load is no longer pending. Requested before the completion, so a request or load the
+        // completion makes supersedes this one rather than following it.
+        if (result.isSuccess) {
+            requestNext()
         }
         completingToken = token
         try {
@@ -216,10 +194,26 @@ class LoadCoordinator(
         setPendingLoad(null)
     }
 
-    /** Asks for the active playback's next item to be brought in line with [nextSong]. */
+    /** Asks for the active playback's next item to be brought in line with [nextSong], superseding any earlier request. */
     fun requestNext() {
-        nextRequested = true
-        nextRequests.trySend(Unit)
+        cancelNextRequest()
+        nextJob =
+            scope.launch {
+                // A pending load replaces the playlist this would edit, and requests the next item once it succeeds.
+                isLoading.first { !it }
+                try {
+                    activePlayback().loadNext(nextSong())
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Timber.e(e, "loadNext() failed")
+                }
+            }
+    }
+
+    private fun cancelNextRequest() {
+        nextJob?.cancel()
+        nextJob = null
     }
 
     private fun loadingPendingLoad(): PendingLoad? = pendingLoad?.takeIf { it.token != completingToken }

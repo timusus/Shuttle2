@@ -49,7 +49,7 @@ class PlaybackManagerPlayTest {
         playbackManager.play()
         playback.completeLoad()
 
-        events shouldBe listOf("A load Song seek 0", "A play")
+        events shouldBe listOf("A load Song seek 0", "A play", "A loadNext null")
     }
 
     @Test
@@ -64,7 +64,7 @@ class PlaybackManagerPlayTest {
         playback.completeLoad()
         playback.completeLoad()
 
-        events.count { it.contains("load") } shouldBe 2
+        events.count { it.contains(" load ") } shouldBe 2
         events.none { it == "A play" } shouldBe true
     }
 

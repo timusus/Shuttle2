@@ -7,13 +7,20 @@ import com.simplecityapps.shuttle.model.Song
 interface Playback {
     var callback: Callback?
 
+    /**
+     * Loads [current] at [seekPosition], replacing whatever was loaded, including a prepared next
+     * item. Reports once through [completion]. Preparing the next item is left to [loadNext].
+     */
     suspend fun load(
         current: Song,
-        next: Song?,
         seekPosition: Int,
         completion: (Result<Any?>) -> Unit
     )
 
+    /**
+     * Prepares [song] to play gaplessly after the current item, or clears the prepared item if null.
+     * Only [LoadCoordinator] calls this.
+     */
     suspend fun loadNext(song: Song?)
 
     fun play()

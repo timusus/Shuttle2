@@ -56,7 +56,7 @@ class PlaybackManagerSwitchTest {
 
         playbackB.completeLoad()
 
-        events shouldBe listOf("B seek $SAVED_POSITION", "B play")
+        events shouldBe listOf("B seek $SAVED_POSITION", "B play", "B loadNext null")
         audioEffectSessionManager.sessionId shouldBe playbackB.sessionId
     }
 
@@ -81,7 +81,7 @@ class PlaybackManagerSwitchTest {
 
         playbackC.completeLoad()
 
-        events shouldBe listOf("C seek $SAVED_POSITION")
+        events shouldBe listOf("C seek $SAVED_POSITION", "C loadNext null")
         audioEffectSessionManager.sessionId shouldBe playbackC.sessionId
     }
 
@@ -112,7 +112,7 @@ class PlaybackManagerSwitchTest {
 
         playbackB.completeLoad()
 
-        events shouldBe listOf("B seek $SAVED_POSITION")
+        events shouldBe listOf("B seek $SAVED_POSITION", "B loadNext null")
     }
 
     @Test

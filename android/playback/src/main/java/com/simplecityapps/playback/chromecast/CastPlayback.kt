@@ -45,7 +45,6 @@ class CastPlayback(
 
     override suspend fun load(
         current: Song,
-        next: Song?,
         seekPosition: Int,
         completion: (Result<Any?>) -> Unit
     ) {

@@ -47,7 +47,7 @@ class PlaybackManagerLoadTest {
         playback.failLoad()
         playback.completeLoad()
 
-        events shouldBe listOf("A load Song1 seek 0", "A load Song2 seek 0")
+        events shouldBe listOf("A load Song1 seek 0", "A load Song2 seek 0", "A loadNext Song3")
         queueManager.getCurrentItem()!!.song.id shouldBe 2L
         // The success flag reports whether it loaded on the first attempt.
         result!!.getOrThrow() shouldBe false
@@ -92,7 +92,7 @@ class PlaybackManagerLoadTest {
         fixture.playback.completeLoad()
 
         result!!.getOrThrow() shouldBe true
-        fixture.events.filter { it.startsWith("A load") || it == "A play" } shouldBe listOf("A load Song1 seek 0", "A play")
+        fixture.events.filter { it.startsWith("A load ") || it == "A play" } shouldBe listOf("A load Song1 seek 0", "A play")
     }
 
     @Test

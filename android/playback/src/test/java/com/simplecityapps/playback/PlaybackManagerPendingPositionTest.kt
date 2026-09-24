@@ -99,6 +99,6 @@ class PlaybackManagerPendingPositionTest {
 
         playback.completeLoad()
 
-        events shouldBe listOf("A play", "A seek 0")
+        events shouldBe listOf("A play", "A seek 0", "A loadNext Song2")
     }
 }
