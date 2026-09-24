@@ -3,12 +3,15 @@ package com.simplecityapps.shuttle.debug
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.media.AudioManager
 import android.util.Log
 import com.simplecityapps.mediaprovider.repository.songs.SongRepository
+import com.simplecityapps.playback.NoisyReceiver
 import com.simplecityapps.playback.PlaybackManager
 import com.simplecityapps.playback.PlaybackState
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
 import com.simplecityapps.playback.queue.QueueManager
+import com.simplecityapps.playback.sleeptimer.SleepTimer
 import com.simplecityapps.shuttle.query.SongQuery
 import com.simplecityapps.shuttle.ui.common.playback.PlaySongs
 import dagger.hilt.android.AndroidEntryPoint
@@ -45,6 +48,9 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
 
     @Inject
     lateinit var playbackPreferenceManager: PlaybackPreferenceManager
+
+    @Inject
+    lateinit var sleepTimer: SleepTimer
 
     override fun onReceive(
         context: Context,
@@ -129,6 +135,28 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
             queueManager.getRepeatMode().name
         }
 
+        "SPEED" -> {
+            val multiplier = intent.getFloatExtra("multiplier", -1f)
+            require(multiplier > 0f) { "missing --ef multiplier <speed>" }
+            playbackManager.setPlaybackSpeed(multiplier)
+            "${multiplier}x"
+        }
+
+        "SLEEP_TIMER" -> {
+            val seconds = intent.getLongExtra("seconds", -1L)
+            require(seconds >= 0) { "missing --el seconds <delay>" }
+            val playToEnd = intent.getBooleanExtra("play_to_end", false)
+            sleepTimer.startTimer(seconds * 1000L, playToEnd)
+            "${seconds}s, playToEnd=$playToEnd"
+        }
+
+        "BECOMING_NOISY" -> null.also {
+            // Runs the same NoisyReceiver.onReceive the real (protected, un-broadcastable in a
+            // debug build) ACTION_AUDIO_BECOMING_NOISY registration handles, rather than a copy of
+            // its pause-on-noisy logic. NoisyReceiver ignores its context argument.
+            NoisyReceiver(playbackManager).onReceive(null, Intent(AudioManager.ACTION_AUDIO_BECOMING_NOISY))
+        }
+
         "DUMP_STATE" -> dumpState().toString()
 
         else -> throw IllegalArgumentException("unknown action")
@@ -148,6 +176,7 @@ class DebugPlaybackReceiver : BroadcastReceiver() {
             put("title", currentSong?.name ?: JSONObject.NULL)
             put("shuffle", queueManager.getShuffleMode().name)
             put("repeat", queueManager.getRepeatMode().name)
+            put("speed", playbackManager.getPlaybackSpeed())
             put("pendingLoad", pendingLoad())
         }
     }

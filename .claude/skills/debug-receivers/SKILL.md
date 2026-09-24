@@ -26,6 +26,9 @@ failing.
 | `REMOVE_QUEUE_ITEM` | `--ei position N` | `PlaybackManager.removeQueueItem`, the queue screen's "Remove from Queue" path. N indexes the queue in its displayed (shuffle-aware) order |
 | `SHUFFLE` | `[--ez enabled true\|false]` | Toggle, or set, the shuffle mode |
 | `REPEAT` | `[--es mode off\|all\|one]` | Toggle (Off → All → One), or set, the repeat mode |
+| `SPEED` | `--ef multiplier 1.5` | `PlaybackManager.setPlaybackSpeed(multiplier)` |
+| `SLEEP_TIMER` | `--el seconds 3 [--ez play_to_end true\|false]` | `SleepTimer.startTimer`, the same timer the Sleep Timer dialog starts |
+| `BECOMING_NOISY` | | Runs `NoisyReceiver.onReceive` directly with `ACTION_AUDIO_BECOMING_NOISY` — `AUDIO_BECOMING_NOISY` is a protected broadcast `adb` can't send |
 | `DUMP_STATE` | | Print the state as one JSON line (below) |
 | `DOWNLOAD_SONG` | `[--el song_id N]` | `DebugDownloadReceiver`: download a song for offline use (default: the first remote song) from its current stream URI, keyed by `song.path` |
 | `REMOVE_DOWNLOAD` | `[--el song_id N]` | Remove that song's download |
@@ -40,11 +43,12 @@ manifest's intent filter is never delivered, so the wrapper times out on typos.
 `DUMP_STATE` fields: `state` (`PlaybackManager.playbackState()`), `reportedState` (the
 `playbackStateFlow` value), `positionMs` (`getProgress()`), `progressMs` (`progressFlow`),
 `durationMs`, `savedPositionMs` (the persisted resume position), `queuePosition`, `queueSize`,
-`title` (current song), `shuffle`, `repeat`, `pendingLoad` (a track load in flight; read
-reflectively from `PlaybackManager`'s private `LoadCoordinator`, `null` if that field moves).
+`title` (current song), `shuffle`, `repeat`, `speed` (`getPlaybackSpeed()`), `pendingLoad` (a track
+load in flight; read reflectively from `PlaybackManager`'s private `LoadCoordinator`, `null` if
+that field moves).
 
 ```json
-{"state":"Playing","reportedState":"Playing","positionMs":3225,"progressMs":3153,"durationMs":60029,"savedPositionMs":3050,"queuePosition":0,"queueSize":5,"title":"Playback One","shuffle":"Off","repeat":"Off","pendingLoad":false}
+{"state":"Playing","reportedState":"Playing","positionMs":3225,"progressMs":3153,"durationMs":60029,"savedPositionMs":3050,"queuePosition":0,"queueSize":5,"title":"Playback One","shuffle":"Off","repeat":"Off","speed":1.0,"pendingLoad":false}
 ```
 
 ## Typical check

@@ -115,6 +115,21 @@ for line in sys.stdin:
 print(",".join(titles))'
 }
 
+# Whether PlaybackService is currently listed for the debug app in dumpsys.
+service_running() {
+    adb_retry shell dumpsys activity services "$APP_ID" 2>/dev/null | grep -q "PlaybackService"
+}
+
+# wait_for_service_stop <seconds>: polls dumpsys activity services until PlaybackService is gone
+# (PlaybackService.postDelayedShutdown's own timer, not a fixed sleep).
+wait_for_service_stop() {
+    local timeout="$1" deadline=$(($(date +%s) + $1))
+    while service_running; do
+        [ "$(date +%s)" -lt "$deadline" ] || fail "PlaybackService still running after ${timeout}s"
+        sleep 1
+    done
+}
+
 # screenshot <name>: the screen as it is now, to ${SHOTS:-tmp/maestro}/<name>.png.
 screenshot() {
     mkdir -p "${SHOTS:-${CHECKS_ROOT}/tmp/maestro}"

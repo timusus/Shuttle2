@@ -31,6 +31,9 @@
                 <action android:name="com.simplecityapps.shuttle.debug.REMOVE_QUEUE_ITEM" />
                 <action android:name="com.simplecityapps.shuttle.debug.SHUFFLE" />
                 <action android:name="com.simplecityapps.shuttle.debug.REPEAT" />
+                <action android:name="com.simplecityapps.shuttle.debug.SPEED" />
+                <action android:name="com.simplecityapps.shuttle.debug.SLEEP_TIMER" />
+                <action android:name="com.simplecityapps.shuttle.debug.BECOMING_NOISY" />
                 <action android:name="com.simplecityapps.shuttle.debug.DUMP_STATE" />
             </intent-filter>
         </receiver>
