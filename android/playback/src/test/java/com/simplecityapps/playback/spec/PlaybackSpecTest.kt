@@ -422,6 +422,32 @@ class PlaybackSpecTest {
     }
 
     @Test
+    fun `RS-28 clearing the queue while playing keeps the current song, in one change`() {
+        startPlaying((1L..300L).map { song(it) })
+        val changes = harness.playlistChanges
+
+        playback.clearQueue()
+        harness.idle()
+
+        queue.queueStateFlow.value.items.map { it.song.id } shouldBe listOf(1L)
+        playback.playbackStateFlow.value shouldBe PlaybackState.Playing
+        harness.playlistChanges - changes shouldBe 1
+    }
+
+    @Test
+    fun `RS-28 removing a run of songs is one change`() {
+        startPlaying((1L..300L).map { song(it) })
+        val items = queue.queueStateFlow.value.items
+        val changes = harness.playlistChanges
+
+        queue.remove(items.subList(10, 100) + items.subList(200, 250))
+        harness.idle()
+
+        queue.queueStateFlow.value.items shouldBe items.take(10) + items.subList(100, 200) + items.drop(250)
+        harness.playlistChanges - changes shouldBe 2
+    }
+
+    @Test
     fun `RS-29 playback and queue calls made off the main thread run on it`() {
         startPlaying(listOf(song(1), song(2), song(3)))
         val errors = mutableListOf<Throwable>()

@@ -4,6 +4,8 @@ import android.content.Context
 import android.media.AudioManager
 import android.media.AudioTrack
 import android.os.Looper
+import androidx.media3.common.Player
+import androidx.media3.common.Timeline
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.test.utils.FakeClock
 import androidx.media3.test.utils.TestExoPlayerBuilder
@@ -125,6 +127,10 @@ class PlaybackHarness(
 
     val playbackOperations: PlaybackOperations
 
+    /** How many times the player's playlist has changed: each change is a timeline rebuild, costing time in the queue's length. */
+    var playlistChanges = 0
+        private set
+
     init {
         ShadowAudioTrack.addAudioDataListener(audioDataListener)
         player =
@@ -135,6 +141,16 @@ class PlaybackHarness(
                     .setMediaSourceFactory(mediaSourceFactory)
                     .build()
             }.create()
+        player.addListener(
+            object : Player.Listener {
+                override fun onTimelineChanged(
+                    timeline: Timeline,
+                    reason: Int
+                ) {
+                    if (reason == Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED) playlistChanges++
+                }
+            }
+        )
         // Entries are built inline, so a queue change completes within the call that makes it.
         val queueManager = QueueManager(player, GeneralPreferenceManager(FakeSharedPreferences()), songUriResolver, buildContext = EmptyCoroutineContext)
         queueOperations = queueManager

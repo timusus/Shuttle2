@@ -355,7 +355,14 @@ class QueueManager(
         val uids = items.map { it.uid }.toSet()
         playerThread.run {
             batch {
-                entries().withIndex().reversed().filter { it.value.uid in uids }.forEach { player.removeMediaItem(it.index) }
+                // Each player change rebuilds the timeline, so a run of items goes in one call, the last run first.
+                val indices = entries().withIndex().filter { it.value.uid in uids }.map { it.index }
+                val runs = mutableListOf<IntRange>()
+                indices.forEach { index ->
+                    val last = runs.lastOrNull()
+                    if (last != null && last.last + 1 == index) runs[runs.lastIndex] = last.first..index else runs += index..index
+                }
+                runs.asReversed().forEach { range -> player.removeMediaItems(range.first, range.last + 1) }
             }
         }
     }

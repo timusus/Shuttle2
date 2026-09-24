@@ -88,6 +88,10 @@ playing from where it was, without reloading. (#345) — JVM.
 queue no longer has, when it's restored with shuffle on, then the other songs keep their saved order and the song
 that was current is current again. (#345) — JVM.
 
+**RS-28: removing many songs is one change per run.** Given a long queue playing, when the queue is cleared (the
+current song stays) or a selection is removed, then each run of adjacent songs leaves in one playlist change, not
+one per song, so the time taken doesn't grow with the square of the queue's length. (#345) — JVM.
+
 **RS-29: playback and queue calls work from any thread.** Given a song playing, when a caller off the main thread
 reads the progress or duration, pauses, or removes a queue item, then the read returns the last published state and
 each change takes effect on the main thread, without an error. (#345) — JVM.
