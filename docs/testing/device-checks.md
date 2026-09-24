@@ -34,6 +34,10 @@ build, tick them off, and file anything wrong with `/note`. Remove ticked items 
 - [ ] Resume playback from the notification and from a Bluetooth/headset button after the service has stopped.
 - [ ] Unplug headphones or disconnect Bluetooth while playing. Playback pauses.
 
+### Next-track preparation and slow loads (#300)
+- [ ] Gapless auto-advance still works after reordering the queue, turning shuffle on, and removing the next track.
+- [ ] A slow Jellyfin transcode or Cast load (weak Wi-Fi, large FLAC) that takes more than 30 s still plays that track instead of skipping it.
+
 ### Widgets (after the WidgetManager migration)
 - [ ] Each widget size shows the current song, artwork and play/pause state, and updates on skip, pause and resume.
 - [ ] The widget controls (play/pause, next, previous) work while the app is in the background and after a force-stop.

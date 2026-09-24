@@ -16,7 +16,9 @@ s2 PLAY >/dev/null
 wait_for 10 "s['state'] == 'Playing'"
 after="$(state positionMs)"
 [ "$(state title)" = "Playback One" ] || fail "resumed on $(state title), not Playback One"
-[ "$after" -ge 23000 ] && [ "$after" -le 28500 ] \
-    || fail "resumed at ${after} ms, expected ~25000 (was ${before} ms before the force-stop)"
+# Measured against the pre-stop position, not a fixed ~25 s: on a loaded host the 5 s sleep overruns,
+# and the read after PLAY can lag a couple of seconds.
+[ "$after" -ge $((before - 2000)) ] && [ "$after" -le $((before + 3500)) ] \
+    || fail "resumed at ${after} ms, expected near ${before} ms (the position before the force-stop)"
 echo "  resumed at ${after} ms (${before} ms before the force-stop)"
 pass
