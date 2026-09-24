@@ -35,9 +35,11 @@ build, tick them off, and file anything wrong with `/note`. Remove ticked items 
 - [ ] On a slow server, skip and then immediately reorder the queue: the track that plays next is the new next song, not the old one.
 
 ### Widgets (after the WidgetManager migration)
-- [ ] Each widget size shows the current song, artwork and play/pause state, and updates on skip, pause and resume.
-- [ ] The widget controls (play/pause, next, previous) work while the app is in the background and after a force-stop.
-- [ ] Shuffle/repeat changes show on widgets that display them.
+- [x] Each widget layout shows the current song and its play/pause state, and the empty state renders. — automated: `NowPlayingWidgetRenderTest`
+- [x] The play/pause, next, previous, shuffle and repeat buttons send the right playback action. — automated: `NowPlayingWidgetRenderTest`
+- [x] Shuffle/repeat state shows on the layouts that display it. — automated: `NowPlayingWidgetRenderTest`
+- [ ] On the launcher, the widget updates on skip, pause and resume, and shows the artwork.
+- [ ] The widget controls work while the app is in the background and after a force-stop.
 
 ### Tag edits reaching a queued song (#270)
 - [ ] With the Shuttle (TagLib) local provider set up (needs a real SAF folder pick, which
