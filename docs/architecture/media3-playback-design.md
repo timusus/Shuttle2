@@ -175,3 +175,4 @@ price of Android Auto's queue view; a windowed timeline would break the one-queu
 
 - Everything marked (unverified) above. In particular: Cast message limits with large queues; whether Media3 windows the legacy session queue; foregrounding when the Player is driven directly; whether focus is abandoned on pause; and Auto and widget behaviour if the service class name changes.
 - Owner decisions (2026-09-24): the UI keeps an in-process layer over the Player, not MediaController; casting with shuffle on sends the queue flattened into play order; the Cast queue is capped to a window if the spike shows a limit; no flag and no parallel engine; playback reporting (ded7f569, branch worktree-pr-integ) lands before step 1.
+- Owner decision (2026-09-25): keep Media3's default foreground timeout for a paused service (10 minutes). The notification stays pinned that long, and the service stops when the app is swiped from Recents, replacing the old 15 s self-stop.
