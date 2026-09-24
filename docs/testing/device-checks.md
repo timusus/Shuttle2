@@ -47,6 +47,14 @@ build, tick them off, and file anything wrong with `/note`. Remove ticked items 
 - [ ] The widget controls (play/pause, next, previous) work while the app is in the background and after a force-stop.
 - [ ] Shuffle/repeat changes show on widgets that display them.
 
+### Tag edits reaching a queued song (#270)
+- [ ] With the Shuttle (TagLib) local provider set up (needs a real SAF folder pick, which
+      `seed-test-media.sh` deliberately skips by using the MediaStore provider), queue several
+      songs and play one. Edit the playing song's title via the batch tag editor; the queue, now
+      playing, mini player and notification all update without playback interrupting.
+- [ ] Edit a queued-but-not-playing song's title the same way; the queue screen shows the new
+      title, playback isn't affected.
+
 ### Audio (still outstanding from earlier stages)
 - [ ] ReplayGain (track and album modes) sounds right.
 - [ ] Gapless playback across an album with no gaps between tracks.
