@@ -361,6 +361,26 @@ class PlaybackSpecTest {
         harness.audioOutput().size.shouldBeBetween((TONE_2S_MS - 50) * BYTES_PER_MS, (TONE_2S_MS + 50) * BYTES_PER_MS)
     }
 
+    @Test
+    fun `RS-29 playback and queue calls made off the main thread run on it`() {
+        startPlaying(listOf(song(1), song(2), song(3)))
+        val errors = mutableListOf<Throwable>()
+        var progress: Int? = null
+
+        offMainThread(errors) {
+            progress = playback.getProgress()
+            playback.getDuration()
+            playback.pause()
+            queue.remove(listOf(queue.queueStateFlow.value.items[2]))
+        }
+        harness.idle()
+
+        errors.shouldBeEmpty()
+        progress.shouldNotBeNull()
+        playback.playbackStateFlow.value shouldBe PlaybackState.Paused
+        queue.queueStateFlow.value.items.map { it.song.id } shouldBe listOf(1L, 2L)
+    }
+
     private fun offMainThread(
         errors: MutableList<Throwable>,
         block: () -> Unit

@@ -11,6 +11,7 @@ import androidx.media3.common.Timeline
 import androidx.media3.exoplayer.ExoPlaybackException
 import androidx.media3.exoplayer.ExoPlayer
 import com.simplecityapps.playback.audiofocus.AudioFocusHelper
+import com.simplecityapps.playback.engine.PlayerThread
 import com.simplecityapps.playback.engine.SongUriResolver.Companion.isDirect
 import com.simplecityapps.playback.engine.isResolutionFailure
 import com.simplecityapps.playback.persistence.PlaybackPreferenceManager
@@ -42,7 +43,8 @@ import timber.log.Timber
  * queue. Adds what the player doesn't do itself: audio focus, the saved position to resume from, skipping past songs
  * that fail to load, and the events the app records (track ends, pauses, failures).
  *
- * Main thread only, like the player.
+ * Callable from any thread, on [PlayerThread]'s rule: a call that changes playback runs on the main thread, where the
+ * player lives, straight away if made there, else posted to it; a read made off it returns the last published state.
  */
 class PlaybackManager(
     private val queueManager: QueueManager,
@@ -56,6 +58,8 @@ class PlaybackManager(
     private val elapsedRealtime: () -> Long = SystemClock::elapsedRealtime
 ) : PlaybackOperations,
     AudioFocusHelper.Listener {
+    private val playerThread = PlayerThread(player)
+
     /** The uid of the entry that last became ready to play; while the current one hasn't, it's loading. */
     private var readyUid: Long? = null
 
@@ -360,17 +364,17 @@ class PlaybackManager(
     override fun load(
         seekPosition: Int?,
         completion: (Result<Boolean>) -> Unit
-    ) {
+    ) = playerThread.run {
         val entry = currentEntry
         if (entry == null) {
             Timber.w("load() failed: queue empty")
             completion(Result.failure(IllegalStateException("Queue empty")))
-            return
+        } else {
+            Timber.v("load(seekPosition: $seekPosition) ${entry.song.name}")
+            pendingLoad = PendingLoad(completion)
+            player.playWhenReady = false
+            loadCurrent(seekPosition ?: entry.song.getStartPosition() ?: 0, completion)
         }
-        Timber.v("load(seekPosition: $seekPosition) ${entry.song.name}")
-        pendingLoad = PendingLoad(completion)
-        player.playWhenReady = false
-        loadCurrent(seekPosition ?: entry.song.getStartPosition() ?: 0, completion)
     }
 
     /** Moves to the current item at [positionMs] and prepares it, calling [completion] once it's ready. */
@@ -392,7 +396,9 @@ class PlaybackManager(
      * Plays the current item. An unprepared player (nothing loaded yet) prepares it at the saved position; a
      * position within the song's last moments restarts it.
      */
-    override fun play(attempt: Int) {
+    override fun play(attempt: Int) = playerThread.run { playNow() }
+
+    private fun playNow() {
         Timber.v("play()")
         if (player.mediaItemCount == 0) {
             Timber.w("Failed to play: Queue empty.")
@@ -423,13 +429,13 @@ class PlaybackManager(
     }
 
     /** A user- or system-driven pause, distinct from [pauseForFocusLoss]: this one gives up audio focus. */
-    override fun pause() {
+    override fun pause() = playerThread.run {
         Timber.v("pause()")
         player.playWhenReady = false
         audioFocusHelper.abandonAudioFocus()
     }
 
-    override fun togglePlayback() {
+    override fun togglePlayback() = playerThread.run {
         when (playbackState()) {
             is PlaybackState.Loading, PlaybackState.Playing -> pause()
             else -> play()
@@ -439,7 +445,7 @@ class PlaybackManager(
     override fun skipToNext(
         ignoreRepeat: Boolean,
         completion: ((Result<Any?>) -> Unit)?
-    ) {
+    ) = playerThread.run {
         Timber.v("skipToNext()")
         if (queueManager.skipToNext(ignoreRepeat)) {
             playFromStart(completion)
@@ -451,7 +457,7 @@ class PlaybackManager(
     override fun skipToPrev(
         force: Boolean,
         completion: ((Result<Any?>) -> Unit)?
-    ) {
+    ) = playerThread.run {
         Timber.v("skipToPrev()")
         if (force || (getProgress() ?: 0) < RESTART_THRESHOLD_MS) {
             queueManager.skipToPrevious()
@@ -462,7 +468,7 @@ class PlaybackManager(
         }
     }
 
-    override fun skipTo(position: Int) {
+    override fun skipTo(position: Int) = playerThread.run {
         if (position != queueManager.getCurrentPosition()) {
             queueManager.skipTo(position)
             playFromStart(null)
@@ -506,27 +512,35 @@ class PlaybackManager(
         load(0, completion)
     }
 
-    override fun seekTo(position: Int) {
+    override fun seekTo(position: Int) = playerThread.run {
         Timber.v("seekTo(position: $position)")
         player.seekTo(position.toLong())
     }
 
     override fun playbackState(): PlaybackState = _playbackStateFlow.value
 
-    override fun getProgress(): Int? = player.currentPosition.toInt().takeIf { player.mediaItemCount > 0 }
+    override fun getProgress(): Int? = if (playerThread.isCurrent) {
+        player.currentPosition.toInt().takeIf { player.mediaItemCount > 0 }
+    } else {
+        _progressFlow.value?.position
+    }
 
-    override fun getDuration(): Int? = player.duration.takeIf { it != C.TIME_UNSET && player.mediaItemCount > 0 }?.toInt()
+    override fun getDuration(): Int? = if (playerThread.isCurrent) {
+        player.duration.takeIf { it != C.TIME_UNSET && player.mediaItemCount > 0 }?.toInt()
+    } else {
+        _progressFlow.value?.duration
+    }
 
-    override fun getPlaybackSpeed(): Float = player.playbackParameters.speed
+    override fun getPlaybackSpeed(): Float = if (playerThread.isCurrent) player.playbackParameters.speed else _positionAnchorFlow.value.speed
 
-    override fun setPlaybackSpeed(multiplier: Float) {
+    override fun setPlaybackSpeed(multiplier: Float) = playerThread.run {
         player.playbackParameters = PlaybackParameters(multiplier, multiplier)
     }
 
     override fun moveQueueItem(
         from: Int,
         to: Int
-    ) {
+    ) = playerThread.run {
         queueManager.move(from, to)
     }
 
@@ -534,22 +548,23 @@ class PlaybackManager(
      * Removes [queueItem]. Removing the current item moves to the next one (wrapping to the start), which plays on
      * if playback was playing; removing the last item left stops playback.
      */
-    override fun removeQueueItem(queueItem: QueueItem) {
+    override fun removeQueueItem(queueItem: QueueItem) = playerThread.run {
         val entries = List(player.mediaItemCount) { player.getMediaItemAt(it).queueEntry }
         val index = entries.indexOfFirst { it.uid == queueItem.uid }
-        if (index == -1) return
-        if (index == player.currentMediaItemIndex) {
+        if (index != -1 && index == player.currentMediaItemIndex) {
             if (entries.size == 1) {
                 pause()
             } else {
                 player.seekTo(player.currentTimeline.getNextWindowIndex(index, Player.REPEAT_MODE_ALL, player.shuffleModeEnabled), 0)
             }
         }
-        queueManager.remove(listOf(queueItem))
+        if (index != -1) {
+            queueManager.remove(listOf(queueItem))
+        }
     }
 
     /** Clears the queue; while playing, the current item stays and plays on. */
-    override fun clearQueue() {
+    override fun clearQueue() = playerThread.run {
         if (playbackState() == PlaybackState.Playing) {
             queueManager.remove(queueManager.getQueue().filterNot { it.isCurrent })
         } else {
@@ -557,23 +572,23 @@ class PlaybackManager(
         }
     }
 
-    override fun updateQueueSongs(songs: List<Song>) {
+    override fun updateQueueSongs(songs: List<Song>) = playerThread.run {
         queueManager.updateSongs(songs)
     }
 
     // AudioFocusHelper.Listener
 
-    override fun pauseForFocusLoss() {
+    override fun pauseForFocusLoss() = playerThread.run {
         Timber.v("pauseForFocusLoss()")
         player.playWhenReady = false
     }
 
-    override fun restoreVolumeAndPlay() {
+    override fun restoreVolumeAndPlay() = playerThread.run {
         player.volume = 1f
         play()
     }
 
-    override fun duck() {
+    override fun duck() = playerThread.run {
         player.volume = DUCK_VOLUME
     }
 

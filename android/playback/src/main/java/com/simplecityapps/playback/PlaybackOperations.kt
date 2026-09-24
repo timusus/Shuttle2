@@ -5,6 +5,12 @@ import com.simplecityapps.shuttle.model.Song
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
+/**
+ * Callable from any thread. A call that changes playback runs on the main thread, where the player lives: straight away
+ * if made there, else posted to it, so its effect isn't visible until the main thread gets to it. A read made off the
+ * main thread returns the last published state. [QueueOperations][com.simplecityapps.playback.queue.QueueOperations]
+ * follows the same rule.
+ */
 interface PlaybackOperations {
     /** The player's playback state: loading until the current item is ready, then playing or paused. */
     val playbackStateFlow: StateFlow<PlaybackState>

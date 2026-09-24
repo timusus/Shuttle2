@@ -1,12 +1,11 @@
 package com.simplecityapps.playback.queue
 
-import android.os.Handler
-import android.os.Looper
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import androidx.media3.exoplayer.ExoPlayer
+import com.simplecityapps.playback.engine.PlayerThread
 import com.simplecityapps.playback.engine.S2ShuffleOrder
 import com.simplecityapps.playback.engine.SongUriResolver
 import com.simplecityapps.shuttle.model.Song
@@ -25,8 +24,9 @@ import timber.log.Timber
  * queue's current item. Nothing is stored here that the player doesn't hold: every flow is derived from player
  * events.
  *
- * The player lives on the main thread. Calls that change the queue run there: a suspend call switches to it, and
- * any other call made off it is posted to it. Reads are safe from any thread, and return the last published state.
+ * Callable from any thread, on [PlayerThread]'s rule: the player lives on the main thread, and calls that change the
+ * queue run there (a suspend call switches to it, and any other call made off it is posted to it). Reads are safe from
+ * any thread, and return the last published state.
  */
 class QueueManager(
     private val player: ExoPlayer,
@@ -65,7 +65,7 @@ class QueueManager(
         }
     }
 
-    private val mainHandler = Handler(player.applicationLooper)
+    private val playerThread = PlayerThread(player)
 
     private val _shuffleModeFlow = MutableStateFlow(player.shuffleModeEnabled.toShuffleMode())
 
@@ -95,7 +95,7 @@ class QueueManager(
     override var hasRestoredQueue = false
         set(value) {
             field = value
-            onMain { publish() }
+            playerThread.run { publish() }
         }
 
     init {
@@ -214,7 +214,7 @@ class QueueManager(
     override fun getSize(): Int = lists.base.size
 
     override fun setCurrentItem(currentItem: QueueItem) {
-        onMain {
+        playerThread.run {
             val index = entries().indexOfFirst { it.uid == currentItem.uid }
             if (index != -1 && index != player.currentMediaItemIndex) {
                 player.seekTo(index, 0)
@@ -255,7 +255,7 @@ class QueueManager(
             Timber.v("No next track to skip to")
             return false
         }
-        onMain { player.seekTo(next, 0) }
+        playerThread.run { player.seekTo(next, 0) }
         return true
     }
 
@@ -271,13 +271,13 @@ class QueueManager(
     /** Adds [songs] to the end of the queue: the end of the unshuffled order, and the end of the shuffled order. */
     override fun addToQueue(songs: List<Song>) {
         val items = songs.map { song -> songUriResolver.toMediaItem(song.toQueueEntry()) }
-        onMain { player.addMediaItems(items) }
+        playerThread.run { player.addMediaItems(items) }
     }
 
     /** Adds [songs] after the current item, in both the unshuffled and the shuffled order. */
     override fun addToNext(songs: List<Song>) {
         val items = songs.map { song -> songUriResolver.toMediaItem(song.toQueueEntry()) }
-        onMain {
+        playerThread.run {
             batch {
                 val current = player.currentMediaItemIndex.takeIf { player.mediaItemCount > 0 }
                 val insertAt = (current ?: -1) + 1
@@ -296,7 +296,7 @@ class QueueManager(
     override fun updateSongs(songs: List<Song>) {
         val songsById = songs.associateBy { it.id }
         if (songsById.isEmpty()) return
-        onMain {
+        playerThread.run {
             batch {
                 entries().forEachIndexed { index, entry ->
                     val updated = songsById[entry.song.id]
@@ -313,10 +313,10 @@ class QueueManager(
         from: Int,
         to: Int
     ) {
-        onMain {
+        playerThread.run {
             if (player.shuffleModeEnabled) {
                 val order = shuffledIndices().toMutableList()
-                if (from !in order.indices || to !in order.indices) return@onMain
+                if (from !in order.indices || to !in order.indices) return@run
                 order.add(to, order.removeAt(from))
                 player.setShuffleOrder(S2ShuffleOrder(order.toIntArray()))
             } else {
@@ -327,7 +327,7 @@ class QueueManager(
 
     override fun remove(items: List<QueueItem>) {
         val uids = items.map { it.uid }.toSet()
-        onMain {
+        playerThread.run {
             batch {
                 entries().withIndex().reversed().filter { it.value.uid in uids }.forEach { player.removeMediaItem(it.index) }
             }
@@ -340,7 +340,7 @@ class QueueManager(
 
     override fun clear() {
         Timber.v("clear()")
-        onMain { player.clearMediaItems() }
+        playerThread.run { player.clearMediaItems() }
     }
 
     override fun getShuffleMode(): ShuffleMode = shuffleModeFlow.value
@@ -371,7 +371,7 @@ class QueueManager(
     override fun getRepeatMode(): RepeatMode = repeatModeFlow.value
 
     override fun setRepeatMode(repeatMode: RepeatMode) {
-        onMain { player.repeatMode = repeatMode.toPlayerRepeatMode() }
+        playerThread.run { player.repeatMode = repeatMode.toPlayerRepeatMode() }
     }
 
     override fun toggleRepeatMode() {
@@ -391,11 +391,6 @@ class QueueManager(
         return generateSequence(timeline.getFirstWindowIndex(true).takeIf { it != C.INDEX_UNSET }) { index ->
             timeline.getNextWindowIndex(index, Player.REPEAT_MODE_OFF, true).takeIf { it != C.INDEX_UNSET }
         }.toList()
-    }
-
-    /** Runs [block] on the player's thread: now if already on it, else posted to it. */
-    private fun onMain(block: () -> Unit) {
-        if (Looper.myLooper() == player.applicationLooper) block() else mainHandler.post(block)
     }
 
     /** Runs [block], then publishes once, rather than once per player call it makes. Main thread only. */

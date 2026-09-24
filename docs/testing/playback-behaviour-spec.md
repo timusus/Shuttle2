@@ -77,6 +77,10 @@ that can load plays; up to 15 songs in a row are tried before playback stops, pa
 loaded (after a failure, or a restore), when another song is made current (from the queue screen or a media
 controller) and played, then it plays from its start, not from the other song's position. (#345) — JVM.
 
+**RS-29: playback and queue calls work from any thread.** Given a song playing, when a caller off the main thread
+reads the progress or duration, pauses, or removes a queue item, then the read returns the last published state and
+each change takes effect on the main thread, without an error. (#345) — JVM.
+
 ## Audio output
 
 **RS-15: ReplayGain from the first sample.** Given ReplayGain on and a song with a track gain, when it starts, then

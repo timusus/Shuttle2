@@ -3,6 +3,12 @@ package com.simplecityapps.playback.queue
 import com.simplecityapps.shuttle.model.Song
 import kotlinx.coroutines.flow.StateFlow
 
+/**
+ * Callable from any thread. A call that changes the queue runs on the main thread, where the player lives: a suspend
+ * call switches to it, and any other call made off it is posted to it, so its effect isn't visible until the main
+ * thread gets to it. Reads return the last published state. [PlaybackOperations][com.simplecityapps.playback.PlaybackOperations]
+ * follows the same rule.
+ */
 interface QueueOperations {
     /** The queue as the active shuffle mode presents it, with the current item and position. */
     val queueStateFlow: StateFlow<QueueState>
